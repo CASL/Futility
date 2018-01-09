@@ -48,7 +48,7 @@ MODULE SmootherTypes
 
   PRIVATE
 
-  INTEGER(SIK),PARAMETER,PUBLIC :: MAX_SMOOTHERS_PER_LIST=8_SIK
+  INTEGER(SIK),PARAMETER,PUBLIC :: MAX_SMOOTHERS_PER_LIST=8
 !
 ! List of public members
   PUBLIC :: eSmootherType
@@ -96,11 +96,11 @@ MODULE SmootherTypes
     !> Current global residual norm
     REAL(SRK) :: globalResidual=0.0_SRK
     !> Starting local index:
-    INTEGER(SIK) :: istt=-1_SIK
+    INTEGER(SIK) :: istt=-1
     !> End local index:
-    INTEGER(SIK) :: istp=-1_SIK
+    INTEGER(SIK) :: istp=-1
     !> Block size (number of unknowns per point):
-    INTEGER(SIK) :: blk_size=-1_SIK
+    INTEGER(SIK) :: blk_size=-1
     !> Solvers for all the blocks:
     CLASS(LinearSolverType_Base),ALLOCATABLE :: blockSolvers(:)
 
@@ -121,9 +121,9 @@ MODULE SmootherTypes
     PC :: pc
 #else
     !> Dummy attribute to make sure Futility compiles when PETSc is not present
-    INTEGER(SIK) :: ksp=-1_SIK
+    INTEGER(SIK) :: ksp=-1
     !> Dummy attribute to make sure Futility compiles when PETSc is not present
-    INTEGER(SIK) :: pc=-1_SIK
+    INTEGER(SIK) :: pc=-1
 #endif
     !> Whether or not the KSP has been initialized/set up:
     LOGICAL(SBK) :: isKSPSetup=.FALSE.
@@ -133,7 +133,7 @@ MODULE SmootherTypes
   !  color to color)
   TYPE :: IndexList
     !Number of indices for this color:
-    INTEGER(SIK) :: num_indices=-1_SIK
+    INTEGER(SIK) :: num_indices=-1
     !List of indices for this color:
     INTEGER(SIK),ALLOCATABLE :: index_list(:)
   ENDTYPE IndexList
@@ -141,7 +141,7 @@ MODULE SmootherTypes
   !Handy type to handle the coloring of indices
   TYPE :: ColorManagerType
     !> Number of colors:
-    INTEGER(SIK) :: num_colors=-1_SIK
+    INTEGER(SIK) :: num_colors=-1
     !> List of indices for each color (1:num_colors)
     TYPE(IndexList),ALLOCATABLE :: colors(:)
     !> Whether or not each of the color index lists have been set (1:num_colors)
@@ -153,9 +153,9 @@ MODULE SmootherTypes
     !> Whether the arrays above have been allocated:
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Starting local index:
-    INTEGER(SIK) :: istt=-1_SIK
+    INTEGER(SIK) :: istt=-1
     !> End local index:
-    INTEGER(SIK) :: istp=-1_SIK
+    INTEGER(SIK) :: istp=-1
 
     !
     !List of Type Bound Procedures
@@ -173,7 +173,7 @@ MODULE SmootherTypes
     !> A type for managing the coloring scheme:
     TYPE(ColorManagerType) :: colorManager
     !> Current color being solved:
-    INTEGER(SIK) :: icolor=-1_SIK
+    INTEGER(SIK) :: icolor=-1
     !> Whether or not block calculations need to be reperformed:
     LOGICAL(SBK) :: blocksNeedUpdate=.TRUE.
 
@@ -325,7 +325,7 @@ MODULE SmootherTypes
     !>   There is only one copy of the smoother list.
     LOGICAL(SBK) :: isSmootherListInit=.FALSE.
     !> Number of smoothers in the smoother list
-    INTEGER(SIK) :: num_smoothers=0_SIK
+    INTEGER(SIK) :: num_smoothers=0
     !> List of abstract smoothers:
     TYPE(SmootherInstanceType),ALLOCATABLE :: smootherList(:)
     !> ctxList to keep track of which smoother is which
@@ -333,7 +333,7 @@ MODULE SmootherTypes
   ENDTYPE SmootherListType
 
   !Number of smoother lists:
-  INTEGER(SIK),SAVE :: num_smoother_lists=0_SIK
+  INTEGER(SIK),SAVE :: num_smoother_lists=0
   !Collection of smootherList objects
   TYPE(SmootherListType),ALLOCATABLE,SAVE :: smootherListCollection(:)
 
@@ -374,7 +374,7 @@ MODULE SmootherTypes
 
       !Extract param list info:
       CALL smoother%colorManager%init(params)
-      smoother%icolor=1_SIK
+      smoother%icolor=1
 
       CALL params%get('SmootherType->istt',smoother%istt)
       CALL params%get('SmootherType->istp',smoother%istp)
@@ -396,7 +396,7 @@ MODULE SmootherTypes
       smoother%smootherMethod=CBJ
       smoother%TPLType=PETSc
       CALL params%get('SmootherType->blockMethod',smoother%blockMethod)
-      IF(smoother%blockMethod == -1_SIK) smoother%blockMethod=LU
+      IF(smoother%blockMethod == -1) smoother%blockMethod=LU
       smoother%hasX0=.FALSE.
       smoother%isKSPSetup=.FALSE.
       smoother%blocksNeedUpdate=.TRUE.
@@ -534,7 +534,7 @@ MODULE SmootherTypes
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
             "Smoother list has not been initialized!")
 
-      IF(ismoother < 1_SIK .OR. &
+      IF(ismoother < 1 .OR. &
           ismoother > smootherListCollection(iList)%num_smoothers) &
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
             "Invalid smoother ID!")
@@ -621,12 +621,12 @@ MODULE SmootherTypes
       IF(params%has('SmootherType->blockMethod_list')) THEN
         CALL params%get('SmootherType->blockMethod_list',blockMethod_list)
       ELSE
-        blockMethod_list=-1_SIK
+        blockMethod_list=-1
       ENDIF
       IF(params%has('SmootherType->num_colors_list')) THEN
         CALL params%get('SmootherType->num_colors_list',num_colors_list)
       ELSE
-        num_colors_list=1_SIK
+        num_colors_list=1
       ENDIF
       CALL params%get('SmootherType->MPI_Comm_ID_list',MPI_Comm_ID_list)
 
@@ -806,7 +806,7 @@ MODULE SmootherTypes
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
             "Smoother list has not been initialized!")
 
-      IF(ismoother < 1_SIK .OR. &
+      IF(ismoother < 1 .OR. &
          ismoother > smootherListCollection(iList)%num_smoothers) &
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
             "Invalid smoother ID!")
@@ -868,7 +868,7 @@ MODULE SmootherTypes
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
             "Smoother list has not been initialized!")
 
-      IF(ismoother < 1_SIK .OR. &
+      IF(ismoother < 1 .OR. &
           ismoother > smootherListCollection(iList)%num_smoothers) &
         CALL eSmootherType%raiseError(modName//"::"//myName//" - "// &
             "Invalid smoother ID!")
@@ -897,7 +897,7 @@ MODULE SmootherTypes
 
             !Fill out index lists for each color:
             ALLOCATE(tmpints(manager%num_colors))
-            tmpints=0_SIK
+            tmpints=0
             DO i=manager%istt,manager%istp
               icolor=color_ids(i)
               tmpints(icolor)=tmpints(icolor)+1
@@ -1011,10 +1011,10 @@ MODULE SmootherTypes
             CALL params%add('LinearSolverType->TPLType',NATIVE)
             CALL params%add('LinearSolverType->solverMethod',LU)
             !This part is serial, so we don't need an MPI communicator
-            CALL params%add('LinearSolverType->MPI_Comm_ID',-1_SIK)
+            CALL params%add('LinearSolverType->MPI_Comm_ID',-1)
             CALL params%add('LinearSolverType->timerName', &
                             'LU solver for smoother blocks')
-            CALL params%add('LinearSolverType->numberOMP',1_SIK)
+            CALL params%add('LinearSolverType->numberOMP',1)
             CALL params%add('LinearSolverType->matType',DENSESQUARE)
             CALL params%add('LinearSolverType->A->MatrixType->n', &
                             smoother%blk_size)
@@ -1164,7 +1164,7 @@ MODULE SmootherTypes
             ENDDO
             !Increment the color
             smoother%icolor=smoother%icolor+1
-            IF(smoother%icolor > manager%num_colors) smoother%icolor=1_SIK
+            IF(smoother%icolor > manager%num_colors) smoother%icolor=1
           ENDASSOCIATE
           CALL VecRestoreArrayF90(xout,xout_vals,iperr)
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
@@ -1177,7 +1177,7 @@ MODULE SmootherTypes
               "This subroutine is only for CBJ smoothers!")
       ENDSELECT
 
-      iperr=0_SIK
+      iperr=0
     ENDSUBROUTINE PCApply_CBJ
 #endif
 

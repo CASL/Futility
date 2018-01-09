@@ -148,7 +148,7 @@ CONTAINS
           .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2             &
           .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed                 &
           .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK    &
-          .OR. ALLOCATED(thisLS%PreCondType) .OR. thisLS%nLevels /= 1_SIK &
+          .OR. ALLOCATED(thisLS%PreCondType) .OR. thisLS%nLevels /= 1 &
           .OR. ALLOCATED(thisLS%level_info)                               &
           .OR. ALLOCATED(thisLS%level_info_local)                         &
 #ifdef FUTILITY_HAVE_PETSC
@@ -182,10 +182,10 @@ CONTAINS
       CALL pList%add('LinearSolverType->PCType','PCMG')
       CALL pList%add('LinearSolverType->PCIters',-1)
       CALL pList%add('LinearSolverType->PCSetup',0)
-      CALL pList%add('LinearSolverType->Multigrid->nx_local',65_SIK)
-      CALL pList%add('LinearSolverType->Multigrid->ny_local',1_SIK)
-      CALL pList%add('LinearSolverType->Multigrid->nz_local',1_SIK)
-      CALL pList%add('LinearSolverType->Multigrid->num_eqns',1_SIK)
+      CALL pList%add('LinearSolverType->Multigrid->nx_local',65)
+      CALL pList%add('LinearSolverType->Multigrid->ny_local',1)
+      CALL pList%add('LinearSolverType->Multigrid->nz_local',1)
+      CALL pList%add('LinearSolverType->Multigrid->num_eqns',1)
       CALL pList%add('LinearSolverType->Multigrid->manuallySetLevelInfo',.FALSE.)
 
       CALL pList%validate(pList,optListLS)
@@ -282,7 +282,7 @@ CONTAINS
       ALLOCATE(tmpint(thisLS%nLevels))
       tmpint=mpiTestEnv%comm
       CALL smootherParams%add('SmootherType->MPI_Comm_ID_list',tmpint)
-      tmpint=2_SIK
+      tmpint=2
       CALL smootherParams%add('SmootherType->num_colors_list',tmpint)
       CALL smootherManager_initFromMMeshes(smootherParams,myMMeshes)
       CALL thisLS%fillInterpMats(myMMeshes)
@@ -296,7 +296,7 @@ CONTAINS
       ASSERT(isSmootherListInit,'smoother list initialized')
 
       ALLOCATE(vals(2),cols(2))
-      cols=0_SIK
+      cols=0
       DO iLevel=1,thisLS%nLevels-1
         boolcols=.TRUE.
         boolvals=.TRUE.
@@ -312,12 +312,12 @@ CONTAINS
             boolvals=ALL(vals(1:2)==0.5_SRK)
           ENDIF
           CALL MatRestoreRow(thisLS%interpMats_PETSc(iLevel)%a,1_SIK,ncol,cols,vals,iperr)
-          IF(.NOT. boolcols .OR. .NOT. boolvals .OR. iperr /= 0_SIK ) EXIT
+          IF(.NOT. boolcols .OR. .NOT. boolvals .OR. iperr /= 0 ) EXIT
         ENDDO
         WRITE(tmpchar,'(I2)') iLevel
         ASSERT(boolcols,'Check interpolation matrix col indices for grid '//tmpchar)
         ASSERT(boolvals,'Check interpolation matrix entries for grid '//tmpchar)
-        ASSERT(iperr == 0_SIK,'Error obtaining matrix entries for grid '//tmpchar)
+        ASSERT(iperr == 0,'Error obtaining matrix entries for grid '//tmpchar)
 
         IF(iLevel > 1) THEN
           WRITE(tmpchar,'(I2)') iLevel+1
@@ -404,7 +404,7 @@ CONTAINS
         CALL thisLS%setX0(x)
 
         !set iterations and convergence information and build/set M
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2,1.0E-9_SRK,1000,30)
 
         !solve it
         CALL thisLS%solve()
@@ -431,9 +431,9 @@ CONTAINS
       IF(mpiTestEnv%nproc == 2) THEN
         level_info=RESHAPE((/2,18,2,34,2,66,2,130/),(/2,4/))
         level_info_local=RESHAPE((/2,9,2,17,2,33,2,65/),(/2,4/))
-        CALL init_MultigridLS(thisLS,num_eqns_in=2_SIK,nx_in=130_SIK, &
-                                nprocs_in=2_SIK,level_info=level_info, &
-                                level_info_local=level_info_local,nlevels=4_SIK)
+        CALL init_MultigridLS(thisLS,num_eqns_in=2,nx_in=130, &
+                                nprocs_in=2,level_info=level_info, &
+                                level_info_local=level_info_local,nlevels=4)
 
         ! Create solution:
         ALLOCATE(soln(n_2G))
@@ -461,7 +461,7 @@ CONTAINS
         ENDSELECT
 
         !set iterations and convergence information and build/set M
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2,1.0E-9_SRK,1000,30)
 
         !solve it
         CALL mpiTestEnv%barrier()
@@ -506,7 +506,7 @@ CONTAINS
       CALL setupInterpMatrices_1D1G(thisLS)
       CALL thisLS%setupPETScMG(pList)
 
-      CALL thisLS%setSmoother(SOR,0_SIK)
+      CALL thisLS%setSmoother(SOR,0)
       CALL PCMGGetSmoother(thisLS%pc,0,ksp_temp,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL KSPGetType(ksp_temp,myksptype,iperr)
@@ -525,7 +525,7 @@ CONTAINS
       ENDDO
       ASSERT(tmpbool,'Set smoother for all but the coarsest level.')
 
-      CALL thisLS%setSmoother(SOR,1_SIK)
+      CALL thisLS%setSmoother(SOR,1)
       CALL PCMGGetSmoother(thisLS%pc,1,ksp_temp,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL KSPGetType(ksp_temp,myksptype,iperr)
@@ -555,11 +555,11 @@ CONTAINS
       INTEGER(SIK) :: num_eqns,nx,ny,nz,nprocs,n,nlocal
       INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
-      nprocs=1_SIK
-      num_eqns=1_SIK
-      nx=65_SIK
-      ny=1_SIK
-      nz=1_SIK
+      nprocs=1
+      num_eqns=1
+      nx=65
+      ny=1
+      nz=1
       IF(PRESENT(num_eqns_in)) num_eqns=num_eqns_in
       IF(PRESENT(nx_in)) nx=nx_in
       IF(PRESENT(ny_in)) ny=ny_in
@@ -574,7 +574,7 @@ CONTAINS
       CALL pList%clear()
       CALL pList%add('LinearSolverType->TPLType',PETSC)
       CALL pList%add('LinearSolverType->solverMethod',MULTIGRID)
-      IF(nprocs > 1_SIK) THEN
+      IF(nprocs > 1) THEN
         CALL pList%add('LinearSolverType->MPI_Comm_ID',mpiTestEnv%comm)
       ELSE
         CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
@@ -586,15 +586,15 @@ CONTAINS
       CALL pList%add('LinearSolverType->A->MatrixType->n',n)
       CALL pList%add('LinearSolverType->A->MatrixType->nlocal',nlocal)
       ALLOCATE(dnnz(nlocal),onnz(nlocal))
-      onnz=0_SIK
-      dnnz(1:num_eqns)=1_SIK+num_eqns
-      dnnz(num_eqns+1:nlocal-num_eqns)=2_SIK+num_eqns
-      dnnz(nlocal-num_eqns+1:nlocal)=1_SIK+num_eqns
-      IF(nprocs > 1_SIK) THEN
+      onnz=0
+      dnnz(1:num_eqns)=1+num_eqns
+      dnnz(num_eqns+1:nlocal-num_eqns)=2+num_eqns
+      dnnz(nlocal-num_eqns+1:nlocal)=1+num_eqns
+      IF(nprocs > 1) THEN
         IF(mpiTestEnv%master) THEN
-          onnz(nlocal-num_eqns+1:nlocal)=1_SIK
+          onnz(nlocal-num_eqns+1:nlocal)=1
         ELSE
-          onnz(1:num_eqns)=1_SIK
+          onnz(1:num_eqns)=1
         ENDIF
       ENDIF
       CALL pList%add('LinearSolverType->A->MatrixType->dnnz',dnnz)
@@ -641,7 +641,7 @@ CONTAINS
         nx=thisLS%level_info(2,iLevel)
 
         ALLOCATE(dnnz(nx_old),onnz(nx_old))
-        onnz=0_SIK
+        onnz=0
         DO inx=1,nx_old
           IF(XOR(MOD(inx,2)==1, (inx>nx/2 .AND. MOD(nx,2) == 0))) THEN
             dnnz(inx)=1
@@ -696,7 +696,7 @@ CONTAINS
         nx=thisLS%level_info_local(2,iLevel)
 
         ALLOCATE(dnnz(nx_old*2),onnz(nx_old*2))
-        onnz=0_SIK
+        onnz=0
         DO inx=1,nx_old
           DO ieqn=1,2
             row=(inx-1)*2+ieqn
@@ -729,7 +729,7 @@ CONTAINS
         nx_old=nx
         nx=thisLS%level_info_local(2,iLevel)
         IF(mpiTestEnv%master) THEN
-          offset=0_SIK
+          offset=0
         ELSE
           offset(1)=nx_old*2
           offset(2)=nx*2

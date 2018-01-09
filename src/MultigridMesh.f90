@@ -63,7 +63,7 @@ MODULE MultigridMesh
     !>  operator has no injections.  This is not needed for fillInterpMatrices
     !>  in LinearSolverTypes_Multigrid, it is only here for the user's
     !>  convenience and using/setting this variable is optional.
-    INTEGER(SIK) :: finestGridIndex=-1_SIK
+    INTEGER(SIK) :: finestGridIndex=-1
     !> For degree 0 points, childIndices is a size-1 array containing the
     !>  child mesh index of the point that it injects into.
     !> For degree >0 points, childIndices is a size >1 array containing the
@@ -81,7 +81,7 @@ MODULE MultigridMesh
 
   TYPE :: MultigridMeshType
     !> Which level the mesh corresponds to (1 = coarsest)
-    INTEGER(SIK) :: iLevel=-1_SIK
+    INTEGER(SIK) :: iLevel=-1
     !> Whether or not it is the finest level:
     LOGICAL(SBK) :: isFinestLevel=.FALSE.
     !> Whether or not it is the coarsest level:
@@ -89,11 +89,11 @@ MODULE MultigridMesh
     !>  not be allocated!
     LOGICAL(SBK) :: isCoarsestLevel=.FALSE.
     !> Number of cells/points on this level locally:
-    INTEGER(SIK) :: nPointsLocal=-1_SIK
+    INTEGER(SIK) :: nPointsLocal=-1
     !> Local starting index of mesh points:
-    INTEGER(SIK) :: istt=-1_SIK
+    INTEGER(SIK) :: istt=-1
     !> Local end index of mesh points:
-    INTEGER(SIK) :: istp=-1_SIK
+    INTEGER(SIK) :: istp=-1
     !> Global x,y,z location of each element in units of the finest mesh
     !> This means that adjacent cells in coarser meshes do not have
     !>   adjacent x/y/z values.  Range is (3,istt:istp)
@@ -126,7 +126,7 @@ MODULE MultigridMesh
 
   TYPE :: MultigridMeshStructureType
     !> Number of multigrid levels, including the coarsest and finest
-    INTEGER(SIK) :: nLevels=-1_SIK
+    INTEGER(SIK) :: nLevels=-1
     !> Data for each multigrid level. 1 = coarsest level, nLevels = finest level
     TYPE(MultigridMeshType),ALLOCATABLE :: meshes(:)
     !> Whether or not the mesh structure has been initialized:
@@ -156,7 +156,7 @@ MODULE MultigridMesh
     !>   Right now, there is no support for simultaneous collapse in both space
     !>   and the number of eqns in this module.  Collapse of eqns must be done
     !>   separately.
-    INTEGER(SIK) :: num_eqns=1_SIK
+    INTEGER(SIK) :: num_eqns=1
 
     CONTAINS
       !> @copybrief MultigridMesh::clear_InterpWeightsLevel
@@ -211,7 +211,7 @@ MODULE MultigridMesh
 
       INTEGER(SIK) :: iLevel
 
-      IF(nLevels < 1_SIK) &
+      IF(nLevels < 1) &
         CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
           "nLevels must be a positive integer!")
 

@@ -76,14 +76,14 @@ PROGRAM testSmoother
 
   istt=1
   istp=65
-  blk_size=2_SIK
-  num_colors=2_SIK
-  num_colors_long=2_SIK
-  num_smoothers=1_SIK
+  blk_size=2
+  num_colors=2
+  num_colors_long=2
+  num_smoothers=1
   smootherMethod=CBJ
   MPI_Comm_ID=mpiTestEnv%comm
   MPI_Comm_ID_long=mpiTestEnv%comm
-  CALL params%add('SmootherType->num_smoothers',1_SIK)
+  CALL params%add('SmootherType->num_smoothers',1)
   CALL params%add('SmootherType->istt_list',istt)
   CALL params%add('SmootherType->istp_list',istp)
   CALL params%add('SmootherType->num_colors_list',num_colors)
@@ -126,7 +126,7 @@ PROGRAM testSmoother
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testClear()
-      num_smoothers=1_SIK
+      num_smoothers=1
       ALLOCATE(smootherList(num_smoothers))
       ALLOCATE(SmootherType_PETSc_CBJ ::smootherList(1)%smoother)
 
@@ -135,7 +135,7 @@ PROGRAM testSmoother
 
       ASSERT(.NOT. ALLOCATED(smootherList),'smootherList deallocated')
       ASSERT(.NOT. isSmootherListInit, 'smootherList not initialized')
-      ASSERT(num_smoothers == 0_SIK,'no smoothers exist')
+      ASSERT(num_smoothers == 0,'no smoothers exist')
     ENDSUBROUTINE testClear
 !
 !-------------------------------------------------------------------------------
@@ -153,7 +153,7 @@ PROGRAM testSmoother
       CALL KSPGetPC(ksp,pc,iperr)
       CALL PCSetType(pc,PCJACOBI,iperr)
 
-      num_smoothers=1_SIK
+      num_smoothers=1
       ALLOCATE(smootherList(num_smoothers))
       ALLOCATE(ctxList(num_smoothers))
       ctxList(1)%ctx=1
@@ -166,7 +166,7 @@ PROGRAM testSmoother
         TYPE IS(SmootherType_PETSc_CBJ)
           CALL KSPGetType(smoother%ksp,myksptype,iperr)
           CALL PCGetType(smoother%pc,mypctype,iperr)
-          tmpbool=iperr == 0_SIK .AND. &
+          tmpbool=iperr == 0 .AND. &
                   myksptype == KSPRICHARDSON .AND. &
                   mypctype == PCSHELL
           ASSERT(tmpbool,"smoother's copy of ksp and pc set to the correct types in PETSc")
@@ -175,14 +175,14 @@ PROGRAM testSmoother
       !Get context returns a pointer to a pointer for some maddening reason:
       CALL PCShellGetContext(pc,ctx_ptr,iperr)
       CALL C_F_POINTER(ctx_ptr,ctx,(/1/))
-      ASSERT(ctx(1) == 1_SIK,'Correct context')
+      ASSERT(ctx(1) == 1,'Correct context')
 
       CALL PCShellGetName(pc,pcname,iperr)
       ASSERT(pcname=="CBJ PC    1",'Correct PC name')
 
       CALL KSPGetType(ksp,myksptype,iperr)
       CALL PCGetType(pc,mypctype,iperr)
-      tmpbool=iperr == 0_SIK .AND. &
+      tmpbool=iperr == 0 .AND. &
               myksptype == KSPRICHARDSON .AND. &
               mypctype == PCSHELL
       ASSERT(tmpbool,'ksp and pc set to the correct types in PETSc')
@@ -234,9 +234,9 @@ PROGRAM testSmoother
 
       LOGICAL(SBK) :: boolcols,boolvals,tmpbool
 
-      nLevels=4_SIK
-      nx=65_SIK
-      num_eqns=2_SIK
+      nLevels=4
+      nx=65
+      num_eqns=2
 
       CALL myMMeshes%init(nLevels,num_eqns)
       DO iLevel=myMMeshes%nLevels,1,-1
@@ -265,7 +265,7 @@ PROGRAM testSmoother
       ENDDO
       CALL smootherManager_initFromMMeshes(params_limited,myMMeshes)
 
-      nx=65_SIK
+      nx=65
       DO iLevel=myMMeshes%nLevels,2,-1
         SELECTTYPE(smoother => smootherList(iLevel)%smoother)
           TYPE IS(SmootherType_PETSc_CBJ)
@@ -300,7 +300,7 @@ PROGRAM testSmoother
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDefineColor
-      INTEGER(SIK),PARAMETER :: num_indices=25_SIK
+      INTEGER(SIK),PARAMETER :: num_indices=25
       INTEGER(SIK) :: index_list(num_indices)
       INTEGER(SIK) :: icolor,i
       LOGICAL(SBK) :: tmpbool
@@ -314,10 +314,10 @@ PROGRAM testSmoother
               index_list(i)=2*i-1
             ENDDO
             !Mess up the color ids intentionally:
-            manager%color_ids=1_SIK
+            manager%color_ids=1
 
-            icolor=2_SIK
-            CALL smootherManager_defineColor(1_SIK,icolor,index_list)
+            icolor=2
+            CALL smootherManager_defineColor(1,icolor,index_list)
 
             ASSERT(manager%colors(icolor)%num_indices == num_indices,'Correct # of indices')
             ASSERT(ALL(manager%colors(icolor)%index_list == index_list),'Correct index list')
@@ -349,7 +349,7 @@ PROGRAM testSmoother
       DO i=istt(1),istp(1),2
         color_ids(i)=1
       ENDDO
-      CALL smootherManager_defineAllColors(1_SIK,color_ids)
+      CALL smootherManager_defineAllColors(1,color_ids)
 
       SELECTTYPE(smoother => smootherList(1)%smoother)
         TYPE IS(SmootherType_PETSc_CBJ)
@@ -357,8 +357,8 @@ PROGRAM testSmoother
 
             tmpbool=ALL(manager%color_ids == color_ids)
             ASSERT(tmpbool,'Smoother%color_ids correctly set')
-            tmpbool=manager%colors(1)%num_indices == 33_SIK .AND. &
-                      manager%colors(2)%num_indices == 32_SIK
+            tmpbool=manager%colors(1)%num_indices == 33 .AND. &
+                      manager%colors(2)%num_indices == 32
             ASSERT(tmpbool,'Correct number of red and black indices')
             tmpbool=manager%hasAllColorsDefined
             ASSERT(tmpbool,'Has all colors defined')
@@ -374,8 +374,8 @@ PROGRAM testSmoother
 #ifdef FUTILITY_HAVE_PETSC
 #ifdef HAVE_MPI
       !Test smoother on 2-proc,2-group problem
-      INTEGER(SIK),PARAMETER :: nlocal=65_SIK
-      INTEGER(SIK),PARAMETER :: num_eqns=2_SIK
+      INTEGER(SIK),PARAMETER :: nlocal=65
+      INTEGER(SIK),PARAMETER :: num_eqns=2
       INTEGER(SIK) :: n
       INTEGER(SIK) :: nstart,nend
       INTEGER(SIK) :: i,ieqn
@@ -393,14 +393,14 @@ PROGRAM testSmoother
       dnnz=num_eqns+2
       dnnz(1:num_eqns)=num_eqns+1
       dnnz((nlocal-1)*num_eqns+1:nlocal*num_eqns)=num_eqns+1
-      onnz=0_SIK
+      onnz=0
       nstart=mpiTestEnv%rank*nlocal+1
       nend=(mpiTestEnv%rank+1)*nlocal
       IF(mpiTestEnv%rank < mpiTestEnv%nproc-1) THEN
-        onnz((nend-1)*num_eqns+1:nend*num_eqns)=1_SIK
+        onnz((nend-1)*num_eqns+1:nend*num_eqns)=1
       ENDIF
       IF(mpiTestEnv%rank > 0) THEN
-        onnz(1:num_eqns)=1_SIK
+        onnz(1:num_eqns)=1
       ENDIF
 
       CALL MatCreate(MPI_COMM_WORLD,A_petsc,iperr)
@@ -429,7 +429,7 @@ PROGRAM testSmoother
             col=i*num_eqns+ieqn
             CALL MatSetValue(A_petsc,row-1,col-1,-1.0_SRK,INSERT_VALUES,iperr)
           ENDIF
-          IF(MOD(i,2) == 1_SIK) THEN
+          IF(MOD(i,2) == 1) THEN
             CALL VecSetValue(x_petsc,row-1,0.0_SRK,INSERT_VALUES,iperr)
           ELSE
             CALL VecSetValue(x_petsc,row-1,0.0_SRK,INSERT_VALUES,iperr)
@@ -460,14 +460,14 @@ PROGRAM testSmoother
       DO i=istt(1),istp(1),2
         color_ids(i)=1
       ENDDO
-      CALL smootherManager_defineAllColors(1_SIK,color_ids)
+      CALL smootherManager_defineAllColors(1,color_ids)
 
       CALL KSPSetOperators(ksp,A_petsc,A_petsc,iperr)
 
       CALL KSPSetInitialGuessNonzero(ksp,PETSC_TRUE,iperr)
 
       CALL KSPSolve(ksp,b_petsc,x_petsc,iperr)
-      ASSERT(iperr == 0_SIK,'No KSPSolve Errors')
+      ASSERT(iperr == 0,'No KSPSolve Errors')
 
       CALL VecGetArrayReadF90(x_petsc,xx_v,iperr)
       ASSERT(ALL(xx_v .APPROXEQ. 0.0_SRK),'CBJ converged oscillating error in 1 it.')
