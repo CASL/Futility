@@ -47,6 +47,13 @@ MODULE Constants_Conversion
 
   !> Conversion factor from MPa to psia (should move to constants conversion)
   REAL(SRK),PUBLIC,PARAMETER :: MPa2PSIA=145.0_SRK+377.0_SRK/9990.0_SRK
+  !> Conversion factor from bar to MPA
+  REAL(SRK),PUBLIC,PARAMETER :: Bar2MPa=0.1_SRK
+
+  !> Conversion factor from kg to g
+  REAL(SRK),PUBLIC,PARAMETER :: kg2g=1000.0_SRK
+  !> Conversion factor from m to cm
+  REAL(SRK),PUBLIC,PARAMETER :: m2cm=100.0_SRK
 
   !> May be used for comparing real numbers relating to geometry
   !> Tolerance is 0.0001 cm
