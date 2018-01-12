@@ -68,14 +68,12 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Panzer
     Sundance
     CTrilinos
-    ForTrilinos
     PyTrilinos
     Didasko
     Optika
     Mesquite
     FEApp
     Zoltan2
-    Gtest
     SEACAS
     FEI
     STK
