@@ -18,7 +18,6 @@ PROGRAM testLinearSolver_Multigrid
   USE LinearSolverTypes
   USE LinearSolverTypes_Multigrid
   USE MultigridMesh
-  USE SmootherTypes
 
   IMPLICIT NONE
 
@@ -280,20 +279,11 @@ CONTAINS
       CALL myWtStructure%init(myMMeshes,1)
       CALL thisLS%fillInterpMats(myMMeshes,myWtStructure)
       ALLOCATE(tmpint(thisLS%nLevels))
-      tmpint=mpiTestEnv%comm
-      CALL smootherParams%add('SmootherType->MPI_Comm_ID_list',tmpint)
-      tmpint=2
-      CALL smootherParams%add('SmootherType->num_colors_list',tmpint)
-      CALL smootherManager_initFromMMeshes(smootherParams,myMMeshes)
-      CALL thisLS%fillInterpMats(myMMeshes)
-      !Also test out the CBJ smoothers:
       tmpint(1)=GMRES
-      tmpint(2:thisLS%nLevels)=CBJ
+      tmpint(2:thisLS%nLevels)=SOR
       CALL pList%add('LinearSolverType->smootherMethod_list',tmpint)
       DEALLOCATE(tmpint)
       CALL thisLS%setupPETScMG(pList)
-
-      ASSERT(isSmootherListInit,'smoother list initialized')
 
       ALLOCATE(vals(2),cols(2))
       cols=0
@@ -318,19 +308,6 @@ CONTAINS
         ASSERT(boolcols,'Check interpolation matrix col indices for grid '//tmpchar)
         ASSERT(boolvals,'Check interpolation matrix entries for grid '//tmpchar)
         ASSERT(iperr == 0,'Error obtaining matrix entries for grid '//tmpchar)
-
-        IF(iLevel > 1) THEN
-          WRITE(tmpchar,'(I2)') iLevel+1
-          tmpbool= smootherList(iLevel+1)%smoother%smootherMethod == CBJ .AND. &
-                    smootherList(iLevel+1)%smoother%isInit
-          ASSERT(tmpbool,'smoother initialized to correct smoother method for grid '//tmpchar)
-          SELECTTYPE(smoother=>smootherList(iLevel+1)%smoother)
-            TYPE IS(SmootherType_PETSc_CBJ)
-              tmpbool=smoother%colorManager%hasAllColorsDefined .AND. &
-                        smoother%isKSPSetup
-              ASSERT(tmpbool,'smoother has all colors defined and ksp set up for grid '//tmpchar)
-          ENDSELECT
-        ENDIF
 
       ENDDO
       CALL myWtStructure%clear()
