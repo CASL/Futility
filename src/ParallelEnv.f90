@@ -30,7 +30,6 @@ MODULE ParallelEnv
   USE IntrType
   USE ExceptionHandler
   USE BLAS
-  USE trilinos_interfaces
   USE Allocs
 !$ USE OMP_LIB
 

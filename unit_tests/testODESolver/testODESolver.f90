@@ -74,7 +74,6 @@ PROGRAM testODESolver
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
-  USE trilinos_interfaces
   USE ParameterLists
   USE VectorTypes
   USE MatrixTypes

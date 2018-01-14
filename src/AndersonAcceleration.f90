@@ -32,7 +32,6 @@
 MODULE AndersonAccelerationTypes
   USE IntrType
   USE BLAS
-  USE trilinos_interfaces
   USE Times
   USE ExceptionHandler
   USE ParameterLists

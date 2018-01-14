@@ -24,7 +24,6 @@ MODULE VectorTypes_Trilinos
   USE ExceptionHandler
   USE ParameterLists
   USE VectorTypes_Base
-  USE trilinos_interfaces
 
   IMPLICIT NONE
 

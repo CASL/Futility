@@ -26,7 +26,6 @@ MODULE MatrixTypes_Trilinos
   USE ParameterLists
   USE VectorTypes
   USE MatrixTypes_Base
-  USE trilinos_interfaces
 
   IMPLICIT NONE
   PRIVATE

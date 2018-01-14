@@ -62,7 +62,6 @@ include 'mkl_pardiso.f90'
 MODULE LinearSolverTypes
   USE IntrType
   USE BLAS
-  USE trilinos_interfaces
   USE Times
   USE ExceptionHandler
   USE Allocs

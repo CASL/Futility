@@ -96,7 +96,6 @@ MODULE MatrixTypes
   USE MatrixTypes_Native
   USE MatrixTypes_Trilinos
   USE MatrixTypes_PETSc
-  USE trilinos_interfaces
   IMPLICIT NONE
 
   PRIVATE

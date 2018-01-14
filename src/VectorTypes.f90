@@ -73,7 +73,6 @@ MODULE VectorTypes
   USE VectorTypes_Native
   USE VectorTypes_PETSc
   USE VectorTypes_Trilinos
-  USE trilinos_interfaces
   USE BLAS1,           ONLY: BLAS1_asum  => BLAS_asum,  &
                              BLAS1_axpy  => BLAS_axpy,  &
                              BLAS1_copy  => BLAS_copy,  &

@@ -40,7 +40,6 @@ MODULE EigenvalueSolverTypes
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE BLAS
-  USE trilinos_interfaces
   USE Times
   USE ExceptionHandler
   USE Allocs

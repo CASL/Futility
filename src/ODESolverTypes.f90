@@ -41,7 +41,6 @@ MODULE ODESolverTypes
   USE ISO_C_BINDING
   USE IntrType
   USE BLAS
-  !USE trilinos_interfaces
   USE Times
   USE ExceptionHandler
   USE Allocs
@@ -51,7 +50,6 @@ MODULE ODESolverTypes
   USE MatrixTypes
   USE LinearSolverTypes
   USE Strings
-  USE trilinos_interfaces
   IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC

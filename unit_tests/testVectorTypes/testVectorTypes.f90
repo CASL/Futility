@@ -13,7 +13,6 @@ PROGRAM testVectorTypes
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
-  USE trilinos_interfaces
   USE ParameterLists
   USE ParallelEnv
   USE VectorTypes

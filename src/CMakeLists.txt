@@ -19,8 +19,6 @@ TRIBITS_ADD_LIBRARY(CUtils
           floatingpointchecks.c
     )
 
-ADD_SUBDIRECTORY(trilinos_interfaces)
-
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
     HEADERS
@@ -39,7 +37,7 @@ TRIBITS_ADD_LIBRARY(Utils
       BLAS2.f90
       BLAS3.f90
       BLAS.f90
-      trilinos_interfaces/trilinos_f_interfaces.f90
+      #trilinos_interfaces/trilinos_f_interfaces.f90
       Strings.f90
       Times.f90
       TAU_Stubs.f90
@@ -94,7 +92,6 @@ TRIBITS_ADD_LIBRARY(Utils
       PartitionGraph.f90
     DEPLIBS
       CUtils
-      TrilinosUtils
 )
 
 
