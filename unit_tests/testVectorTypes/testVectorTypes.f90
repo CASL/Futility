@@ -1132,7 +1132,7 @@ PROGRAM testVectorTypes
 #endif
 
 
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       ALLOCATE(TrilinosVectorType :: thisVector)
       !Perform test of init function
       !first check intended init path (m provided)
@@ -1258,6 +1258,7 @@ PROGRAM testVectorTypes
             CALL thisVector%get(i,dummy)
             bool = .NOT.((dummy /= 10._SRK) .AND. iverr /= 0)
             ASSERT(bool, 'Trilinosvec%setAll_scalar(...)')
+            FINFO() i, dummy
           ENDDO
       ENDSELECT
 

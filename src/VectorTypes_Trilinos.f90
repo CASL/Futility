@@ -20,23 +20,32 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VectorTypes_Trilinos
+  USE ISO_C_BINDING
   USE IntrType
   USE ExceptionHandler
   USE ParameterLists
   USE VectorTypes_Base
+#ifdef FUTILITY_HAVE_ForTrilinos
+#include "ForTrilinosTpetra_config.hpp"
+#include "ForTrilinos.h"
+  USE forteuchos
+  USE fortpetra
 
   IMPLICIT NONE
 
   PRIVATE
-#ifdef FUTILITY_HAVE_Trilinos
 !
 ! List of public members
   PUBLIC :: TrilinosVectorType
 
   !> @brief The extended type for Trilinos vectors
   TYPE,EXTENDS(DistributedVectorType) :: TrilinosVectorType
-    !> The values of the vector
-    INTEGER(SIK) :: b
+    !> mpi communicator
+    TYPE(TeuchosComm) :: Tcomm
+    !> Parallel distribution map
+    TYPE(TpetraMap) :: map
+    !> Vector
+    TYPE(TpetraMultiVector) :: b
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -122,7 +131,13 @@ MODULE VectorTypes_Trilinos
           thisVector%comm=MPI_Comm_ID
           thisVector%nlocal=nlocal
           IF(.NOT.thisVector%isCreated) THEN
-            CALL ForPETRA_VecInit(thisVector%b,n,nlocal,thisVector%comm)
+#ifdef HAVE_MPI
+            CALL thisVector%Tcomm%create(MPI_Comm_ID)
+#else
+            CALL thisVector%Tcomm%create()
+#endif
+            CALL thisVector%map%create(INT(n,C_LONG),INT(nlocal,C_LONG),thisVector%Tcomm)
+            CALL thisVector%b%create(thisVector%map,1_C_LONG)
             thisVector%isCreated=.TRUE.
           ENDIF
         ENDIF
@@ -145,7 +160,9 @@ MODULE VectorTypes_Trilinos
       thisVector%isAssembled=.FALSE.
       thisVector%isCreated=.FALSE.
       thisVector%n=0
-      CALL ForPETRA_VecDestroy(thisVector%b)
+      CALL thisVector%b%release()
+      CALL thisVector%map%release()
+      CALL thisVector%Tcomm%release()
       IF(VectorType_Paramsflag) CALL VectorType_Clear_ValidParams()
     ENDSUBROUTINE clear_TrilinosVectorType
 !
@@ -167,7 +184,7 @@ MODULE VectorTypes_Trilinos
       IF(thisVector%isInit) THEN
         ierrc=-2
         IF((i <= thisVector%n) .AND. (i > 0)) THEN
-          CALL ForPETRA_VecSet(thisVector%b,i,setval)
+          CALL thisVector%b%replaceGlobalValue(INT(i,C_LONG),1_C_LONG,setval)
           ierrc=0
         ENDIF
       ENDIF
@@ -189,7 +206,7 @@ MODULE VectorTypes_Trilinos
 
       ierrc=-1
       IF(thisVector%isInit) THEN
-        CALL ForPETRA_VecSetAll(thisVector%b,setval)
+        CALL thisVector%b%putScalar(setval)
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE setAll_scalar_TrilinosVectorType
@@ -241,7 +258,7 @@ MODULE VectorTypes_Trilinos
         ierrc=-2
         IF(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n) THEN
           DO i=istt,istp
-            CALL ForPETRA_VecSet(thisVector%b,i,setval)
+            CALL thisVector%b%replaceGlobalValue(INT(i,C_LONG),1_C_LONG,setval)
           ENDDO
           ierrc=0
           thisVector%isAssembled=.TRUE.
@@ -274,7 +291,7 @@ MODULE VectorTypes_Trilinos
           ierrc=-3
           IF(istp-istt+1 == SIZE(setval)) THEN
             DO i=istt,istp
-              CALL ForPETRA_VecSet(thisVector%b,i,setval(i-istt+1))
+              CALL thisVector%b%replaceGlobalValue(INT(i,C_LONG),1_C_LONG,setval(i-istt+1))
             ENDDO
             thisVector%isAssembled=.TRUE.
             ierrc=0
@@ -295,13 +312,15 @@ MODULE VectorTypes_Trilinos
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
+      REAL(SRK) :: tmpval(1)
       INTEGER(SIK) :: ierrc
 
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
         IF((i <= thisVector%n) .AND. (i > 0)) THEN
-          CALL ForPETRA_VecGet(thisVector%b,i,getval)
+          tmpval=thisVector%b%getData(INT(i,C_LONG))
+          getval=tmpval(1)
           ierrc=0
         ENDIF
       ENDIF
@@ -345,6 +364,7 @@ MODULE VectorTypes_Trilinos
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
+      REAL(SRK) :: tmpval(1)
       INTEGER(SIK) :: ierrc
       INTEGER(SIK) :: i
 
@@ -355,7 +375,8 @@ MODULE VectorTypes_Trilinos
           ierrc=-3
           IF(istp-istt+1 == SIZE(getval)) THEN
             DO i=istt,istp
-              CALL ForPETRA_VecGet(thisVector%b,i,getval(i-istt+1))
+              tmpval=thisVector%b%getData(INT(i,C_LONG))
+              getval(i-istt+1)=tmpval(1)
             ENDDO
             ierrc=0
           ENDIF

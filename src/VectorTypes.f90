@@ -101,7 +101,7 @@ MODULE VectorTypes
 #ifdef FUTILITY_HAVE_PETSC
   PUBLIC :: PETScVectorType
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
   PUBLIC :: TrilinosVectorType
 #endif
   !> Enumerated matrix-vector engines
@@ -248,7 +248,7 @@ MODULE VectorTypes
           ALLOCATE(PETScVectorType :: vector)
 #endif
         CASE(VM_TRILINOS)
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
           ALLOCATE(TrilinosVectorType :: vector)
 #endif
         CASE DEFAULT
@@ -319,7 +319,7 @@ MODULE VectorTypes
         TYPE IS(PETScVectorType)
           ALLOCATE(PETScVectorType :: dest)
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
         TYPE IS(TrilinosVectorType)
           ALLOCATE(TrilinosVectorType :: dest)
 #endif
