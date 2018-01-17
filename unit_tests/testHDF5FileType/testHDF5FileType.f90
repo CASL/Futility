@@ -1131,7 +1131,7 @@ PROGRAM testHDF5
 
       COMPONENT_TEST('%fwrite with gdims')
       ! Create a RW access file. Existing file overwritten
-      CALL h5%init('writetest_compress.h5','NEW',.TRUE.)
+      CALL h5%init('writetest_compress.h5','NEW',5)
       CALL h5%fopen()
 
       ! Test writing with the gdims arguments
@@ -1252,7 +1252,7 @@ PROGRAM testHDF5
       CALL h5%clear(.TRUE.)
 
       COMPONENT_TEST('%fwrite without gdims')
-      CALL h5%init('writetest_compress.h5','NEW',.TRUE.)
+      CALL h5%init('writetest_compress.h5','NEW',5)
       CALL h5%fopen()
 
       ! Test writing without the gdims arguments
@@ -1373,7 +1373,7 @@ PROGRAM testHDF5
 
 
       COMPONENT_TEST('Large Array')
-      CALL h5%init('largeData.h5','NEW',.TRUE.)
+      CALL h5%init('largeData.h5','NEW',5)
       CALL h5%fopen()
       CALL h5%mkdir('large')
       CALL TAUSTUB_CHECK_MEMORY()
@@ -1696,7 +1696,7 @@ PROGRAM testHDF5
       TYPE(HDF5FileType) :: h5
 
       COMPONENT_TEST('Uncompressed')
-      CALL h5%init('tmpIsCompressed.h5','NEW',.FALSE.)
+      CALL h5%init('tmpIsCompressed.h5','NEW',-1)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
       CALL h5%fwrite('groupR->memD1',refD1)
@@ -1710,7 +1710,7 @@ PROGRAM testHDF5
       CALL h5%clear(.TRUE.)
 
       COMPONENT_TEST('Compressed')
-      CALL h5%init('tmpIsCompressed.h5','NEW',.TRUE.)
+      CALL h5%init('tmpIsCompressed.h5','NEW',5)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
       CALL h5%fwrite('groupR->memD1',refD1)
@@ -1730,7 +1730,7 @@ PROGRAM testHDF5
       INTEGER(SLK),ALLOCATABLE :: cdims(:)
 
       COMPONENT_TEST('Non-zero chunks')
-      CALL h5%init('tmpGetChunkSize.h5','NEW',.TRUE.)
+      CALL h5%init('tmpGetChunkSize.h5','NEW',5)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
       CALL h5%fwrite('groupR->memD1',refD1)
@@ -1748,7 +1748,7 @@ PROGRAM testHDF5
       CALL h5%clear(.TRUE.)
 
       COMPONENT_TEST('No chunking')
-      CALL h5%init('tmpGetChunkSize.h5','NEW',.FALSE.)
+      CALL h5%init('tmpGetChunkSize.h5','NEW',-1)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
       CALL h5%fwrite('groupR->memD1',refD1)
