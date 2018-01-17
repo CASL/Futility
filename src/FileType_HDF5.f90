@@ -109,6 +109,8 @@ MODULE FileType_HDF5
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Whether or not the file uses compression for writing
     LOGICAL(SBK) :: hasCompression=.FALSE.
+    !> Option for gzip compression
+    INTEGER(SIK),PRIVATE :: zlibOpt=-1
     !> The 'new' status of a file
     LOGICAL(SBK),PRIVATE :: newstat=.FALSE.
     !> Full path to the file
@@ -537,18 +539,19 @@ MODULE FileType_HDF5
 !> @param thisHDF5File the object to be initialized
 !> @param filename the relative path to the file on the filesystem
 !> @param mode the access mode. Can be 'READ', 'WRITE' or 'NEW'
-!> @param cmpStr (optional) the identifier for the compression mode
+!> @param zlibOpt numeric option for GZIP compression [0-9] uses compression, -1
+!>        is no compression
 !>
 !> This routine initializes an HDF5 file object by setting the objects
 !> attributes, initializing the HDF5 library interface and calling the @c open
 !> routine.
 !>
-    SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,useZlib)
+    SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
       CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: filename
       CHARACTER(LEN=*),INTENT(IN) :: mode
-      LOGICAL(SBK),INTENT(IN),OPTIONAL :: useZlib
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: zlibOpt
 #ifdef FUTILITY_HAVE_HDF5
       TYPE(StringType) :: fpath,fname,fext,mode_in
       INTEGER(SIK) :: unitno
@@ -566,7 +569,12 @@ MODULE FileType_HDF5
       CALL thisHDF5File%setFileName(CHAR(fname))
       CALL thisHDF5File%setFileExt(CHAR(fext))
 
-      IF(PRESENT(useZlib)) thisHDF5File%hasCompression=useZlib
+      IF(PRESENT(zlibOpt)) THEN
+        IF(zlibOpt >= 0) THEN
+          thisHDF5File%hasCompression=.TRUE.
+          thisHDF5File%zlibOpt=zlibOpt
+        ENDIF
+      ENDIF
 
       ! Store the access mode
       mode_in=mode
@@ -662,6 +670,7 @@ MODULE FileType_HDF5
         thisHDF5File%isinit=.FALSE.
         thisHDF5File%newstat=.FALSE.
         thisHDF5File%hasCompression=.FALSE.
+        thisHDF5File%zlibOpt=-1
         thisHDF5File%fullname=''
         thisHDF5File%unitno=-1
         CALL clear_base_file(thisHDF5File)
@@ -6549,7 +6558,7 @@ MODULE FileType_HDF5
 
             !Do not presently support user defined compression levels, just level 5
             !5 seems like a good trade-off of speed vs. compression ratio.
-            CALL h5pset_deflate_f(plist_id,5,error)
+            CALL h5pset_deflate_f(plist_id,thisHDF5File%zlibOpt,error)
           ENDIF
         ENDIF
 
