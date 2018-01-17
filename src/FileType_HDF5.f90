@@ -6554,11 +6554,14 @@ MODULE FileType_HDF5
 
             !Compute optimal chunk size and specify in property list.
             CALL compute_chunk_size(mem,gdims,cdims)
-            CALL h5pset_chunk_f(plist_id,rank,cdims,error)
-
-            !Do not presently support user defined compression levels, just level 5
-            !5 seems like a good trade-off of speed vs. compression ratio.
-            CALL h5pset_deflate_f(plist_id,thisHDF5File%zlibOpt,error)
+            !Logic is equivalent to "compress anything > 1MB"
+            IF(.NOT.ALL(gdims == cdims)) THEN
+              CALL h5pset_chunk_f(plist_id,rank,cdims,error)
+  
+              !Do not presently support user defined compression levels, just level 5
+              !5 seems like a good trade-off of speed vs. compression ratio.
+              CALL h5pset_deflate_f(plist_id,thisHDF5File%zlibOpt,error)
+            ENDIF
           ENDIF
         ENDIF
 
