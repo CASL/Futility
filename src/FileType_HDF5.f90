@@ -109,7 +109,9 @@ MODULE FileType_HDF5
     LOGICAL(SBK) :: isInit=.FALSE.
     !> Whether or not the file uses compression for writing
     LOGICAL(SBK) :: hasCompression=.FALSE.
-    !> Option for gzip compression
+    !> Option for gzip compression -1 (no filter) or [0-9].
+    !> these options are defined by HDF5.
+    !> https://support.hdfgroup.org/HDF5/doc/RM/RM_H5P.html#Property-SetDeflate
     INTEGER(SIK),PRIVATE :: zlibOpt=-1
     !> The 'new' status of a file
     LOGICAL(SBK),PRIVATE :: newstat=.FALSE.
