@@ -1131,7 +1131,7 @@ PROGRAM testHDF5
 
       COMPONENT_TEST('%fwrite with gdims')
       ! Create a RW access file. Existing file overwritten
-      CALL h5%init('writetest_compress.h5','NEW',.TRUE.)
+      CALL h5%init('writetest_compress.h5','NEW',5)
       CALL h5%fopen()
 
       ! Test writing with the gdims arguments
@@ -1252,7 +1252,7 @@ PROGRAM testHDF5
       CALL h5%clear(.TRUE.)
 
       COMPONENT_TEST('%fwrite without gdims')
-      CALL h5%init('writetest_compress.h5','NEW',.TRUE.)
+      CALL h5%init('writetest_compress.h5','NEW',5)
       CALL h5%fopen()
 
       ! Test writing without the gdims arguments
@@ -1373,7 +1373,7 @@ PROGRAM testHDF5
 
 
       COMPONENT_TEST('Large Array')
-      CALL h5%init('largeData.h5','NEW',.TRUE.)
+      CALL h5%init('largeData.h5','NEW',5)
       CALL h5%fopen()
       CALL h5%mkdir('large')
       CALL TAUSTUB_CHECK_MEMORY()
@@ -1694,9 +1694,11 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testIsCompressed()
       TYPE(HDF5FileType) :: h5
+      INTEGER(SLK),ALLOCATABLE :: tmpA(:)
+      ALLOCATE(tmpA(2097152))
 
       COMPONENT_TEST('Uncompressed')
-      CALL h5%init('tmpIsCompressed.h5','NEW',.FALSE.)
+      CALL h5%init('tmpIsCompressed.h5','NEW',-1)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
       CALL h5%fwrite('groupR->memD1',refD1)
@@ -1710,16 +1712,16 @@ PROGRAM testHDF5
       CALL h5%clear(.TRUE.)
 
       COMPONENT_TEST('Compressed')
-      CALL h5%init('tmpIsCompressed.h5','NEW',.TRUE.)
+      CALL h5%init('tmpIsCompressed.h5','NEW',5)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
       CALL h5%fwrite('groupR->memD1',refD1)
-      CALL h5%fwrite('groupR->memD2',refD2)
-      CALL h5%fwrite('groupR->memD3',refD3)
-      CALL h5%fwrite('groupR->memD4',refD4)
+      CALL h5%fwrite('groupR->tmpA',tmpA)
 
       ASSERT(h5%isCompressed(),'file query')
-      ASSERT(h5%isCompressed('groupR->memD2'),'groupR->memD2')
+      ASSERT(.NOT.h5%isCompressed('groupR->memD1'),'groupR->memD1')
+      ASSERT(h5%isCompressed('groupR->tmpA'),'groupR->tmpA')
+
 
       CALL h5%clear(.TRUE.)
     ENDSUBROUTINE testIsCompressed
@@ -1727,28 +1729,26 @@ PROGRAM testHDF5
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetChunkSize()
       TYPE(HDF5FileType) :: h5
-      INTEGER(SLK),ALLOCATABLE :: cdims(:)
+      INTEGER(SLK),ALLOCATABLE :: cdims(:),tmpA(:),tmpA2(:,:)
+
+      ALLOCATE(tmpA(2097152))
+      ALLOCATE(tmpA2(2,1048576))
 
       COMPONENT_TEST('Non-zero chunks')
-      CALL h5%init('tmpGetChunkSize.h5','NEW',.TRUE.)
+      CALL h5%init('tmpGetChunkSize.h5','NEW',5)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
-      CALL h5%fwrite('groupR->memD1',refD1)
-      CALL h5%fwrite('groupR->memD2',refD2)
-      CALL h5%fwrite('groupR->memD3',refD3)
-      CALL h5%fwrite('groupR->memD4',refD4)
-
-      CALL h5%getChunkSize('groupR->memD1',cdims)
-      ASSERT(cdims(1) == 10,'memD1')
-      CALL h5%getChunkSize('groupR->memD2',cdims)
-      ASSERT(ALL(cdims == (/4,5/)),'memD2')
-      CALL  h5%getChunkSize('groupR->memS2',cdims)
-      ASSERT(.NOT.ALLOCATED(cdims),'memS2')
+      CALL h5%fwrite('groupR->tmpA',tmpA)
+      CALL h5%fwrite('groupR->tmpA2',tmpA2)
+      CALL h5%getChunkSize('groupR->tmpA',cdims)
+      ASSERT(cdims(1) == 131072,'memD1')
+      CALL h5%getChunkSize('groupR->tmpA2',cdims)
+      ASSERT(ALL(cdims == (/2,131072/)),'memD2')
 
       CALL h5%clear(.TRUE.)
 
       COMPONENT_TEST('No chunking')
-      CALL h5%init('tmpGetChunkSize.h5','NEW',.FALSE.)
+      CALL h5%init('tmpGetChunkSize.h5','NEW',-1)
       CALL h5%fopen()
       CALL h5%mkdir('groupR')
       CALL h5%fwrite('groupR->memD1',refD1)
