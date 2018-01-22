@@ -312,18 +312,23 @@ MODULE VectorTypes_Trilinos
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
-      REAL(SRK) :: tmpval(1)
+      !real(C_DOUBLE), dimension(:), pointer :: tmpval
+      REAL(C_DOUBLE),ALLOCATABLE :: tmpval(:) ! This only works because vector in test is len=6
+      INTEGER(C_INT) :: localID
       INTEGER(SIK) :: ierrc
 
+      ALLOCATE(tmpval(thisVector%nlocal))
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
         IF((i <= thisVector%n) .AND. (i > 0)) THEN
-          tmpval=thisVector%b%getData(INT(i,C_LONG))
-          getval=tmpval(1)
+          localID=thisVector%map%getLocalElement(INT(i,C_LONG_LONG))
+          tmpval=thisVector%b%getData(INT(1,C_SIZE_T))
+          getval=tmpval(localID)
           ierrc=0
         ENDIF
       ENDIF
+      DEALLOCATE(tmpval)
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getOne_TrilinosVectorType
 !
@@ -364,24 +369,28 @@ MODULE VectorTypes_Trilinos
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
-      REAL(SRK) :: tmpval(1)
+      REAL(C_DOUBLE),ALLOCATABLE :: tmpval(:)
+      INTEGER(C_INT) :: localID
       INTEGER(SIK) :: ierrc
       INTEGER(SIK) :: i
 
+      ALLOCATE(tmpval(thisVector%nlocal))
       ierrc=-1
       IF(thisVector%isInit) THEN
         ierrc=-2
         IF(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n) THEN
           ierrc=-3
           IF(istp-istt+1 == SIZE(getval)) THEN
+            tmpval=thisVector%b%getData(INT(1,C_SIZE_T))
             DO i=istt,istp
-              tmpval=thisVector%b%getData(INT(i,C_LONG))
-              getval(i-istt+1)=tmpval(1)
+              localID=thisVector%map%getLocalElement(INT(i,C_LONG_LONG))
+              getval(i-istt+1)=tmpval(localID)
             ENDDO
             ierrc=0
           ENDIF
         ENDIF
       ENDIF
+      DEALLOCATE(tmpval)
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getRange_TrilinosVectorType
 !
