@@ -1321,6 +1321,7 @@ MODULE PartitionGraph
       INTEGER(SIK),ALLOCATABLE :: av(:),bv(:)
       REAL(SRK),ALLOCATABLE :: D(:),gv(:)
       REAL(SRK) :: wg1,wg2,wdiff,wta,wtb,g,gmax
+      REAL(SRK) :: wo1,wo2,woc
 
       !Allocate memory
       nneigh=thisGraph%maxneigh
@@ -1339,6 +1340,12 @@ MODULE PartitionGraph
       DO iv=1,N1
         lInL1(L1(iv))=.TRUE.
       ENDDO !iv
+
+      !Determine optimal weights for domains (1 or 2 doesn't matter)
+      wg1=SUM(thisGraph%wts)
+      wo1=wg1*(REAL(thisGraph%nGroups/2,SRK)/REAL(thisGraph%nGroups,SRK))
+      wo2=wg1-wo1
+      woc=wo1 ! Current optimal target for domain 1
 
       gmax=1.0_SRK
       DO WHILE(gmax > 0)
@@ -1400,26 +1407,20 @@ MODULE PartitionGraph
               DO ib=1,N2
                 cvb=L2(ib)
                 IF(.NOT. locked(cvb)) THEN
-                  wta=thisGraph%wts(cva)
-                  wtb=thisGraph%wts(cvb)
-                  !Conserve balance between the groups
-                  IF((wta .APPROXEQA. wtb) .OR. &
-                     (wtb-wta .APPROXEQA. wdiff)) THEN
-                    g=D(cva)+D(cvb)
-                    DO in=1,nneigh
-                      ineigh=thisGraph%neigh(in,cva)
-                      IF(ineigh == cvb) THEN
-                        g=g-2.0_SRK*thisGraph%neighwts(in,cva)
-                        EXIT
-                      ENDIF
-                    ENDDO !in
-
-                    !Check for new maximal value
-                    IF(g > gmax) THEN
-                      iam=ia
-                      ibm=ib
-                      gmax=g
+                  g=D(cva)+D(cvb)
+                  DO in=1,nneigh
+                    ineigh=thisGraph%neigh(in,cva)
+                    IF(ineigh == cvb) THEN
+                      g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                      EXIT
                     ENDIF
+                  ENDDO !in
+
+                  !Check for new maximal value
+                  IF(g > gmax) THEN
+                    iam=ia
+                    ibm=ib
+                    gmax=g
                   ENDIF
                 ENDIF
               ENDDO !ib
@@ -1433,6 +1434,19 @@ MODULE PartitionGraph
             cg=cg+1
           ENDIF
 
+          !Check if balance is conserved or improved. If not, stop search.
+          wta=thisGraph%wts(iam)
+          wtb=thisGraph%wts(ibm)
+          wdiff=wtb-wta
+          IF(ABS(wg1+wdiff-wo1) <= ABS(wg1-woc)) THEN
+            woc=wo1
+          ELSEIF(ABS(wg1+wdiff-wo2) <= ABS(wg1-woc)) THEN
+            woc=wo2
+          ELSE
+            cg=cg-1
+            EXIT
+          ENDIF
+
           !Update sets
           av(ig)=L1(iam)
           bv(ig)=L2(ibm)
@@ -1441,9 +1455,8 @@ MODULE PartitionGraph
           locked(bv(ig))=.TRUE.
 
           !Update weights of groups as if these have been swapped
-          wdiff=thisGraph%wts(iam)-thisGraph%wts(ibm)
-          wg1=wg1-wdiff
-          wg2=wg2+wdiff
+          wg1=wg1+wdiff
+          wg2=wg2-wdiff
 
           !Update D values as if these have been swapped
           DO in=1,nneigh
@@ -1524,6 +1537,7 @@ MODULE PartitionGraph
       INTEGER(SIK),ALLOCATABLE :: av(:),bv(:)
       REAL(SRK),ALLOCATABLE :: D(:),gv(:),wd(:)
       REAL(SRK) :: wg1,wg2,wdiff,wta,wtb,g,gmax,sd,dmax
+      REAL(SRK) :: wo1,wo2,woc
 
       IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -1552,6 +1566,12 @@ MODULE PartitionGraph
         DO iv=1,thisGraph%nvert
           wd(iv)=SUM(thisGraph%neighwts(:,iv))
         ENDDO !iv
+
+        !Determine optimal weights for domains (1 or 2 doesn't matter)
+        wg1=SUM(thisGraph%wts)
+        wo1=wg1*(REAL(thisGraph%nGroups/2,SRK)/REAL(thisGraph%nGroups,SRK))
+        wo2=wg1-wo1
+        woc=wo1 ! Current optimal target for domain 1
 
         gmax=1.0_SRK
         DO WHILE(gmax > 0)
@@ -1590,8 +1610,8 @@ MODULE PartitionGraph
           locked=.FALSE.
 
           !Current size of each group
-          wg1=0
-          wg2=0
+          wg1=0.0_SRK
+          wg2=0.0_SRK
           DO iv=1,N1
             wg1=wg1+thisGraph%wts(L1(iv))
           ENDDO !iv
@@ -1600,9 +1620,6 @@ MODULE PartitionGraph
           ENDDO !iv
 
           DO ig=1,ng
-            !Current weight difference between groups
-            wdiff=wg2-wg1
-
             !Find maximum value of g
             iam=-1
             ibm=-1
@@ -1614,32 +1631,28 @@ MODULE PartitionGraph
                 DO ib=1,N2
                   cvb=L2(ib)
                   IF(D(cvb) > -wd(cvb) .AND. .NOT. locked(cvb)) THEN
-                    wta=thisGraph%wts(cva)
-                    wtb=thisGraph%wts(cvb)
-                    !Conserve balance between the groups
-                    IF((wta .APPROXEQA. wtb) .OR. &
-                       (wtb-wta .APPROXEQA. wdiff)) THEN
-                      g=D(cva)+D(cvb)
-                      DO in=1,nneigh
-                        ineigh=thisGraph%neigh(in,cva)
-                        IF(ineigh == cvb) THEN
-                          g=g-2.0_SRK*thisGraph%neighwts(in,cva)
-                          EXIT
-                        ENDIF
-                      ENDDO !in
+                    !Calculate gain from swap
+                    g=D(cva)+D(cvb)
+                    DO in=1,nneigh
+                      ineigh=thisGraph%neigh(in,cva)
+                      IF(ineigh == cvb) THEN
+                        g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                        EXIT
+                      ENDIF
+                    ENDDO !in
 
-                      IF(g >= gmax) THEN
-                        IF(g > gmax) THEN
-                          gmax=g
-                          dmax=0.0_SRK
-                        ENDIF
+                    !Check for maximal gain
+                    IF(g >= gmax) THEN
+                      IF(g > gmax) THEN
+                        gmax=g
+                        dmax=0.0_SRK
+                      ENDIF
 
-                        sd=distance(thisGraph%coord(:,cva),thisGraph%coord(:,cvb))
-                        IF(sd > dmax) THEN
-                          dmax=sd
-                          iam=ia
-                          ibm=ib
-                        ENDIF
+                      sd=distance(thisGraph%coord(:,cva),thisGraph%coord(:,cvb))
+                      IF(sd > dmax) THEN
+                        dmax=sd
+                        iam=ia
+                        ibm=ib
                       ENDIF
                     ENDIF
                   ENDIF
@@ -1655,25 +1668,19 @@ MODULE PartitionGraph
                   DO ib=1,N2
                     cvb=L2(ib)
                     IF(.NOT. locked(cvb)) THEN
-                      wta=thisGraph%wts(cva)
-                      wtb=thisGraph%wts(cvb)
-                      !Conserve balance between the groups
-                      IF((wta .APPROXEQA. wtb) .OR. &
-                         (wtb-wta .APPROXEQA. wdiff)) THEN
-                        g=D(cva)+D(cvb)
-                        DO in=1,nneigh
-                          ineigh=thisGraph%neigh(in,cva)
-                          IF(ineigh == cvb) THEN
-                            g=g-2.0_SRK*thisGraph%neighwts(in,cva)
-                            EXIT
-                          ENDIF
-                        ENDDO !in
-
-                        IF(g > gmax) THEN
-                          gmax=g
-                          iam=ia
-                          ibm=ib
+                      g=D(cva)+D(cvb)
+                      DO in=1,nneigh
+                        ineigh=thisGraph%neigh(in,cva)
+                        IF(ineigh == cvb) THEN
+                          g=g-2.0_SRK*thisGraph%neighwts(in,cva)
+                          EXIT
                         ENDIF
+                      ENDDO !in
+
+                      IF(g > gmax) THEN
+                        gmax=g
+                        iam=ia
+                        ibm=ib
                       ENDIF
                     ENDIF
                   ENDDO !ib
@@ -1690,17 +1697,28 @@ MODULE PartitionGraph
               cg=cg+1
             ENDIF
 
+            !Check if balance is conserved or improved. If not, stop search.
+            wta=thisGraph%wts(iam)
+            wtb=thisGraph%wts(ibm)
+            wdiff=wtb-wta
+            IF(ABS(wg1+wdiff-wo1) <= ABS(wg1-woc)) THEN
+              woc=wo1
+            ELSEIF(ABS(wg1+wdiff-wo2) <= ABS(wg1-woc)) THEN
+              woc=wo2
+            ELSE
+              cg=cg-1
+              EXIT
+            ENDIF
+
             !Update sets
             av(ig)=L1(iam)
             bv(ig)=L2(ibm)
             gv(ig)=gmax
             locked(av(ig))=.TRUE.
             locked(bv(ig))=.TRUE.
-
             !Update weights of groups as if these have been swapped
-            wdiff=thisGraph%wts(iam)-thisGraph%wts(ibm)
-            wg1=wg1-wdiff
-            wg2=wg2+wdiff
+            wg1=wg1+wdiff
+            wg2=wg2-wdiff
 
             !Update D values as if these have been swapped
             DO in=1,nneigh
