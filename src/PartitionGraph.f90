@@ -684,6 +684,7 @@ MODULE PartitionGraph
       IF(ASSOCIATED(thisGraph%refineAlgArry(corAlg)%r)) &
          CALL thisGraph%refineAlgArry(corAlg)%r(thisGraph,L1,L2)
     ENDSUBROUTINE refine_PartitionGraph
+!
 !-------------------------------------------------------------------------------
 !> @brief Recursively bisect the graph by starting at a specific vertex, and
 !> expanding to a vertex with five prioritized properties:
@@ -691,7 +692,7 @@ MODULE PartitionGraph
 !> 2. Lowest Connectivity to outside the group
 !> 3. Largest within group Sphere of Influence (SoI)
 !> 4. Largest outside group SoI
-!> 5. Smallest distance from original vertex
+!> 5. Smallest distance from reference vertex
 !>
 !> @param thisGraph the graph to use the REB metod on
 !>
@@ -700,34 +701,34 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 
       !local scalars
-      INTEGER(SIK) :: nv,nv1,nv2,iv,jv,kv,in,jn,kn,maxd,maxd2
+      LOGICAL(SBK) :: lfillL1
+      INTEGER(SIK) :: nvert,nv1,iv,jv,kv,in,jn,kn,maxd,maxd2
       INTEGER(SIK) :: soiv,count,bvert
       INTEGER(SIK) :: curSI,curSE,maxSI,maxSE
-      REAL(SRK) :: cw1,wg1,wg2,wtSum,cE,cS,lE,dS,soid,curdif,wt
+      REAL(SRK) :: cw1,wg1,wtSum,cE,cS,lE,dS,soid,curdif,wt
       REAL(SRK) :: curInt,curExt,maxInt,minExt,prevExt
       !local arrays
       REAL(SRK) :: wc(thisGraph%dim),soic(thisGraph%dim),gsc(thisGraph%dim)
       !local allocatables
       LOGICAL(SBK),ALLOCATABLE :: SCalc(:),linL1(:),lL1neigh(:)
-      INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),S(:,:)
+      INTEGER(SIK),ALLOCATABLE :: S(:,:)
+      !local pointers
+      INTEGER(SIK),POINTER :: Order(:)
 
       IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
           ' - cannot use REB method to partition without coordinates!')
       ELSE
-
         !Initial guess for group sizes
-        nv=thisGraph%nvert
-        CALL detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
-        ALLOCATE(L1(nv1))
-        ALLOCATE(L2(nv2))
-        L1=0
-        L2=0
+        nvert=thisGraph%nvert
+        CALL detGroupSize(thisGraph,wg1,wtSum)
+        ALLOCATE(Order(nvert))
+        Order=-1
 
         !Calculate the weighted "centroid" of the graph
         !(i.e. weighted average position)
         wc=0.0_SRK
-        DO iv=1,nv
+        DO iv=1,nvert
           wc=wc+thisGraph%coord(1:thisGraph%dim,iv)*thisGraph%wts(iv)
         ENDDO !iv
         wc=wc/wtSum
@@ -743,7 +744,7 @@ MODULE PartitionGraph
         maxd=MAXVAL(thisGraph%d)
         maxd2=0
         soiv=-1
-        DO iv=1,nv
+        DO iv=1,nvert
           !Check if this vertex is max degree
           IF(thisGraph%d(iv) == maxd) THEN
             !Check if it has atleast 1 max degree neighbor
@@ -798,7 +799,7 @@ MODULE PartitionGraph
         ! 3. Furthest from weighted centroid
         lE=HUGE(1.0_SRK)
         dS=0.0_SRK
-        DO iv=1,nv
+        DO iv=1,nvert
           !Check if the vertex is a vertex on the outer rim of graph
           IF(ANY(thisGraph%neigh(1:thisGraph%maxneigh,iv) == 0)) THEN
             !Calculate the vertex's weighted edge sum
@@ -807,38 +808,38 @@ MODULE PartitionGraph
               lE=cE
               !Calculate distance from graph's weighted centroid
               dS=distance(wc,thisGraph%coord(1:thisGraph%dim,iv))
-              L1(1)=iv !Starting vertex
+              Order(1)=iv !Starting vertex
             ELSEIF(cE == lE) THEN
               !Calculate distance from graph's weighted centroid
               cS=distance(wc,thisGraph%coord(1:thisGraph%dim,iv))
               IF(cS > dS+EPSREAL) THEN
                 dS=cS
-                L1(1)=iv !Starting vertex
+                Order(1)=iv !Starting vertex
               ENDIF
             ENDIF
           ENDIF
         ENDDO !iv
-        gsc=thisGraph%coord(1:thisGraph%dim,L1(1)) !Starting vertex coordinates
+        gsc=thisGraph%coord(1:thisGraph%dim,Order(1)) !Starting vertex coordinates
 
         !Allocate memory for SoI list for each vertex...only calculate the ones
         !which are needed, in the interior loops
         !Maximum size expected is dim*maxneigh for each vertex
-        ALLOCATE(SCalc(nv))
-        ALLOCATE(S(thisGraph%dim*thisGraph%maxneigh,nv))
-        ALLOCATE(lInL1(nv))
-        ALLOCATE(lL1neigh(nv))
+        ALLOCATE(SCalc(nvert))
+        ALLOCATE(S(thisGraph%dim*thisGraph%maxneigh,nvert))
+        ALLOCATE(lInL1(nvert))
+        ALLOCATE(lL1neigh(nvert))
         Scalc=.FALSE.
         lInL1=.FALSE.
         lL1neigh=.FALSE.
         S=0
-        lInL1(L1(1))=.TRUE.
+        lInL1(Order(1))=.TRUE.
 
         !Calculate (weighted) sum of external edges
-        iv=L1(1)
+        iv=Order(1)
         prevExt=0.0_SRK
         DO jn=1,thisGraph%maxneigh
           jv=thisGraph%neigh(jn,iv)
-          IF(jv /= 0) THEN
+          IF(jv > 0) THEN
               prevExt=prevExt+thisGraph%neighwts(jn,iv)
           ENDIF
         ENDDO !jn
@@ -849,13 +850,14 @@ MODULE PartitionGraph
         ! 3. Highest SI
         ! 4. Highest SE
         ! 5. Smallest distance from reference vertex
-        cw1=thisGraph%wts(L1(1))
+        lfillL1=.TRUE.
+        cw1=thisGraph%wts(Order(1))
         nv1=1
         curdif=wg1-cw1
-        DO WHILE(.TRUE.)
+        DO kv=2,nvert
           !Update list of possible neighbors
           DO jn=1,thisGraph%maxneigh
-            jv=thisGraph%neigh(jn,L1(nv1))
+            jv=thisGraph%neigh(jn,Order(kv-1))
             IF(jv > 0) lL1neigh(jv)=.TRUE.
           ENDDO !jn
 
@@ -867,7 +869,7 @@ MODULE PartitionGraph
           dS=HUGE(1.0_SRK)
           bvert=0
           !Loop over all vertices
-          DO iv=1,nv
+          DO iv=1,nvert
             !Only consider those not already within the group
             IF(.NOT. lInL1(iv) .AND. lL1neigh(iv)) THEN
               wt=thisGraph%wts(iv)
@@ -890,18 +892,18 @@ MODULE PartitionGraph
                 !Set new min/max and store index for new "best"
                 maxInt=curInt
                 minExt=curExt
-                CALL detSoI(thisGraph,iv,L1,soid,Scalc,S,maxSI,maxSE)
+                CALL detSoI(thisGraph,iv,linL1,soid,Scalc,S,maxSI,maxSE)
                 dS=distance(gsc,thisGraph%coord(1:thisGraph%dim,iv))
                 bvert=iv
               ELSEIF(curInt .APPROXEQA. maxInt) THEN
                 IF(curExt < minExt) THEN
                   minExt=curExt
-                  CALL detSoI(thisGraph,iv,L1,soid,Scalc,S,maxSI,maxSE)
+                  CALL detSoI(thisGraph,iv,linL1,soid,Scalc,S,maxSI,maxSE)
                   dS=distance(gsc,thisGraph%coord(1:thisGraph%dim,iv))
                   bvert=iv
                 ELSEIF(curExt .APPROXEQA. minExt) THEN
                   !Determine sphere of influence weighted internal/external edges
-                  CALL detSoI(thisGraph,iv,L1,soid,Scalc,S,curSI,curSE)
+                  CALL detSoI(thisGraph,iv,linL1,soid,Scalc,S,curSI,curSE)
                   IF(curSI > maxSI) THEN
                     maxSI=curSI
                     maxSE=curSE
@@ -926,32 +928,21 @@ MODULE PartitionGraph
           ENDDO !iv
 
           !Add "best" vertex to the list and update weighted sum
-          IF(bvert > 0) THEN
-            IF(ABS(curdif-thisGraph%wts(bvert)) > ABS(curdif)) EXIT
+          IF(ABS(curdif-thisGraph%wts(bvert)) > ABS(curdif)) lfillL1=.FALSE.
+          IF(lfillL1) THEN
             nv1=nv1+1
-            L1(nv1)=bvert
             cw1=cw1+thisGraph%wts(bvert)
             curdif=curdif-thisGraph%wts(bvert)
-            lInL1(bvert)=.TRUE.
-
-            !Check if reference (distance) point needs to be changed
-            IF(minExt < prevExt) THEN
-              gsc=thisGraph%coord(1:thisGraph%dim,bvert)
-            ENDIF
-            prevExt = minExt
-          ELSE
-            EXIT
           ENDIF
-        ENDDO !cw1 < wg1
+          lInL1(bvert)=.TRUE.
+          Order(kv)=bvert
 
-        !Populate 2nd group
-        nv2=0
-        DO iv=1,nv
-          IF(.NOT. lInL1(iv)) THEN
-            nv2=nv2+1
-            L2(nv2)=iv
+          !Check if reference (distance) point needs to be changed
+          IF(minExt < prevExt) THEN
+            gsc=thisGraph%coord(1:thisGraph%dim,bvert)
           ENDIF
-        ENDDO !iv
+          prevExt = minExt
+        ENDDO !kv
 
         !Deallocate sphere memory
         DEALLOCATE(S)
@@ -960,11 +951,10 @@ MODULE PartitionGraph
         DEALLOCATE(lL1neigh)
 
         !Recursively partition the graph
-        CALL recursivePartitioning(thisGraph,L1(1:nv1),L2(1:nv2),cw1,wtSum)
+        CALL recursivePartitioning(thisGraph,Order,nv1,cw1,wtSum)
 
         !Deallocate lists
-        DEALLOCATE(L1)
-        DEALLOCATE(L2)
+        DEALLOCATE(Order)
       ENDIF
     ENDSUBROUTINE RecursiveExpansionBisection
 !
@@ -977,12 +967,12 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: nvert,iv,jv,in,nlocal,nneigh
-      INTEGER(SIK) :: nv1,nv2
-      REAL(SRK) :: wg1,wg2,cw1,curdif,wt,wtSum,wneigh
+      INTEGER(SIK) :: nv1
+      REAL(SRK) :: wg1,cw1,curdif,wt,wtSum,wneigh
       TYPE(ParamType) :: matParams
-      INTEGER(SIK),ALLOCATABLE :: L1(:),L2(:),Order(:)
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
       TYPE(PETScMatrixType) :: Lmat
+      INTEGER(SIK),POINTER :: Order(:)
 
       nvert=thisGraph%nvert
       nneigh=thisGraph%maxneigh
@@ -1036,11 +1026,7 @@ MODULE PartitionGraph
       DEALLOCATE(evecs)
 
       !Initial guess for group sizes
-      CALL detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
-      ALLOCATE(L1(nv1))
-      ALLOCATE(L2(nv2))
-      L1=0
-      L2=0
+      CALL detGroupSize(thisGraph,wg1,wtSum)
       cw1=0.0_SRK
       curdif=wg1
       !Expand until closest to desired size
@@ -1050,7 +1036,6 @@ MODULE PartitionGraph
         wt=thisGraph%wts(iv)
         IF(ABS(curdif-wt) < ABS(curdif)) THEN
           nv1=nv1+1
-          L1(jv)=iv
           curdif=curdif-wt
           cw1=cw1+wt
         ELSE
@@ -1058,19 +1043,11 @@ MODULE PartitionGraph
         ENDIF
       ENDDO !jv
 
-      !Populate 2nd group
-      nv2=0
-      DO iv=nv1+1,nvert
-        nv2=nv2+1
-        L2(nv2)=Order(iv)
-      ENDDO !iv
-
       !Recursively partition the graph
-      CALL recursivePartitioning(thisGraph,L1(1:nv1),L2(1:nv2),cw1,wtSum)
+      CALL recursivePartitioning(thisGraph,Order,nv1,cw1,wtSum)
 
       !Deallocate lists
-      DEALLOCATE(L1)
-      DEALLOCATE(L2)
+      DEALLOCATE(Order)
 #else
       CALL ePartitionGraph%raiseError(modName//'::'//myName// &
         ' - must recompile with PETSc and SLEPc to use RSB!')
@@ -1086,13 +1063,13 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: dim,iv,jv
-      INTEGER(SIK) :: nv1,nv2,idim,idim2
-      REAL(SRK) :: wtSum,wg1,wg2,wt,cw1,curdif,ccoord,cprod
-      INTEGER(SIK),ALLOCATABLE :: Order(:),L1(:),L2(:)
+      INTEGER(SIK) :: nv1,idim,idim2
+      REAL(SRK) :: wtSum,wg1,wt,cw1,curdif,ccoord,cprod
       REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
       TYPE(ParamType) :: mparams
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
       TYPE(PETScMatrixType) :: Imat
+      INTEGER(SIK),POINTER :: Order(:)
 
       IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -1168,11 +1145,7 @@ MODULE PartitionGraph
         DEALLOCATE(evecs)
 
         !Initial guess for group sizes
-        CALL detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
-        ALLOCATE(L1(nv1))
-        ALLOCATE(L2(nv2))
-        L1=0
-        L2=0
+        CALL detGroupSize(thisGraph,wg1,wtSum)
         cw1=0.0_SRK
         curdif=wg1
 
@@ -1183,7 +1156,6 @@ MODULE PartitionGraph
           wt=thisGraph%wts(iv)
           IF(ABS(curdif-wt) < ABS(curdif)) THEN
             nv1=nv1+1
-            L1(jv)=iv
             curdif=curdif-wt
             cw1=cw1+wt
           ELSE
@@ -1191,20 +1163,11 @@ MODULE PartitionGraph
           ENDIF
         ENDDO !jv
 
-        !Populate 2nd group
-        nv2=0
-        DO iv=nv1+1,thisGraph%nvert
-          nv2=nv2+1
-          L2(nv2)=Order(iv)
-        ENDDO !iv
-        DEALLOCATE(Order)
-
         !Recursively partition the graph
-        CALL recursivePartitioning(thisGraph,L1(1:nv1),L2(1:nv2),cw1,wtSum)
+        CALL recursivePartitioning(thisGraph,Order,nv1,cw1,wtSum)
 
         !Deallocate lists
-        DEALLOCATE(L1)
-        DEALLOCATE(L2)
+        DEALLOCATE(Order)
       ENDIF
 #else
       CALL ePartitionGraph%raiseError(modName//'::'//myName// &
@@ -1236,17 +1199,17 @@ MODULE PartitionGraph
 !>        internal and external edge sums relative to the given group
 !> @param thisGraph the graph type the SoI is within
 !> @param iv the vertex index for finding SoI
-!> @param L1 the current list of vertices in the group
+!> @param linL1 logical array for if vertex is within the expanding domain
 !> @param r radius of SoI
 !> @param Scalc logical on whether or not the SoI has already been determined
 !> @param S SoI vertex indices
 !> @param SI SoI intenal edges sum
 !> @param SE SoI external edges sum
 !>
-    SUBROUTINE detSoI(thisGraph,iv,L1,r,Scalc,S,SI,SE)
+    SUBROUTINE detSoI(thisGraph,iv,linL1,r,Scalc,S,SI,SE)
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
       INTEGER(SIK),INTENT(IN) :: iv
-      INTEGER(SIK),INTENT(IN) :: L1(:)
+      LOGICAL(SBK),INTENT(IN) :: linL1(:)
       REAL(SRK),INTENT(IN) :: r
       LOGICAL(SBK),INTENT(INOUT) :: Scalc(thisGraph%nvert)
       INTEGER(SIK),INTENT(INOUT) :: S(thisGraph%dim*thisGraph%maxneigh,thisGraph%nvert)
@@ -1296,8 +1259,8 @@ MODULE PartitionGraph
       SE=0
       DO jn=1,maxEl
         jv=S(jn,iv)
-        IF(jv /= 0) THEN
-          IF(ANY(jv == L1)) THEN
+        IF(jv > 0) THEN
+          IF(linL1(jv)) THEN
             SI=SI+1
           ELSE
             SE=SE+1
@@ -2108,61 +2071,53 @@ MODULE PartitionGraph
 !> @brief Determine the desired number of groups for each bisection in the
 !>        recursive bisection methods.
 !> @param thisGraph the graph which is being bisected
-!> @param nv1 the max number of vertices to be put in group 1
-!> @param nv2 the max number of vertices to be put in group 2
 !> @param wg1 the desired weight of group 1
-!> @param wg2 the desired weight of group 2
+!> @param wtSum the sum of weights in the graph
 !>
-    SUBROUTINE detGroupSize(thisGraph,nv1,nv2,wg1,wg2,wtSum)
+    SUBROUTINE detGroupSize(thisGraph,wg1,wtSum)
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
-      INTEGER(SIK),INTENT(OUT) :: nv1,nv2
-      REAL(SRK),INTENT(OUT) :: wg1,wg2,wtSum
-      INTEGER(SIK) :: ng,ng1,ng2
-      REAL(SRK) :: wtMin
+      REAL(SRK),INTENT(OUT) :: wg1,wtSum
+      INTEGER(SIK) :: ng,ng1
 
       !Determine desired number of subgroups for each group
       ng=thisGraph%nGroups
       ng1=ng/2    !Group 1
-      ng2=ng-ng1  !Group 2
 
       !Determine desired weight of each group
       wtSum=SUM(thisGraph%wts)
-      wtMin=MINVAL(thisGraph%wts)
       wg1=wtSum*REAL(ng1,SRK)/REAL(ng,SRK)  !Group 1
-      wg2=wtSum-wg1                         !Group 2
-
-      !Determine maximum size of groups
-      nv1=CEILING(wg1/wtMin)+1
-      nv2=CEILING(wg2/wtMin)+1
     ENDSUBROUTINE detGroupSize
 !
 !-------------------------------------------------------------------------------
 !> @brief Partitioning process for the recusive class of partitioning methods
 !>        Routine added to reduce code replication in all these routines
 !> @param thisGraph The graph which is being partitioned
-!> @param L1 List of vertices in the first bisection group
-!> @param L2 List of vertices in the second bisection group
+!> @param Order "Ordering" assigned to graph by recusive method
+!> @param nv1 The number of vertices in L1
 !> @param cw1 The weight of group 1
 !> @param wtSum The total weight of the graph
 !>
-    RECURSIVE SUBROUTINE recursivePartitioning(thisGraph,L1,L2,cw1,wtSum)
+    RECURSIVE SUBROUTINE recursivePartitioning(thisGraph,Order,nv1,cw1,wtSum)
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
-      INTEGER(SIK),INTENT(INOUT) :: L1(:),L2(:)
+      INTEGER(SIK),POINTER,INTENT(INOUT) :: Order(:)
+      INTEGER(SIK),INTENT(INOUT) :: nv1
       REAL(SRK),INTENT(INOUT) :: cw1
       REAL(SRK),INTENT(IN) :: wtSum
-      INTEGER(SIK) :: iv,nv1,nv2,ng,ng1,ng2
+      INTEGER(SIK) :: iv,ng,ng1,ng2
       TYPE(PartitionGraphType) :: sg1,sg2
+      INTEGER(SIK),POINTER :: L1(:)
+      INTEGER(SIK),POINTER :: L2(:)
 
-      !Number of elements in each list
-      nv1=SIZE(L1)
-      nv2=SIZE(L2)
+      !Assign L1,L2
+      L1 => Order(1:nv1)
+      L2 => Order(nv1+1:thisGraph%nvert)
 
       !Refine the 2 groups
       CALL thisGraph%refine(L1,L2)
 
       !Redistribute the number of groups for each subgraph
       ng=thisGraph%nGroups
-      ng1=NINT(ng*cw1/wtSum)
+      ng1=MAX(1,NINT(ng*cw1/wtSum))
       ng2=ng-ng1
 
       IF(ng1 > 1) THEN
@@ -2197,7 +2152,6 @@ MODULE PartitionGraph
           thisGraph%groupList(iv)=L1(iv)
         ENDDO !iv
       ENDIF
-
       IF(ng2 > 1) THEN
         !Pull groups from second subgraph
         thisGraph%groupIdx(ng1+1:ng1+ng2+1)=nv1+sg2%groupIdx(1:ng2+1)
@@ -2207,11 +2161,13 @@ MODULE PartitionGraph
         CALL sg2%clear()
       ELSE
         thisGraph%groupIdx(ng1+1)=nv1+1
-        thisGraph%groupIdx(ng1+2)=nv1+nv2+1
-        DO iv=1,nv2
+        thisGraph%groupIdx(ng1+2)=thisGraph%nvert+1
+        DO iv=1,thisGraph%nvert-nv1
           thisGraph%groupList(iv+nv1)=L2(iv)
         ENDDO !iv
       ENDIF
+      NULLIFY(L1)
+      NULLIFY(L2)
     ENDSUBROUTINE recursivePartitioning
 !
 ENDMODULE PartitionGraph
