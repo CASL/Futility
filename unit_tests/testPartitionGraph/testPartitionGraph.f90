@@ -520,7 +520,7 @@ PROGRAM testPartitionGraph
       grpIdx=(/1, 9, 17, 25/)
       grpList=(/ 1,  2,  4,  3,  5,  6,  7,  8, &
                 24, 18, 17, 23, 22, 16, 12, 11, &
-                 9, 10, 13, 14, 15, 19, 20, 21/)
+                15, 21, 20, 14, 10,  9, 13, 19/)
       !Test
       CALL partitionTest(tparams,str,grpIdx,grpList)
 
@@ -540,7 +540,7 @@ PROGRAM testPartitionGraph
       grpIdx=(/1, 11, 21, 29/)
       grpList=(/ 1,  2,  3,  6,  5,  4,  7,  8,  9, 10, &
                 16, 15, 22, 21, 28, 27, 26, 20, 14, 13, &
-                11, 12, 17, 18, 19, 23, 24, 25/)
+                19, 25, 24, 18, 12, 11, 17, 23/)
       !Test
       CALL partitionTest(tparams,str,grpIdx,grpList)
     ENDSUBROUTINE testREB
@@ -671,19 +671,18 @@ PROGRAM testPartitionGraph
     SUBROUTINE testMulti()
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: ig,iv
-      LOGICAL(SBK),ALLOCATABLE :: match(:,:)
-      INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:),grpList2(:)
+      INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
       TYPE(StringType) :: str,algName(2)
 
-      str='REB-RSB'
+      str='REB-RIB'
       algName(1)='Recursive Expansion Bisection'
-      algName(2)='Recursive Spectral Bisection'
+      algName(2)='Recursive Inertial Bisection'
 
       !Test larger 3-group problem (uneven divisions, weighted)
       !Decomposition should look like
-      ! 2 2 2 3 3 3
-      ! 2 2 2 3 3 3
-      ! 2 2 2 3 3 3
+      ! 3 3 3 2 2 2
+      ! 3 3 3 2 2 2
+      ! 3 3 3 2 2 2
       ! 1 1 1 1
       ! 1 1 1
       ! 1 1 1
@@ -693,56 +692,13 @@ PROGRAM testPartitionGraph
       CALL tparams%add('PartitionGraph -> Conditions',(/20/))
       ALLOCATE(grpIdx(4))
       ALLOCATE(grpList(28))
-      ALLOCATE(grpList2(28))
-      grpIdx=(/1, 11, 19, 29/)
+      grpIdx=(/1, 11, 20, 29/)
       grpList=(/ 1, 2, 3, 6, 5, 4, 7, 8, 9,10, &
-                11,17,23,12,18,24,13,19, &
-                25,26,20,14,27,21,15,28,22,16/)
-      grpList2=(/ 1, 2, 3, 6, 5, 4, 7, 8, 9,10, &
-                 23,17,11,24,18,12,25,19, &
-                 13,14,20,26,15,21,27,16,22,28/)
-      ALLOCATE(match(2,28))
-      !This case leads to a symmetric case with RSB. When getting eigenvectors
-      !from SLEPc, different compilations will return different a different order
-      !of the 3rd/4th smallest eigenvectors, as their eigenvalues are identical.
-      !Thus 2 different orders must be checked.
-      !Initialize
-      CALL testPG%initialize(tparams)
-
-      !Partition
-      CALL testPG%partition()
+                16,22,28,15,21,27,14,20,26, &
+                13,19,25,12,18,24,11,17,23/)
 
       !Test
-      DO ig=1,testPG%nGroups+1
-        bool=(testPG%groupIdx(ig) == grpIdx(ig))
-        ASSERT(bool,'%partition%groupIdx')
-        FINFO() 'Index:', ig
-        FINFO() 'Ref: ',grpIdx(ig)
-        FINFO() 'Test:',testPG%groupIdx(ig)
-      ENDDO !ig
-
-      !Make sure it follows 1 of the 2 orders
-      DO iv=1,testPG%nvert
-        match(1,iv)=(testPG%groupList(iv) == grpList(iv))
-        match(2,iv)=(testPG%groupList(iv) == grpList2(iv))
-        bool=match(1,iv) .OR. match(2,iv)
-        ASSERT(bool, '%partition(REB-RSB)%GroupList')
-        FINFO() 'Index:',iv
-        FINFO() 'Refs: ',grpList(iv),grpList2(iv)
-        FINFO() 'Test:',testPG%groupList(iv)
-      ENDDO !iv
-
-      !Make sure complete match with 1 of the lists
-      bool=ALL(match(1,:)) .OR. ALL(match(2,:))
-      ASSERT(bool,'%partition(REB-RSB)%GroupList')
-      FINFO() "2-case scenario didn't match either reference!"
-      !Clear
-      CALL tparams%clear()
-      CALL testPG%clear()
-      DEALLOCATE(grpIdx)
-      DEALLOCATE(grpList)
-      DEALLOCATE(grpList2)
-      DEALLOCATE(match)
+      CALL partitionTest(tparams,str,grpIdx,grpList)
     ENDSUBROUTINE testMulti
 !
 !-------------------------------------------------------------------------------
