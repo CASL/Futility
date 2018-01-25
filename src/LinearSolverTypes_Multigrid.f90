@@ -113,6 +113,9 @@ MODULE LinearSolverTypes_Multigrid
       !> @copybrief  LinearSolverType_Multigrid::setSmoother_LinearSolverType_Multigrid
       !> @copydetails LinearSolverType_Multigrid::setSmoother_LinearSolverType_Multigrid
       PROCEDURE,PASS :: setSmoother => setSmoother_LinearSolverType_Multigrid
+      !> @copybrief  LinearSolverType_Multigrid::updatedA_LinearSolverType_Multigrid
+      !> @copydetails LinearSolverType_Multigrid::updatedA_LinearSolverType_Multigrid
+      PROCEDURE,PASS :: updatedA => updatedA_LinearSolverType_Multigrid
   ENDTYPE LinearSolverType_Multigrid
 
   !> Logical flag to check whether the required and optional parameter lists
@@ -849,6 +852,23 @@ MODULE LinearSolverTypes_Multigrid
         ENDDO
       ENDIF
 
-    ENDSUBROUTINE
+    ENDSUBROUTINE collectWtsAndIndices
+!
+!-------------------------------------------------------------------------------
+!> @brief Resets the operators on each multigrid level for PCMG and then calls
+!>        parent updatedA subroutine which associates a new matrix for the KSP
+!> @param solver The linear solver to act on
+!>
+    SUBROUTINE updatedA_LinearSolverType_Multigrid(solver)
+      CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
+#ifdef FUTILITY_HAVE_PETSC
+      PetscErrorCode  :: iperr
+
+      !Note: This does NOT work when PETSc's DM objects are used
+      CALL PCMGSoftReset(solver%pc,iperr)
+#endif
+      CALL solver%LinearSolverType_Iterative%updatedA()
+
+    ENDSUBROUTINE updatedA_LinearSolverType_Multigrid
 
 ENDMODULE LinearSolverTypes_Multigrid
