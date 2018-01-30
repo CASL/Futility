@@ -40,7 +40,12 @@ MODULE ParallelEnv
 #ifdef HAVE_MPI
 
 #ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#include <petsc/finclude/petsc.h>
+#else
 #include <finclude/petsc.h>
+#endif
 #undef IS
   PetscErrorCode  :: ierr
   PetscBool :: petsc_isinit

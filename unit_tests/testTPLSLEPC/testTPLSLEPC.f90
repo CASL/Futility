@@ -11,7 +11,12 @@ PROGRAM testTPLSLEPC
   IMPLICIT NONE
 
 #include <finclude/slepc.h>
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#include <petsc/finclude/petsc.h>
+#else
 #include <finclude/petsc.h>
+#endif
 #undef IS
 
   !define precision kinds
