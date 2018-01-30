@@ -75,6 +75,7 @@ PROGRAM testLinearSolver_Multigrid
 #endif
   REGISTER_SUBTEST('testIterativeSolve_Multigrid',testIterativeSolve_Multigrid)
   REGISTER_SUBTEST('testSetSmoother',testSetSmoother)
+  REGISTER_SUBTEST('testSoftReset',testSoftReset)
 
   FINALIZE_TEST()
 
@@ -245,9 +246,8 @@ CONTAINS
       INTEGER(SIK),ALLOCATABLE :: cols(:),tmpint(:)
       REAL(SRK),ALLOCATABLE :: vals(:)
       CHARACTER(LEN=2) :: tmpchar
-      TYPE(ParamType) :: smootherParams
 
-      LOGICAL(SBK) :: boolcols,boolvals,tmpbool
+      LOGICAL(SBK) :: boolcols,boolvals
 
       PetscErrorCode :: iperr
 
@@ -523,6 +523,104 @@ CONTAINS
     ENDSUBROUTINE testSetSmoother
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testSoftReset
+      TYPE(LinearSolverType_Multigrid) :: thisLS
+      REAL(SRK),ALLOCATABLE :: soln(:)
+      REAL(SRK),POINTER :: x(:)
+      TYPE(ParamType) :: matPList
+      INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
+      INTEGER(SIK) :: i
+      LOGICAL(SBK) :: match
+      INTEGER(SIK),PARAMETER :: n=65_SNK
+#ifdef FUTILITY_HAVE_PETSC
+      !================ 1G Problem ============================
+#ifdef HAVE_MPI
+      IF(mpiTestEnv%master) THEN
+#endif
+        CALL init_MultigridLS(thisLS)
+
+        ! Create solution:
+        ALLOCATE(soln(n))
+        soln=1.0_SRK
+        soln(n/3)=2.0_SRK
+        CALL setupLinearProblem_1D1G(thisLS,soln)
+
+        CALL preAllocInterpMatrices_1D1G(thisLS)
+        CALL setupInterpMatrices_1D1G(thisLS)
+        CALL thisLS%setupPETScMG(pList)
+
+        ! build x0
+        ALLOCATE(x(n))
+        x(1:(n-1)/2)=0.5_SRK
+        x((n+1)/2:n)=1.1_SRK
+        CALL thisLS%setX0(x)
+
+        !set iterations and convergence information and build/set M
+        CALL thisLS%setConv(2,1.0E-9_SRK,1000,30)
+
+        !solve it
+        CALL thisLS%solve()
+
+        !prepare matrix A for reinit
+        CALL thisLS%A%clear()
+        DEALLOCATE(thisLS%A)
+
+        !set up parameter list
+        CALL matPList%clear()
+        CALL matPList%add('MatrixType->engine',VM_PETSC)
+        CALL matPList%add('MatrixType->matType',SPARSE)
+        CALL matPList%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
+        CALL matPList%add('MatrixType->n',n)
+        CALL matPList%add('MatrixType->nlocal',n)
+        ALLOCATE(dnnz(n),onnz(n))
+        onnz=0
+        dnnz=1
+        CALL matPList%add('MatrixType->dnnz',dnnz)
+        CALL matPList%add('MatrixType->onnz',onnz)
+        DEALLOCATE(dnnz,onnz)
+
+        !allocate and initialize matrix (A)
+        CALL MatrixFactory(thisLS%A,matPList)
+        !set A to the identity matrix:
+        DO i=1,n
+          CALL thisLS%A%set(i,i,1.0_SRK)
+          CALL thisLS%b%set(i,1.0_SRK)
+        ENDDO
+        !associate A with the KSP
+        CALL thisLS%updatedA()
+        !clean up
+        CALL matPList%clear()
+
+        ! build x0
+        ALLOCATE(x(n))
+        x(1:(n-1)/2)=0.5_SRK
+        x((n+1)/2:n)=1.1_SRK
+        CALL thisLS%setX0(x)
+
+        !solve new system
+        CALL thisLS%solve()
+        SELECTTYPE(LS_x => thisLS%X); TYPE IS(PETScVectorType)
+          CALL LS_x%getAll(x)
+        ENDSELECT
+        match=ALL(ABS(x-1.0_SRK) < 1.0E-6_SRK)
+        ASSERT(match, 'testSoftReset()')
+
+        DEALLOCATE(soln)
+        DEALLOCATE(x)
+        CALL thisLS%clear()
+
+#ifdef HAVE_MPI
+      ELSE
+        !This is needed or it will hang:
+        ASSERT(.TRUE., 'dummy assert for proc 2')
+      ENDIF
+      CALL mpiTestEnv%barrier()
+#endif
+#endif
+
+    ENDSUBROUTINE testSoftReset
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE init_MultigridLS(thisLS,num_eqns_in,nx_in,ny_in,nz_in,nprocs_in, &
                                 level_info,level_info_local,nlevels)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
@@ -559,7 +657,6 @@ CONTAINS
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
       CALL pList%add('LinearSolverType->timerName','testTimer')
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->A->MatrixType->blockSize',num_eqns)
       CALL pList%add('LinearSolverType->A->MatrixType->n',n)
       CALL pList%add('LinearSolverType->A->MatrixType->nlocal',nlocal)
       ALLOCATE(dnnz(nlocal),onnz(nlocal))
