@@ -669,8 +669,6 @@ PROGRAM testPartitionGraph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMulti()
-      LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: ig,iv
       INTEGER(SIK),ALLOCATABLE :: grpIdx(:),grpList(:)
       TYPE(StringType) :: str,algName(2)
 
