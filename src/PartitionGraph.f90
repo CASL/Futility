@@ -1323,34 +1323,9 @@ MODULE PartitionGraph
       woc=wo1 ! Current optimal target for domain 1
 
       gmax=1.0_SRK
+      !Calculate D=E-I
+      CALL calcD(thisGraph,linL1,D)
       DO WHILE(gmax > 0)
-        !Calculate D=E-I
-        D=0
-        DO ia=1,N1
-          cva=L1(ia)
-          DO in=1,nneigh
-            ineigh=thisGraph%neigh(in,cva)
-            IF(ineigh == 0) CYCLE
-            IF(lInL1(ineigh)) THEN
-              D(cva)=D(cva)-thisGraph%neighwts(in,cva)
-            ELSE
-              D(cva)=D(cva)+thisGraph%neighwts(in,cva)
-            ENDIF
-          ENDDO !in
-        ENDDO !ia
-        DO ib=1,N2
-          cvb=L2(ib)
-          DO in=1,nneigh
-            ineigh=thisGraph%neigh(in,cvb)
-            IF(ineigh == 0) CYCLE
-            IF(.NOT. lInL1(ineigh)) THEN
-              D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
-            ELSE
-              D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
-            ENDIF
-          ENDDO !in
-        ENDDO !ib
-
         !Begin with empty set
         av=-1
         bv=-1
@@ -1434,24 +1409,8 @@ MODULE PartitionGraph
           wg2=wg2-wdiff
 
           !Update D values as if these have been swapped
-          DO in=1,nneigh
-            ineigh=thisGraph%neigh(in,av(ig))
-            IF(ineigh <= 0) CYCLE
-            IF(lInL1(ineigh)) THEN
-              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,av(ig))
-            ELSE
-              D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,av(ig))
-            ENDIF
-          ENDDO !in
-          DO in=1,nneigh
-            ineigh=thisGraph%neigh(in,bv(ig))
-            IF(ineigh <= 0) CYCLE
-            IF(lInL1(ineigh)) THEN
-              D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,bv(ig))
-            ELSE
-              D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
-            ENDIF
-          ENDDO !in
+          CALL swapDomain(thisGraph,av(ig),linL1,D,.FALSE.)
+          CALL swapDomain(thisGraph,bv(ig),linL1,D,.FALSE.)
         ENDDO !ig
 
         k=-1
@@ -1468,9 +1427,15 @@ MODULE PartitionGraph
 
         !Exchange between groups
         IF(gmax > 0) THEN
+          ! Perform "logical" swap
           DO ig=1,k
-            lInL1(av(ig))=.FALSE.
-            lInL1(bv(ig))=.TRUE.
+            linL1(av(ig))=.FALSE.
+            linL1(bv(ig))=.TRUE.
+          ENDDO !ig
+
+          ! Calculate new D values
+          CALL calcD(thisGraph,linL1,D)
+          DO ig=1,k
             DO ia=1,N1
               IF(L1(ia) == av(ig)) THEN
                 L1(ia)=bv(ig)
@@ -1549,34 +1514,8 @@ MODULE PartitionGraph
         woc=wo1 ! Current optimal target for domain 1
 
         gmax=1.0_SRK
+        CALL calcD(thisGraph,linL1,D)
         DO WHILE(gmax > 0)
-          !Calculate D=E-I
-          D=0
-          DO ia=1,N1
-            cva=L1(ia)
-            DO in=1,nneigh
-              ineigh=thisGraph%neigh(in,cva)
-              IF(ineigh == 0) CYCLE
-              IF(lInL1(ineigh)) THEN
-                D(cva)=D(cva)-thisGraph%neighwts(in,cva)
-              ELSE
-                D(cva)=D(cva)+thisGraph%neighwts(in,cva)
-              ENDIF
-            ENDDO !in
-          ENDDO !ia
-          DO ib=1,N2
-            cvb=L2(ib)
-            DO in=1,nneigh
-              ineigh=thisGraph%neigh(in,cvb)
-              IF(ineigh == 0) CYCLE
-              IF(.NOT. lInL1(ineigh)) THEN
-                D(cvb)=D(cvb)-thisGraph%neighwts(in,cvb)
-              ELSE
-                D(cvb)=D(cvb)+thisGraph%neighwts(in,cvb)
-              ENDIF
-            ENDDO !in
-          ENDDO !ib
-
           !Begin with empty set
           av=-1
           bv=-1
@@ -1696,24 +1635,8 @@ MODULE PartitionGraph
             wg2=wg2-wdiff
 
             !Update D values as if these have been swapped
-            DO in=1,nneigh
-              ineigh=thisGraph%neigh(in,av(ig))
-              IF(ineigh <= 0) CYCLE
-              IF(lInL1(ineigh)) THEN
-                D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,av(ig))
-              ELSE
-                D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,av(ig))
-              ENDIF
-            ENDDO !in
-            DO in=1,nneigh
-              ineigh=thisGraph%neigh(in,bv(ig))
-              IF(ineigh <= 0) CYCLE
-              IF(lInL1(ineigh)) THEN
-                D(ineigh)=D(ineigh)-2.0_SRK*thisGraph%neighwts(in,bv(ig))
-              ELSE
-                D(ineigh)=D(ineigh)+2.0_SRK*thisGraph%neighwts(in,bv(ig))
-              ENDIF
-            ENDDO !in
+            CALL swapDomain(thisGraph,av(ig),linL1,D,.FALSE.)
+            CALL swapDomain(thisGraph,bv(ig),linL1,D,.FALSE.)
           ENDDO !ig
 
           k=-1
@@ -1730,9 +1653,15 @@ MODULE PartitionGraph
 
           !Exchange between groups
           IF(gmax > 0) THEN
+            ! Perform "logical" swap
             DO ig=1,k
-              lInL1(av(ig))=.FALSE.
-              lInL1(bv(ig))=.TRUE.
+              linL1(av(ig))=.FALSE.
+              linL1(bv(ig))=.TRUE.
+            ENDDO !ig
+
+            ! Calculate new D values
+            CALL calcD(thisGraph,linL1,D)
+            DO ig=1,k
               DO ia=1,N1
                 IF(L1(ia) == av(ig)) THEN
                   L1(ia)=bv(ig)
@@ -2128,6 +2057,7 @@ MODULE PartitionGraph
       CALL thisGraph%refine(L1,L2)
 
       !Redistribute the number of groups for each subgraph
+      cw1=SUM(thisGraph%wts(L1))
       ng=thisGraph%nGroups
       ng1=MAX(1,NINT(ng*cw1/wtSum))
       ng2=ng-ng1
@@ -2181,5 +2111,102 @@ MODULE PartitionGraph
       NULLIFY(L1)
       NULLIFY(L2)
     ENDSUBROUTINE recursivePartitioning
+!
+!-------------------------------------------------------------------------------
+!> @brief Calculates D=E-I for each vertex
+!> @param thisGraph The graph object
+!> @param linL1 Logical whether vertex is in group 1 or not
+!> @param D The D vector
+!>
+    SUBROUTINE calcD(thisGraph,linL1,D)
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      LOGICAL(SBK),INTENT(IN) :: linL1(:)
+      REAL(SRK),INTENT(OUT) :: D(:)
+      ! local scalars
+      INTEGER(SIK) :: iv,jv,in
+
+      ! Calculate D=E-I
+      D=0.0_SRK
+      DO iv=1,thisGraph%nvert
+        IF(linL1(iv)) THEN
+          DO in=1,thisGraph%maxneigh
+            jv=thisGraph%neigh(in,iv)
+            IF(jv > 0)  THEN
+              IF(lInL1(jv)) THEN
+                D(iv)=D(iv)-thisGraph%neighwts(in,iv)
+              ELSE
+                D(iv)=D(iv)+thisGraph%neighwts(in,iv)
+              ENDIF
+            ENDIF
+          ENDDO !in
+        ELSE
+          DO in=1,thisGraph%maxneigh
+            jv=thisGraph%neigh(in,iv)
+            IF(jv > 0)  THEN
+              IF(lInL1(jv)) THEN
+                D(iv)=D(iv)+thisGraph%neighwts(in,iv)
+              ELSE
+                D(iv)=D(iv)-thisGraph%neighwts(in,iv)
+              ENDIF
+            ENDIF
+          ENDDO !in
+        ENDIF
+      ENDDO !iv
+    ENDSUBROUTINE calcD
+!
+!-------------------------------------------------------------------------------
+!> @brief Swaps a vertex from one bisection to the other and updates D
+!> @param thisGraph The graph object
+!> @param iv The vertex to move from one domain to the other
+!> @param linL1 Logical whether vertex is in domain 1 or not
+!> @param D The D vector
+!> @param lswap indicates whether or not it is a test or true swap
+!>
+!> For test swaps (KL and SKL) the logical array will be unchanged.
+!> For true swaps (netCommCheck) the logical array will be changed.
+!>
+    SUBROUTINE swapDomain(thisGraph,iv,linL1,D,lswap)
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: iv
+      LOGICAL(SBK),INTENT(INOUT) :: linL1(:)
+      REAL(SRK),INTENT(INOUT) :: D(:)
+      LOGICAL(SBK),INTENT(IN) :: lswap
+      INTEGER(SIK) :: in,jv
+
+      ! Negate the swapped verices D value
+      D(iv)=-D(iv)
+
+      ! Check current domain of the vertex
+      IF(linL1(iv)) THEN
+        ! Move into domain 2
+        DO in=1,thisGraph%maxneigh
+          jv=thisGraph%neigh(in,iv)
+          IF(jv > 0) THEN
+            IF(linL1(jv)) THEN
+              D(jv)=D(jv)+2.0_SRK*thisGraph%neighwts(in,iv)
+            ELSE
+              D(jv)=D(jv)-2.0_SRK*thisGraph%neighwts(in,iv)
+            ENDIF
+          ENDIF
+        ENDDO !in
+      ELSE
+        ! Move into domain 1
+        DO in=1,thisGraph%maxneigh
+          jv=thisGraph%neigh(in,iv)
+          IF(jv > 0) THEN
+            IF(jv > 0) THEN
+              IF(linL1(jv)) THEN
+                D(jv)=D(jv)-2.0_SRK*thisGraph%neighwts(in,iv)
+              ELSE
+                D(jv)=D(jv)+2.0_SRK*thisGraph%neighwts(in,iv)
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDDO !in
+      ENDIF
+
+      ! Change logical array?
+      IF(lswap) linL1(iv)=(.NOT. linL1(iv))
+    ENDSUBROUTINE swapDomain
 !
 ENDMODULE PartitionGraph
