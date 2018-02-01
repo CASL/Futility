@@ -867,7 +867,7 @@ MODULE PartitionGraph
           maxSI=0
           maxSE=0
           dS=HUGE(1.0_SRK)
-          bvert=0
+          bvert=-1
           !Loop over all vertices
           DO iv=1,nvert
             !Only consider those not already within the group
@@ -928,6 +928,7 @@ MODULE PartitionGraph
           ENDDO !iv
 
           !Add "best" vertex to the list and update weighted sum
+          IF(bvert == -1) EXIT
           IF(ABS(curdif-thisGraph%wts(bvert)) > ABS(curdif)) lfillL1=.FALSE.
           IF(lfillL1) THEN
             nv1=nv1+1
@@ -943,6 +944,17 @@ MODULE PartitionGraph
           ENDIF
           prevExt = minExt
         ENDDO !kv
+
+        ! If the domain we decomposed was discontinuous (rarely occurs)
+        ! Fill the rest into order
+        IF(bvert == -1) THEN
+          DO iv=1,nvert
+            IF(.NOT.linL1(iv)) THEN
+              Order(kv)=iv
+              kv=kv+1
+            ENDIF
+          ENDDO !iv
+        ENDIF
 
         !Deallocate sphere memory
         DEALLOCATE(S)
