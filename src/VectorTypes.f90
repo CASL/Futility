@@ -82,6 +82,15 @@ MODULE VectorTypes
                              BLAS1_nrm2  => BLAS_nrm2,  &
                              BLAS1_scal  => BLAS_scal,  &
                              BLAS1_swap  => BLAS_swap
+
+#ifdef FUTILITY_HAVE_ForTrilinos
+#include "ForTrilinosTpetra_config.hpp"
+#include "ForTrilinos.h"
+  USE forteuchos
+  USE fortpetra
+#endif
+                          
+
   IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -344,6 +353,10 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       REAL(SRK) :: r
+#ifdef FUTILITY_HAVE_ForTrilinos
+      INTEGER(size_type) num_vecs 
+      REAL(scalar_type), allocatable :: tnorm1(:)
+#endif
 
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -360,9 +373,16 @@ MODULE VectorTypes
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_1,r,iperr)
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       TYPE IS(TrilinosVectorType)
-        CALL ForPETRA_VecSUM(thisVector%b,r)
+        !CALL ForPETRA_VecSUM(thisVector%b,r)
+        num_vecs = thisVector%b%getNumVectors()
+        IF (num_vecs.GT.1) CALL eVectorType%raiseFatalError('Incorrect call to '// &
+           modName//'::'//myName//' - Norms of multiple vectors not supported.')
+        ALLOCATE(tnorm1(num_vecs))
+        CALL thisVector%b%norm1(tnorm1)
+        r=tnorm1(1)
+        DEALLOCATE(tnorm1)
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -414,11 +434,12 @@ MODULE VectorTypes
           IF(iperr == 0) CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
         ENDSELECT
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-          CALL ForPETRA_VecAXPY(newVector%b,thisVector%b,alpha,1.0_SRK)
+          !CALL ForPETRA_VecAXPY(newVector%b,thisVector%b,alpha,1.0_SRK)
+          CALL newVector%b%update(alpha,thisVector%b,1.0_SRK)
         ENDSELECT
 #endif
       CLASS DEFAULT
@@ -543,11 +564,12 @@ MODULE VectorTypes
           IF(iperr == 0) CALL VecCopy(thisVector%b,newVector%b,iperr)
         ENDSELECT
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-          CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
+          !CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
+          newVector%b = thisVector%b
         ENDSELECT
 #endif
       CLASS DEFAULT
@@ -705,7 +727,10 @@ MODULE VectorTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: n
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
       REAL(SRK) :: norm2
-
+#ifdef FUTILITY_HAVE_ForTrilinos
+      INTEGER(size_type) num_vecs 
+      REAL(scalar_type), allocatable :: tnorm2(:)
+#endif
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         IF(PRESENT(n) .AND. PRESENT(incx)) THEN
           norm2=BLAS1_nrm2(n,thisVector%b,incx)
@@ -721,10 +746,17 @@ MODULE VectorTypes
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecNorm(thisVector%b,NORM_2,norm2,iperr)
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       TYPE IS(TrilinosVectorType)
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-        CALL ForPETRA_VecNorm2(thisVector%b,norm2)
+        !CALL ForPETRA_VecNorm2(thisVector%b,norm2)
+        num_vecs = thisVector%b%getNumVectors()
+        IF (num_vecs.GT.1) CALL eVectorType%raiseFatalError('Incorrect call to '// &
+           modName//'::'//myName//' - Norms of multiple vectors not supported.')
+        ALLOCATE(tnorm2(num_vecs))
+        CALL thisVector%b%norm2(tnorm2)
+        norm2=tnorm2(1)
+        DEALLOCATE(tnorm2)
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &
@@ -762,9 +794,10 @@ MODULE VectorTypes
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
         IF(iperr == 0) CALL VecScale(thisVector%b,a,iperr)
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       TYPE IS(TrilinosVectorType)
-        CALL ForPETRA_VecScale(thisVector%b,a)
+        !CALL ForPETRA_VecScale(thisVector%b,a)
+        CALL thisVector%b%scale(a)
 #endif
       CLASS DEFAULT
         CALL eVectorType%raiseFatalError('Incorrect call to '// &

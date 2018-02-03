@@ -21,27 +21,36 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes_Trilinos
+  USE ISO_C_BINDING
   USE IntrType
   USE ExceptionHandler
   USE ParameterLists
   USE VectorTypes
   USE MatrixTypes_Base
+#ifdef FUTILITY_HAVE_ForTrilinos
+#include "ForTrilinosTpetra_config.hpp"
+#include "ForTrilinos.h"
+  USE forteuchos
+  USE fortpetra
 
   IMPLICIT NONE
   PRIVATE
 
-#ifdef FUTILITY_HAVE_Trilinos
 !
 ! List of public members
   PUBLIC :: TrilinosMatrixType
   PUBLIC :: matvec_TrilinosVector
   
   TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
-    INTEGER(SIK) :: A
-    INTEGER(SIK) :: currow
-    INTEGER(SIK) :: ncol
-    INTEGER(SIK),ALLOCATABLE :: jloc(:)
-    REAL(SRK),ALLOCATABLE :: aloc(:)
+    TYPE(TpetraCrsMatrix) :: A
+    TYPE(TeuchosComm) :: Tcomm
+    TYPE(TpetraMap) :: map
+
+    INTEGER(global_ordinal_type) :: currow
+    INTEGER(global_ordinal_type) :: ncol
+    INTEGER(global_ordinal_type),ALLOCATABLE :: jloc(:)
+    REAL(scalar_type),ALLOCATABLE :: aloc(:)
+
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -141,7 +150,16 @@ MODULE MatrixTypes_Trilinos
             matrix%isSymmetric=.FALSE.
           ENDIF
           IF(.NOT.matrix%isCreated) THEN
-            CALL ForPETRA_MatInit(matrix%A,n,nlocal,rnnz,matrix%comm)
+#ifdef HAVE_MPI            
+            matrix%Tcomm = create_TeuchosComm(MPI_COMM_ID)
+#else
+            matrix%Tcomm = create_TeuchosComm()
+#endif
+            matrix%map = create_TpetraMap(INT(n,global_ordinal_type),INT(nlocal,global_ordinal_type),matrix%Tcomm)
+            !FORTRILINOS_CHECK_IERR()
+            matrix%A = create_TpetraCrsMatrix(matrix%map,INT(rnnz,global_ordinal_type),TpetraDynamicProfile)
+            !CALL ForPETRA_MatInit(matrix%A,n,nlocal,rnnz,matrix%comm)
+
             matrix%isCreated=.TRUE.
           ENDIF
 
@@ -175,8 +193,11 @@ MODULE MatrixTypes_Trilinos
       IF(ALLOCATED(matrix%aloc)) DEALLOCATE(matrix%aloc)
       matrix%currow=0
       matrix%ncol=0
-      CALL ForPETRA_MatDestroy(matrix%a)
-      matrix%A=-1
+      CALL matrix%A%release()
+      CALL matrix%map%release()
+      CALL matrix%Tcomm%release()
+      !CALL ForPETRA_MatDestroy(matrix%a)
+      !matrix%A=-1
     ENDSUBROUTINE clear_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -196,14 +217,16 @@ MODULE MatrixTypes_Trilinos
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
           .AND. ((j > 0) .AND. (i > 0))) THEN
-          IF(matrix%isAssembled) CALL ForPETRA_MatReset(matrix%A)
+          IF(matrix%isAssembled) CALL matrix%A%resumeFill()
           IF(i==matrix%currow) THEN
             matrix%ncol=matrix%ncol+1
             matrix%jloc(matrix%ncol)=j
             matrix%aloc(matrix%ncol)=setval
           ELSE
             IF(matrix%currow>0) THEN
-              CALL ForPETRA_MatSet(matrix%A,matrix%currow,matrix%ncol,matrix%jloc,matrix%aloc)
+              ! Flush out the current row
+              !CALL ForPETRA_MatSet(matrix%A,matrix%currow,matrix%ncol,matrix%jloc,matrix%aloc)
+              CALL matrix%A%insertGlobalValues(matrix%currow,matrix%jloc(1:matrix%ncol),matrix%aloc(1:matrix%ncol))
             ENDIF
             matrix%jloc=0
             matrix%aloc=0.0_SRK
@@ -241,7 +264,7 @@ MODULE MatrixTypes_Trilinos
             matrix%jloc(matrix%ncol)=j
             matrix%aloc(matrix%ncol)=setval
           ELSE
-            IF(matrix%currow>0) CALL ForPETRA_MatSet(matrix%A,i,matrix%ncol,matrix%jloc,matrix%aloc)
+            IF(matrix%currow>0) CALL matrix%A%insertGlobalValues(matrix%currow,matrix%jloc(1:matrix%ncol),matrix%aloc(1:matrix%ncol))
             matrix%aloc=0.0_SRK
             matrix%jloc=0
             matrix%ncol=0
@@ -252,22 +275,26 @@ MODULE MatrixTypes_Trilinos
         ENDIF
       ENDIF
     ENDSUBROUTINE setShape_TrilinosMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Gets the values in the Trilinos matrix - presently untested
-!> @param declare the matrix type to act on
-!> @param i the ith location in the matrix
-!> @param j the jth location in the matrix
-!>
-!> This routine gets the values of the sparse matrix.  If the (i,j) location is
-!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
-!>
+!!
+!!-------------------------------------------------------------------------------
+!!> @brief Gets the values in the Trilinos matrix - presently untested
+!!> @param declare the matrix type to act on
+!!> @param i the ith location in the matrix
+!!> @param j the jth location in the matrix
+!!>
+!!> This routine gets the values of the sparse matrix.  If the (i,j) location is
+!!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
+!!>
     SUBROUTINE get_TrilinosMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_TrilinosMatrixType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
+      INTEGER(size_type) :: n,cnt1
+      INTEGER(global_ordinal_type), allocatable :: cols(:)
+      REAL(scalar_type), allocatable :: vals(:)
+      
 
       getval=0.0_SRK
       IF(matrix%isInit) THEN
@@ -275,28 +302,45 @@ MODULE MatrixTypes_Trilinos
         IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
 
         IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          CALL ForPETRA_MatGet(matrix%a,i,j,getval)
+          n = matrix%A%getNumEntriesInGlobalRow(INT(i,global_ordinal_type))
+          allocate(cols(n))
+          allocate(vals(n))
+!FixMe          
+          !CALL matrix%A%getGlobalRowView(INT(i,global_ordinal_type),cols,vals)
+          CALL matrix%A%getGlobalRowCopy(INT(i,global_ordinal_type),cols,vals,n)
+          DO cnt1 = 1,n
+            IF(cols(cnt1).eq.j) THEN
+              getval = vals(cnt1)
+              EXIT
+            ENDIF
+          ENDDO
+          !CALL ForPETRA_MatGet(matrix%a,i,j,getval)
+          
+          deallocate(cols)
+          deallocate(vals)
         ELSE
           getval=-1051._SRK
         ENDIF
       ENDIF
     ENDSUBROUTINE get_TrilinosMatrixtype
-!
-!-------------------------------------------------------------------------------
+!!
+!!-------------------------------------------------------------------------------
     SUBROUTINE assemble_TrilinosMatrixType(thisMatrix,ierr)
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: ierrc
 
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       ierrc=0
       IF(.NOT.thisMatrix%isAssembled) THEN
-        CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)
+        !CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)
+        CALL thisMatrix%A%insertGlobalValues(thisMatrix%currow,thisMatrix%jloc(1:thisMatrix%ncol),thisMatrix%aloc(1:thisMatrix%ncol))
+
         thisMatrix%aloc=0.0_SRK
         thisMatrix%jloc=0
         thisMatrix%ncol=0
         thisMatrix%currow=0
-        CALL ForPETRA_MatAssemble(thisMatrix%A)
+        CALL thisMatrix%A%fillComplete()
         thisMatrix%isAssembled=.TRUE.
         ierrc=0
       ENDIF
@@ -309,36 +353,36 @@ MODULE MatrixTypes_Trilinos
          'need to recompile with Trilinos enabled to use this feature.')
 #endif
     ENDSUBROUTINE assemble_TrilinosMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief tranpose the matrix
-!> @param matrix declare the matrix type to act on
-!>
-!>
+!!
+!!-------------------------------------------------------------------------------
+!!> @brief tranpose the matrix
+!!> @param matrix declare the matrix type to act on
+!!>
+!!>
     SUBROUTINE transpose_TrilinosMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_TrilinosMatrixType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
       CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
         ' - routine is not implemented!')
     ENDSUBROUTINE transpose_TrilinosMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Subroutine provides an interface to matrix vector multiplication for
-!> the MatrixType.
-!> @param trans single character input indicating whether or not to use the
-!>        transpose of @c A
-!> @param thisMatrix derived matrix type.
-!> @param alpha the scalar used to scale @c x
-!> @param x the vector to multiply with @c A
-!> @param beta the scalar used to scale @c y
-!> @param y the vector to add to the product of @c A and @c x
-!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
-!> @param diag character indicating if diagonal of @c thisMatrix should be treated
-!> @param incx_in integer containing distance between elements in @c x
-!>
-!> TODO: This is more of a mess than it needs to be, and should be resturctured
-!> to match the matvec implementation. Split up the functionality and store
-!> closer to their respective implementations.
+!!
+!!-------------------------------------------------------------------------------
+!!> @brief Subroutine provides an interface to matrix vector multiplication for
+!!> the MatrixType.
+!!> @param trans single character input indicating whether or not to use the
+!!>        transpose of @c A
+!!> @param thisMatrix derived matrix type.
+!!> @param alpha the scalar used to scale @c x
+!!> @param x the vector to multiply with @c A
+!!> @param beta the scalar used to scale @c y
+!!> @param y the vector to add to the product of @c A and @c x
+!!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
+!!> @param diag character indicating if diagonal of @c thisMatrix should be treated
+!!> @param incx_in integer containing distance between elements in @c x
+!!>
+!!> TODO: This is more of a mess than it needs to be, and should be resturctured
+!!> to match the matvec implementation. Split up the functionality and store
+!!> closer to their respective implementations.
     SUBROUTINE matvec_TrilinosVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
@@ -378,9 +422,11 @@ MODULE MatrixTypes_Trilinos
           IF(.NOT.y%isAssembled) CALL y%assemble()
           IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
           IF(t == 'n') THEN
-            CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.FALSE.,1),x%b,tdummy%b)
+            !CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.FALSE.,1),x%b,tdummy%b)
+            CALL thisMatrix%A%apply(x%b,tdummy%b,TeuchosNO_TRANS)
           ELSE
-            CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.TRUE.,1),x%b,tdummy%b)
+            !CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.TRUE.,1),x%b,tdummy%b)
+            CALL thisMatrix%A%apply(x%b,tdummy%b,TeuchosTRANS)
           ENDIF
           CALL BLAS_scal(tdummy,a)
           CALL BLAS_scal(y,b)

@@ -124,7 +124,7 @@ MODULE MatrixTypes
 #ifdef FUTILITY_HAVE_PETSC
   PUBLIC :: PETScMatrixType
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
   PUBLIC :: TrilinosMatrixType
 #endif
   
@@ -289,7 +289,7 @@ MODULE MatrixTypes
 
       SELECTCASE(engine)
         CASE(VM_TRILINOS)
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
           IF(matType == SPARSE) THEN
             ALLOCATE(TrilinosMatrixType :: matrix)
           ELSE
@@ -366,7 +366,7 @@ MODULE MatrixTypes
         TYPE IS(PETScMatrixType)
           ALLOCATE(PETScMatrixType :: dest)
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
         TYPE IS(TrilinosMatrixType)
           ALLOCATE(TrilinosMatrixType :: dest)
 #endif
@@ -519,7 +519,7 @@ MODULE MatrixTypes
       ENDSELECT
 #endif
 
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       SELECTTYPE(mat => thisMatrix); TYPE IS(TrilinosMatrixType)
         CALL matvec_TrilinosVector(mat,trans,alpha,x,beta,y,uplo,diag,incx_in)
         RETURN

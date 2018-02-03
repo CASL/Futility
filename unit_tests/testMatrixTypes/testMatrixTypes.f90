@@ -94,7 +94,7 @@ PROGRAM testMatrixTypes
       INTEGER(SIK) :: matsize1,matsize2
       CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       INTEGER(SIK),ALLOCATABLE :: dnnz(:)
       CLASS(VectorType),ALLOCATABLE :: xTrilinosVector,yTrilinosVector
 #endif
@@ -115,7 +115,7 @@ PROGRAM testMatrixTypes
       CALL xPETScVector%init(vecPList)
       CALL yPETScVector%init(vecPlist)
 #endif
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       ALLOCATE(TrilinosVectorType :: xTrilinosVector)
       ALLOCATE(TrilinosVectorType :: yTrilinosVector)
       CALL xTrilinosVector%init(vecPList)
@@ -2193,7 +2193,7 @@ PROGRAM testMatrixTypes
 #endif
 
 !Test for Trilinos matrices (if necessary)
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
 
 !Test for Trilinos sparsematrices
       ALLOCATE(TrilinosMatrixType :: thisMatrix)
@@ -3604,7 +3604,7 @@ PROGRAM testMatrixTypes
       CLASS(MatrixType),POINTER :: other_mat_p
       CLASS(DistributedMatrixType),POINTER :: dmat_p
       TYPE(ParamType) :: params
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       INTEGER(SIK),ALLOCATABLE :: dnnz(:)
 #endif
 
@@ -3754,8 +3754,8 @@ PROGRAM testMatrixTypes
       CALL params%clear()
 #endif
 
-#ifdef FUTILITY_HAVE_Trilinos
-      ! PETSc Matrix
+#ifdef FUTILITY_HAVE_ForTrilinos
+      ! Trilinos Matrix
       CALL params%add('MatrixType->n',10_SNK)
       CALL params%add('MatrixType->nlocal',10_SNK)
       CALL params%add('MatrixType->isSym',.FALSE.)
@@ -3812,8 +3812,8 @@ PROGRAM testMatrixTypes
       CALL params%clear()
 #endif
 
-#ifdef FUTILITY_HAVE_Trilinos
-      ! PETSc Matrix
+#ifdef FUTILITY_HAVE_ForTrilinos
+      ! Trilinos Matrix
       CALL params%add('MatrixType->n',10_SNK)
       CALL params%add('MatrixType->nlocal',10_SNK)
       CALL params%add('MatrixType->isSym',.FALSE.)
