@@ -96,6 +96,7 @@ MODULE FileType_HDF5
   PUBLIC :: HDF5FilePtrArrayType
   PUBLIC :: HDF5Open
   PUBLIC :: HDF5Close
+  PUBLIC :: HDF5Quiet
 
   !> reading from HDF5 binary files. As implemented, there are three modes for
   !> accessing a file can be opened as: 'read' and 'write' and 'new'. Read mode
@@ -121,6 +122,8 @@ MODULE FileType_HDF5
     INTEGER(SIK),PRIVATE :: unitno=-1
     !> Parallel environment for MPI I/O
     TYPE(MPI_EnvType),POINTER  :: pe => NULL()
+    !> When .TRUE., file data can be overwritten
+    LOGICAL(SBK),PRIVATE :: overwriteStat=.FALSE.
 
 #ifdef FUTILITY_HAVE_HDF5
     !> File id assigned by the HDF5 library when file is opened
@@ -134,6 +137,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::clear_HDF5FileType
       !> @copydetails FileType_HDF5::clear_HDF5FileType
       PROCEDURE,PASS :: clear => clear_HDF5FileType
+      !> @copybrief FileType_HDF5::setOverwriteStat_file
+      !> @copydetails FileType_HDF5::setOverwriteStat_file
+      PROCEDURE,PASS :: setOverwriteStat => setOverwriteStat_file
       !> @copybrief FileType_HDF5::open_HDF5FileType
       !> @copydetails FileType_HDF5::open_HDF5FileType
       PROCEDURE,PASS :: fopen => open_HDF5FileType
@@ -537,10 +543,34 @@ MODULE FileType_HDF5
   ENDSUBROUTINE HDF5Close
 !
 !-------------------------------------------------------------------------------
+!> @brief   Enable/disable HDF5 exception writing
+!> @param   quiet Set to .TRUE. to disable HDF5 exceptions from being printed
+    SUBROUTINE HDF5Quiet(quiet)
+      CHARACTER(LEN=*),PARAMETER :: myName='HDF5Quiet'
+      LOGICAL,INTENT(IN) :: quiet
+#ifdef FUTILITY_HAVE_HDF5
+      IF(quiet) THEN
+         CALL h5eset_auto_f(0, error)
+      ELSE
+         CALL h5eset_auto_f(1, error)
+      ENDIF
+#endif
+    ENDSUBROUTINE
+
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes an HDF5 file object.
 !> @param thisHDF5File the object to be initialized
 !> @param filename the relative path to the file on the filesystem
-!> @param mode the access mode. Can be 'READ', 'WRITE' or 'NEW'
+!> @param mode the access mode. Can be 'READ', 'WRITE', 'OVERWRITE', or 'NEW'. 
+!>        Status 'READ', 'WRITE', and 'OVERWRITE' all require the file to 
+!>        exist.
+!>        'WRITE' gives write access but will fail if the user tries to overwrite
+!>        data existing in the file, whereas 'OVERWRITE' will allow the user to
+!>        overwrite existing data in the file.
+!>        'NEW' will create the file, overwriting any existing files with the
+!>        same name.  File will be given 'WRITE' status.  Use setOverwriteStat
+!>        to change the status to 'OVERWRITE'.
 !> @param zlibOpt numeric option for GZIP compression [0-9] uses compression, -1
 !>        is no compression
 !>
@@ -601,6 +631,17 @@ MODULE FileType_HDF5
             CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
               ' - HDF5 file '//filename//' is being opened with '// &
               'mode WRITE but does not exist.')
+          ENDIF
+        CASE('OVERWRITE')
+          INQUIRE(FILE=filename,EXIST=exists)
+          IF(exists) THEN
+            CALL thisHDF5File%setWriteStat(.TRUE.)
+            CALL thisHDF5File%setOverwriteStat(.TRUE.)
+            CALL thisHDF5File%setReadStat(.TRUE.)
+          ELSE
+            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+              ' - HDF5 file '//filename//' is being opened with '// &
+              'mode OVERWRITE but does not exist.')
           ENDIF
         CASE('NEW')
           CALL thisHDF5File%setWriteStat(.TRUE.)
@@ -675,9 +716,22 @@ MODULE FileType_HDF5
         thisHDF5File%zlibOpt=-1
         thisHDF5File%fullname=''
         thisHDF5File%unitno=-1
+        thisHDF5File%overwriteStat = .FALSE.
         CALL clear_base_file(thisHDF5File)
       ENDIF
     ENDSUBROUTINE clear_HDF5FileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value for the status of whether or not the file will
+!> be overwritable.
+!>
+    SUBROUTINE setOverwriteStat_file(file,bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='setOverwriteStat_file'
+      CLASS(HDF5FileType),INTENT(INOUT) :: file
+      LOGICAL(SBK),INTENT(IN) :: bool
+      file%overwriteStat=bool
+    ENDSUBROUTINE setOverwriteStat_file
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Open an HDF5 file
@@ -928,6 +982,7 @@ MODULE FileType_HDF5
 #ifdef FUTILITY_HAVE_HDF5
       TYPE(StringType) :: path2
       INTEGER(HID_T) :: group_id
+      LOGICAL :: dset_exists
 
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
@@ -947,17 +1002,27 @@ MODULE FileType_HDF5
         ! Convert the path to use slashes
         path2=convertPath(path)
 
-        ! Create the group
-        CALL h5gcreate_f(thisHDF5File%file_id,CHAR(path2),group_id,error)
+        CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
+        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+           ' - invalid group path:'//path)
 
-        IF(error == 0) THEN
-          ! Close the group
-          CALL h5gclose_f(group_id,error)
-          IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
-              myName//' - Failed to close HDF group')
+        IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
+          ! If group exists, do nothing, but only if overwrites are allowed
+          CONTINUE
         ELSE
-          CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Failed to create HDF5 group.')
+
+          ! Create the group
+          CALL h5gcreate_f(thisHDF5File%file_id,CHAR(path2),group_id,error)
+
+          IF(error == 0) THEN
+            ! Close the group
+            CALL h5gclose_f(group_id,error)
+            IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+                myName//' - Failed to close HDF group')
+          ELSE
+            CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+              ' - Failed to create HDF5 group.')
+          ENDIF
         ENDIF
       ENDIF
 #endif
@@ -6481,7 +6546,7 @@ MODULE FileType_HDF5
       CHARACTER(LEN=*),PARAMETER :: myName='preWrite'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       INTEGER,INTENT(IN) :: rank
-      INTEGER(HSIZE_T),INTENT(INOUT) :: gdims(:)
+      INTEGER(HSIZE_T),INTENT(IN) :: gdims(:)
       INTEGER(HSIZE_T),INTENT(IN) :: ldims(:)
       CHARACTER(LEN=*),INTENT(INOUT) :: path
       INTEGER(HID_T),INTENT(IN) :: mem
@@ -6495,6 +6560,7 @@ MODULE FileType_HDF5
 
       INTEGER(HID_T) :: file_id
       INTEGER(HSIZE_T) :: cdims(rank)
+      LOGICAL :: dset_exists
 
       error=0
       ! Make sure the object is initialized
@@ -6518,6 +6584,7 @@ MODULE FileType_HDF5
 
         !> Convert path here, further reducing code
         path=convertPath(path)
+
 
 !        parwrite=.FALSE.
 !#ifdef HAVE_MPI
@@ -6570,10 +6637,21 @@ MODULE FileType_HDF5
           ENDIF
         ENDIF
 
-        ! Create the dataset
-        CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
+        ! Create the dataset, if necessary
+        CALL h5lexists_f(file_id,path,dset_exists,error)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset:'//path)
+           ' - invalid group path:'//path)
+
+        IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
+           ! Open group for overwrite if it already exists and the file has overwrite status
+           CALL h5dopen_f(file_id,path,dset_id,error)
+           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+             ' - Could not open dataset:'//path)
+        ELSE
+           CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
+           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+             ' - Could not create dataset:'//path)
+        ENDIF
 
         ! Destroy the property list
         CALL h5pclose_f(plist_id,error)
@@ -6810,6 +6888,33 @@ MODULE FileType_HDF5
 #endif
 !
 !-------------------------------------------------------------------------------
+!> @brief Use to create an attribute
+#ifdef FUTILITY_HAVE_HDF5
+    SUBROUTINE createAttribute(this,obj_id,attr_name,atype_id,dspace_id,attr_id)
+       CHARACTER(LEN=*),PARAMETER :: myName='createAttribute'
+       CLASS(HDF5FileType),INTENT(INOUT) :: this
+       CHARACTER(LEN=*),INTENT(IN) :: attr_name
+       INTEGER(HID_T), INTENT(IN) :: atype_id, dspace_id, obj_id
+       INTEGER(HID_T), INTENT(OUT) :: attr_id
+       LOGICAL :: attr_exists
+
+       CALL h5aexists_f(obj_id,attr_name,attr_exists,error)
+       !Create and write to the attribute within the dataspce
+       IF(this%overwriteStat.AND.attr_exists) THEN
+         ! Open the attribute
+         CALL h5aopen_f(obj_id,attr_name,attr_id,error)
+         IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
+           ' - Unable to open attribute.')
+       ELSE
+         ! Create the attribute
+         CALL h5acreate_f(obj_id,attr_name,atype_id,dspace_id,attr_id,error)
+         IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
+           ' - Unable to create attribute.')
+       ENDIF
+   END SUBROUTINE createAttribute
+#endif
+!
+!-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and string value to a known dataset
 !>
 !> @param obj_name the relative path to the dataset
@@ -6842,8 +6947,7 @@ MODULE FileType_HDF5
        CALL h5tcopy_f(H5T_NATIVE_CHARACTER,atype_id,error)
        CALL h5tset_size_f(atype_id,attr_len,error)
 
-       !Create and write to the attribute within the dataspce
-       CALL h5acreate_f(obj_id,attr_name,atype_id,dspace_id,attr_id,error)
+       CALL createAttribute(this,obj_id,attr_name,atype_id,dspace_id,attr_id)
        CALL h5awrite_f(attr_id,atype_id,TRIM(valss),dims,error)
 
        !Close datatype opened by h5tcopy_f
@@ -6884,8 +6988,8 @@ MODULE FileType_HDF5
        CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
 
        !Create and write to the attribute within the dataspce
-       CALL h5acreate_f(obj_id,attr_name,H5T_NATIVE_INTEGER,dspace_id,&
-               attr_id,error)
+       CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_INTEGER,&
+          dspace_id,attr_id)
        CALL h5awrite_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
 
        CALL h5sclose_f(dspace_id,error)
@@ -6922,8 +7026,8 @@ MODULE FileType_HDF5
        CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
 
        !Create and write to the attribute within the dataspce
-       CALL h5acreate_f(obj_id,attr_name,H5T_NATIVE_DOUBLE,dspace_id,&
-               attr_id,error)
+       CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_DOUBLE,&
+          dspace_id,attr_id)
        CALL h5awrite_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
 
        CALL h5sclose_f(dspace_id,error)

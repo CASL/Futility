@@ -61,6 +61,7 @@ PROGRAM testHDF5
   REGISTER_SUBTEST("%fread",testHDF5FileTypeRead)
   IF(utest_nfail == 0) THEN
     REGISTER_SUBTEST("%fwrite",testHDF5FileTypeWrite)
+    REGISTER_SUBTEST("%overwrite",testHDF5FileTypeOverwrite)
     REGISTER_SUBTEST("File Compression",testCompress)
     REGISTER_SUBTEST("%isCompressed",testIsCompressed)
     REGISTER_SUBTEST("%getChunkSize",testGetChunkSize)
@@ -1106,6 +1107,560 @@ PROGRAM testHDF5
       !INQUIRE(FILE='writetest.h5',EXIST=exists)
       !ASSERT(.NOT.exists,'HDF5 object not properly deleted!')
     ENDSUBROUTINE testHDF5FileTypeWrite
+!
+!-------------------------------------------------------------------------------
+!> @brief Demonstrate that user can overwrite HDF5 file datasets
+    SUBROUTINE testHDF5FileTypeOverwrite()
+      TYPE(HDF5FileType) :: h5
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+
+      COMPONENT_TEST('%set to overwrite and overwrite data')
+      ! Open as new, write initial data, then overwrite it.
+      CALL h5%init('writetest.h5','NEW')
+      CALL h5%setOverwriteStat(.TRUE.)
+      CALL h5%fopen()
+
+      ! Write data first time
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD0',refD0)
+      CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
+      CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
+      CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
+      CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
+      CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
+      CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
+      CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
+      CALL h5%fwrite('groupR->memS0',refS0)
+      CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
+      CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
+      CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
+      CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
+      CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
+      CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
+      CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
+      CALL h5%mkdir('groupI')
+      CALL h5%fwrite('groupI->memL0',refL0)
+      CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
+      CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
+      CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
+      CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
+      CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
+      CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
+      CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
+      CALL h5%fwrite('groupI->memN0',refN0)
+      CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
+      CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
+      CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
+      CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
+      CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
+      CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
+      CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
+      CALL h5%mkdir('groupB')
+      CALL h5%fwrite('groupB->memB0',refB0)
+      CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
+      CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
+      CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
+      CALL h5%mkdir('groupCNCHAR')
+      CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1,SHAPE(refCNCHAR1))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2,SHAPE(refCNCHAR2))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3,SHAPE(refCNCHAR3))
+      CALL h5%mkdir('groupST')
+      CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
+      CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
+      CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
+      CALL h5%mkdir('groupC')
+      CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
+
+      ! Write data second time, overwriting existing
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD0',refD0)
+      CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
+      CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
+      CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
+      CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
+      CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
+      CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
+      CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
+      CALL h5%fwrite('groupR->memS0',refS0)
+      CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
+      CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
+      CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
+      CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
+      CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
+      CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
+      CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
+      CALL h5%mkdir('groupI')
+      CALL h5%fwrite('groupI->memL0',refL0)
+      CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
+      CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
+      CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
+      CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
+      CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
+      CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
+      CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
+      CALL h5%fwrite('groupI->memN0',refN0)
+      CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
+      CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
+      CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
+      CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
+      CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
+      CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
+      CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
+      CALL h5%mkdir('groupB')
+      CALL h5%fwrite('groupB->memB0',refB0)
+      CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
+      CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
+      CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
+      CALL h5%mkdir('groupCNCHAR')
+      CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1,SHAPE(refCNCHAR1))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2,SHAPE(refCNCHAR2))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3,SHAPE(refCNCHAR3))
+      CALL h5%mkdir('groupST')
+      CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
+      CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
+      CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
+      CALL h5%mkdir('groupC')
+      CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
+
+      CALL h5%fclose()
+      CALL h5%clear()
+
+      COMPONENT_TEST('%Test file opened as OVERWRITE works')
+      CALL h5%init('writetest.h5','OVERWRITE')
+      CALL h5%fopen()
+
+      ! Write data a third time, overwriting existing
+      ! No need to set status to overwrite because it was set when file was opened
+      CALL h5%mkdir('groupR')
+      CALL h5%fwrite('groupR->memD0',refD0)
+      CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
+      CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
+      CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
+      CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
+      CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
+      CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
+      CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
+      CALL h5%fwrite('groupR->memS0',refS0)
+      CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
+      CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
+      CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
+      CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
+      CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
+      CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
+      CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
+      CALL h5%mkdir('groupI')
+      CALL h5%fwrite('groupI->memL0',refL0)
+      CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
+      CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
+      CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
+      CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
+      CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
+      CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
+      CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
+      CALL h5%fwrite('groupI->memN0',refN0)
+      CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
+      CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
+      CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
+      CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
+      CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
+      CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
+      CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
+      CALL h5%mkdir('groupB')
+      CALL h5%fwrite('groupB->memB0',refB0)
+      CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
+      CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
+      CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
+      CALL h5%mkdir('groupCNCHAR')
+      CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
+      CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1,SHAPE(refCNCHAR1))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2,SHAPE(refCNCHAR2))
+      CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3,SHAPE(refCNCHAR3))
+      CALL h5%mkdir('groupST')
+      CALL h5%fwrite('groupST->memST0',refST0)
+      CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
+      CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
+      CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
+      CALL h5%mkdir('groupC')
+      CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
+
+      COMPONENT_TEST('%Test no overwrite')
+      CALL h5%setOverwriteStat(.FALSE.)
+
+      ! After setting overwrite stat back to .false., make sure each write fails.
+      CALL h5%e%setStopOnError(.FALSE.)
+      CALL h5%e%setQuietMode(.TRUE.)
+
+      ! Quiet HDF5 down 
+      CALL HDF5Quiet(.TRUE.)
+
+      CALL h5%mkdir('groupR')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
+        '- Failed to create HDF5 group.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD0',refD0)
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS0',refS0)
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%mkdir('groupI')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
+        '- Failed to create HDF5 group.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL0',refL0)
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN0',refN0)
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%mkdir('groupB')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
+        '- Failed to create HDF5 group.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupB->memB0',refB0)
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%mkdir('groupCNCHAR')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
+        '- Failed to create HDF5 group.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1,SHAPE(refCNCHAR1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2,SHAPE(refCNCHAR2))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3,SHAPE(refCNCHAR3))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%mkdir('groupST')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
+        '- Failed to create HDF5 group.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupST->memST0',refST0)
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%mkdir('groupC')
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
+        '- Failed to create HDF5 group.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      ! Turn exceptions back on for last one to make sure this function works
+      call HDF5Quiet(.FALSE.)
+
+      CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
+      msg=h5%e%getLastMessage()
+      refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
+        '- Could not close the dataset.'
+      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      CALL h5%e%initCounter()
+
+      CALL h5%fclose()
+      CALL h5%clear(.TRUE.)
+
+END SUBROUTINE
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testCompress()
