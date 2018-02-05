@@ -571,6 +571,9 @@ MODULE FileType_HDF5
 !>        'NEW' will create the file, overwriting any existing files with the
 !>        same name.  File will be given 'WRITE' status.  Use setOverwriteStat
 !>        to change the status to 'OVERWRITE'.
+!>        Note that when overwriting datasets, new datasets must be the same
+!>        type and shape as the existing one being overwritten; otherwise
+!>        an exception will be thrown.
 !> @param zlibOpt numeric option for GZIP compression [0-9] uses compression, -1
 !>        is no compression
 !>
