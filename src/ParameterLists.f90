@@ -97,6 +97,13 @@ MODULE ParameterLists
 #ifdef FUTILITY_HAVE_Trilinos
   USE ForTeuchos_ParameterList
 #endif
+#ifdef FUTILITY_HAVE_ForTrilinos
+#include "ForTrilinosTeuchos_config.hpp"
+  USE, intrinsic :: iso_c_binding
+  USE forteuchos
+#endif
+
+
 
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -496,6 +503,9 @@ MODULE ParameterLists
       PROCEDURE,PASS :: clear => clear_ParamType
 #ifdef FUTILITY_HAVE_Trilinos
       PROCEDURE,PASS :: toTeuchosPlist
+#endif
+#ifdef FUTILITY_HAVE_ForTrilinos
+      PROCEDURE,PASS :: toForTeuchosPlist
 #endif
   PROCEDURE :: procXMLTree
   ENDTYPE ParamType
@@ -928,6 +938,67 @@ MODULE ParameterLists
       ENDDO
     ENDSUBROUTINE
 #endif
+
+
+#ifdef FUTILITY_HAVE_ForTrilinos
+    RECURSIVE SUBROUTINE toForTeuchosPlist(this, that, n)
+      CLASS(ParamType),INTENT(IN) :: this
+      TYPE(ParameterList),INTENT(INOUT) :: that
+      INTEGER(SNK),INTENT(IN),OPTIONAL :: n
+      !
+      CLASS(ParamType), POINTER :: itr
+      Type(ParamType) :: nextParam
+      TYPE(ParameterList) :: new
+      INTEGER(C_INT) :: ierr
+      INTEGER(SNK) :: level
+      TYPE(StringType) :: path
+
+      nullify(itr)
+
+      level = 0
+      IF(PRESENT(n)) THEN
+        level = n
+      ENDIF
+
+      path = ''
+      CALL this%getSubParams(path, itr)
+
+      DO WHILE(ASSOCIATED(itr))
+        SELECT TYPE(itr)
+          TYPE IS(ParamType_List)
+            ! This node is its own parameter list
+            !new = ForTeuchos_PL_sublist(that, CHAR(itr%name), 0, &
+            !  "Imported from MPACT PList", ierr)
+            new = that%sublist(CHAR(itr%name))
+            nextParam = itr
+            CALL toForTeuchosPlist(nextParam, new, level+1)
+            call new%release()
+          TYPE IS(ParamType_SBK)
+            !CALL ForTeuchos_PL_set_bool(that, CHAR(itr%name), itr%val,&
+            !  CHAR(itr%description), ierr)
+            CALL that%set(CHAR(itr%name), LOGICAL(itr%val,C_BOOL))
+          TYPE IS(ParamType_SDK)
+            !CALL ForTeuchos_PL_set_double(that, CHAR(itr%name), itr%val,&
+            !  CHAR(itr%description), ierr)
+            CALL that%set(CHAR(itr%name), itr%val)
+          TYPE IS(ParamType_SNK)
+            !CALL ForTeuchos_PL_set_int(that, CHAR(itr%name), itr%val,&
+            !  CHAR(itr%description), ierr)
+            CALL that%set(CHAR(itr%name), itr%val)
+          TYPE IS(ParamType_STR)
+            !CALL ForTeuchos_PL_set_string(that, CHAR(itr%name), CHAR(itr%val),&
+            !  CHAR(itr%description), ierr)
+            CALL that%set(CHAR(itr%name), CHAR(itr%val))
+          CLASS DEFAULT
+            CALL eParams%raiseError(&
+              "Unsupported PARAMETER TYPE for Teuchos conversion.")
+        ENDSELECT
+        CALL this%getSubParams(path, itr)
+      ENDDO
+    ENDSUBROUTINE
+#endif
+
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the assignment operation two @c ParamType objects.

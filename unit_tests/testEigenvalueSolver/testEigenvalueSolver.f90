@@ -77,6 +77,9 @@ PROGRAM testEigenvalueSolver
     DEALLOCATE(B)
   ENDIF 
   DEALLOCATE(testEVS)
+
+
+
   ALLOCATE(EigenvalueSolverType_Anasazi :: testEVS)
   CALL optList%set('EigenvalueSolverType->solver',GD)
   CALL optList%set('EigenvalueSolverType->n',30_SIK)
@@ -89,6 +92,35 @@ PROGRAM testEigenvalueSolver
   REGISTER_SUBTEST('testSolveAnasazi',testSolveAnasazi)
   !REGISTER_SUBTEST('testGetResidAnasazi',testGetResidAnasazi)
   REGISTER_SUBTEST('testClearAnasazi',testClearAnasazi)
+#endif
+
+
+  IF(ASSOCIATED(A)) THEN
+    IF(A%isInit) THEN
+      CALL A%clear()
+    ENDIF
+    DEALLOCATE(A)
+  ENDIF
+  IF(ASSOCIATED(B)) THEN
+    IF(B%isInit) THEN
+      CALL B%clear()
+    ENDIF
+    DEALLOCATE(B)
+  ENDIF 
+  DEALLOCATE(testEVS)
+
+  ALLOCATE(EigenvalueSolverType_ForAnasazi :: testEVS)
+  CALL optList%set('EigenvalueSolverType->solver',GD)
+  CALL optList%set('EigenvalueSolverType->n',30_SIK)
+  CALL optList%set('EigenvalueSolverType->nlocal',30_SIK)
+#ifdef FUTILITY_HAVE_ForTrilinos
+  REGISTER_SUBTEST('testInitForAnasazi',testInitForAnasazi)
+  REGISTER_SUBTEST('testSetMatAnasazi',testSetMatForAnasazi)
+  REGISTER_SUBTEST('testSetX0Anasazi',testSetX0ForAnasazi)
+  !REGISTER_SUBTEST('testSetConvAnasazi',testSetConvForAnasazi)
+  !REGISTER_SUBTEST('testSolveAnasazi',testSolveForAnasazi)
+  !REGISTER_SUBTEST('testGetResidAnasazi',testGetResidAnasazi)
+  REGISTER_SUBTEST('testClearForAnasazi',testClearForAnasazi)
 #endif
   FINALIZE_TEST()
 
@@ -108,10 +140,9 @@ PROGRAM testEigenvalueSolver
     DEALLOCATE(B)
   ENDIF 
   DEALLOCATE(testEVS)
-
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
-#else
+!#else
   CALL mpiTestEnv%finalize()
 #endif
 !
@@ -266,6 +297,27 @@ CONTAINS
 #endif
       ENDSELECT
     ENDSUBROUTINE testInitAnasazi
+
+!-------------------------------------------------------------------------------
+!
+    SUBROUTINE testInitForAnasazi()
+      CALL testEVS%init(mpiTestEnv,optList)
+      ASSERT(testEVS%isInit,'%isInit')
+      ASSERT(testEVS%n==30,'%n')
+      ASSERT(testEVS%maxit==2,'%maxit')
+      ASSERT(testEVS%tol==1.0E-8_SRK,'%tol')
+      ASSERT(testEVS%SolverMethod==GD,'%SolverMethod')
+      ASSERT(testEVS%TPLType==Anasazi,'%SolverMethod')
+      ASSERT(ASSOCIATED(testEVS%MPIparallelEnv),'%MPIenv')
+      ASSERT(testEVS%X%isInit ,'%x')
+      SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_ForAnasazi)
+#ifdef FUTILITY_HAVE_ForTrilinos
+        ASSERT(testEVS%x_scale%isInit,'%x_scale')
+#endif
+      ENDSELECT
+    ENDSUBROUTINE testInitForAnasazi
+!
+    
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testClearAnasazi()
@@ -288,6 +340,30 @@ CONTAINS
       ENDSELECT
     ENDSUBROUTINE testClearAnasazi
 !
+
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testClearForAnasazi()
+      CALL testEVS%clear()
+      ASSERT(testEVS%solverMethod==-1,'%solverMethod')
+      ASSERT(testEVS%TPLType==-1,'%TPLType')
+      ASSERT(.NOT. ASSOCIATED(testEVS%MPIparallelEnv),'%MPIenv')
+      ASSERT(.NOT. testEVS%OMPparallelEnv%isInit(),'%OMPenv')
+      ASSERT(testEVS%n==-1,'%n')
+      ASSERT(testEVS%maxit==-1,'%maxit')
+      ASSERT(testEVS%tol==0.0_SRK,'%tol')
+      ASSERT(testEVS%k==0.0_SRK,'%k')
+      ASSERT(.NOT. ASSOCIATED(testEVS%A),'%A')
+      ASSERT(.NOT. ASSOCIATED(testEVS%B),'%B')
+      ASSERT(.NOT. (testEVS%X%isInit) ,'%x')
+      SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_ForAnasazi)
+#ifdef FUTILITY_HAVE_ForTrilinos
+        ASSERT(.NOT. testEVS%x_scale%isInit,'%x_scale')
+#endif
+      ENDSELECT
+    ENDSUBROUTINE testClearForAnasazi
+!
+
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetMatAnasazi()
       INTEGER(SIK) :: i
@@ -323,6 +399,41 @@ CONTAINS
       ASSERT(testEVS%B%isInit,'B%isInit')
 
     ENDSUBROUTINE testSetMatAnasazi
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSetMatForAnasazi()
+      INTEGER(SIK) :: i
+      CALL plist%clear()
+      CALL plist%add('MatrixType->n',30_SIK)
+      CALL plist%add('MatrixType->nlocal',30_SIK)
+      CALL plist%add('MatrixType->isSym',.FALSE.)
+      CALL plist%add('MatrixType->matType',0_SIK)
+      CALL plist%add('MatrixType->engine',VM_TRILINOS)
+      CALL plist%add('MatrixType->MPI_COMM_ID',testEVS%MPIparallelEnv%comm)
+
+      CALL DistributedMatrixFactory(A,plist)
+      CALL DistributedMatrixFactory(B,plist)
+
+      CALL B%set(1,1,0.1208_SRK)
+      CALL B%set(2,1,-0.117_SRK)
+      CALL B%set(2,2,0.184_SRK)
+      CALL A%set(1,1,0.0015_SRK)
+      CALL A%set(1,2,0.325_SRK)
+      !Adding rows 3-30 because minimum subspace is set to 25 and Anasazi doesn't
+      ! like having a subspace bigger than problem size.  Adding diagonal entries
+      ! into B but since A is all 0 for rows 3-30, there is no source so the flux
+      ! is 0 thus having no impact on the solution
+      DO i=3,30
+        CALL B%set(i,i,0.1_SRK)
+      ENDDO
+
+      CALL testEVS%setMat(A,B)
+
+      ASSERT(ASSOCIATED(testEVS%A),'%setMat A')
+      ASSERT(ASSOCIATED(testEVS%B),'%setMat B')
+      ASSERT(testEVS%A%isInit,'A%isInit')
+      ASSERT(testEVS%B%isInit,'B%isInit')
+
+    ENDSUBROUTINE testSetMatForAnasazi
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSolveAnasazi()
@@ -372,6 +483,32 @@ CONTAINS
       CALL x%clear()
 #endif
 ENDSUBROUTINE testSetX0Anasazi
+
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSetX0ForAnasazi()
+#ifdef FUTILITY_HAVE_ForTrilinos
+      TYPE(TrilinosVectorType) :: x
+      REAL(SRK) :: tmp(30)
+      INTEGER(SIK) :: i
+      CALL plist%clear()
+      CALL plist%add('VectorType->n',30_SIK)
+      CALL plist%add('VectorType->nlocal',30_SIK)
+      CALL plist%add('VectorType->MPI_COMM_ID',testEVS%MPIparallelEnv%comm)
+      CALL x%init(plist)
+      CALL x%set(1.5_SRK)
+      CALL x%assemble()
+
+      CALL testEVS%setX0(x)
+
+      DO i=1,30
+        CALL testEVS%x%get(i,tmp(i))
+        ASSERT(tmp(i)==1.5_SRK,'%x(i)')
+        FINFO() i,tmp(i)
+      ENDDO
+
+      CALL x%clear()
+#endif
+ENDSUBROUTINE testSetX0ForAnasazi
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetConvAnasazi()
