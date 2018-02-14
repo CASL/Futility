@@ -557,8 +557,17 @@ MODULE LinearSolverTypes_Multigrid
       IF(.NOT. ASSOCIATED(solver%interpMats_PETSc)) &
         CALL eLinearSolverType%raiseError(modName//'::'//myName// &
           ' - Cannot setup without interpolation operators!')
+
+      num_smooth=-1
+      IF(Params%has('LinearSolverType->Multigrid->num_smooth')) THEN
+        CALL Params%get('LinearSolverType->Multigrid->num_smooth',num_smooth)
+      ENDIF
       DO iLevel=solver%nLevels-1,1,-1
-        CALL solver%setSmoother(smootherMethod_list(iLevel+1),iLevel)
+        IF(num_smooth > 0) THEN
+          CALL solver%setSmoother(smootherMethod_list(iLevel+1),iLevel,num_smooth)
+        ELSE
+          CALL solver%setSmoother(smootherMethod_list(iLevel+1),iLevel)
+        ENDIF
 
         !Set the interpolation operator:
         CALL solver%interpMats_PETSc(iLevel)%assemble()
@@ -633,11 +642,12 @@ MODULE LinearSolverTypes_Multigrid
 !> @param smoother The type to set the smoother to
 !> @param iLevel level index, in PETSc notation where 0=coarsest
 !>
-    SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel)
+    SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smooth)
       CHARACTER(LEN=*),PARAMETER :: myName='setSmoother_LinearSolverType_Multigrid'
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(IN) :: smoother
       INTEGER(SIK),INTENT(IN),OPTIONAL :: iLevel
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: num_smooth
       INTEGER(SIK) :: i,istt,istp
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -712,6 +722,10 @@ MODULE LinearSolverTypes_Multigrid
           CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
             "Unrecognized smoother option!")
         ENDIF
+
+        IF(PRESENT(num_smooth)) &
+          CALL KSPSetTolerances(ksp_temp,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL, &
+                                PETSC_DEFAULT_REAL,num_smooth,iperr)
 
         !On all levels except the finest, the initial guess should be zero
         !  since it is an error equation.
