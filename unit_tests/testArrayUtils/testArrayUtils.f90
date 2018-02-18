@@ -334,6 +334,15 @@ PROGRAM testArrayUtils
       ASSERT(findIndex(tmprealarray,0.0_SRK,.TRUE.,INCL=1) == 1,'index == 1')
       ASSERT(findIndex(tmprealarray,0.0_SRK,.TRUE.,INCL=2) == 2,'index == 2')
       ASSERT(findIndex(tmprealarray,65.0_SRK,.TRUE.,INCL=2) == -2,'index == -2')
+
+      COMPONENT_TEST('boundCheck 1-D Reals')
+      ASSERT(boundCheck(tmprealarray,3),'in bounds not-allocatable')
+      ASSERT(.NOT.boundCheck(tmprealarray,13),'out of bounds not-allocatable')
+      IF(ALLOCATED(tmpr)) DEALLOCATE(tmpr)
+      ALLOCATE(tmpr(-5:10))
+      ASSERT(boundCheck(tmpr,-3),'in bounds allocatable')
+      ASSERT(.NOT.boundCheck(tmpr,-8),'out of bounds allocatable')
+      DEALLOCATE(tmpr)
     ENDSUBROUTINE test1DReals
 !
 !-------------------------------------------------------------------------------
@@ -414,6 +423,14 @@ PROGRAM testArrayUtils
       bool=ALL(tmpi == (/0,2,5,20,25,40,100/))
       ASSERT(bool,'getUnique, 3 duplicates')
 
+      COMPONENT_TEST('boundCheck 1-D Ints')
+      ASSERT(boundCheck(tmpintarray,3),'in bounds not-allocatable')
+      ASSERT(.NOT.boundCheck(tmpintarray,13),'out of bounds not-allocatable')
+      IF(ALLOCATED(tmpi)) DEALLOCATE(tmpi)
+      ALLOCATE(tmpi(-8:-2))
+      ASSERT(boundCheck(tmpi,-2),'in bounds allocatable')
+      ASSERT(.NOT.boundCheck(tmpi,1),'out of bounds allocatable')
+      DEALLOCATE(tmpi)
     ENDSUBROUTINE test1DInts
 !
 !-------------------------------------------------------------------------------
@@ -466,6 +483,15 @@ PROGRAM testArrayUtils
         tmps1(3) == 'four' .AND.  tmps1(4) == 'six' .AND. &
         tmps1(5) == 'seven' .AND. tmps1(6) == 'eight' .AND. tmps1(7) == 'nine'
       ASSERT(bool,'3 duplicates unique array')
+
+      COMPONENT_TEST('boundCheck 1-D StringType')
+      ASSERT(boundCheck(tmpstr1a,3),'in bounds not-allocatable')
+      ASSERT(.NOT.boundCheck(tmpstr1a,13),'out of bounds not-allocatable')
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
+      ALLOCATE(tmps1(5:10))
+      ASSERT(boundCheck(tmps1,7),'in bounds allocatable')
+      ASSERT(.NOT.boundCheck(tmps1,2),'out of bounds allocatable')
+      DEALLOCATE(tmps1)
     ENDSUBROUTINE test1DStrings
 !
 !-------------------------------------------------------------------------------
