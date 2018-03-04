@@ -986,7 +986,7 @@ MODULE ArrayUtils
       LOGICAL(SBK) :: res
 
       res=.FALSE.
-      IF(LBOUND(array,DIM=1) <= idx.AND.idx <= UBOUND(array,DIM=1)) res=.TRUE.
+      IF(LBOUND(array,DIM=1) <= idx .AND. idx <= UBOUND(array,DIM=1)) res=.TRUE.
     ENDFUNCTION boundCheck
 !
 ENDMODULE ArrayUtils
