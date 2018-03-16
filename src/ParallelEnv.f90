@@ -241,6 +241,23 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::finalize_MPI_Env_type
       !> @copydetails  ParallelEnv::finalize_MPI_Env_type
       PROCEDURE,NOPASS :: finalize => finalize_MPI_Env_type
+      !> @copybrief ParallelEnv::scanSum_SIK0_MPI_Env_type
+      !> @copydetails ParallelEnv::scanSum_SIK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: scanSum_SIK0_MPI_Env_type
+      !> @copybrief ParallelEnv::scanSum_SIK_MPI_Env_type
+      !> @copydetails ParallelEnv::scanSum_SIK_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: scanSum_SIK_MPI_Env_type
+      !> @copybrief ParallelEnv::scanSum_SRK0_MPI_Env_type
+      !> @copydetails ParallelEnv::scanSum_SRK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: scanSum_SRK0_MPI_Env_type
+      !> @copybrief ParallelEnv::scanSum_SRK_MPI_Env_type
+      !> @copydetails ParallelEnv::scanSum_SRK_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: scanSum_SRK_MPI_Env_type
+      !>
+      GENERIC :: scanSum => scanSum_SIK0_MPI_Env_type, &
+                            scanSum_SIK_MPI_Env_type, &
+                            scanSum_SRK0_MPI_Env_type, &
+                            scanSum_SRK_MPI_Env_type
   ENDTYPE MPI_EnvType
 
   !> Type describes basic information about OpenMP environment
@@ -1260,6 +1277,98 @@ MODULE ParallelEnv
       ENDIF
 #endif
     ENDSUBROUTINE trueForAny_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_scan on MPI_INTEGER data for operation MPI_SUM
+!> @param myPE the MPI parallel environment
+!> @param buffer_in the input buffer
+!> @param buffer_out the output buffer
+!> @param n the size of the input and output buffers
+!>
+    SUBROUTINE scanSum_SIK0_MPI_Env_type(myPE,n,buffer_in,buffer_out)
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: buffer_in
+      INTEGER(SIK),INTENT(OUT) :: buffer_out
+      !
+      INTEGER(SIK) :: buf_in(1),buf_out(1)
+
+      REQUIRE(myPE%initstat)
+
+      buf_in(1)=buffer_in
+      CALL myPE%scanSum_SIK_MPI_Env_type(1,buf_in,buf_out)
+      buffer_out=buf_out(1)
+
+    ENDSUBROUTINE scanSum_SIK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_scan on MPI_INTEGER data for operation MPI_SUM
+!> @param myPE the MPI parallel environment
+!> @param buffer_in the input buffer
+!> @param buffer_out the output buffer
+!> @param n the size of the input and output buffers
+!>
+    SUBROUTINE scanSum_SIK_MPI_Env_type(myPE,n,buffer_in,buffer_out)
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: buffer_in(*)
+      INTEGER(SIK),INTENT(OUT) :: buffer_out(*)
+
+      REQUIRE(myPE%initstat)
+
+#ifdef HAVE_MPI
+      CALL MPI_scan(buffer_in,buffer_out,n,MPI_INTEGER,MPI_SUM,myPE%comm,mpierr)
+#else
+      buffer_out(1:n)=buffer_in(1:n)
+#endif
+
+    ENDSUBROUTINE scanSum_SIK_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_scan on MPI_REAL data for operation MPI_SUM
+!> @param myPE the MPI parallel environment
+!> @param buffer_in the input buffer
+!> @param buffer_out the output buffer
+!> @param n the size of the input and output buffers
+!>
+    SUBROUTINE scanSum_SRK0_MPI_Env_type(myPE,n,buffer_in,buffer_out)
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(IN) :: buffer_in
+      REAL(SRK),INTENT(OUT) :: buffer_out
+      !
+      REAL(SRK) :: buf_in(1),buf_out(1)
+
+      REQUIRE(myPE%initstat)
+
+      buf_in(1)=buffer_in
+      CALL myPE%scanSum_SRK_MPI_Env_type(1,buf_in,buf_out)
+      buffer_out=buf_out(1)
+
+    ENDSUBROUTINE scanSum_SRK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_scan on MPI_REAL data for operation MPI_SUM
+!> @param myPE the MPI parallel environment
+!> @param buffer_in the input buffer
+!> @param buffer_out the output buffer
+!> @param n the size of the input and output buffers
+!>
+    SUBROUTINE scanSum_SRK_MPI_Env_type(myPE,n,buffer_in,buffer_out)
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      REAL(SRK),INTENT(IN) :: buffer_in(*)
+      REAL(SRK),INTENT(OUT) :: buffer_out(*)
+
+      REQUIRE(myPE%initstat)
+
+#ifdef HAVE_MPI
+      CALL MPI_scan(buffer_in,buffer_out,n,MPI_REAL,MPI_SUM,myPE%comm,mpierr)
+#else
+      buffer_out(1:n)=buffer_in(1:n)
+#endif
+
+    ENDSUBROUTINE scanSum_SRK_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Finalize
