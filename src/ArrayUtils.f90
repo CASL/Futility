@@ -982,9 +982,7 @@ MODULE ArrayUtils
     PURE FUNCTION boundCheck(array,idx) RESULT(res)
       CLASS(*),INTENT(IN) :: array(:)
       INTEGER(SIK),INTENT(IN) :: idx
-      !
       LOGICAL(SBK) :: res
-
       res=.FALSE.
       IF(LBOUND(array,DIM=1) <= idx .AND. idx <= UBOUND(array,DIM=1)) res=.TRUE.
     ENDFUNCTION boundCheck
