@@ -31,6 +31,7 @@ MODULE ArrayUtils
   PUBLIC :: findNUnique
   PUBLIC :: getUnion
   PUBLIC :: findIndex
+  PUBLIC :: boundCheck
   !PUBLIC :: findIntersection
   !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
   !to see if the 1-D array exists in the 2-D array...
@@ -970,5 +971,20 @@ MODULE ArrayUtils
         val=tmp(ind)
       ENDIF
     ENDFUNCTION findUpBound_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief This function checks if an index is within the allocated domain of a
+!>        1D array of unspecified type. Currently can only be used for 1D arrays
+!>        until assumed-shape polymorphic arrays are supported.
+!> @param array the 1D array to be checked
+!> @param idx the index to check
+!>
+    PURE FUNCTION boundCheck(array,idx) RESULT(res)
+      CLASS(*),INTENT(IN) :: array(:)
+      INTEGER(SIK),INTENT(IN) :: idx
+      LOGICAL(SBK) :: res
+      res=.FALSE.
+      IF(LBOUND(array,DIM=1) <= idx .AND. idx <= UBOUND(array,DIM=1)) res=.TRUE.
+    ENDFUNCTION boundCheck
 !
 ENDMODULE ArrayUtils
