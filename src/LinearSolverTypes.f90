@@ -244,6 +244,9 @@ MODULE LinearSolverTypes
       !> @copybrief LinearSolverTypes::setConv_LinearSolverType_Iterative
       !> @copydetails LinearSolverTypes::setConv_LinearSolverType_Iterative
       PROCEDURE,PASS :: setConv => setConv_LinearSolverType_Iterative
+      !> @copybrief LinearSolverTypes::setConvPETSc
+      !> @copydetails LinearSolverTypes::setConvPETSc
+      PROCEDURE,PASS :: setConvPETSc
       !> @copybrief LinearSolverTypes::setX0_LinearSolverType_Iterative
       !> @copydetails LinearSolverTypes::setX0_LinearSolverType_Iterative
       PROCEDURE,PASS :: setX0 => setX0_LinearSolverType_Iterative
@@ -1268,12 +1271,7 @@ MODULE LinearSolverTypes
       PetscErrorCode  :: ierr
       PetscInt  :: maxits,nrst
       PetscReal :: rtol,abstol
-!Because PETSC doesn't like backwards compatability
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-      PetscReal :: dtol=PETSC_DEFAULT_REAL
-#else
-      PetscReal :: dtol=PETSC_DEFAULT_DOUBLE_PRECISION
-#endif
+      PetscReal :: dtol=1E30_SRK
 #endif
 
       INTEGER(SIK) :: normType,maxIters,nRestart
@@ -1346,6 +1344,105 @@ MODULE LinearSolverTypes
         ENDIF
       ENDIF
     ENDSUBROUTINE setConv_LinearSolverType_Iterative
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the convergence criteria for PETSc iterative solvers
+!> @param solver The linear solver to act on
+!> @param normType An integer representing the convergence check norm
+!> @param rTol Relative convergence criteria
+!> @param absTol Absolute convergence criteria
+!> @param dTol Divergence criteria
+!> @param maxIters The maximum number of iterations to perform
+!> @param nRestart The number of iterations before GMRES restarts
+!>
+!> This subroutine sets the convergence criterion for the iterative solver.
+!>
+    SUBROUTINE setConvPETSc(solver,normType_in,rTol_in,maxIters_in,nRestart_in, &
+                                   absTol_in,dTol_in)
+      CHARACTER(LEN=*),PARAMETER :: myName='setConv_LinearSolverType_Iterative'
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      INTEGER(SIK),INTENT(IN) :: normType_in
+      REAL(SRK),INTENT(IN) :: rTol_in
+      INTEGER(SIK),INTENT(IN) :: maxIters_in
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
+      REAL(SRK),INTENT(IN),OPTIONAL :: absTol_in,dTol_in
+#ifdef FUTILITY_HAVE_PETSC
+      PetscErrorCode  :: ierr
+      PetscInt  :: maxits,nrst
+      PetscReal :: rtol,dtol,abstol
+
+      INTEGER(SIK) :: normType,maxIters,nRestart
+
+      !Input check
+      normType=normType_in
+      rtol=rTol_in
+      IF(PRESENT(dTol_in)) THEN
+        dtol=dTol_in
+      ELSE
+        dtol=1E30_SRK
+      ENDIF
+      maxIters=maxIters_in
+      IF(PRESENT(nRestart_in)) nRestart=nRestart_in
+      IF(normType <= -2) THEN
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
+          myName//' - Incorrect input, normType should not be less '// &
+            'than -1. Default value is used!')
+        normType=2
+      ENDIF
+      IF(rtol < 0._SRK .OR. rtol >= 1._SRK) THEN
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
+          myName//' - Incorrect input, rtol should be in '// &
+            'the range of (0, 1). Default value is used!')
+        rtol=0.001_SRK
+      ENDIF
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
+      abstol=PETSC_DEFAULT_REAL
+#else
+      abstol=PETSC_DEFAULT_DOUBLE_PRECISION
+#endif
+      IF(PRESENT(absTol_in)) THEN
+        IF(absTol_in < 0._SRK .OR. absTol_in >= 1._SRK) THEN
+          CALL eLinearSolverType%raiseDebug(modName//'::'// &
+            myName//' - Incorrect input, absTol_in should be in '// &
+              'the range of (0, 1). Default value is used!')
+        ELSE
+          abstol=absTol_in
+        ENDIF
+      ENDIF
+      IF(maxIters <= 1) THEN
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
+          myName//' - Incorrect input, maxIters should not be less '// &
+            'than or equal to 1. Default value is used!')
+        maxIters=1000
+      ENDIF
+      IF(nRestart <= 1 .OR. .NOT.PRESENT(nRestart_in)) THEN
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
+          myName//' - Incorrect input, nRestart should not be less '// &
+            'than or equal to 1. Default value is used!')
+        nRestart=30
+      ENDIF
+      IF(solver%isInit) THEN
+        solver%normType=normType
+        solver%relConvTol=rtol
+        solver%absConvTol=rtol
+        solver%maxIters=maxIters
+        solver%nRestart=nRestart
+
+        IF(solver%TPLType == PETSC) THEN
+          maxits=maxIters
+          nrst=nRestart
+          CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
+          IF(PRESENT(nRestart_in)) CALL KSPGMRESSetRestart(solver%ksp,nrst,ierr)
+        ELSE
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+             modName//'::'//myName//' - TPL type is not PETSc.')
+        ENDIF
+      ENDIF
+#else
+      CALL eLinearSolverType%raiseError('Incorrect call to '// &
+         modName//'::'//myName//' - PETSc not enabled.')
+#endif
+    ENDSUBROUTINE setConvPETSc
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the residual for the iterative solver
