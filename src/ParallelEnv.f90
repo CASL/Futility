@@ -174,6 +174,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::bcast_SSK1_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SSK1_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SSK1_MPI_Env_type
+      !> @copybrief ParallelEnv::bcast_SSK0_MPI_Env_type
+      !> @copydetails ParallelEnv::bcast_SSK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: bcast_SSK0_MPI_Env_type
       !> @copybrief ParallelEnv::bcast_SSK2_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SSK2_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SSK2_MPI_Env_type
@@ -183,6 +186,9 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::bcast_SSK4_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SSK4_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SSK4_MPI_Env_type
+      !> @copybrief ParallelEnv::bcast_SDK0_MPI_Env_type
+      !> @copydetails ParallelEnv::bcast_SDK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: bcast_SDK0_MPI_Env_type
       !> @copybrief ParallelEnv::bcast_SDK1_MPI_Env_type
       !> @copydetails ParallelEnv::bcast_SDK1_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: bcast_SDK1_MPI_Env_type
@@ -200,10 +206,12 @@ MODULE ParallelEnv
                           bcast_SNK1_MPI_Env_type, &
                           bcast_SLK0_MPI_Env_type, &
                           bcast_SLK1_MPI_Env_type, &
+                          bcast_SSK0_MPI_Env_type, &
                           bcast_SSK1_MPI_Env_type, &
                           bcast_SSK2_MPI_Env_type, &
                           bcast_SSK3_MPI_Env_type, &
                           bcast_SSK4_MPI_Env_type, &
+                          bcast_SDK0_MPI_Env_type, &
                           bcast_SDK1_MPI_Env_type, &
                           bcast_SDK2_MPI_Env_type, &
                           bcast_SDK3_MPI_Env_type, &
@@ -314,7 +322,9 @@ MODULE ParallelEnv
   !> Private scratch variable for the mpierr
   INTEGER(SIK) :: mpierr
 
+#ifndef HAVE_MPI
   INTEGER(SIK),SAVE :: MAX_PE_COMM_ID=1
+#endif
 
   !> Module name
   CHARACTER(LEN=*),PARAMETER :: modName='PARALLELENV'
@@ -809,6 +819,23 @@ MODULE ParallelEnv
 !
 !-------------------------------------------------------------------------------
 !> @brief
+    SUBROUTINE bcast_SSK0_MPI_Env_type(myPE,buf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK0_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      REAL(SSK),INTENT(IN) :: buf
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
+#ifdef HAVE_MPI
+      CALL MPI_Bcast(buf,1,MPI_REAL4,rank,myPE%comm,mpierr)
+#endif
+    ENDSUBROUTINE bcast_SsK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief
     SUBROUTINE bcast_SSK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -840,6 +867,23 @@ MODULE ParallelEnv
       CALL MPI_Bcast(buf,SIZE(buf),MPI_REAL4,rank,myPE%comm,mpierr)
 #endif
     ENDSUBROUTINE bcast_SSK2_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief
+    SUBROUTINE bcast_SDK0_MPI_Env_type(myPE,buf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK0_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      REAL(SDK),INTENT(IN) :: buf
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank
+      rank=0
+      IF(PRESENT(root)) rank=root
+      REQUIRE(rank >= 0)
+      REQUIRE(rank < myPE%nproc)
+#ifdef HAVE_MPI
+      CALL MPI_Bcast(buf,1,MPI_REAL8,rank,myPE%comm,mpierr)
+#endif
+    ENDSUBROUTINE bcast_SDK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief
