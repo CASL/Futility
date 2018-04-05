@@ -750,7 +750,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE scatter_SLK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for scalar short integer
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SNK0_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SNK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -767,7 +773,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SNK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-1 short integer
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SNK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SNK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -784,7 +796,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SNK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for scalar long integer
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SLK0_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SLK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -801,7 +819,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-1 long integer
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SLK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SLK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -818,7 +842,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SLK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for scalar single precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SSK0_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -832,10 +862,16 @@ MODULE ParallelEnv
 #ifdef HAVE_MPI
       CALL MPI_Bcast(buf,1,MPI_REAL4,rank,myPE%comm,mpierr)
 #endif
-    ENDSUBROUTINE bcast_SsK0_MPI_Env_type
+    ENDSUBROUTINE bcast_SSK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-1 single precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SSK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -852,7 +888,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SSK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-2 single precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SSK2_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK2_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -869,7 +911,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SSK2_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for scalar double precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SDK0_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -886,7 +934,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SDK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-1 double precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SDK1_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -903,7 +957,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SDK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-2 double precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SDK2_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK2_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -920,7 +980,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SDK2_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-3 single precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SSK3_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK3_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -937,7 +1003,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SSK3_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-3 double precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SDK3_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK3_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -954,7 +1026,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SDK3_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-4 single precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SSK4_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK4_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -971,7 +1049,13 @@ MODULE ParallelEnv
     ENDSUBROUTINE bcast_SSK4_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Performs broadcast for rank-4 double precision real
+!> @param myPE the MPI_EnvType
+!> @param buf the data to be broadcast
+!> @param root the rank of the source process; optional
+!>
+!> If @c root is not present, it default to 0 (master).
+!>
     SUBROUTINE bcast_SDK4_MPI_Env_type(myPE,buf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK4_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
