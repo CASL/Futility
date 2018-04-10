@@ -32,7 +32,7 @@
 !> @author Benjamin Collins
 !>    @date 09/19/2017
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE DBC
+MODULE Futility_DBC
   USE ISO_FORTRAN_ENV
   IMPLICIT NONE
 
@@ -77,4 +77,4 @@ MODULE DBC
     STOP 2
   ENDSUBROUTINE DBC_FAIL
 !
-ENDMODULE DBC
+ENDMODULE Futility_DBC
