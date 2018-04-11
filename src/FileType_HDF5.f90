@@ -62,8 +62,8 @@
 !>  - Make sure routines are safe (check for initialized object, etc.)
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_HDF5
-#include "DBC.h"
-  USE DBC
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE ISO_FORTRAN_ENV
   USE ISO_C_BINDING
 #ifdef FUTILITY_HAVE_HDF5

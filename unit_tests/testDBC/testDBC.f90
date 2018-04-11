@@ -7,8 +7,8 @@
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testDBC
-#include "DBC.h"
-  USE DBC
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   IMPLICIT NONE
   CHARACTER(LEN=*),PARAMETER :: modName="testDBC"

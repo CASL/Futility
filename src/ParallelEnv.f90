@@ -25,8 +25,8 @@
 !>  - initialization/clear routines for ParallelEnvType
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParallelEnv
-#include "DBC.h"
-  USE DBC
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE ExceptionHandler
   USE BLAS
