@@ -966,8 +966,6 @@ MODULE ParameterLists
       DO WHILE(ASSOCIATED(itr))
        SELECT TYPE(itr)
           TYPE IS(ParamType_List)
-            write(*,*) "List: ",CHAR(itr%name)
- 
             ! This node is its own parameter list
             !new = ForTeuchos_PL_sublist(that, CHAR(itr%name), 0, &
             !  "Imported from MPACT PList", ierr)
@@ -982,17 +980,14 @@ MODULE ParameterLists
           TYPE IS(ParamType_SDK)
             !CALL ForTeuchos_PL_set_double(that, CHAR(itr%name), itr%val,&
             !  CHAR(itr%description), ierr)
-            write(*,*) "Real: ",CHAR(itr%name)
             CALL that%set(CHAR(itr%name), itr%val)
           TYPE IS(ParamType_SNK)
             !CALL ForTeuchos_PL_set_int(that, CHAR(itr%name), itr%val,&
             !  CHAR(itr%description), ierr)
-            write(*,*) "Int: ",CHAR(itr%name)
             CALL that%set(CHAR(itr%name), itr%val)
           TYPE IS(ParamType_STR)
             !CALL ForTeuchos_PL_set_string(that, CHAR(itr%name), CHAR(itr%val),&
             !  CHAR(itr%description), ierr)
-            write(*,*) "String: ",CHAR(itr%name)
             CALL that%set(CHAR(itr%name), CHAR(itr%val))
           CLASS DEFAULT
             CALL eParams%raiseError(&

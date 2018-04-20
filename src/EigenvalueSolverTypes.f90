@@ -735,7 +735,7 @@ MODULE EigenvalueSolverTypes
         ! create the solver handle
         solver%eig = TrilinosEigenSolver()
         CALL solver%eig%init(solver%Tcomm)
-        call solver%TplAnasazi%print()
+        ! call solver%TplAnasazi%print()
         ! setup the solver
         !CALL solver%eig%setup_solver(plAnasazi)
         !Need to set PC type
