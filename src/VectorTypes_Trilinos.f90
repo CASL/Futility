@@ -132,12 +132,12 @@ MODULE VectorTypes_Trilinos
           thisVector%nlocal=nlocal
           IF(.NOT.thisVector%isCreated) THEN
 #ifdef HAVE_MPI
-            thisVector%Tcomm = create_TeuchosComm(MPI_Comm_ID)
+            thisVector%Tcomm = TeuchosComm(MPI_Comm_ID)
 #else
-            thisVector%Tcomm = create_TeuchosComm()
+            thisVector%Tcomm = TeuchosComm()
 #endif
-            thisVector%map = create_TpetraMap(INT(n,C_LONG),INT(nlocal,C_LONG),thisVector%Tcomm)
-            thisVector%b = create_TpetraMultiVector(thisVector%map,1_C_LONG)
+            thisVector%map = TpetraMap(INT(n,C_LONG),INT(nlocal,C_LONG),thisVector%Tcomm)
+            thisVector%b = TpetraMultiVector(thisVector%map,1_C_LONG)
             thisVector%isCreated=.TRUE.
           ENDIF
         ENDIF

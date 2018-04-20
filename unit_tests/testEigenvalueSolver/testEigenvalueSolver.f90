@@ -17,6 +17,10 @@ PROGRAM testEigenvalueSolver
   USE MatrixTypes
   USE EigenvalueSolverTypes
 
+#ifdef FUTILITY_HAVE_ForTrilinos
+  USE fortpetra
+#endif
+
   IMPLICIT NONE
 
   TYPE(ExceptionHandlerType),TARGET :: e
@@ -110,15 +114,15 @@ PROGRAM testEigenvalueSolver
   DEALLOCATE(testEVS)
 
   ALLOCATE(EigenvalueSolverType_ForAnasazi :: testEVS)
-  CALL optList%set('EigenvalueSolverType->solver',GD)
-  CALL optList%set('EigenvalueSolverType->n',30_SIK)
-  CALL optList%set('EigenvalueSolverType->nlocal',30_SIK)
+!  CALL optList%set('EigenvalueSolverType->solver',GD)
+!  CALL optList%set('EigenvalueSolverType->n',30_SIK)
+!  CALL optList%set('EigenvalueSolverType->nlocal',30_SIK)
 #ifdef FUTILITY_HAVE_ForTrilinos
   REGISTER_SUBTEST('testInitForAnasazi',testInitForAnasazi)
   REGISTER_SUBTEST('testSetMatAnasazi',testSetMatForAnasazi)
   REGISTER_SUBTEST('testSetX0Anasazi',testSetX0ForAnasazi)
   !REGISTER_SUBTEST('testSetConvAnasazi',testSetConvForAnasazi)
-  !REGISTER_SUBTEST('testSolveAnasazi',testSolveForAnasazi)
+  REGISTER_SUBTEST('testSolveAnasazi',testSolveForAnasazi)
   !REGISTER_SUBTEST('testGetResidAnasazi',testGetResidAnasazi)
   REGISTER_SUBTEST('testClearForAnasazi',testClearForAnasazi)
 #endif
@@ -142,7 +146,7 @@ PROGRAM testEigenvalueSolver
   DEALLOCATE(testEVS)
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
-!#else
+#else
   CALL mpiTestEnv%finalize()
 #endif
 !
@@ -150,6 +154,28 @@ PROGRAM testEigenvalueSolver
 CONTAINS
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE printMatrix(matrix)
+      TYPE(TrilinosMatrixType) :: matrix
+      TYPE(TpetraMap) :: rowmap
+      INTEGER(size_type) :: n,i,j
+      INTEGER(local_ordinal_type) :: imin,imax
+    
+      ! get the row map
+      rowmap = matrix%A%getRowMap()
+      ! get the number of rows
+      n = rowmap%getNodeNumElements()
+      imin = rowmap%getMinLocalIndex()
+      imax = rowmap%getMaxLocalIndex()
+
+      write(*,*) n,imin,imax
+
+
+            
+
+    ENDSUBROUTINE printMatrix
+
+
+
     SUBROUTINE testInitSLEPc()
       CALL testEVS%init(mpiTestEnv,optList)
       ASSERT(testEVS%isInit,'%isInit')
@@ -301,6 +327,13 @@ CONTAINS
 !-------------------------------------------------------------------------------
 !
     SUBROUTINE testInitForAnasazi()
+      CALL optList%add('anasazi_options->Solver Type','Generalized Davidson')
+      CALL optList%add('anasazi_options->Generalized Davidson->Convergence Tolerance',1e-7_SRK)
+      CALL optList%add('anasazi_options->Generalized Davidson->Maximum Subspace Dimension',25_SIK)
+      CALL optList%add('anasazi_options->Generalized Davidson->Restart Dimension',5_SIK)
+      CALL optList%add('anasazi_options->Generalized Davidson->Maximum Restarts',20_SIK)
+      CALL optList%add('anasazi_options->Preconditioner Type','IDENTITY')
+
       CALL testEVS%init(mpiTestEnv,optList)
       ASSERT(testEVS%isInit,'%isInit')
       ASSERT(testEVS%n==30,'%n')
@@ -423,6 +456,7 @@ CONTAINS
       ! into B but since A is all 0 for rows 3-30, there is no source so the flux
       ! is 0 thus having no impact on the solution
       DO i=3,30
+        !CALL A%set(i,i,0.0_SRK)
         CALL B%set(i,i,0.1_SRK)
       ENDDO
 
@@ -457,6 +491,30 @@ CONTAINS
       ENDDO
 
     ENDSUBROUTINE testSolveAnasazi
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSolveForAnasazi()
+      INTEGER(SIK) :: i
+      REAL(SRK) :: kerr
+      REAL(SRK) :: flux(30)
+
+      CALL testEVS%solve()
+      kerr=testEVS%k - (0.0015_SRK+0.117_SRK*0.325_SRK/0.184_SRK)/0.1208_SRK
+      ASSERT(ABS(kerr)<=1.0E-8_SRK,'%solve k')
+      FINFO() testEVS%k, kerr
+
+      DO i=1,30
+        CALL testEVS%x%get(i,flux(i))
+      ENDDO
+      ASSERT(ABS(flux(1)/flux(2)-0.184_SRK/0.117_SRK)<1.0E-8_SRK,'%solve flux')
+      FINFO() flux(1), flux(2)
+      DO i=3,30
+        ASSERT(ABS(flux(i))<=1.0E-10_SRK,'%solve flux')
+        FINFO() i, flux(i)
+      ENDDO
+
+    ENDSUBROUTINE testSolveForAnasazi
+
+    
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetX0Anasazi()

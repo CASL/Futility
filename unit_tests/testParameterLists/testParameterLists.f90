@@ -5575,7 +5575,7 @@ PROGRAM testParameterLists
     CALL params%add("test_params->a_false_bool", .false.)
 
 
-    teuchos_plist = create_ParameterList("test_params")
+    teuchos_plist = ParameterList("test_params")
     CALL params%toForTeuchosPlist(teuchos_plist)
     CALL teuchos_plist%print()
 
@@ -5600,7 +5600,8 @@ PROGRAM testParameterLists
 
     !bool = ForTeuchos_PL_get_bool(teuchos_plist, "a_false_bool", ierr)
     !ASSERT(.not.bool,"bool")
-
+    
+    CALL teuchos_plist%release()
 
   ENDSUBROUTINE testConvertForTeuchos
 #endif

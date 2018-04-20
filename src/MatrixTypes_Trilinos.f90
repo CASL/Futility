@@ -151,13 +151,13 @@ MODULE MatrixTypes_Trilinos
           ENDIF
           IF(.NOT.matrix%isCreated) THEN
 #ifdef HAVE_MPI            
-            matrix%Tcomm = create_TeuchosComm(MPI_COMM_ID)
+            matrix%Tcomm = TeuchosComm(MPI_COMM_ID)
 #else
-            matrix%Tcomm = create_TeuchosComm()
+            matrix%Tcomm = TeuchosComm()
 #endif
-            matrix%map = create_TpetraMap(INT(n,global_ordinal_type),INT(nlocal,global_ordinal_type),matrix%Tcomm)
+            matrix%map = TpetraMap(INT(n,global_ordinal_type),INT(nlocal,global_ordinal_type),matrix%Tcomm)
             !FORTRILINOS_CHECK_IERR()
-            matrix%A = create_TpetraCrsMatrix(matrix%map,INT(rnnz,global_ordinal_type),TpetraDynamicProfile)
+            matrix%A = TpetraCrsMatrix(matrix%map,INT(rnnz,global_ordinal_type),TpetraDynamicProfile)
             !CALL ForPETRA_MatInit(matrix%A,n,nlocal,rnnz,matrix%comm)
 
             matrix%isCreated=.TRUE.

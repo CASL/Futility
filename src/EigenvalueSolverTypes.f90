@@ -55,6 +55,7 @@ MODULE EigenvalueSolverTypes
 #ifdef FUTILITY_HAVE_ForTrilinos
 #include "ForTrilinosSimpleInterface_config.hpp"
 #include "ForTrilinos.h"
+
   USE iso_c_binding
   USE forteuchos
   USE fortpetra
@@ -642,6 +643,7 @@ MODULE EigenvalueSolverTypes
       TYPE(STRINGType) :: pctype
       INTEGER(C_INT) :: ierr
       CLASS(ParamType),POINTER :: anasaziParams, pcParams
+      TYPE(ParameterList) :: sublist
       !Check to set up required and optional param lists.
       !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
@@ -650,7 +652,7 @@ MODULE EigenvalueSolverTypes
           modName//'::'//myName//' - MPI Environment is not initialized!')
       ELSE
         solver%MPIparallelEnv => MPIEnv
-        solver%Tcomm = create_TeuchosComm(solver%MPIparallelEnv%comm)
+        solver%Tcomm = TeuchosComm(solver%MPIparallelEnv%comm)
       ENDIF
       !Validate against the reqParams and OptParams
       validParams=Params
@@ -698,20 +700,42 @@ MODULE EigenvalueSolverTypes
           solver%maxit=maxit
         ENDIF
 
-        solver%TplAnasazi = create_ParameterList("anasazi")
+        solver%TplAnasazi = ParameterList("anasazi")
+
  
         IF(Params%has('EigenvalueSolverType->anasazi_options')) THEN
           CALL Params%get('EigenvalueSolverType->anasazi_options', anasaziParams)
-         CALL anasaziParams%toForTeuchosPlist(solver%TplAnasazi)
+          CALL anasaziParams%toForTeuchosPlist(solver%TplAnasazi)
           !CALL Anasazi_Init_Params(solver%eig, plID)
+        ELSE
+          !CALL Params%toForTeuchosPlist(solver%TplAnasazi)
+          CALL solver%TplAnasazi%set('Solver Type','Generalized Davidson')
+          sublist = solver%TplAnasazi%sublist('Generalized Davidson')
+          
+          CALL sublist%set('Which','LM')
+          CALL sublist%set('Convergence Tolerance',1.0d-7)
+          CALL sublist%set('Maximum Subspace Dimension',25)
+          CALL sublist%set('Restart Dimension',5)
+          CALL sublist%set('Maximum Restarts', 20)
+          
+          CALL solver%TplAnasazi%set('Preconditioner Type','MueLu')
+          sublist = solver%TplAnasazi%sublist('MueLu')
+          
+          CALL sublist%set('verbosity','none')
+          CALL sublist%set('smoother: type','RILUK')
+          CALL sublist%set('coarse: type','RILUK')
+          
+          CALL sublist%release()
+          
         ENDIF
         IF(solvertype/=GD) THEN
           CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
               modName//'::'//myName//' - Only Generalized Davidson works with Anasazi.')
         ENDIF
         ! create the solver handle
-        solver%eig = create_TrilinosEigenSolver()
+        solver%eig = TrilinosEigenSolver()
         CALL solver%eig%init(solver%Tcomm)
+        call solver%TplAnasazi%print()
         ! setup the solver
         !CALL solver%eig%setup_solver(plAnasazi)
         !Need to set PC type
@@ -739,7 +763,6 @@ MODULE EigenvalueSolverTypes
         CALL tmpPL%add('VectorType->n',n)
         CALL tmpPL%add('VectorType->MPI_Comm_ID',solver%MPIparallelEnv%comm)
         CALL tmpPL%add('VectorType->nlocal',nlocal)
-        write(*,*) "I'm here now",n,nlocal
        
         CALL solver%X%init(tmpPL)
         CALL solver%X_scale%init(tmpPL)
@@ -1134,7 +1157,11 @@ MODULE EigenvalueSolverTypes
           !ENDIF
 
           CALL solver%eig%setup_matrix(A%A)
+          FORTRILINOS_CHECK_IERR()
+          CALL solver%eig%setup_matrix_rhs(B%A)
+          FORTRILINOS_CHECK_IERR()
           CALL solver%eig%setup_solver(solver%TplAnasazi)
+          FORTRILINOS_CHECK_IERR()
           !IF(solver%tmpcnt==2) THEN
           !  CALL ForPETRA_MatEdit(B%A,"M.mtx"//C_NULL_CHAR);
           !  CALL ForPETRA_MatEdit(A%A,"F.mtx"//C_NULL_CHAR);
@@ -1147,6 +1174,7 @@ MODULE EigenvalueSolverTypes
       !if solver%x%b is a tpetra multivector.
       SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
         CALL solver%eig%solve(val,x%b)
+        FORTRILINOS_CHECK_IERR()
         solver%k = val(1)
       ENDSELECT  
       !CALL Anasazi_GetEigenvalue(solver%eig,solver%k)

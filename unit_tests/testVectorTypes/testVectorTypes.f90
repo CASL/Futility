@@ -17,6 +17,12 @@ PROGRAM testVectorTypes
   USE ParallelEnv
   USE VectorTypes
 
+#ifdef FUTILITY_HAVE_ForTrilinos
+#include "ForTrilinos.h"
+  use forteuchos
+  use fortpetra
+#endif
+
   IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -71,6 +77,10 @@ PROGRAM testVectorTypes
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
+#else
+#ifdef HAVE_MPI
+  CALL MPI_Finalize(ierr)
+#endif
 #endif
   FINALIZE_TEST()
 
@@ -1621,8 +1631,11 @@ PROGRAM testVectorTypes
     INTEGER(SIK) :: r_index
     TYPE(ParamType) :: pList
     LOGICAL(SBK) :: bool
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
     INTEGER(SIK) :: i
+    TYPE(TeuchosComm) :: tcomm
+    TYPE(TpetraMap) :: tmap
+    TYPE(TpetraMultiVector) :: tvec
 #endif
     ! test with real vectors
     ALLOCATE(RealVectorType :: xVector)
@@ -2770,7 +2783,7 @@ PROGRAM testVectorTypes
     CALL pList%clear()
 #endif
 
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
     ! test with Trilinos vectors
     ALLOCATE(TrilinosVectorType :: xVector)
     ALLOCATE(TrilinosVectorType :: yVector)
@@ -2947,6 +2960,13 @@ PROGRAM testVectorTypes
     CALL xVector%set(2,3.0_SRK)
     CALL xVector%set(3,7.0_SRK)
     CALL yVector%set(0.0_SRK,iverr)
+
+    !SELECTTYPE(xVector);TYPEIS(TrilinosVectorType)
+    !  tcomm = create_TeuchosComm(xVector%comm)
+    !  tmap = create_TpetraMap(INT(xVector%n,C_LONG),INT(xVector%nlocal,C_LONG),tcomm)
+    !  tvec = create_TpetraMultiVector(xVector%b,TeuchosCopy)
+    !ENDSELECT
+
     CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1)
     IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
     ALLOCATE(dummyvec(yVector%n))
@@ -3406,7 +3426,7 @@ PROGRAM testVectorTypes
       CLASS(VectorType),POINTER :: vec_p
       CLASS(VectorType),POINTER :: other_vec_p
       CLASS(ParamType),ALLOCATABLE :: params
-#if defined(FUTILITY_HAVE_PETSC) || defined(FUTILITY_HAVE_Trilinos)
+#if defined(FUTILITY_HAVE_PETSC) || defined(FUTILITY_HAVE_ForTrilinos)
       CLASS(DistributedVectorType),POINTER :: dvec_p
 #endif
 
@@ -3507,7 +3527,7 @@ PROGRAM testVectorTypes
 #endif
 
       ! Trilinos
-#ifdef FUTILITY_HAVE_Trilinos
+#ifdef FUTILITY_HAVE_ForTrilinos
       CALL params%add("VectorType->n",10_SIK)
       CALL params%add("VectorType->nlocal",10_SIK)
       CALL params%add("VectorType->engine",VM_TRILINOS)

@@ -569,7 +569,8 @@ MODULE VectorTypes
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
           !CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
-          newVector%b = thisVector%b
+          call newVector%b%release()
+          newVector%b = TpetraMultiVector(thisVector%b,TeuchosCopy)
         ENDSELECT
 #endif
       CLASS DEFAULT
