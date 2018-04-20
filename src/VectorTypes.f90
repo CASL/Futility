@@ -375,9 +375,8 @@ MODULE VectorTypes
 #endif
 #ifdef FUTILITY_HAVE_ForTrilinos
       TYPE IS(TrilinosVectorType)
-        !CALL ForPETRA_VecSUM(thisVector%b,r)
         num_vecs = thisVector%b%getNumVectors()
-        IF (num_vecs.GT.1) CALL eVectorType%raiseFatalError('Incorrect call to '// &
+        IF (num_vecs > 1) CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - Norms of multiple vectors not supported.')
         ALLOCATE(tnorm1(num_vecs))
         CALL thisVector%b%norm1(tnorm1)
@@ -750,9 +749,9 @@ MODULE VectorTypes
 #ifdef FUTILITY_HAVE_ForTrilinos
       TYPE IS(TrilinosVectorType)
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-        !CALL ForPETRA_VecNorm2(thisVector%b,norm2)
+        
         num_vecs = thisVector%b%getNumVectors()
-        IF (num_vecs.GT.1) CALL eVectorType%raiseFatalError('Incorrect call to '// &
+        IF (num_vecs > 1) CALL eVectorType%raiseFatalError('Incorrect call to '// &
            modName//'::'//myName//' - Norms of multiple vectors not supported.')
         ALLOCATE(tnorm2(num_vecs))
         CALL thisVector%b%norm2(tnorm2)

@@ -158,7 +158,6 @@ MODULE MatrixTypes_Trilinos
             matrix%map = TpetraMap(INT(n,global_ordinal_type),INT(nlocal,global_ordinal_type),matrix%Tcomm)
             !FORTRILINOS_CHECK_IERR()
             matrix%A = TpetraCrsMatrix(matrix%map,INT(rnnz,global_ordinal_type),TpetraDynamicProfile)
-            !CALL ForPETRA_MatInit(matrix%A,n,nlocal,rnnz,matrix%comm)
 
             matrix%isCreated=.TRUE.
           ENDIF
@@ -196,8 +195,6 @@ MODULE MatrixTypes_Trilinos
       CALL matrix%A%release()
       CALL matrix%map%release()
       CALL matrix%Tcomm%release()
-      !CALL ForPETRA_MatDestroy(matrix%a)
-      !matrix%A=-1
     ENDSUBROUTINE clear_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -213,11 +210,15 @@ MODULE MatrixTypes_Trilinos
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-
+      INTEGER(SIK) :: rnnz
+      
       IF(matrix%isInit) THEN
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
           .AND. ((j > 0) .AND. (i > 0))) THEN
-          IF(matrix%isAssembled) CALL matrix%A%resumeFill()
+          IF(matrix%isAssembled) THEN
+            rnnz = size(matrix%jloc)
+            matrix%A=TpetraCrsMatrix(matrix%map,INT(rnnz,global_ordinal_type),TpetraDynamicProfile)
+          ENDIF  
           IF(i==matrix%currow) THEN
             matrix%ncol=matrix%ncol+1
             matrix%jloc(matrix%ncol)=j
@@ -225,7 +226,6 @@ MODULE MatrixTypes_Trilinos
           ELSE
             IF(matrix%currow>0) THEN
               ! Flush out the current row
-              !CALL ForPETRA_MatSet(matrix%A,matrix%currow,matrix%ncol,matrix%jloc,matrix%aloc)
               CALL matrix%A%insertGlobalValues(matrix%currow,matrix%jloc(1:matrix%ncol),matrix%aloc(1:matrix%ncol))
             ENDIF
             matrix%jloc=0
@@ -314,7 +314,6 @@ MODULE MatrixTypes_Trilinos
               EXIT
             ENDIF
           ENDDO
-          !CALL ForPETRA_MatGet(matrix%a,i,j,getval)
           
           deallocate(cols)
           deallocate(vals)
@@ -333,7 +332,6 @@ MODULE MatrixTypes_Trilinos
 #ifdef FUTILITY_HAVE_ForTrilinos
       ierrc=0
       IF(.NOT.thisMatrix%isAssembled) THEN
-        !CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)
         CALL thisMatrix%A%insertGlobalValues(thisMatrix%currow,thisMatrix%jloc(1:thisMatrix%ncol),thisMatrix%aloc(1:thisMatrix%ncol))
 
         thisMatrix%aloc=0.0_SRK
@@ -422,10 +420,8 @@ MODULE MatrixTypes_Trilinos
           IF(.NOT.y%isAssembled) CALL y%assemble()
           IF(.NOT.thisMatrix%isAssembled) CALL thisMatrix%assemble()
           IF(t == 'n') THEN
-            !CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.FALSE.,1),x%b,tdummy%b)
             CALL thisMatrix%A%apply(x%b,tdummy%b,TeuchosNO_TRANS)
           ELSE
-            !CALL ForPETRA_MatMult(thisMatrix%a,LOGICAL(.TRUE.,1),x%b,tdummy%b)
             CALL thisMatrix%A%apply(x%b,tdummy%b,TeuchosTRANS)
           ENDIF
           CALL BLAS_scal(tdummy,a)
