@@ -11,7 +11,12 @@ PROGRAM testMeshTransfer
   USE UnitTest
   USE IntrType
   USE Strings
+  USE Constants_Conversion
   USE ParameterLists
+  USE ParallelEnv
+  USE VectorTypes
+  USE MatrixTypes
+  USE LinearSolverTypes
   USE MeshTransfer
 
   IMPLICIT NONE
