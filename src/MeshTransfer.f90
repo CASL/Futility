@@ -89,6 +89,7 @@ MODULE MeshTransfer
   USE MatrixTypes
   USE LinearSolverTypes
   IMPLICIT NONE
+  PRIVATE
 
   PUBLIC :: eMeshTransfer
   PUBLIC :: LPPointVal
