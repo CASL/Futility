@@ -212,8 +212,10 @@ MODULE LinearSolverTypes
     INTEGER(SIK) :: nRestart=30_SIK
     !> Actual iterations performed
     INTEGER(SIK) :: iters=0_SIK
-    !> Tolerance for successful convergence
-    REAL(SRK) :: convTol=1.0E-5_SRK
+    !> Relative tolerance for successful convergence
+    REAL(SRK) :: relConvTol=1.0E-5_SRK
+    !> Absolute tolerance for successful convergence
+    REAL(SRK) :: absConvtol=1.0E-5_SRK
     !> Actual residual converged to
     REAL(SRK) :: residual=0._SRK
     !> Preconditioner to be used by LinearSolverTyope
@@ -812,7 +814,8 @@ MODULE LinearSolverTypes
       solver%normType=-1
       solver%maxIters=-1
       solver%iters=0
-      solver%convTol=0._SRK
+      solver%relConvTol=0._SRK
+      solver%absConvTol=0._SRK
       solver%residual=0._SRK
       IF(LinearSolverType_Paramsflag) CALL LinearSolverType_Clear_ValidParams()
     ENDSUBROUTINE clear_LinearSolverType_Iterative
@@ -1253,11 +1256,12 @@ MODULE LinearSolverTypes
 !> This subroutine sets the convergence criterion for the iterative solver.
 !>
     SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,  &
-                                             convTol_in,maxIters_in,nRestart_in)
+                                             relConvTol_in,absConvTol_in,maxIters_in,nRestart_in)
       CHARACTER(LEN=*),PARAMETER :: myName='setConv_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(IN) :: normType_in
-      REAL(SRK),INTENT(IN) :: convTol_in
+      REAL(SRK),INTENT(IN) :: relConvTol_in
+      REAL(SRK),INTENT(IN) :: absConvTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
       INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
 #ifdef FUTILITY_HAVE_PETSC
@@ -1273,11 +1277,12 @@ MODULE LinearSolverTypes
 #endif
 
       INTEGER(SIK) :: normType,maxIters,nRestart
-      REAL(SRK) :: convTol
+      REAL(SRK) :: relConvTol,absConvTol
 
       !Input check
       normType=normType_in
-      convTol=convTol_in
+      relConvTol=relConvTol_in
+      absConvTol=absConvTol_in
       maxIters=maxIters_in
       IF(PRESENT(nRestart_in)) nRestart=nRestart_in
       IF(normType <= -2) THEN
@@ -1286,11 +1291,17 @@ MODULE LinearSolverTypes
             'than -1. Default value is used!')
         normType=2
       ENDIF
-      IF(convTol < 0._SRK .OR. convTol >= 1._SRK) THEN
+      IF(relConvTol < 0._SRK .OR. relConvTol >= 1._SRK) THEN
         CALL eLinearSolverType%raiseDebug(modName//'::'// &
-          myName//' - Incorrect input, convTol should be in '// &
+          myName//' - Incorrect input, relConvTol should be in '// &
             'the range of (0, 1). Default value is used!')
-        convTol=0.001_SRK
+        relConvTol=0.001_SRK
+      ENDIF
+      IF(absConvTol < 0._SRK .OR. absConvTol >= 1._SRK) THEN
+        CALL eLinearSolverType%raiseDebug(modName//'::'// &
+          myName//' - Incorrect input, absConvTol should be in '// &
+            'the range of (0, 1). Default value is used!')
+        absConvTol=0.001_SRK
       ENDIF
       IF(maxIters <= 1) THEN
         CALL eLinearSolverType%raiseDebug(modName//'::'// &
@@ -1306,14 +1317,15 @@ MODULE LinearSolverTypes
       ENDIF
       IF(solver%isInit) THEN
         solver%normType=normType
-        solver%convTol=convTol
+        solver%relConvTol=relConvTol
+        solver%absConvTol=absConvTol
         solver%maxIters=maxIters
         solver%nRestart=nRestart
 
         IF(solver%TPLType == PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
-          rtol=convTol
-          abstol=convTol
+          rtol=relConvTol
+          abstol=absConvTol
           maxits=maxIters
           nrst=nRestart
           CALL KSPSetTolerances(solver%ksp,rtol,abstol,dtol,maxits,ierr)
@@ -1515,7 +1527,7 @@ MODULE LinearSolverTypes
         !get L_norm
         CALL LNorm(vr%b,solver%normType,solver%residual)
         !check convergence
-        IF(solver%residual <= solver%convTol) EXIT
+        IF(solver%residual <= solver%absConvTol) EXIT
       ENDDO
       solver%iters=iterations
       solver%info=0
@@ -1563,7 +1575,7 @@ MODULE LinearSolverTypes
         s(:)=0._SRK
         g(:)=0._SRK
         y(:)=0._SRK
-        tol=solver%convTol*beta
+        tol=solver%absConvTol*beta
 
         v(:,1)=-u%b/beta
         h=beta
@@ -1674,7 +1686,7 @@ MODULE LinearSolverTypes
         s(:)=0._SRK
         g(:)=0._SRK
         y(:)=0._SRK
-        tol=solver%convTol*beta
+        tol=solver%absConvTol*beta
 
         v(:,1)=-u%b/beta
         h=beta
@@ -2272,7 +2284,7 @@ MODULE LinearSolverTypes
       maxIters=M
       SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)
         maxIters=MIN(M,solver%maxIters)
-        convTol=solver%convTol
+        convTol=solver%absConvTol
       ENDSELECT
       IF(N >= M) THEN
         CALL r%init(pList)

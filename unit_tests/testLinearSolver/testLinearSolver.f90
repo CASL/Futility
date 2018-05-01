@@ -165,7 +165,7 @@ CONTAINS
         thisLS%normType=2
         thisLS%maxIters=2
         thisLS%iters=2
-        thisLS%convTol=2._SRK
+        thisLS%absConvTol=2._SRK
         thisLS%residual=2._SRK
         thisLS%isDecomposed=.TRUE.
         CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
@@ -214,7 +214,7 @@ CONTAINS
 !            .OR. thisLS%OMPparallelEnv%isInit()                          &
             .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2          &
             .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed              &
-            .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK &
+            .OR. thisLS%residual == 2._SRK .OR. thisLS%absConvTol == 2._SRK &
             .OR. ALLOCATED(thisLS%PreCondType)
         ASSERT(.NOT.(bool),'CALL Iterative%clear() FAILED!')
       ENDSELECT
@@ -1591,20 +1591,20 @@ CONTAINS
       CALL thisLS%init(pList)
 
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-        CALL thisLS%setConv(-2,-0.1_SRK,-1,-1)
-        CALL thisLS%setConv(-2,1.1_SRK,-1,-1)
+        CALL thisLS%setConv(-2,-0.1_SRK,-0.1_SRK,-1,-1)
+        CALL thisLS%setConv(-2,1.1_SRK,1.1_SRK,-1,-1)
         !Check if default value is used
         bool = thisLS%maxIters == 1000_SIK .AND. thisLS%normType == 2_SIK &
-          .AND. thisLS%convTol == 0.001_SRK .AND. thisLS%nRestart == 30_SIK
+          .AND. thisLS%absConvTol == 0.001_SRK .AND. thisLS%nRestart == 30_SIK
         ASSERT(bool, 'Iterative%setConv(...)')
-        FINFO() thisLS%maxIters, thisLS%normType, thisLS%convTol, thisLS%nRestart
+        FINFO() thisLS%maxIters, thisLS%normType, thisLS%absConvTol, thisLS%nRestart
       ENDSELECT
 
       !Correct input
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-        CALL thisLS%setConv(1_SIK,0.01_SRK,100_SIK,10_SIK)
+        CALL thisLS%setConv(1_SIK,0.01_SRK,0.01_SRK,100_SIK,10_SIK)
         bool = thisLS%maxIters == 100_SIK .AND. thisLS%normType == 1_SIK &
-          .AND. thisLS%convTol == 0.01_SRK .AND. thisLS%nRestart == 10_SIK
+          .AND. thisLS%absConvTol == 0.01_SRK .AND. thisLS%nRestart == 10_SIK
         ASSERT(bool, 'Iterative%setConv(...)')
       ENDSELECT
       CALL thisLS%clear()
@@ -1628,8 +1628,8 @@ CONTAINS
       CALL thisLS%init(pList)
 
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-        CALL thisLS%setConv(-2,-0.1_SRK,-1,-1)
-        CALL thisLS%setConv(-2,1.1_SRK,-1,-1)
+        CALL thisLS%setConv(-2,-0.1_SRK,-0.1_SRK,-1,-1)
+        CALL thisLS%setConv(-2,1.1_SRK,1.1_SRK,-1,-1)
         !Check if default value is used
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
@@ -1641,7 +1641,7 @@ CONTAINS
 
       !Correct input
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-        CALL thisLS%setConv(1_SIK,0.01_SRK,100_SIK,10_SIK)
+        CALL thisLS%setConv(1_SIK,0.01_SRK,0.01_SRK,100_SIK,10_SIK)
         CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
         restart=10
@@ -1865,7 +1865,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve it
@@ -1946,7 +1946,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve
@@ -2078,7 +2078,7 @@ CONTAINS
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !Solve it
@@ -2166,7 +2166,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve it
@@ -2245,7 +2245,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve
@@ -2351,7 +2351,7 @@ CONTAINS
         CALL thisLS%setX0(thisX)
       ENDSELECT
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+          CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       CALL thisLS%solve()
@@ -2406,7 +2406,7 @@ CONTAINS
       ENDSELECT
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1000_SIK,30_SIK)
+          CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       CALL thisLS%solve()
@@ -2459,7 +2459,7 @@ CONTAINS
 
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1000_SIK,30_SIK)
+          CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       CALL thisLS%solve()
@@ -2521,7 +2521,7 @@ CONTAINS
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
-        CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !Check X
@@ -2618,7 +2618,7 @@ CONTAINS
 
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1000_SIK,30_SIK)
+          CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       CALL thisLS%solve()
@@ -2679,7 +2679,7 @@ CONTAINS
       !set iterations and convergence information and
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
-        CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !Check X
@@ -2792,7 +2792,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve it
@@ -2872,7 +2872,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve
@@ -3006,7 +3006,7 @@ CONTAINS
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !Solve it
@@ -3096,7 +3096,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve it
@@ -3176,7 +3176,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
       ENDSELECT
 
       !solve
