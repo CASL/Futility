@@ -1595,16 +1595,18 @@ CONTAINS
         CALL thisLS%setConv(-2,1.1_SRK,1.1_SRK,-1,-1)
         !Check if default value is used
         bool = thisLS%maxIters == 1000_SIK .AND. thisLS%normType == 2_SIK &
-          .AND. thisLS%absConvTol == 0.001_SRK .AND. thisLS%nRestart == 30_SIK
+          .AND. thisLS%relConvTol == 0.001_SRK .AND. thisLS%absConvTol == 0.001_SRK &
+          .AND. thisLS%nRestart == 30_SIK
         ASSERT(bool, 'Iterative%setConv(...)')
         FINFO() thisLS%maxIters, thisLS%normType, thisLS%absConvTol, thisLS%nRestart
       ENDSELECT
 
       !Correct input
       SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-        CALL thisLS%setConv(1_SIK,0.01_SRK,0.01_SRK,100_SIK,10_SIK)
+        CALL thisLS%setConv(1_SIK,0.01_SRK,0.001_SRK,100_SIK,10_SIK)
         bool = thisLS%maxIters == 100_SIK .AND. thisLS%normType == 1_SIK &
-          .AND. thisLS%absConvTol == 0.01_SRK .AND. thisLS%nRestart == 10_SIK
+          .AND. thisLS%relConvTol == 0.01_SRK .AND. thisLS%absConvTol == 0.001_SRK &
+          .AND. thisLS%nRestart == 10_SIK
         ASSERT(bool, 'Iterative%setConv(...)')
       ENDSELECT
       CALL thisLS%clear()
