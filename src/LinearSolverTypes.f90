@@ -1337,7 +1337,7 @@ MODULE LinearSolverTypes
 #endif
         ELSEIF(solver%TPLType == TRILINOS) THEN
 #ifdef FUTILITY_HAVE_Trilinos
-          CALL Belos_SetConvCrit(solver%Belos_solver,solver%convTol,solver%maxIters)
+          CALL Belos_SetConvCrit(solver%Belos_solver,solver%absConvTol,solver%maxIters)
 #else
           CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
              modName//'::'//myName//' - Trilinos not enabled.  You will'// &
