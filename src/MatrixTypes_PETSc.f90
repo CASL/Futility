@@ -108,7 +108,9 @@ MODULE MatrixTypes_PETSc
 
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
-      CALL validParams%get('MatrixType->isSym',isSym)
+      isSym=.FALSE.
+      IF(validParams%has('MatrixType->isSym')) &
+        CALL validParams%get('MatrixType->isSym',isSym)
       CALL validParams%get('MatrixType->matType',matType)
       CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
       CALL validParams%get('MatrixType->nlocal',nlocal)
