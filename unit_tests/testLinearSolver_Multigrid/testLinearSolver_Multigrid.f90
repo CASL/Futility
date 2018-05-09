@@ -107,7 +107,8 @@ CONTAINS
       thisLS%normType=2
       thisLS%maxIters=2
       thisLS%iters=2
-      thisLS%convTol=2._SRK
+      thisLS%relConvTol=2._SRK
+      thisLS%absConvTol=2._SRK
       thisLS%residual=2._SRK
       thisLS%isDecomposed=.TRUE.
       CALL thisLS%MPIparallelEnv%init(PE_COMM_SELF)
@@ -148,7 +149,7 @@ CONTAINS
           .OR. ASSOCIATED(thisLS%X) .OR. thisLS%info /= 0                 &
           .OR. thisLS%normType == 2 .OR. thisLS%maxIters == 2             &
           .OR. thisLS%iters == 2 .OR. thisLS%isDecomposed                 &
-          .OR. thisLS%residual == 2._SRK .OR. thisLS%convTol == 2._SRK    &
+          .OR. thisLS%residual == 2._SRK .OR. thisLS%relConvTol == 2._SRK &
           .OR. ALLOCATED(thisLS%PreCondType) .OR. thisLS%nLevels /= 1 &
           .OR. ALLOCATED(thisLS%level_info)                               &
           .OR. ALLOCATED(thisLS%level_info_local)                         &
@@ -382,7 +383,7 @@ CONTAINS
         CALL thisLS%setX0(x)
 
         !set iterations and convergence information and build/set M
-        CALL thisLS%setConv(2,1.0E-9_SRK,1000,30)
+        CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
 
         !solve it
         CALL thisLS%solve()
@@ -439,7 +440,7 @@ CONTAINS
         ENDSELECT
 
         !set iterations and convergence information and build/set M
-        CALL thisLS%setConv(2,1.0E-9_SRK,1000,30)
+        CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
 
         !solve it
         CALL mpiTestEnv%barrier()
@@ -557,7 +558,7 @@ CONTAINS
         CALL thisLS%setX0(x)
 
         !set iterations and convergence information and build/set M
-        CALL thisLS%setConv(2,1.0E-9_SRK,1000,30)
+        CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
 
         !solve it
         CALL thisLS%solve()
@@ -657,8 +658,8 @@ CONTAINS
         CALL thisLS2%setupPETScMG(pList)
 
         !set iterations and convergence information and build/set M
-        CALL thisLS%setConv(2,1.0E-9_SRK,1000,30)
-        CALL thisLS2%setConv(2,1.0E-9_SRK,1000,30)
+        CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
+        CALL thisLS2%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
 
         ! build x0
         ALLOCATE(x(n))
