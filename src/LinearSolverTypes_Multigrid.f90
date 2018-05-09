@@ -575,10 +575,15 @@ MODULE LinearSolverTypes_Multigrid
                                   solver%interpMats_PETSc(iLevel)%a,iperr)
       ENDDO
 
-      IF(Params%has('LinearSolverType->Multigrid->num_smooth')) THEN
-        CALL Params%get('LinearSolverType->Multigrid->num_smooth',num_smooth)
-        CALL PCMGSetNumberSmoothDown(solver%pc,num_smooth,iperr)
+      !Default is to do one smoother iteration on the way down, but none
+      !  on the way up.  This only occurs if num_smooth <= 0
+      !If num_smooth > 0, it does num_smooth iterations up and down
+      IF(num_smooth > 0) THEN
         CALL PCMGSetNumberSmoothUp(solver%pc,num_smooth,iperr)
+        CALL PCMGSetNumberSmoothDown(solver%pc,num_smooth,iperr)
+      ELSE
+        CALL PCMGSetNumberSmoothUp(solver%pc,0,iperr)
+        CALL PCMGSetNumberSmoothDown(solver%pc,1,iperr)
       ENDIF
 
       iLevel=0
@@ -678,7 +683,19 @@ MODULE LinearSolverTypes_Multigrid
       ENDIF
 
       DO i=istt,istp
-        CALL PCMGGetSmoother(solver%pc,i,ksp_temp,iperr)
+        IF(i == 0 .OR. (PRESENT(num_smooth) .AND. num_smooth > 0)) THEN
+          CALL PCMGGetSmoother(solver%pc,i,ksp_temp,iperr)
+        ELSE
+          CALL PCMGGetSmootherUp(solver%pc,i,ksp_temp,iperr)
+          CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
+          !Due to missing functionality in PETSc, I can't set the num_smooth
+          !  to 0 with PCSOR.  So use PCJACOBI whenever you want to set
+          !  num_smooth to 0 on the way up (or on the way down).
+          CALL KSPGetPC(ksp_temp,pc_temp,iperr)
+          CALL PCSetType(pc_temp,PCJACOBI,iperr)
+          CALL KSPSetInitialGuessNonzero(ksp_temp,PETSC_FALSE,iperr)
+          CALL PCMGGetSmootherDown(solver%pc,i,ksp_temp,iperr)
+        ENDIF
 
         IF(smoother == SOR) THEN
           CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
