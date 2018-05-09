@@ -65,9 +65,9 @@ MODULE MultigridMesh
     !>  convenience and using/setting this variable is optional.
     INTEGER(SIK) :: finestGridIndex=-1
     !> For degree 0 points, childIndices is a size-1 array containing the
-    !>  child mesh index of the point that it injects into.
+    !>  **child** mesh index of the point that it injects into.
     !> For degree >0 points, childIndices is a size >1 array containing the
-    !>  current mesh indices of the points from which the value on this point
+    !>  **current** mesh indices of the points from which the value on this point
     !>  is interpolated.
     !> For MPACT, ordering should be WSENBT on finest mesh and WESNBT on
     !>  all other meshes, but, in general, ordering is arbitrary

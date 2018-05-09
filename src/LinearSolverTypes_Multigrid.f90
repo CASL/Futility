@@ -9,6 +9,22 @@
 !> @brief Module provides a linear system type and methods to solve systems
 !> of equations via a multigrid method
 !>
+!> To use LinearSolverType_Multigrid:
+!>   (1) Initialize the linear solver using %init
+!>   (2) Fill out MultigridMesh appropriately.
+!>   (3) Call LS%fillInterpMats
+!>   (4) Call LS%setupPETScMG
+!>
+!> Step 3 allocates and fills out all of the interpolation operators in PETSc's
+!>   MG structure.  The Galerkin process is assumed so coarse grid operators
+!>   are generated as a triple product of the form RAI, where I is interp.,
+!>   R is restriction (transport of interpolation), and A is the fine grid
+!>   matrix from the next grid up.
+!> Step 4 sets up the smoother options on each level and misc. details for MG
+!>
+!> For more information, see:
+!>  http://www.mcs.anl.gov/petsc/petsc-3.6/docs/manualpages/PC/PCMG.html
+!>
 !> For valid reference lists
 !> see @ref MatrixTypes::LinearSolverTypes_Declare_ValidParams
 !> "LinearSolverTypes_Declare_ValidParams".
@@ -86,7 +102,9 @@ MODULE LinearSolverTypes_Multigrid
     !>    level_info(:,level) = (/num_eqns_local,npts_local/)
     INTEGER(SIK),ALLOCATABLE :: level_info_local(:,:)
 #ifdef FUTILITY_HAVE_PETSC
-    !> Array of PETSc interpolation matrices
+    !> Array of PETSc interpolation matrices, index range 1:nLevels-1
+    !>  interpMats_PETSc(i) is the interpolation matrix from PETSc grid i-1 to grid i
+    !>  It is 1-indexed, but levels (grids) in PETSc are 0-indexed.
     TYPE(PETScMatrixType),POINTER :: interpMats_PETSc(:) => NULL()
 #endif
     !> Whether or not the matrix was allocated on this object:
@@ -391,9 +409,11 @@ MODULE LinearSolverTypes_Multigrid
 
         !Store this matrix object:
         SELECTTYPE(interpmat); TYPE IS(PETScMatrixType)
+          !TODO check whether this assignment is optimal/improve it:
           solver%interpMats_PETSc(iLevel)=interpmat
         ENDSELECT
 
+        !TODO Should I deallocate this instead?
         NULLIFY(interpmat)
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -527,10 +547,12 @@ MODULE LinearSolverTypes_Multigrid
         CALL Params%get('LinearSolverType->Multigrid->smootherMethod_list', &
                 smootherMethod_list)
       ELSE
-        smootherMethod_list(1)=GMRES
-        smootherMethod_list(2:solver%nLevels)=SOR
+        smootherMethod_list(1)=GMRES !grid 0 (coarsest grid) solver
+        smootherMethod_list(2:solver%nLevels)=SOR !smoother for all other grids
       ENDIF
 
+      !KSPRICHARDSON + any inexact "PC" method in petsc =
+      !                                       Use that PC method as a solver.
       !KSPRICHARDSON+PCMG = Multigrid linear solver, not multigrid precon.
       precond_flag=.FALSE.
       IF(Params%has('LinearSolverType->Multigrid->precond_flag')) THEN
