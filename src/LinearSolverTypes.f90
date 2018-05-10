@@ -345,7 +345,11 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
       CALL validParams%get('LinearSolverType->timerName',timerName)
       CALL validParams%get('LinearSolverType->matType',matType)
-      CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
+      IF(validParams%has('LinearSolverType->A->MatrixType->matType')) THEN
+        CALL validParams%set('LinearSolverType->A->MatrixType->matType',matType)
+      ELSE
+        CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
+      ENDIF
       ! pull data for matrix and vector parameter lists
       CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
