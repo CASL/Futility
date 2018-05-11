@@ -54,23 +54,23 @@ PROGRAM testMultigridMesh
   SUBROUTINE testClearMesh
     TYPE(MultigridMeshStructureType) :: myMMeshes
 
-    CALL myMMeshes%init(4)
+    myMMeshes%nLevels=5
+    ALLOCATE(myMMeshes%meshes(5))
+    myMMeshes%isInit=.TRUE.
 
     !Test clearing for one particular level:
-    ASSOCIATE(myMesh => myMMeshes%meshes(3))
-      ALLOCATE(myMesh%interpDegrees(10))
-      ALLOCATE(myMesh%xyzMap(3,10))
-      ALLOCATE(myMesh%mmData(10))
-      myMesh%istt=1
-      myMesh%istp=10
-      ALLOCATE(myMesh%mmData(1)%childIndices(4))
-      CALL myMesh%mmData(1)%clear()
-      ASSERT(.NOT. ALLOCATED(myMesh%mmData(1)%childIndices),'childindices not allocated')
-      CALL myMesh%clear()
-      ASSERT(.NOT. ALLOCATED(myMesh%interpDegrees),'xyzmap not allocated')
-      ASSERT(.NOT. ALLOCATED(myMesh%xyzMap),'xyzmap not allocated')
-      ASSERT(.NOT. ALLOCATED(myMesh%mmData),'xyzmap not allocated')
-    ENDASSOCIATE
+    ALLOCATE(myMMeshes%meshes(3)%interpDegrees(10))
+    ALLOCATE(myMMeshes%meshes(3)%xyzMap(3,10))
+    ALLOCATE(myMMeshes%meshes(3)%mmData(10))
+    myMMeshes%meshes(3)%istt=1
+    myMMeshes%meshes(3)%istp=10
+    ALLOCATE(myMMeshes%meshes(3)%mmData(1)%childIndices(4))
+    CALL myMMeshes%meshes(3)%mmData(1)%clear()
+    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%mmData(1)%childIndices),'childindices not allocated')
+    CALL myMMeshes%meshes(3)%clear()
+    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%interpDegrees),'interpDegrees not allocated')
+    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%xyzMap),'xyzmap not allocated')
+    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%mmData),'mmData not allocated')
 
     CALL myMMeshes%clear()
   ENDSUBROUTINE testClearMesh
