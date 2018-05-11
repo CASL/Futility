@@ -69,8 +69,10 @@ MODULE MultigridMesh
     !> For degree >0 points, childIndices is a size >1 array containing the
     !>  **current** mesh indices of the points from which the value on this point
     !>  is interpolated.
-    !> For MPACT, ordering should be WSENBT on finest mesh and WESNBT on
-    !>  all other meshes, but, in general, ordering is arbitrary
+    !> In general, the relation between the index and neighbor direction is
+    !>  arbitrary.  For reasonably structured grids, some consistency
+    !>  should be maintained to avoid coding errors, but from the linear solver's
+    !>  perspective, it shouldn't matter.
     INTEGER(SIK),ALLOCATABLE :: childIndices(:)
 
     CONTAINS
@@ -111,8 +113,11 @@ MODULE MultigridMesh
     !> Ideally, this would be stored in MultigridMeshElementType, but having
     !>  it stored as an array is really handy for PETSc's dnnz arguments.
     INTEGER(SIK),ALLOCATABLE :: interpDegrees(:)
-    !TODO Generalize this logic beyond structured Cartesian grids.
-    !  Actually, I think it should work as is for unstructured grids.
+    !TODO Generalize this logic beyond structured Cartesian grids.  This works
+    !  for more complex grids as long as interpolation only occurs across the
+    !  structured-Cartesian parts.  For example, in MPACT, pin cells do not
+    !  necessarily align across assemblies, but it is fine because we do not
+    !  ever interpolate across assemblies.
     !TODO allow for interpolation across processors?  Not needed unless we
     !  encounter a problem where we want to restrict a grid with very few
     !  spatial points per processor.  At that point though, you might want to

@@ -44,11 +44,6 @@
 !>  - @ref MatrixTypes "MatrixTypes": @copybrief MatrixTypes
 !>  - @ref LinearSolverTypes "LinearSolverTypes": @copybrief LinearSolverTypes
 !>
-!> @par EXAMPLES
-!> @code
-!>
-!> @endcode
-!>
 !> @author Ben C. Yee
 !>   @date 08/22/2017
 !>
