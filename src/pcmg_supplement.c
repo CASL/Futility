@@ -1,3 +1,4 @@
+#ifdef FUTILITY_HAVE_PETSC
 #include <petsc.h>
 #include <petscsys.h>
 #include <petscfix.h>
@@ -100,3 +101,4 @@ PETSC_EXTERN void PETSC_STDCALL  pcmgsoftreset_(PC pc, int *__ierr ){
 *__ierr = PCMGSoftReset(
   (PC)PetscToPointer((pc) ));
 }
+#endif
