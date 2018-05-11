@@ -962,7 +962,7 @@ MODULE LinearSolverTypes_Multigrid
       ENDIF
       solver%interpMats_PETSc => interpMats
 #else
-      TYPE(MatrixType),POINTER,INTENT(IN) :: interpMats(:)
+      CLASS(MatrixType),POINTER,INTENT(IN) :: interpMats(:)
 
       CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
         "PETSc must be enabled in Futility to call this subroutine!")
