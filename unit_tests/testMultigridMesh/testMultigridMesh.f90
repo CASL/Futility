@@ -6,6 +6,16 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!
+! MultigridMesh does not have much functionality on its own; it mostly serves
+! as a template for storing mesh information used by LinearSolverTypes_Multigrid.
+!
+! For an example of how to set up MultigridMesh, there is a very simplified
+! example in testLinearSolver_Multigrid under testFillInterpMats.  A more
+! complex example can be found in MPACT.  For those attempting to use this in
+! non-MPACT codes, please carefully read the descriptions of the attributes in
+! MultigridMesh.f90
+!
 PROGRAM testMultigridMesh
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
@@ -17,7 +27,8 @@ PROGRAM testMultigridMesh
 
   CREATE_TEST('Test MultigridMesh')
 
-  REGISTER_SUBTEST('Test Clear',testClear)
+  REGISTER_SUBTEST('Test Clear Structure',testClearStructure)
+  REGISTER_SUBTEST('Test Clear Mesh',testClearMesh)
   REGISTER_SUBTEST('Test Init',testInit)
 
   FINALIZE_TEST()
@@ -26,7 +37,7 @@ PROGRAM testMultigridMesh
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-  SUBROUTINE testClear
+  SUBROUTINE testClearStructure
     TYPE(MultigridMeshStructureType) :: myMMeshes
 
     myMMeshes%nLevels=5
@@ -37,7 +48,32 @@ PROGRAM testMultigridMesh
 
     ASSERT(.NOT. myMMeshes%isInit,'should not be init')
     ASSERT(.NOT. ALLOCATED(myMMeshes%meshes),'meshes should not be allocated')
-  ENDSUBROUTINE testClear
+  ENDSUBROUTINE testClearStructure
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testClearMesh
+    TYPE(MultigridMeshStructureType) :: myMMeshes
+
+    myMMeshes%nLevels=5
+    ALLOCATE(myMMeshes%meshes(4))
+    myMMeshes%isInit=.TRUE.
+
+    !Test clearing for one particular level:
+    ASSOCIATE(myMesh => myMMeshes%meshes(3))
+      ALLOCATE(myMesh%interpDegrees(10))
+      ALLOCATE(myMesh%xyzMap(3,10))
+      ALLOCATE(myMesh%mmData(10))
+      ALLOCATE(myMesh%mmData(1)%childIndices(4))
+      CALL myMesh%mmData(1)%clear()
+      ASSERT(.NOT. ALLOCATED(myMesh%mmData(1)%childIndices),'childindices not allocated')
+      CALL myMesh%clear()
+      ASSERT(.NOT. ALLOCATED(myMesh%interpDegrees),'xyzmap not allocated')
+      ASSERT(.NOT. ALLOCATED(myMesh%xyzMap),'xyzmap not allocated')
+      ASSERT(.NOT. ALLOCATED(myMesh%mmData),'xyzmap not allocated')
+    ENDASSOCIATE
+
+    CALL myMMeshes%clear()
+  ENDSUBROUTINE testClearMesh
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testInit

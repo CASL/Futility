@@ -80,7 +80,7 @@ MODULE LinearSolverTypes_Multigrid
 
   INTEGER(SIK),PARAMETER,PUBLIC :: MAX_MG_LEVELS=8
 
-  !!Public enumerations from LSTypes
+  !===== Public enumerations from LSTypes =====!
   PUBLIC :: PETSC
   PUBLIC :: MULTIGRID
   !Krylov smoother/solver options:
@@ -89,6 +89,7 @@ MODULE LinearSolverTypes_Multigrid
   PUBLIC :: SOR,BJACOBI,JACOBI
   !Direct solver options:
   PUBLIC :: LU
+  !=== END Public enumerations from LSTypes ===!
 
   !> @brief The extended type for the Iterative Linear Solver
   TYPE,EXTENDS(LinearSolverType_Iterative) :: LinearSolverType_Multigrid
