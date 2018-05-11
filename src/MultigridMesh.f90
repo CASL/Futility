@@ -372,7 +372,7 @@ MODULE MultigridMesh
       TYPE(MultigridMeshType),POINTER,INTENT(IN) :: meshes
       INTEGER(SIK),INTENT(IN) :: num_eqns
 
-      INTEGER(SIK) :: i
+      !INTEGER(SIK) :: i
 
       myWts%meshes => meshes
       myWts%num_eqns=num_eqns

@@ -348,6 +348,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIterativeSolve_Multigrid()
+#ifdef FUTILITY_HAVE_PETSC
       TYPE(LinearSolverType_Multigrid) :: thisLS
       REAL(SRK),ALLOCATABLE :: soln(:)
       REAL(SRK),POINTER :: x(:)
@@ -359,7 +360,6 @@ CONTAINS
 
       INTEGER(SIK) :: level_info(2,4),level_info_local(2,4)
 
-#ifdef FUTILITY_HAVE_PETSC
       !================ 1G Problem ============================
 #ifdef HAVE_MPI
       IF(mpiTestEnv%master) THEN
@@ -470,10 +470,10 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSetSmoother
+#ifdef FUTILITY_HAVE_PETSC
       TYPE(LinearSolverType_Multigrid) :: thisLS
       LOGICAL(SBK) :: tmpbool
       INTEGER(SIK) :: iLevel
-#ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp_temp
       PC :: pc_temp
       KSPType :: myksptype
@@ -526,6 +526,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testSoftReset
+#ifdef FUTILITY_HAVE_PETSC
       TYPE(LinearSolverType_Multigrid) :: thisLS
       REAL(SRK),ALLOCATABLE :: soln(:)
       REAL(SRK),POINTER :: x(:)
@@ -534,7 +535,6 @@ CONTAINS
       INTEGER(SIK) :: i
       LOGICAL(SBK) :: match
       INTEGER(SIK),PARAMETER :: n=65_SNK
-#ifdef FUTILITY_HAVE_PETSC
       !================ 1G Problem ============================
 #ifdef HAVE_MPI
       IF(mpiTestEnv%master) THEN
@@ -625,6 +625,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
 ! This subroutine tests solving two linear systems with the same interp. matrices
     SUBROUTINE testSetInterp
+#ifdef FUTILITY_HAVE_PETSC
       TYPE(LinearSolverType_Multigrid) :: thisLS,thisLS2
       REAL(SRK),ALLOCATABLE :: soln(:),soln2(:)
       REAL(SRK),POINTER :: x(:)
@@ -632,7 +633,6 @@ CONTAINS
 
       INTEGER(SIK),PARAMETER :: n=65_SNK
 
-#ifdef FUTILITY_HAVE_PETSC
 #ifdef HAVE_MPI
       IF(mpiTestEnv%master) THEN
 #endif
@@ -781,10 +781,10 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE preAllocInterpMatrices_1D1G(thisLS)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: iLevel, inx, nx, nx_old
       INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
-#ifdef FUTILITY_HAVE_PETSC
       IF(.NOT.ASSOCIATED(thisLS%interpMats_PETSc)) THEN
         ALLOCATE(thisLS%interpMats_PETSc(thisLS%nLevels-1))
         thisLS%isOwnerOfInterpMats=.TRUE.
@@ -815,9 +815,9 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE setupInterpMatrices_1D1G(thisLS)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: iLevel, inx, nx, nx_old
 
-#ifdef FUTILITY_HAVE_PETSC
       nx=thisLS%level_info(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
@@ -840,10 +840,10 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE preAllocInterpMatrices_1D2G_2proc(thisLS)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: iLevel,inx,nx,nx_old,ieqn,row
       INTEGER(SIK),ALLOCATABLE :: dnnz(:),onnz(:)
 
-#ifdef FUTILITY_HAVE_PETSC
       IF(.NOT.ASSOCIATED(thisLS%interpMats_PETSc)) THEN
         ALLOCATE(thisLS%interpMats_PETSc(thisLS%nLevels-1))
         thisLS%isOwnerOfInterpMats=.TRUE.
@@ -877,11 +877,11 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE setupInterpMatrices_1D2G_2proc(thisLS)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: iLevel,inx,nx,nx_old,ieqn,row
       INTEGER(SIK) :: inx_c,col
       INTEGER(SIK) :: offset(2)
 
-#ifdef FUTILITY_HAVE_PETSC
       nx=thisLS%level_info_local(2,thisLS%nLevels)
       DO iLevel=thisLS%nLevels-1,1,-1
         !Create the interpolation operator:
@@ -920,12 +920,12 @@ CONTAINS
     SUBROUTINE setupLinearProblem_1D1G(thisLS,soln)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       REAL(SRK),INTENT(IN) :: soln(:)
+#ifdef FUTILITY_HAVE_PETSC
       REAL(SRK),ALLOCATABLE :: b(:)
       REAL(SRK),ALLOCATABLE :: A_temp(:,:)
       INTEGER(SIK) :: n
       INTEGER(SIK) :: i
 
-#ifdef FUTILITY_HAVE_PETSC
       n=SIZE(soln)
 
       !A is a tridiagonal system with -1 on the offdiagonals, and
@@ -963,14 +963,14 @@ CONTAINS
     SUBROUTINE setupLinearProblem_1D2G_2proc(thisLS,soln)
       TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
       REAL(SRK),INTENT(IN) :: soln(:)
+#ifdef FUTILITY_HAVE_PETSC
+#ifdef HAVE_MPI
       REAL(SRK),ALLOCATABLE :: b(:)
       REAL(SRK),ALLOCATABLE :: A_temp(:,:)
       INTEGER(SIK) :: n,nstart,nend
       INTEGER(SIK) :: i,grp
       INTEGER(SIK) :: row,col
 
-#ifdef FUTILITY_HAVE_PETSC
-#ifdef HAVE_MPI
       n=SIZE(soln)/2
 
       !2G homogeneous diffusion problem:
