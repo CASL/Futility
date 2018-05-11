@@ -54,15 +54,15 @@ PROGRAM testMultigridMesh
   SUBROUTINE testClearMesh
     TYPE(MultigridMeshStructureType) :: myMMeshes
 
-    myMMeshes%nLevels=5
-    ALLOCATE(myMMeshes%meshes(4))
-    myMMeshes%isInit=.TRUE.
+    CALL myMMeshes%init(4)
 
     !Test clearing for one particular level:
     ASSOCIATE(myMesh => myMMeshes%meshes(3))
       ALLOCATE(myMesh%interpDegrees(10))
       ALLOCATE(myMesh%xyzMap(3,10))
       ALLOCATE(myMesh%mmData(10))
+      myMesh%istt=1
+      myMesh%istp=10
       ALLOCATE(myMesh%mmData(1)%childIndices(4))
       CALL myMesh%mmData(1)%clear()
       ASSERT(.NOT. ALLOCATED(myMesh%mmData(1)%childIndices),'childindices not allocated')
