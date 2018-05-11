@@ -948,9 +948,9 @@ MODULE LinearSolverTypes_Multigrid
     SUBROUTINE setInterp_LinearSolverType_Multigrid(solver,interpMats)
       CHARACTER(LEN=*),PARAMETER :: myName='setInterp_LinearSolverType_Multigrid'
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
+#ifdef FUTILITY_HAVE_PETSC
       TYPE(PETScMatrixType),POINTER,INTENT(IN) :: interpMats(:)
 
-#ifdef FUTILITY_HAVE_PETSC
       IF(.NOT. ASSOCIATED(interpMats)) &
         CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
           "Attempt to set interpMats_PETSc with an unassociated pointer!")
@@ -961,8 +961,12 @@ MODULE LinearSolverTypes_Multigrid
         NULLIFY(solver%interpMats_PETSc)
       ENDIF
       solver%interpMats_PETSc => interpMats
-#endif
+#else
+      TYPE(MatrixType),POINTER,INTENT(IN) :: interpMats(:)
 
+      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+        "PETSc must be enabled in Futility to call this subroutine!")
+#endif
     ENDSUBROUTINE setInterp_LinearSolverType_Multigrid
 
 ENDMODULE LinearSolverTypes_Multigrid
