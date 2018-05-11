@@ -358,11 +358,13 @@ MODULE LinearSolverTypes_Multigrid
       INTEGER(SIK),INTENT(IN) :: iLevel,dnnz(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: onnz_in(:)
       INTEGER(SIK),ALLOCATABLE :: onnz(:)
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: npts,num_eqns,n
       INTEGER(SIK) :: npts_old,num_eqns_old,n_old
 
-      TYPE(ParamType) :: matPList
       CLASS(MatrixType),POINTER :: interpmat => NULL()
+#endif
+      TYPE(ParamType) :: matPList
 
       ALLOCATE(onnz(SIZE(dnnz)))
       IF(PRESENT(onnz_in)) THEN
@@ -442,7 +444,8 @@ MODULE LinearSolverTypes_Multigrid
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
       TYPE(MultigridMeshStructureType),POINTER,INTENT(IN) :: myMMeshes
       TYPE(InterpWeightsStructureType),POINTER,INTENT(IN) :: myWtStructure
-      LOGICAL(SBK),OPTIONAL :: preallocated
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: preallocated
+#ifdef FUTILITY_HAVE_PETSC
 
       !Need to increase size of indices to 48 if 3-D is allowed:
       INTEGER(SIK) :: iLevel,ip,i,row,col,ieqn,indices(8),nindices
@@ -450,6 +453,7 @@ MODULE LinearSolverTypes_Multigrid
       REAL(SRK),ALLOCATABLE :: wts(:,:)
 
       INTEGER(SIK),ALLOCATABLE :: dnnz(:)
+#endif
 
       IF(solver%TPLType /= PETSC) &
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -521,12 +525,12 @@ MODULE LinearSolverTypes_Multigrid
       CHARACTER(LEN=*),PARAMETER :: myName='setupPETScMG_LinearSolverType_Multigrid'
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
       TYPE(ParamType),INTENT(IN) :: Params
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: iLevel
       INTEGER(SIK),ALLOCATABLE :: smootherMethod_list(:)
       INTEGER(SIK) :: cg_solver_its,num_smooth
       REAL(SRK) :: cg_tol
       LOGICAL(SBK) :: precond_flag,log_flag
-#ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp_temp
       PetscErrorCode  :: iperr
 
@@ -671,9 +675,9 @@ MODULE LinearSolverTypes_Multigrid
       INTEGER(SIK),INTENT(IN) :: smoother
       INTEGER(SIK),INTENT(IN),OPTIONAL :: iLevel
       INTEGER(SIK),INTENT(IN),OPTIONAL :: num_smooth
-      INTEGER(SIK) :: i,istt,istp
 
 #ifdef FUTILITY_HAVE_PETSC
+      INTEGER(SIK) :: i,istt,istp
       KSP :: ksp_temp
       PC :: pc_temp
       PetscErrorCode  :: iperr
@@ -800,9 +804,9 @@ MODULE LinearSolverTypes_Multigrid
     SUBROUTINE clear_LinearSolverType_Multigrid(solver)
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
 
+#ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: iLevel
 
-#ifdef FUTILITY_HAVE_PETSC
       IF(ASSOCIATED(solver%interpMats_PETSc)) THEN
         IF(solver%isOwnerOfInterpMats) THEN
           IF(solver%isMultigridSetup) THEN
