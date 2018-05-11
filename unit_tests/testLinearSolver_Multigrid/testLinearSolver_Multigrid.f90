@@ -64,7 +64,7 @@ PROGRAM testLinearSolver_Multigrid
   CALL eParams%addSurrogate(e)
   CALL eLinearSolverType%addSurrogate(e)
 
-  CREATE_TEST('Test Linear Solvers')
+  CREATE_TEST('Test Multigrid Linear Solvers')
 
   REGISTER_SUBTEST('testClear',testClear)
   REGISTER_SUBTEST('testInit',testInit)
