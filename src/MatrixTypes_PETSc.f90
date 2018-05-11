@@ -52,7 +52,7 @@ MODULE MatrixTypes_PETSc
   TYPE,EXTENDS(DistributedMatrixType) :: PETScMatrixType
     Mat :: A
 
-    !> Number of rows for nonsquare matrices:
+    !> Number of columns for nonsquare matrices:
     INTEGER(SIK) :: m
 !
 !List of Type Bound Procedures
