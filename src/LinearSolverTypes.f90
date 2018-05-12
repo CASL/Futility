@@ -104,14 +104,16 @@ MODULE LinearSolverTypes
   PUBLIC :: LinearSolverType_Declare_ValidParams
   PUBLIC :: LinearSolverType_Clear_ValidParams
 
-  !> Number of direct solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=3
   !> set enumeration scheme for TPLs
   INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
   !> Number of iterative solver solution methodologies - for error checking
-  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=3
+  INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=9
   !> set enumeration scheme for iterative solver methods
-  INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3
+  !>   In PETSc, PCSOR is GS locally and Jacobi globally.
+  INTEGER(SIK),PARAMETER,PUBLIC :: BICGSTAB=1,CGNR=2,GMRES=3,MULTIGRID=4, &
+                                   SOR=5,ILU=6,BJACOBI=7,JACOBI=8,GAUSS_SEIDEL=9
+  !> Number of direct solver solution methodologies - for error checking
+  INTEGER(SIK),PARAMETER :: MAX_DIRECT_SOLVER_METHODS=3
   !> set enumeration scheme for direct solver methods
   INTEGER(SIK),PARAMETER,PUBLIC :: GE=1,LU=2,QR=3
 
@@ -305,6 +307,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
+      KSP :: ksp_temp
       PC :: pc
       PetscErrorCode  :: iperr
 #endif
@@ -339,7 +342,11 @@ MODULE LinearSolverTypes
       CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
       CALL validParams%get('LinearSolverType->timerName',timerName)
       CALL validParams%get('LinearSolverType->matType',matType)
-      CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
+      IF(validParams%has('LinearSolverType->A->MatrixType->matType')) THEN
+        CALL validParams%set('LinearSolverType->A->MatrixType->matType',matType)
+      ELSE
+        CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
+      ENDIF
       ! pull data for matrix and vector parameter lists
       CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
@@ -510,7 +517,7 @@ MODULE LinearSolverTypes
 #endif
             ENDIF
 
-          TYPE IS(LinearSolverType_Iterative) ! iterative solver
+          CLASS IS(LinearSolverType_Iterative) ! iterative solver
             IF((solverMethod > 0) .AND. &
                (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN
 
@@ -888,22 +895,22 @@ MODULE LinearSolverTypes
                 IF(.NOT.solver%isDecomposed) &
                   CALL DecomposePLU_TriDiag(solver)
                 CALL solvePLU_TriDiag(solver)
-#ifdef FUTILITY_HAVE_PETSC                  
+#ifdef FUTILITY_HAVE_PETSC
               TYPE IS(PETScMatrixType)
                 IF(solver%TPLtype==PETSC) THEN
                   ! assemble matrix if necessary
                   IF(.NOT.(A%isAssembled)) CALL A%assemble()
-                  
+
                   ! assemble source vector if necessary
                   SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
                     IF(.NOT.(b%isAssembled)) CALL b%assemble()
                   ENDSELECT
-                  
+
                   ! assemble solution vector if necessary
                   SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
                     IF(.NOT.(X%isAssembled)) CALL X%assemble()
                   ENDSELECT
-                
+
                   SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
                     SELECTTYPE(x => solver%x); TYPE IS(PETScVectorType)
                       SELECTTYPE(b => solver%b); TYPE IS(PETScVectorType)
@@ -1159,6 +1166,24 @@ MODULE LinearSolverTypes
                   CALL solveGMRES(solver)
                 ENDIF
             ENDSELECT
+          CASE(MULTIGRID)
+#ifdef FUTILITY_HAVE_PETSC
+            SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+              ! assemble matrix if necessary
+              IF(.NOT.(A%isAssembled)) CALL A%assemble()
+              SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+                ! assemble source vector if necessary
+                IF(.NOT.(b%isAssembled)) CALL b%assemble()
+                SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+                  ! assemble solution vector if necessary
+                  IF(.NOT.(X%isAssembled)) CALL X%assemble()
+                  ! solve
+                  CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+                  IF(ierr==0) solver%info=0
+                ENDSELECT
+              ENDSELECT
+            ENDSELECT
+#endif
         ENDSELECT
         CALL solver%SolveTime%toc()
       ENDIF
@@ -1256,7 +1281,8 @@ MODULE LinearSolverTypes
 !> This subroutine sets the convergence criterion for the iterative solver.
 !>
     SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,  &
-                                             relConvTol_in,absConvTol_in,maxIters_in,nRestart_in)
+                 relConvTol_in,absConvTol_in,maxIters_in,nRestart_in, &
+                 dTol_in)
       CHARACTER(LEN=*),PARAMETER :: myName='setConv_LinearSolverType_Iterative'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(IN) :: normType_in
@@ -1264,16 +1290,12 @@ MODULE LinearSolverTypes
       REAL(SRK),INTENT(IN) :: absConvTol_in
       INTEGER(SIK),INTENT(IN) :: maxIters_in
       INTEGER(SIK),INTENT(IN),OPTIONAL :: nRestart_in
+      REAL(SRK),INTENT(IN),OPTIONAL :: dTol_in
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
       PetscInt  :: maxits,nrst
       PetscReal :: rtol,abstol
-!Because PETSC doesn't like backwards compatability
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=5))
-      PetscReal :: dtol=PETSC_DEFAULT_REAL
-#else
-      PetscReal :: dtol=PETSC_DEFAULT_DOUBLE_PRECISION
-#endif
+      PetscReal :: dtol
 #endif
 
       INTEGER(SIK) :: normType,maxIters,nRestart
@@ -1285,6 +1307,13 @@ MODULE LinearSolverTypes
       absConvTol=absConvTol_in
       maxIters=maxIters_in
       IF(PRESENT(nRestart_in)) nRestart=nRestart_in
+#ifdef FUTILITY_HAVE_PETSC
+      IF(PRESENT(dTol_in)) THEN
+        dtol=dTol_in
+      ELSE
+        dtol=1E30_SRK
+      ENDIF
+#endif
       IF(normType <= -2) THEN
         CALL eLinearSolverType%raiseDebug(modName//'::'// &
           myName//' - Incorrect input, normType should not be less '// &
