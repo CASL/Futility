@@ -35,7 +35,7 @@ PROGRAM testLinearSolver_Multigrid
 #endif
 
 #ifdef HAVE_MPI
-  CALL mpiTestEnv%init(MPI_COMM_WORLD)
+  CALL mpiTestEnv%init(PE_COMM_WORLD)
 #endif
 
   !> set up default parameter list
