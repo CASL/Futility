@@ -287,7 +287,7 @@ PROGRAM testParallelEnv
           bool2d(1,:)=.FALSE.
           bool2d(2,:)=.TRUE.
         ENDIF
-        CALL testMPI%trueForAll_SBK1(10,bool2d)
+        CALL testMPI%trueForAll(10,bool2d)
         ASSERT(.NOT.ANY(bool2d),'trueForAll - Array')
       ENDIF
 
@@ -318,7 +318,7 @@ PROGRAM testParallelEnv
           bool2d(1,:)=.FALSE.
           bool2d(2,:)=.TRUE.
         ENDIF
-        CALL testMPI%trueForAny_SBK1(10,bool2d)
+        CALL testMPI%trueForAny(10,bool2d)
         ASSERT(ALL(bool2d),'trueForAny - Array')
       ENDIF
 
