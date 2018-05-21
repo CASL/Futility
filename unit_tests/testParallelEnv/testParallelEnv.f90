@@ -114,7 +114,7 @@ PROGRAM testParallelEnv
       INTEGER(SLK) :: sbuf(2)
       INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
       INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
-      LOGICAL(SBK) :: bool
+      LOGICAL(SBK) :: bool,bool2d(2,5)
       TYPE(MPI_EnvType) :: testMPI,testMPI2
 
 
@@ -279,6 +279,18 @@ PROGRAM testParallelEnv
         ASSERT(.NOT.bool,'trueForAll - Parallel')
       ENDIF
 
+      IF(testMPI%nproc > 1) THEN
+        IF(testMPI%rank == 0) THEN
+          bool2d(1,:)=.TRUE.
+          bool2d(2,:)=.FALSE.
+        ELSE
+          bool2d(1,:)=.FALSE.
+          bool2d(2,:)=.TRUE.
+        ENDIF
+        CALL testMPI%trueForAll_SBK1(10,bool2d)
+        ASSERT(.NOT.ANY(bool2d),'trueForAll - Array')
+      ENDIF
+
       COMPONENT_TEST('%trueForAny')
       CALL testMPI%clear()
       CALL testMPI%init()
@@ -296,6 +308,18 @@ PROGRAM testParallelEnv
         ENDIF
         CALL testMPI%trueForAny(bool)
         ASSERT(bool,'trueForAny - Parallel')
+      ENDIF
+
+      IF(testMPI%nproc > 1) THEN
+        IF(testMPI%rank == 0) THEN
+          bool2d(1,:)=.TRUE.
+          bool2d(2,:)=.FALSE.
+        ELSE
+          bool2d(1,:)=.FALSE.
+          bool2d(2,:)=.TRUE.
+        ENDIF
+        CALL testMPI%trueForAny_SBK1(10,bool2d)
+        ASSERT(ALL(bool2d),'trueForAny - Array')
       ENDIF
 
       CALL testMPI%clear()

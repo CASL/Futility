@@ -240,12 +240,20 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::reduceMinLoc_MPI_Env_type
       !> @copydetails  ParallelEnv::reduceMinLoc_MPI_Env_type
       PROCEDURE,PASS :: reduceMinLoc => reduceMinLocR_MPI_Env_type
-      !> @copybrief ParallelEnv::trueForAll_MPI_Env_type
-      !> @copydetails  ParallelEnv::trueForAll_MPI_Env_type
-      PROCEDURE,PASS :: trueForAll => trueForAll_MPI_Env_type
-      !> @copybrief ParallelEnv::trueForAny_MPI_Env_type
-      !> @copydetails  ParallelEnv::trueForAny_MPI_Env_type
-      PROCEDURE,PASS :: trueForAny => trueForAny_MPI_Env_type
+      !> @copybrief ParallelEnv::trueForAll_SBK0_MPI_Env_type
+      !> @copydetails  ParallelEnv::trueForAll_SBK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: trueForAll_SBK0 => trueForAll_SBK0_MPI_Env_type
+      !> @copybrief ParallelEnv::trueForAll_SBK1_MPI_Env_type
+      !> @copydetails  ParallelEnv::trueForAll_SBK1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: trueForAll_SBK1 => trueForAll_SBK1_MPI_Env_type
+      GENERIC :: trueForAll => trueForAll_SBK0,trueForAll_SBK1
+      !> @copybrief ParallelEnv::trueForAny_SBK0_MPI_Env_type
+      !> @copydetails  ParallelEnv::trueForAny_SBK0_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: trueForAny_SBK0 => trueForAny_SBK0_MPI_Env_type
+      !> @copybrief ParallelEnv::trueForAny_SBK1_MPI_Env_type
+      !> @copydetails  ParallelEnv::trueForAny_SBK1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: trueForAny_SBK1 => trueForAny_SBK1_MPI_Env_type
+      GENERIC :: trueForAny => trueForAny_SBK0,trueForAny_SBK1
       !> @copybrief ParallelEnv::finalize_MPI_Env_type
       !> @copydetails  ParallelEnv::finalize_MPI_Env_type
       PROCEDURE,NOPASS :: finalize => finalize_MPI_Env_type
@@ -1364,8 +1372,8 @@ MODULE ParallelEnv
 !> @param myPE the MPI parallel environment
 !> @param lstat logical that is set to the status of the logical 'and' operation
 !>
-    SUBROUTINE trueForAll_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_MPI_Env_type'
+    SUBROUTINE trueForAll_SBK0_MPI_Env_type(myPE,lstat)
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
@@ -1380,7 +1388,34 @@ MODULE ParallelEnv
         lstat=lrbuf
       ENDIF
 #endif
-    ENDSUBROUTINE trueForAll_MPI_Env_type
+    ENDSUBROUTINE trueForAll_SBK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a logical 'and'
+!> operation for an array logical.
+!> @param myPE the MPI parallel environment
+!> @param lstat logical that is set to the status of the logical 'and' operation
+!>
+    SUBROUTINE trueForAll_SBK1_MPI_Env_type(myPE,n,lstat)
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      LOGICAL(SBK),INTENT(INOUT) :: lstat(*)
+#ifdef HAVE_MPI
+      LOGICAL(SBK),ALLOCATABLE :: lrbuf(:)
+      REQUIRE(myPE%initstat)
+      ALLOCATE(lrbuf(n))
+      CALL MPI_Allreduce(lstat,lrbuf,n,MPI_LOGICAL,MPI_LAND, &
+        myPE%comm,mpierr)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_Allreduce returned an error!')
+      ELSE
+        lstat(1:n)=lrbuf(1:n)
+      ENDIF
+      DEALLOCATE(lrbuf)
+#endif
+    ENDSUBROUTINE trueForAll_SBK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a logical 'or'
@@ -1388,8 +1423,8 @@ MODULE ParallelEnv
 !> @param myPE the MPI parallel environment
 !> @param lstat logical that is set to the status of the logical 'or' operation
 !>
-    SUBROUTINE trueForAny_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_MPI_Env_type'
+    SUBROUTINE trueForAny_SBK0_MPI_Env_type(myPE,lstat)
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
@@ -1404,7 +1439,34 @@ MODULE ParallelEnv
         lstat=lrbuf
       ENDIF
 #endif
-    ENDSUBROUTINE trueForAny_MPI_Env_type
+    ENDSUBROUTINE trueForAny_SBK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a logical 'or'
+!> operation for an array logical.
+!> @param myPE the MPI parallel environment
+!> @param lstat logical that is set to the status of the logical 'or' operation
+!>
+    SUBROUTINE trueForAny_SBK1_MPI_Env_type(myPE,n,lstat)
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: n
+      LOGICAL(SBK),INTENT(INOUT) :: lstat(*)
+#ifdef HAVE_MPI
+      LOGICAL(SBK),ALLOCATABLE :: lrbuf(:)
+      REQUIRE(myPE%initstat)
+      ALLOCATE(lrbuf(n))
+      CALL MPI_Allreduce(lstat,lrbuf,n,MPI_LOGICAL,MPI_LOR, &
+        myPE%comm,mpierr)
+      IF(mpierr /= MPI_SUCCESS) THEN
+        CALL eParEnv%raiseError(modName//'::'// &
+          myName//' - call to MPI_Allreduce returned an error!')
+      ELSE
+        lstat(1:n)=lrbuf(1:n)
+      ENDIF
+      DEALLOCATE(lrbuf)
+#endif
+    ENDSUBROUTINE trueForAny_SBK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_scan on MPI_INTEGER data for operation MPI_SUM
