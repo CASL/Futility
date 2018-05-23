@@ -114,7 +114,7 @@ PROGRAM testParallelEnv
       INTEGER(SLK) :: sbuf(2)
       INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
       INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
-      LOGICAL(SBK) :: bool,bool2d(2,5)
+      LOGICAL(SBK) :: bool,bool1d(10),bool2d(2,5),bool3d(2,5,2),bool4d(2,5,2,5)
       TYPE(MPI_EnvType) :: testMPI,testMPI2
 
 
@@ -277,18 +277,34 @@ PROGRAM testParallelEnv
         ENDIF
         CALL testMPI%trueForAll(bool)
         ASSERT(.NOT.bool,'trueForAll - Parallel')
-      ENDIF
 
-      IF(testMPI%nproc > 1) THEN
+        bool1d=.FALSE.
+        bool2d=.FALSE.
+        bool3d=.FALSE.
+        bool4d=.FALSE.
         IF(testMPI%rank == 0) THEN
+          bool1d(1:5)=.TRUE.
           bool2d(1,:)=.TRUE.
-          bool2d(2,:)=.FALSE.
+          bool3d(1,:,:)=.TRUE.
+          bool4d(1,:,2,:)=.TRUE.
         ELSE
-          bool2d(1,:)=.FALSE.
+          bool1d(1:4)=.TRUE.
           bool2d(2,:)=.TRUE.
+          bool3d(1,2,:)=.TRUE.
+          bool4d(:,:,2,:)=.TRUE.
         ENDIF
+        CALL testMPI%trueForAll(bool1d)
+        ASSERT_EQ(COUNT(bool1d),4,'trueForAll, 1D, count')
+        ASSERT(ALL(bool1d(1:4)),'trueForAll, 1D')
         CALL testMPI%trueForAll(bool2d)
-        ASSERT(.NOT.ANY(bool2d),'trueForAll - Array')
+        ASSERT_EQ(COUNT(bool2d),0,'trueForAll, 1D, count')
+        ASSERT(.NOT.ANY(bool2d),'trueForAll, 1D')
+        CALL testMPI%trueForAll(bool3d)
+        ASSERT_EQ(COUNT(bool3d),SIZE(bool3d,DIM=3),'trueForAll, 1D, count')
+        ASSERT(ALL(bool3d(1,2,:)),'trueForAll, 1D')
+        CALL testMPI%trueForAll(bool4d)
+        ASSERT_EQ(COUNT(bool4d),SIZE(bool4d(1,:,2,:)),'trueForAll, 1D, count')
+        ASSERT(ALL(bool4d(1,:,2,:)),'trueForAll, 1D')
       ENDIF
 
       COMPONENT_TEST('%trueForAny')
@@ -308,18 +324,34 @@ PROGRAM testParallelEnv
         ENDIF
         CALL testMPI%trueForAny(bool)
         ASSERT(bool,'trueForAny - Parallel')
-      ENDIF
 
-      IF(testMPI%nproc > 1) THEN
+        bool1d=.FALSE.
+        bool2d=.FALSE.
+        bool3d=.FALSE.
+        bool4d=.FALSE.
         IF(testMPI%rank == 0) THEN
+          bool1d(1:5)=.TRUE.
           bool2d(1,:)=.TRUE.
-          bool2d(2,:)=.FALSE.
+          bool3d(1,:,:)=.TRUE.
+          bool4d(:,:,1,:)=.TRUE.
         ELSE
-          bool2d(1,:)=.FALSE.
+          bool1d(1:4)=.TRUE.
           bool2d(2,:)=.TRUE.
+          bool3d(1,2,:)=.TRUE.
+          bool4d(:,:,2,:)=.TRUE.
         ENDIF
+        CALL testMPI%trueForAny(bool1d)
+        ASSERT_EQ(COUNT(bool1d),5,'trueForAny, 1D, count')
+        ASSERT(ALL(bool1d(1:5)),'trueForAny, 1D')
         CALL testMPI%trueForAny(bool2d)
-        ASSERT(ALL(bool2d),'trueForAny - Array')
+        ASSERT_EQ(COUNT(bool2d),SIZE(bool2d(1:2,:)),'trueForAny, 1D, count')
+        ASSERT(ALL(bool2d(1:2,:)),'trueForAny, 1D')
+        CALL testMPI%trueForAny(bool3d)
+        ASSERT_EQ(COUNT(bool3d),SIZE(bool3d(1,:,:)),'trueForAny, 1D, count')
+        ASSERT(ALL(bool3d(1,:,:)),'trueForAny, 1D')
+        CALL testMPI%trueForAny(bool4d)
+        ASSERT_EQ(COUNT(bool4d),SIZE(bool4d(:,:,1:2,:)),'trueForAny, 1D, count')
+        ASSERT(ALL(bool4d(:,:,1:2,:)),'trueForAny, 1D')
       ENDIF
 
       CALL testMPI%clear()
@@ -360,13 +392,18 @@ PROGRAM testParallelEnv
       ASSERT(.NOT.testPE%world%isInit(),'%isInit()')
 
       COMPONENT_TEST('%initialize(...)')
-      CALL testPE%initialize(PE_COMM_SELF,1,1,1,1)
+#ifdef HAVE_MPI
+      CALL testPE%initialize(PE_COMM_WORLD,2,1,1,1)
+
+#else
+      CALL testPE%initialize(PE_COMM_WORLD,1,1,1,1)
+#endif
       ASSERT(testPE%world%comm /= PE_COMM_WORLD,'%world%comm world')
       ASSERT(testPE%world%comm /= PE_COMM_SELF,'%world%comm self')
       ASSERT(testPE%world%comm /= PE_COMM_NULL,'%world%comm null')
-      ASSERT(testPE%world%nproc == 1,'%world%nproc')
-      ASSERT(testPE%world%rank == 0,'%world%rank')
-      ASSERT(testPE%world%master,'%world%master')
+      ASSERT(testPE%world%nproc == mysize,'%world%nproc')
+      ASSERT(testPE%world%rank == myrank,'%world%rank')
+      ASSERT(testPE%world%master == (myrank == 0),'%world%master')
       ASSERT(testPE%world%isInit(),'%isInit()')
       ASSERTFAIL(ASSOCIATED(testPE%energy),'%energy')
       ASSERT(testPE%energy%comm /= PE_COMM_WORLD,'%energy%comm world')
@@ -380,9 +417,9 @@ PROGRAM testParallelEnv
       ASSERT(testPE%space%comm /= PE_COMM_WORLD,'%space%comm world')
       ASSERT(testPE%space%comm /= PE_COMM_SELF,'%space%comm self')
       ASSERT(testPE%space%comm /= PE_COMM_NULL,'%space%comm null')
-      ASSERT(testPE%space%nproc == 1,'%space%nproc')
-      ASSERT(testPE%space%rank == 0,'%space%rank')
-      ASSERT(testPE%space%master,'%space%master')
+      ASSERT(testPE%space%nproc == mysize,'%space%nproc')
+      ASSERT(testPE%space%rank == myrank,'%space%rank')
+      ASSERT(testPE%space%master == (myrank == 0),'%space%master')
       ASSERT(testPE%space%isInit(),'%isInit()')
       ASSERTFAIL(ASSOCIATED(testPE%angle),'%angle')
       ASSERT(testPE%angle%comm /= PE_COMM_WORLD,'%angle%comm world')
@@ -445,9 +482,9 @@ PROGRAM testParallelEnv
       ASSERT(testPE%world%comm /= PE_COMM_WORLD,'%world%comm world')
       ASSERT(testPE%world%comm /= PE_COMM_SELF,'%world%comm self')
       ASSERT(testPE%world%comm /= PE_COMM_NULL,'%world%comm null')
-      ASSERT(testPE%world%nproc == 1,'%world%nproc')
-      ASSERT(testPE%world%rank == 0,'%world%rank')
-      ASSERT(testPE%world%master,'%world%master')
+      ASSERT(testPE%world%nproc == mysize,'%world%nproc')
+      ASSERT(testPE%world%rank == myrank,'%world%rank')
+      ASSERT(testPE%world%master == (myrank == 0),'%world%master')
       ASSERT(testPE%world%isInit(),'%isInit()')
       ASSERTFAIL(ASSOCIATED(testPE%energy),'%energy')
       ASSERT(testPE%energy%comm /= PE_COMM_WORLD,'%energy%comm world')
@@ -461,9 +498,9 @@ PROGRAM testParallelEnv
       ASSERT(testPE%space%comm /= PE_COMM_WORLD,'%space%comm world')
       ASSERT(testPE%space%comm /= PE_COMM_SELF,'%space%comm self')
       ASSERT(testPE%space%comm /= PE_COMM_NULL,'%space%comm null')
-      ASSERT(testPE%space%nproc == 1,'%space%nproc')
-      ASSERT(testPE%space%rank == 0,'%space%rank')
-      ASSERT(testPE%space%master,'%space%master')
+      ASSERT(testPE%space%nproc == mysize,'%space%nproc')
+      ASSERT(testPE%space%rank == myrank,'%space%rank')
+      ASSERT(testPE%space%master == (myrank == 0),'%space%master')
       ASSERT(testPE%space%isInit(),'%isInit()')
       ASSERTFAIL(ASSOCIATED(testPE%angle),'%angle')
       ASSERT(testPE%angle%comm /= PE_COMM_WORLD,'%angle%comm world')

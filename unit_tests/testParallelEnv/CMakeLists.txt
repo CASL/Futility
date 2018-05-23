@@ -7,4 +7,8 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
-Futility_CreateUnitTest(testParallelEnv)
+IF (${PACKAGE_NAME}_ENABLE_MPI)
+    Futility_CreateParUnitTest(testParallelEnv 2)
+ELSE()
+    Futility_CreateUnitTest(testParallelEnv)
+ENDIF()
