@@ -394,7 +394,6 @@ PROGRAM testParallelEnv
       COMPONENT_TEST('%initialize(...)')
 #ifdef HAVE_MPI
       CALL testPE%initialize(PE_COMM_WORLD,2,1,1,1)
-
 #else
       CALL testPE%initialize(PE_COMM_WORLD,1,1,1,1)
 #endif
