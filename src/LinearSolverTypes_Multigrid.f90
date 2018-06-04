@@ -411,8 +411,7 @@ MODULE LinearSolverTypes_Multigrid
           solver%interpMats_PETSc(iLevel)=interpmat
         ENDSELECT
 
-        !TODO Should I deallocate this instead?
-        NULLIFY(interpmat)
+        DEALLOCATE(interpmat)
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - LinearSolverType must be initialized')
