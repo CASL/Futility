@@ -275,16 +275,16 @@ MODULE MatrixTypes_Trilinos
         ENDIF
       ENDIF
     ENDSUBROUTINE setShape_TrilinosMatrixType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets the values in the Trilinos matrix - presently untested
-!!> @param declare the matrix type to act on
-!!> @param i the ith location in the matrix
-!!> @param j the jth location in the matrix
-!!>
-!!> This routine gets the values of the sparse matrix.  If the (i,j) location is
-!!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
-!!>
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the Trilinos matrix - presently untested
+!> @param declare the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!>
+!> This routine gets the values of the sparse matrix.  If the (i,j) location is
+!> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
+!>
     SUBROUTINE get_TrilinosMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_TrilinosMatrixType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
@@ -322,8 +322,8 @@ MODULE MatrixTypes_Trilinos
         ENDIF
       ENDIF
     ENDSUBROUTINE get_TrilinosMatrixtype
-!!
-!!-------------------------------------------------------------------------------
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE assemble_TrilinosMatrixType(thisMatrix,ierr)
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
@@ -351,36 +351,36 @@ MODULE MatrixTypes_Trilinos
          'need to recompile with Trilinos enabled to use this feature.')
 #endif
     ENDSUBROUTINE assemble_TrilinosMatrixType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief tranpose the matrix
-!!> @param matrix declare the matrix type to act on
-!!>
-!!>
+!
+!-------------------------------------------------------------------------------
+!> @brief tranpose the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE transpose_TrilinosMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_TrilinosMatrixType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
       CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
         ' - routine is not implemented!')
     ENDSUBROUTINE transpose_TrilinosMatrixType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Subroutine provides an interface to matrix vector multiplication for
-!!> the MatrixType.
-!!> @param trans single character input indicating whether or not to use the
-!!>        transpose of @c A
-!!> @param thisMatrix derived matrix type.
-!!> @param alpha the scalar used to scale @c x
-!!> @param x the vector to multiply with @c A
-!!> @param beta the scalar used to scale @c y
-!!> @param y the vector to add to the product of @c A and @c x
-!!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
-!!> @param diag character indicating if diagonal of @c thisMatrix should be treated
-!!> @param incx_in integer containing distance between elements in @c x
-!!>
-!!> TODO: This is more of a mess than it needs to be, and should be resturctured
-!!> to match the matvec implementation. Split up the functionality and store
-!!> closer to their respective implementations.
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine provides an interface to matrix vector multiplication for
+!> the MatrixType.
+!> @param trans single character input indicating whether or not to use the
+!>        transpose of @c A
+!> @param thisMatrix derived matrix type.
+!> @param alpha the scalar used to scale @c x
+!> @param x the vector to multiply with @c A
+!> @param beta the scalar used to scale @c y
+!> @param y the vector to add to the product of @c A and @c x
+!> @param uplo character indicating if @c thisMatrix is upper or lower triangular
+!> @param diag character indicating if diagonal of @c thisMatrix should be treated
+!> @param incx_in integer containing distance between elements in @c x
+!>
+!> TODO: This is more of a mess than it needs to be, and should be resturctured
+!> to match the matvec implementation. Split up the functionality and store
+!> closer to their respective implementations.
     SUBROUTINE matvec_TrilinosVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: thisMatrix
