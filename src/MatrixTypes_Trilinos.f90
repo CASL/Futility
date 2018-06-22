@@ -36,7 +36,7 @@ MODULE MatrixTypes_Trilinos
 ! List of public members
   PUBLIC :: TrilinosMatrixType
   PUBLIC :: matvec_TrilinosVector
-  
+
   TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
     INTEGER(SIK) :: A
     INTEGER(SIK) :: currow
@@ -67,6 +67,7 @@ MODULE MatrixTypes_Trilinos
       !> @copybrief MatrixTypes::transpose_TrilinosMatrixType
       !> @copydetails MatrixTypes::transpose_TrilinosMatrixType
       PROCEDURE,PASS :: transpose => transpose_TrilinosMatrixType
+      PROCEDURE,PASS :: zeroentries => zeroentries_TrilinosMatrixType
   ENDTYPE TrilinosMatrixType
 
   !> Name of module
@@ -397,7 +398,10 @@ MODULE MatrixTypes_Trilinos
             modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDSUBROUTINE matvec_TrilinosVector
-    
+
+    SUBROUTINE zeroentries_TrilinosMatrixType(matrix)
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+    ENDSUBROUTINE zeroentries_TrilinosMatrixType
 #endif
 
 ENDMODULE MatrixTypes_Trilinos

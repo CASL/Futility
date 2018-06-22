@@ -32,7 +32,7 @@ MODULE MatrixTypes_Base
   PUBLIC :: SquareMatrixType
   PUBLIC :: RectMatrixType
   PUBLIC :: DistributedMatrixType
-  
+
   PUBLIC :: MatrixType_Paramsflag
   !> set enumeration scheme for matrix types
   INTEGER(SIK),PARAMETER,PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
@@ -55,6 +55,8 @@ MODULE MatrixTypes_Base
     CONTAINS
       !> Deferred routine for clearing the matrix
       PROCEDURE(matrix_sub_absintfc),DEFERRED,PASS :: clear
+      !> Deferred routine for clearing the matrix
+      PROCEDURE(matrix_sub_absintfc),DEFERRED,PASS :: zeroentries
       !> Deferred routine for initializing the matrix
       PROCEDURE(matrix_init_param_sub_absintfc),DEFERRED,PASS :: init
       !> Deferred routine for setting matrix values

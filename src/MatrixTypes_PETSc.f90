@@ -78,6 +78,7 @@ MODULE MatrixTypes_PETSc
       !> @copybrief MatrixTypes::transpose_PETScMatrixType
       !> @copydetails MatrixTypes::transpose_PETScMatrixType
       PROCEDURE,PASS :: transpose => transpose_PETScMatrixType
+      PROCEDURE,PASS :: zeroentries => zeroentries_PETScMatrixType
   ENDTYPE PETScMatrixType
 
   !> Name of module
@@ -565,6 +566,15 @@ MODULE MatrixTypes_PETSc
       DEALLOCATE(tmpB)
       DEALLOCATE(tmpC)
     ENDSUBROUTINE matmult_PETSc
+
+    SUBROUTINE zeroentries_PETScMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_PETScMatrixType'
+      CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
+      PetscErrorCode  :: ierr
+      IF(matrix%isInit) THEN
+        CALL MatZeroEntries(matrix%a,ierr)
+      ENDIF
+    ENDSUBROUTINE zeroentries_PETScMatrixType
 #endif
 
 ENDMODULE MatrixTypes_PETSc
