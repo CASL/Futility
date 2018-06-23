@@ -18,6 +18,7 @@ SET(UNIT_TEST_NAMES
     testSelectedKinds
     testWaterSatProperties
     testArrayUtils
+    testElementsIsotopes
     testExtendedMath
     testBLAS
     testStrings
