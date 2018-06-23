@@ -465,7 +465,7 @@ MODULE LinearSolverTypes
 
         ! define other linear solver variables
         SELECTTYPE(solver)
-          TYPE IS(LinearSolverType_Direct) ! direct solver
+          CLASS IS(LinearSolverType_Direct) ! direct solver
             IF((solverMethod > 0) .AND. &
                (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN
               !assign values to solver
