@@ -55,7 +55,7 @@ MODULE MatrixTypes_Base
     CONTAINS
       !> Deferred routine for clearing the matrix
       PROCEDURE(matrix_sub_absintfc),DEFERRED,PASS :: clear
-      !> Deferred routine for clearing the matrix
+      !> Deferred routine for zeroing all the entries of the matrix
       PROCEDURE(matrix_sub_absintfc),DEFERRED,PASS :: zeroentries
       !> Deferred routine for initializing the matrix
       PROCEDURE(matrix_init_param_sub_absintfc),DEFERRED,PASS :: init
