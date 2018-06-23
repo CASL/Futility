@@ -296,7 +296,6 @@ MODULE ElementsIsotopes
       CHARACTER(LEN=*),INTENT(IN) :: isoName
 
       INTEGER(SIK) :: A ! Return value
-      INTEGER(SIK) :: zaid
 
       REQUIRE(this%isInit)
 
