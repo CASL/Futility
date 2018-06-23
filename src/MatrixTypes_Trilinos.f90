@@ -67,6 +67,8 @@ MODULE MatrixTypes_Trilinos
       !> @copybrief MatrixTypes::transpose_TrilinosMatrixType
       !> @copydetails MatrixTypes::transpose_TrilinosMatrixType
       PROCEDURE,PASS :: transpose => transpose_TrilinosMatrixType
+      !> @copybrief MatrixTypes::zeros_TrilinosMatrixType
+      !> @copydetails MatrixTypes::zeros_TrilinosMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_TrilinosMatrixType
   ENDTYPE TrilinosMatrixType
 
@@ -398,7 +400,12 @@ MODULE MatrixTypes_Trilinos
             modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDSUBROUTINE matvec_TrilinosVector
-
+!
+!-------------------------------------------------------------------------------
+!> @brief zero all the elements of the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE zeroentries_TrilinosMatrixType(matrix)
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
     ENDSUBROUTINE zeroentries_TrilinosMatrixType

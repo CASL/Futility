@@ -64,7 +64,8 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::transpose_DenseSquareMatrixType
       !> @copydetails MatrixTypes::transpose_DenseSquareMatrixType
       PROCEDURE,PASS :: transpose => transpose_DenseSquareMatrixType
-
+      !> @copybrief MatrixTypes::zeroentries_DenseSquareMatrixType
+      !> @copydetails MatrixTypes::zeroentries_DenseSquareMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_DenseSquareMatrixType
   ENDTYPE DenseSquareMatrixType
 
@@ -90,7 +91,8 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::transpose_DenseRectMatrixType
       !> @copydetails MatrixTypes::transpose_DenseRectMatrixType
       PROCEDURE,PASS :: transpose => transpose_DenseRectMatrixType
-
+      !> @copybrief MatrixTypes::zeroentries_DenseRectMatrixType
+      !> @copydetails MatrixTypes::zeroentries_DenseRectMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_DenseRectMatrixType
   ENDTYPE DenseRectMatrixType
 
@@ -117,6 +119,8 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::transpose_TriDiagMatrixType
       !> @copydetails MatrixTypes::transpose_TriDiagMatrixType
       PROCEDURE,PASS :: transpose => transpose_TriDiagMatrixType
+      !> @copybrief MatrixTypes::zeroentries_TriDiagMatrixType
+      !> @copydetails MatrixTypes::zeroentries_TriDiagMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_TriDiagMatrixType
   ENDTYPE TriDiagMatrixType
 
@@ -160,6 +164,8 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::transpose_SparseMatrixType
       !> @copydetails MatrixTypes::transpose_SparseMatrixType
       PROCEDURE,PASS :: transpose => transpose_SparseMatrixType
+      !> @copybrief MatrixTypes::zeroentries_SparseMatrixType
+      !> @copydetails MatrixTypes::zeroentries_SparseMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_SparseMatrixType
   ENDTYPE SparseMatrixType
 
@@ -807,24 +813,40 @@ MODULE MatrixTypes_Native
       DEALLOCATE(n_Row)
       DEALLOCATE(Row)
     ENDSUBROUTINE transpose_SparseMatrixType
-
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE  zeroentries_SparseMatrixType(matrix)
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
-
     ENDSUBROUTINE zeroentries_SparseMatrixType
-
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE  zeroentries_DenseSquareMatrixType(matrix)
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
-
     ENDSUBROUTINE zeroentries_DenseSquareMatrixType
-
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE  zeroentries_TriDiagMatrixType(matrix)
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
-
     ENDSUBROUTINE zeroentries_TriDiagMatrixType
-
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE  zeroentries_DenseRectMatrixType(matrix)
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
-
     ENDSUBROUTINE zeroentries_DenseRectMatrixType
 ENDMODULE MatrixTypes_Native
