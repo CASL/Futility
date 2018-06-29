@@ -37,6 +37,7 @@ ENDIF()
 SET(CONFIG_TYPES
     DEBUG
     RELEASE
+    RELWITHDEBINFO
    )
 
 # Set Default configuration for Futility
@@ -276,6 +277,11 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     SET(Fortran_FLAGS_RELEASE
         ${CSYM}O3
        )
+
+    SET(Fortran_FLAGS_RELWITHDEBINFO
+        ${CSYM}O3
+        ${CSYM}fbounds-check
+       )
 ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
 
     SET(Fortran_FLAGS
@@ -376,6 +382,14 @@ FOREACH(flag ${Fortran_FLAGS_RELEASE})
     STRING(REGEX MATCH "${flag}" ispresent "${CMAKE_Fortran_FLAGS_RELEASE}")
     IF(NOT ispresent)
         SET(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${flag}")
+    ENDIF()
+ENDFOREACH()
+
+# Append Futility Release flags to existing CMAKE_Fortran_FLAGS_RELWITHDEBINFO
+FOREACH(flag ${Fortran_FLAGS_RELWITHDEBINFO})
+    STRING(REGEX MATCH "${flag}" ispresent "${CMAKE_Fortran_FLAGS_RELWITHDEBINFO}")
+    IF(NOT ispresent)
+        SET(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELWITHDEBINFO} ${flag}")
     ENDIF()
 ENDFOREACH()
 
