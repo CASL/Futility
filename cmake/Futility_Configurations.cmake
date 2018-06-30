@@ -37,6 +37,7 @@ ENDIF()
 SET(CONFIG_TYPES
     DEBUG
     RELEASE
+    RELWITHDEBINFO
    )
 
 # Set Default configuration for Futility
@@ -191,6 +192,13 @@ IF(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR
         ${CSYM}Os
        )
 
+    SET(Fortran_FLAGS_RELWITHDEBINFO
+        ${CSYM}O3
+        ${CSYM}Os
+        ${CSYM}debug${s}full
+        ${CSYM}check${s}all
+       )
+
     IF(${PACKAGE_NAME}_ENABLE_MKL)
         IF(DEFINED OpenMP_Fortran_FLAGS)
             SET(mkllib parallel)
@@ -210,8 +218,12 @@ IF(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR
     IF("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
         SET(Fortran_FLAGS_RELEASE ${Fortran_FLAGS_RELEASE}
             ${CSYM}QxHost ${CSYM}inline:speed)
+        SET(Fortran_FLAGS_RELWITHDEBINFO ${Fortran_FLAGS_RELWITHDEBINFO}
+            ${CSYM}QxHost ${CSYM}inline:speed)
     ELSE()
         SET(Fortran_FLAGS_RELEASE ${Fortran_FLAGS_RELEASE}
+            ${CSYM}inline-level=2)
+        SET(Fortran_FLAGS_RELWITHDEBINFO ${Fortran_FLAGS_RELWITHDEBINFO}
             ${CSYM}inline-level=2)
     ENDIF()
 ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
@@ -276,6 +288,12 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     SET(Fortran_FLAGS_RELEASE
         ${CSYM}O3
        )
+
+    SET(Fortran_FLAGS_RELWITHDEBINFO
+        ${CSYM}O3
+        ${CSYM}g
+        ${CSYM}fbounds-check
+       )
 ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
 
     SET(Fortran_FLAGS
@@ -297,6 +315,12 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
     SET(Fortran_FLAGS_RELEASE
         ${CSYM}O3
        )
+
+    SET(Fortran_FLAGS_RELWITHDEBINFO
+        ${CSYM}O3
+        ${CSYM}g
+        ${CSYM}Mbounds
+       )
 ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
 
     SET(Fortran_FLAGS_DEBUG
@@ -306,6 +330,11 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
 
     SET(Fortran_FLAGS_RELEASE
         ${CSYM}O2
+       )
+
+    SET(Fortran_FLAGS_RELWITHDEBINFO
+        ${CSYM}O2
+        ${CSYM}g
        )
 ELSE()
     MESSAGE(WARNING " Fortran compiler: ${CMAKE_Fortran_COMPILER_ID} not supported!")
@@ -376,6 +405,14 @@ FOREACH(flag ${Fortran_FLAGS_RELEASE})
     STRING(REGEX MATCH "${flag}" ispresent "${CMAKE_Fortran_FLAGS_RELEASE}")
     IF(NOT ispresent)
         SET(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${flag}")
+    ENDIF()
+ENDFOREACH()
+
+# Append Futility Release flags to existing CMAKE_Fortran_FLAGS_RELWITHDEBINFO
+FOREACH(flag ${Fortran_FLAGS_RELWITHDEBINFO})
+    STRING(REGEX MATCH "${flag}" ispresent "${CMAKE_Fortran_FLAGS_RELWITHDEBINFO}")
+    IF(NOT ispresent)
+        SET(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELWITHDEBINFO} ${flag}")
     ENDIF()
 ENDFOREACH()
 
