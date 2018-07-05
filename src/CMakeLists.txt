@@ -34,6 +34,7 @@ TRIBITS_ADD_LIBRARY(Utils
       Search.f90
       Constants_Conversion.f90
       ExtendedMath.f90
+      ElementsIsotopes.f90
       WaterSatProperties.f90
       BLAS1.f90
       BLAS2.f90
