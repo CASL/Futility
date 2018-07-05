@@ -133,12 +133,13 @@ void getProcMemInfo(long long *curUsage, long long *peakUsage)
   char line[128];
 
   getrusage(RUSAGE_SELF, &usage);
-  *peakUsage = usage.ru_maxrss;
+  *peakUsage = usage.ru_maxrss; //usage.ru_maxrss is in kB
 
   file = fopen("/proc/self/status", "r");
   while (fgets(line, 128, file) != NULL)
   {
-    if (strncmp(line, "VmSize:", 7) == 0)
+    //if (strncmp(line, "VmSize:", 7) == 0)
+    if (strncmp(line, "VmRSS:", 6) == 0)
     {
       *curUsage = parseLine(line);
       break;
