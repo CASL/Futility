@@ -116,15 +116,16 @@ PROGRAM testIOutil
       ASSERT(nFields(string) == -2,'bad double-quote')
       string='1'
       ASSERT(nFields(string) == 1,'1')
-      !string='XSMACRO "core mat mod" 0'
-      !ASSERT(nFields(string) == 3,'quotes')
-      !string=' XSMACRO "core mat mod" 0'
-      !ASSERT(nFields(string) == 3,'quotes')
-      !string='XSMACRO "core mat mod" 0 '
-      !ASSERT(nFields(string) == 3,'quotes')
-      !string=' XSMACRO "core mat mod" 0 '
-      !ASSERT(nFields(string) == 3,'quotes')
-
+      string='XSMACRO "core mat mod" 0'
+      ASSERT(nFields(string) == 3,'quotes')
+      string=' XSMACRO "core mat mod" 0'
+      ASSERT(nFields(string) == 3,'quotes')
+      string='XSMACRO "core mat mod" 0 '
+      ASSERT(nFields(string) == 3,'quotes')
+      string=' XSMACRO "core mat mod" 0 '
+      ASSERT(nFields(string) == 3,'quotes')
+      string=' XSMACRO "core mat mod" 0 "number 2"'
+      ASSERT(nFields(string) == 4,'quotes')
       string='arg1 nmult*arg2'
       ASSERT(nFields(string) == 2,'bad multi-arg')
       string='arg1 2*arg2'

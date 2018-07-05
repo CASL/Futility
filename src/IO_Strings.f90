@@ -657,13 +657,12 @@ MODULE IO_Strings
         IF(aline(i:i) == "'" .OR. aline(i:i) == '"') THEN
           IF(inQuotes) THEN
             inQuotes=.FALSE.
-            n=n+1
+            n=n+2
             CYCLE
           ELSE
             inQuotes=.TRUE.
           ENDIF
         ENDIF
-
         !Process the spaces and multiplier characters if not in a quoted string
         IF(.NOT.inQuotes) THEN
           IF(aline(i:i) == ' ' .OR. ICHAR(aline(i:i)) == 9) THEN !ichar(tab)=9
@@ -684,6 +683,14 @@ MODULE IO_Strings
             READ(aline(i+1:multidcol-1),*,IOSTAT=ioerr) nmult
             IF(ioerr /= 0) nmult=1
             n=n+(nmult-1)*2
+
+            !If we are multiplying a quoted string need to subtract 1.
+            IF(multidcol < ncol) THEN
+              IF(aline(multidcol+1:multidcol+1) == '"' .OR. &
+                 aline(multidcol+1:multidcol+1) == "'") &
+                n=n-1
+            ENDIF
+
             multidata=.FALSE.
           ENDIF
           nonblankd=nonblank
