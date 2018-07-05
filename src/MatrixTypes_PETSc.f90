@@ -22,6 +22,8 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes_PETSc
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE ExceptionHandler
   USE ParameterLists
@@ -578,9 +580,8 @@ MODULE MatrixTypes_PETSc
       CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_PETScMatrixType'
       CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
       PetscErrorCode  :: ierr
-      IF(matrix%isInit) THEN
-        CALL MatZeroEntries(matrix%a,ierr)
-      ENDIF
+      REQUIRE(matrix%isInit)
+      CALL MatZeroEntries(matrix%a,ierr)
     ENDSUBROUTINE zeroentries_PETScMatrixType
 #endif
 

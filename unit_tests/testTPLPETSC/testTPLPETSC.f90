@@ -630,6 +630,53 @@ PROGRAM testTPLPETSC
     ENDIF
     WRITE(*,*) '  Passed: CALL MatTranspose(...)'
 
+    CALL MatZeroEntries(A,ierr)
+    CALL MatGetValues(A,1,0,1,0,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,1,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,0,1,1,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,2,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,0,1,2,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,1,1,3,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,1,1,0,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,1,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,1,1,1,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,2,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,1,1,2,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,2,1,3,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,2,1,0,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,1,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,2,1,1,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,2,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    CALL MatGetValues(A,1,2,1,2,getval,ierr)
+    IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+      WRITE(*,*) 'CALL MatGetValues(A,1,3,1,3,getval,ierr) FAILED!'
+      STOP 666
+    ENDIF
+    WRITE(*,*) '  Passed: CALL MatZeroentries(...)'
     !test MatDestroy
     CALL MatDestroy(A,ierr)
     IF(ierr /= 0) WRITE(*,*) 'CALL MatDestroy(A,ierr) FAILED!'
