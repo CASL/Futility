@@ -69,6 +69,7 @@ PROGRAM testMatrixTypes
   REGISTER_SUBTEST('TestMatrix',testMatrix)
   REGISTER_SUBTEST('Test Factories',testFactories)
   REGISTER_SUBTEST('TestTranspose',testTransposeMatrix)
+  REGISTER_SUBTEST('Test Zeroentries',testzeroEntriesMatrix)
   FINALIZE_TEST()
 
   CALL optListMat%clear()
@@ -3582,7 +3583,7 @@ PROGRAM testMatrixTypes
       CALL dmat_p%set(4,4,6.0_SRK)
 
       CALL dmat_p%assemble()
-      
+
       CALL dmat_p%transpose()
 
       CALL dmat_p%get(2,1,aij)
@@ -3603,6 +3604,150 @@ PROGRAM testMatrixTypes
       CALL tmpPlist%clear()
 #endif
     ENDSUBROUTINE testTransposeMatrix
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testzeroEntriesMatrix()
+      CLASS(MatrixType),POINTER :: mat_p
+      CLASS(SparseMatrixType),ALLOCATABLE :: testA
+      LOGICAL(SBK) :: bool
+      TYPE(ParamType) :: tmpPlist,params
+      INTEGER(SIK) :: i,j
+#ifdef FUTILITY_HAVE_PETSC
+      CLASS(DistributedMatrixType),POINTER :: dmat_p
+      REAL(SRK) :: aij
+#endif
+      ALLOCATE(SparseMatrixType :: testA)
+
+      COMPONENT_TEST("Matrix ZeroEntries")
+      ALLOCATE(DenseSquareMatrixType :: mat_p)
+      ! Dense Square matrix
+      CALL params%add("MatrixType->n",4)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",DENSESQUARE)
+      CALL params%add("MatrixType->engine",VM_NATIVE)
+      CALL mat_p%init(params)
+      CALL mat_p%zeroentries()
+      SELECTTYPE(mat_p)
+        TYPE IS(DenseSquareMatrixType)
+          DO i=1,mat_p%n
+            DO j=1,mat_p%n
+              bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+              ASSERT(bool,"wrong zeroentries")
+            ENDDO
+          ENDDO
+      ENDSELECT
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+      ALLOCATE(DenseRectMatrixType :: mat_p)
+      ! Dense Square matrix
+      CALL params%add("MatrixType->n",4)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",DENSERECT)
+      CALL params%add("MatrixType->engine",VM_NATIVE)
+      CALL mat_p%init(params)
+      CALL mat_p%zeroentries()
+      SELECTTYPE(mat_p)
+        TYPE IS(DenseRectMatrixType)
+          DO i=1,mat_p%n
+            DO j=1,mat_p%n
+              bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+              ASSERT(bool,"wrong zeroentries")
+            ENDDO
+          ENDDO
+      ENDSELECT
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+
+      ! Dense Square matrix
+      ALLOCATE(TridiagMatrixType :: mat_p)
+      CALL params%add("MatrixType->n",4)
+      CALL params%add("MatrixType->isSym",.FALSE.)
+      CALL params%add("MatrixType->matType",TRIDIAG)
+      CALL params%add("MatrixType->engine",VM_NATIVE)
+      CALL mat_p%init(params)
+      CALL mat_p%zeroentries()
+      SELECTTYPE(mat_p)
+        TYPE IS(TridiagMatrixType)
+          DO i=1,mat_p%n
+            DO j=1,mat_p%n
+              bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+              ASSERT(bool,"wrong zeroentries")
+            ENDDO
+          ENDDO
+      ENDSELECT
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+
+
+      COMPONENT_TEST('Sparse')
+      CALL Plist%clear()
+      CALL tmpPlist%add('MatrixType->n',4_SIK)
+      CALL tmpPlist%add('MatrixType->matType',SPARSE)
+      CALL tmpPlist%add('MatrixType->nnz',6_SIK)
+
+      CALL testA%init(tmpPlist)
+      CALL testA%setShape(1,2,1.0_SRK)
+      CALL testA%setShape(2,1,2.0_SRK)
+      CALL testA%setShape(2,4,3.0_SRK)
+      CALL testA%setShape(3,4,4.0_SRK)
+      CALL testA%setShape(4,1,5.0_SRK)
+      CALL testA%setShape(4,4,6.0_SRK)
+
+      CALL testA%zeroentries()
+      SELECTTYPE(mat_p)
+        TYPE IS(SparseMatrixType)
+          bool=ALL(testA%a(:) .APPROXEQ. (/0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK/))
+      ENDSELECT
+      ASSERT(bool,"wrong a")
+      CALL tmpPlist%clear()
+
+
+#ifdef FUTILITY_HAVE_PETSC
+      COMPONENT_TEST('PETSc')
+      dmat_p => NULL()
+      CALL tmpPlist%add("MatrixType->n",4)
+      CALL tmpPlist%add("MatrixType->isSym",.FALSE.)
+      CALL tmpPlist%add("MatrixType->matType",SPARSE)
+      CALL tmpPlist%add("MatrixType->engine",VM_PETSC)
+      CALL tmpPlist%add("MatrixType->MPI_COMM_ID",PE_COMM_SELF)
+      CALL DistributedMatrixFactory(dmat_p,tmpPlist)
+
+      CALL dmat_p%set(1,2,1.0_SRK)
+      CALL dmat_p%set(2,1,2.0_SRK)
+      CALL dmat_p%set(2,4,3.0_SRK)
+      CALL dmat_p%set(3,4,4.0_SRK)
+      CALL dmat_p%set(4,1,5.0_SRK)
+      CALL dmat_p%set(4,4,6.0_SRK)
+
+      CALL dmat_p%assemble()
+
+      CALL dmat_p%zeroentries()
+
+      CALL dmat_p%get(2,1,aij)
+      ASSERT(aij == 0.0_SRK,'(1,2)->(2,1)')
+      CALL dmat_p%get(1,2,aij)
+      ASSERT(aij == 0.0_SRK,'(2,1)->(1,2)')
+      CALL dmat_p%get(4,2,aij)
+      ASSERT(aij == 0.0_SRK,'(2,4)->(4,2)')
+      CALL dmat_p%get(4,3,aij)
+      ASSERT(aij == 0.0_SRK,'(3,4)->(4,3)')
+      CALL dmat_p%get(1,4,aij)
+      ASSERT(aij == 0.0_SRK,'(4,1)->(1,4)')
+      CALL dmat_p%get(4,4,aij)
+      ASSERT(aij == 0.0_SRK,'(4,4)->(4,4)')
+
+      CALL dmat_p%clear()
+      DEALLOCATE(dmat_p)
+      CALL tmpPlist%clear()
+#endif
+    ENDSUBROUTINE testzeroEntriesMatrix
+!
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testFactories()
@@ -3630,7 +3775,7 @@ PROGRAM testMatrixTypes
       ASSERT(mat_p%isInit, "dense square matrix not initialized")
       SELECTTYPE(mat_p); TYPE IS(DenseSquareMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for dense square matrix")
       ENDSELECT
       CALL MatrixResemble(other_mat_p,mat_p,params)
@@ -3658,7 +3803,7 @@ PROGRAM testMatrixTypes
       ASSERT(mat_p%isInit, "dense rect matrix not initialized")
       SELECTTYPE(mat_p); TYPE IS(DenseRectMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for dense rect matrix")
       ENDSELECT
       CALL MatrixResemble(other_mat_p,mat_p,params)
@@ -3685,7 +3830,7 @@ PROGRAM testMatrixTypes
       ASSERT(mat_p%isInit, "sparse matrix not initialized")
       SELECTTYPE(mat_p); TYPE IS(SparseMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for sparse matrix")
       ENDSELECT
       CALL MatrixResemble(other_mat_p,mat_p,params)
@@ -3712,7 +3857,7 @@ PROGRAM testMatrixTypes
       ASSERT(mat_p%isInit, "tridiag matrix not initialized")
       SELECTTYPE(mat_p); TYPE IS(TridiagMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for tridiag matrix")
       ENDSELECT
       CALL MatrixResemble(other_mat_p,mat_p,params)
@@ -3742,7 +3887,7 @@ PROGRAM testMatrixTypes
       ASSERT(mat_p%isInit, "PETSc matrix not initialized")
       SELECTTYPE(mat_p); TYPE IS(PETScMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for PETSc matrix")
       ENDSELECT
       CALL MatrixResemble(other_mat_p,mat_p,params)
@@ -3778,7 +3923,7 @@ PROGRAM testMatrixTypes
       ASSERT(mat_p%isInit, "Trilinos matrix not initialized")
       SELECTTYPE(mat_p); TYPE IS(TrilinosMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for Trilinos matrix")
       ENDSELECT
       CALL MatrixResemble(other_mat_p,mat_p,params)
@@ -3795,7 +3940,7 @@ PROGRAM testMatrixTypes
       NULLIFY(mat_p)
       CALL params%clear()
 #endif
-      
+
       COMPONENT_TEST("Distributed Matrix Factory")
 #ifdef FUTILITY_HAVE_PETSC
       ! PETSc Matrix
@@ -3809,7 +3954,7 @@ PROGRAM testMatrixTypes
       ASSERT(dmat_p%isInit, "PETSc matrix not initialized")
       SELECTTYPE(dmat_p); TYPE IS(PETScMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for PETSc matrix")
       ENDSELECT
       CALL dmat_p%clear()
@@ -3837,7 +3982,7 @@ PROGRAM testMatrixTypes
       ASSERT(dmat_p%isInit, "Trilinos matrix not initialized")
       SELECTTYPE(dmat_p); TYPE IS(TrilinosMatrixType)
         ASSERT(.TRUE., "yay")
-      CLASS DEFAULT 
+      CLASS DEFAULT
         ASSERT(.FALSE., "Wrong TYPE ALLOCATED for Trilinos matrix")
       ENDSELECT
       CALL dmat_p%clear()

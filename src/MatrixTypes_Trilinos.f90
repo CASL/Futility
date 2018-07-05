@@ -408,6 +408,10 @@ MODULE MatrixTypes_Trilinos
 !>
     SUBROUTINE zeroentries_TrilinosMatrixType(matrix)
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
+      ! No need
+      CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
+        ' - routine is not implemented!')
     ENDSUBROUTINE zeroentries_TrilinosMatrixType
 #endif
 

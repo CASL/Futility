@@ -20,6 +20,8 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes_Native
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE ExceptionHandler
   USE ParameterLists
@@ -708,7 +710,7 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE transpose_DenseRectMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='transpose_DenseSquareMatrixType'
+      CHARACTER(LEN=*),PARAMETER :: myName='transpose_DenseRecMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
         ' - routine is not implemented!')
@@ -820,7 +822,12 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_SparseMatrixType(matrix)
+    CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
+
+      REQUIRE(matrix%isInit)
+      matrix%a=0.0_SRK
+
     ENDSUBROUTINE zeroentries_SparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -829,7 +836,12 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_DenseSquareMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
+
+      REQUIRE(matrix%isInit)
+      matrix%a=0.0_SRK
+
     ENDSUBROUTINE zeroentries_DenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -838,7 +850,12 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_TriDiagMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
+
+      REQUIRE(matrix%isInit)
+      matrix%a=0.0_SRK
+
     ENDSUBROUTINE zeroentries_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -847,6 +864,11 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_DenseRectMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
+
+      REQUIRE(matrix%isInit)
+      matrix%a=0.0_SRK
+
     ENDSUBROUTINE zeroentries_DenseRectMatrixType
 ENDMODULE MatrixTypes_Native
