@@ -410,8 +410,8 @@ MODULE MatrixTypes_Trilinos
       CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
       ! No need
-      CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
-        ' - routine is not implemented!')
+      REQUIRE(matrix%isInit)
+      CALL ForPETRA_MatReset(matrix%A)
     ENDSUBROUTINE zeroentries_TrilinosMatrixType
 #endif
 
