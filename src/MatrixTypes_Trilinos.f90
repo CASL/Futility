@@ -21,6 +21,8 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes_Trilinos
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE ExceptionHandler
   USE ParameterLists
