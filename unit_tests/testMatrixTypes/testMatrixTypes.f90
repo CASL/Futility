@@ -3643,6 +3643,7 @@ PROGRAM testMatrixTypes
       ALLOCATE(DenseRectMatrixType :: mat_p)
       ! Dense Square matrix
       CALL params%add("MatrixType->n",4)
+      CALL params%add("MatrixType->m",4)
       CALL params%add("MatrixType->isSym",.FALSE.)
       CALL params%add("MatrixType->matType",DENSERECT)
       CALL params%add("MatrixType->engine",VM_NATIVE)
@@ -3672,7 +3673,7 @@ PROGRAM testMatrixTypes
       CALL mat_p%zeroentries()
       SELECTTYPE(mat_p)
         TYPE IS(TridiagMatrixType)
-          DO i=1,mat_p%n
+          DO i=1,SIZE(mat_p%a,DIM=1)
             DO j=1,mat_p%n
               bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
               ASSERT(bool,"wrong zeroentries")
