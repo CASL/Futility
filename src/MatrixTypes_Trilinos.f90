@@ -21,6 +21,8 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes_Trilinos
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE ExceptionHandler
   USE ParameterLists
@@ -36,7 +38,7 @@ MODULE MatrixTypes_Trilinos
 ! List of public members
   PUBLIC :: TrilinosMatrixType
   PUBLIC :: matvec_TrilinosVector
-  
+
   TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
     INTEGER(SIK) :: A
     INTEGER(SIK) :: currow
@@ -67,6 +69,9 @@ MODULE MatrixTypes_Trilinos
       !> @copybrief MatrixTypes::transpose_TrilinosMatrixType
       !> @copydetails MatrixTypes::transpose_TrilinosMatrixType
       PROCEDURE,PASS :: transpose => transpose_TrilinosMatrixType
+      !> @copybrief MatrixTypes::zeros_TrilinosMatrixType
+      !> @copydetails MatrixTypes::zeros_TrilinosMatrixType
+      PROCEDURE,PASS :: zeroentries => zeroentries_TrilinosMatrixType
   ENDTYPE TrilinosMatrixType
 
   !> Name of module
@@ -397,7 +402,19 @@ MODULE MatrixTypes_Trilinos
             modName//'::'//myName//' - This interface is not available.')
       ENDSELECT
     ENDSUBROUTINE matvec_TrilinosVector
-    
+!
+!-------------------------------------------------------------------------------
+!> @brief zero all the elements of the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
+    SUBROUTINE zeroentries_TrilinosMatrixType(matrix)
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixTypeVectorType'
+      ! No need
+      REQUIRE(matrix%isInit)
+      CALL ForPETRA_MatReset(matrix%A)
+    ENDSUBROUTINE zeroentries_TrilinosMatrixType
 #endif
 
 ENDMODULE MatrixTypes_Trilinos

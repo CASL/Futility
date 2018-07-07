@@ -163,12 +163,12 @@ MODULE MemProf
           thisMP%print_banner=.FALSE.
         ENDIF
         CALL thisMP%pe%world%barrier()
-        CALL getProcMemInfo(tmpL1,tmpL2)
-        thisMP%mem_current=REAL(tmpL1,SRK)/(1024.0_SRK*1024.0_SRK)
+        CALL getProcMemInfo(tmpL1,tmpL2) !tmpL1 in kB, and tmpL2 in bytes
+        thisMP%mem_current=REAL(tmpL1,SRK)*1000.0_SRK/(1024.0_SRK*1024.0_SRK*1024.0_SRK)
         loc(1)=thisMP%pe%world%rank
 
         mem=thisMP%mem_current
-        maxmem=mem
+        maxmem=REAL(tmpL2,SRK)/(1024.0_SRK*1024.0_SRK*1024.0_SRK)
         dmem=(thisMP%mem_current-thisMP%mem_old)*1024.0_SRK
         IF(thisMP%verbose) THEN
           WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
@@ -182,7 +182,7 @@ MODULE MemProf
         CALL thisMP%pe%world%allReduce(1,mem)
         mem=mem/REAL(thisMP%pe%world%nproc,SRK)
 
-        IF(dmem(1)>=thisMP%mem_threshold .AND. ASSOCIATED(thisMP%myLog) .AND. &
+        IF(ABS(dmem(1))>=thisMP%mem_threshold .AND. ASSOCIATED(thisMP%myLog) .AND. &
             thisMP%pe%world%master) THEN
           WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
           WRITE(amesg,'(a,3(f10.3),"  (",I4,")")') ADJUSTL(tmpchar), mem, maxmem, dmem, loc
