@@ -45,6 +45,12 @@ MODULE Constants_Conversion
   !> Avogadro's Number
   REAL(SRK),PUBLIC,PARAMETER :: Na=6.02214129000E+23_SRK !16 digits
 
+  ! Area conversion
+  !> Conversion factor from barns to cm**2
+  REAL(SRK),PUBLIC,PARAMETER :: barn2cm=1.0E-24_SRK
+  !> Conversion factor from cm**2 to barns
+  REAL(SRK),PUBLIC,PARAMETER :: cm2barn=1.0E24_SRK
+
   !Pressure Conversions
   !> Conversion factor from MPa to psia
   REAL(SRK),PUBLIC,PARAMETER :: MPa2PSIA=145.0_SRK+377.0_SRK/9990.0_SRK
