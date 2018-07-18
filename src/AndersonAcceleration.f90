@@ -142,6 +142,7 @@ MODULE AndersonAccelerationTypes
       CALL validParams%get('AndersonAccelerationType->depth',depth)
       CALL validParams%get('AndersonAccelerationType->beta',beta)
       CALL validParams%get('AndersonAccelerationType->start',start)
+      CALL validParams%clear()
 
       IF(.NOT. solver%isInit) THEN
         IF(n < 1) THEN
