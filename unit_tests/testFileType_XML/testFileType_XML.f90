@@ -143,10 +143,6 @@ PROGRAM testXMLFileType
     bool=(TRIM(refval) == TRIM(val))
     ASSERT(bool,'set non-existing attribute')
 
-    DO iattr=1,4
-      CALL setChildren(iattr)%clear()
-    ENDDO !iattr
-    DEALLOCATE(setChildren)
     NULLIFY(getChildren)
   ENDSUBROUTINE testSet
 !

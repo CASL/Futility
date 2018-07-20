@@ -545,7 +545,14 @@ MODULE FileType_XML
       TYPE(XMLElementType),POINTER,INTENT(INOUT) :: children(:)
       INTEGER(SIK) :: i,nChildren
 
-      IF(thisXMLE%hasChildren()) DEALLOCATE(thisXMLE%children)
+      !if thisXMLE already has children, clear and deallocate them first
+      IF(thisXMLE%hasChildren()) THEN
+        DO i=SIZE(thisXMLE%children),1,-1
+          CALL clear_XMLElementType(thisXMLE%children(i))
+        ENDDO
+        DEALLOCATE(thisXMLE%children)
+      ENDIF
+
       IF(SIZE(children) > 0) THEN
         nChildren=SIZE(children)
         thisXMLE%children => children
