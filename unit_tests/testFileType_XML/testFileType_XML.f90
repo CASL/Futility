@@ -88,7 +88,7 @@ PROGRAM testXMLFileType
 !-------------------------------------------------------------------------------
   SUBROUTINE testSet()
     LOGICAL(SBK) :: bool
-    INTEGER(SIK) :: nch,nchComp,iattr
+    INTEGER(SIK) :: nch,nchComp
     TYPE(StringType) :: attr_name,val,refval
     TYPE(StringType) :: refName,setName
     TYPE(XMLElementType),POINTER :: setChildren(:),getChildren(:)
