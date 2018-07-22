@@ -88,7 +88,7 @@ PROGRAM testXMLFileType
 !-------------------------------------------------------------------------------
   SUBROUTINE testSet()
     LOGICAL(SBK) :: bool
-    INTEGER(SIK) :: nch,nchComp,iattr
+    INTEGER(SIK) :: nch,nchComp
     TYPE(StringType) :: attr_name,val,refval
     TYPE(StringType) :: refName,setName
     TYPE(XMLElementType),POINTER :: setChildren(:),getChildren(:)
@@ -143,10 +143,6 @@ PROGRAM testXMLFileType
     bool=(TRIM(refval) == TRIM(val))
     ASSERT(bool,'set non-existing attribute')
 
-    DO iattr=1,4
-      CALL setChildren(iattr)%clear()
-    ENDDO !iattr
-    DEALLOCATE(setChildren)
     NULLIFY(getChildren)
   ENDSUBROUTINE testSet
 !

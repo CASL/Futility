@@ -263,7 +263,7 @@ MODULE EigenvalueSolverTypes
 !> @param MPIEnv the MPI environment to be used to initialize the solver
 !> @param M the matrix to use to determine which type of solver to create
 !> @param params A parameter list to use in allocating the solver
-!> 
+!>
 !> This is a simple abstract factory routine for the base EigenvalueSolverType.
 !> It uses the type of the passed MatrixType object to determine which type of
 !> eigenvalue solver to allocate, then initialized the solver with the passed
@@ -276,7 +276,7 @@ MODULE EigenvalueSolverTypes
       TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
       CLASS(MatrixType),INTENT(IN),TARGET :: M
       TYPE(ParamType),INTENT(IN) :: params
-      
+
       IF(ASSOCIATED(solver)) THEN
         CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
           "Solver pointer is already associated")
@@ -435,6 +435,7 @@ MODULE EigenvalueSolverTypes
         CALL tmpPL%add('VectorType->nlocal',nlocal)
         CALL solver%X%init(tmpPL)
         CALL solver%xi%init(tmpPL)
+        CALL tmpPL%clear()
 
         solver%TPLType=SLEPC
         solver%isInit=.TRUE.
@@ -777,7 +778,10 @@ MODULE EigenvalueSolverTypes
       solver%k=0.0_SRK
       NULLIFY(solver%A)
       NULLIFY(solver%B)
-      IF(solver%X%isInit) CALL solver%X%clear()
+      IF(solver%X%isInit) THEN
+        CALL solver%X%clear()
+        DEALLOCATE(solver%X)
+      ENDIF
 #ifdef FUTILITY_HAVE_SLEPC
       IF(solver%xi%isInit) CALL solver%xi%clear()
       CALL EPSDestroy(solver%eps,ierr)

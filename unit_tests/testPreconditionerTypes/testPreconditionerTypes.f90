@@ -571,6 +571,7 @@ PROGRAM testPreconditionerTypes
       CALL VecDestroy(b,ierr)
       CALL KSPDestroy(ksp,ierr)
       CALL shellPC%clear()
+      DEALLOCATE(shellPC)
       NULLIFY(PETSC_PCSHELL_PC)
 #endif
     ENDSUBROUTINE testPCShell

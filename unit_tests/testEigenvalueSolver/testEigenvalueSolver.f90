@@ -81,7 +81,7 @@ PROGRAM testEigenvalueSolver
       CALL B%clear()
     ENDIF
     DEALLOCATE(B)
-  ENDIF 
+  ENDIF
   DEALLOCATE(testEVS)
   ALLOCATE(EigenvalueSolverType_Anasazi :: testEVS)
   CALL optList%set('EigenvalueSolverType->solver',GD)
@@ -112,7 +112,7 @@ PROGRAM testEigenvalueSolver
       CALL B%clear()
     ENDIF
     DEALLOCATE(B)
-  ENDIF 
+  ENDIF
   DEALLOCATE(testEVS)
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -155,7 +155,7 @@ CONTAINS
       ASSERT(testEVS%k==0.0_SRK,'%k')
       ASSERT(.NOT. ASSOCIATED(testEVS%A),'%A')
       ASSERT(.NOT. ASSOCIATED(testEVS%B),'%B')
-      ASSERT(.NOT. (testEVS%X%isInit) ,'%x')
+      ASSERT(.NOT. ASSOCIATED(testEVS%X),'%x')
       SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_SLEPC)
 #ifdef FUTILITY_HAVE_SLEPC
         ASSERT(.NOT. (testEVS%xi%isInit),'%xi')
