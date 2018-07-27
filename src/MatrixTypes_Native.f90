@@ -458,7 +458,16 @@ MODULE MatrixTypes_Native
             ENDIF
           ENDDO
           IF(found_ja) matrix%a(ja_index)=setval
+        ELSE
+          IF(matrix%jCount==0) THEN
+            CALL eMatrixType%raiseError(modName//'::'//myName//' - Matrix entries not defined.  '//&
+               'Ensure that setShape has been called.')
+          ELSEIF(i>matrix%n.or.i<0.or.j<0) THEN
+            CALL eMatrixType%raiseError(modName//'::'//myName//' - Passed row/col out of bounds.')
+          ENDIF
         ENDIF
+      ELSE
+         CALL eMatrixType%raiseError(modName//'::'//myName//' - Matrix not initialized.')
       ENDIF
     ENDSUBROUTINE set_SparseMatrixtype
 !
@@ -572,8 +581,16 @@ MODULE MatrixTypes_Native
             matrix%jCount=matrix%jCount+1
             IF(PRESENT(setval)) matrix%a(matrix%jCount)=setval
             matrix%ja(matrix%jCount)=j
+          ELSE
+            CALL eMatrixType%raiseError(modName//'::'//myName//&
+               ' - Failed consistency checks; ensure j values for row are in ascending'//&
+               ' order, entires are row-major, and the number of nonzeros are within bounds.')
           ENDIF
+        ELSE
+          CALL eMatrixType%raiseError(modName//'::'//myName//' - Passed row/col out of bounds.')
         ENDIF
+      ELSE
+        CALL eMatrixType%raiseError(modName//'::'//myName//' - Matrix not initialized.')
       ENDIF
     ENDSUBROUTINE set_shape_SparseMatrixType
 !

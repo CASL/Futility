@@ -97,6 +97,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: dummy
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
       LOGICAL(SBK) :: bool
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg, refMsg
 #ifdef FUTILITY_HAVE_PETSC
       INTEGER(SIK) :: matsize1,matsize2
       CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
@@ -288,6 +289,69 @@ PROGRAM testMatrixTypes
             ASSERT(thisMatrix%a(i) == 0, 'sparse%setShape(...)')
           ENDDO
           CALL thisMatrix%clear()
+          
+          ! Perform a series of exception tests:
+          ! 1. Try to set before matrix is initialized
+          CALL thisMatrix%SetShape(1,1,1._SRK)
+          msg=eMatrixType%getLastMessage()
+          refMsg = "#### EXCEPTION_ERROR #### - MATRIXTYPES_NATIVE::set_shape_SparseMatrixType"//&
+             " - Matrix not initialized."
+          ASSERT(trim(msg)==trim(refMsg), "")
+          CALL thisMatrix%SetShape(1,1)
+          msg=eMatrixType%getLastMessage()
+          ASSERT(trim(msg)==trim(refMsg), "")
+
+          CALL thisMatrix%init(pList)
+
+          ! 2. Try to set data before setShape is called
+          CALL thisMatrix%set(1,1,1._SRK)
+          msg=eMatrixType%getLastMessage()
+          refMsg = "#### EXCEPTION_ERROR #### - MATRIXTYPES_NATIVE::set_SparseMatrixType - "//&
+            "Matrix entries not defined.  Ensure that setShape has been called."
+          ASSERT(trim(msg)==trim(refMsg), "")
+
+          ! 3. Pass in j's out of order in setShape
+          CALL thisMatrix%setShape(1,1)
+          CALL thisMatrix%setShape(1,4)
+          CALL thisMatrix%setShape(1,3)
+          msg=eMatrixType%getLastMessage()
+          refMsg = "#### EXCEPTION_ERROR #### - MATRIXTYPES_NATIVE::set_shape_SparseMatrixType - "//&
+            'Failed consistency checks; ensure j values for row are in ascending '//&
+            'order, entires are row-major, and the number of nonzeros are within bounds.'
+          ASSERT(trim(msg)==trim(refMsg), "")
+
+
+          ! 4. Pass in row/col out of bounds for setShape
+          CALL thisMatrix%SetShape(5,1)
+          msg=eMatrixType%getLastMessage()
+          refMsg = "#### EXCEPTION_ERROR #### - MATRIXTYPES_NATIVE::set_shape_SparseMatrixType - "//&
+            "Passed row/col out of bounds."
+          ASSERT(trim(msg)==trim(refMsg), "")
+          CALL thisMatrix%SetShape(0,1)
+          msg=eMatrixType%getLastMessage()
+          ASSERT(trim(msg)==trim(refMsg), "")
+          CALL thisMatrix%SetShape(1,0)
+          msg=eMatrixType%getLastMessage()
+          ASSERT(trim(msg)==trim(refMsg), "")
+
+          CALL thisMatrix%SetShape(1,1,1._SRK)
+
+          ! 5. Pass in row/col out of bounds for set
+          CALL thisMatrix%set(5,1,1._SRK)
+          msg=eMatrixType%getLastMessage()
+          refMsg = "#### EXCEPTION_ERROR #### - MATRIXTYPES_NATIVE::set_SparseMatrixType - "//&
+            "Passed row/col out of bounds."
+          ASSERT(trim(msg)==trim(refMsg), "")
+          CALL thisMatrix%set(0,1,1._SRK)
+          msg=eMatrixType%getLastMessage()
+          ASSERT(trim(msg)==trim(refMsg), "")
+          CALL thisMatrix%set(1,0,1._SRK)
+          msg=eMatrixType%getLastMessage()
+          ASSERT(trim(msg)==trim(refMsg), "")
+
+          CALL thisMatrix%clear()
+          ! Exception tests done
+
           !off-nominal setShape cases
           !test matrix with isInit set to false artificially
           CALL thisMatrix%init(pList)
