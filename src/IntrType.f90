@@ -589,7 +589,7 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       REAL(SDK) :: eps
       eps=MAX(ABS(a),ABS(b))*EPSS
-      IF(a == 0.0_SSK .OR. b == 0.0_SSK) eps=EPSS
+      IF(a == 0.0_SSK .AND. b == 0.0_SSK) eps=EPSS
       bool=(ABS(a-b) <= eps)
     ENDFUNCTION approxeq_rel_single
 !
@@ -610,7 +610,7 @@ MODULE IntrType
       LOGICAL(SBK) :: bool
       REAL(SDK) :: eps
       eps=MAX(ABS(a),ABS(b))*EPSD
-      IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSD
+      IF(a == 0.0_SDK .AND. b == 0.0_SDK) eps=EPSD
       bool=(ABS(a-b) <= eps)
     ENDFUNCTION approxeq_rel_double
 !
