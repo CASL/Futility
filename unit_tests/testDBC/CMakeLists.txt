@@ -41,6 +41,12 @@ IF(${Futility_ENABLE_DBC})
         NUM_MPI_PROCS 1
         ARGS 4
         WILL_FAIL
+    TEST_4
+        NOEXEPREFIX
+        EXEC testDBC
+        NUM_MPI_PROCS 1
+        ARGS 5
+        ALWAYS_FAIL_ON_NONZERO_RETURN
   )
 ELSE()
   TRIBITS_ADD_ADVANCED_TEST(testDBC

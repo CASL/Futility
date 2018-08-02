@@ -32,6 +32,8 @@ PROGRAM testDBC
       CALL require_fail()
     CASE(4)
       CALL ensure_fail()
+    CASE(5)
+      CALL no_stop_on_fail()
     CASE DEFAULT
       STOP 1
   ENDSELECT
@@ -80,4 +82,22 @@ PROGRAM testDBC
       ENSURE(5==8)
 
     ENDSUBROUTINE ensure_fail
+!
+!-------------------------------------------------------------------------------
+!> @brief Tests the ENSURE macro and associated function calls
+!>
+    SUBROUTINE no_stop_on_fail()
+      INTEGER(SIK) :: ctr
+      WRITE(*,*) "Testing STOP ON FAIL"
+      DBC_STOP_ON_FAIL=.FALSE.
+
+      ctr=DBC_COUNTER
+      REQUIRE(5==5)
+      REQUIRE(5==8)
+      ENSURE(5==5)
+      ENSURE(5==8)
+
+      IF(DBC_COUNTER/=ctr+2) STOP 2
+      DBC_STOP_ON_FAIL=.TRUE.
+    ENDSUBROUTINE no_stop_on_fail
 ENDPROGRAM testDBC
