@@ -7,12 +7,14 @@
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testMatrixTypes
+#include "Futility_DBC.h"
 #include "UnitTest.h"
   USE ISO_FORTRAN_ENV
   USE ISO_C_BINDING
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
+  USE Futility_DBC
   USE trilinos_interfaces
   USE ParameterLists
   USE ParallelEnv
@@ -288,39 +290,32 @@ PROGRAM testMatrixTypes
             ASSERT(thisMatrix%a(i) == 0, 'sparse%setShape(...)')
           ENDDO
           CALL thisMatrix%clear()
-          !off-nominal setShape cases
-          !test matrix with isInit set to false artificially
+          
+          ! Perform a series of exception tests:
+          ! These tests rely on DBC being hit, so if it's not available, don't do them
+#ifdef FUTILITY_DBC
+          DBC_STOP_ON_FAIL=.false.
+          ASSERT(DBC_COUNTER==0, "")
           CALL thisMatrix%init(pList)
-          thisMatrix%isInit=.FALSE.
-          CALL thisMatrix%SetShape(1,1,1._SRK)
-          ASSERT(thisMatrix%a(1) /= 1._SRK, 'sparse%setShape(...)')
+
+          ! 1. Try to set data before setShape is called
+          ! Trips jcount>0 require
+          CALL thisMatrix%set(1,1,1._SRK)
+          ASSERT(DBC_COUNTER==1, "")
+
+          ! 2. Pass in j's out of order in setShape
+          ! Hits only ordering require
+          CALL thisMatrix%setShape(1,1)
+          CALL thisMatrix%setShape(1,4)
+          CALL thisMatrix%setShape(1,3)
+          ASSERT(DBC_COUNTER==2, "")
+
           CALL thisMatrix%clear()
-          !test case where i and j are out of bounds (one at a time)
-          CALL thisMatrix%init(pList)
-          CALL thisMatrix%setShape(-1,1,2._SRK) !i<1
-          ASSERT(thisMatrix%a(1) /= 2._SRK, 'sparse%setShape(...)')
-          CALL thisMatrix%clear
-          CALL thisMatrix%init(pList)
-          CALL thisMatrix%setShape(1,-1,2._SRK) !j<1
-          ASSERT(thisMatrix%a(1) /= 2._SRK, 'sparse%setShape(...)')
-          CALL thisMatrix%clear
-          CALL thisMatrix%init(pList)
-          CALL thisMatrix%setShape(4,1,2._SRK) !i>n
-          ASSERT(thisMatrix%a(1) /= 2._SRK, 'sparse%setShape(...)')
-          !test check to see if i,j of new entry are below and to the right
-          !of previous i.j
-          CALL thisMatrix%clear()
-          CALL thisMatrix%init(pList)
-          CALL thisMatrix%setShape(1,2,1._SRK)
-          CALL thisMatrix%setShape(1,1,2._SRK)
-          ASSERT(thisMatrix%a(2) /= 2._SRK, 'sparse%setShape(...)')
-          CALL thisMatrix%clear
-          CALL thisMatrix%init(pList)
-          CALL thisMatrix%setShape(1,1,1._SRK)
-          CALL thisMatrix%setShape(2,2,2._SRK)
-          CALL thisMatrix%setShape(1,3,3._SRK)
-          ASSERT(thisMatrix%a(3) /= 3._SRK, 'sparse%setShape(...)')
-          WRITE(*,*) '  Passed: CALL sparse%setShape(...)'
+          DBC_STOP_ON_FAIL=.true.
+          DBC_COUNTER=0
+#endif
+          ! Exception tests done
+
           !test set (first initialize the values w/ setShape)
           CALL thisMatrix%clear()
           CALL thisMatrix%init(pList)
@@ -563,30 +558,10 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->n',3)
       CALL pList%add('MatrixType->nnz',6)
       CALL thisMatrix%init(pList)
-      CALL thisMatrix%set(1,1,1._SRK) !since jCount = 0, expect no change
-      SELECTTYPE(thisMatrix)
-        TYPE IS(SparseMatrixType)
-          DO i=1,SIZE(thisMatrix%a)
-            ASSERT(thisMatrix%a(i) /= 1._SRK, 'sparse%set(...)')
-          ENDDO
-      ENDSELECT
-      !set uninit matrix.
-      CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK) !since isInit=.FALSE. expect no change
-      !no crash? good.
-      !pass out-of bounds i and j
-      CALL thisMatrix%clear()
-      CALL thisMatrix%init(pList)
       SELECTTYPE(thisMatrix)
         TYPE IS(SparseMatrixType); CALL thisMatrix%setShape(1,1)
       ENDSELECT
 
-      CALL thisMatrix%set(-1,1,1._SRK)
-      CALL thisMatrix%set(1,-1,1._SRK)
-      CALL thisMatrix%set(4,1,1._SRK)
-      CALL thisMatrix%set(1,4,1._SRK)
-      !no crash? good.
-      !i,j not in pre-defined shape
       CALL pList%clear()
       CALL pList%add('MatrixType->n',3_SNK)
       CALL pList%add('MatrixType->nnz',6_SNK)
@@ -645,27 +620,6 @@ PROGRAM testMatrixTypes
                  (dummyvec(8) == 3._SRK) .AND. &
                  (dummyvec(9) == 6._SRK)
           ASSERT(bool, 'sparse%get(...)') !column three check
-      ENDSELECT
-      !test with out of bounds i,j, make sure no crash.
-      SELECTTYPE(thisMatrix)
-        TYPE IS(SparseMatrixType)
-          CALL thisMatrix%get(4,2,dummy)
-          bool = (dummy == -1051._SRK)
-          ASSERT(bool, 'sparse%get(...)')
-          CALL thisMatrix%get(-1,2,dummy)
-          bool = (dummy == -1051._SRK)
-          ASSERT(bool, 'sparse%get(...)')
-          CALL thisMatrix%get(2,-1,dummy)
-          bool = dummy == -1051._SRK
-          ASSERT(bool, 'sparse%get(...)')
-      ENDSELECT
-      !test get with uninit, make sure no crash.
-      CALL thisMatrix%clear()
-      SELECTTYPE(thisMatrix)
-        TYPE IS(SparseMatrixType)
-          CALL thisMatrix%get(1,1,dummy)
-          bool = dummy == 0.0_SRK
-          ASSERT(bool, 'sparse%get(...)')
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL sparse%get(...)'
