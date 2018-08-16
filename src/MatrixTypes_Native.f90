@@ -450,6 +450,7 @@ MODULE MatrixTypes_Native
       REQUIRE(j>0)
       REQUIRE(i>0)
       REQUIRE(i+1<=size(matrix%ia))
+      REQUIRE(i<=matrix%n)
 
       !currently written assuming no all-zero rows.
       !pretty safe assumption.
