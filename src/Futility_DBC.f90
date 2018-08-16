@@ -44,6 +44,17 @@ MODULE Futility_DBC
 !
 ! List of Public items
   PUBLIC :: DBC_FAIL
+  PUBLIC :: DBC_STOP_ON_FAIL
+  PUBLIC :: DBC_COUNTER
+
+! These variables are created to be used in unit testing DBC
+  !This logical disables the "stop" from being called if DBC_FAIL is called
+  !  The user should be very careful when setting this to FALSE to set back to TRUE
+  !  as soon as possible to ensure DBC is working properly where intended
+  !  This logical should ONLY be changed in unit test code and NEVER in a routine.
+  LOGICAL :: DBC_STOP_ON_FAIL=.TRUE.
+  !This integer counts the total number of DBC_FAIL statements called 
+  INTEGER :: DBC_COUNTER=0
 !
 !===============================================================================
   CONTAINS
@@ -67,14 +78,14 @@ MODULE Futility_DBC
     rank=0
     nproc=1
 #endif
-
+    DBC_COUNTER=DBC_COUNTER+1
     WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
       mod_name//" on line",line,":  process",rank+1," of",nproc
 
 #ifndef __INTEL_COMPILER
     CALL backtrace()
 #endif
-    STOP 2
+    IF(DBC_STOP_ON_FAIL) STOP 2
   ENDSUBROUTINE DBC_FAIL
 !
 ENDMODULE Futility_DBC
