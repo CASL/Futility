@@ -445,30 +445,22 @@ MODULE MatrixTypes_Native
       INTEGER(SIK) :: ja_index
       LOGICAL(SBK) :: found_ja
 
-      IF(matrix%isInit) THEN
-        IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
-            .AND. ((j > 0) .AND. (i > 0))) THEN
-          !currently written assuming no all-zero rows.
-          !pretty safe assumption.
-          found_ja=.FALSE.
-          DO ja_index=matrix%ia(i),matrix%ia(i+1)-1
-            IF(matrix%ja(ja_index) == j) THEN
-              found_ja=.TRUE.
-              EXIT
-            ENDIF
-          ENDDO
-          IF(found_ja) matrix%a(ja_index)=setval
-        ELSE
-          IF(matrix%jCount==0) THEN
-            CALL eMatrixType%raiseError(modName//'::'//myName//' - Matrix entries not defined.  '//&
-               'Ensure that setShape has been called.')
-          ELSEIF(i>matrix%n.or.i<0.or.j<0) THEN
-            CALL eMatrixType%raiseError(modName//'::'//myName//' - Passed row/col out of bounds.')
-          ENDIF
+      REQUIRE(matrix%isInit)
+      REQUIRE(matrix%jCount>0)
+      REQUIRE(j>0)
+      REQUIRE(i>0)
+      REQUIRE(i+1<=size(matrix%ia))
+
+      !currently written assuming no all-zero rows.
+      !pretty safe assumption.
+      found_ja=.FALSE.
+      DO ja_index=matrix%ia(i),matrix%ia(i+1)-1
+        IF(matrix%ja(ja_index) == j) THEN
+          found_ja=.TRUE.
+          EXIT
         ENDIF
-      ELSE
-         CALL eMatrixType%raiseError(modName//'::'//myName//' - Matrix not initialized.')
-      ENDIF
+      ENDDO
+      IF(found_ja) matrix%a(ja_index)=setval
     ENDSUBROUTINE set_SparseMatrixtype
 !
 !-------------------------------------------------------------------------------
@@ -560,38 +552,24 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),OPTIONAL,INTENT(IN) :: setval
-      LOGICAL(SBK) :: ijOK
 
-      IF(matrix%isInit) THEN
-        IF((i <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-          !enforce entering values in row-major order
-          !first check to see if this is a new row or not (ia(i)>0)
-          !If it is, then we have to comprae new j with previous j
-          ijOK=.FALSE.
-          IF((matrix%jCount < matrix%nnz) &
-            .AND.((matrix%iPrev == i).AND.(matrix%jPrev < j))) THEN
-            ijOK=.TRUE.
-          ELSEIF(matrix%iPrev < i) THEN
-            ijOK=.TRUE.
-          ENDIF
-          IF(matrix%ia(i) == 0) matrix%ia(i)=matrix%jCount+1
-          IF(ijOK) THEN
-            matrix%iPrev=i
-            matrix%jPrev=j
-            matrix%jCount=matrix%jCount+1
-            IF(PRESENT(setval)) matrix%a(matrix%jCount)=setval
-            matrix%ja(matrix%jCount)=j
-          ELSE
-            CALL eMatrixType%raiseError(modName//'::'//myName//&
-               ' - Failed consistency checks; ensure j values for row are in ascending'//&
-               ' order, entires are row-major, and the number of nonzeros are within bounds.')
-          ENDIF
-        ELSE
-          CALL eMatrixType%raiseError(modName//'::'//myName//' - Passed row/col out of bounds.')
-        ENDIF
-      ELSE
-        CALL eMatrixType%raiseError(modName//'::'//myName//' - Matrix not initialized.')
-      ENDIF
+      REQUIRE(matrix%isInit)
+      REQUIRE(i<=matrix%n)
+      REQUIRE(j>0)
+      REQUIRE(i>0)
+
+      !enforce entering values in row-major order
+      !first check to see if this is a new row or not (ia(i)>0)
+      !If it is, then we have to comprae new j with previous j
+      REQUIRE((matrix%jCount<matrix%nnz.AND.matrix%iPrev==i.AND.matrix%jPrev<j).OR.(matrix%iPrev<i))
+
+      IF(matrix%ia(i) == 0) matrix%ia(i)=matrix%jCount+1
+      matrix%iPrev=i
+      matrix%jPrev=j
+      matrix%jCount=matrix%jCount+1
+      IF(PRESENT(setval)) matrix%a(matrix%jCount)=setval
+      matrix%ja(matrix%jCount)=j
+
     ENDSUBROUTINE set_shape_SparseMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -680,7 +658,7 @@ MODULE MatrixTypes_Native
 !>
 !> This routine gets the values of the sparse matrix.  If an (i,j) value
 !> is not present, then 0.0 is returned.  If the (i,j) location is out of
-!> bounds, then -1051.0 is returned (-1051.0 is an arbitrarily chosen key).
+!> bounds, then an exception is raised.
 !>
     SUBROUTINE get_SparseMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_SparseMatrixType'
@@ -691,21 +669,24 @@ MODULE MatrixTypes_Native
       LOGICAL(SBK) :: found_ja
       REAL(SRK),INTENT(INOUT) :: getval
 
-      getval=0.0_SRK
-      IF(matrix%isInit) THEN
-        IF(((matrix%jCount > 0).AND.(i <= matrix%n)) &
-            .AND. ((j > 0) .AND. (i > 0))) THEN
-          found_ja=.FALSE.
-          DO ja_index=matrix%ia(i),matrix%ia(i+1)-1
-            IF(matrix%ja(ja_index) == j) THEN
-              found_ja=.TRUE.
-              EXIT
-            ENDIF
-          ENDDO
-          IF(found_ja) getval=matrix%a(ja_index)
-        ELSE
-          getval=-1051._SRK
+      REQUIRE(matrix%isInit)
+      REQUIRE(matrix%jCount>0)
+      REQUIRE(i<=matrix%n)
+      REQUIRE(j>0)
+      REQUIRE(i>0)
+
+      found_ja=.FALSE.
+      DO ja_index=matrix%ia(i),matrix%ia(i+1)-1
+        IF(matrix%ja(ja_index) == j) THEN
+          found_ja=.TRUE.
+          EXIT
         ENDIF
+      ENDDO
+
+      IF(found_ja) THEN
+         getval=matrix%a(ja_index)
+      ELSE
+         getval=0.0_SRK
       ENDIF
     ENDSUBROUTINE get_SparseMatrixtype
 !
