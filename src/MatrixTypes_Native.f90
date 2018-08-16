@@ -659,7 +659,7 @@ MODULE MatrixTypes_Native
 !>
 !> This routine gets the values of the sparse matrix.  If an (i,j) value
 !> is not present, then 0.0 is returned.  If the (i,j) location is out of
-!> bounds, then an exception is raised.
+!> bounds, fails if DBC is enabled.
 !>
     SUBROUTINE get_SparseMatrixType(matrix,i,j,getval)
       CHARACTER(LEN=*),PARAMETER :: myName='get_SparseMatrixType'
