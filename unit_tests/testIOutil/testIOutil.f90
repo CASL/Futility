@@ -64,6 +64,8 @@ PROGRAM testIOutil
         WRITE(char,'(i32)') stat-1; char=ADJUSTL(char)
         tmpStrArray(stat)='test'//TRIM(char)
       ENDDO
+      !have value 10 be the same as 9 for a duplicate/reverse test
+      tmpStrArray(10)='test8'
       ASSERT(strarraymatch(tmpStrArray,'test'),'testing')
       ASSERT(strarraymatch(tmpStrArray,'1'),'testing 1')
       ASSERT(.NOT.strarraymatch(tmpStrArray,'11'),'testing 11')
@@ -71,8 +73,21 @@ PROGRAM testIOutil
       COMPONENT_TEST('strarraymatchind')
       ASSERT(strarraymatchind(tmpStrArray,'test') == 1,'testing')
       ASSERT(strarraymatchind(tmpStrArray,'1') == 2,'testing 1')
-      ASSERT(strarraymatchind(tmpStrArray,'9') == 10,'testing 9')
+      ASSERT(strarraymatchind(tmpStrArray,'8') == 9,'testing 8')
+      ASSERT(strarraymatchind(tmpStrArray,'8',.FALSE.) == 9,'testing 8')
+      ASSERT(strarraymatchind(tmpStrArray,'8',.TRUE.) == 10,'testing 8 reverse')
       ASSERT(strarraymatchind(tmpStrArray,'11') == -1,'testing 11')
+
+      COMPONENT_TEST('strarrayeqind')
+      ASSERT(strarrayeqind(tmpStrArray,'test') == -1,'match not eq testing')
+      ASSERT(strarrayeqind(tmpStrArray,'test1') == 2,'testing')
+      ASSERT(strarrayeqind(tmpStrArray,'1') == -1,'match not eq testing 1')
+      ASSERT(strarrayeqind(tmpStrArray,'test7') == 8,'testing test7')
+      ASSERT(strarrayeqind(tmpStrArray,'test7',.FALSE.) == 8,'testing test7 F reverse')
+      ASSERT(strarrayeqind(tmpStrArray,'test7',.TRUE.) == 8,'testing test7 reverse')
+      ASSERT(strarrayeqind(tmpStrArray,'test8') == 9,'testing test8')
+      ASSERT(strarrayeqind(tmpStrArray,'test8',.FALSE.) == 9,'testing test8 F reverse')
+      ASSERT(strarrayeqind(tmpStrArray,'test8',.TRUE.) == 10,'testing test8 reverse')
 
       COMPONENT_TEST('nmatchstr')
       ASSERT(nmatchstr('testing','test') == 1,'testing')
