@@ -1070,7 +1070,7 @@ MODULE IO_Strings
 
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(string(i),pattern)
+        bool=strmatch_char(string(i),pattern)
         IF(bool) EXIT
       ENDDO
     ENDFUNCTION strarraymatch_char
@@ -1094,7 +1094,7 @@ MODULE IO_Strings
 
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(CHAR(string(i)),pattern)
+        bool=strmatch_char(CHAR(string(i)),pattern)
         IF(bool) EXIT
       ENDDO
     ENDFUNCTION strarraymatch_string
@@ -1104,21 +1104,29 @@ MODULE IO_Strings
 !> string array.
 !> @param string the stringarray to search
 !> @param pattern the substring to find
+!> @param lreverse the logical as to whether to perform the search in reverse.
 !> @returns ind the index in string array @c string where the substring was
 !> found.
 !>
 !> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
-    PURE FUNCTION strarraymatchind_char(string,pattern) RESULT(ind)
+    PURE FUNCTION strarraymatchind_char(string,pattern,lreverse) RESULT(ind)
       CHARACTER(LEN=*),INTENT(IN) :: string(:)
       CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,ind
+      INTEGER(SIK) :: i,ind,istt,istp,incr
 
       ind=-1
-      DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(string(i),pattern)
+      istt=1; istp=SIZE(string,DIM=1); incr=1
+      IF(PRESENT(lreverse)) THEN
+        IF(lreverse) THEN
+          istt=SIZE(string,DIM=1); istp=1; incr=-1
+        ENDIF
+      ENDIF
+      DO i=istt,istp,incr
+        bool=strmatch_char(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
@@ -1131,20 +1139,28 @@ MODULE IO_Strings
 !> string array.
 !> @param string the stringarray to search
 !> @param pattern the substring to find
+!> @param lreverse the logical as to whether to perform the search in reverse.
 !> @returns bool whether or not @c pattern was found in @c string
 !>
 !> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
-    PURE FUNCTION strarraymatchind_string(string,pattern) RESULT(ind)
+    PURE FUNCTION strarraymatchind_string(string,pattern,lreverse) RESULT(ind)
       TYPE(StringType),INTENT(IN) :: string(:)
       CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,ind
+      INTEGER(SIK) :: i,ind,istt,istp,incr
 
       ind=-1
-      DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(string(i),pattern)
+      istt=1; istp=SIZE(string,DIM=1); incr=1
+      IF(PRESENT(lreverse)) THEN
+        IF(lreverse) THEN
+          istt=SIZE(string,DIM=1); istp=1; incr=-1
+        ENDIF
+      ENDIF
+      DO i=istt,istp,incr
+        bool=strmatch_string(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
@@ -1157,20 +1173,28 @@ MODULE IO_Strings
 !> string array.
 !> @param string the stringarray to search
 !> @param pattern the substring to find
+!> @param lreverse the logical as to whether to perform the search in reverse.
 !> @returns ind the index in string array @c string where the substring was
 !> found.
 !>
 !> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
-    PURE FUNCTION strarrayeqind_char(string,pattern) RESULT(ind)
+    PURE FUNCTION strarrayeqind_char(string,pattern,lreverse) RESULT(ind)
       CHARACTER(LEN=*),INTENT(IN) :: string(:)
       CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,ind
+      INTEGER(SIK) :: i,ind,istt,istp,incr
 
       ind=-1
-      DO i=1,SIZE(string,DIM=1)
+      istt=1; istp=SIZE(string,DIM=1); incr=1
+      IF(PRESENT(lreverse)) THEN
+        IF(lreverse) THEN
+          istt=SIZE(string,DIM=1); istp=1; incr=-1
+        ENDIF
+      ENDIF
+      DO i=istt,istp,incr
         bool=string(i) == pattern
         IF(bool) THEN
           ind=i
@@ -1184,19 +1208,27 @@ MODULE IO_Strings
 !> string array.
 !> @param string the stringarray to search
 !> @param pattern the substring to find
+!> @param lreverse the logical as to whether to perform the search in reverse.
 !> @returns bool whether or not @c pattern was found in @c string
 !>
 !> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
-    PURE FUNCTION strarrayeqind_string(string,pattern) RESULT(ind)
+    PURE FUNCTION strarrayeqind_string(string,pattern,lreverse) RESULT(ind)
       TYPE(StringType),INTENT(IN) :: string(:)
       CHARACTER(LEN=*),INTENT(IN) :: pattern
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,ind
+      INTEGER(SIK) :: i,ind,istt,istp,incr
 
       ind=-1
-      DO i=1,SIZE(string,DIM=1)
+      istt=1; istp=SIZE(string,DIM=1); incr=1
+      IF(PRESENT(lreverse)) THEN
+        IF(lreverse) THEN
+          istt=SIZE(string,DIM=1); istp=1; incr=-1
+        ENDIF
+      ENDIF
+      DO i=istt,istp,incr
         bool=CHAR(string(i)) == pattern
         IF(bool) THEN
           ind=i
@@ -1210,19 +1242,27 @@ MODULE IO_Strings
 !> string array.
 !> @param string the stringarray to search
 !> @param pattern the substring to find
+!> @param lreverse the logical as to whether to perform the search in reverse.
 !> @returns bool whether or not @c pattern was found in @c string
 !>
 !> @note Does not handle trailing spaces that can be eliminated by TRIM() so
 !> strings should be trimmed when passing into function.
 !>
-    PURE FUNCTION strarrayeqind_string_string(string,pattern) RESULT(ind)
+    PURE FUNCTION strarrayeqind_string_string(string,pattern,lreverse) RESULT(ind)
       TYPE(StringType),INTENT(IN) :: string(:)
       TYPE(StringType),INTENT(IN) :: pattern
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i,ind
+      INTEGER(SIK) :: i,ind,istt,istp,incr
 
       ind=-1
-      DO i=1,SIZE(string,DIM=1)
+      istt=1; istp=SIZE(string,DIM=1); incr=1
+      IF(PRESENT(lreverse)) THEN
+        IF(lreverse) THEN
+          istt=SIZE(string,DIM=1); istp=1; incr=-1
+        ENDIF
+      ENDIF
+      DO i=istt,istp,incr
         bool=string(i) == pattern
         IF(bool) THEN
           ind=i
