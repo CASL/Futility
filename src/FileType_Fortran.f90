@@ -476,6 +476,8 @@ MODULE FileType_Fortran
 !> @param file the fortran file type object
 !> @returns val the value of the unit number
 !>
+!> Guaranteed to return -1 prior to initialize being called and after clear being 
+!> called
     PURE FUNCTION getUnitNo_fortran_file(file) RESULT(val)
       CLASS(FortranFileType),INTENT(IN) :: file
       INTEGER(SIK) :: val

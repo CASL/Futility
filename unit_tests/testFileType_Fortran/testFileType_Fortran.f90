@@ -133,6 +133,14 @@ PROGRAM testFileType_Fortran
       CALL testFile%fopen()
       CALL testFile%fdelete()
       CALL testFile%clear()
+
+      ! Ensure unit number is as expected
+      ASSERT(testFile%getUnitNo()==-1, "")
+      call testFile%initialize(UNIT=12,FILE='.testFile.txt')
+      ASSERT(testFile%getUnitNo()==12, "")
+      call testFile%clear(ldel=.TRUE.)
+      ASSERT(testFile%getUnitNo()==-1, "")
+
     ENDSUBROUTINE testFortranFileType
 !
 ENDPROGRAM testFileType_Fortran
