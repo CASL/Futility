@@ -60,16 +60,10 @@ PROGRAM testIOutil
       ASSERT(.NOT.(strmatch('TEAM','I')),'TEAM')
 
       COMPONENT_TEST('strarraymatch')
-      !So, if you make a loop to assign these, you get valgrind problems.
-      tmpStrArray(1)='test0'
-      tmpStrArray(2)='test1'
-      tmpStrArray(3)='test2'
-      tmpStrArray(4)='test3'
-      tmpStrArray(5)='test4'
-      tmpStrArray(6)='test5'
-      tmpStrArray(7)='test6'
-      tmpStrArray(8)='test7'
-      tmpStrArray(9)='test8'
+      DO stat=1,10
+        WRITE(char,'(i32)') stat-1; char=ADJUSTL(char)
+        tmpStrArray(stat)='test'//TRIM(char)
+      ENDDO
       !have value 10 be the same as 9 for a duplicate/reverse test
       tmpStrArray(10)='test8'
       ASSERT(strarraymatch(tmpStrArray,'test'),'testing')
