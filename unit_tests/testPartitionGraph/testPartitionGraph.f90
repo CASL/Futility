@@ -60,6 +60,7 @@ PROGRAM testPartitionGraph
 #endif
   REGISTER_SUBTEST('Kernighan-Lin',testKL)
   REGISTER_SUBTEST('Metrics Calculation',testMetrics)
+  REGISTER_SUBTEST('Contiguous Domains',testMakeContiguousDomains)
 #ifdef FUTILITY_HAVE_SLEPC
   CALL SlepcFinalize(ierr)
   CALL PetscFinalize(ierr)
@@ -840,6 +841,77 @@ PROGRAM testPartitionGraph
       !Clear
       CALL testPG%clear()
     ENDSUBROUTINE testMetrics
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testMakeContiguousDomains()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: iv,nv1
+      INTEGER(SIK) :: Order(28)
+      INTEGER(SIK) :: refOrder(28)
+
+      !Initialize the graph
+      CALL testPG%initialize(refG3Params)
+      !Give an order to the graph
+      !The original bisection of the graph looks like:
+      !                   Should become:
+      ! 1 1 1 1 2 2        1 1 1 1 2 2
+      ! 1 1 1 1 2 2        1 1 1 1 2 2
+      ! 1 1 1 1 2 2        1 1 1 1 2 2
+      ! 1 1 1 2            1 1 1 1
+      ! 2 2 2              1 1 1
+      ! 2 2 2              1 1 1
+      nv1=15
+      Order=(/ 7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26, &
+               1, 2, 3,  4,  5,  6, 10, 15, 16, 21, 22, 27, 28/)
+      refOrder=(/ 7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26, &
+                 10, 1, 2, 3,  4,  5,  6, 15, 16, 21, 22, 27, 28/)
+      CALL makeContiguousDomains(testPG, Order, nv1)
+
+      bool=(nv1 == 22)
+      ASSERT(bool, 'nv1')
+      FINFO() "Reference:",22
+      FINFO() "Test:     ",nv1
+      DO iv=1,28
+        bool=(Order(iv) == refOrder(iv))
+        ASSERT(bool, 'Order')
+        FINFO() "iv:       ",iv
+        FINFO() "Reference:",refOrder(iv)
+        FINFO() "Test:     ",Order(iv)
+      ENDDO !iv
+      CALL testPG%clear()
+
+      !Repeat the test but swap domain 1 and 2
+      !Initialize the graph
+      CALL testPG%initialize(refG3Params)
+      !Give an order to the graph
+      !The original bisection of the graph looks like:
+      !                   Should become:
+      ! 2 2 2 2 1 1        2 2 2 2 1 1
+      ! 2 2 2 2 1 1        2 2 2 2 1 1
+      ! 2 2 2 2 1 1        2 2 2 2 1 1
+      ! 2 2 2 1            2 2 2 2
+      ! 1 1 1              2 2 2
+      ! 1 1 1              2 2 2
+      nv1=13
+      Order=(/ 1, 2, 3,  4,  5,  6, 10, 15, 16, 21, 22, 27, 28, &
+               7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26/)
+      refOrder=(/ 15, 16, 21, 22, 27, 28, 1, 2, 3, 4, 5, 6, 10, 7, 8, 9, 11,  &
+                  12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26/)
+      CALL makeContiguousDomains(testPG, Order, nv1)
+
+      bool=(nv1 == 6)
+      ASSERT(bool, 'nv1')
+      FINFO() "Reference:",6
+      FINFO() "Test:     ",nv1
+      DO iv=1,28
+        bool=(Order(iv) == refOrder(iv))
+        ASSERT(bool, 'Order')
+        FINFO() "iv:       ",iv
+        FINFO() "Reference:",refOrder(iv)
+        FINFO() "Test:     ",Order(iv)
+      ENDDO !iv
+      CALL testPG%clear()
+      ENDSUBROUTINE testMakeContiguousDomains
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE setupTest()
