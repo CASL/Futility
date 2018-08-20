@@ -743,7 +743,7 @@ MODULE PartitionGraph
         !Find a max degree vertex with max degree neighbor
         maxd=MAXVAL(thisGraph%d)
         maxd2=0
-        soiv=-1
+        soiv=1   !Default to 1st vertex in case of discontiguous domains
         DO iv=1,nvert
           !Check if this vertex is max degree
           IF(thisGraph%d(iv) == maxd) THEN
@@ -979,7 +979,7 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: nvert,iv,jv,in,nlocal,nneigh
-      INTEGER(SIK) :: nv1
+      INTEGER(SIK) :: nv1,numvecs
       REAL(SRK) :: wg1,cw1,curdif,wt,wtSum,wneigh
       TYPE(ParamType) :: matParams
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
@@ -1021,7 +1021,8 @@ MODULE PartitionGraph
       ENDDO !iv
 
       !Find Fiedler vector (Algebraic connectivity) - 2nd smallest eigenvector
-      CALL getEigenVecs(Lmat,.TRUE.,4,evecs)
+      numvecs=4
+      CALL getEigenVecs(Lmat,.TRUE.,numvecs,evecs)
       CALL Lmat%clear()
 
       !Get the Order
@@ -1030,7 +1031,7 @@ MODULE PartitionGraph
         Order(iv)=iv
       ENDDO !iv
       SELECTTYPE(evecs(1)); TYPEIS(PETScVectorType)
-        CALL recursiveEigenOrder(evecs(2:), Order)
+        CALL recursiveEigenOrder(evecs(2:numvecs), Order)
       ENDSELECT
       DO iv=1,SIZE(evecs)
         CALL evecs(iv)%clear()
@@ -1074,7 +1075,7 @@ MODULE PartitionGraph
       CHARACTER(LEN=*),PARAMETER :: myName='RecursiveInertialBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
-      INTEGER(SIK) :: dim,iv,jv
+      INTEGER(SIK) :: dim,iv,jv,numvecs
       INTEGER(SIK) :: nv1,idim,idim2
       REAL(SRK) :: wtSum,wg1,wt,cw1,curdif,ccoord,cprod
       REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
@@ -1139,7 +1140,8 @@ MODULE PartitionGraph
         ENDDO !iv
 
         !Solve the eigenvalue problem
-        CALL getEigenVecs(Imat, .FALSE., dim, evecs)
+        numvecs=dim
+        CALL getEigenVecs(Imat, .FALSE.,numvecs, evecs)
         CALL Imat%clear()
 
         !Determine the order based on distance from the inertial vectors
@@ -1148,7 +1150,7 @@ MODULE PartitionGraph
           Order(iv)=iv
         ENDDO !iv
         SELECTTYPE(evecs); TYPEIS(PETScVectorType)
-          CALL recursiveEigenOrder(evecs, Order, dot=coord)
+          CALL recursiveEigenOrder(evecs(1:numvecs), Order, dot=coord)
         ENDSELECT
         DEALLOCATE(coord)
         DO iv=1,SIZE(evecs)
@@ -1794,7 +1796,7 @@ MODULE PartitionGraph
       CHARACTER(LEN=*),PARAMETER :: myName='getEigenVecs'
       CLASS(MatrixType),INTENT(IN) :: A
       LOGICAL(SBK),INTENT(IN) :: lsmall
-      INTEGER(SIK),INTENT(IN) :: numvecs
+      INTEGER(SIK),INTENT(INOUT) :: numvecs
       CLASS(VectorType),ALLOCATABLE,INTENT(OUT) :: V(:)
 #ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: n,iv
@@ -1837,6 +1839,8 @@ MODULE PartitionGraph
 
       CALL EPSSetDimensions(eps,nev,ncv,mpd,ierr)
       CALL EPSSolve(eps,ierr)
+      CALL EPSGetConverged(eps,numvecs,ierr)
+      numvecs=MIN(nev,numvecs)
       DO iv=1,numvecs
       SELECTTYPE(v1 => V(iv)); TYPE IS(PETScVectorType)
           SELECTTYPE(v2 => Vi(iv)); TYPE IS(PETScVectorType)
@@ -1969,10 +1973,10 @@ MODULE PartitionGraph
             IF(PRESENT(dot)) THEN
               !Use dot-product approach on eigen-vectors
               IF(d(iv) .APPROXGE. 0.0_SRK) THEN
-                CALL recursiveEigenOrder(evecs(2:),Order(iv:iv+numeq),.TRUE., &
+                CALL recursiveEigenOrder(evecs(2:numvecs),Order(iv:iv+numeq),.TRUE., &
                   dot(1:dim, iv:iv+numeq))
               ELSE
-                CALL recursiveEigenOrder(evecs(2:),Order(iv:iv+numeq),.FALSE., &
+                CALL recursiveEigenOrder(evecs(2:numvecs),Order(iv:iv+numeq),.FALSE., &
                   dot(1:dim, iv:iv+numeq))
               ENDIF
             ELSE
@@ -1986,9 +1990,9 @@ MODULE PartitionGraph
                 CALL evc(jv-1)%setall_array(ec(iv:iv+numeq))
               ENDDO !iv
               IF(d(iv) .APPROXGE. 0.0_SRK) THEN
-                CALL recursiveEigenOrder(evc,Order(iv:iv+numeq),.TRUE.)
+                CALL recursiveEigenOrder(evc(1:numvecs-1),Order(iv:iv+numeq),.TRUE.)
               ELSE
-                CALL recursiveEigenOrder(evc,Order(iv:iv+numeq),.FALSE.)
+                CALL recursiveEigenOrder(evc(1:numvecs-1),Order(iv:iv+numeq),.FALSE.)
               ENDIF
               DO jv=1,numvecs-1
                 CALL evc(jv)%clear()
