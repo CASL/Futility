@@ -433,6 +433,11 @@ PROGRAM testParallelEnv
       ASSERT(testPE%ray%rank == 0,'%ray%rank')
       ASSERT(testPE%ray%master,'%ray%master')
       ASSERT(testPE%ray%isInit(),'%isInit()')
+      
+      COMPONENT_TEST('deviceID')
+      ASSERT_EQ(testPE%getDeviceID(),-1,'%deviceID')
+      CALL testPE%setDeviceID(2)
+      ASSERT_EQ(testPE%getDeviceID(),2,'%deviceID')
 
       COMPONENT_TEST('OPERATOR(=)')
       testPE2=testPE
