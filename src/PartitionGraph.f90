@@ -1142,7 +1142,7 @@ MODULE PartitionGraph
 
         !Solve the eigenvalue problem
         numvecs=dim
-        CALL getEigenVecs(Imat, .FALSE.,numvecs, evecs)
+        CALL getEigenVecs(Imat,.FALSE.,numvecs,evecs)
         CALL Imat%clear()
 
         !Determine the order based on distance from the inertial vectors
@@ -2234,7 +2234,13 @@ MODULE PartitionGraph
 !> @param thisGraph The graph object
 !> @param Order The order vector
 !> @param nv1 The number of vertices in sub-domain 1
-!> @param lContiguous Logical for if the two subdomains are contiguous
+!>
+!> This routine takes the graph "Order" given in recursive bisection, and makes
+!> the two sub-domains contiguous. First, the checkContiguity routine is called
+!> which finds all contiguous chunks in the sub-domain. The sub-domain is made
+!> contiguous by giving all contiguous chunks except 1 to the other sub-domain.
+!> This will affect balance, but is necessary for decompositions to be robust
+!> with the contiguous and convex requirements.
 !>
     SUBROUTINE makeContiguousDomains(thisGraph, Order, nv1)
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
@@ -2246,7 +2252,7 @@ MODULE PartitionGraph
       INTEGER(SIK) :: OrderCpy(thisGraph%nvert)
       REAL(SRK),ALLOCATABLE :: chunkWeight(:)
 
-      !Contiguity check on L1
+      !Contiguity check on the first sub-domain L1 => Order(1:nv1)
       nv=nv1; istt=1; istp=nv1
       CALL checkContiguity(thisGraph, nv, Order(istt:istp), ndc, ichunk)
       nchunk=ndc
@@ -2291,7 +2297,7 @@ MODULE PartitionGraph
       ENDDO !nchunk > 1
       DEALLOCATE(chunkWeight)
 
-      !Contiguity check on L2
+      !Contiguity check on the second sub-domain L2 => Order(nv1+1:nvert)
       nv2=thisGraph%nvert-nv1
       nv=nv2; istt=nv1+1; istp=thisGraph%nvert
       CALL checkContiguity(thisGraph, nv, Order(istt:istp), ndc, ichunk)
@@ -2345,6 +2351,10 @@ MODULE PartitionGraph
 !> @param L the list of vertices in the subdomain
 !> @param nchunk the number of contiguous chunks
 !> @param ichunk the chunk index of each vertex in L
+!>
+!> This routine finds all contiguous "chunks" within a subdomain L. This is
+!> done by looping through neighboring vertices within the same subdomain.
+!> This routine is only used by the makeContiguousDomains routine.
 !>
     SUBROUTINE checkContiguity(thisGraph, nv, L, nchunk, ichunk)
       TYPE(PartitionGraphType),INTENT(IN) :: thisGraph
