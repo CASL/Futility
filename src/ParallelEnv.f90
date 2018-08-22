@@ -327,6 +327,8 @@ MODULE ParallelEnv
     TYPE(MPI_EnvType),POINTER :: angle => NULL()
     !> The environment for the threads decomposing the rays.
     TYPE(OMP_EnvType),POINTER :: ray => NULL()
+    !> The device ID for offloading to to external accelerators
+    INTEGER(SIK),PRIVATE :: deviceID=-1
 !
 !List of type bound procedures (methods) for the object
     CONTAINS
@@ -339,6 +341,12 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::clear_ParEnvType
       !> @copydetails  ParallelEnv::clear_ParEnvType
       PROCEDURE,PASS :: clear => clear_ParEnvType
+      !> @copybrief ParallelEnv::setDeviceID_ParEnvType
+      !> @copydetails ParallelEnv::setDeviceID_ParEnvType
+      PROCEDURE,PASS :: setDeviceID => setDeviceID_ParEnvType
+      !> @copybrief ParallelEnv::getDeviceID_ParEnvType
+      !> @copydetails ParallelEnv::getDeviceID_ParEnvType
+      PROCEDURE,PASS :: getDeviceID => getDeviceID_ParEnvType
   ENDTYPE ParallelEnvType
 
   !> @brief Overloads the assignment operator for the ParallelEnvType.
@@ -1968,7 +1976,35 @@ MODULE ParallelEnv
       ENDIF
       CALL myPE%CartGridWorld%clear()
       CALL myPE%world%clear()
+      myPE%deviceID=-1
+
     ENDSUBROUTINE clear_ParEnvType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the device ID for an external accelerator
+!> @param this the parallel environment type
+!> @param ID the device ID
+!>
+    SUBROUTINE setDeviceID_ParEnvType(this,ID)
+      CLASS(ParallelEnvType),INTENT(INOUT) :: this
+      INTEGER(SIK),INTENT(IN) :: ID
+
+      this%deviceID=ID
+
+    ENDSUBROUTINE setDeviceID_ParEnvType
+!
+!-------------------------------------------------------------------------------
+!> @brief Retrieves the device ID for an external accelerator
+!> @param this the parallel environment type
+!> @param ID the device ID
+!>
+    FUNCTION getDeviceID_ParEnvType(this) RESULT(ID)
+      CLASS(ParallelEnvType),INTENT(INOUT) :: this
+      INTEGER(SIK) :: ID
+
+      ID=this%deviceID
+
+    ENDFUNCTION getDeviceID_ParEnvType
 !
 !-------------------------------------------------------------------------------
 !> Returns initialization status of the parallel environment type object
