@@ -216,7 +216,7 @@ MODULE MatrixTypes_Trilinos
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
           .AND. ((j > 0) .AND. (i > 0))) THEN
           IF(matrix%isAssembled) THEN
-            rnnz = size(matrix%jloc)
+            rnnz = SIZE(matrix%jloc)
             matrix%A=TpetraCrsMatrix(matrix%map,INT(rnnz,global_ordinal_type),TpetraDynamicProfile)
           ENDIF  
           IF(i==matrix%currow) THEN
@@ -303,20 +303,20 @@ MODULE MatrixTypes_Trilinos
 
         IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           n = matrix%A%getNumEntriesInGlobalRow(INT(i,global_ordinal_type))
-          allocate(cols(n))
-          allocate(vals(n))
+          ALLOCATE(cols(n))
+          ALLOCATE(vals(n))
 !FixMe          
           !CALL matrix%A%getGlobalRowView(INT(i,global_ordinal_type),cols,vals)
           CALL matrix%A%getGlobalRowCopy(INT(i,global_ordinal_type),cols,vals,n)
           DO cnt1 = 1,n
-            IF(cols(cnt1).eq.j) THEN
+            IF(cols(cnt1)==j) THEN
               getval = vals(cnt1)
               EXIT
             ENDIF
           ENDDO
           
-          deallocate(cols)
-          deallocate(vals)
+          DEALLOCATE(cols)
+          DEALLOCATE(vals)
         ELSE
           getval=-1051._SRK
         ENDIF

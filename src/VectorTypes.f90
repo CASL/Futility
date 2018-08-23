@@ -355,7 +355,7 @@ MODULE VectorTypes
       REAL(SRK) :: r
 #ifdef FUTILITY_HAVE_ForTrilinos
       INTEGER(size_type) num_vecs 
-      REAL(scalar_type), allocatable :: tnorm1(:)
+      REAL(scalar_type), ALLOCATABLE :: tnorm1(:)
 #endif
 
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
@@ -437,7 +437,6 @@ MODULE VectorTypes
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-          !CALL ForPETRA_VecAXPY(newVector%b,thisVector%b,alpha,1.0_SRK)
           CALL newVector%b%update(alpha,thisVector%b,1.0_SRK)
         ENDSELECT
 #endif
@@ -567,7 +566,6 @@ MODULE VectorTypes
       TYPE IS(TrilinosVectorType)
         SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
-          !CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
           call newVector%b%release()
           newVector%b = TpetraMultiVector(thisVector%b,TeuchosCopy)
         ENDSELECT
@@ -729,7 +727,7 @@ MODULE VectorTypes
       REAL(SRK) :: norm2
 #ifdef FUTILITY_HAVE_ForTrilinos
       INTEGER(size_type) num_vecs 
-      REAL(scalar_type), allocatable :: tnorm2(:)
+      REAL(scalar_type), ALLOCATABLE :: tnorm2(:)
 #endif
       SELECTTYPE(thisVector); TYPE IS(RealVectorType)
         IF(PRESENT(n) .AND. PRESENT(incx)) THEN

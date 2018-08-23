@@ -99,7 +99,7 @@ MODULE ParameterLists
 #endif
 #ifdef FUTILITY_HAVE_ForTrilinos
 #include "ForTrilinosTeuchos_config.hpp"
-  USE, intrinsic :: iso_c_binding
+  USE, INTRINSIC :: ISO_C_BINDING
   USE forteuchos
 #endif
 
@@ -953,7 +953,7 @@ MODULE ParameterLists
       INTEGER(SNK) :: level
       TYPE(StringType) :: path
 
-      nullify(itr)
+      NULLIFY(itr)
 
       level = 0
       IF(PRESENT(n)) THEN
@@ -972,7 +972,7 @@ MODULE ParameterLists
             new = that%sublist(CHAR(itr%name))
             nextParam = itr
             CALL toForTeuchosPlist(nextParam, new, level+1)
-            call new%release()
+            CALL new%release()
           TYPE IS(ParamType_SBK)
             !CALL ForTeuchos_PL_set_bool(that, CHAR(itr%name), itr%val,&
             !  CHAR(itr%description), ierr)

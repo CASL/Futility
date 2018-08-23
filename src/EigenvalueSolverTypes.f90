@@ -56,7 +56,7 @@ MODULE EigenvalueSolverTypes
 #include "ForTrilinosSimpleInterface_config.hpp"
 #include "ForTrilinos.h"
 
-  USE iso_c_binding
+  USE ISO_C_BINDING
   USE forteuchos
   USE fortpetra
   USE fortrilinos
@@ -222,9 +222,7 @@ MODULE EigenvalueSolverTypes
     TYPE(TrilinosEigenSolver) :: eig
     !> Teuchos parameter list for anasazi
     TYPE(ParameterList) :: TplAnasazi
-    !> Anasazi Eigenvalue Preconditioner type
-    INTEGER(SIK) :: pc
-    !> store vector for scaling fission source
+   !> store vector for scaling fission source
     TYPE(TrilinosVectorType) :: x_scale
 #endif
 !
@@ -700,20 +698,26 @@ MODULE EigenvalueSolverTypes
           solver%maxit=maxit
         ENDIF
 
+        IF(solvertype/=GD) THEN
+          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+              modName//'::'//myName//' - Only Generalized Davidson works with Anasazi.')
+        ENDIF
+ 
+        
+        ! need to map the Params to the solver's parameter list
         solver%TplAnasazi = ParameterList("anasazi")
 
- 
+        ! if the user already supplied anasazi-specific parameters, use those
         IF(Params%has('EigenvalueSolverType->anasazi_options')) THEN
           CALL Params%get('EigenvalueSolverType->anasazi_options', anasaziParams)
           CALL anasaziParams%toForTeuchosPlist(solver%TplAnasazi)
-          !CALL Anasazi_Init_Params(solver%eig, plID)
+        ! otherwise map over the generic parameters that were supplied  
         ELSE
-          !CALL Params%toForTeuchosPlist(solver%TplAnasazi)
           CALL solver%TplAnasazi%set('Solver Type','Generalized Davidson')
           sublist = solver%TplAnasazi%sublist('Generalized Davidson')
           
           CALL sublist%set('Which','LM')
-          CALL sublist%set('Convergence Tolerance',1.0d-7)
+          CALL sublist%set('Convergence Tolerance',tol)
           CALL sublist%set('Maximum Subspace Dimension',25)
           CALL sublist%set('Restart Dimension',5)
           CALL sublist%set('Maximum Restarts', 20)
@@ -728,34 +732,10 @@ MODULE EigenvalueSolverTypes
           CALL sublist%release()
           
         ENDIF
-        IF(solvertype/=GD) THEN
-          CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Only Generalized Davidson works with Anasazi.')
-        ENDIF
-        ! create the solver handle
+
+       ! create the solver handle
         solver%eig = TrilinosEigenSolver()
         CALL solver%eig%init(solver%Tcomm)
-        ! call solver%TplAnasazi%print()
-        ! setup the solver
-        !CALL solver%eig%setup_solver(plAnasazi)
-        !Need to set PC type
-!FIXME will punt on this for now        
-        !IF(Params%has('EigenvalueSolverType->pc_options')) THEN
-          !CALL Params%get('EigenvalueSolverType->pc_options', pcParams)
-          !! Make sure that a pc_option is defined, if not, set to 2
-          !IF(.NOT.pcParams%has('pc_options->pc_option')) THEN
-            !CALL pcParams%add('pc_options->pc_option',2_SIK)
-          !ENDIF
-
-          !plPC = create_ParameterList("PC")
-          !CALL pcParams%toForTeuchosPlist(plPC)
-          !CALL Preconditioner_InitParams(solver%pc,plID)
-          !CALL Teuchos_ParameterList_Release(plID, ierr)
-        !ELSE
-          !CALL Preconditioner_Init(solver%pc,2)
-        !ENDIF
-
-
         solver%SolverMethod=solvertype
 
         ALLOCATE(TrilinosVectorType :: solver%X)
@@ -766,9 +746,6 @@ MODULE EigenvalueSolverTypes
        
         CALL solver%X%init(tmpPL)
         CALL solver%X_scale%init(tmpPL)
-        !SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-        !  CALL Anasazi_SetX(solver%eig,x%b)
-        !ENDSELECT
 
         solver%TPLType=Anasazi
         solver%isInit=.TRUE.
@@ -1020,7 +997,6 @@ MODULE EigenvalueSolverTypes
       NULLIFY(solver%B)
       CALL solver%x_scale%clear()
       IF(solver%X%isInit) CALL solver%X%clear()
-      !CALL Preconditioner_Destroy(solver%pc)
       CALL solver%eig%release()
       CALL solver%Tcomm%release()
       CALL solver%TplAnasazi%release()
@@ -1147,37 +1123,22 @@ MODULE EigenvalueSolverTypes
         SELECTTYPE(B=>solver%B); TYPE IS(TrilinosMatrixType)
           IF (.NOT.(A%isAssembled)) CALL A%assemble()
           IF (.NOT.(B%isAssembled)) CALL B%assemble()
-          !IF(solver%setupPC) THEN
-          !  CALL Preconditioner_Setup(solver%pc,B%A)
-          !  solver%setupPC=.FALSE.
-          !  solver%updatePC=.FALSE.
-          !ELSEIF(solver%updatePC) THEN
-          !  !CALL Preconditioner_Reset(solver%pc,B%A)
-          !  solver%updatePC=.FALSE.
-          !ENDIF
-
           CALL solver%eig%setup_matrix(A%A)
           FORTRILINOS_CHECK_IERR()
           CALL solver%eig%setup_matrix_rhs(B%A)
           FORTRILINOS_CHECK_IERR()
           CALL solver%eig%setup_solver(solver%TplAnasazi)
           FORTRILINOS_CHECK_IERR()
-          !IF(solver%tmpcnt==2) THEN
-          !  CALL ForPETRA_MatEdit(B%A,"M.mtx"//C_NULL_CHAR);
-          !  CALL ForPETRA_MatEdit(A%A,"F.mtx"//C_NULL_CHAR);
-          !ENDIF
-        ENDSELECT
+       ENDSELECT
       ENDSELECT
 
       !TODO: set tolerance
-      !CALL Anasazi_SetPC(solver%eig,solver%pc)
       !if solver%x%b is a tpetra multivector.
       SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
         CALL solver%eig%solve(val,x%b)
         FORTRILINOS_CHECK_IERR()
         solver%k = val(1)
       ENDSELECT  
-      !CALL Anasazi_GetEigenvalue(solver%eig,solver%k)
 
       !renormalize
       CALL solver%x_scale%set(0.0_SRK)

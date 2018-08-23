@@ -1631,12 +1631,8 @@ PROGRAM testVectorTypes
     INTEGER(SIK) :: r_index
     TYPE(ParamType) :: pList
     LOGICAL(SBK) :: bool
-#ifdef FUTILITY_HAVE_ForTrilinos
     INTEGER(SIK) :: i
-    TYPE(TeuchosComm) :: tcomm
-    TYPE(TpetraMap) :: tmap
-    TYPE(TpetraMultiVector) :: tvec
-#endif
+
     ! test with real vectors
     ALLOCATE(RealVectorType :: xVector)
     ALLOCATE(RealVectorType :: yVector)
@@ -2960,12 +2956,6 @@ PROGRAM testVectorTypes
     CALL xVector%set(2,3.0_SRK)
     CALL xVector%set(3,7.0_SRK)
     CALL yVector%set(0.0_SRK,iverr)
-
-    !SELECTTYPE(xVector);TYPEIS(TrilinosVectorType)
-    !  tcomm = create_TeuchosComm(xVector%comm)
-    !  tmap = create_TpetraMap(INT(xVector%n,C_LONG),INT(xVector%nlocal,C_LONG),tcomm)
-    !  tvec = create_TpetraMultiVector(xVector%b,TeuchosCopy)
-    !ENDSELECT
 
     CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1)
     IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)

@@ -82,8 +82,6 @@ PROGRAM testEigenvalueSolver
   ENDIF 
   DEALLOCATE(testEVS)
 
-
-
   ALLOCATE(EigenvalueSolverType_Anasazi :: testEVS)
   CALL optList%set('EigenvalueSolverType->solver',GD)
   CALL optList%set('EigenvalueSolverType->n',30_SIK)
@@ -114,9 +112,6 @@ PROGRAM testEigenvalueSolver
   DEALLOCATE(testEVS)
 
   ALLOCATE(EigenvalueSolverType_ForAnasazi :: testEVS)
-!  CALL optList%set('EigenvalueSolverType->solver',GD)
-!  CALL optList%set('EigenvalueSolverType->n',30_SIK)
-!  CALL optList%set('EigenvalueSolverType->nlocal',30_SIK)
 #ifdef FUTILITY_HAVE_ForTrilinos
   REGISTER_SUBTEST('testInitForAnasazi',testInitForAnasazi)
   REGISTER_SUBTEST('testSetMatAnasazi',testSetMatForAnasazi)
@@ -167,11 +162,7 @@ CONTAINS
       imin = rowmap%getMinLocalIndex()
       imax = rowmap%getMaxLocalIndex()
 
-      write(*,*) n,imin,imax
-
-
-            
-
+      WRITE(*,*) n,imin,imax
     ENDSUBROUTINE printMatrix
 
 
