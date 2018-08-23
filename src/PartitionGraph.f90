@@ -69,6 +69,7 @@ MODULE PartitionGraph
   PUBLIC :: PartitionGraphType
 #ifdef UNIT_TEST
   PUBLIC :: ePartitionGraph
+  PUBLIC :: makeContiguousDomains
 #endif
 
   !> Pointer to a partitioning algorithm. Type used to create arrays of
@@ -743,7 +744,7 @@ MODULE PartitionGraph
         !Find a max degree vertex with max degree neighbor
         maxd=MAXVAL(thisGraph%d)
         maxd2=0
-        soiv=-1
+        soiv=1   !Default to 1st vertex in case of discontiguous domains
         DO iv=1,nvert
           !Check if this vertex is max degree
           IF(thisGraph%d(iv) == maxd) THEN
@@ -979,7 +980,7 @@ MODULE PartitionGraph
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: nvert,iv,jv,in,nlocal,nneigh
-      INTEGER(SIK) :: nv1
+      INTEGER(SIK) :: nv1,numvecs
       REAL(SRK) :: wg1,cw1,curdif,wt,wtSum,wneigh
       TYPE(ParamType) :: matParams
       CLASS(VectorType),ALLOCATABLE :: evecs(:)
@@ -1021,7 +1022,8 @@ MODULE PartitionGraph
       ENDDO !iv
 
       !Find Fiedler vector (Algebraic connectivity) - 2nd smallest eigenvector
-      CALL getEigenVecs(Lmat,.TRUE.,4,evecs)
+      numvecs=4
+      CALL getEigenVecs(Lmat,.TRUE.,numvecs,evecs)
       CALL Lmat%clear()
 
       !Get the Order
@@ -1030,7 +1032,7 @@ MODULE PartitionGraph
         Order(iv)=iv
       ENDDO !iv
       SELECTTYPE(evecs(1)); TYPEIS(PETScVectorType)
-        CALL recursiveEigenOrder(evecs(2:), Order)
+        CALL recursiveEigenOrder(evecs(2:numvecs), Order)
       ENDSELECT
       DO iv=1,SIZE(evecs)
         CALL evecs(iv)%clear()
@@ -1074,7 +1076,7 @@ MODULE PartitionGraph
       CHARACTER(LEN=*),PARAMETER :: myName='RecursiveInertialBisection'
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
 #ifdef FUTILITY_HAVE_SLEPC
-      INTEGER(SIK) :: dim,iv,jv
+      INTEGER(SIK) :: dim,iv,jv,numvecs
       INTEGER(SIK) :: nv1,idim,idim2
       REAL(SRK) :: wtSum,wg1,wt,cw1,curdif,ccoord,cprod
       REAL(SRK),ALLOCATABLE :: I(:,:),coord(:,:),cent(:)
@@ -1139,7 +1141,8 @@ MODULE PartitionGraph
         ENDDO !iv
 
         !Solve the eigenvalue problem
-        CALL getEigenVecs(Imat, .FALSE., dim, evecs)
+        numvecs=dim
+        CALL getEigenVecs(Imat,.FALSE.,numvecs,evecs)
         CALL Imat%clear()
 
         !Determine the order based on distance from the inertial vectors
@@ -1148,7 +1151,7 @@ MODULE PartitionGraph
           Order(iv)=iv
         ENDDO !iv
         SELECTTYPE(evecs); TYPEIS(PETScVectorType)
-          CALL recursiveEigenOrder(evecs, Order, dot=coord)
+          CALL recursiveEigenOrder(evecs(1:numvecs), Order, dot=coord)
         ENDSELECT
         DEALLOCATE(coord)
         DO iv=1,SIZE(evecs)
@@ -1794,7 +1797,7 @@ MODULE PartitionGraph
       CHARACTER(LEN=*),PARAMETER :: myName='getEigenVecs'
       CLASS(MatrixType),INTENT(IN) :: A
       LOGICAL(SBK),INTENT(IN) :: lsmall
-      INTEGER(SIK),INTENT(IN) :: numvecs
+      INTEGER(SIK),INTENT(INOUT) :: numvecs
       CLASS(VectorType),ALLOCATABLE,INTENT(OUT) :: V(:)
 #ifdef FUTILITY_HAVE_SLEPC
       INTEGER(SIK) :: n,iv
@@ -1837,6 +1840,8 @@ MODULE PartitionGraph
 
       CALL EPSSetDimensions(eps,nev,ncv,mpd,ierr)
       CALL EPSSolve(eps,ierr)
+      CALL EPSGetConverged(eps,numvecs,ierr)
+      numvecs=MIN(nev,numvecs)
       DO iv=1,numvecs
       SELECTTYPE(v1 => V(iv)); TYPE IS(PETScVectorType)
           SELECTTYPE(v2 => Vi(iv)); TYPE IS(PETScVectorType)
@@ -1969,10 +1974,10 @@ MODULE PartitionGraph
             IF(PRESENT(dot)) THEN
               !Use dot-product approach on eigen-vectors
               IF(d(iv) .APPROXGE. 0.0_SRK) THEN
-                CALL recursiveEigenOrder(evecs(2:),Order(iv:iv+numeq),.TRUE., &
+                CALL recursiveEigenOrder(evecs(2:numvecs),Order(iv:iv+numeq),.TRUE., &
                   dot(1:dim, iv:iv+numeq))
               ELSE
-                CALL recursiveEigenOrder(evecs(2:),Order(iv:iv+numeq),.FALSE., &
+                CALL recursiveEigenOrder(evecs(2:numvecs),Order(iv:iv+numeq),.FALSE., &
                   dot(1:dim, iv:iv+numeq))
               ENDIF
             ELSE
@@ -1986,9 +1991,9 @@ MODULE PartitionGraph
                 CALL evc(jv-1)%setall_array(ec(iv:iv+numeq))
               ENDDO !iv
               IF(d(iv) .APPROXGE. 0.0_SRK) THEN
-                CALL recursiveEigenOrder(evc,Order(iv:iv+numeq),.TRUE.)
+                CALL recursiveEigenOrder(evc(1:numvecs-1),Order(iv:iv+numeq),.TRUE.)
               ELSE
-                CALL recursiveEigenOrder(evc,Order(iv:iv+numeq),.FALSE.)
+                CALL recursiveEigenOrder(evc(1:numvecs-1),Order(iv:iv+numeq),.FALSE.)
               ENDIF
               DO jv=1,numvecs-1
                 CALL evc(jv)%clear()
@@ -2039,6 +2044,7 @@ MODULE PartitionGraph
 !> @param wtSum The total weight of the graph
 !>
     RECURSIVE SUBROUTINE recursivePartitioning(thisGraph,Order,nv1,cw1,wtSum)
+      CHARACTER(LEN=*),PARAMETER :: myName="recursivePartitioning"
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),POINTER,INTENT(INOUT) :: Order(:)
       INTEGER(SIK),INTENT(INOUT) :: nv1
@@ -2056,11 +2062,25 @@ MODULE PartitionGraph
       !Refine the 2 groups
       CALL thisGraph%refine(L1,L2)
 
+      !Make contiguous domains
+      CALL makeContiguousDomains(thisGraph,Order,nv1)
+
+      !Reassign L1,L2
+      L1 => Order(1:nv1)
+      L2 => Order(nv1+1:thisGraph%nvert)
+
       !Redistribute the number of groups for each subgraph
       cw1=SUM(thisGraph%wts(L1))
       ng=thisGraph%nGroups
       ng1=MAX(1,NINT(ng*cw1/wtSum))
-      ng2=ng-ng1
+      ng1=MIN(nv1,ng1) ! Cannot have more domains than vertices
+      ng2=MAX(1,ng-ng1)
+      ng1=ng-ng2
+      ! Cannot have more domains than vertices
+      IF(ng2 > thisGraph%nvert-nv1) THEN
+        ng1=ng1+MAX(1,ng2-(thisGraph%nvert-nv1))
+        ng2=MAX(1,thisGraph%nvert-nv1)
+      ENDIF
 
       IF(ng1 > 1) THEN
         !Generate subgraph if further decomposition is needed
@@ -2208,5 +2228,198 @@ MODULE PartitionGraph
       ! Change logical array?
       IF(lswap) linL1(iv)=(.NOT. linL1(iv))
     ENDSUBROUTINE swapDomain
+!
+!-------------------------------------------------------------------------------
+!> @brief A fixup for discontiguous domains during recursive partitioning
+!> @param thisGraph The graph object
+!> @param Order The order vector
+!> @param nv1 The number of vertices in sub-domain 1
+!>
+!> This routine takes the graph "Order" given in recursive bisection, and makes
+!> the two sub-domains contiguous. First, the checkContiguity routine is called
+!> which finds all contiguous chunks in the sub-domain. The sub-domain is made
+!> contiguous by giving all contiguous chunks except 1 to the other sub-domain.
+!> This will affect balance, but is necessary for decompositions to be robust
+!> with the contiguous and convex requirements.
+!>
+    SUBROUTINE makeContiguousDomains(thisGraph, Order, nv1)
+      CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(INOUT) :: Order(:)
+      INTEGER(SIK),INTENT(INOUT) :: nv1
+      INTEGER(SIK) :: nchunk,ndc,schunk,istt,istp,nv,iv,ivt,iv1,iv2,nv2
+      REAL(SRK) :: schunkWeight
+      INTEGER(SIK) :: ichunk(thisGraph%nvert)
+      INTEGER(SIK) :: OrderCpy(thisGraph%nvert)
+      REAL(SRK),ALLOCATABLE :: chunkWeight(:)
+
+      !Contiguity check on the first sub-domain L1 => Order(1:nv1)
+      nv=nv1; istt=1; istp=nv1
+      CALL checkContiguity(thisGraph, nv, Order(istt:istp), ndc, ichunk)
+      nchunk=ndc
+      ALLOCATE(chunkWeight(nchunk))
+      chunkWeight=0.0_SRK
+      DO ivt=istt,istp
+        iv=Order(ivt)
+        chunkWeight(ichunk(iv))=chunkWeight(ichunk(iv))+thisGraph%wts(iv)
+      ENDDO !ivt
+      !Move smallest chunks to L2 until L1 is contiguous
+      DO WHILE(nchunk > 1)
+        istt=1; istp=nv1
+        !Find current smallest chunk (by weight)
+        schunkWeight=MINVAL(chunkWeight)
+        DO schunk=1,ndc
+          IF(chunkWeight(schunk) == schunkWeight) THEN
+            nv=0
+            DO ivt=istt,istp
+              iv=Order(ivt)
+              IF(ichunk(iv) == schunk) nv=nv+1
+            ENDDO !ivt
+            EXIT
+          ENDIF
+        ENDDO !schunk
+
+        !Move all vertices in this chunk to end of the list
+        OrderCpy=Order
+        iv1=0; iv2=0
+        DO ivt=istt,istp
+          iv=OrderCpy(ivt)
+          IF(ichunk(iv) /= schunk) THEN
+            iv1=iv1+1
+            Order(iv1)=iv
+          ELSE
+            iv2=iv2+1
+            Order(nv1-nv+iv2)=iv
+          ENDIF
+        ENDDO !ivt
+        chunkWeight(schunk)=HUGE(1.0_SRK)
+        nchunk=nchunk-1
+        nv1=nv1-nv
+      ENDDO !nchunk > 1
+      DEALLOCATE(chunkWeight)
+
+      !Contiguity check on the second sub-domain L2 => Order(nv1+1:nvert)
+      nv2=thisGraph%nvert-nv1
+      nv=nv2; istt=nv1+1; istp=thisGraph%nvert
+      CALL checkContiguity(thisGraph, nv, Order(istt:istp), ndc, ichunk)
+      nchunk=ndc
+      ALLOCATE(chunkWeight(nchunk))
+      chunkWeight=0.0_SRK
+      DO ivt=istt,istp
+        iv=Order(ivt)
+        chunkWeight(ichunk(iv))=chunkWeight(ichunk(iv))+thisGraph%wts(iv)
+      ENDDO !ivt
+      !Move smallest chunks to L2 until L1 is contiguous
+      DO WHILE(nchunk > 1)
+        istt=nv1+1; istp=thisGraph%nvert
+        !Find current smallest chunk (by weight)
+        schunkWeight=MINVAL(chunkWeight)
+        DO schunk=1,ndc
+          IF(chunkWeight(schunk) == schunkWeight) THEN
+            nv=0
+            DO ivt=istt,istp
+              iv=Order(ivt)
+              IF(ichunk(iv) == schunk) nv=nv+1
+            ENDDO !ivt
+            EXIT
+          ENDIF
+        ENDDO !schunk
+
+        !Move all vertices in this chunk to start of the list
+        OrderCpy=Order
+        iv1=0; iv2=0
+        DO ivt=istt,istp
+          iv=OrderCpy(ivt)
+          IF(ichunk(iv) /= schunk) THEN
+            iv1=iv1+1
+            Order(nv1+nv+iv1)=iv
+          ELSE
+            iv2=iv2+1
+            Order(nv1+iv2)=iv
+          ENDIF
+        ENDDO !ivt
+        chunkWeight(schunk)=HUGE(1.0_SRK)
+        nchunk=nchunk-1
+        nv1=nv1+nv
+      ENDDO !nchunk > 1
+      DEALLOCATE(chunkWeight)
+    ENDSUBROUTINE makeContiguousDomains
+!
+!-------------------------------------------------------------------------------
+!> @brief get list of contiguous chunks in subdomain L
+!> @param thisGraph the graph object
+!> @param nv the number of vertices in subdomain L
+!> @param L the list of vertices in the subdomain
+!> @param nchunk the number of contiguous chunks
+!> @param ichunk the chunk index of each vertex in L
+!>
+!> This routine finds all contiguous "chunks" within a subdomain L. This is
+!> done by looping through neighboring vertices within the same subdomain.
+!> This routine is only used by the makeContiguousDomains routine.
+!>
+    SUBROUTINE checkContiguity(thisGraph, nv, L, nchunk, ichunk)
+      TYPE(PartitionGraphType),INTENT(IN) :: thisGraph
+      INTEGER(SIK),INTENT(IN) :: nv
+      INTEGER(SIK),INTENT(IN) :: L(nv)
+      INTEGER(SIK),INTENT(OUT) :: nchunk
+      INTEGER(SIK),INTENT(OUT) :: ichunk(thisGraph%nvert)
+      LOGICAL(SBK) :: lContig
+      INTEGER(SIK) :: ivL,iv,in,jv
+      INTEGER(SIK) :: ncount
+      LOGICAL(SBK) :: lChecked(nv),lCheck(thisGraph%nvert)
+      LOGICAL(SBK) :: linL(thisGraph%nvert)
+
+      !Initialize output
+      nchunk=0
+      ichunk=0
+
+      !Setup logical array to check if vertex index is in L
+      lInL=.FALSE.
+      DO ivL=1,nv
+        lInL(L(ivL))=.TRUE.
+      ENDDO !ivL
+
+      !Begin counting and labeling vertices in contiuguous chunks
+      ncount=0
+      lContig=.FALSE.
+      DO WHILE(ncount < nv)
+        IF(lContig) THEN
+          lContig=.FALSE.
+          !Search for vertices in this contiguous chunk
+          DO ivL=1,nv
+            iv=L(ivL)
+            IF(lCheck(iv) .AND. .NOT. lChecked(ivL)) THEN
+              !Change flags and increase count
+              ncount=ncount+1
+              lContig=.TRUE.
+              lChecked(ivL)=.TRUE.
+              ichunk(iv)=nchunk
+
+              !Add neighbors in subdomain L to check list
+              DO in=1,thisGraph%maxneigh
+                jv=thisGraph%neigh(in,iv)
+                IF(jv > 0) THEN
+                  IF(lInL(jv)) THEN
+                    lCheck(jv)=.TRUE.
+                  ENDIF
+                ENDIF
+              ENDDO !in
+            ENDIF
+          ENDDO !ivL
+        ELSE
+          !Move to the next contiguous chunk
+          nchunk=nchunk+1
+          lContig=.TRUE.
+          lCheck=.FALSE.
+          lChecked=.FALSE.
+          DO ivL=1,nv
+            iv=L(ivL)
+            IF(ichunk(iv) == 0) THEN
+              lCheck(iv)=.TRUE.
+              EXIT
+            ENDIF
+          ENDDO !ivL
+        ENDIF
+      ENDDO !ncount < nv
+    ENDSUBROUTINE checkContiguity
 !
 ENDMODULE PartitionGraph
