@@ -20,6 +20,7 @@ PROGRAM testElementsIsotopes
   CREATE_TEST("ElementsIsotopes")
 
   REGISTER_SUBTEST('Initialize',testInit)
+  REGISTER_SUBTEST('isValidIsoName',testIsValidIsoName)
   REGISTER_SUBTEST('getZAID',testGetZAID)
   REGISTER_SUBTEST('getIsoName',testGetIsotopeName)
   REGISTER_SUBTEST('getElementName',testGetElementName)
@@ -47,6 +48,21 @@ PROGRAM testElementsIsotopes
       CALL myEI%clear()
       ASSERT(.NOT. myEI%isInit,'isInit')
     ENDSUBROUTINE testClear
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testIsValidIsoName()
+      ASSERT(myEI%isValidIsoName('H-2'),'H-2')
+      ASSERT(myEI%isValidIsoName(' H-2'),' H-2')
+      ASSERT(myEI%isValidIsoName('AG-110m'),'AG-110m')
+      ASSERT(myEI%isValidIsoName('f-18m'),'f-18m')
+      ASSERT(myEI%isValidIsoName(' f-18m'),' f-18m')
+      ASSERT(myEI%isValidIsoName('B-NAT'),'B-NAT')
+      ASSERT(.NOT. myEI%isValidIsoName('BadName'),'Bad Name')
+      ASSERT(.NOT. myEI%isValidIsoName('H2'),'Missing Hyphen')
+      ASSERT(.NOT. myEI%isValidIsoName('-H2'),'Wrong Hyphen')
+      ASSERT(.NOT. myEI%isValidIsoName('ZZ-42'),'Bad Element')
+      ASSERT(.NOT. myEI%isValidIsoName('B-EN'),'Bad Mass Number')
+    ENDSUBROUTINE testIsValidIsoName
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testGetZAID()
