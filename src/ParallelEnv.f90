@@ -706,10 +706,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
       INTEGER(SIK) :: tag, numChar
-#ifdef HAVE_MPI
       tag=1
-      IF(PRESENT(in_tag)) tag=in_tag
       numChar = LEN(sendbuf)
+#ifdef HAVE_MPI
+      IF(PRESENT(in_tag)) tag=in_tag
       CALL MPI_send(sendBuf,numChar,MPI_CHARACTER,destProc,tag,myPE%comm,mpierr)
 #endif
     ENDSUBROUTINE send_CHAR_MPI_Env_type
@@ -730,8 +730,8 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
       INTEGER(SIK) :: tag
-#ifdef HAVE_MPI
       tag=1
+#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
       CALL MPI_send(sendBuf,n,MPI_INTEGER,destProc,tag,myPE%comm,mpierr)
 #endif
@@ -753,8 +753,8 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
       INTEGER(SIK) :: tag
-#ifdef HAVE_MPI
       tag=1
+#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBL
       CALL MPI_send(sendBuf,n,MPI_DOUBLE_PRECISION,destProc,tag,myPE%comm,mpierr)
@@ -778,10 +778,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
       INTEGER(SIK) :: tag, numChar
-#ifdef HAVE_MPI
       tag=1
-      IF(PRESENT(in_tag)) tag=in_tag
       numChar = LEN(recvbuf)
+#ifdef HAVE_MPI
+      IF(PRESENT(in_tag)) tag=in_tag
       CALL MPI_recv(recvBuf,numChar,MPI_CHARACTER,srcProc,tag,myPE%comm,mpierr)
 #endif
     ENDSUBROUTINE recv_CHAR_MPI_Env_type
@@ -802,8 +802,8 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
       INTEGER(SIK) :: tag
-#ifdef HAVE_MPI
       tag=1
+#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBL
       CALL MPI_recv(recvBuf,n,MPI_DOUBLE_PRECISION,srcProc,tag,myPE%comm,mpierr)
@@ -829,8 +829,8 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
       INTEGER(SIK) :: tag
-#ifdef HAVE_MPI
       tag=1
+#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
       CALL MPI_recv(recvBuf,n,MPI_INTEGER,srcProc,tag,myPE%comm,mpierr)
 #endif
