@@ -74,7 +74,6 @@ MODULE Futility_DBC
     INTEGER :: mpierr
     LOGICAL :: mpiInit
     CALL MPI_Initialized(mpiInit,mpierr)
-    print *, mpiInit
     IF(mpiInit) THEN
       CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
       CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
