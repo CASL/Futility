@@ -885,7 +885,7 @@ MODULE ParallelEnv
       count=SIZE(sendbuf)
       REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
 #ifdef HAVE_MPI
-      CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+      CALL MPI_Gather(sendbuf,count,MPI_INTEGER,recvbuf,count, &
         MPI_INTEGER8,rank,myPE%comm,mpierr)
 #else
       DO n=1,count
