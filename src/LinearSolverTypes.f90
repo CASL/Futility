@@ -1306,6 +1306,7 @@ MODULE LinearSolverTypes
       relConvTol=relConvTol_in
       absConvTol=absConvTol_in
       maxIters=maxIters_in
+      nRestart=-1_SRK
       IF(PRESENT(nRestart_in)) nRestart=nRestart_in
 #ifdef FUTILITY_HAVE_PETSC
       IF(PRESENT(dTol_in)) THEN
