@@ -42,8 +42,8 @@ MODULE Constants_Conversion
   REAL(SRK),PUBLIC,PARAMETER ::     RPI=ONE/PI
   REAL(SRK),PUBLIC,PARAMETER ::  RTWOPI=ONE/TWOPI
   REAL(SRK),PUBLIC,PARAMETER :: RFOURPI=ONE/FOURPI
-  !> Avogadro's Number
-  REAL(SRK),PUBLIC,PARAMETER :: Na=6.02214129000E+23_SRK !16 digits
+  !> Avogadro's Number; source: https://physics.nist.gov/cgi-bin/cuu/Value?na
+  REAL(SRK),PUBLIC,PARAMETER :: NA=6.022140857E+23_SRK
 
   ! Area conversion
   !> Conversion factor from barns to cm**2
