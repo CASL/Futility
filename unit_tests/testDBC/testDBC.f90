@@ -17,11 +17,17 @@ PROGRAM testDBC
 #ifdef HAVE_MPI
   INCLUDE "mpif.h"
   INTEGER(SIK) :: mpierr
-  CALL MPI_Init(mpierr)
 #endif
 
   CALL GET_COMMAND_ARGUMENT(1,arg)
   READ(arg,*) iopt
+
+#ifdef HAVE_MPI
+  ! Do not init MPI for the no_stop_on_fail test.  This test calls DBC_Fail
+  ! but will not stop because of the failed REQUIRE.  It did still fail when trying
+  ! to call MPI routines without MPI_Init being called before a fix was put in.
+  IF(iopt/=5) CALL MPI_Init(mpierr)
+#endif
 
   SELECTCASE(iopt)
     CASE(1)
@@ -41,7 +47,7 @@ PROGRAM testDBC
   WRITE(*,*) "TEST PASSED"
 
 #ifdef HAVE_MPI
-      CALL MPI_Finalize(mpierr)
+  IF(iopt/=5) CALL MPI_Finalize(mpierr)
 #endif
 !
 !===============================================================================

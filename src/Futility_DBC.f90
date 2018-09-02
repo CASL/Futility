@@ -72,8 +72,15 @@ MODULE Futility_DBC
     INTEGER :: rank,nproc
 #ifdef HAVE_MPI
     INTEGER :: mpierr
-    CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
-    CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+    LOGICAL :: mpiInit
+    CALL MPI_Initialized(mpiInit,mpierr)
+    IF(mpiInit) THEN
+      CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
+      CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+   ELSE
+      rank=0
+      nproc=1
+   ENDIF
 #else
     rank=0
     nproc=1
