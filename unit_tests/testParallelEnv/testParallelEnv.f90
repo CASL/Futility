@@ -302,8 +302,6 @@ PROGRAM testParallelEnv
       ENDDO
 
       COMPONENT_TEST('%send/%recv')
-      CALL testMPI%clear()
-      CALL testMPI%init(MPI_COMM_WORLD)
       sbuf_SIK = 0
       IF(testMPI%nproc > 1) THEN
         IF(testMPI%rank == 0) THEN
