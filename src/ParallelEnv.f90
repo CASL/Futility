@@ -721,8 +721,8 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: destProc
       INTEGER(SIK),INTENT(IN) :: tag
       !
-      INTEGER(SIK) :: numChar
 #ifdef HAVE_MPI
+      INTEGER(SIK) :: numChar
       numChar = LEN_TRIM(sendbuf)
       CALL MPI_send(sendBuf,numChar,MPI_CHARACTER,destProc,tag,myPE%comm,mpierr)
 #endif
@@ -741,9 +741,9 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: destProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER(SIK) :: tag
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBLINT
       CALL MPI_send(sendBuf,1,MPI_INTEGER8,destProc,tag,myPE%comm,mpierr)
@@ -768,9 +768,9 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: destProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER(SIK) :: tag
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBLINT
       CALL MPI_send(sendBuf,n,MPI_INTEGER8,destProc,tag,myPE%comm,mpierr)
@@ -793,9 +793,9 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: destProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER(SIK) :: tag
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBL
       CALL MPI_send(sendBuf,1,MPI_DOUBLE_PRECISION,destProc,tag,myPE%comm,mpierr)
@@ -820,9 +820,9 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: destProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER(SIK) :: tag
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBL
       CALL MPI_send(sendBuf,n,MPI_DOUBLE_PRECISION,destProc,tag,myPE%comm,mpierr)
