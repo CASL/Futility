@@ -845,10 +845,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: srcProc
       INTEGER(SIK),INTENT(IN) :: tag
       !
-      INTEGER :: stat(MPI_STATUS_SIZE)
-      INTEGER(SIK) :: numChar
-
 #ifdef HAVE_MPI
+      INTEGER(SIK) :: numChar
+      INTEGER :: stat(MPI_STATUS_SIZE)
+
       CALL MPI_Probe(srcProc,tag,myPe%comm,stat,mpierr)
       CALL MPI_Get_Count(stat,MPI_CHARACTER,numChar,mpierr)
       CALL MPI_recv(recvBuf,numChar,MPI_CHARACTER,srcProc,tag,myPE%comm,stat,mpierr)
@@ -868,10 +868,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: srcProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER :: stat(MPI_STATUS_SIZE)
       INTEGER(SIK) :: tag
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBL
       CALL MPI_recv(recvBuf,1,MPI_DOUBLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
@@ -896,10 +896,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: srcProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER :: stat(MPI_STATUS_SIZE)
       INTEGER(SIK) :: tag
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBL
       CALL MPI_recv(recvBuf,n,MPI_DOUBLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
@@ -922,10 +922,10 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: srcProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER :: stat(MPI_STATUS_SIZE)
       INTEGER(SIK) :: tag
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBLINT
       CALL MPI_recv(recvBuf,1,MPI_INTEGER8,srcProc,tag,myPE%comm,stat,mpierr)
@@ -950,12 +950,12 @@ MODULE ParallelEnv
       INTEGER(SIK),INTENT(IN) :: srcProc
       INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
       !
+#ifdef HAVE_MPI
       INTEGER :: stat(MPI_STATUS_SIZE)
       INTEGER(SIK) :: tag
       REAL(SRK) :: buf(n)
 
       tag=1
-#ifdef HAVE_MPI
       IF(PRESENT(in_tag)) tag=in_tag
 #ifdef DBLINT
       CALL MPI_recv(recvBuf,n,MPI_INTEGER8,srcProc,tag,myPE%comm,stat,mpierr)
