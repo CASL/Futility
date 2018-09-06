@@ -137,9 +137,55 @@ MODULE ParallelEnv
       !> @copybrief ParallelEnv::barrier_MPI_Env_type
       !> @copydetails ParallelEnv::barrier_MPI_Env_type
       PROCEDURE,PASS :: barrier => barrier_MPI_Env_type
+
+      !> @copybrief ParallelEnv::recv_CHAR_MPI_Env_type
+      !> @copydetails ParallelEnv::recv_CHAR_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: recv_CHAR_MPI_Env_type
+      !> @copybrief ParallelEnv::recv_REAL_MPI_Env_type
+      !> @copydetails ParallelEnv::recv_REAL_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: recv_REAL_MPI_Env_type
+      !> @copybrief ParallelEnv::recv_INT_MPI_Env_type
+      !> @copydetails ParallelEnv::recv_INT_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: recv_INT_MPI_Env_type
+      !> @copybrief ParallelEnv::recv_REAL1_MPI_Env_type
+      !> @copydetails ParallelEnv::recv_REAL1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: recv_REAL1_MPI_Env_type
+      !> @copybrief ParallelEnv::recv_INT1_MPI_Env_type
+      !> @copydetails ParallelEnv::recv_INT1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: recv_INT1_MPI_Env_type
+      GENERIC :: recv => recv_CHAR_MPI_Env_type, &
+                         recv_REAL_MPI_Env_type, &
+                         recv_INT_MPI_Env_type, &
+                         recv_REAL1_MPI_Env_type, &
+                         recv_INT1_MPI_Env_type
+
+      !> @copybrief ParallelEnv::send_CHAR_MPI_Env_type
+      !> @copydetails ParallelEnv::send_CHAR_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: send_CHAR_MPI_Env_type
+      !> @copybrief ParallelEnv::send_REAL_MPI_Env_type
+      !> @copydetails ParallelEnv::send_REAL_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: send_REAL_MPI_Env_type
+      !> @copybrief ParallelEnv::send_INT_MPI_Env_type
+      !> @copydetails ParallelEnv::send_INT_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: send_INT_MPI_Env_type
+      !> @copybrief ParallelEnv::send_REAL1_MPI_Env_type
+      !> @copydetails ParallelEnv::send_REAL1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: send_REAL1_MPI_Env_type
+      !> @copybrief ParallelEnv::send_INT1_MPI_Env_type
+      !> @copydetails ParallelEnv::send_INT1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: send_INT1_MPI_Env_type
+      GENERIC :: send => send_CHAR_MPI_Env_type, &
+                         send_REAL_MPI_Env_type, &
+                         send_INT_MPI_Env_type, &
+                         send_REAL1_MPI_Env_type, &
+                         send_INT1_MPI_Env_type
+
       !> @copybrief ParallelEnv::gather_SIK0_MPI_Env_type
       !> @copydetails ParallelEnv::gather_SIK0_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: gather_SIK0_MPI_Env_type
+      !> @copybrief ParallelEnv::gather_SIK1_MPI_Env_type
+      !> @copydetails ParallelEnv::gather_SIK1_MPI_Env_type
+      PROCEDURE,PASS,PRIVATE :: gather_SIK1_MPI_Env_type
       !> @copybrief ParallelEnv::gather_SLK0_MPI_Env_type
       !> @copydetails ParallelEnv::gather_SLK0_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: gather_SLK0_MPI_Env_type
@@ -149,7 +195,8 @@ MODULE ParallelEnv
       !>
       GENERIC :: gather => gather_SIK0_MPI_Env_type, &
                            gather_SLK0_MPI_Env_type, &
-                           gather_SLK1_MPI_Env_type
+                           gather_SLK1_MPI_Env_type, &
+                           gather_SIK1_MPI_Env_type
       !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
       !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
       PROCEDURE,PASS,PRIVATE :: scatter_SLK0_MPI_Env_type
@@ -662,7 +709,268 @@ MODULE ParallelEnv
     ENDSUBROUTINE barrier_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper routine calls MPI_Gather
+!> @brief Wrapper routine calls MPI_Send for character array
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE send_CHAR_MPI_Env_type(myPE,sendbuf,destProc,tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='send_CHAR_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      CHARACTER(LEN=*),INTENT(IN) :: sendbuf
+      INTEGER(SIK),INTENT(IN) :: destProc
+      INTEGER(SIK),INTENT(IN) :: tag
+      !
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: numChar
+      numChar = LEN_TRIM(sendbuf)
+      CALL MPI_send(sendBuf,numChar,MPI_CHARACTER,destProc,tag,myPE%comm,mpierr)
+#endif
+    ENDSUBROUTINE send_CHAR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Send for ints
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the scalar which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE send_INT_MPI_Env_type(myPE,sendbuf,destProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='send_INT_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: sendbuf
+      INTEGER(SIK),INTENT(IN) :: destProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: tag
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBLINT
+      CALL MPI_send(sendBuf,1,MPI_INTEGER8,destProc,tag,myPE%comm,mpierr)
+#else
+      CALL MPI_send(sendBuf,1,MPI_INTEGER,destProc,tag,myPE%comm,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE send_INT_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Send for ints
+!> @param myPE parallel environment where the communication originates
+!> @param n the number of elements to be sent
+!> @param sendbuf the data which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE send_INT1_MPI_Env_type(myPE,sendbuf,n,destProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='send_INT1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: sendbuf(*)
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: destProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: tag
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBLINT
+      CALL MPI_send(sendBuf,n,MPI_INTEGER8,destProc,tag,myPE%comm,mpierr)
+#else
+      CALL MPI_send(sendBuf,n,MPI_INTEGER,destProc,tag,myPE%comm,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE send_INT1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Send for reals
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE send_REAL_MPI_Env_type(myPE,sendbuf,destProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='send_REAL_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      REAL(SRK),INTENT(IN) :: sendbuf
+      INTEGER(SIK),INTENT(IN) :: destProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: tag
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBL
+      CALL MPI_send(sendBuf,1,MPI_DOUBLE_PRECISION,destProc,tag,myPE%comm,mpierr)
+#else
+      CALL MPI_send(sendBuf,1,MPI_SINGLE_PRECISION,destProc,tag,myPE%comm,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE send_REAL_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Send for reals
+!> @param myPE parallel environment where the communication originates
+!> @param n the number of elements to be sent
+!> @param sendbuf the data which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE send_REAL1_MPI_Env_type(myPE,sendbuf,n,destProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='send_REAL1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      REAL(SRK),INTENT(IN) :: sendbuf(*)
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: destProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: tag
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBL
+      CALL MPI_send(sendBuf,n,MPI_DOUBLE_PRECISION,destProc,tag,myPE%comm,mpierr)
+#else
+      CALL MPI_send(sendBuf,n,MPI_SINGLE_PRECISION,destProc,tag,myPE%comm,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE send_REAL1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_recv for characters
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE recv_CHAR_MPI_Env_type(myPE,recvbuf,srcProc,tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='recv_CHAR_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      CHARACTER(LEN=*),INTENT(OUT) :: recvbuf
+      INTEGER(SIK),INTENT(IN) :: srcProc
+      INTEGER(SIK),INTENT(IN) :: tag
+      !
+#ifdef HAVE_MPI
+      INTEGER(SIK) :: numChar
+      INTEGER :: stat(MPI_STATUS_SIZE)
+
+      CALL MPI_Probe(srcProc,tag,myPE%comm,stat,mpierr)
+      CALL MPI_Get_Count(stat,MPI_CHARACTER,numChar,mpierr)
+      CALL MPI_recv(recvBuf,numChar,MPI_CHARACTER,srcProc,tag,myPE%comm,stat,mpierr)
+#endif
+    ENDSUBROUTINE recv_CHAR_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_recv for reals
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the scalar which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE recv_REAL_MPI_Env_type(myPE,recvbuf,srcProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='recv_REAL_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      REAL(SRK),INTENT(INOUT) :: recvbuf
+      INTEGER(SIK),INTENT(IN) :: srcProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER :: stat(MPI_STATUS_SIZE)
+      INTEGER(SIK) :: tag
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBL
+      CALL MPI_recv(recvBuf,1,MPI_DOUBLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
+#else
+      CALL MPI_recv(recvBuf,1,MPI_SINGLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE recv_REAL_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_recv for reals
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data array which is to be sent
+!> @param n the number of elements to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE recv_REAL1_MPI_Env_type(myPE,recvbuf,n,srcProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='recv_REAL_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      REAL(SRK),INTENT(INOUT) :: recvbuf(:)
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: srcProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER :: stat(MPI_STATUS_SIZE)
+      INTEGER(SIK) :: tag
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBL
+      CALL MPI_recv(recvBuf,n,MPI_DOUBLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
+#else
+      CALL MPI_recv(recvBuf,n,MPI_SINGLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE recv_REAL1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_recv for integers
+!> @param myPE parallel environment where the communication originates
+!> @param recvbuf the scalar which is to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE recv_INT_MPI_Env_type(myPE,recvbuf,srcProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='recv_INT_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(INOUT) :: recvbuf
+      INTEGER(SIK),INTENT(IN) :: srcProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER :: stat(MPI_STATUS_SIZE)
+      INTEGER(SIK) :: tag
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBLINT
+      CALL MPI_recv(recvBuf,1,MPI_INTEGER8,srcProc,tag,myPE%comm,stat,mpierr)
+#else
+      CALL MPI_recv(recvBuf,1,MPI_INTEGER,srcProc,tag,myPE%comm,stat,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE recv_INT_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_recv for integers
+!> @param myPE parallel environment where the communication originates
+!> @param recvbuf the array which is to be sent
+!> @param n the number of elements to be sent
+!> @param destProc the rank of the recieving proc in myPE
+!> @param in_tag message id which can be provided to distiguish messages
+    SUBROUTINE recv_INT1_MPI_Env_type(myPE,recvbuf,n,srcProc,in_tag)
+      CHARACTER(LEN=*),PARAMETER :: myName='recv_INT1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(INOUT) :: recvbuf(:)
+      INTEGER(SIK),INTENT(IN) :: n
+      INTEGER(SIK),INTENT(IN) :: srcProc
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: in_tag
+      !
+#ifdef HAVE_MPI
+      INTEGER :: stat(MPI_STATUS_SIZE)
+      INTEGER(SIK) :: tag
+      REAL(SRK) :: buf(n)
+
+      tag=1
+      IF(PRESENT(in_tag)) tag=in_tag
+#ifdef DBLINT
+      CALL MPI_recv(recvBuf,n,MPI_INTEGER8,srcProc,tag,myPE%comm,stat,mpierr)
+#else
+      CALL MPI_recv(recvBuf,n,MPI_INTEGER,srcProc,tag,myPE%comm,stat,mpierr)
+#endif
+#endif
+    ENDSUBROUTINE recv_INT1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Gather for integers
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
     SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
       CHARACTER(LEN=*),PARAMETER :: myName='gather_SIK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
@@ -682,6 +990,47 @@ MODULE ParallelEnv
       recvbuf(1)=sendbuf
 #endif
     ENDSUBROUTINE gather_SIK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Gather for an SIK array
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+    SUBROUTINE gather_SIK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+      CHARACTER(LEN=*),PARAMETER :: myName='gather_SIK1_MPI_Env_type'
+      CLASS(MPI_EnvType),INTENT(IN) :: myPE
+      INTEGER(SIK),INTENT(IN) :: sendbuf(:)
+      INTEGER(SIK),INTENT(INOUT) :: recvbuf(:,:)
+      INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+      INTEGER(SIK) :: rank,count
+#ifndef HAVE_MPI
+      INTEGER(SIK)::i,j,n
+#endif
+      rank=0
+      IF(PRESENT(root)) rank=root
+      REQUIRE(0 <= rank)
+      REQUIRE(rank < myPE%nproc)
+      count=SIZE(sendbuf)
+      REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+#ifdef HAVE_MPI
+#ifdef DBLINT
+      !64 Bit integer
+      CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+        MPI_INTEGER8,rank,myPE%comm,mpierr)
+#else
+      !32 Bit integer
+      CALL MPI_Gather(sendbuf,count,MPI_INTEGER,recvbuf,count, &
+        MPI_INTEGER,rank,myPE%comm,mpierr)
+#endif
+#else
+      DO n=1,count
+        i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
+        j=(n-1)/SIZE(recvbuf,DIM=1)+1
+        recvbuf(i,j)=sendbuf(n)
+      ENDDO
+#endif
+    ENDSUBROUTINE gather_SIK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather
