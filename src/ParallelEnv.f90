@@ -953,7 +953,6 @@ MODULE ParallelEnv
 #ifdef HAVE_MPI
       INTEGER :: stat(MPI_STATUS_SIZE)
       INTEGER(SIK) :: tag
-      REAL(SRK) :: buf(n)
 
       tag=1
       IF(PRESENT(in_tag)) tag=in_tag
