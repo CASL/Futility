@@ -114,6 +114,7 @@ PROGRAM testParallelEnv
       INTEGER(SIK) :: ip,jp,tag
       INTEGER(SLK) :: sbuf(2)
       INTEGER(SIK) :: sbuf_SIK(2)
+      REAL(SRK) :: sbuf_SRK(2)
       INTEGER(SIK),ALLOCATABLE :: ranks_SIK(:),ranks2_SIK(:,:)
       INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
       INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
@@ -316,6 +317,14 @@ PROGRAM testParallelEnv
           tag=3
           tmpChar ='testChar'
           CALL testMPI%send(tmpChar,1,tag)
+          !Send it out as the largest possible real
+          sbuf_SRK = (/HUGE(sbuf_SRK(1)),-HUGE(sbuf_SRK(1))/)
+          tag=4
+          CALL testMPI%send(sbuf_SRK,size(sbuf_SRK),1,tag)
+          !Get it back as zeros
+          tag=5
+          CALL testMPI%recv(sbuf_SRK,SIZE(sbuf_SRK),1,tag)
+          ASSERT(ALL(sbuf_SRK == 0_SIK),'master recv')
         ELSEIF(testMPI%rank ==1) THEN
           !Recieve as largest possible integers
           tag=1
@@ -329,6 +338,15 @@ PROGRAM testParallelEnv
           tag=3
           CALL testMPI%recv(tmpChar,0,tag)
           ASSERT(tmpChar == 'testChar','CHARACTER check')
+          !Recieve as largest possible integers
+          tag=4
+          CALL testMPI%recv(sbuf_SRK,SIZE(sbuf_SRK),0,tag)
+          ASSERT_EQ(sbuf_SRK(1),HUGE(sbuf_SRK(1)),'subordinate recv positive')
+          ASSERT_EQ(sbuf_SRK(2),-HUGE(sbuf_SRK(2)),'subordinate recv negative')
+          !Send as zero
+          sbuf_SRK = 0
+          tag=5
+          CALL testMPI%send(sbuf_SRK,SIZE(sbuf_SRK),0,tag)
         ENDIF
       ENDIF
 
