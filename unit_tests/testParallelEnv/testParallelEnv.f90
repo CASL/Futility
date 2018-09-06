@@ -326,7 +326,7 @@ PROGRAM testParallelEnv
           CALL testMPI%recv(sbuf_SRK,SIZE(sbuf_SRK),1,tag)
           ASSERT(ALL(sbuf_SRK == 0_SIK),'master recv')
         ELSEIF(testMPI%rank ==1) THEN
-          !Recieve as largest possible integers
+          !Receive as largest possible integers
           tag=1
           CALL testMPI%recv(sbuf_SIK,SIZE(sbuf_SIK),0,tag)
           ASSERT_EQ(sbuf_SIK(1),HUGE(ip),'subordinate recv positive')
@@ -338,7 +338,7 @@ PROGRAM testParallelEnv
           tag=3
           CALL testMPI%recv(tmpChar,0,tag)
           ASSERT(tmpChar == 'testChar','CHARACTER check')
-          !Recieve as largest possible integers
+          !Receive as largest possible real
           tag=4
           CALL testMPI%recv(sbuf_SRK,SIZE(sbuf_SRK),0,tag)
           ASSERT_EQ(sbuf_SRK(1),HUGE(sbuf_SRK(1)),'subordinate recv positive')

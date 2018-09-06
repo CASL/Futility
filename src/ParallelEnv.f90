@@ -775,7 +775,7 @@ MODULE ParallelEnv
 #ifdef DBLINT
       CALL MPI_send(sendBuf,n,MPI_INTEGER8,destProc,tag,myPE%comm,mpierr)
 #else
-      CALL MPI_send(sendBuf,n,MPI_INTEGER,destProc,tag,myPe%comm,mpierr)
+      CALL MPI_send(sendBuf,n,MPI_INTEGER,destProc,tag,myPE%comm,mpierr)
 #endif
 #endif
     ENDSUBROUTINE send_INT1_MPI_Env_type
@@ -849,7 +849,7 @@ MODULE ParallelEnv
       INTEGER(SIK) :: numChar
       INTEGER :: stat(MPI_STATUS_SIZE)
 
-      CALL MPI_Probe(srcProc,tag,myPe%comm,stat,mpierr)
+      CALL MPI_Probe(srcProc,tag,myPE%comm,stat,mpierr)
       CALL MPI_Get_Count(stat,MPI_CHARACTER,numChar,mpierr)
       CALL MPI_recv(recvBuf,numChar,MPI_CHARACTER,srcProc,tag,myPE%comm,stat,mpierr)
 #endif
@@ -960,7 +960,7 @@ MODULE ParallelEnv
 #ifdef DBLINT
       CALL MPI_recv(recvBuf,n,MPI_INTEGER8,srcProc,tag,myPE%comm,stat,mpierr)
 #else
-      CALL MPI_recv(recvBuf,n,MPI_INTEGER,srcProc,tag,myPe%comm,stat,mpierr)
+      CALL MPI_recv(recvBuf,n,MPI_INTEGER,srcProc,tag,myPE%comm,stat,mpierr)
 #endif
 #endif
     ENDSUBROUTINE recv_INT1_MPI_Env_type
