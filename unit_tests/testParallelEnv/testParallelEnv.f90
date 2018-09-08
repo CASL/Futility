@@ -14,6 +14,7 @@ PROGRAM testParallelEnv
   USE IntrType
   USE ExceptionHandler
   USE ParallelEnv
+  USE Strings
 
   IMPLICIT NONE
 
@@ -110,12 +111,16 @@ PROGRAM testParallelEnv
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testMPIEnv()
-      INTEGER(SIK) :: ip,jp
+      INTEGER(SIK) :: ip,jp,tag
       INTEGER(SLK) :: sbuf(2)
+      INTEGER(SIK) :: sbuf_SIK(2)
+      REAL(SRK) :: sbuf_SRK(2)
+      INTEGER(SIK),ALLOCATABLE :: ranks_SIK(:),ranks2_SIK(:,:)
       INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
       INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
       LOGICAL(SBK) :: bool,bool1d(10),bool2d(2,5),bool3d(2,5,2),bool4d(2,5,2,5)
       TYPE(MPI_EnvType) :: testMPI,testMPI2
+      CHARACTER(LEN=8) :: tmpChar
 
 
       COMPONENT_TEST('%isInit()')
@@ -259,6 +264,91 @@ PROGRAM testParallelEnv
           ASSERT(ALL(ranks2 == -1),'non-ip ranks2')
         ENDIF
       ENDDO
+
+      !Simple extension, testing gather on SIK
+      ALLOCATE(ranks_SIK(testMPI%nproc))
+      ALLOCATE(ranks2_SIK(2,testMPI%nproc))
+      ranks_SIK=-1
+      ranks2_SIK=-1
+      CALL testMPI%gather(testMPI%rank,ranks_SIK)
+      sbuf_SIK=(/testMPI%rank,-testMPI%rank/)
+      CALL testMPI%gather(sbuf_SIK,ranks2_SIK)
+      IF(testMPI%rank == 0) THEN
+        DO ip=1,testMPI%nproc
+          ASSERT(ranks_SIK(ip) == ip-1,'master ranks_SIK(ip)')
+          FINFO() ip-1,ranks_SIK(ip)
+          ASSERT(ALL(ranks2_SIK(:,ip) == (/ip-1,-ip+1/)),'master ranks2_SIK(ip)')
+          FINFO() ip-1,ranks2_SIK(:,ip)
+        ENDDO
+      ELSE
+        ASSERT(ALL(ranks_SIK == -1),'non-master ranks_SIK')
+        ASSERT(ALL(ranks2_SIK == -1),'non-master ranks2_SIK')
+      ENDIF
+      DO ip=1,testMPI%nproc-1
+        ranks_SIK=-1
+        ranks2_SIK=-1
+        CALL testMPI%gather(testMPI%rank,ranks_SIK,ip)
+        CALL testMPI%gather(sbuf_SIK,ranks2_SIK,ip)
+        IF(testMPI%rank == ip) THEN
+          DO jp=1,testMPI%nproc
+            ASSERT(ranks_SIK(jp) == jp-1,'master ranks_SIK(jp)')
+            FINFO() ip,jp-1,ranks_SIK(jp)
+            ASSERT(ALL(ranks2_SIK(:,jp) == (/jp-1,-jp+1/)),'master ranks2_SIK(jp)')
+            FINFO() ip,jp-1,ranks2_SIK(:,jp)
+          ENDDO
+        ELSE
+          ASSERT(ALL(ranks_SIK == -1),'non-ip ranks_SIK')
+          ASSERT(ALL(ranks2_SIK == -1),'non-ip ranks2_SIK')
+        ENDIF
+      ENDDO
+
+      COMPONENT_TEST('%send/%recv')
+      sbuf_SIK = 0
+      IF(testMPI%nproc > 1) THEN
+        IF(testMPI%rank == 0) THEN
+          !Send it out as the largest possible integers
+          sbuf_SIK = (/HUGE(ip),-HUGE(ip)/)
+          tag=1
+          CALL testMPI%send(sbuf_SIK,size(sbuf_SIK),1,tag)
+          !Get it back as zeros
+          tag=2
+          CALL testMPI%recv(sbuf_SIK,SIZE(sbuf_SIK),1,tag)
+          ASSERT(ALL(sbuf_SIK == 0_SIK),'master recv')
+          tag=3
+          tmpChar ='testChar'
+          CALL testMPI%send(tmpChar,1,tag)
+          !Send it out as the largest possible real
+          sbuf_SRK = (/HUGE(sbuf_SRK(1)),-HUGE(sbuf_SRK(1))/)
+          tag=4
+          CALL testMPI%send(sbuf_SRK,size(sbuf_SRK),1,tag)
+          !Get it back as zeros
+          tag=5
+          CALL testMPI%recv(sbuf_SRK,SIZE(sbuf_SRK),1,tag)
+          ASSERT(ALL(sbuf_SRK == 0_SIK),'master recv')
+        ELSEIF(testMPI%rank ==1) THEN
+          !Receive as largest possible integers
+          tag=1
+          CALL testMPI%recv(sbuf_SIK,SIZE(sbuf_SIK),0,tag)
+          ASSERT_EQ(sbuf_SIK(1),HUGE(ip),'subordinate recv positive')
+          ASSERT_EQ(sbuf_SIK(2),-HUGE(ip),'subordinate recv negative')
+          !Send as zero
+          sbuf_SIK = 0
+          tag=2
+          CALL testMPI%send(sbuf_SIK,SIZE(sbuf_SIK),0,tag)
+          tag=3
+          CALL testMPI%recv(tmpChar,0,tag)
+          ASSERT(tmpChar == 'testChar','CHARACTER check')
+          !Receive as largest possible real
+          tag=4
+          CALL testMPI%recv(sbuf_SRK,SIZE(sbuf_SRK),0,tag)
+          ASSERT_EQ(sbuf_SRK(1),HUGE(sbuf_SRK(1)),'subordinate recv positive')
+          ASSERT_EQ(sbuf_SRK(2),-HUGE(sbuf_SRK(2)),'subordinate recv negative')
+          !Send as zero
+          sbuf_SRK = 0
+          tag=5
+          CALL testMPI%send(sbuf_SRK,SIZE(sbuf_SRK),0,tag)
+        ENDIF
+      ENDIF
 
       COMPONENT_TEST('%trueForAll')
       CALL testMPI%clear()
