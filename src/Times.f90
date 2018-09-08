@@ -703,14 +703,14 @@ MODULE Times
         !is on an actual leap day...
         !IF(Date1month == 2 .AND. Date1day == 29)
         total1=0
-        DO i=1,Date1month
+        DO i=1,Date1month-1
           total1=total1+dayspermonth(i)
         ENDDO
         total1=Date1year*365+leapdays+total1+Date1day
 
         leapdays=countleapyears(0,1,1,Date2year,Date2month,Date2day)
         total2=0
-        DO i=1,Date2month
+        DO i=1,Date2month-1
           total2=total2+dayspermonth(i)
         ENDDO
         total2=Date2year*365+leapdays+total2+Date2day
