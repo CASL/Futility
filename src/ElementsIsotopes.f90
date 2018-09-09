@@ -130,7 +130,8 @@ MODULE ElementsIsotopes
     ENDSUBROUTINE clear_ElemIso
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns the ZAID based on a specified isotope name
+!> @brief Routine returns a bool corresponding whether or not the provided 
+!>        isoName is a valid isotope name
 !> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
 !>
