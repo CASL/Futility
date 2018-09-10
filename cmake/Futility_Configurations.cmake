@@ -336,6 +336,71 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "Cray")
         ${CSYM}O2
         ${CSYM}g
        )
+ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
+    SET(Fortran_FLAGS
+        ${CSYM}fpp
+        #${CSYM}fall-intrinsics
+        ${CSYM}free
+       )
+
+    SET(C_FLAGS
+        ${CSYM}lm
+       )
+
+    IF(${PROJECT_NAME}_BUILD_STANDARD)
+        SET(Fortran_FLAGS
+            ${Fortran_FLAGS}
+            ${CSYM}f2003
+           )
+    ENDIF()
+
+    #IF(${PROJECT_NAME}_FPE_TRAP)
+    #    SET(Fortran_FLAGS
+    #        ${Fortran_FLAGS}
+    #        ${CSYM}ffpe-trap=invalid,zero,overflow,underflow,denormal
+    #       )
+    #ENDIF()
+
+    IF(MPACT_SUPPRESS_WARNINGS)
+        SET(Fortran_FLAGS
+            ${Fortran_FLAGS}
+            ${CSYM}w
+           )
+    ENDIF()
+
+    IF(BUILD_SHARED_LIBS)
+        SET(Fortan_FLAGS
+            ${Fortran_FLAGS}
+            ${CSYM}Bdynamic
+            ${CSYM}PIC
+           )
+    ELSE()
+        SET(Fotran_FLAGS
+            ${Fortran_FLAGS}
+            ${CSYM}Bstatic
+        )
+    ENDIF()
+
+    IF(${PROJECT_NAME}_GPROF)
+        SET(Fortran_FLAGS
+            ${Fortran_FLAGS}
+            ${CSYM}pg
+           )
+    ENDIF()
+
+    SET(Fortran_FLAGS_DEBUG
+        ${CSYM}O0
+        #${CSYM}Wall
+        #${CSYM}Warn=?
+        ${CSYM}C=all
+        ${CSYM}g
+        ${CSYM}gline
+        ${CSYM}mtrace=all
+       )
+
+    SET(Fortran_FLAGS_RELEASE
+        ${CSYM}O3
+       )
 ELSE()
     MESSAGE(WARNING " Fortran compiler: ${CMAKE_Fortran_COMPILER_ID} not supported!")
 ENDIF()
