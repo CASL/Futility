@@ -62,6 +62,9 @@ MODULE ElementsIsotopes
       !> @copybrief ElementsIsotopes::clear_ElemIso
       !> @copydetails ElementsIsotopes::clear_ElemIso
       PROCEDURE,PASS :: clear => clear_ElemIso
+      !> @copybrief ElementsIsotopes::isValidIsoName_ElemIso
+      !> @copydetails ElementsIsotopes::isValidIsoName_ElemIso
+      PROCEDURE,PASS :: isValidIsoName => isValidIsoName_ElemIso
       !> @copybrief ElementsIsotopes::getZAID_ElemIso
       !> @copydetails ElementsIsotopes::getZAID_ElemIso
       PROCEDURE,PASS :: getZAID => getZAID_ElemIso
@@ -127,6 +130,44 @@ MODULE ElementsIsotopes
     ENDSUBROUTINE clear_ElemIso
 !
 !-------------------------------------------------------------------------------
+!> @brief Routine returns a bool corresponding whether or not the provided 
+!>        isoName is a valid isotope name
+!> @param this the object
+!> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!>
+    FUNCTION isValidIsoName_ElemIso(this,isoName) RESULT(isValid)
+      CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: isoName
+
+      LOGICAL(SBK) :: isValid ! Return value
+      CHARACTER(LEN=6) :: tmpChar
+      INTEGER(SIK) :: dashloc,Z,A,ioerr
+
+
+      isValid=.FALSE.
+      tmpChar=TRIM(ADJUSTL(isoName))
+      CALL toUpper(tmpChar)
+      IF(this%isMetastable(tmpChar)) tmpChar=tmpChar(1:LEN_TRIM(tmpChar)-1)
+      dashloc=INDEX(tmpChar,"-")
+      IF(dashloc>1) THEN
+        IF(dashloc==2) THEN
+          Z=strarraymatchind(elementlist," "//tmpChar(1:1))
+        ELSE
+          Z=strarraymatchind(elementlist,tmpChar(dashloc-2:dashloc-1))
+        ENDIF
+        IF(Z>0) THEN
+          IF(INDEX(tmpChar(dashloc+1:LEN(tmpChar)),"NAT")>0) THEN
+            isValid=.TRUE.
+          ELSE
+            READ(tmpChar(dashloc+1:LEN(tmpChar)),*,IOSTAT=ioerr) A
+            IF(ioerr == 0) isValid=.TRUE.
+          ENDIF
+        ENDIF
+      ENDIF
+
+    ENDFUNCTION isValidIsoName_ElemIso
+!
+!-------------------------------------------------------------------------------
 !> @brief Routine returns the ZAID based on a specified isotope name
 !> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
@@ -140,7 +181,7 @@ MODULE ElementsIsotopes
       INTEGER(SIK) :: dashloc,Z,A
 
       REQUIRE(this%isInit)
-      REQUIRE(INDEX(isoName,'-')>0)
+      REQUIRE(this%isValidIsoName(isoName))
 
       tmpChar=TRIM(ADJUSTL(isoName))
       CALL toUpper(tmpChar)
@@ -220,7 +261,7 @@ MODULE ElementsIsotopes
       INTEGER(SIK) :: dashloc
 
       REQUIRE(this%isInit)
-      REQUIRE(INDEX(isoName,'-')>0)
+      REQUIRE(this%isValidIsoName(isoName))
 
       dashloc=INDEX(isoName,'-')
       IF(dashloc==0) dashloc=LEN(isoName)+1
