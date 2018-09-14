@@ -96,7 +96,7 @@ TRIBITS_ADD_LIBRARY(Utils
       MeshTransfer.f90
       ArrayUtils.f90
       PartitionGraph.f90
-      ComputingEnvironment.f90
+      FutilityComputingEnvironment.f90
     DEPLIBS
       CUtils
       TrilinosUtils
