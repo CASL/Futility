@@ -354,7 +354,7 @@ ENDFUNCTION getSubCompEnv
 !> @brief Clears and removes all sub-environments from @c this
 !> @param this the FutilityComputingEnvironment object to operate on
 !>
-SUBROUTINE clearSubCompEnvs(this)
+RECURSIVE SUBROUTINE clearSubCompEnvs(this)
   CLASS(FutilityComputingEnvironment),INTENT(INOUT) :: this
   !
   INTEGER(SIK) :: iEnv
