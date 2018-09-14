@@ -63,6 +63,7 @@ SET(UNIT_TEST_NAMES
     testAndersonAcceleration
     testStochasticSampler
     testPartitionGraph
+    testFutilityComputingEnvironment
 )
 
 IF("${PROJECT_NAME}" STREQUAL "Futility" OR "${PROJECT_NAME}" STREQUAL "MPACT")
