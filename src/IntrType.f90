@@ -203,12 +203,12 @@ MODULE IntrType
 #endif
 
   !> @brief Interface for the operator for "approximately equals" for intrinsic
-  !> real kinds. Compares significant decimal digits
+  !> real kinds. Performs absolute comparison to EPSREAL
   INTERFACE OPERATOR(.APPROXEQ.)
-    !> @copybrief IntrType::approxeq_single
-    MODULE PROCEDURE approxeq_single
-    !> @copybrief IntrType::approxeq_double
-    MODULE PROCEDURE approxeq_double
+    !> @copybrief IntrType::approxeq_abs_single
+    MODULE PROCEDURE approxeq_abs_single
+    !> @copybrief IntrType::approxeq_abs_double
+    MODULE PROCEDURE approxeq_abs_double
   ENDINTERFACE
 
   !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -407,134 +407,6 @@ MODULE IntrType
 !
 !===============================================================================
   CONTAINS
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation when comparing two single precision reals
-!> with .APPROXEQ.
-!> @param a
-!> @param b
-!> @returns bool logical indicating if a and b are approximately equal
-!>
-!> In this module single precision numbers are defined as having 6 digits of
-!> precision. This function defines "approximately equals to" such that the
-!> numbers are allowed to by vary exactly 1.0 or less in the 6th significant
-!> digit.
-!>
-!> This function works by "printing" the first 14 digits of a real
-!> and doing a string comparison to insure that the first 5 digits and the
-!> exponent agree exactly and the 6th and 7th digit are then converted to
-!> an integer and their absolute difference must then be less than or equal
-!> to 10.
-!>
-    ELEMENTAL FUNCTION approxeq_single(a,b) RESULT(bool)
-      REAL(SSK),INTENT(IN) :: a,b
-      LOGICAL(SBK) :: bool
-      CHARACTER(LEN=13) :: aString,bString
-      CHARACTER(LEN=7) :: expString
-      INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp
-      INTEGER(SLK) :: intA_right,intB_right
-      REAL(SSK) :: tol
-
-      !Convert to character variable
-      WRITE(aString,'(es13.6E2)') a
-      WRITE(bString,'(es13.6E2)') b
-
-      !First digit that is left of decimal
-      READ(aString(1:2),'(i2)') intA_left
-      READ(bString(1:2),'(i2)') intB_left
-
-      IF(intA_left == 0 .OR. intB_left == 0) THEN
-        !Special case for 0, use absolute comparison
-        bool=(ABS(a-b) <= EPSS)
-      ELSE
-        !Conver exponent and numbers right of decimal to integers
-        READ(aString(4:9),'(i6)') intA_right
-        READ(bString(4:9),'(i6)') intB_right
-        READ(aString(11:13),'(i4)') intA_exp
-        READ(bString(11:13),'(i4)') intB_exp
-        diffExp=ABS(intA_exp-intB_exp)
-
-        IF(diffExp < 2) THEN
-          IF(diffExp == 0 .AND. intA_left == intB_left) THEN
-            !exponents are the same and left of decimal numbers are same,
-            !so compare sig figs to the right of the decimal
-            bool=(ABS(intA_right-intB_right) < 15)
-          ELSE
-            !Exponent or number may have rolled over (e.g. 1.0 and 0.9)
-            !Compute tolerance based on larger exponent
-            WRITE(expString,'(a,sp,i3.2)') '1.0e',(MAX(intA_exp,intB_exp)-5)
-            READ(expString,*) tol
-            bool=(ABS(a-b) <= tol)
-          ENDIF
-        ELSE
-          bool=.FALSE.
-        ENDIF
-      ENDIF
-    ENDFUNCTION approxeq_single
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation when comparing two double precision reals
-!> with .APPROXEQ.
-!> @param a
-!> @param b
-!> @returns bool logical indicating if a and b are approximately equal
-!>
-!> In this module double precision numbers are defined as having 15 digits of
-!> precision. This function defines "approximately equals to" such that the
-!> numbers are allowed to by vary exactly 1.0 or less in the 15th significant
-!> digit.
-!>
-!> This function works by "printing" the first 16 digits of a real
-!> and doing a string comparison to insure that the first 14 digits and the
-!> exponent agree exactly and the 15th and 16th digit are then converted to
-!> an integer and their absolute difference must then be less than or equal
-!> to 10.
-!>
-    ELEMENTAL FUNCTION approxeq_double(a,b) RESULT(bool)
-      REAL(SDK),INTENT(IN) :: a,b
-      LOGICAL(SBK) :: bool
-      CHARACTER(LEN=23) :: aString,bString
-      CHARACTER(LEN=8) :: expString
-      INTEGER(SNK) :: intA_left,intB_left,intA_exp,intB_exp,diffExp
-      INTEGER(SLK) :: intA_right,intB_right
-      REAL(SDK) :: tol
-
-      !Convert to character variable
-      WRITE(aString,'(es23.15E3)') a
-      WRITE(bString,'(es23.15E3)') b
-
-      !First digit that is left of decimal
-      READ(aString(1:2),'(i2)') intA_left
-      READ(bString(1:2),'(i2)') intB_left
-
-      IF(intA_left == 0 .OR. intB_left == 0) THEN
-        !Special case for 0, use absolute comparison
-        bool=(ABS(a-b) <= EPSD)
-      ELSE
-        !Conver exponent and numbers right of decimal to integers
-        READ(aString(4:18),'(i15)') intA_right
-        READ(bString(4:18),'(i15)') intB_right
-        READ(aString(20:23),'(i4)') intA_exp
-        READ(bString(20:23),'(i4)') intB_exp
-        diffExp=ABS(intA_exp-intB_exp)
-
-        IF(diffExp < 2) THEN
-          IF(diffExp == 0 .AND. intA_left == intB_left) THEN
-            !exponents are the same and left of decimal numbers are same,
-            !so compare sig figs to the right of the decimal
-            bool=(ABS(intA_right-intB_right) < 15)
-          ELSE
-            !Exponent or number may have rolled over (e.g. 1.0 and 0.9)
-            !Compute tolerance based on larger exponent
-            WRITE(expString,'(a,sp,i4.3)') '1.0d',(MAX(intA_exp,intB_exp)-14)
-            READ(expString,*) tol
-            bool=(ABS(a-b) <= tol)
-          ENDIF
-        ELSE
-          bool=.FALSE.
-        ENDIF
-      ENDIF
-    ENDFUNCTION approxeq_double
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an absolute comparison of two
