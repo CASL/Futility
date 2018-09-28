@@ -555,14 +555,12 @@ MODULE MatrixTypes_Native
       REAL(SRK),OPTIONAL,INTENT(IN) :: setval
 
       REQUIRE(matrix%isInit)
-      REQUIRE(i<=matrix%n)
-      REQUIRE(j>0)
-      REQUIRE(i>0)
-
-      !enforce entering values in row-major order
-      !first check to see if this is a new row or not (ia(i)>0)
-      !If it is, then we have to comprae new j with previous j
-      REQUIRE((matrix%jCount<matrix%nnz .AND. matrix%iPrev==i .AND. matrix%jPrev<j).OR.(matrix%iPrev<i))
+      REQUIRE(i<=matrix%n) !row within bounds
+      REQUIRE(j>0) !positive column
+      REQUIRE(i>0) !positive row
+      REQUIRE(matrix%jCount<matrix%nnz) !valid number of non-zero entries
+      !check for increasing column order (or new row)
+      REQUIRE((matrix%iPrev==i .AND. matrix%jPrev<j) .OR. (matrix%iPrev<i))
 
       IF(matrix%ia(i) == 0) matrix%ia(i)=matrix%jCount+1
       matrix%iPrev=i
