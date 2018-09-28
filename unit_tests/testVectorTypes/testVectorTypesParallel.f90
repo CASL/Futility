@@ -118,8 +118,7 @@ CONTAINS
         ASSERT(val==20._SRK, "getOne")
       ENDIF
 
-      ! Test setting/getting all elements at a time
-      ! Need to use getSelected because getAll does not work for parallel vectors
+      ! Test setting/getting selected elements all at once
       CALL thisVector%set([(REAL(i, SRK), i=1, 20)])
       ALLOCATE(getval(10))
       IF(rank==0) THEN
@@ -129,6 +128,15 @@ CONTAINS
          CALL thisVector%get([(i, i=11, 20)], getval)
          ASSERT(ALL(getval==[(REAL(i, SRK), i=11, 20)]), 'getAll')
       ENDIF
+
+      ! Use getAll with same data
+      CALL thisVector%get(getval)
+      IF(rank==0) THEN
+         ASSERT(ALL(getval==[(REAL(i, SRK), i=1, 10)]), 'getAll')
+      ELSE
+         ASSERT(ALL(getval==[(REAL(i, SRK), i=11, 20)]), 'getAll')
+      ENDIF
+
 
       ! Test setting/getting elemnts by range
       CALL thisVector%set(1, 3, [1._SRK, 2._SRK, 3._SRK])

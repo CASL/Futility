@@ -306,14 +306,11 @@ MODULE VectorTypes_Native
       INTEGER(SIK),INTENT(IN) :: indices(:)
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      ierrc=-1
-      IF(thisVector%isInit) THEN
-        ierrc=-3
-        IF(SIZE(indices) == SIZE(getval) .AND. SIZE(indices) <= thisVector%n) THEN
-          ierrc=0
-          getval=thisVector%b(indices)
-        ENDIF
-      ENDIF
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(indices) == SIZE(getval))
+      REQUIRE(SIZE(indices) <= thisVector%n)
+      ierrc=0
+      getval=thisVector%b(indices)
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getSelected_RealVectorType
 

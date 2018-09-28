@@ -329,15 +329,15 @@ MODULE VectorTypes_PETSc
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets all values in the PETSc vector
-!> ONLY WORKS ON SERIAL VECTORS!  Use getSelected using global indices to getAll in a
-!> parallel vector
+!> For parallel vectors, will only return the data owned by this domain.  Use getSelected to
+!> specify which data to get.
 !> @param declares the vector type to act on
 !> @param getval Correctly sized array that will be filled with contents of this vector
     SUBROUTINE getAll_PETScVectorType(thisVector,getval,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: low, high
       !
       INTEGER(SIK) :: ierrc
 
@@ -346,9 +346,8 @@ MODULE VectorTypes_PETSc
         ierrc=-3
         IF(SIZE(getval) == thisVector%n) THEN
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
-          DO i=1,thisVector%n
-            CALL VecGetValues(thisVector%b,1,i-1,getval(i),iperr)
-          ENDDO
+          CALL VecGetOwnershipRange(thisVector%b,low,high,iperr)
+          CALL thisVector%get(low+1,high,getval)
           ierrc=iperr
         ENDIF
       ENDIF
@@ -370,15 +369,13 @@ MODULE VectorTypes_PETSc
       !
       INTEGER(SIK) :: ierrc
 
-      ierrc=-1
-      IF(thisVector%isInit) THEN
-        ierrc=-3
-        IF(SIZE(getval) == SIZE(indices) .AND. SIZE(indices) <= thisVector%n) THEN
-          IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
-          CALL VecGetValues(thisVector%b,SIZE(indices),indices-1,getval,iperr)
-          ierrc=iperr
-        ENDIF
-      ENDIF
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(getval) == SIZE(indices))
+      REQUIRE(SIZE(indices) <= thisVector%n)
+
+      IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+      CALL VecGetValues(thisVector%b,SIZE(indices),indices-1,getval,iperr)
+      ierrc=iperr
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getSelected_PETScVectorType
 
