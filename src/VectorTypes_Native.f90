@@ -22,6 +22,8 @@
 MODULE VectorTypes_Native
   USE IntrType
   USE ExceptionHandler
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE ParameterLists
   USE Allocs
   USE VectorTypes_Base
@@ -74,6 +76,9 @@ MODULE VectorTypes_Native
       !> @copybrief VectorTypes::getAll_RealVectorType
       !> @copydetails VectorTypes::getAll_RealVectorType
       PROCEDURE,PASS :: getAll => getAll_RealVectorType
+      !> @copybrief VectorTypes::getSelected_RealVectorType
+      !> @copydetails VectorTypes::getSelected_RealVectorType
+      PROCEDURE,PASS :: getSelected => getSelected_RealVectorType
       !> @copybrief VectorTypes::getRange_RealVectorType
       !> @copydetails VectorTypes::getRange_RealVectorType
       PROCEDURE,PASS :: getRange => getRange_RealVectorType
@@ -272,8 +277,10 @@ MODULE VectorTypes_Native
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets all values in the real vector
+!> Works on serial vectors only, meaning the indices used to extract data from the vector
+!> are 1->N, where N is the size of the vector.
 !> @param declares the vector type to act on
-!>
+!> @param getval Correctly sized array that will be filled with contents of this vector
     SUBROUTINE getAll_RealVectorType(thisVector,getval,ierr)
       CLASS(RealVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(INOUT) :: getval(:)
@@ -288,6 +295,28 @@ MODULE VectorTypes_Native
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getAll_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets a list of selected values from the vector
+!> @param declares the vector type to act on
+!> @param indices A list of the indices in the vector
+!> @param getval Correctly sized array that will be filled with contents of this vector
+    SUBROUTINE getSelected_RealVectorType(thisVector,indices,getval,ierr)
+      CLASS(RealVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(INOUT) :: getval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-3
+        IF(SIZE(indices) == SIZE(getval) .AND. SIZE(indices) <= thisVector%n) THEN
+          ierrc=0
+          getval=thisVector%b(indices)
+        ENDIF
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE getSelected_RealVectorType
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets a range of values in the real vector

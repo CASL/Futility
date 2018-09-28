@@ -85,9 +85,11 @@ MODULE VectorTypes_Base
       PROCEDURE(vector_getOne_absintfc),DEFERRED,PASS :: getOne
       !> Deferred routine for getting all vector values
       PROCEDURE(vector_getAll_absintfc),DEFERRED,PASS :: getAll
+      !> Deferred routine for getting all vector values, entire vector at once
+      PROCEDURE(vector_getSelected_absintfc),DEFERRED,PASS :: getSelected
       !> Deferred routine for getting a range of vector values
       PROCEDURE(vector_getRange_absintfc),DEFERRED,PASS :: getRange
-      GENERIC :: get => getOne,getAll,getRange
+      GENERIC :: get => getOne,getAll,getSelected,getRange
   ENDTYPE VectorType
 !
 !List of Abstract Interfaces
@@ -189,6 +191,18 @@ MODULE VectorTypes_Base
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
     ENDSUBROUTINE vector_getAll_absintfc
+  ENDINTERFACE
+
+  !> Explicitly defines the interface for the get (vector) routine of all vector
+  !> types
+  ABSTRACT INTERFACE
+    SUBROUTINE vector_getSelected_absintfc(thisVector,indices,getval,ierr)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN):: indices(:)
+      REAL(SRK),INTENT(INOUT) :: getval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+    ENDSUBROUTINE vector_getSelected_absintfc
   ENDINTERFACE
 
   !> Explicitly defines the interface for the get (scalar) routine of all vector

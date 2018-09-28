@@ -531,6 +531,16 @@ PROGRAM testVectorTypes
                        (testvec(7) /= 2._SRK) .OR. &
                        iverr /= 0)
           ASSERT(bool, 'realvec%getAll(...)')
+          DEALLOCATE(testvec)
+          ALLOCATE(testvec(4))
+          CALL thisVector%get([1,3,5,7],testvec)
+          bool = testvec(1) == 1._SRK .AND. &
+                 testvec(2) == 8._SRK .AND. &
+                 testvec(3) == 3._SRK .AND. &
+                 testvec(4) == 2._SRK
+          ASSERT(bool, 'realvec%getSelected(...)')
+          DEALLOCATE(testvec)
+          ALLOCATE(testvec(7))
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisVector%clear()
@@ -1057,6 +1067,16 @@ PROGRAM testVectorTypes
                        (testvec(6) /= 7._SRK) .OR. &
                        (testvec(7) /= 2._SRK))
           ASSERT(bool, 'petscvec%getAll(...)')
+          DEALLOCATE(testvec)
+          ALLOCATE(testvec(4))
+          CALL thisVector%get([1,3,5,7],testvec)
+          bool = testvec(1) == 1._SRK .AND. &
+                 testvec(2) == 8._SRK .AND. &
+                 testvec(3) == 3._SRK .AND. &
+                 testvec(4) == 2._SRK
+          ASSERT(bool, 'petscvec%getSelected(...)')
+          DEALLOCATE(testvec)
+          ALLOCATE(testvec(7))
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisVector%clear()
