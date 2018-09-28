@@ -64,6 +64,9 @@ MODULE VectorTypes_Native
       !> @copybrief VectorTypes::setAll_array_RealVectorType
       !> @copydetails VectorTypes::setAll_array_RealVectorType
       PROCEDURE,PASS :: setAll_array => setAll_array_RealVectorType
+      !> @copybrief VectorTypes::setSelected_RealVectorType
+      !> @copydetails VectorTypes::setSelected_RealVectorType
+      PROCEDURE,PASS :: setSelected => setSelected_RealVectorType
       !> @copybrief VectorTypes::setRange_scalar_RealVectorType
       !> @copydetails VectorTypes::setRange_scalar_RealVectorType
       PROCEDURE,PASS :: setRange_scalar => setRange_scalar_RealVectorType
@@ -202,6 +205,25 @@ MODULE VectorTypes_Native
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE setAll_array_RealVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets selected values in the real vector
+!> @param declare the vector type to act on
+!> @param indices a list of indices in the vector to set
+!> @param setval the array of values to be set (must be same size as indices)
+!>
+    SUBROUTINE setSelected_RealVectorType(thisVector,indices,setval,ierr)
+      CLASS(RealVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(setval) == SIZE(indices))
+      ierrc=0
+      thisVector%b(indices)=setval
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setSelected_RealVectorType
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets a range of values in the real vector with a scalar value

@@ -65,6 +65,9 @@ MODULE VectorTypes_PETSc
       !> @copybrief VectorTypes::setAll_array_PETScVectorType
       !> @copydetails VectorTypes::setAll_array_PETScVectorType
       PROCEDURE,PASS :: setAll_array => setAll_array_PETScVectorType
+      !> @copybrief VectorTypes::setSelected_PETScVectorType
+      !> @copydetails VectorTypes::setSelected_PETScVectorType
+      PROCEDURE,PASS :: setSelected => setSelected_PETScVectorType
       !> @copybrief VectorTypes::setRange_scalar_PETScVectorType
       !> @copydetails VectorTypes::setRange_scalar_PETScVectorType
       PROCEDURE,PASS :: setRange_scalar => setRange_scalar_PETScVectorType
@@ -239,6 +242,29 @@ MODULE VectorTypes_PETSc
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE setAll_array_PETScVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets selected values in the PETSc vector with an array of values
+!> @param declare the vector type to act on
+!> @param indices a list of indices (global if parallel) for which data is being set
+!> @param setval the array of values to be set (same size as indices)
+!>
+    SUBROUTINE setSelected_PETScVectorType(thisVector,indices,setval,ierr)
+      CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(setval) == SIZE(indices))
+      CALL VecSetValues(thisVector%b,SIZE(indices),indices-1,setval,INSERT_VALUES,iperr)
+      ierrc=0
+      thisVector%isAssembled=.FALSE.
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setSelected_PETScVectorType
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets a range of values in the PETSc vector with a scalar value

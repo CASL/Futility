@@ -542,6 +542,21 @@ PROGRAM testVectorTypes
           DEALLOCATE(testvec)
           ALLOCATE(testvec(7))
       ENDSELECT
+
+      ! Set and get a few selected elements
+      CALL thisVector%set(0._SRK)
+      CALL thisVector%set([1, 5], [1._SRK, 2._SRK])
+      CALL thisVector%get(1, dummy)
+      ASSERT(dummy==1._SRK, 'set/getSelected')
+      CALL thisVector%get(2, dummy)
+      ASSERT(dummy==0._SRK, 'set/getSelected')
+      CALL thisVector%get(3, dummy)
+      ASSERT(dummy==0._SRK, 'set/getSelected')
+      CALL thisVector%get(4, dummy)
+      ASSERT(dummy==0._SRK, 'set/getSelected')
+      CALL thisVector%get(5, dummy)
+      ASSERT(dummy==2._SRK, 'set/getSelected')
+
       !test get with uninit, make sure no crash.
       CALL thisVector%clear()
       testvec=0._SRK
@@ -814,6 +829,22 @@ PROGRAM testVectorTypes
             ASSERT(bool, 'petscvec%setAll_array(...)')
           ENDDO
       ENDSELECT
+      
+      ! Will overrwrite elements 1, 3, and 5
+      ! The rest will remain the same
+      CALL thisVector%set([1, 3, 5], [1._SRK, 3._SRK, 5._SRK])
+      CALL thisVector%get(1, dummy)
+      ASSERT(dummy==1._SRK, "setSelected")
+      CALL thisVector%get(2, dummy)
+      ASSERT(dummy==4._SRK, "setSelected")
+      CALL thisVector%get(3, dummy)
+      ASSERT(dummy==3._SRK, "setSelected")
+      CALL thisVector%get(4, dummy)
+      ASSERT(dummy==8._SRK, "setSelected")
+      CALL thisVector%get(5, dummy)
+      ASSERT(dummy==5._SRK, "setSelected")
+      CALL thisVector%get(6, dummy)
+      ASSERT(dummy==12._SRK, "setSelected")
 
       !set uninit matrix.
       CALL thisVector%clear()
@@ -840,6 +871,7 @@ PROGRAM testVectorTypes
       testvec2(6)=11._SRK
       CALL thisVector%set(testvec2,iverr) !since isInit=.FALSE. expect no change
       ASSERT(iverr == -3, 'petscvec%setAll_array(...)')
+
 
       CALL thisVector%clear()
       CALL pList%clear()

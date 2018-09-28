@@ -76,11 +76,13 @@ MODULE VectorTypes_Base
       PROCEDURE(vector_setAll_scalar_absintfc),DEFERRED,PASS :: setAll_scalar
       !> Deferred routine for setting all vector values with array
       PROCEDURE(vector_setAll_array_absintfc),DEFERRED,PASS :: setAll_array
+      !> Deferred routine for setting selected vector values with array
+      PROCEDURE(vector_setSelected_absintfc),DEFERRED,PASS :: setSelected
       !> Deferred routine for setting all vector values with scalar
       PROCEDURE(vector_setRange_scalar_absintfc),DEFERRED,PASS :: setRange_scalar
       !> Deferred routine for setting all vector values with array
       PROCEDURE(vector_setRange_array_absintfc),DEFERRED,PASS :: setRange_array
-      GENERIC :: set => setOne,setAll_scalar,setAll_array,setRange_scalar,setRange_array
+      GENERIC :: set => setOne,setAll_scalar,setAll_array,setRange_scalar,setRange_array,setSelected
       !> Deferred routine for getting vector value
       PROCEDURE(vector_getOne_absintfc),DEFERRED,PASS :: getOne
       !> Deferred routine for getting all vector values
@@ -131,6 +133,18 @@ MODULE VectorTypes_Base
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
     ENDSUBROUTINE vector_setAll_scalar_absintfc
+  ENDINTERFACE
+
+  !> Explicitly defines the interface for the set selected (array) routine of all
+  !> vector types
+  ABSTRACT INTERFACE
+    SUBROUTINE vector_setSelected_absintfc(thisVector,indices,setval,ierr)
+      IMPORT :: SIK,SRK,VectorType
+      CLASS(VectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+    ENDSUBROUTINE vector_setSelected_absintfc
   ENDINTERFACE
 
   !> Explicitly defines the interface for the set all (array) routine of all

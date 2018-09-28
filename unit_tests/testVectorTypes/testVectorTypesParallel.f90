@@ -128,6 +128,7 @@ CONTAINS
          ASSERT(ALL(getval==[(REAL(i, SRK), i=11, 20)]), 'getAll')
       ENDIF
 
+
       ! Use getAll with same data
       CALL thisVector%get(getval)
       IF(rank==0) THEN
@@ -136,6 +137,19 @@ CONTAINS
          ASSERT(ALL(getval==[(REAL(i, SRK), i=11, 20)]), 'getAll')
       ENDIF
 
+      ! Test setSelected by overwiting a few entries
+      CALL thisVector%set([1, 5, 15, 20], [100._SRK, 105._SRK, 115._SRK, 120._SRK])
+      DEALLOCATE(getval)
+      ALLOCATE(getval(2))
+      IF(rank==0) THEN
+         CALL thisVector%get([1, 5], getval)
+         ASSERT(getval(1)==100._SRK, 'set/getSelected')
+         ASSERT(getval(2)==105._SRK, 'set/getSelected')
+      ELSE
+         CALL thisVector%get([15, 20], getval)
+         ASSERT(getval(1)==115._SRK, 'set/getSelected')
+         ASSERT(getval(2)==120._SRK, 'set/getSelected')
+      ENDIF
 
       ! Test setting/getting elemnts by range
       CALL thisVector%set(1, 3, [1._SRK, 2._SRK, 3._SRK])
