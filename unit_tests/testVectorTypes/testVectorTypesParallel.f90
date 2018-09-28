@@ -35,7 +35,6 @@ PROGRAM testVectorTypesParallel
   INTEGER :: ierr
 #endif
 #endif
-  INTEGER(SIK) :: iverr
   TYPE(ExceptionHandlerType),POINTER :: e
 
   CREATE_TEST('Test Vector Types Parallel')
