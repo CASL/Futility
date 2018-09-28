@@ -67,13 +67,13 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testVector()
+#if defined(FUTILITY_HAVE_PETSC) && defined(HAVE_MPI)
       CLASS(VectorType),ALLOCATABLE :: thisVector
       TYPE(ParamType) :: pList
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: rank, nproc, mpierr, i
       REAL(SRK) :: val
       REAL(SRK),ALLOCATABLE :: getval(:)
-#if defined(FUTILITY_HAVE_PETSC) && defined(HAVE_MPI)
       CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
       CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
       ASSERT(nproc==2, 'nproc valid')
