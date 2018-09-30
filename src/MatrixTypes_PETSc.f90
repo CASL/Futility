@@ -68,6 +68,9 @@ MODULE MatrixTypes_PETSc
       !> @copybrief MatrixTypes::set_PETScMatrixType
       !> @copydetails MatrixTypes::set_PETScMatrixType
       PROCEDURE,PASS :: set => set_PETScMatrixType
+      !> @copybrief MatrixTypes::setRow_PETScMatrixType
+      !> @copydetails MatrixTypes::setRow_PETScMatrixType
+      PROCEDURE,PASS :: setRow => setRow_PETScMatrixType
       !> @copybrief MatrixTypes::set_PETScMatrixType
       !> @copydetails MatrixTypes::set_PETScMatrixType
       PROCEDURE,PASS :: setShape => set_PETScMatrixType
@@ -241,6 +244,30 @@ MODULE MatrixTypes_PETSc
         ENDIF
       ENDIF
     ENDSUBROUTINE set_PETScMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets an entire row of values in the PETSc matrix
+!> Using this procedure can be much more computationally efficient for building the matrix than
+!> setting one value at a time.
+!> @param declares the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j a list of j indices of values to be entered in the matrix
+!> @param setval a list of values corresponding to the j locations (must be same size as j)
+!>
+    SUBROUTINE setRow_PETScMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_PETScMatrixType'
+      CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      PetscErrorCode  :: ierr
+
+      REQUIRE(matrix%isInit)
+      REQUIRE(SIZE(j)==SIZE(setval))
+      CALL MatSetValues(matrix%a,1,i-1,SIZE(j),j-1,setval,INSERT_VALUES,ierr)
+      matrix%isAssembled=.FALSE.
+    ENDSUBROUTINE setRow_PETScMatrixType
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the PETSc matrix - presently untested

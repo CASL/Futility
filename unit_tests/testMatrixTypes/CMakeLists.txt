@@ -8,3 +8,4 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 Futility_CreateUnitTest(testMatrixTypes)
+Futility_CreateParUnitTest(testMatrixTypesParallel 2)
