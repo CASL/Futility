@@ -265,49 +265,40 @@ MODULE ParallelEnv
                           bcast_SDK4_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceR_scalar_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceR_scalar_MPI_Env_type
-      PROCEDURE,PASS,PRIVATE :: allReduceR_scalar => allReduceR_scalar_MPI_Env_type
+      PROCEDURE,PASS :: allReduce_scalar => allReduceR_scalar_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceR_array_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceR_array_MPI_Env_type
-      PROCEDURE,PASS,PRIVATE :: allReduceR_array => allReduceR_array_MPI_Env_type
+      PROCEDURE,PASS :: allReduce => allReduceR_array_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceI_scalar_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceI_scalar_MPI_Env_type
-      PROCEDURE,PASS,PRIVATE :: allReduceI_scalar => allReduceI_scalar_MPI_Env_type
+      PROCEDURE,PASS :: allReduceI_scalar => allReduceI_scalar_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceI_array_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceI_array_MPI_Env_type
-      PROCEDURE,PASS,PRIVATE :: allReduceI_array => allReduceI_array_MPI_Env_type
-      GENERIC :: allReduceI => allReduceI_scalar,allReduceI_array
-      GENERIC :: allReduce => allReduceR_scalar,allReduceR_array, &
-                              allReduceI_scalar,allReduceI_array
+      PROCEDURE,PASS :: allReduceI => allReduceI_array_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMaxR_scalar_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMaxR_scalar_MPI_Env_type
-      PROCEDURE,PASS :: allReduceMaxR_scalar => allReduceMaxR_scalar_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMax_scalar => allReduceMaxR_scalar_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMaxR_array_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMaxR_array_MPI_Env_type
-      PROCEDURE,PASS :: allReduceMaxR_array => allReduceMaxR_array_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMax => allReduceMaxR_array_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMaxI_scalar_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMaxI_scalar_MPI_Env_type
       PROCEDURE,PASS :: allReduceMaxI_scalar => allReduceMaxI_scalar_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMaxI_array_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMaxI_array_MPI_Env_type
-      PROCEDURE,PASS :: allReduceMaxI_array => allReduceMaxI_array_MPI_Env_type
-      GENERIC :: allReduceMaxI => allReduceMaxI_scalar,allReduceMaxI_array
-      GENERIC :: allReduceMax => allReduceMaxR_scalar,allReduceMaxR_array, &
-                                 allReduceMaxI_scalar,allReduceMaxI_array
+      PROCEDURE,PASS :: allReduceMaxI => allReduceMaxI_array_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMinR_scalar_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMinR_scalar_MPI_Env_type
-      PROCEDURE,PASS :: allReduceMinR_scalar => allReduceMinR_scalar_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMin_scalar => allReduceMinR_scalar_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMinR_array_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMinR_array_MPI_Env_type
-      PROCEDURE,PASS :: allReduceMinR_array => allReduceMinR_array_MPI_Env_type
+      PROCEDURE,PASS :: allReduceMin => allReduceMinR_array_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMinI_scalar_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMinI_scalar_MPI_Env_type
       PROCEDURE,PASS :: allReduceMinI_scalar => allReduceMinI_scalar_MPI_Env_type
       !> @copybrief ParallelEnv::allReduceMinI_array_MPI_Env_type
       !> @copydetails  ParallelEnv::allReduceMinI_array_MPI_Env_type
-      PROCEDURE,PASS :: allReduceMinI_array => allReduceMinI_array_MPI_Env_type
-      GENERIC :: allReduceMinI => allReduceMinI_scalar,allReduceMinI_array
-      GENERIC :: allReduceMin => allReduceMinR_scalar,allReduceMinR_array, &
-                                 allReduceMinI_scalar,allReduceMinI_array
+      PROCEDURE,PASS :: allReduceMinI => allReduceMinI_array_MPI_Env_type
       !> @copybrief ParallelEnv::reduceMaxLoc_MPI_Env_type
       !> @copydetails  ParallelEnv::reduceMaxLoc_MPI_Env_type
       PROCEDURE,PASS :: reduceMaxLoc => reduceMaxLocR_MPI_Env_type
