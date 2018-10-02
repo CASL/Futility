@@ -113,8 +113,8 @@ PROGRAM testParallelEnv
     SUBROUTINE testMPIEnv()
       INTEGER(SIK) :: ip,jp,tag
       INTEGER(SLK) :: sbuf(2)
-      INTEGER(SIK) :: sbuf_SIK(2)
-      REAL(SRK) :: sbuf_SRK(2)
+      INTEGER(SIK) :: sbuf_SIK(2),sbuf0_SIK
+      REAL(SRK) :: sbuf_SRK(2),sbuf0_SRK
       INTEGER(SIK),ALLOCATABLE :: ranks_SIK(:),ranks2_SIK(:,:)
       INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
       INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
@@ -444,6 +444,69 @@ PROGRAM testParallelEnv
         ASSERT(ALL(bool4d(:,:,1:2,:)),'trueForAny, 1D')
       ENDIF
 
+      COMPONENT_TEST('%allReduce')
+      CALL testMPI%clear()
+      CALL testMPI%init()
+      IF(testMPI%nproc > 1) THEN
+        sbuf0_SIK=testMPI%rank+1
+        CALL testMPI%allReduceI_scalar(sbuf0_SIK)
+        ASSERT_EQ(sbuf0_SIK,3,'allReduceI_scalar')
+        sbuf_SIK=testMPI%rank+1
+        CALL testMPI%allReduceI(1,sbuf_SIK)
+        ASSERT_EQ(sbuf_SIK(1),3,'allreduceI_array')
+        ASSERT_EQ(sbuf_SIK(2),testMPI%rank+1,'allreduceI_array')
+
+        sbuf0_SRK=REAL(testMPI%rank+1,SRK)
+        CALL testMPI%allReduce_scalar(sbuf0_SRK)
+        ASSERT_APPROXEQA(sbuf0_SRK,3.0_SRK,'allReduce scalar real')
+        sbuf_SRK=REAL(testMPI%rank+1,SRK)
+        CALL testMPI%allReduce(1,sbuf_SRK)
+        ASSERT_APPROXEQA(sbuf_SRK(1),3.0_SRK,'allreduce array real')
+        ASSERT_APPROXEQA(sbuf_SRK(2),REAL(testMPI%rank+1,SRK),'allreduce rray real')
+      ENDIF
+
+      COMPONENT_TEST('%allReduceMax')
+      CALL testMPI%clear()
+      CALL testMPI%init()
+      IF(testMPI%nproc > 1) THEN
+        sbuf0_SIK=testMPI%rank+1
+        CALL testMPI%allReduceMaxI_scalar(sbuf0_SIK)
+        ASSERT_EQ(sbuf0_SIK,2,'allReduceI_scalar')
+        sbuf_SIK=testMPI%rank+1
+        CALL testMPI%allReduceMaxI(1,sbuf_SIK)
+        ASSERT_EQ(sbuf_SIK(1),2,'allreduceI_array')
+        ASSERT_EQ(sbuf_SIK(2),testMPI%rank+1,'allreduceI_array')
+
+        sbuf0_SRK=REAL(testMPI%rank+1,SRK)
+        CALL testMPI%allReduceMax_scalar(sbuf0_SRK)
+        ASSERT_APPROXEQA(sbuf0_SRK,2.0_SRK,'allReduce scalar real')
+        sbuf_SRK=REAL(testMPI%rank+1,SRK)
+        CALL testMPI%allReduceMax(1,sbuf_SRK)
+        ASSERT_APPROXEQA(sbuf_SRK(1),2.0_SRK,'allreduce array real')
+        ASSERT_APPROXEQA(sbuf_SRK(2),REAL(testMPI%rank+1,SRK),'allreduce rray real')
+      ENDIF
+
+      COMPONENT_TEST('%allReduceMin')
+      CALL testMPI%clear()
+      CALL testMPI%init()
+      IF(testMPI%nproc > 1) THEN
+        sbuf0_SIK=testMPI%rank+1
+        CALL testMPI%allReduceMinI_scalar(sbuf0_SIK)
+        ASSERT_EQ(sbuf0_SIK,1,'allReduceI_scalar')
+        sbuf_SIK=testMPI%rank+1
+        CALL testMPI%allReduceMinI(1,sbuf_SIK)
+        ASSERT_EQ(sbuf_SIK(1),1,'allreduceI_array')
+        ASSERT_EQ(sbuf_SIK(2),testMPI%rank+1,'allreduceI_array')
+
+        sbuf0_SRK=REAL(testMPI%rank+1,SRK)
+        CALL testMPI%allReduceMin_scalar(sbuf0_SRK)
+        ASSERT_APPROXEQA(sbuf0_SRK,1.0_SRK,'allReduce scalar real')
+        sbuf_SRK=REAL(testMPI%rank+1,SRK)
+        CALL testMPI%allReduceMin(1,sbuf_SRK)
+        ASSERT_APPROXEQA(sbuf_SRK(1),1.0_SRK,'allreduce array real')
+        ASSERT_APPROXEQA(sbuf_SRK(2),REAL(testMPI%rank+1,SRK),'allreduce rray real')
+      ENDIF
+
       CALL testMPI%clear()
     ENDSUBROUTINE testMPIEnv
 !
@@ -523,7 +586,7 @@ PROGRAM testParallelEnv
       ASSERT(testPE%ray%rank == 0,'%ray%rank')
       ASSERT(testPE%ray%master,'%ray%master')
       ASSERT(testPE%ray%isInit(),'%isInit()')
-      
+
       COMPONENT_TEST('deviceID')
       ASSERT_EQ(testPE%getDeviceID(),-1,'%deviceID')
       CALL testPE%setDeviceID(2)
