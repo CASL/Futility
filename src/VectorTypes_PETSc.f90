@@ -20,6 +20,8 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VectorTypes_PETSc
   USE IntrType
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE ExceptionHandler
   USE ParameterLists
   USE VectorTypes_Base
@@ -63,6 +65,9 @@ MODULE VectorTypes_PETSc
       !> @copybrief VectorTypes::setAll_array_PETScVectorType
       !> @copydetails VectorTypes::setAll_array_PETScVectorType
       PROCEDURE,PASS :: setAll_array => setAll_array_PETScVectorType
+      !> @copybrief VectorTypes::setSelected_PETScVectorType
+      !> @copydetails VectorTypes::setSelected_PETScVectorType
+      PROCEDURE,PASS :: setSelected => setSelected_PETScVectorType
       !> @copybrief VectorTypes::setRange_scalar_PETScVectorType
       !> @copydetails VectorTypes::setRange_scalar_PETScVectorType
       PROCEDURE,PASS :: setRange_scalar => setRange_scalar_PETScVectorType
@@ -75,6 +80,9 @@ MODULE VectorTypes_PETSc
       !> @copybrief VectorTypes::getAll_PETScVectorType
       !> @copydetails VectorTypes::getAll_PETScVectorType
       PROCEDURE,PASS :: getAll => getAll_PETScVectorType
+      !> @copybrief VectorTypes::getSelected_PETScVectorType
+      !> @copydetails VectorTypes::getSelected_PETScVectorType
+      PROCEDURE,PASS :: getSelected => getSelected_PETScVectorType
       !> @copybrief VectorTypes::getRange_PETScVectorType
       !> @copydetails VectorTypes::getRange_PETScVectorType
       PROCEDURE,PASS :: getRange => getRange_PETScVectorType
@@ -236,6 +244,29 @@ MODULE VectorTypes_PETSc
     ENDSUBROUTINE setAll_array_PETScVectorType
 !
 !-------------------------------------------------------------------------------
+!> @brief Sets selected values in the PETSc vector with an array of values
+!> @param declare the vector type to act on
+!> @param indices a list of indices (global if parallel) for which data is being set
+!> @param setval the array of values to be set (same size as indices)
+!>
+    SUBROUTINE setSelected_PETScVectorType(thisVector,indices,setval,ierr)
+      CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(setval) == SIZE(indices))
+      CALL VecSetValues(thisVector%b,SIZE(indices),indices-1,setval,INSERT_VALUES,iperr)
+      ierrc=0
+      thisVector%isAssembled=.FALSE.
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setSelected_PETScVectorType
+
+!
+!-------------------------------------------------------------------------------
 !> @brief Sets a range of values in the PETSc vector with a scalar value
 !> @param declare the vector type to act on
 !> @param setval the scalar value to be set
@@ -324,13 +355,15 @@ MODULE VectorTypes_PETSc
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets all values in the PETSc vector
+!> For parallel vectors, will only return the data owned by this domain.  Use getSelected to
+!> specify which data to get.
 !> @param declares the vector type to act on
-!>
+!> @param getval Correctly sized array that will be filled with contents of this vector
     SUBROUTINE getAll_PETScVectorType(thisVector,getval,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK) :: i
+      INTEGER(SIK) :: low, high
       !
       INTEGER(SIK) :: ierrc
 
@@ -339,9 +372,8 @@ MODULE VectorTypes_PETSc
         ierrc=-3
         IF(SIZE(getval) == thisVector%n) THEN
           IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
-          DO i=1,thisVector%n
-            CALL VecGetValues(thisVector%b,1,i-1,getval(i),iperr)
-          ENDDO
+          CALL VecGetOwnershipRange(thisVector%b,low,high,iperr)
+          CALL thisVector%get(low+1,high,getval)
           ierrc=iperr
         ENDIF
       ENDIF
@@ -349,10 +381,36 @@ MODULE VectorTypes_PETSc
     ENDSUBROUTINE getAll_PETScVectorType
 !
 !-------------------------------------------------------------------------------
+!> @brief Gets selected values in the PETSc vector
+!> @param declares the vector type to act on
+!> @param indices A list of indices at which to get vector values.  For parallel vectors,
+!>        you must use the global indices.
+!> @param getval Correctly sized array that will be filled with contents of this vector.
+!>        Must be the same size as indices.
+    SUBROUTINE getSelected_PETScVectorType(thisVector,indices,getval,ierr)
+      CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(INOUT) :: getval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(getval) == SIZE(indices))
+      REQUIRE(SIZE(indices) <= thisVector%n)
+
+      IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+      CALL VecGetValues(thisVector%b,SIZE(indices),indices-1,getval,iperr)
+      ierrc=iperr
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE getSelected_PETScVectorType
+
+!
+!-------------------------------------------------------------------------------
 !> @brief Gets a range of  values in the PETSc vector
 !> @param declares the vector type to act on
-!> @param istt the starting point of the range
-!> @param istp the stopping point in the range
+!> @param istt the starting point of the range (Use global indices for parallel vectors)
+!> @param istp the stopping point in the range (Use global indices for parallel vectors)
 !>
     SUBROUTINE getRange_PETScVectorType(thisVector,istt,istp,getval,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
@@ -371,9 +429,7 @@ MODULE VectorTypes_PETSc
           ierrc=-3
           IF(istp-istt+1 == SIZE(getval)) THEN
             IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
-            DO i=istt,istp
-              CALL VecGetValues(thisVector%b,1,i-1,getval(i-istt+1),iperr)
-            ENDDO
+            CALL VecGetValues(thisVector%b,(istp-istt+1),[(i, i=istt-1, istp)],getval,iperr)
             ierrc=iperr
           ENDIF
         ENDIF

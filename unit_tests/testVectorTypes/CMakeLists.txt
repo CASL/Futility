@@ -8,3 +8,4 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 Futility_CreateUnitTest(testVectorTypes)
+Futility_CreateParUnitTest(testVectorTypesParallel 2)
