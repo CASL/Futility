@@ -56,6 +56,9 @@ MODULE VectorTypes_Trilinos
       !> @copybrief VectorTypes::setAll_array_TrilinosVectorType
       !> @copydetails VectorTypes::setAll_array_TrilinosVectorType
       PROCEDURE,PASS :: setAll_array => setAll_array_TrilinosVectorType
+      !> @copybrief VectorTypes::setSelected_TrilinosVectorType
+      !> @copydetails VectorTypes::setSelected_TrilinosVectorType
+      PROCEDURE,PASS :: setSelected => setSelected_TrilinosVectorType
       !> @copybrief VectorTypes::setRange_scalar_TrilinosVectorType
       !> @copydetails VectorTypes::setRange_scalar_TrilinosVectorType
       PROCEDURE,PASS :: setRange_scalar => setRange_scalar_TrilinosVectorType
@@ -65,6 +68,9 @@ MODULE VectorTypes_Trilinos
       !> @copybrief VectorTypes::getOne_TrilinosVectorType
       !> @copydetails VectorTypes::getOne_TrilinosVectorType
       PROCEDURE,PASS :: getOne => getOne_TrilinosVectorType
+      !> @copybrief VectorTypes::getSelected_TrilinosVectorType
+      !> @copydetails VectorTypes::getSelected_TrilinosVectorType
+      PROCEDURE,PASS :: getSelected => getSelected_TrilinosVectorType
       !> @copybrief VectorTypes::getAll_TrilinosVectorType
       !> @copydetails VectorTypes::getAll_TrilinosVectorType
       PROCEDURE,PASS :: getAll => getAll_TrilinosVectorType
@@ -213,12 +219,37 @@ MODULE VectorTypes_Trilinos
         ierrc=-3
         IF(SIZE(setval) == thisVector%n) THEN
 !TODO
-      CALL eVectorType%raiseFatalError('Incorrect call to '// &
-           modName//'::'//myName//' - This interface is not available.')
+          CALL eVectorType%raiseFatalError('Incorrect call to '// &
+             modName//'::'//myName//' - This interface is not available.')
         ENDIF
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE setAll_array_TrilinosVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets all the values in the Trilinos vector with an array of values
+!> @param declare the vector type to act on
+!> @param indices a list of indices (global if parallel) for which data is being set
+!> @param setval the array of values to be set
+!>
+    SUBROUTINE setSelected_TrilinosVectorType(thisVector,indices,setval,ierr)
+      CHARACTER(LEN=*),PARAMETER :: myName='setSelected_array_TrilinosVectorType'
+      CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-3
+!TODO
+        CALL eVectorType%raiseFatalError('Incorrect call to '// &
+           modName//'::'//myName//' - This interface is not available.')
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setSelected_TrilinosVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets a range of values in the Trilinos vector with a scalar value
@@ -308,6 +339,32 @@ MODULE VectorTypes_Trilinos
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getOne_TrilinosVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets all values in the Trilinos vector
+!> @param declares the vector type to act on
+!> @param indices A list of indices at which to get vector values.  For parallel vectors,
+!>        you must use the global indices.
+!> @param getval Correctly sized array that will be filled with contents of this vector.
+!>        Must be the same size as indices.
+!>
+    SUBROUTINE getSelected_TrilinosVectorType(thisVector,indices,getval,ierr)
+      CHARACTER(LEN=*),PARAMETER :: myName='getSelected_TrilinosVectorType'
+      CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(INOUT) :: getval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+!TODO
+        CALL eVectorType%raiseFatalError('Incorrect call to '// &
+           modName//'::'//myName//' - This interface is not available.')
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE getSelected_TrilinosVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets all values in the Trilinos vector
