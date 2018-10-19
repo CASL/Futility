@@ -40,12 +40,23 @@ MODULE MatrixTypes_Trilinos
   PUBLIC :: matvec_TrilinosVector
 
   TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
+    !> Trilinos pointer to this array
     INTEGER(SIK) :: A
+    !> Saves the current row number when building the row value-by-value.  Trilinos only accepts building the
+    !> matrix by row, so we need to save the row entries as the user sets them and then pass them to Trilinos
+    !> all at once.
     INTEGER(SIK) :: currow
+    !> Number of columns in the current row being built.
     INTEGER(SIK) :: ncol
+    !> The global column indices in the current row being built.
     INTEGER(SIK),ALLOCATABLE :: jloc(:)
+    !> The values in the current row being built (same size as jlocc).
     REAL(SRK),ALLOCATABLE :: aloc(:)
+    !> Set to .true. if the user calls "set" to enter a value in the matrix.  We do not allow mixing calls to
+    !> "set" and "setRow" when building a matrix because the "set" procedure requires a certain order when building
+    !> the matrix.
     LOGICAL(SBK) :: setByVal = .FALSE.
+    !> Set to .true. if the user calls "setRow" to enter a row of values in the matrix.
     LOGICAL(SBK) :: setByRow = .FALSE.
 !
 !List of Type Bound Procedures
@@ -221,7 +232,6 @@ MODULE MatrixTypes_Trilinos
           ELSE
             IF(matrix%currow>0) THEN
               CALL ForPETRA_MatSet(matrix%A,matrix%currow,matrix%ncol,matrix%jloc,matrix%aloc)
-print *, matrix%currow, matrix%jloc, matrix%aloc
             ENDIF
             matrix%jloc=0
             matrix%aloc=0.0_SRK
@@ -321,7 +331,6 @@ print *, matrix%currow, matrix%jloc, matrix%aloc
 
         IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
           CALL ForPETRA_MatGet(matrix%a,i,j,getval)
-print *, i, j, getval
         ELSE
           getval=-1051._SRK
         ENDIF
@@ -339,7 +348,6 @@ print *, i, j, getval
       IF(.NOT.thisMatrix%isAssembled) THEN
         IF(thisMatrix%setByVal) THEN ! Add the last row
           CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)
-          print *, thisMatrix%currow, thisMatrix%jloc, thisMatrix%aloc
           thisMatrix%aloc=0.0_SRK
           thisMatrix%jloc=0
           thisMatrix%ncol=0
