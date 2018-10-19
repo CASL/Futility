@@ -220,29 +220,32 @@ MODULE ArrayUtils
       REAL(SRK),ALLOCATABLE :: tmpr(:)
 
       n=SIZE(r,DIM=1)
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          CALL getAbsolute_1DReal(r,tmpr)
-          n=SIZE(tmpr,DIM=1)
+      sout=0
+      IF(n > 0) THEN
+        IF(PRESENT(delta)) THEN
+          IF(delta) THEN
+            CALL getAbsolute_1DReal(r,tmpr)
+            n=SIZE(tmpr,DIM=1)
+          ENDIF
         ENDIF
-      ENDIF
-      IF(.NOT.ALLOCATED(tmpr)) THEN
-        ALLOCATE(tmpr(n))
-        tmpr=r
-      ENDIF
-      loctol=EPSREAL*100.0_SRK
-      IF(PRESENT(tol)) THEN
-        IF((0.0_SRK < tol)) loctol=tol
-      ENDIF
+        IF(.NOT.ALLOCATED(tmpr)) THEN
+          ALLOCATE(tmpr(n))
+          tmpr=r
+        ENDIF
+        loctol=EPSREAL*100.0_SRK
+        IF(PRESENT(tol)) THEN
+          IF((0.0_SRK < tol)) loctol=tol
+        ENDIF
 
-      !Find the number of unique entries
-      CALL sort(tmpr)
-      sout=1
-      DO i=2,n
-        IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) sout=sout+1
-      ENDDO
-      !Deallocate
-      DEALLOCATE(tmpr)
+        !Find the number of unique entries
+        CALL sort(tmpr)
+        sout=1
+        DO i=2,n
+          IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) sout=sout+1
+        ENDDO
+        !Deallocate
+        DEALLOCATE(tmpr)
+      ENDIF
     ENDFUNCTION findNUnique_1DReal
 !
 !-------------------------------------------------------------------------------
@@ -262,25 +265,28 @@ MODULE ArrayUtils
       INTEGER(SIK),ALLOCATABLE :: tmpr(:)
 
       n=SIZE(r,DIM=1)
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          CALL getAbsolute_1DInt(r,tmpr)
-          n=SIZE(tmpr,DIM=1)
+      sout=0
+      IF(n > 0) THEN
+        IF(PRESENT(delta)) THEN
+          IF(delta) THEN
+            CALL getAbsolute_1DInt(r,tmpr)
+            n=SIZE(tmpr,DIM=1)
+          ENDIF
         ENDIF
-      ENDIF
-      IF(.NOT.ALLOCATED(tmpr)) THEN
-        ALLOCATE(tmpr(n))
-        tmpr=r
-      ENDIF
+        IF(.NOT.ALLOCATED(tmpr)) THEN
+          ALLOCATE(tmpr(n))
+          tmpr=r
+        ENDIF
 
-      !Find the number of unique entries
-      CALL sort(tmpr)
-      sout=1
-      DO i=2,n
-        IF(tmpr(i-1) /= tmpr(i)) sout=sout+1
-      ENDDO
-      !Deallocate
-      DEALLOCATE(tmpr)
+        !Find the number of unique entries
+        CALL sort(tmpr)
+        sout=1
+        DO i=2,n
+          IF(tmpr(i-1) /= tmpr(i)) sout=sout+1
+        ENDDO
+        !Deallocate
+        DEALLOCATE(tmpr)
+      ENDIF
     ENDFUNCTION findNUnique_1DInt
 !
 !-------------------------------------------------------------------------------
@@ -304,21 +310,23 @@ MODULE ArrayUtils
       TYPE(StringType),ALLOCATABLE :: tmpr(:)
 
       n=SIZE(r,DIM=1)
-      ALLOCATE(tmpr(n))
-      tmpr=r
-
-      !Find the number of unique entries
-      DO i=1,n
-        DO j=i+1,n
-          IF((TRIM(tmpr(i)) == TRIM(tmpr(j))) .AND. (LEN_TRIM(tmpr(j)) > 0)) tmpr(j)=''
-        ENDDO
-      ENDDO
       sout=0
-      DO i=1,n
-        IF(TRIM(tmpr(i)) /= '') sout=sout+1
-      ENDDO
-      !Deallocate
-      DEALLOCATE(tmpr)
+      IF(n > 0) THEN
+        ALLOCATE(tmpr(n))
+        tmpr=r
+
+        !Find the number of unique entries
+        DO i=1,n
+          DO j=i+1,n
+            IF((TRIM(tmpr(i)) == TRIM(tmpr(j))) .AND. (LEN_TRIM(tmpr(j)) > 0)) tmpr(j)=''
+          ENDDO
+        ENDDO
+        DO i=1,n
+          IF(TRIM(tmpr(i)) /= '') sout=sout+1
+        ENDDO
+        !Deallocate
+        DEALLOCATE(tmpr)
+      ENDIF
     ENDFUNCTION findNUnique_1DString
 !
 !-------------------------------------------------------------------------------
@@ -343,6 +351,8 @@ MODULE ArrayUtils
 
       n=SIZE(r,DIM=1)
       m=SIZE(r,DIM=2)
+      
+      sout=0
       IF(n > 0 .AND. m > 0) THEN
         ALLOCATE(tmpr(n,m))
         tmpr=r
@@ -390,40 +400,43 @@ MODULE ArrayUtils
       REAL(SRK),ALLOCATABLE :: tmpr(:)
 
       n=SIZE(r,DIM=1)
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          CALL getAbsolute_1DReal(r,tmpr)
-          n=SIZE(tmpr,DIM=1)
+      IF(ALLOCATED(rout)) DEALLOCATE(rout)
+      IF(n > 0) THEN
+        IF(PRESENT(delta)) THEN
+          IF(delta) THEN
+            CALL getAbsolute_1DReal(r,tmpr)
+            n=SIZE(tmpr,DIM=1)
+          ENDIF
         ENDIF
-      ENDIF
-      IF(.NOT.ALLOCATED(tmpr)) THEN
-        ALLOCATE(tmpr(n))
-        tmpr=r
-      ENDIF
-      loctol=EPSREAL*100.0_SRK
-      IF(PRESENT(tol)) THEN
-        IF((0.0_SRK < tol)) loctol=tol
-      ENDIF
-
-      !Find the number of unique entries
-      CALL sort(tmpr)
-      sout=1
-      DO i=2,n
-        IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) sout=sout+1
-      ENDDO
-      ALLOCATE(rout(sout))
-      rout=0.0_SRK
-      rout(1)=tmpr(1)
-      sout=2
-      DO i=2,n
-        IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) THEN
-          rout(sout)=tmpr(i)
-          sout=sout+1
+        IF(.NOT.ALLOCATED(tmpr)) THEN
+          ALLOCATE(tmpr(n))
+          tmpr=r
         ENDIF
-      ENDDO
+        loctol=EPSREAL*100.0_SRK
+        IF(PRESENT(tol)) THEN
+          IF((0.0_SRK < tol)) loctol=tol
+        ENDIF
 
-      !Deallocate
-      DEALLOCATE(tmpr)
+        !Find the number of unique entries
+        CALL sort(tmpr)
+        sout=1
+        DO i=2,n
+          IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) sout=sout+1
+        ENDDO
+        ALLOCATE(rout(sout))
+        rout=0.0_SRK
+        rout(1)=tmpr(1)
+        sout=2
+        DO i=2,n
+          IF(.NOT. SOFTEQ(tmpr(i-1),tmpr(i),loctol)) THEN
+            rout(sout)=tmpr(i)
+            sout=sout+1
+          ENDIF
+        ENDDO
+
+        !Deallocate
+        DEALLOCATE(tmpr)
+      ENDIF
     ENDSUBROUTINE getUnique_1DReal
 !
 !-------------------------------------------------------------------------------
@@ -443,35 +456,38 @@ MODULE ArrayUtils
       INTEGER(SIK),ALLOCATABLE :: tmpr(:)
 
       n=SIZE(r,DIM=1)
-      IF(PRESENT(delta)) THEN
-        IF(delta) THEN
-          CALL getAbsolute_1DInt(r,tmpr)
-          n=SIZE(tmpr,DIM=1)
+      IF(ALLOCATED(rout)) DEALLOCATE(rout)
+      IF(n > 0) THEN
+        IF(PRESENT(delta)) THEN
+          IF(delta) THEN
+            CALL getAbsolute_1DInt(r,tmpr)
+            n=SIZE(tmpr,DIM=1)
+          ENDIF
         ENDIF
-      ENDIF
-      IF(.NOT.ALLOCATED(tmpr)) THEN
-        ALLOCATE(tmpr(n))
-        tmpr=r
-      ENDIF
+        IF(.NOT.ALLOCATED(tmpr)) THEN
+          ALLOCATE(tmpr(n))
+          tmpr=r
+        ENDIF
 
-      !Find the number of unique entries
-      CALL sort(tmpr)
-      sout=1
-      DO i=2,n
-        IF(tmpr(i-1) /= tmpr(i)) sout=sout+1
-      ENDDO
-      ALLOCATE(rout(sout))
-      rout=0
-      rout(1)=tmpr(1)
-      sout=2
-      DO i=2,n
-        IF(tmpr(i-1) /= tmpr(i)) THEN
-          rout(sout)=tmpr(i)
-          sout=sout+1
-        ENDIF
-      ENDDO
-      !Deallocate
-      DEALLOCATE(tmpr)
+        !Find the number of unique entries
+        CALL sort(tmpr)
+        sout=1
+        DO i=2,n
+          IF(tmpr(i-1) /= tmpr(i)) sout=sout+1
+        ENDDO
+        ALLOCATE(rout(sout))
+        rout=0
+        rout(1)=tmpr(1)
+        sout=2
+        DO i=2,n
+          IF(tmpr(i-1) /= tmpr(i)) THEN
+            rout(sout)=tmpr(i)
+            sout=sout+1
+          ENDIF
+        ENDDO
+        !Deallocate
+        DEALLOCATE(tmpr)
+      ENDIF
     ENDSUBROUTINE getUnique_1DInt
 !
 !-------------------------------------------------------------------------------
