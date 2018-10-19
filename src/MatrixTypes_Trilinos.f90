@@ -40,11 +40,24 @@ MODULE MatrixTypes_Trilinos
   PUBLIC :: matvec_TrilinosVector
 
   TYPE,EXTENDS(DistributedMatrixType) :: TrilinosMatrixType
+    !> Trilinos pointer to this array
     INTEGER(SIK) :: A
+    !> Saves the current row number when building the row value-by-value.  Trilinos only accepts building the
+    !> matrix by row, so we need to save the row entries as the user sets them and then pass them to Trilinos
+    !> all at once.
     INTEGER(SIK) :: currow
+    !> Number of columns in the current row being built.
     INTEGER(SIK) :: ncol
+    !> The global column indices in the current row being built.
     INTEGER(SIK),ALLOCATABLE :: jloc(:)
+    !> The values in the current row being built (same size as jlocc).
     REAL(SRK),ALLOCATABLE :: aloc(:)
+    !> Set to .true. if the user calls "set" to enter a value in the matrix.  We do not allow mixing calls to
+    !> "set" and "setRow" when building a matrix because the "set" procedure requires a certain order when building
+    !> the matrix.
+    LOGICAL(SBK) :: setByVal = .FALSE.
+    !> Set to .true. if the user calls "setRow" to enter a row of values in the matrix.
+    LOGICAL(SBK) :: setByRow = .FALSE.
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -57,6 +70,9 @@ MODULE MatrixTypes_Trilinos
       !> @copybrief MatrixTypes::set_TrilinosMatrixType
       !> @copydetails MatrixTypes::set_TrilinosMatrixType
       PROCEDURE,PASS :: set => set_TrilinosMatrixType
+      !> @copybrief MatrixTypes::setRow_TrilinosMatrixType
+      !> @copydetails MatrixTypes::setRow_TrilinosMatrixType
+      PROCEDURE,PASS :: setRow => setRow_TrilinosMatrixType
       !> @copybrief MatrixTypes::set_TrilinosMatrixType
       !> @copydetails MatrixTypes::set_TrilinosMatrixType
       PROCEDURE,PASS :: setShape => setShape_TrilinosMatrixType
@@ -177,6 +193,8 @@ MODULE MatrixTypes_Trilinos
       matrix%isAssembled=.FALSE.
       matrix%isCreated=.FALSE.
       matrix%isSymmetric=.FALSE.
+      matrix%setByVal=.FALSE.
+      matrix%setByRow=.FALSE.
       IF(ALLOCATED(matrix%jloc)) DEALLOCATE(matrix%jloc)
       IF(ALLOCATED(matrix%aloc)) DEALLOCATE(matrix%aloc)
       matrix%currow=0
@@ -200,6 +218,10 @@ MODULE MatrixTypes_Trilinos
       REAL(SRK),INTENT(IN) :: setval
 
       IF(matrix%isInit) THEN
+        matrix%setByVal = .TRUE.
+        ! This procedure expects to be called for the next row so it can save
+        ! the values from the previous row.  Do not mix calling set and setRow.
+        REQUIRE(.NOT.matrix%setByRow)
         IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
           .AND. ((j > 0) .AND. (i > 0))) THEN
           IF(matrix%isAssembled) CALL ForPETRA_MatReset(matrix%A)
@@ -224,6 +246,33 @@ MODULE MatrixTypes_Trilinos
         ENDIF
       ENDIF
     ENDSUBROUTINE set_TrilinosMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets an entire row of values in the Trilinos matrix
+!> @param declares the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j a list of j locations of values to set in the matrix
+!> @param setval a list of values corresponding to the j locations
+!>
+    SUBROUTINE setRow_TrilinosMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_TrilinosMatrixType'
+      CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+
+      REQUIRE(matrix%isInit)
+      REQUIRE(((j <= matrix%n) .AND. (i <= matrix%n)) .AND. ((j > 0) .AND. (i > 0)))
+      REQUIRE(SIZE(j)==SIZE(setval))
+      matrix%setByRow = .TRUE.
+      ! set expects to be called for each row to store the matrix.
+      ! Do not mix calling set and setRow.
+      REQUIRE(.NOT.matrix%setByVal)
+      IF(matrix%isAssembled) CALL ForPETRA_MatReset(matrix%A)
+      CALL ForPETRA_MatSet(matrix%A,i,SIZE(j),j,setval)
+      matrix%isAssembled=.FALSE.
+    ENDSUBROUTINE setRow_TrilinosMatrixType
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the Trilinos matrix
@@ -297,11 +346,13 @@ MODULE MatrixTypes_Trilinos
 #ifdef FUTILITY_HAVE_Trilinos
       ierrc=0
       IF(.NOT.thisMatrix%isAssembled) THEN
-        CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)
-        thisMatrix%aloc=0.0_SRK
-        thisMatrix%jloc=0
-        thisMatrix%ncol=0
-        thisMatrix%currow=0
+        IF(thisMatrix%setByVal) THEN ! Add the last row
+          CALL ForPETRA_MatSet(thisMatrix%A,thisMatrix%currow,thisMatrix%ncol,thisMatrix%jloc,thisMatrix%aloc)
+          thisMatrix%aloc=0.0_SRK
+          thisMatrix%jloc=0
+          thisMatrix%ncol=0
+          thisMatrix%currow=0
+        ENDIF
         CALL ForPETRA_MatAssemble(thisMatrix%A)
         thisMatrix%isAssembled=.TRUE.
         ierrc=0

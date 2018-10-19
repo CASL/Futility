@@ -97,6 +97,7 @@ MODULE MatrixTypes_Base
     ENDSUBROUTINE matrix_set_sub_absintfc
   ENDINTERFACE
 
+
   !> Explicitly defines the interface for the get routine of all matrix types
   ABSTRACT INTERFACE
     SUBROUTINE matrix_get_sub_absintfc(matrix,i,j,getval)
@@ -144,6 +145,8 @@ MODULE MatrixTypes_Base
     CONTAINS
       !> Deferred routine for assembling a matrix
       PROCEDURE(distmatrix_assemble_absintfc),DEFERRED,PASS :: assemble
+      !> Deferred routine for setting a row at a time
+      PROCEDURE(distmatrix_setRow_absintfc),DEFERRED,PASS :: setRow
   ENDTYPE DistributedMatrixType
 
   !> Explicitly defines the interface for assembling a distributed matrix
@@ -153,6 +156,16 @@ MODULE MatrixTypes_Base
       CLASS(DistributedMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
     ENDSUBROUTINE distmatrix_assemble_absintfc
+  ENDINTERFACE
+
+  !> Explicitly defines the interface for setting row of a distributed matrix
+  ABSTRACT INTERFACE
+    SUBROUTINE distmatrix_setRow_absintfc(matrix,i,j,setval)
+      IMPORT :: SIK,SRK,DistributedMatrixType
+      CLASS(DistributedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i, j(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+    ENDSUBROUTINE distmatrix_setRow_absintfc
   ENDINTERFACE
 
   !> The parameter lists to use when validating a parameter list for
