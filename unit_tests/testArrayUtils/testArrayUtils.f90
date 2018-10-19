@@ -159,27 +159,6 @@ PROGRAM testArrayUtils
       CALL getUnique(tmprealarray(1:0),tmpr)
       ASSERT(.NOT. ALLOCATED(tmpr),'getUnique, size 0 array')
 
-      !bool=findNUnique(tmprealarray) == 3
-      !ASSERT(bool,'findNUnique == 3')
-      !tmprealarray(4)=1.000000000000100_SRK
-      !bool=findNUnique(tmprealarray,tol=EPSREAL) == 3
-      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL')
-      !tmprealarray(4)=1.000000000001000_SRK
-      !bool=findNUnique(tmprealarray,tol=EPSREAL*10.0_SRK) == 3
-      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*10.0_SRK')
-      !tmprealarray(4)=1.000000000010000_SRK
-      !bool=findNUnique(tmprealarray,tol=EPSREAL*100.0_SRK) == 3
-      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*100.0_SRK')
-      !tmprealarray(4)=1.000000000100000_SRK
-      !bool=findNUnique(tmprealarray,tol=EPSREAL*1000.0_SRK) == 3
-      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*1000.0_SRK')
-      !bool=findNUnique(tmprealarray,tol=EPSREAL*10000.0_SRK) == 3
-      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*10000.0_SRK')
-      !ASSERT(findNUnique(tmprealarray(1:0)) == 0,'0 subset size')
-      !IF(ALLOCATED(tmpr)) DEALLOCATE(tmpr)
-      !ALLOCATE(tmpr(0))
-      !ASSERT(findNUnique(tmpr) == 0,'size 0 array')
-
       !
       COMPONENT_TEST('findIndex 1-D Array')
       !Test with 0.0 specified
