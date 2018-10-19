@@ -262,7 +262,7 @@ MODULE MatrixTypes_Trilinos
       REAL(SRK),INTENT(IN) :: setval(:)
 
       REQUIRE(matrix%isInit)
-      REQUIRE(((ALL(j <= matrix%n)) .AND. (ALL(i <= matrix%n))) .AND. ((ALL(j > 0)) .AND. (ALL(i > 0))))
+      REQUIRE(((ALL(j <= matrix%n)) .AND. (i <= matrix%n)) .AND. ((ALL(j > 0)) .AND. (i > 0)))
       REQUIRE(SIZE(j)==SIZE(setval))
       matrix%setByRow = .TRUE.
       ! set expects to be called for each row to store the matrix.
