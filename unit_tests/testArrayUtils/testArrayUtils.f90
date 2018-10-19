@@ -22,7 +22,7 @@ PROGRAM testArrayUtils
   INTEGER(SIK) :: tmpintarray(10)
   INTEGER(SIK),ALLOCATABLE :: tmpi(:)
   TYPE(StringType) :: tmpstr1a(10),tmpstr2a(2,2),str2a(2,3)
-  TYPE(StringType),ALLOCATABLE :: tmps1(:)
+  TYPE(StringType),ALLOCATABLE :: tmps1(:),tmps2(:,:)
 !
 !Check the timer resolution
   CREATE_TEST('ArrayUtils')
@@ -129,6 +129,56 @@ PROGRAM testArrayUtils
       ASSERT(bool,'findNUnique == 3,tol=EPSREAL*1000.0_SRK')
       bool=findNUnique(tmprealarray,tol=EPSREAL*10000.0_SRK) == 3
       ASSERT(bool,'findNUnique == 3,tol=EPSREAL*10000.0_SRK')
+      ASSERT(findNUnique(tmprealarray(1:0)) == 0,'0 subset size')
+      IF(ALLOCATED(tmpr)) DEALLOCATE(tmpr)
+      ALLOCATE(tmpr(0))
+      ASSERT(findNUnique(tmpr) == 0,'size 0 array')
+
+      COMPONENT_TEST('getUnique 1-D Array')
+      tmprealarray(1)=1.0_SRK
+      tmprealarray(2)=1.0_SRK
+      tmprealarray(3)=1.0000000000000010_SRK
+      tmprealarray(4)=1.0000000000100000_SRK
+      tmprealarray(5)=2.0_SRK
+      tmprealarray(6)=2.0_SRK
+      tmprealarray(7)=2.0_SRK
+      tmprealarray(8)=2.0_SRK
+      tmprealarray(9)=2.0_SRK
+      tmprealarray(10)=2.0_SRK
+      CALL getUnique(tmprealarray,tmpr)
+      bool=ALL(tmpr == (/1.0_SRK,1.0000000000100000_SRK,2.0_SRK/))
+      ASSERT(bool,'getUnique, 3 unique')
+      tmprealarray(3)=1.0000000000000100_SRK
+      CALL getUnique(tmprealarray,tmpr,TOL=1.E-15_SRK)
+      bool=ALL(tmpr == (/1.0_SRK,1.0000000000000100_SRK,1.0000000000100000_SRK,2.0_SRK/))
+      ASSERT(bool,'getUnique, 4 unique with TOL')
+      tmprealarray(3)=1.0000000000100001_SRK
+      CALL getUnique(tmprealarray,tmpr,TOL=1.E-15_SRK)
+      bool=ALL(tmpr == (/1.0_SRK,1.0000000000100000_SRK,2.0_SRK/))
+      ASSERT(bool,'getUnique, 3 unique with TOL')
+      CALL getUnique(tmprealarray(1:0),tmpr)
+      ASSERT(.NOT. ALLOCATED(tmpr),'getUnique, size 0 array')
+
+      !bool=findNUnique(tmprealarray) == 3
+      !ASSERT(bool,'findNUnique == 3')
+      !tmprealarray(4)=1.000000000000100_SRK
+      !bool=findNUnique(tmprealarray,tol=EPSREAL) == 3
+      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL')
+      !tmprealarray(4)=1.000000000001000_SRK
+      !bool=findNUnique(tmprealarray,tol=EPSREAL*10.0_SRK) == 3
+      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*10.0_SRK')
+      !tmprealarray(4)=1.000000000010000_SRK
+      !bool=findNUnique(tmprealarray,tol=EPSREAL*100.0_SRK) == 3
+      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*100.0_SRK')
+      !tmprealarray(4)=1.000000000100000_SRK
+      !bool=findNUnique(tmprealarray,tol=EPSREAL*1000.0_SRK) == 3
+      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*1000.0_SRK')
+      !bool=findNUnique(tmprealarray,tol=EPSREAL*10000.0_SRK) == 3
+      !ASSERT(bool,'findNUnique == 3,tol=EPSREAL*10000.0_SRK')
+      !ASSERT(findNUnique(tmprealarray(1:0)) == 0,'0 subset size')
+      !IF(ALLOCATED(tmpr)) DEALLOCATE(tmpr)
+      !ALLOCATE(tmpr(0))
+      !ASSERT(findNUnique(tmpr) == 0,'size 0 array')
 
       !
       COMPONENT_TEST('findIndex 1-D Array')
@@ -401,6 +451,10 @@ PROGRAM testArrayUtils
       tmpintarray(5)=20
       tmpintarray(9)=100
       ASSERT(findNUnique(tmpintarray) == 7,'3 duplicates')
+      ASSERT(findNUnique(tmpintarray(1:0)) == 0,'0 subset size')
+      IF(ALLOCATED(tmpi)) DEALLOCATE(tmpi)
+      ALLOCATE(tmpi(0))
+      ASSERT(findNUnique(tmpi) == 0,'size 0 array')
       !
       COMPONENT_TEST('getUnique 1-D Array')
       tmpintarray(1)=0
@@ -422,6 +476,8 @@ PROGRAM testArrayUtils
       CALL getUnique(tmpintarray,tmpi)
       bool=ALL(tmpi == (/0,2,5,20,25,40,100/))
       ASSERT(bool,'getUnique, 3 duplicates')
+      CALL getUnique(tmpintarray(1:0),tmpi)
+      ASSERT(.NOT. ALLOCATED(tmpi),'getUnique, size 0 array')
 
       COMPONENT_TEST('boundCheck 1-D Ints')
       ASSERT(boundCheck(tmpintarray,3),'in bounds not-allocatable')
@@ -454,6 +510,10 @@ PROGRAM testArrayUtils
       tmpstr1a(5)='four'
       tmpstr1a(10)='nine'
       ASSERT(findNUnique(tmpstr1a) == 7,'3 duplicates array')
+      ASSERT(findNUnique(tmpstr1a(1:0)) == 0,'0 subset size')
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
+      ALLOCATE(tmps1(0))
+      ASSERT(findNUnique(tmps1) == 0,'size 0 array')
 
       !getUnique_1DStrings
       COMPONENT_TEST('getUnique 1-D Array')
@@ -510,6 +570,11 @@ PROGRAM testArrayUtils
 
       str2a='one'; str2a(2,3)='two'
       ASSERT(findNUnique(str2a) == 2,'one unique array')
+
+      ASSERT(findNUnique(tmpstr2a(1:0,1:0)) == 0,'0 subset size')
+      IF(ALLOCATED(tmps2)) DEALLOCATE(tmps2)
+      ALLOCATE(tmps2(0,0))
+      ASSERT(findNUnique(tmps2) == 0,'size 0 array')
 
       !getUnique_1DStrings
       COMPONENT_TEST('getUnique 2-D Array')
