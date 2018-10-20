@@ -157,6 +157,9 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::set_SparseMatrixType
       !> @copydetails MatrixTypes::set_SparseMatrixType
       PROCEDURE,PASS :: set => set_SparseMatrixType
+      !> @copybrief MatrixTypes::setRow_SparseMatrixType
+      !> @copydetails MatrixTypes::setRow_SparseMatrixType
+      PROCEDURE,PASS :: setRow => setRow_SparseMatrixType
       !> @copybrief MatrixTypes::set_shape_SparseMatrixType
       !> @copydetails MatrixTypes::set_shape_SparseMatrixType
       PROCEDURE,PASS :: setShape => set_shape_SparseMatrixType
@@ -463,6 +466,44 @@ MODULE MatrixTypes_Native
       ENDDO
       IF(found_ja) matrix%a(ja_index)=setval
     ENDSUBROUTINE set_SparseMatrixtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets an entire row of values in the sparse matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j a list of j locations in the matrix
+!> @param setval a list of values to set at the corresponding j locations
+!>
+!> This routine sets the values of an entire row in the sparse matrix.  It can only be used
+!> If setShape has previously been applied to the same sparse matrix.  
+!>
+    SUBROUTINE setRow_SparseMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_SparseMatrixType'
+      CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK) :: ja_index,ja
+      LOGICAL(SBK) :: found_ja
+
+      REQUIRE(matrix%isInit)
+      REQUIRE(((matrix%jCount > 0).AND.(i <= matrix%n)) .AND. ((ALL(j > 0)) .AND. (i > 0)))
+      REQUIRE(SIZE(j)==SIZE(setval))
+      !currently written assuming no all-zero rows.
+      !pretty safe assumption.
+      DO ja = 1, SIZE(j)
+        found_ja=.FALSE.
+        DO ja_index=matrix%ia(i),matrix%ia(i+1)-1
+          IF(matrix%ja(ja_index) == j(ja)) THEN
+            found_ja=.TRUE.
+            EXIT
+          ENDIF
+        ENDDO
+        REQUIRE(found_ja)
+        matrix%a(ja_index)=setval(ja)
+      ENDDO
+    ENDSUBROUTINE setRow_SparseMatrixtype
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the dense square matrix

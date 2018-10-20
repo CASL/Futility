@@ -95,7 +95,7 @@ PROGRAM testMatrixTypes
       INTEGER(SIK) :: i, ncnt, ncnt2
       INTEGER(SIK) :: ia_vals(4)
       INTEGER(SIK) :: ja_vals(6)
-      REAL(SRK) :: a_vals(6),x(3),y(3)
+      REAL(SRK) :: a_vals(6),x(3),y(3),val
       REAL(SRK) :: dummy
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
       LOGICAL(SBK) :: bool
@@ -348,6 +348,7 @@ PROGRAM testMatrixTypes
           ENDDO
       ENDSELECT
 
+
       !Test BLAS_matvec
       x=1.0_SRK
       y=1.0_SRK
@@ -390,6 +391,27 @@ PROGRAM testMatrixTypes
       FINFO() 'BLAS_matvec'
       FINFO() '(THISMATRIX=thisMatrix,ALPHA=2.0_SRK,X=xRealVector,BETA=2.0_SRK,Y=yRealVector)'
       FINFO() '-sparse'
+
+      ! Set row at a time
+      SELECT TYPE (thisMatrix)
+      CLASS IS (SparseMatrixType)
+        CALL thisMatrix%setRow(1, [1, 3], [11._SRK, 12._SRK])
+        CALL thisMatrix%setRow(2, [3], [13._SRK])
+        CALL thisMatrix%setRow(3, [1, 2, 3], [15._SRK, 16._SRK, 17._SRK])
+        CALL thisMatrix%get(1, 1, val)
+        ASSERT(val .APPROXEQ. 11._SRK, "SparseMatrixTvalpe::setRow")
+        CALL thisMatrix%get(1, 3, val)
+        ASSERT(val .APPROXEQ. 12._SRK, "SparseMatrixTvalpe::setRow")
+        CALL thisMatrix%get(2, 3, val)
+        ASSERT(val .APPROXEQ. 13._SRK, "SparseMatrixTvalpe::setRow")
+        CALL thisMatrix%get(3, 1, val)
+        ASSERT(val .APPROXEQ. 15._SRK, "SparseMatrixTvalpe::setRow")
+        CALL thisMatrix%get(3, 2, val)
+        ASSERT(val .APPROXEQ. 16._SRK, "SparseMatrixTvalpe::setRow")
+        CALL thisMatrix%get(3, 3, val)
+        ASSERT(val .APPROXEQ. 17._SRK, "SparseMatrixTvalpe::setRow")
+      ENDSELECT
+
 ! Check sparse triangular solvers
       CALL yRealVector%clear()
       CALL xRealVector%clear()
@@ -1177,6 +1199,7 @@ PROGRAM testMatrixTypes
             ASSERT(bool, 'tridiag%set(...)')
           ENDDO
       ENDSELECT
+
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
       CALL thisMatrix%set(1,1,1._SRK)
@@ -1596,6 +1619,21 @@ PROGRAM testMatrixTypes
           bool = dummy==3._SRK
           ASSERT(bool, 'petscsparse%set(...)')
       ENDSELECT
+
+      SELECT TYPE (thisMatrix)
+      CLASS IS (DistributedMatrixType)
+        ! Overwrite with setRow
+        CALL thisMatrix%setRow(1,[1, 2],[10._SRK, 11._SRK])
+        CALL thisMatrix%setRow(2,[2],[13._SRK])
+        CALL thisMatrix%get(1, 1, val)
+        ASSERT(val .APPROXEQ. 10._SRK, "PETScMatrixTvalpe::setRow")
+        CALL thisMatrix%get(1, 2, val)
+        ASSERT(val .APPROXEQ. 11._SRK, "PETScMatrixTvalpe::setRow")
+        CALL thisMatrix%get(2, 2, val)
+        ASSERT(val .APPROXEQ. 13._SRK, "PETScMatrixTvalpe::setRow")
+     ENDSELECT
+
+
       CALL thisMatrix%clear()
 
       CALL pList%clear()
@@ -2274,6 +2312,25 @@ PROGRAM testMatrixTypes
           bool = dummy==3._SRK
           ASSERT(bool, 'Trilinossparse%set(...)')
       ENDSELECT
+
+      CALL thisMatrix%clear()
+      CALL thisMatrix%init(pList)  ! nonsymmetric (0), sparse (0)
+
+      SELECT TYPE (thisMatrix)
+      CLASS IS (DistributedMatrixType)
+        ! Overwrite with setRow
+        CALL thisMatrix%setRow(1,[1, 2],[10._SRK, 11._SRK])
+        CALL thisMatrix%setRow(2,[1, 2],[12._SRK, 13._SRK])
+        CALL thisMatrix%assemble()
+        CALL thisMatrix%get(1, 1, val)
+        ASSERT(val .APPROXEQ. 10._SRK, "TrilinosMatrixType::setRow")
+        CALL thisMatrix%get(1, 2, val)
+        ASSERT(val .APPROXEQ. 11._SRK, "TrilinosMatrixType::setRow")
+        CALL thisMatrix%get(2, 1, val)
+        ASSERT(val .APPROXEQ. 12._SRK, "TrilinosMatrixType::setRow")
+        CALL thisMatrix%get(2, 2, val)
+        ASSERT(val .APPROXEQ. 13._SRK, "TrilinosMatrixType::setRow")
+     ENDSELECT
 
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
