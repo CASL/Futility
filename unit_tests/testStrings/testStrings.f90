@@ -208,6 +208,8 @@ PROGRAM testStrings
   ASSERT(ALLOCATED(s1a),'allocated array assignment')
   ASSERT(SIZE(s1a,DIM=1) == 1,'SIZE array assignment')
   ASSERT(s1a(1)=='','test array assignment')
+  DEALLOCATE(s1a)
+  DEALLOCATE(s1a2)
 !
 !Test assigning an array of strings to an array of strings
   !null assignmnet (should deallocate the array)
@@ -237,6 +239,8 @@ PROGRAM testStrings
   ASSERT(SIZE(s2a,DIM=1) == 2 .AND. SIZE(s2a,DIM=2) == 2,'SIZE array assignment')
   bool=s2a(1,1) == '' .AND. s2a(1,2) == '' .AND. s2a(2,1) == '' .AND. s2a(2,2) == ''
   ASSERT(bool,'test array assignment')
+  DEALLOCATE(s2a)
+  DEALLOCATE(s2a2)
 
 !
 !Test ADJUSTL and ADJUSTR

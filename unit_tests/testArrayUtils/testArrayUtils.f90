@@ -497,6 +497,7 @@ PROGRAM testArrayUtils
       !getUnique_1DStrings
       COMPONENT_TEST('getUnique 1-D Array')
       tmpstr1a=''
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
       CALL getUnique(tmpstr1a,tmps1)
       ASSERT(.NOT.ALLOCATED(tmps1),'empty array')
       tmpstr1a(1)='one'
@@ -509,6 +510,7 @@ PROGRAM testArrayUtils
       tmpstr1a(8)='eight'
       tmpstr1a(9)='nine'
       tmpstr1a(10)='ten'
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
       CALL getUnique(tmpstr1a,tmps1)
       bool=tmps1(1) == 'one' .AND. tmps1(2) == 'two' .AND. tmps1(3) == 'three' .AND. &
         tmps1(4) == 'four' .AND. tmps1(5) == 'five' .AND. tmps1(6) == 'six' .AND. &
@@ -517,6 +519,7 @@ PROGRAM testArrayUtils
       tmpstr1a(1)='two'
       tmpstr1a(5)='four'
       tmpstr1a(10)='nine'
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
       CALL getUnique(tmpstr1a,tmps1)
       bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
         tmps1(3) == 'four' .AND.  tmps1(4) == 'six' .AND. &
@@ -558,18 +561,21 @@ PROGRAM testArrayUtils
       !getUnique_1DStrings
       COMPONENT_TEST('getUnique 2-D Array')
       tmpstr2a=''
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
       CALL getUnique(tmpstr2a,tmps1)
       ASSERT(.NOT.ALLOCATED(tmps1),'empty array')
       tmpstr2a(1,1)='one'
       tmpstr2a(1,2)='three'
       tmpstr2a(2,1)='two'
       tmpstr2a(2,2)='four'
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
       CALL getUnique(tmpstr2a,tmps1)
       bool=tmps1(1) == 'one' .AND. tmps1(2) == 'two' .AND. tmps1(3) == 'three' .AND. &
         tmps1(4) == 'four'
       ASSERT(bool,'all unique array')
       FINFO() tmps1(1)//' '//tmps1(2)//' '//tmps1(3)//' '//tmps1(4)
       tmpstr2a(1,1)='two'
+      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
       CALL getUnique(tmpstr2a,tmps1)
       bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
         tmps1(3) == 'four'

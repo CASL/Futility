@@ -290,18 +290,6 @@ PROGRAM testPreconditionerTypes
       ENDSELECT
 
       CALL testLU%clear()
-!      nerrors1=e%getCounter(EXCEPTION_ERROR)
-!      CALL testLU%apply(testDummy)
-!      nerrors2=e%getCounter(EXCEPTION_ERROR)
-!      ASSERT(nerrors2 == nerrors1+1,'applpy_LU_Preconditioner PC%isInit check')
-!      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-
-!      CALL testLU%init(testDenseMatrix)
-!      nerrors1=e%getCounter(EXCEPTION_ERROR)
-!      CALL testLU%apply(testDummy)
-!      nerrors2=e%getCounter(EXCEPTION_ERROR)
-!      ASSERT(nerrors2 == nerrors1+1,'apply_LU_Preconditioner ALLOCATED(v) check')
-!      FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
 
       ALLOCATE(RealVectorType :: testDummy)
       nerrors1=e%getCounter(EXCEPTION_ERROR)
@@ -586,14 +574,17 @@ PROGRAM testPreconditionerTypes
       IF(ALLOCATED(testVec_1g)) CALL testVec_1g%clear()
       IF(ALLOCATED(testVec_mg)) CALL testVec_mg%clear()
       IF(ALLOCATED(testDenseMatrix)) CALL testDenseMatrix%clear()
+      IF(ALLOCATED(testMatrix)) CALL testMatrix%clear()
       IF(ALLOCATED(testVector)) CALL testVector%clear()
+      IF(ALLOCATED(testDummy)) CALL testDummy%clear()
 
       IF(ALLOCATED(testSparseMatrix)) DEALLOCATE(testSparseMatrix)
       IF(ALLOCATED(testVec_1g)) DEALLOCATE(testVec_1g)
       IF(ALLOCATED(testVec_mg)) DEALLOCATE(testVec_mg)
       IF(ALLOCATED(testDenseMatrix)) DEALLOCATE(testDenseMatrix)
+      IF(ALLOCATED(testMatrix)) DEALLOCATE(testMatrix)
       IF(ALLOCATED(testVector)) DEALLOCATE(testVector)
-
+      IF(ALLOCATED(testDummy)) DEALLOCATE(testDummy)
 
     ENDSUBROUTINE clearTest
 !

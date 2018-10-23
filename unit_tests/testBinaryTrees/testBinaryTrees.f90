@@ -83,6 +83,8 @@ PROGRAM testBinaryTrees
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING BINARY TREES PASSED!'
   WRITE(*,*) '==================================================='
+  
+  DEALLOCATE(emptyi)
 
   FINALIZE_TEST()
 

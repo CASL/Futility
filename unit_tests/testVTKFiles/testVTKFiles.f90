@@ -360,6 +360,9 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%z .APPROXEQ. zref))
   ASSERT(bool, 'VTKMeshType OPERATOR(+)')
   WRITE(*,*) '  Passed: VTKMeshType OPERATOR(+)'
+  DEALLOCATE(xref)
+  DEALLOCATE(yref)
+  DEALLOCATE(zref)
 !
 !Test cell removal
   CALL testVTKFile%clear()
@@ -371,6 +374,7 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKMesh%numCells == 3
   ASSERT(bool, 'VTKMeshType removeCells')
+  DEALLOCATE(testMask)
   WRITE(*,*) '  Passed: VTKMeshType removeCells'
 !
 !Check for memory leak
