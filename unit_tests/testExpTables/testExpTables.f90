@@ -194,7 +194,6 @@ PROGRAM testExpTables
   ENDDO
   DO i=-10000,0
     bool = (reftbl(i) .APPROXEQ. testET2(5)%table(i))
-    bool=.FALSE.
     ASSERT(bool, 'testET2(5)%initialize(...)')
     FINFO() i,reftbl(i),testET2(5)%table(i)
   ENDDO

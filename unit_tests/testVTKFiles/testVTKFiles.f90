@@ -27,10 +27,6 @@ PROGRAM testVTKFiles
 
   CREATE_TEST('Test VTK Files')
 
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING VTKFILES...'
-  WRITE(*,*) '==================================================='
-
   ALLOCATE(e)
   CALL e%setStopOnError(.FALSE.)
   CALL e%setQuietMode(.TRUE.)
@@ -44,7 +40,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%initialize(666,'testVTK0.vtk')
   bool = testVTKFile%isInit() .AND. testVTKFile%isOpen()
   ASSERT(bool, 'testVTKFile%initialize(...)')
-  WRITE(*,*) '  Passed: CALL testVTKFile%initialize(...) 0'
 
   !Error check
   CALL testVTKFile%initialize(666,'testVTK1.vtk',STATUS='testVTK1')
@@ -53,7 +48,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%e%addSurrogate(e)
   bool = .NOT.testVTKFile%isInit()
   ASSERT(bool, 'testVTKFile%clear() 0')
-  WRITE(*,*) '  Passed: CALL testVTKFile%clear() 0'
 
   CALL testVTKFile%clear()
   CALL testVTKFile%e%addSurrogate(e)
@@ -74,7 +68,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKFile%hasMesh
   ASSERT(bool, 'testVTKFile%writeMesh(...) STRUCTURED_POINTS')
-  WRITE(*,*) '  Passed: CALL testVTKFile%writeMesh(...) STRUCTURED_POINTS'
 !
 !Test writeScalarData
   CALL SetupTest1_Data()
@@ -107,7 +100,6 @@ PROGRAM testVTKFiles
   testVTKFile%hasMesh=.TRUE.
   CALL testVTKFile%fclose()
   CALL testVTKFile%writeScalarData(testVTKData) !closed file
-  WRITE(*,*) '  Passed: CALL testVTKFile%writeScalarData(...) 1'
 !
 !Test writeMesh for STRUCTURED_GRID
   CALL testVTKFile%clear()
@@ -116,7 +108,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKFile%hasMesh
   ASSERT(bool, 'testVTKFile%writeMesh(...) STRUCTURED_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKFile%writeMesh(...) STRUCTURED_GRID'
   !Write data on the mesh
   CALL SetupTest1_Data()
   CALL testVTKFile%writeScalarData(testVTKData)
@@ -129,7 +120,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKFile%hasMesh
   ASSERT(bool, 'testVTKFile%writeMesh(...) RECTILINEAR_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKFile%writeMesh(...) RECTILINEAR_GRID'
   !Write data on the mesh
   testVTKData%vtkDataFormat='double'
   CALL testVTKFile%writeScalarData(testVTKData)
@@ -141,7 +131,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKFile%hasMesh
   ASSERT(bool, 'testVTKFile%writeMesh(...) UNSTRUCTURED_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKFile%writeMesh(...) UNSTRUCTURED_GRID'
   !Write data on the mesh
   CALL SetupTest4_Data()
   CALL testVTKFile%writeScalarData(testVTKData)
@@ -183,7 +172,6 @@ PROGRAM testVTKFiles
     WRITE(*,*) 'WARNING: Partial failures n=',npartfail, &
       ' for "CALL testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID"'
   ENDIF
-  WRITE(*,*) '  Passed: CALL testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID'
   !
   !Another test for redundant point removal
   CALL testVTKFile%clear()
@@ -207,7 +195,6 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref))
   ASSERT(bool, 'testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID'
   !
   !Test mesh conversion - structured points to unstructured grid
   CALL testVTKFile%clear()
@@ -222,23 +209,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKMesh%numPoints == 5445
   ASSERT(bool, 'testVTKMesh%convert(...) STRUCTURED_POINTS')
-  WRITE(*,*) '  Passed: CALL testVTKMesh%convert(...) STRUCTURED_POINTS'
-!
-!Test mesh conversion - structured grid to unstructured grid
-!Not yet implemented; may be implemented later
-  !CALL testVTKFile%clear()
-  !DEALLOCATE(testVTKMesh%cellList)
-  !DEALLOCATE(testVTKMesh%nodeList)
-  !CALL testVTKFile%initialize(666,'testVTK8.vtk',STATUS='testVTK8')
-  !CALL SetupTest2_Mesh()
-  !CALL testVTKMesh%convert(VTK_UNSTRUCTURED_GRID)
-  !CALL testVTKFile%writeMesh(testVTKMesh)
-  !IF(testVTKMesh%numPoints /= 5445) THEN
-  !  WRITE(*,*) 'CALL testVTKMesh%convert(...) STRUCTURED_GRID FAILED!'
-  !  STOP 666
-  !ELSE
-  !  WRITE(*,*) '  Passed: CALL testVTKMesh%convert(...) STRUCTURED_GRID'
-  !ENDIF
 !
 !Test mesh conversion - rectilinear grid to unstructured grid
   CALL testVTKFile%clear()
@@ -251,7 +221,6 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKMesh%numPoints == 5445
   ASSERT(bool, 'testVTKMesh%convert(...) RECTILINEAR_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKMesh%convert(...) RECTILINEAR_GRID'
 !
 !Test mesh translation - VTK_STRUCTURED_POINTS
   CALL testVTKFile%clear()
@@ -280,7 +249,6 @@ PROGRAM testVTKFiles
          ((testVTKMesh%z(1) .APPROXEQ. zref(1)+3.0_SRK) .OR. &
          (testVTKMesh%z(2) .APPROXEQ. zref(2)))
   ASSERT(bool, 'testVTKMesh%translate(...) STRUCTURED_POINTS')
-  WRITE(*,*) '  Passed: CALL testVTKMesh%translate(...) STRUCTURED_POINTS'
 !
 !Test mesh translation - VTK_STRUCTURED_GRID
   DEALLOCATE(xref)
@@ -300,7 +268,6 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref+2.0_SRK)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref+3.0_SRK))
   ASSERT(bool, 'testVTKMesh%translate(...) STRUCTURED_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKMesh%translate(...) STRUCTURED_GRID'
 !
 !Test mesh translation - VTK_RECTILINEAR_GRID
   DEALLOCATE(xref)
@@ -319,7 +286,6 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref+2.0_SRK)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref+3.0_SRK))
   ASSERT(bool, 'testVTKMesh%translate(...) RECTILINEAR_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKMesh%translate(...) RECTILINEAR_GRID'
 !
 !Test mesh translation - VTK_UNSTRUCTURED_GRID
   DEALLOCATE(xref)
@@ -337,7 +303,6 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref+2.0_SRK)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref+3.0_SRK))
   ASSERT(bool, 'testVTKMesh%translate(...) UNSTRUCTURED_GRID')
-  WRITE(*,*) '  Passed: CALL testVTKMesh%translate(...) UNSTRUCTURED_GRID'
 !
 !Test mesh addition
   CALL testVTKFile%clear()
@@ -359,7 +324,6 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref))
   ASSERT(bool, 'VTKMeshType OPERATOR(+)')
-  WRITE(*,*) '  Passed: VTKMeshType OPERATOR(+)'
   DEALLOCATE(xref)
   DEALLOCATE(yref)
   DEALLOCATE(zref)
@@ -375,23 +339,7 @@ PROGRAM testVTKFiles
   bool = testVTKMesh%numCells == 3
   ASSERT(bool, 'VTKMeshType removeCells')
   DEALLOCATE(testMask)
-  WRITE(*,*) '  Passed: VTKMeshType removeCells'
 !
-!Check for memory leak
- !DO k=1,1000
- !  DEALLOCATE(testVTKMesh2%x)
- !  DEALLOCATE(testVTKMesh2%y)
- !  DEALLOCATE(testVTKMesh2%z)
- !  DEALLOCATE(testVTKMesh2%cellList)
- !  DEALLOCATE(testVTKMesh2%nodeList)
- !  CALL SetupTest14_Mesh()
- !  CALL testVTKMesh2%translate(1.0_SRK,0.0_SRK,0.0_SRK)
- !  testVTKMesh=testVTKMesh+testVTKMesh2
- !ENDDO
-!
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING VTKFILES PASSED!'
-  WRITE(*,*) '==================================================='
   DEALLOCATE(e)
   CALL testVTKMesh%clear()
   CALL testVTKMesh2%clear()

@@ -79,10 +79,6 @@ PROGRAM testBinaryTrees
   WRITE(*,*) '  Passed: CALL SortedBinaryTree(...)'
   CALL BurnBinaryTree(t2)
   WRITE(*,*) '---------------------------------------------------'
-
-  WRITE(*,*) '==================================================='
-  WRITE(*,*) 'TESTING BINARY TREES PASSED!'
-  WRITE(*,*) '==================================================='
   
   DEALLOCATE(emptyi)
 
