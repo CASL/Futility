@@ -1141,6 +1141,7 @@ PROGRAM testParameterLists
     ASSERT(someParam%description == 'The values .FALSE. & .TRUE.','someParam%description')
     ASSERT(SIZE(valsbka1,DIM=1) == 2,'someParam valsbka1 size 2')
     ASSERT(.NOT.valsbka1(1) .AND. valsbka1(2),'testParam valsbka1 2')
+    DEALLOCATE(valsbka1)
     !
     CALL someParam%set('testError',(/.FALSE./)) !Name mismatch
     msg=eParams%getLastMessage()
@@ -1303,6 +1304,7 @@ PROGRAM testParameterLists
     ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
     ASSERT(SIZE(valsnka1,DIM=1) == 2,'someParam valsnka1 size 2')
     ASSERT(valsnka1(1) == 5 .AND. valsnka1(2) == 7,'testParam valsnka1 2')
+    DEALLOCATE(valsnka1)
     !
     CALL someParam%set('testError',(/-1/)) !Name mismatch
     msg=eParams%getLastMessage()
@@ -1465,6 +1467,7 @@ PROGRAM testParameterLists
     ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
     ASSERT(SIZE(valslka1,DIM=1) == 2,'someParam valslka1 size 2')
     ASSERT(valslka1(1) == 5_SLK .AND. valslka1(2) == 7_SLK,'testParam valslka1 2')
+    DEALLOCATE(valslka1)
     !
     CALL someParam%set('testError',(/-1_SLK/)) !Name mismatch
     msg=eParams%getLastMessage()
@@ -1635,6 +1638,7 @@ PROGRAM testParameterLists
     ASSERT(SIZE(valsska1,DIM=1) == 2,'someParam valsska1 size 2')
     bool=ALL(valsska1 .APPROXEQA. (/5.0_SSK,7.0_SSK/))
     ASSERT(bool,'testParam valsska1 2')
+    DEALLOCATE(valsska1)
     !
     CALL someParam%set('testError',(/-1.0_SSK/)) !Name mismatch
     msg=eParams%getLastMessage()
@@ -1805,6 +1809,7 @@ PROGRAM testParameterLists
     ASSERT(SIZE(valsdka1,DIM=1) == 2,'someParam valsdka1 size 2')
     bool=ALL(valsdka1 .APPROXEQA. (/5.0_SDK,7.0_SDK/))
     ASSERT(bool,'testParam valsdka1 2')
+    DEALLOCATE(valsdka1)
     !
     CALL someParam%set('testError',(/-1.0_SDK/)) !Name mismatch
     msg=eParams%getLastMessage()
@@ -2031,6 +2036,7 @@ PROGRAM testParameterLists
     ASSERT(testParam2%pdat%name == 'testSTRa1','%name')
     ASSERT(testParam2%pdat%datatype == '1-D ARRAY TYPE(StringType)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
+    DEALLOCATE(valstra1)
     CALL clear_test_vars()
   ENDSUBROUTINE testSTRa1
 !
@@ -2184,6 +2190,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valsnka2 size 2')
     bool=valsnka2(1,1) == 5 .AND. valsnka2(1,2) == 7
     ASSERT(bool,'testParam valsnka2 2')
+    DEALLOCATE(valsnka2)
     !
     CALL someParam%set('testError',RESHAPE((/-1/),(/1,1/))) !Name mismatch
     msg=eParams%getLastMessage()
@@ -2372,6 +2379,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valslka2 size 2')
     bool=valslka2(1,1) == 5_SLK .AND. valslka2(1,2) == 7_SLK
     ASSERT(bool,'testParam valslka2 2')
+    DEALLOCATE(valslka2)
     !
     CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1/))) !Name mismatch
     msg=eParams%getLastMessage()
@@ -2560,6 +2568,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valsska2 size 2')
     bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(1,2) == 7.0_SSK
     ASSERT(bool,'testParam valsska2 2')
+    DEALLOCATE(valsska2)
     !
     CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1/))) !Name mismatch
     msg=eParams%getLastMessage()
@@ -2748,6 +2757,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valsdka2 size 2')
     bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(1,2) == 7.0_SDK
     ASSERT(bool,'testParam valsdka2 2')
+    DEALLOCATE(valsdka2)
     !
     CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1/))) !Name mismatch
     msg=eParams%getLastMessage()
@@ -2986,6 +2996,7 @@ PROGRAM testParameterLists
     ASSERT(testParam2%pdat%name == 'testSTRa2','%name')
     ASSERT(testParam2%pdat%datatype == '2-D ARRAY TYPE(StringType)','%datatype')
     ASSERT(testParam2 == testParam,'OPERATOR(==)')
+    DEALLOCATE(valstra2)
     CALL clear_test_vars()
   ENDSUBROUTINE testSTRa2
 !
@@ -3145,6 +3156,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valsnka3 size 2')
     bool=valsnka3(1,1,1) == 5 .AND. valsnka3(1,1,2) == 7
     ASSERT(bool,'testParam valsnka3 2')
+    DEALLOCATE(valsnka3)
     !
     CALL someParam%set('testError',RESHAPE((/-1/),(/1,1,1/))) !Name mismatch
     msg=eParams%getLastMessage()
@@ -3334,6 +3346,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valslka3 size 2')
     bool=valslka3(1,1,1) == 5_SLK .AND. valslka3(1,1,2) == 7_SLK
     ASSERT(bool,'testParam valslka3 2')
+    DEALLOCATE(valslka3)
     !
     CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1,1/))) !Name mismatch
     msg=eParams%getLastMessage()
@@ -3523,6 +3536,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valsska3 size 2')
     bool=valsska3(1,1,1) == 5.0_SSK .AND. valsska3(1,1,2) == 7.0_SSK
     ASSERT(bool,'testParam valsska3 2')
+    DEALLOCATE(valsska3)
     !
     CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Name mismatch
     msg=eParams%getLastMessage()
@@ -3712,6 +3726,7 @@ PROGRAM testParameterLists
     ASSERT(bool,'someParam valsdka3 size 2')
     bool=valsdka3(1,1,1) == 5.0_SDK .AND. valsdka3(1,1,2) == 7.0_SDK
     ASSERT(bool,'testParam valsdka3 2')
+    DEALLOCATE(valsdka3)
     !
     CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Name mismatch
     msg=eParams%getLastMessage()

@@ -316,6 +316,7 @@ CONTAINS
         ASSERT(iperr == 0,'Error obtaining matrix entries for grid '//tmpchar)
 
       ENDDO
+      CALL thisLS%clear()
       CALL myWtStructure%clear()
       CALL myMMeshes%clear()
       DEALLOCATE(vals,cols,myWtStructure,myMMeshes)
@@ -598,6 +599,7 @@ CONTAINS
         CALL matPList%clear()
 
         ! build x0
+        DEALLOCATE(x)
         ALLOCATE(x(n))
         x(1:(n-1)/2)=0.5_SRK
         x((n+1)/2:n)=1.1_SRK

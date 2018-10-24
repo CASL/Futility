@@ -77,8 +77,9 @@ PROGRAM testHDF5
   CALL h5file%clear(.TRUE.)
   DEALLOCATE(refD1,refD2,refD3,refD4,refD5,refD6,refD7,refS1,refS2,refS3,refS4, &
     refS5,refS6,refS7,refB1,refB2,refB3,refL1,refL2,refL3,refL4,refL5,refL6, &
-      refL7,refN1,refN2,refN3,refN4,refN5,refN6,refN7,refST1,refST2,refST3,refsets)
-
+      refL7,refN1,refN2,refN3,refN4,refN5,refN6,refN7,refST1,refST2,refST3,refsets, &
+      refCNCHAR1,refCNCHAR2,refCNCHAR3,refSTC1,refST0CA)      
+      
   CALL HDF5Close()
   FINALIZE_TEST()
   CALL testMPI%clear()

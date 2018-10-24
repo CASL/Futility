@@ -22,7 +22,6 @@ PROGRAM testExpTables
   REAL(SRK) :: reftbl(-10000:0),reftbl2(-10000:0),reftbl3(-10000:0)
   REAL(SRK) :: reftbl4(1:1000)
   INTEGER(SIK) :: i
-  CHARACTER(LEN=6) :: istr
   TYPE(ExpTableType),SAVE :: testET1,testET2(5)
   TYPE(ParamType),SAVE :: PL
   LOGICAL(SBK) :: bool
@@ -161,12 +160,12 @@ PROGRAM testExpTables
   DO i=-10000,0
     bool = (reftbl(i) .APPROXEQ. testET2(4)%table2D(1,i))
     ASSERT(bool, 'testET2(4)%initialize(...)')
-    FINFO() 'testET2(4)%table('//TRIM(istr)//')'
+    FINFO() i,reftbl(i),testET2(4)%table2D(1,i)
   ENDDO
   DO i=-10000,0
     bool = (reftbl2(i) .APPROXEQ. testET2(4)%table2D(2,i))
     ASSERT(bool, 'testET2(4)%initialize(...)')
-    FINFO() 'testET2(4)%table2rd('//TRIM(istr)//')'
+    FINFO() i,reftbl2(i),testET2(4)%table2D(2,i)
   ENDDO
   WRITE(*,*) '  Passed: CALL testET2(4)%initialize(...) LINEAR'
 
@@ -196,21 +195,18 @@ PROGRAM testExpTables
   DO i=-10000,0
     bool = (reftbl(i) .APPROXEQ. testET2(5)%table(i))
     ASSERT(bool, 'testET2(5)%initialize(...)')
-    FINFO() '(',istr,"(i6))",i;istr=ADJUSTL(istr)
-    FINFO() 'testET2(5)%table('//TRIM(istr)//')'
+    FINFO() i,reftbl(i),testET2(5)%table(i)
   ENDDO
   DO i=-10000,0
     bool = (reftbl2(i) .APPROXEQ. testET2(5)%table2rd(i))
     ASSERT(bool, 'testET2(5)%initialize(...)')
-    FINFO() '(',istr,"(i6))",i;istr=ADJUSTL(istr)
-    FINFO() 'testET2(5)%table2rd('//TRIM(istr)//')'
+    FINFO() i,reftbl2(i),testET2(5)%table2rd(i)
   ENDDO
 
   DO i=-10000,0
     bool = SOFTEQ(reftbl3(i),testET2(5)%table3rd(i),1.0e-7_SRK)
     ASSERT(bool, 'testET2(5)%initialize(...)')
-    FINFO() '(',istr,"(i6))",i;istr=ADJUSTL(istr)
-    FINFO() 'testET2(5)%table3rd('//TRIM(istr)//')'
+    FINFO() i,reftbl3(i),testET2(5)%table3rd(i)
   ENDDO
   WRITE(*,*) '  Passed: CALL testET2(5)%initialize(...) ORDER2'
 
