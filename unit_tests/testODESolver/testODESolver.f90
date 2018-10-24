@@ -252,6 +252,7 @@ CONTAINS
       CALL tmpPL%add('VectorType->n',3_SIK)
       CALL y0%init(tmpPL)
       CALL yf%init(tmpPL)
+      CALL tmpPL%clear()
 
       CALL y0%set(3.0_SRK)
       CALL yf%set(0.0_SRK)
@@ -407,6 +408,7 @@ CONTAINS
       CALL tmpPL%add('VectorType->n',3_SIK)
       CALL y0%init(tmpPL)
       CALL yf%init(tmpPL)
+      CALL tmpPL%clear()
 
       CALL y0%set(3.0_SRK)
       CALL yf%set(0.0_SRK)
@@ -450,6 +452,7 @@ CONTAINS
       CALL tmpPL%add('VectorType->n',3_SIK)
       CALL y0%init(tmpPL)
       CALL yf%init(tmpPL)
+      CALL tmpPL%clear()
 
       CALL y0%set(3.0_SRK)
       CALL yf%set(0.0_SRK)
@@ -479,6 +482,7 @@ CONTAINS
       CALL tmpPL%add('VectorType->n',3_SIK)
       CALL y0%init(tmpPL)
       CALL yf%init(tmpPL)
+      CALL tmpPL%clear()
 
       CALL y0%set(3.0_SRK)
       CALL yf%set(0.0_SRK)
@@ -529,6 +533,7 @@ CONTAINS
       CALL tmpPL%add('VectorType->n',3_SIK)
       CALL y0%init(tmpPL)
       CALL yf%init(tmpPL)
+      CALL tmpPL%clear()
 
       substep=1.0E-2_SRK
       DO i=1,4
