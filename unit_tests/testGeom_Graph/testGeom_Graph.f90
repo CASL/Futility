@@ -45,6 +45,7 @@ PROGRAM testGeom_Graph
   REGISTER_SUBTEST('%TriangulateVerts',testTriangulate)
   REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
   !REGISTER_SUBTEST('OPERATOR(+)',testAddition)
+  FINALIZE_TEST()
 
   CREATE_TEST('TEST Directed Acyclic Graph')
   REGISTER_SUBTEST('Uninit',testDAGUninit)
@@ -2778,9 +2779,12 @@ PROGRAM testGeom_Graph
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testDAGKATS()
+      INTEGER(SIK),ALLOCATABLE :: nodes(:)
 
+      ALLOCATE(nodes(8))
+      nodes=(/10,9,2,8,11,3,5,7/)
       CALL testDAGraph%clear()
-      CALL testDAGraph%init(8,(/10,9,2,8,11,3,5,7/))
+      CALL testDAGraph%init(8,nodes)
       CALL testDAGraph%defineEdge(3,8)
       CALL testDAGraph%defineEdge(3,10)
       CALL testDAGraph%defineEdge(5,11)
@@ -2793,6 +2797,7 @@ PROGRAM testGeom_Graph
 
       CALL testDAGraph%KATS()
       ASSERT(ALL(testDAGraph%nodes == (/2,9,10,11,8,7,5,3/)),'%sorted')
+      DEALLOCATE(nodes)
 
     ENDSUBROUTINE testDAGKATS
 !
