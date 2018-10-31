@@ -234,6 +234,7 @@ PROGRAM testExpTables
          .OR. (testET1%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET1%minVal == 0) &
          .OR. (testET1%maxVal == 0) .OR. (testET1%tableErr .APPROXEQ. 0._SRK))
   ASSERT(bool, 'testET1%clear()')
+  FINALIZE_TEST()
 
   CREATE_TEST("subtest POLAR_EXP_TABLE")
 
@@ -470,7 +471,7 @@ CONTAINS
       EQUIVALENCE(x,xint)
       EQUIVALENCE(y,yint)
       EQUIVALENCE(xinit,xinitint)
-      INTEGER(SIK) :: i 
+      INTEGER(SIK) :: i
       !REAL(SSK),ALLOCATABLE :: ans(:),xval(:)
       REAL(SSK) :: logvals(27)
 

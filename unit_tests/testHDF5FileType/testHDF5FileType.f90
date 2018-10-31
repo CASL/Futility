@@ -78,8 +78,8 @@ PROGRAM testHDF5
   DEALLOCATE(refD1,refD2,refD3,refD4,refD5,refD6,refD7,refS1,refS2,refS3,refS4, &
     refS5,refS6,refS7,refB1,refB2,refB3,refL1,refL2,refL3,refL4,refL5,refL6, &
       refL7,refN1,refN2,refN3,refN4,refN5,refN6,refN7,refST1,refST2,refST3,refsets, &
-      refCNCHAR1,refCNCHAR2,refCNCHAR3,refSTC1,refST0CA)      
-      
+      refCNCHAR1,refCNCHAR2,refCNCHAR3,refSTC1,refST0CA)
+
   CALL HDF5Close()
   FINALIZE_TEST()
   CALL testMPI%clear()
@@ -1140,7 +1140,7 @@ PROGRAM testHDF5
       INTEGER(SLK) :: testL0
       INTEGER(SNK) :: testN0, newN0, i, j, k
       ! Picking a number that happens to work for the test.  The conversion between SLK and SDK
-      ! is losing precision and leading to a different value being written than indicated in some 
+      ! is losing precision and leading to a different value being written than indicated in some
       ! cases.  The array values need to be smaller because of a conversion to SNK
       ! in the procedure truncating the value.
       INTEGER(SLK),PARAMETER :: newL0=12345678912345672_SLK, arrVal=2000000000_SLK
@@ -1449,7 +1449,7 @@ PROGRAM testHDF5
 
 
       ! The file was previously status 'NEW' and the setOverwrite method
-      ! call was made to make the file overwritable.  
+      ! call was made to make the file overwritable.
       ! This time, open the existing file with status 'OVERWRITE'.
       ! Overwrite the data again with different data and make sure it
       ! changed by reading it back in and comparing.
@@ -1473,7 +1473,7 @@ PROGRAM testHDF5
       newS5=refS5
       newS6=refS6
       newS7=refS7
-      newL1=arrVal+10_SLK 
+      newL1=arrVal+10_SLK
       newL2=arrVal+10_SLK
       newL3=arrVal+10_SLK
       newL4=arrVal+10_SLK
@@ -1688,7 +1688,7 @@ PROGRAM testHDF5
       CALL h5%e%setStopOnError(.FALSE.)
       CALL h5%e%setQuietMode(.TRUE.)
 
-      ! Quiet HDF5 down 
+      ! Quiet HDF5 down
       CALL HDF5Quiet(.TRUE.)
 
       CALL h5%mkdir('groupR')
@@ -2512,7 +2512,7 @@ PROGRAM testHDF5
       ASSERT(checkread,'CA3 Read Failure')
       CALL h5%fread('groupC->memC1',testC1)
       ASSERT(testC1 == refC1,'C1 Read Failure')
-      
+
       !Read test attributes
       COMPONENT_TEST('%read_attributes')
       !READ ATTRIBUTES
@@ -2646,6 +2646,7 @@ PROGRAM testHDF5
       TYPE(HDF5FileType) :: h5
       INTEGER(SLK),ALLOCATABLE :: tmpA(:)
       ALLOCATE(tmpA(2097152))
+      tmpA=-1
 
       COMPONENT_TEST('Uncompressed')
       CALL h5%init('tmpIsCompressed.h5','NEW',-1)
@@ -2673,6 +2674,7 @@ PROGRAM testHDF5
       ASSERT(h5%isCompressed('groupR->tmpA'),'groupR->tmpA')
 
 
+      DEALLOCATE(tmpA)
       CALL h5%clear(.TRUE.)
     ENDSUBROUTINE testIsCompressed
 !
@@ -2682,7 +2684,9 @@ PROGRAM testHDF5
       INTEGER(SLK),ALLOCATABLE :: cdims(:),tmpA(:),tmpA2(:,:)
 
       ALLOCATE(tmpA(2097152))
+      tmpA=-1
       ALLOCATE(tmpA2(2,1048576))
+      tmpA2=-1
 
       COMPONENT_TEST('Non-zero chunks')
       CALL h5%init('tmpGetChunkSize.h5','NEW',5)
@@ -2713,6 +2717,8 @@ PROGRAM testHDF5
       CALL  h5%getChunkSize('groupR->memS2',cdims)
       ASSERT(.NOT.ALLOCATED(cdims),'memS2')
 
+      DEALLOCATE(tmpA)
+      DEALLOCATE(tmpA2)
       CALL h5%clear(.TRUE.)
     ENDSUBROUTINE testGetChunkSize
 !

@@ -557,6 +557,7 @@ PROGRAM testArrayUtils
       IF(ALLOCATED(tmps2)) DEALLOCATE(tmps2)
       ALLOCATE(tmps2(0,0))
       ASSERT(findNUnique(tmps2) == 0,'size 0 array')
+      DEALLOCATE(tmps2)
 
       !getUnique_1DStrings
       COMPONENT_TEST('getUnique 2-D Array')
@@ -580,6 +581,7 @@ PROGRAM testArrayUtils
       bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
         tmps1(3) == 'four'
       ASSERT(bool,'3 duplicates unique array')
+      DEALLOCATE(tmps1)
     ENDSUBROUTINE test2DStrings
 !
 !-------------------------------------------------------------------------------

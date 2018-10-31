@@ -123,11 +123,12 @@ MODULE ArrayUtils
 !>
     PURE SUBROUTINE getAbsolute_1DReal(r,rout,xi)
       REAL(SRK),INTENT(IN) :: r(:)
-      REAL(SRK),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: xi
       INTEGER(SIK) :: i,n
 
       n=SIZE(r,DIM=1)
+      IF(ALLOCATED(rout)) DEALLOCATE(rout)
       ALLOCATE(rout(n+1))
       IF(PRESENT(xi)) THEN
         rout(1)=xi
@@ -150,11 +151,12 @@ MODULE ArrayUtils
 !>
     PURE SUBROUTINE getAbsolute_1DInt(r,rout,xi)
       INTEGER(SIK),INTENT(IN) :: r(:)
-      INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: xi
       INTEGER(SIK) :: i,n
 
       n=SIZE(r,DIM=1)
+      IF(ALLOCATED(rout)) DEALLOCATE(rout)
       ALLOCATE(rout(n+1))
       IF(PRESENT(xi)) THEN
         rout(1)=xi
@@ -178,11 +180,12 @@ MODULE ArrayUtils
 !>
     PURE SUBROUTINE getDelta_1DReal(r,rout,xi)
       REAL(SRK),INTENT(IN) :: r(:)
-      REAL(SRK),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: xi
       INTEGER(SIK) :: i,n
 
       n=SIZE(r,DIM=1)
+      IF(ALLOCATED(rout)) DEALLOCATE(rout)
       IF(PRESENT(xi)) THEN
         ALLOCATE(rout(n))
         DO i=n,2,-1
@@ -351,7 +354,7 @@ MODULE ArrayUtils
 
       n=SIZE(r,DIM=1)
       m=SIZE(r,DIM=2)
-      
+
       sout=0
       IF(n > 0 .AND. m > 0) THEN
         ALLOCATE(tmpr(n,m))
@@ -391,7 +394,7 @@ MODULE ArrayUtils
 !>
     SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
       REAL(SRK),INTENT(IN) :: r(:)
-      REAL(SRK),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
       REAL(SRK),INTENT(IN),OPTIONAL :: tol
 
@@ -449,7 +452,7 @@ MODULE ArrayUtils
 !>
     SUBROUTINE getUnique_1DInt(r,rout,delta)
       INTEGER(SIK),INTENT(IN) :: r(:)
-      INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
 
       INTEGER(SIK) :: i,n,sout
@@ -500,7 +503,7 @@ MODULE ArrayUtils
 !>
     SUBROUTINE getUnique_1DString(r,rout,delta)
       TYPE(StringType),INTENT(IN) :: r(:)
-      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
 
       INTEGER(SIK) :: i,j,n,sout
@@ -513,6 +516,7 @@ MODULE ArrayUtils
       !Find the number of unique entries
       sout=findNUnique_1DString(r)
       IF(sout > 0) THEN
+        IF(ALLOCATED(rout)) DEALLOCATE(rout)
         ALLOCATE(rout(sout))
         rout=''
         !remove duplicate entries
@@ -546,7 +550,7 @@ MODULE ArrayUtils
 !>
     SUBROUTINE getUnique_2DString(r,rout,delta)
       TYPE(StringType),INTENT(IN) :: r(:,:)
-      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
 
       INTEGER(SIK) :: i,j,n,m,x1,y1,x2,y2,sout
@@ -559,6 +563,7 @@ MODULE ArrayUtils
       !Find the number of unique entries
       sout=findNUnique_2DString(r)
       IF(sout > 0) THEN
+        IF(ALLOCATED(rout)) DEALLOCATE(rout)
         ALLOCATE(rout(sout))
         rout=''
         !Remove the duplicate entries
@@ -605,7 +610,7 @@ MODULE ArrayUtils
     SUBROUTINE getUnion_1DReal(r1,r2,rout,xi1,xi2,delta1,delta2,deltaout)
       REAL(SRK),INTENT(IN) :: r1(:)
       REAL(SRK),INTENT(IN) :: r2(:)
-      REAL(SRK),ALLOCATABLE,INTENT(OUT) :: rout(:)
+      REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
       REAL(SRK),INTENT(IN),OPTIONAL :: xi1
       REAL(SRK),INTENT(IN),OPTIONAL :: xi2
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta1
@@ -615,6 +620,7 @@ MODULE ArrayUtils
       INTEGER(SIK) :: i,j,sr1,sr2,sout,tmpsout
       REAL(SRK),ALLOCATABLE :: tmpout(:),tmpout2(:),tmp1(:),tmp2(:)
 
+      IF(ALLOCATED(rout)) DEALLOCATE(rout)
       !Process the first array if it is a delta
       IF(SIZE(r1) > 0 .AND. SIZE(r2) == 0) THEN
         ALLOCATE(rout(SIZE(r1)))
