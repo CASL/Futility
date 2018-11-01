@@ -562,8 +562,8 @@ MODULE FileType_HDF5
 !> @brief Initializes an HDF5 file object.
 !> @param thisHDF5File the object to be initialized
 !> @param filename the relative path to the file on the filesystem
-!> @param mode the access mode. Can be 'READ', 'WRITE', 'OVERWRITE', or 'NEW'. 
-!>        Status 'READ', 'WRITE', and 'OVERWRITE' all require the file to 
+!> @param mode the access mode. Can be 'READ', 'WRITE', 'OVERWRITE', or 'NEW'.
+!>        Status 'READ', 'WRITE', and 'OVERWRITE' all require the file to
 !>        exist.
 !>        'WRITE' gives write access but will fail if the user tries to overwrite
 !>        data existing in the file, whereas 'OVERWRITE' will allow the user to
@@ -3409,8 +3409,8 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: cnt_in
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-      CHARACTER(LEN=LEN(vals),KIND=C_CHAR),TARGET :: valss
-      CHARACTER(LEN=LEN(dsetname)+1) :: path
+      CHARACTER(LEN=LEN_TRIM(vals),KIND=C_CHAR),TARGET :: valss
+      CHARACTER(LEN=LEN_TRIM(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
       INTEGER,PARAMETER :: rank=0
 
@@ -3419,7 +3419,7 @@ MODULE FileType_HDF5
 
       path=dsetname
       ! Fill character array
-      valss=vals
+      valss=TRIM(vals)
 
       ! stash offset
       offset(1)=0
@@ -3439,11 +3439,11 @@ MODULE FileType_HDF5
 
       CALL h5tcopy_f(H5T_NATIVE_CHARACTER,mem,error)
       CALL h5tset_strpad_f(mem,0,error)
-      CALL h5tset_size_f(mem,INT(LEN(vals),SDK),error)
+      CALL h5tset_size_f(mem,INT(LEN_TRIM(vals),SDK),error)
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) &
-        CALL h5dwrite_f(dset_id,mem,TRIM(valss),gdims,error,dspace_id,gspace_id,plist_id)
+        CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
       CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
       CALL h5tclose_f(mem,error)
 #endif
@@ -3472,7 +3472,7 @@ MODULE FileType_HDF5
 
       length_max=0
       DO i=1,SIZE(vals)
-        length_max=MAX(LEN(vals(i)),length_max)
+        length_max=MAX(LEN_TRIM(vals(i)),length_max)
       ENDDO
       local_gdims(1:)=SHAPE(vals)
       IF(PRESENT(gdims_in)) local_gdims(1)=gdims_in(1)
@@ -3513,7 +3513,7 @@ MODULE FileType_HDF5
       path=dsetname
       ! Fill character array
       DO j=1,SIZE(vals,DIM=1)
-        valss(j)=CHAR(vals(j))
+        valss(j)=TRIM(vals(j))
       ENDDO
 
       ! stash offset
@@ -3567,7 +3567,7 @@ MODULE FileType_HDF5
       length_max=0
       DO j=1,SIZE(vals,1)
         DO i=1,SIZE(vals,2)
-          length_max=MAX(LEN(vals(j,i)),length_max)
+          length_max=MAX(LEN_TRIM(vals(j,i)),length_max)
         ENDDO
       ENDDO
 
@@ -3612,7 +3612,7 @@ MODULE FileType_HDF5
       path=dsetname
        DO k=1,SIZE(vals,2)
          DO j=1,SIZE(vals,1)
-           valss(j,k)=CHAR(vals(j,k))
+           valss(j,k)=TRIM(vals(j,k))
          ENDDO
        ENDDO
 
@@ -3716,7 +3716,7 @@ MODULE FileType_HDF5
       DO l=1,SIZE(vals,3)
         DO k=1,SIZE(vals,2)
           DO j=1,SIZE(vals,1)
-            valss(j,k,l)=CHAR(vals(j,k,l))
+            valss(j,k,l)=TRIM(vals(j,k,l))
           ENDDO
         ENDDO
       ENDDO
@@ -6632,7 +6632,7 @@ MODULE FileType_HDF5
             !Logic is equivalent to "compress anything > 1MB"
             IF(.NOT.ALL(gdims == cdims)) THEN
               CALL h5pset_chunk_f(plist_id,rank,cdims,error)
-  
+
               !Do not presently support user defined compression levels, just level 5
               !5 seems like a good trade-off of speed vs. compression ratio.
               CALL h5pset_deflate_f(plist_id,thisHDF5File%zlibOpt,error)
