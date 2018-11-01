@@ -1781,9 +1781,9 @@ MODULE Geom_Graph
     SUBROUTINE init_DAGraphType(thisGraph,n,nodes)
       CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),INTENT(IN) :: n
-      INTEGER(SIK),INTENT(IN) :: nodes(:)
+      INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: nodes(:)
 
-      IF(.NOT. ALLOCATED(thisGraph%nodes)) THEN
+      IF(.NOT. ALLOCATED(thisGraph%nodes) .AND. ALLOCATED(nodes)) THEN
         IF(n > 0) THEN
           IF(SIZE(nodes) == n) THEN
             thisGraph%n=n

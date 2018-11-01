@@ -562,8 +562,8 @@ MODULE FileType_HDF5
 !> @brief Initializes an HDF5 file object.
 !> @param thisHDF5File the object to be initialized
 !> @param filename the relative path to the file on the filesystem
-!> @param mode the access mode. Can be 'READ', 'WRITE', 'OVERWRITE', or 'NEW'. 
-!>        Status 'READ', 'WRITE', and 'OVERWRITE' all require the file to 
+!> @param mode the access mode. Can be 'READ', 'WRITE', 'OVERWRITE', or 'NEW'.
+!>        Status 'READ', 'WRITE', and 'OVERWRITE' all require the file to
 !>        exist.
 !>        'WRITE' gives write access but will fail if the user tries to overwrite
 !>        data existing in the file, whereas 'OVERWRITE' will allow the user to
@@ -5603,8 +5603,8 @@ MODULE FileType_HDF5
       INTEGER,PARAMETER :: rank=0
 
       INTEGER :: ndims
-      INTEGER(HID_T) :: mem
-      INTEGER(HID_T) :: dspace_id,dset_id
+      INTEGER(HID_T) :: mem=-1
+      INTEGER(HID_T) :: dspace_id=-1,dset_id=-1
       INTEGER(SIZE_T) :: max_size
 
       path=convertPath(dsetname)
@@ -5731,8 +5731,8 @@ MODULE FileType_HDF5
       INTEGER,PARAMETER :: rank=1
 
       INTEGER :: ndims
-      INTEGER(HID_T) :: mem
-      INTEGER(HID_T) :: dspace_id,dset_id
+      INTEGER(HID_T) :: mem=-1
+      INTEGER(HID_T) :: dspace_id=-1,dset_id=-1
       INTEGER(SIZE_T) :: max_size
 
       path=convertPath(dsetname)
@@ -5885,8 +5885,8 @@ MODULE FileType_HDF5
       INTEGER,PARAMETER :: rank=2
 
       INTEGER :: ndims
-      INTEGER(HID_T) :: mem
-      INTEGER(HID_T) :: dspace_id,dset_id
+      INTEGER(HID_T) :: mem=-1
+      INTEGER(HID_T) :: dspace_id=-1,dset_id=-1
       INTEGER(SIZE_T) :: max_size
 
       path=convertPath(dsetname)
@@ -6045,8 +6045,8 @@ MODULE FileType_HDF5
       INTEGER,PARAMETER :: rank=3
 
       INTEGER :: ndims
-      INTEGER(HID_T) :: mem
-      INTEGER(HID_T) :: dspace_id,dset_id
+      INTEGER(HID_T) :: mem=-1
+      INTEGER(HID_T) :: dspace_id=-1,dset_id=-1
       INTEGER(SIZE_T) :: max_size
 
       path=convertPath(dsetname)
@@ -6566,6 +6566,7 @@ MODULE FileType_HDF5
       LOGICAL :: dset_exists
 
       error=0
+      dset_id=-1
       ! Make sure the object is initialized
       IF(.NOT.thisHDF5File%isinit) THEN
         CALL thisHDF5File%e%setStopOnError(.FALSE.)
@@ -6632,7 +6633,7 @@ MODULE FileType_HDF5
             !Logic is equivalent to "compress anything > 1MB"
             IF(.NOT.ALL(gdims == cdims)) THEN
               CALL h5pset_chunk_f(plist_id,rank,cdims,error)
-  
+
               !Do not presently support user defined compression levels, just level 5
               !5 seems like a good trade-off of speed vs. compression ratio.
               CALL h5pset_deflate_f(plist_id,thisHDF5File%zlibOpt,error)
