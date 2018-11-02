@@ -3409,7 +3409,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: cnt_in
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-      CHARACTER(LEN=LEN(vals),KIND=C_CHAR),TARGET :: valss
+      CHARACTER(LEN=LEN_TRIM(vals)) :: valss
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
       INTEGER,PARAMETER :: rank=0
@@ -3419,7 +3419,7 @@ MODULE FileType_HDF5
 
       path=dsetname
       ! Fill character array
-      valss=vals
+      valss=TRIM(vals)
 
       ! stash offset
       offset(1)=0
@@ -3439,11 +3439,11 @@ MODULE FileType_HDF5
 
       CALL h5tcopy_f(H5T_NATIVE_CHARACTER,mem,error)
       CALL h5tset_strpad_f(mem,0,error)
-      CALL h5tset_size_f(mem,INT(LEN(vals),SDK),error)
+      CALL h5tset_size_f(mem,INT(LEN_TRIM(vals),SDK),error)
       CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
         gspace_id,plist_id,error,cnt,offset)
       IF(error == 0) &
-        CALL h5dwrite_f(dset_id,mem,TRIM(valss),gdims,error,dspace_id,gspace_id,plist_id)
+        CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
       CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
       CALL h5tclose_f(mem,error)
 #endif
@@ -3472,7 +3472,7 @@ MODULE FileType_HDF5
 
       length_max=0
       DO i=1,SIZE(vals)
-        length_max=MAX(LEN(vals(i)),length_max)
+        length_max=MAX(LEN_TRIM(vals(i)),length_max)
       ENDDO
       local_gdims(1:)=SHAPE(vals)
       IF(PRESENT(gdims_in)) local_gdims(1)=gdims_in(1)
@@ -3501,7 +3501,7 @@ MODULE FileType_HDF5
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: cnt_in
       INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-      CHARACTER(LEN=length_max,KIND=C_CHAR),TARGET :: valss(SIZE(vals))
+      CHARACTER(LEN=length_max) :: valss(SIZE(vals))
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(SIK) :: j
       INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
@@ -3513,7 +3513,7 @@ MODULE FileType_HDF5
       path=dsetname
       ! Fill character array
       DO j=1,SIZE(vals,DIM=1)
-        valss(j)=CHAR(vals(j))
+        valss(j)=TRIM(vals(j))
       ENDDO
 
       ! stash offset
@@ -3567,7 +3567,7 @@ MODULE FileType_HDF5
       length_max=0
       DO j=1,SIZE(vals,1)
         DO i=1,SIZE(vals,2)
-          length_max=MAX(LEN(vals(j,i)),length_max)
+          length_max=MAX(LEN_TRIM(vals(j,i)),length_max)
         ENDDO
       ENDDO
 
@@ -3610,11 +3610,11 @@ MODULE FileType_HDF5
       INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
       path=dsetname
-       DO k=1,SIZE(vals,2)
-         DO j=1,SIZE(vals,1)
-           valss(j,k)=CHAR(vals(j,k))
-         ENDDO
-       ENDDO
+      DO k=1,SIZE(vals,2)
+        DO j=1,SIZE(vals,1)
+          valss(j,k)=TRIM(vals(j,k))
+        ENDDO
+      ENDDO
 
       ! stash offset
       offset(1)=LBOUND(vals,1)-1
@@ -3716,7 +3716,7 @@ MODULE FileType_HDF5
       DO l=1,SIZE(vals,3)
         DO k=1,SIZE(vals,2)
           DO j=1,SIZE(vals,1)
-            valss(j,k,l)=CHAR(vals(j,k,l))
+            valss(j,k,l)=TRIM(vals(j,k,l))
           ENDDO
         ENDDO
       ENDDO
@@ -6561,8 +6561,9 @@ MODULE FileType_HDF5
       INTEGER(HSIZE_T),INTENT(IN) :: cnt(:)
       INTEGER(HSSIZE_T),INTENT(IN) :: offset(:)
 
-      INTEGER(HID_T) :: file_id
+      INTEGER(HID_T) :: file_id,oldmem
       INTEGER(HSIZE_T) :: cdims(rank)
+      INTEGER(HSIZE_T) :: oldsize,newsize
       LOGICAL :: dset_exists
 
       error=0
@@ -6647,14 +6648,38 @@ MODULE FileType_HDF5
            ' - invalid group path:'//path)
 
         IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
-           ! Open group for overwrite if it already exists and the file has overwrite status
-           CALL h5dopen_f(file_id,path,dset_id,error)
-           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ' - Could not open dataset:'//path)
+          ! Open group for overwrite if it already exists and the file has overwrite status
+          CALL h5dopen_f(file_id,path,dset_id,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not open dataset:'//path)
+
+          ! Get the old and new data type sizes
+          CALL h5dget_type_f(dset_id,oldmem,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not retrieve data type:'//path)
+          CALL h5tget_size_f(oldmem,oldsize,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not retrieve old data type size:'//path)
+          CALL h5tget_size_f(mem,newsize,error)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not retrieve new data type size:'//path)
+
+          ! Check that the size of the data type is equal to or less than the data type size
+          ! in the dataset since there is currently no way to resize the dataset
+          IF(oldsize < newsize) THEN
+            CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+              ' - Size of new data is greater than size of pre-existing data type:'//path)
+          ENDIF
+
+          ! For non-scalar data, check that the size of the array equal to or less than the
+          ! array size in the dataset since there is currently no way to resize the dataset
+          CALL h5dget_storage_size_f(dset_id,oldsize,error)
+          IF(oldsize < newsize*PRODUCT(gdims)) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Storage size of the pre-existing dataset is too small:'//path)
         ELSE
-           CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
-           IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-             ' - Could not create dataset:'//path)
+          CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
+          IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Could not create dataset:'//path)
         ENDIF
 
         ! Destroy the property list
