@@ -325,9 +325,9 @@ PROGRAM testHDF5
       TYPE(HDF5FileType) :: h5
       ASSERT(.NOT.h5%isinit,'%isinit')
       ASSERT(.NOT.h5%isNew(),'%newstat')
-      ASSERT(h5%fullname%n == 0,'%fullname')
-      ASSERT(h5%getUnitNo() == -1,'%unitno')
-      ASSERT(h5%file_id == 0,'%file_id')
+      ASSERT_EQ(h5%fullname%n,0,'%fullname')
+      ASSERT_EQ(h5%getUnitNo(),-1,'%unitno')
+      ASSERT_EQ(h5%file_id,0,'%file_id')
     ENDSUBROUTINE testHDF5FileTypeUninit
 !
 !-------------------------------------------------------------------------------
@@ -339,9 +339,9 @@ PROGRAM testHDF5
 
       ASSERT(h5%isinit,'HDF5 object no properly initialized')
       CALL h5%fopen()
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%fopen')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),0,'hdf5_filetype%fopen')
       CALL h5%fclose()
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%fclose')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),0,'hdf5_filetype%fclose')
       CALL h5%clear()
       ASSERT(.NOT.h5%isinit,'HDF5 object not properly cleared.')
 
@@ -349,7 +349,7 @@ PROGRAM testHDF5
       CALL h5%fopen()
       ASSERT(h5%isWrite(),'HDF object %isWrite() should be .TRUE.')
       CALL h5%mkdir('testGroup')
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 0,'hdf5_filetype%init ''WRITE''')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),0,'hdf5_filetype%init ''WRITE''')
       CALL h5%clear()
 
       CALL h5%init('createdeletetest.h5','READ')
@@ -357,8 +357,7 @@ PROGRAM testHDF5
       ASSERT(.NOT.(h5%isWrite()),'HDF object %isWrite() should be .FALSE.')
       CALL h5%e%setStopOnError(.FALSE.)
       CALL h5%mkdir('testGroup')
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR) == 1,'hdf5_filetype%init ''READ''')
-      FINFO() h5%e%getCounter(EXCEPTION_ERROR)
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),1,'hdf5_filetype%init ''READ''')
       CALL h5%fdelete()
       ASSERT(h5%isinit,'HDF5 object still initialized after deletion.')
       INQUIRE(FILE='createdeletetest.h5',EXIST=exists)
@@ -388,226 +387,226 @@ PROGRAM testHDF5
       !mostly redundant now though, one check checks the same code as all of them now.
       CALL h5%fwrite('groupR->memD0',refD0)
       tmpi=1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d0 %isinit check')
       CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d1 %isinit check')
       CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d2 %isinit check')
       CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d3 %isinit check')
       CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d4 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d4 %isinit check')
       CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d5 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d5 %isinit check')
       CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d6 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d6 %isinit check')
       CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_d7 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_d7 %isinit check')
       CALL h5%fwrite('groupR->memS0',refS0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s0 %isinit check')
       CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s1 %isinit check')
       CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s2 %isinit check')
       CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s3 %isinit check')
       CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s4 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s4 %isinit check')
       CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s5 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s5 %isinit check')
       CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s6 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s6 %isinit check')
       CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_s7 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_s7 %isinit check')
       CALL h5%fwrite('groupI->memL0',refL0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l0 %isinit check')
       CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l1 %isinit check')
       CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l2 %isinit check')
       CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l3 %isinit check')
       CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l4 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l4 %isinit check')
       CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l5 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l5 %isinit check')
       CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l6 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l6 %isinit check')
       CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_l7 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_l7 %isinit check')
       CALL h5%fwrite('groupI->memN0',refN0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n0 %isinit check')
       CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n1 %isinit check')
       CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n2 %isinit check')
       CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n3 %isinit check')
       CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n4 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n4 %isinit check')
       CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n5 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n5 %isinit check')
       CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n6 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n6 %isinit check')
       CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_n7 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_n7 %isinit check')
       CALL h5%fwrite('groupB->memB0',refB0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_b0 %isinit check')
       CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_b1 %isinit check')
       CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_b2 %isinit check')
       CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_b3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_b3 %isinit check')
       CALL h5%fwrite('groupST->CNULLCHAR0',refCNCHAR0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st0 %isinit check')
       CALL h5%fwrite('groupST->CNULLCHAR1',refCNCHAR1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st1 %isinit check')
       CALL h5%fwrite('groupST->CNULLCHAR2',refCNCHAR2)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st2 %isinit check')
       CALL h5%fwrite('groupST->CNULLCHAR3',refCNCHAR3)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st3 %isinit check')
       CALL h5%fwrite('groupST->memST0',refST0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st0 %isinit check')
       CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st1 %isinit check')
       CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st2 %isinit check')
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_st3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_st3 %isinit check')
       CALL h5%fwrite('groupC->memC1',refC1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%write_c1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%write_c1 %isinit check')
       CALL h5%mkdir('groupI')
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2-1,'%mkdir %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2-1,'%mkdir %isinit check')
       CALL h5%ls('groupR',refST1)
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%ls %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%ls %isinit check')
 
       CALL h5%fread('groupR->memD0',refD0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_d0 %isinit check')
       CALL h5%fread('groupR->memD1',refD1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_d1 %isinit check')
       CALL h5%fread('groupR->memD2',refD2)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_d2 %isinit check')
       CALL h5%fread('groupR->memD3',refD3)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_d3 %isinit check')
       CALL h5%fread('groupR->memD4',refD4)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d4 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_d4 %isinit check')
       CALL h5%freadp('groupR->memD4',d4ptr)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_d4 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_d4 %isinit check')
       CALL h5%fread('groupR->memS0',refS0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_s0 %isinit check')
       CALL h5%fread('groupR->memS1',refS1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_s1 %isinit check')
       CALL h5%fread('groupR->memS2',refS2)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_s2 %isinit check')
       CALL h5%fread('groupR->memS3',refS3)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_s3 %isinit check')
       CALL h5%fread('groupR->memS4',refS4)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_s4 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_s4 %isinit check')
       CALL h5%fread('groupI->memL0',refL0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_l0 %isinit check')
       CALL h5%fread('groupI->memL1',refL1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_l1 %isinit check')
       CALL h5%fread('groupI->memL2',refL2)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_l2 %isinit check')
       CALL h5%fread('groupI->memL3',refL3)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_l3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_l3 %isinit check')
       CALL h5%fread('groupI->memN0',refN0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_n0 %isinit check')
       CALL h5%fread('groupI->memN1',refN1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_n1 %isinit check')
       CALL h5%fread('groupI->memN2',refN2)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_n2 %isinit check')
       CALL h5%fread('groupI->memN3',refN3)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_n3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_n3 %isinit check')
       CALL h5%fread('groupB->memB0',refB0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_b0 %isinit check')
       CALL h5%fread('groupB->memB1',refB1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_b1 %isinit check')
       CALL h5%fread('groupB->memB2',refB2)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_b2 %isinit check')
       CALL h5%fread('groupB->memB3',refB3)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_b3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_b3 %isinit check')
       CALL h5%fread('groupST->memST0',refST0)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st0 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_st0 %isinit check')
       CALL h5%fread('groupST->memST1',refST1)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st1 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_st1 %isinit check')
       CALL h5%fread('groupST->memST2',refST2)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st2 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_st2 %isinit check')
       CALL h5%fread('groupST->memST3',refST3)
       tmpi=tmpi+1
-      ASSERT(h5%e%getCounter(EXCEPTION_ERROR)==tmpi*2,'%read_st3 %isinit check')
+      ASSERT_EQ(h5%e%getCounter(EXCEPTION_ERROR),tmpi*2,'%read_st3 %isinit check')
 
       CALL h5%clear(.TRUE.)
     ENDSUBROUTINE testHDF5FileTypeErrorCheck
@@ -695,7 +694,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
 
       CALL h5%fread('groupR->memD0',testD0)
-      ASSERT(testD0==refD0,'D0 Write Failure with gdims_in')
+      ASSERT_EQ(testD0,refD0,'D0 Write Failure with gdims_in')
       CALL h5%fread('groupR->memD1',testD1)
       ASSERT(ALL(testD1==refD1),'D1 Write Failure with gdims_in')
       CALL h5%fread('groupR->memD2',testD2)
@@ -711,7 +710,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memD7',testD7)
       ASSERT(ALL(testD7==refD7),'D7 Write Failure with gdims_in')
       CALL h5%fread('groupR->memS0',testS0)
-      ASSERT(testS0==refS0,'S0 Write Failure with gdims_in')
+      ASSERT_EQ(testS0,refS0,'S0 Write Failure with gdims_in')
       CALL h5%fread('groupR->memS1',testS1)
       ASSERT(ALL(testS1==refS1),'S1 Write Failure with gdims_in')
       CALL h5%fread('groupR->memS2',testS2)
@@ -727,7 +726,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memS7',testS7)
       ASSERT(ALL(testS7==refS7),'S7 Write Failure with gdims_in')
       CALL h5%fread('groupI->memN0',testN0)
-      ASSERT(testN0==refN0,'N0 Write Failure with gdims_in')
+      ASSERT_EQ(testN0,refN0,'N0 Write Failure with gdims_in')
       CALL h5%fread('groupI->memN1',testN1)
       ASSERT(ALL(testN1==refN1),'N1 Write Failure with gdims_in')
       CALL h5%fread('groupI->memN2',testN2)
@@ -743,8 +742,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupI->memN7',testN7)
       ASSERT(ALL(testN7==refN7),'N7 Write Failure with gdims_in')
       CALL h5%fread('groupI->memL0',testL0)
-      ASSERT(testL0==refL0,'L0 Write Failure with gdims_in')
-      FINFO()testL0,refL0
+      ASSERT_EQ(testL0,refL0,'L0 Write Failure with gdims_in')
       CALL h5%fread('groupI->memL1',testL1)
       ASSERT(ALL(testL1==refL1),'L1 Write Failure with gdims_in')
       CALL h5%fread('groupI->memL2',testL2)
@@ -768,7 +766,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure with gdims_in')
       CALL h5%fread('groupCNCHAR->CNCHAR0',testST0)
-      ASSERT(testST0=='','CNCHAR0 is non empty! Write Failure with gdims_in')
+      ASSERT_EQ(CHAR(testST0),'','CNCHAR0 is non empty! Write Failure with gdims_in')
       CALL h5%fread('groupCNCHAR->CNCHAR1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refCNCHAR1)
@@ -795,8 +793,7 @@ PROGRAM testHDF5
       ASSERT(checkwrite,'CNCHAR3 is non empty! Write Failure with gdims_in')
 
       CALL h5%fread('groupST->memST0',testST0)
-      ASSERT(testST0==refST0,'ST0 Write Failure with gdims_in')
-      FINFO() ":"//testST0//":   :"//refST0//":"
+      ASSERT_EQ(CHAR(testST0),CHAR(refST0),'ST0 Write Failure with gdims_in')
       CALL h5%fread('groupST->memST1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refST1)
@@ -822,12 +819,10 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkwrite,'ST3 Write Failure with gdims_in')
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure with gdims_in')
-      FINFO() ':'//testC1//':  :'//refC1//':'
+      ASSERT_EQ(TRIM(testC1),TRIM(refC1),'C1 Write Failure with gdims_in')
 
       i=h5%ngrp('groupR')
-      ASSERT(i == 16,'ngrp_HDF5FileType')
-      FINFO() i
+      ASSERT_EQ(i,16,'ngrp_HDF5FileType')
 
       ! Delete the file
       CALL h5%clear(.TRUE.)
@@ -897,14 +892,14 @@ PROGRAM testHDF5
 
       !READ ATTRIBUTES
       CALL h5%read_attribute('groupB->memB0',integer_name,testN0)
-      ASSERT(refN0==testN0,'integer read fail')
+      ASSERT_EQ(refN0,testN0,'integer read fail')
       CALL h5%read_attribute('groupB->memB1',string_name,testST0)
-      ASSERT(refST0==testST0,'string read fail')
+      ASSERT_EQ(CHAR(refST0),CHAR(testST0),'string read fail')
       CALL h5%read_attribute('groupB->memB2',real_name,testD0)
       ASSERT_SOFTEQ(refD0,testD0,1.E-12_SRK,'l')
 
       CALL h5%fread('groupR->memD0',testD0)
-      ASSERT(testD0==refD0,'D0 Write Failure')
+      ASSERT_EQ(testD0,refD0,'D0 Write Failure')
       CALL h5%fread('groupR->memD1',testD1)
       ASSERT(ALL(testD1==refD1),'D1 Write Failure')
       CALL h5%fread('groupR->memD2',testD2)
@@ -920,7 +915,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memD7',testD7)
       ASSERT(ALL(testD7==refD7),'D7 Write Failure')
       CALL h5%fread('groupR->memS0',testS0)
-      ASSERT(testS0==refS0,'S0 Write Failure')
+      ASSERT_EQ(testS0,refS0,'S0 Write Failure')
       CALL h5%fread('groupR->memS1',testS1)
       ASSERT(ALL(testS1==refS1),'S1 Write Failure')
       CALL h5%fread('groupR->memS2',testS2)
@@ -936,7 +931,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memS7',testS7)
       ASSERT(ALL(testS7==refS7),'S7 Write Failure')
       CALL h5%fread('groupI->memN0',testN0)
-      ASSERT(testN0==refN0,'N0 Write Failure')
+      ASSERT_EQ(testN0,refN0,'N0 Write Failure')
       CALL h5%fread('groupI->memN1',testN1)
       ASSERT(ALL(testN1==refN1),'N1 Write Failure')
       CALL h5%fread('groupI->memN2',testN2)
@@ -952,8 +947,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupI->memN7',testN7)
       ASSERT(ALL(testN7==refN7),'N7 Write Failure')
       CALL h5%fread('groupI->memL0',testL0)
-      ASSERT(testL0==refL0,'L0 Write Failure')
-      FINFO()testL0,refL0
+      ASSERT_EQ(testL0,refL0,'L0 Write Failure')
       CALL h5%fread('groupI->memL1',testL1)
       ASSERT(ALL(testL1==refL1),'L1 Write Failure')
       CALL h5%fread('groupI->memL2',testL2)
@@ -977,7 +971,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure')
       CALL h5%fread('groupCNCHAR->CNCHAR0',testST0)
-      ASSERT(testST0=='','CNCHAR0 is non empty! Write Failure')
+      ASSERT_EQ(CHAR(testST0),'','CNCHAR0 is non empty! Write Failure')
       CALL h5%fread('groupCNCHAR->CNCHAR1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refCNCHAR1)
@@ -1004,8 +998,7 @@ PROGRAM testHDF5
       ASSERT(checkwrite,'CNCHAR3 is non empty! Write Failure')
 
       CALL h5%fread('groupST->memST0',testST0)
-      ASSERT(testST0==refST0,'ST0 Write Failure')
-      FINFO() ':'//CHAR(testST0)//':  :'//CHAR(refST0)//':'
+      ASSERT_EQ(CHAR(testST0),CHAR(refST0),'ST0 Write Failure')
       CALL h5%fread('groupST->memST1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refST1)
@@ -1031,11 +1024,9 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkwrite,'ST3 Write Failure')
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT(testC1==refC1,'C1 Write Failure')
-      FINFO() "testC1=",testC1,":refC1=",refC1,":"
+      ASSERT_EQ(testC1,refC1,'C1 Write Failure')
       i=h5%ngrp('groupR')
-      ASSERT(i == 16,'ngrp_HDF5FileType')
-      FINFO() i
+      ASSERT_EQ(i,16,'ngrp_HDF5FileType')
 
 
       COMPONENT_TEST('%pathExists')
@@ -1081,23 +1072,19 @@ PROGRAM testHDF5
         'groupC->anotherGroup->moreGroups->almostLastGroup->memC2')
       CALL h5%fread('groupC->anotherGroup->memC1',testC1)
       CALL h5%fread('groupC->anotherGroup->moreGroups->almostLastGroup->memC2',testC2)
-      ASSERT(testC1 == testC2,'Valid Hardlink')
+      ASSERT_EQ(testC1,testC2,'Valid Hardlink')
       CALL h5%e%setQuietMode(.TRUE.)
       CALL h5%e%setStopOnError(.FALSE.)
       CALL h5%createHardLink('groupThatDoesNotExist->memC1','groupC->anotherGroup->moreGroups')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::createHardLink_HDF5FileType '// &
         '- Target of new link must exist in file!'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Non-existant Target Link')
-      FINFO() "   msg="//TRIM(msg)
-      FINFO() "refmsg="//TRIM(refmsg)
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Non-existant Target Link')
       CALL h5%createHardLink('groupC->memC1','groupC->anotherGroup->moreGroups')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::createHardLink_HDF5FileType '// &
         '- Location of new link already exists!'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Pre-existing New Link')
-      FINFO() "   msg="//TRIM(msg)
-      FINFO() "refmsg="//TRIM(refmsg)
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Pre-existing New Link')
 
       CALL h5%e%setQuietMode(.FALSE.)
       CALL h5%e%setStopOnError(.TRUE.)
@@ -1342,7 +1329,7 @@ PROGRAM testHDF5
       CALL h5%mkdir('groupI')
       CALL h5%fwrite('groupI->memL0',newL0)
       CALL h5%fread ('groupI->memL0',testL0)
-      ASSERT(newL0==testL0,msg)
+      ASSERT_EQ(newL0,testL0,msg)
 
       CALL h5%fwrite('groupI->memL1',newL1,SHAPE(newL1))
       CALL h5%fread ('groupI->memL1',testL1)
@@ -1374,7 +1361,7 @@ PROGRAM testHDF5
 
       CALL h5%fwrite('groupI->memN0',newN0)
       CALL h5%fread ('groupI->memN0',testN0)
-      ASSERT(newN0==testN0,msg)
+      ASSERT_EQ(newN0,testN0,msg)
 
       CALL h5%fwrite('groupI->memN1',newN1,SHAPE(newN1))
       CALL h5%fread ('groupI->memN1',testN1)
@@ -1424,7 +1411,7 @@ PROGRAM testHDF5
       CALL h5%mkdir('groupST')
       CALL h5%fwrite('groupST->memST0',newST0)
       CALL h5%fread ('groupST->memST0',testST0)
-      ASSERT(newST0==testST0,msg)
+      ASSERT_EQ(CHAR(newST0),CHAR(testST0),msg)
 
       CALL h5%fwrite('groupST->memST1',newST1,SHAPE(newST1))
       CALL h5%fread ('groupST->memST1',testST1)
@@ -1441,7 +1428,7 @@ PROGRAM testHDF5
       !CALL h5%mkdir('groupC')
       CALL h5%fwrite('groupC->memC1',newC1,LEN(newC1))
       CALL h5%fread ('groupC->memC1',testC1)
-      ASSERT(testC1==newC1,msg)
+      ASSERT_EQ(testC1,newC1,msg)
 
 
       CALL h5%fclose()
@@ -1492,19 +1479,19 @@ PROGRAM testHDF5
       newB1=refB1
       newB2=refB2
       newB3=refB3
-      newST0='ref value'
+      newST0='ref val'
       DO i=1,SIZE(newST1)
-        newST1(i)='ref value'
+        newST1(i)=newST0
       ENDDO
       DO i=1,SIZE(newST2,1)
         DO j=1,SIZE(newST2,2)
-          newST2(i,j)='ref value'
+          newST2(i,j)=newST0
         ENDDO
       ENDDO
       DO i=1,SIZE(newST3,1)
         DO j=1,SIZE(newST3,2)
           DO k=1,SIZE(newST3,3)
-            newST3(i,j,k)='ref value'
+            newST3(i,j,k)=newST0
           ENDDO
         ENDDO
       ENDDO
@@ -1578,7 +1565,7 @@ PROGRAM testHDF5
       CALL h5%mkdir('groupI')
       CALL h5%fwrite('groupI->memL0',newL0)
       CALL h5%fread ('groupI->memL0',testL0)
-      ASSERT(newL0==testL0,msg)
+      ASSERT_EQ(newL0,testL0,msg)
 
       CALL h5%fwrite('groupI->memL1',newL1,SHAPE(newL1))
       CALL h5%fread ('groupI->memL1',testL1)
@@ -1610,7 +1597,7 @@ PROGRAM testHDF5
 
       CALL h5%fwrite('groupI->memN0',newN0)
       CALL h5%fread ('groupI->memN0',testN0)
-      ASSERT(newN0==testN0,msg)
+      ASSERT_EQ(newN0,testN0,msg)
 
       CALL h5%fwrite('groupI->memN1',newN1,SHAPE(newN1))
       CALL h5%fread ('groupI->memN1',testN1)
@@ -1660,11 +1647,11 @@ PROGRAM testHDF5
       CALL h5%mkdir('groupST')
       CALL h5%fwrite('groupST->memST0',newST0)
       CALL h5%fread ('groupST->memST0',testST0)
-      ASSERT(newST0==testST0,msg)
+      ASSERT_EQ(CHAR(newST0),CHAR(testST0),msg)
 
       CALL h5%fwrite('groupST->memST1',newST1,SHAPE(newST1))
       CALL h5%fread ('groupST->memST1',testST1)
-      ASSERT(newST1(1)==testST1(1),msg)
+      ASSERT_EQ(CHAR(newST1(1)),CHAR(testST1(1)),msg)
 
       CALL h5%fwrite('groupST->memST2',newST2,SHAPE(newST2))
       CALL h5%fread ('groupST->memST2',testST2)
@@ -1677,7 +1664,7 @@ PROGRAM testHDF5
       !CALL h5%mkdir('groupC')
       CALL h5%fwrite('groupC->memC1',newC1,LEN(newC1))
       CALL h5%fread ('groupC->memC1',testC1)
-      ASSERT(testC1==newC1,msg)
+      ASSERT_EQ(testC1,newC1,msg)
 
 
       ! Set the overwrite status back to .FALSE. and try to overwrite
@@ -1695,350 +1682,350 @@ PROGRAM testHDF5
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
         '- Failed to create HDF5 group.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD0',refD0)
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS0',refS0)
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%mkdir('groupI')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
         '- Failed to create HDF5 group.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL0',refL0)
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN0',refN0)
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%mkdir('groupB')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
         '- Failed to create HDF5 group.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupB->memB0',refB0)
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%mkdir('groupCNCHAR')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
         '- Failed to create HDF5 group.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1,SHAPE(refCNCHAR1))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2,SHAPE(refCNCHAR2))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3,SHAPE(refCNCHAR3))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%mkdir('groupST')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
         '- Failed to create HDF5 group.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupST->memST0',refST0)
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%mkdir('groupC')
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
         '- Failed to create HDF5 group.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       ! Turn exceptions back on for last one to make sure this function works
@@ -2048,7 +2035,7 @@ PROGRAM testHDF5
       msg=h5%e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
         '- Could not close the dataset.'
-      ASSERT(TRIM(msg) == TRIM(refmsg),'Failure to prevent overwrite.')
+      ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
       CALL h5%e%initCounter()
 
       CALL h5%fclose()
@@ -2119,7 +2106,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
 
       CALL h5%fread('groupR->memD0',testD0)
-      ASSERT(testD0==refD0,'D0 Write Failure with gdims_in')
+      ASSERT_EQ(testD0,refD0,'D0 Write Failure with gdims_in')
       CALL h5%fread('groupR->memD1',testD1)
       ASSERT(ALL(testD1==refD1),'D1 Write Failure with gdims_in')
       CALL h5%fread('groupR->memD2',testD2)
@@ -2129,7 +2116,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memD4',testD4)
       ASSERT(ALL(testD4==refD4),'D4 Write Failure with gdims_in')
       CALL h5%fread('groupR->memS0',testS0)
-      ASSERT(testS0==refS0,'S0 Write Failure with gdims_in')
+      ASSERT_EQ(testS0,refS0,'S0 Write Failure with gdims_in')
       CALL h5%fread('groupR->memS1',testS1)
       ASSERT(ALL(testS1==refS1),'S1 Write Failure with gdims_in')
       CALL h5%fread('groupR->memS2',testS2)
@@ -2139,7 +2126,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memS4',testS4)
       ASSERT(ALL(testS4==refS4),'S4 Write Failure with gdims_in')
       CALL h5%fread('groupI->memN0',testN0)
-      ASSERT(testN0==refN0,'N0 Write Failure with gdims_in')
+      ASSERT_EQ(testN0,refN0,'N0 Write Failure with gdims_in')
       CALL h5%fread('groupI->memN1',testN1)
       ASSERT(ALL(testN1==refN1),'N1 Write Failure with gdims_in')
       CALL h5%fread('groupI->memN2',testN2)
@@ -2147,8 +2134,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupI->memN3',testN3)
       ASSERT(ALL(testN3==refN3),'N3 Write Failure with gdims_in')
       CALL h5%fread('groupI->memL0',testL0)
-      ASSERT(testL0==refL0,'L0 Write Failure with gdims_in')
-      FINFO()testL0,refL0
+      ASSERT_EQ(testL0,refL0,'L0 Write Failure with gdims_in')
       CALL h5%fread('groupI->memL1',testL1)
       ASSERT(ALL(testL1==refL1),'L1 Write Failure with gdims_in')
       CALL h5%fread('groupI->memL2',testL2)
@@ -2164,8 +2150,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure with gdims_in')
       CALL h5%fread('groupST->memST0',testST0)
-      ASSERT(testST0==refST0,'ST0 Write Failure with gdims_in')
-      FINFO() ":"//testST0//":   :"//refST0//":"
+      ASSERT_EQ(CHAR(testST0),CHAR(refST0),'ST0 Write Failure with gdims_in')
       CALL h5%fread('groupST->memST1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refST1)
@@ -2191,12 +2176,10 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkwrite,'ST3 Write Failure with gdims_in')
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT(TRIM(testC1)==TRIM(refC1),'C1 Write Failure with gdims_in')
-      FINFO() ':'//testC1//':  :'//refC1//':'
+      ASSERT_EQ(TRIM(testC1),TRIM(refC1),'C1 Write Failure with gdims_in')
 
       i=h5%ngrp('groupR')
-      ASSERT(i == 10,'ngrp_HDF5FileType')
-      FINFO() i
+      ASSERT_EQ(i,10,'ngrp_HDF5FileType')
 
       ! Delete the file
       CALL h5%clear(.TRUE.)
@@ -2240,7 +2223,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupC->memC1',refC1)
 
       CALL h5%fread('groupR->memD0',testD0)
-      ASSERT(testD0==refD0,'D0 Write Failure')
+      ASSERT_EQ(testD0,refD0,'D0 Write Failure')
       CALL h5%fread('groupR->memD1',testD1)
       ASSERT(ALL(testD1==refD1),'D1 Write Failure')
       CALL h5%fread('groupR->memD2',testD2)
@@ -2250,7 +2233,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memD4',testD4)
       ASSERT(ALL(testD4==refD4),'D4 Write Failure')
       CALL h5%fread('groupR->memS0',testS0)
-      ASSERT(testS0==refS0,'S0 Write Failure')
+      ASSERT_EQ(testS0,refS0,'S0 Write Failure')
       CALL h5%fread('groupR->memS1',testS1)
       ASSERT(ALL(testS1==refS1),'S1 Write Failure')
       CALL h5%fread('groupR->memS2',testS2)
@@ -2260,7 +2243,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memS4',testS4)
       ASSERT(ALL(testS4==refS4),'S4 Write Failure')
       CALL h5%fread('groupI->memN0',testN0)
-      ASSERT(testN0==refN0,'N0 Write Failure')
+      ASSERT_EQ(testN0,refN0,'N0 Write Failure')
       CALL h5%fread('groupI->memN1',testN1)
       ASSERT(ALL(testN1==refN1),'N1 Write Failure')
       CALL h5%fread('groupI->memN2',testN2)
@@ -2268,8 +2251,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupI->memN3',testN3)
       ASSERT(ALL(testN3==refN3),'N3 Write Failure')
       CALL h5%fread('groupI->memL0',testL0)
-      ASSERT(testL0==refL0,'L0 Write Failure')
-      FINFO()testL0,refL0
+      ASSERT_EQ(testL0,refL0,'L0 Write Failure')
       CALL h5%fread('groupI->memL1',testL1)
       ASSERT(ALL(testL1==refL1),'L1 Write Failure')
       CALL h5%fread('groupI->memL2',testL2)
@@ -2285,8 +2267,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Write Failure')
       CALL h5%fread('groupST->memST0',testST0)
-      ASSERT(testST0==refST0,'ST0 Write Failure')
-      FINFO() ':'//CHAR(testST0)//':  :'//CHAR(refST0)//':'
+      ASSERT_EQ(CHAR(testST0),CHAR(refST0),'ST0 Write Failure')
       CALL h5%fread('groupST->memST1',testST1)
       checkwrite=.TRUE.
       DO i=1,SIZE(refST1)
@@ -2312,11 +2293,9 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkwrite,'ST3 Write Failure')
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT(testC1==refC1,'C1 Write Failure')
-      FINFO() "testC1=",testC1,":refC1=",refC1,":"
+      ASSERT_EQ(testC1,refC1,'C1 Write Failure')
       i=h5%ngrp('groupR')
-      ASSERT(i == 10,'ngrp_HDF5FileType')
-      FINFO() i
+      ASSERT_EQ(i,10,'ngrp_HDF5FileType')
 
       !Clear variables
       CALL h5%clear(.TRUE.)
@@ -2376,14 +2355,13 @@ PROGRAM testHDF5
 
       CALL h5%ls('groupR',testST1)
       DO i=1,SIZE(testST1)
-        ASSERT(TRIM(refsets(i))==TRIM(testST1(i)),refsets(i)//' List Failure')
-        FINFO() refsets(i)//':'//testST1(i)
+        ASSERT_EQ(TRIM(refsets(i)),TRIM(testST1(i)),refsets(i)//' List Failure')
       ENDDO
 
       COMPONENT_TEST('%fread values')
       ! Read a dataset (real-1)
       CALL h5%fread('groupR->memD0',testD0)
-      ASSERT(testD0==refD0,'D0 Read Failure')
+      ASSERT_EQ(testD0,refD0,'D0 Read Failure')
       CALL h5%fread('groupR->memD1',testD1)
       ASSERT(ALL(testD1==refD1),'D1 Read Failure')
       CALL h5%fread('groupR->memD2',testD2)
@@ -2401,7 +2379,7 @@ PROGRAM testHDF5
       CALL h5%freadp('groupR->memD4',testDP4)
       ASSERT(ALL(testDP4==refD4),'DP4 Read Failure')
       CALL h5%fread('groupR->memS0',testS0)
-      ASSERT(testS0==refS0,'S0 Read Failure')
+      ASSERT_EQ(testS0,refS0,'S0 Read Failure')
       CALL h5%fread('groupR->memS1',testS1)
       ASSERT(ALL(testS1==refS1),'S1 Read Failure')
       CALL h5%fread('groupR->memS2',testS2)
@@ -2417,7 +2395,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupR->memS7',testS7)
       ASSERT(ALL(testS7==refS7),'S7 Read Failure')
       CALL h5%fread('groupI->memN0',testN0)
-      ASSERT(testN0==refN0,'N0 Read Failure')
+      ASSERT_EQ(testN0,refN0,'N0 Read Failure')
       CALL h5%fread('groupI->memN1',testN1)
       ASSERT(ALL(testN1==refN1),'N1 Read Failure')
       CALL h5%fread('groupI->memN2',testN2)
@@ -2433,8 +2411,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupI->memN7',testN7)
       ASSERT(ALL(testN7==refN7),'N7 Read Failure')
       CALL h5%fread('groupI->memL0',testL0)
-      ASSERT(testL0==refL0,'L0 Read Failure')
-      FINFO()testL0,refL0
+      ASSERT_EQ(testL0,refL0,'L0 Read Failure')
       CALL h5%fread('groupI->memL1',testL1)
       ASSERT(ALL(testL1==refL1),'L1 Read Failure')
       CALL h5%fread('groupI->memL2',testL2)
@@ -2458,8 +2435,7 @@ PROGRAM testHDF5
       CALL h5%fread('groupB->memB3',testB3)
       ASSERT(ALL(testB3.EQV.refB3),'B3 Read Failure')
       CALL h5%fread('groupST->memST0',testST0)
-      ASSERT(testST0==refST0,'ST0 Read Failure')
-      FINFO() "test: "//CHAR(testST0), "ref: "//CHAR(refST0)
+      ASSERT_EQ(CHAR(testST0),CHAR(refST0),'ST0 Read Failure')
       CALL h5%fread('groupST->memST1',testST1)
       checkread=.TRUE.
       DO i=1,SIZE(refST1)
@@ -2484,8 +2460,7 @@ PROGRAM testHDF5
         ENDDO
       ENDDO
       CALL h5%fread('groupST->memCA0',testST0)
-      ASSERT(testST0==refST0,'CA0 Read Failure')
-      FINFO() "test: "//CHAR(testST0), "ref: "//CHAR(refST0)
+      ASSERT_EQ(CHAR(testST0),CHAR(refST0),'CA0 Read Failure')
       CALL h5%fread('groupST->memCA1',testST1)
       checkread=.TRUE.
       DO i=1,SIZE(refST1)
@@ -2511,17 +2486,17 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkread,'CA3 Read Failure')
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT(testC1 == refC1,'C1 Read Failure')
+      ASSERT_EQ(testC1,refC1,'C1 Read Failure')
 
       !Read test attributes
       COMPONENT_TEST('%read_attributes')
       !READ ATTRIBUTES
       CALL h5%read_attribute('groupB->memB0',integer_name,testN0)
-      ASSERT(refN0==testN0,'integer read fail')
+      ASSERT_EQ(refN0,testN0,'integer read fail')
       CALL h5%read_attribute('groupB->memB1',string_name,testST0)
-      ASSERT(refST0==testST0,'string read fail')
+      ASSERT_EQ(CHAR(refST0),CHAR(testST0),'string read fail')
       CALL h5%read_attribute('groupB->memB2',real_name,testD0)
-      ASSERT(refD0==testD0,'real_read fail')
+      ASSERT_EQ(refD0,testD0,'real_read fail')
 
       COMPONENT_TEST('%fread to parameter list')
       CALL h5%fread('groupC',tmpPL)
@@ -2529,23 +2504,17 @@ PROGRAM testHDF5
       CALL tmpPL%get('groupC->anotherGroup->memC1',testST1)
       DO i=1,SIZE(testST1)
         ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
-        ASSERT(testST1(i) == refSTC1(i),'C1 Read PL Failure')
-        FINFO() i,CHAR(testST1(i))
-        FINFO() i,CHAR(refSTC1(i))
+        ASSERT_EQ(CHAR(testST1(i)),CHAR(refSTC1(i)),'C1 Read PL Failure')
       ENDDO
       CALL tmpPL%get('groupC->anotherGroup->moreGroups->almostLastGroup->memC2',testST1)
       DO i=1,SIZE(testST1)
         ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
-        ASSERT(testST1(i) == refSTC1(i),'C1 Read PL Failure')
-        FINFO() i,CHAR(testST1(i))
-        FINFO() i,CHAR(refSTC1(i))
+        ASSERT_EQ(CHAR(testST1(i)),CHAR(refSTC1(i)),'C1 Read PL Failure')
       ENDDO
       CALL tmpPL%get('groupC->memC1',testST1)
       DO i=1,SIZE(testST1)
         ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
-        ASSERT(testST1(i) == refSTC1(i),'C1 Read PL Failure')
-        FINFO() i,CHAR(testST1(i))
-        FINFO() i,CHAR(refSTC1(i))
+        ASSERT_EQ(CHAR(testST1(i)),CHAR(refSTC1(i)),'C1 Read PL Failure')
       ENDDO
       !Logicals
       CALL tmpPL%clear()
@@ -2560,7 +2529,7 @@ PROGRAM testHDF5
       CALL tmpPL%clear()
       CALL h5%fread('groupI',tmpPL)
       CALL tmpPL%get('groupI->memL0',testL0)
-      ASSERT(testL0 == refL0,'L0 read PL Failure')
+      ASSERT_EQ(testL0,refL0,'L0 read PL Failure')
       CALL tmpPL%get('groupI->memL1',testL1)
       ASSERT(ALL(testL1 == refL1),'L1 read PL Failure')
       CALL tmpPL%get('groupI->memL2',testL2)
@@ -2568,7 +2537,7 @@ PROGRAM testHDF5
       CALL tmpPL%get('groupI->memL3',testL3)
       ASSERT(ALL(testL3 == refL3),'L3 read PL Failure')
       CALL tmpPL%get('groupI->memN0',testN0)
-      ASSERT(testN0 == refN0,'N0 read PL Failure')
+      ASSERT_EQ(testN0,refN0,'N0 read PL Failure')
       CALL tmpPL%get('groupI->memN1',testN1)
       ASSERT(ALL(testN1 == refN1),'N1 read PL Failure')
       CALL tmpPL%get('groupI->memN2',testN2)
@@ -2579,7 +2548,7 @@ PROGRAM testHDF5
       CALL tmpPL%clear()
       CALL h5%fread('groupR',tmpPL)
       CALL tmpPL%get('groupR->memD0',testD0)
-      ASSERT(testD0 == refD0,'D0 read PL Failure')
+      ASSERT_EQ(testD0,refD0,'D0 read PL Failure')
       CALL tmpPL%get('groupR->memD1',testD1)
       ASSERT(ALL(testD1 == refD1),'D1 read PL Failure')
       CALL tmpPL%get('groupR->memD2',testD2)
@@ -2587,7 +2556,7 @@ PROGRAM testHDF5
       CALL tmpPL%get('groupR->memD3',testD3)
       ASSERT(ALL(testD3 == refD3),'D3 read PL Failure')
       CALL tmpPL%get('groupR->memS0',testS0)
-      ASSERT(testS0 == refS0,'S0 read PL Failure')
+      ASSERT_EQ(testS0,refS0,'S0 read PL Failure')
       CALL tmpPL%get('groupR->memS1',testS1)
       ASSERT(ALL(testS1 == refS1),'S1 read PL Failure')
       CALL tmpPL%get('groupR->memS2',testS2)
@@ -2599,11 +2568,11 @@ PROGRAM testHDF5
       CALL tmpPL%clear()
       CALL h5%fread('groupST',tmpPL)
       CALL tmpPL%get('groupST->memST0',testST0)
-      ASSERT(testST0 == refST0,'ST0 read PL Failure')
+      ASSERT_EQ(CHAR(testST0),CHAR(refST0),'ST0 read PL Failure')
       CALL tmpPL%get('groupST->memST1',testST1)
       ASSERTFAIL(SIZE(testST1) == SIZE(refST1),'ST1 Sizes')
       DO i=1,SIZE(testST1)
-        ASSERT(testST1(i) == refST1(i),'ST1 read PL Failure')
+        ASSERT_EQ(CHAR(testST1(i)),CHAR(refST1(i)),'ST1 read PL Failure')
       ENDDO
       CALL tmpPL%get('groupST->memST2',testST2)
       testB0=(SIZE(testST2,DIM=1) == SIZE(refST2,DIM=1)) .AND. &
@@ -2611,15 +2580,14 @@ PROGRAM testHDF5
       ASSERTFAIL(testB0,'ST2 Sizes')
       DO j=1,SIZE(testST2,DIM=2)
         DO i=1,SIZE(testST2,DIM=1)
-          ASSERT(testST2(i,j) == refST2(i,j),'ST2 read PL Failure')
+          ASSERT_EQ(CHAR(testST2(i,j)),CHAR(refST2(i,j)),'ST2 read PL Failure')
          ENDDO
        ENDDO
       !Character array, read in as a 1-D string array
       CALL tmpPL%get('groupST->memCA0',testST1)
       ASSERTFAIL(SIZE(testST1) == SIZE(refST0CA),'ST1 Sizes')
       DO i=1,SIZE(testST1)
-        ASSERT(testST1(i) == refST0CA(i),'ST1 read PL Failure')
-        FINFO() i,CHAR(testST1(i))//' | '//CHAR(refST0CA(i))
+        ASSERT_EQ(CHAR(testST1(i)),CHAR(refST0CA(i)),'ST1 read PL Failure')
       ENDDO
       CALL tmpPL%clear()
 
@@ -2695,7 +2663,7 @@ PROGRAM testHDF5
       CALL h5%fwrite('groupR->tmpA',tmpA)
       CALL h5%fwrite('groupR->tmpA2',tmpA2)
       CALL h5%getChunkSize('groupR->tmpA',cdims)
-      ASSERT(cdims(1) == 131072,'memD1')
+      ASSERT_EQ(cdims(1),131072,'memD1')
       CALL h5%getChunkSize('groupR->tmpA2',cdims)
       ASSERT(ALL(cdims == (/2,131072/)),'memD2')
 
