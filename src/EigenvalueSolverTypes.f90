@@ -62,11 +62,19 @@ MODULE EigenvalueSolverTypes
 #else
 #include <finclude/petsc.h>
 #endif
-!petscisdef.h defines the keyword IS, and it needs to be reset
+
 #ifdef FUTILITY_HAVE_SLEPC
+!SLEPC version == PETSC version
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#else
 #include <finclude/slepcsys.h>
 #include <finclude/slepceps.h>
 #endif
+#endif
+
+!petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
 #endif
 
@@ -720,7 +728,11 @@ MODULE EigenvalueSolverTypes
 
       SELECTTYPE(solver); TYPE IS(EigenvalueSolverType_SLEPc)
 #ifdef FUTILITY_HAVE_SLEPC
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+        CALL EPSComputeError(solver%eps,0,EPS_ERROR_RELATIVE,resid,ierr)
+#else
         CALL EPSComputeRelativeError(solver%eps,0,resid,ierr)
+#endif
         CALL EPSGetIterationNumber(solver%eps,its,ierr)
 #endif
       TYPE IS(EigenvalueSolverType_Anasazi)
