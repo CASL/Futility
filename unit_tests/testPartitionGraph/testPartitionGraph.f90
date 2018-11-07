@@ -31,7 +31,14 @@ PROGRAM testPartitionGraph
 #else
 #include <finclude/petsc.h>
 #endif
+
+!SLEPC version == PETSC version
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#include <slepc/finclude/slepc.h>
+#else
 #include <finclude/slepc.h>
+#endif
+
 #undef IS
   PetscErrorCode  :: ierr
 #endif

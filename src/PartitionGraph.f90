@@ -56,11 +56,19 @@ MODULE PartitionGraph
 #else
 #include <finclude/petsc.h>
 #endif
-!petscisdef.h defines the keyword IS, and it needs to be reset
+
 #ifdef FUTILITY_HAVE_SLEPC
+!SLEPC version == PETSC version
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#else
 #include <finclude/slepcsys.h>
 #include <finclude/slepceps.h>
 #endif
+#endif
+
+!petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
 #endif
 
