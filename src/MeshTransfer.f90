@@ -233,10 +233,10 @@ MODULE MeshTransfer
 !>   - Required:
 !>     * map_in - type of incoming map (POINT,VOLUME,CONTINUOUS)
 !>     * map_out - type of outgoing map (POINT,VOLUME,CONTINUOUS)
-!>     * moment_in - number of polynomial coefficients (only for map_in=CONTINUOUS)
+!>     * moments_in - number of polynomial coefficients (only for map_in=CONTINUOUS)
 !>     * pointmesh_in - 1D array of point locations (only for map_in=POINT)
 !>     * volumemesh_in - 1D array of edges of volumes (only for map_in=VOLUME)
-!>     * moment_out - number of polynomial coefficients (only for map_out=CONTINUOUS)
+!>     * moments_out - number of polynomial coefficients (only for map_out=CONTINUOUS)
 !>     * pointmesh_out - 1D array of point locations (only for map_out=POINT)
 !>     * volumemesh_out - 1D array of edges of volumes (only for map_out=VOLUME)
 !>   - Optional:
@@ -1413,7 +1413,7 @@ MODULE MeshTransfer
       !project into local coordinate system
       xa=TWO*xa/w
       xb=TWO*xb/w
-      IF(N > 1) THEN
+      IF(N > 0) THEN
         Pnm1a=xa
         Pnm1b=xb
         Pnm2a=ONE
