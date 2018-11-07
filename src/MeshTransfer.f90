@@ -1338,7 +1338,7 @@ MODULE MeshTransfer
 !> specific point for NEM and SANM nodal methods.
 !>
     FUNCTION LPPointVal(coef,globX,h,nodeX) RESULT(y)
-      REAL(SRK),INTENT(IN) :: coef(:)
+      REAL(SRK),INTENT(IN) :: coef(0:)
       REAL(SRK),INTENT(IN) :: globX
       REAL(SRK),INTENT(IN),OPTIONAL :: h
       REAL(SRK),INTENT(IN),OPTIONAL :: nodeX
@@ -1346,6 +1346,8 @@ MODULE MeshTransfer
       ! Local variables
       INTEGER(SIK) :: N,i
       REAL(SRK) :: w, x, Pn, Pnm1, Pnm2
+
+      REQUIRE(SIZE(coef) > 0)
 
       w=TWO
       x=globX
@@ -1357,14 +1359,14 @@ MODULE MeshTransfer
 
       !project into local coordinate system
       x=TWO*x/w
-      y=coef(1)
+      y=coef(0)
       Pnm2=ONE
       IF(N > 1) THEN
-        y=y+coef(2)*x
+        y=y+coef(1)*x
         Pnm1=x
         DO i=2,N-1
           Pn=(TWO*REAL(i,SRK)-ONE)/REAL(i,SRK)*x*Pnm1-(REAL(i,SRK)-ONE)/REAL(i,SRK)*Pnm2
-          y=y+coef(i+1)*Pn
+          y=y+coef(i)*Pn
           Pnm2=Pnm1
           Pnm1=Pn
         ENDDO
@@ -1383,7 +1385,7 @@ MODULE MeshTransfer
 !> specific range a to b for NEM and SANM nodal methods.
 !>
     FUNCTION LPIntegral(coef,a,b,h,nodeX) RESULT(y)
-      REAL(SRK),INTENT(IN) :: coef(:)
+      REAL(SRK),INTENT(IN) :: coef(0:)
       REAL(SRK),INTENT(IN) :: a
       REAL(SRK),INTENT(IN) :: b
       REAL(SRK),INTENT(IN),OPTIONAL :: h
@@ -1392,7 +1394,8 @@ MODULE MeshTransfer
       ! Local variables
       INTEGER(SIK) :: N,m
       REAL(SRK) :: w, xa, xb, Pna, Pnm1a, Pnm2a, Pnb, Pnm1b, Pnm2b
-      REAL(SRK),ALLOCATABLE :: c(:)
+
+      REQUIRE(SIZE(coef) > 0)
 
       w=TWO
       xa=a
@@ -1406,32 +1409,27 @@ MODULE MeshTransfer
 
       N=SIZE(coef)
 
-      ALLOCATE(c(0:N-1))
-      c(:)=0.0_SRK
-      c(0:N-1)=coef(1:N)
-
       !project into local coordinate system
       xa=TWO*xa/w
       xb=TWO*xb/w
-      IF(N > 0) THEN
-        Pnm1a=xa
-        Pnm1b=xb
-        Pnm2a=ONE
-        Pnm2b=ONE
-        !this is m=1
-        y=c(0)*(xb-xa)
-        DO m=2,N
-          Pna=(TWO*REAL(m,SRK)-ONE)/REAL(m,SRK)*xa*Pnm1a-(REAL(m,SRK)-ONE)/REAL(m,SRK)*Pnm2a
-          Pnb=(TWO*REAL(m,SRK)-ONE)/REAL(m,SRK)*xb*Pnm1b-(REAL(m,SRK)-ONE)/REAL(m,SRK)*Pnm2b
-          y=y+c(m-1)/(TWO*REAL(m,SRK)-ONE)*(Pnb-Pna-Pnm2b+Pnm2a)
-          Pnm2a=Pnm1a
-          Pnm2b=Pnm1b
-          Pnm1a=Pna
-          Pnm1b=Pnb
-        ENDDO
-      ENDIF
+
+      Pnm1a=xa
+      Pnm1b=xb
+      Pnm2a=ONE
+      Pnm2b=ONE
+      !this is m=1
+      y=coef(0)*(xb-xa)
+      DO m=2,N
+        Pna=(TWO*REAL(m,SRK)-ONE)/REAL(m,SRK)*xa*Pnm1a-(REAL(m,SRK)-ONE)/REAL(m,SRK)*Pnm2a
+        Pnb=(TWO*REAL(m,SRK)-ONE)/REAL(m,SRK)*xb*Pnm1b-(REAL(m,SRK)-ONE)/REAL(m,SRK)*Pnm2b
+        y=y+coef(m-1)/(TWO*REAL(m,SRK)-ONE)*(Pnb-Pna-Pnm2b+Pnm2a)
+        Pnm2a=Pnm1a
+        Pnm2b=Pnm1b
+        Pnm1a=Pna
+        Pnm1b=Pnb
+      ENDDO
       y=y/(xb-xa)
-      DEALLOCATE(c)
+
     ENDFUNCTION LPIntegral
 !
 !-------------------------------------------------------------------------------
