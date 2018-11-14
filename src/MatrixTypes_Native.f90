@@ -36,6 +36,7 @@ MODULE MatrixTypes_Native
   PUBLIC :: DenseSquareMatrixType
   PUBLIC :: DenseRectMatrixType
   PUBLIC :: TriDiagMatrixType
+  PUBLIC :: BandedMatrixType
   PUBLIC :: SparseMatrixType
 
   !> @brief The extended type for dense square matrices
@@ -98,7 +99,6 @@ MODULE MatrixTypes_Native
       PROCEDURE,PASS :: zeroentries => zeroentries_DenseRectMatrixType
   ENDTYPE DenseRectMatrixType
 
-  !I think this may need to be revisited
   !> @brief The extended type for tri-diagonal square matrices
   TYPE,EXTENDS(SquareMatrixType) :: TriDiagMatrixType
     !> The values of the matrix
@@ -125,7 +125,41 @@ MODULE MatrixTypes_Native
       !> @copydetails MatrixTypes::zeroentries_TriDiagMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_TriDiagMatrixType
   ENDTYPE TriDiagMatrixType
-
+ 
+  !> @brief Type used to hold the bands in the banded type
+  TYPE Band
+    ! begin i,j index,  end i,j index, diagonal index relative to main
+    REAL(SRK) :: ib, jb, ie, je, didx 
+    REAL(SRK), ALLOCATABLE :: elem(:)
+  ENDTYPE Band
+ 
+  !> @brief The basic banded matrix type
+  TYPE,EXTENDS(RectMatrixType) :: BandedMatrixType
+    !> The bands of the matrix
+    TYPE(Band),ALLOCATABLE :: b(:) 
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief MatrixTypes::clear_BandedMatrixType
+      !> @copydetails MatrixTypes::clear_BandedMatrixType
+      PROCEDURE,PASS :: clear => clear_BandedMatrixType
+      !> @copybrief MatrixTypes::init_BandedMatrixType
+      !> @copydetails MatrixTypes::init_BandedMatrixType
+      PROCEDURE,PASS :: init => init_BandedMatrixParam
+      !> @copybrief MatrixTypes::set_BandedMatrixType
+      !> @copydetails MatrixTypes::set_BandedMatrixType
+      PROCEDURE,PASS :: set => set_BandedMatrixType
+      !> @copybrief MatrixTypes::get_BandedMatrixType
+      !> @copydetails MatrixTypes::get_BandedMatrixType
+      PROCEDURE,PASS :: get => get_BandedMatrixType
+      !> @copybrief MatrixTypes::transpose_BandedMatrixType
+      !> @copydetails MatrixTypes::transpose_BandedMatrixType
+      PROCEDURE,PASS :: transpose => transpose_BandedMatrixType
+      !> @copybrief MatrixTypes::zeroentries_BandedMatrixType
+      !> @copydetails MatrixTypes::zeroentries_BandedMatrixType
+      PROCEDURE,PASS :: zeroentries => zeroentries_BandedMatrixType
+  ENDTYPE BandedMatrixType
+ 
   !> @brief The basic sparse matrix type
   !>
   !> Matrix uses compressed sparse row storage format,
@@ -278,6 +312,21 @@ MODULE MatrixTypes_Native
     ENDSUBROUTINE init_TriDiagMatrixParam
 !
 !-------------------------------------------------------------------------------
+!> @brief Initializes Tridiagonal Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE init_BandedMatrixParam(matrix,Params)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_BandedMatrixParam'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
+      INTEGER(SIK) :: n
+      LOGICAL(SBK) :: isSym
+    
+    ENDSUBROUTINE init_BandedMatrixParam
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes Dense Rectangular Matrix Type with a Parameter List
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
@@ -414,6 +463,17 @@ MODULE MatrixTypes_Native
       IF(ALLOCATED(matrix%a)) CALL demallocA(matrix%a)
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
      ENDSUBROUTINE clear_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the banded matrix
+!> @param matrix the matrix type to act on
+!>
+    SUBROUTINE clear_BandedMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_BandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      matrix%isInit=.FALSE.
+      matrix%n=0
+     ENDSUBROUTINE clear_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the dense rectangular matrix
@@ -558,6 +618,21 @@ MODULE MatrixTypes_Native
     ENDSUBROUTINE set_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Sets the values in the banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE set_BandedMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_BandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(IN) :: setval
+    ENDSUBROUTINE set_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Sets the values in the dense rectangular matrix
 !> @param matrix the matrix type to act on
 !> @param i the ith location in the matrix
@@ -641,6 +716,21 @@ MODULE MatrixTypes_Native
         ENDIF
       ENDIF
     ENDSUBROUTINE get_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE get_BandedMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_BandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+    ENDSUBROUTINE get_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the dense rectangular matrix
@@ -771,6 +861,16 @@ MODULE MatrixTypes_Native
 !> @param matrix declare the matrix type to act on
 !>
 !>
+    SUBROUTINE transpose_BandedMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='transpose_BandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+    ENDSUBROUTINE transpose_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief tranpose the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE transpose_SparseMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
@@ -889,6 +989,17 @@ MODULE MatrixTypes_Native
       REQUIRE(matrix%isInit)
       matrix%a=0.0_SRK
     ENDSUBROUTINE zeroentries_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
+    SUBROUTINE  zeroentries_BandedMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_BandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      REQUIRE(matrix%isInit)
+    ENDSUBROUTINE zeroentries_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief zero the matrix

@@ -120,6 +120,7 @@ MODULE MatrixTypes
   PUBLIC :: DenseSquareMatrixType
   PUBLIC :: DenseRectMatrixType
   PUBLIC :: TriDiagMatrixType
+  PUBLIC :: BandedMatrixType
   PUBLIC :: SparseMatrixType
   ! PETSc implementations
 #ifdef FUTILITY_HAVE_PETSC
