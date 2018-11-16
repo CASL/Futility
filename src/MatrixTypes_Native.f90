@@ -1059,17 +1059,6 @@ MODULE MatrixTypes_Native
 !> @param matrix declare the matrix type to act on
 !>
 !>
-    SUBROUTINE  zeroentries_BandedMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_BandedMatrixType'
-      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
-      REQUIRE(matrix%isInit)
-    ENDSUBROUTINE zeroentries_BandedMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief zero the matrix
-!> @param matrix declare the matrix type to act on
-!>
-!>
     SUBROUTINE  zeroentries_DenseRectMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix

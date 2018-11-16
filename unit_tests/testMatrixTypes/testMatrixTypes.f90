@@ -1281,6 +1281,33 @@ PROGRAM testMatrixTypes
       WRITE(*,*) '  Passed: CALL tridiag%get(...)'
       DEALLOCATE(thisMatrix)
 !
+!Test for banded matrices
+      ALLOCATE(BandedMatrixType :: thisMatrix)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          !test clear
+          !make matrix w/out using untested init
+          thisMatrix%isInit=.TRUE.
+          thisMatrix%n=10
+          thisMatrix%m=15
+          thisMatrix%bnum=4
+          ALLOCATE(thisMatrix%b(4))
+          ALLOCATE(thisMatrix%b(2)%elem(5))
+      ENDSELECT
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          bool = (.NOT.(thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+              .AND.((thisMatrix%m == 0) &
+              .AND.(thisMatrix%bnum == 0) &
+              .AND.(.NOT.ALLOCATED(thisMatrix%b)))
+          ASSERT(bool, 'banded%clear()')
+          WRITE(*,*) '  Passed: CALL banded%clear()'
+      ENDSELECT
+
+
+      DEALLOCATE(thisMatrix)
+!
 !Test for dense rectangular matrices
       ALLOCATE(DenseRectMatrixType :: thisMatrix)
       SELECTTYPE(thisMatrix)
