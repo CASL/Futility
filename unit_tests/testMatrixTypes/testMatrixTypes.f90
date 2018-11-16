@@ -1304,6 +1304,65 @@ PROGRAM testMatrixTypes
           ASSERT(bool, 'banded%clear()')
           WRITE(*,*) '  Passed: CALL banded%clear()'
       ENDSELECT
+      !check init
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',15_SNK)
+      CALL pList%add('MatrixType->bnum',4_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+              .AND.((thisMatrix%m == 15))
+          ASSERT(bool, 'banded%init(...)')
+          bool = (SIZE(thisMatrix%b) == 4)
+          ASSERT(bool, 'banded%init(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      !test with double init (isInit==true on 2nd try)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType); thisMatrix%m=1
+      ENDSELECT
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          bool = thisMatrix%m == 1
+          ASSERT(bool, 'banded%init(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      !test with n<1
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',-1_SNK)
+      CALL pList%add('MatrixType->m',10_SNK)
+      CALL pList%add('MatrixType->bnum',4_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      !test with m<1
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',-1_SNK)
+      CALL pList%add('MatrixType->bnum',4_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      !test with bnum<1
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',15_SNK)
+      CALL pList%add('MatrixType->bnum',-1_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL banded%init(...)'
 
 
       DEALLOCATE(thisMatrix)
