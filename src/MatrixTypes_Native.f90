@@ -471,13 +471,15 @@ MODULE MatrixTypes_Native
     SUBROUTINE clear_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK) :: i, bs
+      INTEGER(SIK) :: i, mysize
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%m=0
+      ! May want to add additional subroutine to Allocs.f90 so can use
+      ! IF(ALLOCATED(matrix%b)) CALL demallocA(matrix%b)
       IF(ALLOCATED(matrix%b)) THEN
-        bs=SIZE(matrix%b)
-        DO i=1,bs
+        mysize=SIZE(matrix%b)
+        DO i=1,mysize
           IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
         ENDDO
         DEALLOCATE(matrix%b)
