@@ -38,6 +38,7 @@ MODULE MatrixTypes_Base
   INTEGER(SIK),PARAMETER,PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
   PUBLIC :: SparseMatrixType_reqParams,SparseMatrixType_optParams
   PUBLIC :: TriDiagMatrixType_reqParams,TriDiagMatrixType_optParams
+  PUBLIC :: BandedMatrixType_reqParams,BandedMatrixType_optParams
   PUBLIC :: DenseRectMatrixType_reqParams,DenseRectMatrixType_optParams
   PUBLIC :: DenseSquareMatrixType_reqParams,DenseSquareMatrixType_optParams
   PUBLIC :: DistributedMatrixType_reqParams,DistributedMatrixType_optParams
@@ -177,6 +178,10 @@ MODULE MatrixTypes_Base
   TYPE(ParamType),PROTECTED,SAVE :: TriDiagMatrixType_reqParams, TriDiagMatrixType_optParams
 
   !> The parameter lists to use when validating a parameter list for
+  !> initialization for a Banded Matrix Type.
+  TYPE(ParamType),PROTECTED,SAVE :: BandedMatrixType_reqParams, BandedMatrixType_optParams
+
+  !> The parameter lists to use when validating a parameter list for
   !> initialization for a Dense Rectangular Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: DenseRectMatrixType_reqParams, DenseRectMatrixType_optParams
 
@@ -248,6 +253,9 @@ MODULE MatrixTypes_Base
       !Tri-Diagonal Matrix Type - Required
       CALL TriDiagMatrixType_reqParams%add('MatrixType->n',n)
       CALL TriDiagMatrixType_reqParams%add('MatrixType->isSym',isSym)
+      !Banded Matrix Type - Required
+      CALL BandedMatrixType_reqParams%add('MatrixType->n',n)
+      CALL BandedMatrixType_reqParams%add('MatrixType->m',m)
       !Dense Rectangular Matrix Type - Required
       CALL DenseRectMatrixType_reqParams%add('MatrixType->n',n)
       CALL DenseRectMatrixType_reqParams%add('MatrixType->m',m)
@@ -283,6 +291,8 @@ MODULE MatrixTypes_Base
       CALL SparseMatrixType_reqParams%clear()
       !Tri-Diagonal Matrix Type
       CALL TriDiagMatrixType_reqParams%clear()
+      !Banded Matrix Type
+      CALL BandedMatrixType_reqParams%clear()      
       !Dense Rectangular Matrix Type
       CALL DenseRectMatrixType_reqParams%clear()
       !Dense Square Matrix Type

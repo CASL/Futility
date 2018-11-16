@@ -471,8 +471,18 @@ MODULE MatrixTypes_Native
     SUBROUTINE clear_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: i, bs
       matrix%isInit=.FALSE.
       matrix%n=0
+      matrix%m=0
+      IF(ALLOCATED(matrix%b)) THEN
+        bs=SIZE(matrix%b)
+        DO i=1,bs
+          IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
+        ENDDO
+        DEALLOCATE(matrix%b)
+      ENDIF  
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
      ENDSUBROUTINE clear_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
