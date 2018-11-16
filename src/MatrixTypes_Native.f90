@@ -129,12 +129,14 @@ MODULE MatrixTypes_Native
   !> @brief Type used to hold the bands in the banded type
   TYPE Band
     ! begin i,j index,  end i,j index, diagonal index relative to main
-    REAL(SRK) :: ib, jb, ie, je, didx 
+    INTEGER(SIK) :: ib, jb, ie, je, didx 
     REAL(SRK), ALLOCATABLE :: elem(:)
   ENDTYPE Band
  
   !> @brief The basic banded matrix type
   TYPE,EXTENDS(RectMatrixType) :: BandedMatrixType
+    !> The number of elements of b
+    INTEGER(SIK) :: bnum
     !> The bands of the matrix
     TYPE(Band),ALLOCATABLE :: b(:) 
 !
@@ -312,7 +314,7 @@ MODULE MatrixTypes_Native
     ENDSUBROUTINE init_TriDiagMatrixParam
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes Tridiagonal Matrix Type with a Parameter List
+!> @brief Initializes Banded Matrix Type with a Parameter List
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
 !>
@@ -321,9 +323,44 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n
-      LOGICAL(SBK) :: isSym
-    
+      INTEGER(SIK) :: n, m, bnum
+
+      !Check to set up required and optional param lists.
+      IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
+
+      !Validate against the reqParams and OptParams
+      validParams=Params
+      CALL validParams%validate(BandedMatrixType_reqParams)
+
+      ! Pull Data From Parameter List
+      CALL validParams%get('MatrixType->n',n)
+      CALL validParams%get('MatrixType->m',m)
+      CALL validParams%get('MatrixType->bnum',bnum)
+      CALL validParams%clear()
+
+      IF(.NOT. matrix%isInit) THEN
+        IF(n < 1) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of rows (n) must'// &
+              ' be greater than 1!')
+        ELSEIF(m < 1) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of columns (m) must'// &
+              ' be greater than 1!')
+        ELSEIF(bnum < 0) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of band objects (bnum) must'// &
+              ' be greater than 0!')
+        ELSE
+          matrix%isInit=.TRUE.
+          matrix%n=n
+          matrix%m=m
+          ALLOCATE(matrix%b(bnum))
+        ENDIF
+      ELSE
+        CALL eMatrixType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - MatrixType already initialized')
+      ENDIF
     ENDSUBROUTINE init_BandedMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -471,19 +508,19 @@ MODULE MatrixTypes_Native
     SUBROUTINE clear_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK) :: i, mysize
+      INTEGER(SIK) :: i
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%m=0
       ! May want to add additional subroutine to Allocs.f90 so can use
       ! IF(ALLOCATED(matrix%b)) CALL demallocA(matrix%b)
       IF(ALLOCATED(matrix%b)) THEN
-        mysize=SIZE(matrix%b)
-        DO i=1,mysize
+        DO i=1,matrix%bnum
           IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
         ENDDO
         DEALLOCATE(matrix%b)
       ENDIF  
+      matrix%bnum=0
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
      ENDSUBROUTINE clear_BandedMatrixType
 !
@@ -1001,6 +1038,21 @@ MODULE MatrixTypes_Native
       REQUIRE(matrix%isInit)
       matrix%a=0.0_SRK
     ENDSUBROUTINE zeroentries_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
+    SUBROUTINE  zeroentries_BandedMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_BandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: i
+      REQUIRE(matrix%isInit)
+      DO i=1,matrix%bnum
+        IF(ALLOCATED(matrix%b(i)%elem)) matrix%b(i)%elem=0.0_SRK
+      ENDDO
+    ENDSUBROUTINE zeroentries_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief zero the matrix

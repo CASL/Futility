@@ -234,7 +234,7 @@ MODULE MatrixTypes_Base
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
     SUBROUTINE MatrixTypes_Declare_ValidParams()
-      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal
+      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal,bnum
       LOGICAL(SBK) :: isSym
 
       !Setup the required and optional parameter lists
@@ -247,6 +247,7 @@ MODULE MatrixTypes_Base
       matType=1
       MPI_COMM_ID=1
       nlocal=-1
+      bnum=0
       !Sparse Matrix Type - Required
       CALL SparseMatrixType_reqParams%add('MatrixType->n',n)
       CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz)
@@ -256,6 +257,7 @@ MODULE MatrixTypes_Base
       !Banded Matrix Type - Required
       CALL BandedMatrixType_reqParams%add('MatrixType->n',n)
       CALL BandedMatrixType_reqParams%add('MatrixType->m',m)
+      CALL BandedMatrixType_reqParams%add('MatrixType->bnum',bnum)
       !Dense Rectangular Matrix Type - Required
       CALL DenseRectMatrixType_reqParams%add('MatrixType->n',n)
       CALL DenseRectMatrixType_reqParams%add('MatrixType->m',m)
