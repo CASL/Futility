@@ -136,7 +136,7 @@ MODULE MatrixTypes_Native
   !> @brief The basic banded matrix type
   TYPE,EXTENDS(RectMatrixType) :: BandedMatrixType
     !> The number of elements of b
-    INTEGER(SIK) :: bnum
+    INTEGER(SIK) :: nband
     !> The bands of the matrix
     TYPE(Band),ALLOCATABLE :: b(:) 
 !
@@ -323,7 +323,9 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, m, bnum
+      INTEGER(SIK) :: n,m,l,nband,i,j,p,q
+      INTEGER(SNK), ALLOCATABLE :: bandi(:),bandj(:),bandl(:), d(:)
+      LOGICAL(SBK) :: bool
 
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -335,9 +337,14 @@ MODULE MatrixTypes_Native
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->m',m)
-      CALL validParams%get('MatrixType->bnum',bnum)
+      CALL validParams%get('MatrixType->nband',nband)
+      CALL validParams%get('bandi',bandi)
+      CALL validParams%get('bandj',bandj)
+      CALL validParams%get('bandl',bandl)
       CALL validParams%clear()
 
+      ! be greater than 1 and n < 1 are note logically equivalent. is this
+      ! desired behavior?
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -347,15 +354,82 @@ MODULE MatrixTypes_Native
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of columns (m) must'// &
               ' be greater than 1!')
-        ELSEIF(bnum < 0) THEN
+        ELSEIF(nband < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of band objects (bnum) must'// &
-              ' be greater than 0!')
+            modName//'::'//myName//' - Number of band objects (nband)'// &
+              ' must be greater than 0!')
+        ELSEIF((SIZE(bandi)/=SIZE(bandj)) .OR. (SIZE(bandi)/=SIZE(bandL))) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Size of arrays containing band'// &
+              ' start indices and lengths must agree!')
+        ELSEIF(nband/=SIZE(bandi)) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - Number of bands (nband) does not'// &
+              ' agree with size of arrays containing band parameters!')
         ELSE
-          matrix%isInit=.TRUE.
-          matrix%n=n
-          matrix%m=m
-          ALLOCATE(matrix%b(bnum))
+          bool=.TRUE.
+          ALLOCATE(d(nband))
+          DO p=1,nband
+            i=bandi(p)
+            j=bandj(p)
+            l=bandl(p)
+            !Check valid (i,j) based on n,m
+            IF(i<1 .OR. i>n) bool=.FALSE.
+            IF(j<1 .OR. j>m) bool=.FALSE.
+            !Check valid length based on (i,j),n,m
+            IF(i+l>n) bool=.FALSE.
+            IF(j+l>m) bool=.FALSE.
+            !Calculate diagonal number for next step
+            IF(i==l) THEN
+              d(p)=0_SNK
+            ELSEIF(i>j) THEN
+              d(p)=-1_SNK*ABS(i-j)
+            ELSE
+              d(p)=ABS(i-j)
+            ENDIF
+          ENDDO
+          IF(.NOT. bool) THEN
+            CALL eMatrixType%raiseError('Incorrect input to '// &
+              modName//'::'//myName//' - Array elements are out of bounds'// &
+                ' of the specified max rows and columns (n,m)!')
+          ENDIF
+          IF(bool) THEN
+            !Check that no two bands overlap
+            DO p=1,nband
+              DO q=p,nband
+                !Have the same band index and overlapping elements
+                IF(d(p)==d(q)) THEN
+                  !Either has start index between the other's start and stop
+                  IF((bandi(p)<bandi(q)) .AND. (bandi(q)<bandi(p)+bandl(p))) THEN
+                    bool=.FALSE. 
+                  ENDIF
+                  IF((bandi(q)<bandi(p)) .AND. (bandi(p)<bandi(q)+bandl(q))) THEN
+                    bool=.FALSE. 
+                  ENDIF
+                ENDIF  
+              ENDDO
+            ENDDO  
+          ENDIF
+          IF(.NOT. bool) THEN
+            CALL eMatrixType%raiseError('Incorrect input to '// &
+              modName//'::'//myName//' - Multiple bands contain the same'// &
+                ' array element!')
+          ENDIF
+          !Everything's okay. Initialize
+          IF(bool) THEN
+            matrix%isInit=.TRUE.
+            matrix%n=n
+            matrix%m=m
+            matrix%nband=nband
+            ALLOCATE(matrix%b(nband))
+            DO p=1,nband
+              ALLOCATE(matrix%b(p)%elem(bandl(p)))
+              matrix%b(p)%ib=bandi(p)
+              matrix%b(p)%jb=bandj(p)
+              matrix%b(p)%ie=bandi(p)+bandl(p)
+              matrix%b(p)%je=bandj(p)+bandl(p)
+              matrix%b(p)%didx=d(p) 
+          ENDIF
         ENDIF
       ELSE
         CALL eMatrixType%raiseError('Incorrect call to '// &
@@ -512,15 +586,13 @@ MODULE MatrixTypes_Native
       matrix%isInit=.FALSE.
       matrix%n=0
       matrix%m=0
-      ! May want to add additional subroutine to Allocs.f90 so can use
-      ! IF(ALLOCATED(matrix%b)) CALL demallocA(matrix%b)
       IF(ALLOCATED(matrix%b)) THEN
-        DO i=1,matrix%bnum
+        DO i=1,matrix%nband
           IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
         ENDDO
         DEALLOCATE(matrix%b)
       ENDIF  
-      matrix%bnum=0
+      matrix%nband=0
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
      ENDSUBROUTINE clear_BandedMatrixType
 !
@@ -1049,7 +1121,7 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
       REQUIRE(matrix%isInit)
-      DO i=1,matrix%bnum
+      DO i=1,matrix%nband
         IF(ALLOCATED(matrix%b(i)%elem)) matrix%b(i)%elem=0.0_SRK
       ENDDO
     ENDSUBROUTINE zeroentries_BandedMatrixType
