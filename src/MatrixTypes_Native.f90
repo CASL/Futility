@@ -324,7 +324,7 @@ MODULE MatrixTypes_Native
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,m,l,nband,i,j,p,q
-      INTEGER(SNK), ALLOCATABLE :: bandi(:),bandj(:),bandl(:), d(:)
+      INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
       LOGICAL(SBK) :: bool
 
       !Check to set up required and optional param lists.
@@ -358,11 +358,12 @@ MODULE MatrixTypes_Native
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of band objects (nband)'// &
               ' must be greater than 0!')
-        ELSEIF((SIZE(bandi)/=SIZE(bandj)) .OR. (SIZE(bandi)/=SIZE(bandL))) THEN
+        ELSEIF((SIZE(bandi) /= SIZE(bandj)) .OR. &
+                  (SIZE(bandi) /= SIZE(bandl))) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Size of arrays containing band'// &
               ' start indices and lengths must agree!')
-        ELSEIF(nband/=SIZE(bandi)) THEN
+        ELSEIF(nband /= SIZE(bandi)) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of bands (nband) does not'// &
               ' agree with size of arrays containing band parameters!')
@@ -429,6 +430,7 @@ MODULE MatrixTypes_Native
               matrix%b(p)%ie=bandi(p)+bandl(p)
               matrix%b(p)%je=bandj(p)+bandl(p)
               matrix%b(p)%didx=d(p) 
+            ENDDO
           ENDIF
         ENDIF
       ELSE

@@ -1308,7 +1308,7 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
-      CALL pList%add('MatrixType->nband',4_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
       CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -1319,7 +1319,7 @@ PROGRAM testMatrixTypes
           bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
               .AND.((thisMatrix%m == 15))
           ASSERT(bool, 'banded%init(...)')
-          bool = (SIZE(thisMatrix%b) == 4)
+          bool = (SIZE(thisMatrix%b) == 3)
           ASSERT(bool, 'banded%init(...)')
       ENDSELECT
       CALL thisMatrix%clear()
@@ -1339,7 +1339,10 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',-1_SNK)
       CALL pList%add('MatrixType->m',10_SNK)
-      CALL pList%add('MatrixType->nband',4_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
       CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       bool = .NOT.thisMatrix%isInit
@@ -1349,7 +1352,10 @@ PROGRAM testMatrixTypes
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',-1_SNK)
-      CALL pList%add('MatrixType->nband',4_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
       CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       bool = .NOT.thisMatrix%isInit
@@ -1360,6 +1366,35 @@ PROGRAM testMatrixTypes
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%add('MatrixType->nband',-1_SNK)
+      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      !test with SIZE(bandi)/=SIZE(bandl)
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',15_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+      CALL pList%add('bandl',(/4_SIK,3_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      !test nband /= SIZE(bandi)
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',15_SNK)
+      CALL pList%add('MatrixType->nband',16_SNK)
+      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
       CALL pList%validate(pList,optListMat)
       CALL thisMatrix%init(pList) !expect exception
       bool = .NOT.thisMatrix%isInit

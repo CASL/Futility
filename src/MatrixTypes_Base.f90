@@ -264,7 +264,7 @@ MODULE MatrixTypes_Base
       CALL BandedMatrixType_reqParams%add('MatrixType->nband',nband)
       CALL BandedMatrixType_reqParams%add('bandi',bandi)
       CALL BandedMatrixType_reqParams%add('bandj',bandj)
-      CALL BandedMatrixType_reqParams%add('bandl',band)
+      CALL BandedMatrixType_reqParams%add('bandl',bandl)
       !Dense Rectangular Matrix Type - Required
       CALL DenseRectMatrixType_reqParams%add('MatrixType->n',n)
       CALL DenseRectMatrixType_reqParams%add('MatrixType->m',m)
