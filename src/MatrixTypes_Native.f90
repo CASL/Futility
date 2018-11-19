@@ -378,8 +378,8 @@ MODULE MatrixTypes_Native
             IF(i<1 .OR. i>n) bool=.FALSE.
             IF(j<1 .OR. j>m) bool=.FALSE.
             !Check valid length based on (i,j),n,m
-            IF(i+l>n) bool=.FALSE.
-            IF(j+l>m) bool=.FALSE.
+            IF(i+l-1>n) bool=.FALSE.
+            IF(j+l-1>m) bool=.FALSE.
             !Calculate diagonal number for next step
             IF(i==j) THEN
               d(p)=0_SNK
@@ -427,8 +427,8 @@ MODULE MatrixTypes_Native
               ALLOCATE(matrix%b(p)%elem(bandl(p)))
               matrix%b(p)%ib=bandi(p)
               matrix%b(p)%jb=bandj(p)
-              matrix%b(p)%ie=bandi(p)+bandl(p)
-              matrix%b(p)%je=bandj(p)+bandl(p)
+              matrix%b(p)%ie=bandi(p)+bandl(p)-1
+              matrix%b(p)%je=bandj(p)+bandl(p)-1
               matrix%b(p)%didx=d(p) 
             ENDDO
           ENDIF
@@ -752,7 +752,30 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
+      INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
+            .AND. (i>=1) .AND. (j >= 1)) THEN
+          !Find diagonal number
+          IF(i==j) THEN
+            d=0_SIK
+          ELSEIF(i>j) THEN
+            d=-1_SIK*ABS(i-j)
+          ELSE
+            d=ABS(i-j)
+          ENDIF
+          !I band should contain this element, set it
+          DO p=1,matrix%nband
+            IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
+               (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
+               (j <= matrix%b(p)%je)) THEN
+              matrix%b(p)%elem(i-matrix%b(p)%ib+1)=setval
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
     ENDSUBROUTINE set_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
