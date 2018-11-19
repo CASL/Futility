@@ -381,7 +381,7 @@ MODULE MatrixTypes_Native
             IF(i+l>n) bool=.FALSE.
             IF(j+l>m) bool=.FALSE.
             !Calculate diagonal number for next step
-            IF(i==l) THEN
+            IF(i==j) THEN
               d(p)=0_SNK
             ELSEIF(i>j) THEN
               d(p)=-1_SNK*ABS(i-j)
