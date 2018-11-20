@@ -1784,6 +1784,155 @@ MODULE LinearSolverTypes
       solver%info=0
       CALL u%clear()
     ENDSUBROUTINE solveGMRES_lpc
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Solves the Iterative Linear System using in parallel using the GMRES
+!>        method with left-preconditioning
+!> @param solver The linear solver to act on
+!> @param PreCondType The preconditioner object to use on the system
+!>
+!> This subroutine solves the Iterative Linear System using the GMRES method
+!>
+    SUBROUTINE solvePGMRES_lpc(solver,PreCondType)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+
+      REAL(SRK)  :: beta,h,t,phibar,temp,tol
+      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
+      TYPE(RealVectorType) :: u
+      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx
+      INTEGER(SIK) :: mpierr,nProcs,rank
+      TYPE(MPI_EnvType) :: parEnv
+      TYPE(ParamType) :: pList
+
+      n=0
+      !Set parameter list for vector
+      CALL pList%add('VectorType -> n',solver%A%n)
+      n=solver%A%n
+      m=MIN(solver%nRestart,n)
+
+      ! We will split up v and w over the long index (with length n)
+      ! Extract MPI communicator and determine our indices:
+      parEnv = solver%MPIparallelEnv
+      nprocs = parEnv%nproc
+      rank = parEnv%rank
+      IF(rank < MOD(n,nProcs)) THEN
+        lowIdx = rank*(n/nProcs + 1)
+        highIdx = lowIdx + n/nProcs + 1
+      ELSE
+        lowIdx = rank*(n/nProcs) + MOD(n,nProcs)
+        highIdx = lowIdx + n/nProcs
+      ENDIF
+
+      !> TODO: Figure out what to do with u%b
+      CALL u%init(pList)
+      CALL pList%clear()
+      CALL solver%getResidual(u)
+      CALL PreCondType%apply(u)
+      CALL LNorm(u%b,2,beta)
+      solver%iters=0
+
+      !> TODO: Allocate correct size for v,w
+      IF(beta > EPSILON(0.0_SRK)) THEN
+        ALLOCATE(v(n,m+1))
+        ALLOCATE(R(m+1,m+1))
+        ALLOCATE(w(n))
+        ALLOCATE(c(m+1))
+        ALLOCATE(s(m+1))
+        ALLOCATE(g(m+1))
+        ALLOCATE(y(m+1))
+        v(:,:)=0._SRK
+        R(:,:)=0._SRK
+        w(:)=0._SRK
+        c(:)=0._SRK
+        s(:)=0._SRK
+        g(:)=0._SRK
+        y(:)=0._SRK
+        tol=solver%absConvTol*beta
+
+        v(:,1)=-u%b/beta
+        h=beta
+        phibar=beta
+#ifdef FUTILITY_DEBUG_MSG
+          WRITE(668,*) '         GMRES-LP',0,ABS(phibar)
+#endif
+        !Iterate on solution
+        DO it=1,m
+          !> TODO: Parallelize vector multiplication w/function call
+          CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+
+          !> TODO: Modify preconditioner call to allow parallelism
+          u%b=w
+          CALL solver%PreCondType%apply(u)
+          w=u%b
+
+          !> TODO: parallelize dot product w/allreduce
+          h=BLAS_dot(n,w,1,v(:,1),1)
+          w=w-h*v(:,1)
+          t=h
+
+          !> TODO: use OMP parallel model to parallelize this do loop
+          DO k=2,it
+            !> TODO: Parallelize dot product w/allreduce
+            h=BLAS_dot(n,w,1,v(:,k),1)
+            w=w-h*v(:,k)
+
+            R(k-1,it)=c(k-1)*t+s(k-1)*h
+            t=c(k-1)*h-s(k-1)*t
+          ENDDO
+
+          !> TODO: Parallelize LNorm call
+          CALL LNorm(w,2,h)
+
+          !> TODO: Parallelize assignment of V
+          IF(h > 0.0_SRK) THEN
+            v(:,it+1)=w/h
+          ELSE
+            v(:,it+1)=0.0_SRK*w
+          ENDIF
+
+          !Set up next Given's rotation
+          IF(t >= 0.0_SRK) THEN
+            temp=SQRT(t*t+h*h)
+          ELSE
+            temp=-SQRT(t*t+h*h)
+          ENDIF
+          c(it)=t/temp
+          s(it)=h/temp
+          R(it,it)=temp
+
+          !> TODO: Figure out what to do with phibar
+          g(it)=c(it)*phibar
+          phibar=-s(it)*phibar
+#ifdef FUTILITY_DEBUG_MSG
+          WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
+#endif
+          IF(ABS(phibar) <= tol) EXIT
+        ENDDO
+
+        !> TODO: Correctly report/reduce correct solution
+        y(1:it)=g(1:it)
+        CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
+
+        CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
+        CALL BLAS_axpy(u,solver%x)
+        CALL solver%getResidual(u)
+        CALL LNorm(u%b,2,beta)
+        IF(it == m+1) it=m
+        solver%iters=it
+
+        DEALLOCATE(v)
+        DEALLOCATE(R)
+        DEALLOCATE(w)
+        DEALLOCATE(c)
+        DEALLOCATE(s)
+        DEALLOCATE(g)
+        DEALLOCATE(y)
+      ENDIF
+      solver%info=0
+      CALL u%clear()
+    ENDSUBROUTINE solvePGMRES_lpc
 !
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
