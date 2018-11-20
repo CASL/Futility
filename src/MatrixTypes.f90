@@ -110,7 +110,7 @@ MODULE MatrixTypes
   PUBLIC :: RectMatrixType
   PUBLIC :: DistributedMatrixType
   ! Matrix structure enumerations
-  PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG
+  PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG,BANDED
   ! Matrix-Vector engine enumerations
   PUBLIC :: VM_PETSC,VM_TRILINOS,VM_NATIVE
   ! Parameter list setup/teardown
@@ -234,6 +234,8 @@ MODULE MatrixTypes
               ALLOCATE(SparseMatrixType :: matrix)
             CASE(TRIDIAG)
               ALLOCATE(TriDiagMatrixType :: matrix)
+            CASE(BANDED)
+              ALLOCATE(BandedMatrixType :: matrix)
             CASE DEFAULT
               CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
                 "Unrecognized matrix structure requested")
@@ -362,6 +364,8 @@ MODULE MatrixTypes
           ALLOCATE(DenseRectMatrixType :: dest)
         TYPE IS(TriDiagMatrixType)
           ALLOCATE(TriDiagMatrixType :: dest)
+        TYPE IS(BandedMatrixType)
+          ALLOCATE(BandedMatrixType :: dest)
         TYPE IS(SparseMatrixType)
           ALLOCATE(SparseMatrixType :: dest)
 #ifdef FUTILITY_HAVE_PETSC

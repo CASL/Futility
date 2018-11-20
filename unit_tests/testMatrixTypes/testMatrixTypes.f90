@@ -3840,6 +3840,7 @@ PROGRAM testMatrixTypes
 !-------------------------------------------------------------------------------
     SUBROUTINE testTransposeMatrix()
       CLASS(SparseMatrixType),ALLOCATABLE :: testA
+      CLASS(MatrixType),POINTER :: mat_p
       LOGICAL(SBK) :: bool
       TYPE(ParamType) :: tmpPlist
 #ifdef FUTILITY_HAVE_PETSC
@@ -3870,6 +3871,55 @@ PROGRAM testMatrixTypes
       ASSERT(bool,"wrong ja")
       bool=ALL(testA%a(:) .APPROXEQ. (/2.0_SRK,5.0_SRK,1.0_SRK,3.0_SRK,4.0_SRK,6.0_SRK/))
       ASSERT(bool,"wrong a")
+      CALL tmpPlist%clear()
+
+      ! Banded Matrix
+      !want to build:
+      ![1 2 0 0 0]
+      ![0 3 4 0 0]
+      ![8 0 5 6 0]
+      ![0 9 0 7 0]
+      !with main diagonal split [1,3],[5,7]
+      !transpose to
+      ![1 0 8 0]
+      ![2 3 0 9]
+      ![0 4 5 0]
+      ![0 0 6 7]
+      ![0 0 0 0]
+      ALLOCATE(BandedMatrixType :: mat_p)
+      CALL tmpPlist%add('MatrixType->n',4)
+      CALL tmpPlist%add('MatrixType->m',5)
+      CALL tmpPlist%add('MatrixType->nband',4)
+      CALL tmpPlist%add('bandi',(/1_SIK,3_SIK,1_SIK,3_SIK/))
+      CALL tmpPlist%add('bandj',(/1_SIK,3_SIK,2_SIK,1_SIK/))
+      CALL tmpPlist%add('bandl',(/2_SIK,2_SIK,3_SIK,2_SIK/))
+      CALL mat_p%init(tmpPlist)
+      CALL mat_p%set(1,1,1._SRK)
+      CALL mat_p%set(1,2,2._SRK)
+      CALL mat_p%set(2,2,3._SRK)
+      CALL mat_p%set(2,3,4._SRK)
+      CALL mat_p%set(3,3,5._SRK)
+      CALL mat_p%set(3,4,6._SRK)
+      CALL mat_p%set(4,4,7._SRK)
+      CALL mat_p%set(3,1,8._SRK)
+      CALL mat_p%set(4,2,9._SRK)
+      CALL mat_p%transpose()
+      SELECTTYPE(mat_p)
+        TYPE IS(BandedMatrixType)
+          bool = (mat_p%n == 5).AND.(mat_p%m == 4)
+          ASSERT(bool,"banded%transpose()")
+          bool = (mat_p%b(3)%ib == 2).AND.(mat_p%b(3)%ie == 4)
+          ASSERT(bool,"banded%transpose()")
+          bool = (mat_p%b(4)%jb == 3).AND.(mat_p%b(4)%je == 4)
+          ASSERT(bool,"banded%transpose()")
+          bool = (mat_p%b(3)%didx == -1).AND.(mat_p%b(4)%didx == 2)
+          ASSERT(bool,"banded%transpose()")
+          ASSERT(mat_p%b(3)%elem(2) == 4, "banded%transpose()")
+          ASSERT(mat_p%b(1)%elem(2) == 3, "banded%transpose()")
+      ENDSELECT
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
       CALL tmpPlist%clear()
 
 
@@ -3971,7 +4021,7 @@ PROGRAM testMatrixTypes
       NULLIFY(mat_p)
       CALL params%clear()
 
-      ! Dense Square matrix
+      ! TriDiag matrix
       ALLOCATE(TridiagMatrixType :: mat_p)
       CALL params%add("MatrixType->n",4)
       CALL params%add("MatrixType->isSym",.FALSE.)
@@ -3987,6 +4037,39 @@ PROGRAM testMatrixTypes
               ASSERT(bool,"wrong zeroentries")
             ENDDO
           ENDDO
+      ENDSELECT
+      CALL mat_p%clear()
+      DEALLOCATE(mat_p)
+      NULLIFY(mat_p)
+      CALL params%clear()
+
+      ! Banded Matrix
+      ALLOCATE(BandedMatrixType :: mat_p)
+      CALL params%add('MatrixType->n',4)
+      CALL params%add('MatrixType->m',4)
+      CALL params%add('MatrixType->nband',4)
+      CALL params%add('bandi',(/1_SIK,3_SIK,1_SIK,3_SIK/))
+      CALL params%add('bandj',(/1_SIK,3_SIK,2_SIK,1_SIK/))
+      CALL params%add('bandl',(/2_SIK,2_SIK,3_SIK,2_SIK/))
+      CALL mat_p%init(params)
+      CALL mat_p%set(1,1,1._SRK)
+      CALL mat_p%set(1,2,2._SRK)
+      CALL mat_p%set(2,2,3._SRK)
+      CALL mat_p%set(2,3,4._SRK)
+      CALL mat_p%set(3,3,5._SRK)
+      CALL mat_p%set(3,4,6._SRK)
+      CALL mat_p%set(4,4,7._SRK)
+      CALL mat_p%set(3,1,8._SRK)
+      CALL mat_p%set(4,2,9._SRK)
+      CALL mat_p%zeroentries()
+      SELECTTYPE(mat_p)
+        TYPE IS(BandedMatrixType)
+          DO i=1,SIZE(mat_p%b)
+            DO j=1,SIZE(mat_p%b(i)%elem)
+              bool=(mat_p%b(i)%elem(j) .APPROXEQ. 0.0_SRK)
+              ASSERT(bool,"banded%zeroentries()")
+            ENDDO  
+          ENDDO  
       ENDSELECT
       CALL mat_p%clear()
       DEALLOCATE(mat_p)

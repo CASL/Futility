@@ -765,7 +765,7 @@ MODULE MatrixTypes_Native
           ELSE
             d=ABS(i-j)
           ENDIF
-          !I band should contain this element, set it
+          !If band should contain this element, set it
           DO p=1,matrix%nband
             IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
                (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
@@ -876,6 +876,33 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
+      INTEGER(SIK) :: d,p
+      LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
+            .AND. (i>=1) .AND. (j >= 1)) THEN
+          !Find diagonal number
+          IF(i==j) THEN
+            d=0_SIK
+          ELSEIF(i>j) THEN
+            d=-1_SIK*ABS(i-j)
+          ELSE
+            d=ABS(i-j)
+          ENDIF
+          !If band contains this element, get it
+          DO p=1,matrix%nband
+            IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
+               (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
+               (j <= matrix%b(p)%je)) THEN
+              getval=matrix%b(p)%elem(i-matrix%b(p)%ib+1)
+              bool=.TRUE.
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+        IF(.NOT. bool) getval=-1051._SRK
+      ENDIF
     ENDSUBROUTINE get_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1010,6 +1037,20 @@ MODULE MatrixTypes_Native
     SUBROUTINE transpose_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: i,tmp
+      REQUIRE(matrix%isInit)
+      tmp=matrix%n
+      matrix%n=matrix%m
+      matrix%m=tmp
+      DO i=1,matrix%nband
+        tmp=matrix%b(i)%ib
+        matrix%b(i)%ib=matrix%b(i)%jb
+        matrix%b(i)%jb=tmp
+        tmp=matrix%b(i)%ie
+        matrix%b(i)%ie=matrix%b(i)%je
+        matrix%b(i)%je=tmp
+        matrix%b(i)%didx=-1*matrix%b(i)%didx
+      ENDDO
     ENDSUBROUTINE transpose_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
