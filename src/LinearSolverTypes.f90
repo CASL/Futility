@@ -1798,12 +1798,13 @@ MODULE LinearSolverTypes
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
 
-      REAL(SRK)  :: beta,h,t,phibar,temp,tol
-      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
+      REAL(SRK)  :: beta,h,t,phibar,temp,tol,acc
+      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:),b(:)
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx
-      INTEGER(SIK) :: mpierr,nProcs,rank
+      INTEGER(SIK) :: nProcs, mpierr
       TYPE(MPI_EnvType) :: parEnv
+      INTEGER(SIK) :: MPI_IN_PLACE, MPI_SUM
       TYPE(ParamType) :: pList
 
       n=0
@@ -1815,33 +1816,30 @@ MODULE LinearSolverTypes
       ! We will split up v and w over the long index (with length n)
       ! Extract MPI communicator and determine our indices:
       parEnv = solver%MPIparallelEnv
-      nprocs = parEnv%nproc
-      rank = parEnv%rank
-      IF(rank < MOD(n,nProcs)) THEN
-        lowIdx = rank*(n/nProcs + 1)
-        highIdx = lowIdx + n/nProcs + 1
+      IF(parEnv%rank < MOD(n,parenv%nproc)) THEN
+        lowIdx = parEnv%rank*(n/parEnv%nproc + 1)
+        highIdx = lowIdx + n/parEnv%nproc + 1
       ELSE
-        lowIdx = rank*(n/nProcs) + MOD(n,nProcs)
-        highIdx = lowIdx + n/nProcs
+        lowIdx = parEnv%rank*(n/parEnv%nproc) + MOD(n,parEnv%nproc)
+        highIdx = lowIdx + n/parEnv%nproc
       ENDIF
 
-      !> TODO: Figure out what to do with u%b
       CALL u%init(pList)
       CALL pList%clear()
       CALL solver%getResidual(u)
       CALL PreCondType%apply(u)
-      CALL LNorm(u%b,2,beta)
       solver%iters=0
 
       !> TODO: Allocate correct size for v,w
       IF(beta > EPSILON(0.0_SRK)) THEN
-        ALLOCATE(v(n,m+1))
+        ALLOCATE(v(highIdx - lowIdx,m+1))
         ALLOCATE(R(m+1,m+1))
-        ALLOCATE(w(n))
+        ALLOCATE(w(highIdx - lowIdx))
         ALLOCATE(c(m+1))
         ALLOCATE(s(m+1))
         ALLOCATE(g(m+1))
         ALLOCATE(y(m+1))
+        ALLOCATE(b(highIdx - lowIdx))
         v(:,:)=0._SRK
         R(:,:)=0._SRK
         w(:)=0._SRK
@@ -1849,13 +1847,22 @@ MODULE LinearSolverTypes
         s(:)=0._SRK
         g(:)=0._SRK
         y(:)=0._SRK
+        b(:)=u%b(lowIdx:highIdx)
+
+        DO it=1,(highIdx - lowIdx)
+          beta = beta + b(it)*b(it)
+        ENDDO
+        CALL parenv%allReduce_scalar(beta)
+        beta = sqrt(beta)
         tol=solver%absConvTol*beta
 
-        v(:,1)=-u%b/beta
+        v(:,1)=-b/beta
         h=beta
         phibar=beta
 #ifdef FUTILITY_DEBUG_MSG
+        IF(parenv%rank==0) THEN
           WRITE(668,*) '         GMRES-LP',0,ABS(phibar)
+        ENDIF
 #endif
         !Iterate on solution
         DO it=1,m
@@ -1867,8 +1874,8 @@ MODULE LinearSolverTypes
           CALL solver%PreCondType%apply(u)
           w=u%b
 
-          !> TODO: parallelize dot product w/allreduce
           h=BLAS_dot(n,w,1,v(:,1),1)
+          CALL parEnv%allReduce_scalar(h)
           w=w-h*v(:,1)
           t=h
 
@@ -1876,16 +1883,18 @@ MODULE LinearSolverTypes
           DO k=2,it
             !> TODO: Parallelize dot product w/allreduce
             h=BLAS_dot(n,w,1,v(:,k),1)
+            CALL parEnv%allReduce_scalar(h)
             w=w-h*v(:,k)
 
             R(k-1,it)=c(k-1)*t+s(k-1)*h
             t=c(k-1)*h-s(k-1)*t
           ENDDO
 
-          !> TODO: Parallelize LNorm call
-          CALL LNorm(w,2,h)
+          DO k=1,(highIdx - lowIdx)
+            h = h + w(k)*w(k)
+          ENDDO
+          CALL parEnv%allReduce_scalar(h)
 
-          !> TODO: Parallelize assignment of V
           IF(h > 0.0_SRK) THEN
             v(:,it+1)=w/h
           ELSE
@@ -1906,7 +1915,9 @@ MODULE LinearSolverTypes
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
 #ifdef FUTILITY_DEBUG_MSG
-          WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
+          IF(parenv%rank == 0) THEN
+            WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
+          ENDIF
 #endif
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
