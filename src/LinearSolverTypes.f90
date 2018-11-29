@@ -1802,9 +1802,7 @@ MODULE LinearSolverTypes
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:),b(:)
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx
-      INTEGER(SIK) :: nProcs, mpierr
       TYPE(MPI_EnvType) :: parEnv
-      INTEGER(SIK) :: MPI_IN_PLACE, MPI_SUM
       TYPE(ParamType) :: pList
 
       n=0
@@ -1827,7 +1825,9 @@ MODULE LinearSolverTypes
       CALL u%init(pList)
       CALL pList%clear()
       CALL solver%getResidual(u)
-      CALL PreCondType%apply(u)
+
+      !>TODO: Enable Preconditioner
+      !CALL PreCondType%apply(u)
       solver%iters=0
 
       !> TODO: Allocate correct size for v,w
@@ -1861,7 +1861,7 @@ MODULE LinearSolverTypes
         phibar=beta
 #ifdef FUTILITY_DEBUG_MSG
         IF(parenv%rank==0) THEN
-          WRITE(668,*) '         GMRES-LP',0,ABS(phibar)
+          WRITE(668,*) '         PGMRES-LP',0,ABS(phibar)
         ENDIF
 #endif
         !Iterate on solution
@@ -1869,19 +1869,17 @@ MODULE LinearSolverTypes
           !> TODO: Parallelize vector multiplication w/function call
           CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
 
-          !> TODO: Modify preconditioner call to allow parallelism
           u%b=w
-          CALL solver%PreCondType%apply(u)
-          w=u%b
+          !> TODO: Enable preconditioner
+          !CALL solver%PreCondType%apply(u)
+          !w=u%b
 
           h=BLAS_dot(n,w,1,v(:,1),1)
           CALL parEnv%allReduce_scalar(h)
           w=w-h*v(:,1)
           t=h
 
-          !> TODO: use OMP parallel model to parallelize this do loop
           DO k=2,it
-            !> TODO: Parallelize dot product w/allreduce
             h=BLAS_dot(n,w,1,v(:,k),1)
             CALL parEnv%allReduce_scalar(h)
             w=w-h*v(:,k)
@@ -1911,25 +1909,31 @@ MODULE LinearSolverTypes
           s(it)=h/temp
           R(it,it)=temp
 
-          !> TODO: Figure out what to do with phibar
           g(it)=c(it)*phibar
           phibar=-s(it)*phibar
 #ifdef FUTILITY_DEBUG_MSG
           IF(parenv%rank == 0) THEN
-            WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
+            WRITE(668,*) '         PGMRES-LP',it,ABS(phibar)
           ENDIF
 #endif
           IF(ABS(phibar) <= tol) EXIT
         ENDDO
 
-        !> TODO: Correctly report/reduce correct solution
         y(1:it)=g(1:it)
         CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
 
-        CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
+        CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,b)
+        u%b(lowIdx:highIdx) = b
+
         CALL BLAS_axpy(u,solver%x)
+
+        DO it=1,(highIdx - lowIdx)
+          beta = beta + b(it)*b(it)
+        ENDDO
+        CALL parenv%allReduce_scalar(beta)
+        beta = sqrt(beta)
+
         CALL solver%getResidual(u)
-        CALL LNorm(u%b,2,beta)
         IF(it == m+1) it=m
         solver%iters=it
 
