@@ -1570,7 +1570,7 @@ MODULE LinearSolverTypes
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-    SUBROUTINE solveGMRES_nopc(solver)
+    SUBROUTINE solveSGMRES_nopc(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
 
       REAL(SRK)  :: beta,h,t,phibar,temp,tol
@@ -1669,7 +1669,26 @@ MODULE LinearSolverTypes
       ENDIF
       solver%info=0
       CALL u%clear()
+    ENDSUBROUTINE solveSGMRES_nopc
+
+    SUBROUTINE solveGMRES_nopc(solver)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      IF(solver%MPIparallelEnv%isInit()) THEN
+        CALL solvePGMRES_lpc(solver)
+      ELSE
+        CALL solveSGMRES_nopc(solver)
+      ENDIF
     ENDSUBROUTINE solveGMRES_nopc
+
+    SUBROUTINE solveGMRES_lpc(solver, PreCondType)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+      IF(solver%MPIparallelEnv%isInit()) THEN
+        CALL solvePGMRES_lpc(solver)
+      ELSE
+        CALL solveSGMRES_lpc(solver, PrecondType)
+      ENDIF
+    ENDSUBROUTINE solveGMRES_lpc
 !
 !-------------------------------------------------------------------------------
 !> @brief Solves the Iterative Linear System using the GMRES method with
@@ -1679,7 +1698,7 @@ MODULE LinearSolverTypes
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-    SUBROUTINE solveGMRES_lpc(solver,PreCondType)
+    SUBROUTINE solveSGMRES_lpc(solver,PreCondType)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
 
@@ -1783,20 +1802,20 @@ MODULE LinearSolverTypes
       ENDIF
       solver%info=0
       CALL u%clear()
-    ENDSUBROUTINE solveGMRES_lpc
+    ENDSUBROUTINE solveSGMRES_lpc
 
 !
 !-------------------------------------------------------------------------------
-!> @brief Solves the Iterative Linear System using in parallel using the GMRES
+!> @brief Solves the Iterative Linear System in parallel using the GMRES
 !>        method with left-preconditioning
 !> @param solver The linear solver to act on
 !> @param PreCondType The preconditioner object to use on the system
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-    SUBROUTINE solvePGMRES_lpc(solver,PreCondType)
+    SUBROUTINE solvePGMRES_lpc(solver)!,PreCondType)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+      !CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
 
       REAL(SRK)  :: beta,h,t,phibar,temp,tol,acc
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:),b(:)
@@ -1815,11 +1834,11 @@ MODULE LinearSolverTypes
       ! Extract MPI communicator and determine our indices:
       parEnv = solver%MPIparallelEnv
       IF(parEnv%rank < MOD(n,parenv%nproc)) THEN
-        lowIdx = parEnv%rank*(n/parEnv%nproc + 1)
-        highIdx = lowIdx + n/parEnv%nproc + 1
-      ELSE
-        lowIdx = parEnv%rank*(n/parEnv%nproc) + MOD(n,parEnv%nproc)
+        lowIdx = (parEnv%rank)*(n/parEnv%nproc + 1) + 1
         highIdx = lowIdx + n/parEnv%nproc
+      ELSE
+        lowIdx = (parEnv%rank)*(n/parEnv%nproc) + MOD(n,parEnv%nproc) + 1
+        highIdx = lowIdx + n/parEnv%nproc - 1
       ENDIF
 
       CALL u%init(pList)
@@ -1828,18 +1847,23 @@ MODULE LinearSolverTypes
 
       !>TODO: Enable Preconditioner
       !CALL PreCondType%apply(u)
+      beta = 0.0_SRK
+      DO it=1,(highIdx - lowIdx + 1)
+        beta = beta + u%b(it)*u%b(it)
+      ENDDO
+      CALL parenv%allReduce_scalar(beta)
+      beta = sqrt(beta)
       solver%iters=0
 
-      !> TODO: Allocate correct size for v,w
       IF(beta > EPSILON(0.0_SRK)) THEN
-        ALLOCATE(v(highIdx - lowIdx,m+1))
+        ALLOCATE(v(highIdx - lowIdx + 1,m+1))
         ALLOCATE(R(m+1,m+1))
-        ALLOCATE(w(highIdx - lowIdx))
+        ALLOCATE(w(highIdx - lowIdx + 1))
         ALLOCATE(c(m+1))
         ALLOCATE(s(m+1))
         ALLOCATE(g(m+1))
         ALLOCATE(y(m+1))
-        ALLOCATE(b(highIdx - lowIdx))
+        ALLOCATE(b(highIdx - lowIdx + 1))
         v(:,:)=0._SRK
         R(:,:)=0._SRK
         w(:)=0._SRK
@@ -1849,13 +1873,7 @@ MODULE LinearSolverTypes
         y(:)=0._SRK
         b(:)=u%b(lowIdx:highIdx)
 
-        DO it=1,(highIdx - lowIdx)
-          beta = beta + b(it)*b(it)
-        ENDDO
-        CALL parenv%allReduce_scalar(beta)
-        beta = sqrt(beta)
         tol=solver%absConvTol*beta
-
         v(:,1)=-b/beta
         h=beta
         phibar=beta
@@ -1869,8 +1887,8 @@ MODULE LinearSolverTypes
           !> TODO: Parallelize vector multiplication w/function call
           CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
 
-          u%b=w
           !> TODO: Enable preconditioner
+          !u%b(lowIdx:highIdx)=w
           !CALL solver%PreCondType%apply(u)
           !w=u%b
 
@@ -1888,10 +1906,12 @@ MODULE LinearSolverTypes
             t=c(k-1)*h-s(k-1)*t
           ENDDO
 
-          DO k=1,(highIdx - lowIdx)
+          h = 0.0_SRK
+          DO k=1,(highIdx - lowIdx + 1)
             h = h + w(k)*w(k)
           ENDDO
           CALL parEnv%allReduce_scalar(h)
+          h = sqrt(h)
 
           IF(h > 0.0_SRK) THEN
             v(:,it+1)=w/h
@@ -1927,8 +1947,9 @@ MODULE LinearSolverTypes
 
         CALL BLAS_axpy(u,solver%x)
 
-        DO it=1,(highIdx - lowIdx)
-          beta = beta + b(it)*b(it)
+        beta = 0.0_SRK
+        DO k=1,(highIdx - lowIdx + 1)
+          beta = beta + b(k)*b(k)
         ENDDO
         CALL parenv%allReduce_scalar(beta)
         beta = sqrt(beta)
