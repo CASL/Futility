@@ -1541,6 +1541,11 @@ PROGRAM testMatrixTypes
             bool = dummyvec(i) == i
             ASSERT(bool, 'banded%get(...)')
           ENDDO
+          DO i=1,3
+            CALL thisMatrix%get(i+1,i,dummyvec(1))
+            bool = dummyvec(1) == 0.0
+            ASSERT(bool, 'banded%get(...)')
+          ENDDO
       ENDSELECT
       !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
@@ -1551,6 +1556,7 @@ PROGRAM testMatrixTypes
           bool = dummy == 0.0_SRK
           ASSERT(bool, 'banded%get(...)')
       ENDSELECT
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
       !check matrix that hasnt been init, i,j out of bounds
       CALL thisMatrix%clear()
       CALL pList%add('MatrixType->n',4_SNK)

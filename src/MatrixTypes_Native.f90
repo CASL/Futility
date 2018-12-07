@@ -900,6 +900,10 @@ MODULE MatrixTypes_Native
               EXIT
             ENDIF
           ENDDO
+          IF(.NOT. bool) THEN
+            getval=0.0_SRK
+            bool=.TRUE.
+          ENDIF
         ENDIF
         IF(.NOT. bool) getval=-1051._SRK
       ENDIF
