@@ -160,6 +160,9 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::zeroentries_BandedMatrixType
       !> @copydetails MatrixTypes::zeroentries_BandedMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_BandedMatrixType
+      !> @copybrief MatrixTypes::matvec_BandedMatrixType
+      !> @copydetails MatrixTypes::matvec_BandedMatrixType
+      PROCEDURE,PASS :: matvec => matvec_BandedMatrixType
   ENDTYPE BandedMatrixType
  
   !> @brief The basic sparse matrix type
@@ -1208,4 +1211,34 @@ MODULE MatrixTypes_Native
       matrix%a=0.0_SRK
     ENDSUBROUTINE zeroentries_DenseRectMatrixType
 !
+!-------------------------------------------------------------------------------
+!> @brief Subroutine computes a matrix vector product for the banded matrix
+!         type.
+!> @param matrix declare the matrix type to act on.
+!> @param x the double-precision 1-D array to multiply the matrix by.
+!> @param y the double-precision 1-D array to hold the result of the
+!         multiplication.
+    SUBROUTINE matvec_BandedMatrixType(matrix, x, y)
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_BandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      REAL(SDK),INTENT(IN) :: x(:)
+      REAL(SDK),INTENT(INOUT) :: y(:)
+      INTEGER(SIK) :: i,j,ib,ie,jb,je
+      REQUIRE(matrix%isInit)
+      REQUIRE(SIZE(x) == matrix%m)
+      REQUIRE(SIZE(y) == matrix%n) 
+      y(1:matrix%n)=0.0_SDK 
+      DO i=1,matrix%nband
+        ! Multiply by appropriate subset of x
+        ib=matrix%b(i)%ib
+        ie=matrix%b(i)%ie 
+        jb=matrix%b(i)%jb
+        je=matrix%b(i)%je
+        DO j=jb,je
+          y(j-jb+ib)=y(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb) 
+        ENDDO        
+      ENDDO
+    ENDSUBROUTINE matvec_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
 ENDMODULE MatrixTypes_Native
