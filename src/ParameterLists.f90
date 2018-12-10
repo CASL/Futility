@@ -2458,7 +2458,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType(thisParam)
+   SUBROUTINE clearFinal_ParamType(thisParam)
       TYPE(ParamType),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType
@@ -3263,7 +3263,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_List(thisParam)
+   SUBROUTINE clearFinal_ParamType_List(thisParam)
       TYPE(ParamType_List),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_List
@@ -3576,7 +3576,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SSK(thisParam)
+   SUBROUTINE clearFinal_ParamType_SSK(thisParam)
       TYPE(ParamType_SSK),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SSK
@@ -3841,7 +3841,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SDK(thisParam)
+   SUBROUTINE clearFinal_ParamType_SDK(thisParam)
       TYPE(ParamType_SDK),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SDK
@@ -4106,7 +4106,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SNK(thisParam)
+   SUBROUTINE clearFinal_ParamType_SNK(thisParam)
       TYPE(ParamType_SNK),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SNK
@@ -4367,7 +4367,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SLK(thisParam)
+   SUBROUTINE clearFinal_ParamType_SLK(thisParam)
       TYPE(ParamType_SLK),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SLK
@@ -4628,7 +4628,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SBK(thisParam)
+   SUBROUTINE clearFinal_ParamType_SBK(thisParam)
       TYPE(ParamType_SBK),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SBK
@@ -4883,7 +4883,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_STR(thisParam)
+   SUBROUTINE clearFinal_ParamType_STR(thisParam)
       TYPE(ParamType_STR),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_STR
@@ -5258,7 +5258,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SSK_a1(thisParam)
+   SUBROUTINE clearFinal_ParamType_SSK_a1(thisParam)
       TYPE(ParamType_SSK_a1),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SSK_a1
@@ -5567,7 +5567,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SDK_a1(thisParam)
+   SUBROUTINE clearFinal_ParamType_SDK_a1(thisParam)
       TYPE(ParamType_SDK_a1),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SDK_a1
@@ -5874,7 +5874,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SNK_a1(thisParam)
+   SUBROUTINE clearFinal_ParamType_SNK_a1(thisParam)
       TYPE(ParamType_SNK_a1),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SNK_a1
@@ -6182,7 +6182,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SLK_a1(thisParam)
+   SUBROUTINE clearFinal_ParamType_SLK_a1(thisParam)
       TYPE(ParamType_SLK_a1),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SLK_a1
@@ -6487,7 +6487,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SBK_a1(thisParam)
+   SUBROUTINE clearFinal_ParamType_SBK_a1(thisParam)
       TYPE(ParamType_SBK_a1),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SBK_a1
@@ -6796,7 +6796,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_STR_a1(thisParam)
+   SUBROUTINE clearFinal_ParamType_STR_a1(thisParam)
       TYPE(ParamType_STR_a1),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_STR_a1
@@ -7097,7 +7097,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SSK_a2(thisParam)
+   SUBROUTINE clearFinal_ParamType_SSK_a2(thisParam)
       TYPE(ParamType_SSK_a2),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SSK_a2
@@ -7398,7 +7398,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SDK_a2(thisParam)
+   SUBROUTINE clearFinal_ParamType_SDK_a2(thisParam)
       TYPE(ParamType_SDK_a2),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SDK_a2
@@ -7699,7 +7699,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SNK_a2(thisParam)
+   SUBROUTINE clearFinal_ParamType_SNK_a2(thisParam)
       TYPE(ParamType_SNK_a2),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SNK_a2
@@ -8000,7 +8000,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SLK_a2(thisParam)
+   SUBROUTINE clearFinal_ParamType_SLK_a2(thisParam)
       TYPE(ParamType_SLK_a2),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SLK_a2
@@ -8312,7 +8312,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_STR_a2(thisParam)
+   SUBROUTINE clearFinal_ParamType_STR_a2(thisParam)
       TYPE(ParamType_STR_a2),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_STR_a2
@@ -8618,7 +8618,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SSK_a3(thisParam)
+   SUBROUTINE clearFinal_ParamType_SSK_a3(thisParam)
       TYPE(ParamType_SSK_a3),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SSK_a3
@@ -8926,7 +8926,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SDK_a3(thisParam)
+   SUBROUTINE clearFinal_ParamType_SDK_a3(thisParam)
       TYPE(ParamType_SDK_a3),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SDK_a3
@@ -9234,7 +9234,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SNK_a3(thisParam)
+   SUBROUTINE clearFinal_ParamType_SNK_a3(thisParam)
       TYPE(ParamType_SNK_a3),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SNK_a3
@@ -9542,7 +9542,7 @@ MODULE ParameterLists
 !> @param thisParam the parameter to clear
 !>
 !> Called automatically when object goes out of scope.
-   IMPURE ELEMENTAL SUBROUTINE clearFinal_ParamType_SLK_a3(thisParam)
+   SUBROUTINE clearFinal_ParamType_SLK_a3(thisParam)
       TYPE(ParamType_SLK_a3),INTENT(INOUT) :: thisParam
       CALL thisParam%clear
    ENDSUBROUTINE clearFinal_ParamType_SLK_a3
