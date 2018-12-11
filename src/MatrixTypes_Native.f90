@@ -37,6 +37,7 @@ MODULE MatrixTypes_Native
   PUBLIC :: DenseRectMatrixType
   PUBLIC :: TriDiagMatrixType
   PUBLIC :: BandedMatrixType
+  PUBLIC :: DistributedBandedMatrixType
   PUBLIC :: SparseMatrixType
 
   !> @brief The extended type for dense square matrices
@@ -164,6 +165,46 @@ MODULE MatrixTypes_Native
       !> @copydetails MatrixTypes::matvec_BandedMatrixType
       PROCEDURE,PASS :: matvec => matvec_BandedMatrixType
   ENDTYPE BandedMatrixType
+ 
+  !> @brief The basic banded matrix type
+  TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
+    !> The number of elements of b
+    INTEGER(SIK) :: nband
+    !> Number of columns for nonsquare matrices:
+    INTEGER(SIK) :: m
+    !> The bands of the matrix
+    TYPE(Band),ALLOCATABLE :: b(:) 
+!
+!List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief MatrixTypes::clear_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::clear_DistributedBandedMatrixType
+      PROCEDURE,PASS :: clear => clear_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::init_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::init_DistributedBandedMatrixType
+      PROCEDURE,PASS :: init => init_DistributedBandedMatrixParam
+      !> @copybrief MatrixTypes::assemble_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::assemble_DistributedBandedMatrixType
+      PROCEDURE,PASS :: assemble => assemble_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::setrow_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::setrow_DistributedBandedMatrixType
+      PROCEDURE,PASS :: setrow => setrow_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::set_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::set_DistributedBandedMatrixType
+      PROCEDURE,PASS :: set => set_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::get_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::get_DistributedBandedMatrixType
+      PROCEDURE,PASS :: get => get_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::transpose_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::transpose_DistributedBandedMatrixType
+      PROCEDURE,PASS :: transpose => transpose_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::zeroentries_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::zeroentries_DistributedBandedMatrixType
+      PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::matvec_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::matvec_DistributedBandedMatrixType
+      PROCEDURE,PASS :: matvec => matvec_DistributedBandedMatrixType
+  ENDTYPE DistributedBandedMatrixType
  
   !> @brief The basic sparse matrix type
   !>
@@ -443,6 +484,36 @@ MODULE MatrixTypes_Native
     ENDSUBROUTINE init_BandedMatrixParam
 !
 !-------------------------------------------------------------------------------
+!> @brief Initializes Distributed Banded Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBandedMatrixParam'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      CLASS(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
+      INTEGER(SIK) :: n,m,l,nband,i,j,p,q
+      INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
+      LOGICAL(SBK) :: bool
+
+    ENDSUBROUTINE init_DistributedBandedMatrixParam
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes Distributed Banded Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix, ierr)
+      CHARACTER(LEN=*),PARAMETER :: myName='assemble_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: n,m,l,nband,i,j,p,q
+      INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
+      LOGICAL(SBK) :: bool
+    ENDSUBROUTINE assemble_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes Dense Rectangular Matrix Type with a Parameter List
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
@@ -602,6 +673,16 @@ MODULE MatrixTypes_Native
      ENDSUBROUTINE clear_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Clears the distributed banded matrix
+!> @param matrix the matrix type to act on
+!>
+    SUBROUTINE clear_DistributedBandedMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: i
+     ENDSUBROUTINE clear_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Clears the dense rectangular matrix
 !> @param matrix the matrix type to act on
 !>
@@ -744,6 +825,38 @@ MODULE MatrixTypes_Native
     ENDSUBROUTINE set_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Sets the values in the distributed banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE set_DistributedBandedMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='set_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      INTEGER(SIK) :: d, p
+      REAL(SRK),INTENT(IN) :: setval
+    ENDSUBROUTINE set_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the distributed banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE setrow_DistributedBandedMatrixType(matrix,i,j,setval)
+      CHARACTER(LEN=*),PARAMETER :: myName='setrow_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j(:)
+      INTEGER(SIK) :: d, p
+      REAL(SRK),INTENT(IN) :: setval(:)
+    ENDSUBROUTINE setrow_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Sets the values in the banded matrix
 !> @param matrix the matrix type to act on
 !> @param i the ith location in the matrix
@@ -865,6 +978,23 @@ MODULE MatrixTypes_Native
         ENDIF
       ENDIF
     ENDSUBROUTINE get_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the distributed banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+    SUBROUTINE get_DistributedBandedMatrixType(matrix,i,j,getval)
+      CHARACTER(LEN=*),PARAMETER :: myName='get_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      REAL(SRK),INTENT(INOUT) :: getval
+      INTEGER(SIK) :: d,p
+      LOGICAL(SBK) :: bool
+    ENDSUBROUTINE get_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the banded matrix
@@ -1041,6 +1171,18 @@ MODULE MatrixTypes_Native
 !> @param matrix declare the matrix type to act on
 !>
 !>
+    SUBROUTINE transpose_DistributedBandedMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName='transpose_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: i,tmp
+      REQUIRE(matrix%isInit)
+    ENDSUBROUTINE transpose_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief tranpose the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE transpose_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
@@ -1189,6 +1331,19 @@ MODULE MatrixTypes_Native
 !> @param matrix declare the matrix type to act on
 !>
 !>
+    SUBROUTINE  zeroentries_DistributedBandedMatrixType(matrix)
+      CHARACTER(LEN=*),PARAMETER :: myName=&
+                      'zeroentries_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: i
+      REQUIRE(matrix%isInit)
+    ENDSUBROUTINE zeroentries_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
     SUBROUTINE  zeroentries_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
@@ -1239,6 +1394,21 @@ MODULE MatrixTypes_Native
         ENDDO        
       ENDDO
     ENDSUBROUTINE matvec_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Subroutine computes a matrix vector product for the banded matrix
+!         type.
+!> @param matrix declare the matrix type to act on.
+!> @param x the double-precision 1-D array to multiply the matrix by.
+!> @param y the double-precision 1-D array to hold the result of the
+!         multiplication.
+    SUBROUTINE matvec_DistributedBandedMatrixType(matrix, x, y)
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_DistributedBandedMatrixType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      REAL(SDK),INTENT(IN) :: x(:)
+      REAL(SDK),INTENT(INOUT) :: y(:)
+      INTEGER(SIK) :: i,j,ib,ie,jb,je
+    ENDSUBROUTINE matvec_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
 ENDMODULE MatrixTypes_Native
