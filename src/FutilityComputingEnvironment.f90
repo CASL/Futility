@@ -59,7 +59,7 @@ TYPE :: FutilityComputingEnvironment
   !> Number of timers own by the computing environment
   INTEGER(SIK) :: nTimers=0
   !> Pointer to the array of timers
-  TYPE(TimerType),POINTER,PRIVATE :: timers(:) => NULL()
+  TYPE(TimerPtrArray),ALLOCATABLE :: timers(:)
   !> Number of sub-environments owned by the computing environment
   INTEGER(SIK) :: nSubCompEnvs=0
   !> Pointer to the array of sub-environments
@@ -135,7 +135,7 @@ FUNCTION addTimer(this,name) RESULT(timer)
   TYPE(TimerType),POINTER :: timer
   !
   INTEGER(SIK) :: iTimer
-  TYPE(Timertype),POINTER :: oldTimers(:)
+  TYPE(TimerPtrArray),ALLOCATABLE :: oldTimers(:)
 
   REQUIRE(LEN_TRIM(name) > 0)
 
@@ -144,23 +144,27 @@ FUNCTION addTimer(this,name) RESULT(timer)
 
   !If no timer was found, create it and return a pointer
   IF(.NOT.ASSOCIATED(timer)) THEN
-    !Resize timers array and copy pre-existing timers into new array
-    oldTimers => this%timers
+    !Save the old timers
+    ALLOCATE(oldTimers(this%nTimers))
+    DO iTimer=1,this%nTimers
+      oldTimers(iTimer)%t => this%timers(iTimer)%t
+    ENDDO !iTimer
+    !Resize the timers array
+    IF(ALLOCATED(this%timers)) DEALLOCATE(this%timers)
     ALLOCATE(this%timers(this%nTimers+1))
     IF(this%nTimers > 0) THEN
       DO iTimer=1,this%nTimers
-        this%timers(iTimer)=oldTimers(iTimer)
-        CALL oldTimers(iTimer)%resetTimer()
+        this%timers(iTimer)%t => oldTimers(iTimer)%t
       ENDDO !iTimer
       DEALLOCATE(oldTimers)
-      oldTimers => NULL()
     ENDIF
 
     !Now add the new timer
     this%nTimers=this%nTimers+1
-    CALL this%timers(this%nTimers)%setTimerHiResMode(.TRUE.)
-    CALL this%timers(this%nTimers)%setTimerName(TRIM(name))
-    timer => this%timers(this%nTimers)
+    ALLOCATE(this%timers(this%nTimers)%t)
+    CALL this%timers(this%nTimers)%t%setTimerHiResMode(.TRUE.)
+    CALL this%timers(this%nTimers)%t%setTimerName(TRIM(name))
+    timer => this%timers(this%nTimers)%t
   ENDIF
 
   ENSURE(ASSOCIATED(timer))
@@ -172,7 +176,9 @@ ENDFUNCTION addTimer
 !> @param this the FutilityComputingEnvironment object to operate on
 !> @param name the name of the timer to remove
 !>
-!> If a timer with name @c name is not found, nothing is done.
+!> If a timer with name @c name is not found, nothing is done.  If the timer is
+!> found, it is deallocated.  The client is responsible for ensuring that any
+!> dangling pointers are managed properly.
 !>
 SUBROUTINE removeTimer(this,name)
   CLASS(FutilityComputingEnvironment),INTENT(INOUT) :: this
@@ -180,22 +186,27 @@ SUBROUTINE removeTimer(this,name)
   !
   INTEGER(SIK) :: iTimer
   TYPE(TimerType),POINTER :: timer
-  TYPE(Timertype),POINTER :: oldTimers(:)
+  TYPE(TimerPtrArray),ALLOCATABLE :: oldTimers(:)
 
   timer => this%getTimer(name)
 
   IF(ASSOCIATED(timer)) THEN
-    oldTimers => this%timers
+    !Save the old timers
+    ALLOCATE(oldTimers(this%nTimers))
+    DO iTimer=1,this%nTimers
+      oldTimers(iTimer)%t => this%timers(iTimer)%t
+    ENDDO !iTimer
+    !Resize timers
+    IF(ALLOCATED(this%timers)) DEALLOCATE(this%timers)
     ALLOCATE(this%timers(this%nTimers-1))
     this%nTimers=0
     DO iTimer=1,SIZE(oldTimers)
-      IF(TRIM(name) == oldTimers(iTimer)%getTimerName()) THEN
-        CONTINUE
+      IF(TRIM(name) == oldTimers(iTimer)%t%getTimerName()) THEN
+        DEALLOCATE(oldTimers(iTimer)%t)
       ELSE
         this%nTimers=this%nTimers+1
-        this%timers(this%nTimers)=oldTimers(iTimer)
+        this%timers(this%nTimers)%t => oldTimers(iTimer)%t
       ENDIF
-      CALL oldTimers(iTimer)%resetTimer()
     ENDDO !iTimer
     DEALLOCATE(oldTimers)
   ENDIF
@@ -219,8 +230,8 @@ FUNCTION getTimer(this,name) RESULT(timer)
 
   timer => NULL()
   DO iTimer=1,this%nTimers
-    IF(TRIM(name) == this%timers(iTimer)%getTimerName()) THEN
-      timer => this%timers(iTimer)
+    IF(TRIM(name) == this%timers(iTimer)%t%getTimerName()) THEN
+      timer => this%timers(iTimer)%t
       EXIT
     ENDIF
   ENDDO !iTimer
@@ -236,13 +247,13 @@ SUBROUTINE clearTimers(this)
   !
   INTEGER(SIK) :: iTimer
 
-  IF(ASSOCIATED(this%timers)) THEN
+  IF(ALLOCATED(this%timers)) THEN
     DO iTimer=1,this%nTimers
-      CALL this%timers(iTimer)%resetTimer()
+      CALL this%timers(iTimer)%t%resetTimer()
+      DEALLOCATE(this%timers(iTimer)%t)
     ENDDO !iTimer
     DEALLOCATE(this%timers)
   ENDIF
-  this%timers => NULL()
   this%nTimers=0
 
 ENDSUBROUTINE clearTimers
