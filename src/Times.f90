@@ -82,6 +82,7 @@ MODULE Times
 !
 ! List of Public items
   PUBLIC :: TimerType
+  PUBLIC :: TimerPtrArray
   PUBLIC :: getDate
   PUBLIC :: getClockTime
   PUBLIC :: getTimeFromDate
@@ -175,6 +176,12 @@ MODULE Times
       !> @copydetails Times::getTimeChar
       PROCEDURE,PASS :: getTimeChar
   ENDTYPE TimerType
+
+  !> @brief Wrapper object for an allocatable array of pointers to timers
+  TYPE :: TimerPtrArray
+    !> Pointer to the timer
+    CLASS(TimerType),POINTER :: t => NULL()
+  ENDTYPE TimerPtrArray
 
   !> @brief The current value of the processor clock (for HI-RES timer)
   !>

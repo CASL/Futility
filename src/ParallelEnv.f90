@@ -64,7 +64,7 @@ MODULE ParallelEnv
   INTEGER,SAVE :: PE_COMM_DEFAULT=0
 #endif
 
-  INTEGER :: max_threads_requested=0
+!$  INTEGER :: max_threads_requested=0
 
   PUBLIC :: PE_COMM_SELF
   PUBLIC :: PE_COMM_WORLD
