@@ -53,7 +53,7 @@ MODULE EigenvalueSolverTypes
   USE ForTeuchos_ParameterList
 #endif
 #ifdef FUTILITY_HAVE_ForTrilinos
-#include "ForTrilinosSimpleInterface_config.hpp"
+!#include "ForTrilinosSimpleInterface_config.hpp"
 #include "ForTrilinos.h"
 
   USE ISO_C_BINDING
@@ -728,6 +728,8 @@ MODULE EigenvalueSolverTypes
           CALL sublist%set('verbosity','none')
           CALL sublist%set('smoother: type','RILUK')
           CALL sublist%set('coarse: type','RILUK')
+
+          CALL solver%TplAnasazi%set('NumEV',1)
           
           CALL sublist%release()
           
@@ -1118,7 +1120,8 @@ MODULE EigenvalueSolverTypes
     SUBROUTINE solve_EigenvalueSolverType_ForAnasazi(solver)
       CLASS(EigenvalueSolverType_ForAnasazi),INTENT(INOUT) :: solver
 #ifdef FUTILITY_HAVE_ForTrilinos
-      REAL(SRK) :: factor, val(1)
+      REAL(SRK) :: factor, val(2)
+      INTEGER(SIK) :: eindex(2),numeigen
       SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
         SELECTTYPE(B=>solver%B); TYPE IS(TrilinosMatrixType)
           IF (.NOT.(A%isAssembled)) CALL A%assemble()
@@ -1135,7 +1138,7 @@ MODULE EigenvalueSolverTypes
       !TODO: set tolerance
       !if solver%x%b is a tpetra multivector.
       SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-        CALL solver%eig%solve(val,x%b)
+        numeigen = solver%eig%solve(val,x%b,eindex)
         FORTRILINOS_CHECK_IERR()
         solver%k = val(1)
       ENDSELECT  

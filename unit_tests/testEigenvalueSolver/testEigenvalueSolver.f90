@@ -324,6 +324,7 @@ CONTAINS
       CALL optList%add('anasazi_options->Generalized Davidson->Restart Dimension',5_SIK)
       CALL optList%add('anasazi_options->Generalized Davidson->Maximum Restarts',20_SIK)
       CALL optList%add('anasazi_options->Preconditioner Type','IDENTITY')
+      CALL optList%add('anasazi_options->NumEV',1_SIK)
 
       CALL testEVS%init(mpiTestEnv,optList)
       ASSERT(testEVS%isInit,'%isInit')
