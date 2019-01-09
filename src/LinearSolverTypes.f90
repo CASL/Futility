@@ -673,8 +673,9 @@ MODULE LinearSolverTypes
 !>
 !> This routine sets up the precondtioner of type PreCondType
 !>
-    SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver)
+    SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver,params)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      TYPE(ParamType),INTENT(IN),OPTIONAL :: params
       CHARACTER(LEN=*),PARAMETER :: myName='setup_PreCond_LinearSolverType_Iterative'
 
       IF(solver%isinit) THEN
@@ -682,7 +683,12 @@ MODULE LinearSolverTypes
           IF(solver%A%isInit) THEN
             ! Set up PreconditionerType
             CALL solver%PreCondType%clear()
-            CALL solver%PreCondType%init(solver%A)
+            SELECTTYPE(precond => solver%PreCondType)
+                TYPE IS(ILU_PreCondType)
+                    CALL solver%PreCondType%init(solver%A)
+                TYPE IS(RSOR_PreCondType)
+                    CALL solver%PreCondType%init(solver%A,params)
+            ENDSELECT
             CALL solver%PreCondType%setup()
           ELSE
             CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
@@ -1656,6 +1662,7 @@ MODULE LinearSolverTypes
         CALL BLAS_axpy(u,solver%x)
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
+        solver%residual=beta
         IF(it == m+1) it=m
         solver%iters=it
 
@@ -1789,6 +1796,7 @@ MODULE LinearSolverTypes
         CALL BLAS_axpy(u,solver%x)
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
+        solver%residual=beta
         IF(it == m+1) it=m
         solver%iters=it
 

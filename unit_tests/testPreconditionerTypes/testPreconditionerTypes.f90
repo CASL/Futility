@@ -11,6 +11,7 @@ MODULE dummyPCShell
   USE VectorTypes
   USE MatrixTypes
   USE PreconditionerTypes
+  USE ParameterLists
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
@@ -39,9 +40,10 @@ MODULE dummyPCShell
 
   CONTAINS
 !
-    SUBROUTINE init_dummyPC(thisPC,A)
+    SUBROUTINE init_dummyPC(thisPC,A,params)
       CLASS(dummyPCType),INTENT(INOUT) :: thisPC
       CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
+      TYPE(ParamType),INTENT(IN),OPTIONAL :: params
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: ierr
       CALL MatCreate(MPI_COMM_WORLD,thisPC%M,ierr)

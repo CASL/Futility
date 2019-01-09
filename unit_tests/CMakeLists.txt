@@ -66,6 +66,8 @@ SET(UNIT_TEST_NAMES
     testPartitionGraph
     testFutilityComputingEnvironment
     testSpeciesElements
+    testRSORprecon
+    ILUvsRSOR
 )
 
 IF("${PROJECT_NAME}" STREQUAL "Futility" OR "${PROJECT_NAME}" STREQUAL "MPACT")
