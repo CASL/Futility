@@ -241,7 +241,8 @@ MODULE MatrixTypes_Base
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
     SUBROUTINE MatrixTypes_Declare_ValidParams()
-      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal,nband
+      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal, &
+        nband, myband
       INTEGER(SIK) :: bandi(1), bandj(1), bandl(1)
       LOGICAL(SBK) :: isSym
 
@@ -256,6 +257,7 @@ MODULE MatrixTypes_Base
       MPI_COMM_ID=1
       nlocal=-1
       nband=1
+      myband=0
       bandi(1)=1
       bandj(1)=1
       bandl(1)=1
@@ -286,10 +288,9 @@ MODULE MatrixTypes_Base
       !Distributed Banded Matrix Type - Required
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->n',n)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
-      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->isSym',isSym)
-      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->matType',matType)
-      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->comm',MPI_COMM_ID)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nband',nband)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->myband',myband)
       CALL DistributedBandedMatrixType_reqParams%add('bandi',bandi)
       CALL DistributedBandedMatrixType_reqParams%add('bandj',bandj)
       CALL DistributedBandedMatrixType_reqParams%add('bandl',bandl)
@@ -326,6 +327,8 @@ MODULE MatrixTypes_Base
       CALL DenseSquareMatrixType_reqParams%clear()
       !Distributed Matrix Type
       CALL DistributedMatrixType_reqParams%clear()
+      !Distributed Banded Matrix Type
+      CALL DistributedBandedMatrixType_reqParams%clear()
 
       !There are no optional parameters at this time.
       CALL DistributedMatrixType_optParams%clear()

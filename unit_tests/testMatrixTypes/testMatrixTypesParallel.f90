@@ -19,7 +19,6 @@ PROGRAM testMatrixTypesParallel
   USE VectorTypes
   USE MatrixTypes
 
-
   IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -71,18 +70,51 @@ CONTAINS
 !-------------------------------------------------------------------------------
     SUBROUTINE testMatrix()
 #ifdef HAVE_MPI
+      IMPLICIT NONE
+      
       TYPE(ParamType) :: pList
       INTEGER(SIK) :: rank, nproc, mpierr
-#if defined(FUTILITY_HAVE_PETSC) || defined(FUTILITY_HAVE_Trilinos)
       CLASS(DistributedMatrixType),ALLOCATABLE :: thisMatrix
       REAL(SRK) :: val
-#endif
+      LOGICAL(SBK) :: bool
+
 
       CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
       CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
 
       ASSERT(nproc==2, 'nproc valid')
 
+!Test for distributed banded matrices
+      ALLOCATE(DistributedBandedMatrixType :: thisMatrix)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+        !test clear
+        !make matrix w/out using untested init
+        thisMatrix%isInit=.TRUE.
+        thisMatrix%n=10
+        thisMatrix%m=15
+        thisMatrix%nband=4
+        thisMatrix%myband=4
+        thisMatrix%isCreated=.TRUE.
+        thisMatrix%isAssembled=.TRUE.
+        thisMatrix%comm=33
+        ALLOCATE(thisMatrix%b(4))
+        ALLOCATE(thisMatrix%b(2)%elem(5))
+      ENDSELECT
+      CALL thisMatrix%clear()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+          bool = (.NOT.(thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+              .AND.((thisMatrix%m == 0) & 
+              .AND.(thisMatrix%nband == 0) & 
+              .AND.(thisMatrix%myband == 0) &
+              .AND.(thisMatrix%isCreated == .FALSE.) &
+              .AND.(thisMatrix%isAssembled == .FALSE.) &
+              .AND.(thisMatrix%comm == -1234) &
+              .AND.(thisMatrix%m == 0) &
+              .AND.(.NOT.ALLOCATED(thisMatrix%b)))
+          ASSERT(bool, 'DistributedBandedMatrixType%clear()')
+      ENDSELECT
       ! Create matrix that looks like this
       ! 1 0 2 0
       ! 0 3 0 4

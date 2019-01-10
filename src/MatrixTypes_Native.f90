@@ -168,11 +168,13 @@ MODULE MatrixTypes_Native
  
   !> @brief The basic banded matrix type
   TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
-    !> The number of elements of b
+    !> The number of bands across all processors
     INTEGER(SIK) :: nband
+    !> The number of elements of b
+    INTEGER(SIK) :: myband
     !> Number of columns for nonsquare matrices:
     INTEGER(SIK) :: m
-    !> The bands of the matrix
+    !> The bands of the local matrix
     TYPE(Band),ALLOCATABLE :: b(:) 
 !
 !List of Type Bound Procedures
@@ -516,7 +518,7 @@ MODULE MatrixTypes_Native
       CALL validParams%get('bandl',bandl)
       CALL validParams%clear()
 
-      ! be greater than 1 and n < 1 are note logically equivalent. is this
+      ! be greater than 1 and n < 1 are not logically equivalent. is this
       ! desired behavior?
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
@@ -794,6 +796,21 @@ MODULE MatrixTypes_Native
       CHARACTER(LEN=*),PARAMETER :: myName='clear_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
+      matrix%isInit=.FALSE.
+      matrix%isCreated=.FALSE.
+      matrix%isAssembled=.FALSE.
+      matrix%comm=-1234
+      matrix%n=0
+      matrix%m=0
+      IF(ALLOCATED(matrix%b)) THEN
+        DO i=1,matrix%myband
+          IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
+        ENDDO
+        DEALLOCATE(matrix%b)
+      ENDIF  
+      matrix%nband=0
+      matrix%myband=0
+      IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
      ENDSUBROUTINE clear_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
