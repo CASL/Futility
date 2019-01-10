@@ -40,6 +40,8 @@ MODULE MatrixTypes_Base
   PUBLIC :: SparseMatrixType_reqParams,SparseMatrixType_optParams
   PUBLIC :: TriDiagMatrixType_reqParams,TriDiagMatrixType_optParams
   PUBLIC :: BandedMatrixType_reqParams,BandedMatrixType_optParams
+  PUBLIC :: DistributedBandedMatrixType_reqParams, &
+    DistributedBandedMatrixType_optParams
   PUBLIC :: DenseRectMatrixType_reqParams,DenseRectMatrixType_optParams
   PUBLIC :: DenseSquareMatrixType_reqParams,DenseSquareMatrixType_optParams
   PUBLIC :: DistributedMatrixType_reqParams,DistributedMatrixType_optParams
@@ -193,6 +195,10 @@ MODULE MatrixTypes_Base
   !> initialization for a Distributed Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: DistributedMatrixType_reqParams, DistributedMatrixType_optParams
 
+!> The parameter lists to use when validating a parameter list for
+  !> initialization for a Banded Matrix Type.
+  TYPE(ParamType),PROTECTED,SAVE :: DistributedBandedMatrixType_reqParams, DistributedBandedMatrixType_optParams
+
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
   LOGICAL(SBK),SAVE :: MatrixType_Paramsflag=.FALSE.
@@ -277,6 +283,17 @@ MODULE MatrixTypes_Base
       CALL DistributedMatrixType_reqParams%add('MatrixType->isSym',isSym)
       CALL DistributedMatrixType_reqParams%add('MatrixType->matType',matType)
       CALL DistributedMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      !Distributed Banded Matrix Type - Required
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->n',n)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->isSym',isSym)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->matType',matType)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nband',nband)
+      CALL DistributedBandedMatrixType_reqParams%add('bandi',bandi)
+      CALL DistributedBandedMatrixType_reqParams%add('bandj',bandj)
+      CALL DistributedBandedMatrixType_reqParams%add('bandl',bandl)
+
 
       !There are no optional parameters at this time.
       CALL DistributedMatrixType_optParams%add('MatrixType->nlocal',nlocal)
