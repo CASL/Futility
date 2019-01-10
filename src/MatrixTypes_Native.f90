@@ -30,6 +30,10 @@ MODULE MatrixTypes_Native
 
   IMPLICIT NONE
 
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
+
   PRIVATE
 !
 ! List of public members
@@ -420,6 +424,11 @@ MODULE MatrixTypes_Native
             i=bandi(p)
             j=bandj(p)
             l=bandl(p)
+            IF(l<1) THEN
+              CALL eMatrixType%raiseError('Incorrect input to '// &
+                modName//'::'//myName//' - Band length must be 1'// &
+                ' or greater!!')
+            ENDIF
             !Check valid (i,j) based on n,m
             IF(i<1 .OR. i>n) bool=.FALSE.
             IF(j<1 .OR. j>m) bool=.FALSE.
@@ -491,13 +500,15 @@ MODULE MatrixTypes_Native
 !> @param pList the parameter list
 !>
     SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
+#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBandedMatrixParam'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n,m,l,nband,i,j,p,q,matType,MPI_COMM_ID
+      INTEGER(SIK) :: n,m,l,nband,i,j,p,q,MPI_COMM_ID,elem_total,rank, &
+        mpierr,nproc,nelem, elem_ps,start_band,end_band
       INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
-      LOGICAL(SBK) :: bool,isSym
+      LOGICAL(SBK) :: bool
 
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -509,9 +520,7 @@ MODULE MatrixTypes_Native
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->m',m)
-      CALL validParams%get('MatrixType->isSym',isSym)
-      CALL validParams%get('MatrixType->matType',matType)
-      CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL validParams%get('MatrixType->comm',MPI_COMM_ID)
       CALL validParams%get('MatrixType->nband',nband)
       CALL validParams%get('bandi',bandi)
       CALL validParams%get('bandj',bandj)
@@ -549,6 +558,11 @@ MODULE MatrixTypes_Native
             i=bandi(p)
             j=bandj(p)
             l=bandl(p)
+            IF(l<1) THEN
+              CALL eMatrixType%raiseError('Incorrect input to '// &
+                modName//'::'//myName//' - Band length must be 1'// &
+                ' or greater!!')
+            ENDIF
             !Check valid (i,j) based on n,m
             IF(i<1 .OR. i>n) bool=.FALSE.
             IF(j<1 .OR. j>m) bool=.FALSE.
@@ -597,6 +611,31 @@ MODULE MatrixTypes_Native
             matrix%n=n
             matrix%m=m
             matrix%nband=nband
+            ! Divide elements between processors, maintaining bands.
+            ! Processor 1 takes first X elements, 2 takes next X, etc.
+            ! Find total number of elements in entire matrix
+            elem_total=0
+            DO p=1,nband
+              elem_total=elem_total+bandl(p)
+            ENDDO
+            CALL MPI_Comm_rank(MPI_COMM_ID,rank,mpierr)
+            CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+            ! number of elements to hold, excluding remainder
+            nelem=elem_total/nproc
+            ! figure out which bands and pieces to hold
+            elem_ps=0
+            start_band=-1
+            end_band=-1
+            IF(rank == 0) start_band=1
+            DO p=1,nband
+              elem_ps=elem_ps+bandl(p)
+              IF(rank == 0) THEN
+                IF(elem_ps  
+              ELSE
+
+              ENDIF
+            ENDDO
+            MOD(elem_total,nproc)
             ALLOCATE(matrix%b(nband))
             DO p=1,nband
               ALLOCATE(matrix%b(p)%elem(bandl(p)))
@@ -612,7 +651,7 @@ MODULE MatrixTypes_Native
         CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - MatrixType already initialized')
       ENDIF
-
+#endif
     ENDSUBROUTINE init_DistributedBandedMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -793,13 +832,14 @@ MODULE MatrixTypes_Native
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_DistributedBandedMatrixType(matrix)
+#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='clear_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
       matrix%isInit=.FALSE.
       matrix%isCreated=.FALSE.
       matrix%isAssembled=.FALSE.
-      matrix%comm=-1234
+      matrix%comm=MPI_COMM_NULL
       matrix%n=0
       matrix%m=0
       IF(ALLOCATED(matrix%b)) THEN
@@ -811,6 +851,7 @@ MODULE MatrixTypes_Native
       matrix%nband=0
       matrix%myband=0
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
+#endif
      ENDSUBROUTINE clear_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------

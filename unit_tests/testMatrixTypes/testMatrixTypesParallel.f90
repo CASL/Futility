@@ -72,8 +72,8 @@ CONTAINS
 #ifdef HAVE_MPI
       IMPLICIT NONE
       
-      TYPE(ParamType) :: pList
-      INTEGER(SIK) :: rank, nproc, mpierr
+      TYPE(ParamType) :: pList,optListMat
+      INTEGER(SIK) :: rank,nproc,mpierr
       CLASS(DistributedMatrixType),ALLOCATABLE :: thisMatrix
       REAL(SRK) :: val
       LOGICAL(SBK) :: bool
@@ -110,11 +110,140 @@ CONTAINS
               .AND.(thisMatrix%myband == 0) &
               .AND.(thisMatrix%isCreated == .FALSE.) &
               .AND.(thisMatrix%isAssembled == .FALSE.) &
-              .AND.(thisMatrix%comm == -1234) &
+              .AND.(thisMatrix%comm == MPI_COMM_NULL) &
               .AND.(thisMatrix%m == 0) &
               .AND.(.NOT.ALLOCATED(thisMatrix%b)))
           ASSERT(bool, 'DistributedBandedMatrixType%clear()')
       ENDSELECT
+      !check init
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',15_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+          bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+              .AND.((thisMatrix%m == 15).AND.(thisMatrix%nband == 3))
+          ASSERT(bool, 'banded%init(...)')
+          bool = ((SIZE(thisMatrix%b) == 3).AND. &
+                  (SIZE(thisMatrix%b(2)%elem) == 3) .AND. &
+                  (thisMatrix%b(2)%ib == 1) .AND. &
+                  (thisMatrix%b(2)%jb == 2) .AND. &
+                  (thisMatrix%b(2)%ie == 3) .AND. &
+                  (thisMatrix%b(2)%je == 4) .AND. &
+                  (thisMatrix%b(2)%didx == 1))
+          ASSERT(bool, 'banded%init(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+!      !test with double init (isInit==true on 2nd try)
+!      SELECTTYPE(thisMatrix)
+!        TYPE IS(DistributedBandedMatrixType); thisMatrix%m=1
+!      ENDSELECT
+!      CALL thisMatrix%init(pList)
+!      SELECTTYPE(thisMatrix)
+!        TYPE IS(DistributedBandedMatrixType)
+!          bool = thisMatrix%m == 1
+!          ASSERT(bool, 'banded%init(...)')
+!      ENDSELECT
+!      CALL thisMatrix%clear()
+!      !test with n<1
+!      CALL pList%clear()
+!      CALL pList%add('MatrixType->n',-1_SNK)
+!      CALL pList%add('MatrixType->m',10_SNK)
+!      CALL pList%add('MatrixType->nband',3_SNK)
+!      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+!      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+!      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+!      CALL pList%validate(pList,optListMat)
+!      CALL thisMatrix%init(pList) !expect exception
+!      bool = .NOT.thisMatrix%isInit
+!      ASSERT(bool, 'banded%init(...)')
+!      CALL thisMatrix%clear()
+!      !test with m<1
+!      CALL pList%clear()
+!      CALL pList%add('MatrixType->n',10_SNK)
+!      CALL pList%add('MatrixType->m',-1_SNK)
+!      CALL pList%add('MatrixType->nband',3_SNK)
+!      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+!      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+!      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+!      CALL pList%validate(pList,optListMat)
+!      CALL thisMatrix%init(pList) !expect exception
+!      bool = .NOT.thisMatrix%isInit
+!      ASSERT(bool, 'banded%init(...)')
+!      CALL thisMatrix%clear()
+!      !test with nband<1
+!      CALL pList%clear()
+!      CALL pList%add('MatrixType->n',10_SNK)
+!      CALL pList%add('MatrixType->m',15_SNK)
+!      CALL pList%add('MatrixType->nband',-1_SNK)
+!      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+!      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+!      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+!      CALL pList%validate(pList,optListMat)
+!      CALL thisMatrix%init(pList) !expect exception
+!      bool = .NOT.thisMatrix%isInit
+!      ASSERT(bool, 'banded%init(...)')
+!      CALL thisMatrix%clear()
+!      !test with SIZE(bandi)/=SIZE(bandl) 
+!      CALL pList%clear()
+!      CALL pList%add('MatrixType->n',10_SNK)
+!      CALL pList%add('MatrixType->m',15_SNK)
+!      CALL pList%add('MatrixType->nband',3_SNK)
+!      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+!      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+!      CALL pList%add('bandl',(/4_SIK,3_SIK/))
+!      CALL pList%validate(pList,optListMat)
+!      CALL thisMatrix%init(pList) !expect exception
+!      bool = .NOT.thisMatrix%isInit
+!      ASSERT(bool, 'banded%init(...)')
+!      CALL thisMatrix%clear()
+!      !test nband /= SIZE(bandi)
+!      CALL pList%clear()
+!      CALL pList%add('MatrixType->n',10_SNK)
+!      CALL pList%add('MatrixType->m',15_SNK)
+!      CALL pList%add('MatrixType->nband',16_SNK)
+!      CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
+!      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+!      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+!      CALL pList%validate(pList,optListMat)
+!      CALL thisMatrix%init(pList) !expect exception
+!      bool = .NOT.thisMatrix%isInit
+!      ASSERT(bool, 'banded%init(...)')
+!      CALL thisMatrix%clear()
+!      !test out of bounds array element (i,j) not in (1:n,1:m)
+!      CALL pList%clear()
+!      CALL pList%add('MatrixType->n',10_SNK)
+!      CALL pList%add('MatrixType->m',15_SNK)
+!      CALL pList%add('MatrixType->nband',3_SNK)
+!      CALL pList%add('bandi',(/1_SIK,1_SIK,21_SIK/))
+!      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+!      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+!      CALL pList%validate(pList,optListMat)
+!      CALL thisMatrix%init(pList) !expect exception
+!      bool = .NOT.thisMatrix%isInit
+!      ASSERT(bool, 'banded%init(...)')
+!      CALL thisMatrix%clear()
+!      !test multiple bands containing same array element
+!      CALL pList%clear()
+!      CALL pList%add('MatrixType->n',10_SNK)
+!      CALL pList%add('MatrixType->m',15_SNK)
+!      CALL pList%add('MatrixType->nband',3_SNK)
+!      CALL pList%add('bandi',(/1_SIK,2_SIK,1_SIK/))
+!      CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
+!      CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
+!      CALL pList%validate(pList,optListMat)
+!      CALL thisMatrix%init(pList) !expect exception
+!      bool = .NOT.thisMatrix%isInit
+!      ASSERT(bool, 'banded%init(...)')
+!      CALL thisMatrix%clear()
+!      WRITE(*,*) '  Passed: CALL banded%init(...)'
+
       ! Create matrix that looks like this
       ! 1 0 2 0
       ! 0 3 0 4
