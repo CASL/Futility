@@ -106,10 +106,12 @@ MODULE ODESolverTypes
   TYPE(RealVectorType),SAVE :: EXTERNAL_ydot
   INTEGER(SIK),SAVE :: EXTERNAL_N=0
   LOGICAL(SLK),SAVE :: EXTERNAL_isInit=.FALSE.
+#ifdef FUTILITY_HAVE_SUNDIALS
   INTEGER(C_LONG),SAVE :: SUNDIALS_iout(25)
   INTEGER(C_LONG),SAVE :: SUNDIALS_ipar(1)
   REAL(C_DOUBLE),SAVE :: SUNDIALS_rout(10)
   REAL(C_DOUBLE),SAVE :: SUNDIALS_rpar(1)
+#endif
 
   !> @brief the base ode solver type
   TYPE,ABSTRACT :: ODESolverType_Base
