@@ -506,7 +506,8 @@ MODULE MatrixTypes_Native
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,m,l,nband,i,j,p,q,MPI_COMM_ID,elem_total,rank, &
-        mpierr,nproc,nelem, elem_ps,start_band,end_band
+        mpierr,nproc,nelem, elem_ps,start_band,end_bandi,omit_1st_start, &
+        omit_1st_end
       INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
       LOGICAL(SBK) :: bool
 
@@ -626,16 +627,34 @@ MODULE MatrixTypes_Native
             elem_ps=0
             start_band=-1
             end_band=-1
-            IF(rank == 0) start_band=1
+            IF(rank == 0) THEN
+              start_band=1
+              omit_1st_start=0   
+            ENDIF 
             DO p=1,nband
               elem_ps=elem_ps+bandl(p)
               IF(rank == 0) THEN
-                IF(elem_ps  
+                IF((elem_ps > nelem+MOD(elem_total,nproc)).AND. &
+                  (end_band == -1)) THEN
+                  end_band=p
+                  EXIT
+                ENDIF
               ELSE
-
+                IF((elem_ps > rank*nelem+MOD(elem_total,nproc)).AND. &
+                    (start_band == -1) THEN
+                  start_band=p
+                  IF(elem_ps - 
+                ENDIF
+                IF((elem_ps > (rank+1)*nelem+MOD(elem_total,nproc)).AND. &
+                  (end_band == -1)) THEN
+                  end_band=p
+                  EXIT
+                ENDIF
               ENDIF
             ENDDO
-            MOD(elem_total,nproc)
+            IF(end_band == -1) end_band=nband
+            ! Determine which partial bands to hold if any
+
             ALLOCATE(matrix%b(nband))
             DO p=1,nband
               ALLOCATE(matrix%b(p)%elem(bandl(p)))
