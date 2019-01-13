@@ -506,8 +506,8 @@ MODULE MatrixTypes_Native
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n,m,l,nband,i,j,p,q,MPI_COMM_ID,elem_total,rank, &
-        mpierr,nproc,nelem, elem_ps,start_band,end_bandi,omit_1st_start, &
-        omit_1st_end
+        mpierr,nproc,nelem, elem_ps,start_band,end_band,omit_1st, &
+        omit_last
       INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
       LOGICAL(SBK) :: bool
 
@@ -629,7 +629,7 @@ MODULE MatrixTypes_Native
             end_band=-1
             IF(rank == 0) THEN
               start_band=1
-              omit_1st_start=0   
+              omit_1st=0   
             ENDIF 
             DO p=1,nband
               elem_ps=elem_ps+bandl(p)
@@ -637,24 +637,38 @@ MODULE MatrixTypes_Native
                 IF((elem_ps > nelem+MOD(elem_total,nproc)).AND. &
                   (end_band == -1)) THEN
                   end_band=p
+                  omit_last=elem_ps-(nelem+MOD(elem_total,nproc))
                   EXIT
                 ENDIF
               ELSE
                 IF((elem_ps > rank*nelem+MOD(elem_total,nproc)).AND. &
-                    (start_band == -1) THEN
+                    (start_band == -1)) THEN
                   start_band=p
-                  IF(elem_ps - 
+                  omit_1st=rank*nelem+MOD(elem_total,nproc)-(elem_ps-bandl(p))
                 ENDIF
                 IF((elem_ps > (rank+1)*nelem+MOD(elem_total,nproc)).AND. &
                   (end_band == -1)) THEN
                   end_band=p
+                  omit_last=elem_ps-((rank+1)*nelem+MOD(elem_total,nproc))
                   EXIT
                 ENDIF
               ENDIF
             ENDDO
-            IF(end_band == -1) end_band=nband
-            ! Determine which partial bands to hold if any
-
+            IF(end_band == -1) THEN
+              end_band=nband
+              omit_last=0
+            ENDIF
+            IF(rank==0) THEN
+            write(*,*) "rank      : ", rank
+            write(*,*) "start_band: ", start_band
+            write(*,*) "omit_1st  : ", omit_1st
+            write(*,*) "end_band  : ", end_band
+            write(*,*) "omit_last : ", omit_last
+            ENDIF
+            ! Allocate
+            ! omit_1st=0 implies band is not needed
+            ! If omit_last == size of end_band, omit whole band
+            ! check the case of start and end band are the same or different
             ALLOCATE(matrix%b(nband))
             DO p=1,nband
               ALLOCATE(matrix%b(p)%elem(bandl(p)))
