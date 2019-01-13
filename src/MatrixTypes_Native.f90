@@ -1092,6 +1092,28 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: j
       INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval
+      IF(matrix%isInit) THEN
+        IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+            .AND. (i>=1) .AND. (j >= 1)) THEN
+          !Find diagonal number
+          IF(i==j) THEN
+            d=0_SIK
+          ELSEIF(i>j) THEN
+            d=-1_SIK*ABS(i-j)
+          ELSE
+            d=ABS(i-j)
+          ENDIF
+          !If band should contain this element, set it
+          DO p=1,matrix%myband
+            IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
+               (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
+               (j <= matrix%b(p)%je)) THEN
+              matrix%b(p)%elem(i-matrix%b(p)%ib+1)=setval
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDIF
 #endif
     ENDSUBROUTINE set_DistributedBandedMatrixType
 !
@@ -1126,7 +1148,7 @@ MODULE MatrixTypes_Native
       INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval
       IF(matrix%isInit) THEN
-        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
+        IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
             .AND. (i>=1) .AND. (j >= 1)) THEN
           !Find diagonal number
           IF(i==j) THEN
