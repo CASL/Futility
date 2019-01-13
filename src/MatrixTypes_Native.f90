@@ -665,6 +665,7 @@ MODULE MatrixTypes_Native
             ENDIF
             matrix%myband=end_band-start_band+1
             IF(omit_last == bandl(end_band)) THEN
+              end_band=end_band-1
               matrix%myband=matrix%myband-1
               omit_last=0
             ENDIF
@@ -704,26 +705,27 @@ MODULE MatrixTypes_Native
                 matrix%b(i)%didx=d(p)
             ENDIF 
             ! Debug
-!            if(rank==1) then
-!            write(*,*) "n        : ", matrix%n
-!            write(*,*) "m        : ", matrix%m
-!            write(*,*) "nband    : ", matrix%nband
-!            write(*,*) "myband   : ", matrix%myband
-!            write(*,*) "comm     : ", matrix%comm
-!            write(*,*) "start_band ", start_band
-!            write(*,*) "omit_1st : ", omit_1st
-!            write(*,*) "end_band : ", end_band
-!            write(*,*) "omit_last: ", omit_last
-!            do i=1,matrix%myband
-!            write(*,*) "i        : ", i
-!            write(*,*) "Size b(i): ", SIZE(matrix%b(i)%elem)
-!            write(*,*) "ib       : ",   matrix%b(i)%ib
-!            write(*,*) "jb       : ",   matrix%b(i)%jb
-!            write(*,*) "ie       : ",  matrix%b(i)%ie
-!            write(*,*) "je       : ",  matrix%b(i)%je
-!            write(*,*) "didx     : ",  matrix%b(i)%didx
-!            enddo
-!            endif
+            if(rank==0) then
+            write(*,*) "n        : ", matrix%n
+            write(*,*) "m        : ", matrix%m
+            write(*,*) "nband    : ", matrix%nband
+            write(*,*) "myband   : ", matrix%myband
+            write(*,*) "comm     : ", matrix%comm
+            write(*,*) "start_band ", start_band
+            write(*,*) "omit_1st : ", omit_1st
+            write(*,*) "end_band : ", end_band
+            write(*,*) "omit_last: ", omit_last
+            do i=1,matrix%myband
+            write(*,*) "i        : ", i
+            write(*,*) "Size b(i): ", SIZE(matrix%b(i)%elem)
+            write(*,*) "ib       : ",   matrix%b(i)%ib
+            write(*,*) "jb       : ",   matrix%b(i)%jb
+            write(*,*) "ie       : ",  matrix%b(i)%ie
+            write(*,*) "je       : ",  matrix%b(i)%je
+            write(*,*) "didx     : ",  matrix%b(i)%didx
+            enddo
+            write(*,*)
+            endif
           ENDIF
         ENDIF
       ELSE
@@ -1083,12 +1085,14 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE set_DistributedBandedMatrixType(matrix,i,j,setval)
+#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='set_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval
+#endif
     ENDSUBROUTINE set_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------

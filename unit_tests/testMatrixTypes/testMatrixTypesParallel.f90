@@ -271,7 +271,153 @@ CONTAINS
       bool = .NOT.thisMatrix%isInit
       ASSERT(bool, 'banded%init(...)')
       CALL thisMatrix%clear()
+      ! Test single band matrix
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nband',1_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
+      CALL pList%add('bandi',(/1_SIK/))
+      CALL pList%add('bandj',(/1_SIK/))
+      CALL pList%add('bandl',(/4_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+          bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 4)) &
+              .AND.((thisMatrix%m == 4).AND.(thisMatrix%nband == 1))
+          ASSERT(bool, 'banded%init(...)')
+          bool = ((thisMatrix%myband == 1).AND. &
+            (thisMatrix%comm == MPI_COMM_WORLD))
+          ASSERT(bool, 'banded%init(...)')
+          IF(rank == 0) THEN
+            bool = ((SIZE(thisMatrix%b) == 1).AND. &
+                    (SIZE(thisMatrix%b(1)%elem) == 2) .AND. &
+                    (thisMatrix%b(1)%ib == 1) .AND. &
+                    (thisMatrix%b(1)%jb == 1) .AND. &
+                    (thisMatrix%b(1)%ie == 2) .AND. &
+                    (thisMatrix%b(1)%je == 2) .AND. &
+                    (thisMatrix%b(1)%didx == 0))
+            ASSERT(bool, 'banded%init(...)')
+          ELSE
+            bool = ((SIZE(thisMatrix%b) == 1).AND. &
+                    (SIZE(thisMatrix%b(1)%elem) == 2) .AND. &
+                    (thisMatrix%b(1)%ib == 3) .AND. &
+                    (thisMatrix%b(1)%jb == 3) .AND. &
+                    (thisMatrix%b(1)%ie == 4) .AND. &
+                    (thisMatrix%b(1)%je == 4) .AND. &
+                    (thisMatrix%b(1)%didx == 0))
+            ASSERT(bool, 'banded%init(...)')
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      ! Test perfectly divided bands
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nband',2_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
+      CALL pList%add('bandi',(/1_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,2_SIK/))
+      CALL pList%add('bandl',(/2_SIK,2_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+          bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 4)) &
+              .AND.((thisMatrix%m == 4).AND.(thisMatrix%nband == 2))
+          ASSERT(bool, 'banded%init(...)')
+          bool = ((thisMatrix%myband == 1).AND. &
+            (thisMatrix%comm == MPI_COMM_WORLD))
+          ASSERT(bool, 'banded%init(...)')
+          IF(rank == 0) THEN
+            bool = ((SIZE(thisMatrix%b) == 1).AND. &
+                    (SIZE(thisMatrix%b(1)%elem) == 2) .AND. &
+                    (thisMatrix%b(1)%ib == 1) .AND. &
+                    (thisMatrix%b(1)%jb == 1) .AND. &
+                    (thisMatrix%b(1)%ie == 2) .AND. &
+                    (thisMatrix%b(1)%je == 2) .AND. &
+                    (thisMatrix%b(1)%didx == 0))
+            ASSERT(bool, 'banded%init(...)')
+          ELSE
+            bool = ((SIZE(thisMatrix%b) == 1).AND. &
+                    (SIZE(thisMatrix%b(1)%elem) == 2) .AND. &
+                    (thisMatrix%b(1)%ib == 1) .AND. &
+                    (thisMatrix%b(1)%jb == 2) .AND. &
+                    (thisMatrix%b(1)%ie == 2) .AND. &
+                    (thisMatrix%b(1)%je == 3) .AND. &
+                    (thisMatrix%b(1)%didx == 1))
+            ASSERT(bool, 'banded%init(...)')
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL banded%init(...)'
+      !check set
+      !test normal use case (split diagonal)
+      !want to build:
+      ![1 2 0 0]
+      ![0 3 4 0]
+      ![8 0 5 6]
+      ![0 9 0 7]
+      !with main diagonal split [1,3],[5,7]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nband',4_SNK)
+      CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK,3_SIK/))
+      CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK,1_SIK/))
+      CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK,2_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(2,3,4._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      CALL thisMatrix%set(3,1,8._SRK)
+      CALL thisMatrix%set(4,2,9._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+          bool = thisMatrix%b(1)%elem(1) == 1
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(1)%elem(2) == 3
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(2)%elem(1) == 5
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(2)%elem(2) == 7
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(3)%elem(1) == 2
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(3)%elem(2) == 4
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(3)%elem(3) == 6
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(4)%elem(1) == 8
+          ASSERT(bool, 'banded%set(...)')
+          bool = thisMatrix%b(4)%elem(2) == 9
+          ASSERT(bool, 'banded%set(...)')
+      ENDSELECT
+      !check matrix that hasnt been init, i,j out of bounds
+      CALL thisMatrix%clear()
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nband',4_SNK)
+      CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK,3_SIK/))
+      CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK,1_SIK/))
+      CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK,2_SIK/))
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(-1,1,1._SRK)
+      CALL thisMatrix%set(1,-1,1._SRK)
+      CALL thisMatrix%set(5,1,1._SRK)
+      CALL thisMatrix%set(1,5,1._SRK)
+      !no crash? good
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL banded%set(...)'
+
 
       ! Create matrix that looks like this
       ! 1 0 2 0
