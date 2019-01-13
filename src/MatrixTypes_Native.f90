@@ -552,6 +552,10 @@ MODULE MatrixTypes_Native
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of bands (nband) does not'// &
               ' agree with size of arrays containing band parameters!')
+        ELSEIF(MPI_COMM_ID == MPI_COMM_NULL) THEN
+          CALL eMatrixType%raiseError('Incorrect input to '// &
+            modName//'::'//myName//' - MPI communicator cannot have the same'// &
+              ' value as MPI_COMM_NULL')
         ELSE
           bool=.TRUE.
           ALLOCATE(d(nband))
@@ -612,6 +616,7 @@ MODULE MatrixTypes_Native
             matrix%n=n
             matrix%m=m
             matrix%nband=nband
+            matrix%comm=MPI_COMM_ID
             ! Divide elements between processors, maintaining bands.
             ! Processor 1 takes first X elements, 2 takes next X, etc.
             ! Find total number of elements in entire matrix
@@ -620,7 +625,7 @@ MODULE MatrixTypes_Native
               elem_total=elem_total+bandl(p)
             ENDDO
             CALL MPI_Comm_rank(MPI_COMM_ID,rank,mpierr)
-            CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+            CALL MPI_Comm_size(MPI_COMM_ID,nproc,mpierr)
             ! number of elements to hold, excluding remainder
             nelem=elem_total/nproc
             ! figure out which bands and pieces to hold
@@ -658,26 +663,67 @@ MODULE MatrixTypes_Native
               end_band=nband
               omit_last=0
             ENDIF
-            IF(rank==0) THEN
-            write(*,*) "rank      : ", rank
-            write(*,*) "start_band: ", start_band
-            write(*,*) "omit_1st  : ", omit_1st
-            write(*,*) "end_band  : ", end_band
-            write(*,*) "omit_last : ", omit_last
+            matrix%myband=end_band-start_band+1
+            IF(omit_last == bandl(end_band)) THEN
+              matrix%myband=matrix%myband-1
+              omit_last=0
             ENDIF
-            ! Allocate
-            ! omit_1st=0 implies band is not needed
-            ! If omit_last == size of end_band, omit whole band
-            ! check the case of start and end band are the same or different
-            ALLOCATE(matrix%b(nband))
-            DO p=1,nband
-              ALLOCATE(matrix%b(p)%elem(bandl(p)))
-              matrix%b(p)%ib=bandi(p)
-              matrix%b(p)%jb=bandj(p)
-              matrix%b(p)%ie=bandi(p)+bandl(p)-1
-              matrix%b(p)%je=bandj(p)+bandl(p)-1
-              matrix%b(p)%didx=d(p) 
-            ENDDO
+            ! Allocate bands
+            ALLOCATE(matrix%b(matrix%myband))
+            ! Allocate elements of bands
+           IF(start_band == end_band) THEN
+              ALLOCATE(matrix%b(1)%elem(bandl(start_band)-omit_1st-omit_last))
+              matrix%b(1)%ib=bandi(start_band)+omit_1st
+              matrix%b(1)%jb=bandj(start_band)+omit_1st
+              matrix%b(1)%ie=bandi(start_band)+bandl(start_band)-1-omit_last
+              matrix%b(1)%je=bandj(start_band)+bandl(start_band)-1-omit_last
+              matrix%b(1)%didx=d(start_band) 
+            ELSE
+              ALLOCATE(matrix%b(1)%elem(bandl(start_band)-omit_1st))              
+              matrix%b(1)%ib=bandi(start_band)+omit_1st
+              matrix%b(1)%jb=bandj(start_band)+omit_1st
+              matrix%b(1)%ie=bandi(start_band)+bandl(start_band)-1
+              matrix%b(1)%je=bandj(start_band)+bandl(start_band)-1
+              matrix%b(1)%didx=d(start_band)
+              DO p=start_band+1,end_band-1
+                i=p-start_band
+                ALLOCATE(matrix%b(i)%elem(bandl(p)))
+                matrix%b(i)%ib=bandi(p)
+                matrix%b(i)%jb=bandj(p)
+                matrix%b(i)%ie=bandi(p)+bandl(p)-1
+                matrix%b(i)%je=bandj(p)+bandl(p)-1
+                matrix%b(i)%didx=d(p) 
+              ENDDO
+              p=end_band
+              i=p-start_band+1
+              ALLOCATE(matrix%b(i)%elem(bandl(p)-omit_last))
+                matrix%b(i)%ib=bandi(p)
+                matrix%b(i)%jb=bandj(p)
+                matrix%b(i)%ie=bandi(p)+bandl(p)-1-omit_last
+                matrix%b(i)%je=bandj(p)+bandl(p)-1-omit_last
+                matrix%b(i)%didx=d(p)
+            ENDIF 
+            ! Debug
+!            if(rank==1) then
+!            write(*,*) "n        : ", matrix%n
+!            write(*,*) "m        : ", matrix%m
+!            write(*,*) "nband    : ", matrix%nband
+!            write(*,*) "myband   : ", matrix%myband
+!            write(*,*) "comm     : ", matrix%comm
+!            write(*,*) "start_band ", start_band
+!            write(*,*) "omit_1st : ", omit_1st
+!            write(*,*) "end_band : ", end_band
+!            write(*,*) "omit_last: ", omit_last
+!            do i=1,matrix%myband
+!            write(*,*) "i        : ", i
+!            write(*,*) "Size b(i): ", SIZE(matrix%b(i)%elem)
+!            write(*,*) "ib       : ",   matrix%b(i)%ib
+!            write(*,*) "jb       : ",   matrix%b(i)%jb
+!            write(*,*) "ie       : ",  matrix%b(i)%ie
+!            write(*,*) "je       : ",  matrix%b(i)%je
+!            write(*,*) "didx     : ",  matrix%b(i)%didx
+!            enddo
+!            endif
           ENDIF
         ENDIF
       ELSE

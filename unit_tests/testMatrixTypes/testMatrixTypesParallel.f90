@@ -119,6 +119,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -129,17 +130,46 @@ CONTAINS
           bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
               .AND.((thisMatrix%m == 15).AND.(thisMatrix%nband == 3))
           ASSERT(bool, 'banded%init(...)')
-          bool = ((SIZE(thisMatrix%b) == 3).AND. &
-                  (SIZE(thisMatrix%b(2)%elem) == 3) .AND. &
-                  (thisMatrix%b(2)%ib == 1) .AND. &
-                  (thisMatrix%b(2)%jb == 2) .AND. &
-                  (thisMatrix%b(2)%ie == 3) .AND. &
-                  (thisMatrix%b(2)%je == 4) .AND. &
-                  (thisMatrix%b(2)%didx == 1))
+          bool = ((thisMatrix%myband == 2).AND. &
+            (thisMatrix%comm == MPI_COMM_WORLD))
           ASSERT(bool, 'banded%init(...)')
+          IF(rank == 0) THEN
+            bool = ((SIZE(thisMatrix%b) == 2).AND. &
+                    (SIZE(thisMatrix%b(1)%elem) == 4) .AND. &
+                    (thisMatrix%b(1)%ib == 1) .AND. &
+                    (thisMatrix%b(1)%jb == 1) .AND. &
+                    (thisMatrix%b(1)%ie == 4) .AND. &
+                    (thisMatrix%b(1)%je == 4) .AND. &
+                    (thisMatrix%b(1)%didx == 0))
+            ASSERT(bool, 'banded%init(...)')
+            bool = ((SIZE(thisMatrix%b(2)%elem) == 1) .AND. &
+                    (thisMatrix%b(2)%ib == 1) .AND. &
+                    (thisMatrix%b(2)%jb == 2) .AND. &
+                    (thisMatrix%b(2)%ie == 1) .AND. &
+                    (thisMatrix%b(2)%je == 2) .AND. &
+                    (thisMatrix%b(2)%didx == 1))
+            ASSERT(bool, 'banded%init(...)')
+          ELSE
+            bool = ((SIZE(thisMatrix%b) == 2).AND. &
+                    (SIZE(thisMatrix%b(1)%elem) == 2) .AND. &
+                    (thisMatrix%b(1)%ib == 2) .AND. &
+                    (thisMatrix%b(1)%jb == 3) .AND. &
+                    (thisMatrix%b(1)%ie == 3) .AND. &
+                    (thisMatrix%b(1)%je == 4) .AND. &
+                    (thisMatrix%b(1)%didx == 1))
+            ASSERT(bool, 'banded%init(...)')
+            bool = ((SIZE(thisMatrix%b(2)%elem) == 2) .AND. &
+                    (thisMatrix%b(2)%ib == 1) .AND. &
+                    (thisMatrix%b(2)%jb == 3) .AND. &
+                    (thisMatrix%b(2)%ie == 2) .AND. &
+                    (thisMatrix%b(2)%je == 4) .AND. &
+                    (thisMatrix%b(2)%didx == 2))
+            ASSERT(bool, 'banded%init(...)')
+          ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
       !test with double init (isInit==true on 2nd try)
+      CALL thisMatrix%init(pList)
       SELECTTYPE(thisMatrix)
         TYPE IS(DistributedBandedMatrixType); thisMatrix%m=1
       ENDSELECT
@@ -150,7 +180,6 @@ CONTAINS
           ASSERT(bool, 'banded%init(...)')
       ENDSELECT
       CALL thisMatrix%clear()
-      WRITE(*,*) rank, "MADE IT TO 4"
       !test with n<1
       CALL pList%clear()
       CALL pList%add('MatrixType->n',-1_SNK)
@@ -164,7 +193,6 @@ CONTAINS
       bool = .NOT.thisMatrix%isInit
       ASSERT(bool, 'banded%init(...)')
       CALL thisMatrix%clear()
-      WRITE(*,*) rank, "MADE IT TO 5"
       !test with m<1
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
