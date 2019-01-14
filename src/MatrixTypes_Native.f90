@@ -1661,6 +1661,9 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
       REQUIRE(matrix%isInit)
+      DO i=1,matrix%myband
+        IF(ALLOCATED(matrix%b(i)%elem)) matrix%b(i)%elem=0.0_SRK
+      ENDDO
     ENDSUBROUTINE zeroentries_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------

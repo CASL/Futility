@@ -73,10 +73,9 @@ CONTAINS
       IMPLICIT NONE
       
       TYPE(ParamType) :: pList,optListMat
-      INTEGER(SIK) :: rank,nproc,mpierr,i
+      INTEGER(SIK) :: rank,nproc,mpierr,i,j
       CLASS(DistributedMatrixType),ALLOCATABLE :: thisMatrix
       REAL(SRK),ALLOCATABLE :: dummyvec(:)
-      REAL(SRK) :: val,dummy
       LOGICAL(SBK) :: bool
 
 
@@ -515,6 +514,37 @@ CONTAINS
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL banded%transpose(...)' 
+      !check zero_entries functionality
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',5_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
+      CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(2,3,4._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      CALL thisMatrix%zeroentries()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+          DO i=1,SIZE(thisMatrix%b)
+            DO j=1,SIZE(thisMatrix%b(i)%elem)
+              bool=(thisMatrix%b(i)%elem(j) .APPROXEQ. 0.0_SRK)
+              ASSERT(bool,"banded%zero()")
+            ENDDO  
+          ENDDO  
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL banded%zero(...)' 
+
 
       ! Create matrix that looks like this
       ! 1 0 2 0
