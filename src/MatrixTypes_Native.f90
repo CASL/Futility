@@ -705,6 +705,8 @@ MODULE MatrixTypes_Native
                 matrix%b(i)%didx=d(p)
             ENDIF 
             ! Debug
+            ! IF THIS IS REMOVED THINGS CRASH. WHY?
+            Write(*,*)
             if(rank==0) then
             write(*,*) "n        : ", matrix%n
             write(*,*) "m        : ", matrix%m
@@ -744,9 +746,8 @@ MODULE MatrixTypes_Native
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK) :: n,m,l,nband,i,j,p,q
-      INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
-      LOGICAL(SBK) :: bool
+      CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
+        ' - routine is not implemented!')
     ENDSUBROUTINE assemble_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1129,8 +1130,9 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j(:)
-      INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval(:)
+      CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
+        ' - routine is not implemented!')
     ENDSUBROUTINE setrow_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1264,13 +1266,46 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE get_DistributedBandedMatrixType(matrix,i,j,getval)
+#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='get_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-      INTEGER(SIK) :: d,p
+      INTEGER(SIK) :: d,p,ierr
       LOGICAL(SBK) :: bool
+      bool=.FALSE.
+      REQUIRE(matrix%isInit)
+      REQUIRE(j <= matrix%n)
+      REQUIRE(i <= matrix%n)
+      REQUIRE(i >= 1)
+      REQUIRE(j >= 1)
+      !Find diagonal number
+      IF(i==j) THEN
+        d=0_SIK
+      ELSEIF(i>j) THEN
+        d=-1_SIK*ABS(i-j)
+      ELSE
+        d=ABS(i-j)
+      ENDIF
+      !If band contains this element, get it
+      DO p=1,matrix%myband
+        IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
+            (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
+            (j <= matrix%b(p)%je)) THEN
+          getval=matrix%b(p)%elem(i-matrix%b(p)%ib+1)
+          bool=.TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+      IF(.NOT. bool) THEN
+        getval=0.0_SRK
+      ENDIF
+      ! only 1 if any processor should have non-zero value.
+      ! Use all reduce sum to get value
+      CALL MPI_ALLREDUCE(getval, getval, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+              matrix%comm, ierr)
+#endif
     ENDSUBROUTINE get_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1453,6 +1488,18 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i,tmp
       REQUIRE(matrix%isInit)
+      tmp=matrix%n
+      matrix%n=matrix%m
+      matrix%m=tmp
+      DO i=1,matrix%myband
+        tmp=matrix%b(i)%ib
+        matrix%b(i)%ib=matrix%b(i)%jb
+        matrix%b(i)%jb=tmp
+        tmp=matrix%b(i)%ie
+        matrix%b(i)%ie=matrix%b(i)%je
+        matrix%b(i)%je=tmp
+        matrix%b(i)%didx=-1*matrix%b(i)%didx
+      ENDDO
     ENDSUBROUTINE transpose_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
