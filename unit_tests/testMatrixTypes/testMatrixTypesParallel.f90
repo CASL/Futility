@@ -75,7 +75,7 @@ CONTAINS
       TYPE(ParamType) :: pList,optListMat
       INTEGER(SIK) :: rank,nproc,mpierr,i,j
       CLASS(DistributedMatrixType),ALLOCATABLE :: thisMatrix
-      REAL(SRK),ALLOCATABLE :: dummyvec(:)
+      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
       LOGICAL(SBK) :: bool
 
 
@@ -544,7 +544,60 @@ CONTAINS
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL banded%zero(...)' 
-
+      !check matvec functionality
+      ![1 2 0 0]
+      ![0 3 4 0]
+      ![0 0 5 6]
+      ![0 0 0 7]
+      !with main diagonal split [1,3],[5,7]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
+      CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(2,3,4._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      IF(ALLOCATED(dummyvec2)) DEALLOCATE(dummyvec2)
+      ALLOCATE(dummyvec(4))
+      ALLOCATE(dummyvec2(4))
+      ! Check zero vector
+      dummyvec=0
+      dummyvec2=1
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+        CALL thisMatrix%matvec(dummyvec,dummyvec2)
+          DO i=1,4
+            bool = ABS(dummyvec2(i)) < 1E-6 
+            ASSERT(bool, 'banded%matvec(...)')
+          ENDDO
+      ENDSELECT
+      ! Check for non-trivial vector
+      dummyvec=(/1._SRK,2._SRK,3._SRK,4._SRK/)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+        CALL thisMatrix%matvec(dummyvec,dummyvec2)
+        bool = dummyvec2(1) == 5._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = dummyvec2(2) == 18._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = dummyvec2(3) == 39._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = dummyvec2(4) == 28._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+      ENDSELECT
+      WRITE(*,*) '  Passed: CALL banded%matvec(...)'
+      DEALLOCATE(thisMatrix)
 
       ! Create matrix that looks like this
       ! 1 0 2 0

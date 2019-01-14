@@ -1301,7 +1301,7 @@ MODULE MatrixTypes_Native
       IF(.NOT. bool) THEN
         getval=0.0_SRK
       ENDIF
-      ! only 1 if any processor should have non-zero value.
+      ! only 1 of any processor should have non-zero value.
       ! Use all reduce sum to get value
       CALL MPI_ALLREDUCE(getval, getval, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
               matrix%comm, ierr)
@@ -1734,7 +1734,25 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK),INTENT(INOUT) :: y(:)
-      INTEGER(SIK) :: i,j,ib,ie,jb,je
+      INTEGER(SIK) :: i,j,ib,ie,jb,je,ierr
+      REQUIRE(matrix%isInit)
+      REQUIRE(SIZE(x) == matrix%m)
+      REQUIRE(SIZE(y) == matrix%n) 
+      y(1:matrix%n)=0.0_SDK 
+      DO i=1,matrix%myband
+        ! Multiply by appropriate subset of x
+        ib=matrix%b(i)%ib
+        ie=matrix%b(i)%ie 
+        jb=matrix%b(i)%jb
+        je=matrix%b(i)%je
+        DO j=jb,je
+          y(j-jb+ib)=y(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb) 
+        ENDDO        
+      ENDDO
+      DO i=1,SIZE(x)
+        CALL MPI_ALLREDUCE(y(i), y(i), 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+              matrix%comm, ierr)
+      ENDDO
     ENDSUBROUTINE matvec_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
