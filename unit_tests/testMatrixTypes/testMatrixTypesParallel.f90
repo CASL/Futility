@@ -463,7 +463,58 @@ CONTAINS
       IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL banded%get(...)' 
-
+      !check transpose functionality
+      ![1 2 0 0 0]
+      ![0 3 4 0 0]
+      ![0 0 5 6 0]
+      ![0 0 0 7 0]
+      !with main diagonal split [1,3],[5,7]
+      !to
+      ![1 0 0 0]
+      ![2 3 0 0]
+      ![0 4 5 0]
+      ![0 0 6 7]
+      ![0 0 0 0]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',5_SNK)
+      CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
+      CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
+      CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(2,3,4._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      CALL thisMatrix%transpose()
+      SELECTTYPE(thisMatrix)
+        TYPE IS(DistributedBandedMatrixType)
+          IF(rank == 0) THEN
+            bool = ((thisMatrix%n == 5).AND.(thisMatrix%m == 4) &
+                .AND.(thisMatrix%b(1)%ib == 1).AND.(thisMatrix%b(1)%ie == 2) &
+                .AND.(thisMatrix%b(1)%jb == 1).AND.(thisMatrix%b(1)%je == 2) &
+                .AND.(thisMatrix%b(1)%didx == 0))
+            ASSERT(bool,"banded%transpose()")
+            bool = ((thisMatrix%b(2)%ib == 3).AND.(thisMatrix%b(2)%ie == 4) &
+                .AND.(thisMatrix%b(2)%jb == 3).AND.(thisMatrix%b(2)%je == 4) &
+                .AND.(thisMatrix%b(2)%didx == 0))
+            ASSERT(bool,"banded%transpose()")
+          ELSE
+            bool = ((thisMatrix%n == 5).AND.(thisMatrix%m == 4) &
+                .AND.(thisMatrix%b(1)%ib == 2).AND.(thisMatrix%b(1)%ie == 4) &
+                .AND.(thisMatrix%b(1)%jb == 1).AND.(thisMatrix%b(1)%je == 3) &
+                .AND.(thisMatrix%b(1)%didx == -1))
+            ASSERT(bool,"banded%transpose()")
+          ENDIF
+      ENDSELECT
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL banded%transpose(...)' 
 
       ! Create matrix that looks like this
       ! 1 0 2 0
