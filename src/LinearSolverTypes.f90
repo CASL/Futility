@@ -1575,8 +1575,9 @@ MODULE LinearSolverTypes
 
       REAL(SRK)  :: beta,h,t,phibar,temp,tol
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
+      REAL(SRK),POINTER :: newGuess(:)
       TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: k,m,n,it
+      INTEGER(SIK) :: j,k,m,n,it,itOuter
       TYPE(ParamType) :: pList
 
       n=0
@@ -1598,61 +1599,71 @@ MODULE LinearSolverTypes
         ALLOCATE(s(m+1))
         ALLOCATE(g(m+1))
         ALLOCATE(y(m+1))
-        v(:,:)=0._SRK
-        R(:,:)=0._SRK
-        w(:)=0._SRK
-        c(:)=0._SRK
-        s(:)=0._SRK
-        g(:)=0._SRK
-        y(:)=0._SRK
-        tol=solver%absConvTol*beta
+        !v(:,:)=0._SRK
+        !R(:,:)=0._SRK
+        !w(:)=0._SRK
+        !c(:)=0._SRK
+        !s(:)=0._SRK
+        !g(:)=0._SRK
+        !y(:)=0._SRK
+        tol=solver%absConvTol*beta ! Is this correct?
 
-        v(:,1)=-u%b/beta
-        h=beta
-        phibar=beta
+        DO itOuter=1,solver%maxIters
+          v(:,1)=-u%b/beta
+          h=beta
+          phibar=beta
 #ifdef FUTILITY_DEBUG_MSG
-          WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
+            WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
 #endif
-        !Iterate on solution
-        DO it=1,m
-          CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-          h=BLAS_dot(n,w,1,v(:,1),1)
-          w=w-h*v(:,1)
-          t=h
-          DO k=2,it
-            h=BLAS_dot(n,w,1,v(:,k),1)
-            w=w-h*v(:,k)
-            R(k-1,it)=c(k-1)*t+s(k-1)*h
-            t=c(k-1)*h-s(k-1)*t
+          !Iterate on solution
+          DO it=1,m
+            CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+            h=BLAS_dot(n,w,1,v(:,1),1)
+            w=w-h*v(:,1)
+            t=h
+            DO k=2,it
+              h=BLAS_dot(n,w,1,v(:,k),1)
+              w=w-h*v(:,k)
+              R(k-1,it)=c(k-1)*t+s(k-1)*h
+              t=c(k-1)*h-s(k-1)*t
+            ENDDO
+            CALL LNorm(w,2,h)
+            !WRITE(*,*) "h = ", h
+            IF(h > 0.0_SRK) THEN
+              v(:,it+1)=w/h
+            ELSE
+              v(:,it+1)=0.0_SRK*w
+            ENDIF
+            !Set up next Given's rotation
+            IF(t >= 0.0_SRK) THEN
+              temp=SQRT(t*t+h*h)
+            ELSE
+              temp=-SQRT(t*t+h*h)
+            ENDIF
+            c(it)=t/temp
+            s(it)=h/temp
+            R(it,it)=temp
+            g(it)=c(it)*phibar
+            phibar=-s(it)*phibar
+#ifdef FUTILITY_DEBUG_MSG
+            WRITE(668,*) '         GMRES-NOPC',it,ABS(phibar)
+#endif
+            IF(ABS(phibar) <= tol) EXIT
           ENDDO
-          CALL LNorm(w,2,h)
-          !WRITE(*,*) "h = ", h
-          IF(h > 0.0_SRK) THEN
-            v(:,it+1)=w/h
-          ELSE
-            v(:,it+1)=0.0_SRK*w
-          ENDIF
-          !Set up next Given's rotation
-          IF(t >= 0.0_SRK) THEN
-            temp=SQRT(t*t+h*h)
-          ELSE
-            temp=-SQRT(t*t+h*h)
-          ENDIF
-          c(it)=t/temp
-          s(it)=h/temp
-          R(it,it)=temp
-          g(it)=c(it)*phibar
-          phibar=-s(it)*phibar
-#ifdef FUTILITY_DEBUG_MSG
-          WRITE(668,*) '         GMRES-NOPC',it,ABS(phibar)
-#endif
-          IF(ABS(phibar) <= tol) EXIT
+
+          y(1:it)=g(1:it)
+          CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
+          CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
+
+          ! If we've converged, exit and report
+          IF (ABS(phibar) <= tol) EXIT
+          ! If not, set up the restart:
+          newGuess => u%b
+          CALL solver%setX0(newGuess)
+          CALL solver%getResidual(u)
+          CALL LNorm(u%b,2,beta)
         ENDDO
 
-        y(1:it)=g(1:it)
-        CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
-
-        CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
         CALL BLAS_axpy(u,solver%x)
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
