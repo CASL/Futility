@@ -1568,6 +1568,26 @@ MODULE LinearSolverTypes
       solver%iters=iterations
       solver%info=0
     ENDSUBROUTINE solveBiCGSTAB
+
+    SUBROUTINE solveGMRES_nopc(solver)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      IF(solver%MPIparallelEnv%isInit()) THEN
+        CALL solvePGMRES_lpc(solver)
+      ELSE
+        CALL solveSGMRES_nopc(solver)
+      ENDIF
+    ENDSUBROUTINE solveGMRES_nopc
+
+    SUBROUTINE solveGMRES_lpc(solver, PreCondType)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+      IF(solver%MPIparallelEnv%isInit()) THEN
+        CALL solvePGMRES_lpc(solver)
+      ELSE
+        CALL solveSGMRES_lpc(solver, PrecondType)
+      ENDIF
+    ENDSUBROUTINE solveGMRES_lpc
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Solves the Iterative Linear System using the GMRES method with no
@@ -1678,24 +1698,6 @@ MODULE LinearSolverTypes
       CALL u%clear()
     ENDSUBROUTINE solveSGMRES_nopc
 
-    SUBROUTINE solveGMRES_nopc(solver)
-      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      IF(solver%MPIparallelEnv%isInit()) THEN
-        CALL solvePGMRES_lpc(solver)
-      ELSE
-        CALL solveSGMRES_nopc(solver)
-      ENDIF
-    ENDSUBROUTINE solveGMRES_nopc
-
-    SUBROUTINE solveGMRES_lpc(solver, PreCondType)
-      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
-      IF(solver%MPIparallelEnv%isInit()) THEN
-        CALL solvePGMRES_lpc(solver)
-      ELSE
-        CALL solveSGMRES_lpc(solver, PrecondType)
-      ENDIF
-    ENDSUBROUTINE solveGMRES_lpc
 !
 !-------------------------------------------------------------------------------
 !> @brief Solves the Iterative Linear System using the GMRES method with
