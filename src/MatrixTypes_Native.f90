@@ -704,30 +704,6 @@ MODULE MatrixTypes_Native
                 matrix%b(i)%je=bandj(p)+bandl(p)-1-omit_last
                 matrix%b(i)%didx=d(p)
             ENDIF 
-            ! Debug
-            ! IF THIS IS REMOVED THINGS CRASH. WHY?
-            Write(*,*)
-            if(rank==0) then
-            write(*,*) "n        : ", matrix%n
-            write(*,*) "m        : ", matrix%m
-            write(*,*) "nband    : ", matrix%nband
-            write(*,*) "myband   : ", matrix%myband
-            write(*,*) "comm     : ", matrix%comm
-            write(*,*) "start_band ", start_band
-            write(*,*) "omit_1st : ", omit_1st
-            write(*,*) "end_band : ", end_band
-            write(*,*) "omit_last: ", omit_last
-            do i=1,matrix%myband
-            write(*,*) "i        : ", i
-            write(*,*) "Size b(i): ", SIZE(matrix%b(i)%elem)
-            write(*,*) "ib       : ",   matrix%b(i)%ib
-            write(*,*) "jb       : ",   matrix%b(i)%jb
-            write(*,*) "ie       : ",  matrix%b(i)%ie
-            write(*,*) "je       : ",  matrix%b(i)%je
-            write(*,*) "didx     : ",  matrix%b(i)%didx
-            enddo
-            write(*,*)
-            endif
           ENDIF
         ENDIF
       ELSE

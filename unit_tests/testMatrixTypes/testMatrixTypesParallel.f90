@@ -185,6 +185,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',-1_SNK)
       CALL pList%add('MatrixType->m',10_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -198,6 +199,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',-1_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -211,6 +213,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%add('MatrixType->nband',-1_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -224,6 +227,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK/))
@@ -237,6 +241,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%add('MatrixType->nband',16_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,1_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -250,6 +255,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,1_SIK,21_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -263,6 +269,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,2_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,2_SIK,3_SIK/))
       CALL pList%add('bandl',(/4_SIK,3_SIK,2_SIK/))
@@ -365,6 +372,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',4_SNK)
       CALL pList%add('MatrixType->m',4_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
       CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))
@@ -395,6 +403,8 @@ CONTAINS
             ASSERT(bool, 'banded%set(...)')
             bool = thisMatrix%b(1)%elem(3) == 6
             ASSERT(bool, 'banded%set(...)')
+            ! extra assert to keep test pass numbers even among processors
+            ASSERT(bool, 'banded%set(...)')
           ENDIF
       ENDSELECT
       !check matrix that hasnt been init, i,j out of bounds
@@ -403,6 +413,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',4_SNK)
       CALL pList%add('MatrixType->m',4_SNK)
       CALL pList%add('MatrixType->nband',4_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK,3_SIK/))
       CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK,1_SIK/))
       CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK,2_SIK/))
@@ -425,6 +436,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',4_SNK)
       CALL pList%add('MatrixType->m',4_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
       CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))
@@ -479,6 +491,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',4_SNK)
       CALL pList%add('MatrixType->m',5_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
       CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))
@@ -510,6 +523,8 @@ CONTAINS
                 .AND.(thisMatrix%b(1)%jb == 1).AND.(thisMatrix%b(1)%je == 3) &
                 .AND.(thisMatrix%b(1)%didx == -1))
             ASSERT(bool,"banded%transpose()")
+            ! Extra assert to keep pass numbers even among processors
+            ASSERT(bool,"banded%transpose()")
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
@@ -520,6 +535,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',4_SNK)
       CALL pList%add('MatrixType->m',5_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
       CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))
@@ -541,6 +557,8 @@ CONTAINS
               ASSERT(bool,"banded%zero()")
             ENDDO  
           ENDDO  
+          ! Extra assert to keep pass numbers even among procs
+          IF(rank==1) ASSERT(bool,"banded%zero()")
       ENDSELECT
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL banded%zero(...)' 
@@ -555,6 +573,7 @@ CONTAINS
       CALL pList%add('MatrixType->n',4_SNK)
       CALL pList%add('MatrixType->m',4_SNK)
       CALL pList%add('MatrixType->nband',3_SNK)
+      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
       CALL pList%add('bandi',(/1_SIK,3_SIK,1_SIK/))
       CALL pList%add('bandj',(/1_SIK,3_SIK,2_SIK/))
       CALL pList%add('bandl',(/2_SIK,2_SIK,3_SIK/))

@@ -284,11 +284,12 @@ MODULE MatrixTypes_Base
       CALL DistributedMatrixType_reqParams%add('MatrixType->n',n)
       CALL DistributedMatrixType_reqParams%add('MatrixType->isSym',isSym)
       CALL DistributedMatrixType_reqParams%add('MatrixType->matType',matType)
-      CALL DistributedMatrixType_reqParams%add('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
+      CALL DistributedMatrixType_reqParams%add('MatrixType->comm',MPI_COMM_ID)
       !Distributed Banded Matrix Type - Required
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->n',n)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
-      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->comm',MPI_COMM_ID)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->comm' &
+        ,MPI_COMM_ID)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nband',nband)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->myband',myband)
       CALL DistributedBandedMatrixType_reqParams%add('bandi',bandi)
