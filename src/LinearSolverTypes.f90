@@ -1598,16 +1598,17 @@ MODULE LinearSolverTypes
         ALLOCATE(s(m+1))
         ALLOCATE(g(m+1))
         ALLOCATE(y(m+1))
-        !v(:,:)=0._SRK
-        !R(:,:)=0._SRK
-        !w(:)=0._SRK
-        !c(:)=0._SRK
-        !s(:)=0._SRK
-        !g(:)=0._SRK
-        !y(:)=0._SRK
+
         tol=solver%absConvTol*beta ! Is this correct?
 
         DO itOuter=1,solver%maxIters
+          v(:,:)=0._SRK
+          R(:,:)=0._SRK
+          w(:)=0._SRK
+          c(:)=0._SRK
+          s(:)=0._SRK
+          g(:)=0._SRK
+          y(:)=0._SRK
           v(:,1)=-u%b/beta
           h=beta
           phibar=beta
@@ -1656,18 +1657,19 @@ MODULE LinearSolverTypes
 
           ! If we've converged, exit and report
           IF (ABS(phibar) <= tol) EXIT
+
           ! If not, set up the restart:
-          !newGuess => u%b
           CALL solver%setX0(u%b)
           CALL solver%getResidual(u)
           CALL LNorm(u%b,2,beta)
         ENDDO
+        IF (itOuter >= solver%maxIters-1) WRITE(*,*) "Max iters reached"
 
         CALL BLAS_axpy(u,solver%x)
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
         IF(it == m+1) it=m
-        solver%iters=it
+        solver%iters=it + itOuter*solver%nRestart
 
         DEALLOCATE(v)
         DEALLOCATE(R)
@@ -1678,6 +1680,7 @@ MODULE LinearSolverTypes
         DEALLOCATE(y)
       ENDIF
       solver%info=0
+      solver%residual=beta
       CALL u%clear()
     ENDSUBROUTINE solveGMRES_nopc
 !
