@@ -1254,7 +1254,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      REAL(SRK),POINTER,INTENT(IN) :: X0(:)
+      REAL(SRK),INTENT(IN) :: X0(:)
       INTEGER(SIK) :: i
 
       IF(solver%isInit) THEN
@@ -1575,7 +1575,6 @@ MODULE LinearSolverTypes
 
       REAL(SRK)  :: beta,h,t,phibar,temp,tol
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
-      REAL(SRK),POINTER :: newGuess(:)
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: j,k,m,n,it,itOuter
       TYPE(ParamType) :: pList
@@ -1658,8 +1657,8 @@ MODULE LinearSolverTypes
           ! If we've converged, exit and report
           IF (ABS(phibar) <= tol) EXIT
           ! If not, set up the restart:
-          newGuess => u%b
-          CALL solver%setX0(newGuess)
+          !newGuess => u%b
+          CALL solver%setX0(u%b)
           CALL solver%getResidual(u)
           CALL LNorm(u%b,2,beta)
         ENDDO
