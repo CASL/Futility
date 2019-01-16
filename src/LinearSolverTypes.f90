@@ -1579,7 +1579,6 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: k,m,n,it,itOuter
       TYPE(ParamType) :: pList
 
-      WRITE(*,*) "GMRES NOPC"
       n=0
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
@@ -1601,7 +1600,6 @@ MODULE LinearSolverTypes
         ALLOCATE(y(m+1))
 
         tol=solver%absConvTol*beta ! Is this correct?
-        phibar=beta
 
         DO itOuter=1,solver%maxIters
           v(:,:)=0._SRK
@@ -1613,6 +1611,7 @@ MODULE LinearSolverTypes
           y(:)=0._SRK
           v(:,1)=-u%b/beta
           h=beta
+          phibar=beta
 #ifdef FUTILITY_DEBUG_MSG
             WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
 #endif
@@ -1724,7 +1723,6 @@ MODULE LinearSolverTypes
         ALLOCATE(y(m+1))
 
         tol=solver%absConvTol*beta ! Is this correct?
-        phibar=beta
 
         DO itOuter=1,solver%maxIters
           v(:,:)=0._SRK
@@ -1735,6 +1733,7 @@ MODULE LinearSolverTypes
           g(:)=0._SRK
           y(:)=0._SRK
           v(:,1)=-u%b/beta
+          phibar=beta
           h=beta
 #ifdef FUTILITY_DEBUG_MSG
             WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
