@@ -2856,11 +2856,9 @@ CONTAINS
           CALL A%set(i,i,4.0_SRK)
           IF((i < 9).AND.((i /= 3).AND.(i /= 6))) THEN
             CALL A%set(i,i+1,-1.0_SRK)
-            CALL A%set(i+1,i,-1.0_SRK)
           ENDIF
           IF(i < 7) THEN
             CALL A%set(i,i+3,-1.0_SRK)
-            CALL A%set(i+3,i,-1.0_SRK)
           ENDIF
         ENDSELECT
       ENDDO

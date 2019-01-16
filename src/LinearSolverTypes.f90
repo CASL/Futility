@@ -1576,9 +1576,10 @@ MODULE LinearSolverTypes
       REAL(SRK)  :: beta,h,t,phibar,temp,tol
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
       TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: j,k,m,n,it,itOuter
+      INTEGER(SIK) :: k,m,n,it,itOuter
       TYPE(ParamType) :: pList
 
+      WRITE(*,*) "GMRES NOPC"
       n=0
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
@@ -1600,6 +1601,7 @@ MODULE LinearSolverTypes
         ALLOCATE(y(m+1))
 
         tol=solver%absConvTol*beta ! Is this correct?
+        phibar=beta
 
         DO itOuter=1,solver%maxIters
           v(:,:)=0._SRK
@@ -1611,13 +1613,138 @@ MODULE LinearSolverTypes
           y(:)=0._SRK
           v(:,1)=-u%b/beta
           h=beta
-          phibar=beta
 #ifdef FUTILITY_DEBUG_MSG
             WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
 #endif
           !Iterate on solution
           DO it=1,m
             CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+            h=BLAS_dot(n,w,1,v(:,1),1)
+            w=w-h*v(:,1)
+            t=h
+            DO k=2,it
+              h=BLAS_dot(n,w,1,v(:,k),1)
+              w=w-h*v(:,k)
+              R(k-1,it)=c(k-1)*t+s(k-1)*h
+              t=c(k-1)*h-s(k-1)*t
+            ENDDO
+            CALL LNorm(w,2,h)
+            !WRITE(*,*) "h = ", h
+            IF(h > 0.0_SRK) THEN
+              v(:,it+1)=w/h
+            ELSE
+              v(:,it+1)=0.0_SRK*w
+            ENDIF
+            !Set up next Given's rotation
+            IF(t >= 0.0_SRK) THEN
+              temp=SQRT(t*t+h*h)
+            ELSE
+              temp=-SQRT(t*t+h*h)
+            ENDIF
+            c(it)=t/temp
+            s(it)=h/temp
+            R(it,it)=temp
+            g(it)=c(it)*phibar
+            phibar=-s(it)*phibar
+#ifdef FUTILITY_DEBUG_MSG
+            WRITE(668,*) '         GMRES-NOPC',it,ABS(phibar)
+#endif
+            IF(ABS(phibar) <= tol) EXIT
+          ENDDO
+
+          y(1:it)=g(1:it)
+          CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
+          CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
+
+          ! If we've converged, exit and report
+          IF (ABS(phibar) <= tol) EXIT
+
+          ! If not, set up the restart:
+          CALL solver%setX0(u%b)
+          CALL solver%getResidual(u)
+          CALL LNorm(u%b,2,beta)
+        ENDDO
+
+        CALL BLAS_axpy(u,solver%x)
+        CALL solver%getResidual(u)
+        CALL LNorm(u%b,2,beta)
+        IF(it == m+1) it=m
+        solver%iters=it + itOuter*solver%nRestart
+
+        DEALLOCATE(v)
+        DEALLOCATE(R)
+        DEALLOCATE(w)
+        DEALLOCATE(c)
+        DEALLOCATE(s)
+        DEALLOCATE(g)
+        DEALLOCATE(y)
+      ENDIF
+      solver%info=0
+      solver%residual=beta
+      CALL u%clear()
+    ENDSUBROUTINE solveGMRES_nopc
+!
+!-------------------------------------------------------------------------------
+!> @brief Solves the Iterative Linear System using the GMRES method with
+!>        left-preconditioning
+!> @param solver The linear solver to act on
+!> @param PreCondType The preconditioner object to use on the system
+!>
+!> This subroutine solves the Iterative Linear System using the GMRES method
+!>
+    SUBROUTINE solveGMRES_lpc(solver,PreCondType)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+
+      REAL(SRK)  :: beta,h,t,phibar,temp,tol
+      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
+      TYPE(RealVectorType) :: u
+      INTEGER(SIK) :: k,m,n,it,itOuter
+      TYPE(ParamType) :: pList
+
+      n=0
+      !Set parameter list for vector
+      CALL pList%add('VectorType -> n',solver%A%n)
+      n=solver%A%n
+      m=MIN(solver%nRestart,n)
+      CALL u%init(pList)
+      CALL pList%clear()
+      CALL solver%getResidual(u)
+      CALL PreCondType%apply(u)
+      CALL LNorm(u%b,2,beta)
+      solver%iters=0
+
+      IF(beta > EPSILON(0.0_SRK)) THEN
+        ALLOCATE(v(n,m+1))
+        ALLOCATE(R(m+1,m+1))
+        ALLOCATE(w(n))
+        ALLOCATE(c(m+1))
+        ALLOCATE(s(m+1))
+        ALLOCATE(g(m+1))
+        ALLOCATE(y(m+1))
+
+        tol=solver%absConvTol*beta ! Is this correct?
+        phibar=beta
+
+        DO itOuter=1,solver%maxIters
+          v(:,:)=0._SRK
+          R(:,:)=0._SRK
+          w(:)=0._SRK
+          c(:)=0._SRK
+          s(:)=0._SRK
+          g(:)=0._SRK
+          y(:)=0._SRK
+          v(:,1)=-u%b/beta
+          h=beta
+#ifdef FUTILITY_DEBUG_MSG
+            WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
+#endif
+          !Iterate on solution
+          DO it=1,m
+            CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+            u%b=w
+            CALL solver%PreCondType%apply(u)
+            w=u%b
             h=BLAS_dot(n,w,1,v(:,1),1)
             w=w-h*v(:,1)
             t=h
@@ -1682,121 +1809,8 @@ MODULE LinearSolverTypes
       solver%info=0
       solver%residual=beta
       CALL u%clear()
-    ENDSUBROUTINE solveGMRES_nopc
-!
-!-------------------------------------------------------------------------------
-!> @brief Solves the Iterative Linear System using the GMRES method with
-!>        left-preconditioning
-!> @param solver The linear solver to act on
-!> @param PreCondType The preconditioner object to use on the system
-!>
-!> This subroutine solves the Iterative Linear System using the GMRES method
-!>
-    SUBROUTINE solveGMRES_lpc(solver,PreCondType)
-      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
-
-      REAL(SRK)  :: beta,h,t,phibar,temp,tol
-      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
-      TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: k,m,n,it
-      TYPE(ParamType) :: pList
-
-      n=0
-      !Set parameter list for vector
-      CALL pList%add('VectorType -> n',solver%A%n)
-      n=solver%A%n
-      m=MIN(solver%nRestart,n)
-      CALL u%init(pList)
-      CALL pList%clear()
-      CALL solver%getResidual(u)
-      CALL PreCondType%apply(u)
-      CALL LNorm(u%b,2,beta)
-      solver%iters=0
-
-      IF(beta > EPSILON(0.0_SRK)) THEN
-        ALLOCATE(v(n,m+1))
-        ALLOCATE(R(m+1,m+1))
-        ALLOCATE(w(n))
-        ALLOCATE(c(m+1))
-        ALLOCATE(s(m+1))
-        ALLOCATE(g(m+1))
-        ALLOCATE(y(m+1))
-        v(:,:)=0._SRK
-        R(:,:)=0._SRK
-        w(:)=0._SRK
-        c(:)=0._SRK
-        s(:)=0._SRK
-        g(:)=0._SRK
-        y(:)=0._SRK
-        tol=solver%absConvTol*beta
-
-        v(:,1)=-u%b/beta
-        h=beta
-        phibar=beta
-#ifdef FUTILITY_DEBUG_MSG
-          WRITE(668,*) '         GMRES-LP',0,ABS(phibar)
-#endif
-        !Iterate on solution
-        DO it=1,m
-          CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-          u%b=w
-          CALL solver%PreCondType%apply(u)
-          w=u%b
-          h=BLAS_dot(n,w,1,v(:,1),1)
-          w=w-h*v(:,1)
-          t=h
-          DO k=2,it
-            h=BLAS_dot(n,w,1,v(:,k),1)
-            w=w-h*v(:,k)
-            R(k-1,it)=c(k-1)*t+s(k-1)*h
-            t=c(k-1)*h-s(k-1)*t
-          ENDDO
-          CALL LNorm(w,2,h)
-          !WRITE(*,*) "h = ", h
-          IF(h > 0.0_SRK) THEN
-            v(:,it+1)=w/h
-          ELSE
-            v(:,it+1)=0.0_SRK*w
-          ENDIF
-          !Set up next Given's rotation
-          IF(t >= 0.0_SRK) THEN
-            temp=SQRT(t*t+h*h)
-          ELSE
-            temp=-SQRT(t*t+h*h)
-          ENDIF
-          c(it)=t/temp
-          s(it)=h/temp
-          R(it,it)=temp
-          g(it)=c(it)*phibar
-          phibar=-s(it)*phibar
-#ifdef FUTILITY_DEBUG_MSG
-          WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
-#endif
-          IF(ABS(phibar) <= tol) EXIT
-        ENDDO
-
-        y(1:it)=g(1:it)
-        CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
-
-        CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
-        CALL BLAS_axpy(u,solver%x)
-        CALL solver%getResidual(u)
-        CALL LNorm(u%b,2,beta)
-        IF(it == m+1) it=m
-        solver%iters=it
-
-        DEALLOCATE(v)
-        DEALLOCATE(R)
-        DEALLOCATE(w)
-        DEALLOCATE(c)
-        DEALLOCATE(s)
-        DEALLOCATE(g)
-        DEALLOCATE(y)
-      ENDIF
-      solver%info=0
-      CALL u%clear()
     ENDSUBROUTINE solveGMRES_lpc
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
