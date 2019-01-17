@@ -1,2 +1,0 @@
-/usr/bin/ar qc libTrilinosUtils.a  CMakeFiles/TrilinosUtils.dir/trilinos_mat_vec.cpp.o CMakeFiles/TrilinosUtils.dir/trilinos_pc.cpp.o CMakeFiles/TrilinosUtils.dir/trilinos_solvers.cpp.o CMakeFiles/TrilinosUtils.dir/trilinos_c_interfaces.cpp.o
-/usr/bin/ranlib libTrilinosUtils.a

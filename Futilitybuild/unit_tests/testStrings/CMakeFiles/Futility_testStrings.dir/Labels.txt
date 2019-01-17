@@ -1,5 +1,0 @@
-# Target labels
- FutilityExes
- FutilityExes
-# Source files and their labels
-/home/nfherrin/research/MPACT/Futility/unit_tests/testStrings/testStrings.f90
