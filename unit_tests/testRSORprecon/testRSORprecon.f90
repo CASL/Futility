@@ -64,6 +64,7 @@ PROGRAM testRSORprecon
         REAL(SRK)::tmpreal1(9*9),tmpreal2(9)
         
         CALL PListRSOR%add('PCType->numblocks',3_SIK)
+        CALL PListRSOR%add('PCType->omega',1.0_SRK)
         CALL PListVec%add('VectorType->n',9_SIK)
         ALLOCATE(RealVectorType :: testVector)
         ALLOCATE(RealVectorType :: refVector)
@@ -104,15 +105,15 @@ PROGRAM testRSORprecon
             CALL testVector%set(i,tmpreal2(i))
         END DO
         
-        tmpreal2=(/0.134981101936174,&
-                    1.48029736616688e-17,&
-                    -0.134981101936174,&
-                    -0.246252472291998,&
-                    -3.70074341541719e-17,&
-                    0.246252472291998,&
-                    0.134981101936174,&
-                    7.40148683083438e-18,&
-                    -0.134981101936174/)
+        tmpreal2=(/0.15182522957531913_SRK,&
+                7.4014868308343768E-018_SRK,&
+                -0.15182522957531916_SRK,&
+                -0.26769908169872342_SRK,&
+                -2.9605947323337507E-017_SRK,&
+                0.26769908169872342_SRK,&
+                0.15182522957531913_SRK,&
+                7.4014868308343768E-018_SRK,&
+                -0.15182522957531916_SRK/)
         
         DO i=1,9
             CALL refVector%set(i,tmpreal2(i))
@@ -200,6 +201,12 @@ PROGRAM testRSORprecon
             
             ! Check %apply
             CALL testSOR%apply(testVector)
+            SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
+                SELECTTYPE(rv => refVector); TYPE IS(RealVectorType)
+                    ASSERT(ALL(tv%b .APPROXEQA. rv%b),'DenseSquareMatrixType RSOR%apply(vector)')
+                    FINFO() 'Result:',tv%b,'Solution:',rv%b
+                ENDSELECT
+            ENDSELECT
             
         ELSE
             ASSERT(testDenseMatrix%isInit,'TestDenseMatrix Initialization')

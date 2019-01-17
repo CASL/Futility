@@ -469,6 +469,7 @@ MODULE PreconditionerTypes
       
       !gets the number of blocks from the parameter list
       CALL params%get('PCType->numblocks',thisPC%numblocks)
+      CALL params%get('PCType->omega',thisPC%omega)
       
       !makes sure that the number of blocks is valid
       IF(MOD(thisPC%A%n,thisPC%numblocks) .NE. 0)THEN
@@ -478,12 +479,6 @@ MODULE PreconditionerTypes
       
       !calculate block size
       thisPC%blocksize=thisPC%A%n/thisPC%numblocks
-      
-      !calculate omega factor. this is an estimation based on 2d poisson 
-      !finite difference matrix. should be way better than just 1 though.
-      !at omega=1, sor just reduces to a jacoby iteration
-      thisPC%omega=2.0D+0/(1.0D+0+abs(sin(pi/(thisPC%blocksize+1.0D+0))))
-      thisPC%omega=1.0001D+0
       
       !makes a lu matrix for each diagonal block in an array
       ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%numblocks))

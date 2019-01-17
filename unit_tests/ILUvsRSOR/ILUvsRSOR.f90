@@ -86,6 +86,7 @@ PROGRAM ILUvsRSOR
         CHARACTER(100)::tempcharacter
         
         CALL PListRSOR%add('PCType->numblocks',27_SIK)
+        CALL PListRSOR%add('PCType->omega',1.0_SRK)
         CALL PListVec%add('VectorType->n',1512_SIK)
         ALLOCATE(RealVectorType :: rhsVector)
         CALL rhsVector%init(PListVec)
