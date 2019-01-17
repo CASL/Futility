@@ -1248,6 +1248,7 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
+      REAL(SRK) :: val
       INTEGER(SIK) :: d,p,ierr
       LOGICAL(SBK) :: bool
       bool=.FALSE.
@@ -1269,17 +1270,17 @@ MODULE MatrixTypes_Native
         IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
             (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
             (j <= matrix%b(p)%je)) THEN
-          getval=matrix%b(p)%elem(i-matrix%b(p)%ib+1)
+          val=matrix%b(p)%elem(i-matrix%b(p)%ib+1)
           bool=.TRUE.
           EXIT
         ENDIF
       ENDDO
       IF(.NOT. bool) THEN
-        getval=0.0_SRK
+        val=0.0_SRK
       ENDIF
       ! only 1 of any processor should have non-zero value.
       ! Use all reduce sum to get value
-      CALL MPI_ALLREDUCE(getval, getval, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
+      CALL MPI_ALLREDUCE(val, getval, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
               matrix%comm, ierr)
 #endif
     ENDSUBROUTINE get_DistributedBandedMatrixType
@@ -1709,11 +1710,14 @@ MODULE MatrixTypes_Native
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       REAL(SDK),INTENT(IN) :: x(:)
+      REAL(SDK), ALLOCATABLE :: z(:)
       REAL(SDK),INTENT(INOUT) :: y(:)
       INTEGER(SIK) :: i,j,ib,ie,jb,je,ierr
       REQUIRE(matrix%isInit)
       REQUIRE(SIZE(x) == matrix%m)
-      REQUIRE(SIZE(y) == matrix%n) 
+      REQUIRE(SIZE(y) == matrix%n)
+      ALLOCATE(z(matrix%n))
+      z(1:matrix%n)=0.0_SDK
       y(1:matrix%n)=0.0_SDK 
       DO i=1,matrix%myband
         ! Multiply by appropriate subset of x
@@ -1722,13 +1726,11 @@ MODULE MatrixTypes_Native
         jb=matrix%b(i)%jb
         je=matrix%b(i)%je
         DO j=jb,je
-          y(j-jb+ib)=y(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb) 
+          z(j-jb+ib)=z(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb) 
         ENDDO        
       ENDDO
-      DO i=1,SIZE(x)
-        CALL MPI_ALLREDUCE(y(i), y(i), 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
-              matrix%comm, ierr)
-      ENDDO
+      CALL MPI_ALLREDUCE(z, y, matrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
+                    matrix%comm, ierr)
     ENDSUBROUTINE matvec_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
