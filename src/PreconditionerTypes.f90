@@ -500,8 +500,7 @@ MODULE PreconditionerTypes
       DO k=1,thisPC%numblocks
         CALL thisPC%LU(k)%init(PListMat_LU)
       END DO
-
-      ! This might not be necessary here, but not sure
+      
       SELECTTYPE(mat => thisPC%A)
         TYPE IS(DenseSquareMatrixType)
           ALLOCATE(DenseSquareMatrixType :: thisPC%LpU)
@@ -517,6 +516,20 @@ MODULE PreconditionerTypes
             CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
               ' - In RSOR Preconditioner initialization, RSOR was not properly initialized!')
           ENDIF
+        TYPE IS(SparseMatrixType)
+            ALLOCATE(SparseMatrixType :: thisPC%LpU)
+      
+            ! Assign A to LpU
+            SELECTTYPE(LpU => thisPC%LpU); TYPE IS(SparseMatrixType)
+                LpU=mat
+            ENDSELECT
+
+            IF(thisPC%LpU%isInit) THEN
+                thisPC%isInit=.TRUE.
+            ELSE
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                    ' - In RSOR Preconditioner initialization, RSOR was not properly initialized!')
+            ENDIF
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - RSOR Preconditioners are not supported for input matrix type!')
@@ -585,6 +598,20 @@ MODULE PreconditionerTypes
                         END DO
                     END DO
                 END DO
+            CLASS IS(SparseMatrixType)
+                !have to also check that the value being zeroed is valid here.
+                DO k=1,thisPC%numblocks
+                    DO i=1,thisPC%blocksize
+                        DO j=1,thisPC%blocksize
+                            CALL thisPC%A%get((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,tempreal)
+                            CALL thisPC%LU(k)%set(i,j,tempreal)
+                            IF(tempreal .NE. 0.0_SRK)THEN
+                                CALL thisPC%LpU%set((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,0.0_SRK)
+                            END IF
+                        END DO
+                    END DO
+                END DO
+            CLASS DEFAULT
           ENDSELECT
           !do LU factorization on the diagonal blocks
           CALL doolittle_LU_RSOR(thisPC)

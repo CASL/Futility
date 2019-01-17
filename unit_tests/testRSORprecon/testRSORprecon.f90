@@ -60,8 +60,8 @@ PROGRAM testRSORprecon
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE setupRSORTest()
-        INTEGER(SIK)::ioerr,i,j
-        REAL(SRK)::tmpreal1(9*9),tmpreal2(9)
+        INTEGER(SIK)::ioerr,i,j,numnonzero
+        REAL(SRK)::tmpreal1(9*9),tmpreal2(9),tempreal
         
         CALL PListRSOR%add('PCType->numblocks',3_SIK)
         CALL PListRSOR%add('PCType->omega',1.0_SRK)
@@ -85,11 +85,28 @@ PROGRAM testRSORprecon
                 0_SRK, 0_SRK, 0_SRK, 0_SRK, 16_SRK, 0_SRK, 16_SRK, -64_SRK, 16_SRK,&
                 0_SRK, 0_SRK, 0_SRK, 0_SRK, 0_SRK, 16_SRK, 0_SRK, 16_SRK, -64_SRK/)
         
+        !setup the dense matrixk and count the number of nonzeroentries
+        numnonzero=0
         DO i=1,9
             DO j=1,9
                 CALL testDenseMatrix%set(i,j,tmpreal1((i-1)*9+j))
+                IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)numnonzero=numnonzero+1
             END DO
         END DO
+        
+        !setup the sparse version of the matrix
+        CALL PListMat%add('MatrixType->nnz',numnonzero)
+        ALLOCATE(SparseMatrixType :: testSparseMatrix)
+        CALL testSparseMatrix%init(PListMat)
+        SELECTTYPE(testSparseMatrix); TYPE IS(SparseMatrixType)
+            DO i=1,9
+                DO j=1,9
+                    IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
+                        CALL testSparseMatrix%setShape(i,j,tmpreal1((i-1)*9+j))
+                    END IF
+                END DO
+            END DO
+        ENDSELECT
         
         tmpreal2=(/-16.0_SRK,&
                 -1.95943487863577E-15_SRK,&
@@ -127,6 +144,7 @@ PROGRAM testRSORprecon
         INTEGER(SIK)::i,j,k
         REAL(SRK)::tmpreal,trv1(9*9),trv2(3*3*3)
         REAL(SRK)::refLpU(9,9),refLU(3,3,3)
+        REAL(SRK)::vecsave(9)
 
 
         ALLOCATE(RSOR_PreCondType :: testSOR)
@@ -214,7 +232,11 @@ PROGRAM testRSORprecon
             END DO
         END DO
         
-        !check if it works
+        SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
+            vecsave=tv%b
+        ENDSELECT
+        
+        !check if it works for dense matrices
         COMPONENT_TEST('RSOR_PreCondType, DenseMatrixType')
         IF(testDenseMatrix%isInit .AND. testVector%isInit) THEN
         
@@ -256,12 +278,67 @@ PROGRAM testRSORprecon
 
             ! Check %clear
             CALL testSOR%clear()
+            ASSERT(.NOT.(testSOR%isInit),'DenseSquareMatrixType .NOT.(RSOR%SOR%isInit)')
+            ASSERT(.NOT.(ASSOCIATED(testSOR%A)),'DenseSquareMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+            ASSERT(.NOT.(ALLOCATED(testSOR%LpU)),'DenseSquareMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+            
+        ELSE
+            ASSERT(testDenseMatrix%isInit,'TestDenseMatrix Initialization')
+            ASSERT(testVector%isInit,'TestVector Initialization')
+        ENDIF
+        
+        SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
+            tv%b=vecsave
+        ENDSELECT
+        
+        !check if it works for sparse matrices
+        COMPONENT_TEST('RSOR_PreCondType, SparseMatrixType')
+        IF(testSparseMatrix%isInit .AND. testVector%isInit) THEN
+        
+            ! Check %init
+            CALL testSOR%init(testSparseMatrix,PListRSOR)
+            ASSERT(testSOR%isInit,'SparseMatrixType RSOR%isInit')
+            ASSERT(ASSOCIATED(testSOR%A),'SparseMatrixType ASSOCIATED(RSOR%LU%A)')
+            ASSERT(testSOR%LpU%isInit,'SparseMatrixType RSOR%LpU%isInit')
+            SELECTTYPE(LpU => testSOR%LpU); TYPE IS(SparseMatrixType)
+                SELECTTYPE(A => testSOR%A); TYPE IS(SparseMatrixType)
+                    ASSERT(ALL(LpU%a .APPROXEQA. A%a),'SparseMatrixType RSOR%LpU%a')
+                ENDSELECT
+            CLASS DEFAULT
+                ASSERT(.FALSE.,'SparseMatrixType RSOR%LpU TYPE IS(SparseMatrixType)')
+            ENDSELECT
+
+
+            ! Check %setup
+            CALL testSOR%setup()
+            !SELECTTYPE(LpU => testSOR%LpU); TYPE IS(SparseMatrixType)
+            !    ASSERT(ALL(LpU%a .APPROXEQA. refLpU),'RSOR%LpU%a Correct')
+            !ENDSELECT
+            DO k=1,3
+                SELECTTYPE(LU => testSOR%LU(k)); TYPE IS(DenseSquareMatrixType)
+                    ASSERT(ALL(LU%a .APPROXEQA. refLU(:,:,k)),'RSOR%LU(k)%a Correct')
+                    FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
+                ENDSELECT
+            END DO
+                
+            
+            ! Check %apply
+            CALL testSOR%apply(testVector)
+            SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
+                SELECTTYPE(rv => refVector); TYPE IS(RealVectorType)
+                    ASSERT(ALL(tv%b .APPROXEQA. rv%b),'DenseSquareMatrixType RSOR%apply(vector)')
+                    FINFO() 'Result:',tv%b,'Solution:',rv%b
+                ENDSELECT
+            ENDSELECT
+
+            ! Check %clear
+            CALL testSOR%clear()
             ASSERT(.NOT.(testSOR%isInit),'SparseMatrixType .NOT.(RSOR%SOR%isInit)')
             ASSERT(.NOT.(ASSOCIATED(testSOR%A)),'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
             ASSERT(.NOT.(ALLOCATED(testSOR%LpU)),'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
             
         ELSE
-            ASSERT(testDenseMatrix%isInit,'TestDenseMatrix Initialization')
+            ASSERT(testDenseMatrix%isInit,'TestSparseMatrix Initialization')
             ASSERT(testVector%isInit,'TestVector Initialization')
         ENDIF
 
