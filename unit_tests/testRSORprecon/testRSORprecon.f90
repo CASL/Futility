@@ -75,15 +75,15 @@ PROGRAM testRSORprecon
         ALLOCATE(DenseSquareMatrixType :: testDenseMatrix)
         CALL testDenseMatrix%init(PListMat)
         
-        tmpreal1=(/-64,    16,    0,    16,    0,    0,    0,    0,    0,&
-                    16,    -64,    16,    0,    16,    0,    0,    0,    0,&
-                    0,    16,    -64,    0,    0,    16,    0,    0,    0,&
-                    16,    0,    0,    -64,    16,    0,    16,    0,    0,&
-                    0,    16,    0,    16,    -64,    16,    0,    16,    0,&
-                    0,    0,    16,    0,    16,    -64,    0,    0,    16,&
-                    0,    0,    0,    16,    0,    0,    -64, 16,    0,&
-                    0,    0,    0,    0,    16,    0,    16,    -64, 16,&
-                    0,    0,    0,    0,    0,    16,    0,    16,    -64/)
+        tmpreal1=(/-64_SRK, 16_SRK, 0_SRK, 16_SRK, 0_SRK, 0_SRK, 0_SRK, 0_SRK, 0_SRK,&
+                16_SRK, -64_SRK, 16_SRK, 0_SRK, 16_SRK, 0_SRK, 0_SRK, 0_SRK, 0_SRK,&
+                0_SRK, 16_SRK, -64_SRK, 0_SRK, 0_SRK, 16_SRK, 0_SRK, 0_SRK, 0_SRK,&
+                16_SRK, 0_SRK, 0_SRK, -64_SRK, 16_SRK, 0_SRK, 16_SRK, 0_SRK, 0_SRK,&
+                0_SRK, 16_SRK, 0_SRK, 16_SRK, -64_SRK, 16_SRK, 0_SRK, 16_SRK, 0_SRK,&
+                0_SRK, 0_SRK, 16_SRK, 0_SRK, 16_SRK, -64_SRK, 0_SRK, 0_SRK, 16_SRK,&
+                0_SRK, 0_SRK, 0_SRK, 16_SRK, 0_SRK, 0_SRK, -64_SRK, 16_SRK, 0_SRK,&
+                0_SRK, 0_SRK, 0_SRK, 0_SRK, 16_SRK, 0_SRK, 16_SRK, -64_SRK, 16_SRK,&
+                0_SRK, 0_SRK, 0_SRK, 0_SRK, 0_SRK, 16_SRK, 0_SRK, 16_SRK, -64_SRK/)
         
         DO i=1,9
             DO j=1,9
@@ -125,7 +125,8 @@ PROGRAM testRSORprecon
     SUBROUTINE testRSOR_PreCondType()
         CLASS(SOR_PreCondType),ALLOCATABLE :: testSOR
         INTEGER(SIK)::i,j,k
-        REAL(SRK)::tmpreal
+        REAL(SRK)::tmpreal,trv1(9*9),trv2(3*3*3)
+        REAL(SRK)::refLpU(9,9),refLU(3,3,3)
 
 
         ALLOCATE(RSOR_PreCondType :: testSOR)
@@ -178,6 +179,41 @@ PROGRAM testRSORprecon
         ASSERT(nerrors2 == nerrors1+1,'apply_SOR_Preconditioner v%isInit check')
         FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
         
+        !data for checking that the setup is correct
+        trv1=(/0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,&
+                0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,&
+                0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,&
+                16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,&
+                0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,&
+                0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,&
+                0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,&
+                0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,&
+                0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK/)
+        
+        DO i=1,9
+            DO j=1,9
+                refLpU(i,j)=trv1((i-1)*9+j)
+            END DO
+        END DO
+        
+        trv2=(/-64.0_SRK, -0.250_SRK,  -0.00_SRK,&
+            16.0_SRK,  -60.0_SRK, -0.26666666666666666_SRK,&
+            0.00_SRK,   16.0_SRK,  -59.733333333333334_SRK,&
+            -64.0_SRK, -0.250_SRK,  -0.00_SRK,&
+            16.0_SRK,  -60.0_SRK, -0.26666666666666666_SRK,&
+            0.00_SRK,   16.0_SRK,  -59.733333333333334_SRK,&
+            -64.0_SRK, -0.250_SRK,  -0.00_SRK,&
+            16.0_SRK,  -60.0_SRK, -0.26666666666666666_SRK,&
+            0.00_SRK,   16.0_SRK,  -59.733333333333334_SRK/)
+         
+        DO k=1,3
+            DO i=1,3
+                DO j=1,3
+                    refLU(j,i,k)=trv2((i-1)*3+j+(k-1)*9)
+                END DO
+            END DO
+        END DO
+        
         !check if it works
         COMPONENT_TEST('RSOR_PreCondType, DenseMatrixType')
         IF(testDenseMatrix%isInit .AND. testVector%isInit) THEN
@@ -198,6 +234,16 @@ PROGRAM testRSORprecon
 
             ! Check %setup
             CALL testSOR%setup()
+            SELECTTYPE(LpU => testSOR%LpU); TYPE IS(DenseSquareMatrixType)
+                ASSERT(ALL(LpU%a .APPROXEQA. refLpU),'RSOR%LpU%a Correct')
+            ENDSELECT
+            DO k=1,3
+                SELECTTYPE(LU => testSOR%LU(k)); TYPE IS(DenseSquareMatrixType)
+                    ASSERT(ALL(LU%a .APPROXEQA. refLU(:,:,k)),'RSOR%LU(k)%a Correct')
+                    FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
+                ENDSELECT
+            END DO
+                
             
             ! Check %apply
             CALL testSOR%apply(testVector)
@@ -207,6 +253,12 @@ PROGRAM testRSORprecon
                     FINFO() 'Result:',tv%b,'Solution:',rv%b
                 ENDSELECT
             ENDSELECT
+
+            ! Check %clear
+            CALL testSOR%clear()
+            ASSERT(.NOT.(testSOR%isInit),'SparseMatrixType .NOT.(RSOR%SOR%isInit)')
+            ASSERT(.NOT.(ASSOCIATED(testSOR%A)),'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+            ASSERT(.NOT.(ALLOCATED(testSOR%LpU)),'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
             
         ELSE
             ASSERT(testDenseMatrix%isInit,'TestDenseMatrix Initialization')

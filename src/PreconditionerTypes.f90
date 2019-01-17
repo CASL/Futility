@@ -472,9 +472,21 @@ MODULE PreconditionerTypes
       CALL params%get('PCType->omega',thisPC%omega)
       
       !makes sure that the number of blocks is valid
+      IF(thisPC%numblocks .LT. 0)THEN
+          CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - Number of blocks is negative!')
+      END IF
+      
+      !makes sure that the number of blocks is valid
       IF(MOD(thisPC%A%n,thisPC%numblocks) .NE. 0)THEN
           CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
                   ' - Matrix size not divisible by number of blocks!')
+      END IF
+      
+      !makes sure that the number of blocks is valid
+      IF(thisPC%omega .GT. 2 .OR. thisPC%omega .LT. 0)THEN
+          CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                  ' - Omega value must be between 0 and 2!')
       END IF
       
       !calculate block size
