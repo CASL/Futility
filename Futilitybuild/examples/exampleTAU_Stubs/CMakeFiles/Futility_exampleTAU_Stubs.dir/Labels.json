@@ -1,0 +1,17 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/examples/exampleTAU_Stubs/exampleTAU_Stubs.f90"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"FutilityExes",
+			"FutilityExes"
+		],
+		"name" : "Futility_exampleTAU_Stubs"
+	}
+}

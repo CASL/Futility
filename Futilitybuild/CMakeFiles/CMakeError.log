@@ -1,0 +1,66 @@
+Performing C++ SOURCE FILE Test FINITE_VALUE_HAVE_GLOBAL_ISNAN failed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_cea2c/fast"
+/usr/bin/make -f CMakeFiles/cmTC_cea2c.dir/build.make CMakeFiles/cmTC_cea2c.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_cea2c.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++11 -DFINITE_VALUE_HAVE_GLOBAL_ISNAN -O3 -DNDEBUG   -o CMakeFiles/cmTC_cea2c.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx: In function 'int main()':
+/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx:6:10: error: 'isnan' was not declared in this scope
+   isnan(x);
+          ^
+/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx:6:10: note: suggested alternative:
+In file included from /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx:2:0:
+/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/include/c++/5.4.0/cmath:641:5: note:   'std::isnan'
+     isnan(_Tp __x)
+     ^
+CMakeFiles/cmTC_cea2c.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_cea2c.dir/src.cxx.o' failed
+make[1]: *** [CMakeFiles/cmTC_cea2c.dir/src.cxx.o] Error 1
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_cea2c/fast' failed
+make: *** [cmTC_cea2c/fast] Error 2
+
+Source file was:
+
+#include <cmath>
+int main()
+{
+  double x = 1.0;
+  isnan(x);
+  return 0;
+}
+  
+Performing C++ SOURCE FILE Test FINITE_VALUE_HAVE_GLOBAL_ISINF failed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_400b9/fast"
+/usr/bin/make -f CMakeFiles/cmTC_400b9.dir/build.make CMakeFiles/cmTC_400b9.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_400b9.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++11 -DFINITE_VALUE_HAVE_GLOBAL_ISINF -O3 -DNDEBUG   -o CMakeFiles/cmTC_400b9.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx: In function 'int main()':
+/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx:6:10: error: 'isinf' was not declared in this scope
+   isinf(x);
+          ^
+/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx:6:10: note: suggested alternative:
+In file included from /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx:2:0:
+/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/include/c++/5.4.0/cmath:621:5: note:   'std::isinf'
+     isinf(_Tp __x)
+     ^
+CMakeFiles/cmTC_400b9.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_400b9.dir/src.cxx.o' failed
+make[1]: *** [CMakeFiles/cmTC_400b9.dir/src.cxx.o] Error 1
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_400b9/fast' failed
+make: *** [cmTC_400b9/fast] Error 2
+
+Source file was:
+
+#include <cmath>
+int main()
+{
+  double x = 1.0;
+  isinf(x);
+  return 0;
+}
+  

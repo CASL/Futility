@@ -1,0 +1,17 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/unit_tests/testDBC/testDBC.f90"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"FutilityExes",
+			"FutilityExes"
+		],
+		"name" : "testDBC"
+	}
+}

@@ -1,0 +1,8 @@
+# Target labels
+ FutilityLibs
+ FutilityLibs
+# Source files and their labels
+/home/nfherrin/research/MPACT/Futility/src/getSysProcInfo.h
+/home/nfherrin/research/MPACT/Futility/src/floatingpointchecks.h
+/home/nfherrin/research/MPACT/Futility/src/getSysProcInfo.c
+/home/nfherrin/research/MPACT/Futility/src/floatingpointchecks.c

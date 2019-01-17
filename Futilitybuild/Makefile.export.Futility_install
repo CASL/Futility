@@ -1,0 +1,90 @@
+##############################################################################
+#
+# Make variables for use by Futility clients. 
+#
+# Do not edit: This file was generated automatically by CMake.
+#
+##############################################################################
+
+
+## ---------------------------------------------------------------------------
+## Compilers used by Futility build
+## ---------------------------------------------------------------------------
+
+Futility_CXX_COMPILER=/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx
+
+Futility_C_COMPILER=/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc
+
+Futility_Fortran_COMPILER=/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90
+
+
+## ---------------------------------------------------------------------------
+## Compiler flags used by Futility build
+## ---------------------------------------------------------------------------
+
+Futility_CXX_COMPILER_FLAGS= -std=c++11 -DFUTILITY_DBC -DFUTILITY_DBC -DUNIT_TEST -DDBL -g -O0
+
+Futility_C_COMPILER_FLAGS=-lm -DFUTILITY_DBC -DFUTILITY_DBC -DUNIT_TEST -DDBL -g -O0
+
+Futility_Fortran_COMPILER_FLAGS= -cpp -fall-intrinsics -ffree-line-length-none -std=f2003 -DFUTILITY_DBC -DFUTILITY_DBC -DUNIT_TEST -DDBL -g -O0 -Wall -fcheck=all -fbacktrace
+
+## Extra link flags (e.g., specification of fortran libraries)
+Futility_EXTRA_LD_FLAGS=
+
+## This is the command-line entry used for setting rpaths. In a build
+## with static libraries it will be empty. 
+Futility_SHARED_LIB_RPATH_COMMAND=
+Futility_BUILD_SHARED_LIBS=FALSE
+
+Futility_LINKER=/usr/bin/ld
+Futility_AR=/usr/bin/ar
+
+
+## ---------------------------------------------------------------------------
+## Set library specifications and paths 
+## ---------------------------------------------------------------------------
+
+## The project version number
+Futility_VERSION=2.1.0
+
+## The project include file directories.
+Futility_INCLUDE_DIRS= -I/home/nfherrin/research/MPACT/Futility/Futilitybuild/install/include
+
+## The project library directories.
+Futility_LIBRARY_DIRS= -L/home/nfherrin/research/MPACT/Futility/Futilitybuild/install/lib
+
+## The project libraries.
+Futility_LIBRARIES= -lUtils -lTrilinosUtils -lCUtils -lUtils -lTrilinosUtils -lCUtils
+
+## The project tpl include paths
+Futility_TPL_INCLUDE_DIRS=
+
+## The project tpl library paths
+Futility_TPL_LIBRARY_DIRS=
+
+## The project tpl libraries
+Futility_TPL_LIBRARIES=
+
+## ---------------------------------------------------------------------------
+## MPI specific variables
+##   These variables are provided to make it easier to get the mpi libraries
+##   and includes on systems that do not use the mpi wrappers for compiling
+## ---------------------------------------------------------------------------
+
+Futility_MPI_LIBRARIES=
+Futility_MPI_LIBRARY_DIRS=
+Futility_MPI_INCLUDE_DIRS=
+Futility_MPI_EXEC=
+Futility_MPI_EXEC_MAX_NUMPROCS=
+Futility_MPI_EXEC_NUMPROCS_FLAG=
+
+## ---------------------------------------------------------------------------
+## Set useful general variables 
+## ---------------------------------------------------------------------------
+
+## The packages enabled for this project
+Futility_PACKAGE_LIST= Futility
+
+## The TPLs enabled for this project
+Futility_TPL_LIST=
+

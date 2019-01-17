@@ -1,0 +1,5 @@
+# Target labels
+ FutilityExes
+ FutilityExes
+# Source files and their labels
+/home/nfherrin/research/MPACT/Futility/examples/exampleTAU_Stubs/exampleTAU_Stubs.f90

@@ -1,0 +1,35 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/src/trilinos_interfaces/trilinos_mat_vec.hpp"
+		},
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/src/trilinos_interfaces/trilinos_pc.hpp"
+		},
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/src/trilinos_interfaces/trilinos_solvers.hpp"
+		},
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/src/trilinos_interfaces/trilinos_mat_vec.cpp"
+		},
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/src/trilinos_interfaces/trilinos_pc.cpp"
+		},
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/src/trilinos_interfaces/trilinos_solvers.cpp"
+		},
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/src/trilinos_interfaces/trilinos_c_interfaces.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"FutilityLibs",
+			"FutilityLibs"
+		],
+		"name" : "TrilinosUtils"
+	}
+}

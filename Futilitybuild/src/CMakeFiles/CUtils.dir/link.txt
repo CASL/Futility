@@ -1,0 +1,2 @@
+/usr/bin/ar qc libCUtils.a  CMakeFiles/CUtils.dir/getSysProcInfo.c.o CMakeFiles/CUtils.dir/floatingpointchecks.c.o
+/usr/bin/ranlib libCUtils.a

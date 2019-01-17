@@ -1,0 +1,3 @@
+*** Base Git Repo: Futility
+0a456c5 [Thu Jan 17 16:37:45 2019 -0500] <nfherrin@umich.edu>
+sparse matrices work with the RSOR and pass all unit tests

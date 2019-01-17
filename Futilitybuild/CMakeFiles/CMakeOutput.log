@@ -1,0 +1,1119 @@
+The system is: Linux - 4.15.0-39-generic - x86_64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is GNU, found in "/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/3.10.2/CompilerIdC/a.out"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_900da/fast"
+/usr/bin/make -f CMakeFiles/cmTC_900da.dir/build.make CMakeFiles/cmTC_900da.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_900da.dir/testCCompiler.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc    -o CMakeFiles/cmTC_900da.dir/testCCompiler.c.o   -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTC_900da
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_900da.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc      -rdynamic CMakeFiles/cmTC_900da.dir/testCCompiler.c.o  -o cmTC_900da 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_5d4c4/fast"
+/usr/bin/make -f CMakeFiles/cmTC_5d4c4.dir/build.make CMakeFiles/cmTC_5d4c4.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc    -o CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o   -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/CMakeCCompilerABI.c
+Linking C executable cmTC_5d4c4
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5d4c4.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc     -v -rdynamic CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o  -o cmTC_5d4c4 
+mpicc for MPICH version 3.2.1
+Using built-in specs.
+COLLECT_GCC=gcc
+COLLECT_LTO_WRAPPER=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper
+Target: x86_64-unknown-linux-gnu
+Configured with: ../gcc-5.4.0-source/configure --disable-multilib --disable-libsanitizer --enable-languages=c,c++,fortran --prefix=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0
+Thread model: posix
+gcc version 5.4.0 (GCC) 
+COMPILER_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/
+LIBRARY_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/x86_64-linux-gnu/:/lib/../lib64/:/usr/lib/x86_64-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_5d4c4' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-mtune=generic' '-march=x86-64'
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 -plugin /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so -plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccbxzMV0.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_5d4c4 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o -rpath /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib --enable-new-dtags -lmpi -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /usr/lib/x86_64-linux-gnu/crtn.o
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:"/usr/bin/make" "cmTC_5d4c4/fast"]
+  ignore line: [/usr/bin/make -f CMakeFiles/cmTC_5d4c4.dir/build.make CMakeFiles/cmTC_5d4c4.dir/build]
+  ignore line: [make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp']
+  ignore line: [Building C object CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc    -o CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o   -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/CMakeCCompilerABI.c]
+  ignore line: [Linking C executable cmTC_5d4c4]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5d4c4.dir/link.txt --verbose=1]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc     -v -rdynamic CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o  -o cmTC_5d4c4 ]
+  ignore line: [mpicc for MPICH version 3.2.1]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=gcc]
+  ignore line: [COLLECT_LTO_WRAPPER=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper]
+  ignore line: [Target: x86_64-unknown-linux-gnu]
+  ignore line: [Configured with: ../gcc-5.4.0-source/configure --disable-multilib --disable-libsanitizer --enable-languages=c,c++,fortran --prefix=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 5.4.0 (GCC) ]
+  ignore line: [COMPILER_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/x86_64-linux-gnu/:/lib/../lib64/:/usr/lib/x86_64-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_5d4c4' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-mtune=generic' '-march=x86-64']
+  link line: [ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 -plugin /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so -plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccbxzMV0.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_5d4c4 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o -rpath /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib --enable-new-dtags -lmpi -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /usr/lib/x86_64-linux-gnu/crtn.o]
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccbxzMV0.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_5d4c4] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crt1.o] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crti.o] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o] ==> ignore
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..]
+    arg [CMakeFiles/cmTC_5d4c4.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-rpath] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> ignore
+    arg [--enable-new-dtags] ==> ignore
+    arg [-lmpi] ==> lib [mpi]
+    arg [-lgcc] ==> lib [gcc]
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--no-as-needed] ==> ignore
+    arg [-lc] ==> lib [c]
+    arg [-lgcc] ==> lib [gcc]
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--no-as-needed] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crtn.o] ==> ignore
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib64]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib64] ==> [/lib64]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib]
+  implicit libs: [mpi;gcc;gcc_s;c;gcc;gcc_s]
+  implicit dirs: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib64;/lib/x86_64-linux-gnu;/lib64;/usr/lib/x86_64-linux-gnu;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib]
+  implicit fwks: []
+
+
+
+
+Detecting C [-std=c11] compiler features compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_8806c/fast"
+/usr/bin/make -f CMakeFiles/cmTC_8806c.dir/build.make CMakeFiles/cmTC_8806c.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8806c.dir/feature_tests.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc   -std=c11 -o CMakeFiles/cmTC_8806c.dir/feature_tests.c.o   -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/feature_tests.c
+Linking C executable cmTC_8806c
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8806c.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc      -rdynamic CMakeFiles/cmTC_8806c.dir/feature_tests.c.o  -o cmTC_8806c 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:1c_restrict
+    Feature record: C_FEATURE:1c_static_assert
+    Feature record: C_FEATURE:1c_variadic_macros
+
+
+Detecting C [-std=c99] compiler features compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_dbd6e/fast"
+/usr/bin/make -f CMakeFiles/cmTC_dbd6e.dir/build.make CMakeFiles/cmTC_dbd6e.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_dbd6e.dir/feature_tests.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc   -std=c99 -o CMakeFiles/cmTC_dbd6e.dir/feature_tests.c.o   -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/feature_tests.c
+Linking C executable cmTC_dbd6e
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dbd6e.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc      -rdynamic CMakeFiles/cmTC_dbd6e.dir/feature_tests.c.o  -o cmTC_dbd6e 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:1c_restrict
+    Feature record: C_FEATURE:0c_static_assert
+    Feature record: C_FEATURE:1c_variadic_macros
+
+
+Detecting C [-std=c90] compiler features compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_c4877/fast"
+/usr/bin/make -f CMakeFiles/cmTC_c4877.dir/build.make CMakeFiles/cmTC_c4877.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c4877.dir/feature_tests.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc   -std=c90 -o CMakeFiles/cmTC_c4877.dir/feature_tests.c.o   -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/feature_tests.c
+Linking C executable cmTC_c4877
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c4877.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc      -rdynamic CMakeFiles/cmTC_c4877.dir/feature_tests.c.o  -o cmTC_c4877 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:0c_restrict
+    Feature record: C_FEATURE:0c_static_assert
+    Feature record: C_FEATURE:0c_variadic_macros
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is GNU, found in "/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/3.10.2/CompilerIdCXX/a.out"
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_6d13c/fast"
+/usr/bin/make -f CMakeFiles/cmTC_6d13c.dir/build.make CMakeFiles/cmTC_6d13c.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_6d13c.dir/testCXXCompiler.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx     -o CMakeFiles/cmTC_6d13c.dir/testCXXCompiler.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTC_6d13c
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6d13c.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_6d13c.dir/testCXXCompiler.cxx.o  -o cmTC_6d13c 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_378f9/fast"
+/usr/bin/make -f CMakeFiles/cmTC_378f9.dir/build.make CMakeFiles/cmTC_378f9.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx     -o CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTC_378f9
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_378f9.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx      -v -rdynamic CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_378f9 
+mpicxx for MPICH version 3.2.1
+Using built-in specs.
+COLLECT_GCC=g++
+COLLECT_LTO_WRAPPER=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper
+Target: x86_64-unknown-linux-gnu
+Configured with: ../gcc-5.4.0-source/configure --disable-multilib --disable-libsanitizer --enable-languages=c,c++,fortran --prefix=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0
+Thread model: posix
+gcc version 5.4.0 (GCC) 
+COMPILER_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/
+LIBRARY_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/x86_64-linux-gnu/:/lib/../lib64/:/usr/lib/x86_64-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_378f9' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 -plugin /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so -plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cce0Qtlz.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_378f9 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o -lmpicxx -rpath /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib --enable-new-dtags -lmpi -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /usr/lib/x86_64-linux-gnu/crtn.o
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:"/usr/bin/make" "cmTC_378f9/fast"]
+  ignore line: [/usr/bin/make -f CMakeFiles/cmTC_378f9.dir/build.make CMakeFiles/cmTC_378f9.dir/build]
+  ignore line: [make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp']
+  ignore line: [Building CXX object CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx     -o CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Linking CXX executable cmTC_378f9]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_378f9.dir/link.txt --verbose=1]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx      -v -rdynamic CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_378f9 ]
+  ignore line: [mpicxx for MPICH version 3.2.1]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=g++]
+  ignore line: [COLLECT_LTO_WRAPPER=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper]
+  ignore line: [Target: x86_64-unknown-linux-gnu]
+  ignore line: [Configured with: ../gcc-5.4.0-source/configure --disable-multilib --disable-libsanitizer --enable-languages=c,c++,fortran --prefix=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 5.4.0 (GCC) ]
+  ignore line: [COMPILER_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/x86_64-linux-gnu/:/lib/../lib64/:/usr/lib/x86_64-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_378f9' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  link line: [ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 -plugin /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so -plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cce0Qtlz.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_378f9 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o -lmpicxx -rpath /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib --enable-new-dtags -lmpi -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /usr/lib/x86_64-linux-gnu/crtn.o]
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/cce0Qtlz.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_378f9] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crt1.o] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crti.o] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o] ==> ignore
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..]
+    arg [CMakeFiles/cmTC_378f9.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lmpicxx] ==> lib [mpicxx]
+    arg [-rpath] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> ignore
+    arg [--enable-new-dtags] ==> ignore
+    arg [-lmpi] ==> lib [mpi]
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crtn.o] ==> ignore
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib64]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib64] ==> [/lib64]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib]
+  implicit libs: [mpicxx;mpi;stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+  implicit dirs: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib64;/lib/x86_64-linux-gnu;/lib64;/usr/lib/x86_64-linux-gnu;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib]
+  implicit fwks: []
+
+
+
+
+Detecting CXX [-std=c++1z] compiler features compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_ff7cc/fast"
+/usr/bin/make -f CMakeFiles/cmTC_ff7cc.dir/build.make CMakeFiles/cmTC_ff7cc.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_ff7cc.dir/feature_tests.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++1z -o CMakeFiles/cmTC_ff7cc.dir/feature_tests.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_ff7cc
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ff7cc.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_ff7cc.dir/feature_tests.cxx.o  -o cmTC_ff7cc 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++14] compiler features compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_0603b/fast"
+/usr/bin/make -f CMakeFiles/cmTC_0603b.dir/build.make CMakeFiles/cmTC_0603b.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_0603b.dir/feature_tests.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++14 -o CMakeFiles/cmTC_0603b.dir/feature_tests.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_0603b
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0603b.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_0603b.dir/feature_tests.cxx.o  -o cmTC_0603b 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++11] compiler features compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_81ef9/fast"
+/usr/bin/make -f CMakeFiles/cmTC_81ef9.dir/build.make CMakeFiles/cmTC_81ef9.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_81ef9.dir/feature_tests.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++11 -o CMakeFiles/cmTC_81ef9.dir/feature_tests.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_81ef9
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_81ef9.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_81ef9.dir/feature_tests.cxx.o  -o cmTC_81ef9 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:0cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:0cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:0cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:0cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:0cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:0cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:0cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:0cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:0cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:0cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++98] compiler features compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_de473/fast"
+/usr/bin/make -f CMakeFiles/cmTC_de473.dir/build.make CMakeFiles/cmTC_de473.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_de473.dir/feature_tests.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++98 -o CMakeFiles/cmTC_de473.dir/feature_tests.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_de473
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_de473.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_de473.dir/feature_tests.cxx.o  -o cmTC_de473 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:0cxx_alias_templates
+    Feature record: CXX_FEATURE:0cxx_alignas
+    Feature record: CXX_FEATURE:0cxx_alignof
+    Feature record: CXX_FEATURE:0cxx_attributes
+    Feature record: CXX_FEATURE:0cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:0cxx_auto_type
+    Feature record: CXX_FEATURE:0cxx_binary_literals
+    Feature record: CXX_FEATURE:0cxx_constexpr
+    Feature record: CXX_FEATURE:0cxx_contextual_conversions
+    Feature record: CXX_FEATURE:0cxx_decltype
+    Feature record: CXX_FEATURE:0cxx_decltype_auto
+    Feature record: CXX_FEATURE:0cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:0cxx_default_function_template_args
+    Feature record: CXX_FEATURE:0cxx_defaulted_functions
+    Feature record: CXX_FEATURE:0cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:0cxx_delegating_constructors
+    Feature record: CXX_FEATURE:0cxx_deleted_functions
+    Feature record: CXX_FEATURE:0cxx_digit_separators
+    Feature record: CXX_FEATURE:0cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:0cxx_explicit_conversions
+    Feature record: CXX_FEATURE:0cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:0cxx_extern_templates
+    Feature record: CXX_FEATURE:0cxx_final
+    Feature record: CXX_FEATURE:0cxx_func_identifier
+    Feature record: CXX_FEATURE:0cxx_generalized_initializers
+    Feature record: CXX_FEATURE:0cxx_generic_lambdas
+    Feature record: CXX_FEATURE:0cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:0cxx_inline_namespaces
+    Feature record: CXX_FEATURE:0cxx_lambdas
+    Feature record: CXX_FEATURE:0cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:0cxx_local_type_template_args
+    Feature record: CXX_FEATURE:0cxx_long_long_type
+    Feature record: CXX_FEATURE:0cxx_noexcept
+    Feature record: CXX_FEATURE:0cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:0cxx_nullptr
+    Feature record: CXX_FEATURE:0cxx_override
+    Feature record: CXX_FEATURE:0cxx_range_for
+    Feature record: CXX_FEATURE:0cxx_raw_string_literals
+    Feature record: CXX_FEATURE:0cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:0cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:0cxx_return_type_deduction
+    Feature record: CXX_FEATURE:0cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:0cxx_rvalue_references
+    Feature record: CXX_FEATURE:0cxx_sizeof_member
+    Feature record: CXX_FEATURE:0cxx_static_assert
+    Feature record: CXX_FEATURE:0cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:0cxx_thread_local
+    Feature record: CXX_FEATURE:0cxx_trailing_return_types
+    Feature record: CXX_FEATURE:0cxx_unicode_literals
+    Feature record: CXX_FEATURE:0cxx_uniform_initialization
+    Feature record: CXX_FEATURE:0cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:0cxx_user_literals
+    Feature record: CXX_FEATURE:0cxx_variable_templates
+    Feature record: CXX_FEATURE:0cxx_variadic_macros
+    Feature record: CXX_FEATURE:0cxx_variadic_templates
+Compiling the Fortran compiler identification source file "CMakeFortranCompilerId.F" succeeded.
+Compiler: /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90 
+Build flags: 
+Id flags: -v 
+
+The output was:
+0
+mpifort for MPICH version 3.2.1
+Driving: gfortran -v CMakeFortranCompilerId.F -I/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -I/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -lmpifort -Wl,-rpath -Wl,/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -Wl,--enable-new-dtags -lmpi -l gfortran -l m -shared-libgcc
+Using built-in specs.
+COLLECT_GCC=gfortran
+COLLECT_LTO_WRAPPER=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper
+Target: x86_64-unknown-linux-gnu
+Configured with: ../gcc-5.4.0-source/configure --disable-multilib --disable-libsanitizer --enable-languages=c,c++,fortran --prefix=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0
+Thread model: posix
+gcc version 5.4.0 (GCC) 
+COLLECT_GCC_OPTIONS='-v' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/f951 CMakeFortranCompilerId.F -ffixed-form -cpp=/tmp/ccYICM26.f90 -quiet -v -I /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -I /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -imultiarch x86_64-linux-gnu CMakeFortranCompilerId.F -quiet -dumpbase CMakeFortranCompilerId.F -mtune=generic -march=x86-64 -auxbase CMakeFortranCompilerId -version -fintrinsic-modules-path /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/finclude -o /tmp/ccpX3yH8.s
+GNU Fortran (GCC) version 5.4.0 (x86_64-unknown-linux-gnu)
+	compiled by GNU C version 5.4.0, GMP version 4.3.2, MPFR version 2.4.2, MPC version 0.8.1
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"
+ignoring nonexistent directory "/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../x86_64-unknown-linux-gnu/include"
+ignoring duplicate directory "/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/finclude
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/include
+ /usr/local/include
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/include
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/include-fixed
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+GNU Fortran2008 (GCC) version 5.4.0 (x86_64-unknown-linux-gnu)
+	compiled by GNU C version 5.4.0, GMP version 4.3.2, MPFR version 2.4.2, MPC version 0.8.1
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+COLLECT_GCC_OPTIONS='-v' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ as -v -I /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -I /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include --64 -o /tmp/cc2a10ra.o /tmp/ccpX3yH8.s
+GNU assembler version 2.30 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.30
+Reading specs from /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/libgfortran.spec
+rename spec lib to liborig
+COLLECT_GCC_OPTIONS='-v' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+COMPILER_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/
+LIBRARY_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/x86_64-linux-gnu/:/lib/../lib64/:/usr/lib/x86_64-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 -plugin /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so -plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cc7N8tec.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lquadmath -plugin-opt=-pass-through=-lm -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. /tmp/cc2a10ra.o -lmpifort -rpath /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib --enable-new-dtags -lmpi -lgfortran -lm -lgcc_s -lgcc -lquadmath -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /usr/lib/x86_64-linux-gnu/crtn.o
+
+
+Compilation of the Fortran compiler identification source "CMakeFortranCompilerId.F" produced "a.out"
+
+The Fortran compiler identification is GNU, found in "/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/3.10.2/CompilerIdFortran/a.out"
+
+Determining if the Fortran compiler works passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_f68b3/fast"
+/usr/bin/make -f CMakeFiles/cmTC_f68b3.dir/build.make CMakeFiles/cmTC_f68b3.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building Fortran object CMakeFiles/cmTC_f68b3.dir/testFortranCompiler.f.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90    -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/testFortranCompiler.f -o CMakeFiles/cmTC_f68b3.dir/testFortranCompiler.f.o
+Linking Fortran executable cmTC_f68b3
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f68b3.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90      CMakeFiles/cmTC_f68b3.dir/testFortranCompiler.f.o  -o cmTC_f68b3 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Detecting Fortran compiler ABI info compiled with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_1da0a/fast"
+/usr/bin/make -f CMakeFiles/cmTC_1da0a.dir/build.make CMakeFiles/cmTC_1da0a.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building Fortran object CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90    -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/CMakeFortranCompilerABI.F -o CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o
+Linking Fortran executable cmTC_1da0a
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1da0a.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90   -v   CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o  -o cmTC_1da0a 
+mpifort for MPICH version 3.2.1
+Driving: gfortran -v CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o -o cmTC_1da0a -I/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -I/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -lmpifort -Wl,-rpath -Wl,/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -Wl,--enable-new-dtags -lmpi -l gfortran -l m -shared-libgcc
+Using built-in specs.
+COLLECT_GCC=gfortran
+COLLECT_LTO_WRAPPER=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper
+Target: x86_64-unknown-linux-gnu
+Configured with: ../gcc-5.4.0-source/configure --disable-multilib --disable-libsanitizer --enable-languages=c,c++,fortran --prefix=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0
+Thread model: posix
+gcc version 5.4.0 (GCC) 
+Reading specs from /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/libgfortran.spec
+rename spec lib to liborig
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_1da0a' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+COMPILER_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/
+LIBRARY_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/x86_64-linux-gnu/:/lib/../lib64/:/usr/lib/x86_64-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_1da0a' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 -plugin /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so -plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccqwHTPK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lquadmath -plugin-opt=-pass-through=-lm -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_1da0a /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o -lmpifort -rpath /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib --enable-new-dtags -lmpi -lgfortran -lm -lgcc_s -lgcc -lquadmath -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /usr/lib/x86_64-linux-gnu/crtn.o
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Parsed Fortran implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:"/usr/bin/make" "cmTC_1da0a/fast"]
+  ignore line: [/usr/bin/make -f CMakeFiles/cmTC_1da0a.dir/build.make CMakeFiles/cmTC_1da0a.dir/build]
+  ignore line: [make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp']
+  ignore line: [Building Fortran object CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90    -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/CMakeFortranCompilerABI.F -o CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o]
+  ignore line: [Linking Fortran executable cmTC_1da0a]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1da0a.dir/link.txt --verbose=1]
+  ignore line: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90   -v   CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o  -o cmTC_1da0a ]
+  ignore line: [mpifort for MPICH version 3.2.1]
+  ignore line: [Driving: gfortran -v CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o -o cmTC_1da0a -I/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -I/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -lmpifort -Wl,-rpath -Wl,/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -Wl,--enable-new-dtags -lmpi -l gfortran -l m -shared-libgcc]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=gfortran]
+  ignore line: [COLLECT_LTO_WRAPPER=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper]
+  ignore line: [Target: x86_64-unknown-linux-gnu]
+  ignore line: [Configured with: ../gcc-5.4.0-source/configure --disable-multilib --disable-libsanitizer --enable-languages=c,c++,fortran --prefix=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 5.4.0 (GCC) ]
+  ignore line: [Reading specs from /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/libgfortran.spec]
+  ignore line: [rename spec lib to liborig]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_1da0a' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  ignore line: [COMPILER_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/x86_64-linux-gnu/:/lib/../lib64/:/usr/lib/x86_64-linux-gnu/:/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_1da0a' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-I' '/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/include' '-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  link line: [ /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 -plugin /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so -plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccqwHTPK.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lquadmath -plugin-opt=-pass-through=-lm -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_1da0a /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o -lmpifort -rpath /home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib --enable-new-dtags -lmpi -lgfortran -lm -lgcc_s -lgcc -lquadmath -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /usr/lib/x86_64-linux-gnu/crtn.o]
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccqwHTPK.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lquadmath] ==> ignore
+    arg [-plugin-opt=-pass-through=-lm] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_1da0a] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crt1.o] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crti.o] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o] ==> ignore
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..]
+    arg [CMakeFiles/cmTC_1da0a.dir/CMakeFortranCompilerABI.F.o] ==> ignore
+    arg [-lmpifort] ==> lib [mpifort]
+    arg [-rpath] ==> ignore
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> ignore
+    arg [--enable-new-dtags] ==> ignore
+    arg [-lmpi] ==> lib [mpi]
+    arg [-lgfortran] ==> lib [gfortran]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lquadmath] ==> lib [quadmath]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o] ==> ignore
+    arg [/usr/lib/x86_64-linux-gnu/crtn.o] ==> ignore
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib64]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib64] ==> [/lib64]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> [/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib]
+  implicit libs: [mpifort;mpi;gfortran;m;gcc_s;gcc;quadmath;m;gcc_s;gcc;c;gcc_s;gcc]
+  implicit dirs: [/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/lib;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib64;/lib/x86_64-linux-gnu;/lib64;/usr/lib/x86_64-linux-gnu;/home/nfherrin/research/env/gcc-5.4.0/toolset/gcc-5.4.0/lib]
+  implicit fwks: []
+
+
+Determining if the Fortran compiler supports Fortran 90 passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_f598c/fast"
+/usr/bin/make -f CMakeFiles/cmTC_f598c.dir/build.make CMakeFiles/cmTC_f598c.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building Fortran object CMakeFiles/cmTC_f598c.dir/testFortranCompilerF90.f90.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90    -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/testFortranCompilerF90.f90 -o CMakeFiles/cmTC_f598c.dir/testFortranCompilerF90.f90.o
+Linking Fortran executable cmTC_f598c
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f598c.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90      CMakeFiles/cmTC_f598c.dir/testFortranCompilerF90.f90.o  -o cmTC_f598c 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file sys/time.h exists passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_1435d/fast"
+/usr/bin/make -f CMakeFiles/cmTC_1435d.dir/build.make CMakeFiles/cmTC_1435d.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_1435d.dir/CheckIncludeFile.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx     -o CMakeFiles/cmTC_1435d.dir/CheckIncludeFile.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+Linking CXX executable cmTC_1435d
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1435d.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_1435d.dir/CheckIncludeFile.cxx.o  -o cmTC_1435d 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file time.h exists passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_e76eb/fast"
+/usr/bin/make -f CMakeFiles/cmTC_e76eb.dir/build.make CMakeFiles/cmTC_e76eb.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e76eb.dir/CheckIncludeFile.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx     -o CMakeFiles/cmTC_e76eb.dir/CheckIncludeFile.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+Linking CXX executable cmTC_e76eb
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e76eb.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_e76eb.dir/CheckIncludeFile.cxx.o  -o cmTC_e76eb 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file stdint.h exists passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_6cc92/fast"
+/usr/bin/make -f CMakeFiles/cmTC_6cc92.dir/build.make CMakeFiles/cmTC_6cc92.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_6cc92.dir/CheckIncludeFile.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx     -o CMakeFiles/cmTC_6cc92.dir/CheckIncludeFile.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+Linking CXX executable cmTC_6cc92
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6cc92.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_6cc92.dir/CheckIncludeFile.cxx.o  -o cmTC_6cc92 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file inttypes.h exists passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_e160a/fast"
+/usr/bin/make -f CMakeFiles/cmTC_e160a.dir/build.make CMakeFiles/cmTC_e160a.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e160a.dir/CheckIncludeFile.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx     -o CMakeFiles/cmTC_e160a.dir/CheckIncludeFile.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/CheckIncludeFile.cxx
+Linking CXX executable cmTC_e160a
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e160a.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx       -rdynamic CMakeFiles/cmTC_e160a.dir/CheckIncludeFile.cxx.o  -o cmTC_e160a 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+
+Verifying Fortran/CXX Compiler Compatibility passed with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX
+
+Run Build Command:"/usr/bin/make" "VerifyFortranC"
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -H/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify -B/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX --check-build-system CMakeFiles/Makefile.cmake 0
+/usr/bin/make -f CMakeFiles/Makefile2 VerifyFortranC
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -H/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify -B/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX --check-build-system CMakeFiles/Makefile.cmake 0
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_progress_start /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles 6
+/usr/bin/make -f CMakeFiles/Makefile2 CMakeFiles/VerifyFortranC.dir/all
+make[2]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+/usr/bin/make -f CMakeFiles/VerifyFortran.dir/build.make CMakeFiles/VerifyFortran.dir/depend
+make[3]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+cd /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX && /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_depends "Unix Makefiles" /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/VerifyFortran.dir/DependInfo.cmake
+Scanning dependencies of target VerifyFortran
+make[3]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+/usr/bin/make -f CMakeFiles/VerifyFortran.dir/build.make CMakeFiles/VerifyFortran.dir/requires
+make[3]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+make[3]: Nothing to be done for 'CMakeFiles/VerifyFortran.dir/requires'.
+make[3]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+/usr/bin/make -f CMakeFiles/VerifyFortran.dir/build.make CMakeFiles/VerifyFortran.dir/build
+make[3]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+[ 16%] Building Fortran object CMakeFiles/VerifyFortran.dir/VerifyFortran.f.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpif90 -DVERIFY_CXX -I/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX  -O3   -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify/VerifyFortran.f -o CMakeFiles/VerifyFortran.dir/VerifyFortran.f.o
+[ 33%] Linking Fortran static library libVerifyFortran.a
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -P CMakeFiles/VerifyFortran.dir/cmake_clean_target.cmake
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/VerifyFortran.dir/link.txt --verbose=1
+/usr/bin/ar qc libVerifyFortran.a  CMakeFiles/VerifyFortran.dir/VerifyFortran.f.o
+/usr/bin/ranlib libVerifyFortran.a
+make[3]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+[ 33%] Built target VerifyFortran
+/usr/bin/make -f CMakeFiles/VerifyFortranC.dir/build.make CMakeFiles/VerifyFortranC.dir/depend
+make[3]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+cd /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX && /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_depends "Unix Makefiles" /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles/VerifyFortranC.dir/DependInfo.cmake
+Scanning dependencies of target VerifyFortranC
+make[3]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+/usr/bin/make -f CMakeFiles/VerifyFortranC.dir/build.make CMakeFiles/VerifyFortranC.dir/build
+make[3]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+[ 50%] Building C object CMakeFiles/VerifyFortranC.dir/main.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc -DVERIFY_CXX -I/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX  -O3 -DNDEBUG   -o CMakeFiles/VerifyFortranC.dir/main.c.o   -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify/main.c
+[ 66%] Building C object CMakeFiles/VerifyFortranC.dir/VerifyC.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc -DVERIFY_CXX -I/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX  -O3 -DNDEBUG   -o CMakeFiles/VerifyFortranC.dir/VerifyC.c.o   -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify/VerifyC.c
+[ 83%] Building CXX object CMakeFiles/VerifyFortranC.dir/VerifyCXX.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx  -DVERIFY_CXX -I/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX  -O3 -DNDEBUG   -o CMakeFiles/VerifyFortranC.dir/VerifyCXX.cxx.o -c /home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/share/cmake-3.10/Modules/FortranCInterface/Verify/VerifyCXX.cxx
+[100%] Linking CXX executable VerifyFortranC
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/VerifyFortranC.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx  -O3 -DNDEBUG   CMakeFiles/VerifyFortranC.dir/main.c.o CMakeFiles/VerifyFortranC.dir/VerifyC.c.o CMakeFiles/VerifyFortranC.dir/VerifyCXX.cxx.o  -o VerifyFortranC libVerifyFortran.a -lmpifort -lgfortran -lquadmath 
+make[3]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+[100%] Built target VerifyFortranC
+make[2]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_progress_start /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX/CMakeFiles 0
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/FortranCInterface/VerifyCXX'
+
+
+Performing C++ SOURCE FILE Test CXX11_FLAGS_COMPILE_RESULT_0 succeeded with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_9d6a0/fast"
+/usr/bin/make -f CMakeFiles/cmTC_9d6a0.dir/build.make CMakeFiles/cmTC_9d6a0.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_9d6a0.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -DCXX11_FLAGS_COMPILE_RESULT_0  -std=c++11 -O3 -DNDEBUG   -o CMakeFiles/cmTC_9d6a0.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_9d6a0
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9d6a0.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx   -DCXX11_FLAGS_COMPILE_RESULT_0  -std=c++11 -O3 -DNDEBUG    -rdynamic CMakeFiles/cmTC_9d6a0.dir/src.cxx.o  -o cmTC_9d6a0 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+        #include <vector>
+        #include <algorithm>
+        int main() {
+          // check >> closing brackets
+          std::vector<std::vector<float>> vecvecfloat(1);
+          vecvecfloat[0].resize(1);
+          vecvecfloat[0][0] = 0.0f;
+          std::vector<int> vec(10);
+          auto b        = vec.begin();
+          decltype(b) e = vec.end();
+          std::fill(b,e,1);
+          // two examples, taken from the wikipedia article on C++0x :)
+          std::vector<int> some_list;
+          int total = 0;
+          int value = 5;
+          std::for_each(some_list.begin(), some_list.end(), [&total](int x) {
+              total += x;
+              });
+          std::for_each(some_list.begin(), some_list.end(), [&, value](int x) {
+              total += x * value;
+              });
+          return 0;
+        }
+        
+Performing C++ SOURCE FILE Test CXX11_CONSECUTIVE_RIGHT_ANGLE_BRACKETS succeeded with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_2dfdf/fast"
+/usr/bin/make -f CMakeFiles/cmTC_2dfdf.dir/build.make CMakeFiles/cmTC_2dfdf.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_2dfdf.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -DCXX11_CONSECUTIVE_RIGHT_ANGLE_BRACKETS  -std=c++11 -O3 -DNDEBUG   -o CMakeFiles/cmTC_2dfdf.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_2dfdf
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2dfdf.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx   -DCXX11_CONSECUTIVE_RIGHT_ANGLE_BRACKETS  -std=c++11 -O3 -DNDEBUG    -rdynamic CMakeFiles/cmTC_2dfdf.dir/src.cxx.o  -o cmTC_2dfdf 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+#include <vector>
+int main() {
+  // check >> closing brackets
+  std::vector<std::vector<float>> vecvecfloat(1);
+  vecvecfloat[0].resize(1);
+  vecvecfloat[0][0] = 0.0f;
+  return 0;
+}
+  
+Performing C++ SOURCE FILE Test CXX11_AUTOTYPEDVARIABLES succeeded with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_91995/fast"
+/usr/bin/make -f CMakeFiles/cmTC_91995.dir/build.make CMakeFiles/cmTC_91995.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_91995.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -DCXX11_AUTOTYPEDVARIABLES  -std=c++11 -O3 -DNDEBUG   -o CMakeFiles/cmTC_91995.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_91995
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_91995.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx   -DCXX11_AUTOTYPEDVARIABLES  -std=c++11 -O3 -DNDEBUG    -rdynamic CMakeFiles/cmTC_91995.dir/src.cxx.o  -o cmTC_91995 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+#include <vector>
+int main() {
+  std::vector<int> vec(10);
+  auto b        = vec.begin();
+  decltype(b) e = vec.end();
+  std::fill(b,e,1);
+  return 0;
+}
+  
+Performing C++ SOURCE FILE Test CXX11_LAMBDAS succeeded with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_a51db/fast"
+/usr/bin/make -f CMakeFiles/cmTC_a51db.dir/build.make CMakeFiles/cmTC_a51db.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_a51db.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -DCXX11_LAMBDAS  -std=c++11 -O3 -DNDEBUG   -o CMakeFiles/cmTC_a51db.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_a51db
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a51db.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx   -DCXX11_LAMBDAS  -std=c++11 -O3 -DNDEBUG    -rdynamic CMakeFiles/cmTC_a51db.dir/src.cxx.o  -o cmTC_a51db 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+#include <vector>
+#include <algorithm>
+int main() {
+  // two examples, taken from the wikipedia article on C++0x :)
+  std::vector<int> some_list;
+  int total = 0;
+  int value = 5;
+  std::for_each(some_list.begin(), some_list.end(), [&total](int x) {
+      total += x;
+      });
+  std::for_each(some_list.begin(), some_list.end(), [&, value](int x) {
+      total += x * value;
+      });
+  //
+  return 0;
+}
+  
+Performing C SOURCE FILE Test MATH_LIBRARY_IS_SUPPLIED succeeded with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_28664/fast"
+/usr/bin/make -f CMakeFiles/cmTC_28664.dir/build.make CMakeFiles/cmTC_28664.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_28664.dir/src.c.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc   -DMATH_LIBRARY_IS_SUPPLIED -O3 -DNDEBUG   -o CMakeFiles/cmTC_28664.dir/src.c.o   -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_28664
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_28664.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicc  -DMATH_LIBRARY_IS_SUPPLIED -O3 -DNDEBUG    -rdynamic CMakeFiles/cmTC_28664.dir/src.c.o  -o cmTC_28664 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+#include <math.h>
+int main()
+{
+  double val1 = sqrt(1.0);
+  double val2 = log10(2.0);
+  double val3 = log(2.0);
+  return 0;
+}
+    
+Performing C++ SOURCE FILE Test FINITE_VALUE_HAVE_STD_ISNAN succeeded with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_01e98/fast"
+/usr/bin/make -f CMakeFiles/cmTC_01e98.dir/build.make CMakeFiles/cmTC_01e98.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_01e98.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++11 -DFINITE_VALUE_HAVE_STD_ISNAN -O3 -DNDEBUG   -o CMakeFiles/cmTC_01e98.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_01e98
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_01e98.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx   -std=c++11 -DFINITE_VALUE_HAVE_STD_ISNAN -O3 -DNDEBUG    -rdynamic CMakeFiles/cmTC_01e98.dir/src.cxx.o  -o cmTC_01e98 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+#include <cmath>
+int main()
+{
+  double x = 1.0;
+  std::isnan(x);
+  return 0;
+}
+  
+Performing C++ SOURCE FILE Test FINITE_VALUE_HAVE_STD_ISINF succeeded with the following output:
+Change Dir: /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_7e7a8/fast"
+/usr/bin/make -f CMakeFiles/cmTC_7e7a8.dir/build.make CMakeFiles/cmTC_7e7a8.dir/build
+make[1]: Entering directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_7e7a8.dir/src.cxx.o
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx    -std=c++11 -DFINITE_VALUE_HAVE_STD_ISINF -O3 -DNDEBUG   -o CMakeFiles/cmTC_7e7a8.dir/src.cxx.o -c /home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_7e7a8
+/home/nfherrin/research/env/gcc-5.4.0/common_tools/cmake-3.10.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7e7a8.dir/link.txt --verbose=1
+/home/nfherrin/research/env/gcc-5.4.0/toolset/mpich-3.2.1/bin/mpicxx   -std=c++11 -DFINITE_VALUE_HAVE_STD_ISINF -O3 -DNDEBUG    -rdynamic CMakeFiles/cmTC_7e7a8.dir/src.cxx.o  -o cmTC_7e7a8 
+make[1]: Leaving directory '/home/nfherrin/research/MPACT/Futility/Futilitybuild/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+#include <cmath>
+int main()
+{
+  double x = 1.0;
+  std::isinf(x);
+  return 0;
+}
+  

@@ -1,0 +1,17 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/nfherrin/research/MPACT/Futility/unit_tests/testVTKFiles/testVTKFiles.f90"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"FutilityExes",
+			"FutilityExes"
+		],
+		"name" : "Futility_testVTKFiles"
+	}
+}
