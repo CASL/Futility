@@ -2780,9 +2780,12 @@ CONTAINS
           CALL A%setShape(9,9, 4.0_SRK)
       ENDSELECT
 
-      ! build X0 and set it to 1.0s
+      ! build X0 and set it to a vector orthogonal to the solution
+      ! This forces GMRES to take longer and thus require a restart,
+      ! which tests this portion of the solver
       ALLOCATE(thisX(9))
-      thisX=1.0_SRK
+      thisX(1)=1.0_SRK
+      thisX(9)=-1.0_SRK
 
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
           CALL thisLS%setX0(thisX)
@@ -2794,7 +2797,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
       ENDSELECT
 
       !solve it
@@ -2860,9 +2863,13 @@ CONTAINS
         ENDSELECT
       ENDDO
 
-      !build X0 and set it to 1.0s
+      ! build X0 and set it to a vector orthogonal to the solution
+      ! This forces GMRES to take longer and thus require a restart,
+      ! which tests this portion of the solver
       ALLOCATE(thisX(9))
-      thisX=1.0_SRK
+      thisX(1)=1.0_SRK
+      thisX(9)=-1.0_SRK
+
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
       ENDSELECT
@@ -2874,7 +2881,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
       ENDSELECT
 
       !solve
@@ -3084,9 +3091,12 @@ CONTAINS
           CALL A%set(9,9, 4.0_SRK)
       ENDSELECT
 
-      ! build X0 and set it to 1.0s
+      ! build X0 and set it to a vector orthogonal to the solution
+      ! This forces GMRES to take longer and thus require a restart,
+      ! which tests this portion of the solver
       ALLOCATE(thisX(9))
-      thisX=1.0_SRK
+      thisX(1)=1.0_SRK
+      thisX(9)=-1.0_SRK
 
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
           CALL thisLS%setX0(thisX)
@@ -3098,7 +3108,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
       ENDSELECT
 
       !solve it
@@ -3165,9 +3175,12 @@ CONTAINS
         ENDSELECT
       ENDDO
 
-      !build X0 and set it to 1.0s
+      ! build X0 and set it to a vector orthogonal to the solution
+      ! This forces GMRES to take longer and thus require a restart,
+      ! which tests this portion of the solver
       ALLOCATE(thisX(9))
-      thisX=1.0_SRK
+      thisX(1)=1.0_SRK
+      thisX(9)=-1.0_SRK
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
       ENDSELECT
@@ -3178,7 +3191,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
       ENDSELECT
 
       !solve
