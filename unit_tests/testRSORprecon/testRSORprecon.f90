@@ -29,6 +29,7 @@ PROGRAM testRSORprecon
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec,PListRSOR
   CLASS(MatrixType),ALLOCATABLE :: testSparseMatrix,testDenseMatrix,testMatrix
+  CLASS(MatrixType),ALLOCATABLE :: testBandedMatrix
   CLASS(VectorType),ALLOCATABLE :: testVector,testDummy,refVector
   CLASS(VectorType),ALLOCATABLE :: testVec_1g,testVec_mg
   INTEGER(SIK) :: nerrors1,nerrors2
@@ -71,7 +72,12 @@ PROGRAM testRSORprecon
         CALL testVector%init(PListVec)
         CALL refVector%init(PListVec)
         CALL PListMat%add('MatrixType->n',9_SIK)
+        CALL PListMat%add('MatrixType->m',9_SIK)
         CALL PListMat%add('MatrixType->isSym',.FALSE.)
+        CALL PListMat%add('MatrixType->nband',5_SNK)
+        CALL PListMat%add('bandi',(/1_SIK,1_SIK,1_SIK,2_SIK,4_SIK/))
+        CALL PListMat%add('bandj',(/1_SIK,2_SIK,4_SIK,1_SIK,1_SIK/))
+        CALL PListMat%add('bandl',(/9_SIK,8_SIK,6_SIK,8_SIK,6_SIK/))
         ALLOCATE(DenseSquareMatrixType :: testDenseMatrix)
         CALL testDenseMatrix%init(PListMat)
         
@@ -103,6 +109,19 @@ PROGRAM testRSORprecon
                 DO j=1,9
                     IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
                         CALL testSparseMatrix%setShape(i,j,tmpreal1((i-1)*9+j))
+                    END IF
+                END DO
+            END DO
+        ENDSELECT
+        
+        !setup the banded version of the matrix
+        ALLOCATE(BandedMatrixType :: testBandedMatrix)
+        CALL testBandedMatrix%init(PListMat)
+        SELECTTYPE(testBandedMatrix); TYPE IS(BandedMatrixType)
+            DO i=1,9
+                DO j=1,9
+                    IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
+                        CALL testBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
                     END IF
                 END DO
             END DO
@@ -294,7 +313,7 @@ PROGRAM testRSORprecon
         !check if it works for sparse matrices
         COMPONENT_TEST('RSOR_PreCondType, SparseMatrixType')
         IF(testSparseMatrix%isInit .AND. testVector%isInit) THEN
-        
+            
             ! Check %init
             CALL testSOR%init(testSparseMatrix,PListRSOR)
             ASSERT(testSOR%isInit,'SparseMatrixType RSOR%isInit')
@@ -307,6 +326,7 @@ PROGRAM testRSORprecon
             CLASS DEFAULT
                 ASSERT(.FALSE.,'SparseMatrixType RSOR%LpU TYPE IS(SparseMatrixType)')
             ENDSELECT
+            
 
 
             ! Check %setup
@@ -326,7 +346,7 @@ PROGRAM testRSORprecon
             CALL testSOR%apply(testVector)
             SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
                 SELECTTYPE(rv => refVector); TYPE IS(RealVectorType)
-                    ASSERT(ALL(tv%b .APPROXEQA. rv%b),'DenseSquareMatrixType RSOR%apply(vector)')
+                    ASSERT(ALL(tv%b .APPROXEQA. rv%b),'SparseMatrixType RSOR%apply(vector)')
                     FINFO() 'Result:',tv%b,'Solution:',rv%b
                 ENDSELECT
             ENDSELECT
@@ -339,6 +359,49 @@ PROGRAM testRSORprecon
             
         ELSE
             ASSERT(testDenseMatrix%isInit,'TestSparseMatrix Initialization')
+            ASSERT(testVector%isInit,'TestVector Initialization')
+        ENDIF
+        
+        SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
+            tv%b=vecsave
+        ENDSELECT
+        
+        !check if it works for banded matrices
+        COMPONENT_TEST('RSOR_PreCondType, BandedMatrixType')
+        IF(testBandedMatrix%isInit .AND. testVector%isInit) THEN
+        
+            ! Check %init
+            CALL testSOR%init(testBandedMatrix,PListRSOR)
+            ASSERT(testSOR%isInit,'BandedMatrixType RSOR%isInit')
+            ASSERT(ASSOCIATED(testSOR%A),'BandedMatrixType ASSOCIATED(RSOR%LU%A)')
+            ASSERT(testSOR%LpU%isInit,'BandedMatrixType RSOR%LpU%isInit')
+
+            ! Check %setup
+            CALL testSOR%setup()
+            DO k=1,3
+                SELECTTYPE(LU => testSOR%LU(k)); TYPE IS(DenseSquareMatrixType)
+                    ASSERT(ALL(LU%a .APPROXEQA. refLU(:,:,k)),'RSOR%LU(k)%a Correct')
+                    FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
+                ENDSELECT
+            END DO
+            
+            ! Check %apply
+            CALL testSOR%apply(testVector)
+            SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
+                SELECTTYPE(rv => refVector); TYPE IS(RealVectorType)
+                    ASSERT(ALL(tv%b .APPROXEQA. rv%b),'BandedMatrixType RSOR%apply(vector)')
+                    FINFO() 'Result:',tv%b,'Solution:',rv%b
+                ENDSELECT
+            ENDSELECT
+
+            ! Check %clear
+            CALL testSOR%clear()
+            ASSERT(.NOT.(testSOR%isInit),'BandedMatrixType .NOT.(RSOR%SOR%isInit)')
+            ASSERT(.NOT.(ASSOCIATED(testSOR%A)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+            ASSERT(.NOT.(ALLOCATED(testSOR%LpU)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+            
+        ELSE
+            ASSERT(testDenseMatrix%isInit,'TestBandedMatrix Initialization')
             ASSERT(testVector%isInit,'TestVector Initialization')
         ENDIF
 

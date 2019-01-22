@@ -530,6 +530,20 @@ MODULE PreconditionerTypes
                 CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
                     ' - In RSOR Preconditioner initialization, RSOR was not properly initialized!')
             ENDIF
+        TYPE IS(BandedMatrixType)
+            ALLOCATE(BandedMatrixType :: thisPC%LpU)
+      
+            ! Assign A to LpU
+            SELECTTYPE(LpU => thisPC%LpU); TYPE IS(BandedMatrixType)
+                LpU=mat
+            ENDSELECT
+
+            IF(thisPC%LpU%isInit) THEN
+                thisPC%isInit=.TRUE.
+            ELSE
+                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
+                    ' - In RSOR Preconditioner initialization, RSOR was not properly initialized!')
+            ENDIF
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - RSOR Preconditioners are not supported for input matrix type!')
@@ -611,6 +625,19 @@ MODULE PreconditionerTypes
                         END DO
                     END DO
                 END DO
+            CLASS IS(BandedMatrixType)
+                !have to also check that the value being zeroed is valid here.
+                DO k=1,thisPC%numblocks
+                    DO i=1,thisPC%blocksize
+                        DO j=1,thisPC%blocksize
+                            CALL thisPC%A%get((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,tempreal)
+                            CALL thisPC%LU(k)%set(i,j,tempreal)
+                            IF(tempreal .NE. 0.0_SRK)THEN
+                                CALL thisPC%LpU%set((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,0.0_SRK)
+                            END IF
+                        END DO
+                    END DO
+                END DO
             CLASS DEFAULT
           ENDSELECT
           !do LU factorization on the diagonal blocks
@@ -624,7 +651,7 @@ MODULE PreconditionerTypes
       CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
       CHARACTER(LEN=*),PARAMETER :: myName='apply_RSOR_PreCondType'
-      TYPE(RealVectorType)::w(4)
+      TYPE(RealVectorType)::w(4),tempw
       TYPE(ParamType)::PListVec_RSOR
       INTEGER(SIK)::k,i
       REAL(SRK)::tmpreal
@@ -646,13 +673,22 @@ MODULE PreconditionerTypes
           CALL w(2)%init(PListVec_RSOR)
           CALL w(3)%init(PListVec_RSOR)
           CALL w(4)%init(PListVec_RSOR)
+          CALL tempw%init(PListVec_RSOR)
           SELECTTYPE(v)
             CLASS IS(RealVectorType)
                 w(3)%b=v%b
                 CALL RSORsolveL(thisPC,v,w(1))
                 CALL RSORsolveU(thisPC,w(1),w(2))
-                CALL BLAS_matvec(THISMATRIX=thisPC%LpU,X=w(2),Y=w(3),&
-                    &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
+                
+                SELECTTYPE(LpU => thisPC%LpU)
+                    CLASS IS(BandedMatrixType)
+                        CALL LpU%matvec(w(2)%b,tempw%b)
+                        w(3)%b=w(3)%b-thisPC%omega*tempw%b
+                    CLASS DEFAULT
+                        CALL BLAS_matvec(THISMATRIX=LpU,X=w(2),Y=w(3),&
+                            &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
+                ENDSELECT
+                
                 CALL RSORsolveL(thisPC,w(3),w(4))
                 CALL RSORsolveU(thisPC,w(4),v)
             CLASS DEFAULT
