@@ -87,6 +87,51 @@ MODULE VectorTypes_Native
       PROCEDURE,PASS :: getRange => getRange_RealVectorType
   ENDTYPE RealVectorType
 
+  TYPE,EXTENDS(DistributedVectorType) :: NativeDistributedVectorType
+    !
+    !List of Type Bound Procedures
+    CONTAINS
+      !> @copybrief VectorTypes::clear_NativeDistributedVectorType
+      !> @copydetails VectorTypes::clear_NativeDistributedVectorType
+      PROCEDURE,PASS :: clear => clear_NativeDistributedVectorType
+      !> @copybrief VectorTypes::init_NativeDistributedVectorType
+      !> @copydetails VectorTypes::init_NativeDistributedVectorType
+      PROCEDURE,PASS :: init => init_NativeDistributedVectorType
+      !> @copybrief VectorTypes::setOne_NativeDistributedVectorType
+      !> @copydetails VectorTypes::setOne_NativeDistributedVectorType
+      PROCEDURE,PASS :: setOne => setOne_NativeDistributedVectorType
+      !> @copybrief VectorTypes::setAll_scalar_NativeDistributedVectorType
+      !> @copydetails VectorTypes::setAll_scalar_NativeDistributedVectorType
+      PROCEDURE,PASS :: setAll_scalar => setAll_scalar_NativeDistributedVectorType
+      !> @copybrief VectorTypes::setAll_array_NativeDistributedVectorType
+      !> @copydetails VectorTypes::setAll_array_NativeDistributedVectorType
+      PROCEDURE,PASS :: setAll_array => setAll_array_NativeDistributedVectorType
+      !> @copybrief VectorTypes::setSelected_NativeDistributedVectorType
+      !> @copydetails VectorTypes::setSelected_NativeDistributedVectorType
+      PROCEDURE,PASS :: setSelected => setSelected_NativeDistributedVectorType
+      !> @copybrief VectorTypes::setRange_scalar_NativeDistributedVectorType
+      !> @copydetails VectorTypes::setRange_scalar_NativeDistributedVectorType
+      PROCEDURE,PASS :: setRange_scalar => setRange_NativeDistributedVectorType
+      !> @copybrief VectorTypes::setRange_array_NativeDistributedVectorType
+      !> @copydetails VectorTypes::setRange_array_NativeDistributedVectorType
+      PROCEDURE,PASS :: setRange_array => setRange_array_NativeDistributedVectorType
+      !> @copybrief VectorTypes::getOne_NativeDistributedVectorType
+      !> @copydetails VectorTypes::getOne_NativeDistributedVectorType
+      PROCEDURE,PASS :: getOne => getOne_NativeDistributedVectorType
+      !> @copybrief VectorTypes::getAll_NativeDistributedVectorType
+      !> @copydetails VectorTypes::getAll_NativeDistributedVectorType
+      PROCEDURE,PASS :: getAll => getAll_NativeDistributedVectorType
+      !> @copybrief VectorTypes::getSelected_NativeDistributedVectorType
+      !> @copydetails VectorTypes::getSelected_NativeDistributedVectorType
+      PROCEDURE,PASS :: getSelected => getSelected_NativeDistributedVectorType
+      !> @copybrief VectorTypes::getRange_NativeDistributedVectorType
+      !> @copydetails VectorTypes::getRange_NativeDistributedVectorType
+      PROCEDURE,PASS :: getRange => getRange_NativeDistributedVectorType
+      ! TODO: Add descr.
+      PROCEDURE,PASS :: inLocalMem => inLocalMem_NativeDistributedVectorType
+  ENDTYPE NativeDistributedVectorType
+
+
   INTEGER(SIK) :: ierrc
 
   !> Name of module
@@ -363,5 +408,337 @@ MODULE VectorTypes_Native
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getRange_RealVectorType
 
+    SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_NativeDistributedVectorType'
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      TYPE(ParamType),INTENT(IN) :: Params
+      TYPE(ParamType) :: validParams
+      INTEGER(SIK) :: n, MPI_Comm_ID, nlocal
 
-ENDMODULE VectorTypes_Native
+      !Check to set up required and optional param lists.
+      IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
+
+      !Validate against the reqParams and OptParams
+      validParams=Params
+      CALL validParams%validate(DistributedVectorType_reqParams,DistributedVectorType_optParams)
+
+      !Pull Data from Parameter List
+      CALL validParams%get('VectorType->n',n)
+      CALL validParams%get('VectorType->MPI_Comm_ID',MPI_Comm_ID)
+      CALL validParams%get('VectorType->nlocal',nlocal)
+
+      REQUIRE(.NOT. thisVector%isInit)
+      REQUIRE(n > 1)
+
+      thisVector%isInit=.TRUE.
+      thisVector%n=n
+      thisVector%comm=MPI_Comm_ID
+
+      ! TODO: replace parEnv with appropriate symbol
+      IF(nlocal<0) THEN
+        ! Default to greedy partitioning
+        IF(parEnv%rank < MOD(n,parenv%nproc)) THEN
+          thisVector%offset = (parEnv%rank)*(n/parEnv%nproc + 1)
+          thisVector%nlocal = n/parEnv%nproc + 1
+        ELSE
+          thisVector%offset = (parEnv%rank)*(n/parEnv%nproc) + MOD(n,parEnv%nproc)
+          thisVector%nlocal = n/parEnv%nproc
+        ENDIF
+      ENDIF
+
+      CALL validParams%clear()
+    ENDSUBROUTINE init_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the PETSc vector
+!> @param declares the vector type to act on
+!>
+    SUBROUTINE clear_NativeDistributedVectorType(thisVector)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+
+      thisVector%isInit=.FALSE.
+      thisVector%n=0
+    ENDSUBROUTINE clear_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets one value in the real vector
+!> @param declares the vector type to act on
+!> @param i the ith location in the vector
+!> @param setval the value to be set
+!>
+    SUBROUTINE setOne_NativeDistributedVectorType(thisVector,i,setval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: i
+      REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-2
+        IF((i <= thisVector%offset + thisVector%nlocal) .AND. (i > thisVector%offset)) THEN
+          thisVector%b(i - offset) = setval
+          ierrc=iperr
+        ENDIF
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setOne_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets all values in the PETSc vector with a scalar value
+!> @param declare the vector type to act on
+!> @param setval the scalar value to be set
+!>
+    SUBROUTINE setAll_scalar_NativeDistributedVectorType(thisVector,setval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        thisVector%b = setval
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setAll_scalar_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets all the values in the PETSc vector with an array of values
+!> @param declare the vector type to act on
+!> @param setval the array of values to be set
+!>
+    SUBROUTINE setAll_array_NativeDistributedVectorType(thisVector,setval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: i
+      !
+      INTEGER(SIK) :: ierrc
+
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-3
+        IF(SIZE(setval) == thisVector%n) THEN
+          thisVector%b = setval((thisVector%offset+1):(thisVector%offset + thisVector%nlocal))
+        ENDIF
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setAll_array_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets selected values in the PETSc vector with an array of values
+!> @param declare the vector type to act on
+!> @param indices a list of indices (global if parallel) for which data is being set
+!> @param setval the array of values to be set (same size as indices)
+!>
+    SUBROUTINE setSelected_NativeDistributedVectorType(thisVector,indices,setval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(setval) == SIZE(indices))
+
+      DO i=1,SIZE(setval)
+        CALL setOne_NativeDistributedVectorType(thisVector,indices(i),setval(i),iperr)
+      END DO
+
+      ierrc=0
+      IF(PRESENT(ierr)) ierr=ierrc
+
+    END SUBROUTINE setSelected_NativeDistributedVectorType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets a range of values in the PETSc vector with a scalar value
+!> @param declare the vector type to act on
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+    SUBROUTINE setRange_scalar_NativeDistributedVectorType(thisVector,istt,istp,setval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK),INTENT(IN) :: istt
+      INTEGER(SIK),INTENT(IN) :: istp
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: i
+      !
+      INTEGER(SIK) :: ierrc
+
+      REQUIRE(thisVector%isInit)
+      REQUIRE(0 < istt .AND. istp <= thisVector%n)
+
+      IF(istt <= (thisVector%offset + thisVector%nlocal)  .OR. istp > thisVector%offset) THEN
+        thisVector%b(MAX(istt,thisVector%offset+1):MIN(istp,thisVector%offset+thisVector%nlocal)) = setval
+      ENDIF
+
+      IF(PRESENT(ierr)) ierr=ierrc
+    END SUBROUTINE setRange_scalar_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets a range of values in the PETSc vector with an array of values
+!> @param declare the vector type to act on
+!> @param setval the scalar value to be set
+!> @param istt the starting point of the range
+!> @param istp the stopping point in the range
+!>
+    SUBROUTINE setRange_array_NativeDistributedVectorType(thisVector,istt,istp,setval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      REAL(SRK),INTENT(IN) :: setval(:)
+      INTEGER(SIK),INTENT(IN) :: istt
+      INTEGER(SIK),INTENT(IN) :: istp
+      INTEGER(SIK) :: low,high
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: i
+      !
+      INTEGER(SIK) :: ierrc
+
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-2
+        IF(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n) THEN
+          ierrc=-3
+          IF(istp-istt+1 == SIZE(setval)) THEN
+            IF(istt <= (thisVector%offset + thisVector%nlocal)  .OR. istp > thisVector%offset) THEN
+              low = MAX(istt,thisVector%offset+1)
+              high = MIN(istp,thisVector%offset+thisVector%nlocal)
+              thisVector%b(low:high) = setval((low - istt + 1):(high - istt + 1))
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE setRange_array_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets one values in the PETSc vector
+!> @param declares the vector type to act on
+!> @param i the ith location in the vector
+!>
+    SUBROUTINE getOne_NativeDistributedVectorType(thisVector,i,getval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: i
+      REAL(SRK),INTENT(INOUT) :: getval
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-2
+        IF((i <= thisVector%offset + thisVector%nlocal) .AND. (i > thisVector%offset)) THEN
+          getVal = thisVector%b(i - offset)
+          ierrc=0
+        ENDIF
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE getOne_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets all values in the PETSc vector
+!> For parallel vectors, will only return the data owned by this domain.  Use getSelected to
+!> specify which data to get.
+!> @param declares the vector type to act on
+!> @param getval Correctly sized array that will be filled with contents of this vector
+    SUBROUTINE getAll_NativeDistributedVectorType(thisVector,getval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      REAL(SRK),INTENT(INOUT) :: getval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      !
+      INTEGER(SIK) :: ierrc
+
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-3
+        IF(SIZE(getval) == thisVector%n) THEN
+          getval = thisVector%b
+          ierrc=0
+        ENDIF
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE getAll_NativeDistributedVectorType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets selected values in the PETSc vector
+!> @param declares the vector type to act on
+!> @param indices A list of indices at which to get vector values.  For parallel vectors,
+!>        you must use the global indices.
+!> @param getval Correctly sized array that will be filled with contents of this vector.
+!>        Must be the same size as indices.
+    SUBROUTINE getSelected_NativeDistributedVectorType(thisVector,indices,getval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: indices(:)
+      REAL(SRK),INTENT(INOUT) :: getval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      LOGICAL(SBK) :: inMemFlag
+      !
+      INTEGER(SIK) :: ierrc
+
+      REQUIRE(thisVector%isInit)
+      REQUIRE(SIZE(getval) == SIZE(indices))
+      REQUIRE(SIZE(indices) <= thisVector%n)
+
+      DO i=1,SIZE(indices)
+        CALL inLocalMem_single_NativeDistributedVectorType(thisVector,indices(i),inMemFlag,ierrc)
+        IF(inMemFlag) THEN
+          getval(i) = thisVector%b(indices(i))
+        END IF
+      END DO
+
+      ierrc=iperr
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE getSelected_NativeDistributedVectorType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets a range of  values in the PETSc vector
+!> @param declares the vector type to act on
+!> @param istt the starting point of the range (Use global indices for parallel vectors)
+!> @param istp the stopping point in the range (Use global indices for parallel vectors)
+!>
+    SUBROUTINE getRange_PETScVectorType(thisVector,istt,istp,getval,ierr)
+      CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: istt
+      INTEGER(SIK),INTENT(IN) :: istp
+      REAL(SRK),INTENT(INOUT) :: getval(:)
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: i
+      !
+      INTEGER(SIK) :: ierrc
+
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc=-2
+        IF(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n) THEN
+          ierrc=-3
+          IF(istp-istt+1 == SIZE(getval)) THEN
+            IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
+            CALL VecGetValues(thisVector%b,(istp-istt+1),[(i, i=istt-1, istp)],getval,iperr)
+            ierrc=iperr
+          ENDIF
+        ENDIF
+      ENDIF
+      IF(PRESENT(ierr)) ierr=ierrc
+    ENDSUBROUTINE getRange_PETScVectorType
+
+    SUBROUTINE inLocalMem_single_NativeDistributedVectorType(thisVector,i,ret,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(IN) :: i
+      LOGICAL(SBK),INTENT(OUT) :: ret
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK) :: ierrc
+
+      ierrc=-1
+      IF(thisVector%isInit) THEN
+        ierrc = 0
+        IF(i > thisVector%offset .AND. i <= thisVector%offset + thisVector%nlocal) THEN
+          ret = .TRUE.
+        ELSE
+          ret = .FALSE.
+        END IF
+      END IF
+      IF(PRESENT(ierr)) ierr = ierrc
+    END SUBROUTINE inLocalMem_single_NativeDistributedVectorType
