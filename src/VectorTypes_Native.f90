@@ -27,6 +27,7 @@ MODULE VectorTypes_Native
   USE ParameterLists
   USE Allocs
   USE VectorTypes_Base
+  USE ParallelEnv
 
   IMPLICIT NONE
 
@@ -88,6 +89,10 @@ MODULE VectorTypes_Native
   ENDTYPE RealVectorType
 
   TYPE,EXTENDS(DistributedVectorType) :: NativeDistributedVectorType
+    INTEGER(SIK) :: offset
+    REAL(SRK),ALLOCATABLE :: b(:)
+    TYPE(MPI_EnvType) :: commType
+
     !
     !List of Type Bound Procedures
     CONTAINS
@@ -111,7 +116,7 @@ MODULE VectorTypes_Native
       PROCEDURE,PASS :: setSelected => setSelected_NativeDistributedVectorType
       !> @copybrief VectorTypes::setRange_scalar_NativeDistributedVectorType
       !> @copydetails VectorTypes::setRange_scalar_NativeDistributedVectorType
-      PROCEDURE,PASS :: setRange_scalar => setRange_NativeDistributedVectorType
+      PROCEDURE,PASS :: setRange_scalar => setRange_scalar_NativeDistributedVectorType
       !> @copybrief VectorTypes::setRange_array_NativeDistributedVectorType
       !> @copydetails VectorTypes::setRange_array_NativeDistributedVectorType
       PROCEDURE,PASS :: setRange_array => setRange_array_NativeDistributedVectorType
@@ -127,8 +132,11 @@ MODULE VectorTypes_Native
       !> @copybrief VectorTypes::getRange_NativeDistributedVectorType
       !> @copydetails VectorTypes::getRange_NativeDistributedVectorType
       PROCEDURE,PASS :: getRange => getRange_NativeDistributedVectorType
+      !> @copybrief VectorTypes::assemble_PETScVectorType
+      !> @copydetails VectorTypes::assemble_PETScVectorType
+      PROCEDURE,PASS :: assemble => assemble_NativeDistributedVectorType
       ! TODO: Add descr.
-      PROCEDURE,PASS :: inLocalMem => inLocalMem_NativeDistributedVectorType
+      !PROCEDURE,PASS :: inLocalMem => inLocalMem_NativeDistributedVectorType
   ENDTYPE NativeDistributedVectorType
 
 
@@ -413,7 +421,8 @@ MODULE VectorTypes_Native
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, MPI_Comm_ID, nlocal
+      INTEGER(SIK) :: n, nlocal, comm
+      TYPE(MPI_EnvType) :: commType
 
       !Check to set up required and optional param lists.
       IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
@@ -424,7 +433,7 @@ MODULE VectorTypes_Native
 
       !Pull Data from Parameter List
       CALL validParams%get('VectorType->n',n)
-      CALL validParams%get('VectorType->MPI_Comm_ID',MPI_Comm_ID)
+      CALL validParams%get('VectorType->MPI_Comm_ID',comm)
       CALL validParams%get('VectorType->nlocal',nlocal)
 
       REQUIRE(.NOT. thisVector%isInit)
@@ -432,17 +441,18 @@ MODULE VectorTypes_Native
 
       thisVector%isInit=.TRUE.
       thisVector%n=n
-      thisVector%comm=MPI_Comm_ID
+      CALL commType%init(comm)
+      thisVector%comm = comm
+      thisVector%commType = commType
 
-      ! TODO: replace parEnv with appropriate symbol
       IF(nlocal<0) THEN
         ! Default to greedy partitioning
-        IF(parEnv%rank < MOD(n,parenv%nproc)) THEN
-          thisVector%offset = (parEnv%rank)*(n/parEnv%nproc + 1)
-          thisVector%nlocal = n/parEnv%nproc + 1
+        IF(commType%rank < MOD(n,commType%nproc)) THEN
+          thisVector%offset = (commType%rank)*(n/commType%nproc + 1)
+          thisVector%nlocal = n/commType%nproc + 1
         ELSE
-          thisVector%offset = (parEnv%rank)*(n/parEnv%nproc) + MOD(n,parEnv%nproc)
-          thisVector%nlocal = n/parEnv%nproc
+          thisVector%offset = (commType%rank)*(n/commType%nproc) + MOD(n,commType%nproc)
+          thisVector%nlocal = n/commType%nproc
         ENDIF
       ENDIF
 
@@ -477,8 +487,8 @@ MODULE VectorTypes_Native
       IF(thisVector%isInit) THEN
         ierrc=-2
         IF((i <= thisVector%offset + thisVector%nlocal) .AND. (i > thisVector%offset)) THEN
-          thisVector%b(i - offset) = setval
-          ierrc=iperr
+          thisVector%b(i - thisVector%offset) = setval
+          ierrc=0
         ENDIF
       ENDIF
       IF(PRESENT(ierr)) ierr=ierrc
@@ -536,17 +546,15 @@ MODULE VectorTypes_Native
       INTEGER(SIK),INTENT(IN) :: indices(:)
       REAL(SRK),INTENT(IN) :: setval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      !
-      INTEGER(SIK) :: ierrc
+      INTEGER(SIK) :: ierrc,i
 
       REQUIRE(thisVector%isInit)
       REQUIRE(SIZE(setval) == SIZE(indices))
 
       DO i=1,SIZE(setval)
-        CALL setOne_NativeDistributedVectorType(thisVector,indices(i),setval(i),iperr)
+        CALL setOne_NativeDistributedVectorType(thisVector,indices(i),setval(i),ierrc)
       END DO
 
-      ierrc=0
       IF(PRESENT(ierr)) ierr=ierrc
 
     END SUBROUTINE setSelected_NativeDistributedVectorType
@@ -630,7 +638,7 @@ MODULE VectorTypes_Native
       IF(thisVector%isInit) THEN
         ierrc=-2
         IF((i <= thisVector%offset + thisVector%nlocal) .AND. (i > thisVector%offset)) THEN
-          getVal = thisVector%b(i - offset)
+          getVal = thisVector%b(i - thisVector%offset)
           ierrc=0
         ENDIF
       ENDIF
@@ -675,7 +683,7 @@ MODULE VectorTypes_Native
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       LOGICAL(SBK) :: inMemFlag
       !
-      INTEGER(SIK) :: ierrc
+      INTEGER(SIK) :: ierrc,i
 
       REQUIRE(thisVector%isInit)
       REQUIRE(SIZE(getval) == SIZE(indices))
@@ -688,7 +696,7 @@ MODULE VectorTypes_Native
         END IF
       END DO
 
-      ierrc=iperr
+      ierrc=0
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getSelected_NativeDistributedVectorType
 
@@ -699,30 +707,31 @@ MODULE VectorTypes_Native
 !> @param istt the starting point of the range (Use global indices for parallel vectors)
 !> @param istp the stopping point in the range (Use global indices for parallel vectors)
 !>
-    SUBROUTINE getRange_PETScVectorType(thisVector,istt,istp,getval,ierr)
-      CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
+    SUBROUTINE getRange_NativeDistributedVectorType(thisVector,istt,istp,getval,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
       REAL(SRK),INTENT(INOUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK) :: i
-      !
+      INTEGER(SIK) :: i, srcLow, srcHigh, destLow, destHigh
       INTEGER(SIK) :: ierrc
 
-      ierrc=-1
-      IF(thisVector%isInit) THEN
-        ierrc=-2
-        IF(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n) THEN
-          ierrc=-3
-          IF(istp-istt+1 == SIZE(getval)) THEN
-            IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
-            CALL VecGetValues(thisVector%b,(istp-istt+1),[(i, i=istt-1, istp)],getval,iperr)
-            ierrc=iperr
-          ENDIF
-        ENDIF
-      ENDIF
+
+      REQUIRE(thisVector%isInit)
+      REQUIRE(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n)
+      REQUIRE(istp - istt+1 == SIZE(getVal))
+
+      srcLow = MAX(istt,thisVector%offset+1)
+      destLow = thisVector%offset+2 - istt
+      srcHigh = MIN(istp,thisVector%offset+thisVector%nlocal)
+      destHigh = destLow + istp - istt + 1
+
+      getval(destLow:destHigh) = thisVector%b(srcLow:srcHigh)
+
+      ierrc = 0
+
       IF(PRESENT(ierr)) ierr=ierrc
-    ENDSUBROUTINE getRange_PETScVectorType
+    ENDSUBROUTINE getRange_NativeDistributedVectorType
 
     SUBROUTINE inLocalMem_single_NativeDistributedVectorType(thisVector,i,ret,ierr)
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
@@ -741,4 +750,11 @@ MODULE VectorTypes_Native
         END IF
       END IF
       IF(PRESENT(ierr)) ierr = ierrc
-    END SUBROUTINE inLocalMem_single_NativeDistributedVectorType
+    ENDSUBROUTINE inLocalMem_single_NativeDistributedVectorType
+
+    SUBROUTINE assemble_NativeDistributedVectorType(thisVector,ierr)
+      CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+
+    ENDSUBROUTINE
+END MODULE VectorTypes_Native
