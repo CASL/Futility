@@ -1260,7 +1260,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      REAL(SRK),POINTER,INTENT(IN) :: X0(:)
+      REAL(SRK),INTENT(IN) :: X0(:)
       INTEGER(SIK) :: i
 
       IF(solver%isInit) THEN
@@ -1874,6 +1874,7 @@ MODULE LinearSolverTypes
         highIdx = lowIdx + n/parEnv%nproc - 1
       ENDIF
 
+      !> TODO: Set up residual so that it is striped over procs.
       CALL u%init(pList)
       CALL pList%clear()
       CALL solver%getResidual(u)
@@ -1897,15 +1898,8 @@ MODULE LinearSolverTypes
         ALLOCATE(g(m+1))
         ALLOCATE(y(m+1))
         ALLOCATE(b(highIdx - lowIdx + 1))
-        v(:,:)=0._SRK
-        R(:,:)=0._SRK
-        w(:)=0._SRK
-        c(:)=0._SRK
-        s(:)=0._SRK
-        g(:)=0._SRK
-        y(:)=0._SRK
-        b(:)=u%b(lowIdx:highIdx)
 
+        !> TODO: Fix v(:,1) being initialized to garbage
         tol=solver%absConvTol*beta
         v(:,1)=-b/beta
         h=beta
@@ -1916,70 +1910,91 @@ MODULE LinearSolverTypes
         ENDIF
 #endif
         !Iterate on solution
-        DO it=1,m
-          !> TODO: Parallelize vector multiplication w/function call
-          CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
+        DO itOuter=1,solver%maxIters
+          v(:,:)=0._SRK
+          R(:,:)=0._SRK
+          w(:)=0._SRK
+          c(:)=0._SRK
+          s(:)=0._SRK
+          g(:)=0._SRK
+          y(:)=0._SRK
+          b(:)=u%b(lowIdx:highIdx)
+          DO it=1,m
+            !> TODO: Parallelize vector multiplication w/function call
+            CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
 
-          !> TODO: Enable preconditioner
-          !u%b(lowIdx:highIdx)=w
-          !CALL solver%PreCondType%apply(u)
-          !w=u%b
+            !> TODO: Enable preconditioner
+            !u%b(lowIdx:highIdx)=w
+            !CALL solver%PreCondType%apply(u)
+            !w=u%b
 
-          h=BLAS_dot(n,w,1,v(:,1),1)
-          CALL parEnv%allReduce_scalar(h)
-          w=w-h*v(:,1)
-          t=h
-
-          DO k=2,it
-            h=BLAS_dot(n,w,1,v(:,k),1)
+            h=BLAS_dot(n,w,1,v(:,1),1)
             CALL parEnv%allReduce_scalar(h)
-            w=w-h*v(:,k)
+            w=w-h*v(:,1)
+            t=h
 
-            R(k-1,it)=c(k-1)*t+s(k-1)*h
-            t=c(k-1)*h-s(k-1)*t
+            DO k=2,it
+              h=BLAS_dot(n,w,1,v(:,k),1)
+              CALL parEnv%allReduce_scalar(h)
+              w=w-h*v(:,k)
+
+              R(k-1,it)=c(k-1)*t+s(k-1)*h
+              t=c(k-1)*h-s(k-1)*t
+            ENDDO
+
+            h = 0.0_SRK
+            DO k=1,(highIdx - lowIdx + 1)
+              h = h + w(k)*w(k)
+            ENDDO
+            CALL parEnv%allReduce_scalar(h)
+            h = sqrt(h)
+
+            IF(h > 0.0_SRK) THEN
+              v(:,it+1)=w/h
+            ELSE
+              v(:,it+1)=0.0_SRK*w
+            ENDIF
+
+            !Set up next Given's rotation
+            IF(t >= 0.0_SRK) THEN
+              temp=SQRT(t*t+h*h)
+            ELSE
+              temp=-SQRT(t*t+h*h)
+            ENDIF
+            c(it)=t/temp
+            s(it)=h/temp
+            R(it,it)=temp
+
+            g(it)=c(it)*phibar
+            phibar=-s(it)*phibar
+  #ifdef FUTILITY_DEBUG_MSG
+            IF(parenv%rank == 0) THEN
+              WRITE(668,*) '         PGMRES-LP',it,ABS(phibar)
+            ENDIF
+  #endif
+            IF(ABS(phibar) <= tol) EXIT
           ENDDO
+          y(1:it)=g(1:it)
+          CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
+          CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,b)
 
-          h = 0.0_SRK
-          DO k=1,(highIdx - lowIdx + 1)
-            h = h + w(k)*w(k)
-          ENDDO
-          CALL parEnv%allReduce_scalar(h)
-          h = sqrt(h)
-
-          IF(h > 0.0_SRK) THEN
-            v(:,it+1)=w/h
-          ELSE
-            v(:,it+1)=0.0_SRK*w
-          ENDIF
-
-          !Set up next Given's rotation
-          IF(t >= 0.0_SRK) THEN
-            temp=SQRT(t*t+h*h)
-          ELSE
-            temp=-SQRT(t*t+h*h)
-          ENDIF
-          c(it)=t/temp
-          s(it)=h/temp
-          R(it,it)=temp
-
-          g(it)=c(it)*phibar
-          phibar=-s(it)*phibar
-#ifdef FUTILITY_DEBUG_MSG
-          IF(parenv%rank == 0) THEN
-            WRITE(668,*) '         PGMRES-LP',it,ABS(phibar)
-          ENDIF
-#endif
+          ! If we'e converged, exit and report
           IF(ABS(phibar) <= tol) EXIT
+
+          ! Otherwise, set up the next restart:
+          !> TODO: correctly set x0 and residual and beta
+          CALL solver%setX0(u%b)
+          CALL solver%getResidual(u)
+          CALL LNorm(u%b,2,beta)
         ENDDO
 
-        y(1:it)=g(1:it)
-        CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
+        !> TODO: Figure out what to do with non-convergence
+        IF (itOuter >= solver%maxIters-1) WRITE(*,*) "Max iters reached"
 
-        CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,b)
         u%b(lowIdx:highIdx) = b
-
         CALL BLAS_axpy(u,solver%x)
 
+        CALL solver%getResidual(u)
         beta = 0.0_SRK
         DO k=1,(highIdx - lowIdx + 1)
           beta = beta + b(k)*b(k)
@@ -1987,9 +2002,8 @@ MODULE LinearSolverTypes
         CALL parenv%allReduce_scalar(beta)
         beta = sqrt(beta)
 
-        CALL solver%getResidual(u)
         IF(it == m+1) it=m
-        solver%iters=it
+        solver%iters=it + itOuter*solver%nRestart
 
         DEALLOCATE(v)
         DEALLOCATE(R)
