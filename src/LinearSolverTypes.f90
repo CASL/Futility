@@ -1254,7 +1254,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      REAL(SRK),INTENT(IN) :: X0(:)
+      REAL(SRK),INTENT(IN),POINTER :: X0(:)
       INTEGER(SIK) :: i
 
       IF(solver%isInit) THEN
@@ -1659,7 +1659,9 @@ MODULE LinearSolverTypes
           IF (ABS(phibar) <= tol) EXIT
 
           ! If not, set up the restart:
-          CALL solver%setX0(u%b)
+          ! Set solver%x to u%b
+          CALL BLAS_axpy(u,solver%x)
+          ! Recalculate the residual and residual norm
           CALL solver%getResidual(u)
           CALL LNorm(u%b,2,beta)
         ENDDO
@@ -1785,7 +1787,9 @@ MODULE LinearSolverTypes
           IF (ABS(phibar) <= tol) EXIT
 
           ! If not, set up the restart:
-          CALL solver%setX0(u%b)
+          ! Set solver%x to u%b
+          CALL BLAS_axpy(u,solver%x)
+          ! Recalculate the residual and residual norm
           CALL solver%getResidual(u)
           CALL LNorm(u%b,2,beta)
         ENDDO
