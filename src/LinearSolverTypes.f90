@@ -1967,11 +1967,11 @@ MODULE LinearSolverTypes
 
             g(it)=c(it)*phibar
             phibar=-s(it)*phibar
-  #ifdef FUTILITY_DEBUG_MSG
+#ifdef FUTILITY_DEBUG_MSG
             IF(parenv%rank == 0) THEN
               WRITE(668,*) '         PGMRES-LP',it,ABS(phibar)
             ENDIF
-  #endif
+#endif
             IF(ABS(phibar) <= tol) EXIT
           ENDDO
           y(1:it)=g(1:it)
