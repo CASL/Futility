@@ -1853,7 +1853,7 @@ MODULE LinearSolverTypes
       REAL(SRK)  :: beta,h,t,phibar,temp,tol,acc
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:),b(:)
       TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx
+      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx,itOuter
       TYPE(MPI_EnvType) :: parEnv
       TYPE(ParamType) :: pList
 
