@@ -7,7 +7,7 @@
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 ! test with ./unit_tests/testRSORprecon/Futility_testRSORprecon.exe
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-PROGRAM testRSORprecon
+PROGRAM testRSORPrecon
 #include "UnitTest.h"
 
   USE ISO_FORTRAN_ENV
@@ -168,54 +168,6 @@ PROGRAM testRSORprecon
 
         ALLOCATE(RSOR_PreCondType :: testSOR)
         
-        !check to make sure that bad/redundant info is noticed
-        CALL testSOR%init(testDenseMatrix,PListRSOR)
-        nerrors1=e%getCounter(EXCEPTION_ERROR)
-        CALL testSOR%init(testDenseMatrix,PListRSOR)
-        nerrors2=e%getCounter(EXCEPTION_ERROR)
-        ASSERT(nerrors2 == nerrors1+1,'init_SOR_Preconditioner PC%isInit check')
-        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-        CALL testSOR%clear()
-
-        nerrors1=e%getCounter(EXCEPTION_ERROR)
-        CALL testSOR%init(testMatrix,PListRSOR)
-        nerrors2=e%getCounter(EXCEPTION_ERROR)
-        ASSERT(nerrors2 == nerrors1+1,'init_SOR_Preconditioner ALLOCATED(PC%A) check')
-        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-
-        nerrors1=e%getCounter(EXCEPTION_ERROR)
-        ALLOCATE(DenseSquareMatrixType :: testMatrix) !Just a dummy matrix for error check tests
-        CALL testSOR%init(testMatrix,PListRSOR)
-        nerrors2=e%getCounter(EXCEPTION_ERROR)
-        ASSERT(nerrors2 == nerrors1+1,'init_SOR_Preconditioner PC%A%isInit check')
-        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-
-        CALL testSOR%clear()
-        nerrors1=e%getCounter(EXCEPTION_ERROR)
-        CALL testSOR%setup()
-        nerrors2=e%getCounter(EXCEPTION_ERROR)
-        ASSERT(nerrors2 == nerrors1+1,'setup_SOR_Preconditioner PC%isInit check')
-        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-
-        CALL testSOR%init(testDenseMatrix,PListRSOR)
-        SELECTTYPE(LpU => testSOR%LpU); TYPE IS(DenseSquareMatrixType)
-            CALL LpU%clear()
-            nerrors1=e%getCounter(EXCEPTION_ERROR)
-            CALL testSOR%setup()
-            nerrors2=e%getCounter(EXCEPTION_ERROR)
-            ASSERT(nerrors2 == nerrors1+1,'setup_SOR_Preconditioner PC%LpU%isInit check')
-            FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-        ENDSELECT
-
-        CALL testSOR%clear()
-
-        ALLOCATE(RealVectorType :: testDummy)
-        nerrors1=e%getCounter(EXCEPTION_ERROR)
-        CALL testSOR%apply(testDummy)
-        nerrors2=e%getCounter(EXCEPTION_ERROR)
-        ASSERT(nerrors2 == nerrors1+1,'apply_SOR_Preconditioner v%isInit check')
-        FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
-        
         !data for checking that the setup is correct
         trv1=(/0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,&
                 0_SRK,    0_SRK,    0_SRK,    0_SRK,    16_SRK,    0_SRK,    0_SRK,    0_SRK,    0_SRK,&
@@ -261,6 +213,7 @@ PROGRAM testRSORprecon
         
             ! Check %init
             CALL testSOR%init(testDenseMatrix,PListRSOR)
+            
             ASSERT(testSOR%isInit,'DenseSquareMatrixType RSOR%isInit')
             ASSERT(ASSOCIATED(testSOR%A),'DenseSquareMatrixType ASSOCIATED(RSOR%LU%A)')
             ASSERT(testSOR%LpU%isInit,'DenseSquareMatrixType RSOR%LpU%isInit')
@@ -305,6 +258,7 @@ PROGRAM testRSORprecon
             ASSERT(testDenseMatrix%isInit,'TestDenseMatrix Initialization')
             ASSERT(testVector%isInit,'TestVector Initialization')
         ENDIF
+        
         
         SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
             tv%b=vecsave
@@ -433,4 +387,4 @@ PROGRAM testRSORprecon
 
     ENDSUBROUTINE clearTest
 !
-ENDPROGRAM testRSORprecon
+ENDPROGRAM testRSORPrecon

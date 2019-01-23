@@ -38,6 +38,8 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE PreconditionerTypes
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE BLAS
   USE ExceptionHandler
@@ -88,6 +90,11 @@ MODULE PreconditionerTypes
       PROCEDURE(precond_apply_absintfc),DEFERRED,PASS :: apply
   ENDTYPE PreConditionerType
 
+  TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: DistributedPrecond
+    !> MPI comm ID
+    INTEGER(SIK) :: comm=-1
+  ENDTYPE DistributedPrecond
+
   TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: LU_PreCondType
     CLASS(MatrixType),ALLOCATABLE :: L
     CLASS(MatrixType),ALLOCATABLE :: U
@@ -137,6 +144,41 @@ MODULE PreconditionerTypes
   ENDTYPE RSOR_PreCondType
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  TYPE,ABSTRACT,EXTENDS(DistributedPrecond) :: DistributedSOR_PreCondType
+    !size of the diagonal blocks
+    INTEGER(SIK) :: blocksize
+    !number of diagonal blocks in matrix
+    INTEGER(SIK) :: numblocks
+    !number of blocks assigned to a processor
+    INTEGER(SIK) :: mynumblocks
+    !first block assigned to a processor
+    INTEGER(SIK) :: myfirstblock
+    !omega factor for sor
+    REAL(SRK) :: omega
+    !array of LU matrices for each diagonal block, will be dense!
+    CLASS(MatrixType),ALLOCATABLE :: LU(:)
+    !lower and upper portions of matrix with diagonal blocks removed
+    CLASS(MatrixType),ALLOCATABLE :: LpU
+
+    CONTAINS
+        !initialize procedure
+      PROCEDURE,PASS :: init => init_DistributedSOR_PreCondType
+      !clear procedure
+      PROCEDURE,PASS :: clear => clear_DistributedSOR_PreCondType
+      PROCEDURE(precond_DistributedSOR_absintfc),DEFERRED,PASS :: setup
+      PROCEDURE(precond_applyDistributedSOR_absintfc),DEFERRED,PASS :: apply
+  ENDTYPE DistributedSOR_PreCondType
+
+  TYPE,EXTENDS(DistributedSOR_PreCondType) :: DistributedRSOR_PreCondType
+    CONTAINS
+      !setup procedure
+      PROCEDURE,PASS :: setup => setup_DistributedRSOR_PreCondType
+      !application procedure
+      PROCEDURE,PASS :: apply => apply_DistributedRSOR_PreCondType
+  ENDTYPE DistributedRSOR_PreCondType
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   ABSTRACT INTERFACE
     SUBROUTINE precond_init_absintfc(thisPC,A,params)
         !notice you need to import all necessary types for abstract interfaces
@@ -167,6 +209,12 @@ MODULE PreconditionerTypes
       CLASS(SOR_PreCondType),INTENT(INOUT) :: thisPC
       CLASS(VectorType),INTENT(INOUT) :: v
     ENDSUBROUTINE precond_applySOR_absintfc
+
+    SUBROUTINE precond_applyDistributedSOR_absintfc(thisPC,v)
+      IMPORT :: DistributedSOR_PreCondType,VectorType
+      CLASS(DistributedSOR_PreCondType),INTENT(INOUT) :: thisPC
+      CLASS(VectorType),INTENT(INOUT) :: v
+    ENDSUBROUTINE precond_applyDistributedSOR_absintfc
   ENDINTERFACE
 
   ABSTRACT INTERFACE
@@ -184,6 +232,11 @@ MODULE PreconditionerTypes
       IMPORT :: SOR_PreCondType
       CLASS(SOR_PreCondType),INTENT(INOUT) :: thisPC
     ENDSUBROUTINE precond_SOR_absintfc
+
+    SUBROUTINE precond_DistributedSOR_absintfc(thisPC)
+      IMPORT :: DistributedSOR_PreCondType
+      CLASS(DistributedSOR_PreCondType),INTENT(INOUT) :: thisPC
+    ENDSUBROUTINE precond_DistributedSOR_absintfc
   ENDINTERFACE
 
   CLASS(PreConditionerType),POINTER :: PETSC_PCSHELL_PC => NULL()
@@ -447,23 +500,11 @@ MODULE PreconditionerTypes
       TYPE(ParamType),INTENT(IN),OPTIONAL :: params
       TYPE(ParamType)::PListMat_LU
       INTEGER(SIK)::k
-
-      IF(thisPC%isinit) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - Preconditioner is already initialized!')
-        RETURN
-      ENDIF
       
-      IF(.NOT. PRESENT(A) .OR. .NOT.(ALLOCATED(A))) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - Matrix being used for RSOR Preconditioner is not allocated!')
-        RETURN
-      ENDIF
-      IF(.NOT.(A%isInit)) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - Matrix being used for RSOR Preconditioner is not initialized!')
-        RETURN
-      ENDIF
+      REQUIRE(.NOT. thisPC%isinit)
+      REQUIRE(PRESENT(A))
+      REQUIRE(ALLOCATED(A))
+      REQUIRE(A%isInit)
       
       thisPC%A => A
       
@@ -472,28 +513,21 @@ MODULE PreconditionerTypes
       CALL params%get('PCType->omega',thisPC%omega)
       
       !makes sure that the number of blocks is valid
-      IF(thisPC%numblocks .LT. 0)THEN
-          CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - Number of blocks is negative!')
-      END IF
+      REQUIRE(thisPC%numblocks .GT. 0)
       
       !makes sure that the number of blocks is valid
-      IF(MOD(thisPC%A%n,thisPC%numblocks) .NE. 0)THEN
-          CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - Matrix size not divisible by number of blocks!')
-      END IF
+      REQUIRE(MOD(thisPC%A%n,thisPC%numblocks) .EQ. 0)
       
-      !makes sure that the number of blocks is valid
-      IF(thisPC%omega .GT. 2 .OR. thisPC%omega .LT. 0)THEN
-          CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                  ' - Omega value must be between 0 and 2!')
-      END IF
+      !makes sure that the value of omega is valid
+      REQUIRE(thisPC%omega .LE. 2)
+      REQUIRE(thisPC%omega .GE. 0)
       
       !calculate block size
       thisPC%blocksize=thisPC%A%n/thisPC%numblocks
       
       !makes a lu matrix for each diagonal block in an array
       ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%numblocks))
+      
       !initializes those matrices
       CALL PListMat_LU%add('MatrixType->n',thisPC%blocksize)
       CALL PListMat_LU%add('MatrixType->isSym',.FALSE.)
@@ -504,46 +538,31 @@ MODULE PreconditionerTypes
       SELECTTYPE(mat => thisPC%A)
         TYPE IS(DenseSquareMatrixType)
           ALLOCATE(DenseSquareMatrixType :: thisPC%LpU)
-      
           ! Assign A to LpU
           SELECTTYPE(LpU => thisPC%LpU); TYPE IS(DenseSquareMatrixType)
             LpU=mat
           ENDSELECT
-      
-          IF(thisPC%LpU%isInit) THEN
-            thisPC%isInit=.TRUE.
-          ELSE
-            CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-              ' - In RSOR Preconditioner initialization, RSOR was not properly initialized!')
-          ENDIF
+          REQUIRE(thisPC%LpU%isInit)
+          thisPC%isInit=.TRUE.
+            
         TYPE IS(SparseMatrixType)
             ALLOCATE(SparseMatrixType :: thisPC%LpU)
-      
             ! Assign A to LpU
             SELECTTYPE(LpU => thisPC%LpU); TYPE IS(SparseMatrixType)
                 LpU=mat
             ENDSELECT
-
-            IF(thisPC%LpU%isInit) THEN
-                thisPC%isInit=.TRUE.
-            ELSE
-                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                    ' - In RSOR Preconditioner initialization, RSOR was not properly initialized!')
-            ENDIF
+            REQUIRE(thisPC%LpU%isInit)
+            thisPC%isInit=.TRUE.
+            
         TYPE IS(BandedMatrixType)
             ALLOCATE(BandedMatrixType :: thisPC%LpU)
-      
             ! Assign A to LpU
             SELECTTYPE(LpU => thisPC%LpU); TYPE IS(BandedMatrixType)
                 LpU=mat
             ENDSELECT
-
-            IF(thisPC%LpU%isInit) THEN
-                thisPC%isInit=.TRUE.
-            ELSE
-                CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-                    ' - In RSOR Preconditioner initialization, RSOR was not properly initialized!')
-            ENDIF
+            REQUIRE(thisPC%LpU%isInit)
+            thisPC%isInit=.TRUE.
+            
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - RSOR Preconditioners are not supported for input matrix type!')
@@ -580,69 +599,34 @@ MODULE PreconditionerTypes
       REAL(SRK)::tempreal
 
       !make sure everything is initialized and allocated
-      IF(.NOT.(thisPC%isinit)) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - Preconditioner is not initialized!')
-      ELSEIF(.NOT.(ALLOCATED(thisPC%LpU))) THEN
-          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-            ' - Big Upper and Lower being used for RSOR Preconditioner is not allocated!')
-      ELSEIF(.NOT.(thisPC%LpU%isInit)) THEN
-          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-            ' - Big Upper and Lower being used for RSOR Preconditioner is not initialized!')
-      ELSE
-          ! make sure each LU block is initialized
-          DO k=1,thisPC%numblocks
-            IF(.NOT.(thisPC%LU(k)%isInit)) THEN
-              WRITE(*,*)'For Block',k
-              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-                ' - A LU matrix being used for RSOR Preconditioner is not initialized!')
-            END IF
+      REQUIRE(thisPC%isinit)
+      REQUIRE(ALLOCATED(thisPC%LpU))
+      REQUIRE(thisPC%LpU%isInit)
+      
+      ! make sure each LU block is initialized
+      DO k=1,thisPC%numblocks
+        REQUIRE(thisPC%LU(k)%isInit)
+      END DO
+      
+      !setup the Upper and Lower portion of the diagonal 
+      DO k=1,thisPC%numblocks
+          DO i=1,thisPC%blocksize
+              DO j=1,thisPC%blocksize
+                  CALL thisPC%A%get((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,tempreal)
+                  CALL thisPC%LU(k)%set(i,j,tempreal)
+                  IF(tempreal .NE. 0.0_SRK)THEN
+                      CALL thisPC%LpU%set((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,0.0_SRK)
+                  END IF
+              END DO
           END DO
-          
-          !setup the Upper and Lower portion of the diagonal 
-          SELECTTYPE(LpU => thisPC%LpU)
-            CLASS IS(DenseSquareMatrixType)
-                !basically just remove the diagonal values AND set the LU blocks
-                DO k=1,thisPC%numblocks
-                    DO i=1,thisPC%blocksize
-                        DO j=1,thisPC%blocksize
-                            CALL LpU%get((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,tempreal)
-                            CALL thisPC%LU(k)%set(i,j,tempreal)
-                            CALL LpU%set((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,0.0_SRK)
-                        END DO
-                    END DO
-                END DO
-            CLASS IS(SparseMatrixType)
-                !have to also check that the value being zeroed is valid here.
-                DO k=1,thisPC%numblocks
-                    DO i=1,thisPC%blocksize
-                        DO j=1,thisPC%blocksize
-                            CALL thisPC%A%get((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,tempreal)
-                            CALL thisPC%LU(k)%set(i,j,tempreal)
-                            IF(tempreal .NE. 0.0_SRK)THEN
-                                CALL thisPC%LpU%set((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,0.0_SRK)
-                            END IF
-                        END DO
-                    END DO
-                END DO
-            CLASS IS(BandedMatrixType)
-                !have to also check that the value being zeroed is valid here.
-                DO k=1,thisPC%numblocks
-                    DO i=1,thisPC%blocksize
-                        DO j=1,thisPC%blocksize
-                            CALL thisPC%A%get((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,tempreal)
-                            CALL thisPC%LU(k)%set(i,j,tempreal)
-                            IF(tempreal .NE. 0.0_SRK)THEN
-                                CALL thisPC%LpU%set((k-1)*thisPC%blocksize+i,(k-1)*thisPC%blocksize+j,0.0_SRK)
-                            END IF
-                        END DO
-                    END DO
-                END DO
-            CLASS DEFAULT
-          ENDSELECT
-          !do LU factorization on the diagonal blocks
-          CALL doolittle_LU_RSOR(thisPC)
-      ENDIF
+      END DO
+      !do LU factorization on the diagonal blocks
+      DO k=1,thisPC%numblocks
+        SELECTTYPE(mat => thisPC%LU(k))
+          CLASS IS(DenseSquareMatrixType)
+            CALL doolittle_LU_RSOR(mat)
+        ENDSELECT
+      END DO
     ENDSUBROUTINE setup_RSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
@@ -656,147 +640,343 @@ MODULE PreconditionerTypes
       INTEGER(SIK)::k,i
       REAL(SRK)::tmpreal
 
-      IF(.NOT.(thisPC%isInit)) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - Preconditioner is not initialized.')
-      ELSEIF(.NOT.(ALLOCATED(v))) THEN
-        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - VectorType is not allocated.')
-      ELSE
-        IF(.NOT.(v%isInit)) THEN
+      REQUIRE(thisPC%isInit)
+      REQUIRE(ALLOCATED(v))
+      REQUIRE(v%isInit)
+      
+      CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
+      CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL w(1)%init(PListVec_RSOR)
+      CALL w(2)%init(PListVec_RSOR)
+      CALL w(3)%init(PListVec_RSOR)
+      CALL w(4)%init(PListVec_RSOR)
+      CALL tempw%init(PListVec_RSOR)
+      SELECTTYPE(v)
+        CLASS IS(RealVectorType)
+            w(3)%b=v%b
+            
+            DO k=1,thisPC%numblocks
+              SELECTTYPE(mat => thisPC%LU(k))
+                CLASS IS(DenseSquareMatrixType)
+                  CALL RSORsolveL(mat,v,w(1),k)
+                  CALL RSORsolveU(mat,w(1),w(2),k)
+              ENDSELECT
+            END DO
+            
+            SELECTTYPE(LpU => thisPC%LpU)
+                CLASS IS(BandedMatrixType)
+                    CALL LpU%matvec(w(2)%b,tempw%b)
+                    w(3)%b=w(3)%b-thisPC%omega*tempw%b
+                CLASS DEFAULT
+                    CALL BLAS_matvec(THISMATRIX=LpU,X=w(2),Y=w(3),&
+                        &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
+            ENDSELECT
+            
+            DO k=1,thisPC%numblocks
+              SELECTTYPE(mat => thisPC%LU(k))
+                CLASS IS(DenseSquareMatrixType)
+                  CALL RSORsolveL(mat,w(3),w(4),k)
+                  CALL RSORsolveU(mat,w(4),v,k)
+              ENDSELECT
+            END DO
+            
+        CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-            ' - VectorType is not initialized.')
-        ELSE
-          CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
-          CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
-          CALL w(1)%init(PListVec_RSOR)
-          CALL w(2)%init(PListVec_RSOR)
-          CALL w(3)%init(PListVec_RSOR)
-          CALL w(4)%init(PListVec_RSOR)
-          CALL tempw%init(PListVec_RSOR)
-          SELECTTYPE(v)
-            CLASS IS(RealVectorType)
-                w(3)%b=v%b
-                CALL RSORsolveL(thisPC,v,w(1))
-                CALL RSORsolveU(thisPC,w(1),w(2))
-                
-                SELECTTYPE(LpU => thisPC%LpU)
-                    CLASS IS(BandedMatrixType)
-                        CALL LpU%matvec(w(2)%b,tempw%b)
-                        w(3)%b=w(3)%b-thisPC%omega*tempw%b
-                    CLASS DEFAULT
-                        CALL BLAS_matvec(THISMATRIX=LpU,X=w(2),Y=w(3),&
-                            &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
-                ENDSELECT
-                
-                CALL RSORsolveL(thisPC,w(3),w(4))
-                CALL RSORsolveU(thisPC,w(4),v)
-            CLASS DEFAULT
-              CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-                ' - Vector type is not support by this PreconditionerType.')
-          ENDSELECT
-        ENDIF
-      ENDIF
+            ' - Vector type is not support by this PreconditionerType.')
+      ENDSELECT
     ENDSUBROUTINE apply_RSOR_PreCondType
 !
 !-------------------------------------------------------------------------------
 ! Doolittle algorithm for LU decomposition
 ! Does it for all diagonal blocks
-    SUBROUTINE doolittle_LU_RSOR(thisPC)
-      CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
+    SUBROUTINE doolittle_LU_RSOR(thisLU)
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
       CHARACTER(LEN=*),PARAMETER :: myName='doolittle_LU_RSOR'
       INTEGER(SIK)::k,i,j,l
-      REAL(SRK)::Ltemp(thisPC%blocksize,thisPC%blocksize),Utemp(thisPC%blocksize,thisPC%blocksize)
+      REAL(SRK)::Ltemp(thisLU%n,thisLU%n),Utemp(thisLU%n,thisLU%n)
       
-      !loop over all diagonal blocks
-      DO l=1,thisPC%numblocks
-          !these need to be 0 at start since the accumulate
-          Utemp(:,:)=0
-          Ltemp(:,:)=0
-          !this does the actual LU decomposition on each block
-          DO i=1,thisPC%blocksize
-            DO j=1,thisPC%blocksize
-                CALL thisPC%LU(l)%get(i,j,Utemp(i,j))
-                DO k=1,i-1
-                    Utemp(i,j)=Utemp(i,j)-Ltemp(i,k)*Utemp(k,j)
-                END DO
+      !these need to be 0 at start since they accumulate
+      Utemp(:,:)=0
+      Ltemp(:,:)=0
+      !this does the actual LU decomposition on each block
+      DO i=1,thisLU%n
+        DO j=1,thisLU%n
+            CALL thisLU%get(i,j,Utemp(i,j))
+            DO k=1,i-1
+                Utemp(i,j)=Utemp(i,j)-Ltemp(i,k)*Utemp(k,j)
             END DO
-            DO j=i+1,thisPC%blocksize
-                CALL thisPC%LU(l)%get(j,i,Ltemp(j,i))
-                DO k=1,i-1
-                    Ltemp(j,i)=Ltemp(j,i)-Ltemp(j,k)*Utemp(k,i)
-                END DO
-                Ltemp(j,i)=Ltemp(j,i)/Utemp(i,i)
+        END DO
+        DO j=i+1,thisLU%n
+            CALL thisLU%get(j,i,Ltemp(j,i))
+            DO k=1,i-1
+                Ltemp(j,i)=Ltemp(j,i)-Ltemp(j,k)*Utemp(k,i)
             END DO
-            Ltemp(i,i)=0
-          END DO
-          !set the block now to the new L in the lower and U in the upper
-          !L is always 1 on diagonals, so set diagonals to U values
-          DO i=1,thisPC%blocksize
-            DO j=i,thisPC%blocksize
-                CALL thisPC%LU(l)%set(i,j,Utemp(i,j))
-            END DO
-          END DO
-          DO i=2,thisPC%blocksize
-            DO j=1,i-1
-                CALL thisPC%LU(l)%set(i,j,Ltemp(i,j))
-            END DO
-          END DO
+            Ltemp(j,i)=Ltemp(j,i)/Utemp(i,i)
+        END DO
+        Ltemp(i,i)=0
+      END DO
+      !set the block now to the new L in the lower and U in the upper
+      !L is always 1 on diagonals, so set diagonals to U values
+      DO i=1,thisLU%n
+        DO j=i,thisLU%n
+            CALL thisLU%set(i,j,Utemp(i,j))
+        END DO
+      END DO
+      DO i=2,thisLU%n
+        DO j=1,i-1
+            CALL thisLU%set(i,j,Ltemp(i,j))
+        END DO
       END DO
     ENDSUBROUTINE doolittle_LU_RSOR
 !
 !-------------------------------------------------------------------------------
 ! Solving L matrix system
-    SUBROUTINE RSORsolveL(thisPC,b,x)
-      CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
+    SUBROUTINE RSORsolveL(thisLU,b,x,k)
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
       CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveL'
       TYPE(RealVectorType),INTENT(INOUT)::b
       TYPE(RealVectorType),INTENT(INOUT)::x
-      INTEGER(SIK)::i,j,k
+      INTEGER(SIK),INTENT(IN)::k
+      INTEGER(SIK)::i,j
       REAL(SRK)::tempreal(3)
       
-      DO k=1,thisPC%numblocks
-        CALL x%setrange_scalar((k-1)*thisPC%blocksize+1,k*thisPC%blocksize,0.0_SRK)
-        DO i=1,thisPC%blocksize
-            CALL b%getone((k-1)*thisPC%blocksize+i,tempreal(1))
-            CALL x%setone((k-1)*thisPC%blocksize+i,tempreal(1))
-            DO j=1,i-1
-                CALL x%getone((k-1)*thisPC%blocksize+i,tempreal(1))
-                CALL x%getone((k-1)*thisPC%blocksize+j,tempreal(2))
-                CALL thisPC%LU(k)%get(i,j,tempreal(3))
-                CALL x%setone((k-1)*thisPC%blocksize+i,tempreal(1)-tempreal(2)*tempreal(3))
-            END DO
-        END DO
+      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      DO i=1,thisLU%n
+          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
+          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
+          DO j=1,i-1
+              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
+              CALL thisLU%get(i,j,tempreal(3))
+              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
+          END DO
       END DO
+      
     ENDSUBROUTINE RSORsolveL
 !
 !-------------------------------------------------------------------------------
 ! Solves U matrix system
-    SUBROUTINE RSORsolveU(thisPC,b,x)
-      CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
+    SUBROUTINE RSORsolveU(thisLU,b,x,k)
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
       CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveU'
       TYPE(RealVectorType),INTENT(INOUT)::b
       TYPE(RealVectorType),INTENT(INOUT)::x
-      INTEGER(SIK)::i,j,k
+      INTEGER(SIK),INTENT(IN)::k
+      INTEGER(SIK)::i,j
       REAL(SRK)::tempreal(3)
       
-      DO k=1,thisPC%numblocks
-        CALL x%setrange_scalar((k-1)*thisPC%blocksize+1,k*thisPC%blocksize,0.0_SRK)
-        DO i=thisPC%blocksize,1,-1
-            CALL b%getone((k-1)*thisPC%blocksize+i,tempreal(1))
-            CALL x%setone((k-1)*thisPC%blocksize+i,tempreal(1))
-            DO j=thisPC%blocksize,i+1,-1
-                CALL x%getone((k-1)*thisPC%blocksize+i,tempreal(1))
-                CALL x%getone((k-1)*thisPC%blocksize+j,tempreal(2))
-                CALL thisPC%LU(k)%get(i,j,tempreal(3))
-                CALL x%setone((k-1)*thisPC%blocksize+i,tempreal(1)-tempreal(2)*tempreal(3))
-            END DO
-            CALL x%getone((k-1)*thisPC%blocksize+i,tempreal(1))
-            CALL thisPC%LU(k)%get(i,i,tempreal(2))
-            CALL x%setone((k-1)*thisPC%blocksize+i,tempreal(1)/tempreal(2))
-        END DO
+      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      DO i=thisLU%n,1,-1
+          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
+          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
+          DO j=thisLU%n,i+1,-1
+              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
+              CALL thisLU%get(i,j,tempreal(3))
+              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
+          END DO
+          CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+          CALL thisLU%get(i,i,tempreal(2))
+          CALL x%setone((k-1)*thisLU%n+i,tempreal(1)/tempreal(2))
       END DO
+        
     ENDSUBROUTINE RSORsolveU
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!-------------------------------------------------------------------------------
+! RSOR preconditioner initializer
+    SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
+#ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='init_RSOR_PreCondType'
+      CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
+      CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
+      TYPE(ParamType),INTENT(IN),OPTIONAL :: params
+      TYPE(ParamType)::PListMat_LU
+      INTEGER(SIK)::k,mpierr,rank,nproc,extrablocks
+      
+      REQUIRE(.NOT. thisPC%isinit)
+      REQUIRE(PRESENT(A))
+      REQUIRE(ALLOCATED(A))
+      REQUIRE(A%isInit)
+      
+      thisPC%A => A
+      
+      !gets the number of blocks from the parameter list
+      CALL params%get('PCType->numblocks',thisPC%numblocks)
+      CALL params%get('PCType->omega',thisPC%omega)
+      CALL params%get('PCType->comm',thisPC%comm)
+      
+      
+      !makes sure that the number of blocks is valid
+      REQUIRE(thisPC%numblocks .GT. 0)
+      REQUIRE(MOD(thisPC%A%n,thisPC%numblocks) .EQ. 0)
+      
+      !makes sure that the value of omega is valid
+      REQUIRE(thisPC%omega .LE. 2)
+      REQUIRE(thisPC%omega .GE. 0)
+      
+      !calculate block size
+      thisPC%blocksize=thisPC%A%n/thisPC%numblocks
+      
+      !makes a lu matrix for each diagonal block in an array
+      ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%numblocks))
+      !initializes those matrices
+      CALL PListMat_LU%add('MatrixType->n',thisPC%blocksize)
+      CALL PListMat_LU%add('MatrixType->isSym',.FALSE.)
+      DO k=1,thisPC%numblocks
+        CALL thisPC%LU(k)%init(PListMat_LU)
+      END DO
+      
+      CALL MPI_Comm_rank(thisPC%comm,rank,mpierr)
+      CALL MPI_Comm_size(thisPC%comm,nproc,mpierr)
+      
+      thisPC%mynumblocks=INT(thisPC%numblocks/nproc)
+      
+      extrablocks=MOD(thisPC%numblocks,nproc)
+      
+      IF(rank .LE. extrablocks)thisPC%mynumblocks=thisPC%mynumblocks+1
+      
+      thisPC%myfirstblock=thisPC%mynumblocks*(rank-1)+1
+      
+      IF(rank .GT. extrablocks)thisPC%myfirstblock=thisPC%myfirstblock+extrablocks
+      
+      SELECTTYPE(mat => thisPC%A)
+        TYPE IS(DenseSquareMatrixType)
+          ALLOCATE(DenseSquareMatrixType :: thisPC%LpU)
+          ! Assign A to LpU
+          SELECTTYPE(LpU => thisPC%LpU); TYPE IS(DenseSquareMatrixType)
+            LpU=mat
+          ENDSELECT
+          REQUIRE(thisPC%LpU%isInit)
+          thisPC%isInit=.TRUE.
+          
+        TYPE IS(SparseMatrixType)
+          ALLOCATE(SparseMatrixType :: thisPC%LpU)
+          ! Assign A to LpU
+          SELECTTYPE(LpU => thisPC%LpU); TYPE IS(SparseMatrixType)
+              LpU=mat
+          ENDSELECT
+          REQUIRE(thisPC%LpU%isInit)
+          thisPC%isInit=.TRUE.
+        
+        TYPE IS(BandedMatrixType)
+          ALLOCATE(BandedMatrixType :: thisPC%LpU)
+          ! Assign A to LpU
+          SELECTTYPE(LpU => thisPC%LpU); TYPE IS(BandedMatrixType)
+              LpU=mat
+          ENDSELECT
+          REQUIRE(thisPC%LpU%isInit)
+          thisPC%isInit=.TRUE.
+          
+        CLASS DEFAULT
+          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+            ' - RSOR Preconditioners are not supported for input matrix type!')
+      ENDSELECT
+#endif
+    ENDSUBROUTINE init_DistributedSOR_PreCondtype
+!
+!-------------------------------------------------------------------------------
+! clears the rsor preconditioner
+    SUBROUTINE clear_DistributedSOR_PreCondtype(thisPC)
+      CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
+      INTEGER(SIK)::i
+
+      IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
+      IF(ALLOCATED(thisPC%LpU)) THEN
+        CALL thisPC%LpU%clear()
+        DEALLOCATE(thisPC%LpU)
+      ENDIF
+      IF(ALLOCATED(thisPC%LU)) THEN
+        !gotta loop through, clear only works on a single matrix
+        DO i=1,thisPC%numblocks
+            CALL thisPC%LU(i)%clear()
+        END DO
+        DEALLOCATE(thisPC%LU)
+      ENDIF
+      thisPC%isInit=.FALSE.
+    ENDSUBROUTINE clear_DistributedSOR_PreCondtype
+!
+!-------------------------------------------------------------------------------
+! Sets up RSOR preconditioner
+    SUBROUTINE setup_DistributedRSOR_PreCondtype(thisPC)
+      CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
+      CHARACTER(LEN=*),PARAMETER :: myName='setup_RSOR_PreCondType'
+      INTEGER(SIK)::k,i,j
+      REAL(SRK)::tempreal
+    ENDSUBROUTINE setup_DistributedRSOR_PreCondtype
+!
+!-------------------------------------------------------------------------------
+! no real comments yet
+    SUBROUTINE apply_DistributedRSOR_PreCondType(thisPC,v)
+      CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
+      CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
+      CHARACTER(LEN=*),PARAMETER :: myName='apply_RSOR_PreCondType'
+      TYPE(RealVectorType)::w(4),tempw
+      TYPE(ParamType)::PListVec_RSOR
+      INTEGER(SIK)::k,i
+      REAL(SRK)::tmpreal
+    ENDSUBROUTINE apply_DistributedRSOR_PreCondType
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

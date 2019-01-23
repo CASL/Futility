@@ -7,17 +7,5 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
-INCLUDE(Futility_CopyFiles)
-
-SET(ADDITIONAL_FILES
-    matrices/LpU.txt
-    matrices/LU.txt
-    matrices/matrix.txt
-    matrices/solution.txt
-    matrices/vector.txt
-)
-
-Futility_CreateUnitTest(testRSORprecon)
-
-Futility_CopyFiles(ADDITIONAL_FILES)
-UNSET(ADDITIONAL_FILES)
+Futility_CreateUnitTest(testRSORPrecon)
+Futility_CreateParUnitTest(testRSORPreconParallel 2)
