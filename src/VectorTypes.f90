@@ -36,7 +36,7 @@
 !>   TYPE(RealVectorType) :: vector
 !>   CLASS(VectorType),POINTER :: vec_p
 !>   TYPE(ParamType) :: params
-!>   
+!>
 !>   CALL params%add("VectorType->n",36_SIK)
 !>
 !>   CALL vector%init(params)
@@ -110,6 +110,9 @@ MODULE VectorTypes
 #ifdef FUTILITY_HAVE_Trilinos
   PUBLIC :: TrilinosVectorType
 #endif
+#ifdef HAVE_MPI
+  PUBLIC :: NativeDistributedVectorType
+#endif
   !> Enumerated matrix-vector engines
   INTEGER(SIK),PARAMETER,PUBLIC :: VM_PETSC=0,VM_TRILINOS=1,VM_NATIVE=2
   PUBLIC :: VectorType_Declare_ValidParams
@@ -123,7 +126,7 @@ MODULE VectorTypes
   PUBLIC :: BLAS_nrm2
   PUBLIC :: BLAS_scal
   PUBLIC :: BLAS_swap
-  
+
   !> @brief Adds to the @ref BLAS1::BLAS_asum "BLAS_asum" interface so that
   !> the vector types defined in this module are also supported.
   INTERFACE BLAS_asum
@@ -314,7 +317,7 @@ MODULE VectorTypes
           CALL params%add("VectorType->nlocal",source%nlocal)
         ENDIF
         IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
-          CALL params%add("VectorType->MPI_Comm_Id",source%comm) 
+          CALL params%add("VectorType->MPI_Comm_Id",source%comm)
         ENDIF
       ENDSELECT
 

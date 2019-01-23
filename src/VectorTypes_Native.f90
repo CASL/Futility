@@ -36,6 +36,7 @@ MODULE VectorTypes_Native
 !
 ! List of public members
   PUBLIC :: RealVectorType
+  PUBLIC :: NativeDistributedVectorType
 
   !> @brief The extended type for real vector
   !>
@@ -93,6 +94,7 @@ MODULE VectorTypes_Native
     REAL(SRK),ALLOCATABLE :: b(:)
     TYPE(MPI_EnvType) :: commType
 
+    !!! TODO: Edit vectortypes_base appropriately
     !
     !List of Type Bound Procedures
     CONTAINS
@@ -434,7 +436,7 @@ MODULE VectorTypes_Native
       !Pull Data from Parameter List
       CALL validParams%get('VectorType->n',n)
       CALL validParams%get('VectorType->MPI_Comm_ID',comm)
-      CALL validParams%get('VectorType->nlocal',nlocal)
+      !CALL validParams%get('VectorType->nlocal',nlocal)
 
       REQUIRE(.NOT. thisVector%isInit)
       REQUIRE(n > 1)
@@ -445,16 +447,15 @@ MODULE VectorTypes_Native
       thisVector%comm = comm
       thisVector%commType = commType
 
-      IF(nlocal<0) THEN
-        ! Default to greedy partitioning
-        IF(commType%rank < MOD(n,commType%nproc)) THEN
-          thisVector%offset = (commType%rank)*(n/commType%nproc + 1)
-          thisVector%nlocal = n/commType%nproc + 1
-        ELSE
-          thisVector%offset = (commType%rank)*(n/commType%nproc) + MOD(n,commType%nproc)
-          thisVector%nlocal = n/commType%nproc
-        ENDIF
+      ! Default to greedy partitioning
+      IF(commType%rank < MOD(n,commType%nproc)) THEN
+        thisVector%offset = (commType%rank)*(n/commType%nproc + 1)
+        thisVector%nlocal = n/commType%nproc + 1
+      ELSE
+        thisVector%offset = (commType%rank)*(n/commType%nproc) + MOD(n,commType%nproc)
+        thisVector%nlocal = n/commType%nproc
       ENDIF
+      ALLOCATE(thisVector%b(thisVector%nlocal))
 
       CALL validParams%clear()
     ENDSUBROUTINE init_NativeDistributedVectorType
@@ -614,7 +615,7 @@ MODULE VectorTypes_Native
             IF(istt <= (thisVector%offset + thisVector%nlocal)  .OR. istp > thisVector%offset) THEN
               low = MAX(istt,thisVector%offset+1)
               high = MIN(istp,thisVector%offset+thisVector%nlocal)
-              thisVector%b(low:high) = setval((low - istt + 1):(high - istt + 1))
+              thisVector%b((low - thisVector%offset):(high - thisVector%offset)) = setval((low - istt + 1):(high - istt + 1))
             ENDIF
           ENDIF
         ENDIF
@@ -692,7 +693,7 @@ MODULE VectorTypes_Native
       DO i=1,SIZE(indices)
         CALL inLocalMem_single_NativeDistributedVectorType(thisVector,indices(i),inMemFlag,ierrc)
         IF(inMemFlag) THEN
-          getval(i) = thisVector%b(indices(i))
+          getval(i) = thisVector%b(indices(i) - thisVector%offset)
         END IF
       END DO
 
@@ -721,10 +722,20 @@ MODULE VectorTypes_Native
       REQUIRE(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n)
       REQUIRE(istp - istt+1 == SIZE(getVal))
 
-      srcLow = MAX(istt,thisVector%offset+1)
-      destLow = thisVector%offset+2 - istt
-      srcHigh = MIN(istp,thisVector%offset+thisVector%nlocal)
-      destHigh = destLow + istp - istt + 1
+      srcLow = MAX(istt,thisVector%offset+1) - thisVector%offset
+      srcHigh = MIN(istp,thisVector%offset+thisVector%nlocal) - thisVector%offset
+      IF(istt > thisVector%offset) THEN
+        destLow = 1
+      ELSE
+        destLow = thisVector%offset - istt + 2
+      ENDIF
+      IF(istp <= thisVector%offset + thisVector%nlocal) THEN
+        destHigh = istp - istt + 1
+      ELSE
+        destHigh = istp - istt + 1 - (istp - thisVector%offset - thisVector%nlocal)
+      ENDIF
+
+      WRITE(*,*) "Rank",thisVector%commType%rank, "src",srcLow,srcHigh, "dest",destLow,destHigh
 
       getval(destLow:destHigh) = thisVector%b(srcLow:srcHigh)
 
