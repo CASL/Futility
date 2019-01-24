@@ -688,6 +688,7 @@ MODULE MatrixTypes_Native
               matrix%b(1)%didx=d(start_band)
               DO p=start_band+1,end_band-1
                 i=p-start_band
+                WRITE(*,*)start_band,end_band,rank
                 ALLOCATE(matrix%b(i)%elem(bandl(p)))
                 matrix%b(i)%ib=bandi(p)
                 matrix%b(i)%jb=bandj(p)
