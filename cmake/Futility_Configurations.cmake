@@ -282,6 +282,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     SET(Fortran_FLAGS_DEBUG
         ${CSYM}O0
         ${CSYM}Wall
+        ${CSYM}Wno-surprising
         ${CSYM}fcheck=all
         ${CSYM}fbacktrace
         ${CSYM}g
