@@ -51,6 +51,11 @@ MODULE PreconditionerTypes
   USE Constants_Conversion
 
   IMPLICIT NONE
+
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
+
   PRIVATE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -163,6 +168,10 @@ MODULE PreconditionerTypes
     CLASS(MatrixType),ALLOCATABLE :: LU(:)
     !lower and upper portions of matrix with diagonal blocks removed
     CLASS(MatrixType),ALLOCATABLE :: LpU
+    !Number of elements belonging to each processor
+    INTEGER(SIK),ALLOCATABLE :: psize(:)
+    !Number of elements belonging to each processor
+    INTEGER(SIK),ALLOCATABLE :: pdispl(:)
 
     CONTAINS
         !initialize procedure
@@ -856,7 +865,7 @@ MODULE PreconditionerTypes
       CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
       TYPE(ParamType),INTENT(IN),OPTIONAL :: params
       TYPE(ParamType)::PListMat_LU
-      INTEGER(SIK)::k,mpierr,rank,nproc,extrablocks
+      INTEGER(SIK)::k,mpierr,rank,nproc,extrablocks,stdblocks,i
       
       REQUIRE(.NOT. thisPC%isinit)
       REQUIRE(PRESENT(A))
@@ -882,6 +891,27 @@ MODULE PreconditionerTypes
       !calculate block size
       thisPC%blockSize=thisPC%A%n/thisPC%numBlocks
       
+      !calculate how many blocks this processor gets and which ones
+      CALL MPI_Comm_rank(thisPC%comm,rank,mpierr)
+      CALL MPI_Comm_size(thisPC%comm,nproc,mpierr)
+      ALLOCATE(thisPC%psize(nproc),thisPC%pdispl(nproc))
+      thisPC%myNumBlocks=INT(thisPC%numBlocks/nproc)
+      stdblocks=INT(thisPC%numBlocks/nproc)
+      extrablocks=MOD(thisPC%numBlocks,nproc)
+      IF(rank+1 .LE. extrablocks)thisPC%myNumBlocks=thisPC%myNumBlocks+1
+      thisPC%myFirstBlock=thisPC%myNumBlocks*rank+1
+      IF(rank+1 .GT. extrablocks)thisPC%myFirstBlock=thisPC%myFirstBlock+extrablocks
+      
+      DO i=1,extrablocks
+        thisPC%psize(i)=(stdblocks+1)*thisPC%blockSize
+        thisPC%pdispl(i)=(i-1)*thisPC%psize(i)
+      END DO
+      
+      DO i=extrablocks+1,nproc
+        thisPC%psize(i)=stdblocks*thisPC%blockSize
+        thisPC%pdispl(i)=(i-1)*thisPC%psize(i)+extrablocks*thisPC%blockSize
+      END DO
+      
       !makes a lu matrix for each diagonal block in an array
       ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%numBlocks))
       !initializes those matrices
@@ -890,19 +920,6 @@ MODULE PreconditionerTypes
       DO k=1,thisPC%numBlocks
         CALL thisPC%LU(k)%init(PListMat_LU)
       END DO
-      
-      CALL MPI_Comm_rank(thisPC%comm,rank,mpierr)
-      CALL MPI_Comm_size(thisPC%comm,nproc,mpierr)
-      
-      thisPC%myNumBlocks=INT(thisPC%numBlocks/nproc)
-      
-      extrablocks=MOD(thisPC%numBlocks,nproc)
-      
-      IF(rank+1 .LE. extrablocks)thisPC%myNumBlocks=thisPC%myNumBlocks+1
-      
-      thisPC%myFirstBlock=thisPC%myNumBlocks*rank+1
-      
-      IF(rank+1 .GT. extrablocks)thisPC%myFirstBlock=thisPC%myFirstBlock+extrablocks
       
       SELECTTYPE(mat => thisPC%A)
         TYPE IS(DistributedBandedMatrixType)
@@ -973,7 +990,7 @@ MODULE PreconditionerTypes
           END DO
       END DO
       !do LU factorization on the diagonal blocks
-      DO k=1,thisPC%numBlocks
+      DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
         SELECTTYPE(mat => thisPC%LU(k))
           CLASS IS(DenseSquareMatrixType)
             CALL doolittle_LU_RSOR(mat)
@@ -989,12 +1006,15 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='apply_RSOR_PreCondType'
       TYPE(RealVectorType)::w(4),tempw
       TYPE(ParamType)::PListVec_RSOR
-      INTEGER(SIK)::k,i
+      INTEGER(SIK)::k,i,mpierr,vecstart
       REAL(SRK)::tmpreal
+      REAL(SRK)::tmpreal1,tmpreal2
 
       REQUIRE(thisPC%isInit)
       REQUIRE(ALLOCATED(v))
       REQUIRE(v%isInit)
+      
+      vecstart=(thisPC%myFirstBlock-1)*thisPC%blockSize+1
       
       CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
       CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
@@ -1007,13 +1027,18 @@ MODULE PreconditionerTypes
         CLASS IS(RealVectorType)
             w(3)%b=v%b
             
-            DO k=1,thisPC%numBlocks
+            !DO k=1,thisPC%numBlocks
+            DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
               SELECTTYPE(mat => thisPC%LU(k))
                 CLASS IS(DenseSquareMatrixType)
                   CALL RSORsolveL(mat,v,w(1),k)
                   CALL RSORsolveU(mat,w(1),w(2),k)
               ENDSELECT
             END DO
+            
+            CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
+              ,MPI_DOUBLE_PRECISION,w(2)%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
+              thisPC%comm,mpierr)
             
             SELECTTYPE(LpU => thisPC%LpU)
                 CLASS IS(DistributedBandedMatrixType)
@@ -1024,13 +1049,17 @@ MODULE PreconditionerTypes
                         &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
             ENDSELECT
             
-            DO k=1,thisPC%numBlocks
+            DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
               SELECTTYPE(mat => thisPC%LU(k))
                 CLASS IS(DenseSquareMatrixType)
                   CALL RSORsolveL(mat,w(3),w(4),k)
                   CALL RSORsolveU(mat,w(4),v,k)
               ENDSELECT
             END DO
+            
+            CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
+              ,MPI_DOUBLE_PRECISION,v%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
+              thisPC%comm,mpierr)
             
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
