@@ -206,7 +206,7 @@ PROGRAM testRSORPreconParallel
             ! Check %setup
             CALL testSORP%setup()
             DO k=testSORP%myFirstBlock,testSORP%myFirstBlock+testSORP%myNumBlocks-1
-                SELECTTYPE(LU => testSORP%LU(k)); TYPE IS(DenseSquareMatrixType)
+                SELECTTYPE(LU => testSORP%LU(k-testSORP%myFirstBlock+1)); TYPE IS(DenseSquareMatrixType)
                     ASSERT(ALL(LU%a .APPROXEQA. refLU(:,:,k)),'RSOR%LU(k)%a Correct')
                     FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
                 ENDSELECT

@@ -913,11 +913,11 @@ MODULE PreconditionerTypes
       END DO
       
       !makes a lu matrix for each diagonal block in an array
-      ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%numBlocks))
+      ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%myNumBlocks))
       !initializes those matrices
       CALL PListMat_LU%add('MatrixType->n',thisPC%blockSize)
       CALL PListMat_LU%add('MatrixType->isSym',.FALSE.)
-      DO k=1,thisPC%numBlocks
+      DO k=1,thisPC%myNumBlocks
         CALL thisPC%LU(k)%init(PListMat_LU)
       END DO
       
@@ -951,7 +951,7 @@ MODULE PreconditionerTypes
       ENDIF
       IF(ALLOCATED(thisPC%LU)) THEN
         !gotta loop through, clear only works on a single matrix
-        DO i=1,thisPC%numBlocks
+        DO i=1,thisPC%myNumBlocks
             CALL thisPC%LU(i)%clear()
         END DO
         DEALLOCATE(thisPC%LU)
@@ -973,24 +973,35 @@ MODULE PreconditionerTypes
       REQUIRE(thisPC%LpU%isInit)
       
       ! make sure each LU block is initialized
-      DO k=1,thisPC%numBlocks
+      DO k=1,thisPC%myNumBlocks
         REQUIRE(thisPC%LU(k)%isInit)
       END DO
       
       !setup the Upper and Lower portion of the diagonal 
       DO k=1,thisPC%numBlocks
+        IF(k .GE. thisPC%myFirstBlock .AND. k .LE. thisPC%myFirstBlock+thisPC%myNumBlocks-1)THEN
           DO i=1,thisPC%blockSize
               DO j=1,thisPC%blockSize
                   CALL thisPC%A%get((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,tempreal)
-                  CALL thisPC%LU(k)%set(i,j,tempreal)
+                  CALL thisPC%LU(k-thisPC%myFirstBlock+1)%set(i,j,tempreal)
                   IF(tempreal .NE. 0.0_SRK)THEN
                       CALL thisPC%LpU%set((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,0.0_SRK)
                   END IF
               END DO
           END DO
+        ELSE
+          DO i=1,thisPC%blockSize
+              DO j=1,thisPC%blockSize
+                  CALL thisPC%A%get((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,tempreal)
+                  IF(tempreal .NE. 0.0_SRK)THEN
+                      CALL thisPC%LpU%set((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,0.0_SRK)
+                  END IF
+              END DO
+          END DO
+        END IF
       END DO
       !do LU factorization on the diagonal blocks
-      DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
+      DO k=1,thisPC%myNumBlocks
         SELECTTYPE(mat => thisPC%LU(k))
           CLASS IS(DenseSquareMatrixType)
             CALL doolittle_LU_RSOR(mat)
@@ -1029,7 +1040,7 @@ MODULE PreconditionerTypes
             
             !DO k=1,thisPC%numBlocks
             DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
-              SELECTTYPE(mat => thisPC%LU(k))
+              SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
                 CLASS IS(DenseSquareMatrixType)
                   CALL RSORsolveL(mat,v,w(1),k)
                   CALL RSORsolveU(mat,w(1),w(2),k)
@@ -1050,7 +1061,7 @@ MODULE PreconditionerTypes
             ENDSELECT
             
             DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
-              SELECTTYPE(mat => thisPC%LU(k))
+              SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
                 CLASS IS(DenseSquareMatrixType)
                   CALL RSORsolveL(mat,w(3),w(4),k)
                   CALL RSORsolveU(mat,w(4),v,k)
