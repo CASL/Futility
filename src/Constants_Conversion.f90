@@ -30,10 +30,12 @@ MODULE Constants_Conversion
   IMPLICIT NONE
   PRIVATE
 
+  !> Parameters for commonly used constants
   REAL(SRK),PUBLIC,PARAMETER ::    ZERO=0.000000000000000_SRK !16 digits
   REAL(SRK),PUBLIC,PARAMETER ::     ONE=1.000000000000000_SRK !16 digits
   REAL(SRK),PUBLIC,PARAMETER ::     TWO=2.000000000000000_SRK !16 digits
   REAL(SRK),PUBLIC,PARAMETER ::    HALF=0.500000000000000_SRK !16 digits
+  !> Useful fractions of PI
   REAL(SRK),PUBLIC,PARAMETER ::   QTRPI=ATAN(ONE)
   REAL(SRK),PUBLIC,PARAMETER ::  HALFPI=TWO*QTRPI
   REAL(SRK),PUBLIC,PARAMETER ::      PI=TWO*HALFPI
@@ -44,6 +46,12 @@ MODULE Constants_Conversion
   REAL(SRK),PUBLIC,PARAMETER ::     RPI=ONE/PI
   REAL(SRK),PUBLIC,PARAMETER ::  RTWOPI=ONE/TWOPI
   REAL(SRK),PUBLIC,PARAMETER :: RFOURPI=ONE/FOURPI
+
+  !> Convert from radians to degrees
+  REAL(SRK),PUBLIC,PARAMETER :: rad2degrees=180.0_SRK/PI
+  !> Convert from degrees to radians
+  REAL(SRK),PUBLIC,PARAMETER :: degrees2rad=PI/180.0_SRK
+
   !> Avogadro's Number; source: https://physics.nist.gov/cgi-bin/cuu/Value?na
   REAL(SRK),PUBLIC,PARAMETER :: NA=6.022140857E+23_SRK
 

@@ -193,9 +193,6 @@ MODULE MultigridMesh
 
   ENDTYPE InterpWeightsStructureType
 
-  !> Exception Handler for use in MatrixTypes
-  TYPE(ExceptionHandlerType),SAVE :: eMultigridMesh
-
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='MULTIGRIDMESH'
 !
