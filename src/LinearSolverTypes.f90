@@ -1694,7 +1694,7 @@ MODULE LinearSolverTypes
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
         IF(it == m+1) it=m
-        solver%iters=it + itOuter*solver%nRestart
+        solver%iters=it + (itOuter-1)*solver%nRestart
 
         DEALLOCATE(v)
         DEALLOCATE(R)
@@ -1822,7 +1822,7 @@ MODULE LinearSolverTypes
         CALL solver%getResidual(u)
         CALL LNorm(u%b,2,beta)
         IF(it == m+1) it=m
-        solver%iters=it + itOuter*solver%nRestart
+        solver%iters=it + (itOuter-1)*solver%nRestart
 
         DEALLOCATE(v)
         DEALLOCATE(R)
@@ -2003,7 +2003,7 @@ MODULE LinearSolverTypes
         beta = sqrt(beta)
 
         IF(it == m+1) it=m
-        solver%iters=it + itOuter*solver%nRestart
+        solver%iters=it + (itOuter-1)*solver%nRestart
 
         DEALLOCATE(v)
         DEALLOCATE(R)
