@@ -911,7 +911,6 @@ MODULE PreconditionerTypes
         thisPC%psize(i)=stdblocks*thisPC%blockSize
         thisPC%pdispl(i)=(i-1)*thisPC%psize(i)+extrablocks*thisPC%blockSize
       END DO
-      
       !makes a lu matrix for each diagonal block in an array
       ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%myNumBlocks))
       !initializes those matrices
@@ -1017,15 +1016,13 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='apply_RSOR_PreCondType'
       TYPE(RealVectorType)::w(4),tempw
       TYPE(ParamType)::PListVec_RSOR
-      INTEGER(SIK)::k,i,mpierr,vecstart
+      INTEGER(SIK)::k,i,mpierr
       REAL(SRK)::tmpreal
       REAL(SRK)::tmpreal1,tmpreal2
 
       REQUIRE(thisPC%isInit)
       REQUIRE(ALLOCATED(v))
       REQUIRE(v%isInit)
-      
-      vecstart=(thisPC%myFirstBlock-1)*thisPC%blockSize+1
       
       CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
       CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
@@ -1038,7 +1035,6 @@ MODULE PreconditionerTypes
         CLASS IS(RealVectorType)
             w(3)%b=v%b
             
-            !DO k=1,thisPC%numBlocks
             DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
               SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
                 CLASS IS(DenseSquareMatrixType)
@@ -1050,6 +1046,8 @@ MODULE PreconditionerTypes
             CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
               ,MPI_DOUBLE_PRECISION,w(2)%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
               thisPC%comm,mpierr)
+              
+            REQUIRE(mpierr .EQ. 0)
             
             SELECTTYPE(LpU => thisPC%LpU)
                 CLASS IS(DistributedBandedMatrixType)
@@ -1071,6 +1069,8 @@ MODULE PreconditionerTypes
             CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
               ,MPI_DOUBLE_PRECISION,v%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
               thisPC%comm,mpierr)
+              
+            REQUIRE(mpierr .EQ. 0)
             
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
