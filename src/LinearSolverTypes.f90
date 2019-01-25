@@ -1571,7 +1571,7 @@ MODULE LinearSolverTypes
 
     SUBROUTINE solveGMRES_nopc(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      IF(solver%MPIparallelEnv%isInit()) THEN
+      IF(solver%MPIparallelEnv%isInit() .AND. solver%MPIparallelEnv%nproc > 1) THEN
         CALL solvePGMRES_lpc(solver)
       ELSE
         CALL solveSGMRES_nopc(solver)
@@ -1581,7 +1581,7 @@ MODULE LinearSolverTypes
     SUBROUTINE solveGMRES_lpc(solver, PreCondType)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
-      IF(solver%MPIparallelEnv%isInit()) THEN
+      IF(solver%MPIparallelEnv%isInit() .AND. solver%MPIparallelEnv%nproc > 1) THEN
         CALL solvePGMRES_lpc(solver)
       ELSE
         CALL solveSGMRES_lpc(solver, PrecondType)
