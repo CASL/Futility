@@ -242,14 +242,6 @@ MODULE EigenvalueSolverTypes
   !> SNES Resid calculator
   CLASS(EigenvalueSolverType_Base),POINTER :: PETSC_SHELL_EVS => NULL()
 
-  !> Logical flag to check whether the required and optional parameter lists
-  !> have been created yet for the Eigenvalue Solver Type.
-  LOGICAL(SBK),SAVE :: EigenvalueSolverType_Paramsflag=.FALSE.
-
-  !> The parameter lists to use when validating a parameter list for
-  !> initialization for a Eigenvalue Solver Type.
-  TYPE(ParamType),PROTECTED,SAVE :: EigenvalueSolverType_reqParams,EigenvalueSolverType_optParams
-
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),SAVE :: eEigenvalueSolverType
 
@@ -336,8 +328,6 @@ MODULE EigenvalueSolverTypes
       ST :: st
       KSP :: ksp
       PC :: pc
-      !Check to set up required and optional param lists.
-      !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
       IF(.NOT. MPIEnv%isInit()) THEN
         CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
@@ -345,9 +335,7 @@ MODULE EigenvalueSolverTypes
       ELSE
         solver%MPIparallelEnv => MPIEnv
       ENDIF
-      !Validate against the reqParams and OptParams
       validParams=Params
-      !CALL validParams%validate(EigenType_reqParams)
 
       n=0
       nlocal=0
@@ -489,8 +477,6 @@ MODULE EigenvalueSolverTypes
       INTEGER(C_INT) :: ierr
       CLASS(ParamType),POINTER :: anasaziParams, pcParams
       TYPE(ForTeuchos_ParameterList_ID) :: plID
-      !Check to set up required and optional param lists.
-      !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
       IF(.NOT. MPIEnv%isInit()) THEN
         CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
@@ -498,9 +484,7 @@ MODULE EigenvalueSolverTypes
       ELSE
         solver%MPIparallelEnv => MPIEnv
       ENDIF
-      !Validate against the reqParams and OptParams
       validParams=Params
-      !CALL validParams%validate(EigenType_reqParams)
 
       n=0
       nlocal=0
@@ -625,8 +609,6 @@ MODULE EigenvalueSolverTypes
 #ifdef FUTILITY_HAVE_PETSC
       TYPE(ParamType) :: tmpPL
 #endif
-      !Check to set up required and optional param lists.
-      !IF(.NOT.EigenType_Paramsflag) CALL EigenType_Declare_ValidParams()
 
       IF(.NOT. MPIEnv%isInit()) THEN
         CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
@@ -634,9 +616,7 @@ MODULE EigenvalueSolverTypes
       ELSE
         solver%MPIparallelEnv => MPIEnv
       ENDIF
-      !Validate against the reqParams and OptParams
       validParams=Params
-      !CALL validParams%validate(EigenType_reqParams)
 
       n=0
       nlocal=0
