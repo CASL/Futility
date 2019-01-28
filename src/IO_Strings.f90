@@ -112,6 +112,7 @@ MODULE IO_Strings
   PUBLIC :: stripComment
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
+  PUBLIC :: str
   !
   !PUBLIC :: charToStringArray
 
@@ -347,6 +348,22 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::SlashRep_c
     MODULE PROCEDURE SlashRep_c
   ENDINTERFACE SlashRep
+
+  !> @brief Generic interface for converting variables to strings
+  INTERFACE str
+    !> @copybrief IO_Strings::str_SNK
+    !> @copydetails IO_Strings::str_SNK
+    MODULE PROCEDURE str_SNK
+    !> @copybrief IO_Strings::str_SLK
+    !> @copydetails IO_Strings::str_SLK
+    MODULE PROCEDURE str_SLK
+    !> @copybrief IO_Strings::str_SSK
+    !> @copydetails IO_Strings::str_SSK
+    MODULE PROCEDURE str_SSK
+    !> @copybrief IO_Strings::str_SDK
+    !> @copydetails IO_Strings::str_SDK
+    MODULE PROCEDURE str_SDK
+  ENDINTERFACE str
 !
 !===============================================================================
   CONTAINS
@@ -1397,48 +1414,53 @@ MODULE IO_Strings
     ENDSUBROUTINE SlashRep_c
 !
 !-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of a character
-!> string to an array of strings
-!> @param dArr the array of strings
-!> @param c the character value
-!    SUBROUTINE charToStringArray(sArr,c)
-!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
-!      TYPE(StringType),INTENT(IN) :: c
-!      CHARACTER(LEN=100) :: tmpStr
-!      TYPE(StringType) :: tmpElt
-!      INTEGER(SIK) :: numElts
-!      INTEGER(SIK) :: i,j,k
+!> @brief Converts an integer to a character
+!> @param i the value to convert
+!> @returns string the string
+    FUNCTION str_SNK(i) RESULT(string)
+      INTEGER(SNK),INTENT(IN) :: i
+      CHARACTER(LEN=FLOOR(ABS(LOG10(REAL(i)))+1)) :: string
+
+      WRITE(string,'(i0)') i
+
+    ENDFUNCTION str_SNK
 !
-!      numElts=0
-!      IF(LEN(c) /= 2) THEN
-!        DO i=2,(c%n-1)
-!          IF(c(i) == ',') THEN
-!            numElts=numElts+1
-!          ENDIF
-!        ENDDO
-!        numElts=numElts+1
-!      ENDIF
+!-------------------------------------------------------------------------------
+!> @brief Converts a long integer to a character
+!> @param i the value to convert
+!> @returns string the string
+    FUNCTION str_SLK(i) RESULT(string)
+      INTEGER(SLK),INTENT(IN) :: i
+      CHARACTER(LEN=FLOOR(ABS(LOG10(REAL(i)))+1)) :: string
+
+      WRITE(string,'(i0)') i
+
+    ENDFUNCTION str_SLK
 !
-!      !Empty array case
-!      IF(numElts == 0) THEN
-!        RETURN
-!      ENDIF
+!-------------------------------------------------------------------------------
+!> @brief Converts a single precision real to a character
+!> @param r the value to convert
+!> @returns string the string
+!>
+!> Prints in scientific
+    FUNCTION str_SSK(r) RESULT(string)
+      REAL(SSK),INTENT(IN) :: r
+      CHARACTER(LEN=14) :: string
+
+      WRITE(string,'(es14.7)') r
+
+    ENDFUNCTION str_SSK
 !
-!      j=0
-!      k=1 !sArr index
-!      ALLOCATE(sArr(numElts))
-!      DO i=2,LEN(c)
-!        IF(c(i) /= ',' .AND. c(i) /= '}') THEN
-!          j=j+1
-!          tmpStr(j:j)=c(i)
-!        ELSE
-!          tmpStr=tmpStr(1:j)
-!          tmpElt=tmpStr
-!          sArr(k:k)=tmpElt
-!          j=0
-!          k=k+1
-!        ENDIF
-!      ENDDO
-!    ENDSUBROUTINE charToStringArray
+!-------------------------------------------------------------------------------
+!> @brief Converts a double precision real to a character
+!> @param r the value to convert
+!> @returns string the string
+    FUNCTION str_SDK(r) RESULT(string)
+      REAL(SDK),INTENT(IN) :: r
+      CHARACTER(LEN=22) :: string
+
+      WRITE(string,'(es22.15)') r
+
+    ENDFUNCTION str_SDK
 !
 ENDMODULE IO_Strings
