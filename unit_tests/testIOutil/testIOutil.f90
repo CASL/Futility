@@ -542,14 +542,26 @@ PROGRAM testIOutil
       FINFO() '"'//string1//'"'
 
       COMPONENT_TEST('str')
+      !SNK
       ASSERT_EQ(str(2_SNK),'2','str(SNK)')
       ASSERT_EQ(str(-2_SNK),'-2','str(SNK)')
+      ASSERT_EQ(str(3_SNK,3),'0003','str(SNK,pad)')
+      ASSERT_EQ(str(-3_SNK,3),'-0003','str(SNK,pad)')
+      !SLK
       ASSERT_EQ(str(3_SLK),'3','str(SLK)')
       ASSERT_EQ(str(-3_SLK),'-3','str(SLK)')
-      ASSERT_EQ(str(2.5_SSK),' 2.5000000E+00','str(SSK)')
+      ASSERT_EQ(str(3_SLK,3),'0003','str(SLK,pad)')
+      ASSERT_EQ(str(-3_SLK,3),'-0003','str(SLK,pad)')
+      !SSK
+      ASSERT_EQ(str(2.5_SSK),'2.5000000E+00','str(SSK)')
+      ASSERT_EQ(str(2.5_SSK,2),'2.50E+00','str(SSK,nDecimal)')
       ASSERT_EQ(str(-0.0025_SSK),'-2.4999999E-03','str(SSK)')
-      ASSERT_EQ(str(0.5_SDK),' 5.000000000000000E-01','str(SDK)')
+      ASSERT_EQ(str(-0.0025_SSK,2),'-2.50E-03','str(SSK,nDecimal)')
+      !SDK
+      ASSERT_EQ(str(0.5_SDK),'5.000000000000000E-01','str(SDK)')
+      ASSERT_EQ(str(0.5_SDK,5),'5.00000E-01','str(SDK,nDecimal)')
       ASSERT_EQ(str(-5000.0_SDK),'-5.000000000000000E+03','str(SDK)')
+      ASSERT_EQ(str(-5000.0_SDK,5),'-5.00000E+03','str(SDK,nDecimal)')
 
     ENDSUBROUTINE testIO_Strings
 !
