@@ -9,16 +9,8 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for coverting different forms of elements and isotopes
 !>
-!> This package provides an interface to convert a chemical formula into an 
-!> input array for coupling with Thermochimica
-!>
-!> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref Strings "Strings": @copybrief Strings
-!>  - @ref ElementsIsotopes "ElementsIsotopes": @copybrief ElementsIsotopes
-!>
-!> @author Zack Taylor
-!>   @date 01/24/19
+!> This package provides an interface to convert a chemical formula into a
+!> (0:118) size array.
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE SpeciesElements
