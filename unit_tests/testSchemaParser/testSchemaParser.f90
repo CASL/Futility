@@ -25,7 +25,7 @@ MODULE DummyEntryModule
       PROCEDURE,PASS :: parse => parseDummy_SchEnt
   ENDTYPE SchemaEntryDummyType
 
-  TYPE(SchemaEntryDummyType) :: SCHEMA_DUMMY_ENTRY
+  TYPE(SchemaEntryDummyType),SAVE :: SCHEMA_DUMMY_ENTRY
 
   CONTAINS
     SUBROUTINE parseDummy_SchEnt(this,entryStr,paramList,pListPathCrd)
