@@ -167,14 +167,14 @@ MODULE SchemaParserModule
   !> These are used when calling %addEntry to designate
   !> which entry to instantiate.  Though Public and mutable
   !> they should ONLY BE USED FOR ADDING ENTRIES!
-  TYPE(SchemaEntrySIKType) :: SCHEMA_SIK_ENTRY
-  TYPE(SchemaEntrySRKType) :: SCHEMA_SRK_ENTRY
-  TYPE(SchemaEntrySBKType) :: SCHEMA_SBK_ENTRY
-  TYPE(SchemaEntrySTRType) :: SCHEMA_STR_ENTRY
-  TYPE(SchemaEntrySIKa1Type) :: SCHEMA_SIKA1_ENTRY
-  TYPE(SchemaEntrySRKa1Type) :: SCHEMA_SRKA1_ENTRY
-  TYPE(SchemaEntrySBKa1Type) :: SCHEMA_SBKA1_ENTRY
-  TYPE(SchemaEntrySTRa1Type) :: SCHEMA_STRA1_ENTRY
+  TYPE(SchemaEntrySIKType),SAVE :: SCHEMA_SIK_ENTRY
+  TYPE(SchemaEntrySRKType),SAVE :: SCHEMA_SRK_ENTRY
+  TYPE(SchemaEntrySBKType),SAVE :: SCHEMA_SBK_ENTRY
+  TYPE(SchemaEntrySTRType),SAVE :: SCHEMA_STR_ENTRY
+  TYPE(SchemaEntrySIKa1Type),SAVE :: SCHEMA_SIKA1_ENTRY
+  TYPE(SchemaEntrySRKa1Type),SAVE :: SCHEMA_SRKA1_ENTRY
+  TYPE(SchemaEntrySBKa1Type),SAVE :: SCHEMA_SBKA1_ENTRY
+  TYPE(SchemaEntrySTRa1Type),SAVE :: SCHEMA_STRA1_ENTRY
 
   !> Type that defines a Element of a schema
   TYPE :: SchemaElementType
@@ -819,7 +819,7 @@ MODULE SchemaParserModule
       TYPE(SchemaEntryPtrArryType),ALLOCATABLE :: preventries(:)
       INTEGER(SIK) :: ientry,nEntries
 
-      ALLOCATE(entry%entryPtr, MOLD=type)
+      ALLOCATE(entry%entryPtr, SOURCE=type)
       entry%entryPtr%pListPath=pListPath
 
       ! Append this card to the list of cards
