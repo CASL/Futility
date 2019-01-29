@@ -1442,7 +1442,8 @@ MODULE IO_Strings
 !> @param nPadZero the number of leading 0s to pad with
 !> @returns string the string
 !>
-!> Prints with no white space and the number of leading 0s specified by @c nPadZero
+!> Prints with no white space and pads with leading 0s so that the string is
+!> @c nPadZero in length (not counting a possible negative sign)
 !>
     FUNCTION str_SNK_pad(i,nPadZero) RESULT(string)
       INTEGER(SNK),INTENT(IN) :: i
@@ -1451,10 +1452,10 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      REQUIRE(nPadZero >= 0)
-
       length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
-      length=length+nPadZero
+      REQUIRE(nPadZero >= length)
+
+      length=nPadZero
       IF(i < 0) THEN
         ALLOCATE(CHARACTER(length+1) :: string)
       ELSE
@@ -1491,7 +1492,8 @@ MODULE IO_Strings
 !> @param nPadZero the number of leading 0s to pad with
 !> @returns string the string
 !>
-!> Prints with no white space and the number of leading 0s specified by @c nPadZero
+!> Prints with no white space and pads with leading 0s so that the string is
+!> @c nPadZero in length (not counting a possible negative sign)
 !>
     FUNCTION str_SLK_pad(i,nPadZero) RESULT(string)
       INTEGER(SLK),INTENT(IN) :: i
@@ -1500,10 +1502,10 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      REQUIRE(nPadZero >= 0)
-
       length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
-      length=length+nPadZero
+      REQUIRE(nPadZero >= length)
+
+      length=nPadZero
       IF(i < 0) THEN
         ALLOCATE(CHARACTER(length+1) :: string)
       ELSE
