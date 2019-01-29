@@ -34,3 +34,5 @@ GEOM
     8 7 6 5
     4 3 2 1
 
+USER_BLOCK USER_CARD str1 20 str2 31 str3 8
+

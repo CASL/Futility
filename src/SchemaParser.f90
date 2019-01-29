@@ -17,16 +17,8 @@
 !> be limited to what may be accomplished using the information
 !> available from a single keyword-value pair.
 !>
-!> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
-!>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
-!>
-!> @author Cole Gentry
-!>   @date 01/14/2019
-!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE SchemaParser
+MODULE SchemaParserModule
 #include "Futility_DBC.h"
   USE Futility_DBC
   USE IntrType
@@ -42,36 +34,27 @@ MODULE SchemaParser
 ! List of public members
   PUBLIC :: eSchemaParser
   PUBLIC :: SchemaParserType
-  PUBLIC :: SINGLE_OCCURRENCE
-  PUBLIC :: MULTPL_OCCURRENCE
+  PUBLIC :: SchemaEntryType
+  PUBLIC :: SCHEMA_SINGLE_OCCURRENCE
+  PUBLIC :: SCHEMA_MULTPL_OCCURRENCE
   PUBLIC :: SCHEMA_ELEMENT_REQUIRED
   PUBLIC :: SCHEMA_ELEMENT_NOT_REQUIRED
-  PUBLIC :: SIK_ENTRY
-  PUBLIC :: SRK_ENTRY
-  PUBLIC :: SBK_ENTRY
-  PUBLIC :: STR_ENTRY
-  PUBLIC :: SIKa1_ENTRY
-  PUBLIC :: SRKa1_ENTRY
-  PUBLIC :: SBKa1_ENTRY
-  PUBLIC :: STRA1_ENTRY
+  PUBLIC :: SCHEMA_SIK_ENTRY
+  PUBLIC :: SCHEMA_SRK_ENTRY
+  PUBLIC :: SCHEMA_SBK_ENTRY
+  PUBLIC :: SCHEMA_STR_ENTRY
+  PUBLIC :: SCHEMA_SIKA1_ENTRY
+  PUBLIC :: SCHEMA_SRKA1_ENTRY
+  PUBLIC :: SCHEMA_SBKA1_ENTRY
+  PUBLIC :: SCHEMA_STRA1_ENTRY
 
   !> Enumerations for the BLOCK TYPES
-  INTEGER(SIK),PARAMETER :: SINGLE_OCCURRENCE=1
-  INTEGER(SIK),PARAMETER :: MULTPL_OCCURRENCE=2
+  INTEGER(SIK),PARAMETER :: SCHEMA_SINGLE_OCCURRENCE=1
+  INTEGER(SIK),PARAMETER :: SCHEMA_MULTPL_OCCURRENCE=2
 
   !> Aliasing of Element requirement
   LOGICAL(SBK),PARAMETER :: SCHEMA_ELEMENT_REQUIRED=.TRUE.
   LOGICAL(SBK),PARAMETER :: SCHEMA_ELEMENT_NOT_REQUIRED=.FALSE.
-
-  !> Enumerations for the ENTRY TYPES
-  INTEGER(SIK),PARAMETER :: SIK_ENTRY=1
-  INTEGER(SIK),PARAMETER :: SRK_ENTRY=2
-  INTEGER(SIK),PARAMETER :: SBK_ENTRY=3
-  INTEGER(SIK),PARAMETER :: STR_ENTRY=4
-  INTEGER(SIK),PARAMETER :: SIKa1_ENTRY=5
-  INTEGER(SIK),PARAMETER :: SRKa1_ENTRY=6
-  INTEGER(SIK),PARAMETER :: SBKa1_ENTRY=7
-  INTEGER(SIK),PARAMETER :: STRA1_ENTRY=8
 
   !> Enumeration for undefined status
   INTEGER(SIK),PARAMETER :: UNDEFINED_TYPE=-1
@@ -80,7 +63,7 @@ MODULE SchemaParser
   INTEGER(SIK),PARAMETER :: UNDEFINED_ELEMENT=-1
 
   !> Name of module
-  CHARACTER(LEN=*),PARAMETER :: modName='SCHEMA_PARSER'
+  CHARACTER(LEN=*),PARAMETER :: modName='SCHEMAPARSER'
 
   !> Max allowed lengths for text file reading
   INTEGER(SIK),PARAMETER :: MAX_ELEMENT_NAME_LEN = 20
@@ -180,6 +163,19 @@ MODULE SchemaParser
       PROCEDURE,PASS :: parse => parseSTRa1_SchEnt
   ENDTYPE SchemaEntrySTRa1Type
 
+  !> Base entry types which are supported by schema parser
+  !> These are used when calling %addEntry to designate
+  !> which entry to instantiate.  Though Public and mutable
+  !> they should ONLY BE USED FOR ADDING ENTRIES!
+  TYPE(SchemaEntrySIKType) :: SCHEMA_SIK_ENTRY
+  TYPE(SchemaEntrySRKType) :: SCHEMA_SRK_ENTRY
+  TYPE(SchemaEntrySBKType) :: SCHEMA_SBK_ENTRY
+  TYPE(SchemaEntrySTRType) :: SCHEMA_STR_ENTRY
+  TYPE(SchemaEntrySIKa1Type) :: SCHEMA_SIKA1_ENTRY
+  TYPE(SchemaEntrySRKa1Type) :: SCHEMA_SRKA1_ENTRY
+  TYPE(SchemaEntrySBKa1Type) :: SCHEMA_SBKA1_ENTRY
+  TYPE(SchemaEntrySTRa1Type) :: SCHEMA_STRA1_ENTRY
+
   !> Type that defines a Element of a schema
   TYPE :: SchemaElementType
     !> element name (as it should appear in the input file)
@@ -233,30 +229,6 @@ MODULE SchemaParser
       !> @copybrief SchemaCardType::addEntry_SchCrd
       !> @copydetails SchemaCardType::addEntry_SchCrd
       PROCEDURE,PRIVATE,PASS :: addEntry => addEntry_SchCrd
-      !> @copybrief SchemaCardType::addEntrySIK_SchCrd
-      !> @copydetails SchemaCardType::addEntrySIK_SchCrd
-      PROCEDURE,PASS :: addEntrySIK => addEntrySIK_SchCrd
-      !> @copybrief SchemaCardType::addEntrySRK_SchCrd
-      !> @copydetails SchemaCardType::addEntrySRK_SchCrd
-      PROCEDURE,PASS :: addEntrySRK => addEntrySRK_SchCrd
-      !> @copybrief SchemaCardType::addEntrySBK_SchCrd
-      !> @copydetails SchemaCardType::addEntrySBK_SchCrd
-      PROCEDURE,PASS :: addEntrySBK => addEntrySBK_SchCrd
-      !> @copybrief SchemaCardType::addEntrySTR_SchCrd
-      !> @copydetails SchemaCardType::addEntrySTR_SchCrd
-      PROCEDURE,PASS :: addEntrySTR => addEntrySTR_SchCrd
-      !> @copybrief SchemaCardType::addEntrySIKa1_SchCrd
-      !> @copydetails SchemaCardType::addEntrySIKa1_SchCrd
-      PROCEDURE,PASS :: addEntrySIKa1 => addEntrySIKa1_SchCrd
-      !> @copybrief SchemaCardType::addEntrySRKa1_SchCrd
-      !> @copydetails SchemaCardType::addEntrySRKa1_SchCrd
-      PROCEDURE,PASS :: addEntrySRKa1 => addEntrySRKa1_SchCrd
-      !> @copybrief SchemaCardType::addEntrySBKa1_SchCrd
-      !> @copydetails SchemaCardType::addEntrySBKa1_SchCrd
-      PROCEDURE,PASS :: addEntrySBKa1 => addEntrySBKa1_SchCrd
-      !> @copybrief SchemaCardType::addEntrySTRa1_SchCrd
-      !> @copydetails SchemaCardType::addEntrySTRa1_SchCrd
-      PROCEDURE,PASS :: addEntrySTRa1 => addEntrySTRa1_SchCrd
       !> @copybrief SchemaCardType::clear_SchCrd
       !> @copydetails SchemaCardType::clear_SchCrd
       PROCEDURE,PASS :: clear => clear_SchCrd
@@ -433,6 +405,7 @@ MODULE SchemaParser
       this%nOccurrences=0
       DO WHILE(.NOT.atEndOfFile(inputFile))
         CALL inputfile%fgetl(line)
+        CALL stripComment(line)
         iline=iline+1
         IF(iline>=sttLine .AND. iline<=stpLine) THEN
           IF(atContentLine(inputFile)) THEN
@@ -488,6 +461,7 @@ MODULE SchemaParser
       readingThisElement=.FALSE.
       DO WHILE(.NOT.atEndOfFile(inputFile))
         CALL inputfile%fgetl(line)
+        CALL stripComment(line)
         iline=iline+1
         IF(iline>stpLine) EXIT
         IF(iline>=sttLine) THEN
@@ -533,7 +507,7 @@ MODULE SchemaParser
       IF(this%nOccurrences==0 .AND. this%isRequired) THEN
         CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Not Defined!') 
         isValid=.FALSE.
-      ELSEIF(this%nOccurrences>1 .AND. this%type==SINGLE_OCCURRENCE) THEN
+      ELSEIF(this%nOccurrences>1 .AND. this%type==SCHEMA_SINGLE_OCCURRENCE) THEN
         CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Defined more than once!') 
         isValid=.FALSE.
       ENDIF
@@ -554,7 +528,7 @@ MODULE SchemaParser
 
       CHARACTER(LEN=1000) ioccurChr
 
-      IF(this%type==SINGLE_OCCURRENCE) THEN
+      IF(this%type==SCHEMA_SINGLE_OCCURRENCE) THEN
         pListPath=pListPath//this%pListPath//'->'
       ELSE
         WRITE(ioccurChr,'(I0)') ioccur
@@ -639,7 +613,7 @@ MODULE SchemaParser
 !> @param this        the schema parser to add the entry to
 !> @param blockName   the name of the block to add the entry to
 !> @param cardName    the name of the card to add the entry to
-!> @param type        occurence type, either single or multi occ
+!> @param type        a defined entry type to be used for parsing
 !> @param pListPath   the parameter list path under which the entry data will be
 !>                    put in the outgoing parameter list
 !>
@@ -647,7 +621,7 @@ MODULE SchemaParser
       CLASS(SchemaParserType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: blockName
       CHARACTER(LEN=*),INTENT(IN) :: cardName
-      INTEGER(SIK),INTENT(IN) :: type
+      CLASS(SchemaEntryType),INTENT(IN) :: type
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: pListPath
 
       TYPE(StringType) :: cardNameStr,blockNameStr,pListPathStr
@@ -689,6 +663,7 @@ MODULE SchemaParser
       !Ensure no line in the input file exceeds the max line limit
       DO WHILE(.NOT.atEndOfFile(inputFile))
         CALL inputfile%fgetl(line)
+        CALL stripComment(line)
         IF(atContentLine(inputFile)) THEN
           IF(LEN(line)>MAX_LINE_LEN) THEN
             WRITE(limit,'(I0)') MAX_LINE_LEN
@@ -754,31 +729,20 @@ MODULE SchemaParser
 !> @param cardName    the name of the card to add the entry to
 !> @param pListPath   the parameter list path under which the entry data will be
 !>                    put in the outgoing parameter list
-!> @param type        occurence type, either single or multi occ
+!> @param type        a defined entry type used for parsing
 !>
     SUBROUTINE addEntry_SchBlk(this,cardName,pListPath,type)
       CLASS(SchemaBlockType),INTENT(INOUT) :: this
       TYPE(StringType),INTENT(IN) :: cardName
       TYPE(StringType),INTENT(IN) :: pListPath
-      INTEGER(SIK),INTENT(IN) :: type
+      CLASS(SchemaEntryType),INTENT(IN) :: type
 
-      LOGICAL(SBK),PARAMETER :: isAnAcceptableEntryType=.FALSE.
       INTEGER(SIK) :: icard
 
       !Add the entry to the card
       icard=findElementByName(this%card,cardName)
       REQUIRE(icard/=UNDEFINED_ELEMENT)
-      SELECTCASE(type)
-        CASE(SIK_ENTRY);  CALL this%card(icard)%addEntrySIK(pListPath)
-        CASE(SRK_ENTRY);  CALL this%card(icard)%addEntrySRK(pListPath)
-        CASE(SBK_ENTRY);  CALL this%card(icard)%addEntrySBK(pListPath)
-        CASE(STR_ENTRY);  CALL this%card(icard)%addEntrySTR(pListPath)
-        CASE(SIKA1_ENTRY);  CALL this%card(icard)%addEntrySIKa1(pListPath)
-        CASE(SRKA1_ENTRY);  CALL this%card(icard)%addEntrySRKa1(pListPath)
-        CASE(SBKA1_ENTRY);  CALL this%card(icard)%addEntrySBKa1(pListPath)
-        CASE(STRA1_ENTRY);  CALL this%card(icard)%addEntrySTRa1(pListPath)
-        CASE DEFAULT;     REQUIRE(isAnAcceptableEntryType);
-      ENDSELECT
+      CALL this%card(icard)%addEntry(pListPath,type)
 
     ENDSUBROUTINE addEntry_SchBlk
 !
@@ -843,19 +807,24 @@ MODULE SchemaParser
 !> @brief Appends the entry to the list of entries owned by the card
 !> @param this    the card to add the entry to
 !> @param entry   the pointer to the entry to be added
+!> @param type    a defined entry type used for parsing
 !>
-    SUBROUTINE addEntry_SchCrd(this,entry)
+    SUBROUTINE addEntry_SchCrd(this,pListPath,type)
       CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(SchemaEntryPtrArryType),INTENT(IN) :: entry
+      TYPE(StringType),INTENT(IN) :: pListPath
+      CLASS(SchemaEntryType),INTENT(IN) :: type
+      
+      TYPE(SchemaEntryPtrArryType) :: entry
 
       TYPE(SchemaEntryPtrArryType),ALLOCATABLE :: preventries(:)
       INTEGER(SIK) :: ientry,nEntries
 
+      ALLOCATE(entry%entryPtr, MOLD=type)
+      entry%entryPtr%pListPath=pListPath
+
       ! Append this card to the list of cards
       nEntries=SIZE(this%entry)
-      ALLOCATE(preventries(nEntries))
-      preventries=this%entry
-      DEALLOCATE(this%entry)
+      CALL MOVE_ALLOC(this%entry,preventries)
       ALLOCATE(this%entry(nEntries+1))
       DO ientry=1,nEntries
         this%entry(ientry)=preventries(ientry)
@@ -901,6 +870,7 @@ MODULE SchemaParser
       ientry=1
       DO WHILE(.NOT.atEndOfFile(inputFile))
         CALL inputfile%fgetl(line)
+        CALL stripComment(line)
         iline=iline+1
         IF(iline>stpLine) EXIT
         IF(iline>=sttLine) THEN
@@ -930,158 +900,6 @@ MODULE SchemaParser
         CALL eSchemaParser%raiseError(modName//'::'//myName//' - Error parsing card '//TRIM(this%name)//'!')
       ENDIF
     ENDSUBROUTINE parse_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an SIK entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySIK_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySIKType :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySIK_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an SRK entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySRK_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySRKType :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySRK_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an SBK entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySBK_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySBKType :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySBK_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an string entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySTR_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySTRType :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySTR_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an SIKa1 entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySIKa1_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySIKa1Type :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySIKa1_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an SRKa1 entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySRKa1_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySRKa1Type :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySRKa1_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an SBKa1 entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySBKa1_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySBKa1Type :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySBKa1_SchCrd
-!
-!-------------------------------------------------------------------------------
-!> @brief Adds an string entry to the card
-!> @param this        the card to add the entry to
-!> @param pListPath   the parameter list path under which the entry data will be
-!>                    put in the outgoing parameter list
-!>
-    SUBROUTINE addEntrySTRa1_SchCrd(this,pListPath)
-      CLASS(SchemaCardType),INTENT(INOUT) :: this
-      TYPE(StringType),INTENT(IN) :: pListPath
-
-      TYPE(SchemaEntryPtrArryType) :: entry
-
-      ALLOCATE(SchemaEntrySTRa1Type :: entry%entryPtr)
-      entry%entryPtr%pListPath=pListPath
-
-      ! Append this card to the list of cards
-      CALL this%addEntry(entry)
-    ENDSUBROUTINE addEntrySTRa1_SchCrd
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine clears the data in Schema Card type variable
@@ -1127,6 +945,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSIK_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSIK_SchEnt'
       CLASS(SchemaEntrySIKType),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1141,8 +960,21 @@ MODULE SchemaParser
       CALL this%addPLPath(pListPath)
 
       !Parse string into SIK
-      IF(.NOT.isScalarEntry(entryStr)) RETURN
-      IF(.NOT.isSIKEntry(entryStr)) RETURN
+      IF(isEmptyEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Entry string contains no entries!')
+        RETURN
+      ENDIF
+      IF(.NOT.isScalarEntry(entryStr)) THEN 
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        RETURN
+      ENDIF
+      IF(.NOT.isSIKEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Expected Integer_SIK entry but provided other data type at "'//TRIM(entryStr)//'"!')
+        RETURN
+      ENDIF
       CALL getField(1,entryStr,entry,ierr)
 
       !Add to parameter list
@@ -1158,6 +990,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSRK_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSRK_SchEnt'
       CLASS(SchemaEntrySRKType),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1172,8 +1005,21 @@ MODULE SchemaParser
       CALL this%addPLPath(pListPath)
 
       !Parse string into SRK
-      IF(.NOT.isScalarEntry(entryStr)) RETURN
-      IF(.NOT.isSRKEntry(entryStr)) RETURN
+      IF(isEmptyEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Entry string contains no entries!')
+        RETURN
+      ENDIF
+      IF(.NOT.isScalarEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        RETURN
+      ENDIF
+      IF(.NOT.isSRKEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Expected Real_SRK entry but provided other data type at "'//TRIM(entryStr)//'"!')
+        RETURN
+      ENDIF
       CALL getField(1,entryStr,entry,ierr)
 
       !Add to parameter list
@@ -1189,6 +1035,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSBK_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSBK_SchEnt'
       CLASS(SchemaEntrySBKType),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1204,8 +1051,21 @@ MODULE SchemaParser
       CALL this%addPLPath(pListPath)
 
       !Parse string into SBK
-      IF(.NOT.isScalarEntry(entryStr)) RETURN
-      IF(.NOT.isSBKEntry(entryStr)) RETURN
+      IF(isEmptyEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Entry string contains no entries!')
+        RETURN
+      ENDIF
+      IF(.NOT.isScalarEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        RETURN
+      ENDIF
+      IF(.NOT.isSBKEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(entryStr)//'"!')
+        RETURN
+      ENDIF
       CALL getField(1,entryStr,entry,ierr)
       CALL toUPPER(entry)
       IF(entry=='TRUE' .OR. entry=='T') THEN
@@ -1227,6 +1087,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSTR_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSTR_SchEnt'
       CLASS(SchemaEntrySTRType),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1241,7 +1102,16 @@ MODULE SchemaParser
       CALL this%addPLPath(pListPath)
 
       !Parse string into STR
-      IF(.NOT.isScalarEntry(entryStr)) RETURN
+      IF(isEmptyEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Entry string contains no entries!')
+        RETURN
+      ENDIF
+      IF(.NOT.isScalarEntry(entryStr)) THEN
+        CALL eSchemaParser%raiseError(modName//'::'//myName// &
+          ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        RETURN
+      ENDIF
       CALL getField(1,entryStr,entry,ierr)
 
       !Add to parameter list
@@ -1257,6 +1127,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSIKa1_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSIKa1_SchEnt'
       CLASS(SchemaEntrySIKa1Type),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1274,7 +1145,11 @@ MODULE SchemaParser
       ALLOCATE(entry(nFields(entryStr)))
       DO ientry=1,nFields(entryStr)
         CALL getField(ientry,entryStr,tmpstr,ierr)
-        IF(.NOT.isSIKEntry(tmpstr)) RETURN
+        IF(.NOT.isSIKEntry(tmpstr)) THEN
+          CALL eSchemaParser%raiseError(modName//'::'//myName// &
+            ' - Expected Integer_SIK entry but provided other data type at "'//TRIM(tmpstr)//'"!')
+          RETURN
+        ENDIF
         CALL getField(1,tmpstr,entry(ientry),ierr)
       ENDDO
 
@@ -1291,6 +1166,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSRKa1_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSRKa1_SchEnt'
       CLASS(SchemaEntrySRKa1Type),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1308,7 +1184,11 @@ MODULE SchemaParser
       ALLOCATE(entry(nFields(entryStr)))
       DO ientry=1,nFields(entryStr)
         CALL getField(ientry,entryStr,tmpstr,ierr)
-        IF(.NOT.isSRKEntry(tmpstr)) RETURN
+        IF(.NOT.isSRKEntry(tmpstr)) THEN
+          CALL eSchemaParser%raiseError(modName//'::'//myName// &
+            ' - Expected Real_SRK entry but provided other data type at "'//TRIM(tmpstr)//'"!')
+          RETURN
+        ENDIF
         CALL getField(1,tmpstr,entry(ientry),ierr)
       ENDDO
 
@@ -1325,6 +1205,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSBKa1_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSBKa1_SchEnt'
       CLASS(SchemaEntrySBKa1Type),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1343,7 +1224,11 @@ MODULE SchemaParser
       ALLOCATE(entrySBK(nFields(entryStr)))
       DO ientry=1,nFields(entryStr)
         CALL getField(ientry,entryStr,entry,ierr)
-        IF(.NOT.isSBKEntry(entry)) RETURN
+        IF(.NOT.isSBKEntry(entry)) THEN
+          CALL eSchemaParser%raiseError(modName//'::'//myName// &
+            ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(entry)//'"!')
+          RETURN
+        ENDIF
         CALL toUPPER(entry)
         IF(entry=='TRUE' .OR. entry=='T') THEN
           entrySBK(ientry)=.TRUE.
@@ -1365,6 +1250,7 @@ MODULE SchemaParser
 !> @param pListPathCrd the card parameter list path
 !>
     SUBROUTINE parseSTRa1_SchEnt(this,entryStr,paramList,pListPathCrd)
+      CHARACTER(LEN=*),PARAMETER :: myName='parseSTRa1_SchEnt'
       CLASS(SchemaEntrySTRa1Type),INTENT(IN) :: this
       CLASS(StringType),INTENT(IN) :: entryStr
       CLASS(ParamType),INTENT(INOUT) :: paramList
@@ -1433,7 +1319,6 @@ MODULE SchemaParser
     FUNCTION atContentLine(file) RESULT(hasContent)
       TYPE(InputFileType),INTENT(IN) :: file
       LOGICAL(SBK) :: hasContent
-      TYPE(StringType) :: line
 
       REQUIRE(file%isOpen())
       hasContent=file%getProbe()/=BANG .AND. file%getProbe() /= DOT
@@ -1442,110 +1327,79 @@ MODULE SchemaParser
 !-------------------------------------------------------------------------------
 !> @brief Checks to see if entry string is empty
 !> @param string   the string to be checked
-!> @param isValid  logical corresponding to if the entry string is empty
+!> @param isEmpty  logical corresponding to if the entry string is empty
 !>
-    FUNCTION isEmptyEntry(string) RESULT(isValid)
-      CHARACTER(LEN=*),PARAMETER :: myName='isEmptyEntry'
+    FUNCTION isEmptyEntry(string) RESULT(isEmpty)
       TYPE(StringType),INTENT(IN) :: string
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isEmpty
 
-      isValid=.FALSE.
-      IF(.NOT.nFields(string)>0) THEN
-        isValid=.TRUE.
-        CALL eSchemaParser%raiseError(modName//'::'//myName// &
-          ' - Entry string contains no entries!')
-      ENDIF
+      isEmpty=.NOT.nFields(string)>0
     ENDFUNCTION isEmptyEntry
 !
 !-------------------------------------------------------------------------------
 !> @brief Checks to ensure a string has a single field (i.e. is scalar value)
 !> @param string   the string to be checked   
-!> @param isValid  logical corresponding to if the string is a scalar
+!> @param isScalar logical corresponding to if the string is a scalar
 !>
-    FUNCTION isScalarEntry(string) RESULT(isValid)
-      CHARACTER(LEN=*),PARAMETER :: myName='isSingleEntry'
+    FUNCTION isScalarEntry(string) RESULT(isScalar)
       TYPE(StringType),INTENT(IN) :: string
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isScalar
 
-      isValid=.NOT.isEmptyEntry(string)
-      IF(nFields(string)>2) THEN
-        isValid=.FALSE.
-        CALL eSchemaParser%raiseError(modName//'::'//myName// &
-          ' - Expected Scalar entry but provided multiple entries at "'//TRIM(string)//'"!')
-      ENDIF
+      isScalar=nFields(string)==1
     ENDFUNCTION isScalarEntry
 !
 !-------------------------------------------------------------------------------
 !> @brief Checks to ensure an entry is a valid SIK entry
 !> @param string   the string to be checked   
-!> @param isValid  logical corresponding to if the string is valid
+!> @param isSIK    logical corresponding to if the string is an SIK
 !>
-    FUNCTION isSIKEntry(string) RESULT(isValid)
-      CHARACTER(LEN=*),PARAMETER :: myName='isSIKEntry'
+    FUNCTION isSIKEntry(string) RESULT(isSIK)
       TYPE(StringType),INTENT(IN) :: string
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isSIK
 
       INTEGER(SIK) :: entry,ioerr
 
       REQUIRE(isScalarEntry(string))
 
-      isValid=.TRUE.
       CALL getField(1,string,entry,ioerr)
-      IF(ioerr/=0) THEN
-        isValid=.FALSE.
-        CALL eSchemaParser%raiseError(modName//'::'//myName// &
-          ' - Expected Integer_SIK entry but provided other data type at "'//TRIM(string)//'"!')
-      ENDIF
+      isSIK=ioerr==0
     ENDFUNCTION isSIKEntry
 !
 !-------------------------------------------------------------------------------
 !> @brief Checks to ensure an entry is a valid SRK entry
-!> @param string   the string to be checked
-!> @param isValid  logical corresponding to if the string is valid
+!> @param string  the string to be checked
+!> @param isSRK   logical corresponding to if the string is an SRK
 !>
-    FUNCTION isSRKEntry(string) RESULT(isValid)
-      CHARACTER(LEN=*),PARAMETER :: myName='isSRKEntry'
+    FUNCTION isSRKEntry(string) RESULT(isSRK)
       TYPE(StringType),INTENT(IN) :: string
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isSRK
 
       REAL(SRK) :: entry
       INTEGER(SIK) :: ioerr
 
       REQUIRE(isScalarEntry(string))
 
-      isValid=.TRUE.
       CALL getField(1,string,entry,ioerr)
-      IF(ioerr/=0) THEN
-        isValid=.FALSE.
-        CALL eSchemaParser%raiseError(modName//'::'//myName// &
-          ' - Expected Real_SRK entry but provided other data type at "'//TRIM(string)//'"!')
-      ENDIF
+      isSRK=ioerr==0
     ENDFUNCTION isSRKEntry
 !
 !-------------------------------------------------------------------------------
 !> @brief Checks to ensure an entry is a valid SBK entry
-!> @param string   the string to be checked
-!> @param isValid  logical corresponding to if the string is valid
+!> @param string  the string to be checked
+!> @param isSBK   logical corresponding to if the string is valid
 !>
-    FUNCTION isSBKEntry(string) RESULT(isValid)
-      CHARACTER(LEN=*),PARAMETER :: myName='isSBKEntry'
+    FUNCTION isSBKEntry(string) RESULT(isSBK)
       TYPE(StringType),INTENT(IN) :: string
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isSBK
 
       TYPE(StringType) :: entry
-      INTEGER(SIK) :: ioerr
 
       REQUIRE(isScalarEntry(string))
 
-      isValid=.TRUE.
       CALL getField(1,string,entry)
       CALL toUPPER(entry)
-      IF(.NOT.(entry=='TRUE' .OR. entry=='T' .OR. entry=='FALSE' .OR. entry=='F')) THEN
-        isValid=.FALSE.
-        CALL eSchemaParser%raiseError(modName//'::'//myName// &
-          ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(string)//'"!')
-      ENDIF
+      isSBK=(entry=='TRUE' .OR. entry=='T' .OR. entry=='FALSE' .OR. entry=='F')
     ENDFUNCTION isSBKEntry
 !
-ENDMODULE SchemaParser
+ENDMODULE SchemaParserModule
 
