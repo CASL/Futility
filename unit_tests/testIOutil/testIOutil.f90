@@ -545,13 +545,17 @@ PROGRAM testIOutil
       !SNK
       ASSERT_EQ(str(2_SNK),'2','str(SNK)')
       ASSERT_EQ(str(-2_SNK),'-2','str(SNK)')
+      ASSERT_EQ(str(375_SNK,9),'000000375','str(SNK,pad)')
       ASSERT_EQ(str(3_SNK,3),'003','str(SNK,pad)')
       ASSERT_EQ(str(-3_SNK,3),'-003','str(SNK,pad)')
+      ASSERT_EQ(str(-375_SNK,9),'-000000375','str(SNK,pad)')
       !SLK
       ASSERT_EQ(str(3_SLK),'3','str(SLK)')
       ASSERT_EQ(str(-3_SLK),'-3','str(SLK)')
+      ASSERT_EQ(str(375_SLK,9),'000000375','str(SLK,pad)')
       ASSERT_EQ(str(3_SLK,3),'003','str(SLK,pad)')
       ASSERT_EQ(str(-3_SLK,3),'-003','str(SLK,pad)')
+      ASSERT_EQ(str(-375_SLK,9),'-000000375','str(SLK,pad)')
       !SSK
       ASSERT_EQ(str(2.5_SSK),'2.5000000E+00','str(SSK)')
       ASSERT_EQ(str(2.5_SSK,2),'2.50E+00','str(SSK,nDecimal)')
