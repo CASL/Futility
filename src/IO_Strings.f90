@@ -16,12 +16,6 @@
 !> CodeCoverageReports "Code Coverage Reports" page. An example of how to use
 !> the routines in this module is provided below and in the test.
 !>
-!> @par Module Dependencies
-!>  - ISO_FORTRAN_ENV
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref Strings "Strings": @copybrief Strings
-!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief Exceptionhandler
-!>
 !> @par EXAMPLES
 !> @code
 !> PROGRAM FileExample
@@ -70,15 +64,11 @@
 !> ENDPROGRAM
 !> @endcode
 !>
-!> @author Brendan Kochunas
-!>   @date 07/05/2011
-!>
-!> @todo
-!>  - Add optional inputs to nFields and getField to specify delimiter symbols
-!>    and repeater symbols.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE IO_Strings
   USE ISO_FORTRAN_ENV
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE Strings
   USE ExceptionHandler
@@ -112,6 +102,7 @@ MODULE IO_Strings
   PUBLIC :: stripComment
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
+  PUBLIC :: str
   !
   !PUBLIC :: charToStringArray
 
@@ -347,6 +338,34 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::SlashRep_c
     MODULE PROCEDURE SlashRep_c
   ENDINTERFACE SlashRep
+
+  !> @brief Generic interface for converting variables to strings
+  INTERFACE str
+    !> @copybrief IO_Strings::str_SNK
+    !> @copydetails IO_Strings::str_SNK
+    MODULE PROCEDURE str_SNK
+    !> @copybrief IO_Strings::str_SNK_pad
+    !> @copydetails IO_Strings::str_SNK_pad
+    MODULE PROCEDURE str_SNK_pad
+    !> @copybrief IO_Strings::str_SLK
+    !> @copydetails IO_Strings::str_SLK
+    MODULE PROCEDURE str_SLK
+    !> @copybrief IO_Strings::str_SLK_pad
+    !> @copydetails IO_Strings::str_SLK_pad
+    MODULE PROCEDURE str_SLK_pad
+    !> @copybrief IO_Strings::str_SSK
+    !> @copydetails IO_Strings::str_SSK
+    MODULE PROCEDURE str_SSK
+    !> @copybrief IO_Strings::str_SSK_nDecimal
+    !> @copydetails IO_Strings::str_SSK_nDecimal
+    MODULE PROCEDURE str_SSK_nDecimal
+    !> @copybrief IO_Strings::str_SDK
+    !> @copydetails IO_Strings::str_SDK
+    MODULE PROCEDURE str_SDK
+    !> @copybrief IO_Strings::str_SDK_nDecimal
+    !> @copydetails IO_Strings::str_SDK_nDecimal
+    MODULE PROCEDURE str_SDK_nDecimal
+  ENDINTERFACE str
 !
 !===============================================================================
   CONTAINS
@@ -1397,48 +1416,199 @@ MODULE IO_Strings
     ENDSUBROUTINE SlashRep_c
 !
 !-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of a character
-!> string to an array of strings
-!> @param dArr the array of strings
-!> @param c the character value
-!    SUBROUTINE charToStringArray(sArr,c)
-!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
-!      TYPE(StringType),INTENT(IN) :: c
-!      CHARACTER(LEN=100) :: tmpStr
-!      TYPE(StringType) :: tmpElt
-!      INTEGER(SIK) :: numElts
-!      INTEGER(SIK) :: i,j,k
+!> @brief Converts an integer to a character
+!> @param i the value to convert
+!> @returns string the string
+!>
+!> Prints with no white space
+!>
+    FUNCTION str_SNK(i) RESULT(string)
+      INTEGER(SNK),INTENT(IN) :: i
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      IF(i < 0) length=length+1
+      ALLOCATE(CHARACTER(length) :: string)
+      WRITE(string,'(i0)') i
+
+    ENDFUNCTION str_SNK
 !
-!      numElts=0
-!      IF(LEN(c) /= 2) THEN
-!        DO i=2,(c%n-1)
-!          IF(c(i) == ',') THEN
-!            numElts=numElts+1
-!          ENDIF
-!        ENDDO
-!        numElts=numElts+1
-!      ENDIF
 !
-!      !Empty array case
-!      IF(numElts == 0) THEN
-!        RETURN
-!      ENDIF
+!-------------------------------------------------------------------------------
+!> @brief Converts an integer to a character and pads with leading 0s
+!> @param i the value to convert
+!> @param nPadZero the number of leading 0s to pad with
+!> @returns string the string
+!>
+!> Prints with no white space and pads with leading 0s so that the string is
+!> @c nPadZero in length (not counting a possible negative sign)
+!>
+    FUNCTION str_SNK_pad(i,nPadZero) RESULT(string)
+      INTEGER(SNK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: nPadZero
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      REQUIRE(nPadZero >= length)
+
+      length=nPadZero
+      IF(i < 0) THEN
+        ALLOCATE(CHARACTER(length+1) :: string)
+      ELSE
+        ALLOCATE(CHARACTER(length) :: string)
+      ENDIF
+      WRITE(string,'(i0.'//str(length)//')') i
+
+    ENDFUNCTION str_SNK_pad
 !
-!      j=0
-!      k=1 !sArr index
-!      ALLOCATE(sArr(numElts))
-!      DO i=2,LEN(c)
-!        IF(c(i) /= ',' .AND. c(i) /= '}') THEN
-!          j=j+1
-!          tmpStr(j:j)=c(i)
-!        ELSE
-!          tmpStr=tmpStr(1:j)
-!          tmpElt=tmpStr
-!          sArr(k:k)=tmpElt
-!          j=0
-!          k=k+1
-!        ENDIF
-!      ENDDO
-!    ENDSUBROUTINE charToStringArray
+!-------------------------------------------------------------------------------
+!> @brief Converts a long integer to a character
+!> @param i the value to convert
+!> @returns string the string
+!>
+!> Prints with no white space
+!>
+    FUNCTION str_SLK(i) RESULT(string)
+      INTEGER(SLK),INTENT(IN) :: i
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      IF(i < 0) length=length+1
+      ALLOCATE(CHARACTER(length) :: string)
+      WRITE(string,'(i0)') i
+
+    ENDFUNCTION str_SLK
+!
+!
+!-------------------------------------------------------------------------------
+!> @brief Converts a long integer to a character and pads with leading 0s
+!> @param i the value to convert
+!> @param nPadZero the number of leading 0s to pad with
+!> @returns string the string
+!>
+!> Prints with no white space and pads with leading 0s so that the string is
+!> @c nPadZero in length (not counting a possible negative sign)
+!>
+    FUNCTION str_SLK_pad(i,nPadZero) RESULT(string)
+      INTEGER(SLK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: nPadZero
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      REQUIRE(nPadZero >= length)
+
+      length=nPadZero
+      IF(i < 0) THEN
+        ALLOCATE(CHARACTER(length+1) :: string)
+      ELSE
+        ALLOCATE(CHARACTER(length) :: string)
+      ENDIF
+      WRITE(string,'(i0.'//str(length)//')') i
+
+    ENDFUNCTION str_SLK_pad
+!
+!-------------------------------------------------------------------------------
+!> @brief Converts a single precision real to a character
+!> @param r the value to convert
+!> @returns string the string
+!>
+!> Prints in scientific notation with no white space.
+!>
+    FUNCTION str_SSK(r) RESULT(string)
+      REAL(SSK),INTENT(IN) :: r
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      IF(r < 0.0_SSK) THEN
+        length=14
+      ELSE
+        length=13
+      ENDIF
+      ALLOCATE(CHARACTER(length) :: string)
+      WRITE(string,'(es'//str(length)//'.7)') r
+
+    ENDFUNCTION str_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Converts a single precision real to a character
+!> @param r the value to convert
+!> @param nDecimal the number of decimal places
+!> @returns string the string
+!>
+!> Prints in scientific notation with the number of decimal places specified by
+!> @c nDecimal and no white space.
+!>
+    FUNCTION str_SSK_nDecimal(r,nDecimal) RESULT(string)
+      REAL(SSK),INTENT(IN) :: r
+      INTEGER(SIK),INTENT(IN) :: nDecimal
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      REQUIRE(nDecimal >= 0)
+
+      length=nDecimal+6
+      IF(r < 0.0_SSK) length=length+1
+      ALLOCATE(CHARACTER(length) :: string)
+      WRITE(string,'(es'//str(length)//'.'//str(nDecimal)//')') r
+
+    ENDFUNCTION str_SSK_nDecimal
+!
+!-------------------------------------------------------------------------------
+!> @brief Converts a double precision real to a character
+!> @param r the value to convert
+!> @returns string the string
+!>
+!> Prints in scientific notation with no white space.
+!>
+    FUNCTION str_SDK(r) RESULT(string)
+      REAL(SDK),INTENT(IN) :: r
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      IF(r < 0.0_SSK) THEN
+        length=22
+      ELSE
+        length=21
+      ENDIF
+      ALLOCATE(CHARACTER(length) :: string)
+      WRITE(string,'(es'//str(length)//'.15)') r
+
+    ENDFUNCTION str_SDK
+!
+!-------------------------------------------------------------------------------
+!> @brief Converts a double precision real to a character
+!> @param r the value to convert
+!> @param nDecimal the number of decimal places
+!> @returns string the string
+!>
+!> Prints in scientific notation with the number of decimal places specified by
+!> @c nDecimal and no white space.
+!>
+    FUNCTION str_SDK_nDecimal(r,nDecimal) RESULT(string)
+      REAL(SDK),INTENT(IN) :: r
+      INTEGER(SIK),INTENT(IN) :: nDecimal
+      CHARACTER(LEN=:),ALLOCATABLE :: string
+      !
+      INTEGER(SIK) :: length
+
+      REQUIRE(nDecimal >= 0)
+
+      length=nDecimal+6
+      IF(r < 0.0_SDK) length=length+1
+      ALLOCATE(CHARACTER(length) :: string)
+      WRITE(string,'(es'//str(length)//'.'//str(nDecimal)//')') r
+
+    ENDFUNCTION str_SDK_nDecimal
 !
 ENDMODULE IO_Strings
