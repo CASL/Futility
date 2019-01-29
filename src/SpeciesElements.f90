@@ -9,27 +9,20 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief Utility module for coverting different forms of elements and isotopes
 !>
-!> This package provides an interface to convert isotope and element character
-!> strings to integer representations and back.  It also provides an interface
-!> to determine if an isotope string is a metastable isotope.  The isotope
-!> string has the atomic symbol and the mass number seperated by a "-" such
-!> as "U-235".  Also, "NAT" can be used for natural isotopes and the mass number
-!> would be 0.  
+!> This package provides an interface to convert a chemical formula into an 
+!> input array for coupling with Thermochimica
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
-!>  - @ref IO_Strings "IO_Strings": @copybrief IO_Strings
+!>  - @ref Strings "Strings": @copybrief Strings
+!>  - @ref ElementsIsotopes "ElementsIsotopes": @copybrief ElementsIsotopes
 !>
 !> @author Zack Taylor
 !>   @date 01/24/19
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE SpeciesElements
-#include "Futility_DBC.h"
-  USE Futility_DBC
   USE IntrType
-  USE ExceptionHandler
   USE Strings
   USE ElementsIsotopes
   IMPLICIT NONE
@@ -41,7 +34,6 @@ MODULE SpeciesElements
   !> Type that converts a given species chemical formula and molar amount
   !! to an array of molar amounts ordered by atomic number 
   TYPE :: SpeciesElementsType 
-
 
   !List of type bound procedures
   CONTAINS
