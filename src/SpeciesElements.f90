@@ -13,7 +13,7 @@
 !> (0:118) size array.
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE SpeciesElements
+MODULE SpeciesElementsModule
   USE IntrType
   USE Strings
   USE ElementsIsotopes
@@ -46,11 +46,11 @@ MODULE SpeciesElements
 !>
    FUNCTION getElementArray(this, formula) RESULT(eleArray)
       CLASS(SpeciesElementsType),INTENT(INOUT) :: this
-      type(StringType), INTENT(IN) :: formula
+      TYPE(StringType), INTENT(IN) :: formula
 
-      REAL(SDK), dimension(0:118) :: eleArray ! Return Value
+      REAL(SRK), dimension(0:118) :: eleArray ! Return Value
       INTEGER(SIK) :: i, Z
-      REAL(SDK) :: coeff
+      REAL(SRK) :: coeff
       CHARACTER(LEN=1) :: letter, nextLetter
       CHARACTER(LEN=2) :: element
       TYPE(ElementsIsotopesType) :: myEI
