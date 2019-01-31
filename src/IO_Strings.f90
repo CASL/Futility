@@ -103,6 +103,9 @@ MODULE IO_Strings
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
   PUBLIC :: str
+  PUBLIC :: isChar
+  PUBLIC :: isCharCap
+  PUBLIC :: isCharLow
   !
   !PUBLIC :: charToStringArray
 
@@ -1537,6 +1540,74 @@ MODULE IO_Strings
       WRITE(string,'(es'//str(length)//'.7)') r
 
     ENDFUNCTION str_SSK
+!> @brief Determines whether a character is in the alphabet using ASCII format
+!> @param letter character to check
+!> @returns isValid logical representing if the letter is an alphabetic 
+!> character
+!>
+   FUNCTION isChar(letter) RESULT(isValid)
+      CHARACTER(LEN=1), INTENT(IN) :: letter
+
+      LOGICAL(SBK) :: isValid
+
+      isValid = isCharCap(letter) .OR. isCharLow(letter)
+
+   ENDFUNCTION isChar 
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a character is capitilized using ASCII format
+!> @param letter character to check
+!> @returns isValid logical representing if the letter is a capital alphabetic 
+!> character
+!>
+   FUNCTION isCharCap(letter) RESULT(isValid)
+      CHARACTER(LEN=1), INTENT(IN) :: letter
+
+      LOGICAL(SBK) :: isValid
+      INTEGER(SIK) :: val
+
+      val = IACHAR(letter)
+
+      isValid = .FALSE.
+      IF (65 <= val .AND. val <= 90) THEN
+         isValid = .TRUE.
+      END IF 
+
+   ENDFUNCTION isCharCap
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a character is lower case using ASCII format
+!> @param letter character to check
+!> @returns isValid logical representing if the letter is a lower alphabetic 
+!> character
+!>
+   FUNCTION isCharLow(letter) RESULT(isValid)
+      CHARACTER(LEN=1), INTENT(IN) :: letter
+
+      LOGICAL(SBK) :: isValid
+      INTEGER(SIK) :: val
+
+      val = IACHAR(letter)
+
+      isValid = .FALSE.
+      IF (97 <= val .AND. val <= 122) THEN
+         isValid = .TRUE.
+      END IF 
+
+   ENDFUNCTION isCharLow
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of strings
+!> @param dArr the array of strings
+!> @param c the character value
+!    SUBROUTINE charToStringArray(sArr,c)
+!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
+!      TYPE(StringType),INTENT(IN) :: c
+!      CHARACTER(LEN=100) :: tmpStr
+!      TYPE(StringType) :: tmpElt
+!      INTEGER(SIK) :: numElts
+!      INTEGER(SIK) :: i,j,k
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts a single precision real to a character

@@ -17,6 +17,7 @@ MODULE SpeciesElementsModule
   USE IntrType
   USE Strings
   USE ElementsIsotopes
+  USE IO_Strings
   IMPLICIT NONE
   PRIVATE
 
@@ -37,6 +38,7 @@ MODULE SpeciesElementsModule
 !> @brief Returns a 0:118 size array with the atomic number index containing
 !> the stoichiometric coefficient in the input formula
 !> @param formula chemical formula
+!> @returns eleArray 0:118 size array  
 !>
    FUNCTION getElementArray(formula) RESULT(eleArray)
       TYPE(StringType), INTENT(IN) :: formula
@@ -81,56 +83,5 @@ MODULE SpeciesElementsModule
          eleArray(Z) = coeff 
       END DO
    ENDFUNCTION  getElementArray
-!
-!-------------------------------------------------------------------------------
-!> @brief Determines whether a character is in the alphabet using ASCII format
-!> @param letter character to check
-!>
-   FUNCTION isChar(letter) RESULT(isValid)
-      CHARACTER(LEN=1), INTENT(IN) :: letter
-
-      LOGICAL(SBK) :: isValid
-
-      isValid = isCharCap(letter) .OR. isCharLow(letter)
-
-   ENDFUNCTION isChar 
-!
-!-------------------------------------------------------------------------------
-!> @brief Determines whether a character is capitilized using ASCII format
-!> @param letter character to check
-!>
-   FUNCTION isCharCap(letter) RESULT(isValid)
-      CHARACTER(LEN=1), INTENT(IN) :: letter
-
-      LOGICAL(SBK) :: isValid
-      INTEGER(SIK) :: val
-
-      val = IACHAR(letter)
-
-      isValid = .FALSE.
-      IF (65 <= val .AND. val <= 90) THEN
-         isValid = .TRUE.
-      END IF 
-
-   ENDFUNCTION isCharCap
-!
-!-------------------------------------------------------------------------------
-!> @brief Determines whether a character is lower case using ASCII format
-!> @param letter character to check
-!>
-   FUNCTION isCharLow(letter) RESULT(isValid)
-      CHARACTER(LEN=1), INTENT(IN) :: letter
-
-      LOGICAL(SBK) :: isValid
-      INTEGER(SIK) :: val
-
-      val = IACHAR(letter)
-
-      isValid = .FALSE.
-      IF (97 <= val .AND. val <= 122) THEN
-         isValid = .TRUE.
-      END IF 
-
-   ENDFUNCTION isCharLow
 !
 ENDMODULE SpeciesElementsModule
