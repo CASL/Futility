@@ -34,8 +34,8 @@ PRIVATE
 !
 ! List of public members
 PUBLIC :: eSchemaParser
-PUBLIC :: SchemaParserType
-PUBLIC :: SchemaEntryType
+PUBLIC :: SchemaParser
+PUBLIC :: SchemaEntry
 PUBLIC :: SCHEMA_SINGLE_OCCURRENCE
 PUBLIC :: SCHEMA_MULTPL_OCCURRENCE
 PUBLIC :: SCHEMA_ELEMENT_REQUIRED
@@ -71,7 +71,7 @@ INTEGER(SIK),PARAMETER :: MAX_ELEMENT_NAME_LEN = 20
 INTEGER(SIK),PARAMETER :: MAX_LINE_LEN = 5000
 
 !> Base Entry Type
-TYPE,ABSTRACT :: SchemaEntryType
+TYPE,ABSTRACT :: SchemaEntry
   !> the Parameter List to write the entry data to
   TYPE(StringType),PRIVATE :: pListPath
   !
@@ -80,87 +80,87 @@ TYPE,ABSTRACT :: SchemaEntryType
     !> @copybrief SchemaCard::addPLPath_SchEnt
     !> @copydetails SchemaCard::addPLPath_SchEnt
     PROCEDURE,PASS :: addPLPath => addPLPath_SchEnt
-    !> @copybrief SchemaEntryType::parse_SchEnt_absintfc
-    !> @copydetails SchemaEntryType::parse_SchEnt_absintfc
+    !> @copybrief SchemaEntry::parse_SchEnt_absintfc
+    !> @copydetails SchemaEntry::parse_SchEnt_absintfc
     PROCEDURE(parse_SchEnt_absintfc),DEFERRED,PASS :: parse
-ENDTYPE SchemaEntryType
+ENDTYPE SchemaEntry
 
 !> Type that is a container so as to have an array of pointers of
 !> Entry types
-TYPE :: SchemaEntryPtrArryType
+TYPE :: SchemaEntryPtrArry
   !> Polymorphic pointer array of assemblies
-  CLASS(SchemaEntryType),POINTER :: entryPtr => NULL()
-ENDTYPE SchemaEntryPtrArryType
+  CLASS(SchemaEntry),POINTER :: entryPtr => NULL()
+ENDTYPE SchemaEntryPtrArry
 
 !> SIK Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySIK
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySIK
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSIK_SchEnt
-    !> @copydetails SchemaEntryType::parseSIK_SchEnt
+    !> @copybrief SchemaEntry::parseSIK_SchEnt
+    !> @copydetails SchemaEntry::parseSIK_SchEnt
     PROCEDURE,PASS :: parse => parseSIK_SchEnt
 ENDTYPE SchemaEntrySIK
 
 !> SRK Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySRK
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySRK
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSRK_SchEnt
-    !> @copydetails SchemaEntryType::parseSRK_SchEnt
+    !> @copybrief SchemaEntry::parseSRK_SchEnt
+    !> @copydetails SchemaEntry::parseSRK_SchEnt
     PROCEDURE,PASS :: parse => parseSRK_SchEnt
 ENDTYPE SchemaEntrySRK
 
 !> SBK Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySBK
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySBK
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSBK_SchEnt
-    !> @copydetails SchemaEntryType::parseSBK_SchEnt
+    !> @copybrief SchemaEntry::parseSBK_SchEnt
+    !> @copydetails SchemaEntry::parseSBK_SchEnt
     PROCEDURE,PASS :: parse => parseSBK_SchEnt
 ENDTYPE SchemaEntrySBK
 
 !> STR Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySTR
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySTR
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSTR_SchEnt
-    !> @copydetails SchemaEntryType::parseSTR_SchEnt
+    !> @copybrief SchemaEntry::parseSTR_SchEnt
+    !> @copydetails SchemaEntry::parseSTR_SchEnt
     PROCEDURE,PASS :: parse => parseSTR_SchEnt
 ENDTYPE SchemaEntrySTR
 
 !> SIKa1 Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySIKa1
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySIKa1
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSIKa1_SchEnt
-    !> @copydetails SchemaEntryType::parseSIKa1_SchEnt
+    !> @copybrief SchemaEntry::parseSIKa1_SchEnt
+    !> @copydetails SchemaEntry::parseSIKa1_SchEnt
     PROCEDURE,PASS :: parse => parseSIKa1_SchEnt
 ENDTYPE SchemaEntrySIKa1
 
 !> SRKa1 Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySRKa1
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySRKa1
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSRKa1_SchEnt
-    !> @copydetails SchemaEntryType::parseSRKa1_SchEnt
+    !> @copybrief SchemaEntry::parseSRKa1_SchEnt
+    !> @copydetails SchemaEntry::parseSRKa1_SchEnt
     PROCEDURE,PASS :: parse => parseSRKa1_SchEnt
 ENDTYPE SchemaEntrySRKa1
 
 !> SBKa1 Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySBKa1
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySBKa1
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSBKa1_SchEnt
-    !> @copydetails SchemaEntryType::parseSBKa1_SchEnt
+    !> @copybrief SchemaEntry::parseSBKa1_SchEnt
+    !> @copydetails SchemaEntry::parseSBKa1_SchEnt
     PROCEDURE,PASS :: parse => parseSBKa1_SchEnt
 ENDTYPE SchemaEntrySBKa1
 
 !> STRa1 Entry Type
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntrySTRa1
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntrySTRa1
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaEntryType::parseSTRa1_SchEnt
-    !> @copydetails SchemaEntryType::parseSTRa1_SchEnt
+    !> @copybrief SchemaEntry::parseSTRa1_SchEnt
+    !> @copydetails SchemaEntry::parseSTRa1_SchEnt
     PROCEDURE,PASS :: parse => parseSTRa1_SchEnt
 ENDTYPE SchemaEntrySTRa1
 
@@ -178,7 +178,7 @@ TYPE(SchemaEntrySBKa1),SAVE :: SCHEMA_SBKA1_ENTRY
 TYPE(SchemaEntrySTRa1),SAVE :: SCHEMA_STRA1_ENTRY
 
 !> Type that defines a Element of a schema
-TYPE :: SchemaElementType
+TYPE :: SchemaElement
   !> element name (as it should appear in the input file)
   TYPE(StringType),PRIVATE :: name
   !> the Parameter List to write the element data to
@@ -200,8 +200,8 @@ TYPE :: SchemaElementType
   !
   !List of type bound procedures
   CONTAINS
-    !> @copybrief SchemaElementType::init_SchElm
-    !> @copydetails SchemaElementType::init_SchElm
+    !> @copybrief SchemaElement::init_SchElm
+    !> @copydetails SchemaElement::init_SchElm
     PROCEDURE,PASS :: init => init_SchElm
     !> @copybrief SchemaCard::hasName_SchElm
     !> @copydetails SchemaCard::hasName_SchElm
@@ -218,12 +218,12 @@ TYPE :: SchemaElementType
     !> @copybrief SchemaCard::addPLPath_SchElm
     !> @copydetails SchemaCard::addPLPath_SchElm
     PROCEDURE,PASS :: addPLPath => addPLPath_SchElm
-ENDTYPE SchemaElementType
+ENDTYPE SchemaElement
 
 !> Type that defines a card of a block
-TYPE,EXTENDS(SchemaElementType) :: SchemaCard
+TYPE,EXTENDS(SchemaElement) :: SchemaCard
   !> The cards defining this block
-  TYPE(SchemaEntryPtrArryType),ALLOCATABLE,PRIVATE :: entry(:)
+  TYPE(SchemaEntryPtrArry),ALLOCATABLE,PRIVATE :: entry(:)
   !
   !List of type bound procedures
   CONTAINS
@@ -239,7 +239,7 @@ TYPE,EXTENDS(SchemaElementType) :: SchemaCard
 ENDTYPE SchemaCard
 
 !> Type that defines a block of a schema
-TYPE,EXTENDS(SchemaElementType) :: SchemaBlock
+TYPE,EXTENDS(SchemaElement) :: SchemaBlock
   !> The cards defining this block
   TYPE(SchemaCard),ALLOCATABLE,PRIVATE :: card(:)
   !
@@ -262,7 +262,7 @@ ENDTYPE SchemaBlock
 
 !> Type that contains a schema described by blocks and cards and uses
 !> this schema to parse a given input into a parameter list
-TYPE :: SchemaParserType
+TYPE :: SchemaParser
   !> Initialization status
   LOGICAL(SBK) :: isInit=.FALSE.
   !> The blocks defining this schema
@@ -290,12 +290,12 @@ TYPE :: SchemaParserType
     !> @copydetails SchemaParser::parse_SchPar
     PROCEDURE,PASS :: parse => parse_SchPar
 
-ENDTYPE SchemaParserType
+ENDTYPE SchemaParser
 
 ABSTRACT INTERFACE
   SUBROUTINE parse_SchEnt_absintfc(this,entryStr,paramList,pListPathCrd)
-    IMPORT :: SchemaEntryType,StringType,ParamType
-    CLASS(SchemaEntryType),INTENT(IN) :: this
+    IMPORT :: SchemaEntry,StringType,ParamType
+    CLASS(SchemaEntry),INTENT(IN) :: this
     CLASS(StringType),INTENT(IN) :: entryStr
     CLASS(ParamType),INTENT(INOUT) :: paramList
     TYPE(StringType),INTENT(IN) :: pListPathCrd
@@ -316,7 +316,7 @@ CONTAINS
 !>
 SUBROUTINE init_SchPar(this)
   CHARACTER(LEN=*),PARAMETER :: myName='init_SchPar'
-  CLASS(SchemaParserType),INTENT(INOUT) :: this
+  CLASS(SchemaParser),INTENT(INOUT) :: this
 
   ALLOCATE(this%block(0))
   this%isInit=.TRUE.
@@ -327,7 +327,7 @@ ENDSUBROUTINE init_SchPar
 !> @param this the type variable to clear
 !>
 SUBROUTINE clear_SchPar(this)
-  CLASS(SchemaParserType),INTENT(INOUT) :: this
+  CLASS(SchemaParser),INTENT(INOUT) :: this
 
   INTEGER(SIK) iblock,nBlocks
 
@@ -350,7 +350,7 @@ ENDSUBROUTINE clear_SchPar
 !> @param required    whether or not the element is required
 !>
 SUBROUTINE init_SchElm(this,name,pListPath,type,required)
-  CLASS(SchemaElementType),INTENT(INOUT) :: this
+  CLASS(SchemaElement),INTENT(INOUT) :: this
   TYPE(StringType),INTENT(IN) :: name
   TYPE(StringType),INTENT(IN) :: pListPath
   INTEGER(SIK),INTENT(IN) :: type
@@ -373,7 +373,7 @@ ENDSUBROUTINE init_SchElm
 !> @param name  the name 
 !>
 FUNCTION hasName_SchElm(this,name) RESULT(hasName)
-  CLASS(SchemaElementType),INTENT(IN) :: this
+  CLASS(SchemaElement),INTENT(IN) :: this
   TYPE(StringType),INTENT(IN) :: name
   LOGICAL(SBK) :: hasName
 
@@ -390,7 +390,7 @@ ENDFUNCTION hasName_SchElm
 !> @param lastField  the last field within the last line to start considering 
 !>
 SUBROUTINE countOccurrences_SchElm(this,inputFile,firstLine,lastLine,firstField,lastField)
-  CLASS(SchemaElementType),INTENT(INOUT) :: this
+  CLASS(SchemaElement),INTENT(INOUT) :: this
   TYPE(InputFileType),INTENT(INOUT) :: inputFile
   INTEGER(SIK),INTENT(IN),OPTIONAL :: firstLine
   INTEGER(SIK),INTENT(IN),OPTIONAL :: lastLine
@@ -445,9 +445,9 @@ ENDSUBROUTINE countOccurrences_SchElm
 !> @param lastField     the last field within the last line to start considering
 !>
 SUBROUTINE determineExtentsWithinTextFile_SchElm(this,inputFile,validElements,firstLine,lastLine,firstField,lastField)
-  CLASS(SchemaElementType),INTENT(INOUT) :: this
+  CLASS(SchemaElement),INTENT(INOUT) :: this
   TYPE(InputFileType),INTENT(INOUT) :: inputFile
-  CLASS(SchemaElementType),INTENT(IN) :: validElements(:)
+  CLASS(SchemaElement),INTENT(IN) :: validElements(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: firstLine
   INTEGER(SIK),INTENT(IN),OPTIONAL :: lastLine
   INTEGER(SIK),INTENT(IN),OPTIONAL :: firstField
@@ -515,7 +515,7 @@ ENDSUBROUTINE determineExtentsWithinTextFile_SchElm
 !>
 FUNCTION nOccurrencesIsValid_SchElm(this) RESULT(isValid)
   CHARACTER(LEN=*),PARAMETER :: myName='nOccurrencesIsValid_SchElm'
-  CLASS(SchemaElementType),INTENT(IN) :: this
+  CLASS(SchemaElement),INTENT(IN) :: this
   LOGICAL(SBK) :: isValid
 
   isValid=.TRUE.
@@ -537,12 +537,12 @@ ENDFUNCTION nOccurrencesIsValid_SchElm
 !>                  if this element type is a multiple occurrence type
 !>
 SUBROUTINE addPLPath_SchElm(this,pListPath,ioccur)
-  CLASS(SchemaElementType),INTENT(IN) :: this
+  CLASS(SchemaElement),INTENT(IN) :: this
   TYPE(StringType),INTENT(INOUT) ::pListPath
   INTEGER(SIK),INTENT(IN) :: ioccur
 
   REQUIRE(ioccur > 0)
-  REQUIRE(ioccur < this%nOccurrences)
+  REQUIRE(ioccur <= this%nOccurrences)
 
   IF(this%occurrenceType == SCHEMA_SINGLE_OCCURRENCE) THEN
     pListPath=pListPath//this%pListPath//'->'
@@ -561,7 +561,7 @@ ENDSUBROUTINE addPLPath_SchElm
 !>                    put in the outgoing parameter list
 !>
 SUBROUTINE addBlock_SchPar(this,blockName,type,required,pListPath)
-  CLASS(SchemaParserType),INTENT(INOUT) :: this
+  CLASS(SchemaParser),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: blockName
   INTEGER(SIK),INTENT(IN) :: type
   LOGICAL(SBK),INTENT(IN) :: required
@@ -602,7 +602,7 @@ ENDSUBROUTINE addBlock_SchPar
 !>                    put in the outgoing parameter list
 !>
 SUBROUTINE addCard_SchPar(this,blockName,cardName,type,required,pListPath)
-  CLASS(SchemaParserType),INTENT(INOUT) :: this
+  CLASS(SchemaParser),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: blockName
   CHARACTER(LEN=*),INTENT(IN) :: cardName
   INTEGER(SIK),INTENT(IN) :: type
@@ -635,10 +635,10 @@ ENDSUBROUTINE addCard_SchPar
 !>                    put in the outgoing parameter list
 !>
 SUBROUTINE addEntry_SchPar(this,blockName,cardName,type,pListPath)
-  CLASS(SchemaParserType),INTENT(INOUT) :: this
+  CLASS(SchemaParser),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: blockName
   CHARACTER(LEN=*),INTENT(IN) :: cardName
-  CLASS(SchemaEntryType),INTENT(IN) :: type
+  CLASS(SchemaEntry),INTENT(IN) :: type
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: pListPath
 
   TYPE(StringType) :: cardNameStr,blockNameStr,pListPathStr
@@ -668,7 +668,7 @@ ENDSUBROUTINE addEntry_SchPar
 !>
 SUBROUTINE parse_SchPar(this,inputFile,paramList)
   CHARACTER(LEN=*),PARAMETER :: myName='parse_SchPar'
-  CLASS(SchemaParserType),INTENT(INOUT) :: this
+  CLASS(SchemaParser),INTENT(INOUT) :: this
   TYPE(InputFileType),INTENT(INOUT) :: inputFile
   TYPE(ParamType),INTENT(INOUT) :: paramList
 
@@ -751,7 +751,7 @@ SUBROUTINE addEntry_SchBlk(this,cardName,pListPath,type)
   CLASS(SchemaBlock),INTENT(INOUT) :: this
   TYPE(StringType),INTENT(IN) :: cardName
   TYPE(StringType),INTENT(IN) :: pListPath
-  CLASS(SchemaEntryType),INTENT(IN) :: type
+  CLASS(SchemaEntry),INTENT(IN) :: type
 
   INTEGER(SIK) :: icard
 
@@ -828,11 +828,11 @@ ENDSUBROUTINE parse_SchBlk
 SUBROUTINE addEntry_SchCrd(this,pListPath,type)
   CLASS(SchemaCard),INTENT(INOUT) :: this
   TYPE(StringType),INTENT(IN) :: pListPath
-  CLASS(SchemaEntryType),INTENT(IN) :: type
+  CLASS(SchemaEntry),INTENT(IN) :: type
   
-  TYPE(SchemaEntryPtrArryType) :: entry
+  TYPE(SchemaEntryPtrArry) :: entry
 
-  TYPE(SchemaEntryPtrArryType),ALLOCATABLE :: preventries(:)
+  TYPE(SchemaEntryPtrArry),ALLOCATABLE :: preventries(:)
   INTEGER(SIK) :: ientry,nEntries
 
   ALLOCATE(entry%entryPtr, SOURCE=type)
@@ -945,7 +945,7 @@ ENDSUBROUTINE clear_SchCrd
 !> @param pListPath the pListPath to append the entry pListPath to
 !>
 SUBROUTINE addPLPath_SchEnt(this,pListPath)
-  CLASS(SchemaEntryType),INTENT(IN) :: this
+  CLASS(SchemaEntry),INTENT(IN) :: this
   TYPE(StringType),INTENT(INOUT) :: pListPath
   TYPE(StringType) :: tmpStr
 
@@ -1302,7 +1302,7 @@ ENDSUBROUTINE parseSTRa1_SchEnt
 !> @param index     the index number of the matching element in the array
 !>
 FUNCTION findElementByName(elements,name) RESULT(index)
-  CLASS(SchemaElementType),INTENT(IN) :: elements(:)
+  CLASS(SchemaElement),INTENT(IN) :: elements(:)
   TYPE(StringType),INTENT(IN) :: name
   INTEGER(SIK) :: index
 

@@ -20,16 +20,16 @@ PRIVATE
 
 PUBLIC :: SCHEMA_DUMMY_ENTRY
 
-TYPE,EXTENDS(SchemaEntryType) :: SchemaEntryDummyType
+TYPE,EXTENDS(SchemaEntry) :: SchemaEntryDummy
   CONTAINS
     PROCEDURE,PASS :: parse => parseDummy_SchEnt
-ENDTYPE SchemaEntryDummyType
+ENDTYPE SchemaEntryDummy
 
-TYPE(SchemaEntryDummyType),SAVE :: SCHEMA_DUMMY_ENTRY
+TYPE(SchemaEntryDummy),SAVE :: SCHEMA_DUMMY_ENTRY
 
 CONTAINS
 SUBROUTINE parseDummy_SchEnt(this,entryStr,paramList,pListPathCrd)
-  CLASS(SchemaEntryDummyType),INTENT(IN) :: this
+  CLASS(SchemaEntryDummy),INTENT(IN) :: this
   CLASS(StringType),INTENT(IN) :: entryStr
   CLASS(ParamType),INTENT(INOUT) :: paramList
   TYPE(StringType),INTENT(IN) :: pListPathCrd
@@ -80,7 +80,7 @@ LOGICAL(SBK),ALLOCATABLE :: valsbka1(:)
 TYPE(StringType),ALLOCATABLE :: valstra1(:)
 LOGICAL(SBK) :: bool
 
-TYPE(SchemaParserType) :: mySP
+TYPE(SchemaParser) :: mySP
 TYPE(ParamType) :: testParam
 TYPE(InputFileType) :: testFile
 
