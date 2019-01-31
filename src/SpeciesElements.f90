@@ -13,7 +13,7 @@
 !> (0:118) size array.
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE SpeciesElements
+MODULE SpeciesElementsModule
   USE IntrType
   USE Strings
   USE ElementsIsotopes
@@ -78,9 +78,6 @@ MODULE SpeciesElements
                   element = letter // nextLetter
                END IF
             END IF
-         ! If the character is lower case then do nothing
-         ELSE IF (this%isCharLow(letter)) THEN
-            CONTINUE 
          ! If not a letter then its a stoichiometrix coefficient
          ELSE
             coeff = letter
@@ -117,7 +114,7 @@ MODULE SpeciesElements
    ENDFUNCTION isChar 
 !
 !-------------------------------------------------------------------------------
-!> @brief Determins whether a character is capitilized using ASCII format
+!> @brief Determines whether a character is capitilized using ASCII format
 !> @param letter character to check
 !>
    FUNCTION isCharCap(this, letter) RESULT(isValid)
@@ -137,7 +134,7 @@ MODULE SpeciesElements
    ENDFUNCTION isCharCap
 !
 !-------------------------------------------------------------------------------
-!> @brief Determins whether a character is lower case using ASCII format
+!> @brief Determines whether a character is lower case using ASCII format
 !> @param letter character to check
 !>
    FUNCTION isCharLow(this, letter) RESULT(isValid)
@@ -156,4 +153,4 @@ MODULE SpeciesElements
 
    ENDFUNCTION isCharLow
 !
-ENDMODULE SpeciesElements
+ENDMODULE SpeciesElementsModule

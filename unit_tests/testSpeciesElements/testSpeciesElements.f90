@@ -17,7 +17,7 @@ PROGRAM testSpeciesElements
   USE UnitTest
   USE IntrType
   USE Strings
-  USE SpeciesElements
+  USE SpeciesElementsModule
   USE ElementsIsotopes
 
   IMPLICIT NONE
