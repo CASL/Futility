@@ -117,7 +117,7 @@ MODULE SpeciesElementsModule
       val = IACHAR(letter)
 
       isValid = .FALSE.
-      IF (65<= val .AND. val<=90) THEN
+      IF (65 <= val .AND. val <= 90) THEN
          isValid = .TRUE.
       END IF 
 
@@ -137,7 +137,7 @@ MODULE SpeciesElementsModule
       val = IACHAR(letter)
 
       isValid = .FALSE.
-      IF (97<= val .AND. val<=122) THEN
+      IF (97 <= val .AND. val <= 122) THEN
          isValid = .TRUE.
       END IF 
 
