@@ -486,7 +486,7 @@ SUBROUTINE determineExtentsWithinTextFile_SchElm(this,inputFile,validElements,fi
         stpField=nFields(line); IF(iline == lstLine) stpField=MIN(lstField,stpField)
         DO ifield=sttField,stpField
           CALL getField(ifield,line,fieldStr)
-          IF(fieldStr==this%name) THEN
+          IF(fieldStr == this%name) THEN
             ioccur=ioccur+1
             this%firstLine(ioccur)=iline
             this%lastLine(ioccur)=iline
@@ -522,7 +522,7 @@ FUNCTION nOccurrencesIsValid_SchElm(this) RESULT(isValid)
   IF(this%nOccurrences == 0 .AND. this%isRequired) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Not Defined!') 
     isValid=.FALSE.
-  ELSEIF(this%nOccurrences > 1 .AND. this%occurrenceType==SCHEMA_SINGLE_OCCURRENCE) THEN
+  ELSEIF(this%nOccurrences > 1 .AND. this%occurrenceType == SCHEMA_SINGLE_OCCURRENCE) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Defined more than once!') 
     isValid=.FALSE.
   ENDIF
@@ -543,8 +543,8 @@ SUBROUTINE addPLPath_SchElm(this,pListPath,ioccur)
 
   CHARACTER(LEN=1000) ioccurChr
 
-  REQUIRE(ioccur>0)
-  REQUIRE(ioccur<this%nOccurrences)
+  REQUIRE(ioccur > 0)
+  REQUIRE(ioccur < this%nOccurrences)
 
   IF(this%occurrenceType == SCHEMA_SINGLE_OCCURRENCE) THEN
     pListPath=pListPath//this%pListPath//'->'
