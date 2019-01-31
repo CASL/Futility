@@ -407,8 +407,8 @@ SUBROUTINE countOccurrences_SchElm(this,inputFile,firstLine,lastLine,firstField,
   IF(PRESENT(firstField)) fstField=firstField; IF(PRESENT(lastField)) lstField=lastField
 
   REQUIRE(inputFile%isOpen())
-  REQUIRE(fstLine >= 0 .AND. sttLine <= lstLine)
-  REQUIRE(fstField >= 0 .AND. sttField <= lstField)
+  REQUIRE(fstLine >= 0 .AND. fstLine <= lstLine)
+  REQUIRE(fstField >= 0 .AND. fstField <= lstField)
 
   iline=0
   this%nOccurrences=0
@@ -464,8 +464,8 @@ SUBROUTINE determineExtentsWithinTextFile_SchElm(this,inputFile,validElements,fi
   IF(PRESENT(firstField)) fstField=firstField; IF(PRESENT(lastField)) lstField=lastField
 
   REQUIRE(inputFile%isOpen())
-  REQUIRE(fstLine >= 0 .AND. sttLine <= lstLine)
-  REQUIRE(fstField >= 0 .AND. sttField <= lstField)
+  REQUIRE(fstLine >= 0 .AND. fstLine <= lstLine)
+  REQUIRE(fstField >= 0 .AND. fstField <= lstField)
 
   IF(ALLOCATED(this%firstLine))  DEALLOCATE(this%firstLine);  ALLOCATE(this%firstLine(this%nOccurrences))
   IF(ALLOCATED(this%lastLine))   DEALLOCATE(this%lastLine);   ALLOCATE(this%lastLine(this%nOccurrences))
@@ -541,16 +541,13 @@ SUBROUTINE addPLPath_SchElm(this,pListPath,ioccur)
   TYPE(StringType),INTENT(INOUT) ::pListPath
   INTEGER(SIK),INTENT(IN) :: ioccur
 
-  CHARACTER(LEN=1000) ioccurChr
-
   REQUIRE(ioccur > 0)
   REQUIRE(ioccur < this%nOccurrences)
 
   IF(this%occurrenceType == SCHEMA_SINGLE_OCCURRENCE) THEN
     pListPath=pListPath//this%pListPath//'->'
   ELSE
-    WRITE(ioccurChr,'(I0)') ioccur
-    pListPath=pListPath//this%pListPath//'_'//TRIM(ioccurChr)//'->'
+    pListPath=pListPath//this%pListPath//'_'//str(ioccur)//'->'
   ENDIF
 ENDSUBROUTINE addPLPath_SchElm
 !
@@ -676,7 +673,6 @@ SUBROUTINE parse_SchPar(this,inputFile,paramList)
   TYPE(ParamType),INTENT(INOUT) :: paramList
 
   TYPE(StringType) line
-  CHARACTER(LEN=6) :: limit
   INTEGER(SIK) :: iblock,ioccur
   
   
@@ -689,9 +685,8 @@ SUBROUTINE parse_SchPar(this,inputFile,paramList)
     CALL stripComment(line)
     IF(atContentLine(inputFile)) THEN
       IF(LEN(line)>MAX_LINE_LEN) THEN
-        WRITE(limit,'(I0)') MAX_LINE_LEN
         CALL eSchemaParser%raiseError(modName//'::'//myName// &
-          ' - "A content line exceeds the max line limit of '//limit//' characters')
+          ' - "A content line exceeds the max line limit of '//str(MAX_LINE_LEN)//' characters')
         RETURN
       ENDIF
     ENDIF
@@ -801,7 +796,6 @@ SUBROUTINE parse_SchBlk(this,inputFile,paramList,ioccurBlk)
   INTEGER(SIK) :: nerr
   INTEGER(SIK) :: icard,ioccur,firstLine,lastLine,firstField,lastField
   TYPE(StringType) :: pListPath
-  CHARACTER(LEN=1000) ioccurChr
   
   nerr=eSchemaParser%getCounter(EXCEPTION_ERROR)
 
@@ -821,8 +815,7 @@ SUBROUTINE parse_SchBlk(this,inputFile,paramList,ioccurBlk)
   ENDDO
 
   IF(eSchemaParser%getCounter(EXCEPTION_ERROR) > nerr) THEN
-    WRITE(ioccurChr,'(I0)') ioccurBlk
-    CALL eSchemaParser%raiseError(modName//'::'//myName//' - Error parsing block '//TRIM(this%name)//' Instance '//TRIM(ioccurChr)//'!')
+    CALL eSchemaParser%raiseError(modName//'::'//myName//' - Error parsing block '//TRIM(this%name)//' Instance '//str(ioccurBlk)//'!')
   ENDIF
 ENDSUBROUTINE parse_SchBlk
 !
@@ -877,7 +870,6 @@ SUBROUTINE parse_SchCrd(this,inputFile,paramList,ioccurCrd,pListPathBlk)
   TYPE(StringType) :: pListPath,line,fieldStr
   INTEGER(SIK) :: ientry,nEntries,iline,ifield
   TYPE(StringType),ALLOCATABLE :: entryStr(:)
-  CHARACTER(LEN=1000) ioccurChr
 
   nerr=eSchemaParser%getCounter(EXCEPTION_ERROR)
 
@@ -925,8 +917,7 @@ SUBROUTINE parse_SchCrd(this,inputFile,paramList,ioccurCrd,pListPathBlk)
   ENDDO
 
   IF(eSchemaParser%getCounter(EXCEPTION_ERROR) > nerr) THEN
-    WRITE(ioccurChr,'(I0)') ioccurCrd
-    CALL eSchemaParser%raiseError(modName//'::'//myName//' - Error parsing card '//TRIM(this%name)//' Instance '//TRIM(ioccurChr)//'!')
+    CALL eSchemaParser%raiseError(modName//'::'//myName//' - Error parsing card '//TRIM(this%name)//' Instance '//str(ioccurCrd)//'!')
   ENDIF
 ENDSUBROUTINE parse_SchCrd
 !
