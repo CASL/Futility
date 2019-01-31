@@ -13,7 +13,7 @@
 !> (0:118) size array.
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE SpeciesElementsModule
+MODULE SpeciesElements
   USE IntrType
   USE Strings
   USE ElementsIsotopes
