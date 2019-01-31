@@ -90,26 +90,16 @@ MODULE SpeciesElementsModule
    ENDFUNCTION  getElementArray
 !
 !-------------------------------------------------------------------------------
-!> @brief Determins whether a character is in the alphabet using ASCII format
+!> @brief Determines whether a character is in the alphabet using ASCII format
 !> @param letter character to check
 !>
    FUNCTION isChar(this, letter) RESULT(isValid)
       CLASS(SpeciesElementsType),INTENT(INOUT) :: this
-      CHARACTER(LEN=*), INTENT(IN) :: letter
+      CHARACTER(LEN=1), INTENT(IN) :: letter
 
       LOGICAL(SBK) :: isValid
-      INTEGER(SIK) :: val
 
-      val = IACHAR(letter)
-
-      isValid = .FALSE.
-      ! Checks against the upper case letters
-      IF (65<= val .AND. val<=90) THEN
-         isValid = .TRUE.
-      ! Checks against the lower case letters
-      ELSE IF  (97<= val .AND. val<=122) THEN
-         isValid = .TRUE.
-      end if 
+      isValid = this%isCharCap(letter) .OR. this%isCharLow(letter)
 
    ENDFUNCTION isChar 
 !
@@ -119,7 +109,7 @@ MODULE SpeciesElementsModule
 !>
    FUNCTION isCharCap(this, letter) RESULT(isValid)
       CLASS(SpeciesElementsType),INTENT(INOUT) :: this
-      CHARACTER(LEN=*), INTENT(IN) :: letter
+      CHARACTER(LEN=1), INTENT(IN) :: letter
 
       LOGICAL(SBK) :: isValid
       INTEGER(SIK) :: val
@@ -139,7 +129,7 @@ MODULE SpeciesElementsModule
 !>
    FUNCTION isCharLow(this, letter) RESULT(isValid)
       CLASS(SpeciesElementsType),INTENT(INOUT) :: this
-      CHARACTER(LEN=*), INTENT(IN) :: letter
+      CHARACTER(LEN=1), INTENT(IN) :: letter
 
       LOGICAL(SBK) :: isValid
       INTEGER(SIK) :: val
