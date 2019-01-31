@@ -20,20 +20,14 @@ MODULE SpeciesElementsModule
   IMPLICIT NONE
   PRIVATE
 
-  ! Member
-  PUBLIC :: SpeciesElementsType
+  !List of Public Members
+  PUBLIC :: getElementArray
 
-  !> Type that converts a given species chemical formula and molar amount
-  !! to an array of molar amounts ordered by atomic number 
-  TYPE :: SpeciesElementsType 
-
-  !List of type bound procedures
-  CONTAINS
-    PROCEDURE,PASS :: getElementArray
-    PROCEDURE,PASS,PRIVATE :: isChar
-    PROCEDURE,PASS,PRIVATE :: isCharCap
-    PROCEDURE,PASS,PRIVATE :: isCharLow
-  ENDTYPE SpeciesElementsType
+  !INTERFACE getElementArray
+  !  !> @copybrief IO_Strings::stripComment_char
+  !  !> @copydetails IO_Strings::stripComment_char
+  !  MODULE PROCEDURE getElementArray
+  !ENDINTERFACE getElementArray
 
 !
 !===============================================================================
@@ -44,8 +38,7 @@ MODULE SpeciesElementsModule
 !> the stoichiometric coefficient in the input formula
 !> @param formula chemical formula
 !>
-   FUNCTION getElementArray(this, formula) RESULT(eleArray)
-      CLASS(SpeciesElementsType),INTENT(INOUT) :: this
+   FUNCTION getElementArray(formula) RESULT(eleArray)
       TYPE(StringType), INTENT(IN) :: formula
 
       REAL(SRK), dimension(0:118) :: eleArray ! Return Value
@@ -62,9 +55,9 @@ MODULE SpeciesElementsModule
          ! Gets the value in the formula
          letter = CHAR(formula,i,i)
          ! Test to see if its a letter         
-         IF (this%isChar(letter)) THEN
+         IF (isChar(letter)) THEN
             ! Test to see if its capital
-            IF (this%isCharCap(letter)) THEN
+            IF (isCharCap(letter)) THEN
                element = letter
                IF (i /= LEN(formula)) THEN
                   ! Gets the next letter to see if its lower or upper.
@@ -74,7 +67,7 @@ MODULE SpeciesElementsModule
                END IF
                ! If its lower case then it needs to be added to the 
                ! current letter
-               IF (this%isCharLow(nextLetter)) THEN
+               IF (isCharLow(nextLetter)) THEN
                   element = letter // nextLetter
                END IF
             END IF
@@ -93,13 +86,12 @@ MODULE SpeciesElementsModule
 !> @brief Determines whether a character is in the alphabet using ASCII format
 !> @param letter character to check
 !>
-   FUNCTION isChar(this, letter) RESULT(isValid)
-      CLASS(SpeciesElementsType),INTENT(INOUT) :: this
+   FUNCTION isChar(letter) RESULT(isValid)
       CHARACTER(LEN=1), INTENT(IN) :: letter
 
       LOGICAL(SBK) :: isValid
 
-      isValid = this%isCharCap(letter) .OR. this%isCharLow(letter)
+      isValid = isCharCap(letter) .OR. isCharLow(letter)
 
    ENDFUNCTION isChar 
 !
@@ -107,8 +99,7 @@ MODULE SpeciesElementsModule
 !> @brief Determines whether a character is capitilized using ASCII format
 !> @param letter character to check
 !>
-   FUNCTION isCharCap(this, letter) RESULT(isValid)
-      CLASS(SpeciesElementsType),INTENT(INOUT) :: this
+   FUNCTION isCharCap(letter) RESULT(isValid)
       CHARACTER(LEN=1), INTENT(IN) :: letter
 
       LOGICAL(SBK) :: isValid
@@ -127,8 +118,7 @@ MODULE SpeciesElementsModule
 !> @brief Determines whether a character is lower case using ASCII format
 !> @param letter character to check
 !>
-   FUNCTION isCharLow(this, letter) RESULT(isValid)
-      CLASS(SpeciesElementsType),INTENT(INOUT) :: this
+   FUNCTION isCharLow(letter) RESULT(isValid)
       CHARACTER(LEN=1), INTENT(IN) :: letter
 
       LOGICAL(SBK) :: isValid
