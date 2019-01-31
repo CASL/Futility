@@ -356,7 +356,6 @@ SUBROUTINE init_SchElm(this,name,pListPath,type,required)
   INTEGER(SIK),INTENT(IN) :: type
   LOGICAL(SBK),INTENT(IN) :: required
 
-  REQUIRE(required == SCHEMA_ELEMENT_REQUIRED .OR. required == SCHEMA_ELEMENT_NOT_REQUIRED)
   REQUIRE(LEN_TRIM(name) > 0)
   REQUIRE(LEN_TRIM(pListPath) > 0)
 
@@ -556,7 +555,9 @@ ENDSUBROUTINE addPLPath_SchElm
 !> @param this        the schema parser to add the block to
 !> @param blockName   the name of the block as it will appear in the input
 !> @param type        occurence type, either single or multi occurrence
-!> @param required    whether or not the block is required`
+!> @param required    whether or not the block is required.  Clients should use
+!>                    SCHEMA_ELEMENT_REQUIRED and SCHEMA_ELEMENT_NOT_REQUIRED
+!>                    when populating this value
 !> @param pListPath   the parameter list path under which the block data will
 !>                    put in the outgoing parameter list
 !>
@@ -597,7 +598,9 @@ ENDSUBROUTINE addBlock_SchPar
 !> @param blockName   the name of the block to add the card to
 !> @param cardName    the name of the card as it will appear in the input
 !> @param type        occurence type, either single or multi occurrence
-!> @param required    whether or not the block is required`
+!> @param required    whether or not the card is required.  Clients should use
+!>                    SCHEMA_ELEMENT_REQUIRED and SCHEMA_ELEMENT_NOT_REQUIRED
+!>                    when populating this value
 !> @param pListPath   the parameter list path under which the card data will be
 !>                    put in the outgoing parameter list
 !>
