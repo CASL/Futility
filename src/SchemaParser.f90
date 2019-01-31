@@ -356,7 +356,7 @@ SUBROUTINE init_SchElm(this,name,pListPath,type,required)
   INTEGER(SIK),INTENT(IN) :: type
   LOGICAL(SBK),INTENT(IN) :: required
 
-  REQUIRE(type == SCHEMA_ELEMENT_REQUIRED .OR. type == SCHEMA_ELEMENT_NOT_REQUIRED)
+  REQUIRE(required == SCHEMA_ELEMENT_REQUIRED .OR. required == SCHEMA_ELEMENT_NOT_REQUIRED)
   REQUIRE(LEN_TRIM(name) > 0)
   REQUIRE(LEN_TRIM(pListPath) > 0)
 
@@ -877,8 +877,8 @@ SUBROUTINE parse_SchCrd(this,inputFile,paramList,ioccurCrd,pListPathBlk)
   fstField=this%firstField(ioccurCrd); lstField=this%lastField(ioccurCrd);
 
   REQUIRE(inputFile%isOpen())
-  REQUIRE(fstLine >= 0 .AND. sttLine <= lstLine)
-  REQUIRE(fstField >= 0 .AND. sttField <= lstField)
+  REQUIRE(fstLine >= 0 .AND. fstLine <= lstLine)
+  REQUIRE(fstField >= 0 .AND. fstField <= lstField)
 
   pListPath=pListPathBlk
   CALL this%addPLPath(pListPath,ioccurCrd)
