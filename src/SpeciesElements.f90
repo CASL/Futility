@@ -10,7 +10,7 @@
 !> @brief Utility module for coverting different forms of elements and isotopes
 !>
 !> This package provides an interface to convert a chemical formula into a
-!> (0:118) size array.
+!> (1:119) size array.
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE SpeciesElementsModule
@@ -29,10 +29,10 @@ MODULE SpeciesElementsModule
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns a 0:118 size array with the atomic number index containing
+!> @brief Returns a 1:119 size array with the atomic number index containing
 !> the stoichiometric coefficient in the input formula
 !> @param formula chemical formula
-!> @returns eleArray 0:118 size array  
+!> @returns eleArray 1:119 size array  
 !>
    FUNCTION getElementArray(formula) RESULT(eleArray)
       TYPE(StringType), INTENT(IN) :: formula
