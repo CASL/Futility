@@ -362,6 +362,14 @@ PROGRAM testIOutil
       CALL toUPPER(tmpStr)
       ASSERT(TRIM(tmpStr) == '239P84UYQH;JNDF:JKDFH./','gibberish (string)')
 
+      COMPONENT_TEST('toLower')
+      string='239p84uyqh;jndf:JKDFH./'
+      CALL toLower(string)
+      ASSERT(TRIM(string) == '239p84uyqh;jndf:jkdfh./','gibberish (char)')
+      tmpStr='239p84uyqh;jndf:JKDFH./'
+      CALL toLower(tmpStr)
+      ASSERT(TRIM(tmpstr) == '239p84uyqh;jndf:jkdfh./','gibberish (string)')
+
       COMPONENT_TEST('getFilePath')
       string='C:\fullpath\dir1\filenoext'
       CALL getFilePath(string,string2)
