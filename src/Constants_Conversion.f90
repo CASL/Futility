@@ -88,6 +88,8 @@ MODULE Constants_Conversion
   REAL(SRK),PUBLIC,PARAMETER :: m2cm=100.0_SRK
   !> Conversion factor from cm to m
   REAL(SRK),PUBLIC,PARAMETER :: cm2m=ONE/m2cm
+  !> Conversion factor from cm to ft
+  REAL(SRK),PUBLIC,PARAMETER :: cm2ft=ONE/30.48_SRK
 
   !Temperature conversions
   !> Conversion factor from Celsius to Kelvin
