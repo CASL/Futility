@@ -24,12 +24,6 @@ MODULE SpeciesElementsModule
   !List of Public Members
   PUBLIC :: getElementArray
 
-  !INTERFACE getElementArray
-  !  !> @copybrief IO_Strings::stripComment_char
-  !  !> @copydetails IO_Strings::stripComment_char
-  !  MODULE PROCEDURE getElementArray
-  !ENDINTERFACE getElementArray
-
 !
 !===============================================================================
   CONTAINS
@@ -43,7 +37,7 @@ MODULE SpeciesElementsModule
    FUNCTION getElementArray(formula) RESULT(eleArray)
       TYPE(StringType), INTENT(IN) :: formula
 
-      REAL(SRK), dimension(0:118) :: eleArray ! Return Value
+      REAL(SRK), DIMENSION(1:119) :: eleArray ! Return Value
       INTEGER(SIK) :: i, Z
       REAL(SRK) :: coeff
       CHARACTER(LEN=1) :: letter, nextLetter

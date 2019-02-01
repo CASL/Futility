@@ -37,7 +37,7 @@ PROGRAM testSpeciesElements
 !-------------------------------------------------------------------------------
    SUBROUTINE testSpeciesElementsBase()
       TYPE(StringType) :: testWord
-      REAL(SRK), DIMENSION(0:118) :: testArray
+      REAL(SRK), DIMENSION(1:119) :: testArray
 
       ! Test H2O
       testWord = 'H2O'
