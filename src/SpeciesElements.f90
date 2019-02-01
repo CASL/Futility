@@ -1,4 +1,3 @@
-
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !                          Futility Development Group                          !
 !                             All rights reserved.                             !
@@ -22,7 +21,7 @@ MODULE SpeciesElementsModule
   PRIVATE
 
   !List of Public Members
-  PUBLIC :: getElementArray
+  PUBLIC :: SpeciesElements_getElementArray
 
 !
 !===============================================================================
@@ -34,7 +33,7 @@ MODULE SpeciesElementsModule
 !> @param formula chemical formula
 !> @returns eleArray 1:119 size array  
 !>
-   FUNCTION getElementArray(formula) RESULT(eleArray)
+   FUNCTION SpeciesElements_getElementArray(formula) RESULT(eleArray)
       TYPE(StringType), INTENT(IN) :: formula
 
       REAL(SRK), DIMENSION(1:119) :: eleArray ! Return Value
@@ -76,6 +75,6 @@ MODULE SpeciesElementsModule
          ! Sets the coeff in the array
          eleArray(Z) = coeff 
       END DO
-   ENDFUNCTION  getElementArray
+   ENDFUNCTION  SpeciesElements_getElementArray
 !
 ENDMODULE SpeciesElementsModule
