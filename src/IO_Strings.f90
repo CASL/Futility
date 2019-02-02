@@ -92,6 +92,7 @@ MODULE IO_Strings
   PUBLIC :: getField
   PUBLIC :: getSubstring
   PUBLIC :: toUPPER
+  PUBLIC :: toLower
   PUBLIC :: strfind
   PUBLIC :: strmatch
   PUBLIC :: strarraymatch
@@ -226,6 +227,19 @@ MODULE IO_Strings
     !> @copydetails IO_Strings::toUPPER_string
     MODULE PROCEDURE toUPPER_string
   ENDINTERFACE toUPPER
+
+  !> @brief Generic interface for toLower
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE toLower
+    !> @copybrief IO_Strings::toLower_char
+    !> @copydetails IO_Strings::toLower_char
+    MODULE PROCEDURE toLower_char
+    !> @copybrief IO_Strings::toLower_string
+    !> @copydetails IO_Strings::toLower_string
+    MODULE PROCEDURE toLower_string
+  ENDINTERFACE toLower
 
   !> @brief Generic interface for nFields
   !>
@@ -631,6 +645,34 @@ MODULE IO_Strings
           word(i:i)=ACHAR(IACHAR(word(i:i))-32)
       ENDDO
     ENDSUBROUTINE toUPPER_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Utility function takes a string and converts all upper case letters to
+!> lower case letters.
+!> @param word input is a string, output has all lower case letters
+!>
+    PURE SUBROUTINE toLower_string(word)
+      TYPE(StringType),INTENT(INOUT) :: word
+      INTEGER(SIK) :: i
+      DO i=1,LEN(word)
+        IF('A' <= word%s(i) .AND. word%s(i) <= 'Z') &
+          word%s(i)=ACHAR(IACHAR(word%s(i))+32)
+      ENDDO
+    ENDSUBROUTINE toLower_string
+!
+!-------------------------------------------------------------------------------
+!> @brief Utility function takes a character array and converts all upper case
+!> letters to lower case letters.
+!> @param word input is a character array, output has all lower case letters
+!>
+    PURE SUBROUTINE toLower_char(word)
+      CHARACTER(LEN=*),INTENT(INOUT) :: word
+      INTEGER(SIK) :: i
+      DO i=1,LEN(word)
+        IF('A' <= word(i:i) .AND. word(i:i) <= 'Z') &
+          word(i:i)=ACHAR(IACHAR(word(i:i))+32)
+      ENDDO
+    ENDSUBROUTINE toLower_char
 !
 !-------------------------------------------------------------------------------
 !> @brief Counts the number of non-blank entries on a line. An "entry" is
