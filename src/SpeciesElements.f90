@@ -43,7 +43,7 @@ MODULE SpeciesElementsModule
       CHARACTER(LEN=2) :: element
       TYPE(ElementsIsotopesType) :: myEI
    
-      myEI%init()
+      CALL myEI%init()
       eleArray = 0.0
 
       DO i=1, LEN(formula)

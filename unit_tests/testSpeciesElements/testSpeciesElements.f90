@@ -33,7 +33,7 @@ PROGRAM testSpeciesElements
       TYPE(StringType) :: testWord
       REAL(SRK), DIMENSION(1:119) :: testArray
 
-      myEI%init()
+      CALL myEI%init()
 
       ! Test H2O
       testWord = 'H2O'
