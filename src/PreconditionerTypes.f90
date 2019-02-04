@@ -87,110 +87,158 @@ MODULE PreconditionerTypes
 
   PUBLIC :: PETSC_PCSHELL_PC
 
+  !> @brief The base preconditioner type
   TYPE,ABSTRACT :: PreConditionerType
+    !> Initialization status
     LOGICAL(SBK) :: isInit=.FALSE.
+    !> Pointer to matrix being preconditioned
     CLASS(MatrixType),POINTER :: A=>NULL()
-
+!
+!List of Type Bound Procedures
     CONTAINS
+      !> Deferred routine for initializing the preconditioner
       PROCEDURE(precond_init_absintfc),DEFERRED,PASS :: init
+      !> Deferred routine for clearing the preconditioner
       PROCEDURE(precond_absintfc),DEFERRED,PASS :: clear
+      !> Deferred routine for seting up the preconditioner
       PROCEDURE(precond_absintfc),DEFERRED,PASS :: setup
+      !> Deferred routine for applying the preconditioner
       PROCEDURE(precond_apply_absintfc),DEFERRED,PASS :: apply
   ENDTYPE PreConditionerType
 
+  !> @brief The extended type for distributed preconditioners
   TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: DistributedPrecond
     !> MPI comm ID
     INTEGER(SIK) :: comm=-1
   ENDTYPE DistributedPrecond
 
+  !> @brief The extended type for LU based preconditioners
   TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: LU_PreCondType
+    !> L matrix
     CLASS(MatrixType),ALLOCATABLE :: L
+    !> U matrix
     CLASS(MatrixType),ALLOCATABLE :: U
+    !> Combined LU matrix
     CLASS(MatrixType),ALLOCATABLE :: LU
-
+!
+!List of Type Bound Procedures
     CONTAINS
+      !> @copybrief MatrixTypes::init_LU_PreCondType
+      !> @copydetails MatrixTypes::init_LU_PreCondType
       PROCEDURE,PASS :: init => init_LU_PreCondType
+      !> @copybrief MatrixTypes::clear_LU_PreCondType
+      !> @copydetails MatrixTypes::clear_LU_PreCondType
       PROCEDURE,PASS :: clear => clear_LU_PreCondType
+      !> Deferred routine for seting up the preconditioner
       PROCEDURE(precond_LU_absintfc),DEFERRED,PASS :: setup
+      !> Deferred routine for applying the preconditioner
       PROCEDURE(precond_applyLU_absintfc),DEFERRED,PASS :: apply
   ENDTYPE LU_PreCondType
 
+  !> @brief The extended type for the ILU preconditioner
   TYPE,EXTENDS(LU_PreCondType) :: ILU_PreCondType
+!
+!List of Type Bound Procedures
     CONTAINS
+      !> @copybrief MatrixTypes::setup_ILU_PreCondType
+      !> @copydetails MatrixTypes::setup_ILU_PreCondType
       PROCEDURE,PASS :: setup => setup_ILU_PreCondType
+      !> @copybrief MatrixTypes::apply_ILU_PreCondType
+      !> @copydetails MatrixTypes::apply_ILU_PreCondType
       PROCEDURE,PASS :: apply => apply_ILU_PreCondType
   ENDTYPE ILU_PreCondType
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !> @brief The extended type for SOR based preconditioners
   TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: SOR_PreCondType
-    !size of the diagonal blocks
+    !> Size of the diagonal blocks
     INTEGER(SIK) :: blockSize
-    !number of diagonal blocks in matrix
+    !> Number of diagonal blocks in matrix
     INTEGER(SIK) :: numBlocks
-    !omega factor for sor
+    !> Omega factor for sor
     REAL(SRK) :: omega
-    !array of LU matrices for each diagonal block, will be dense!
+    !> Array of LU matrices for each diagonal block, will be dense!
     CLASS(MatrixType),ALLOCATABLE :: LU(:)
-    !lower and upper portions of matrix with diagonal blocks removed
+    !> Lower and upper portions of matrix with diagonal blocks removed
     CLASS(MatrixType),ALLOCATABLE :: LpU
-
+!
+!List of Type Bound Procedures
     CONTAINS
-        !initialize procedure
+      !> @copybrief MatrixTypes::init_SOR_PreCondType
+      !> @copydetails MatrixTypes::init_SOR_PreCondType
       PROCEDURE,PASS :: init => init_SOR_PreCondType
-      !clear procedure
+      !> @copybrief MatrixTypes::clear_SOR_PreCondType
+      !> @copydetails MatrixTypes::clear_SOR_PreCondType
       PROCEDURE,PASS :: clear => clear_SOR_PreCondType
+      !> Deferred routine for setting up the preconditioner
       PROCEDURE(precond_SOR_absintfc),DEFERRED,PASS :: setup
+      !> Deferred routine for applying the preconditioner
       PROCEDURE(precond_applySOR_absintfc),DEFERRED,PASS :: apply
   ENDTYPE SOR_PreCondType
 
+  !> @brief The extended type for the RSOR preconditioner
   TYPE,EXTENDS(SOR_PreCondType) :: RSOR_PreCondType
+!
+!List of Type Bound Procedures
     CONTAINS
-      !setup procedure
+      !> @copybrief MatrixTypes::setup_RSOR_PreCondType
+      !> @copydetails MatrixTypes::setup_RSOR_PreCondType
       PROCEDURE,PASS :: setup => setup_RSOR_PreCondType
-      !application procedure
+      !> @copybrief MatrixTypes::apply_RSOR_PreCondType
+      !> @copydetails MatrixTypes::apply_RSOR_PreCondType
       PROCEDURE,PASS :: apply => apply_RSOR_PreCondType
   ENDTYPE RSOR_PreCondType
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !> @brief The extended type for distributed SOR based preconditioners
   TYPE,ABSTRACT,EXTENDS(DistributedPrecond) :: DistributedSOR_PreCondType
-    !size of the diagonal blocks
+    !> Size of the diagonal blocks
     INTEGER(SIK) :: blockSize
-    !number of diagonal blocks in matrix
+    !> Number of diagonal blocks in matrix
     INTEGER(SIK) :: numBlocks
-    !number of blocks assigned to a processor
+    !> Number of blocks assigned to a processor
     INTEGER(SIK) :: myNumBlocks
-    !first block assigned to a processor
+    !> First block assigned to a processor
     INTEGER(SIK) :: myFirstBlock
-    !omega factor for sor
+    !> Omega factor for sor
     REAL(SRK) :: omega
-    !array of LU matrices for each diagonal block, will be dense!
+    !> Array of LU matrices for each diagonal block, will be dense!
     CLASS(MatrixType),ALLOCATABLE :: LU(:)
-    !lower and upper portions of matrix with diagonal blocks removed
+    !> Lower and upper portions of matrix with diagonal blocks removed
     CLASS(MatrixType),ALLOCATABLE :: LpU
-    !Number of elements belonging to each processor
+    !> Number of elements belonging to each processor
     INTEGER(SIK),ALLOCATABLE :: psize(:)
-    !Number of elements belonging to each processor
+    !> Offset for elements belonging to each processor
     INTEGER(SIK),ALLOCATABLE :: pdispl(:)
-
+!
+!List of Type Bound Procedures
     CONTAINS
-        !initialize procedure
+      !> @copybrief MatrixTypes::init_DistributedSOR_PreCondType
+      !> @copydetails MatrixTypes::init_DistributedSOR_PreCondType
       PROCEDURE,PASS :: init => init_DistributedSOR_PreCondType
-      !clear procedure
+      !> @copybrief MatrixTypes::clear_DistributedSOR_PreCondType
+      !> @copydetails MatrixTypes::clear_DistributedSOR_PreCondType
       PROCEDURE,PASS :: clear => clear_DistributedSOR_PreCondType
+      !> Deferred routine for setting up the preconditioner
       PROCEDURE(precond_DistributedSOR_absintfc),DEFERRED,PASS :: setup
+      !> Deferred routine for applying the preconditioner
       PROCEDURE(precond_applyDistributedSOR_absintfc),DEFERRED,PASS :: apply
   ENDTYPE DistributedSOR_PreCondType
 
+  !> @brief The extended type for the distributed RSOR preconditioner
   TYPE,EXTENDS(DistributedSOR_PreCondType) :: DistributedRSOR_PreCondType
+!
+!List of Type Bound Procedures
     CONTAINS
-      !setup procedure
+      !> @copybrief MatrixTypes::setup_DistributedRSOR_PreCondType
+      !> @copydetails MatrixTypes::setup_DistributedRSOR_PreCondType
       PROCEDURE,PASS :: setup => setup_DistributedRSOR_PreCondType
-      !application procedure
+      !> @copybrief MatrixTypes::apply_DistributedRSOR_PreCondType
+      !> @copydetails MatrixTypes::apply_DistributedRSOR_PreCondType
       PROCEDURE,PASS :: apply => apply_DistributedRSOR_PreCondType
   ENDTYPE DistributedRSOR_PreCondType
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+!
+!List of Abstract Interfaces
+  !> Explicitly defines the interface for the init routine of all preconditioner types
+  !> with parameter list
   ABSTRACT INTERFACE
     SUBROUTINE precond_init_absintfc(thisPC,A,params)
         !notice you need to import all necessary types for abstract interfaces
@@ -203,6 +251,7 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE precond_init_absintfc
   ENDINTERFACE
 
+  !> Explicitly defines the interface for the apply routine of all preconditioner types
   ABSTRACT INTERFACE
     SUBROUTINE precond_apply_absintfc(thisPC,v)
       IMPORT :: PreconditionerType,VectorType
@@ -228,7 +277,7 @@ MODULE PreconditionerTypes
       CLASS(VectorType),INTENT(INOUT) :: v
     ENDSUBROUTINE precond_applyDistributedSOR_absintfc
   ENDINTERFACE
-
+  
   ABSTRACT INTERFACE
     SUBROUTINE precond_absintfc(thisPC)
       IMPORT :: PreconditionerType
@@ -256,6 +305,7 @@ MODULE PreconditionerTypes
   !> set enumeration scheme for BILU preconditioners
   INTEGER(SIK),PARAMETER,PUBLIC :: BILU=0,BILUSGS=1
 
+  !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='PreconditionerTypes'
 
   TYPE(ExceptionHandlerType),SAVE :: ePreCondType
@@ -264,10 +314,11 @@ MODULE PreconditionerTypes
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the Linear Solver Type with a parameter list
-!> @param pList the parameter list
+!> @brief Initializes the LU Preconditioner Type with a parameter list
+!> @param params The parameter list
+!> @param thisPC The preconditioner to act on
+!> @param A The matrix to precondition
 !>
-!> @param solver The linear solver to act on
     SUBROUTINE init_LU_PreCondtype(thisPC,A,params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
       CLASS(LU_PrecondType),INTENT(INOUT) :: thisPC
@@ -353,10 +404,9 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE init_LU_PreCondtype
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the Linear Solver Type with a parameter list
-!> @param pList the parameter list
+!> @brief Clears the LU Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
 !>
-!> @param solver The linear solver to act on
     SUBROUTINE clear_LU_PreCondtype(thisPC)
       CLASS(LU_PrecondType),INTENT(INOUT) :: thisPC
 
@@ -369,10 +419,10 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE clear_LU_PreCondtype
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the Linear Solver Type with a parameter list
-!> @param pList the parameter list
+!> @brief Applies the ILU Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!> @param v The matrix to apply the preconditioner to
 !>
-!> @param solver The linear solver to act on
     SUBROUTINE apply_ILU_PreCondType(thisPC,v)
       CLASS(ILU_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
@@ -402,10 +452,9 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE apply_ILU_PreCondType
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the Linear Solver Type with a parameter list
-!> @param pList the parameter list
+!> @brief Sets up the ILU Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
 !>
-!> @param solver The linear solver to act on
     SUBROUTINE setup_ILU_PreCondtype(thisPC)
       CLASS(ILU_PrecondType),INTENT(INOUT) :: thisPC
 
@@ -474,37 +523,13 @@ MODULE PreconditionerTypes
         ENDIF
       ENDIF
     ENDSUBROUTINE setup_ILU_PreCondtype
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !-------------------------------------------------------------------------------
-! RSOR preconditioner initializer
+!> @brief Intializes up the SOR Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!> @param A The matrix to precondition
+!> @param params The parameter list
+!>
     SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_RSOR_PreCondType'
       CLASS(SOR_PrecondType),INTENT(INOUT) :: thisPC
@@ -513,6 +538,7 @@ MODULE PreconditionerTypes
       TYPE(ParamType)::PListMat_LU
       INTEGER(SIK)::k
       
+      !required statuses
       REQUIRE(.NOT. thisPC%isinit)
       REQUIRE(PRESENT(A))
       REQUIRE(ALLOCATED(A))
@@ -582,7 +608,9 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE init_SOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
-! clears the rsor preconditioner
+!> @brief Clears up the SOR Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!>
     SUBROUTINE clear_SOR_PreCondtype(thisPC)
       CLASS(SOR_PrecondType),INTENT(INOUT) :: thisPC
       INTEGER(SIK)::i
@@ -603,7 +631,9 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE clear_SOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
-! Sets up RSOR preconditioner
+!> @brief Sets up the RSOR Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!>
     SUBROUTINE setup_RSOR_PreCondtype(thisPC)
       CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
       CHARACTER(LEN=*),PARAMETER :: myName='setup_RSOR_PreCondType'
@@ -642,7 +672,10 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE setup_RSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
-! no real comments yet
+!> @brief Applies up the RSOR Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!> @param v The vector to apply the preconditioner to to act on
+!>
     SUBROUTINE apply_RSOR_PreCondType(thisPC,v)
       CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
@@ -667,6 +700,7 @@ MODULE PreconditionerTypes
         CLASS IS(RealVectorType)
             w(3)%b=v%b
             
+            !solves the L and U problems for each block
             DO k=1,thisPC%numBlocks
               SELECTTYPE(mat => thisPC%LU(k))
                 CLASS IS(DenseSquareMatrixType)
@@ -675,6 +709,7 @@ MODULE PreconditionerTypes
               ENDSELECT
             END DO
             
+            !multiply
             SELECTTYPE(LpU => thisPC%LpU)
                 CLASS IS(BandedMatrixType)
                     CALL LpU%matvec(w(2)%b,tempw%b)
@@ -684,6 +719,8 @@ MODULE PreconditionerTypes
                         &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
             ENDSELECT
             
+            
+            !solves the L and U problems for each block
             DO k=1,thisPC%numBlocks
               SELECTTYPE(mat => thisPC%LU(k))
                 CLASS IS(DenseSquareMatrixType)
@@ -699,165 +736,12 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE apply_RSOR_PreCondType
 !
 !-------------------------------------------------------------------------------
-! Doolittle algorithm for LU decomposition
-! Does it for all diagonal blocks
-    SUBROUTINE doolittle_LU_RSOR(thisLU)
-      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
-      CHARACTER(LEN=*),PARAMETER :: myName='doolittle_LU_RSOR'
-      INTEGER(SIK)::k,i,j,l
-      REAL(SRK)::Ltemp(thisLU%n,thisLU%n),Utemp(thisLU%n,thisLU%n)
-      
-      !these need to be 0 at start since they accumulate
-      Utemp(:,:)=0
-      Ltemp(:,:)=0
-      !this does the actual LU decomposition on each block
-      DO i=1,thisLU%n
-        DO j=1,thisLU%n
-            CALL thisLU%get(i,j,Utemp(i,j))
-            DO k=1,i-1
-                Utemp(i,j)=Utemp(i,j)-Ltemp(i,k)*Utemp(k,j)
-            END DO
-        END DO
-        DO j=i+1,thisLU%n
-            CALL thisLU%get(j,i,Ltemp(j,i))
-            DO k=1,i-1
-                Ltemp(j,i)=Ltemp(j,i)-Ltemp(j,k)*Utemp(k,i)
-            END DO
-            Ltemp(j,i)=Ltemp(j,i)/Utemp(i,i)
-        END DO
-        Ltemp(i,i)=0
-      END DO
-      !set the block now to the new L in the lower and U in the upper
-      !L is always 1 on diagonals, so set diagonals to U values
-      DO i=1,thisLU%n
-        DO j=i,thisLU%n
-            CALL thisLU%set(i,j,Utemp(i,j))
-        END DO
-      END DO
-      DO i=2,thisLU%n
-        DO j=1,i-1
-            CALL thisLU%set(i,j,Ltemp(i,j))
-        END DO
-      END DO
-    ENDSUBROUTINE doolittle_LU_RSOR
-!
-!-------------------------------------------------------------------------------
-! Solving L matrix system
-    SUBROUTINE RSORsolveL(thisLU,b,x,k)
-      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
-      CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveL'
-      TYPE(RealVectorType),INTENT(INOUT)::b
-      TYPE(RealVectorType),INTENT(INOUT)::x
-      INTEGER(SIK),INTENT(IN)::k
-      INTEGER(SIK)::i,j
-      REAL(SRK)::tempreal(3)
-      
-      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
-      DO i=1,thisLU%n
-          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
-          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
-          DO j=1,i-1
-              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
-              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
-              CALL thisLU%get(i,j,tempreal(3))
-              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
-          END DO
-      END DO
-      
-    ENDSUBROUTINE RSORsolveL
-!
-!-------------------------------------------------------------------------------
-! Solves U matrix system
-    SUBROUTINE RSORsolveU(thisLU,b,x,k)
-      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
-      CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveU'
-      TYPE(RealVectorType),INTENT(INOUT)::b
-      TYPE(RealVectorType),INTENT(INOUT)::x
-      INTEGER(SIK),INTENT(IN)::k
-      INTEGER(SIK)::i,j
-      REAL(SRK)::tempreal(3)
-      
-      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
-      DO i=thisLU%n,1,-1
-          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
-          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
-          DO j=thisLU%n,i+1,-1
-              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
-              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
-              CALL thisLU%get(i,j,tempreal(3))
-              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
-          END DO
-          CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
-          CALL thisLU%get(i,i,tempreal(2))
-          CALL x%setone((k-1)*thisLU%n+i,tempreal(1)/tempreal(2))
-      END DO
-        
-    ENDSUBROUTINE RSORsolveU
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-!-------------------------------------------------------------------------------
-! RSOR preconditioner initializer
+!> @brief Intializes up the Distributed SOR Preconditioner Type with a parameter
+!> list
+!> @param thisPC The preconditioner to act on
+!> @param A The matrix to precondition
+!> @param params The parameter list
+!>
     SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
 #ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='init_RSOR_PreCondType'
@@ -938,7 +822,9 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE init_DistributedSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
-! clears the rsor preconditioner
+!> @brief Clears the Distributed SOR Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!>
     SUBROUTINE clear_DistributedSOR_PreCondtype(thisPC)
       CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
       INTEGER(SIK)::i
@@ -959,7 +845,9 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE clear_DistributedSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
-! Sets up RSOR preconditioner
+!> @brief Sets up the Distributed RSOR Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!>
     SUBROUTINE setup_DistributedRSOR_PreCondtype(thisPC)
       CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
       CHARACTER(LEN=*),PARAMETER :: myName='setup_RSOR_PreCondType'
@@ -1009,7 +897,10 @@ MODULE PreconditionerTypes
     ENDSUBROUTINE setup_DistributedRSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
-! no real comments yet
+!> @brief Applies up the RSOR Preconditioner Type with a parameter list
+!> @param thisPC The preconditioner to act on
+!> @param v The vector to apply the preconditioner to to act on
+!>
     SUBROUTINE apply_DistributedRSOR_PreCondType(thisPC,v)
       CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
@@ -1077,40 +968,117 @@ MODULE PreconditionerTypes
             ' - Vector type is not support by this PreconditionerType.')
       ENDSELECT
     ENDSUBROUTINE apply_DistributedRSOR_PreCondType
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!-------------------------------------------------------------------------------
+!> @brief Does LU factorization on a matrix using the Doolittle Algorithm with 
+!> parameters
+!> @param thisLU The matrix to perform the factorization on. On completion of 
+!> the factorization this matrix then holds both the L and U matrices. The L 
+!> matrix has 1s on the diagonal, so the diagonal of the matrix coming out has
+!> the diagonals of of the U matrix
+!>
+    SUBROUTINE doolittle_LU_RSOR(thisLU)
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
+      CHARACTER(LEN=*),PARAMETER :: myName='doolittle_LU_RSOR'
+      INTEGER(SIK)::k,i,j,l
+      REAL(SRK)::Ltemp(thisLU%n,thisLU%n),Utemp(thisLU%n,thisLU%n)
+      
+      !these need to be 0 at start since they accumulate
+      Utemp(:,:)=0
+      Ltemp(:,:)=0
+      !this does the actual LU decomposition on each block
+      DO i=1,thisLU%n
+        DO j=1,thisLU%n
+            CALL thisLU%get(i,j,Utemp(i,j))
+            DO k=1,i-1
+                Utemp(i,j)=Utemp(i,j)-Ltemp(i,k)*Utemp(k,j)
+            END DO
+        END DO
+        DO j=i+1,thisLU%n
+            CALL thisLU%get(j,i,Ltemp(j,i))
+            DO k=1,i-1
+                Ltemp(j,i)=Ltemp(j,i)-Ltemp(j,k)*Utemp(k,i)
+            END DO
+            Ltemp(j,i)=Ltemp(j,i)/Utemp(i,i)
+        END DO
+        Ltemp(i,i)=0
+      END DO
+      !set the block now to the new L in the lower and U in the upper
+      !L is always 1 on diagonals, so set diagonals to U values
+      DO i=1,thisLU%n
+        DO j=i,thisLU%n
+            CALL thisLU%set(i,j,Utemp(i,j))
+        END DO
+      END DO
+      DO i=2,thisLU%n
+        DO j=1,i-1
+            CALL thisLU%set(i,j,Ltemp(i,j))
+        END DO
+      END DO
+    ENDSUBROUTINE doolittle_LU_RSOR
+!
+!-------------------------------------------------------------------------------
+!> @brief Solve a problem of Lx=b with parameters
+!> @param thisLU The L matrix.
+!> @param b The right side of the system
+!> @param x The vector being solved for 
+!> @param k The offset for the portion of the vector being solved for
+!>
+    SUBROUTINE RSORsolveL(thisLU,b,x,k)
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
+      CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveL'
+      TYPE(RealVectorType),INTENT(INOUT)::b
+      TYPE(RealVectorType),INTENT(INOUT)::x
+      INTEGER(SIK),INTENT(IN)::k
+      INTEGER(SIK)::i,j
+      REAL(SRK)::tempreal(3)
+      
+      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      DO i=1,thisLU%n
+          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
+          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
+          DO j=1,i-1
+              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
+              CALL thisLU%get(i,j,tempreal(3))
+              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
+          END DO
+      END DO
+      
+    ENDSUBROUTINE RSORsolveL
+!
+!-------------------------------------------------------------------------------
+!> @brief Solve a problem of Ux=b with parameters
+!> @param thisLU The U matrix.
+!> @param b The right side of the system
+!> @param x The vector being solved for
+!> @param k The offset for the portion of the vector being solved for
+!>
+    SUBROUTINE RSORsolveU(thisLU,b,x,k)
+      CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
+      CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveU'
+      TYPE(RealVectorType),INTENT(INOUT)::b
+      TYPE(RealVectorType),INTENT(INOUT)::x
+      INTEGER(SIK),INTENT(IN)::k
+      INTEGER(SIK)::i,j
+      REAL(SRK)::tempreal(3)
+      
+      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      DO i=thisLU%n,1,-1
+          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
+          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
+          DO j=thisLU%n,i+1,-1
+              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
+              CALL thisLU%get(i,j,tempreal(3))
+              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
+          END DO
+          CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+          CALL thisLU%get(i,i,tempreal(2))
+          CALL x%setone((k-1)*thisLU%n+i,tempreal(1)/tempreal(2))
+      END DO
+        
+    ENDSUBROUTINE RSORsolveU
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the matrix multiplication where the diagonal matrix is on the left
