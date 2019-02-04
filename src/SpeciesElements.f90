@@ -42,7 +42,8 @@ MODULE SpeciesElementsModule
       CHARACTER(LEN=1) :: letter, nextLetter
       CHARACTER(LEN=2) :: element
       TYPE(ElementsIsotopesType) :: myEI
-
+   
+      myEI%init()
       eleArray = 0.0
 
       DO i=1, LEN(formula)

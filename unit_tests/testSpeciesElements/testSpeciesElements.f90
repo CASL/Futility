@@ -33,6 +33,8 @@ PROGRAM testSpeciesElements
       TYPE(StringType) :: testWord
       REAL(SRK), DIMENSION(1:119) :: testArray
 
+      myEI%init()
+
       ! Test H2O
       testWord = 'H2O'
       testArray = SpeciesElements_getElementArray(testWord)
