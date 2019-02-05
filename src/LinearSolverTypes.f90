@@ -79,6 +79,7 @@ MODULE LinearSolverTypes
 #ifdef FUTILITY_HAVE_Trilinos
   USE ForTeuchos_ParameterList
 #endif
+
   IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -90,6 +91,9 @@ MODULE LinearSolverTypes
 #endif
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
+#endif
+#ifdef HAVE_MPI
+#include <mpif.h>
 #endif
 
   PRIVATE
@@ -1260,7 +1264,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      REAL(SRK),INTENT(IN) :: X0(:)
+      REAL(SRK),POINTER,INTENT(IN) :: X0(:)
       INTEGER(SIK) :: i
 
       IF(solver%isInit) THEN
@@ -1685,7 +1689,7 @@ MODULE LinearSolverTypes
           IF (ABS(phibar) <= tol) EXIT
 
           ! If not, set up the restart:
-          CALL solver%setX0(u%b)
+          CALL BLAS_axpy(u,solver%x)
           CALL solver%getResidual(u)
           CALL LNorm(u%b,2,beta)
         ENDDO
@@ -1812,7 +1816,7 @@ MODULE LinearSolverTypes
           IF (ABS(phibar) <= tol) EXIT
 
           ! If not, set up the restart:
-          CALL solver%setX0(u%b)
+          CALL BLAS_axpy(u,solver%x)
           CALL solver%getResidual(u)
           CALL LNorm(u%b,2,beta)
         ENDDO
@@ -1852,8 +1856,9 @@ MODULE LinearSolverTypes
 
       REAL(SRK)  :: beta,h,t,phibar,temp,tol,acc
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:),b(:)
+      INTEGER(SIK),ALLOCATABLE :: storageCount(:), offsetVals(:)
       TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx,itOuter
+      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx,itOuter,mpierr
       TYPE(MPI_EnvType) :: parEnv
       TYPE(ParamType) :: pList
 
@@ -1866,51 +1871,62 @@ MODULE LinearSolverTypes
       ! We will split up v and w over the long index (with length n)
       ! Extract MPI communicator and determine our indices:
       parEnv = solver%MPIparallelEnv
-      IF(parEnv%rank < MOD(n,parenv%nproc)) THEN
-        lowIdx = (parEnv%rank)*(n/parEnv%nproc + 1) + 1
-        highIdx = lowIdx + n/parEnv%nproc
-      ELSE
-        lowIdx = (parEnv%rank)*(n/parEnv%nproc) + MOD(n,parEnv%nproc) + 1
-        highIdx = lowIdx + n/parEnv%nproc - 1
-      ENDIF
+      !IF(parEnv%rank < MOD(n,parenv%nproc)) THEN
+      !  lowIdx = (parEnv%rank)*(n/parEnv%nproc + 1) + 1
+      !  highIdx = lowIdx + n/parEnv%nproc
+      !ELSE
+      !  lowIdx = (parEnv%rank)*(n/parEnv%nproc) + MOD(n,parEnv%nproc) + 1
+      !  highIdx = lowIdx + n/parEnv%nproc - 1
+      !ENDIF
 
-      !> TODO: Set up residual so that it is striped over procs.
+      ! Build map of which data is stored where
+      ALLOCATE(storageCount(parEnv%nproc))
+      ALLOCATE(offsetVals(parEnv%nproc))
+      DO it=1,parEnv%nproc
+        IF (it <= MOD(n,parenv%nproc)) THEN
+          storageCount(it) = n/parEnv%nproc + 1
+        ELSE
+          storageCount(it) = n/parEnv%nproc
+        END IF
+        IF (it == 1) THEN
+          offsetVals(it) = 0
+        ELSE
+          offsetVals(it) = offsetVals(it-1) + storageCount(it-1)
+        END IF
+      END DO
+      ! Determine our indices:
+      lowIdx = offsetVals(parEnv%rank+1) + 1
+      highIdx = lowIdx + storageCount(parEnv%rank+1) - 1
+
       CALL u%init(pList)
       CALL pList%clear()
       CALL solver%getResidual(u)
-
       !>TODO: Enable Preconditioner
       !CALL PreCondType%apply(u)
-      beta = 0.0_SRK
-      DO it=1,(highIdx - lowIdx + 1)
-        beta = beta + u%b(it)*u%b(it)
-      ENDDO
+
+      beta = BLAS_dot(highIdx - lowIdx + 1,u%b(lowIdx:highIdx),1,u%b(lowIdx:highIdx),1)
       CALL parenv%allReduce_scalar(beta)
       beta = sqrt(beta)
-      solver%iters=0
 
+      solver%iters=0
       IF(beta > EPSILON(0.0_SRK)) THEN
-        ALLOCATE(v(highIdx - lowIdx + 1,m+1))
+        ALLOCATE(v(n,m+1))
         ALLOCATE(R(m+1,m+1))
-        ALLOCATE(w(highIdx - lowIdx + 1))
+        ALLOCATE(w(n))
         ALLOCATE(c(m+1))
         ALLOCATE(s(m+1))
         ALLOCATE(g(m+1))
         ALLOCATE(y(m+1))
-        ALLOCATE(b(highIdx - lowIdx + 1))
 
-        !> TODO: Fix v(:,1) being initialized to garbage
         tol=solver%absConvTol*beta
-        v(:,1)=-b/beta
-        h=beta
-        phibar=beta
+
 #ifdef FUTILITY_DEBUG_MSG
         IF(parenv%rank==0) THEN
           WRITE(668,*) '         PGMRES-LP',0,ABS(phibar)
         ENDIF
 #endif
         !Iterate on solution
-        DO itOuter=1,solver%maxIters
+        DO itOuter=1,solver%maxIters/solver%nRestart + 1
           v(:,:)=0._SRK
           R(:,:)=0._SRK
           w(:)=0._SRK
@@ -1918,39 +1934,41 @@ MODULE LinearSolverTypes
           s(:)=0._SRK
           g(:)=0._SRK
           y(:)=0._SRK
-          b(:)=u%b(lowIdx:highIdx)
-          DO it=1,m
-            !> TODO: Parallelize vector multiplication w/function call
-            CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
 
+          v(:,1)=-u%b/beta
+          phibar=beta
+
+          DO it=1,m
+            ! Must be done in full on every processor
+            CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
             !> TODO: Enable preconditioner
             !u%b(lowIdx:highIdx)=w
             !CALL solver%PreCondType%apply(u)
             !w=u%b
 
-            h=BLAS_dot(n,w,1,v(:,1),1)
+            h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,1),1)
             CALL parEnv%allReduce_scalar(h)
-            w=w-h*v(:,1)
+
+            w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,1)
             t=h
 
             DO k=2,it
-              h=BLAS_dot(n,w,1,v(:,k),1)
+              h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,k),1)
               CALL parEnv%allReduce_scalar(h)
-              w=w-h*v(:,k)
-
+              w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,k)
               R(k-1,it)=c(k-1)*t+s(k-1)*h
               t=c(k-1)*h-s(k-1)*t
             ENDDO
 
-            h = 0.0_SRK
-            DO k=1,(highIdx - lowIdx + 1)
-              h = h + w(k)*w(k)
-            ENDDO
+            h = BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,w(lowIdx:highIdx),1)
             CALL parEnv%allReduce_scalar(h)
             h = sqrt(h)
 
             IF(h > 0.0_SRK) THEN
-              v(:,it+1)=w/h
+              v(lowIdx:highIdx,it+1)=w(lowIdx:highIdx)/h
+              CALL MPI_Allgatherv(MPI_IN_PLACE,n ,MPI_DOUBLE_PRECISION, &
+                v(:,it+1),storageCount,offsetVals,MPI_DOUBLE_PRECISION, &
+                parEnv%comm,mpierr)
             ELSE
               v(:,it+1)=0.0_SRK*w
             ENDIF
@@ -1976,29 +1994,28 @@ MODULE LinearSolverTypes
           ENDDO
           y(1:it)=g(1:it)
           CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
-          CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,b)
+          ! TODO: Change blas_matvec call to accomadate different size
+          CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
 
           ! If we'e converged, exit and report
           IF(ABS(phibar) <= tol) EXIT
 
           ! Otherwise, set up the next restart:
-          !> TODO: correctly set x0 and residual and beta
-          CALL solver%setX0(u%b)
+          CALL BLAS_axpy(u,solver%x)
           CALL solver%getResidual(u)
-          CALL LNorm(u%b,2,beta)
+
+          beta = BLAS_dot(highIdx - lowIdx + 1, u%b(lowIdx:highIdx), 1, u%b(lowIdx:highIdx), 1)
+          CALL parenv%allReduce_scalar(beta)
+          beta = sqrt(beta)
         ENDDO
 
         !> TODO: Figure out what to do with non-convergence
-        IF (itOuter >= solver%maxIters-1) WRITE(*,*) "Max iters reached"
+        IF (itOuter >= solver%maxIters/solver%nRestart) WRITE(*,*) "Max iters reached"
 
-        u%b(lowIdx:highIdx) = b
         CALL BLAS_axpy(u,solver%x)
 
         CALL solver%getResidual(u)
-        beta = 0.0_SRK
-        DO k=1,(highIdx - lowIdx + 1)
-          beta = beta + b(k)*b(k)
-        ENDDO
+        beta = BLAS_dot(highIdx - lowIdx + 1, u%b(lowIdx:highIdx), 1, u%b(lowIdx:highIdx), 1)
         CALL parenv%allReduce_scalar(beta)
         beta = sqrt(beta)
 
