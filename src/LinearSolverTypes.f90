@@ -267,14 +267,14 @@ MODULE LinearSolverTypes
   TYPE(ParamType),PROTECTED,SAVE :: LinearSolverType_reqParams,LinearSolverType_optParams
 
   !> Interface for preconditioned and unpreconditioned GMRES solvers
-  INTERFACE solveGMRES
-    !> @copybrief LinearSolverTypes::solveGMRES_nopc
-    !> @copydetails LienarSolverTypes::solveGMRES_nopc
-    MODULE PROCEDURE solveGMRES_nopc
-    !> @copybrief LinearSolverTypes::solveGMRES_pc
-    !> @copydetails LinearSolverTypes::solveGMRES_pc
-    MODULE PROCEDURE solveGMRES_lpc
-  ENDINTERFACE
+  !INTERFACE solveGMRES
+  !  !> @copybrief LinearSolverTypes::solveGMRES_nopc
+  !  !> @copydetails LienarSolverTypes::solveGMRES_nopc
+  !  MODULE PROCEDURE solveGMRES_nopc
+  !  !> @copybrief LinearSolverTypes::solveGMRES_pc
+  !  !> @copydetails LinearSolverTypes::solveGMRES_pc
+  !  MODULE PROCEDURE solveGMRES_lpc
+  !ENDINTERFACE
 
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),SAVE :: eLinearSolverType
@@ -1572,7 +1572,7 @@ MODULE LinearSolverTypes
       solver%iters=iterations
       solver%info=0
     ENDSUBROUTINE solveBiCGSTAB
-
+#if 0
     SUBROUTINE solveGMRES_nopc(solver)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       IF(solver%MPIparallelEnv%isInit() .AND. solver%MPIparallelEnv%nproc > 1) THEN
@@ -1591,7 +1591,7 @@ MODULE LinearSolverTypes
         CALL solveSGMRES_lpc(solver, PrecondType)
       ENDIF
     ENDSUBROUTINE solveGMRES_lpc
-
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Solves the Iterative Linear System using the GMRES method with no
@@ -1608,6 +1608,8 @@ MODULE LinearSolverTypes
       TYPE(RealVectorType) :: u
       INTEGER(SIK) :: k,m,n,it,itOuter
       TYPE(ParamType) :: pList
+
+      WRITE(*,*) "WARNING: EXECUTING DEPRECATED GMRES SOLVER"
 
       n=0
       !Set parameter list for vector
@@ -1658,7 +1660,6 @@ MODULE LinearSolverTypes
               t=c(k-1)*h-s(k-1)*t
             ENDDO
             CALL LNorm(w,2,h)
-            !WRITE(*,*) "h = ", h
             IF(h > 0.0_SRK) THEN
               v(:,it+1)=w/h
             ELSE
@@ -1732,6 +1733,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: k,m,n,it,itOuter
       TYPE(ParamType) :: pList
 
+      WRITE(*,*) "WARNING: EXECUTING DEPRECATED GMRES SOLVER"
       n=0
       !Set parameter list for vector
       CALL pList%add('VectorType -> n',solver%A%n)
@@ -1785,7 +1787,6 @@ MODULE LinearSolverTypes
               t=c(k-1)*h-s(k-1)*t
             ENDDO
             CALL LNorm(w,2,h)
-            !WRITE(*,*) "h = ", h
             IF(h > 0.0_SRK) THEN
               v(:,it+1)=w/h
             ELSE
@@ -1850,17 +1851,37 @@ MODULE LinearSolverTypes
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-    SUBROUTINE solvePGMRES_lpc(solver)!,PreCondType)
+    SUBROUTINE solveGMRES(solver,PreCondType)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      !CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+      CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: PrecondType
 
       REAL(SRK)  :: beta,h,t,phibar,temp,tol,acc
       REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:),b(:)
       INTEGER(SIK),ALLOCATABLE :: storageCount(:), offsetVals(:)
       TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx,itOuter,mpierr
+      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx,itOuter,mpierr,rank
       TYPE(MPI_EnvType) :: parEnv
       TYPE(ParamType) :: pList
+      LOGICAL(SBK) :: enableParallelism
+
+#if HAVE_MPI
+      ! Flag to determine parallelism.
+      ! First set it to value of isInit()
+      enableParallelism = solver%MPIparallelEnv%isInit()
+      ! If MPI parallelEnv is init, then check if parallelism is viable:
+      IF (enableParallelism) THEN
+        parEnv = solver%MPIparallelEnv
+        rank = parEnv%rank
+        enableParallelism = solver%MPIparallelEnv%nproc > 1
+      ELSE
+        WRITE(*,*) "You are attempting to run a solver in an unitialized parallel environment"
+        WRITE(*,*) "Please reconsider your life choices"
+        rank = 0
+      END IF
+#else
+      enableParallelism = .FALSE.
+      rank = 0
+#endif
 
       n=0
       !Set parameter list for vector
@@ -1868,45 +1889,45 @@ MODULE LinearSolverTypes
       n=solver%A%n
       m=MIN(solver%nRestart,n)
 
-      ! We will split up v and w over the long index (with length n)
-      ! Extract MPI communicator and determine our indices:
-      parEnv = solver%MPIparallelEnv
-      !IF(parEnv%rank < MOD(n,parenv%nproc)) THEN
-      !  lowIdx = (parEnv%rank)*(n/parEnv%nproc + 1) + 1
-      !  highIdx = lowIdx + n/parEnv%nproc
-      !ELSE
-      !  lowIdx = (parEnv%rank)*(n/parEnv%nproc) + MOD(n,parEnv%nproc) + 1
-      !  highIdx = lowIdx + n/parEnv%nproc - 1
-      !ENDIF
-
-      ! Build map of which data is stored where
-      ALLOCATE(storageCount(parEnv%nproc))
-      ALLOCATE(offsetVals(parEnv%nproc))
-      DO it=1,parEnv%nproc
-        IF (it <= MOD(n,parenv%nproc)) THEN
-          storageCount(it) = n/parEnv%nproc + 1
-        ELSE
-          storageCount(it) = n/parEnv%nproc
-        END IF
-        IF (it == 1) THEN
-          offsetVals(it) = 0
-        ELSE
-          offsetVals(it) = offsetVals(it-1) + storageCount(it-1)
-        END IF
-      END DO
-      ! Determine our indices:
-      lowIdx = offsetVals(parEnv%rank+1) + 1
-      highIdx = lowIdx + storageCount(parEnv%rank+1) - 1
+      IF (enableParallelism) THEN
+        ! Build map of which data is stored where
+        ALLOCATE(storageCount(parEnv%nproc))
+        ALLOCATE(offsetVals(parEnv%nproc))
+        DO it=1,parEnv%nproc
+          IF (it <= MOD(n,parenv%nproc)) THEN
+            storageCount(it) = n/parEnv%nproc + 1
+          ELSE
+            storageCount(it) = n/parEnv%nproc
+          END IF
+          IF (it == 1) THEN
+            offsetVals(it) = 0
+          ELSE
+            offsetVals(it) = offsetVals(it-1) + storageCount(it-1)
+          END IF
+        END DO
+        ! Determine our indices:
+        lowIdx = offsetVals(parEnv%rank+1) + 1
+        highIdx = lowIdx + storageCount(parEnv%rank+1) - 1
+      ELSE
+        lowIdx = 1
+        highIdx = n
+      END IF
 
       CALL u%init(pList)
       CALL pList%clear()
       CALL solver%getResidual(u)
-      !>TODO: Enable Preconditioner
-      !CALL PreCondType%apply(u)
 
-      beta = BLAS_dot(highIdx - lowIdx + 1,u%b(lowIdx:highIdx),1,u%b(lowIdx:highIdx),1)
-      CALL parenv%allReduce_scalar(beta)
-      beta = sqrt(beta)
+      IF (PRESENT(PrecondType)) THEN
+        CALL PreCondType%apply(u)
+      END IF
+
+      IF (enableParallelism) THEN
+        beta = BLAS_dot(highIdx - lowIdx + 1,u%b(lowIdx:highIdx),1,u%b(lowIdx:highIdx),1)
+        CALL parenv%allReduce_scalar(beta)
+        beta = sqrt(beta)
+      ELSE
+        CALL LNorm(u%b,2,beta)
+      END IF
 
       solver%iters=0
       IF(beta > EPSILON(0.0_SRK)) THEN
@@ -1921,7 +1942,7 @@ MODULE LinearSolverTypes
         tol=solver%absConvTol*beta
 
 #ifdef FUTILITY_DEBUG_MSG
-        IF(parenv%rank==0) THEN
+        IF(rank==0) THEN
           WRITE(668,*) '         PGMRES-LP',0,ABS(phibar)
         ENDIF
 #endif
@@ -1941,34 +1962,46 @@ MODULE LinearSolverTypes
           DO it=1,m
             ! Must be done in full on every processor
             CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-            !> TODO: Enable preconditioner
-            !u%b(lowIdx:highIdx)=w
-            !CALL solver%PreCondType%apply(u)
-            !w=u%b
+
+            IF (PRESENT(PrecondType)) THEN
+              u%b(lowIdx:highIdx)=w
+              CALL solver%PreCondType%apply(u)
+              w=u%b
+            END IF
 
             h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,1),1)
-            CALL parEnv%allReduce_scalar(h)
+            IF (enableParallelism) THEN
+              CALL parEnv%allReduce_scalar(h)
+            END IF
 
             w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,1)
             t=h
 
             DO k=2,it
               h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,k),1)
-              CALL parEnv%allReduce_scalar(h)
+              IF (enableParallelism) THEN
+                CALL parEnv%allReduce_scalar(h)
+              END IF
               w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,k)
               R(k-1,it)=c(k-1)*t+s(k-1)*h
               t=c(k-1)*h-s(k-1)*t
             ENDDO
 
-            h = BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,w(lowIdx:highIdx),1)
-            CALL parEnv%allReduce_scalar(h)
-            h = sqrt(h)
+            IF (enableParallelism) THEN
+              h = BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,w(lowIdx:highIdx),1)
+              CALL parEnv%allReduce_scalar(h)
+              h = sqrt(h)
+            ELSE
+              CALL LNorm(w,2,h)
+            END IF
 
             IF(h > 0.0_SRK) THEN
               v(lowIdx:highIdx,it+1)=w(lowIdx:highIdx)/h
-              CALL MPI_Allgatherv(MPI_IN_PLACE,n ,MPI_DOUBLE_PRECISION, &
-                v(:,it+1),storageCount,offsetVals,MPI_DOUBLE_PRECISION, &
-                parEnv%comm,mpierr)
+              IF (enableParallelism) THEN
+                CALL MPI_Allgatherv(MPI_IN_PLACE,n ,MPI_DOUBLE_PRECISION, &
+                  v(:,it+1),storageCount,offsetVals,MPI_DOUBLE_PRECISION, &
+                  parEnv%comm,mpierr)
+              END IF
             ELSE
               v(:,it+1)=0.0_SRK*w
             ENDIF
@@ -1986,38 +2019,37 @@ MODULE LinearSolverTypes
             g(it)=c(it)*phibar
             phibar=-s(it)*phibar
 #ifdef FUTILITY_DEBUG_MSG
-            IF(parenv%rank == 0) THEN
+            IF(rank == 0) THEN
               WRITE(668,*) '         PGMRES-LP',it,ABS(phibar)
             ENDIF
 #endif
             IF(ABS(phibar) <= tol) EXIT
           ENDDO
+
+          ! Compute solution, store in u%b
           y(1:it)=g(1:it)
           CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
-          ! TODO: Change blas_matvec call to accomadate different size
           CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
 
-          ! If we'e converged, exit and report
-          IF(ABS(phibar) <= tol) EXIT
-
-          ! Otherwise, set up the next restart:
+          ! Move solution into solver%x, compute residual
           CALL BLAS_axpy(u,solver%x)
           CALL solver%getResidual(u)
 
-          beta = BLAS_dot(highIdx - lowIdx + 1, u%b(lowIdx:highIdx), 1, u%b(lowIdx:highIdx), 1)
-          CALL parenv%allReduce_scalar(beta)
-          beta = sqrt(beta)
+          IF (enableParallelism) THEN
+            beta = BLAS_dot(highIdx - lowIdx + 1, u%b(lowIdx:highIdx), 1, u%b(lowIdx:highIdx), 1)
+            CALL parenv%allReduce_scalar(beta)
+            beta = sqrt(beta)
+          ELSE
+            CALL LNorm(u%b,2,beta)
+          END IF
+
+          ! If we'e converged, exit and report
+          IF(ABS(phibar) <= tol) EXIT
+          ! Otherwise continue with restart
         ENDDO
 
         !> TODO: Figure out what to do with non-convergence
         IF (itOuter >= solver%maxIters/solver%nRestart) WRITE(*,*) "Max iters reached"
-
-        CALL BLAS_axpy(u,solver%x)
-
-        CALL solver%getResidual(u)
-        beta = BLAS_dot(highIdx - lowIdx + 1, u%b(lowIdx:highIdx), 1, u%b(lowIdx:highIdx), 1)
-        CALL parenv%allReduce_scalar(beta)
-        beta = sqrt(beta)
 
         IF(it == m+1) it=m
         solver%iters=it + (itOuter-1)*solver%nRestart
@@ -2032,7 +2064,7 @@ MODULE LinearSolverTypes
       ENDIF
       solver%info=0
       CALL u%clear()
-    ENDSUBROUTINE solvePGMRES_lpc
+    ENDSUBROUTINE solveGMRES
 !
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
