@@ -743,13 +743,13 @@ MODULE PreconditionerTypes
 !> @param params The parameter list
 !>
     SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
-#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='init_RSOR_PreCondType'
       CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
       TYPE(ParamType),INTENT(IN),OPTIONAL :: params
       TYPE(ParamType)::PListMat_LU
       INTEGER(SIK)::k,mpierr,rank,nproc,extrablocks,stdblocks,i
+#ifdef HAVE_MPI
       
       REQUIRE(.NOT. thisPC%isinit)
       REQUIRE(PRESENT(A))
@@ -828,6 +828,7 @@ MODULE PreconditionerTypes
     SUBROUTINE clear_DistributedSOR_PreCondtype(thisPC)
       CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
       INTEGER(SIK)::i
+#ifdef HAVE_MPI
 
       IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
       IF(ALLOCATED(thisPC%LpU)) THEN
@@ -842,6 +843,7 @@ MODULE PreconditionerTypes
         DEALLOCATE(thisPC%LU)
       ENDIF
       thisPC%isInit=.FALSE.
+#endif
     ENDSUBROUTINE clear_DistributedSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
@@ -910,6 +912,7 @@ MODULE PreconditionerTypes
       INTEGER(SIK)::k,i,mpierr
       REAL(SRK)::tmpreal
       REAL(SRK)::tmpreal1,tmpreal2
+#ifdef HAVE_MPI
 
       REQUIRE(thisPC%isInit)
       REQUIRE(ALLOCATED(v))
@@ -967,6 +970,7 @@ MODULE PreconditionerTypes
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
             ' - Vector type is not support by this PreconditionerType.')
       ENDSELECT
+#endif
     ENDSUBROUTINE apply_DistributedRSOR_PreCondType
 !
 !-------------------------------------------------------------------------------

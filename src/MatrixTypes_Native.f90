@@ -500,7 +500,6 @@ MODULE MatrixTypes_Native
 !> @param pList the parameter list
 !>
     SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
-#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBandedMatrixParam'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
@@ -510,6 +509,7 @@ MODULE MatrixTypes_Native
         omit_last
       INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
       LOGICAL(SBK) :: bool
+#ifdef HAVE_MPI
 
       !Check to set up required and optional param lists.
       IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -891,10 +891,10 @@ MODULE MatrixTypes_Native
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_DistributedBandedMatrixType(matrix)
-#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='clear_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
+#ifdef HAVE_MPI
       matrix%isInit=.FALSE.
       matrix%isCreated=.FALSE.
       matrix%isAssembled=.FALSE.
@@ -1063,13 +1063,13 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE set_DistributedBandedMatrixType(matrix,i,j,setval)
-#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='set_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval
+#ifdef HAVE_MPI
       IF(matrix%isInit) THEN
         IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
             .AND. (i>=1) .AND. (j >= 1)) THEN
@@ -1243,7 +1243,6 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE get_DistributedBandedMatrixType(matrix,i,j,getval)
-#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='get_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
@@ -1252,6 +1251,7 @@ MODULE MatrixTypes_Native
       REAL(SRK) :: val
       INTEGER(SIK) :: d,p,ierr
       LOGICAL(SBK) :: bool
+#ifdef HAVE_MPI
       bool=.FALSE.
       REQUIRE(matrix%isInit)
       REQUIRE(j <= matrix%n)
@@ -1714,6 +1714,7 @@ MODULE MatrixTypes_Native
       REAL(SDK), ALLOCATABLE :: z(:)
       REAL(SDK),INTENT(INOUT) :: y(:)
       INTEGER(SIK) :: i,j,ib,ie,jb,je,ierr
+#ifdef HAVE_MPI
       REQUIRE(matrix%isInit)
       REQUIRE(SIZE(x) == matrix%m)
       REQUIRE(SIZE(y) == matrix%n)
@@ -1732,6 +1733,7 @@ MODULE MatrixTypes_Native
       ENDDO
       CALL MPI_ALLREDUCE(z, y, matrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
                     matrix%comm, ierr)
+#endif
     ENDSUBROUTINE matvec_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------

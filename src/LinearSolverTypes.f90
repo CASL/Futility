@@ -1890,6 +1890,7 @@ MODULE LinearSolverTypes
       m=MIN(solver%nRestart,n)
 
       IF (enableParallelism) THEN
+#ifdef HAVE_MPI
         ! Build map of which data is stored where
         ALLOCATE(storageCount(parEnv%nproc))
         ALLOCATE(offsetVals(parEnv%nproc))
@@ -1908,6 +1909,7 @@ MODULE LinearSolverTypes
         ! Determine our indices:
         lowIdx = offsetVals(parEnv%rank+1) + 1
         highIdx = lowIdx + storageCount(parEnv%rank+1) - 1
+#endif
       ELSE
         lowIdx = 1
         highIdx = n
@@ -1922,9 +1924,11 @@ MODULE LinearSolverTypes
       END IF
 
       IF (enableParallelism) THEN
+#ifdef HAVE_MPI
         beta = BLAS_dot(highIdx - lowIdx + 1,u%b(lowIdx:highIdx),1,u%b(lowIdx:highIdx),1)
         CALL parenv%allReduce_scalar(beta)
         beta = sqrt(beta)
+#endif
       ELSE
         CALL LNorm(u%b,2,beta)
       END IF
@@ -1971,7 +1975,9 @@ MODULE LinearSolverTypes
 
             h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,1),1)
             IF (enableParallelism) THEN
+#ifdef HAVE_MPI
               CALL parEnv%allReduce_scalar(h)
+#endif
             END IF
 
             w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,1)
@@ -1980,7 +1986,9 @@ MODULE LinearSolverTypes
             DO k=2,it
               h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,k),1)
               IF (enableParallelism) THEN
+#ifdef HAVE_MPI
                 CALL parEnv%allReduce_scalar(h)
+#endif
               END IF
               w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,k)
               R(k-1,it)=c(k-1)*t+s(k-1)*h
@@ -1988,9 +1996,11 @@ MODULE LinearSolverTypes
             ENDDO
 
             IF (enableParallelism) THEN
+#ifdef HAVE_MPI
               h = BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,w(lowIdx:highIdx),1)
               CALL parEnv%allReduce_scalar(h)
               h = sqrt(h)
+#endif
             ELSE
               CALL LNorm(w,2,h)
             END IF
@@ -1998,9 +2008,11 @@ MODULE LinearSolverTypes
             IF(h > 0.0_SRK) THEN
               v(lowIdx:highIdx,it+1)=w(lowIdx:highIdx)/h
               IF (enableParallelism) THEN
+#ifdef HAVE_MPI
                 CALL MPI_Allgatherv(MPI_IN_PLACE,n ,MPI_DOUBLE_PRECISION, &
                   v(:,it+1),storageCount,offsetVals,MPI_DOUBLE_PRECISION, &
                   parEnv%comm,mpierr)
+#endif
               END IF
             ELSE
               v(:,it+1)=0.0_SRK*w
@@ -2036,9 +2048,11 @@ MODULE LinearSolverTypes
           CALL solver%getResidual(u)
 
           IF (enableParallelism) THEN
+#ifdef HAVE_MPI
             beta = BLAS_dot(highIdx - lowIdx + 1, u%b(lowIdx:highIdx), 1, u%b(lowIdx:highIdx), 1)
             CALL parenv%allReduce_scalar(beta)
             beta = sqrt(beta)
+#endif
           ELSE
             CALL LNorm(u%b,2,beta)
           END IF

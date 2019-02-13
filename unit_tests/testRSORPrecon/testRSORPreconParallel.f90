@@ -60,6 +60,7 @@ PROGRAM testRSORPreconParallel
     SUBROUTINE setupRSORTest()
         INTEGER(SIK)::ioerr,i,j,numnonzero,rank,nproc
         REAL(SRK)::tmpreal1(9*9),tmpreal2(9),tempreal
+#ifdef HAVE_MPI
         
         CALL PListRSOR%add('PCType->numblocks',3_SIK)
         CALL PListRSOR%add('PCType->omega',1.0_SRK)
@@ -145,6 +146,7 @@ PROGRAM testRSORPreconParallel
         DO i=1,9
             CALL refVector%set(i,tmpreal2(i))
         END DO
+#endif
 
     ENDSUBROUTINE setupRSORTest
 !
@@ -155,6 +157,7 @@ PROGRAM testRSORPreconParallel
         REAL(SRK)::tmpreal,trv1(9*9),trv2(3*3*3)
         REAL(SRK)::refLpU(9,9),refLU(3,3,3)
         REAL(SRK)::vecsave(9)
+#ifdef HAVE_MPI
 
         ALLOCATE(DistributedRSOR_PreCondType :: testSORP)
         
@@ -233,11 +236,13 @@ PROGRAM testRSORPreconParallel
         ENDIF
 
         DEALLOCATE(testSORP)
+#endif
 
     ENDSUBROUTINE testRSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE clearTest()
+#ifdef HAVE_MPI
 
       CALL PListMat%clear()
       CALL PListVec%clear()
@@ -251,6 +256,7 @@ PROGRAM testRSORPreconParallel
       IF(ALLOCATED(testVec_mg)) DEALLOCATE(testVec_mg)
       IF(ALLOCATED(testVector)) DEALLOCATE(testVector)
       IF(ALLOCATED(testDummy)) DEALLOCATE(testDummy)
+#endif
     
     ENDSUBROUTINE clearTest
 !
