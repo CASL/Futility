@@ -8,6 +8,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testLinearSolverParallel
 #include "UnitTest.h"
+  USE BLAS
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
@@ -17,6 +18,11 @@ PROGRAM testLinearSolverParallel
   USE MatrixTypes
   USE PreconditionerTypes
   USE LinearSolverTypes
+  USE trilinos_interfaces
+  USE Times
+  USE Allocs
+  USE Strings
+  USE IOUtil
 
   IMPLICIT NONE
 
@@ -90,10 +96,9 @@ CONTAINS
       REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
       REAL(SRK),POINTER :: initGuess(:)
       REAL(SRK) :: timetaken
-      INTEGER(SIK) :: i,j,n,nnz,time1,time2,clock_rate,gIt
-      INTEGER(SIK) :: gridSizeVals(7)
+      INTEGER(SIK) :: i,n,nnz,time1,time2,clock_rate,gIt,thisIters
+      INTEGER(SIK) :: gridSizeVals(10)
       INTEGER(SIK) :: xCoord,yCoord,gridSize
-      LOGICAL(SBK) :: match, bool
 
       ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -103,7 +108,12 @@ CONTAINS
       ! 16, 256, 1024, 2048, 4096, 8192
       ! 4x4,16x16,32x32, ?, 64x64, ?
       ! 4,  8,   10,   11,   12,   13
-      gridSizeVals = (/4, 16, 32, 48, 64, 96, 128/)
+
+      gridSizeVals = (/4, 16, 32, 64, 96, 128, 160, 192, 224, 256/)
+
+      IF (mpiTestEnv%rank == 0) THEN
+        WRITE(*,*) "Matrix Size"," ","Solution Time"," ","Iteration Count"," ","Max error"
+      END IF
 
       DO gIt = 1,SIZE(gridSizeVals)
         gridSize = gridSizeVals(gIt)
@@ -145,6 +155,7 @@ CONTAINS
         END SELECT
 
         ALLOCATE(initGuess(n))
+        ALLOCATE(dummyvec(n))
         initGuess = 1.0_SRK
         SELECT TYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
           CALL thisLS%setX0(initGuess)
@@ -165,15 +176,24 @@ CONTAINS
         !call clock right after parallel part in the SOR iterations, this will give us how long the SOR iterations took to converge
         CALL SYSTEM_CLOCK(time2,clock_rate)
         !calculate time taken in seconds
-        WRITE(*,*) "For Matrix size ",n
         timetaken=(time2*1.0_SRK-time1*1.0_SRK)/(clock_rate*1.0_SRK)
-        WRITE(*,*) "Solver time: ",timetaken
 
         SELECT TYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-          WRITE(*,*) thisLS%iters
+          thisIters = thisLS%iters
         END SELECT
 
+        SELECT TYPE(A => thisLS%A); TYPE IS(SparseMatrixType)
+          SELECT TYPE(sol => thisLS%X); TYPE IS(RealVectorType)
+            CALL BLAS_matvec(THISMATRIX=A,X=sol%b,BETA=0.0_SRK,Y=dummyvec)
+          END SELECT
+        END SELECT
+
+        IF (mpiTestEnv%rank == 0) THEN
+          WRITE(*,*) n,timetaken,thisIters,MAXVAL(ABS(dummyvec - 1.0_SRK))
+        END IF
+
         DEALLOCATE(initGuess)
+        DEALLOCATE(dummyvec)
         DEALLOCATE(thisB)
         CALL thisLS%clear()
 
