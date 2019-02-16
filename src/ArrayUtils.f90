@@ -606,8 +606,9 @@ MODULE ArrayUtils
 !> @param delta1 The optional flag if the first array is an incremental array
 !> @param delta2 The optional flag if the second array is an incremental array
 !> @param deltaout The optional flag if the output array is an incremental array
+!> @param tol The optional value used to perform the SOFTEQ check
 !>
-    SUBROUTINE getUnion_1DReal(r1,r2,rout,xi1,xi2,delta1,delta2,deltaout)
+    SUBROUTINE getUnion_1DReal(r1,r2,rout,xi1,xi2,delta1,delta2,deltaout,tol)
       REAL(SRK),INTENT(IN) :: r1(:)
       REAL(SRK),INTENT(IN) :: r2(:)
       REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
@@ -616,10 +617,14 @@ MODULE ArrayUtils
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta1
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta2
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: deltaout
+      REAL(SRK),INTENT(IN),OPTIONAL :: tol
       LOGICAL(SBK) :: bool1,bool2
       INTEGER(SIK) :: i,j,sr1,sr2,sout,tmpsout
+      REAL(SRK) :: localtol
       REAL(SRK),ALLOCATABLE :: tmpout(:),tmpout2(:),tmp1(:),tmp2(:)
 
+      localtol=EPSREAL
+      IF(PRESENT(tol)) localtol=tol
       IF(ALLOCATED(rout)) DEALLOCATE(rout)
       !Process the first array if it is a delta
       IF(SIZE(r1) > 0 .AND. SIZE(r2) == 0) THEN
@@ -676,7 +681,7 @@ MODULE ArrayUtils
         sout=tmpsout
         !Find the number of repeated values
         DO i=2,tmpsout
-          IF(tmpout(i-1) .APPROXEQ. tmpout(i)) sout=sout-1
+          IF(SOFTEQ(tmpout(i-1),tmpout(i),localtol)) sout=sout-1
         ENDDO
         ALLOCATE(tmpout2(sout))
         tmpout2=0.0_SRK
@@ -684,7 +689,7 @@ MODULE ArrayUtils
         j=2
         !Assign the non-repeated values
         DO i=2,tmpsout
-          IF(.NOT.(tmpout(i-1) .APPROXEQ. tmpout(i))) THEN
+          IF(.NOT.SOFTEQ(tmpout(i-1),tmpout(i),localtol)) THEN
             tmpout2(j)=tmpout(i)
             j=j+1
           ENDIF
