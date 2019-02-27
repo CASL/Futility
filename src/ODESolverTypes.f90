@@ -6,36 +6,14 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Module provides a eigenvalue system type and methods to solve systems
-!> of equations
+!> @brief Module provides an ODE solver class
 !>
 !> Currently supported TPLs include:
+!>  - Sundials (CVODE)
 !>
 !> Additional TPL support is planned for:
 !>  - PETSc (with interfaces to TS)
 !>  - Trilinos (Rythmos)
-!>  - Sundials (CVODE)
-!>
-!> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref BLAS "BLAS": @copybrief BLAS
-!>  - @ref Times "Times": @copybrief Times
-!>  - @ref ExceptionHandler "ExceptionHandler": @copybrief ExceptionHandler
-!>  - @ref Allocs "Allocs": @copybrief Allocs
-!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
-!>  - @ref ParallelEnv "ParallelEnv": @copybrief ParallelEnv
-!>  - @ref VectorTypes "VectorTypes": @copybrief VectorTypes
-!>  - @ref MatrixTypes "MatrixTypes": @copybrief MatrixTypes
-!>  - @ref LinearSolverTypes "LinearSolverTypes": @copybrief LinearSolverTypes
-!>
-!> @par EXAMPLES
-!> @code
-!>
-!> @endcode
-!>
-!> @author Ben Collins
-!>   @date 12/02/2016
-!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ODESolverTypes
   USE ISO_C_BINDING
