@@ -34,7 +34,6 @@ PUBLIC :: testTPLType
 PUBLIC :: testN
 PUBLIC :: testIterations
 PUBLIC :: testTol
-PUBLIC :: testBounds
 PUBLIC :: testLinSys
 PUBLIC :: testFunc
 PUBLIC :: testCE
@@ -78,7 +77,6 @@ TYPE,ABSTRACT :: NonLinearSolver_Base
   INTEGER(SIK) :: n=-1
   INTEGER(SIK) :: iterations=-1
   REAL(SRK) :: tol=-1.0_SRK
-  REAL(SRK) :: bounds(2)=(/HUGE(1.0_SRK),-HUGE(1.0_SRK)/)
   CLASS(LinearSolverType_Base),ALLOCATABLE :: linSys
   CLASS(NonLinearSolverInterface_Base),POINTER :: func => NULL()
   TYPE(FutilityComputingEnvironment),POINTER :: ce => NULL()
@@ -203,23 +201,16 @@ SUBROUTINE init_NonLinearSolverBase(this,ce,f,plist)
   TYPE(FutilityComputingEnvironment),TARGET,INTENT(IN) :: ce
   CLASS(NonLinearSolverInterface_Base),INTENT(INOUT),POINTER :: f
   TYPE(ParamType),INTENT(IN) :: plist
-  !
-  REAL(SRK),ALLOCATABLE :: bounds(:)
 
   REQUIRE(.NOT.this%isInit)
   REQUIRE(ASSOCIATED(f))
   REQUIRE(plist%has('NonLinearSolver -> n'))
   REQUIRE(plist%has('NonLinearSolver -> method'))
   REQUIRE(plist%has('NonLinearSolver -> tolerance'))
-  REQUIRE(plist%has('NonLinearSolver -> bounds'))
-  CALL plist%get('NonLinearSolver -> bounds',bounds)
-  REQUIRE(SIZE(bounds) == 2)
-  REQUIRE(bounds(1) < bounds(2))
 
   CALL plist%get('NonLinearSolver -> n',this%n)
   CALL plist%get('NonLinearSolver -> method',this%solverMethod)
   CALL plist%get('NonLinearSolver -> tolerance',this%tol)
-  this%bounds(1:2)=bounds(1:2)
   REQUIRE(this%n > 0)
   REQUIRE(ANY(this%solverMethod == VALID_NLSOLVER_METHODS))
   REQUIRE(this%tol > ZERO)
@@ -245,7 +236,6 @@ SUBROUTINE clear_NonLinearSolverBase(this)
   this%n=-1
   this%iterations=-1
   this%tol=-1.0_SRK
-  this%bounds=(/HUGE(1.0_SRK),-HUGE(1.0_SRK)/)
   CALL this%linSys%clear()
   DEALLOCATE(this%linSys)
   this%ce => NULL()
@@ -405,11 +395,6 @@ FUNCTION testTol(this) RESULT(val)
   REAL(SRK) :: val
   val=this%tol
 ENDFUNCTION testTol
-FUNCTION testBounds(this) RESULT(val)
-  CLASS(NonLinearSolver_Base),INTENT(IN) :: this
-  REAL(SRK) :: val(2)
-  val=this%bounds
-ENDFUNCTION testBounds
 SUBROUTINE testLinSys(this,val)
   CLASS(NonLinearSolver_Base),INTENT(IN) :: this
   CLASS(LinearSolverType_Base),ALLOCATABLE,INTENT(OUT) :: val
