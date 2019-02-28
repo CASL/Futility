@@ -41,6 +41,9 @@ MODULE Sorting
     !> @copybrief Sorting::qsort_1DInt
     !> @copydetails Sorting::qsort_1DInt
     MODULE PROCEDURE qsort_1DInt
+    !> @copybrief Sorting::qsort_1DInt_1DReal
+    !> @copydetails Sorting::qsort_1DInt_1DReal
+    MODULE PROCEDURE qsort_1DInt_1DReal
     !> @copybrief Sorting::bubble_sort_2DInt
     !> @copydetails Sorting::bubble_sort_2DInt
     MODULE PROCEDURE bubble_sort_2DInt
@@ -564,6 +567,86 @@ MODULE Sorting
       i=i-1
       CALL swap_int(A,1,i)
     ENDSUBROUTINE partition_array_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief Quicksort 1D array of Ints and apply same sorting operations to
+!> 1D array of Reals
+!> @param keys Integers to sort over
+!> @param values Reals to sort based on keys
+    PURE RECURSIVE SUBROUTINE qsort_1DInt_1DReal(keys, values)
+      INTEGER(SIK),INTENT(INOUT) :: keys(:)
+      REAL(SRK),INTENT(INOUT) :: values(:)
+
+      INTEGER(SIK) :: n,l,p,c
+
+      n=SIZE(keys)
+
+      IF (n>2) THEN
+        !median of 3 pivot
+        c=n/2
+        IF (keys(c) < keys(1)) THEN
+          CALL swap_int(keys,c,1)
+          CALL swap_real(values,c,1)
+        END IF
+        IF (keys(n) < keys(1)) THEN
+          CALL swap_int(keys,1,n)
+          CALL swap_real(values,1,n)
+        END IF
+        IF (keys(n) < keys(c)) THEN
+          CALL swap_int(keys,c,n)
+          CALL swap_real(values,c,n)
+        END IF
+        p=c
+        CALL partition_array_1DInt_1DReal(keys,values,p,l)
+        CALL qsort_1DInt_1DReal(keys(1:l-1),values(1:l-1))
+        CALL qsort_1DInt_1DReal(keys(l+1:n),values(l+1:n))
+      ELSE IF (n==2) THEN
+        IF (keys(1) > keys(2)) THEN
+          CALL swap_int(keys,1,2)
+          CALL swap_real(values,1,2)
+        END IF
+      ENDIF
+    ENDSUBROUTINE qsort_1DInt_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Partition method 1D integer key array and associated 1D real values
+!>         array. For a given partion, sorts values greater than and less than
+!>         the partition
+!> @param keys 1D integer array, modified in place and returned partioned
+!> @param values 1D real array, modified in place and returned partioned
+!> @param p Index of array element to partition with
+!> @param i Index of the partition element once A is partitioned
+!>
+    PURE SUBROUTINE partition_array_1DInt_1DReal(keys,values,p,i)
+      INTEGER(SIK),INTENT(INOUT) :: keys(:)
+      REAL(SRK),INTENT(INOUT) :: values(:)
+      INTEGER(SIK),INTENT(IN) :: p
+      INTEGER(SIK),INTENT(OUT) :: i
+
+      INTEGER(SIK) :: j,n,pval
+
+      pval=keys(p)
+      n=SIZE(keys)
+      IF (p>1) THEN
+        ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
+        CALL swap_int(keys,1,2)
+        CALL swap_real(values,1,2)
+        CALL swap_int(keys,1,p)
+        CALL swap_real(values,1,p)
+      ENDIF
+
+      i=2
+      DO j=2,n
+        IF (keys(j)<pval) THEN
+          CALL swap_int(keys,i,j)
+          CALL swap_real(values,i,j)
+          i=i+1
+        ENDIF
+      ENDDO
+      i=i-1
+      CALL swap_int(keys,1,i)
+      CALL swap_real(values,1,i)
+    ENDSUBROUTINE partition_array_1DInt_1DReal
 !
 !-------------------------------------------------------------------------------
 !> @brief Swap location of 2 locations in 1D integer array.

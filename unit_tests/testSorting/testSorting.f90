@@ -27,6 +27,8 @@ PROGRAM testSorting
 
   REGISTER_SUBTEST('Speed Test - sort int',testSpeedInt)
   REGISTER_SUBTEST('Speed Test - sort real',testSpeedReal)
+
+  REGISTER_SUBTEST('quick sort keys/values',testQuickSort)
   FINALIZE_TEST()
 !
 !
@@ -539,5 +541,41 @@ PROGRAM testSorting
         20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
       ASSERT(bool,'1-D real array qsort')
     ENDSUBROUTINE testRealSort
+
+    SUBROUTINE testQuickSort()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: keys(10)
+      REAL(SRK) :: values(10)
+
+      keys(1) = 1_SIK
+      keys(2) = -2_SIK
+      keys(3) = -3_SIK
+      keys(4) = -1_SIK
+      keys(5) = 4_SIK
+      keys(6) = 3_SIK
+      keys(7) = 2_SIK
+      keys(8) = -4_SIK
+      keys(9) = 0_SIK
+      keys(10) = -5_SIK
+
+      values(1) = 0.0_SRK
+      values(2) = 1.0_SRK
+      values(3) = 2.0_SRK
+      values(4) = 3.0_SRK
+      values(5) = 4.0_SRK
+      values(6) = 5.0_SRK
+      values(7) = 6.0_SRK
+      values(8) = 7.0_SRK
+      values(9) = 8.0_SRK
+      values(10) = 9.0_SRK
+
+      CALL sort(keys,values)
+
+      bool=ALL(keys .EQ. (/-5_SIK,-4_SIK,-3_SIK,-2_SIK,-1_SIK,0_SIK,1_SIK,2_SIK,3_SIK,4_SIK/))
+      ASSERT(bool,'1-D int/1-D real keys')
+
+      bool=ALL(values .APPROXEQ. (/9.0_SRK,7.0_SRK,2.0_SRK,1.0_SRK,3.0_SRK,8.0_SRK,0.0_SRK,6.0_SRK,5.0_SRK,4.0_SRK/))
+      ASSERT(bool,'1-D int/1-D real values')
+    END SUBROUTINE testQuickSort
 !
 ENDPROGRAM testSorting
