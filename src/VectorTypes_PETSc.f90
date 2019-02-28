@@ -42,7 +42,7 @@ MODULE VectorTypes_PETSc
 !
 ! List of public members
   PUBLIC :: PETScVectorType
-  
+
   !> @brief The extended type for PETSc vectors
   TYPE,EXTENDS(DistributedVectorType) :: PETScVectorType
     !> The values of the vector
@@ -337,7 +337,7 @@ MODULE VectorTypes_PETSc
     SUBROUTINE getOne_PETScVectorType(thisVector,i,getval,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: i
-      REAL(SRK),INTENT(INOUT) :: getval
+      REAL(SRK),INTENT(OUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc
@@ -361,7 +361,7 @@ MODULE VectorTypes_PETSc
 !> @param getval Correctly sized array that will be filled with contents of this vector
     SUBROUTINE getAll_PETScVectorType(thisVector,getval,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: low, high
       !
@@ -390,7 +390,7 @@ MODULE VectorTypes_PETSc
     SUBROUTINE getSelected_PETScVectorType(thisVector,indices,getval,ierr)
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: indices(:)
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc
@@ -416,7 +416,7 @@ MODULE VectorTypes_PETSc
       CLASS(PETScVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: i
       !

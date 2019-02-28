@@ -191,7 +191,7 @@ MODULE VectorTypes_Base
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: i
-      REAL(SRK),INTENT(INOUT) :: getval
+      REAL(SRK),INTENT(OUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
     ENDSUBROUTINE vector_getOne_absintfc
   ENDINTERFACE
@@ -202,7 +202,7 @@ MODULE VectorTypes_Base
     SUBROUTINE vector_getAll_absintfc(thisVector,getval,ierr)
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
     ENDSUBROUTINE vector_getAll_absintfc
   ENDINTERFACE
@@ -214,7 +214,7 @@ MODULE VectorTypes_Base
       IMPORT :: SIK,SRK,VectorType
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN):: indices(:)
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
     ENDSUBROUTINE vector_getSelected_absintfc
   ENDINTERFACE
@@ -227,7 +227,7 @@ MODULE VectorTypes_Base
       CLASS(VectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
     ENDSUBROUTINE vector_getRange_absintfc
   ENDINTERFACE
