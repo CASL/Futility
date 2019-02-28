@@ -63,6 +63,9 @@ TYPE,ABSTRACT :: NonLinearSolverInterface_Base
     !> @copybrief NonLinearSolverModule::nonlinearsolver_jacobian_absintfc
     !> @copydetails NonLinearSolverModule::nonlinearsolver_jacobian_absintfc
     PROCEDURE(nonlinearsolver_jacobian_absintfc),DEFERRED,PASS :: jacobian
+    !> @copybrief NonLinearSolverModule::checkBounds_Base
+    !> @copydetails NonLinearSolverModule::checkBounds_Base
+    PROCEDURE,PASS :: checkBounds => checkBounds_Base
 ENDTYPE NonLinearSolverInterface_Base
 
 !> Abstract type for non-linear solver object.  Defines base initialization
@@ -76,7 +79,7 @@ TYPE,ABSTRACT :: NonLinearSolver_Base
   INTEGER(SIK) :: iterations=-1
   REAL(SRK) :: tol=-1.0_SRK
   REAL(SRK) :: bounds(2)=(/HUGE(1.0_SRK),-HUGE(1.0_SRK)/)
-  TYPE(LinearSolverType_Direct) :: linSys
+  CLASS(LinearSolverType_Base),ALLOCATABLE :: linSys
   CLASS(NonLinearSolverInterface_Base),POINTER :: func => NULL()
   TYPE(FutilityComputingEnvironment),POINTER :: ce => NULL()
   CONTAINS
@@ -173,6 +176,19 @@ SUBROUTINE clearInterface_Base(this)
 ENDSUBROUTINE clearInterface_Base
 !
 !-------------------------------------------------------------------------------
+!> @brief Checks
+FUNCTION checkBounds_Base(this,x) RESULT(continueSolve)
+  CLASS(NonLinearSolverInterface_Base),INTENT(IN) :: this
+  CLASS(VectorType),INTENT(INOUT) :: x
+  LOGICAL(SBK) :: continueSolve
+
+  REQUIRE(x%isInit)
+
+  continueSolve=.TRUE.
+
+ENDFUNCTION checkBounds_Base
+!
+!-------------------------------------------------------------------------------
 !> @brief Defines the interface for initializing a @c NonLinearSolver_Base object
 !> @param this the object to initialize
 !> @param ce the computing environment
@@ -231,6 +247,7 @@ SUBROUTINE clear_NonLinearSolverBase(this)
   this%tol=-1.0_SRK
   this%bounds=(/HUGE(1.0_SRK),-HUGE(1.0_SRK)/)
   CALL this%linSys%clear()
+  DEALLOCATE(this%linSys)
   this%ce => NULL()
   IF(ASSOCIATED(this%func)) THEN
     CALL this%func%clear()
@@ -281,6 +298,7 @@ SUBROUTINE init_NonLinearSolverNative(this,ce,f,plist)
   CALL linSysPlist%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
   CALL linSysPlist%add('LinearSolverType->x->VectorType->n',this%n)
   CALL linSysPlist%add('LinearSolverType->b->VectorType->n',this%n)
+  ALLOCATE(LinearSolverType_Direct :: this%linSys)
   CALL this%linSys%init(linSysPlist)
   CALL linSysPlist%clear()
 
@@ -305,14 +323,14 @@ ENDSUBROUTINE clear_NonLinearSolverNative
 !-------------------------------------------------------------------------------
 !> @brief Solves a @c NonLinearSolver_Native object
 !> @param this the @c NonLinearSolver_Native object to solve
-!> @param x the @c VectorType containing the starting guess for the solve
+!> @param x @c VectorType containing the initial guess; will be modified to store
+!>        final solution
 !>
 SUBROUTINE solve_NonLinearSolverNative(this,x)
   CLASS(NonLinearSolver_Native),INTENT(INOUT) :: this
   CLASS(VectorType),INTENT(INOUT) :: x
   !
-  LOGICAL(SBK) :: lastOutOfBounds(this%n),lsolve
-  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: lsolve
   REAL(SRK) :: vec2real(this%n)
   CLASS(VectorType),ALLOCATABLE :: y
 
@@ -321,11 +339,9 @@ SUBROUTINE solve_NonLinearSolverNative(this,x)
 
   IF(this%solverMethod == NLSOLVER_METHOD_NEWTON) THEN
     !Set up the initial solve
-    lastOutOfBounds=.FALSE.
     lsolve=.TRUE.
     ALLOCATE(y,SOURCE=x)
     CALL this%func%eval(x,y) !Get the solution at the intial guess
-    CALL x%getAll(vec2real)
 
     !Solve until all values are under the tolerance
     !  This solves the linear system Jacobian * (x_n+1 - x_n) = -F(x_n)
@@ -344,26 +360,11 @@ SUBROUTINE solve_NonLinearSolverNative(this,x)
       CALL BLAS_axpy(this%linSys%x,x)
 
       !Enforce all parts of the solution to be in-bounds
-      CALL x%getAll(vec2real)
-      DO i=1,this%n
-        IF(vec2real(i) > this%bounds(2)) THEN
-          IF(lastOutOfBounds(i)) THEN
-            lsolve=.FALSE.
-          ELSE
-            CALL x%set(i,this%bounds(2))
-          ENDIF
-        ELSEIF(vec2real(i) < this%bounds(1)) THEN
-          IF(lastOutOfBounds(i)) THEN
-            lsolve=.FALSE.
-          ELSE
-            CALL x%set(i,this%bounds(1))
-          ENDIF
-        ENDIF
-      ENDDO !i
+      lsolve=this%func%checkBounds(x)
 
       !Update the solution
       CALL this%func%eval(x,y)
-      CALL y%getAll(vec2real)
+      CALL y%get(vec2real)
 
       !Set the stop condition
       IF(ALL(ABS(vec2real) < this%tol)) THEN
@@ -409,11 +410,13 @@ FUNCTION testBounds(this) RESULT(val)
   REAL(SRK) :: val(2)
   val=this%bounds
 ENDFUNCTION testBounds
-FUNCTION testLinSys(this) RESULT(val)
+SUBROUTINE testLinSys(this,val)
   CLASS(NonLinearSolver_Base),INTENT(IN) :: this
-  TYPE(LinearSolverType_Direct) :: val
-  val=this%linSys
-ENDFUNCTION testLinSys
+  CLASS(LinearSolverType_Base),ALLOCATABLE,INTENT(OUT) :: val
+  IF(ALLOCATED(this%linSys)) THEN
+    ALLOCATE(val,SOURCE=this%linSys)
+  ENDIF
+ENDSUBROUTINE testLinSys
 FUNCTION testFunc(this) RESULT(val)
   CLASS(NonLinearSolver_Base),INTENT(IN) :: this
   CLASS(NonLinearSolverInterface_Base),POINTER :: val
