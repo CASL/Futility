@@ -324,7 +324,7 @@ MODULE VectorTypes_Trilinos
     SUBROUTINE getOne_TrilinosVectorType(thisVector,i,getval,ierr)
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: i
-      REAL(SRK),INTENT(INOUT) :: getval
+      REAL(SRK),INTENT(OUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc
@@ -352,7 +352,7 @@ MODULE VectorTypes_Trilinos
       CHARACTER(LEN=*),PARAMETER :: myName='getSelected_TrilinosVectorType'
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: indices(:)
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc
@@ -373,7 +373,7 @@ MODULE VectorTypes_Trilinos
     SUBROUTINE getAll_TrilinosVectorType(thisVector,getval,ierr)
       CHARACTER(LEN=*),PARAMETER :: myName='getAll_TrilinosVectorType'
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc
@@ -400,7 +400,7 @@ MODULE VectorTypes_Trilinos
       CLASS(TrilinosVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc

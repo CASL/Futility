@@ -91,7 +91,7 @@ MODULE VectorTypes_Native
 
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='VECTORTYPES_NATIVE'
-  
+
 !
 !===============================================================================
   CONTAINS
@@ -284,7 +284,7 @@ MODULE VectorTypes_Native
     SUBROUTINE getOne_RealVectorType(thisVector,i,getval,ierr)
       CLASS(RealVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: i
-      REAL(SRK),INTENT(INOUT) :: getval
+      REAL(SRK),INTENT(OUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       ierrc=-1
       IF(thisVector%isInit) THEN
@@ -305,7 +305,7 @@ MODULE VectorTypes_Native
 !> @param getval Correctly sized array that will be filled with contents of this vector
     SUBROUTINE getAll_RealVectorType(thisVector,getval,ierr)
       CLASS(RealVectorType),INTENT(INOUT) :: thisVector
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       ierrc=-1
       IF(thisVector%isInit) THEN
@@ -326,7 +326,7 @@ MODULE VectorTypes_Native
     SUBROUTINE getSelected_RealVectorType(thisVector,indices,getval,ierr)
       CLASS(RealVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: indices(:)
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       REQUIRE(thisVector%isInit)
       REQUIRE(SIZE(indices) == SIZE(getval))
@@ -347,7 +347,7 @@ MODULE VectorTypes_Native
       CLASS(RealVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
-      REAL(SRK),INTENT(INOUT):: getval(:)
+      REAL(SRK),INTENT(OUT):: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       ierrc=-1
       IF(thisVector%isInit) THEN
