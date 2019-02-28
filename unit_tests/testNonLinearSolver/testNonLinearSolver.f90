@@ -129,6 +129,7 @@ SUBROUTINE testNativeNewton()
   ASSERT_APPROXEQ(testsol(1),refsol(1),'solution(1)')
   ASSERT_APPROXEQ(testsol(2),refsol(2),'solution(2)')
   ASSERT_EQ(testIterations(nativeSolver),7,'%iterations')
+  CALL x%clear()
 
   CALL nativeSolver%clear()
 
@@ -143,6 +144,7 @@ SUBROUTINE testNativeNewton()
   ASSERT_APPROXEQ(testsol(2),-HUGE(1.0_SRK),'%bounds(2)')
   testLS=testLinSys(nativeSolver)
   ASSERT(.NOT.testLS%isInit,'%linSys')
+  CALL testLS%clear()
   ASSERT(.NOT.ASSOCIATED(testCE(nativeSolver)),'%ce')
   ASSERT(.NOT.ASSOCIATED(testFunc(nativeSolver)),'ASSOCIATED %func')
   ASSERT(.NOT.nativeSolver%isInit,'%isInit')
@@ -153,6 +155,7 @@ ENDSUBROUTINE testNativeNewton
 SUBROUTINE setupTest()
 
   ALLOCATE(ce%exceptHandler)
+  ALLOCATE(ce%parEnv)
 
   ALLOCATE(NonLinearSolverInterface_Test :: ftest)
 
@@ -162,6 +165,10 @@ ENDSUBROUTINE setupTest
 SUBROUTINE clearTest()
 
   ftest => NULL()
+
+  DEALLOCATE(ce%exceptHandler)
+  CALL ce%parEnv%world%finalize()
+  DEALLOCATE(ce%parEnv)
 
 ENDSUBROUTINE clearTest
 !
