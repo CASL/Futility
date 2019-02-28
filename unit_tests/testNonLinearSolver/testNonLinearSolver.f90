@@ -91,7 +91,8 @@ SUBROUTINE testNativeNewton()
   REAL(SRK) :: refsol(2)=(/0.5_SRK,2.0_SRK/),testsol(2)
   TYPE(ParamType) :: plist
   TYPE(RealVectorType) :: x
-  TYPE(LinearSolverType_Direct) :: testLS
+  TYPE(LinearSolverType_Direct) :: refLS
+  CLASS(LinearSolverType_Base),ALLOCATABLE :: testLS
 
   CALL plist%add('NonLinearSolver -> n',2)
   CALL plist%add('NonLinearSolver -> method',NLSOLVER_METHOD_NEWTON)
@@ -114,8 +115,10 @@ SUBROUTINE testNativeNewton()
 
   COMPONENT_TEST('Init')
   ASSERT_EQ(testTPLType(nativeSolver),NLSOLVER_TPL_NATIVE,'%TPLType')
-  testLS=testLinSys(nativeSolver)
+  CALL testLinSys(nativeSolver,testLS)
   ASSERT(testLS%isInit,'%linSys')
+  ASSERT(SAME_TYPE_AS(refLS,testLS),'%linSys dynamic type')
+  DEALLOCATE(testLS)
   ASSERT(nativeSolver%isInit,'%isInit')
 
   CALL plist%add('VectorType -> n',2)
@@ -142,9 +145,8 @@ SUBROUTINE testNativeNewton()
   testsol=testBounds(nativeSolver)
   ASSERT_APPROXEQ(testsol(1),HUGE(1.0_SRK),'%bounds(1)')
   ASSERT_APPROXEQ(testsol(2),-HUGE(1.0_SRK),'%bounds(2)')
-  testLS=testLinSys(nativeSolver)
-  ASSERT(.NOT.testLS%isInit,'%linSys')
-  CALL testLS%clear()
+  CALL testLinSys(nativeSolver,testLS)
+  ASSERT(.NOT.ALLOCATED(testLS),'%linSys')
   ASSERT(.NOT.ASSOCIATED(testCE(nativeSolver)),'%ce')
   ASSERT(.NOT.ASSOCIATED(testFunc(nativeSolver)),'ASSOCIATED %func')
   ASSERT(.NOT.nativeSolver%isInit,'%isInit')
