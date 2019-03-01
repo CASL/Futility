@@ -86,6 +86,8 @@ MODULE Constants_Conversion
   !Energy conversions
   !> Conversion factor from eV to J
   REAL(SRK),PUBLIC,PARAMETER :: eV2J=1.602176487e-19_SRK
+  !> Conversion factor from J to eV
+  REAL(SRK),PUBLIC,PARAMETER :: J2eV=ONE/eV2J
 
   !Time conversions
   !> Conversion factor from min to s
