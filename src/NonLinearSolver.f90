@@ -59,9 +59,9 @@ TYPE,ABSTRACT :: NonLinearSolverInterface_Base
     !> @copybrief NonLinearSolverModule::nonlinearsolver_eval_absintfc
     !> @copydetails NonLinearSolverModule::nonlinearsolver_eval_absintfc
     PROCEDURE(nonlinearsolver_eval_absintfc),DEFERRED,PASS :: eval
-    !> @copybrief NonLinearSolverModule::nonlinearsolver_jacobian_absintfc
-    !> @copydetails NonLinearSolverModule::nonlinearsolver_jacobian_absintfc
-    PROCEDURE(nonlinearsolver_jacobian_absintfc),DEFERRED,PASS :: jacobian
+    !> @copybrief NonLinearSolverModule::estimate_jacobian
+    !> @copydetails NonLinearSolverModule::estimate_jacobian
+    PROCEDURE,PASS :: jacobian => estimate_jacobian
     !> @copybrief NonLinearSolverModule::checkBounds_Base
     !> @copydetails NonLinearSolverModule::checkBounds_Base
     PROCEDURE,PASS :: checkBounds => checkBounds_Base
@@ -174,7 +174,16 @@ SUBROUTINE clearInterface_Base(this)
 ENDSUBROUTINE clearInterface_Base
 !
 !-------------------------------------------------------------------------------
-!> @brief Checks
+!> @brief Checks the bounds of a solution approximation
+!> @param this the @c NonLinearSolverInterface_Base object
+!> @param x the current solution approximation to check
+!> @returns continueSolve a logical indicating whether the solve should continue
+!>          or not
+!>
+!> This procedure defines a default behavior: nothing is checked and the solve will
+!> always be told to continue.  Extensions of the @c NonLinearSolverInterface_Base
+!> object can implement more advanced techniques.
+!>
 FUNCTION checkBounds_Base(this,x) RESULT(continueSolve)
   CLASS(NonLinearSolverInterface_Base),INTENT(IN) :: this
   CLASS(VectorType),INTENT(INOUT) :: x
@@ -185,6 +194,58 @@ FUNCTION checkBounds_Base(this,x) RESULT(continueSolve)
   continueSolve=.TRUE.
 
 ENDFUNCTION checkBounds_Base
+!
+!-------------------------------------------------------------------------------
+!> @brief Estimates the jacobian of a function
+!> @param this the @c NonLinearSolverInterface_Base object
+!> @param x the position at which to estimate the jacobian
+!> @param J the resulting matrix containing the estimated jacobian
+!>
+!> This routine evaluates the function at @c x and @c x + @c perturb*x, where
+!> @c perturb is a parameter set to 1.000001
+!>
+SUBROUTINE estimate_jacobian(this,x,J)
+  CLASS(NonLinearSolverInterface_Base),INTENT(IN) :: this
+  CLASS(VectorType),INTENT(INOUT) :: x
+  CLASS(MatrixType),INTENT(INOUT) :: J
+  !
+  REAL(SRK),PARAMETER :: perturb=1.000001_SRK
+  INTEGER(SIK) :: n,m
+  REAL(SRK) :: x_real,delx_real,invDelx_real,y_x_real,y_delx_real
+  CLASS(VectorType),ALLOCATABLE :: delx,y_x,y_delx
+
+  REQUIRE(x%isInit)
+  REQUIRE(J%isInit)
+  REQUIRE(x%n > 0)
+  REQUIRE(J%n == x%n)
+
+  ALLOCATE(delx,SOURCE=x)
+  ALLOCATE(y_x,SOURCE=x)
+  ALLOCATE(y_delx,SOURCE=x)
+
+  CALL this%eval(x,y_x)
+  DO n=1,x%n
+    !Copy the diffusion coefficients and perturb them
+    CALL BLAS_copy(x,delx)
+    CALL delx%get(n,x_real)
+    IF(x_real .APPROXEQ. ZERO) THEN
+      delx_real=ONE-perturb
+    ELSE
+      delx_real=x_real*perturb
+    ENDIF
+    CALL delx%set(n,delx_real)
+    invDelx_real=ONE/(delx_real-x_real)
+
+    !Evaluate the function and store jacobian entries
+    CALL this%eval(delx,y_delx)
+    DO m=1,x%n
+      CALL y_x%get(m,y_x_real)
+      CALL y_delx%get(m,y_delx_real)
+      CALL J%set(m,n,invDelx_real*(y_delx_real-y_x_real))
+    ENDDO !m
+  ENDDO !n
+
+ENDSUBROUTINE estimate_jacobian
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the interface for initializing a @c NonLinearSolver_Base object

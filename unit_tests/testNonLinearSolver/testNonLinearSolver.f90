@@ -24,7 +24,6 @@ PUBLIC :: NonLinearSolverInterface_Test
 TYPE,EXTENDS(NonLinearSolverInterface_Base) :: NonLinearSolverInterface_Test
   CONTAINS
     PROCEDURE,PASS :: eval => eval_test
-    PROCEDURE,PASS :: jacobian => jacobian_test
 ENDTYPE NonLinearSolverInterface_Test
 
 CONTAINS
@@ -37,24 +36,9 @@ SUBROUTINE eval_test(this,x,y)
 
   CALL x%getAll(xreal)
   CALL y%set((/2.0_SRK*xreal(1) + xreal(1)*xreal(2) - 2.0_SRK, & ! 2*x1 + x1*x2 -2
-      2.0_SRK*xreal(2) - xreal(1)*xreal(2)**2.0_SRK - 2.0_SRK/))    ! 2*x2 - x1*x2**2 -2
+      2.0_SRK*xreal(2) - xreal(1)*xreal(2)**2.0_SRK - 2.0_SRK/)) ! 2*x2 - x1*x2**2 -2
 
 ENDSUBROUTINE eval_test
-
-SUBROUTINE jacobian_test(this,x,J)
-  CLASS(NonLinearSolverInterface_Test),INTENT(IN) :: this
-  CLASS(VectorType),INTENT(INOUT) :: x
-  CLASS(MatrixType),INTENT(INOUT) :: J
-  !
-  REAL(SRK) :: xreal(2)
-
-  CALL x%getAll(xreal)
-  CALL J%set(1,1,2.0_SRK + xreal(2))                    ! d/dx1 (2*x1 + x1*x2 - 2)    = 2 + x2
-  CALL J%set(1,2,xreal(1))                              ! d/dx2 (2*x1 + x1*x2 - 2)    = x1
-  CALL J%set(2,1,-xreal(2)**2)                          ! d/dx1 (2*x2 - x1*x2**2 - 2) = -x2**2
-  CALL J%set(2,2,2.0_SRK - 2.0_SRK*xreal(1)*xreal(2)) ! d/dx2 (2*x2 - x1*x2**2 - 2) = 2 - 2*x1*x2
-
-ENDSUBROUTINE jacobian_test
 ENDMODULE testNonLinearSolverInterface
 !
 PROGRAM testNonLinearSolver
