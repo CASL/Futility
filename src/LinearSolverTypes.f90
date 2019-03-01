@@ -1699,7 +1699,7 @@ MODULE LinearSolverTypes
             CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
 
             IF (PRESENT(PrecondType)) THEN
-              u%b(lowIdx:highIdx)=w
+              u%b=w
               CALL solver%PreCondType%apply(u)
               w=u%b
             END IF
