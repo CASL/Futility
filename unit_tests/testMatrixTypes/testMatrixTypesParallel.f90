@@ -71,7 +71,7 @@ CONTAINS
     SUBROUTINE testMatrix()
 #ifdef HAVE_MPI
       IMPLICIT NONE
-      
+
       TYPE(ParamType) :: pList,optListMat
       INTEGER(SIK) :: rank,nproc,mpierr,i,j
       CLASS(DistributedMatrixType),ALLOCATABLE :: thisMatrix
@@ -104,8 +104,8 @@ CONTAINS
       SELECTTYPE(thisMatrix)
         TYPE IS(DistributedBandedMatrixType)
           bool = (.NOT.(thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
-              .AND.((thisMatrix%m == 0) & 
-              .AND.(thisMatrix%nband == 0) & 
+              .AND.((thisMatrix%m == 0) &
+              .AND.(thisMatrix%nband == 0) &
               .AND.(thisMatrix%myband == 0) &
               .AND.(thisMatrix%isCreated == .FALSE.) &
               .AND.(thisMatrix%isAssembled == .FALSE.) &
@@ -222,7 +222,7 @@ CONTAINS
       bool = .NOT.thisMatrix%isInit
       ASSERT(bool, 'banded%init(...)')
       CALL thisMatrix%clear()
-      !test with SIZE(bandi)/=SIZE(bandl) 
+      !test with SIZE(bandi)/=SIZE(bandl)
       CALL pList%clear()
       CALL pList%add('MatrixType->n',10_SNK)
       CALL pList%add('MatrixType->m',15_SNK)
@@ -462,7 +462,7 @@ CONTAINS
       SELECTTYPE(thisMatrix)
         TYPE IS(DistributedBandedMatrixType)
           DO i=1,7
-            bool = dummyvec(i) == i 
+            bool = dummyvec(i) == i
             ASSERT(bool, 'banded%get(...)')
           ENDDO
           DO i=1,3
@@ -473,7 +473,7 @@ CONTAINS
       ENDSELECT
       IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
       CALL thisMatrix%clear()
-      WRITE(*,*) '  Passed: CALL banded%get(...)' 
+      WRITE(*,*) '  Passed: CALL banded%get(...)'
       !check transpose functionality
       ![1 2 0 0 0]
       ![0 3 4 0 0]
@@ -528,7 +528,7 @@ CONTAINS
           ENDIF
       ENDSELECT
       CALL thisMatrix%clear()
-      WRITE(*,*) '  Passed: CALL banded%transpose(...)' 
+      WRITE(*,*) '  Passed: CALL banded%transpose(...)'
       !check zero_entries functionality
       CALL thisMatrix%clear()
       CALL pList%clear()
@@ -555,13 +555,13 @@ CONTAINS
             DO j=1,SIZE(thisMatrix%b(i)%elem)
               bool=(thisMatrix%b(i)%elem(j) .APPROXEQ. 0.0_SRK)
               ASSERT(bool,"banded%zero()")
-            ENDDO  
-          ENDDO  
+            ENDDO
+          ENDDO
           ! Extra assert to keep pass numbers even among procs
           IF(rank==1) ASSERT(bool,"banded%zero()")
       ENDSELECT
       CALL thisMatrix%clear()
-      WRITE(*,*) '  Passed: CALL banded%zero(...)' 
+      WRITE(*,*) '  Passed: CALL banded%zero(...)'
       !check matvec functionality
       ![1 2 0 0]
       ![0 3 4 0]
@@ -595,9 +595,10 @@ CONTAINS
       dummyvec2=1
       SELECTTYPE(thisMatrix)
         TYPE IS(DistributedBandedMatrixType)
-        CALL thisMatrix%matvec(dummyvec,dummyvec2)
+          CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2)
+          !CALL thisMatrix%matvec(dummyvec,dummyvec2)
           DO i=1,4
-            bool = ABS(dummyvec2(i)) < 1E-6 
+            bool = ABS(dummyvec2(i)) < 1E-6
             ASSERT(bool, 'banded%matvec(...)')
           ENDDO
       ENDSELECT
@@ -605,7 +606,8 @@ CONTAINS
       dummyvec=(/1._SRK,2._SRK,3._SRK,4._SRK/)
       SELECTTYPE(thisMatrix)
         TYPE IS(DistributedBandedMatrixType)
-        CALL thisMatrix%matvec(dummyvec,dummyvec2)
+          CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2)
+          !CALL thisMatrix%matvec(dummyvec,dummyvec2)
         bool = dummyvec2(1) == 5._SRK
         ASSERT(bool, 'banded%matvec(...)')
         bool = dummyvec2(2) == 18._SRK

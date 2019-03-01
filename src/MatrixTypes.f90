@@ -65,7 +65,7 @@
 !>   CALL sparse%set(3,2,50._SRK)
 !>   CALL sparse%set(3,3,60._SRK)
 !>   CALL sparse%clear()
-!>   
+!>
 !>   ! Create a PETSc matrix using the factory
 !>   CALL params%add("MatrixType->n",3_SIK)
 !>   CALL params%add("MatrixType->nnz",6_SIK)
@@ -76,7 +76,7 @@
 !>   ! Clean up
 !>   CALL matrix_p%clear()
 !>   DEALLOCATE(matrix_p)
-!>   
+!>
 !> ENDPROGRAM ExampleMatrix
 !> @endcode
 !>
@@ -130,11 +130,11 @@ MODULE MatrixTypes
 #ifdef FUTILITY_HAVE_Trilinos
   PUBLIC :: TrilinosMatrixType
 #endif
-  
+
   PUBLIC :: eMatrixType
   PUBLIC :: BLAS_matvec
   PUBLIC :: BLAS_matmult
-  
+
   !> @brief Adds to the @ref BLAS2::BLAS_matvec "BLAS_matvec" interface so that
   !> the matrix types defined in this module are also supported.
   INTERFACE BLAS_matvec
@@ -179,7 +179,7 @@ MODULE MatrixTypes
 !> constructed matrix. Should be NULL
 !> @param params a parameter list to use to determine the type of and construct
 !> the matrix
-!> 
+!>
 !> This is an abstract factory routine for the base MatrixTypes. It uses the
 !> matType and engine parameters on the passed parameter list to determine which
 !> type of MatrixType to which the passed pointer should be allocated. It then
@@ -219,7 +219,7 @@ MODULE MatrixTypes
 
       IF(params%has("MatrixType->matType")) THEN
         CALL params%get("MatrixType->matType", matType)
-      ELSE 
+      ELSE
         CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
           "no matrix TYPE specified")
       ENDIF
@@ -281,7 +281,7 @@ MODULE MatrixTypes
           "Matrix pointer already allocated")
         RETURN
       ENDIF
-      
+
       matType=SPARSE
 
       IF(params%has("MatrixType->engine")) THEN
@@ -480,6 +480,20 @@ MODULE MatrixTypes
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
+          TYPE IS(BandedMatrixType)
+            IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
+               PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
+               CALL eMatrixType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - This interface is being implemented.')
+            END IF
+            CALL thisMatrix%matvec(x,y)
+          TYPE IS(DistributedBandedMatrixType)
+            IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
+               PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
+               CALL eMatrixType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - This interface is being implemented.')
+            END IF
+            CALL thisMatrix%matvec(x,y)
           CLASS DEFAULT
             CALL eMatrixType%raiseError('Incorrect call to '// &
                  modName//'::'//myName//' - This interface is not available.')
@@ -836,7 +850,7 @@ MODULE MatrixTypes
         RETURN
       ENDSELECT
 #endif
-  
+
       IF(A%isInit) THEN
         tA='n'
         IF(PRESENT(transA)) tA=transA

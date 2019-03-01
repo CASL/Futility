@@ -290,7 +290,7 @@ PROGRAM testMatrixTypes
             ASSERT(thisMatrix%a(i) == 0, 'sparse%setShape(...)')
           ENDDO
           CALL thisMatrix%clear()
-          
+
           ! Perform a series of exception tests:
           ! These tests rely on DBC being hit, so if it's not available, don't do them
 #ifdef FUTILITY_DBC
@@ -1321,7 +1321,7 @@ PROGRAM testMatrixTypes
           ASSERT(bool, 'banded%init(...)')
           bool = ((SIZE(thisMatrix%b) == 3).AND. &
                   (SIZE(thisMatrix%b(2)%elem) == 3) .AND. &
-                  (thisMatrix%b(2)%ib == 1) .AND. & 
+                  (thisMatrix%b(2)%ib == 1) .AND. &
                   (thisMatrix%b(2)%jb == 2) .AND. &
                   (thisMatrix%b(2)%ie == 3) .AND. &
                   (thisMatrix%b(2)%je == 4) .AND. &
@@ -1616,7 +1616,8 @@ PROGRAM testMatrixTypes
       dummyvec2=1
       SELECTTYPE(thisMatrix)
         TYPE IS(BandedMatrixType)
-        CALL thisMatrix%matvec(dummyvec,dummyvec2)
+        CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2)
+        !CALL thisMatrix%matvec(dummyvec,dummyvec2)
           DO i=1,4
             bool = ABS(dummyvec2(i)) < 1E-6
             ASSERT(bool, 'banded%matvec(...)')
@@ -1626,7 +1627,8 @@ PROGRAM testMatrixTypes
       dummyvec=(/1._SRK,2._SRK,3._SRK,4._SRK/)
       SELECTTYPE(thisMatrix)
         TYPE IS(BandedMatrixType)
-        CALL thisMatrix%matvec(dummyvec,dummyvec2)
+        CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2)
+        !CALL thisMatrix%matvec(dummyvec,dummyvec2)
         bool = dummyvec2(1) == 5._SRK
         ASSERT(bool, 'banded%matvec(...)')
         bool = dummyvec2(2) == 18._SRK
@@ -4129,8 +4131,8 @@ PROGRAM testMatrixTypes
             DO j=1,SIZE(mat_p%b(i)%elem)
               bool=(mat_p%b(i)%elem(j) .APPROXEQ. 0.0_SRK)
               ASSERT(bool,"banded%zeroentries()")
-            ENDDO  
-          ENDDO  
+            ENDDO
+          ENDDO
       ENDSELECT
       CALL mat_p%clear()
       DEALLOCATE(mat_p)
