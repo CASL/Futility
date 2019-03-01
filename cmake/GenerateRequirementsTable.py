@@ -5,37 +5,97 @@
 #TODO: Check against CMakeLists
 #TODO: improve parsing of text file
 
+#NOTE: Requirements are indexed as they are found.  This means requirement numbers can change as new
+#      tests are added in the future.  
+
 import __future__
+import argparse
+import glob
 import sys
 import os
 import re
 import itertools as it
 import pandas as pd
+import warnings
 from IPython.display import HTML
+
+parser=argparse.ArgumentParser(description="Searches recursively through system path to find tagged"+
+      " requirements in files, extracts them, and compiles them into a table in an html file.")
+parser.add_argument("--path",type=str,help="The path to search recursively",default=".")
+parser.add_argument("--ext",action='append',type=str,help="The file extensions to check in for requirements",default=[])
+parser.add_argument("--output",type=str,help="Name of the output file",default="requirements.html")
+parser.add_argument("--skip-no-require", dest="skip_no_require",action="store_true",help="If added, files with no requirements present will not be added to the HTML file")
+args = parser.parse_args()
 
 reqID = it.count()
 
 ################################################################################
 class Requirement:
-  """Define a requirement"""
+  """ Define a requirement
+
+  This class takes a requirement block as input, which is a block of text (formatted as a list of
+  strings) that identifies a single requirement.  It shall be formatted as:
+
+  !> @beginreq
+  !> - Requirement description which
+  !> may span mutliple lines
+  !> - ticket 0000
+  !> @endreq
+
+  There may be any number of spaces or characters prior to the comment tag "!>".
+  There may be any number of spaces before or after the hyphens.
+  The hyphen identifies a new requirement attribute.
+  Currently a requirement may have a description (no keyword) or a ticket number.
+  Any lines without a hyphen are interpretted as continuations of the previous line.
+
+  Args:
+     ID (int): Numeric identifier for this requirement
+     testFile (str): The name of the file where this requirement was found
+     rawReqBlock (list): See above documentation for a detailed description.  Passing None means this
+        is not a requirement.
+  """
+  # Used to find integer ticket number
   _re_int = re.compile(r'[0-9]+')
+  # Used to find the first line of a requirement description
+  re_desc = re.compile('.*!>\s*-\s*')
+  # Used to find continuation lines in the requirement block
+  re_continue_line = re.compile('.*!>\s*')
+  # Used to find a ticket attribute of a requirement
+  re_ticket = re.compile('.*!>\s*-\s*ticket\s*', flags=re.IGNORECASE)
+  descr = None
+  tix = None
 
   def __init__(self,ID,testFile,rawReqBlock):
       self.ID    = ID
-      self.tfile = testFile.split('../')[1].rstrip()
+      self.tfile = testFile
       if rawReqBlock:
-          self.descr = rawReqBlock[1].split('!> - ')[1].rstrip()
-          tix = re.split('!> - ticket ',rawReqBlock[2],flags=re.IGNORECASE)[1].rstrip()
-          if self._re_int.match(tix):
-              self.tix   = ""
-              for t in self._re_int.findall(tix):
-                  self.tix += 'https://vminfo.casl.gov/trac/casl_phi_kanban/ticket/'+t+'\n'
-              self.tix = self.tix.rstrip()
-          else:
-              self.tix = None
-      else:
-          self.descr = None
-          self.tix = None
+          match = self.re_desc.match(rawReqBlock[1])
+          if not match:
+              # If a @beginreq block is present, the description portion of the requirement needs to be present and formatted correctly
+              warnings.warn("Requirement not formatted correctly in file: "+testFile)
+          # Strip out any characters prior to the beginning of the text description ofthe requirement
+          self.descr = rawReqBlock[1][match.end():]
+          # Read through the rest of the block and append any continuation lines to the description
+          # 0 was the @beginreq tag, 1 is the requirements description
+          lineNum = 2
+          for line in rawReqBlock[lineNum:-1]:
+              # If a new block parameter is found, stop looking for continuation lines
+              if self.re_ticket.match(line): break
+              lineNum = lineNum+1
+              self.descr = self.descr+line.split('!>')[1].rstrip()
+          # Check for a ticket number in the block and save
+          # Defaults to None if not present
+          if lineNum<len(rawReqBlock):
+              match = self.re_ticket.match(rawReqBlock[lineNum], re.IGNORECASE)
+              if match:
+                  tix = self.re_ticket.split(rawReqBlock[lineNum])[1].rstrip()
+                  if self._re_int.match(tix):
+                      self.tix   = ""
+                      for t in self._re_int.findall(tix):
+                          self.tix += 'https://vminfo.casl.gov/trac/casl_phi_kanban/ticket/'+t+'\n'
+                      self.tix = self.tix.rstrip()
+                  else:
+                      warnings.warn("Not a valid ticket number in requirement block in file: "+testFile)
 
   def __str__(self):
       return "Requirement ID: " + str(self.ID)   +'\n'\
@@ -53,27 +113,38 @@ class Requirement:
 
 ################################################################################
 class MPACT_RequirementParser:
-    """Set up regular expressions"""
+    """ Extracts requirements from input file
+
+    The input file can be any text file.
+    The class will read through the entire file and find all requirement blocks (see Requirement for a description).
+    A Requirement object will be created for each requirement block that was found.
+    If no requirement blocks are found in the file, one empty Requirement object will be created for that file.
+
+    Args:
+       testFile (str): Name of the file to search (full file path)
+    """
     _re_begin = re.compile(r'!> @beginreq\n',re.IGNORECASE)
     _re_end   = re.compile(r'!> @endreq\n',re.IGNORECASE)
 
     def __init__(self, testFile):
-        self.allReqs = [];
+        self.allReqs = []
+
+        if not os.path.isfile(testFile):
+            return
 
         if sys.version_info[0] < 3:
             fobject = open(testFile,"r")
         else:
             fobject = open(testFile,"r",errors='ignore')
         fline = fobject.readline()
-        print(testFile)
         while fline:
-            if self._re_begin.match(fline):
+            if self._re_begin.search(fline):
                 reqBlock = []
                 reqBlock.append(fline)
                 while fline:
                     fline = fobject.readline()
                     reqBlock.append(fline)
-                    if self._re_end.match(fline):
+                    if self._re_end.search(fline):
                         newID = next(reqID)+1
                         self.allReqs.append(Requirement(newID,testFile,reqBlock))
                         break
@@ -120,22 +191,39 @@ def convert_url_to_html_hyperlink(cell_urls):
   else:
     return None
 
-# Collect a list of all the files to be parsed
-def GenerateInputList(path="/../MPACT_exe/tests"):
+def GenerateInputList(path="/../MPACT_exe/tests", ext=[]):
+    """ Collect a list of all the files to be parsed
+
+    Args:
+       path (str): Path to start searching from.  Will walk all subdirectories starting from this path.
+       ext (list): List of file extensions to include in the list.  By default includes all files.
+
+    """
     searchPath = os.path.dirname(os.path.realpath(__file__))
     searchPath = searchPath + path
+    searchPath = path
     inputs = []
     for root, dirs, files in os.walk(searchPath):
         for file in files:
-            if file.endswith(".inp"):
-                inputs.append(os.path.join(root,file))
+            if len(ext)==0:
+                inputs.extend(glob.glob(os.path.join(root,file)))
+            else:
+                for e in ext:
+                    if file.endswith(e):
+                        inputs.append(os.path.join(root,file))
     return inputs
 
 #Process test inputs
 allReqs = [];
-for f in GenerateInputList():
+for f in GenerateInputList(args.path, args.ext):
    for r in MPACT_RequirementParser(f):
-     allReqs.append(r.to_dict())
+       if args.skip_no_require and not r.descr:
+           # The user wants to skip files with no requirements
+           addFile = False
+       else:
+           addFile = True
+       if addFile:
+           allReqs.append(r.to_dict())
 
 #Convert list of requirements to Pandas DataFrame
 table_headers = ['Requirement ID','Description','File','Tickets']
@@ -176,7 +264,5 @@ html_table = (df.style
                 .render())
 
 # Write to file
-f = open('mpact_requirements.html','w')
+f = open(args.output,'w')
 f.write(html_table)
-f.close()
-
