@@ -90,6 +90,7 @@ TRIBITS_ADD_LIBRARY(Utils
       MultigridMesh.f90
       EigenvalueSolverTypes.f90
       ODESolverTypes.f90
+      NonLinearSolver.f90
       AndersonAcceleration.f90
       StochasticSampling.f90
       Sorting.f90

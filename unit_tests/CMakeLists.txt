@@ -60,6 +60,7 @@ SET(UNIT_TEST_NAMES
     testMultigridMesh
     testEigenvalueSolver
     testODESolver
+    testNonLinearSolver
     testAndersonAcceleration
     testStochasticSampler
     testPartitionGraph
