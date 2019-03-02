@@ -129,19 +129,6 @@ ABSTRACT INTERFACE
     CLASS(VectorType),INTENT(INOUT) :: y
   ENDSUBROUTINE nonlinearsolver_eval_absintfc
 
-  !> @brief Interface for the @c jacobian method of a @c NonLinearSolverInterface_Base
-  !>        extension
-  !> @param this the @c NonLinearSolverInterface_Base object
-  !> @param x the @c VectorType to evaluate the Jacobian at
-  !> @param J the @c MatrixType containing the evaluation of the Jacobian at @c x
-  !>
-  SUBROUTINE nonlinearsolver_jacobian_absintfc(this,x,J)
-    IMPORT :: NonLinearSolverInterface_Base,VectorType,MatrixType
-    CLASS(NonLinearSolverInterface_Base),INTENT(IN) :: this
-    CLASS(VectorType),INTENT(INOUT) :: x
-    CLASS(MatrixType),INTENT(INOUT) :: J
-  ENDSUBROUTINE nonlinearsolver_jacobian_absintfc
-
   !> @brief Interface for the @c solve method of a @c NonLinearSolver extension
   !> @param this the @c NonLinearSolver object
   !> @param x the @c VectorType containing the initial guess for the solution
