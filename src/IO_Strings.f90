@@ -1726,4 +1726,37 @@ MODULE IO_Strings
 
     ENDFUNCTION str_SDK_nDecimal
 !
+!-------------------------------------------------------------------------------
+!> @brief Returns a character array by repeating a provided sample
+!> 
+  FUNCTION charBanner(charSamp,reps) RESULT(tmpChar)
+    CHARACTER(LEN=*),INTENT(IN) :: charSamp
+    INTEGER(SIK),INTENT(IN) :: reps
+    CHARACTER(LEN=reps*LEN(TRIM(charSamp))) :: tmpChar
+    tmpChar = REPEAT(TRIM(charSamp),reps)
+  ENDFUNCTION charBanner
+!
+!-------------------------------------------------------------------------------
+!> @brief takes in a real, returns the number of digits to the left of the
+!> decimal.
+!> 
+! Primary intent of this is for writing floats properly, for that reason negative
+! numbers automatically count "-" in the returned length. However a leading zero
+! is not counted.
+  FUNCTION getFloatFormat(inputData) RESULT(lengthOut)
+    REAL(SRK),INTENT(IN) :: inputData
+    INTEGER(SIK) :: lengthOut
+    !
+    REAL(SRK) :: x
+
+    lengthOut = MERGE(1,0,inputData < 0.0_SRK)
+    x = ABS(inputData)
+
+    DO WHILE(x >= 1.0_SRK)
+      lengthOut = lengthOut + 1
+      x = x / 10.0_SRK
+    ENDDO
+
+  ENDFUNCTION getFloatFormat
+!
 ENDMODULE IO_Strings
