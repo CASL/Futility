@@ -482,6 +482,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::write_attribute_st0
       !> @copyoc FileType_HDF5_write_attribute_st0
       PROCEDURE,PASS,PRIVATE :: write_attribute_st0
+      !> @copybrief FileType_HDF5::write_attribute_c0
+      !> @copyoc FileType_HDF5_write_attribute_c0
+      PROCEDURE,PASS,PRIVATE :: write_attribute_c0
       !> @copybrief FileType_HDF5::write_attribute_i0
       !> @copyoc FileType_HDF5_write_attribute_i0
       PROCEDURE,PASS,PRIVATE :: write_attribute_i0
@@ -489,11 +492,14 @@ MODULE FileType_HDF5
       !> @copyoc FileType_HDF5_write_attribute_d0
       PROCEDURE,PASS,PRIVATE :: write_attribute_d0
       !> Generic typebound interface for all @c attribute writes
-      GENERIC ::  write_attribute => write_attribute_st0, write_attribute_i0,&
-        write_attribute_d0
+      GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
+        write_attribute_i0, write_attribute_d0
       !> @copybrief FileType_HDF5::read_str_attribure_help
       !> @copyoc FileType_HDF5_read_str_attribure_help
       PROCEDURE,PASS,PRIVATE :: read_attribute_st0
+      !> @copybrief FileType_HDF5::read_attribute_c0
+      !> @copyoc FileType_HDF5_read_attribute_c0
+      PROCEDURE,PASS,PRIVATE :: read_attribute_c0
       !> @copybrief FileType_HDF5::read_attribute_i0
       !> @copyoc FileType_HDF5_read_attribute_i0
       PROCEDURE,PASS,PRIVATE :: read_attribute_i0
@@ -501,8 +507,8 @@ MODULE FileType_HDF5
       !> @copyoc FileType_HDF5_read_attribute_d0
       PROCEDURE,PASS,PRIVATE :: read_attribute_d0
       !> Generic typebound interface for all @c attribute writes
-      GENERIC :: read_attribute => read_attribute_st0, read_attribute_i0,&
-        read_attribute_d0
+      GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
+        read_attribute_i0, read_attribute_d0
   ENDTYPE
 
   !> @brief Type that is a container so as to have an array of pointers to HDF5 files
@@ -6990,6 +6996,26 @@ MODULE FileType_HDF5
     END SUBROUTINE write_attribute_st0
 !
 !-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and string value to a known dataset
+!>
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+    SUBROUTINE write_attribute_c0(this,obj_name,attr_name,attr_val)
+       CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_c0_HDF5FileType'
+       CLASS(HDF5FileType),INTENT(INOUT) :: this
+       CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+       CHARACTER(LEN=*) :: attr_val
+
+       TYPE(StringType) :: str_val
+
+       str_val=TRIM(attr_val)
+       CALL this%write_attribute(obj_name,attr_name,str_val)
+
+    END SUBROUTINE write_attribute_c0
+!
+!-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and integer  value to a known dataset
 !>
 !> @param obj_name the relative path to the dataset
@@ -7093,6 +7119,26 @@ MODULE FileType_HDF5
        CALL close_object(this,obj_id)
 #endif
     End SUBROUTINE read_attribute_st0
+!
+!-------------------------------------------------------------------------------
+!> @brief Set-up to read  a string value attribute from a known dataset
+!>
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+    SUBROUTINE read_attribute_c0(this,obj_name,attr_name,attr_val)
+       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
+       CLASS(HDF5FileType),INTENT(INOUT) :: this
+       CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+       CHARACTER(LEN=*),INTENT(INOUT)::attr_val
+
+       TYPE(StringType) :: str_val
+
+       CALL this%read_attribute(obj_name,attr_name,str_val)
+
+       attr_val=CHAR(str_val)
+    End SUBROUTINE read_attribute_c0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a string value attribute from a known dataset
