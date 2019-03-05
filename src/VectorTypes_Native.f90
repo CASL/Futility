@@ -631,7 +631,7 @@ MODULE VectorTypes_Native
     SUBROUTINE getOne_NativeDistributedVectorType(thisVector,i,getval,ierr)
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: i
-      REAL(SRK),INTENT(INOUT) :: getval
+      REAL(SRK),INTENT(OUT) :: getval
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc
@@ -654,7 +654,7 @@ MODULE VectorTypes_Native
 !> @param getval Correctly sized array that will be filled with contents of this vector
     SUBROUTINE getAll_NativeDistributedVectorType(thisVector,getval,ierr)
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       !
       INTEGER(SIK) :: ierrc
@@ -680,7 +680,7 @@ MODULE VectorTypes_Native
     SUBROUTINE getSelected_NativeDistributedVectorType(thisVector,indices,getval,ierr)
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: indices(:)
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       LOGICAL(SBK) :: inMemFlag
       !
@@ -712,7 +712,7 @@ MODULE VectorTypes_Native
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(IN) :: istt
       INTEGER(SIK),INTENT(IN) :: istp
-      REAL(SRK),INTENT(INOUT) :: getval(:)
+      REAL(SRK),INTENT(OUT) :: getval(:)
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: i, srcLow, srcHigh, destLow, destHigh
       INTEGER(SIK) :: ierrc
