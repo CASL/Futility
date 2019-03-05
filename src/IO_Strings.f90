@@ -107,6 +107,7 @@ MODULE IO_Strings
   PUBLIC :: isChar
   PUBLIC :: isCharCap
   PUBLIC :: isCharLow
+  PUBLIC :: getFloatFormat
   !
   !PUBLIC :: charToStringArray
 
@@ -1727,22 +1728,13 @@ MODULE IO_Strings
     ENDFUNCTION str_SDK_nDecimal
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns a character array by repeating a provided sample
-!> 
-  FUNCTION charBanner(charSamp,reps) RESULT(tmpChar)
-    CHARACTER(LEN=*),INTENT(IN) :: charSamp
-    INTEGER(SIK),INTENT(IN) :: reps
-    CHARACTER(LEN=reps*LEN(TRIM(charSamp))) :: tmpChar
-    tmpChar = REPEAT(TRIM(charSamp),reps)
-  ENDFUNCTION charBanner
-!
-!-------------------------------------------------------------------------------
 !> @brief takes in a real, returns the number of digits to the left of the
 !> decimal.
-!> 
+!> @param inputData real valued scalar that will be inspected
+!> @result lengthOut number of digits found
+!>
 ! Primary intent of this is for writing floats properly, for that reason negative
-! numbers automatically count "-" in the returned length. However a leading zero
-! is not counted.
+! numbers automatically count "-" in the returned length.
   FUNCTION getFloatFormat(inputData) RESULT(lengthOut)
     REAL(SRK),INTENT(IN) :: inputData
     INTEGER(SIK) :: lengthOut
@@ -1751,11 +1743,14 @@ MODULE IO_Strings
 
     lengthOut = MERGE(1,0,inputData < 0.0_SRK)
     x = ABS(inputData)
-
-    DO WHILE(x >= 1.0_SRK)
+    IF(x < 1.0) THEN
       lengthOut = lengthOut + 1
-      x = x / 10.0_SRK
-    ENDDO
+    ELSE
+      DO WHILE(x >= 1.0_SRK)
+        lengthOut = lengthOut + 1
+        x = x / 10.0_SRK
+      ENDDO
+    ENDIF !x < 1.0
 
   ENDFUNCTION getFloatFormat
 !
