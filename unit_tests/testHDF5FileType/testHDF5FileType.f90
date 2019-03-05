@@ -42,7 +42,7 @@ PROGRAM testHDF5
   TYPE(StringType) :: refST0,refCNCHAR0
   TYPE(StringType),ALLOCATABLE :: refST1(:),refSTC1(:),refST0CA(:),refST2(:,:),refST3(:,:,:)
   TYPE(StringType),ALLOCATABLE :: refCNCHAR1(:),refCNCHAR2(:,:),refCNCHAR3(:,:,:)
-  CHARACTER(LEN=32) :: refC1,integer_name,real_name,string_name
+  CHARACTER(LEN=32) :: refC1,integer_name,real_name,string_name,char_name
   CHARACTER(LEN=12) :: helper_string
   LOGICAL(SBK) :: exists
   TYPE(StringType),ALLOCATABLE :: refsets(:)
@@ -242,6 +242,7 @@ PROGRAM testHDF5
 
       !Set Attribute write values
       string_name='string'
+      char_name='char'
       integer_name='int'
       real_name='real'
 
@@ -313,6 +314,7 @@ PROGRAM testHDF5
       !Write Attribute Values
       CALL h5%write_attribute('groupB->memB0',integer_name,refN0)
       CALL h5%write_attribute('groupB->memB1',string_name,refST0)
+      CALL h5%write_attribute('groupB->memB1',char_name,refC1)
       CALL h5%write_attribute('groupB->memB2',real_name,refD0)
 
       CALL h5%fclose()
@@ -888,6 +890,7 @@ PROGRAM testHDF5
       !WRITE ATTRIBUTESr
       CALL h5%write_attribute('groupB->memB0',integer_name,refN0)
       CALL h5%write_attribute('groupB->memB1',string_name,refST0)
+      CALL h5%write_attribute('groupB->memB1',char_name,refC1)
       CALL h5%write_attribute('groupB->memB2',real_name,refD0)
 
       !READ ATTRIBUTES
@@ -895,6 +898,8 @@ PROGRAM testHDF5
       ASSERT_EQ(refN0,testN0,'integer read fail')
       CALL h5%read_attribute('groupB->memB1',string_name,testST0)
       ASSERT_EQ(CHAR(refST0),CHAR(testST0),'string read fail')
+      CALL h5%read_attribute('groupB->memB1',char_name,testC1)
+      ASSERT_EQ(TRIM(refC1),TRIM(testC1),'character read fail')
       CALL h5%read_attribute('groupB->memB2',real_name,testD0)
       ASSERT_SOFTEQ(refD0,testD0,1.E-12_SRK,'l')
 
@@ -1024,7 +1029,7 @@ PROGRAM testHDF5
       ENDDO
       ASSERT(checkwrite,'ST3 Write Failure')
       CALL h5%fread('groupC->memC1',testC1)
-      ASSERT_EQ(testC1,refC1,'C1 Write Failure')
+      ASSERT_EQ(TRIM(testC1),TRIM(refC1),'C1 Write Failure')
       i=h5%ngrp('groupR')
       ASSERT_EQ(i,16,'ngrp_HDF5FileType')
 
@@ -2495,6 +2500,8 @@ PROGRAM testHDF5
       ASSERT_EQ(refN0,testN0,'integer read fail')
       CALL h5%read_attribute('groupB->memB1',string_name,testST0)
       ASSERT_EQ(CHAR(refST0),CHAR(testST0),'string read fail')
+      CALL h5%read_attribute('groupB->memB1',char_name,testC1)
+      ASSERT_EQ(refC1,testC1,'string read fail')
       CALL h5%read_attribute('groupB->memB2',real_name,testD0)
       ASSERT_EQ(refD0,testD0,'real_read fail')
 
