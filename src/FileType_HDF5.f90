@@ -497,6 +497,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::read_str_attribure_help
       !> @copyoc FileType_HDF5_read_str_attribure_help
       PROCEDURE,PASS,PRIVATE :: read_attribute_st0
+      !> @copybrief FileType_HDF5::read_attribute_c0
+      !> @copyoc FileType_HDF5_read_attribute_c0
+      PROCEDURE,PASS,PRIVATE :: read_attribute_c0
       !> @copybrief FileType_HDF5::read_attribute_i0
       !> @copyoc FileType_HDF5_read_attribute_i0
       PROCEDURE,PASS,PRIVATE :: read_attribute_i0
@@ -504,8 +507,8 @@ MODULE FileType_HDF5
       !> @copyoc FileType_HDF5_read_attribute_d0
       PROCEDURE,PASS,PRIVATE :: read_attribute_d0
       !> Generic typebound interface for all @c attribute writes
-      GENERIC :: read_attribute => read_attribute_st0, read_attribute_i0,&
-        read_attribute_d0
+      GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
+        read_attribute_i0, read_attribute_d0
   ENDTYPE
 
   !> @brief Type that is a container so as to have an array of pointers to HDF5 files
@@ -7005,37 +7008,11 @@ MODULE FileType_HDF5
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        CHARACTER(LEN=*) :: attr_val
 
-#ifdef FUTILITY_HAVE_HDF5
-       INTEGER :: num_dims
-       INTEGER(HID_T) :: atype_id, attr_id, dspace_id, obj_id
-       INTEGER(HSIZE_T),DIMENSION(1) :: dims
-       INTEGER(SIZE_T) :: attr_len
-       CHARACTER(LEN=LEN(attr_val),KIND=C_CHAR),TARGET :: valss
-       num_dims=1
-       dims(1)=1
-       attr_val=TRIM(attr_val)
-       valss=attr_val
-       attr_len=INT(LEN(attr_val),SDK)
+       TYPE(StringType) :: str_val
 
-       !Prepare the File and object for the attribute
-       CALL open_object(this,obj_name,obj_id)
+       str_val=TRIM(attr_val)
+       CALL this%write_attribute(obj_name,attr_name,str_val)
 
-       !Create the data space for memory type and size
-       CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
-       CALL h5tcopy_f(H5T_NATIVE_CHARACTER,atype_id,error)
-       CALL h5tset_size_f(atype_id,attr_len,error)
-
-       CALL createAttribute(this,obj_id,attr_name,atype_id,dspace_id,attr_id)
-       CALL h5awrite_f(attr_id,atype_id,TRIM(valss),dims,error)
-
-       !Close datatype opened by h5tcopy_f
-       CALL h5tclose_f(atype_id,error)
-
-       !Close dataspace, attribute and object
-       CALL h5sclose_f(dspace_id,error)
-       CALL close_attribute(this,attr_id)
-       CALL close_object(this,obj_id)
-#endif
     END SUBROUTINE write_attribute_c0
 !
 !-------------------------------------------------------------------------------
@@ -7142,6 +7119,26 @@ MODULE FileType_HDF5
        CALL close_object(this,obj_id)
 #endif
     End SUBROUTINE read_attribute_st0
+!
+!-------------------------------------------------------------------------------
+!> @brief Set-up to read  a string value attribute from a known dataset
+!>
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+    SUBROUTINE read_attribute_c0(this,obj_name,attr_name,attr_val)
+       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
+       CLASS(HDF5FileType),INTENT(INOUT) :: this
+       CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+       CHARACTER(LEN=*),INTENT(INOUT)::attr_val
+
+       TYPE(StringType) :: str_val
+
+       CALL this%read_attribute(obj_name,attr_name,str_val)
+
+       attr_val=CHAR(str_val)
+    End SUBROUTINE read_attribute_c0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a string value attribute from a known dataset
