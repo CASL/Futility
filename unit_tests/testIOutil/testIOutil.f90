@@ -552,7 +552,7 @@ PROGRAM testIOutil
 
       COMPONENT_TEST('getFloatFormat')
       ASSERT_EQ(getFloatFormat(0.0_SRK),1_SIK,'zero')
-      ASSERT_EQ(getFloatFormat(-0.0_SRK),1_SIK,'zero')
+      ASSERT_EQ(getFloatFormat(-0.0_SRK),2_SIK,'zero')
       ASSERT_EQ(getFloatFormat(0.1_SRK),1_SIK,'zero')
       ASSERT_EQ(getFloatFormat(-0.1_SRK),2_SIK,'zero')
       ASSERT_EQ(getFloatFormat(1.1_SRK),1_SIK,'zero')

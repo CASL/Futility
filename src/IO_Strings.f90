@@ -1741,7 +1741,7 @@ MODULE IO_Strings
     !
     REAL(SRK) :: x
 
-    lengthOut = MERGE(1,0,inputData < 0.0_SRK)
+    lengthOut = MERGE(1,0,SIGN(1.0_SRK,inputData) < 0.0_SRK)
     x = ABS(inputData)
     IF(x < 1.0) THEN
       lengthOut = lengthOut + 1
