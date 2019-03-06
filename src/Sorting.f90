@@ -41,9 +41,6 @@ MODULE Sorting
     !> @copybrief Sorting::qsort_1DInt
     !> @copydetails Sorting::qsort_1DInt
     MODULE PROCEDURE qsort_1DInt
-    !> @copybrief Sorting::qsort_1DInt_1DReal
-    !> @copydetails Sorting::qsort_1DInt_1DReal
-    MODULE PROCEDURE qsort_1DInt_1DReal
     !> @copybrief Sorting::bubble_sort_2DInt
     !> @copydetails Sorting::bubble_sort_2DInt
     MODULE PROCEDURE bubble_sort_2DInt
@@ -103,6 +100,13 @@ MODULE Sorting
     MODULE PROCEDURE bubble_sort_1DInt_1DStr
 
   ENDINTERFACE bubble_sort
+
+  !> @brief Interface to sort based on integer pairs
+  INTERFACE diagonal_sort
+    !> @copybrief Sorting::qsort_1DInt_1DInt_1DReal
+    !> @copydetails Sorting::qsort_1DInt_1DInt_1DReal
+    MODULE PROCEDURE qsort_diagonal
+  END INTERFACE
 !
 !===============================================================================
   CONTAINS
@@ -573,40 +577,50 @@ MODULE Sorting
 !> 1D array of Reals
 !> @param keys Integers to sort over
 !> @param values Reals to sort based on keys
-    PURE RECURSIVE SUBROUTINE qsort_1DInt_1DReal(keys, values)
-      INTEGER(SIK),INTENT(INOUT) :: keys(:)
-      REAL(SRK),INTENT(INOUT) :: values(:)
+    PURE RECURSIVE SUBROUTINE qsort_diagonal(diagRank, iValues, jValues, rValues)
+      INTEGER(SIK),INTENT(INOUT) :: iValues(:)
+      INTEGER(SIK),INTENT(INOUT) :: jValues(:)
+      INTEGER(SIK),INTENT(INOUT) :: diagRank(:)
+      REAL(SRK),INTENT(INOUT) :: rValues(:)
 
       INTEGER(SIK) :: n,l,p,c
 
-      n=SIZE(keys)
+      n=SIZE(iValues)
 
       IF (n>2) THEN
         !median of 3 pivot
         c=n/2
         IF (keys(c) < keys(1)) THEN
-          CALL swap_int(keys,c,1)
-          CALL swap_real(values,c,1)
+          CALL swap_int(diagRank,c,1)
+          CALL swap_int(iValues,c,1)
+          CALL swap_int(jValues,c,1)
+          CALL swap_real(rValues,c,1)
         END IF
         IF (keys(n) < keys(1)) THEN
-          CALL swap_int(keys,1,n)
-          CALL swap_real(values,1,n)
+          CALL swap_int(diagRank,1,n)
+          CALL swap_int(iValues,1,n)
+          CALL swap_int(jValues,1,n)
+          CALL swap_real(rValues,1,n)
         END IF
         IF (keys(n) < keys(c)) THEN
-          CALL swap_int(keys,c,n)
-          CALL swap_real(values,c,n)
+          CALL swap_int(diagRank,c,n)
+          CALL swap_int(iValues,c,n)
+          CALL swap_int(jValues,c,n)
+          CALL swap_real(rValues,c,n)
         END IF
         p=c
-        CALL partition_array_1DInt_1DReal(keys,values,p,l)
-        CALL qsort_1DInt_1DReal(keys(1:l-1),values(1:l-1))
-        CALL qsort_1DInt_1DReal(keys(l+1:n),values(l+1:n))
+        CALL partition_array_qsort_diagonal(keys,iValues,rValues,p,l)
+        CALL qsort_diagonal(diagRank(1:l-1),iValues(1:l-1),jValues(1:l-1),rValues(1:l-1))
+        CALL qsort_diagonal(diagRank(1:l-1),iValues(l+1:n),jValues(l+1:n),rValues(l+1:n))
       ELSE IF (n==2) THEN
         IF (keys(1) > keys(2)) THEN
-          CALL swap_int(keys,1,2)
-          CALL swap_real(values,1,2)
+          CALL swap_int(diagRank,1,2)
+          CALL swap_int(iValues,1,2)
+          CALL swap_int(jValues,1,2)
+          CALL swap_real(rValues,1,2)
         END IF
       ENDIF
-    ENDSUBROUTINE qsort_1DInt_1DReal
+    ENDSUBROUTINE qsort_diagonal
 !
 !-------------------------------------------------------------------------------
 !> @brief Partition method 1D integer key array and associated 1D real values
@@ -617,9 +631,11 @@ MODULE Sorting
 !> @param p Index of array element to partition with
 !> @param i Index of the partition element once A is partitioned
 !>
-    PURE SUBROUTINE partition_array_1DInt_1DReal(keys,values,p,i)
-      INTEGER(SIK),INTENT(INOUT) :: keys(:)
-      REAL(SRK),INTENT(INOUT) :: values(:)
+    PURE SUBROUTINE partition_array_qsort_diagonal(diagRank,iValues,jValues,rValues,p,i)
+      INTEGER(SIK),INTENT(INOUT) :: diagRank(:)
+      INTEGER(SIK),INTENT(INOUT) :: iValues(:)
+      INTEGER(SIK),INTENT(INOUT) :: jValues(:)
+      REAL(SRK),INTENT(INOUT) :: rValues(:)
       INTEGER(SIK),INTENT(IN) :: p
       INTEGER(SIK),INTENT(OUT) :: i
 
@@ -629,24 +645,32 @@ MODULE Sorting
       n=SIZE(keys)
       IF (p>1) THEN
         ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
-        CALL swap_int(keys,1,2)
-        CALL swap_real(values,1,2)
-        CALL swap_int(keys,1,p)
-        CALL swap_real(values,1,p)
+        CALL swap_int(diagRank,1,2)
+        CALL swap_int(iValues,1,2)
+        CALL swap_int(jValues,1,2)
+        CALL swap_real(rValues,1,2)
+        CALL swap_int(diagRank,1,p)
+        CALL swap_int(iValues,1,p)
+        CALL swap_int(jValues,1,p)
+        CALL swap_real(rValues,1,p)
       ENDIF
 
       i=2
       DO j=2,n
         IF (keys(j)<pval) THEN
-          CALL swap_int(keys,i,j)
-          CALL swap_real(values,i,j)
+          CALL swap_int(diagRank,i,j)
+          CALL swap_int(iValues,i,j)
+          CALL swap_int(jValues,i,j)
+          CALL swap_real(rValues,i,j)
           i=i+1
         ENDIF
       ENDDO
       i=i-1
-      CALL swap_int(keys,1,i)
-      CALL swap_real(values,1,i)
-    ENDSUBROUTINE partition_array_1DInt_1DReal
+      CALL swap_int(diagRank,1,i)
+      CALL swap_int(iValues,1,i)
+      CALL swap_int(jValues,1,i)
+      CALL swap_real(rValues,1,i)
+    ENDSUBROUTINE partition_array_qsort_diagonal
 !
 !-------------------------------------------------------------------------------
 !> @brief Swap location of 2 locations in 1D integer array.

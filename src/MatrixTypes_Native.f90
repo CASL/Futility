@@ -523,7 +523,7 @@ MODULE MatrixTypes_Native
 !> @param pList the parameter list
 !>
     SUBROUTINE assemble_BandedMatrixType(thisMatrix, ierr)
-      CHARACTER(LEN=*),PARAMETER :: myName='assemble_DistributedBandedMatrixType'
+      CHARACTER(LEN=*),PARAMETER :: myName='assemble_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK),ALLOCATABLE :: numOnDiag(:)
@@ -577,8 +577,58 @@ MODULE MatrixTypes_Native
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK),ALLOCATABLE :: iSrt,jSrt,diagRank
+      REAL(SIK),ALLOCATABLE :: valSrt
+      INTEGER(SIK) :: currIdx
       CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
         ' - routine is not implemented!')
+
+      REQUIRE(isInit)
+      CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
+      CALL MPI_Comm_size(matrix%comm,nproc,mpierr)
+      nHeldLower = MIN(rank,MOD(matrix%nnz,nproc))
+      nHeldLower = nHeldLower + rank*matrix%nnz/nproc
+
+      diagRank = thisMatrix%iTmp + thisMatrix%jTmp
+
+      ! Global Sort over all tmp arrays
+
+      ! First, each process sorts its own tmp arrays
+      CALL diagonal_sort(diagRank,thisMatrix%iTmp,thisMatrix%jTmp,thisMatrix%elemTmp)
+
+      ! Now, create the new (sorted) temp arrays
+      ALLOCATE(iSrt(nLocal))
+      ALLOCATE(jSrt(nLocal))
+      ALLOCATE(valSrt(nLocal))
+      currIdx = 1
+      ! Then, loop over nnz to minimize. Yeah, it's inefficient
+      DO i=1,thisMatrix%nnz
+        ! if currIdx <= nlocal
+        !   set tmpDiagRank to diagRank(i)
+        ! else
+        !   set tmpDiagRank to inf
+        ! endif
+        ! NOTE: disregard diagRanks of 0
+        IF (i > nHeldLower .AND. i - nHeldLower <= thisMatrix%nLocal) THEN
+          ! Reduce to on diagRank for minloc
+          ! If value from local data is selected
+          !   copy i, j, val
+          !   Increment currIdx
+          ! else
+          !   receive i, j, val
+          ! end if
+        ELSE
+          ! Reduce elsewhere
+          ! If value from local data is selected
+          !   send i, j, val
+          !   increment currIdx
+          ! end if
+        END IF
+      END DO
+
+      ! Creation of local bands
+      ! Cleanup of tmp arrays
+
     ENDSUBROUTINE assemble_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
