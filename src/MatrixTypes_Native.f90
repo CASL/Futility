@@ -146,8 +146,14 @@ MODULE MatrixTypes_Native
     TYPE(Band),ALLOCATABLE :: bands(:)
     !> Number of nonzero elements
     INTEGER(SIK) :: nnz
+    !> Number of columns
+    INTEGER(SIK) :: m
+    !> Counter to keep track of added elements before assembly
+    INTEGER(SIK) :: counter
     !> Temporary containers used before (and deallocated after) assembly
-    INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:),elemTmp(:)
+    INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
+    REAL(SRK),ALLOCATABLE :: elemTmp(:)
+    LOGICAL(SBK) :: isAssembled, isReversed
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -179,14 +185,20 @@ MODULE MatrixTypes_Native
 
   !> @brief The basic banded matrix type
   TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
-    !> The number of bands across all processors
-    INTEGER(SIK) :: nband
-    !> The number of elements of b
-    INTEGER(SIK) :: myband
-    !> Number of columns for nonsquare matrices:
+    !> Map of band indices stored (-m to n)
+    INTEGER(SIK),ALLOCATABLE :: bandIdx(:)
+    !> The bands stored in the matrix
+    TYPE(Band),ALLOCATABLE :: bands(:)
+    !> Number of nonzero elements
+    INTEGER(SIK) :: nnz
+    !> Number of columns
     INTEGER(SIK) :: m
-    !> The bands of the local matrix
-    TYPE(Band),ALLOCATABLE :: b(:)
+    !> Counter to keep track of added elements before assembly
+    INTEGER(SIK) :: counter
+    !> Temporary containers used before (and deallocated after) assembly
+    INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
+    REAL(SRK),ALLOCATABLE :: elemTmp(:)
+    LOGICAL(SBK) :: isReversed
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -380,8 +392,7 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n,m,l,nband,i,j,p,q
-      INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
+      INTEGER(SIK) :: n,m,nnz
       LOGICAL(SBK) :: bool
 
       !Check to set up required and optional param lists.
@@ -394,10 +405,7 @@ MODULE MatrixTypes_Native
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->m',m)
-      CALL validParams%get('MatrixType->nband',nband)
-      CALL validParams%get('bandi',bandi)
-      CALL validParams%get('bandj',bandj)
-      CALL validParams%get('bandl',bandl)
+      CALL validParams%get('MatrixType->nnz',nnz)
       CALL validParams%clear()
 
       ! be greater than 1 and n < 1 are note logically equivalent. is this
@@ -411,89 +419,22 @@ MODULE MatrixTypes_Native
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of columns (m) must'// &
               ' be greater than 1!')
-        ELSEIF(nband < 1) THEN
+        ELSEIF(nnz < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of band objects (nband)'// &
+            modName//'::'//myName//' - Number of nonzer elements (nnz)'// &
               ' must be greater than 0!')
-        ELSEIF((SIZE(bandi) /= SIZE(bandj)) .OR. &
-                  (SIZE(bandi) /= SIZE(bandl))) THEN
-          CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Size of arrays containing band'// &
-              ' start indices and lengths must agree!')
-        ELSEIF(nband /= SIZE(bandi)) THEN
-          CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of bands (nband) does not'// &
-              ' agree with size of arrays containing band parameters!')
         ELSE
-          bool=.TRUE.
-          ALLOCATE(d(nband))
-          DO p=1,nband
-            i=bandi(p)
-            j=bandj(p)
-            l=bandl(p)
-            IF(l<1) THEN
-              CALL eMatrixType%raiseError('Incorrect input to '// &
-                modName//'::'//myName//' - Band length must be 1'// &
-                ' or greater!!')
-            ENDIF
-            !Check valid (i,j) based on n,m
-            IF(i<1 .OR. i>n) bool=.FALSE.
-            IF(j<1 .OR. j>m) bool=.FALSE.
-            !Check valid length based on (i,j),n,m
-            IF(i+l-1>n) bool=.FALSE.
-            IF(j+l-1>m) bool=.FALSE.
-            !Calculate diagonal number for next step
-            IF(i==j) THEN
-              d(p)=0_SNK
-            ELSEIF(i>j) THEN
-              d(p)=-1_SNK*ABS(i-j)
-            ELSE
-              d(p)=ABS(i-j)
-            ENDIF
-          ENDDO
-          IF(.NOT. bool) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Array elements are out of bounds'// &
-                ' of the specified max rows and columns (n,m)!')
-          ENDIF
-          IF(bool) THEN
-            !Check that no two bands overlap
-            DO p=1,nband
-              DO q=p,nband
-                !Have the same band index and overlapping elements
-                IF(d(p)==d(q)) THEN
-                  !Either has start index between the other's start and stop
-                  IF((bandi(p)<bandi(q)) .AND. (bandi(q)<bandi(p)+bandl(p))) THEN
-                    bool=.FALSE.
-                  ENDIF
-                  IF((bandi(q)<bandi(p)) .AND. (bandi(p)<bandi(q)+bandl(q))) THEN
-                    bool=.FALSE.
-                  ENDIF
-                ENDIF
-              ENDDO
-            ENDDO
-          ENDIF
-          IF(.NOT. bool) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Multiple bands contain the same'// &
-                ' array element!')
-          ENDIF
-          !Everything's okay. Initialize
-          IF(bool) THEN
-            matrix%isInit=.TRUE.
-            matrix%n=n
-            matrix%m=m
-            matrix%nband=nband
-            ALLOCATE(matrix%b(nband))
-            DO p=1,nband
-              ALLOCATE(matrix%b(p)%elem(bandl(p)))
-              matrix%b(p)%ib=bandi(p)
-              matrix%b(p)%jb=bandj(p)
-              matrix%b(p)%ie=bandi(p)+bandl(p)-1
-              matrix%b(p)%je=bandj(p)+bandl(p)-1
-              matrix%b(p)%didx=d(p)
-            ENDDO
-          ENDIF
+          ALLOCATE(matrix%iTmp(nnz))
+          ALLOCATE(matrix%jTmp(nnz))
+          ALLOCATE(matrix%elemTmp(nnz))
+
+          matrix%isInit=.TRUE.
+          matrix%isAssembled=.FaLSE.
+          matrix%isReversed=.FALSE.
+          matrix%counter=0_SRK
+          matrix%n=n
+          matrix%m=m
+          matrix%nnz=nnz
         ENDIF
       ELSE
         CALL eMatrixType%raiseError('Incorrect call to '// &
@@ -511,10 +452,7 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n,m,l,nband,i,j,p,q,MPI_COMM_ID,elem_total,rank, &
-        mpierr,nproc,nelem, elem_ps,start_band,end_band,omit_1st, &
-        omit_last
-      INTEGER(SNK),ALLOCATABLE :: bandi(:),bandj(:),bandl(:),d(:)
+      INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc
       LOGICAL(SBK) :: bool
 #ifdef HAVE_MPI
 
@@ -529,10 +467,7 @@ MODULE MatrixTypes_Native
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->m',m)
       CALL validParams%get('MatrixType->comm',MPI_COMM_ID)
-      CALL validParams%get('MatrixType->nband',nband)
-      CALL validParams%get('bandi',bandi)
-      CALL validParams%get('bandj',bandj)
-      CALL validParams%get('bandl',bandl)
+      CALL validParams%get('MatrixType->nnz',nnz)
       CALL validParams%clear()
 
       ! be greater than 1 and n < 1 are not logically equivalent. is this
@@ -546,173 +481,32 @@ MODULE MatrixTypes_Native
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of columns (m) must'// &
               ' be greater than 1!')
-        ELSEIF(nband < 1) THEN
+        ELSEIF(nnz < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - Number of band objects (nband)'// &
               ' must be greater than 0!')
-        ELSEIF((SIZE(bandi) /= SIZE(bandj)) .OR. &
-                  (SIZE(bandi) /= SIZE(bandl))) THEN
-          CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Size of arrays containing band'// &
-              ' start indices and lengths must agree!')
-        ELSEIF(nband /= SIZE(bandi)) THEN
-          CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of bands (nband) does not'// &
-              ' agree with size of arrays containing band parameters!')
         ELSEIF(MPI_COMM_ID == MPI_COMM_NULL) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
             modName//'::'//myName//' - MPI communicator cannot have the same'// &
               ' value as MPI_COMM_NULL')
         ELSE
-          bool=.TRUE.
-          ALLOCATE(d(nband))
-          DO p=1,nband
-            i=bandi(p)
-            j=bandj(p)
-            l=bandl(p)
-            IF(l<1) THEN
-              CALL eMatrixType%raiseError('Incorrect input to '// &
-                modName//'::'//myName//' - Band length must be 1'// &
-                ' or greater!!')
-            ENDIF
-            !Check valid (i,j) based on n,m
-            IF(i<1 .OR. i>n) bool=.FALSE.
-            IF(j<1 .OR. j>m) bool=.FALSE.
-            !Check valid length based on (i,j),n,m
-            IF(i+l-1>n) bool=.FALSE.
-            IF(j+l-1>m) bool=.FALSE.
-            !Calculate diagonal number for next step
-            IF(i==j) THEN
-              d(p)=0_SNK
-            ELSEIF(i>j) THEN
-              d(p)=-1_SNK*ABS(i-j)
-            ELSE
-              d(p)=ABS(i-j)
-            ENDIF
-          ENDDO
-          IF(.NOT. bool) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Array elements are out of bounds'// &
-                ' of the specified max rows and columns (n,m)!')
-          ENDIF
-          IF(bool) THEN
-            !Check that no two bands overlap
-            DO p=1,nband
-              DO q=p,nband
-                !Have the same band index and overlapping elements
-                IF(d(p)==d(q)) THEN
-                  !Either has start index between the other's start and stop
-                  IF((bandi(p)<bandi(q)) .AND. (bandi(q)<bandi(p)+bandl(p))) THEN
-                    bool=.FALSE.
-                  ENDIF
-                  IF((bandi(q)<bandi(p)) .AND. (bandi(p)<bandi(q)+bandl(q))) THEN
-                    bool=.FALSE.
-                  ENDIF
-                ENDIF
-              ENDDO
-            ENDDO
-          ENDIF
-          IF(.NOT. bool) THEN
-            CALL eMatrixType%raiseError('Incorrect input to '// &
-              modName//'::'//myName//' - Multiple bands contain the same'// &
-                ' array element!')
-          ENDIF
-          !Everything's okay. Initialize
-          IF(bool) THEN
-            matrix%isInit=.TRUE.
-            matrix%n=n
-            matrix%m=m
-            matrix%nband=nband
-            matrix%comm=MPI_COMM_ID
-            ! Divide elements between processors, maintaining bands.
-            ! Processor 1 takes first X elements, 2 takes next X, etc.
-            ! Find total number of elements in entire matrix
-            elem_total=0
-            DO p=1,nband
-              elem_total=elem_total+bandl(p)
-            ENDDO
-            CALL MPI_Comm_rank(MPI_COMM_ID,rank,mpierr)
-            CALL MPI_Comm_size(MPI_COMM_ID,nproc,mpierr)
-            ! number of elements to hold, excluding remainder
-            nelem=elem_total/nproc
-            ! figure out which bands and pieces to hold
-            elem_ps=0
-            start_band=-1
-            end_band=-1
-            IF(rank == 0) THEN
-              start_band=1
-              omit_1st=0
-            ENDIF
-            DO p=1,nband
-              elem_ps=elem_ps+bandl(p)
-              IF(rank == 0) THEN
-                IF((elem_ps > nelem+MOD(elem_total,nproc)).AND. &
-                  (end_band == -1)) THEN
-                  end_band=p
-                  omit_last=elem_ps-(nelem+MOD(elem_total,nproc))
-                  EXIT
-                ENDIF
-              ELSE
-                IF((elem_ps > rank*nelem+MOD(elem_total,nproc)).AND. &
-                    (start_band == -1)) THEN
-                  start_band=p
-                  omit_1st=rank*nelem+MOD(elem_total,nproc)-(elem_ps-bandl(p))
-                ENDIF
-                IF((elem_ps > (rank+1)*nelem+MOD(elem_total,nproc)).AND. &
-                  (end_band == -1)) THEN
-                  end_band=p
-                  omit_last=elem_ps-((rank+1)*nelem+MOD(elem_total,nproc))
-                  EXIT
-                ENDIF
-              ENDIF
-            ENDDO
-            IF(end_band == -1) THEN
-              end_band=nband
-              omit_last=0
-            ENDIF
-            matrix%myband=end_band-start_band+1
-            IF(omit_last == bandl(end_band)) THEN
-              end_band=end_band-1
-              matrix%myband=matrix%myband-1
-              omit_last=0
-            ENDIF
-            ! Allocate bands
-            ALLOCATE(matrix%b(matrix%myband))
-            ! Allocate elements of bands
-           IF(start_band == end_band) THEN
-              ALLOCATE(matrix%b(1)%elem(bandl(start_band)-omit_1st-omit_last))
-              matrix%b(1)%ib=bandi(start_band)+omit_1st
-              matrix%b(1)%jb=bandj(start_band)+omit_1st
-              matrix%b(1)%ie=bandi(start_band)+bandl(start_band)-1-omit_last
-              matrix%b(1)%je=bandj(start_band)+bandl(start_band)-1-omit_last
-              matrix%b(1)%didx=d(start_band)
-            ELSE
-              ALLOCATE(matrix%b(1)%elem(bandl(start_band)-omit_1st))
-              matrix%b(1)%ib=bandi(start_band)+omit_1st
-              matrix%b(1)%jb=bandj(start_band)+omit_1st
-              matrix%b(1)%ie=bandi(start_band)+bandl(start_band)-1
-              matrix%b(1)%je=bandj(start_band)+bandl(start_band)-1
-              matrix%b(1)%didx=d(start_band)
-              ! startband =1, or not 1
-              DO p=start_band+1,end_band-1
-                i=1+p-start_band
-                ALLOCATE(matrix%b(i)%elem(bandl(p)))
-                matrix%b(i)%ib=bandi(p)
-                matrix%b(i)%jb=bandj(p)
-                matrix%b(i)%ie=bandi(p)+bandl(p)-1
-                matrix%b(i)%je=bandj(p)+bandl(p)-1
-                matrix%b(i)%didx=d(p)
-              ENDDO
-              p=end_band
-              i=p-start_band+1
-              ALLOCATE(matrix%b(i)%elem(bandl(p)-omit_last))
-                matrix%b(i)%ib=bandi(p)
-                matrix%b(i)%jb=bandj(p)
-                matrix%b(i)%ie=bandi(p)+bandl(p)-1-omit_last
-                matrix%b(i)%je=bandj(p)+bandl(p)-1-omit_last
-                matrix%b(i)%didx=d(p)
-            ENDIF
-          ENDIF
+          CALL MPI_Comm_rank(MPI_COMM_ID,rank,mpierr)
+          CALL MPI_Comm_size(MPI_COMM_ID,nproc,mpierr)
+          matrix%nLocal = nnz/nproc
+          IF (rank < MOD(nnz,nproc)) THEN
+            matrix%nLocal = matrix%nLocal + 1
+          END IF
+          ALLOCATE(matrix%iTmp(matrix%nLocal))
+          ALLOCATE(matrix%jTmp(matrix%nLocal))
+          ALLOCATE(matrix%elemTmp(matrix%nLocal))
+          matrix%isInit=.TRUE.
+          matrix%isAssembled=.FaLSE.
+          matrix%isReversed=.FALSE.
+          matrix%counter=0_SRK
+          matrix%n=n
+          matrix%m=m
+          matrix%nnz=nnz
+          matrix%comm=MPI_COMM_ID
         ENDIF
       ELSE
         CALL eMatrixType%raiseError('Incorrect call to '// &
@@ -720,6 +514,59 @@ MODULE MatrixTypes_Native
       ENDIF
 #endif
     ENDSUBROUTINE init_DistributedBandedMatrixParam
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Assembles Serial Banded Matrix Type. This rearranges values set into
+!>        matrix bands, and sets the structure to read-only
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+    SUBROUTINE assemble_BandedMatrixType(thisMatrix, ierr)
+      CHARACTER(LEN=*),PARAMETER :: myName='assemble_DistributedBandedMatrixType'
+      CLASS(BandedMatrixType),INTENT(INOUT) :: thisMatrix
+      INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+      INTEGER(SIK),ALLOCATABLE :: numOnDiag(:)
+      INTEGER(SIK) :: counter,currIdx,currBand,nBands,i
+
+      !bandRank = thisMatrix%iTmp + thisMatrix%jTmp
+      CALL diagonal_sort(thisMatrix%iTmp + thisMatrix%jTmp,thisMatrix%iTmp,thisMatrix%jTmp,thisMatrix%elemTmp)
+
+      ! Find number of elements in each band
+      ALLOCATE(numOnDiag(thisMatrix%m+thisMatrix%n-1))
+      numOnDiag = 0_SIK
+      DO i=1,SIZE(thisMatrix%elemTmp)
+        numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%m) = 1 + numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%m)
+      END DO
+      nBands = 0
+      DO i=1,SIZE(numOnDiag)
+        IF (numOnDiag(i)/=0) THEN
+          nBands = nBands + 1
+        END IF
+      END DO
+      ALLOCATE(thisMatrix%bandIdx(nBands))
+      ALLOCATE(thisMatrix%bands(nBands))
+      counter = 0
+      DO i=1,SIZE(numOnDiag)
+        IF (numOnDiag(i)/=0) THEN
+          ALLOCATE(thisMatrix%bands(counter)%jIdx(numOnDiag(i)))
+          ALLOCATE(thisMatrix%bands(counter)%elem(numOnDiag(i)))
+          counter = counter + 1
+        END IF
+      END DO
+      DO i=1,SIZE(thisMatrix%iTmp)
+        currBand = thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%m
+        currIdx = SIZE(thisMatrix%bands(currBand)%jIdx) - numOnDiag(currIdx) + 1
+        thisMatrix%bands(currBand)%jIdx(currIdx) = thisMatrix%jTmp(i)
+        thisMatrix%bands(currBand)%elem(currIdx) = thisMatrix%elemTmp(i)
+        numOnDiag(currIdx) = numOnDiag(currIdx) - 1
+      END DO
+
+      thisMatrix%isAssembled = .TRUE.
+      DEALLOCATE(thisMatrix%iTmp)
+      DEALLOCATE(thisMatrix%jTmp)
+      DEALLOCATE(thisMatrix%elemTmp)
+    ENDSUBROUTINE assemble_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes Distributed Banded Matrix Type with a Parameter List
@@ -884,9 +731,12 @@ MODULE MatrixTypes_Native
       matrix%isAssembled=.FALSE.
       matrix%n=0
       matrix%m=0
+      matrix%counter=0
       IF(ALLOCATED(matrix%bands)) THEN
-        DO i=1,matrix%nband
-          IF(ALLOCATED(matrix%bands(i)%elem)) DEALLOCATE(matrix%bands(i)%elem)
+        DO i=1,SIZE(matrix%bandIdx)
+          IF(ALLOCATED(matrix%bands(i)%elem)) THEN
+            DEALLOCATE(matrix%bands(i)%elem)
+          END IF
         ENDDO
         DEALLOCATE(matrix%bands)
       ENDIF
@@ -899,8 +749,8 @@ MODULE MatrixTypes_Native
       IF(ALLOCATED(matrix%jTmp)) THEN
         DEALLOCATE(matrix%jTmp)
       ENDIF
-      IF(ALLOCATED(matrix%valTmp)) THEN
-        DEALLOCATE(matrix%valTmp)
+      IF(ALLOCATED(matrix%elemTmp)) THEN
+        DEALLOCATE(matrix%elemTmp)
       ENDIF
       matrix%nnz = 0
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
@@ -921,14 +771,29 @@ MODULE MatrixTypes_Native
       matrix%comm=MPI_COMM_NULL
       matrix%n=0
       matrix%m=0
-      IF(ALLOCATED(matrix%b)) THEN
-        DO i=1,matrix%myband
-          IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
+      matrix%nnz=0
+      matrix%nLocal=0
+      matrix%counter=0
+      IF(ALLOCATED(matrix%bands)) THEN
+        DO i=1,SIZE(matrix%bandIdx)
+          IF(ALLOCATED(matrix%bands(i)%elem)) THEN
+            DEALLOCATE(matrix%bands(i)%elem)
+          END IF
         ENDDO
-        DEALLOCATE(matrix%b)
+        DEALLOCATE(matrix%bands)
       ENDIF
-      matrix%nband=0
-      matrix%myband=0
+      IF(ALLOCATED(matrix%bandIdx)) THEN
+        DEALLOCATE(matrix%bandIdx)
+      ENDIF
+      IF(ALLOCATED(matrix%iTmp)) THEN
+        DEALLOCATE(matrix%iTmp)
+      ENDIF
+      IF(ALLOCATED(matrix%jTmp)) THEN
+        DEALLOCATE(matrix%jTmp)
+      ENDIF
+      IF(ALLOCATED(matrix%elemTmp)) THEN
+        DEALLOCATE(matrix%elemTmp)
+      ENDIF
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
 #endif
      ENDSUBROUTINE clear_DistributedBandedMatrixType
@@ -1087,29 +952,23 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
-      INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval
+      INTEGER(SIK) :: rank,nproc,mpierr,nHeldLower
 #ifdef HAVE_MPI
-      IF(matrix%isInit) THEN
+      IF(matrix%isInit .AND. .NOT. matrix%isAssembled) THEN
         IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
             .AND. (i>=1) .AND. (j >= 1)) THEN
-          !Find diagonal number
-          IF(i==j) THEN
-            d=0_SIK
-          ELSEIF(i>j) THEN
-            d=-1_SIK*ABS(i-j)
-          ELSE
-            d=ABS(i-j)
-          ENDIF
-          !If band should contain this element, set it
-          DO p=1,matrix%myband
-            IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
-               (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
-               (j <= matrix%b(p)%je)) THEN
-              matrix%b(p)%elem(i-matrix%b(p)%ib+1)=setval
-              EXIT
-            ENDIF
-          ENDDO
+
+          CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
+          CALL MPI_Comm_size(matrix%comm,nproc,mpierr)
+          nHeldLower = MIN(rank,MOD(matrix%nnz,nproc))
+          nHeldLower = nHeldLower + rank*matrix%nnz/nproc
+          IF (matrix%counter > nHeldLower) THEN
+            matrix%iTmp(matrix%counter - nHeldLower) = i
+            matrix%jTmp(matrix%counter - nHeldLower) = j
+            matrix%elemTmp(matrix%counter - nHeldLower) = setVal
+          END IF
+          matrix%counter = matrix%counter + 1
         ENDIF
       ENDIF
 #endif
@@ -1149,9 +1008,10 @@ MODULE MatrixTypes_Native
         IF(.NOT. matrix%isAssembled) THEN
           IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
                .AND. (i>=1) .AND. (j >= 1)) THEN
-            matrix%iTmp = i
-            matrix%jTmp = j
-            matrix%valTmp = setval
+            matrix%iTmp(matrix%counter) = i
+            matrix%jTmp(matrix%counter) = j
+            matrix%elemTmp(matrix%counter) = setval
+            matrix%counter = matrix%counter + 1
           END IF
         ENDIF
       ENDIF
@@ -1255,37 +1115,66 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
+      INTEGER(SIK) :: lo, mid, hi, bandLoc, bIdx, ierr
       REAL(SRK) :: val
-      INTEGER(SIK) :: d,p,ierr
-      LOGICAL(SBK) :: bool
+      LOGICAL(SBK) :: found
 #ifdef HAVE_MPI
-      bool=.FALSE.
+      found=.FALSE.
       REQUIRE(matrix%isInit)
-      REQUIRE(j <= matrix%n)
-      REQUIRE(i <= matrix%n)
-      REQUIRE(i >= 1)
-      REQUIRE(j >= 1)
-      !Find diagonal number
-      IF(i==j) THEN
-        d=0_SIK
-      ELSEIF(i>j) THEN
-        d=-1_SIK*ABS(i-j)
-      ELSE
-        d=ABS(i-j)
-      ENDIF
-      !If band contains this element, get it
-      DO p=1,matrix%myband
-        IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
-            (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
-            (j <= matrix%b(p)%je)) THEN
-          val=matrix%b(p)%elem(i-matrix%b(p)%ib+1)
-          bool=.TRUE.
-          EXIT
-        ENDIF
-      ENDDO
-      IF(.NOT. bool) THEN
-        val=0.0_SRK
-      ENDIF
+      REQUIRE(matrix%isAssembled)
+      IF(((j <= matrix%n) .AND. (i <= matrix%m)) &
+           .AND. (i>=1) .AND. (j >= 1)) THEN
+        !Check if band is contained (binary search)
+        bIdx = j - i
+        IF (matrix%isReversed) THEN
+          bIdx = -bIdx
+          matrix%bandIdx = -matrix%bandIdx
+        END IF
+        lo = 0
+        hi = SIZE(matrix%bandIdx)
+        IF (bIdx >= matrix%bandIdx(1) .AND. bIdx <= matrix%bandIdx(hi)) THEN
+          getval = 0.0_SRK
+        ELSE
+          DO WHILE (lo <= hi .AND. .NOT. found)
+            mid = (hi+lo)/2
+            IF (bIdx < matrix%bandIdx(mid)) THEN
+              hi = mid-1
+            ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
+              lo = mid+1
+            ELSE
+              found = .TRUE.
+              EXIT
+            END IF
+          END DO
+          IF (found) THEN
+            bandLoc = mid
+            lo = 0
+            hi = SIZE(matrix%bandIdx)
+            found = .FALSE.
+            DO WHILE (lo <= hi .AND. .NOT. found)
+              mid = (hi+lo)/2
+              IF (bIdx < matrix%bandIdx(mid)) THEN
+                hi = mid-1
+              ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
+                lo = mid+1
+              ELSE
+                found = .TRUE.
+                EXIT
+              END IF
+            END DO
+            IF (found) THEN
+              getVal = matrix%bands(bandLoc)%elem(mid)
+            ELSE
+              getVal = 0.0_SRK
+            END IF
+          ELSE
+            getVal = 0.0_SRK
+          END IF
+        END IF
+        IF (matrix%isReversed) THEN
+          matrix%bandIdx = -matrix%bandIdx
+        END IF
+      END IF
       ! only 1 of any processor should have non-zero value.
       ! Use all reduce sum to get value
       CALL MPI_ALLREDUCE(val, getval, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
@@ -1320,15 +1209,15 @@ MODULE MatrixTypes_Native
               matrix%bandIdx = -matrix%bandIdx
             END IF
             lo = 0
-            hi = SIZE(bandIdx)
-            IF (bIdx >= bandIdx(1) .AND. bIdx <= bandIdx(hi)) THEN
+            hi = SIZE(matrix%bandIdx)
+            IF (bIdx >= matrix%bandIdx(1) .AND. bIdx <= matrix%bandIdx(hi)) THEN
               getval = 0.0_SRK
             ELSE
               DO WHILE (lo <= hi .AND. .NOT. found)
                 mid = (hi+lo)/2
-                IF (bIdx < bandIdx[mid]) THEN
+                IF (bIdx < matrix%bandIdx(mid)) THEN
                   hi = mid-1
-                ELSE IF (bIdx > bandIdx[mid]) THEN
+                ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
                   lo = mid+1
                 ELSE
                   found = .TRUE.
@@ -1338,13 +1227,13 @@ MODULE MatrixTypes_Native
               IF (found) THEN
                 bandLoc = mid
                 lo = 0
-                hi = SIZE(bands(bandLoc))
+                hi = SIZE(matrix%bandIdx)
                 found = .FALSE.
                 DO WHILE (lo <= hi .AND. .NOT. found)
                   mid = (hi+lo)/2
-                  IF (bIdx < bandIdx[mid]) THEN
+                  IF (bIdx < matrix%bandIdx(mid)) THEN
                     hi = mid-1
-                  ELSE IF (bIdx > bandIdx[mid]) THEN
+                  ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
                     lo = mid+1
                   ELSE
                     found = .TRUE.
@@ -1352,7 +1241,7 @@ MODULE MatrixTypes_Native
                   END IF
                 END DO
                 IF (found) THEN
-                  getVal = bands(bandLoc)(mid)
+                  getVal = matrix%bands(bandLoc)%elem(mid)
                 ELSE
                   getVal = 0.0_SRK
                 END IF
@@ -1500,20 +1389,13 @@ MODULE MatrixTypes_Native
     SUBROUTINE transpose_DistributedBandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK) :: i,tmp
+
       REQUIRE(matrix%isInit)
-      tmp=matrix%n
-      matrix%n=matrix%m
-      matrix%m=tmp
-      DO i=1,matrix%myband
-        tmp=matrix%b(i)%ib
-        matrix%b(i)%ib=matrix%b(i)%jb
-        matrix%b(i)%jb=tmp
-        tmp=matrix%b(i)%ie
-        matrix%b(i)%ie=matrix%b(i)%je
-        matrix%b(i)%je=tmp
-        matrix%b(i)%didx=-1*matrix%b(i)%didx
-      ENDDO
+      REQUIRE(matrix%isAssembled)
+
+      matrix%bandIdx = -matrix%bandIdx
+      matrix%isReversed = .NOT. matrix%isReversed
+
     ENDSUBROUTINE transpose_DistributedBandedMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1524,14 +1406,12 @@ MODULE MatrixTypes_Native
     SUBROUTINE transpose_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
-      INTEGER(SIK) :: i,tmp
+
       REQUIRE(matrix%isInit)
       REQUIRE(matrix%isAssembled)
-      tmp=matrix%n
-      matrix%n=matrix%m
-      matrix%m=tmp
 
       matrix%bandIdx = -matrix%bandIdx
+      matrix%isReversed = .NOT. matrix%isReversed
 
     ENDSUBROUTINE transpose_BandedMatrixType
 !
@@ -1670,8 +1550,9 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
       REQUIRE(matrix%isInit)
-      DO i=1,matrix%myband
-        IF(ALLOCATED(matrix%b(i)%elem)) matrix%b(i)%elem=0.0_SRK
+      REQUIRE(matrix%isAssembled)
+      DO i=1,SIZE(matrix%bandIdx)
+        IF(ALLOCATED(matrix%bands(i)%elem)) matrix%bands(i)%elem=0.0_SRK
       ENDDO
     ENDSUBROUTINE zeroentries_DistributedBandedMatrixType
 !
@@ -1716,7 +1597,8 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK),INTENT(INOUT) :: y(:)
-      INTEGER(SIK) :: i,j,ib,ie,jb,je
+      INTEGER(SIK) :: i
+      INTEGER(SIK), ALLOCATABLE :: idxMult(:)
       REQUIRE(matrix%isInit)
       REQUIRE(matrix%isAssembled)
       REQUIRE(SIZE(x) == matrix%m)
@@ -1741,7 +1623,8 @@ MODULE MatrixTypes_Native
       REAL(SDK),INTENT(IN) :: x(:)
       REAL(SDK), ALLOCATABLE :: z(:)
       REAL(SDK),INTENT(INOUT) :: y(:)
-      INTEGER(SIK) :: i,j,ib,ie,jb,je,ierr
+      INTEGER(SIK) :: i, ierr
+      INTEGER(SIK), ALLOCATABLE :: idxMult(:)
 #ifdef HAVE_MPI
       REQUIRE(matrix%isInit)
       REQUIRE(SIZE(x) == matrix%m)
@@ -1749,15 +1632,9 @@ MODULE MatrixTypes_Native
       ALLOCATE(z(matrix%n))
       z(1:matrix%n)=0.0_SDK
       y(1:matrix%n)=0.0_SDK
-      DO i=1,matrix%myband
-        ! Multiply by appropriate subset of x
-        ib=matrix%b(i)%ib
-        ie=matrix%b(i)%ie
-        jb=matrix%b(i)%jb
-        je=matrix%b(i)%je
-        DO j=jb,je
-          z(j-jb+ib)=z(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb)
-        ENDDO
+      DO i=1,size(matrix%bandIdx)
+        idxMult = matrix%bands(i)%jIdx
+        y(idxMult) = y(idxMult) + matrix%bands(i)%elem * x%get(idxMult)
       ENDDO
       CALL MPI_ALLREDUCE(z, y, matrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
                     matrix%comm, ierr)

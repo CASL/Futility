@@ -270,10 +270,7 @@ MODULE MatrixTypes_Base
       !Banded Matrix Type - Required
       CALL BandedMatrixType_reqParams%add('MatrixType->n',n)
       CALL BandedMatrixType_reqParams%add('MatrixType->m',m)
-      CALL BandedMatrixType_reqParams%add('MatrixType->nband',nband)
-      CALL BandedMatrixType_reqParams%add('bandi',bandi)
-      CALL BandedMatrixType_reqParams%add('bandj',bandj)
-      CALL BandedMatrixType_reqParams%add('bandl',bandl)
+      CALL BandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
       !Dense Rectangular Matrix Type - Required
       CALL DenseRectMatrixType_reqParams%add('MatrixType->n',n)
       CALL DenseRectMatrixType_reqParams%add('MatrixType->m',m)
@@ -321,7 +318,7 @@ MODULE MatrixTypes_Base
       !Tri-Diagonal Matrix Type
       CALL TriDiagMatrixType_reqParams%clear()
       !Banded Matrix Type
-      CALL BandedMatrixType_reqParams%clear()      
+      CALL BandedMatrixType_reqParams%clear()
       !Dense Rectangular Matrix Type
       CALL DenseRectMatrixType_reqParams%clear()
       !Dense Square Matrix Type
