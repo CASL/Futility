@@ -130,20 +130,24 @@ MODULE MatrixTypes_Native
       !> @copydetails MatrixTypes::zeroentries_TriDiagMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_TriDiagMatrixType
   ENDTYPE TriDiagMatrixType
- 
+
   !> @brief Type used to hold the bands in the banded type
   TYPE Band
-    ! begin i,j index,  end i,j index, diagonal index relative to main
-    INTEGER(SIK) :: ib, jb, ie, je, didx 
+    ! jIdx stores j index of each element in band
+    INTEGER(SIK), ALLOCATABLE :: jIdx(:)
     REAL(SRK), ALLOCATABLE :: elem(:)
   ENDTYPE Band
- 
+
   !> @brief The basic banded matrix type
-  TYPE,EXTENDS(RectMatrixType) :: BandedMatrixType
-    !> The number of elements of b
-    INTEGER(SIK) :: nband
-    !> The bands of the matrix
-    TYPE(Band),ALLOCATABLE :: b(:) 
+  TYPE,EXTENDS(MatrixType) :: BandedMatrixType
+    !> Map of band indices stored (-m to n)
+    INTEGER(SIK),ALLOCATABLE :: bandIdx(:)
+    !> The bands stored in the matrix
+    TYPE(Band),ALLOCATABLE :: bands(:)
+    !> Number of nonzero elements
+    INTEGER(SIK) :: nnz
+    !> Temporary containers used before (and deallocated after) assembly
+    INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:),elemTmp(:)
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -153,6 +157,9 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::init_BandedMatrixType
       !> @copydetails MatrixTypes::init_BandedMatrixType
       PROCEDURE,PASS :: init => init_BandedMatrixParam
+      !> @copybrief MatrixTypes::set_BandedMatrixType
+      !> @copydetails MatrixTypes::set_BandedMatrixType
+      PROCEDURE,PASS :: assemble => assemble_BandedMatrixType
       !> @copybrief MatrixTypes::set_BandedMatrixType
       !> @copydetails MatrixTypes::set_BandedMatrixType
       PROCEDURE,PASS :: set => set_BandedMatrixType
@@ -169,7 +176,7 @@ MODULE MatrixTypes_Native
       !> @copydetails MatrixTypes::matvec_BandedMatrixType
       PROCEDURE,PASS :: matvec => matvec_BandedMatrixType
   ENDTYPE BandedMatrixType
- 
+
   !> @brief The basic banded matrix type
   TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
     !> The number of bands across all processors
@@ -179,7 +186,7 @@ MODULE MatrixTypes_Native
     !> Number of columns for nonsquare matrices:
     INTEGER(SIK) :: m
     !> The bands of the local matrix
-    TYPE(Band),ALLOCATABLE :: b(:) 
+    TYPE(Band),ALLOCATABLE :: b(:)
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -211,7 +218,7 @@ MODULE MatrixTypes_Native
       !> @copydetails MatrixTypes::matvec_DistributedBandedMatrixType
       PROCEDURE,PASS :: matvec => matvec_DistributedBandedMatrixType
   ENDTYPE DistributedBandedMatrixType
- 
+
   !> @brief The basic sparse matrix type
   !>
   !> Matrix uses compressed sparse row storage format,
@@ -457,14 +464,14 @@ MODULE MatrixTypes_Native
                 IF(d(p)==d(q)) THEN
                   !Either has start index between the other's start and stop
                   IF((bandi(p)<bandi(q)) .AND. (bandi(q)<bandi(p)+bandl(p))) THEN
-                    bool=.FALSE. 
+                    bool=.FALSE.
                   ENDIF
                   IF((bandi(q)<bandi(p)) .AND. (bandi(p)<bandi(q)+bandl(q))) THEN
-                    bool=.FALSE. 
+                    bool=.FALSE.
                   ENDIF
-                ENDIF  
+                ENDIF
               ENDDO
-            ENDDO  
+            ENDDO
           ENDIF
           IF(.NOT. bool) THEN
             CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -484,7 +491,7 @@ MODULE MatrixTypes_Native
               matrix%b(p)%jb=bandj(p)
               matrix%b(p)%ie=bandi(p)+bandl(p)-1
               matrix%b(p)%je=bandj(p)+bandl(p)-1
-              matrix%b(p)%didx=d(p) 
+              matrix%b(p)%didx=d(p)
             ENDDO
           ENDIF
         ENDIF
@@ -596,14 +603,14 @@ MODULE MatrixTypes_Native
                 IF(d(p)==d(q)) THEN
                   !Either has start index between the other's start and stop
                   IF((bandi(p)<bandi(q)) .AND. (bandi(q)<bandi(p)+bandl(p))) THEN
-                    bool=.FALSE. 
+                    bool=.FALSE.
                   ENDIF
                   IF((bandi(q)<bandi(p)) .AND. (bandi(p)<bandi(q)+bandl(q))) THEN
-                    bool=.FALSE. 
+                    bool=.FALSE.
                   ENDIF
-                ENDIF  
+                ENDIF
               ENDDO
-            ENDDO  
+            ENDDO
           ENDIF
           IF(.NOT. bool) THEN
             CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -634,8 +641,8 @@ MODULE MatrixTypes_Native
             end_band=-1
             IF(rank == 0) THEN
               start_band=1
-              omit_1st=0   
-            ENDIF 
+              omit_1st=0
+            ENDIF
             DO p=1,nband
               elem_ps=elem_ps+bandl(p)
               IF(rank == 0) THEN
@@ -678,9 +685,9 @@ MODULE MatrixTypes_Native
               matrix%b(1)%jb=bandj(start_band)+omit_1st
               matrix%b(1)%ie=bandi(start_band)+bandl(start_band)-1-omit_last
               matrix%b(1)%je=bandj(start_band)+bandl(start_band)-1-omit_last
-              matrix%b(1)%didx=d(start_band) 
+              matrix%b(1)%didx=d(start_band)
             ELSE
-              ALLOCATE(matrix%b(1)%elem(bandl(start_band)-omit_1st))              
+              ALLOCATE(matrix%b(1)%elem(bandl(start_band)-omit_1st))
               matrix%b(1)%ib=bandi(start_band)+omit_1st
               matrix%b(1)%jb=bandj(start_band)+omit_1st
               matrix%b(1)%ie=bandi(start_band)+bandl(start_band)-1
@@ -694,7 +701,7 @@ MODULE MatrixTypes_Native
                 matrix%b(i)%jb=bandj(p)
                 matrix%b(i)%ie=bandi(p)+bandl(p)-1
                 matrix%b(i)%je=bandj(p)+bandl(p)-1
-                matrix%b(i)%didx=d(p) 
+                matrix%b(i)%didx=d(p)
               ENDDO
               p=end_band
               i=p-start_band+1
@@ -704,7 +711,7 @@ MODULE MatrixTypes_Native
                 matrix%b(i)%ie=bandi(p)+bandl(p)-1-omit_last
                 matrix%b(i)%je=bandj(p)+bandl(p)-1-omit_last
                 matrix%b(i)%didx=d(p)
-            ENDIF 
+            ENDIF
           ENDIF
         ENDIF
       ELSE
@@ -874,15 +881,28 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
       matrix%isInit=.FALSE.
+      matrix%isAssembled=.FALSE.
       matrix%n=0
       matrix%m=0
-      IF(ALLOCATED(matrix%b)) THEN
+      IF(ALLOCATED(matrix%bands)) THEN
         DO i=1,matrix%nband
-          IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
+          IF(ALLOCATED(matrix%bands(i)%elem)) DEALLOCATE(matrix%bands(i)%elem)
         ENDDO
-        DEALLOCATE(matrix%b)
-      ENDIF  
-      matrix%nband=0
+        DEALLOCATE(matrix%bands)
+      ENDIF
+      IF(ALLOCATED(matrix%bandIdx)) THEN
+        DEALLOCATE(matrix%bandIdx)
+      ENDIF
+      IF(ALLOCATED(matrix%iTmp)) THEN
+        DEALLOCATE(matrix%iTmp)
+      ENDIF
+      IF(ALLOCATED(matrix%jTmp)) THEN
+        DEALLOCATE(matrix%jTmp)
+      ENDIF
+      IF(ALLOCATED(matrix%valTmp)) THEN
+        DEALLOCATE(matrix%valTmp)
+      ENDIF
+      matrix%nnz = 0
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
      ENDSUBROUTINE clear_BandedMatrixType
 !
@@ -906,7 +926,7 @@ MODULE MatrixTypes_Native
           IF(ALLOCATED(matrix%b(i)%elem)) DEALLOCATE(matrix%b(i)%elem)
         ENDDO
         DEALLOCATE(matrix%b)
-      ENDIF  
+      ENDIF
       matrix%nband=0
       matrix%myband=0
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
@@ -973,7 +993,7 @@ MODULE MatrixTypes_Native
 !> @param setval a list of values to set at the corresponding j locations
 !>
 !> This routine sets the values of an entire row in the sparse matrix.  It can only be used
-!> If setShape has previously been applied to the same sparse matrix.  
+!> If setShape has previously been applied to the same sparse matrix.
 !>
     SUBROUTINE setRow_SparseMatrixType(matrix,i,j,setval)
       CHARACTER(LEN=*),PARAMETER :: myName='set_SparseMatrixType'
@@ -1124,28 +1144,15 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
-      INTEGER(SIK) :: d, p
       REAL(SRK),INTENT(IN) :: setval
       IF(matrix%isInit) THEN
-        IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
-            .AND. (i>=1) .AND. (j >= 1)) THEN
-          !Find diagonal number
-          IF(i==j) THEN
-            d=0_SIK
-          ELSEIF(i>j) THEN
-            d=-1_SIK*ABS(i-j)
-          ELSE
-            d=ABS(i-j)
-          ENDIF
-          !If band should contain this element, set it
-          DO p=1,matrix%nband
-            IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
-               (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
-               (j <= matrix%b(p)%je)) THEN
-              matrix%b(p)%elem(i-matrix%b(p)%ib+1)=setval
-              EXIT
-            ENDIF
-          ENDDO
+        IF(.NOT. matrix%isAssembled) THEN
+          IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+               .AND. (i>=1) .AND. (j >= 1)) THEN
+            matrix%iTmp = i
+            matrix%jTmp = j
+            matrix%valTmp = setval
+          END IF
         ENDIF
       ENDIF
     ENDSUBROUTINE set_BandedMatrixType
@@ -1299,36 +1306,65 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
-      INTEGER(SIK) :: d,p
-      LOGICAL(SBK) :: bool
-      bool=.FALSE.
+      INTEGER(SIK) :: bIdx,lo,hi,mid,bandLoc
+      LOGICAL(SBK) :: found
+      found=.FALSE.
       IF(matrix%isInit) THEN
-        IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
-            .AND. (i>=1) .AND. (j >= 1)) THEN
-          !Find diagonal number
-          IF(i==j) THEN
-            d=0_SIK
-          ELSEIF(i>j) THEN
-            d=-1_SIK*ABS(i-j)
-          ELSE
-            d=ABS(i-j)
-          ENDIF
-          !If band contains this element, get it
-          DO p=1,matrix%nband
-            IF((matrix%b(p)%didx == d).AND.(matrix%b(p)%ib <= i).AND. &
-               (i <= matrix%b(p)%ie).AND.(matrix%b(p)%jb <= j).AND. &
-               (j <= matrix%b(p)%je)) THEN
-              getval=matrix%b(p)%elem(i-matrix%b(p)%ib+1)
-              bool=.TRUE.
-              EXIT
-            ENDIF
-          ENDDO
-          IF(.NOT. bool) THEN
-            getval=0.0_SRK
-            bool=.TRUE.
-          ENDIF
-        ENDIF
-        IF(.NOT. bool) getval=-1051._SRK
+        IF(matrix%isAssembled) THEN
+          IF(((j <= matrix%n) .AND. (i <= matrix%m)) &
+               .AND. (i>=1) .AND. (j >= 1)) THEN
+            !Check if band is contained (binary search)
+            bIdx = j - i
+            IF (matrix%isReversed) THEN
+              bIdx = -bIdx
+              matrix%bandIdx = -matrix%bandIdx
+            END IF
+            lo = 0
+            hi = SIZE(bandIdx)
+            IF (bIdx >= bandIdx(1) .AND. bIdx <= bandIdx(hi)) THEN
+              getval = 0.0_SRK
+            ELSE
+              DO WHILE (lo <= hi .AND. .NOT. found)
+                mid = (hi+lo)/2
+                IF (bIdx < bandIdx[mid]) THEN
+                  hi = mid-1
+                ELSE IF (bIdx > bandIdx[mid]) THEN
+                  lo = mid+1
+                ELSE
+                  found = .TRUE.
+                  EXIT
+                END IF
+              END DO
+              IF (found) THEN
+                bandLoc = mid
+                lo = 0
+                hi = SIZE(bands(bandLoc))
+                found = .FALSE.
+                DO WHILE (lo <= hi .AND. .NOT. found)
+                  mid = (hi+lo)/2
+                  IF (bIdx < bandIdx[mid]) THEN
+                    hi = mid-1
+                  ELSE IF (bIdx > bandIdx[mid]) THEN
+                    lo = mid+1
+                  ELSE
+                    found = .TRUE.
+                    EXIT
+                  END IF
+                END DO
+                IF (found) THEN
+                  getVal = bands(bandLoc)(mid)
+                ELSE
+                  getVal = 0.0_SRK
+                END IF
+              ELSE
+                getVal = 0.0_SRK
+              END IF
+            END IF
+            IF (matrix%isReversed) THEN
+              matrix%bandIdx = -matrix%bandIdx
+            END IF
+          END IF
+        END IF
       ENDIF
     ENDSUBROUTINE get_BandedMatrixType
 !
@@ -1490,18 +1526,13 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i,tmp
       REQUIRE(matrix%isInit)
+      REQUIRE(matrix%isAssembled)
       tmp=matrix%n
       matrix%n=matrix%m
       matrix%m=tmp
-      DO i=1,matrix%nband
-        tmp=matrix%b(i)%ib
-        matrix%b(i)%ib=matrix%b(i)%jb
-        matrix%b(i)%jb=tmp
-        tmp=matrix%b(i)%ie
-        matrix%b(i)%ie=matrix%b(i)%je
-        matrix%b(i)%je=tmp
-        matrix%b(i)%didx=-1*matrix%b(i)%didx
-      ENDDO
+
+      matrix%bandIdx = -matrix%bandIdx
+
     ENDSUBROUTINE transpose_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1654,9 +1685,11 @@ MODULE MatrixTypes_Native
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK) :: i
       REQUIRE(matrix%isInit)
-      DO i=1,matrix%nband
-        IF(ALLOCATED(matrix%b(i)%elem)) matrix%b(i)%elem=0.0_SRK
+      REQUIRE(matrix%isAssembled)
+      DO i=1,SIZE(matrix%bandIdx)
+        IF(ALLOCATED(matrix%bands(i)%elem)) matrix%bands(i)%elem=0.0_SRK
       ENDDO
+      matrix%bandIdx = 0_SIK
     ENDSUBROUTINE zeroentries_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -1685,18 +1718,13 @@ MODULE MatrixTypes_Native
       REAL(SDK),INTENT(INOUT) :: y(:)
       INTEGER(SIK) :: i,j,ib,ie,jb,je
       REQUIRE(matrix%isInit)
+      REQUIRE(matrix%isAssembled)
       REQUIRE(SIZE(x) == matrix%m)
-      REQUIRE(SIZE(y) == matrix%n) 
-      y(1:matrix%n)=0.0_SDK 
-      DO i=1,matrix%nband
-        ! Multiply by appropriate subset of x
-        ib=matrix%b(i)%ib
-        ie=matrix%b(i)%ie 
-        jb=matrix%b(i)%jb
-        je=matrix%b(i)%je
-        DO j=jb,je
-          y(j-jb+ib)=y(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb) 
-        ENDDO        
+      REQUIRE(SIZE(y) == matrix%n)
+      y(1:matrix%n)=0.0_SDK
+      DO i=1,SIZE(matrix%bandIdx)
+        idxMult = matrix%bands(i)%jIdx
+        y(idxMult) = y(idxMult) + matrix%bands(i)%elem * x%get(idxMult)
       ENDDO
     ENDSUBROUTINE matvec_BandedMatrixType
 !
@@ -1720,16 +1748,16 @@ MODULE MatrixTypes_Native
       REQUIRE(SIZE(y) == matrix%n)
       ALLOCATE(z(matrix%n))
       z(1:matrix%n)=0.0_SDK
-      y(1:matrix%n)=0.0_SDK 
+      y(1:matrix%n)=0.0_SDK
       DO i=1,matrix%myband
         ! Multiply by appropriate subset of x
         ib=matrix%b(i)%ib
-        ie=matrix%b(i)%ie 
+        ie=matrix%b(i)%ie
         jb=matrix%b(i)%jb
         je=matrix%b(i)%je
         DO j=jb,je
-          z(j-jb+ib)=z(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb) 
-        ENDDO        
+          z(j-jb+ib)=z(j-jb+ib)+x(j)*matrix%b(i)%elem(j+1-jb)
+        ENDDO
       ENDDO
       CALL MPI_ALLREDUCE(z, y, matrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
                     matrix%comm, ierr)
