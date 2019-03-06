@@ -76,7 +76,8 @@ TYPE,ABSTRACT :: NonLinearSolver_Base
   INTEGER(SIK) :: TPLType=-1
   INTEGER(SIK) :: n=-1
   INTEGER(SIK) :: iterations=-1
-  REAL(SRK) :: tol=-1.0_SRK
+  INTEGER(SIK) :: maxIterations=10000
+  REAL(SRK) :: tol=1.0E-5_SRK
   CLASS(LinearSolverType_Base),ALLOCATABLE :: linSys
   CLASS(NonLinearSolverInterface_Base),POINTER :: func => NULL()
   TYPE(FutilityComputingEnvironment),POINTER :: ce => NULL()
@@ -96,6 +97,9 @@ TYPE,ABSTRACT :: NonLinearSolver_Base
     !> @copybrief NonLinearSolverModule::nonlinearsolver_solve_absintfc
     !> @copydetails NonLinearSolverModule::nonlinearsolver_solve_absintfc
     PROCEDURE(nonlinearsolver_solve_absintfc),DEFERRED,PASS :: solve
+    !> @copybrief NonLinearSolverModule::continueSolve
+    !> @copydetails NonLinearSolverModule::continueSolve
+    PROCEDURE,PASS,PRIVATE :: continueSolve
 ENDTYPE NonLinearSolver_Base
 
 !> Concrete type for non-linear solver object that uses native vector and
@@ -164,21 +168,21 @@ ENDSUBROUTINE clearInterface_Base
 !> @brief Checks the bounds of a solution approximation
 !> @param this the @c NonLinearSolverInterface_Base object
 !> @param x the current solution approximation to check
-!> @returns continueSolve a logical indicating whether the solve should continue
+!> @returns keepSolving a logical indicating whether the solve should continue
 !>          or not
 !>
 !> This procedure defines a default behavior: nothing is checked and the solve will
 !> always be told to continue.  Extensions of the @c NonLinearSolverInterface_Base
 !> object can implement more advanced techniques.
 !>
-FUNCTION checkBounds_Base(this,x) RESULT(continueSolve)
-  CLASS(NonLinearSolverInterface_Base),INTENT(IN) :: this
+FUNCTION checkBounds_Base(this,x) RESULT(keepSolving)
+  CLASS(NonLinearSolverInterface_Base),INTENT(INOUT) :: this
   CLASS(VectorType),INTENT(INOUT) :: x
-  LOGICAL(SBK) :: continueSolve
+  LOGICAL(SBK) :: keepSolving
 
   REQUIRE(x%isInit)
 
-  continueSolve=.TRUE.
+  keepSolving=.TRUE.
 
 ENDFUNCTION checkBounds_Base
 !
@@ -247,25 +251,28 @@ ENDSUBROUTINE estimate_jacobian
 SUBROUTINE init_NonLinearSolverBase(this,ce,f,plist)
   CLASS(NonLinearSolver_Base),INTENT(INOUT) :: this
   TYPE(FutilityComputingEnvironment),TARGET,INTENT(IN) :: ce
-  CLASS(NonLinearSolverInterface_Base),INTENT(INOUT),POINTER :: f
+  CLASS(NonLinearSolverInterface_Base),INTENT(INOUT),TARGET :: f
   TYPE(ParamType),INTENT(IN) :: plist
 
   REQUIRE(.NOT.this%isInit)
-  REQUIRE(ASSOCIATED(f))
   REQUIRE(plist%has('NonLinearSolver -> n'))
   REQUIRE(plist%has('NonLinearSolver -> method'))
-  REQUIRE(plist%has('NonLinearSolver -> tolerance'))
 
   CALL plist%get('NonLinearSolver -> n',this%n)
-  CALL plist%get('NonLinearSolver -> method',this%solverMethod)
-  CALL plist%get('NonLinearSolver -> tolerance',this%tol)
   REQUIRE(this%n > 0)
+  CALL plist%get('NonLinearSolver -> method',this%solverMethod)
   REQUIRE(ANY(this%solverMethod == VALID_NLSOLVER_METHODS))
-  REQUIRE(this%tol > ZERO)
+  IF(plist%has('NonLinearSolver -> tolerance')) THEN
+    CALL plist%get('NonLinearSolver -> tolerance',this%tol)
+    REQUIRE(this%tol > ZERO)
+  ENDIF
+  IF(plist%has('NonLinearSolver -> maxIterations')) THEN
+    CALL plist%get('NonLinearSolver -> maxIterations',this%maxIterations)
+    REQUIRE(this%maxIterations >= 0)
+  ENDIF
 
   this%ce => ce
   this%func => f
-  f => NULL()
 
 ENDSUBROUTINE init_NonLinearSolverBase
 !
@@ -273,8 +280,7 @@ ENDSUBROUTINE init_NonLinearSolverBase
 !> @brief Defines the interface for clearing a @c NonLinearSolver_Base object
 !> @param this the object to clear
 !>
-!> This routine clears data on the @c func component and then deallocates the
-!> pointer
+!> This routine clears data on the @c func component and nullifies the pointer
 !>
 SUBROUTINE clear_NonLinearSolverBase(this)
   CLASS(NonLinearSolver_Base),INTENT(INOUT) :: this
@@ -283,13 +289,13 @@ SUBROUTINE clear_NonLinearSolverBase(this)
   this%TPLType=-1
   this%n=-1
   this%iterations=-1
-  this%tol=-1.0_SRK
+  this%maxIterations=10000
+  this%tol=1.0E-5_SRK
   CALL this%linSys%clear()
   DEALLOCATE(this%linSys)
   this%ce => NULL()
   IF(ASSOCIATED(this%func)) THEN
     CALL this%func%clear()
-    DEALLOCATE(this%func)
   ENDIF
   this%func => NULL()
   this%isInit=.FALSE.
@@ -309,14 +315,13 @@ ENDSUBROUTINE clear_NonLinearSolverBase
 SUBROUTINE init_NonLinearSolverNative(this,ce,f,plist)
   CLASS(NonLinearSolver_Native),INTENT(INOUT) :: this
   TYPE(FutilityComputingEnvironment),TARGET,INTENT(IN) :: ce
-  CLASS(NonLinearSolverInterface_Base),INTENT(INOUT),POINTER :: f
+  CLASS(NonLinearSolverInterface_Base),INTENT(INOUT),TARGET :: f
   TYPE(ParamType),INTENT(IN) :: plist
   !
   CHARACTER(LEN=*),PARAMETER :: myName='init_NonLinearSolverNative'
   TYPE(ParamType) :: linSysPlist
 
   REQUIRE(.NOT.this%isInit)
-  REQUIRE(ASSOCIATED(f))
 
   CALL this%initBase(ce,f,plist)
 
@@ -369,7 +374,6 @@ SUBROUTINE solve_NonLinearSolverNative(this,x)
   CLASS(VectorType),INTENT(INOUT) :: x
   !
   LOGICAL(SBK) :: lsolve
-  REAL(SRK) :: vec2real(this%n)
   CLASS(VectorType),ALLOCATABLE :: y
 
   REQUIRE(this%isInit)
@@ -377,16 +381,20 @@ SUBROUTINE solve_NonLinearSolverNative(this,x)
 
   IF(this%solverMethod == NLSOLVER_METHOD_NEWTON) THEN
     !Set up the initial solve
-    lsolve=.TRUE.
     ALLOCATE(y,SOURCE=x)
     CALL this%func%eval(x,y) !Get the solution at the intial guess
+
+    !Check that we actually need to do the solve (initial guess could be correct
+    !or user could have set matIterations == 0)
+    this%iterations=0
+    lsolve=this%continueSolve(y)
 
     !Solve until all values are under the tolerance
     !  This solves the linear system Jacobian * (x_n+1 - x_n) = -F(x_n)
     !  for the (x_n+1 - x_n) term, then adds that term to x_n to obtain
     !  x_n+1 and update the function evaluation
-    this%iterations=0
     DO WHILE(lsolve)
+      this%iterations=this%iterations+1
       !Set the RHS to the negative of the previous function evaluation
       CALL this%linSys%b%set(0.0_SRK)
       CALL BLAS_axpy(y,this%linSys%b,-1.0_SRK)
@@ -397,22 +405,51 @@ SUBROUTINE solve_NonLinearSolverNative(this,x)
       !Add the linSys solution to x to get the new position
       CALL BLAS_axpy(this%linSys%x,x)
 
-      !Enforce all parts of the solution to be in-bounds
+      !Enforce all parts of the solution to be in-bounds and allow the function
+      !evaluator to stop the solve if certain conditions are met
       lsolve=this%func%checkBounds(x)
 
       !Update the solution
       CALL this%func%eval(x,y)
-      CALL y%get(vec2real)
 
-      !Set the stop condition
-      IF(ALL(ABS(vec2real) < this%tol)) THEN
-        lsolve=.FALSE.
-      ENDIF
-      this%iterations=this%iterations+1
+      !Check the stop conditions
+      lsolve = lsolve .AND. this%continueSolve(y)
     ENDDO
   ENDIF
 
 ENDSUBROUTINE solve_NonLinearSolverNative
+!
+!-------------------------------------------------------------------------------
+!> @brief Checks stop criteria on a @c NonLinearSolver_Native object
+!> @param this the @c NonLinearSolver_Native object being solved
+!> @param y the current solution to check
+!> @returns keepSolving logical indicating if the solver should keep solving
+!>
+!> If the absolute value of each element of @c y is less than the solver's
+!> tolerance or if the maximum number of iterations has been reached, then
+!> @c keepSolving will be set to false.  Otherwise, it will be set to true.
+!>
+FUNCTION continueSolve(this,y) RESULT(keepSolving)
+  CLASS(NonLinearSolver_Base),INTENT(IN) :: this
+  CLASS(VectorType),INTENT(INOUT) :: y
+  LOGICAL(SBK) :: keepSolving
+  !
+  REAL(SRK),ALLOCATABLE :: vec2real(:)
+
+  ALLOCATE(vec2real(this%n))
+  CALL y%get(vec2real)
+  keepSolving=.TRUE.
+
+  !Convergence has been reached
+  IF(ALL(ABS(vec2real) < this%tol)) THEN
+    keepSolving=.FALSE.
+  ENDIF
+  !Max iterations reached
+  IF(this%iterations >= this%maxIterations) THEN
+    keepSolving=.FALSE.
+  ENDIF
+
+ENDFUNCTION continueSolve
 !
 !-------------------------------------------------------------------------------
 #ifdef UNIT_TEST
