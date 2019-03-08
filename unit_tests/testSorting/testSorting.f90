@@ -28,7 +28,7 @@ PROGRAM testSorting
   REGISTER_SUBTEST('Speed Test - sort int',testSpeedInt)
   REGISTER_SUBTEST('Speed Test - sort real',testSpeedReal)
 
-  REGISTER_SUBTEST('quick sort keys/values',testQuickSort)
+  REGISTER_SUBTEST('Diagonal QSort', testDiagSort)
   FINALIZE_TEST()
 !
 !
@@ -542,40 +542,51 @@ PROGRAM testSorting
       ASSERT(bool,'1-D real array qsort')
     ENDSUBROUTINE testRealSort
 
-    SUBROUTINE testQuickSort()
+    SUBROUTINE testDiagSort()
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: keys(10)
-      REAL(SRK) :: values(10)
+      INTEGER(SIK) :: iVals(16), jVals(16), diagRank(16), i
+      REAL(SRK) :: values(16)
 
-      keys(1) = 1_SIK
-      keys(2) = -2_SIK
-      keys(3) = -3_SIK
-      keys(4) = -1_SIK
-      keys(5) = 4_SIK
-      keys(6) = 3_SIK
-      keys(7) = 2_SIK
-      keys(8) = -4_SIK
-      keys(9) = 0_SIK
-      keys(10) = -5_SIK
+      ! 9  5  2  0
+      ! 12 8  4  1
+      ! 14 11 7  3
+      ! 15 13 10 6
 
-      values(1) = 0.0_SRK
-      values(2) = 1.0_SRK
+      DO i=1,16
+        jVals(i) = MOD(i-1,4)+1
+        iVals(i) = (i-1)/4 + 1
+      END DO
+      diagRank = jVals + ((jVals - iVals)*(jVals - iVals) &
+                 + 7*(jVals - iVals))/2
+
+      values(1) = 9.0_SRK
+      values(2) = 5.0_SRK
       values(3) = 2.0_SRK
-      values(4) = 3.0_SRK
-      values(5) = 4.0_SRK
-      values(6) = 5.0_SRK
-      values(7) = 6.0_SRK
-      values(8) = 7.0_SRK
-      values(9) = 8.0_SRK
-      values(10) = 9.0_SRK
+      values(4) = 0.0_SRK
+      values(5) = 12.0_SRK
+      values(6) = 8.0_SRK
+      values(7) = 4.0_SRK
+      values(8) = 1.0_SRK
+      values(9) = 14.0_SRK
+      values(10) = 11.0_SRK
+      values(11) = 7.0_SRK
+      values(12) = 3.0_SRK
+      values(13) = 15.0_SRK
+      values(14) = 13.0_SRK
+      values(15) = 10.0_SRK
+      values(16) = 6.0_SRK
 
-      CALL sort(keys,values)
+      CALL diagonal_sort(diagRank, iVals, jVals, values)
 
-      bool=ALL(keys .EQ. (/-5_SIK,-4_SIK,-3_SIK,-2_SIK,-1_SIK,0_SIK,1_SIK,2_SIK,3_SIK,4_SIK/))
-      ASSERT(bool,'1-D int/1-D real keys')
+      bool=ALL(iVals .EQ. (/4_SIK,3_SIK,4_SIK,2_SIK,3_SIK,4_SIK,1_SIK,2_SIK,3_SIK,4_SIK,1_SIK,2_SIK,3_SIK,1_SIK,2_SIK,1_SIK/))
+      ASSERT(bool,'Diagonal sort i values')
 
-      bool=ALL(values .APPROXEQ. (/9.0_SRK,7.0_SRK,2.0_SRK,1.0_SRK,3.0_SRK,8.0_SRK,0.0_SRK,6.0_SRK,5.0_SRK,4.0_SRK/))
-      ASSERT(bool,'1-D int/1-D real values')
-    END SUBROUTINE testQuickSort
+      bool=ALL(jVals .EQ. (/1_SIK,1_SIK,2_SIK,1_SIK,2_SIK,3_SIK,1_SIK,2_SIK,3_SIK,4_SIK,2_SIK,3_SIK,4_SIK,3_SIK,4_SIK,4_SIK/))
+      ASSERT(bool,'Diagonal sort j values')
+
+      bool=ALL(values .APPROXEQ. (/15._SRK,14._SRK,13._SRK,12._SRK,11._SRK,10._SRK,9._SRK,8._SRK,7._SRK,6._SRK,5._SRK,4._SRK,3._SRK,2._SRK,1._SRK,0._SRK/))
+      ASSERT(bool,'Diagonal sort entries')
+
+    END SUBROUTINE testDiagSort
 !
 ENDPROGRAM testSorting

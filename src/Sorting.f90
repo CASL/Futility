@@ -106,7 +106,7 @@ MODULE Sorting
     !> @copybrief Sorting::qsort_1DInt_1DInt_1DReal
     !> @copydetails Sorting::qsort_1DInt_1DInt_1DReal
     MODULE PROCEDURE qsort_diagonal
-  END INTERFACE
+  END INTERFACE diagonal_sort
 !
 !===============================================================================
   CONTAINS
@@ -585,35 +585,35 @@ MODULE Sorting
 
       INTEGER(SIK) :: n,l,p,c
 
-      n=SIZE(iValues)
+      n=SIZE(diagRank)
 
       IF (n>2) THEN
         !median of 3 pivot
-        c=n/2
-        IF (keys(c) < keys(1)) THEN
+        c=n/2+1
+        IF (diagRank(c) < diagRank(1)) THEN
           CALL swap_int(diagRank,c,1)
           CALL swap_int(iValues,c,1)
           CALL swap_int(jValues,c,1)
           CALL swap_real(rValues,c,1)
         END IF
-        IF (keys(n) < keys(1)) THEN
+        IF (diagRank(n) < diagRank(1)) THEN
           CALL swap_int(diagRank,1,n)
           CALL swap_int(iValues,1,n)
           CALL swap_int(jValues,1,n)
           CALL swap_real(rValues,1,n)
         END IF
-        IF (keys(n) < keys(c)) THEN
+        IF (diagRank(n) < diagRank(c)) THEN
           CALL swap_int(diagRank,c,n)
           CALL swap_int(iValues,c,n)
           CALL swap_int(jValues,c,n)
           CALL swap_real(rValues,c,n)
         END IF
         p=c
-        CALL partition_array_qsort_diagonal(keys,iValues,rValues,p,l)
+        CALL partition_array_qsort_diagonal(diagRank,iValues,jValues,rValues,p,l)
         CALL qsort_diagonal(diagRank(1:l-1),iValues(1:l-1),jValues(1:l-1),rValues(1:l-1))
-        CALL qsort_diagonal(diagRank(1:l-1),iValues(l+1:n),jValues(l+1:n),rValues(l+1:n))
+        CALL qsort_diagonal(diagRank(l+1:n),iValues(l+1:n),jValues(l+1:n),rValues(l+1:n))
       ELSE IF (n==2) THEN
-        IF (keys(1) > keys(2)) THEN
+        IF (diagRank(1) > diagRank(2)) THEN
           CALL swap_int(diagRank,1,2)
           CALL swap_int(iValues,1,2)
           CALL swap_int(jValues,1,2)
@@ -641,8 +641,8 @@ MODULE Sorting
 
       INTEGER(SIK) :: j,n,pval
 
-      pval=keys(p)
-      n=SIZE(keys)
+      pval=diagRank(p)
+      n=SIZE(diagRank)
       IF (p>1) THEN
         ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
         CALL swap_int(diagRank,1,2)
@@ -657,7 +657,7 @@ MODULE Sorting
 
       i=2
       DO j=2,n
-        IF (keys(j)<pval) THEN
+        IF (diagRank(j)<pval) THEN
           CALL swap_int(diagRank,i,j)
           CALL swap_int(iValues,i,j)
           CALL swap_int(jValues,i,j)

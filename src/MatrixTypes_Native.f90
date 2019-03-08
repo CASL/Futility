@@ -27,6 +27,8 @@ MODULE MatrixTypes_Native
   USE ParameterLists
   USE Allocs
   USE MatrixTypes_Base
+  USE ParallelEnv
+  USE Sorting
 
   IMPLICIT NONE
 
@@ -178,9 +180,6 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::zeroentries_BandedMatrixType
       !> @copydetails MatrixTypes::zeroentries_BandedMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_BandedMatrixType
-      !> @copybrief MatrixTypes::matvec_BandedMatrixType
-      !> @copydetails MatrixTypes::matvec_BandedMatrixType
-      PROCEDURE,PASS :: matvec => matvec_BandedMatrixType
   ENDTYPE BandedMatrixType
 
   !> @brief The basic banded matrix type
@@ -226,9 +225,6 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::zeroentries_DistributedBandedMatrixType
       !> @copydetails MatrixTypes::zeroentries_DistributedBandedMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBandedMatrixType
-      !> @copybrief MatrixTypes::matvec_DistributedBandedMatrixType
-      !> @copydetails MatrixTypes::matvec_DistributedBandedMatrixType
-      PROCEDURE,PASS :: matvec => matvec_DistributedBandedMatrixType
   ENDTYPE DistributedBandedMatrixType
 
   !> @brief The basic sparse matrix type
@@ -526,11 +522,15 @@ MODULE MatrixTypes_Native
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK),ALLOCATABLE :: numOnDiag(:)
-      INTEGER(SIK) :: counter,currIdx,currBand,nBands,i
+      INTEGER(SIK),ALLOCATABLE :: numOnDiag(:),diagRank(:)
+      INTEGER(SIK) :: counter,currIdx,currBand,nBands,i,j
 
-      !bandRank = thisMatrix%iTmp + thisMatrix%jTmp
-      CALL diagonal_sort(thisMatrix%iTmp + thisMatrix%jTmp,thisMatrix%iTmp,thisMatrix%jTmp,thisMatrix%elemTmp)
+      REQUIRE(thisMatrix%isInit)
+      REQUIRE(thisMatrix%nnz == thisMatrix%counter)
+      diagRank = thisMatrix%jTmp + ((thisMatrix%jTmp - thisMatrix%iTmp) &
+                 *(thisMatrix%jTmp - thisMatrix%iTmp) &
+                 + (thisMatrix%m*2-1)*(thisMatrix%jTmp - thisMatrix%iTmp))/2
+      CALL diagonal_sort(diagRank,thisMatrix%iTmp,thisMatrix%jTmp,thisMatrix%elemTmp)
 
       ! Find number of elements in each band
       ALLOCATE(numOnDiag(thisMatrix%m+thisMatrix%n-1))
@@ -546,20 +546,22 @@ MODULE MatrixTypes_Native
       END DO
       ALLOCATE(thisMatrix%bandIdx(nBands))
       ALLOCATE(thisMatrix%bands(nBands))
-      counter = 0
+      counter = 1
       DO i=1,SIZE(numOnDiag)
         IF (numOnDiag(i)/=0) THEN
           ALLOCATE(thisMatrix%bands(counter)%jIdx(numOnDiag(i)))
           ALLOCATE(thisMatrix%bands(counter)%elem(numOnDiag(i)))
+          thisMatrix%bandIdx(counter) = i - thisMatrix%m
           counter = counter + 1
         END IF
       END DO
-      DO i=1,SIZE(thisMatrix%iTmp)
-        currBand = thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%m
-        currIdx = SIZE(thisMatrix%bands(currBand)%jIdx) - numOnDiag(currIdx) + 1
-        thisMatrix%bands(currBand)%jIdx(currIdx) = thisMatrix%jTmp(i)
-        thisMatrix%bands(currBand)%elem(currIdx) = thisMatrix%elemTmp(i)
-        numOnDiag(currIdx) = numOnDiag(currIdx) - 1
+      counter = 1
+      DO i=1,SIZE(thisMatrix%bandIdx)
+        DO j=1,SIZE(thisMatrix%bands(i)%jIdx)
+          thisMatrix%bands(i)%jIdx(j) = thisMatrix%jTmp(counter)
+          thisMatrix%bands(i)%elem(j) = thisMatrix%elemTmp(counter)
+          counter = counter + 1
+        END DO
       END DO
 
       thisMatrix%isAssembled = .TRUE.
@@ -576,20 +578,23 @@ MODULE MatrixTypes_Native
     SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix, ierr)
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
+      TYPE(MPI_EnvType) :: mpiEnv
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK),ALLOCATABLE :: iSrt,jSrt,diagRank
-      REAL(SIK),ALLOCATABLE :: valSrt
-      INTEGER(SIK) :: currIdx
-      CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
-        ' - routine is not implemented!')
+      INTEGER(SIK),ALLOCATABLE :: iSrt(:),jSrt(:),diagRank(:),minDiagRank(:)
+      REAL(SRK),ALLOCATABLE :: elemSrt(:)
+      INTEGER(SIK) :: currIdxUnsorted,currIdxSorted,i,mpierr,nheldlower
+      INTEGER(SIK) :: otherRank, rankMin
 
-      REQUIRE(isInit)
-      CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
-      CALL MPI_Comm_size(matrix%comm,nproc,mpierr)
-      nHeldLower = MIN(rank,MOD(matrix%nnz,nproc))
-      nHeldLower = nHeldLower + rank*matrix%nnz/nproc
+      REQUIRE(thisMatrix%isInit)
+      REQUIRE(thisMatrix%counter == thisMatrix%nnz)
+      CALL mpiEnv%init(thisMatrix%comm)
 
-      diagRank = thisMatrix%iTmp + thisMatrix%jTmp
+      nHeldLower = MIN(mpiEnv%rank,MOD(thismatrix%nnz,mpiEnv%nproc))
+      nHeldLower = nHeldLower + mpiEnv%rank*thismatrix%nnz/mpiEnv%nproc
+
+      diagRank = thisMatrix%jTmp + ((thisMatrix%jTmp - thisMatrix%iTmp) &
+                 *(thisMatrix%jTmp - thisMatrix%iTmp) &
+                 + (thisMatrix%m*2-1)*(thisMatrix%jTmp - thisMatrix%iTmp))/2
 
       ! Global Sort over all tmp arrays
 
@@ -597,32 +602,65 @@ MODULE MatrixTypes_Native
       CALL diagonal_sort(diagRank,thisMatrix%iTmp,thisMatrix%jTmp,thisMatrix%elemTmp)
 
       ! Now, create the new (sorted) temp arrays
-      ALLOCATE(iSrt(nLocal))
-      ALLOCATE(jSrt(nLocal))
-      ALLOCATE(valSrt(nLocal))
-      currIdx = 1
-      ! Then, loop over nnz to minimize. Yeah, it's inefficient
+      ALLOCATE(iSrt(thisMatrix%nLocal))
+      ALLOCATE(jSrt(thisMatrix%nLocal))
+      ALLOCATE(elemSrt(thisMatrix%nLocal))
+      ! Create also a container to hold the minimum diagRank of each process
+      ALLOCATE(minDiagRank(mpiEnv%nproc))
+      minDiagRank(mpiEnv%rank+1) = diagRank(1)
+      ! mpi all gather on minDiagRank
+      CALL MPI_Allgather(diagRank(1),1,MPI_INT,minDiagRank,1,MPI_INT,thisMatrix%comm)
+
+      currIdxSorted = 1
+      currIdxUnsorted = 1
+      ! Then, loop over nnz to minimize
       DO i=1,thisMatrix%nnz
-        ! if currIdx <= nlocal
-        !   set tmpDiagRank to diagRank(i)
-        ! else
-        !   set tmpDiagRank to inf
-        ! endif
-        ! NOTE: disregard diagRanks of 0
-        IF (i > nHeldLower .AND. i - nHeldLower <= thisMatrix%nLocal) THEN
-          ! Reduce to on diagRank for minloc
-          ! If value from local data is selected
-          !   copy i, j, val
-          !   Increment currIdx
-          ! else
-          !   receive i, j, val
-          ! end if
+        ! Get rank which contains minimum
+        rankMin = MINLOC(minDiagRank,1) - 1
+        IF (rankMin == mpiEnv%rank) THEN
+          ! Minimum diag rank is located in this process
+          IF (i > nHeldLower .AND. i - nHeldLower <= thisMatrix%nLocal) THEN
+            ! Value is to be stored in this process
+            iSrt(currIdxSorted) = thisMatrix%iTmp(currIdxUnsorted)
+            jSrt(currIdxSorted) = thisMatrix%jTmp(currIdxUnsorted)
+            elemSrt(currIdxSorted) = thisMatrix%elemTmp(currIdxUnsorted)
+            currIdxSorted = currIdxSorted + 1
+            currIdxUnsorted = currIdxUnsorted + 1
+          ELSE
+            ! Values is to be stored in another process
+            ! Compute other process rank
+            IF (i/(thisMatrix%nnz/mpiEnv%nproc + 1) < MOD(thisMatrix%nnz,mpiEnv%nproc)) THEN
+              otherRank = i/(thisMatrix%nnz/mpiEnv%nproc + 1)
+            ELSE
+              otherRank = (i-MOD(thisMatrix%nnz,mpiEnv%nProc))/(thisMatrix%nnz/mpiEnv%nProc)
+            END IF
+
+            CALL mpiEnv%send(thisMatrix%iTmp(currIdxUnsorted), otherRank)
+            CALL mpiEnv%send(thisMatrix%jTmp(currIdxUnsorted), otherRank)
+            CALL mpiEnv%send(thisMatrix%elemTmp(currIdxUnsorted), otherRank)
+
+            currIdxUnsorted = currIdxUnsorted + 1
+          END IF
+
+          minDiagRank(mpiEnv%rank+1) = diagRank(currIdxUnsorted)
+          ! Update minDiagRank on other processors
+          CALL mpiEnv%bcast(diagRank(currIdxUnsorted), mpiEnv%rank)
+
         ELSE
-          ! Reduce elsewhere
-          ! If value from local data is selected
-          !   send i, j, val
-          !   increment currIdx
-          ! end if
+          ! Minimum diag rank is located in another process
+          IF (i > nHeldLower .AND. i - nHeldLower <= thisMatrix%nLocal) THEN
+            ! Value is to be stored in this process
+            CALL mpiEnv%recv(iSrt(currIdxSorted), rankMin)
+            CALL mpiEnv%recv(jSrt(currIdxSorted), rankMin)
+            CALL mpiEnv%recv(elemSrt(currIdxSorted), rankMin)
+            currIdxSorted = currIdxSorted + 1
+          !ELSE
+            ! Values is to be stored in another process
+            ! Do nothing
+          END IF
+          ! Update minval
+
+          CALL mpiEnv%bcast(minDiagRank(rankMin+1), rankMin)
         END IF
       END DO
 
@@ -1058,10 +1096,10 @@ MODULE MatrixTypes_Native
         IF(.NOT. matrix%isAssembled) THEN
           IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
                .AND. (i>=1) .AND. (j >= 1)) THEN
+            matrix%counter = matrix%counter + 1
             matrix%iTmp(matrix%counter) = i
             matrix%jTmp(matrix%counter) = j
             matrix%elemTmp(matrix%counter) = setval
-            matrix%counter = matrix%counter + 1
           END IF
         ENDIF
       ENDIF
@@ -1258,9 +1296,9 @@ MODULE MatrixTypes_Native
               bIdx = -bIdx
               matrix%bandIdx = -matrix%bandIdx
             END IF
-            lo = 0
+            lo = 1
             hi = SIZE(matrix%bandIdx)
-            IF (bIdx >= matrix%bandIdx(1) .AND. bIdx <= matrix%bandIdx(hi)) THEN
+            IF (bIdx < matrix%bandIdx(1) .OR. bIdx > matrix%bandIdx(hi)) THEN
               getval = 0.0_SRK
             ELSE
               DO WHILE (lo <= hi .AND. .NOT. found)
@@ -1276,14 +1314,14 @@ MODULE MatrixTypes_Native
               END DO
               IF (found) THEN
                 bandLoc = mid
-                lo = 0
-                hi = SIZE(matrix%bandIdx)
+                lo = 1
+                hi = SIZE(matrix%bands(bandLoc)%elem)
                 found = .FALSE.
                 DO WHILE (lo <= hi .AND. .NOT. found)
                   mid = (hi+lo)/2
-                  IF (bIdx < matrix%bandIdx(mid)) THEN
+                  IF (j < matrix%bands(bandLoc)%jIdx(mid)) THEN
                     hi = mid-1
-                  ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
+                  ELSE IF (j > matrix%bands(bandLoc)%jIdx(mid)) THEN
                     lo = mid+1
                   ELSE
                     found = .TRUE.
@@ -1456,10 +1494,18 @@ MODULE MatrixTypes_Native
     SUBROUTINE transpose_BandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: mTmp,i
 
       REQUIRE(matrix%isInit)
       REQUIRE(matrix%isAssembled)
 
+      mTmp = matrix%n
+      matrix%n = matrix%m
+      matrix%m = mTmp
+
+      DO i=1,SIZE(matrix%bandIdx)
+        matrix%bands(i)%jIdx = matrix%bands(i)%jIdx - matrix%bandIdx(i)
+      END DO
       matrix%bandIdx = -matrix%bandIdx
       matrix%isReversed = .NOT. matrix%isReversed
 
@@ -1634,62 +1680,5 @@ MODULE MatrixTypes_Native
       REQUIRE(matrix%isInit)
       matrix%a=0.0_SRK
     ENDSUBROUTINE zeroentries_DenseRectMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Subroutine computes a matrix vector product for the banded matrix
-!         type.
-!> @param matrix declare the matrix type to act on.
-!> @param x the double-precision 1-D array to multiply the matrix by.
-!> @param y the double-precision 1-D array to hold the result of the
-!         multiplication.
-    SUBROUTINE matvec_BandedMatrixType(matrix, x, y)
-      CHARACTER(LEN=*),PARAMETER :: myName='matvec_BandedMatrixType'
-      CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
-      REAL(SDK),INTENT(IN) :: x(:)
-      REAL(SDK),INTENT(INOUT) :: y(:)
-      INTEGER(SIK) :: i
-      INTEGER(SIK), ALLOCATABLE :: idxMult(:)
-      REQUIRE(matrix%isInit)
-      REQUIRE(matrix%isAssembled)
-      REQUIRE(SIZE(x) == matrix%m)
-      REQUIRE(SIZE(y) == matrix%n)
-      y(1:matrix%n)=0.0_SDK
-      DO i=1,SIZE(matrix%bandIdx)
-        idxMult = matrix%bands(i)%jIdx
-        y(idxMult) = y(idxMult) + matrix%bands(i)%elem * x%get(idxMult)
-      ENDDO
-    ENDSUBROUTINE matvec_BandedMatrixType
-!
-!-------------------------------------------------------------------------------
-!> @brief Subroutine computes a matrix vector product for the banded matrix
-!         type.
-!> @param matrix declare the matrix type to act on.
-!> @param x the double-precision 1-D array to multiply the matrix by.
-!> @param y the double-precision 1-D array to hold the result of the
-!         multiplication.
-    SUBROUTINE matvec_DistributedBandedMatrixType(matrix, x, y)
-      CHARACTER(LEN=*),PARAMETER :: myName='matvec_DistributedBandedMatrixType'
-      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
-      REAL(SDK),INTENT(IN) :: x(:)
-      REAL(SDK), ALLOCATABLE :: z(:)
-      REAL(SDK),INTENT(INOUT) :: y(:)
-      INTEGER(SIK) :: i, ierr
-      INTEGER(SIK), ALLOCATABLE :: idxMult(:)
-#ifdef HAVE_MPI
-      REQUIRE(matrix%isInit)
-      REQUIRE(SIZE(x) == matrix%m)
-      REQUIRE(SIZE(y) == matrix%n)
-      ALLOCATE(z(matrix%n))
-      z(1:matrix%n)=0.0_SDK
-      y(1:matrix%n)=0.0_SDK
-      DO i=1,size(matrix%bandIdx)
-        idxMult = matrix%bands(i)%jIdx
-        y(idxMult) = y(idxMult) + matrix%bands(i)%elem * x%get(idxMult)
-      ENDDO
-      CALL MPI_ALLREDUCE(z, y, matrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
-                    matrix%comm, ierr)
-#endif
-    ENDSUBROUTINE matvec_DistributedBandedMatrixType
-!
-!-------------------------------------------------------------------------------
+
 ENDMODULE MatrixTypes_Native

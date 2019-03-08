@@ -90,6 +90,7 @@ MODULE MatrixTypes
   USE Allocs
   USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
   USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
+  USE Futility_DBC
   USE ParameterLists
   USE VectorTypes
   USE MatrixTypes_Base
@@ -98,6 +99,10 @@ MODULE MatrixTypes
   USE MatrixTypes_PETSc
   USE trilinos_interfaces
   IMPLICIT NONE
+
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
 
   PRIVATE
 !
@@ -411,6 +416,9 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       !
       CHARACTER(LEN=1) :: t,ul,d
+      REAL(SRK),ALLOCATABLE :: z(:)
+      INTEGER(SIK),ALLOCATABLE :: idxMult(:)
+      INTEGER(SIK) :: bIdx,ierr
       INTEGER(SIK) :: incx
 
       SELECTTYPE(mat => thisMatrix)
@@ -486,14 +494,40 @@ MODULE MatrixTypes
                CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - This interface is being implemented.')
             END IF
-            CALL thisMatrix%matvec(x,y)
+
+            !REQUIRE(thisMatrix%isInit)
+            !REQUIRE(thisMatrix%isAssembled)
+            !REQUIRE(SIZE(x) == thisMatrix%m)
+            !REQUIRE(SIZE(y) == thisMatrix%n)
+            y(1:thisMatrix%n)=0.0_SDK
+            DO bIdx=1,SIZE(thisMatrix%bandIdx)
+              idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+              y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+            ENDDO
+
           TYPE IS(DistributedBandedMatrixType)
             IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
                PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
                CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - This interface is being implemented.')
             END IF
-            CALL thisMatrix%matvec(x,y)
+
+#ifdef HAVE_MPI
+            !REQUIRE(thisMatrix%isInit)
+            !REQUIRE(thisMatrix%isAssembled)
+            !REQUIRE(SIZE(x) == thisMatrix%m)
+            !REQUIRE(SIZE(y) == thisMatrix%n)
+            ALLOCATE(z(thisMatrix%n))
+            !z(1:matrix%n)=0.0_SDK
+            !y(1:matrix%n)=0.0_SDK
+            DO bIdx=1,size(thisMatrix%bandIdx)
+              idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+              y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+            ENDDO
+            CALL MPI_ALLREDUCE(z, y, thisMatrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
+                          thisMatrix%comm, ierr)
+#endif
+
           CLASS DEFAULT
             CALL eMatrixType%raiseError('Incorrect call to '// &
                  modName//'::'//myName//' - This interface is not available.')
