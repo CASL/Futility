@@ -526,15 +526,19 @@ PROGRAM testIOutil
 
       COMPONENT_TEST('str')
       !SNK
+      ASSERT_EQ(str(0_SNK),'0','str(SNK)')
       ASSERT_EQ(str(2_SNK),'2','str(SNK)')
       ASSERT_EQ(str(-2_SNK),'-2','str(SNK)')
+      ASSERT_EQ(str(0_SNK,4),'0000','str(SNK,pad)')
       ASSERT_EQ(str(375_SNK,9),'000000375','str(SNK,pad)')
       ASSERT_EQ(str(3_SNK,3),'003','str(SNK,pad)')
       ASSERT_EQ(str(-3_SNK,3),'-003','str(SNK,pad)')
       ASSERT_EQ(str(-375_SNK,9),'-000000375','str(SNK,pad)')
       !SLK
+      ASSERT_EQ(str(0_SLK),'0','str(SLK)')
       ASSERT_EQ(str(3_SLK),'3','str(SLK)')
       ASSERT_EQ(str(-3_SLK),'-3','str(SLK)')
+      ASSERT_EQ(str(0_SLK,4),'0000','str(SLK,pad)')
       ASSERT_EQ(str(375_SLK,9),'000000375','str(SLK,pad)')
       ASSERT_EQ(str(3_SLK,3),'003','str(SLK,pad)')
       ASSERT_EQ(str(-3_SLK,3),'-003','str(SLK,pad)')

@@ -1473,8 +1473,12 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
-      IF(i < 0) length=length+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+        IF(i < 0) length=length+1
+      ENDIF
       ALLOCATE(CHARACTER(length) :: string)
       WRITE(string,'(i0)') i
 
@@ -1497,7 +1501,11 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+      ENDIF
       REQUIRE(nPadZero >= length)
 
       length=nPadZero
@@ -1523,8 +1531,12 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
-      IF(i < 0) length=length+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+        IF(i < 0) length=length+1
+      ENDIF
       ALLOCATE(CHARACTER(length) :: string)
       WRITE(string,'(i0)') i
 
@@ -1547,7 +1559,11 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+      ENDIF
       REQUIRE(nPadZero >= length)
 
       length=nPadZero
