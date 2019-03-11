@@ -498,7 +498,7 @@ MODULE MatrixTypes_Native
           matrix%isInit=.TRUE.
           matrix%isAssembled=.FaLSE.
           matrix%isReversed=.FALSE.
-          matrix%counter=0_SRK
+          matrix%counter=0
           matrix%n=n
           matrix%m=m
           matrix%nnz=nnz
@@ -580,10 +580,10 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
       TYPE(MPI_EnvType) :: mpiEnv
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK),ALLOCATABLE :: iSrt(:),jSrt(:),diagRank(:),minDiagRank(:)
+      INTEGER(SIK),ALLOCATABLE :: iSrt(:),jSrt(:),diagRank(:),minDiagRank(:),numOnDiag(:)
       REAL(SRK),ALLOCATABLE :: elemSrt(:)
-      INTEGER(SIK) :: currIdxUnsorted,currIdxSorted,i,mpierr,nheldlower
-      INTEGER(SIK) :: otherRank, rankMin
+      INTEGER(SIK) :: currIdxUnsorted,currIdxSorted,i,j,mpierr,nheldlower,nbands
+      INTEGER(SIK) :: otherRank, rankMin, counter
 
       REQUIRE(thisMatrix%isInit)
       REQUIRE(thisMatrix%counter == thisMatrix%nnz)
@@ -607,13 +607,15 @@ MODULE MatrixTypes_Native
       ALLOCATE(elemSrt(thisMatrix%nLocal))
       ! Create also a container to hold the minimum diagRank of each process
       ALLOCATE(minDiagRank(mpiEnv%nproc))
+
       minDiagRank(mpiEnv%rank+1) = diagRank(1)
       ! mpi all gather on minDiagRank
-      CALL MPI_Allgather(diagRank(1),1,MPI_INT,minDiagRank,1,MPI_INT,thisMatrix%comm)
+      CALL MPI_Allgather(diagRank(1),1,MPI_INTEGER,minDiagRank,1,MPI_INTEGER,mpiEnv%comm,mpierr)
 
       currIdxSorted = 1
       currIdxUnsorted = 1
       ! Then, loop over nnz to minimize
+
       DO i=1,thisMatrix%nnz
         ! Get rank which contains minimum
         rankMin = MINLOC(minDiagRank,1) - 1
@@ -629,10 +631,10 @@ MODULE MatrixTypes_Native
           ELSE
             ! Values is to be stored in another process
             ! Compute other process rank
-            IF (i/(thisMatrix%nnz/mpiEnv%nproc + 1) < MOD(thisMatrix%nnz,mpiEnv%nproc)) THEN
-              otherRank = i/(thisMatrix%nnz/mpiEnv%nproc + 1)
+            IF (i/(thisMatrix%nnz/mpiEnv%nProc+1) <= MOD(thisMatrix%nnz,mpiEnv%nProc)) THEN
+              otherRank = (i-1)/(thisMatrix%nnz/mpiEnv%nProc+1)
             ELSE
-              otherRank = (i-MOD(thisMatrix%nnz,mpiEnv%nProc))/(thisMatrix%nnz/mpiEnv%nProc)
+              otherRank = (i-1-MOD(thisMatrix%nnz,mpiEnv%nProc))/(thisMatrix%nnz/mpiEnv%nProc)
             END IF
 
             CALL mpiEnv%send(thisMatrix%iTmp(currIdxUnsorted), otherRank)
@@ -642,9 +644,12 @@ MODULE MatrixTypes_Native
             currIdxUnsorted = currIdxUnsorted + 1
           END IF
 
-          minDiagRank(mpiEnv%rank+1) = diagRank(currIdxUnsorted)
+          minDiagRank(mpiEnv%rank+1) = HUGE(1)
+          IF (currIdxUnsorted <= thisMatrix%nlocal) THEN
+            minDiagRank(mpiEnv%rank+1) = diagRank(currIdxUnsorted)
+          END IF
           ! Update minDiagRank on other processors
-          CALL mpiEnv%bcast(diagRank(currIdxUnsorted), mpiEnv%rank)
+          CALL mpiEnv%bcast(minDiagRank(mpiEnv%rank+1), mpiEnv%rank)
 
         ELSE
           ! Minimum diag rank is located in another process
@@ -654,7 +659,7 @@ MODULE MatrixTypes_Native
             CALL mpiEnv%recv(jSrt(currIdxSorted), rankMin)
             CALL mpiEnv%recv(elemSrt(currIdxSorted), rankMin)
             currIdxSorted = currIdxSorted + 1
-          !ELSE
+          ELSE
             ! Values is to be stored in another process
             ! Do nothing
           END IF
@@ -664,8 +669,45 @@ MODULE MatrixTypes_Native
         END IF
       END DO
 
-      ! Creation of local bands
-      ! Cleanup of tmp arrays
+      ! Find number of elements in each band
+      ALLOCATE(numOnDiag(thisMatrix%m+thisMatrix%n-1))
+      numOnDiag = 0_SIK
+      DO i=1,SIZE(iSrt)
+        numOnDiag(jSrt(i)-iSrt(i)+thisMatrix%m) = 1 + numOnDiag(jSrt(i)-iSrt(i)+thisMatrix%m)
+      END DO
+      nBands = 0
+      DO i=1,SIZE(numOnDiag)
+        IF (numOnDiag(i)/=0) THEN
+          nBands = nBands + 1
+        END IF
+      END DO
+      ALLOCATE(thisMatrix%bandIdx(nBands))
+      ALLOCATE(thisMatrix%bands(nBands))
+      counter = 1
+      DO i=1,SIZE(numOnDiag)
+        IF (numOnDiag(i)/=0) THEN
+          ALLOCATE(thisMatrix%bands(counter)%jIdx(numOnDiag(i)))
+          ALLOCATE(thisMatrix%bands(counter)%elem(numOnDiag(i)))
+          thisMatrix%bandIdx(counter) = i - thisMatrix%m
+          counter = counter + 1
+        END IF
+      END DO
+      counter = 1
+      DO i=1,SIZE(thisMatrix%bandIdx)
+        DO j=1,SIZE(thisMatrix%bands(i)%jIdx)
+          thisMatrix%bands(i)%jIdx(j) = jSrt(counter)
+          thisMatrix%bands(i)%elem(j) = elemSrt(counter)
+          counter = counter + 1
+        END DO
+      END DO
+
+      thisMatrix%isAssembled = .TRUE.
+      DEALLOCATE(thisMatrix%iTmp)
+      DEALLOCATE(thisMatrix%jTmp)
+      DEALLOCATE(thisMatrix%elemTmp)
+      DEALLOCATE(iSrt)
+      DEALLOCATE(jSrt)
+      DEALLOCATE(elemSrt)
 
     ENDSUBROUTINE assemble_DistributedBandedMatrixType
 !
@@ -1051,12 +1093,13 @@ MODULE MatrixTypes_Native
           CALL MPI_Comm_size(matrix%comm,nproc,mpierr)
           nHeldLower = MIN(rank,MOD(matrix%nnz,nproc))
           nHeldLower = nHeldLower + rank*matrix%nnz/nproc
-          IF (matrix%counter > nHeldLower) THEN
+          matrix%counter = matrix%counter + 1
+          IF (matrix%counter > nHeldLower .AND. &
+              matrix%counter <= nHeldLower + matrix%nlocal) THEN
             matrix%iTmp(matrix%counter - nHeldLower) = i
             matrix%jTmp(matrix%counter - nHeldLower) = j
             matrix%elemTmp(matrix%counter - nHeldLower) = setVal
           END IF
-          matrix%counter = matrix%counter + 1
         ENDIF
       ENDIF
 #endif
@@ -1213,16 +1256,18 @@ MODULE MatrixTypes_Native
       IF(((j <= matrix%n) .AND. (i <= matrix%m)) &
            .AND. (i>=1) .AND. (j >= 1)) THEN
         !Check if band is contained (binary search)
+
         bIdx = j - i
         IF (matrix%isReversed) THEN
           bIdx = -bIdx
           matrix%bandIdx = -matrix%bandIdx
         END IF
-        lo = 0
+        lo = 1
         hi = SIZE(matrix%bandIdx)
-        IF (bIdx >= matrix%bandIdx(1) .AND. bIdx <= matrix%bandIdx(hi)) THEN
-          getval = 0.0_SRK
+        IF (bIdx < matrix%bandIdx(1) .OR. bIdx > matrix%bandIdx(hi)) THEN
+          val = 0.0_SRK
         ELSE
+
           DO WHILE (lo <= hi .AND. .NOT. found)
             mid = (hi+lo)/2
             IF (bIdx < matrix%bandIdx(mid)) THEN
@@ -1236,27 +1281,31 @@ MODULE MatrixTypes_Native
           END DO
           IF (found) THEN
             bandLoc = mid
-            lo = 0
-            hi = SIZE(matrix%bandIdx)
+            lo = 1
+            hi = SIZE(matrix%bands(bandLoc)%jIdx)
             found = .FALSE.
-            DO WHILE (lo <= hi .AND. .NOT. found)
-              mid = (hi+lo)/2
-              IF (bIdx < matrix%bandIdx(mid)) THEN
-                hi = mid-1
-              ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
-                lo = mid+1
-              ELSE
-                found = .TRUE.
-                EXIT
-              END IF
-            END DO
-            IF (found) THEN
-              getVal = matrix%bands(bandLoc)%elem(mid)
+            IF (j < matrix%bands(bandLoc)%jIdx(lo) .OR. j > matrix%bands(bandLoc)%jIdx(hi)) THEN
+              val = 0.0_SRK
             ELSE
-              getVal = 0.0_SRK
+              DO WHILE (lo <= hi .AND. .NOT. found)
+                mid = (hi+lo)/2
+                IF (j < matrix%bands(bandLoc)%jIdx(mid)) THEN
+                  hi = mid-1
+                ELSE IF (j > matrix%bands(bandLoc)%jIdx(mid)) THEN
+                  lo = mid+1
+                ELSE
+                  found = .TRUE.
+                  EXIT
+                END IF
+              END DO
+            END IF
+            IF (found) THEN
+              val = matrix%bands(bandLoc)%elem(mid)
+            ELSE
+              val = 0.0_SRK
             END IF
           ELSE
-            getVal = 0.0_SRK
+            val = 0.0_SRK
           END IF
         END IF
         IF (matrix%isReversed) THEN
@@ -1317,17 +1366,21 @@ MODULE MatrixTypes_Native
                 lo = 1
                 hi = SIZE(matrix%bands(bandLoc)%elem)
                 found = .FALSE.
-                DO WHILE (lo <= hi .AND. .NOT. found)
-                  mid = (hi+lo)/2
-                  IF (j < matrix%bands(bandLoc)%jIdx(mid)) THEN
-                    hi = mid-1
-                  ELSE IF (j > matrix%bands(bandLoc)%jIdx(mid)) THEN
-                    lo = mid+1
-                  ELSE
-                    found = .TRUE.
-                    EXIT
-                  END IF
-                END DO
+                IF (j < matrix%bands(bandLoc)%jIdx(lo) .OR. j > matrix%bands(bandLoc)%jIdx(hi)) THEN
+                  getVal = 0.0_SRK
+                ELSE
+                  DO WHILE (lo <= hi .AND. .NOT. found)
+                    mid = (hi+lo)/2
+                    IF (j < matrix%bands(bandLoc)%jIdx(mid)) THEN
+                      hi = mid-1
+                    ELSE IF (j > matrix%bands(bandLoc)%jIdx(mid)) THEN
+                      lo = mid+1
+                    ELSE
+                      found = .TRUE.
+                      EXIT
+                    END IF
+                  END DO
+                END IF
                 IF (found) THEN
                   getVal = matrix%bands(bandLoc)%elem(mid)
                 ELSE
@@ -1477,10 +1530,18 @@ MODULE MatrixTypes_Native
     SUBROUTINE transpose_DistributedBandedMatrixType(matrix)
       CHARACTER(LEN=*),PARAMETER :: myName='transpose_DistributedBandedMatrixType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+      INTEGER(SIK) :: mTmp,i
 
       REQUIRE(matrix%isInit)
       REQUIRE(matrix%isAssembled)
 
+      mTmp = matrix%n
+      matrix%n = matrix%m
+      matrix%m = mTmp
+
+      DO i=1,SIZE(matrix%bandIdx)
+        matrix%bands(i)%jIdx = matrix%bands(i)%jIdx - matrix%bandIdx(i)
+      END DO
       matrix%bandIdx = -matrix%bandIdx
       matrix%isReversed = .NOT. matrix%isReversed
 

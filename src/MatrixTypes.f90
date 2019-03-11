@@ -242,6 +242,8 @@ MODULE MatrixTypes
               ALLOCATE(TriDiagMatrixType :: matrix)
             CASE(BANDED)
               ALLOCATE(BandedMatrixType :: matrix)
+            CASE(DISTRIBUTED_BANDED)
+              ALLOCATE(DistributedBandedMatrixType :: matrix)
             CASE DEFAULT
               CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
                 "Unrecognized matrix structure requested")
@@ -489,11 +491,11 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(BandedMatrixType)
-            IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
-               PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
-               CALL eMatrixType%raiseError('Incorrect call to '// &
-                    modName//'::'//myName//' - This interface is being implemented.')
-            END IF
+            !IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
+            !   PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
+            !   CALL eMatrixType%raiseError('Incorrect call to '// &
+            !        modName//'::'//myName//' - This interface is being implemented.')
+            !END IF
 
             !REQUIRE(thisMatrix%isInit)
             !REQUIRE(thisMatrix%isAssembled)
@@ -506,11 +508,11 @@ MODULE MatrixTypes
             ENDDO
 
           TYPE IS(DistributedBandedMatrixType)
-            IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
-               PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
-               CALL eMatrixType%raiseError('Incorrect call to '// &
-                    modName//'::'//myName//' - This interface is being implemented.')
-            END IF
+            !IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
+            !   PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
+            !   CALL eMatrixType%raiseError('Incorrect call to '// &
+            !        modName//'::'//myName//' - This interface is being implemented.')
+            !END IF
 
 #ifdef HAVE_MPI
             !REQUIRE(thisMatrix%isInit)
@@ -518,11 +520,11 @@ MODULE MatrixTypes
             !REQUIRE(SIZE(x) == thisMatrix%m)
             !REQUIRE(SIZE(y) == thisMatrix%n)
             ALLOCATE(z(thisMatrix%n))
-            !z(1:matrix%n)=0.0_SDK
+            z(1:thisMatrix%n)=0.0_SDK
             !y(1:matrix%n)=0.0_SDK
             DO bIdx=1,size(thisMatrix%bandIdx)
               idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
-              y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+              z(idxMult) = z(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
             ENDDO
             CALL MPI_ALLREDUCE(z, y, thisMatrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
                           thisMatrix%comm, ierr)
@@ -646,6 +648,12 @@ MODULE MatrixTypes
                   CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                     thisMatrix%ja,thisMatrix%a,x%b,y%b)
                 ENDIF
+              TYPE IS(BandedMatrixType)
+                CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+                                       Y=y%b,uplo=ul,diag=d,incx_in=incx)
+              TYPE IS(DistributedBandedMatrixType)
+                CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+                                       Y=y%b,uplo=ul,diag=d,incx_in=incx)
               CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
                      modName//'::'//myName//' - This interface is not available.')

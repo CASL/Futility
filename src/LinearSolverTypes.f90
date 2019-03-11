@@ -692,6 +692,8 @@ MODULE LinearSolverTypes
                     CALL solver%PreCondType%init(solver%A)
                 TYPE IS(RSOR_PreCondType)
                     CALL solver%PreCondType%init(solver%A,params)
+                TYPE IS(DistributedRSOR_PreCondType)
+                    CALL solver%PreCondType%init(solver%A,params)
             ENDSELECT
             CALL solver%PreCondType%setup()
           ELSE
