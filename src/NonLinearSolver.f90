@@ -71,15 +71,27 @@ ENDTYPE NonLinearSolverInterface_Base
 !> and clear procedures and the interface for a solve procedure.
 TYPE,ABSTRACT :: NonLinearSolver_Base
   PRIVATE
+  !> Initialization status
   LOGICAL(SBK),PUBLIC :: isInit=.FALSE.
+  !> Enumeration for the method this solver will use
   INTEGER(SIK) :: solverMethod=-1
+  !> Enumeration for the TPL this solver will use
   INTEGER(SIK) :: TPLType=-1
+  !> Enumeration for the number of unknowns in the system
   INTEGER(SIK) :: n=-1
+  !> Number of iterations that were used to solve the system
   INTEGER(SIK) :: iterations=-1
+  !> The maximum number of iterations allowed for the solve
   INTEGER(SIK) :: maxIterations=10000
+  !> The target tolerance for the system residual, checked by the @checkBounds
+  !> method on @c func
   REAL(SRK) :: tol=1.0E-5_SRK
+  !> The linear system used to solve each iteration
   CLASS(LinearSolverType_Base),ALLOCATABLE :: linSys
+  !> The function wrapper used to evaluate the function and jacobian, as well as
+  !> check the convergence of the solution
   CLASS(NonLinearSolverInterface_Base),POINTER :: func => NULL()
+  !> Pointer to the computing environment
   TYPE(FutilityComputingEnvironment),POINTER :: ce => NULL()
   CONTAINS
     !> @copybrief NonLinearSolverModule::init_NonLinearSolverBase
