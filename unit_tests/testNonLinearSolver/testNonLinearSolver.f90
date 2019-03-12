@@ -56,7 +56,7 @@ USE testNonLinearSolverInterface
 IMPLICIT NONE
 
 TYPE(FutilityComputingEnvironment),TARGET :: ce
-CLASS(NonLinearSolverInterface_Base),POINTER :: ftest => NULL()
+TYPE(NonLinearSolverInterface_Test),TARGET :: ftest
 TYPE(NonLinearSolver_Native) :: nativeSolver
 
 CALL setupTest()
@@ -91,7 +91,6 @@ SUBROUTINE testNativeNewton()
   ASSERT_EQ(testTol(nativeSolver),1.0E-14_SRK,'%tol')
   ASSERT(ASSOCIATED(testCE(nativeSolver)),'%ce')
   ASSERT(ASSOCIATED(testFunc(nativeSolver)),'%func')
-  ASSERT(.NOT.ASSOCIATED(ftest),'ASSOCIATED f ptr')
 
   COMPONENT_TEST('Init')
   ASSERT_EQ(testTPLType(nativeSolver),NLSOLVER_TPL_NATIVE,'%TPLType')
@@ -121,7 +120,7 @@ SUBROUTINE testNativeNewton()
   ASSERT_EQ(testTPLType(nativeSolver),-1,'%TPLType')
   ASSERT_EQ(testN(nativeSolver),-1,'%n')
   ASSERT_EQ(testIterations(nativeSolver),-1,'%iterations')
-  ASSERT_EQ(testTol(nativeSolver),-1.0_SRK,'%tol')
+  ASSERT_EQ(testTol(nativeSolver),1.0E-5_SRK,'%tol')
   CALL testLinSys(nativeSolver,testLS)
   ASSERT(.NOT.ALLOCATED(testLS),'%linSys')
   ASSERT(.NOT.ASSOCIATED(testCE(nativeSolver)),'%ce')
@@ -136,14 +135,10 @@ SUBROUTINE setupTest()
   ALLOCATE(ce%exceptHandler)
   ALLOCATE(ce%parEnv)
 
-  ALLOCATE(NonLinearSolverInterface_Test :: ftest)
-
 ENDSUBROUTINE setupTest
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE clearTest()
-
-  ftest => NULL()
 
   DEALLOCATE(ce%exceptHandler)
   CALL ce%parEnv%world%finalize()
