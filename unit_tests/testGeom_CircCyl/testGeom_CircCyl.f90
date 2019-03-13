@@ -94,6 +94,14 @@ PROGRAM testGeom_CircCyl
       ASSERT(bool, 'circle1%intersectLine(...) (disjoint 1)')
       CALL line1%clear()
 
+      !Test disjoint although extension tagent
+      CALL line1%p1%init(DIM=2,X=0.4225_SRK,Y=0.4_SRK)
+      CALL line1%p2%init(DIM=2,X=0.4225_SRK,Y=0.6_SRK)
+      CALL circle1%intersectLine(line1,point2,point3)
+      bool = .NOT.(point2%dim /= -2 .OR. point3%dim /= -2)
+      ASSERT(bool, 'circle1%intersectLine(...) (disjoint 2)')
+
+      CALL line1%clear()
       !Test tangent
       CALL line1%p1%init(DIM=2,X=0.4225_SRK,Y=0.4_SRK)
       CALL line1%p2%init(DIM=2,X=0.4225_SRK,Y=-0.5_SRK)
@@ -101,6 +109,7 @@ PROGRAM testGeom_CircCyl
       bool = .NOT.(point2%dim /= -3 .OR. point3%dim /= -3)
       ASSERT(bool, 'circle1%intersectLine(...) (tangent)')
       CALL line1%clear()
+
 
       !Test totally inside
       CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
