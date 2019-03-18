@@ -110,7 +110,6 @@ PROGRAM testGeom_CircCyl
       ASSERT(bool, 'circle1%intersectLine(...) (tangent)')
       CALL line1%clear()
 
-
       !Test totally inside
       CALL line1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
       CALL line1%p2%init(DIM=2,X=0.1_SRK,Y=0.1_SRK)
