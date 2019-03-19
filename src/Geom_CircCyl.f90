@@ -233,6 +233,7 @@ MODULE Geom_CircCyl
         w(2)=line%p1%coord(2)-circle%c%coord(2)
         b=w(1)*u(1)+w(2)*u(2)
         c=w(1)*w(1)+w(2)*w(2)-circle%r*circle%r
+
         IF(c > zero .AND. b > zero) THEN
           p1%dim=-2
           p2%dim=-2
@@ -245,13 +246,19 @@ MODULE Geom_CircCyl
             p2%dim=-2
           ELSEIF(discr .APPROXEQA. zero) THEN
             !Tangent
+
             ra=one/a
             t1=-ra*b
-            p1=line%p1
-            p1%coord(1)=p1%coord(1)+u(1)*t1
-            p1%coord(2)=p1%coord(2)+u(2)*t1
-            p1%dim=-3
-            p2%dim=-3
+            IF(t1<ZERO .OR. t1 > ONE ) THEN
+              p1%dim=-2
+              p2%dim=-2
+            ELSE
+              p1=line%p1
+              p1%coord(1)=p1%coord(1)+u(1)*t1
+              p1%coord(2)=p1%coord(2)+u(2)*t1
+              p1%dim=-3
+              p2%dim=-3
+            ENDIF
           ELSE
             p1%dim=0
             p2%dim=0
