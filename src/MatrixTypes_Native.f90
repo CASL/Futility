@@ -527,16 +527,25 @@ MODULE MatrixTypes_Native
 
       REQUIRE(thisMatrix%isInit)
       REQUIRE(thisMatrix%nnz == thisMatrix%counter)
-      diagRank = thisMatrix%jTmp + ((thisMatrix%jTmp - thisMatrix%iTmp) &
-                 *(thisMatrix%jTmp - thisMatrix%iTmp) &
-                 + (thisMatrix%m*2-1)*(thisMatrix%jTmp - thisMatrix%iTmp))/2
+
+      ALLOCATE(diagRank(SIZE(thisMatrix%iTmp)))
+      DO i=1,SIZE(thisMatrix%iTmp)
+        IF (thisMatrix%n - thisMatrix%iTmp(i) + 1 + thisMatrix%jTmp(i) <= MAX(thisMatrix%m,thisMatrix%n)) THEN
+          diagRank(i) = thisMatrix%jTmp(i) - 1 + ((thisMatrix%n - thisMatrix%iTmp(i) + thisMatrix%jTmp(i) - 1)*(thisMatrix%n - thisMatrix%iTmp(i) + thisMatrix%jTmp(i)))/2
+          diagRank(i) = diagRank(i) - thisMatrix%m*thisMatrix%n/2
+        ELSE
+          diagRank(i) = thisMatrix%m - thisMatrix%jTmp(i) + ((thisMatrix%iTmp(i) + thisMatrix%m - thisMatrix%jTmp(i) - 1)*(thisMatrix%iTmp(i) + thisMatrix%m - thisMatrix%jTmp(i)))/2
+          diagRank(i) = thisMatrix%n*thisMatrix%m/2 - diagRank(i)
+        END IF
+      END DO
+
       CALL diagonal_sort(diagRank,thisMatrix%iTmp,thisMatrix%jTmp,thisMatrix%elemTmp)
 
       ! Find number of elements in each band
       ALLOCATE(numOnDiag(thisMatrix%m+thisMatrix%n-1))
       numOnDiag = 0_SIK
       DO i=1,SIZE(thisMatrix%elemTmp)
-        numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%m) = 1 + numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%m)
+        numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%n) = 1 + numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%n)
       END DO
       nBands = 0
       DO i=1,SIZE(numOnDiag)
@@ -551,7 +560,7 @@ MODULE MatrixTypes_Native
         IF (numOnDiag(i)/=0) THEN
           ALLOCATE(thisMatrix%bands(counter)%jIdx(numOnDiag(i)))
           ALLOCATE(thisMatrix%bands(counter)%elem(numOnDiag(i)))
-          thisMatrix%bandIdx(counter) = i - thisMatrix%m
+          thisMatrix%bandIdx(counter) = i - thisMatrix%n
           counter = counter + 1
         END IF
       END DO
