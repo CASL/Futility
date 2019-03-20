@@ -107,6 +107,7 @@ MODULE IO_Strings
   PUBLIC :: isChar
   PUBLIC :: isCharCap
   PUBLIC :: isCharLow
+  PUBLIC :: getFloatFormat
   !
   !PUBLIC :: charToStringArray
 
@@ -1741,5 +1742,32 @@ MODULE IO_Strings
       WRITE(string,'(es'//str(length)//'.'//str(nDecimal)//')') r
 
     ENDFUNCTION str_SDK_nDecimal
+!
+!-------------------------------------------------------------------------------
+!> @brief takes in a real, returns the number of digits to the left of the
+!> decimal.
+!> @param inputData real valued scalar that will be inspected
+!> @result lengthOut number of digits found
+!>
+! Primary intent of this is for writing floats properly, for that reason negative
+! numbers automatically count "-" in the returned length.
+  FUNCTION getFloatFormat(inputData) RESULT(lengthOut)
+    REAL(SRK),INTENT(IN) :: inputData
+    INTEGER(SIK) :: lengthOut
+    !
+    REAL(SRK) :: x
+
+    lengthOut = MERGE(1,0,SIGN(1.0_SRK,inputData) < 0.0_SRK)
+    x = ABS(inputData)
+    IF(x < 1.0) THEN
+      lengthOut = lengthOut + 1
+    ELSE
+      DO WHILE(x >= 1.0_SRK)
+        lengthOut = lengthOut + 1
+        x = x / 10.0_SRK
+      ENDDO
+    ENDIF !x < 1.0
+
+  ENDFUNCTION getFloatFormat
 !
 ENDMODULE IO_Strings
