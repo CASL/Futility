@@ -76,6 +76,7 @@ CONTAINS
       INTEGER(SIK) :: rank,nproc,mpierr,i,j
       CLASS(DistributedMatrixType),ALLOCATABLE :: thisMatrix
       REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
+      REAL(SRK) :: val
       LOGICAL(SBK) :: bool
 
 

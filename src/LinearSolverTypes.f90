@@ -91,9 +91,10 @@ MODULE LinearSolverTypes
 #endif
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
-#endif
+#else
 #ifdef HAVE_MPI
 #include <mpif.h>
+#endif
 #endif
 
   PRIVATE
