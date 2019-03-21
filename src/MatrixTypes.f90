@@ -421,7 +421,7 @@ MODULE MatrixTypes
       REAL(SRK),ALLOCATABLE :: z(:)
       REAL(SRK) :: al
       INTEGER(SIK),ALLOCATABLE :: idxMult(:)
-      INTEGER(SIK) :: bIdx,ierr
+      INTEGER(SIK) :: bIdx,ierr,rank
       INTEGER(SIK) :: incx
 
       SELECTTYPE(mat => thisMatrix)
@@ -492,7 +492,8 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(BandedMatrixType)
-            IF(ul /= 'n' .OR. d /= 'n' .OR. incx_in /= 1) THEN
+            WRITE(*,*) "Banded",ul,d,incx_in
+            IF(ul /= 'n' .OR. d /= 'n' .OR. incx /= 1) THEN
                CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - This interface is being implemented.')
             END IF
@@ -502,8 +503,8 @@ MODULE MatrixTypes
             !REQUIRE(SIZE(x) == thisMatrix%m)
             !REQUIRE(SIZE(y) == thisMatrix%n)
 
+            WRITE(*,*) "checking args"
             IF(PRESENT(beta)) THEN
-              WRITE(*,*) "beta",beta
               y = y*beta
             ELSE
               y = 0.0_SRK
@@ -511,12 +512,10 @@ MODULE MatrixTypes
 
             al = 1.0_SRK
             IF(PRESENT(alpha)) THEN
-              WRITE(*,*) "alpha",alpha
               al = alpha
             END IF
 
             IF(t /= 'n') THEN
-              WRITE(*,*) "trans",t
               CALL thisMatrix%transpose()
             END IF
 
@@ -530,24 +529,43 @@ MODULE MatrixTypes
             END IF
 
           TYPE IS(DistributedBandedMatrixType)
-            !IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
-            !   PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
-            !   CALL eMatrixType%raiseError('Incorrect call to '// &
-            !        modName//'::'//myName//' - This interface is being implemented.')
-            !END IF
+
+            CALL MPI_Comm_Rank(thisMatrix%comm,rank,ierr)
+            IF(ul /= 'n' .OR. d /= 'n' .OR. incx /= 1) THEN
+               CALL eMatrixType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - This interface is being implemented.')
+            END IF
+
+            al = 1.0_SRK
+            IF(PRESENT(alpha)) THEN
+              al = alpha
+            END IF
+
+            ALLOCATE(z(thisMatrix%n))
+            z = 0.0_SRK
+            IF (rank == 1 .AND. PRESENT(beta)) THEN
+              z = beta*y
+            END IF
 
 #ifdef HAVE_MPI
             !REQUIRE(thisMatrix%isInit)
             !REQUIRE(thisMatrix%isAssembled)
             !REQUIRE(SIZE(x) == thisMatrix%m)
             !REQUIRE(SIZE(y) == thisMatrix%n)
-            ALLOCATE(z(thisMatrix%n))
-            z(1:thisMatrix%n)=0.0_SDK
-            !y(1:matrix%n)=0.0_SDK
+
+            IF(t /= 'n') THEN
+              CALL thisMatrix%transpose()
+            END IF
+
             DO bIdx=1,size(thisMatrix%bandIdx)
               idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
               z(idxMult) = z(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
             ENDDO
+
+            IF(t /= 'n') THEN
+              CALL thisMatrix%transpose()
+            END IF
+
             CALL MPI_ALLREDUCE(z, y, thisMatrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
                           thisMatrix%comm, ierr)
 #endif

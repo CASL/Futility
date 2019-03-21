@@ -238,19 +238,6 @@ CONTAINS
             ASSERT(bool, 'banded%set(...)')
           ENDIF
       ENDSELECT
-      !check matrix that hasnt been init, i,j out of bounds
-      CALL thisMatrix%clear()
-      CALL thisMatrix%set(1,1,1._SRK)
-      CALL pList%add('MatrixType->n',4_SNK)
-      CALL pList%add('MatrixType->m',4_SNK)
-      CALL pList%add('MatrixType->nnz',4_SNK)
-      CALL pList%add('MatrixType->comm',MPI_COMM_WORLD)
-      CALL thisMatrix%init(pList)
-      CALL thisMatrix%set(-1,1,1._SRK)
-      CALL thisMatrix%set(1,-1,1._SRK)
-      CALL thisMatrix%set(5,1,1._SRK)
-      CALL thisMatrix%set(1,5,1._SRK)
-      !no crash? good
       CALL thisMatrix%clear()
       WRITE(*,*) '  Passed: CALL banded%set(...)'
       !check get functionality
@@ -289,15 +276,15 @@ CONTAINS
       CALL thisMatrix%get(1,4,dummyvec(9))
 
       bool = .TRUE.
-      bool = bool .AND. dummyvec(1) == 1
-      bool = bool .AND. dummyvec(2) == 2
-      bool = bool .AND. dummyvec(3) == 3
-      bool = bool .AND. dummyvec(4) == 4
-      bool = bool .AND. dummyvec(5) == 7
-      bool = bool .AND. dummyvec(6) == 8
-      bool = bool .AND. dummyvec(7) == 9
-      bool = bool .AND. dummyvec(8) == 0
-      bool = bool .AND. dummyvec(9) == 0
+      bool = bool .AND. dummyvec(1) == 1._SRK
+      bool = bool .AND. dummyvec(2) == 2._SRK
+      bool = bool .AND. dummyvec(3) == 3._SRK
+      bool = bool .AND. dummyvec(4) == 4._SRK
+      bool = bool .AND. dummyvec(5) == 7._SRK
+      bool = bool .AND. dummyvec(6) == 8._SRK
+      bool = bool .AND. dummyvec(7) == 9._SRK
+      bool = bool .AND. dummyvec(8) == 0._SRK
+      bool = bool .AND. dummyvec(9) == 0._SRK
       ASSERT(bool, 'banded%get(...)')
 
       IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)

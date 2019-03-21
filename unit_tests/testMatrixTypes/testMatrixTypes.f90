@@ -1409,7 +1409,7 @@ PROGRAM testMatrixTypes
       ![0 3 0 0]
       ![0 0 5 6]
       ![0 9 0 7]
-      !with main diagonal split [1,3],[5,7]
+      !
       CALL pList%add('MatrixType->n',4_SNK)
       CALL pList%add('MatrixType->m',4_SNK)
       CALL pList%add('MatrixType->nnz',7_SNK)
@@ -1455,27 +1455,7 @@ PROGRAM testMatrixTypes
       bool = bool .AND. dummyvec(10) == 0
       ASSERT(bool, 'banded%get(...)')
 
-      !test get with uninit, make sure no crash.
       CALL thisMatrix%clear()
-      SELECTTYPE(thisMatrix)
-        TYPE IS(BandedMatrixType)
-          dummy=0.0_SRK
-          CALL thisMatrix%get(1,1,dummy)
-      ENDSELECT
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      !check matrix that hasnt been init, i,j out of bounds
-      CALL thisMatrix%clear()
-      CALL pList%add('MatrixType->n',4_SNK)
-      CALL pList%add('MatrixType->m',4_SNK)
-      CALL pList%add('MatrixType->nnz',4_SNK)
-      CALL thisMatrix%init(pList)
-      SELECTTYPE(thisMatrix)
-        TYPE IS(BandedMatrixType)
-          CALL thisMatrix%get(-1,1,dummy)
-          CALL thisMatrix%get(1,-1,dummy)
-          CALL thisMatrix%get(5,1,dummy)
-          CALL thisMatrix%get(1,5,dummy)
-      ENDSELECT
       WRITE(*,*) '  Passed: CALL banded%get(...)'
       !check matvec functionality
       ![1 2 0 0]
@@ -1507,7 +1487,9 @@ PROGRAM testMatrixTypes
       SELECTTYPE(thisMatrix)
         TYPE IS(BandedMatrixType)
           CALL thisMatrix%assemble()
+          WRITE(*,*) "calling matvec"
           CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2)
+          WRITE(*,*) "finished matvec call"
           DO i=1,4
             bool = ABS(dummyvec2(i)) < 1E-6
             ASSERT(bool, 'banded%matvec(...)')
