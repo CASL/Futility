@@ -419,6 +419,7 @@ MODULE MatrixTypes
       !
       CHARACTER(LEN=1) :: t,ul,d
       REAL(SRK),ALLOCATABLE :: z(:)
+      REAL(SRK) :: al
       INTEGER(SIK),ALLOCATABLE :: idxMult(:)
       INTEGER(SIK) :: bIdx,ierr
       INTEGER(SIK) :: incx
@@ -491,21 +492,42 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(BandedMatrixType)
-            !IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
-            !   PRESENT(uplo) .OR. PRESENT(diag) .OR. PRESENT(incx_in)) THEN
-            !   CALL eMatrixType%raiseError('Incorrect call to '// &
-            !        modName//'::'//myName//' - This interface is being implemented.')
-            !END IF
+            IF(ul /= 'n' .OR. d /= 'n' .OR. incx_in /= 1) THEN
+               CALL eMatrixType%raiseError('Incorrect call to '// &
+                    modName//'::'//myName//' - This interface is being implemented.')
+            END IF
 
             !REQUIRE(thisMatrix%isInit)
             !REQUIRE(thisMatrix%isAssembled)
             !REQUIRE(SIZE(x) == thisMatrix%m)
             !REQUIRE(SIZE(y) == thisMatrix%n)
-            y(1:thisMatrix%n)=0.0_SDK
+
+            IF(PRESENT(beta)) THEN
+              WRITE(*,*) "beta",beta
+              y = y*beta
+            ELSE
+              y = 0.0_SRK
+            END IF
+
+            al = 1.0_SRK
+            IF(PRESENT(alpha)) THEN
+              WRITE(*,*) "alpha",alpha
+              al = alpha
+            END IF
+
+            IF(t /= 'n') THEN
+              WRITE(*,*) "trans",t
+              CALL thisMatrix%transpose()
+            END IF
+
             DO bIdx=1,SIZE(thisMatrix%bandIdx)
               idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
-              y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+              y(idxMult) = y(idxMult) + al*thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
             ENDDO
+
+            IF(t /= 'n') THEN
+              CALL thisMatrix%transpose()
+            END IF
 
           TYPE IS(DistributedBandedMatrixType)
             !IF(PRESENT(alpha) .OR. PRESENT(beta) .OR. PRESENT(trans) .OR. &
@@ -649,8 +671,10 @@ MODULE MatrixTypes
                     thisMatrix%ja,thisMatrix%a,x%b,y%b)
                 ENDIF
               TYPE IS(BandedMatrixType)
+                WRITE(*,*) x%b
                 CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                        Y=y%b,uplo=ul,diag=d,incx_in=incx)
+                WRITE(*,*) y%b
               TYPE IS(DistributedBandedMatrixType)
                 CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                        Y=y%b,uplo=ul,diag=d,incx_in=incx)

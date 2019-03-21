@@ -241,9 +241,7 @@ MODULE MatrixTypes_Base
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
     SUBROUTINE MatrixTypes_Declare_ValidParams()
-      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal, &
-        nband, myband
-      INTEGER(SIK) :: bandi(1), bandj(1), bandl(1)
+      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal
       LOGICAL(SBK) :: isSym
 
       !Setup the required and optional parameter lists
@@ -256,11 +254,6 @@ MODULE MatrixTypes_Base
       matType=1
       MPI_COMM_ID=1
       nlocal=-1
-      nband=1
-      myband=0
-      bandi(1)=1
-      bandj(1)=1
-      bandl(1)=1
       !Sparse Matrix Type - Required
       CALL SparseMatrixType_reqParams%add('MatrixType->n',n)
       CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz)
@@ -281,17 +274,11 @@ MODULE MatrixTypes_Base
       CALL DistributedMatrixType_reqParams%add('MatrixType->n',n)
       CALL DistributedMatrixType_reqParams%add('MatrixType->isSym',isSym)
       CALL DistributedMatrixType_reqParams%add('MatrixType->matType',matType)
-      CALL DistributedMatrixType_reqParams%add('MatrixType->comm',MPI_COMM_ID)
+      CALL DistributedMatrixType_reqParams%add('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
       !Distributed Banded Matrix Type - Required
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->n',n)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
-      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->comm' &
-        ,MPI_COMM_ID)
-      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nband',nband)
-      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->myband',myband)
-      CALL DistributedBandedMatrixType_reqParams%add('bandi',bandi)
-      CALL DistributedBandedMatrixType_reqParams%add('bandj',bandj)
-      CALL DistributedBandedMatrixType_reqParams%add('bandl',bandl)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
 
 
       !There are no optional parameters at this time.

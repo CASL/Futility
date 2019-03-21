@@ -180,6 +180,9 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::zeroentries_BandedMatrixType
       !> @copydetails MatrixTypes::zeroentries_BandedMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_BandedMatrixType
+      !> @copybrief MatrixTypes::binarySearch_BandedMatrixType
+      !> @copydetails MatrixTypes::binarySearch_BandedMatrixType
+      !PROCEDURE,PASS,PRIVATE :: binarySearch => binarySearch_BandedMatrixType
   ENDTYPE BandedMatrixType
 
   !> @brief The basic banded matrix type
@@ -225,6 +228,9 @@ MODULE MatrixTypes_Native
       !> @copybrief MatrixTypes::zeroentries_DistributedBandedMatrixType
       !> @copydetails MatrixTypes::zeroentries_DistributedBandedMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBandedMatrixType
+      !> @copybrief MatrixTypes::binarySearch_DistributedBandedMatrixType
+      !> @copydetails MatrixTypes::binarySearch_DistributedBandedMatrixType
+      !PROCEDURE,PASS,PRIVATE :: binarySearch => binarySearch_DistributedBandedMatrixType
   ENDTYPE DistributedBandedMatrixType
 
   !> @brief The basic sparse matrix type
@@ -1094,7 +1100,8 @@ MODULE MatrixTypes_Native
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK) :: rank,nproc,mpierr,nHeldLower
 #ifdef HAVE_MPI
-      IF(matrix%isInit .AND. .NOT. matrix%isAssembled) THEN
+      REQUIRE(matrix%isInit)
+      IF(.NOT. matrix%isAssembled) THEN
         IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
             .AND. (i>=1) .AND. (j >= 1)) THEN
 
@@ -1110,7 +1117,9 @@ MODULE MatrixTypes_Native
             matrix%elemTmp(matrix%counter - nHeldLower) = setVal
           END IF
         ENDIF
-      ENDIF
+      ELSE
+
+      END IF
 #endif
     ENDSUBROUTINE set_DistributedBandedMatrixType
 !
@@ -1144,17 +1153,67 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
-      IF(matrix%isInit) THEN
+      INTEGER(SIK) :: lo,mid,hi,bIdx,bandLoc
+      LOGICAL(SBK) :: found
+      found = .FALSE.
+
+      REQUIRE(matrix%isInit)
+      IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+         .AND. (i>=1) .AND. (j >= 1)) THEN
         IF(.NOT. matrix%isAssembled) THEN
-          IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
-               .AND. (i>=1) .AND. (j >= 1)) THEN
-            matrix%counter = matrix%counter + 1
-            matrix%iTmp(matrix%counter) = i
-            matrix%jTmp(matrix%counter) = j
-            matrix%elemTmp(matrix%counter) = setval
+          matrix%counter = matrix%counter + 1
+          matrix%iTmp(matrix%counter) = i
+          matrix%jTmp(matrix%counter) = j
+          matrix%elemTmp(matrix%counter) = setval
+        ELSE
+          !Check if band is contained (binary search)
+          bIdx = j - i
+          IF (matrix%isReversed) THEN
+            bIdx = -bIdx
+            matrix%bandIdx = -matrix%bandIdx
           END IF
-        ENDIF
-      ENDIF
+          lo = 1
+          hi = SIZE(matrix%bandIdx)
+          IF (bIdx >= matrix%bandIdx(1) .OR. bIdx <= matrix%bandIdx(hi)) THEN
+            DO WHILE (lo <= hi .AND. .NOT. found)
+              mid = (hi+lo)/2
+              IF (bIdx < matrix%bandIdx(mid)) THEN
+                hi = mid-1
+              ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
+                lo = mid+1
+              ELSE
+                found = .TRUE.
+                EXIT
+              END IF
+            END DO
+            IF (found) THEN
+              bandLoc = mid
+              lo = 1
+              hi = SIZE(matrix%bands(bandLoc)%elem)
+              found = .FALSE.
+              IF (j >= matrix%bands(bandLoc)%jIdx(lo) .OR. j <= matrix%bands(bandLoc)%jIdx(hi)) THEN
+                DO WHILE (lo <= hi .AND. .NOT. found)
+                  mid = (hi+lo)/2
+                  IF (j < matrix%bands(bandLoc)%jIdx(mid)) THEN
+                    hi = mid-1
+                  ELSE IF (j > matrix%bands(bandLoc)%jIdx(mid)) THEN
+                    lo = mid+1
+                  ELSE
+                    found = .TRUE.
+                    EXIT
+                  END IF
+                END DO
+              END IF
+              IF (found) THEN
+                matrix%bands(bandLoc)%elem(mid) = setVal
+              END IF
+            END IF
+          END IF
+          IF (matrix%isReversed) THEN
+            matrix%bandIdx = -matrix%bandIdx
+          END IF
+        END IF
+      END IF
     ENDSUBROUTINE set_BandedMatrixType
 !
 !-------------------------------------------------------------------------------

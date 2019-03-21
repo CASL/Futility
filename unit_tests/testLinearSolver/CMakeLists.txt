@@ -9,6 +9,5 @@
 INCLUDE(Futility_CreateUnitTest)
 Futility_CreateUnitTest(testLinearSolver)
 Futility_CreateParUnitTest(testLinearSolverParallel 2)
-#Futility_CreateParUnitTest(resultsScaling 1)
 #Futility_CreateParUnitTest(resultsScaling 2)
-#Futility_CreateParUnitTest(resultsScaling 4)
+#Futility_CreateParUnitTest(resultsCMFD 2)

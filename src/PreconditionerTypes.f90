@@ -713,17 +713,13 @@ MODULE PreconditionerTypes
 
             !multiply
             SELECT TYPE(LpU => thisPC%LpU)
-                CLASS IS(BandedMatrixType)
-                    CALL BLAS_matvec(THISMATRIX=LpU,X=w(2)%b,Y=tempw%b)
-                    w(3)%b=w(3)%b-thisPC%omega*tempw%b
                 CLASS IS(DistributedBandedMatrixType)
                   CALL BLAS_matvec(THISMATRIX=LpU,X=w(2)%b,Y=tempw%b)
                   w(3)%b=w(3)%b-thisPC%omega*tempw%b
                 CLASS DEFAULT
                     CALL BLAS_matvec(THISMATRIX=LpU,X=w(2),Y=w(3),&
-                        &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
+                        &BETA=1.0_SRK,TRANS='n',ALPHA=-thisPC%omega)
             ENDSELECT
-
 
             !solves the L and U problems for each block
             DO k=1,thisPC%numBlocks
