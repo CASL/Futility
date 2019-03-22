@@ -83,14 +83,14 @@ PROGRAM testMatrixTypes
 
     SUBROUTINE timeBanded()
 
-      CLASS(BandedMatrixType),ALLOCATABLE :: fdBanded
+      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: fdBanded
       REAL(SRK),ALLOCATABLE :: x(:),y(:)
       REAL(SRK) :: timetaken
       INTEGER(SIK) :: i,n,nnz,xCoord,yCoord,gridSize,time1,time2,clock_rate
       TYPE(ParamType) :: bandedPlist
 
       ! Create finite difference matrix
-      ALLOCATE(BandedMatrixType :: fdBanded)
+      ALLOCATE(DistributedBandedMatrixType :: fdBanded)
       n = 16384
       gridSize = 128
       nnz = 1
@@ -103,6 +103,7 @@ PROGRAM testMatrixTypes
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
+      CALL bandedPlist%add('MatrixType->comm',PE_COMM_WORLD)
       CALL bandedPlist%validate(bandedPlist)
       CALL fdBanded%init(bandedPlist)
 
@@ -179,12 +180,12 @@ PROGRAM testMatrixTypes
       CALL petscPlist%add('MatrixType->nnz',nnz)
       CALL petscPlist%add('MatrixType->isSym',.FALSE.)
       CALL petscPlist%add('MatrixType->matType',SPARSE)
-      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
       CALL petscPlist%validate(petscPlist)
       CALL fdPetsc%init(petscPlist)
 
       CALL vecPList%add('VectorType->n',n)
-      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
 
       ALLOCATE(PETScVectorType :: x)
       ALLOCATE(PETScVectorType :: y)
@@ -233,7 +234,7 @@ PROGRAM testMatrixTypes
 
     SUBROUTINE timeBandedCMFD()
 
-      CLASS(BandedMatrixType),ALLOCATABLE :: cmfdBanded
+      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
       REAL(SRK),ALLOCATABLE :: x(:),y(:)
       REAL(SRK) :: timetaken,tmpreal
       INTEGER(SIK) :: i,j,n,nnz,xCoord,yCoord,gridSize,time1,time2,clock_rate,ios
@@ -241,7 +242,7 @@ PROGRAM testMatrixTypes
       TYPE(ParamType) :: bandedPlist
 
       ! Create finite difference matrix
-      ALLOCATE(BandedMatrixType :: cmfdBanded)
+      ALLOCATE(DistributedBandedMatrixType :: cmfdBanded)
 
       !WRITE(dirname,'(2A)'),'/home/mkbz/Research/bandMatResults/Futility/unit_tests/testPreconditionerTypes/matrices/mg_matrix.txt'
       WRITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
@@ -251,6 +252,7 @@ PROGRAM testMatrixTypes
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
+      CALL bandedPlist%add('MatrixType->comm',PE_COMM_WORLD)
       CALL bandedPlist%validate(bandedPlist)
       CALL cmfdBanded%init(bandedPlist)
 
@@ -324,12 +326,12 @@ PROGRAM testMatrixTypes
       CALL petscPlist%add('MatrixType->nnz',nnz)
       CALL petscPlist%add('MatrixType->isSym',.FALSE.)
       CALL petscPlist%add('MatrixType->matType',SPARSE)
-      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
       CALL petscPlist%validate(petscPlist)
       CALL cmfdPetsc%init(petscPlist)
 
       CALL vecPList%add('VectorType->n',n)
-      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
 
       ALLOCATE(PETScVectorType :: x)
       ALLOCATE(PETScVectorType :: y)
