@@ -492,7 +492,6 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(BandedMatrixType)
-            WRITE(*,*) "Banded",ul,d,incx_in
             IF(ul /= 'n' .OR. d /= 'n' .OR. incx /= 1) THEN
                CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - This interface is being implemented.')
@@ -503,7 +502,6 @@ MODULE MatrixTypes
             !REQUIRE(SIZE(x) == thisMatrix%m)
             !REQUIRE(SIZE(y) == thisMatrix%n)
 
-            WRITE(*,*) "checking args"
             IF(PRESENT(beta)) THEN
               y = y*beta
             ELSE
@@ -689,10 +687,8 @@ MODULE MatrixTypes
                     thisMatrix%ja,thisMatrix%a,x%b,y%b)
                 ENDIF
               TYPE IS(BandedMatrixType)
-                WRITE(*,*) x%b
                 CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                        Y=y%b,uplo=ul,diag=d,incx_in=incx)
-                WRITE(*,*) y%b
               TYPE IS(DistributedBandedMatrixType)
                 CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                        Y=y%b,uplo=ul,diag=d,incx_in=incx)
