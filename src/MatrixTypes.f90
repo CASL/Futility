@@ -541,9 +541,6 @@ MODULE MatrixTypes
 
             ALLOCATE(z(thisMatrix%n))
             z = 0.0_SRK
-            IF (rank == 1 .AND. PRESENT(beta)) THEN
-              z = beta*y
-            END IF
 
 #ifdef HAVE_MPI
             !REQUIRE(thisMatrix%isInit)
@@ -559,6 +556,9 @@ MODULE MatrixTypes
               idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
               z(idxMult) = z(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
             ENDDO
+            IF (rank == 0 .AND. PRESENT(beta)) THEN
+              z = z + beta*y
+            END IF
 
             IF(t /= 'n') THEN
               CALL thisMatrix%transpose()

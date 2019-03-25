@@ -56,6 +56,11 @@ PROGRAM testMatrixTypes
 #endif
 #endif
 
+  CREATE_TEST('Verify results')
+  REGISTER_SUBTEST('Products Match',verifyFD)
+  REGISTER_SUBTEST('Products Match',verifyCMFD)
+
+
   CREATE_TEST('Matvec FD Timing Results')
   REGISTER_SUBTEST('Petsc',timePetsc)
   REGISTER_SUBTEST('Banded',timeBanded)
@@ -80,6 +85,245 @@ PROGRAM testMatrixTypes
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+
+    SUBROUTINE verifyFD()
+      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: fdBanded
+      CLASS(PETScMatrixType),ALLOCATABLE :: fdPetsc
+      REAL(SRK),ALLOCATABLE :: x(:),y(:),dummyvec(:),dummyvec2(:)
+      REAL(SRK) :: tmpreal
+      CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
+      TYPE(ParamType) :: bandedPlist,petscPList,vecPList
+      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,perr, rank, mpierr
+      LOGICAL(SBK) :: bool,bool2
+
+      ALLOCATE(DistributedBandedMatrixType :: fdBanded)
+      ALLOCATE(PETScMatrixType :: fdPetsc)
+
+      n = 16384
+      gridSize = 128
+      nnz = 1
+      IF (n > 1) THEN
+        nnz = nnz + 11
+      END IF
+      IF (n > 2) THEN
+        nnz = nnz + 5*(gridSize-2)*(gridSize-2) + 16*(gridSize-2)
+      END IF
+
+      CALL bandedPList%clear()
+      CALL bandedPlist%add('MatrixType->n',n)
+      CALL bandedPlist%add('MatrixType->m',n)
+      CALL bandedPlist%add('MatrixType->nnz',nnz)
+      CALL bandedPlist%add('MatrixType->comm',PE_COMM_WORLD)
+
+      CALL petscPList%clear()
+      CALL petscPlist%add('MatrixType->n',n)
+      CALL petscPlist%add('MatrixType->m',n)
+      CALL petscPlist%add('MatrixType->nnz',nnz)
+      CALL petscPlist%add('MatrixType->isSym',.FALSE.)
+      CALL petscPlist%add('MatrixType->matType',SPARSE)
+      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
+
+      CALL vecPList%clear()
+      CALL vecPList%add('VectorType->n',n)
+      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
+
+
+      CALL fdBanded%init(bandedPList)
+      CALL fdPetsc%init(petscPList)
+
+      ALLOCATE(x(n))
+      ALLOCATE(y(n))
+      ALLOCATE(petscVectorType :: xPetsc)
+      ALLOCATE(petscVectorType :: yPetsc)
+
+      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+
+      CALL xPetsc%init(vecPList)
+      CALL yPetsc%init(vecPList)
+
+      x = 1.0_SRK
+      y = 0.0_SRK
+      CALL yPetsc%set(0.0_SRK)
+      CALL xPetsc%set(1.0_SRK)
+      DO i=1,n
+        IF (i <= 8192 .AND. rank == 0) THEN
+          CALL xPetsc%get(i,tmpReal)
+          ASSERT(tmpReal == 1.0_SRK, "Set correctly")
+        END IF
+        IF (i > 8192 .AND. rank == 1) THEN
+          CALL xPetsc%get(i,tmpReal)
+          ASSERT(tmpReal == 1.0_SRK, "Set correctly")
+        END IF
+      END DO
+
+      DO i=1,n
+        yCoord = (i-1)/gridSize
+        xCoord = MOD(i-1,gridSize)
+        IF (yCoord > 0) THEN
+          CALL fdBanded%set(i,i-gridSize,-1.0_SRK)
+          CALL fdPetsc%set(i,i-gridSize,-1.0_SRK)
+        END IF
+        IF (xCoord > 0) THEN
+          CALL fdBanded%set(i, i-1,-1.0_SRK)
+          CALL fdPetsc%set(i, i-1,-1.0_SRK)
+        END IF
+        CALL fdBanded%set(i,i,4.0_SRK)
+        CALL fdPetsc%set(i,i,4.0_SRK)
+        IF (xCoord < gridSize-1) THEN
+          CALL fdBanded%set(i, i+1,-1.0_SRK)
+          CALL fdPetsc%set(i, i+1,-1.0_SRK)
+        END IF
+        IF (yCoord < gridSize-1) THEN
+          CALL fdBanded%set(i,i+gridSize,-1.0_SRK)
+          CALL fdPetsc%set(i,i+gridSize,-1.0_SRK)
+        END IF
+      END DO
+
+      CALL fdBanded%assemble()
+      CALL fdPetsc%assemble()
+
+      CALL BLAS_matvec(THISMATRIX=fdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=fdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
+
+      ALLOCATE(dummyvec(n))
+      dummyvec = 0.0_SRK
+      ALLOCATE(dummyvec2(n))
+      dummyvec2 = 0.0_SRK
+
+      DO i=1,n
+        IF (rank == 0 .AND. i <= 8192) THEN
+          CALL yPetsc%get(i,dummyvec(i))
+        END IF
+        IF (rank == 1 .AND. i > 8192) THEN
+          CALL yPetsc%get(i,dummyvec(i))
+        END IF
+      END DO
+
+      CALL MPI_ALLREDUCE(dummyvec, dummyvec2, n, MPI_DOUBLE_PRECISION, MPI_SUM, &
+                    PE_COMM_WORLD, ierr)
+
+      bool = ALL(y .APPROXEQ. dummyvec2)
+
+      ASSERT(bool,'Matvec results match')
+
+      CALL vecPList%clear()
+      CALL petscPList%clear()
+      CALL bandedPlist%clear()
+
+    END SUBROUTINE verifyFD
+
+    SUBROUTINE verifyCMFD()
+      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
+      CLASS(PETScMatrixType),ALLOCATABLE :: cmfdPetsc
+      REAL(SRK),ALLOCATABLE :: x(:),y(:),dummyvec(:),dummyvec2(:)
+      REAL(SRK) :: tmpreal
+      CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
+      TYPE(ParamType) :: bandedPlist,petscPList,vecPList
+      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,ios,rank,mpierr
+      LOGICAL(SBK) :: bool
+      CHARACTER(200)::tempcharacter,dirname
+
+
+      ALLOCATE(DistributedBandedMatrixType :: cmfdBanded)
+      ALLOCATE(PETScMatrixType :: cmfdPetsc)
+
+      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+
+      n = 1512
+      nnz = 67200
+
+      CALL bandedPList%clear()
+      CALL bandedPlist%add('MatrixType->n',n)
+      CALL bandedPlist%add('MatrixType->m',n)
+      CALL bandedPlist%add('MatrixType->nnz',nnz)
+      CALL bandedPList%add('MatrixType->comm',PE_COMM_WORLD)
+
+      CALL petscPList%clear()
+      CALL petscPlist%add('MatrixType->n',n)
+      CALL petscPlist%add('MatrixType->m',n)
+      CALL petscPlist%add('MatrixType->nnz',nnz)
+      CALL petscPlist%add('MatrixType->isSym',.FALSE.)
+      CALL petscPlist%add('MatrixType->matType',SPARSE)
+      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
+
+      CALL vecPList%clear()
+      CALL vecPList%add('VectorType->n',n)
+      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
+
+
+      CALL cmfdBanded%init(bandedPList)
+      CALL cmfdPetsc%init(petscPList)
+
+      ALLOCATE(x(n))
+      ALLOCATE(y(n))
+      ALLOCATE(petscVectorType :: xPetsc)
+      ALLOCATE(petscVectorType :: yPetsc)
+
+      CALL xPetsc%init(vecPList)
+      CALL yPetsc%init(vecPList)
+
+      x = 1.0_SRK
+      CALL xPetsc%setAll_scalar(1.0_SRK)
+
+      !WRITE(dirname,'(2A)'),'/home/mkbz/Research/bandMatResults/Futility/unit_tests/testPreconditionerTypes/matrices/mg_matrix.txt'
+      WRITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
+
+      OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
+      IF(ios .NE. 0)THEN
+          WRITE(*,*)tempcharacter
+          WRITE(*,*)'Could not open res.dat'
+          STOP
+      END IF
+      READ(11,*)
+      DO
+          READ(11,*,IOSTAT=ios)i,j,tmpreal
+          IF(ios >0)THEN
+              STOP 'File input error'
+          ELSE IF(ios<0)THEN
+              EXIT
+          ELSE
+            CALL cmfdBanded%set(i,j,tmpreal)
+            CALL cmfdPetsc%set(i,j,tmpreal)
+          END IF
+      END DO
+      CLOSE(11)
+
+
+      CALL cmfdBanded%assemble()
+      CALL cmfdPetsc%assemble()
+
+      CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
+      CALL BLAS_matvec(THISMATRIX=cmfdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
+
+      ALLOCATE(dummyvec(n))
+      dummyvec = 0.0_SRK
+      ALLOCATE(dummyvec2(n))
+      dummyvec2 = 0.0_SRK
+
+      DO i=1,n
+        IF (rank == 0 .AND. i <= 756) THEN
+          CALL yPetsc%get(i,dummyvec(i))
+        END IF
+        IF (rank == 1 .AND. i > 756) THEN
+          CALL yPetsc%get(i,dummyvec(i))
+        END IF
+      END DO
+
+      CALL MPI_ALLREDUCE(dummyvec, dummyvec2, n, MPI_DOUBLE_PRECISION, MPI_SUM, &
+                    PE_COMM_WORLD, ierr)
+
+      bool = ALL(y .APPROXEQR. dummyvec2)
+      WRITE(*,*) MAXVAL(ABS(y-dummyvec2))
+      WRITE(*,*) MAXVAL(y)
+      WRITE(*,*) MINVAL(y)
+      ASSERT(bool,'Matvec results match')
+
+      CALL vecPList%clear()
+      CALL petscPList%clear()
+      CALL bandedPlist%clear()
+
+    END SUBROUTINE verifyCMFD
+
 
     SUBROUTINE timeBanded()
 
