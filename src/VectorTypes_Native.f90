@@ -469,6 +469,8 @@ MODULE VectorTypes_Native
 
       thisVector%isInit=.FALSE.
       thisVector%n=0
+      IF(ALLOCATED(thisVector%b)) CALL demallocA(thisVector%b)
+
     ENDSUBROUTINE clear_NativeDistributedVectorType
 !
 !-------------------------------------------------------------------------------
@@ -734,8 +736,6 @@ MODULE VectorTypes_Native
       ELSE
         destHigh = istp - istt + 1 - (istp - thisVector%offset - thisVector%nlocal)
       ENDIF
-
-      WRITE(*,*) "Rank",thisVector%commType%rank, "src",srcLow,srcHigh, "dest",destLow,destHigh
 
       getval(destLow:destHigh) = thisVector%b(srcLow:srcHigh)
 

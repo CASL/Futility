@@ -89,7 +89,8 @@ PROGRAM testMatrixTypes
     SUBROUTINE verifyFD()
       CLASS(DistributedBandedMatrixType),ALLOCATABLE :: fdBanded
       CLASS(PETScMatrixType),ALLOCATABLE :: fdPetsc
-      REAL(SRK),ALLOCATABLE :: x(:),y(:),dummyvec(:),dummyvec2(:)
+      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
+      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
       REAL(SRK) :: tmpreal
       CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
       TYPE(ParamType) :: bandedPlist,petscPList,vecPList
@@ -113,7 +114,7 @@ PROGRAM testMatrixTypes
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
-      CALL bandedPlist%add('MatrixType->comm',PE_COMM_WORLD)
+      CALL bandedPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
 
       CALL petscPList%clear()
       CALL petscPlist%add('MatrixType->n',n)
@@ -131,8 +132,8 @@ PROGRAM testMatrixTypes
       CALL fdBanded%init(bandedPList)
       CALL fdPetsc%init(petscPList)
 
-      ALLOCATE(x(n))
-      ALLOCATE(y(n))
+      ALLOCATE(NativeDistributedVectorType :: x)
+      ALLOCATE(NativeDistributedVectorType :: y)
       ALLOCATE(petscVectorType :: xPetsc)
       ALLOCATE(petscVectorType :: yPetsc)
 
@@ -140,9 +141,11 @@ PROGRAM testMatrixTypes
 
       CALL xPetsc%init(vecPList)
       CALL yPetsc%init(vecPList)
+      CALL x%init(vecPList)
+      CALL y%init(vecPList)
 
-      x = 1.0_SRK
-      y = 0.0_SRK
+      x%b = 1.0_SRK
+      y%b = 0.0_SRK
       CALL yPetsc%set(0.0_SRK)
       CALL xPetsc%set(1.0_SRK)
       DO i=1,n
@@ -185,24 +188,17 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=fdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
       CALL BLAS_matvec(THISMATRIX=fdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
 
-      ALLOCATE(dummyvec(n))
+      ALLOCATE(dummyvec(n/2))
       dummyvec = 0.0_SRK
-      ALLOCATE(dummyvec2(n))
-      dummyvec2 = 0.0_SRK
 
-      DO i=1,n
-        IF (rank == 0 .AND. i <= 8192) THEN
-          CALL yPetsc%get(i,dummyvec(i))
-        END IF
-        IF (rank == 1 .AND. i > 8192) THEN
-          CALL yPetsc%get(i,dummyvec(i))
-        END IF
-      END DO
+      IF (rank == 0) THEN
+        CALL yPetsc%get(1,8192,dummyvec)
+      END IF
+      IF (rank == 1) THEN
+        CALL yPetsc%get(8193,16384,dummyvec)
+      END IF
 
-      CALL MPI_ALLREDUCE(dummyvec, dummyvec2, n, MPI_DOUBLE_PRECISION, MPI_SUM, &
-                    PE_COMM_WORLD, ierr)
-
-      bool = ALL(y .APPROXEQ. dummyvec2)
+      bool = ALL(y%b .APPROXEQ. dummyvec)
 
       ASSERT(bool,'Matvec results match')
 
@@ -215,7 +211,8 @@ PROGRAM testMatrixTypes
     SUBROUTINE verifyCMFD()
       CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
       CLASS(PETScMatrixType),ALLOCATABLE :: cmfdPetsc
-      REAL(SRK),ALLOCATABLE :: x(:),y(:),dummyvec(:),dummyvec2(:)
+      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
+      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
       REAL(SRK) :: tmpreal
       CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
       TYPE(ParamType) :: bandedPlist,petscPList,vecPList
@@ -236,7 +233,7 @@ PROGRAM testMatrixTypes
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
-      CALL bandedPList%add('MatrixType->comm',PE_COMM_WORLD)
+      CALL bandedPList%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
 
       CALL petscPList%clear()
       CALL petscPlist%add('MatrixType->n',n)
@@ -254,15 +251,17 @@ PROGRAM testMatrixTypes
       CALL cmfdBanded%init(bandedPList)
       CALL cmfdPetsc%init(petscPList)
 
-      ALLOCATE(x(n))
-      ALLOCATE(y(n))
+      ALLOCATE(NativeDistributedVectorType :: x)
+      ALLOCATE(NativeDistributedVectorType :: y)
       ALLOCATE(petscVectorType :: xPetsc)
       ALLOCATE(petscVectorType :: yPetsc)
 
       CALL xPetsc%init(vecPList)
       CALL yPetsc%init(vecPList)
+      CALL x%init(vecPList)
+      CALL y%init(vecPList)
 
-      x = 1.0_SRK
+      x%b = 1.0_SRK
       CALL xPetsc%setAll_scalar(1.0_SRK)
 
       !WRITE(dirname,'(2A)'),'/home/mkbz/Research/bandMatResults/Futility/unit_tests/testPreconditionerTypes/matrices/mg_matrix.txt'
@@ -295,27 +294,20 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
       CALL BLAS_matvec(THISMATRIX=cmfdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
 
-      ALLOCATE(dummyvec(n))
+      ALLOCATE(dummyvec(n/2))
       dummyvec = 0.0_SRK
-      ALLOCATE(dummyvec2(n))
-      dummyvec2 = 0.0_SRK
 
-      DO i=1,n
-        IF (rank == 0 .AND. i <= 756) THEN
-          CALL yPetsc%get(i,dummyvec(i))
-        END IF
-        IF (rank == 1 .AND. i > 756) THEN
-          CALL yPetsc%get(i,dummyvec(i))
-        END IF
-      END DO
+      IF (rank == 0) THEN
+        CALL yPetsc%get(1,756,dummyvec)
+      END IF
+      IF (rank == 1) THEN
+        CALL yPetsc%get(757,1512,dummyvec)
+      END IF
 
-      CALL MPI_ALLREDUCE(dummyvec, dummyvec2, n, MPI_DOUBLE_PRECISION, MPI_SUM, &
-                    PE_COMM_WORLD, ierr)
-
-      bool = ALL(y .APPROXEQR. dummyvec2)
-      WRITE(*,*) MAXVAL(ABS(y-dummyvec2))
-      WRITE(*,*) MAXVAL(y)
-      WRITE(*,*) MINVAL(y)
+      bool = ALL(y%b .APPROXEQR. dummyvec)
+      WRITE(*,*) MAXVAL(ABS(y%b-dummyvec))
+      WRITE(*,*) MAXVAL(y%b)
+      WRITE(*,*) MINVAL(y%b)
       ASSERT(bool,'Matvec results match')
 
       CALL vecPList%clear()
@@ -328,7 +320,7 @@ PROGRAM testMatrixTypes
     SUBROUTINE timeBanded()
 
       CLASS(DistributedBandedMatrixType),ALLOCATABLE :: fdBanded
-      REAL(SRK),ALLOCATABLE :: x(:),y(:)
+      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
       REAL(SRK) :: timetaken
       INTEGER(SIK) :: i,n,nnz,xCoord,yCoord,gridSize,time1,time2,clock_rate
       TYPE(ParamType) :: bandedPlist
@@ -347,9 +339,18 @@ PROGRAM testMatrixTypes
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
-      CALL bandedPlist%add('MatrixType->comm',PE_COMM_WORLD)
+      CALL bandedPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
       CALL bandedPlist%validate(bandedPlist)
       CALL fdBanded%init(bandedPlist)
+
+      CALL vecPList%clear()
+      CALL vecPList%add('VectorType->n',n)
+      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
+      ALLOCATE(NativeDistributedVectorType :: x)
+      ALLOCATE(NativeDistributedVectorType :: y)
+      CALL x%init(vecPList)
+      CALL y%init(vecPList)
+
 
       DO i=1,n
         yCoord = (i-1)/gridSize
@@ -376,10 +377,8 @@ PROGRAM testMatrixTypes
       timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
       WRITE(*,*) "Assembly Completed in",timeTaken,"seconds"
 
-      ALLOCATE(x(n))
-      ALLOCATE(y(n))
-
-      x = 1.0_SRK
+      x%b = 1.0_SRK
+      y%b = 0.0_SRK
 
       ! Get clock
       CALL SYSTEM_CLOCK(time1)
@@ -479,7 +478,7 @@ PROGRAM testMatrixTypes
     SUBROUTINE timeBandedCMFD()
 
       CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
-      REAL(SRK),ALLOCATABLE :: x(:),y(:)
+      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
       REAL(SRK) :: timetaken,tmpreal
       INTEGER(SIK) :: i,j,n,nnz,xCoord,yCoord,gridSize,time1,time2,clock_rate,ios
       CHARACTER(200)::tempcharacter,dirname
@@ -496,9 +495,17 @@ PROGRAM testMatrixTypes
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
-      CALL bandedPlist%add('MatrixType->comm',PE_COMM_WORLD)
+      CALL bandedPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
       CALL bandedPlist%validate(bandedPlist)
       CALL cmfdBanded%init(bandedPlist)
+
+      CALL vecPList%add('VectorType->n',n)
+      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
+      ALLOCATE(NativeDistributedVectorType :: x)
+      ALLOCATE(NativeDistributedVectorType :: y)
+
+      CALL x%init(vecPList)
+      CALL y%init(vecPList)
 
       OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
       IF(ios .NE. 0)THEN
@@ -525,10 +532,8 @@ PROGRAM testMatrixTypes
       timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
       WRITE(*,*) "Assembly completed in",timetaken,"seconds"
 
-      ALLOCATE(x(n))
-      ALLOCATE(y(n))
-
-      x = 1.0_SRK
+      x%b = 1.0_SRK
+      y%b = 0.0_SRK
 
       ! Get clock
       CALL SYSTEM_CLOCK(time1)

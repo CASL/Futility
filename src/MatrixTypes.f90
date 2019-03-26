@@ -527,47 +527,10 @@ MODULE MatrixTypes
             END IF
 
           TYPE IS(DistributedBandedMatrixType)
-
-            CALL MPI_Comm_Rank(thisMatrix%comm,rank,ierr)
-            IF(ul /= 'n' .OR. d /= 'n' .OR. incx /= 1) THEN
-               CALL eMatrixType%raiseError('Incorrect call to '// &
-                    modName//'::'//myName//' - This interface is being implemented.')
-            END IF
-
-            al = 1.0_SRK
-            IF(PRESENT(alpha)) THEN
-              al = alpha
-            END IF
-
-            ALLOCATE(z(thisMatrix%n))
-            z = 0.0_SRK
-
 #ifdef HAVE_MPI
-            !REQUIRE(thisMatrix%isInit)
-            !REQUIRE(thisMatrix%isAssembled)
-            !REQUIRE(SIZE(x) == thisMatrix%m)
-            !REQUIRE(SIZE(y) == thisMatrix%n)
-
-            IF(t /= 'n') THEN
-              CALL thisMatrix%transpose()
-            END IF
-
-            DO bIdx=1,size(thisMatrix%bandIdx)
-              idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
-              z(idxMult) = z(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
-            ENDDO
-            IF (rank == 0 .AND. PRESENT(beta)) THEN
-              z = z + beta*y
-            END IF
-
-            IF(t /= 'n') THEN
-              CALL thisMatrix%transpose()
-            END IF
-
-            CALL MPI_ALLREDUCE(z, y, thisMatrix%n, MPI_DOUBLE_PRECISION, MPI_SUM, &
-                          thisMatrix%comm, ierr)
+          CALL eMatrixType%raiseError('Incorrect call to '// &
+               modName//'::'//myName//' - This interface is not available.')
 #endif
-
           CLASS DEFAULT
             CALL eMatrixType%raiseError('Incorrect call to '// &
                  modName//'::'//myName//' - This interface is not available.')
@@ -604,8 +567,9 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       CHARACTER(LEN=1) :: t,ul,d
-      INTEGER(SIK) :: incx
+      INTEGER(SIK) :: incx,count,i,rank,mpierr
       REAL(SRK) :: a,b
+      REAL(SRK),ALLOCATABLE :: reduceResult(:),tmpProduct(:)
 
 #ifdef FUTILITY_HAVE_PETSC
       SELECTTYPE(mat => thisMatrix); TYPE IS(PETScMatrixType)
@@ -635,69 +599,107 @@ MODULE MatrixTypes
         IF(PRESENT(alpha)) a=alpha
         IF(PRESENT(beta))  b=beta
 
-        SELECTTYPE(x); TYPE IS(RealVectorType)
-          SELECTTYPE(y); TYPE IS(RealVectorType)
-            SELECTTYPE(thisMatrix)
-              TYPE IS(DenseSquareMatrixType)
-                IF(ul /= 'n') THEN
-                  y%b=x%b
-                  CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
-                ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ENDIF
-              TYPE IS(DenseRectMatrixType)
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ENDIF
-              TYPE IS(SparseMatrixType)
-                IF(ul /= 'n') THEN
-                  y%b=x%b
-                  CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
-                ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,x%b,y%b)
-                ENDIF
-              TYPE IS(BandedMatrixType)
-                CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
-                                       Y=y%b,uplo=ul,diag=d,incx_in=incx)
-              TYPE IS(DistributedBandedMatrixType)
-                CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
-                                       Y=y%b,uplo=ul,diag=d,incx_in=incx)
+        SELECT TYPE(x)
+          TYPE IS(RealVectorType)
+            SELECT TYPE(y)
+              TYPE IS(RealVectorType)
+                SELECT TYPE(thisMatrix)
+                  TYPE IS(DenseSquareMatrixType)
+                    IF(ul /= 'n') THEN
+                      y%b=x%b
+                      CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
+                    ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                        alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                    ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                        alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                        thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                        thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                    ENDIF
+                  TYPE IS(DenseRectMatrixType)
+                    IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                        alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                    ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                        alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                        thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                        thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                    ENDIF
+                  TYPE IS(SparseMatrixType)
+                    IF(ul /= 'n') THEN
+                      y%b=x%b
+                      CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
+                    ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                        thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
+                    ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                        thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                        thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
+                    ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+                      CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                        thisMatrix%ja,thisMatrix%a,x%b,y%b)
+                    ENDIF
+                  TYPE IS(BandedMatrixType)
+                    CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+                                           Y=y%b,uplo=ul,diag=d,incx_in=incx)
+                  TYPE IS(DistributedBandedMatrixType)
+                    CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+                                           Y=y%b,uplo=ul,diag=d,incx_in=incx)
+                  CLASS DEFAULT
+                    CALL eMatrixType%raiseError('Incorrect call to '// &
+                         modName//'::'//myName//' - This interface is not available.')
+                ENDSELECT
               CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
                      modName//'::'//myName//' - This interface is not available.')
             ENDSELECT
-          ENDSELECT
-        CLASS DEFAULT
+          TYPE IS (NativeDistributedVectorType)
+            SELECT TYPE(y)
+              TYPE IS (NativeDistributedVectorType)
+                SELECT TYPE(thisMatrix)
+                  TYPE IS(DistributedBandedMatrixType)
+
+                    CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
+                    ! Allocate storage array for reduce to this proc
+                    ALLOCATE(reduceResult(thisMatrix%jOffsets(rank+2) - thisMatrix%jOffsets(rank+1)))
+                    ! Allocate storage array for nproc-1 banded products
+                    ALLOCATE(tmpProduct(thisMatrix%jOffsets(2)))
+                    DO i=1,SIZE(thisMatrix%iOffsets)-1
+                      ! If chunk is init
+                      count = thisMatrix%jOffsets(i+1) - thisMatrix%jOffsets(i)
+                      IF (thisMatrix%chunks(i)%isInit) THEN
+                        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,Y=tmpProduct(1:count))
+                      ELSE
+                        tmpProduct = 0.0_SRK
+                      END IF
+                      CALL MPI_Reduce(tmpProduct,reduceResult,count,MPI_DOUBLE_PRECISION,MPI_SUM,i-1,thisMatrix%comm,mpierr)
+                    END DO
+
+                    ! do y = alpha * reduce + beta*y
+                    y%b = a*reduceResult + b*y%b
+
+                  CLASS DEFAULT
+                    CALL eMatrixType%raiseError('Incorrect call to '// &
+                         modName//'::'//myName//' - This interface is not available.')
+                END SELECT
+              CLASS DEFAULT
+                CALL eMatrixType%raiseError('Incorrect call to '// &
+                     modName//'::'//myName//' - This interface is not available.')
+            END SELECT
+          CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
