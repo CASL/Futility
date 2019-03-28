@@ -195,6 +195,8 @@ MODULE MatrixTypes_Native
     INTEGER(SIK) :: nnz
     !> Number of columns
     INTEGER(SIK) :: m
+    !> Map of which ranks contribute to a matvec at this location
+    LOGICAL(SBK), ALLOCATABLE :: contrib(:,:)
     !> Temporary containers used before (and deallocated after) assembly
     INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
     REAL(SRK),ALLOCATABLE :: elemTmp(:)
@@ -511,6 +513,7 @@ MODULE MatrixTypes_Native
           ALLOCATE(matrix%iTmp(2*nnz/nProc))
           ALLOCATE(matrix%jTmp(2*nnz/nProc))
           ALLOCATE(matrix%elemTmp(2*nnz/nProc))
+          ALLOCATE(matrix%contrib(nProc,nProc))
 
           matrix%nlocal = 0
           matrix%isInit=.TRUE.
@@ -608,6 +611,7 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
       INTEGER(SIK) :: mpierr, rank, nproc, i, j
       INTEGER(SIK),ALLOCATABLE :: nnzPerChunk(:)
+      LOGICAL(SBK) :: blockNonzero
 
       REQUIRE(thisMatrix%isInit)
       CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
@@ -629,7 +633,9 @@ MODULE MatrixTypes_Native
 
       ALLOCATE(thisMatrix%chunks(nProc))
       DO i=1,nProc
-        IF (nnzPerChunk(i) > 0) THEN
+        blockNonzero = nnzPerChunk(i) > 0
+        CALL MPI_Allgather(blockNonzero,1,MPI_LOGICAL,thisMatrix%contrib(i,:),1,MPI_LOGICAL,thismatrix%comm,mpierr)
+        IF (blockNonzero) THEN
           CALL bandedPList%add('MatrixType->nnz',nnzPerChunk(i))
           CALL bandedPList%add('MatrixType->n',thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i))
           CALL bandedPList%add('MatrixType->m',thisMatrix%jOffsets(rank+2) - thisMatrix%jOffsets(rank+1))
@@ -866,6 +872,9 @@ MODULE MatrixTypes_Native
       IF(ALLOCATED(matrix%elemTmp)) THEN
         DEALLOCATE(matrix%elemTmp)
       ENDIF
+      IF(ALLOCATEd(matrix%contrib)) THEN
+        DEALLOCATE(matrix%contrib)
+      END IF
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
 #endif
      ENDSUBROUTINE clear_DistributedBandedMatrixType

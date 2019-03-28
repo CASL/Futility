@@ -567,9 +567,10 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       CHARACTER(LEN=1) :: t,ul,d
-      INTEGER(SIK) :: incx,count,i,rank,mpierr
+      INTEGER(SIK) :: incx,count,i,rank,mpierr,k
       REAL(SRK) :: a,b
-      REAL(SRK),ALLOCATABLE :: reduceResult(:),tmpProduct(:)
+      REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
+      INTEGER(SIK) :: sendRequests(2),recvRequests(2),sendCounter,recvCounter
 
 #ifdef FUTILITY_HAVE_PETSC
       SELECTTYPE(mat => thisMatrix); TYPE IS(PETScMatrixType)
@@ -673,23 +674,65 @@ MODULE MatrixTypes
                   TYPE IS(DistributedBandedMatrixType)
 
                     CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
-                    ! Allocate storage array for reduce to this proc
-                    ALLOCATE(reduceResult(thisMatrix%jOffsets(rank+2) - thisMatrix%jOffsets(rank+1)))
-                    ! Allocate storage array for nproc-1 banded products
-                    ALLOCATE(tmpProduct(thisMatrix%jOffsets(2)))
+                    sendCounter = 0
+                    recvCounter = 0
+                    sendRequests = 0
+                    recvRequests = 0
+                    ALLOCATE(recvResult(thisMatrix%iOffsets(2),2))
+                    ALLOCATE(sendResult(thisMatrix%iOffsets(2),2))
+                    ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)-thisMatrix%iOffsets(rank+1)))
+
                     DO i=1,SIZE(thisMatrix%iOffsets)-1
-                      ! If chunk is init
-                      count = thisMatrix%jOffsets(i+1) - thisMatrix%jOffsets(i)
-                      IF (thisMatrix%chunks(i)%isInit) THEN
-                        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,Y=tmpProduct(1:count))
+
+                      count = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
+                      IF (rank+1 == i) THEN
+                        ! Do product
+                        IF (thisMatrix%chunks(i)%isInit) THEN
+                          CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,y=tmpProduct)
+                        ELSE
+                          tmpProduct = 0.0_SRK
+                        END IF
+                        ! Loop over true elements in contrib(i,:)
+                        DO k=1,SIZE(thisMatrix%contrib,1)
+                          IF (thisMatrix%contrib(i,k) .AND. i /= k) THEN
+                            recvCounter = recvCounter + 1
+                            IF (recvCounter > 2) THEN
+                              CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+                              ! Add k-2 to current
+                              tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
+                            END IF
+                            CALL MPI_IRecv(recvResult(:,MOD(recvCounter,2)+1),count,MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(MOD(recvCounter,2)+1),mpierr)
+                          END IF
+                        END DO
                       ELSE
-                        tmpProduct = 0.0_SRK
+                        IF (thismatrix%chunks(i)%isInit) THEN
+                          sendCounter = sendCounter + 1
+                          !   wait on k-2
+                          IF (sendCounter > 2) THEN
+                            CALL MPI_WAIT(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+                          END IF
+                          CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,y=sendResult(1:count,MOD(sendCounter,2)+1))
+                          CALL MPI_ISend(sendResult(:,MOD(sendCounter,2)+1), count, MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, sendRequests(MOD(sendCounter,2)+1),mpierr)
+                        END IF
                       END IF
-                      CALL MPI_Reduce(tmpProduct,reduceResult,count,MPI_DOUBLE_PRECISION,MPI_SUM,i-1,thisMatrix%comm,mpierr)
                     END DO
+                    IF (sendRequests(MOD(sendCounter+1,2)+1) /= 0) THEN
+                      CALL MPI_Wait(sendRequests(MOD(sendCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
+                    END IF
+                    IF (recvRequests(MOD(sendCounter,2)+1) /= 0) THEN
+                      CALL MPI_Wait(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+                    END IF
+                    IF (recvRequests(MOD(recvCounter+1,2)+1) /= 0) THEN
+                      CALL MPI_Wait(recvRequests(MOD(recvCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
+                      tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter+1,2)+1)
+                    END IF
+                    IF (recvRequests(MOD(recvCounter,2)+1) /= 0) THEN
+                      CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+                      tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
+                    END IF
 
                     ! do y = alpha * reduce + beta*y
-                    y%b = a*reduceResult + b*y%b
+                    y%b = a*tmpProduct + b*y%b
 
                   CLASS DEFAULT
                     CALL eMatrixType%raiseError('Incorrect call to '// &

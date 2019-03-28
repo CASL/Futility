@@ -153,6 +153,7 @@ CONTAINS
       ENDSELECT
       CALL thisMatrix%clear()
       !test with double init (isInit==true on 2nd try)
+      WRITE(*,*) "Beginning double init"
       CALL thisMatrix%init(pList)
       SELECTTYPE(thisMatrix)
         TYPE IS(DistributedBandedMatrixType); thisMatrix%m=1
@@ -453,9 +454,10 @@ CONTAINS
       ELSE
         distrVec1%b = (/3._SRK,4._SRK/)
       END IF
-
+      CALL SLEEP(2)
+      WRITE(*,*) "------------------------------------------------"
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=distrVec1,Y=distrVec2,alpha=1.0_SRK,beta=0.0_SRK)
-
+      WRITE(*,*) distrVec2%b
       IF (rank == 0) THEN
         bool = distrVec2%b(1) == 5._SRK
         ASSERT(bool, 'banded%matvec(...)')
