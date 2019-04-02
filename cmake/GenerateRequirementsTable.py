@@ -75,8 +75,8 @@ class Requirement:
             if not match:
                 # If a @beginreq block is present, the description portion of the
                 # requirement needs to be present and formatted correctly
-                warnings.warn(
-                    'Requirement not formatted correctly in file: '+testFile)
+                raise RuntimeError(
+                    'Requirement not formatted correctly in file: '+testFile+' block: '+rawReqBlock[1])
             # Strip out any characters prior to the beginning of the text description of the requirement
             self.descr = rawReqBlock[1][match.end():]
 
@@ -88,7 +88,11 @@ class Requirement:
                 if self._re_ticket.match(line):
                     break
                 lineNum = lineNum+1
-                self.descr = self.descr+line.split('!>')[1].rstrip()
+                try:
+                    self.descr = self.descr+line.split('!>')[1].rstrip()
+                except:
+                    raise RuntimeError(
+                        "Error process file: "+testFile+" line: "+line)
             # Check for a ticket number in the block and save
             # Defaults to None if not present
             if lineNum < len(rawReqBlock):
