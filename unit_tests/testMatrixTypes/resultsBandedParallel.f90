@@ -94,7 +94,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: tmpreal
       CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
       TYPE(ParamType) :: bandedPlist,petscPList,vecPList
-      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,perr, rank, mpierr
+      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,perr, rank, mpierr, highIdx, lowIdx
       LOGICAL(SBK) :: bool,bool2
 
       ALLOCATE(DistributedBandedMatrixType :: fdBanded)
@@ -138,7 +138,6 @@ PROGRAM testMatrixTypes
       ALLOCATE(petscVectorType :: yPetsc)
 
       CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
-
       CALL xPetsc%init(vecPList)
       CALL yPetsc%init(vecPList)
       CALL x%init(vecPList)
@@ -148,16 +147,6 @@ PROGRAM testMatrixTypes
       y%b = 0.0_SRK
       CALL yPetsc%set(0.0_SRK)
       CALL xPetsc%set(1.0_SRK)
-      DO i=1,n
-        IF (i <= 8192 .AND. rank == 0) THEN
-          CALL xPetsc%get(i,tmpReal)
-          ASSERT(tmpReal == 1.0_SRK, "Set correctly")
-        END IF
-        IF (i > 8192 .AND. rank == 1) THEN
-          CALL xPetsc%get(i,tmpReal)
-          ASSERT(tmpReal == 1.0_SRK, "Set correctly")
-        END IF
-      END DO
 
       DO i=1,n
         yCoord = (i-1)/gridSize
@@ -188,16 +177,13 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=fdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
       CALL BLAS_matvec(THISMATRIX=fdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
 
-      ALLOCATE(dummyvec(n/2))
+      lowIdx = fdBanded%iOffsets(rank+1) + 1
+      highIdx = fdBanded%iOffsets(rank+2)
+
+      ALLOCATE(dummyvec(highIdx - lowIdx + 1))
       dummyvec = 0.0_SRK
 
-      IF (rank == 0) THEN
-        CALL yPetsc%get(1,8192,dummyvec)
-      END IF
-      IF (rank == 1) THEN
-        CALL yPetsc%get(8193,16384,dummyvec)
-      END IF
-
+      CALL yPetsc%get(lowIdx,highIdx,dummyvec)
       bool = ALL(y%b .APPROXEQ. dummyvec)
 
       ASSERT(bool,'Matvec results match')
@@ -216,7 +202,7 @@ PROGRAM testMatrixTypes
       REAL(SRK) :: tmpreal
       CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
       TYPE(ParamType) :: bandedPlist,petscPList,vecPList
-      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,ios,rank,mpierr
+      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,ios,rank,mpierr,lowIdx,highIdx
       LOGICAL(SBK) :: bool
       CHARACTER(200)::tempcharacter,dirname
 
@@ -294,20 +280,15 @@ PROGRAM testMatrixTypes
       CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
       CALL BLAS_matvec(THISMATRIX=cmfdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
 
-      ALLOCATE(dummyvec(n/2))
+      lowIdx = cmfdBanded%iOffsets(rank+1) + 1
+      highIdx = cmfdBanded%iOffsets(rank+2)
+
+      ALLOCATE(dummyvec(highIdx - lowIdx + 1))
       dummyvec = 0.0_SRK
 
-      IF (rank == 0) THEN
-        CALL yPetsc%get(1,756,dummyvec)
-      END IF
-      IF (rank == 1) THEN
-        CALL yPetsc%get(757,1512,dummyvec)
-      END IF
+      CALL yPetsc%get(lowIdx,highIdx,dummyvec)
 
-      bool = ALL(y%b .APPROXEQR. dummyvec)
-      WRITE(*,*) MAXVAL(ABS(y%b-dummyvec))
-      WRITE(*,*) MAXVAL(y%b)
-      WRITE(*,*) MINVAL(y%b)
+      bool = ALL(ABS(y%b - dummyvec) < 1.0e-12)
       ASSERT(bool,'Matvec results match')
 
       CALL vecPList%clear()
@@ -336,6 +317,7 @@ PROGRAM testMatrixTypes
       IF (n > 2) THEN
         nnz = nnz + 5*(gridSize-2)*(gridSize-2) + 16*(gridSize-2)
       END IF
+      CALL bandedPList%clear()
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
@@ -392,10 +374,6 @@ PROGRAM testMatrixTypes
       timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
       WRITE(*,*) n,"Multiplications completed in",timetaken,"seconds"
 
-      CALL optListMat%clear()
-      CALL vecPList%clear()
-      CALL pList%clear()
-
     END SUBROUTINE timeBanded
 
 
@@ -418,6 +396,7 @@ PROGRAM testMatrixTypes
       END IF
 
       ALLOCATE(PETScMatrixType :: fdPetsc)
+      CALL petscPList%clear()
       CALL petscPlist%add('MatrixType->n',n)
       CALL petscPlist%add('MatrixType->m',n)
       CALL petscPlist%add('MatrixType->nnz',nnz)
@@ -427,6 +406,7 @@ PROGRAM testMatrixTypes
       CALL petscPlist%validate(petscPlist)
       CALL fdPetsc%init(petscPlist)
 
+      CALL vecPList%clear()
       CALL vecPList%add('VectorType->n',n)
       CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
 
@@ -469,10 +449,6 @@ PROGRAM testMatrixTypes
       timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
       WRITE(*,*) n,"Multiplications completed in",timetaken,"seconds"
 
-      CALL optListMat%clear()
-      CALL vecPList%clear()
-      CALL pList%clear()
-
     END SUBROUTINE timePetsc
 
     SUBROUTINE timeBandedCMFD()
@@ -492,6 +468,7 @@ PROGRAM testMatrixTypes
 
       nnz = 67200
       n = 1512
+      CALL bandedPlist%clear()
       CALL bandedPlist%add('MatrixType->n',n)
       CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz)
@@ -499,6 +476,7 @@ PROGRAM testMatrixTypes
       CALL bandedPlist%validate(bandedPlist)
       CALL cmfdBanded%init(bandedPlist)
 
+      CALL vecPList%clear()
       CALL vecPList%add('VectorType->n',n)
       CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
       ALLOCATE(NativeDistributedVectorType :: x)
@@ -547,10 +525,6 @@ PROGRAM testMatrixTypes
       timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
       WRITE(*,*) 64*n,"Multiplications completed in",timetaken,"seconds"
 
-      CALL optListMat%clear()
-      CALL vecPList%clear()
-      CALL pList%clear()
-
     END SUBROUTINE timeBandedCMFD
 
 
@@ -570,6 +544,7 @@ PROGRAM testMatrixTypes
       n = 1512
 
       ALLOCATE(PETScMatrixType :: cmfdPetsc)
+      CALL petscPList%clear()
       CALL petscPlist%add('MatrixType->n',n)
       CALL petscPlist%add('MatrixType->m',n)
       CALL petscPlist%add('MatrixType->nnz',nnz)
@@ -579,6 +554,7 @@ PROGRAM testMatrixTypes
       CALL petscPlist%validate(petscPlist)
       CALL cmfdPetsc%init(petscPlist)
 
+      CALL vecPList%clear()
       CALL vecPList%add('VectorType->n',n)
       CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
 

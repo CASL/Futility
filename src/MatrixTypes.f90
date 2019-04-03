@@ -567,7 +567,7 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       CHARACTER(LEN=1) :: t,ul,d
-      INTEGER(SIK) :: incx,count,i,rank,mpierr,k
+      INTEGER(SIK) :: incx,countS(2),countR(2),i,rank,mpierr,k,count
       REAL(SRK) :: a,b
       REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
       INTEGER(SIK) :: sendRequests(2),recvRequests(2),sendCounter,recvCounter
@@ -673,46 +673,70 @@ MODULE MatrixTypes
                 SELECT TYPE(thisMatrix)
                   TYPE IS(DistributedBandedMatrixType)
 
+                    ! Get rank; initialize requests/counters
                     CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
+
+                    ! We will store our send/recv arrays in an array of length 2
+                    ! This allows one to be used for computation and one for
+                    ! communication.
+                    ! Which one to write to will be determined by *Counter MOD 2
                     sendCounter = 0
                     recvCounter = 0
                     sendRequests = 0
                     recvRequests = 0
+                    ! The recv/sendResult array will sometimes hold it's full length,
+                    ! and sometimes the full length - 1.
+                    ! The variable "count" will be used to determine this at
+                    ! each iteration
                     ALLOCATE(recvResult(thisMatrix%iOffsets(2),2))
                     ALLOCATE(sendResult(thisMatrix%iOffsets(2),2))
                     ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)-thisMatrix%iOffsets(rank+1)))
 
+                    ! On each rank, loop over the chunks held (top to bottom)
                     DO i=1,SIZE(thisMatrix%iOffsets)-1
-
                       count = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
                       IF (rank+1 == i) THEN
-                        ! Do product
+                        ! We will be receiving data from other processes
+                        ! Do local product
                         IF (thisMatrix%chunks(i)%isInit) THEN
                           CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,y=tmpProduct)
                         ELSE
                           tmpProduct = 0.0_SRK
                         END IF
-                        ! Loop over true elements in contrib(i,:)
+                        ! Find which other chunks in this row we need to
+                        ! communicate with
                         DO k=1,SIZE(thisMatrix%contrib,1)
-                          IF (thisMatrix%contrib(i,k) .AND. i /= k) THEN
+                          IF (thisMatrix%contrib(k,i) .AND. i /= k) THEN
                             recvCounter = recvCounter + 1
+                            ! If we've filled up the available storage, we need
+                            ! to wait for communication to finish up
                             IF (recvCounter > 2) THEN
                               CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                              ! Add k-2 to current
                               tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
                             END IF
-                            CALL MPI_IRecv(recvResult(:,MOD(recvCounter,2)+1),count,MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(MOD(recvCounter,2)+1),mpierr)
+                            CALL MPI_IRecv(recvResult(1:count,MOD(recvCounter,2)+1),count,MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(MOD(recvCounter,2)+1),mpierr)
                           END IF
                         END DO
+                        ! We've finished calling irecv. Wait for remaining
+                        ! requests to finish:
+                        IF (recvRequests(MOD(recvCounter+1,2)+1) /= 0) THEN
+                          CALL MPI_Wait(recvRequests(MOD(recvCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
+                          tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter+1,2)+1)
+                        END IF
+                        IF (recvRequests(MOD(recvCounter,2)+1) /= 0) THEN
+                          CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+                          tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
+                        END IF
                       ELSE
+                        ! We will be sending data to some other process
                         IF (thismatrix%chunks(i)%isInit) THEN
                           sendCounter = sendCounter + 1
-                          !   wait on k-2
+                          ! Check if we can safely write to sendRequests
                           IF (sendCounter > 2) THEN
                             CALL MPI_WAIT(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
                           END IF
                           CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,y=sendResult(1:count,MOD(sendCounter,2)+1))
-                          CALL MPI_ISend(sendResult(:,MOD(sendCounter,2)+1), count, MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, sendRequests(MOD(sendCounter,2)+1),mpierr)
+                          CALL MPI_ISend(sendResult(1:count,MOD(sendCounter,2)+1), count, MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, sendRequests(MOD(sendCounter,2)+1),mpierr)
                         END IF
                       END IF
                     END DO
@@ -721,14 +745,6 @@ MODULE MatrixTypes
                     END IF
                     IF (recvRequests(MOD(sendCounter,2)+1) /= 0) THEN
                       CALL MPI_Wait(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                    END IF
-                    IF (recvRequests(MOD(recvCounter+1,2)+1) /= 0) THEN
-                      CALL MPI_Wait(recvRequests(MOD(recvCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
-                      tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter+1,2)+1)
-                    END IF
-                    IF (recvRequests(MOD(recvCounter,2)+1) /= 0) THEN
-                      CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                      tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
                     END IF
 
                     ! do y = alpha * reduce + beta*y

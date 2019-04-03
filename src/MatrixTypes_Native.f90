@@ -616,7 +616,6 @@ MODULE MatrixTypes_Native
       REQUIRE(thisMatrix%isInit)
       CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
       CALL MPI_Comm_size(thisMatrix%comm,nproc,mpierr)
-
       ALLOCATE(nnzPerChunk(nProc))
       nnzPerChunk = 0_SIK
       DO i=1,thisMatrix%nLocal
@@ -628,13 +627,12 @@ MODULE MatrixTypes_Native
           END IF
         END DO
       END DO
-
       CALL bandedPList%clear()
 
       ALLOCATE(thisMatrix%chunks(nProc))
       DO i=1,nProc
         blockNonzero = nnzPerChunk(i) > 0
-        CALL MPI_Allgather(blockNonzero,1,MPI_LOGICAL,thisMatrix%contrib(i,:),1,MPI_LOGICAL,thismatrix%comm,mpierr)
+        CALL MPI_Allgather(blockNonzero,1,MPI_LOGICAL,thisMatrix%contrib(:,i),1,MPI_LOGICAL,thismatrix%comm,mpierr)
         IF (blockNonzero) THEN
           CALL bandedPList%add('MatrixType->nnz',nnzPerChunk(i))
           CALL bandedPList%add('MatrixType->n',thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i))
