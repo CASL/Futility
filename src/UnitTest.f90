@@ -230,50 +230,49 @@ MODULE UnitTest
       tmp => utest_firsttest
 
       DO
-        IF(tmp%npass+tmp%nfail>0) THEN
 #ifdef HAVE_MPI
-          !The master prints its stats first
-          IF(utest_master) THEN
-            WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
-              adjustl(tmp%subtestname//"                            "),&
-              tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
-          ENDIF
-
-          !The other processes send there stats to the master
-          !The master then prints them in order
-          !If mpi is unitialized or if only 1 process exists, this loop is never
-          !executed
-          DO i=1,nproc-1
-            IF(rank == 0) THEN
-              CALL MPI_Recv(recvcharbuf,79,MPI_CHARACTER,i,1,MPI_COMM_WORLD,mpistatus,mpierr)
-              IF(mpierr /= 0) THEN
-                WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Recv FAILED'
-                STOP
-              ENDIF
-              subtest_stats=recvcharbuf
-            ENDIF
-            IF(i == rank) THEN
-              WRITE(sendcharbuf,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
-                adjustl(tmp%subtestname//"                            "),&
-                tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
-              CALL MPI_Send(sendcharbuf,79,MPI_CHARACTER,0,1,MPI_COMM_WORLD,mpierr)
-              IF(mpierr /= 0) THEN
-                WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Send FAILED'
-                STOP
-              ENDIF
-            ENDIF
-            IF(utest_master) THEN
-              WRITE(*,'(A79)') subtest_stats
-            ENDIF
-          ENDDO
-#else
+        !The master prints its stats first
+        IF(utest_master) THEN
           WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
             adjustl(tmp%subtestname//"                            "),&
             tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
-#endif
-          npass=npass+tmp%npass
-          nfail=nfail+tmp%nfail
         ENDIF
+
+        !The other processes send there stats to the master
+        !The master then prints them in order
+        !If mpi is uninitialized or if only 1 process exists, this loop is never
+        !executed
+        DO i=1,nproc-1
+          IF(rank == 0) THEN
+            CALL MPI_Recv(recvcharbuf,79,MPI_CHARACTER,i,1,MPI_COMM_WORLD,mpistatus,mpierr)
+            IF(mpierr /= 0) THEN
+              WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Recv FAILED'
+              STOP
+            ENDIF
+            subtest_stats=recvcharbuf
+          ENDIF
+          IF(i == rank) THEN
+            WRITE(sendcharbuf,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
+              adjustl(tmp%subtestname//"                            "),&
+              tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+            CALL MPI_Send(sendcharbuf,79,MPI_CHARACTER,0,1,MPI_COMM_WORLD,mpierr)
+            IF(mpierr /= 0) THEN
+              WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Send FAILED'
+              STOP
+            ENDIF
+          ENDIF
+          IF(utest_master) THEN
+            WRITE(*,'(A79)') subtest_stats
+          ENDIF
+        ENDDO
+#else
+        WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
+          adjustl(tmp%subtestname//"                            "),&
+          tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+#endif
+        npass=npass+tmp%npass
+        nfail=nfail+tmp%nfail
+
         tmp1 => tmp%next
         DEALLOCATE(tmp)
         IF(.NOT.ASSOCIATED(tmp1)) EXIT
