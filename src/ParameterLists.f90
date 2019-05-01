@@ -115,6 +115,11 @@ MODULE ParameterLists
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
   INTEGER(SIK),PARAMETER :: MAX_1D_LEN=10
 
+  !> Verification enumerations
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VALIDATE=0
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYTEST=1
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYLIST=2
+
   !> Exception handler for the module
   TYPE(ExceptionHandlerType),SAVE :: eParams
 
@@ -482,9 +487,12 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
       PROCEDURE,PASS :: validate => validate_ParamType
-      !> @copybrief ParameterLists::verify_ParamType
-      !> @copydoc ParameterLists::verify_ParamType
-      PROCEDURE,PASS :: verify => verify_ParamType
+      !> @copybrief ParameterLists::verifyTest_ParamType
+      !> @copydoc ParameterLists::verifyTest_ParamType
+      PROCEDURE,PASS :: verify => verifyTest_ParamType
+      !> @copybrief ParameterLists::verifyTest_ParamType
+      !> @copydoc ParameterLists::verifyTest_ParamType
+      PROCEDURE,PASS :: verifyList => verifyList_ParamType
       !> @copybrief ParameterLists::edit_ParamType
       !> @copydoc ParameterLists::edit_ParamType
       PROCEDURE,PASS :: edit => edit_ParamType
@@ -2395,14 +2403,15 @@ MODULE ParameterLists
 !> @returns isValid logical indicating that all the required parameters exist
 !>          in @c thisParam and are of the correct type.
 !>
-    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,isMatch) &
+    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,validType,isMatch) &
       RESULT(isValid)
       CHARACTER(LEN=*),PARAMETER :: myName='validateReq_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
-      LOGICAL(SBK),INTENT(OUT),OPTIONAL :: isMatch
-      LOGICAL(SBK) :: isValid
+      INTEGER(SIK),INTENT(IN) :: validType
+      LOGICAL(SBK),INTENT(OUT) :: isMatch
+      LOGICAL(SBK) :: isValid,tmpbool
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
 
@@ -2413,40 +2422,55 @@ MODULE ParameterLists
       SELECTTYPE(p=>reqParams)
         TYPE IS(ParamType)
           !Call validate on the required parameter's value
-          IF(PRESENT(isMatch)) THEN
+          IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+              (validType == VALIDTYPE_VERIFYLIST)) THEN
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,isMatch)
+              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,validType,isMatch)
           ELSE
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix)
+              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,validType,tmpbool)
           ENDIF
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
           IF(ALLOCATED(p%pList)) THEN
             ntrue=0
             DO i=1,SIZE(p%pList)
-              IF(PRESENT(isMatch)) THEN
+              IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+                  (validType == VALIDTYPE_VERIFYLIST)) THEN
                 IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->',isMatch)) ntrue=ntrue+1
+                  prefix//p%name//'->',validType,isMatch)) ntrue=ntrue+1
               ELSE
                 IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->')) ntrue=ntrue+1
+                  prefix//p%name//'->',validType,tmpbool)) ntrue=ntrue+1
               ENDIF
             ENDDO
-            IF(ntrue == SIZE(p%pList)) isValid=.TRUE.
+            isValid=(ntrue == SIZE(p%pList))
           ELSE
             !The required list is not allocated, which means we do not
             !check any of it's possible subparameters, but we must at least
             !check that the list exists
             CALL thisParam%getParam(prefix//p%name,tmpParam)
             IF(.NOT.ASSOCIATED(tmpParam)) THEN
-              CALL eParams%raiseError(modName//'::'//myName// &
-                ' - Failed to locate required parameter "'//prefix// &
-                  p%name//'"!')
+              SELECTCASE(validType)
+                CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+                  isMatch=.FALSE.
+                  CALL eParams%raiseError(modName//'::'//myName// &
+                      ' - When verifying that parameters are equal, the parameter "'// &
+                      prefix//p%name//'" was not found on both lists!')
+                CASE DEFAULT
+                  CALL eParams%raiseError(modName//'::'//myName// &
+                      ' - Failed to locate required parameter "'//prefix// &
+                      p%name//'"!')
+              ENDSELECT
             ELSE
               IF(SAME_TYPE_AS(tmpParam,p)) THEN
                 isValid=.TRUE.
-                IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
+                SELECTCASE(validType)
+                  CASE(VALIDTYPE_VERIFYTEST)
+                    isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+                  CASE(VALIDTYPE_VERIFYLIST)
+                    isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix)
+                ENDSELECT
               ELSE
                 CALL eParams%raiseError(modName//'::'//myName// &
                   ' - Required parameter "'//prefix//p%name//'" has type "'// &
@@ -2459,12 +2483,26 @@ MODULE ParameterLists
           !required parameter's name and check its type
           CALL thisParam%getParam(prefix//p%name,tmpParam)
           IF(.NOT.ASSOCIATED(tmpParam)) THEN
-            CALL eParams%raiseError(modName//'::'//myName// &
-              ' - Failed to locate required parameter "'//prefix//p%name//'"!')
+            SELECTCASE(validType)
+              CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+                isMatch=.FALSE.
+                CALL eParams%raiseError(modName//'::'//myName// &
+                    ' - When verifying that parameters are equal, the parameter "'// &
+                    prefix//p%name//'" was not found on both lists!')
+              CASE DEFAULT
+                CALL eParams%raiseError(modName//'::'//myName// &
+                    ' - Failed to locate required parameter "'//prefix// &
+                    p%name//'"!')
+            ENDSELECT
           ELSE
             IF(SAME_TYPE_AS(tmpParam,p)) THEN
               isValid=.TRUE.
-              IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
+              SELECTCASE(validType)
+                CASE(VALIDTYPE_VERIFYTEST)
+                  isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+                CASE(VALIDTYPE_VERIFYLIST)
+                  isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix)
+              ENDSELECT
             ELSE
               CALL eParams%raiseError(modName//'::'//myName// &
                 ' - Required parameter "'//prefix//p%name//'" has type "'// &
@@ -2645,14 +2683,14 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: reqParams
       CLASS(ParamType),INTENT(IN),OPTIONAL :: optParams
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isValid,tmpbool
       TYPE(ParamType) :: nullParam
 
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) &
-        isValid=validateReq_ParamType(thisParam,reqParams,'')
+        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VALIDATE,tmpbool)
 
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
@@ -2679,7 +2717,7 @@ MODULE ParameterLists
 !> @param reqParams
 !> @param isMatch
 !>
-    SUBROUTINE verify_Paramtype(thisParam,reqParams,isMatch)
+    SUBROUTINE verifyTest_Paramtype(thisParam,reqParams,isMatch)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       LOGICAL(SBK),INTENT(OUT) :: isMatch
@@ -2688,13 +2726,39 @@ MODULE ParameterLists
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
-      isMatch=.FALSE.
+      isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
-        isValid=validateReq_ParamType(thisParam,reqParams,'',isMatch)
+        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYTEST,isMatch)
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
-    ENDSUBROUTINE verify_Paramtype
+    ENDSUBROUTINE verifyTest_Paramtype
+!
+!-------------------------------------------------------------------------------
+!> @brief Verify should only be used in a unit test setting.  It is for checking
+!>        the structure AND values in two parameter lists.  If they are a match,
+!>        isMatch will be returned as true.  If not, false.  Assertion failures
+!>        will be printed for the parameter list values that fail.
+!> @param thisParam
+!> @param reqParams
+!> @param isMatch
+!>
+    SUBROUTINE verifyList_Paramtype(thisParam,reqParams,isMatch)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: reqParams
+      LOGICAL(SBK),INTENT(OUT) :: isMatch
+      LOGICAL(SBK) :: isValid
+
+      !Assume the list is valid, check it only if the required parameter
+      !list is not empty.
+      isValid=.TRUE.
+      isMatch=.TRUE.
+      IF(ASSOCIATED(reqParams%pdat)) THEN
+        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYLIST,isMatch)
+      ELSE
+        isMatch=.NOT.ASSOCIATED(thisParam%pdat)
+      ENDIF
+    ENDSUBROUTINE verifyList_Paramtype
 !
 !-------------------------------------------------------------------------------
 !> @brief This function assumes that thisParam and thatParam are of the same
@@ -2709,7 +2773,8 @@ MODULE ParameterLists
 !> @param thatParam  The parameter list being checked against
 !> @param bool The logical result of the checked parameters.
 !>
-    FUNCTION match_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+    FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='matchTest_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN),TARGET :: thatParam
       CHARACTER(LEN=*),INTENT(IN) :: prefix
