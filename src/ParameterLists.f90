@@ -3062,7 +3062,319 @@ MODULE ParameterLists
         CLASS DEFAULT
           CONTINUE
       ENDSELECT
-    ENDFUNCTION match_ParamType
+    ENDFUNCTION matchTest_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief This function assumes that thisParam and thatParam are of the same
+!>        extended ParamType.  It also assumes that there is a "gettable" value
+!>        that is of thisParam%name on the ParamType.  This function determines
+!>        the extended type, then "gets" the appropriate parameter from both
+!>        lists, then checks their equivalence.  If they are equal or
+!>        approximately equal, the function results in true.  If not, false.
+!>        The function also performs unit test harness assertions when checking
+!>        the values.
+!> @param thisParam  The parameter list being validated
+!> @param thatParam  The parameter list being checked against
+!> @param bool The logical result of the checked parameters.
+!>
+    FUNCTION matchList_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='matchList_ParamType'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN),TARGET :: thatParam
+      CHARACTER(LEN=*),INTENT(IN) :: prefix
+      LOGICAL(SBK) :: bool
+      TYPE(StringType) :: errmesstt,errmess,errmesstp
+      CLASS(ParamType),POINTER :: paramPtr
+      INTEGER(SIK) :: i,j
+      LOGICAL(SBK) :: tmpsbk1,tmpsbk2
+      LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
+      REAL(SSK) :: tmpssk1,tmpssk2
+      REAL(SSK),ALLOCATABLE :: tmpsska11(:),tmpsska21(:,:),tmpsska31(:,:,:)
+      REAL(SSK),ALLOCATABLE :: tmpsska12(:),tmpsska22(:,:),tmpsska32(:,:,:)
+      REAL(SDK) :: tmpsdk1,tmpsdk2
+      REAL(SDK),ALLOCATABLE :: tmpsdka11(:),tmpsdka21(:,:),tmpsdka31(:,:,:)
+      REAL(SDK),ALLOCATABLE :: tmpsdka12(:),tmpsdka22(:,:),tmpsdka32(:,:,:)
+      INTEGER(SNK) :: tmpsnk1,tmpsnk2
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka11(:),tmpsnka21(:,:),tmpsnka31(:,:,:)
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka12(:),tmpsnka22(:,:),tmpsnka32(:,:,:)
+      INTEGER(SLK) :: tmpslk1,tmpslk2
+      INTEGER(SLK),ALLOCATABLE :: tmpslka11(:),tmpslka21(:,:),tmpslka31(:,:,:)
+      INTEGER(SLK),ALLOCATABLE :: tmpslka12(:),tmpslka22(:,:),tmpslka32(:,:,:)
+      TYPE(StringType) :: tmpstr1,tmpstr2
+      TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
+      TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
+
+      !Point to the intent(in) param to use the get function
+      paramPtr => NULL()
+      bool=.FALSE.
+      !Find the extended parameter type, then use the appropriate variable
+      !and "get" the data to check.
+      errmesstt=' - The values' 
+      errmess=' of the two parameter lists with parameter path "'//prefix//thisParam%name//'"'
+      errmesstp=' are not equal!'
+      SELECTTYPE(paramPtr => thatParam)
+        TYPE IS(ParamType_SSK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
+          bool=(tmpssk1 .APPROXEQ. tmpssk2)
+        TYPE IS(ParamType_SDK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
+          bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
+          IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+        TYPE IS(ParamType_SNK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
+          bool=(tmpsnk1 == tmpsnk2)
+        TYPE IS(ParamType_SLK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
+          bool=(tmpslk1 == tmpslk2)
+        TYPE IS(ParamType_SBK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
+          bool=(tmpsbk1 .EQV. tmpsbk2)
+        TYPE IS(ParamType_STR)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
+          bool=(tmpstr1 == tmpstr2)
+        TYPE IS(ParamType_SSK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
+          bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
+        TYPE IS(ParamType_SDK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
+          bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
+            IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
+        TYPE IS(ParamType_SNK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
+          bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsnka11 == tmpsnka12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
+        TYPE IS(ParamType_SLK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
+          bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpslka11 == tmpslka12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
+        TYPE IS(ParamType_SBK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
+          bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsbka11 .EQV. tmpsbka12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
+        TYPE IS(ParamType_STR_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
+          bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
+          IF(bool) THEN
+            DO i=1,SIZE(tmpstra11)
+              bool=tmpstra11(i) == tmpstra12(i)
+              IF(.NOT. bool) EXIT
+            ENDDO
+            !clear?
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
+        TYPE IS(ParamType_SSK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
+          bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
+        TYPE IS(ParamType_SDK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
+          bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
+        TYPE IS(ParamType_SNK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
+          bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsnka21 == tmpsnka22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
+        TYPE IS(ParamType_SLK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
+          bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpslka21 == tmpslka22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
+        TYPE IS(ParamType_STR_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
+          bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
+            IF(bool) THEN
+              outer : DO j=1,SIZE(tmpstra21,DIM=2)
+                DO i=1,SIZE(tmpstra21,DIM=1)
+                  bool=tmpstra21(i,j) == tmpstra22(i,j)
+                  IF(.NOT.bool) EXIT outer
+                ENDDO
+              ENDDO outer
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          !clear?
+          DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
+        TYPE IS(ParamType_SSK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
+          bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
+        TYPE IS(ParamType_SDK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
+          bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
+        TYPE IS(ParamType_SNK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
+          bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsnka31 == tmpsnka32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
+        TYPE IS(ParamType_SLK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
+          bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpslka31 == tmpslka32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
+        TYPE IS(ParamType_List)
+          bool=SAME_TYPE_AS(thisParam,paramPtr)
+          errmesstt=' - The parameters' 
+          errmesstp=' are not the same type!'
+        CLASS DEFAULT
+          CONTINUE
+      ENDSELECT
+      !Error message.
+      IF(.NOT. bool) CALL eParams%raiseError(modName//'::'//myName// &
+          errmesstt//errmess//errmesstp)
+    ENDFUNCTION matchList_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes a ParamType object as a parameter list
