@@ -2761,17 +2761,19 @@ MODULE ParameterLists
     ENDSUBROUTINE verifyList_Paramtype
 !
 !-------------------------------------------------------------------------------
-!> @brief This function assumes that thisParam and thatParam are of the same
-!>        extended ParamType.  It also assumes that there is a "gettable" value
-!>        that is of thisParam%name on the ParamType.  This function determines
-!>        the extended type, then "gets" the appropriate parameter from both
-!>        lists, then checks their equivalence.  If they are equal or
-!>        approximately equal, the function results in true.  If not, false.
-!>        The function also performs unit test harness assertions when checking
-!>        the values.
+!> @brief This function checks the values of thisParam and thatParam and returns 
+!>        if they are equal or approximately equal.
 !> @param thisParam  The parameter list being validated
 !> @param thatParam  The parameter list being checked against
 !> @param bool The logical result of the checked parameters.
+!>
+!> The assumptions of this routine are that the parameters passed in are the 
+!> same extended ParamType.  It also assumes that there is a "gettable" value
+!> that is of thisParam%name on the ParamType.  This function determines
+!> the extended type, then "gets" the appropriate parameter from both lists,
+!> then checks their equivalence.  If they are equal or approximately equal, 
+!> the function results in true.  If not, false.  The function also performs 
+!> unit test harness assertions when checking the values.
 !>
     FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
       CHARACTER(LEN=*),PARAMETER :: myName='matchTest_ParamType'
@@ -3130,18 +3132,20 @@ MODULE ParameterLists
     ENDFUNCTION matchTest_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief This function assumes that thisParam and thatParam are of the same
-!>        extended ParamType.  It also assumes that there is a "gettable" value
-!>        that is of thisParam%name on the ParamType.  This function determines
-!>        the extended type, then "gets" the appropriate parameter from both
-!>        lists, then checks their equivalence.  If they are equal or
-!>        approximately equal, the function results in true.  If not, false.
-!>        The function also performs unit test harness assertions when checking
-!>        the values.
+!> @brief This function checks the values of thisParam and thatParam and returns 
+!>        if they are equal or approximately equal.
 !> @param thisParam  The parameter list being validated
 !> @param thatParam  The parameter list being checked against
 !> @param bool The logical result of the checked parameters.
 !>
+!> The assumptions of this routine are that the parameters passed in are the 
+!> same extended ParamType.  It also assumes that there is a "gettable" value
+!> that is of thisParam%name on the ParamType.  This function determines
+!> the extended type, then "gets" the appropriate parameter from both lists,
+!> then checks their equivalence.  If they are equal or approximately equal, 
+!> the function results in true.  If not, false.  An error is reported if the 
+!> comparison fails.
+!> 
     FUNCTION matchList_ParamType(thisParam,thatParam,prefix) RESULT(bool)
       CHARACTER(LEN=*),PARAMETER :: myName='matchList_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
