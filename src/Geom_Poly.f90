@@ -103,6 +103,9 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::isCircle_PolygonType
       !> @copydetails Geom_Poly::isCircle_PolygonType
       PROCEDURE,PASS :: isCircle => isCircle_PolygonType
+      !> @copybrief Geom_Poly::isSector_PolygonType
+      !> @copydetails Geom_Poly::isSector_PolygonType
+      PROCEDURE,PASS :: isSector => isSector_PolygonType
       !> @copybrief Geom_Poly::intersectLine_PolygonType
       !> @copydetails Geom_Poly::intersectLine_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
@@ -112,6 +115,12 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::getRadius_PolygonType
       !> @copydetails Geom_Poly::getRadius_PolygonType
       PROCEDURE,PASS :: getRadius => getRadius_PolygonType
+      !> @copybrief Geom_Poly::getInnerRadius_PolygonType
+      !> @copydetails Geom_Poly::getInnerRadius_PolygonType
+      PROCEDURE,PASS :: getInnerRadius => getInnerRadius_PolygonType
+      !> @copybrief Geom_Poly::getOuterRadius_PolygonType
+      !> @copydetails Geom_Poly::getOuterRadius_PolygonType
+      PROCEDURE,PASS :: getOuterRadius => getOuterRadius_PolygonType
       !> @copybrief Geom_Poly::subtractSubVolume_PolygonType
       !> @copydetails Geom_Poly::subtractSubVolume_PolygonType
       PROCEDURE,PASS :: subtractSubVolume => subtractSubVolume_PolygonType
@@ -373,6 +382,73 @@ MODULE Geom_Poly
       r=0.0_SRK
       IF(thisPoly%isCircle()) r=thisPoly%quadEdge(3,1)
     ENDFUNCTION getRadius_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a polygon meets the criteria for being an arc
+!>        sector. In short, the polygon must have at least 1 quadratic edge and
+!>        exactly two non-quadratic edges. A circle is an arc sector.
+!> @param thisPoly The polygon type to query
+!> @param bool The logical result of the operation
+!>
+    ELEMENTAL FUNCTION isSector_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: nNonQuadEdges
+      bool=.FALSE.
+      IF(thisPoly%isinit) THEN
+        IF(thisPoly%isCircle()) THEN
+          bool=.TRUE.
+        ELSE
+          !nVert should be equal to the total number of edges
+          nNonQuadEdges=thisPoly%nVert-thisPoly%nQuadEdge
+          bool=(thisPoly%nQuadEdge >= 1) .AND. (nNonQuadEdges == 2)
+        ENDIF
+      ENDIF
+    ENDFUNCTION isSector_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will query a polygon type, check if it meets the criteria
+!>        to be an arc sector, and if so it will return the inner radius.
+!> @param thisPoly The polygon type from which to get the inner radius
+!> @param r The inner radius if thisPoly is an arc sector.  It will be 0.0 for
+!>        all other cases.
+!>
+    ELEMENTAL FUNCTION getInnerRadius_PolygonType(thisPoly) RESULT(r)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      REAL(SRK) :: r
+      INTEGER(SIK) :: i
+      r=0.0_SRK
+      IF(thisPoly%isCircle()) THEN
+        r=0.0_SRK
+      ELSEIF(thisPoly%isSector()) THEN
+        r=HUGE(1.0_SRK)
+        DO i=1,thisPoly%nQuadEdge
+          IF(thisPoly%quadEdge(3,i) < r) r=thisPoly%quadEdge(3,i)
+        ENDDO
+      ENDIF
+      IF(r .APPROXEQA. thisPoly%getOuterRadius()) r=0.0_SRK
+    ENDFUNCTION getInnerRadius_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will query a polygon type, check if it meets the criteria
+!>        to be an arc sector, and if so it will return the outer radius.
+!> @param thisPoly The polygon type from which to get the outer radius
+!> @param r The outer radius if thisPoly is an arc sector.  It will be 0.0 for
+!>        all other cases.
+!>
+    ELEMENTAL FUNCTION getOuterRadius_PolygonType(thisPoly) RESULT(r)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      REAL(SRK) :: r
+      INTEGER(SIK) :: i
+      r=0.0_SRK
+      IF(thisPoly%isCircle()) THEN
+        r=thisPoly%getRadius()
+      ELSEIF(thisPoly%isSector()) THEN
+        DO i=1,thisPoly%nQuadEdge
+          IF(thisPoly%quadEdge(3,i) > r) r=thisPoly%quadEdge(3,i)
+        ENDDO
+      ENDIF
+    ENDFUNCTION getOuterRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine determines if a given point lies on the surface of a
@@ -1634,7 +1710,7 @@ MODULE Geom_Poly
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will return a polygon type for a given cylindrical geometry.
-!> This routine converts a 3D cylinder to a 2D polygon for visualization. 
+!> This routine converts a 3D cylinder to a 2D polygon for visualization.
 !> @param cylinder The cylinder type to be turned into a polygon
 !> @param polygon The polygon type that corresponds to the cylinder type.
 !>

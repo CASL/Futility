@@ -34,7 +34,10 @@ PROGRAM testGeom_Poly
   REGISTER_SUBTEST('%set',testSet)
   REGISTER_SUBTEST('Polygonize',testPolygonize)
   REGISTER_SUBTEST('%isCircle',testIsCircle)
-  REGISTER_SUBTEST('%GetRadius',testGetRadius)
+  REGISTER_SUBTEST('%getRadius',testGetRadius)
+  REGISTER_SUBTEST('%isSector',testIsSector)
+  REGISTER_SUBTEST('%getInnerRadius',testGetInnerRadius)
+  REGISTER_SUBTEST('%getOuterRadius',testGetOuterRadius)
   REGISTER_SUBTEST('%generateGraph',testGenerateGraph)
   REGISTER_SUBTEST('%intersectLine',testIntersectLine)
   REGISTER_SUBTEST('%doesLineIntersect',testDoesLineIntersect)
@@ -2186,6 +2189,281 @@ PROGRAM testGeom_Poly
       ASSERTFAIL(testPolyType%isinit,'%isinit')
       ASSERT(testPolyType%getRadius() .APPROXEQA. 0.0_SRK,'%getRadius, no quad edges')
     ENDSUBROUTINE testGetRadius
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testIsSector()
+      TYPE(PolygonType) :: testPolyType
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,4),c0(2)
+
+      !Test 4 point polygon-circle
+      COMPONENT_TEST('4-Point Circle')
+      CALL testGraph%clear()
+      CALL testPolyType%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,2.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%isCircle(),'%isCircle, 4-point circle')
+      ASSERT(testPolyType%isSector(),'%isSector, 4-point circle')
+      CALL testPolyType%clear()
+
+      !Test uninitialized poly
+      COMPONENT_TEST('Uninitialized Poly')
+      ASSERT(.NOT.testPolyType%isSector(),'%isSector, uninit circle')
+
+      !Test quarter circle
+      COMPONENT_TEST('Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(.NOT.testPolyType%isCircle(),'not %isCircle, quarter circle')
+      ASSERT(testPolyType%isSector(),'%isSector, quarter circle')
+      CALL testPolyType%clear()
+
+      !Test quarter circle with annular region cut out
+      COMPONENT_TEST('Annular Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,1.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(.NOT.testPolyType%isCircle(),'not %isCircle, quarter circle w/cutout')
+      ASSERT(testPolyType%isSector(),'%isSector, quarter circle w/cutout')
+      CALL testPolyType%clear()
+
+      !Test quarter circle with one quad edge
+      COMPONENT_TEST('Incorrect Annular Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(.NOT.testPolyType%isCircle(),'not %isCircle, quarter circle w/cutout - one quad')
+      ASSERT(.NOT.testPolyType%isSector(),'%isSector, quarter circle w/cutout - one quad')
+      CALL testPolyType%clear()
+    ENDSUBROUTINE testIsSector
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetInnerRadius()
+      TYPE(PolygonType) :: testPolyType
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,4),c0(2)
+
+      !Test 4 point polygon-circle
+      COMPONENT_TEST('4-Point Circle')
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,2.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getInnerRadius() .APPROXEQA. 0.0_SRK,'%getInnerRadius, 4-point circle')
+      CALL testPolyType%clear()
+
+      !Test uninitialized poly
+      COMPONENT_TEST('Uninitialized Poly')
+      ASSERT(testPolyType%getInnerRadius() .APPROXEQA. 0.0_SRK,'%getInnerRadius, uninit')
+
+      !Test quarter circle
+      COMPONENT_TEST('Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getInnerRadius() .APPROXEQA. 0.0_SRK,'%getInnerRadius, quarter circle')
+      CALL testPolyType%clear()
+
+      !Test quarter circle with annular region cut out
+      COMPONENT_TEST('Annular Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,1.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getInnerRadius() .APPROXEQA. 1.0_SRK,'%getInnerRadius, quarter circle w/cutout')
+      CALL testPolyType%clear()
+
+      !Test quarter circle with one quad edge
+      COMPONENT_TEST('Incorrect Annular Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getInnerRadius() .APPROXEQA. 0.0_SRK,'%getInnerRadius, quarter circle w/cutout')
+      CALL testPolyType%clear()
+    ENDSUBROUTINE testGetInnerRadius
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetOuterRadius()
+      TYPE(PolygonType) :: testPolyType
+      INTEGER(SIK) :: i
+      REAL(SRK) :: testCoord(2,4),c0(2)
+
+      !Test 4 point polygon-circle
+      COMPONENT_TEST('4-Point Circle')
+      CALL testGraph%clear()
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/-2.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,3)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,-2.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineQuadraticEdge(testCoord(:,1),testCoord(:,2),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,3),testCoord(:,4),c0,2.0_SRK)
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,2.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getOuterRadius() .APPROXEQA. 2.0_SRK,'%getOuterRadius, 4-point circle')
+      CALL testPolyType%clear()
+
+      !Test uninitialized poly
+      COMPONENT_TEST('Uninitialized Poly')
+      ASSERT(testPolyType%getOuterRadius() .APPROXEQA. 0.0_SRK,'%getOuterRadius, uninit')
+
+      !Test quarter circle
+      COMPONENT_TEST('Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      DO i=1,3
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getOuterRadius() .APPROXEQA. 2.0_SRK,'%getOuterRadius, quarter circle')
+      CALL testPolyType%clear()
+
+      !Test quarter circle with annular region cut out
+      COMPONENT_TEST('Annular Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,4),testCoord(:,1),c0,1.0_SRK)
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getOuterRadius() .APPROXEQA. 2.0_SRK,'%getOuterRadius, quarter circle w/cutout')
+      CALL testPolyType%clear()
+
+      !Test quarter circle with one quad edge
+      COMPONENT_TEST('Incorrect Annular Quarter Circle')
+      c0=(/0.0_SRK,0.0_SRK/)
+      testCoord(:,1)=(/1.0_SRK,0.0_SRK/)
+      testCoord(:,2)=(/2.0_SRK,0.0_SRK/)
+      testCoord(:,3)=(/0.0_SRK,2.0_SRK/)
+      testCoord(:,4)=(/0.0_SRK,1.0_SRK/)
+      DO i=1,4
+        CALL testGraph%insertVertex(testCoord(:,i))
+      ENDDO
+      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+      CALL testGraph%defineQuadraticEdge(testCoord(:,2),testCoord(:,3),c0,2.0_SRK)
+      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+      CALL testPolyType%set(testGraph)
+      CALL testGraph%clear()
+      ASSERTFAIL(testPolyType%isinit,'%isinit')
+      ASSERT(testPolyType%getOuterRadius() .APPROXEQA. 0.0_SRK,'%getOuterRadius, quarter circle w/cutout')
+      CALL testPolyType%clear()
+    ENDSUBROUTINE testGetOuterRadius
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testPolygonize()
