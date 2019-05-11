@@ -517,10 +517,12 @@ MODULE FileType_HDF5
     TYPE(HDF5FileType),POINTER :: h5 => NULL()
   ENDTYPE HDF5FilePtrArrayType
 
+#ifdef FUTILITY_HAVE_HDF5
   !> Variable for keeping track of the number of hdf5 files initialized
   !> This variable will be used in logic to call the h5close_f(error)
   !> which closes the interface.
   INTEGER(SIK),SAVE :: nhdf5fileinuse=0
+#endif
   !> Variable to make sure that the hdf5 interface was opened, and thus
   !> can then be closed.
   LOGICAL(SBK),SAVE :: libh5Open=.FALSE.
