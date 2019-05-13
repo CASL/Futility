@@ -13,7 +13,7 @@
 !> to determine if an isotope string is a metastable isotope.  The isotope
 !> string has the atomic symbol and the mass number seperated by a "-" such
 !> as "U-235".  Also, "NAT" can be used for natural isotopes and the mass number
-!> would be 0.  
+!> would be 0.
 !>
 !> @par Module Dependencies
 !>  - @ref IntrType "IntrType": @copybrief IntrType
@@ -65,6 +65,9 @@ MODULE ElementsIsotopes
       !> @copybrief ElementsIsotopes::isValidIsoName_ElemIso
       !> @copydetails ElementsIsotopes::isValidIsoName_ElemIso
       PROCEDURE,PASS :: isValidIsoName => isValidIsoName_ElemIso
+      !> @copybrief ElementsIsotopes::isValidElemName_ElemIso
+      !> @copydetails ElementsIsotopes::isValidElemName_ElemIso
+      PROCEDURE,PASS :: isValidElemName => isValidElemName_ElemIso
       !> @copybrief ElementsIsotopes::getZAID_ElemIso
       !> @copydetails ElementsIsotopes::getZAID_ElemIso
       PROCEDURE,PASS :: getZAID => getZAID_ElemIso
@@ -130,7 +133,7 @@ MODULE ElementsIsotopes
     ENDSUBROUTINE clear_ElemIso
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine returns a bool corresponding whether or not the provided 
+!> @brief Routine returns a bool corresponding whether or not the provided
 !>        isoName is a valid isotope name
 !> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
@@ -138,8 +141,8 @@ MODULE ElementsIsotopes
     FUNCTION isValidIsoName_ElemIso(this,isoName) RESULT(isValid)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: isoName
-
-      LOGICAL(SBK) :: isValid ! Return value
+      LOGICAL(SBK) :: isValid
+      !
       CHARACTER(LEN=6) :: tmpChar
       INTEGER(SIK) :: dashloc,Z,A,ioerr
 
@@ -168,6 +171,31 @@ MODULE ElementsIsotopes
     ENDFUNCTION isValidIsoName_ElemIso
 !
 !-------------------------------------------------------------------------------
+!> @brief Routine returns a bool corresponding whether or not the provided
+!>        elemName is a valid element name
+!> @param this the object
+!> @param elemName the name of the element such as "U" or "am"
+!>
+    FUNCTION isValidElemName_ElemIso(this,elemName) RESULT(isValid)
+      CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: elemName
+      LOGICAL(SBK) :: isValid
+      !
+      CHARACTER(LEN=2) :: tmpChar
+      INTEGER(SIK) :: Z
+
+
+      isValid=.FALSE.
+      tmpChar=TRIM(ADJUSTL(elemName))
+      CALL toUpper(tmpChar)
+      Z=strarraymatchind(elementlist,ADJUSTR(tmpChar))
+      IF(Z > 0) THEN
+        isValid=.TRUE.
+      ENDIF
+
+    ENDFUNCTION isValidElemName_ElemIso
+!
+!-------------------------------------------------------------------------------
 !> @brief Routine returns the ZAID based on a specified isotope name
 !> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
@@ -175,8 +203,8 @@ MODULE ElementsIsotopes
     FUNCTION getZAID_ElemIso(this,isoName) RESULT(zaid)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: isoName
-
-      INTEGER(SIK) :: zaid ! Return value
+      INTEGER(SIK) :: zaid
+      !
       CHARACTER(LEN=6) :: tmpChar
       INTEGER(SIK) :: dashloc,Z,A
 
@@ -209,8 +237,8 @@ MODULE ElementsIsotopes
     FUNCTION getIsoName_ElemIso(this,zaid) RESULT(isoName)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       INTEGER(SIK),INTENT(IN) :: zaid
-
-      CHARACTER(LEN=6) :: isoName ! Return value
+      CHARACTER(LEN=6) :: isoName
+      !
       CHARACTER(LEN=3) :: massName
       INTEGER(SIK) :: Z,A
 
@@ -235,8 +263,7 @@ MODULE ElementsIsotopes
     FUNCTION getElementName_ZAID_Z(this,id) RESULT(elemName)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       INTEGER(SIK),INTENT(IN) :: id
-
-      CHARACTER(LEN=2) :: elemName ! Return value
+      CHARACTER(LEN=2) :: elemName
 
       REQUIRE(this%isInit)
       REQUIRE(id>0)
@@ -251,21 +278,21 @@ MODULE ElementsIsotopes
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the element name based on specified isotope name
 !> @param this the object
-!> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!> @param name the name of the element or isotope such as "U" or "am-242m"
 !>
-    FUNCTION getElementName_IsoStr(this,isoName) RESULT(elemName)
+    FUNCTION getElementName_IsoStr(this,name) RESULT(elemName)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
-      CHARACTER(LEN=*),INTENT(IN) :: isoName
-
-      CHARACTER(LEN=2) :: elemName ! Return value
+      CHARACTER(LEN=*),INTENT(IN) :: name
+      CHARACTER(LEN=2) :: elemName
+      !
       INTEGER(SIK) :: dashloc
 
       REQUIRE(this%isInit)
-      REQUIRE(this%isValidIsoName(isoName))
+      REQUIRE(this%isValidIsoName(name) .OR. this%isValidElemName(name))
 
-      dashloc=INDEX(isoName,'-')
-      IF(dashloc==0) dashloc=LEN(isoName)+1
-      elemName=TRIM(ADJUSTL(isoName(1:dashloc-1)))
+      dashloc=INDEX(name,'-')
+      IF(dashloc==0) dashloc=LEN(name)+1
+      elemName=TRIM(ADJUSTL(name(1:dashloc-1)))
       CALL toUpper(elemName)
     ENDFUNCTION getElementName_IsoStr
 !
@@ -277,8 +304,7 @@ MODULE ElementsIsotopes
     FUNCTION getAtomicNumber_ZAID(this,zaid) RESULT(Z)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       INTEGER(SIK),INTENT(IN) :: zaid
-
-      INTEGER(SIK) :: Z ! Return value
+      INTEGER(SIK) :: Z
 
       REQUIRE(this%isInit)
       REQUIRE(zaid>=1000)
@@ -294,8 +320,8 @@ MODULE ElementsIsotopes
     FUNCTION getAtomicNumber_IsoStr_ElemStr(this,name) RESULT(Z)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: name
-
-      INTEGER(SIK) :: Z ! Return value
+      INTEGER(SIK) :: Z
+      !
       CHARACTER(LEN=2) ::Elem
 
       REQUIRE(this%isInit)
@@ -318,8 +344,7 @@ MODULE ElementsIsotopes
     FUNCTION getMassNumber_ZAID(this,zaid) RESULT(A)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       INTEGER(SIK),INTENT(IN) :: zaid
-
-      INTEGER(SIK) :: A ! Return value
+      INTEGER(SIK) :: A
 
       REQUIRE(this%isInit)
       REQUIRE(zaid>=1000)
@@ -335,8 +360,7 @@ MODULE ElementsIsotopes
     FUNCTION getMassNumber_IsoStr(this,isoName) RESULT(A)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: isoName
-
-      INTEGER(SIK) :: A ! Return value
+      INTEGER(SIK) :: A
 
       REQUIRE(this%isInit)
 
@@ -351,8 +375,8 @@ MODULE ElementsIsotopes
     FUNCTION isMetastable_ElemIso(this,isoName) RESULT(isMeta)
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
       CHARACTER(LEN=*),INTENT(IN) :: isoName
-
-      LOGICAL(SBK) :: isMeta ! Return value
+      LOGICAL(SBK) :: isMeta
+      !
       CHARACTER(LEN=7) :: tmpchar
 
       REQUIRE(this%isInit)
