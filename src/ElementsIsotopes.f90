@@ -184,7 +184,6 @@ MODULE ElementsIsotopes
       CHARACTER(LEN=2) :: tmpChar
       INTEGER(SIK) :: Z
 
-
       isValid=.FALSE.
       tmpChar=TRIM(ADJUSTL(elemName))
       CALL toUpper(tmpChar)
