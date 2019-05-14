@@ -21,6 +21,7 @@ PROGRAM testElementsIsotopes
 
   REGISTER_SUBTEST('Initialize',testInit)
   REGISTER_SUBTEST('isValidIsoName',testIsValidIsoName)
+  REGISTER_SUBTEST('isValidElemName',testIsValidElemName)
   REGISTER_SUBTEST('getZAID',testGetZAID)
   REGISTER_SUBTEST('getIsoName',testGetIsotopeName)
   REGISTER_SUBTEST('getElementName',testGetElementName)
@@ -65,6 +66,20 @@ PROGRAM testElementsIsotopes
     ENDSUBROUTINE testIsValidIsoName
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testIsValidElemName()
+      ASSERT(myEI%isValidElemName('H'),'H')
+      ASSERT(myEI%isValidElemName(' H'),' H')
+      ASSERT(myEI%isValidElemName(' H '),' H ')
+      ASSERT(myEI%isValidElemName('H '),'H ')
+      ASSERT(myEI%isValidElemName('He'),'He')
+      ASSERT(myEI%isValidElemName(' He'),' He')
+      ASSERT(myEI%isValidElemName(' He '),' He ')
+      ASSERT(myEI%isValidElemName('He '),'He ')
+      ASSERT(.NOT.myEI%isValidElemName('Z'),'Bad Name')
+      ASSERT(.NOT.myEI%isValidElemName('Z-12'),'Isotope, not element')
+    ENDSUBROUTINE testIsValidElemName
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE testGetZAID()
       ASSERT_EQ(myEI%getZAID('H-2'),1002,'H-2')
       ASSERT_EQ(myEI%getZAID(' H-2'),1002,' H-2')
@@ -88,7 +103,7 @@ PROGRAM testElementsIsotopes
 
       ASSERT_EQ(myEI%getElementName(1),'H','1')
       ASSERT_EQ(myEI%getElementName(47),'AG','47')
-      
+
       ASSERT_EQ(myEI%getElementName('U-235'),'U','U-235')
       ASSERT_EQ(myEI%getElementName('xe-135m'),'XE','xe-135m')
     ENDSUBROUTINE testGetElementName
@@ -97,10 +112,10 @@ PROGRAM testElementsIsotopes
     SUBROUTINE testGetAtomicNumber()
       ASSERT_EQ(myEI%getAtomicNumber(1002),1,'1002')
       ASSERT_EQ(myEI%getAtomicNumber(47710),47,'47710')
-      
+
       ASSERT_EQ(myEI%getAtomicNumber('U  '),92,'U')
       ASSERT_EQ(myEI%getAtomicNumber('pu'),94,'pu')
-      
+
       ASSERT_EQ(myEI%getAtomicNumber('U-235'),92,'U-235')
       ASSERT_EQ(myEI%getAtomicNumber('F-18m'),9,'F-18m')
     ENDSUBROUTINE testGetAtomicNumber
