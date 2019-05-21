@@ -9,6 +9,7 @@ import re
 import itertools as it
 import pandas as pd
 import warnings
+import math
 from IPython.display import HTML
 
 # Define comand line arguments
@@ -19,7 +20,7 @@ parser.add_argument('--path', type=str,
 parser.add_argument('--ext', action='append', type=str,
                     help='The file extensions to check in for requirements', default=[])
 parser.add_argument('--output', type=str,
-                    help='Name of the output file', default='requirements.html')
+                    help='Base name of the output file', default='requirements')
 parser.add_argument('--skip-no-require', dest='skip_no_require', action='store_true',
                     help='If added, files with no requirements present will not be added to the HTML file')
 args = parser.parse_args()
@@ -263,6 +264,59 @@ def ConvertToHTML(df):
                   .render())
     return html_table
 
+def ConvertToLatex(df):
+    """ Convert a Pandas DataFrame to a pretty LaTeX table
+
+      The pandas data frame should have an entry "Additional Information".
+
+      Args:
+         df (pandas.DataFrame): A pandas data frame
+
+      Returns:
+        str: LaTeX text for table
+    """
+    #df['Additional Information'] = df['Additional Information'].apply(
+        #convert_url_to_html_hyperlink)
+    #latex_table = (df.style
+                  #.highlight_null(null_color='red')
+                  #.set_table_styles(html_table_style())
+                  #.render())
+    #latex_table = df.to_latex(multicolumn=False,multirow=True,column_format='ll')
+
+    #Header
+    latex_table = '\\begin{table}[h!]\n\\begin{tabular}{ll}\n'
+    mr = '\multirow{4}{*}{'
+    ws = '                   '
+    pathpre = os.getcwd()
+    pathpre = pathpre.replace('_',r'\_')
+
+    #Data
+    for index, row in df.iterrows():
+      #Trim the last entry, which looks like a return.  Escape % and escape _.
+      reqdesc = str(row['Requirement Description'])[:-1].replace('%',r'\%')
+      reqdesc = reqdesc.replace('_',r'\_')
+      #Escape % and escape _.
+      testfile = row['Test File'].replace('%',r'\%')
+      testfile = testfile.replace('_',r'\_')
+      #cdash
+      cdashname = '<cdash testname>'
+      #Escape % and escape _.
+      addinfo = str(row['Additional Information']).replace('_',r'\_')
+      addinfo = addinfo.rstrip()
+      if (len(addinfo) > 0) and ('/' in addinfo):
+        addinfo = "\href{" + addinfo + "}{\# " + addinfo[addinfo.rfind('/')+1:] + "}"
+      rowid = '' 
+      if (not math.isnan(row['Requirement ID'])):
+        rowid = str(int(row['Requirement ID']))
+      latex_table += mr + rowid + '} & ' + reqdesc + r" \\" + '\n'
+      latex_table += ws + '& ' + cdashname + r" \\" +'\n'
+      latex_table += ws + '& ' + pathpre + testfile[1:] + r" \\" +'\n'
+      latex_table += ws + '& ' + addinfo + r" \\" + '\n'
+    #Trim the last \\ and \n
+    latex_table = latex_table[:-4]
+    #Footer
+    latex_table = latex_table + '\end{tabular}\n\end{table}'
+    return latex_table
 
 def GenerateInputList(path='', ext=[]):
     """ Collect a list of all the files to be parsed given a path and list of extensions
@@ -319,8 +373,14 @@ def CreateRequirementsDataFrame():
 # Main
 if __name__ == "__main__":
     reqDF = CreateRequirementsDataFrame()
-    reqHTML = ConvertToHTML(reqDF)
+    #reqHTML = ConvertToHTML(reqDF)
+    reqLatex = ConvertToLatex(reqDF)
 
-    # Write to file
-    f = open(args.output, 'w')
-    f.write(reqHTML)
+    # Write to HTML file
+    #f = open(args.output+'.html', 'w')
+    #f.write(reqHTML)
+    #f.close()
+    f = open(args.output+'.tex', 'w')
+    f.write(reqLatex)
+    f.close()
+    
