@@ -106,6 +106,9 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::isSector_PolygonType
       !> @copydetails Geom_Poly::isSector_PolygonType
       PROCEDURE,PASS :: isSector => isSector_PolygonType
+      !> @copybrief Geom_Poly::isSection_PolygonType
+      !> @copydetails Geom_Poly::isSection_PolygonType
+      PROCEDURE,PASS :: isSection => isSection_PolygonType
       !> @copybrief Geom_Poly::intersectLine_PolygonType
       !> @copydetails Geom_Poly::intersectLine_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
@@ -371,29 +374,67 @@ MODULE Geom_Poly
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will query a polygon type, check if it meets the criteria
-!>        to be a circle, and if so it will return the radius for the circle.
+!>        to be a circle or circle section, and if so it will return the radius.
 !> @param thisPoly The polygon type from which to get the radius
-!> @param r The radius if thisPoly is a circle.  It will be 0.0 for all other
-!>        cases.
+!> @param r The radius if thisPoly is a circle or circle section. It will be 0.0
+!>         for all other cases.
 !>
     ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       REAL(SRK) :: r
       r=0.0_SRK
-      IF(thisPoly%isCircle()) r=thisPoly%quadEdge(3,1)
+      IF(thisPoly%isSection()) r=thisPoly%quadEdge(3,1)
     ENDFUNCTION getRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief Determines whether a polygon meets the criteria for being an arc
-!>        sector. In short, the polygon must have at least 1 quadratic edge and
-!>        exactly two non-quadratic edges. A circle is an arc sector.
+!>        sector. In short, the polygon must have exactly two quadratic edges
+!>        and exactly two non-quadratic edges. A circle is not an arc sector.
 !> @param thisPoly The polygon type to query
 !> @param bool The logical result of the operation
 !>
     ELEMENTAL FUNCTION isSector_PolygonType(thisPoly) RESULT(bool)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: nNonQuadEdges
+      INTEGER(SIK) :: nNonQuadEdges!,i
+      ! REAL(SRK) :: dist,dist_old
+      bool=.FALSE.
+      IF(thisPoly%isinit) THEN
+        !nVert should be equal to the total number of edges
+        nNonQuadEdges=thisPoly%nVert-thisPoly%nQuadEdge
+        bool=(thisPoly%nQuadEdge == 2) .AND. (nNonQuadEdges == 2)
+        !The following code can be used to check if the lengths of the
+        !non-quadratic edges are equal. This might become relevant if the
+        !sector is required to be "ideal". Leaving commented now for speed.
+        ! dist_old=-1.0_SRK
+        ! IF(ALLOCATED(thisPoly%quad2edge)) THEN
+        !   DO i=1,thisPoly%nVert
+        !     IF(.NOT.ANY(thisPoly%quad2edge == i)) THEN
+        !       dist=Distance(thisPoly%vert(thisPoly%edge(1,i)), &
+        !         thisPoly%vert(thisPoly%edge(2,i)))
+        !       IF(dist_old > 0.0_SRK) THEN
+        !         bool=bool .AND. (dist .APPROXEQA. dist_old)
+        !       ELSE
+        !         dist_old=dist
+        !       ENDIF
+        !     ENDIF
+        !   ENDDO
+        ! ENDIF
+      ENDIF
+    ENDFUNCTION isSector_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a polygon meets the criteria for being an circle
+!>        section. In short, the polygon must have exactly 1 quadratic edge
+!>        and exactly two non-quadratic edges. A full circle is a section.
+!> @param thisPoly The polygon type to query
+!> @param bool The logical result of the operation
+!>
+    ELEMENTAL FUNCTION isSection_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: nNonQuadEdges!,i
+      ! REAL(SRK) :: dist,dist_old
       bool=.FALSE.
       IF(thisPoly%isinit) THEN
         IF(thisPoly%isCircle()) THEN
@@ -401,10 +442,27 @@ MODULE Geom_Poly
         ELSE
           !nVert should be equal to the total number of edges
           nNonQuadEdges=thisPoly%nVert-thisPoly%nQuadEdge
-          bool=(thisPoly%nQuadEdge >= 1) .AND. (nNonQuadEdges == 2)
+          bool=(thisPoly%nQuadEdge == 1) .AND. (nNonQuadEdges == 2)
+          !The following code can be used to check if the lengths of the
+          !non-quadratic edges are equal. This might become relevant if the
+          !section is required to be "ideal". Leaving commented now for speed.
+          ! dist_old=-1.0_SRK
+          ! IF(ALLOCATED(thisPoly%quad2edge)) THEN
+          !   DO i=1,thisPoly%nVert
+          !     IF(.NOT.ANY(thisPoly%quad2edge == i)) THEN
+          !       dist=Distance(thisPoly%vert(thisPoly%edge(1,i)), &
+          !         thisPoly%vert(thisPoly%edge(2,i)))
+          !       IF(dist_old > 0.0_SRK) THEN
+          !         bool=bool .AND. (dist .APPROXEQA. dist_old)
+          !       ELSE
+          !         dist_old=dist
+          !       ENDIF
+          !     ENDIF
+          !   ENDDO
+          ! ENDIF
         ENDIF
       ENDIF
-    ENDFUNCTION isSector_PolygonType
+    ENDFUNCTION isSection_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will query a polygon type, check if it meets the criteria
@@ -418,7 +476,7 @@ MODULE Geom_Poly
       REAL(SRK) :: r
       INTEGER(SIK) :: i
       r=0.0_SRK
-      IF(thisPoly%isCircle()) THEN
+      IF(thisPoly%isSection()) THEN
         r=0.0_SRK
       ELSEIF(thisPoly%isSector()) THEN
         r=HUGE(1.0_SRK)
@@ -426,22 +484,21 @@ MODULE Geom_Poly
           IF(thisPoly%quadEdge(3,i) < r) r=thisPoly%quadEdge(3,i)
         ENDDO
       ENDIF
-      IF(r .APPROXEQA. thisPoly%getOuterRadius()) r=0.0_SRK
     ENDFUNCTION getInnerRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will query a polygon type, check if it meets the criteria
 !>        to be an arc sector, and if so it will return the outer radius.
 !> @param thisPoly The polygon type from which to get the outer radius
-!> @param r The outer radius if thisPoly is an arc sector.  It will be 0.0 for
-!>        all other cases.
+!> @param r The outer radius if thisPoly is an arc sector.  It will be the
+!>        radius for all other cases.
 !>
     ELEMENTAL FUNCTION getOuterRadius_PolygonType(thisPoly) RESULT(r)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       REAL(SRK) :: r
       INTEGER(SIK) :: i
       r=0.0_SRK
-      IF(thisPoly%isCircle()) THEN
+      IF(thisPoly%isSection()) THEN
         r=thisPoly%getRadius()
       ELSEIF(thisPoly%isSector()) THEN
         DO i=1,thisPoly%nQuadEdge
