@@ -373,20 +373,6 @@ MODULE Geom_Poly
     ENDFUNCTION isCircle_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine will query a polygon type, check if it meets the criteria
-!>        to be a circle or circle section, and if so it will return the radius.
-!> @param thisPoly The polygon type from which to get the radius
-!> @param r The radius if thisPoly is a circle or circle section. It will be 0.0
-!>         for all other cases.
-!>
-    ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
-      CLASS(PolygonType),INTENT(IN) :: thisPoly
-      REAL(SRK) :: r
-      r=0.0_SRK
-      IF(thisPoly%isSection()) r=thisPoly%quadEdge(3,1)
-    ENDFUNCTION getRadius_PolygonType
-!
-!-------------------------------------------------------------------------------
 !> @brief Determines whether a polygon meets the criteria for being an arc
 !>        sector. In short, the polygon must have exactly two quadratic edges
 !>        and exactly two non-quadratic edges. A circle is not an arc sector.
@@ -425,8 +411,8 @@ MODULE Geom_Poly
 !
 !-------------------------------------------------------------------------------
 !> @brief Determines whether a polygon meets the criteria for being an circle
-!>        section. In short, the polygon must have exactly 1 quadratic edge
-!>        and exactly two non-quadratic edges. A full circle is a section.
+!>        section. In short, the polygon must have exactly one quadratic edge
+!>        and exactly two non-quadratic edges, or be a full circle.
 !> @param thisPoly The polygon type to query
 !> @param bool The logical result of the operation
 !>
@@ -463,6 +449,20 @@ MODULE Geom_Poly
         ENDIF
       ENDIF
     ENDFUNCTION isSection_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will query a polygon type, check if it meets the criteria
+!>        to be a circle or circle section, and if so it will return the radius.
+!> @param thisPoly The polygon type from which to get the radius
+!> @param r The radius if thisPoly is a circle or circle section. It will be 0.0
+!>         for all other cases.
+!>
+    ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      REAL(SRK) :: r
+      r=0.0_SRK
+      IF(thisPoly%isSection()) r=thisPoly%quadEdge(3,1)
+    ENDFUNCTION getRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will query a polygon type, check if it meets the criteria
