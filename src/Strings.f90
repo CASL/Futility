@@ -239,6 +239,9 @@ MODULE Strings
     !> @copybrief Strings::assign_char_to_StringType
     !> @copydetails Strings::assign_char_to_StringType
     MODULE PROCEDURE assign_char_to_StringType
+    !> @copybrief Strings::assign_char_array_to_StringType
+    !> @copydetails Strings::assign_char_array_to_StringType
+    MODULE PROCEDURE assign_char_array_to_StringType
     !> @copybrief Strings::assign_StringType_to_char
     !> @copydetails Strings::assign_StringType_to_char
     MODULE PROCEDURE assign_StringType_to_char
@@ -878,6 +881,29 @@ MODULE Strings
         ENDDO
       ENDIF
     ENDSUBROUTINE assign_char_to_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns the contents of an intrinsic character type variable to a
+!> @c StringType.
+!> @param thisStr the string object
+!> @param s the character string
+!>
+!> The intent is that this will overload the assignment operator so a
+!> @c CHARACTER type can be assigned to a @c StringType.
+!>
+    PURE SUBROUTINE assign_char_array_to_StringType(thisStr,s)
+      CLASS(StringType),INTENT(INOUT) :: thisStr
+      CHARACTER,INTENT(IN) :: s(:)
+      INTEGER(SIK) :: i
+      !
+      CHARACTER(LEN=SIZE(s)) :: s2
+
+      DO i=1,SIZE(s)
+        s2(i:i)=s(i)
+      ENDDO !i
+      CALL assign_char_to_StringType(thisStr,s2)
+
+    ENDSUBROUTINE assign_char_array_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns the contents of a @c StringType variable to a @c StringType.
