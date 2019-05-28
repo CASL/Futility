@@ -2221,8 +2221,7 @@ PROGRAM testGeom_Poly
       CALL testPolyType%clear()
 
       !Test uninitialized poly
-      COMPONENT_TEST('Uninitialized Poly')
-      ASSERT(.NOT.testPolyType%isSector(),'not %isSector, uninit circle')
+      ASSERT(.NOT.testPolyType%isSector(),'%isSector, uninit')
 
       !Test quarter circle
       COMPONENT_TEST('Quarter Circle')
@@ -2316,8 +2315,7 @@ PROGRAM testGeom_Poly
       CALL testPolyType%clear()
 
       !Test uninitialized poly
-      COMPONENT_TEST('Uninitialized Poly')
-      ASSERT(.NOT.testPolyType%isSector(),'not %isSection, uninit circle')
+      ASSERT(.NOT.testPolyType%isSection(),'%isSection, uninit')
 
       !Test quarter circle
       COMPONENT_TEST('Quarter Circle')
@@ -2409,7 +2407,6 @@ PROGRAM testGeom_Poly
       CALL testPolyType%clear()
 
       !Test uninitialized poly
-      COMPONENT_TEST('Uninitialized Poly')
       ASSERT(testPolyType%getInnerRadius() .APPROXEQA. 0.0_SRK,'%getInnerRadius, uninit')
 
       !Test quarter circle
@@ -2499,7 +2496,6 @@ PROGRAM testGeom_Poly
       CALL testPolyType%clear()
 
       !Test uninitialized poly
-      COMPONENT_TEST('Uninitialized Poly')
       ASSERT(testPolyType%getOuterRadius() .APPROXEQA. 0.0_SRK,'%getOuterRadius, uninit')
 
       !Test quarter circle

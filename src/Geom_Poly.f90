@@ -311,7 +311,7 @@ MODULE Geom_Poly
           ENDDO
         ENDIF
         CALL thisPoly%centroid%init(DIM=2,X=xcent/thisPoly%area,Y=ycent/thisPoly%area)
-        thisPoly%isinit=.TRUE.
+        thisPoly%isInit=.TRUE.
       ENDIF
     ENDSUBROUTINE set_PolygonType
 !
@@ -364,7 +364,7 @@ MODULE Geom_Poly
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
       bool=.FALSE.
-      IF(thisPoly%isinit .AND. (thisPoly%nVert == thisPoly%nQuadEdge)) THEN
+      IF(thisPoly%isInit .AND. (thisPoly%nVert == thisPoly%nQuadEdge)) THEN
         bool=.TRUE.
         DO i=2,thisPoly%nQuadEdge
           bool=bool .AND. ALL(thisPoly%quadEdge(:,i) .APPROXEQA. thisPoly%quadEdge(:,1))
@@ -385,7 +385,7 @@ MODULE Geom_Poly
       INTEGER(SIK) :: nNonQuadEdges!,i
       ! REAL(SRK) :: dist,dist_old
       bool=.FALSE.
-      IF(thisPoly%isinit) THEN
+      IF(thisPoly%isInit) THEN
         !nVert should be equal to the total number of edges
         nNonQuadEdges=thisPoly%nVert-thisPoly%nQuadEdge
         bool=(thisPoly%nQuadEdge == 2) .AND. (nNonQuadEdges == 2)
@@ -410,7 +410,7 @@ MODULE Geom_Poly
     ENDFUNCTION isSector_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief Determines whether a polygon meets the criteria for being an circle
+!> @brief Determines whether a polygon meets the criteria for being a circle
 !>        section. In short, the polygon must have exactly one quadratic edge
 !>        and exactly two non-quadratic edges, or be a full circle.
 !> @param thisPoly The polygon type to query
@@ -422,7 +422,7 @@ MODULE Geom_Poly
       INTEGER(SIK) :: nNonQuadEdges!,i
       ! REAL(SRK) :: dist,dist_old
       bool=.FALSE.
-      IF(thisPoly%isinit) THEN
+      IF(thisPoly%isInit) THEN
         IF(thisPoly%isCircle()) THEN
           bool=.TRUE.
         ELSE
@@ -461,7 +461,9 @@ MODULE Geom_Poly
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       REAL(SRK) :: r
       r=0.0_SRK
-      IF(thisPoly%isSection()) r=thisPoly%quadEdge(3,1)
+      IF(thisPoly%isInit) THEN
+        r=MERGE(thisPoly%quadEdge(3,1),0.0_SRK,thisPoly%isSection())
+      ENDIF
     ENDFUNCTION getRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
@@ -474,15 +476,9 @@ MODULE Geom_Poly
     ELEMENTAL FUNCTION getInnerRadius_PolygonType(thisPoly) RESULT(r)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       REAL(SRK) :: r
-      INTEGER(SIK) :: i
       r=0.0_SRK
-      IF(thisPoly%isSection()) THEN
-        r=0.0_SRK
-      ELSEIF(thisPoly%isSector()) THEN
-        r=HUGE(1.0_SRK)
-        DO i=1,thisPoly%nQuadEdge
-          IF(thisPoly%quadEdge(3,i) < r) r=thisPoly%quadEdge(3,i)
-        ENDDO
+      IF(thisPoly%isInit) THEN
+        r=MERGE(MINVAL(thisPoly%quadEdge(3,:)),0.0_SRK,thisPoly%isSector())
       ENDIF
     ENDFUNCTION getInnerRadius_PolygonType
 !
@@ -496,14 +492,13 @@ MODULE Geom_Poly
     ELEMENTAL FUNCTION getOuterRadius_PolygonType(thisPoly) RESULT(r)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       REAL(SRK) :: r
-      INTEGER(SIK) :: i
       r=0.0_SRK
-      IF(thisPoly%isSection()) THEN
-        r=thisPoly%getRadius()
-      ELSEIF(thisPoly%isSector()) THEN
-        DO i=1,thisPoly%nQuadEdge
-          IF(thisPoly%quadEdge(3,i) > r) r=thisPoly%quadEdge(3,i)
-        ENDDO
+      IF(thisPoly%isInit) THEN
+        IF(thisPoly%isSection()) THEN
+          r=thisPoly%getRadius()
+        ELSEIF(thisPoly%isSector()) THEN
+          r=MAXVAL(thisPoly%quadEdge(3,:))
+        ENDIF
       ENDIF
     ENDFUNCTION getOuterRadius_PolygonType
 !
@@ -527,7 +522,7 @@ MODULE Geom_Poly
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
 
-      IF(thisPoly%isinit .AND. point%dim == 2) THEN
+      IF(thisPoly%isInit .AND. point%dim == 2) THEN
         bool=.FALSE.
         !Check if its one of the vertices
         DO i=1,thisPoly%nVert
@@ -725,7 +720,7 @@ MODULE Geom_Poly
 
       bool=.FALSE.
 
-      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      IF(thisPoly%isInit .AND. thatPoly%isinit) THEN
         bool=.TRUE.
         !1. make sure all vertices are inside bounding polygon
         DO i=1,thatPoly%nVert
@@ -1089,7 +1084,7 @@ MODULE Geom_Poly
 
       bool=.FALSE.
 
-      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      IF(thisPoly%isInit .AND. thatPoly%isinit) THEN
         !2. Check intersections between combinations of edges of two polygons (ignore intersections that are vertices)
         ALLOCATE(Lines(thisPoly%nVert-thisPoly%nQuadEdge))
         IF(thisPoly%nQuadEdge > 0) ALLOCATE(Circs(thisPoly%nQuadEdge))
@@ -1435,7 +1430,7 @@ MODULE Geom_Poly
       TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
       TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
 
-      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      IF(thisPoly%isInit .AND. thatPoly%isinit) THEN
         !Set up all the lines for both polygons
         ALLOCATE(theseLines(thisPoly%nVert))
         ALLOCATE(thoseLines(thatPoly%nVert))
