@@ -102,6 +102,7 @@ MODULE VectorTypes
   PUBLIC :: VectorFactory
   PUBLIC :: VectorResemble
   PUBLIC :: VectorType
+  PUBLIC :: NativeVectorType
   PUBLIC :: DistributedVectorType
   PUBLIC :: RealVectorType
 #ifdef FUTILITY_HAVE_PETSC

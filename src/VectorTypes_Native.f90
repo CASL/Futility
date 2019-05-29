@@ -35,8 +35,13 @@ MODULE VectorTypes_Native
 
 !
 ! List of public members
+  PUBLIC :: NativeVectorType
   PUBLIC :: RealVectorType
   PUBLIC :: NativeDistributedVectorType
+
+  TYPE,ABSTRACT,EXTENDS(VectorType) :: NativeVectorType
+    REAL(SRK),ALLOCATABLE :: b(:)
+  ENDTYPE NativeVectorType
 
   !> @brief The extended type for real vector
   !>
@@ -45,9 +50,7 @@ MODULE VectorTypes_Native
   !> is provided so as to be able to use the BLAS interfaces adapted
   !> for the vector type and it also gains some value by having the
   !> isSymmetric and isInit attributes.
-  TYPE,EXTENDS(VectorType) :: RealVectorType
-    !> The values of the vector
-    REAL(SRK),ALLOCATABLE :: b(:)
+  TYPE,EXTENDS(NativeVectorType) :: RealVectorType
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -89,10 +92,14 @@ MODULE VectorTypes_Native
       PROCEDURE,PASS :: getRange => getRange_RealVectorType
   ENDTYPE RealVectorType
 
-  TYPE,EXTENDS(DistributedVectorType) :: NativeDistributedVectorType
-    INTEGER(SIK) :: offset
-    REAL(SRK),ALLOCATABLE :: b(:)
-    TYPE(MPI_EnvType) :: commType
+  TYPE,EXTENDS(NativeVectorType) :: NativeDistributedVectorType
+    INTEGER(SIK) :: offset=0
+    !> MPI comm ID
+    INTEGER(SIK) :: comm=-1
+    !> total number of local values
+    INTEGER(SIK) :: nlocal=-1
+
+    !TYPE(MPI_EnvType) :: commType
 
     !!! TODO: Edit vectortypes_base appropriately
     !
@@ -423,8 +430,8 @@ MODULE VectorTypes_Native
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, nlocal, comm
-      TYPE(MPI_EnvType) :: commType
+      INTEGER(SIK) :: n, nlocal, comm, nProc,rank,mpierr
+      !TYPE(MPI_EnvType) :: commType
 
       !Check to set up required and optional param lists.
       IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
@@ -443,17 +450,19 @@ MODULE VectorTypes_Native
 
       thisVector%isInit=.TRUE.
       thisVector%n=n
-      CALL commType%init(comm)
+      !CALL commType%init(comm)
       thisVector%comm = comm
-      thisVector%commType = commType
+      !thisVector%commType = commType
 
+      CALL MPI_Comm_rank(comm,rank,mpierr)
+      CALL MPI_Comm_size(comm,nproc,mpierr)
       ! Default to greedy partitioning
-      IF(commType%rank < MOD(n,commType%nproc)) THEN
-        thisVector%offset = (commType%rank)*(n/commType%nproc + 1)
-        thisVector%nlocal = n/commType%nproc + 1
+      IF(rank < MOD(n,nproc)) THEN
+        thisVector%offset = (rank)*(n/nproc + 1)
+        thisVector%nlocal = n/nproc + 1
       ELSE
-        thisVector%offset = (commType%rank)*(n/commType%nproc) + MOD(n,commType%nproc)
-        thisVector%nlocal = n/commType%nproc
+        thisVector%offset = (rank)*(n/nproc) + MOD(n,nproc)
+        thisVector%nlocal = n/nproc
       ENDIF
       ALLOCATE(thisVector%b(thisVector%nlocal))
 

@@ -1399,7 +1399,7 @@ MODULE LinearSolverTypes
 !>
     SUBROUTINE getResidual_LinearSolverType_Iterative(solver,resid)
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      TYPE(RealVectorType),INTENT(INOUT) :: resid
+      CLASS(VectorType),INTENT(INOUT) :: resid
       !input check
       IF(solver%isInit .AND. ASSOCIATED(solver%b) .AND. ASSOCIATED(solver%A) &
         .AND. ASSOCIATED(solver%X) .AND. resid%n > 0) THEN
@@ -1408,15 +1408,29 @@ MODULE LinearSolverTypes
         IF(resid%n == solver%b%n) THEN
 #ifdef HAVE_MKL
           !not yet implemented
-          SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
-            resid%b=-b%b
+          SELECTTYPE(b => solver%b)
+          TYPE IS(RealVectorType)
+            SELECTTYPE(resid); TYPE IS(RealVectorType)
+              resid%b=-b%b
+            ENDSELECT
+          TYPE IS(NativeDistributedVectorType)
+            SELECTTYPE(resid); TYPE IS(NativeDistributedVectorType)
+              resid%b=-b%b
+            ENDSELECT
           ENDSELECT
           CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #else
           !perform calculations using the BLAS system (intrinsic to Futility or
           !TPL, defined by #HAVE_BLAS)
-          SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
-            resid%b=-b%b
+          SELECTTYPE(b => solver%b)
+          TYPE IS(RealVectorType)
+            SELECTTYPE(resid); TYPE IS(RealVectorType)
+              resid%b=-b%b
+            ENDSELECT
+          TYPE IS(NativeDistributedVectorType)
+            SELECTTYPE(resid); TYPE IS(NativeDistributedVectorType)
+              resid%b=-b%b
+            ENDSELECT
           ENDSELECT
           CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #endif
@@ -1578,241 +1592,207 @@ MODULE LinearSolverTypes
 
 !
 !-------------------------------------------------------------------------------
-!> @brief Solves the Iterative Linear System in parallel using the GMRES
-!>        method with left-preconditioning
+!> @brief Control program for restarted GMRES solver. Handles restarts,
+!> parallelism, and a few other things. Solver body is located in
+!> solveGMRES_partial
+!> @param solver The linear solver to act on
+!> @param PreCondType The preconditioner object to use on the system
+!>
+!> This subroutine solves the Iterative Linear System using the restarted GMRES method
+!>
+    SUBROUTINE solveGMRES(thisLS,thisPC)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
+      CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
+      INTEGER(SIK) :: nIters,outerIt
+      LOGICAL(SBK) :: converged
+
+      IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
+      thisLS%iters = 0
+      DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
+        IF(PRESENT(thisPC)) THEN
+          CALL solveGMRES_partial(thisLS,nIters,converged,thisPC)
+        ELSE
+          CALL solveGMRES_partial(thisLS,nIters,converged)
+        END IF
+        thisLS%iters = thisLS%iters + nIters
+
+        IF (converged) EXIT
+      END DO
+
+    ENDSUBROUTINE solveGMRES
+
+!
+!-------------------------------------------------------------------------------
+!> @brief GMRES core solver routines.
 !> @param solver The linear solver to act on
 !> @param PreCondType The preconditioner object to use on the system
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-    SUBROUTINE solveGMRES(solver,PreCondType)
-      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-      CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: PrecondType
+    SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
+      CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
+      CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
+      INTEGER(SIK),INTENT(OUT) :: nIters
+      LOGICAL(SBK),INTENT(OUT) :: converged
 
-      REAL(SRK)  :: beta,h,t,phibar,temp,tol,acc
-      REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:),b(:)
-      INTEGER(SIK),ALLOCATABLE :: storageCount(:), offsetVals(:)
-      TYPE(RealVectorType) :: u
-      INTEGER(SIK) :: k,m,n,it,lowIdx,highIdx,itOuter,mpierr,rank
-      TYPE(MPI_EnvType) :: parEnv
-      TYPE(ParamType) :: pList
-      LOGICAL(SBK) :: enableParallelism
+      ! Array of orthogonal basis vectors
+      CLASS(NativeVectorType),ALLOCATABLE :: V(:)
+      CLASS(NativeVectorType),ALLOCATABLE :: u,Vy ! Generic vector container
+      REAL(SRK),ALLOCATABLE :: R(:,:) ! Array of basis vector coeffs for sol.
+      REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:),y(:)
+      TYPE(ParamType) :: vecPlist
+      REAL(SRK) :: norm_b,norm_r0,currResid
+      REAL(SRK) :: divTmp,h,t,temp,tol
+      INTEGER(SIK) :: krylovIdx,orthogIdx,nLocal,i,j,oi1
 
-#if HAVE_MPI
-      ! Flag to determine parallelism.
-      ! First set it to value of isInit()
-      enableParallelism = solver%MPIparallelEnv%isInit()
-      ! If MPI parallelEnv is init, then check if parallelism is viable:
-      IF (enableParallelism) THEN
-        parEnv = solver%MPIparallelEnv
-        rank = parEnv%rank
-        enableParallelism = solver%MPIparallelEnv%nproc > 1
-      ELSE
-        WRITE(*,*) "You are attempting to run a solver in an unitialized parallel environment"
-        WRITE(*,*) "Please reconsider your life choices"
-        rank = 0
+      CALL vecPlist%clear()
+      SELECT TYPE(x => thisLS%X)
+      TYPE IS(RealVectorType)
+        CALL vecPlist%add('VectorType -> n',thisLS%A%n)
+        ALLOCATE(RealVectorType :: u)
+        ALLOCATE(RealVectorType :: Vy)
+      TYPE IS(NativeDistributedVectorType)
+        CALL vecPlist%add('VectorType -> n',thisLS%A%n)
+        CALL vecPlist%add('VectorType -> nlocal',nLocal)
+        CALL vecPlist%add('VectorType -> MPI_Comm_ID',thisLS%MPIparallelEnv%comm)
+        ALLOCATE(NativeDistributedVectorType :: u)
+        ALLOCATE(NativeDistributedVectorType :: Vy)
+      CLASS DEFAULT
+        CALL eLinearSolverType%raiseError('Incorrect call to '// &
+           modName//'::solveGMRES_partial'//' - Native solver does not support this vector type.')
+      END SELECT
+
+      CALL u%init(vecPlist)
+      CALL Vy%init(vecPlist)
+
+      ! Compute norm of b
+      norm_b = BLAS_dot(thisLS%b,thisLS%b)
+      CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_b)
+      norm_b = SQRT(norm_b)
+
+      ! Check if solving null system
+      IF (norm_b <= EPSILON(0.0)) THEN
+        CALL thisLS%X%set(0.0_SRK)
+        thisLS%iters = 0
+        thisLS%residual = 0.0
+        RETURN
       END IF
-#else
-      enableParallelism = .FALSE.
-      rank = 0
-#endif
 
-      n=0
-      !Set parameter list for vector
-      CALL pList%add('VectorType -> n',solver%A%n)
-      n=solver%A%n
-      m=MIN(solver%nRestart,n)
+      tol = thisLS%absConvtol*norm_b
 
-      IF (enableParallelism) THEN
-#ifdef HAVE_MPI
-        ! Build map of which data is stored where
-        ALLOCATE(storageCount(parEnv%nproc))
-        ALLOCATE(offsetVals(parEnv%nproc))
-        DO it=1,parEnv%nproc
-          IF (it <= MOD(n,parenv%nproc)) THEN
-            storageCount(it) = n/parEnv%nproc + 1
-          ELSE
-            storageCount(it) = n/parEnv%nproc
-          END IF
-          IF (it == 1) THEN
-            offsetVals(it) = 0
-          ELSE
-            offsetVals(it) = offsetVals(it-1) + storageCount(it-1)
-          END IF
+      ! Check if initial guess is already solution
+      CALL thisLS%getResidual(u)
+      ! Compute norm of u
+      norm_r0 = BLAS_dot(u,u)
+      CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
+      norm_r0 = SQRT(norm_r0)
+
+      IF (norm_r0 <= EPSILON(0.0)) THEN
+        thisLS%iters = 0
+        thisLS%residual = norm_r0
+        RETURN
+      END IF
+
+      ! Allocate Data storage arrays
+      SELECT TYPE(x => thisLS%X)
+      TYPE IS(RealVectorType)
+        ALLOCATE(RealVectorType :: V(thisLS%nRestart))
+      TYPE IS(NativeDistributedVectorType)
+        ALLOCATE(NativeDistributedVectorType :: V(thisLS%nRestart))
+      END SELECT
+
+      ALLOCATE(R(thisLS%nRestart,thisLS%nRestart))
+      ALLOCATE(givens_cos(thisLS%nRestart))
+      ALLOCATE(givens_sin(thisLS%nRestart))
+      ALLOCATE(f(thisLS%nRestart))
+      ALLOCATE(y(thisLS%nRestart))
+
+      ! Initialize relevant quantities
+      currResid = norm_r0
+      h = norm_r0
+      R(:,:) = 0.0
+      CALL V(1)%init(vecPlist)
+
+      DO krylovIdx = 1,thisLS%nRestart
+        divTmp = 1.0/h
+        V(krylovIdx)%b = u%b*divTmp
+
+        IF (PRESENT(thisPC)) THEN
+          !TODO: Add support for preconditioning
+        ELSE
+          CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx),Y=u,BETA=0.0_SRK)
+        END IF
+        ! Create orthogonal basis
+        h = BLAS_dot(V(1)%b,u%b)
+        CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
+
+        u%b = u%b - h*V(1)%b
+        t = h
+        DO orthogIdx=2,krylovIdx
+          h = BLAS_dot(V(orthogIdx)%b,u%b)
+          CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
+          u%b = u%b - h*V(orthogIdx)%b
+
+          oi1 = orthogIdx - 1
+          R(oi1,krylovIdx) = givens_cos(oi1)*t + givens_sin(oi1)*h
+          t = givens_cos(oi1)*h - givens_sin(oi1)*t
         END DO
-        ! Determine our indices:
-        lowIdx = offsetVals(parEnv%rank+1) + 1
-        highIdx = lowIdx + storageCount(parEnv%rank+1) - 1
-#endif
-      ELSE
-        lowIdx = 1
-        highIdx = n
-      END IF
 
-      CALL u%init(pList)
-      CALL pList%clear()
-      CALL solver%getResidual(u)
+        h = BLAS_dot(u%b,u%b)
+        CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
+        h = SQRT(h)
 
-      IF (PRESENT(PrecondType)) THEN
-        CALL PreCondType%apply(u)
-      END IF
+        IF (t >= 0) THEN
+          temp = SQRT(t*t+h*h)
+        ELSE
+          temp = -SQRT(t*t+h*h)
+        END IF
+        givens_cos(krylovIdx) = t/temp
+        givens_sin(krylovIdx) = h/temp
 
-      IF (enableParallelism) THEN
-#ifdef HAVE_MPI
-        beta = BLAS_dot(highIdx - lowIdx + 1,u%b(lowIdx:highIdx),1,u%b(lowIdx:highIdx),1)
-        CALL parenv%allReduce_scalar(beta)
-        beta = sqrt(beta)
-#endif
-      ELSE
-        CALL LNorm(u%b,2,beta)
-      END IF
+        R(krylovIdx,krylovIdx) = temp
+        f(krylovIdx) = givens_cos(krylovIdx)*currResid
+        currResid = -givens_sin(krylovIdx)*currResid
 
-      solver%iters=0
-      IF(beta > EPSILON(0.0_SRK)) THEN
-        ALLOCATE(v(n,m+1))
-        ALLOCATE(R(m+1,m+1))
-        ALLOCATE(w(n))
-        ALLOCATE(c(m+1))
-        ALLOCATE(s(m+1))
-        ALLOCATE(g(m+1))
-        ALLOCATE(y(m+1))
-
-        tol=solver%absConvTol*beta
-
-#ifdef FUTILITY_DEBUG_MSG
-        IF(rank==0) THEN
-          WRITE(668,*) '         PGMRES-LP',0,ABS(phibar)
-        ENDIF
-#endif
-        !Iterate on solution
-        DO itOuter=1,solver%maxIters/solver%nRestart + 1
-          v(:,:)=0._SRK
-          R(:,:)=0._SRK
-          w(:)=0._SRK
-          c(:)=0._SRK
-          s(:)=0._SRK
-          g(:)=0._SRK
-          y(:)=0._SRK
-
-          v(:,1)=-u%b/beta
-          phibar=beta
-
-          DO it=1,m
-            ! Must be done in full on every processor
-            CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-
-            IF (PRESENT(PrecondType)) THEN
-              u%b=w
-              CALL solver%PreCondType%apply(u)
-              w=u%b
-            END IF
-
-            h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,1),1)
-            IF (enableParallelism) THEN
-#ifdef HAVE_MPI
-              CALL parEnv%allReduce_scalar(h)
-#endif
-            END IF
-
-            w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,1)
-            t=h
-
-            DO k=2,it
-              h=BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,v(lowIdx:highIdx,k),1)
-              IF (enableParallelism) THEN
-#ifdef HAVE_MPI
-                CALL parEnv%allReduce_scalar(h)
-#endif
-              END IF
-              w(lowIdx:highIdx)=w(lowIdx:highIdx)-h*v(lowIdx:highIdx,k)
-              R(k-1,it)=c(k-1)*t+s(k-1)*h
-              t=c(k-1)*h-s(k-1)*t
-            ENDDO
-
-            IF (enableParallelism) THEN
-#ifdef HAVE_MPI
-              h = BLAS_dot(highIdx - lowIdx + 1,w(lowIdx:highIdx),1,w(lowIdx:highIdx),1)
-              CALL parEnv%allReduce_scalar(h)
-              h = sqrt(h)
-#endif
-            ELSE
-              CALL LNorm(w,2,h)
-            END IF
-
-            IF(h > 0.0_SRK) THEN
-              v(lowIdx:highIdx,it+1)=w(lowIdx:highIdx)/h
-              IF (enableParallelism) THEN
-#ifdef HAVE_MPI
-                CALL MPI_Allgatherv(MPI_IN_PLACE,n ,MPI_DOUBLE_PRECISION, &
-                  v(:,it+1),storageCount,offsetVals,MPI_DOUBLE_PRECISION, &
-                  parEnv%comm,mpierr)
-#endif
-              END IF
-            ELSE
-              v(:,it+1)=0.0_SRK*w
-            ENDIF
-
-            !Set up next Given's rotation
-            IF(t >= 0.0_SRK) THEN
-              temp=SQRT(t*t+h*h)
-            ELSE
-              temp=-SQRT(t*t+h*h)
-            ENDIF
-            c(it)=t/temp
-            s(it)=h/temp
-            R(it,it)=temp
-
-            g(it)=c(it)*phibar
-            phibar=-s(it)*phibar
-#ifdef FUTILITY_DEBUG_MSG
-            IF(rank == 0) THEN
-              WRITE(668,*) '         PGMRES-LP',it,ABS(phibar)
-            ENDIF
-#endif
-            IF(ABS(phibar) <= tol) EXIT
-          ENDDO
-
-          ! Compute solution, store in u%b
-          y(1:it)=g(1:it)
-          CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
-          CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
-
-          ! Move solution into solver%x, compute residual
-          CALL BLAS_axpy(u,solver%x)
-          CALL solver%getResidual(u)
-
-          IF (enableParallelism) THEN
-#ifdef HAVE_MPI
-            beta = BLAS_dot(highIdx - lowIdx + 1, u%b(lowIdx:highIdx), 1, u%b(lowIdx:highIdx), 1)
-            CALL parenv%allReduce_scalar(beta)
-            beta = sqrt(beta)
-#endif
+        IF (ABS(currResid) <= tol .OR. krylovIdx == thisLS%nRestart) THEN
+          y(1:krylovIdx)=f(1:krylovIdx)
+          CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),y(1:krylovIdx))
+          !CALL BLAS_matvec(V(1:krylovIdx),y(1:krylovIdx),0.0_SRK,u%b)
+          Vy%b = 0.0
+          DO i=1,krylovIdx
+            Vy%b = Vy%b + V(i)%b*y(i)
+          END DO
+          IF (PRESENT(thisPC)) THEN
+            ! TODO: Support preconditioning
           ELSE
-            CALL LNorm(u%b,2,beta)
+            CALL BLAS_axpy(Vy,thisLS%x,A=-1.0_SRK)
           END IF
+          EXIT
+        END IF
 
-          ! If we'e converged, exit and report
-          IF(ABS(phibar) <= tol) EXIT
-          ! Otherwise continue with restart
-        ENDDO
+        CALL V(krylovIdx+1)%init(vecPlist)
+      END DO
 
-        !> TODO: Figure out what to do with non-convergence
-        IF (itOuter >= solver%maxIters/solver%nRestart) WRITE(*,*) "Max iters reached"
+      CALL thisLS%getResidual(u)
+      norm_r0 = BLAS_dot(u,u)
+      CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
+      norm_r0 = SQRT(norm_r0)
+      thisLS%residual = norm_r0
 
-        IF(it == m+1) it=m
-        solver%iters=it + (itOuter-1)*solver%nRestart
+      nIters = krylovIdx
+      converged = ABS(currResid) <= tol
 
-        DEALLOCATE(v)
-        DEALLOCATE(R)
-        DEALLOCATE(w)
-        DEALLOCATE(c)
-        DEALLOCATE(s)
-        DEALLOCATE(g)
-        DEALLOCATE(y)
-      ENDIF
-      solver%info=0
-      CALL u%clear()
-    ENDSUBROUTINE solveGMRES
+      DEALLOCATE(R)
+      DEALLOCATE(givens_cos)
+      DEALLOCATE(givens_sin)
+      DEALLOCATE(f)
+      DEALLOCATE(y)
+      DEALLOCATE(V)
+      DEALLOCATE(u)
+      DEALLOCATE(Vy)
+
+    ENDSUBROUTINE solveGMRES_partial
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in

@@ -420,7 +420,7 @@ MODULE MatrixTypes_Native
               ' be greater than 1!')
         ELSEIF(nnz < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Number of nonzer elements (nnz)'// &
+            modName//'::'//myName//' - Number of nonzero elements (nnz)'// &
               ' must be greater than 0!')
         ELSE
           ALLOCATE(matrix%iTmp(nnz))

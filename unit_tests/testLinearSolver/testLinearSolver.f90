@@ -2797,7 +2797,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,3_SIK)
       ENDSELECT
 
       !solve it
@@ -2881,7 +2881,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,3_SIK)
       ENDSELECT
 
       !solve
@@ -2898,6 +2898,8 @@ CONTAINS
       thisB(9)=0.6875_SRK
       thisB=thisB*10000._SRK
       match=.TRUE.
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+      ENDSELECT
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
           IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
@@ -3015,7 +3017,7 @@ CONTAINS
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,30_SIK)
       ENDSELECT
 
       !Solve it
@@ -3027,6 +3029,111 @@ CONTAINS
       DEALLOCATE(thisB)
       DEALLOCATE(thisX)
       CALL thisLS%clear()
+
+      ! Banded matrix test
+      COMPONENT_TEST('BandedMatrixType')
+      ! initialize linear system
+      CALL pList%clear()
+      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->solverMethod',GMRES)
+      CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+      CALL pList%add('LinearSolverType->timerName','testTimer')
+      CALL pList%add('LinearSolverType->matType',BANDED)
+      CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->m',9_SNK)
+      CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
+      CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+      CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
+      CALL pList%validate(pList,optListLS)
+      CALL thisLS%init(pList)
+
+      SELECTTYPE(A => thisLS%A); TYPE IS(BandedMatrixType)
+        DO i=1,9
+          CALL A%set(i,i,4.0_SRK)
+          IF((i < 9).AND.((i /= 3).AND.(i /= 6))) THEN
+            CALL A%set(i,i+1,-1.0_SRK)
+            CALL A%set(i+1,i,-1.0_SRK)
+          ENDIF
+          IF(i < 7) THEN
+            CALL A%set(i,i+3,-1.0_SRK)
+            CALL A%set(i+3,i,-1.0_SRK)
+          ENDIF
+        ENDDO
+        CALL A%assemble()
+      ENDSELECT
+
+      ! build X0 and set it to a vector orthogonal to the solution
+      ! This forces GMRES to take longer and thus require a restart,
+      ! which tests this portion of the solver
+      ALLOCATE(thisX(9))
+      thisX(1)=1.0_SRK
+      thisX(9)=-1.0_SRK
+
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setX0(thisX)
+      ENDSELECT
+
+      !set b
+      SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
+        CALL b%set(1.0_SRK)
+      ENDSELECT
+
+      !set iterations and convergence information and build/set M
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,3_SIK)
+      ENDSELECT
+
+      !solve
+      CALL thisLS%solve()
+      ALLOCATE(thisB(9))
+      thisB(1)=0.6875_SRK
+      thisB(2)=0.875_SRK
+      thisB(3)=0.6875_SRK
+      thisB(4)=0.875_SRK
+      thisB(5)=1.125_SRK
+      thisB(6)=0.875_SRK
+      thisB(7)=0.6875_SRK
+      thisB(8)=0.875_SRK
+      thisB(9)=0.6875_SRK
+      thisB=thisB*10000._SRK
+      match=.TRUE.
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+      ENDSELECT
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      ASSERT(match, 'Iterative%solve() - GMRES')
+      !test to see how it performs with an already decomposed M
+      !reset X to 1.0s
+      match=.TRUE.
+      DO i=1,SIZE(thisB)
+        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+          CALL X%set(1.0_SRK)
+          CALL thisLS%solve()
+          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+          ALLOCATE(dummyvec(X%n))
+          CALL X%get(dummyvec)
+          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+            match=.FALSE.
+            EXIT
+          ENDIF
+        ENDSELECT
+      ENDDO
+      ASSERT(match, 'Iterative%solve() - GMRES')
+      CALL thisLS%A%clear()
+      CALL thisLS%clear()
+      DEALLOCATE(thisB)
+      DEALLOCATE(thisX)
+
 
 #ifdef FUTILITY_HAVE_PETSC
       !With GMRES
