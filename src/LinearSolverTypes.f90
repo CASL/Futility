@@ -352,6 +352,12 @@ MODULE LinearSolverTypes
       ELSE
         CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
       ENDIF
+
+      IF (matType == DISTRIBUTED_BANDED) THEN
+        CALL validParams%add('LinearSolverType->x->VectorType->vecType',DISTRIBUTED_NATIVE)
+        CALL validParams%add('LinearSolverType->b->VectorType->vecType',DISTRIBUTED_NATIVE)
+      END IF
+
       ! pull data for matrix and vector parameter lists
       CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
       matPList=pListPtr
@@ -1666,7 +1672,9 @@ MODULE LinearSolverTypes
       CALL Vy%init(vecPlist)
 
       ! Compute norm of b
-      norm_b = BLAS_dot(thisLS%b,thisLS%b)
+      SELECT TYPE(b => thisLS%b); CLASS IS(NativeVectorType)
+        norm_b = BLAS_dot(b%b,b%b)
+      END SELECT
       CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_b)
       norm_b = SQRT(norm_b)
 
@@ -1683,7 +1691,7 @@ MODULE LinearSolverTypes
       ! Check if initial guess is already solution
       CALL thisLS%getResidual(u)
       ! Compute norm of u
-      norm_r0 = BLAS_dot(u,u)
+      norm_r0 = BLAS_dot(u%b,u%b)
       CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
       norm_r0 = SQRT(norm_r0)
 
@@ -1765,7 +1773,9 @@ MODULE LinearSolverTypes
           IF (PRESENT(thisPC)) THEN
             ! TODO: Support preconditioning
           ELSE
-            CALL BLAS_axpy(Vy,thisLS%x,A=-1.0_SRK)
+            SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
+              x%b = x%b - Vy%b
+            END SELECT
           END IF
           EXIT
         END IF
@@ -1774,7 +1784,7 @@ MODULE LinearSolverTypes
       END DO
 
       CALL thisLS%getResidual(u)
-      norm_r0 = BLAS_dot(u,u)
+      norm_r0 = BLAS_dot(u%b,u%b)
       CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
       norm_r0 = SQRT(norm_r0)
       thisLS%residual = norm_r0

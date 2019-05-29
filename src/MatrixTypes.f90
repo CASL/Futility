@@ -115,7 +115,7 @@ MODULE MatrixTypes
   PUBLIC :: RectMatrixType
   PUBLIC :: DistributedMatrixType
   ! Matrix structure enumerations
-  PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG,BANDED
+  PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG,BANDED,DISTRIBUTED_BANDED
   ! Matrix-Vector engine enumerations
   PUBLIC :: VM_PETSC,VM_TRILINOS,VM_NATIVE
   ! Parameter list setup/teardown

@@ -53,6 +53,7 @@ MODULE VectorTypes_Base
   PUBLIC :: RealVectorType_reqParams,RealVectorType_optParams
   PUBLIC :: DistributedVectorType_reqParams,DistributedVectorType_optParams
   PUBLIC :: VectorType_Paramsflag
+  INTEGER(SIK),PARAMETER,PUBLIC :: REAL_NATIVE=0,DISTRIBUTED_NATIVE=1
   PUBLIC :: VectorType_Declare_ValidParams
   PUBLIC :: VectorType_Clear_ValidParams
 

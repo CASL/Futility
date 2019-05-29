@@ -114,6 +114,8 @@ MODULE VectorTypes
 #ifdef HAVE_MPI
   PUBLIC :: NativeDistributedVectorType
 #endif
+  ! Matrix structure enumerations
+  PUBLIC :: REAL_NATIVE,DISTRIBUTED_NATIVE
   !> Enumerated matrix-vector engines
   INTEGER(SIK),PARAMETER,PUBLIC :: VM_PETSC=0,VM_TRILINOS=1,VM_NATIVE=2
   PUBLIC :: VectorType_Declare_ValidParams
@@ -235,7 +237,7 @@ MODULE VectorTypes
       CLASS(VectorType),POINTER,INTENT(INOUT) :: vector
       CLASS(ParamType),INTENT(IN) :: params
       !
-      INTEGER(SIK) :: engine
+      INTEGER(SIK) :: engine,vecType
 
       IF(ASSOCIATED(vector)) THEN
         CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
@@ -245,14 +247,28 @@ MODULE VectorTypes
 
       ! Default to the native engine
       engine=VM_NATIVE
+      ! Default to RealVectorType
+      vecType=REAL_NATIVE
 
       IF(params%has("VectorType->engine")) THEN
         CALL params%get("VectorType->engine",engine)
       ENDIF
 
+      IF(params%has("VectorType->vecType")) THEN
+        CALL params%get("VectorType->vecType", vecType)
+      ENDIF
+
       SELECTCASE(engine)
         CASE(VM_NATIVE)
-          ALLOCATE(RealVectorType :: vector)
+          SELECTCASE(vecType)
+          CASE(REAL_NATIVE)
+              ALLOCATE(RealVectorType :: vector)
+            CASE(DISTRIBUTED_NATIVE)
+              ALLOCATE(NativeDistributedVectorType :: vector)
+            CASE DEFAULT
+              CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+                "Unrecognized vector type requested")
+            ENDSELECT
         CASE(VM_PETSC)
 #ifdef FUTILITY_HAVE_PETSC
           ALLOCATE(PETScVectorType :: vector)
