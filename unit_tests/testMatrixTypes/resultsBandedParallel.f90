@@ -20,6 +20,7 @@ PROGRAM testMatrixTypes
   USE ParallelEnv
   USE VectorTypes
   USE MatrixTypes
+  USE Times
 
   IMPLICIT NONE
 
@@ -39,8 +40,12 @@ PROGRAM testMatrixTypes
 #endif
 #endif
 
+  CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
+  CLASS(PETScMatrixType),ALLOCATABLE :: cmfdPetsc
+  TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
   TYPE(ExceptionHandlerType),TARGET :: e
-  TYPE(ParamType) :: pList,optListMat,vecPList
+  CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
+  TYPE(ParamType) :: bandedPlist,petscPList,vecPList
 
   !Configure exception handler for test
   CALL e%setStopOnError(.FALSE.)
@@ -56,23 +61,24 @@ PROGRAM testMatrixTypes
 #endif
 #endif
 
+  CALL setup()
   CREATE_TEST('Verify results')
-  REGISTER_SUBTEST('Products Match',verifyFD)
+  !REGISTER_SUBTEST('Products Match',verifyFD)
   REGISTER_SUBTEST('Products Match',verifyCMFD)
 
 
-  CREATE_TEST('Matvec FD Timing Results')
-  REGISTER_SUBTEST('Petsc',timePetsc)
-  REGISTER_SUBTEST('Banded',timeBanded)
+  !CREATE_TEST('Matvec FD Timing Results')
+  !REGISTER_SUBTEST('Petsc',timePetsc)
+  !REGISTER_SUBTEST('Banded',timeBanded)
 
   CREATE_TEST('Matvec CMFD Timing Results')
   REGISTER_SUBTEST('Petsc',timePetscCMFD)
   REGISTER_SUBTEST('Banded',timeBandedCMFD)
   FINALIZE_TEST()
 
-  CALL optListMat%clear()
   CALL vecPList%clear()
-  CALL pList%clear()
+  CALL bandedPlist%clear()
+  CALL petscPlist%clear()
   CALL MatrixTypes_Clear_ValidParams()
   CALL VectorType_Clear_ValidParams()
 
@@ -85,135 +91,22 @@ PROGRAM testMatrixTypes
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-
-    SUBROUTINE verifyFD()
-      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: fdBanded
-      CLASS(PETScMatrixType),ALLOCATABLE :: fdPetsc
-      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
-      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
+  
+    SUBROUTINE setup()
+      INTEGER(SIK) :: n,nnz,i,j,rank,mpierr,ios
       REAL(SRK) :: tmpreal
-      CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
-      TYPE(ParamType) :: bandedPlist,petscPList,vecPList
-      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,perr, rank, mpierr, highIdx, lowIdx
-      LOGICAL(SBK) :: bool,bool2
-
-      ALLOCATE(DistributedBandedMatrixType :: fdBanded)
-      ALLOCATE(PETScMatrixType :: fdPetsc)
-
-      n = 16384
-      gridSize = 128
-      nnz = 1
-      IF (n > 1) THEN
-        nnz = nnz + 11
-      END IF
-      IF (n > 2) THEN
-        nnz = nnz + 5*(gridSize-2)*(gridSize-2) + 16*(gridSize-2)
-      END IF
-
-      CALL bandedPList%clear()
-      CALL bandedPlist%add('MatrixType->n',n)
-      CALL bandedPlist%add('MatrixType->m',n)
-      CALL bandedPlist%add('MatrixType->nnz',nnz)
-      CALL bandedPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
-
-      CALL petscPList%clear()
-      CALL petscPlist%add('MatrixType->n',n)
-      CALL petscPlist%add('MatrixType->m',n)
-      CALL petscPlist%add('MatrixType->nnz',nnz)
-      CALL petscPlist%add('MatrixType->isSym',.FALSE.)
-      CALL petscPlist%add('MatrixType->matType',SPARSE)
-      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
-
-      CALL vecPList%clear()
-      CALL vecPList%add('VectorType->n',n)
-      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
-
-
-      CALL fdBanded%init(bandedPList)
-      CALL fdPetsc%init(petscPList)
-
-      ALLOCATE(NativeDistributedVectorType :: x)
-      ALLOCATE(NativeDistributedVectorType :: y)
-      ALLOCATE(petscVectorType :: xPetsc)
-      ALLOCATE(petscVectorType :: yPetsc)
-
-      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
-      CALL xPetsc%init(vecPList)
-      CALL yPetsc%init(vecPList)
-      CALL x%init(vecPList)
-      CALL y%init(vecPList)
-
-      x%b = 1.0_SRK
-      y%b = 0.0_SRK
-      CALL yPetsc%set(0.0_SRK)
-      CALL xPetsc%set(1.0_SRK)
-
-      DO i=1,n
-        yCoord = (i-1)/gridSize
-        xCoord = MOD(i-1,gridSize)
-        IF (yCoord > 0) THEN
-          CALL fdBanded%set(i,i-gridSize,-1.0_SRK)
-          CALL fdPetsc%set(i,i-gridSize,-1.0_SRK)
-        END IF
-        IF (xCoord > 0) THEN
-          CALL fdBanded%set(i, i-1,-1.0_SRK)
-          CALL fdPetsc%set(i, i-1,-1.0_SRK)
-        END IF
-        CALL fdBanded%set(i,i,4.0_SRK)
-        CALL fdPetsc%set(i,i,4.0_SRK)
-        IF (xCoord < gridSize-1) THEN
-          CALL fdBanded%set(i, i+1,-1.0_SRK)
-          CALL fdPetsc%set(i, i+1,-1.0_SRK)
-        END IF
-        IF (yCoord < gridSize-1) THEN
-          CALL fdBanded%set(i,i+gridSize,-1.0_SRK)
-          CALL fdPetsc%set(i,i+gridSize,-1.0_SRK)
-        END IF
-      END DO
-
-      CALL fdBanded%assemble()
-      CALL fdPetsc%assemble()
-
-      CALL BLAS_matvec(THISMATRIX=fdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
-      CALL BLAS_matvec(THISMATRIX=fdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
-
-      lowIdx = fdBanded%iOffsets(rank+1) + 1
-      highIdx = fdBanded%iOffsets(rank+2)
-
-      ALLOCATE(dummyvec(highIdx - lowIdx + 1))
-      dummyvec = 0.0_SRK
-
-      CALL yPetsc%get(lowIdx,highIdx,dummyvec)
-      bool = ALL(y%b .APPROXEQ. dummyvec)
-
-      ASSERT(bool,'Matvec results match')
-
-      CALL vecPList%clear()
-      CALL petscPList%clear()
-      CALL bandedPlist%clear()
-
-    END SUBROUTINE verifyFD
-
-    SUBROUTINE verifyCMFD()
-      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
-      CLASS(PETScMatrixType),ALLOCATABLE :: cmfdPetsc
-      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
-      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
-      REAL(SRK) :: tmpreal
-      CLASS(PETScVectorType),ALLOCATABLE :: xPetsc, yPetsc
-      TYPE(ParamType) :: bandedPlist,petscPList,vecPList
-      INTEGER(SIK) :: i,j,xcoord,ycoord,n,nnz,gridsize,ios,rank,mpierr,lowIdx,highIdx
-      LOGICAL(SBK) :: bool
       CHARACTER(200)::tempcharacter,dirname
-
+      TYPE(TimerType) :: bandAssemble,petscAssemble
 
       ALLOCATE(DistributedBandedMatrixType :: cmfdBanded)
       ALLOCATE(PETScMatrixType :: cmfdPetsc)
 
       CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+      CALL bandAssemble%setTimerName('Banded Matrix Assemble Time')
+      CALL petscAssemble%setTimerName('PETSc Matrix Assemble Time')
 
-      n = 1512
-      nnz = 67200
+      n = 148716
+      nnz = 6015708
 
       CALL bandedPList%clear()
       CALL bandedPlist%add('MatrixType->n',n)
@@ -247,11 +140,9 @@ PROGRAM testMatrixTypes
       CALL x%init(vecPList)
       CALL y%init(vecPList)
 
-      x%b = 1.0_SRK
-      CALL xPetsc%setAll_scalar(1.0_SRK)
-
-      !WRITE(dirname,'(2A)'),'/home/mkbz/Research/bandMatResults/Futility/unit_tests/testPreconditionerTypes/matrices/mg_matrix.txt'
-      WRITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
+      WRITE(*,*) "Reading in data..."
+      WRITE(dirname,'(2A)'),'/home/mkbz/Research/genCMFD/it_end.cmfd.txt'
+      !RITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
 
       OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
       IF(ios .NE. 0)THEN
@@ -273,23 +164,95 @@ PROGRAM testMatrixTypes
       END DO
       CLOSE(11)
 
+      WRITE(dirname,'(2A)'),'/home/mkbz/Research/genCMFD/it_end.src.txt'
+      !RITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
 
+      !OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
+      !IF(ios .NE. 0)THEN
+      !    WRITE(*,*)tempcharacter
+      !    WRITE(*,*)'Could not open res.dat'
+      !    STOP
+      !END IF
+      !READ(11,*)
+      !DO
+      !    READ(11,*,IOSTAT=ios)i,tmpreal
+      !    IF(ios >0)THEN
+      !        STOP 'File input error'
+      !    ELSE IF(ios<0)THEN
+      !        EXIT
+      !    ELSE
+      !      trueSrc(i) = tmpreal
+      !    END IF
+      !END DO
+      !CLOSE(11) 
+
+      WRITE(dirname,'(2A)'),'/home/mkbz/Research/genCMFD/it_end.sol.txt'
+      !RITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
+
+      OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
+      IF(ios .NE. 0)THEN
+          WRITE(*,*)tempcharacter
+          WRITE(*,*)'Could not open res.dat'
+          STOP
+      END IF
+      READ(11,*)
+      DO
+          READ(11,*,IOSTAT=ios)i,tmpreal
+          IF(ios >0)THEN
+              STOP 'File input error'
+          ELSE IF(ios<0)THEN
+              EXIT
+          ELSE
+            CALL x%set(i,tmpreal)
+            IF (i > cmfdBanded%iOffsets(rank+1) .AND. i <= cmfdBanded%iOffsets(rank+2))  CALL xPetsc%set(i,tmpreal)
+          END IF
+      END DO
+      CLOSE(11)
+ 
+      CALL MPI_Barrier(PE_COMM_WORLD,mpierr)
+      WRITE(*,*) "Assembling cmfdBanded"
+      CALL bandAssemble%tic()
       CALL cmfdBanded%assemble()
+      CALL bandAssemble%toc()
+      
+      CALL MPI_Barrier(PE_COMM_WORLD,mpierr)
+      WRITE(*,*) "Assembling cmfdPetsc"
+      CALL petscAssemble%tic()
       CALL cmfdPetsc%assemble()
+      CALL petscAssemble%toc()
+   
+      WRITE(*,*) 'Timer '//bandAssemble%getTimerName()//' had time '// &
+                 bandAssemble%getTimeChar()
+      WRITE(*,*) bandAssemble%getTimeHHMMSS()
+      WRITE(*,*) bandAssemble%getTimeReal()
+      
+      WRITE(*,*) 'Timer '//petscAssemble%getTimerName()//' had time '// &
+                 petscAssemble%getTimeChar()
+      WRITE(*,*) petscAssemble%getTimeHHMMSS()
+      WRITE(*,*) petscAssemble%getTimeReal()
+ 
+    END SUBROUTINE setup
 
+    SUBROUTINE verifyCMFD()
+      REAL(SRK) :: tmpreal,tmpreal2
+      INTEGER(SIK) :: i,lowIdx,highIdx,rank,mpierr
+      LOGICAL(SBK) :: bool
+      
+      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+      WRITE(*,*) "Executing BLAS_matvec (banded)"
       CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
+      WRITE(*,*) "Executing BLAS_matvec (petsc)"
       CALL BLAS_matvec(THISMATRIX=cmfdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
 
+      WRITE(*,*) "Comparing"
       lowIdx = cmfdBanded%iOffsets(rank+1) + 1
       highIdx = cmfdBanded%iOffsets(rank+2)
 
-      ALLOCATE(dummyvec(highIdx - lowIdx + 1))
-      dummyvec = 0.0_SRK
-
-      CALL yPetsc%get(lowIdx,highIdx,dummyvec)
-
-      bool = ALL(ABS(y%b - dummyvec) < 1.0e-12)
-      ASSERT(bool,'Matvec results match')
+      DO i=lowIdx,highIdx
+        CALL yPetsc%get(i,tmpreal2)
+        CALL y%get(i,tmpreal)
+        ASSERT(ABS(tmpreal - tmpreal2) < 1.0e-12,'petsc works')
+      ENDDO
 
       CALL vecPList%clear()
       CALL petscPList%clear()
@@ -298,308 +261,51 @@ PROGRAM testMatrixTypes
     END SUBROUTINE verifyCMFD
 
 
-    SUBROUTINE timeBanded()
-
-      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: fdBanded
-      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
-      REAL(SRK) :: timetaken
-      INTEGER(SIK) :: i,n,nnz,xCoord,yCoord,gridSize,time1,time2,clock_rate
-      TYPE(ParamType) :: bandedPlist
-
-      ! Create finite difference matrix
-      ALLOCATE(DistributedBandedMatrixType :: fdBanded)
-      n = 16384
-      gridSize = 128
-      nnz = 1
-      IF (n > 1) THEN
-        nnz = nnz + 11
-      END IF
-      IF (n > 2) THEN
-        nnz = nnz + 5*(gridSize-2)*(gridSize-2) + 16*(gridSize-2)
-      END IF
-      CALL bandedPList%clear()
-      CALL bandedPlist%add('MatrixType->n',n)
-      CALL bandedPlist%add('MatrixType->m',n)
-      CALL bandedPlist%add('MatrixType->nnz',nnz)
-      CALL bandedPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
-      CALL bandedPlist%validate(bandedPlist)
-      CALL fdBanded%init(bandedPlist)
-
-      CALL vecPList%clear()
-      CALL vecPList%add('VectorType->n',n)
-      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
-      ALLOCATE(NativeDistributedVectorType :: x)
-      ALLOCATE(NativeDistributedVectorType :: y)
-      CALL x%init(vecPList)
-      CALL y%init(vecPList)
-
-
-      DO i=1,n
-        yCoord = (i-1)/gridSize
-        xCoord = MOD(i-1,gridSize)
-        IF (yCoord > 0) THEN
-          CALL fdBanded%set(i,i-gridSize,-1.0_SRK)
-        END IF
-        IF (xCoord > 0) THEN
-          CALL fdBanded%set(i, i-1,-1.0_SRK)
-        END IF
-        CALL fdBanded%set(i,i,4.0_SRK)
-        IF (xCoord < gridSize-1) THEN
-          CALL fdBanded%set(i, i+1,-1.0_SRK)
-        END IF
-        IF (yCoord < gridSize-1) THEN
-          CALL fdBanded%set(i,i+gridSize,-1.0_SRK)
-        END IF
-      END DO
-
-      WRITE(*,*) "Beginning Assemble"
-      CALL SYSTEM_CLOCK(time1)
-      CALL fdBanded%assemble()
-      CALL SYSTEM_CLOCK(time2,clock_rate)
-      timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
-      WRITE(*,*) "Assembly Completed in",timeTaken,"seconds"
-
-      x%b = 1.0_SRK
-      y%b = 0.0_SRK
-
-      ! Get clock
-      CALL SYSTEM_CLOCK(time1)
-        ! Loop multiply banded*x = y
-      DO i=1,n
-        CALL BLAS_matvec(THISMATRIX=fdBanded,X=x,Y=y)
-      END DO
-      ! Get clock
-      CALL SYSTEM_CLOCK(time2,clock_rate)
-      ! report total time
-      timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
-      WRITE(*,*) n,"Multiplications completed in",timetaken,"seconds"
-
-    END SUBROUTINE timeBanded
-
-
-    SUBROUTINE timePetsc()
-      CLASS(PETScMatrixType),ALLOCATABLE :: fdPetsc
-      CLASS(VectorType),ALLOCATABLE :: x,y
-      TYPE(ParamType) :: petscPlist
-      INTEGER(SIK) :: xCoord,yCoord,i,gridsize,n,nnz,time1,time2,clock_rate
-      REAL(SRK) :: timeTaken
-
-      ! Create finite difference matrix
-      n = 16384
-      gridSize = 128
-      nnz = 1
-      IF (n > 1) THEN
-        nnz = nnz + 11
-      END IF
-      IF (n > 2) THEN
-        nnz = nnz + 5*(gridSize-2)*(gridSize-2) + 16*(gridSize-2)
-      END IF
-
-      ALLOCATE(PETScMatrixType :: fdPetsc)
-      CALL petscPList%clear()
-      CALL petscPlist%add('MatrixType->n',n)
-      CALL petscPlist%add('MatrixType->m',n)
-      CALL petscPlist%add('MatrixType->nnz',nnz)
-      CALL petscPlist%add('MatrixType->isSym',.FALSE.)
-      CALL petscPlist%add('MatrixType->matType',SPARSE)
-      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
-      CALL petscPlist%validate(petscPlist)
-      CALL fdPetsc%init(petscPlist)
-
-      CALL vecPList%clear()
-      CALL vecPList%add('VectorType->n',n)
-      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
-
-      ALLOCATE(PETScVectorType :: x)
-      ALLOCATE(PETScVectorType :: y)
-      CALL x%init(vecPList)
-      CALL y%init(vecPList)
-
-      DO i=1,n
-        yCoord = (i-1)/gridSize
-        xCoord = MOD(i-1,gridSize)
-        IF (yCoord > 0) THEN
-          CALL fdPetsc%set(i,i-gridSize,-1.0_SRK)
-        END IF
-        IF (xCoord > 0) THEN
-          CALL fdPetsc%set(i, i-1,-1.0_SRK)
-        END IF
-        CALL fdPetsc%set(i,i,4.0_SRK)
-        IF (xCoord < gridSize-1) THEN
-          CALL fdPetsc%set(i, i+1,-1.0_SRK)
-        END IF
-        IF (yCoord < gridSize-1) THEN
-          CALL fdPetsc%set(i,i+gridSize,-1.0_SRK)
-        END IF
-      END DO
-      CALL fdPetsc%assemble()
-
-      CALL x%setAll_scalar(1.0_SRK)
-
-      ! Get clock
-      WRITE(*,*) "Beginning multiplication loop"
-      CALL SYSTEM_CLOCK(time1)
-        ! Loop multiply banded*x = y
-      DO i=1,n
-        CALL BLAS_matvec(THISMATRIX=fdPetsc,X=x,Y=y)
-      END DO
-      ! Get clock
-      CALL SYSTEM_CLOCK(time2,clock_rate)
-      ! report total time
-      timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
-      WRITE(*,*) n,"Multiplications completed in",timetaken,"seconds"
-
-    END SUBROUTINE timePetsc
 
     SUBROUTINE timeBandedCMFD()
 
-      CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
-      TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
       REAL(SRK) :: timetaken,tmpreal
       INTEGER(SIK) :: i,j,n,nnz,xCoord,yCoord,gridSize,time1,time2,clock_rate,ios
-      CHARACTER(200)::tempcharacter,dirname
-      TYPE(ParamType) :: bandedPlist
+      TYPE(TimerType) :: bandMult
 
-      ! Create finite difference matrix
-      ALLOCATE(DistributedBandedMatrixType :: cmfdBanded)
+      CALL bandMult%setTimerName('Banded Multiplication Time')
 
-      !WRITE(dirname,'(2A)'),'/home/mkbz/Research/bandMatResults/Futility/unit_tests/testPreconditionerTypes/matrices/mg_matrix.txt'
-      WRITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
-
-      nnz = 67200
-      n = 1512
-      CALL bandedPlist%clear()
-      CALL bandedPlist%add('MatrixType->n',n)
-      CALL bandedPlist%add('MatrixType->m',n)
-      CALL bandedPlist%add('MatrixType->nnz',nnz)
-      CALL bandedPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
-      CALL bandedPlist%validate(bandedPlist)
-      CALL cmfdBanded%init(bandedPlist)
-
-      CALL vecPList%clear()
-      CALL vecPList%add('VectorType->n',n)
-      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
-      ALLOCATE(NativeDistributedVectorType :: x)
-      ALLOCATE(NativeDistributedVectorType :: y)
-
-      CALL x%init(vecPList)
-      CALL y%init(vecPList)
-
-      OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
-      IF(ios .NE. 0)THEN
-          WRITE(*,*)tempcharacter
-          WRITE(*,*)'Could not open res.dat'
-          STOP
-      END IF
-      READ(11,*)
-      DO
-          READ(11,*,IOSTAT=ios)i,j,tmpreal
-          IF(ios >0)THEN
-              STOP 'File input error'
-          ELSE IF(ios<0)THEN
-              EXIT
-          ELSE
-              CALL cmfdBanded%set(i,j,tmpreal)
-          END IF
-      END DO
-      CLOSE(11)
-      WRITE(*,*) "Beginning Assemble"
-      CALL SYSTEM_CLOCK(time1)
-      CALL cmfdBanded%assemble()
-      CALL SYSTEM_CLOCK(time2,clock_rate)
-      timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
-      WRITE(*,*) "Assembly completed in",timetaken,"seconds"
-
-      x%b = 1.0_SRK
-      y%b = 0.0_SRK
-
-      ! Get clock
-      CALL SYSTEM_CLOCK(time1)
-        ! Loop multiply banded*x = y
-      DO i=1,64*n
+      ! Loop multiply banded*x = y
+      CALL bandMult%tic()
+      DO i=1,64*8
         CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y)
       END DO
       ! Get clock
-      CALL SYSTEM_CLOCK(time2,clock_rate)
+      CALL bandMult%toc()
       ! report total time
-      timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
-      WRITE(*,*) 64*n,"Multiplications completed in",timetaken,"seconds"
+      WRITE(*,*) 'Timer '//bandMult%getTimerName()//' had time '// &
+                 bandMult%getTimeChar()
+      WRITE(*,*) bandMult%getTimeHHMMSS()
+      WRITE(*,*) bandMult%getTimeReal()
 
     END SUBROUTINE timeBandedCMFD
 
 
     SUBROUTINE timePetscCMFD()
-      CLASS(PetscMatrixType),ALLOCATABLE :: cmfdPetsc
-      CLASS(VectorType),ALLOCATABLE :: x,y
-      TYPE(ParamType) :: petscPlist
       INTEGER(SIK) :: xCoord,yCoord,i,gridsize,n,nnz,time1,time2,clock_rate,ios,j
       REAL(SRK) :: timeTaken,tmpreal
-      CHARACTER(200)::tempcharacter,dirname
+      TYPE(TimerType) :: petscMult
 
-
-      !WRITE(dirname,'(2A)'),'/home/mkbz/Research/bandMatResults/Futility/unit_tests/testPreconditionerTypes/matrices/mg_matrix.txt'
-      WRITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
-      ! Create finite difference matrix
-      nnz = 67200
-      n = 1512
-
-      ALLOCATE(PETScMatrixType :: cmfdPetsc)
-      CALL petscPList%clear()
-      CALL petscPlist%add('MatrixType->n',n)
-      CALL petscPlist%add('MatrixType->m',n)
-      CALL petscPlist%add('MatrixType->nnz',nnz)
-      CALL petscPlist%add('MatrixType->isSym',.FALSE.)
-      CALL petscPlist%add('MatrixType->matType',SPARSE)
-      CALL petscPlist%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
-      CALL petscPlist%validate(petscPlist)
-      CALL cmfdPetsc%init(petscPlist)
-
-      CALL vecPList%clear()
-      CALL vecPList%add('VectorType->n',n)
-      CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
-
-      ALLOCATE(PETScVectorType :: x)
-      ALLOCATE(PETScVectorType :: y)
-      CALL x%init(vecPList)
-      CALL y%init(vecPList)
-
-      OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
-      IF(ios .NE. 0)THEN
-          WRITE(*,*)tempcharacter
-          WRITE(*,*)'Could not open res.dat'
-          STOP
-      END IF
-      READ(11,*)
-      DO
-          READ(11,*,IOSTAT=ios)i,j,tmpreal
-          IF(ios >0)THEN
-              STOP 'File input error'
-          ELSE IF(ios<0)THEN
-              EXIT
-          ELSE
-              CALL cmfdPetsc%set(i,j,tmpreal)
-          END IF
-      END DO
-      CLOSE(11)
-      CALL cmfdPetsc%assemble()
-      CALL x%setAll_scalar(1.0_SRK)
+      CALL petscMult%setTimerName('Petsc Multiplication Time')
 
       ! Get clock
-      WRITE(*,*) "Beginning multiplication loop"
-      CALL SYSTEM_CLOCK(time1)
-        ! Loop multiply banded*x = y
-      DO i=1,64*n
+      CALL petscMult%tic()
+      ! Loop multiply banded*x = y
+      DO i=1,64*8
         CALL BLAS_matvec(THISMATRIX=cmfdPetsc,X=x,Y=y)
       END DO
       ! Get clock
-      CALL SYSTEM_CLOCK(time2,clock_rate)
+      CALL petscMult%toc()
       ! report total time
-      timetaken = (time2*1.0_SRK - time1*1.0_SRK)/(clock_rate*1.0_SRK)
-      WRITE(*,*) 64*n,"Multiplications completed in",timetaken,"seconds"
-
-      CALL optListMat%clear()
-      CALL vecPList%clear()
-      CALL pList%clear()
+      WRITE(*,*) 'Timer '//petscMult%getTimerName()//' had time '// &
+                 petscMult%getTimeChar()
+      WRITE(*,*) petscMult%getTimeHHMMSS()
+      WRITE(*,*) petscMult%getTimeReal()
 
     END SUBROUTINE timePetscCMFD
 
