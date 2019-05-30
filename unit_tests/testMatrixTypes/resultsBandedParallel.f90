@@ -21,6 +21,8 @@ PROGRAM testMatrixTypes
   USE VectorTypes
   USE MatrixTypes
   USE Times
+  USE FileType_HDF5
+  USE Strings
 
   IMPLICIT NONE
 
@@ -93,10 +95,15 @@ PROGRAM testMatrixTypes
 !-------------------------------------------------------------------------------
   
     SUBROUTINE setup()
-      INTEGER(SIK) :: n,nnz,i,j,rank,mpierr,ios
+      INTEGER(SIK) :: n,nnz,i,j,rank,mpierr,ios,lowIdx,highIdx
       REAL(SRK) :: tmpreal
       CHARACTER(200)::tempcharacter,dirname
       TYPE(TimerType) :: bandAssemble,petscAssemble
+      TYPE(StringType),ALLOCATABLE :: contents(:)
+      TYPE(HDF5FileType) :: inputData
+      INTEGER(SIK),ALLOCATABLE :: matrix_row(:),matrix_col(:),src_idx(:),sol_idx(:)
+      REAL(SRK),ALLOCATABLE :: matrix_val(:),src_val(:),sol_val(:)
+
 
       ALLOCATE(DistributedBandedMatrixType :: cmfdBanded)
       ALLOCATE(PETScMatrixType :: cmfdPetsc)
@@ -140,74 +147,57 @@ PROGRAM testMatrixTypes
       CALL x%init(vecPList)
       CALL y%init(vecPList)
 
-      WRITE(*,*) "Reading in data..."
-      WRITE(dirname,'(2A)'),'/home/mkbz/Research/genCMFD/it_end.cmfd.txt'
-      !RITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
+      WRITE(dirname,'(2A)'),'/home/mkbz/Research/genCMFD/it_end.hdf5'
+      CALL inputData%init(dirname,'READ')
+      CALL inputData%fopen()
+     
+      CALL inputData%ls('',contents)
+      WRITE(*,*) TRIM(contents(1))
+      WRITE(*,*) TRIM(contents(2))
+      WRITE(*,*) TRIM(contents(3))
 
-      OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
-      IF(ios .NE. 0)THEN
-          WRITE(*,*)tempcharacter
-          WRITE(*,*)'Could not open res.dat'
-          STOP
-      END IF
-      READ(11,*)
-      DO
-          READ(11,*,IOSTAT=ios)i,j,tmpreal
-          IF(ios >0)THEN
-              STOP 'File input error'
-          ELSE IF(ios<0)THEN
-              EXIT
-          ELSE
-            CALL cmfdBanded%set(i,j,tmpreal)
-            CALL cmfdPetsc%set(i,j,tmpreal)
-          END IF
+      WRITE(*,*) "Reading cmfdmatrix" 
+      CALL inputData%fread('cmfd_matrix/rows',matrix_row)
+      CALL inputData%fread('cmfd_matrix/cols',matrix_col)
+      CALL inputData%fread('cmfd_matrix/vals',matrix_val)
+
+      WRITE(*,*) "Reading sol" 
+      CALL inputData%fread('sol_vec/idx',sol_idx)
+      CALL inputData%fread('sol_vec/val',sol_val)
+      
+      WRITE(*,*) "Reading src" 
+      CALL inputData%fread('src_vec/idx',src_idx)
+      CALL inputData%fread('src_vec/val',src_val)
+     
+      WRITE(*,*) "Setting banded elements" 
+      DO i=1,SIZE(matrix_row)
+        CALL cmfdBanded%set(matrix_row(i),matrix_col(i),matrix_val(i))
       END DO
-      CLOSE(11)
+      
+      WRITE(*,*) "Setting petsc elements"
+      highIdx = 0
+      DO WHILE (highIdx < SIZE(matrix_row))
+        lowIdx = highIdx + 1
+        highIdx = lowIdx
+        IF (rank==0 .AND. MOD(matrix_row(highIdx),100) == 0) &
+          WRITE(*,*) "On row",matrix_row(highIdx),"/",matrix_row(SIZE(matrix_row))
+        DO WHILE (matrix_row(highIdx) == matrix_row(lowIdx) .AND. highIdx <= SIZE(matrix_row))
+          highIdx = highIdx + 1
+        END DO
+        highIdx = highIdx - 1
+        CALL cmfdPetsc%setRow(matrix_row(lowIdx),matrix_col(lowIdx:highIdx),matrix_val(lowIdx:highIdx))
+      END DO
 
-      WRITE(dirname,'(2A)'),'/home/mkbz/Research/genCMFD/it_end.src.txt'
-      !RITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
-
-      !OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
-      !IF(ios .NE. 0)THEN
-      !    WRITE(*,*)tempcharacter
-      !    WRITE(*,*)'Could not open res.dat'
-      !    STOP
-      !END IF
-      !READ(11,*)
-      !DO
-      !    READ(11,*,IOSTAT=ios)i,tmpreal
-      !    IF(ios >0)THEN
-      !        STOP 'File input error'
-      !    ELSE IF(ios<0)THEN
-      !        EXIT
-      !    ELSE
-      !      trueSrc(i) = tmpreal
-      !    END IF
+      !DO i=1,SIZE(src_idx)
+      !  trueSrc(src_idx(i)) = src_val(i)
       !END DO
-      !CLOSE(11) 
 
-      WRITE(dirname,'(2A)'),'/home/mkbz/Research/genCMFD/it_end.sol.txt'
-      !RITE(dirname,'(2A)'),'/home/mkbz/git/Futility/unit_tests/testLinearSolver/matrices/mg_matrix.txt'
-
-      OPEN(UNIT=11,FILE=dirname,STATUS='OLD',ACTION='READ',IOSTAT=ios,IOMSG=tempcharacter)
-      IF(ios .NE. 0)THEN
-          WRITE(*,*)tempcharacter
-          WRITE(*,*)'Could not open res.dat'
-          STOP
-      END IF
-      READ(11,*)
-      DO
-          READ(11,*,IOSTAT=ios)i,tmpreal
-          IF(ios >0)THEN
-              STOP 'File input error'
-          ELSE IF(ios<0)THEN
-              EXIT
-          ELSE
-            CALL x%set(i,tmpreal)
-            IF (i > cmfdBanded%iOffsets(rank+1) .AND. i <= cmfdBanded%iOffsets(rank+2))  CALL xPetsc%set(i,tmpreal)
-          END IF
+      DO i=1,SIZE(sol_idx)
+        CALL x%set(sol_idx(i),sol_val(i))
+        IF (i > cmfdBanded%iOffsets(rank+1) .AND. i <= cmfdBanded%iOffsets(rank+2)) &
+          CALL xPetsc%set(sol_idx(i),sol_val(i))
       END DO
-      CLOSE(11)
+      CALL inputData%clear()
  
       CALL MPI_Barrier(PE_COMM_WORLD,mpierr)
       WRITE(*,*) "Assembling cmfdBanded"
