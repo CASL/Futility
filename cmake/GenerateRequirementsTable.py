@@ -70,7 +70,7 @@ class Requirement:
 
     def __init__(self, ID, testFile, rawReqBlock):
         self.ID = ID
-        self.tfile = testFile
+        self.tfile = testFile[len(args.path)+1:]
         if rawReqBlock:
             match = self._re_desc.match(rawReqBlock[1])
             if not match:
@@ -284,13 +284,33 @@ def ConvertToLatex(df):
     #latex_table = df.to_latex(multicolumn=False,multirow=True,column_format='ll')
 
     #Header
-    latex_table = '\\begin{table}[h!]\n\\begin{tabular}{ll}\n'
-    mr = '\multirow{4}{*}{'
     ws = '                   '
+
+    latex_table = '\\begin{longtable}[!ht]{|p{1.4cm}|p{14cm}|}\n' + \
+                  '\\caption{MPACT Requirements}\\label{tab:req}\\\\\n' + \
+                  '\n\\hline\n' + \
+                  '\\multirow{4}{*}{\\textbf{Req. ID}} & \\cellcolor{caslheader}\\textcolor{white}{\\textit{Requirement Description}} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Test Name} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor2} \\textit{Test Input} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Additional Info} \\\\\\hline\n' + \
+                  '\\endfirsthead\n\n' + \
+                  '\\hline\n' + \
+                  '\\multirow{4}{*}{\\textbf{Req. ID}} & \\cellcolor{caslheader}\\textcolor{white}{\\textit{Requirement Description}} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Test Name} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor2} \\textit{Test Input} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Additional Info} \\\\\\hline\n' + \
+                  '\\endhead\n' + \
+                  '\\hline\n' + \
+                  '\\endfoot\n' + \
+                  '\\hline\n' + \
+                  '\\endlastfoot\n\n'
+
+    mr = '\multirow{4}{*}{'
     pathpre = os.getcwd()
     pathpre = pathpre.replace('_',r'\_')
 
     #Data
+    i=0
     for index, row in df.iterrows():
       #Trim the last entry, which looks like a return.  Escape % and escape _.
       reqdesc = str(row['Requirement Description'])[:-1].replace('%',r'\%')
@@ -298,6 +318,9 @@ def ConvertToLatex(df):
       #Escape % and escape _.
       testfile = row['Test File'].replace('%',r'\%')
       testfile = testfile.replace('_',r'\_')
+      if (len(testfile) > 80):
+        insert_space = testfile.rfind('/',0,80)
+        testfile = testfile[:insert_space+1]+"\\newline "+testfile[insert_space+1:]
       #cdash
       cdashname = '<cdash testname>'
       #Escape % and escape _.
@@ -305,17 +328,19 @@ def ConvertToLatex(df):
       addinfo = addinfo.rstrip()
       if (len(addinfo) > 0) and ('/' in addinfo):
         addinfo = "\href{" + addinfo + "}{\# " + addinfo[addinfo.rfind('/')+1:] + "}"
-      rowid = '' 
+      rowid = ''
       if (not math.isnan(row['Requirement ID'])):
         rowid = str(int(row['Requirement ID']))
-      latex_table += mr + rowid + '} & ' + reqdesc + r" \\" + '\n'
-      latex_table += ws + '& ' + cdashname + r" \\" +'\n'
-      latex_table += ws + '& ' + pathpre + testfile[1:] + r" \\" +'\n'
-      latex_table += ws + '& ' + addinfo + r" \\" + '\n'
-    #Trim the last \\ and \n
-    latex_table = latex_table[:-4]
+      latex_table += mr + rowid + '} & \\cellcolor{caslheader}\\textcolor{white}{' + reqdesc + r"} \\\cline{2-2}" + '\n'
+      latex_table += ws + '& \\cellcolor{caslcolor1}' + cdashname + r" \\\cline{2-2}" +'\n'
+      latex_table += ws + '& \\cellcolor{caslcolor2}' + testfile + r" \\\cline{2-2}" +'\n'
+      latex_table += ws + '& \\cellcolor{caslcolor1}' + addinfo + r" \\\hline" + '\n'
+      i += 1
+      if (i % 6 == 5):
+        latex_table += '\\newpage'
+
     #Footer
-    latex_table = latex_table + '\end{tabular}\n\end{table}'
+    latex_table = latex_table + '\\end{longtable}\n'
     return latex_table
 
 def GenerateInputList(path='', ext=[]):
@@ -383,4 +408,4 @@ if __name__ == "__main__":
     f = open(args.output+'.tex', 'w')
     f.write(reqLatex)
     f.close()
-    
+
