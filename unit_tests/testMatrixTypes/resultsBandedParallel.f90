@@ -42,7 +42,7 @@ PROGRAM testMatrixTypes
 #endif
 #endif
 
-  CLASS(DistributedBandedMatrixType),ALLOCATABLE :: cmfdBanded
+  CLASS(DistributedBlockBandedMatrixType),ALLOCATABLE :: cmfdBanded
   CLASS(PETScMatrixType),ALLOCATABLE :: cmfdPetsc
   TYPE(NativeDistributedVectorType),ALLOCATABLE :: x,y
   TYPE(DenseSquareMatrixType),ALLOCATABLE :: denseSample(:)
@@ -102,10 +102,12 @@ PROGRAM testMatrixTypes
       REAL(SRK),ALLOCATABLE :: matrix_val(:),src_val(:),sol_val(:)
 
 
-      ALLOCATE(DistributedBandedMatrixType :: cmfdBanded)
+      WRITE(*,*) "Beginning setup/allocations"
+      ALLOCATE(DistributedBlockBandedMatrixType :: cmfdBanded)
       ALLOCATE(PETScMatrixType :: cmfdPetsc)
       ALLOCATE(denseSample(162))
 
+      WRITE(*,*) "Setting timers,getting rank"
       CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
       CALL bandAssemble%setTimerName('Banded Matrix Assemble Time')
       CALL petscAssemble%setTimerName('PETSc Matrix Assemble Time')
@@ -114,10 +116,11 @@ PROGRAM testMatrixTypes
       nnz = 6015708
       nnz_banded = 583848
 
+      WRITE(*,*) "Setting param lists"
       CALL bandedPList%clear()
       CALL bandedPlist%add('MatrixType->n',n)
-      CALL bandedPlist%add('MatrixType->m',n)
       CALL bandedPlist%add('MatrixType->nnz',nnz_banded)
+      CALL bandedPlist%add('MatrixType->blockSize',51_SNK)
       CALL bandedPList%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
 
       CALL petscPList%clear()
@@ -130,23 +133,26 @@ PROGRAM testMatrixTypes
 
       CALL vecPList%clear()
       CALL vecPList%add('VectorType->n',n)
+      CALL vecPList%add('VectorType->chunkSize',51_SNK)
       CALL vecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
 
-      CALL denseMatPlist%clear()
-      CALL denseMatPlist%add('MatrixType->n',51)
-      CALL denseMatPlist%add('MatrixType->isSym',.FALSE.)
+      !CALL denseMatPlist%clear()
+      !CALL denseMatPlist%add('MatrixType->n',51)
+      !CALL denseMatPlist%add('MatrixType->isSym',.FALSE.)
 
+      WRITE(*,*) "Calling %init for matrix types"
       CALL cmfdBanded%init(bandedPList)
       CALL cmfdPetsc%init(petscPList)
-      DO i=1,SIZE(denseSample)
-        CALL denseSample(i)%init(denseMatPlist)
-      ENDDO
+      !DO i=1,SIZE(denseSample)
+      !  CALL denseSample(i)%init(denseMatPlist)
+      !ENDDO
 
       ALLOCATE(NativeDistributedVectorType :: x)
       ALLOCATE(NativeDistributedVectorType :: y)
       ALLOCATE(petscVectorType :: xPetsc)
       ALLOCATE(petscVectorType :: yPetsc)
 
+      WRITE(*,*) "Calling %init for vector types"
       CALL xPetsc%init(vecPList)
       CALL yPetsc%init(vecPList)
       CALL x%init(vecPList)
@@ -156,11 +162,6 @@ PROGRAM testMatrixTypes
       CALL inputData%init(dirname,'READ')
       CALL inputData%fopen()
      
-      CALL inputData%ls('',contents)
-      WRITE(*,*) TRIM(contents(1))
-      WRITE(*,*) TRIM(contents(2))
-      WRITE(*,*) TRIM(contents(3))
-
       WRITE(*,*) "Reading cmfdmatrix" 
       CALL inputData%fread('cmfd_matrix/rows',matrix_row)
       CALL inputData%fread('cmfd_matrix/cols',matrix_col)
@@ -175,14 +176,9 @@ PROGRAM testMatrixTypes
       CALL inputData%fread('src_vec/val',src_val)
      
       WRITE(*,*) "Setting banded elements" 
+      WRITE(*,*) "Block offset",cmfdBanded%blockOffset
       DO i=1,SIZE(matrix_row)
-        IF ((matrix_row(i)-1)/51 /= (matrix_col(i)-1)/51) THEN
-          CALL cmfdBanded%set(matrix_row(i),matrix_col(i),matrix_val(i))
-        ELSE IF ((matrix_row(i)-1)/51 >= rank*162 .AND. (matrix_row(i)-1)/51 < (rank+1)*162) THEN
-          dmat = (matrix_row(i)-1)/51+1 - rank*162
-          offset = 51*(dmat-1+rank*162) 
-          CALL denseSample(dmat)%set(matrix_row(i)-offset,matrix_col(i)-offset,matrix_val(i))
-        END IF
+        CALL cmfdBanded%set(matrix_row(i),matrix_col(i),matrix_val(i))
       END DO
       
       WRITE(*,*) "Setting petsc elements"
@@ -241,34 +237,39 @@ PROGRAM testMatrixTypes
 
     SUBROUTINE verifyCMFD()
       REAL(SRK) :: tmpreal,tmpreal2
-      INTEGER(SIK) :: i,j,lowIdx,highIdx,rank,mpierr
+      INTEGER(SIK) :: i,j,lowIdx,highIdx,rank,mpierr,nproc,iperr
       LOGICAL(SBK) :: bool
-      REAL(SRK),ALLOCATABLE :: dummyvec(:)
-      
+      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
+      INTEGER(SRK),ALLOCATABLE :: nlocal(:),offset(:)
+
+      ALLOCATE(dummyvec(cmfdBanded%n))      
       CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+      CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
+
+      ALLOCATE(nlocal(nproc))
+      ALLOCATE(offset(nproc))
+
       WRITE(*,*) "Executing BLAS_matvec (banded)"
-      CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK)
-      DO j=1,SIZE(denseSample)
-        lowIdx = 1 + (j-1)*51
-        highIdx = j*51
-        CALL BLAS_matvec(THISMATRIX=denseSample(j),X=x%b(lowIdx:highIdx),Y=y%b(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=1.0_SRK)
-      END DO
-      
+      CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y,alpha=1.0_SRK,beta=0.0_SRK) 
       
       WRITE(*,*) "Executing BLAS_matvec (petsc)"
       CALL BLAS_matvec(THISMATRIX=cmfdPetsc,X=xPetsc,Y=yPetsc,alpha=1.0_SRK,beta=0.0_SRK)
 
       WRITE(*,*) "Comparing"
-      lowIdx = cmfdBanded%iOffsets(rank+1) + 1
-      highIdx = cmfdBanded%iOffsets(rank+2)
+      CALL MPI_Allgather(y%nlocal,1,MPI_INTEGER,nlocal,1,MPI_INTEGER,y%comm,mpierr)
+      CALL MPI_Allgather(y%offset,1,MPI_INTEGER,offset,1,MPI_INTEGER,y%comm,mpierr)
+      CALL MPI_Allgatherv(y%b,y%nlocal,MPI_DOUBLE_PRECISION,dummyvec,nlocal,offset,MPI_DOUBLE_PRECISION,y%comm,mpierr)
 
-      ALLOCATE(dummyvec(highIdx - lowIdx+1))
+      CALL VecGetOwnershipRange(yPetsc%b,lowIdx,highIdx,iperr)
+      lowIdx = lowIdx + 1
+
+      ALLOCATE(dummyvec2(highIdx - lowIdx+1))
 
       DO i=lowIdx,highIdx
-        CALL yPetsc%get(i,dummyvec(i-lowIdx+1))
+        CALL yPetsc%get(i,dummyvec2(i-lowIdx+1))
       ENDDO
 
-      ASSERT(ALL(ABS(dummyvec - y%b) < 1.0e-12),'products match')
+      ASSERT(ALL(ABS(dummyvec2 - dummyvec(lowIdx:highIdx)) < 1.0e-12),'products match')
 
       CALL vecPList%clear()
       CALL petscPList%clear()
@@ -279,54 +280,75 @@ PROGRAM testMatrixTypes
 
 
     SUBROUTINE timeBandedCMFD()
-
-      REAL(SRK) :: timetaken,tmpreal
-      INTEGER(SIK) :: i,j,n,nnz,xCoord,yCoord,gridSize,lowIdx,highIdx,ios,mpierr
+      INTEGER(SIK) :: i,rank,nproc,mpierr
       TYPE(TimerType) :: bandMult
+      LOGICAL(SBK) :: file_present
 
       CALL bandMult%setTimerName('Banded Multiplication Time')
+      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+      CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
+
+      IF (rank==0) THEN
+        INQUIRE(file="bandCMFD_results.txt", exist=file_present)
+        IF (file_present .AND. rank==0) THEN
+          OPEN(12, FILE="bandCMFD_results.txt", STATUS="old", POSITION="append", ACTION="write")
+        ELSE
+          OPEN(12, FILE="bandCMFD_results.txt", STATUS="new", ACTION="write")
+        END IF
+      END IF
 
       ! Loop multiply banded*x = y
+      CALL MPI_Barrier(PE_COMM_WORLD,mpierr)
       CALL bandMult%tic()
-      DO i=1,64*8
+      DO i=1,64*64*8
         CALL BLAS_matvec(THISMATRIX=cmfdBanded,X=x,Y=y,BETA=0.0_SRK)
-        DO j=1,SIZE(denseSample)
-          lowIdx = 1 + (j-1)*51
-          highIdx = j*51
-          CALL BLAS_matvec(THISMATRIX=denseSample(j),X=x%b(lowIdx:highIdx),Y=y%b(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=1.0_SRK)
-        END DO
       END DO
       ! Get clock
+      CALl MPI_Barrier(PE_COMM_WORLD,mpierr)
       CALL bandMult%toc()
-      ! report total time
-      WRITE(*,*) 'Timer '//bandMult%getTimerName()//' had time '// &
-                 bandMult%getTimeChar()
-      WRITE(*,*) bandMult%getTimeHHMMSS()
-      WRITE(*,*) bandMult%getTimeReal()
+
+      IF (rank==0) THEN
+        WRITE(12,*) nproc, 64*64*8, bandMult%getTimeReal()
+        CLOSE(12)
+      END IF
 
     END SUBROUTINE timeBandedCMFD
 
 
     SUBROUTINE timePetscCMFD()
-      INTEGER(SIK) :: xCoord,yCoord,i,gridsize,n,nnz,time1,time2,clock_rate,ios,j,mpierr
+      INTEGER(SIK) :: i,rank,nproc,mpierr
       REAL(SRK) :: timeTaken,tmpreal
       TYPE(TimerType) :: petscMult
+      LOGICAL(SBK) :: file_present
 
       CALL petscMult%setTimerName('Petsc Multiplication Time')
+      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+      CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
+      
+      IF (rank==0) THEN
+        INQUIRE(file="petscCMFD_results.txt", exist=file_present)
+        IF (file_present) THEN
+          OPEN(12, FILE="petscCMFD_results.txt", STATUS="old", POSITION="append", ACTION="write")
+        ELSE
+          OPEN(12, FILE="petscCMFD_results.txt", STATUS="new", ACTION="write")
+        END IF
+      END IF
 
-      ! Get clock
+      CALL MPI_Barrier(PE_COMM_WORLD,mpierr)
       CALL petscMult%tic()
       ! Loop multiply banded*x = y
-      DO i=1,64*8
+      DO i=1,64*64*8
         CALL BLAS_matvec(THISMATRIX=cmfdPetsc,X=xPetsc,Y=yPetsc,BETA=0.0_SRK)
       END DO
       ! Get clock
+      CALl MPI_Barrier(PE_COMM_WORLD,mpierr)
       CALL petscMult%toc()
       ! report total time
-      WRITE(*,*) 'Timer '//petscMult%getTimerName()//' had time '// &
-                 petscMult%getTimeChar()
-      WRITE(*,*) petscMult%getTimeHHMMSS()
-      WRITE(*,*) petscMult%getTimeReal()
+
+      IF (rank==0) THEN
+        WRITE(12,*) nproc, 64*64*8, petscMult%getTimeReal()
+        CLOSE(12)
+      ENDIF
 
     END SUBROUTINE timePetscCMFD
 

@@ -115,7 +115,8 @@ MODULE MatrixTypes
   PUBLIC :: RectMatrixType
   PUBLIC :: DistributedMatrixType
   ! Matrix structure enumerations
-  PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG,BANDED,DISTRIBUTED_BANDED
+  PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG, &
+            BANDED,DISTRIBUTED_BANDED,DISTR_BLOCKBANDED
   ! Matrix-Vector engine enumerations
   PUBLIC :: VM_PETSC,VM_TRILINOS,VM_NATIVE
   ! Parameter list setup/teardown
@@ -127,6 +128,7 @@ MODULE MatrixTypes
   PUBLIC :: TriDiagMatrixType
   PUBLIC :: BandedMatrixType
   PUBLIC :: DistributedBandedMatrixType
+  PUBLIC :: DistributedBlockBandedMatrixType
   PUBLIC :: SparseMatrixType
   ! PETSc implementations
 #ifdef FUTILITY_HAVE_PETSC
@@ -244,6 +246,8 @@ MODULE MatrixTypes
               ALLOCATE(BandedMatrixType :: matrix)
             CASE(DISTRIBUTED_BANDED)
               ALLOCATE(DistributedBandedMatrixType :: matrix)
+            CASE(DISTR_BLOCKBANDED)
+              ALLOCATE(DistributedBlockBandedMatrixType :: matrix)
             CASE DEFAULT
               CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
                 "Unrecognized matrix structure requested")
@@ -418,8 +422,8 @@ MODULE MatrixTypes
       INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
       !
       CHARACTER(LEN=1) :: t,ul,d
-      REAL(SRK),ALLOCATABLE :: z(:)
-      REAL(SRK) :: al
+      REAL(SRK),ALLOCATABLE :: tmpProduct(:)
+      REAL(SRK) :: a,b
       INTEGER(SIK),ALLOCATABLE :: idxMult(:)
       INTEGER(SIK) :: bIdx,ierr,rank
       INTEGER(SIK) :: incx
@@ -502,31 +506,42 @@ MODULE MatrixTypes
             !REQUIRE(SIZE(x) == thisMatrix%m)
             !REQUIRE(SIZE(y) == thisMatrix%n)
 
-            IF(PRESENT(beta)) THEN
-              y = y*beta
-            ELSE
+            a = 1.0_SRK
+            b = 1.0_SRK
+            IF (PRESENT(alpha)) a = alpha
+            IF (PRESENT(beta)) b = beta
+
+            IF(b == 0.0_SRK) THEN
               y = 0.0_SRK
+            ELSE IF (b /= 1.0_SRK) THEN
+              y = y*b
             END IF
 
-            al = 1.0_SRK
             IF(PRESENT(alpha)) THEN
-              al = alpha
+              a = alpha
             END IF
 
             IF(t /= 'n') THEN
               CALL thisMatrix%transpose()
             END IF
 
-            DO bIdx=1,SIZE(thisMatrix%bandIdx)
-              idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
-              y(idxMult) = y(idxMult) + al*thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
-            ENDDO
+            IF (a==1.0_SRK) THEN
+              DO bIdx=1,SIZE(thisMatrix%bandIdx)
+                idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+                y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+              ENDDO
+            ELSE
+              DO bIdx=1,SIZE(thisMatrix%bandIdx) 
+                idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+                y(idxMult) = y(idxMult) + a * thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+              ENDDO
+            ENDIF 
 
             IF(t /= 'n') THEN
               CALL thisMatrix%transpose()
             END IF
 
-          TYPE IS(DistributedBandedMatrixType)
+          CLASS IS(DistributedBandedMatrixType)
 #ifdef HAVE_MPI
           CALL eMatrixType%raiseError('Incorrect call to '// &
                modName//'::'//myName//' - This interface is not available.')
@@ -571,6 +586,7 @@ MODULE MatrixTypes
       REAL(SRK) :: a,b
       REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
       INTEGER(SIK) :: sendRequests(2),recvRequests(2),sendCounter,recvCounter
+      INTEGER(SIK) :: lowIdx,highIdx
 
 #ifdef FUTILITY_HAVE_PETSC
       SELECTTYPE(mat => thisMatrix); TYPE IS(PETScMatrixType)
@@ -654,9 +670,9 @@ MODULE MatrixTypes
                         thisMatrix%ja,thisMatrix%a,x%b,y%b)
                     ENDIF
                   TYPE IS(BandedMatrixType)
-                    CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
-                                           Y=y%b,uplo=ul,diag=d,incx_in=incx)
-                  TYPE IS(DistributedBandedMatrixType)
+                    CALL eMatrixType%raiseError('Incorrect call to '// &
+                         modName//'::'//myName//' - This interface is not available.')
+                  CLASS IS(DistributedBandedMatrixType)
                     CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                            Y=y%b,uplo=ul,diag=d,incx_in=incx)
                   CLASS DEFAULT
@@ -671,85 +687,9 @@ MODULE MatrixTypes
             SELECT TYPE(y)
               TYPE IS (NativeDistributedVectorType)
                 SELECT TYPE(thisMatrix)
-                  TYPE IS(DistributedBandedMatrixType)
-
-                    ! Get rank; initialize requests/counters
-                    CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
-
-                    ! We will store our send/recv arrays in an array of length 2
-                    ! This allows one to be used for computation and one for
-                    ! communication.
-                    ! Which one to write to will be determined by *Counter MOD 2
-                    sendCounter = 0
-                    recvCounter = 0
-                    sendRequests = 0
-                    recvRequests = 0
-                    ! The recv/sendResult array will sometimes hold it's full length,
-                    ! and sometimes the full length - 1.
-                    ! The variable "count" will be used to determine this at
-                    ! each iteration
-                    ALLOCATE(recvResult(thisMatrix%iOffsets(2),2))
-                    ALLOCATE(sendResult(thisMatrix%iOffsets(2),2))
-                    ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)-thisMatrix%iOffsets(rank+1)))
-
-                    ! On each rank, loop over the chunks held (top to bottom)
-                    DO i=1,SIZE(thisMatrix%iOffsets)-1
-                      count = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
-                      IF (rank+1 == i) THEN
-                        ! We will be receiving data from other processes
-                        ! Do local product
-                        IF (thisMatrix%chunks(i)%isInit) THEN
-                          CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,y=tmpProduct)
-                        ELSE
-                          tmpProduct = 0.0_SRK
-                        END IF
-                        ! Find which other chunks in this row we need to
-                        ! communicate with
-                        DO k=1,SIZE(thisMatrix%contrib,1)
-                          IF (thisMatrix%contrib(k,i) .AND. i /= k) THEN
-                            recvCounter = recvCounter + 1
-                            ! If we've filled up the available storage, we need
-                            ! to wait for communication to finish up
-                            IF (recvCounter > 2) THEN
-                              CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                              tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
-                            END IF
-                            CALL MPI_IRecv(recvResult(1:count,MOD(recvCounter,2)+1),count,MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(MOD(recvCounter,2)+1),mpierr)
-                          END IF
-                        END DO
-                        ! We've finished calling irecv. Wait for remaining
-                        ! requests to finish:
-                        IF (recvRequests(MOD(recvCounter+1,2)+1) /= 0) THEN
-                          CALL MPI_Wait(recvRequests(MOD(recvCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
-                          tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter+1,2)+1)
-                        END IF
-                        IF (recvRequests(MOD(recvCounter,2)+1) /= 0) THEN
-                          CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                          tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
-                        END IF
-                      ELSE
-                        ! We will be sending data to some other process
-                        IF (thismatrix%chunks(i)%isInit) THEN
-                          sendCounter = sendCounter + 1
-                          ! Check if we can safely write to sendRequests
-                          IF (sendCounter > 2) THEN
-                            CALL MPI_WAIT(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                          END IF
-                          CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x%b,y=sendResult(1:count,MOD(sendCounter,2)+1))
-                          CALL MPI_ISend(sendResult(1:count,MOD(sendCounter,2)+1), count, MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, sendRequests(MOD(sendCounter,2)+1),mpierr)
-                        END IF
-                      END IF
-                    END DO
-                    IF (sendRequests(MOD(sendCounter+1,2)+1) /= 0) THEN
-                      CALL MPI_Wait(sendRequests(MOD(sendCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
-                    END IF
-                    IF (recvRequests(MOD(sendCounter,2)+1) /= 0) THEN
-                      CALL MPI_Wait(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                    END IF
-
-                    ! do y = alpha * reduce + beta*y
-                    y%b = a*tmpProduct + b*y%b
-
+                  CLASS IS(DistributedBandedMatrixType)
+                    CALL matvec_DistrBandedMatrixType(thisMatrix,x%b,y%b,t,ul,d,incx,a,b)
+                    
                   CLASS DEFAULT
                     CALL eMatrixType%raiseError('Incorrect call to '// &
                          modName//'::'//myName//' - This interface is not available.')
@@ -764,6 +704,138 @@ MODULE MatrixTypes
         ENDSELECT
       ENDIF
     ENDSUBROUTINE matvec_MatrixTypeVectorType
+
+
+!
+!-------------------------------------------------------------------------------
+
+    SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b) 
+      CHARACTER(LEN=*),PARAMETER :: myName='matvec_DistrBandedMatrixTypeNativeVectorType'
+      CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
+      REAL(SRK),INTENT(INOUT) :: x(:)
+      CHARACTER(LEN=1),INTENT(IN) :: t
+      REAL(SRK),INTENT(IN) :: a
+      REAL(SRK),INTENT(IN) :: b
+      REAL(SRK),INTENT(INOUT) :: y(:)
+      CHARACTER(LEN=1),INTENT(IN) :: ul
+      CHARACTER(LEN=1),INTENT(IN) :: d
+      INTEGER(SIK),INTENT(IN) :: incx
+      INTEGER(SIK) :: countS(2),countR(2),i,rank,mpierr,k,count
+      REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
+      INTEGER(SIK) :: sendRequests(2),recvRequests(2),sendCounter,recvCounter
+      INTEGER(SIK) :: lowIdx,highIdx
+
+      ! NOTE: incx,ul,d,t are NOT USED
+ 
+      ! Get rank; initialize requests/counters
+      CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
+
+      ! We will store our send/recv arrays in an array of length 2
+      ! This allows one to be used for computation and one for
+      ! communication.
+      ! Which one to write to will be determined by *Counter MOD 2
+      sendCounter = 0
+      recvCounter = 0
+      sendRequests = 0
+      recvRequests = 0
+      ! The recv/sendResult array will sometimes hold it's full length,
+      ! and sometimes less.
+      ! The variable "count" will be used to determine this at
+      ! each iteration
+      ALLOCATE(recvResult(thisMatrix%iOffsets(2),2))
+      ALLOCATE(sendResult(thisMatrix%iOffsets(2),2))
+      ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)-thisMatrix%iOffsets(rank+1)))
+
+      ! On each rank, loop over the chunks held (top to bottom)
+      DO i=1,SIZE(thisMatrix%iOffsets)-1
+        count = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
+        IF (rank+1 == i) THEN
+          ! We will be receiving data from other processes
+          ! Do local product
+          IF (thisMatrix%chunks(i)%isInit) THEN
+            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+          ELSE
+            tmpProduct = 0.0_SRK
+          END IF
+          SELECT TYPE(thisMatrix); TYPE IS(DistributedBlockBandedMatrixType)
+            DO k=1,thisMatrix%nlocalBlocks
+              lowIdx = (k-1)*thisMatrix%blockSize+1
+              highIdx = lowIdx-1 + thisMatrix%blockSize
+              CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx),Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=1.0_SRK)
+            ENDDO
+          END SELECT
+
+          ! Find which other chunks in this row we need to
+          ! communicate with
+          DO k=1,SIZE(thisMatrix%contrib,1)
+            IF (thisMatrix%contrib(k,i) .AND. i /= k) THEN
+              recvCounter = recvCounter + 1
+              ! If we've filled up the available storage, we need
+              ! to wait for communication to finish up
+              IF (recvCounter > 2) THEN
+                CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+                tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
+              END IF
+              CALL MPI_IRecv(recvResult(1:count,MOD(recvCounter,2)+1),count,MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(MOD(recvCounter,2)+1),mpierr)
+            END IF
+          END DO
+          ! We've finished calling irecv. Wait for remaining
+          ! requests to finish:
+          IF (recvRequests(MOD(recvCounter+1,2)+1) /= 0) THEN
+            CALL MPI_Wait(recvRequests(MOD(recvCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
+            tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter+1,2)+1)
+          END IF
+          IF (recvRequests(MOD(recvCounter,2)+1) /= 0) THEN
+            CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+            tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
+          END IF
+        ELSE
+          ! We will be sending data to some other process
+          IF (thismatrix%chunks(i)%isInit) THEN
+            sendCounter = sendCounter + 1
+            ! Check if we can safely write to sendRequests
+            IF (sendCounter > 2) THEN
+              CALL MPI_WAIT(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+            END IF
+            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=sendResult(1:count,MOD(sendCounter,2)+1),ALPHA=1.0_SRK,BETA=0.0_SRK)
+            CALL MPI_ISend(sendResult(1:count,MOD(sendCounter,2)+1), count, MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, sendRequests(MOD(sendCounter,2)+1),mpierr)
+          END IF
+        END IF
+      END DO
+      IF (sendRequests(MOD(sendCounter+1,2)+1) /= 0) THEN
+        CALL MPI_Wait(sendRequests(MOD(sendCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
+      END IF
+      IF (recvRequests(MOD(sendCounter,2)+1) /= 0) THEN
+        CALL MPI_Wait(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
+      END IF
+
+      ! do y = alpha * reduce + beta*y
+      IF (a == 1.0_SRK) THEN
+        IF (b == 1.0_SRK) THEN
+          y = tmpProduct + y
+        ELSE IF (b == 0.0_SRK) THEN
+          y = tmpProduct
+        ELSE
+          y = tmpProduct + b*y
+        END IF
+      ELSE IF (a == 0.0_SRK) THEN
+        IF (b == 0.0_SRK) THEN
+          y = 0.0_SRK
+        ELSE
+          y = b*y
+        END IF
+      ELSE
+        IF (b == 1.0_SRK) THEN
+          y = a*tmpProduct + y
+        ELSE IF (b == 0.0_SRK) THEN
+          y = a*tmpProduct
+        ELSE
+          y = a*tmpProduct + b*y
+        END IF
+      END IF
+    ENDSUBROUTINE matvec_DistrBandedMatrixType
+
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a sparse triangular matrix linear system.

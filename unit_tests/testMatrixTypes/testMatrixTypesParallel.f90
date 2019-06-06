@@ -54,7 +54,8 @@ PROGRAM testMatrixTypesParallel
   CALL eParams%addSurrogate(e)
   CALL eMatrixType%addSurrogate(e)
 
-  REGISTER_SUBTEST("Matrix Types",testMatrix)
+  !REGISTER_SUBTEST("Distributed Banded Matrix",testDistrBandMatrix)
+  REGISTER_SUBTEST("Distributed Block-Banded Matrix",testDistrBlockBandMatrix)
 
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -68,7 +69,7 @@ PROGRAM testMatrixTypesParallel
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE testMatrix()
+    SUBROUTINE testDistrBandMatrix()
 #ifdef HAVE_MPI
       IMPLICIT NONE
 
@@ -443,7 +444,7 @@ CONTAINS
       distrVec1%b = 0.0_SRK
       distrVec2%b = 0.0_SRK
 
-      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=distrVec1,Y=distrVec2)
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=distrVec1,Y=distrVec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
       DO i=1,2
         bool = ALL(ABS(distrVec2%b) < 1E-6)
         ASSERT(bool, 'banded%matvec(...)')
@@ -455,7 +456,6 @@ CONTAINS
         distrVec1%b = (/3._SRK,4._SRK/)
       END IF
       CALL BLAS_matvec(THISMATRIX=thisMatrix,X=distrVec1,Y=distrVec2,alpha=1.0_SRK,beta=0.0_SRK)
-      WRITE(*,*) distrVec2%b
       IF (rank == 0) THEN
         bool = distrVec2%b(1) == 5._SRK
         ASSERT(bool, 'banded%matvec(...)')
@@ -555,5 +555,130 @@ CONTAINS
       CALL pList%clear()
 
 #endif
-    ENDSUBROUTINE testMatrix
+    ENDSUBROUTINE testDistrBandMatrix
+
+    SUBROUTINE testDistrBlockBandMatrix()
+#ifdef HAVE_MPI
+      IMPLICIT NONE
+
+      TYPE(ParamType) :: pList,optListMat,distVecPList
+      INTEGER(SIK) :: rank,nproc,mpierr,i,j
+      TYPE(DistributedBlockBandedMatrixType),ALLOCATABLE :: thisMatrix
+      TYPE(NativeDistributedVectorType),ALLOCATABLE :: distrVec1, distrVec2
+      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
+      REAL(SRK) :: val
+      LOGICAL(SBK) :: bool
+
+
+      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+      CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
+
+      ASSERT(nproc==2, 'nproc valid')
+!Test for distributed block banded matrices
+      ALLOCATE(DistributedBlockBandedMatrixType :: thisMatrix)
+      
+      !check init
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',12_SNK)
+      CALL pList%add('MatrixType->nnz',9_SNK)
+      CALl pList%add('MatrixType->blockSize',3_SNK)
+      CALL pList%add('MatrixType->MPI_COMM_ID',PE_COMM_WORLD)
+
+      CALL pList%validate(pList)
+      CALL thisMatrix%init(pList)
+      bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 12))
+      ASSERT(bool, 'banded%init(...)')
+      IF(rank == 0) THEN 
+        bool = (ALLOCATED(thisMatrix%blocks) .AND. &
+                SIZE(thisMatrix%blocks)==2   .AND. &
+                thisMatrix%blockOffset==0    .AND. &
+                thisMatrix%nLocalBlocks==2   .AND. &
+                thisMatrix%blockMask==.FALSE.)
+        ASSERT(bool, 'banded%init')
+      ELSE
+        bool = (ALLOCATED(thisMatrix%blocks) .AND. &
+                SIZE(thisMatrix%blocks)==2   .AND. &
+                thisMatrix%blockOffset==2    .AND. &
+                thisMatrix%nLocalBlocks==2   .AND. &
+                thisMatrix%blockMask==.FALSE.)
+        ASSERT(bool, 'banded%init')
+      ENDIF
+     
+      CALL thisMatrix%clear()
+
+      !check matvec functionality
+      ![1 2 0 0 0 0]
+      ![0 3 0 0 0 0]
+      ![0 0 5 6 0 0]
+      ![0 9 0 7 0 0]
+      ![0 0 0 0 1 0]
+      ![0 0 0 0 0 1]
+
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',6_SNK)
+      CALL plist%add('MatrixType->blockSize',2_SNK)
+      CALL pList%add('MatrixType->nnz',1_SNK)
+      CALL pList%add('MatrixType->MPI_COMM_ID',PE_COMM_WORLD)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      WRITE(*,*) "matrix set calls"
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      CALL thisMatrix%set(4,2,9._SRK)
+      CALL thisMatrix%set(5,5,1._SRK)
+      CALL thisMatrix%set(6,6,1._SRK)
+      CALL thisMatrix%assemble()
+      IF(ALLOCATED(distrVec1)) DEALLOCATE(distrVec1)
+      IF(ALLOCATED(distrVec2)) DEALLOCATE(distrVec2)
+      ALLOCATE(NativeDistributedVectorType :: distrVec1)
+      ALLOCATE(NativeDistributedVectorType :: distrVec2)
+
+      CALL distVecPList%clear()
+      CALL distVecPList%add('VectorType->n',6)
+      CALL distVecPList%add('VectorType->chunkSize',2)
+      CALL distVecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
+      WRITE(*,*) "Vec init"
+      CALL distrVec1%init(distVecPList)
+      CALL distrVec2%init(distVecPList)
+
+      ! Check zero vector
+      distrVec1%b = 0.0_SRK
+      distrVec2%b = 0.0_SRK
+
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=distrVec1,Y=distrVec2,ALPHA=1.0_SRK,beta=0.0_SRK)
+      bool = ALL(ABS(distrVec2%b) < 1E-6)
+      ASSERT(bool, 'banded%matvec(...)')
+
+      ! Check for non-trivial vector
+      IF (rank == 0) THEN
+        distrVec1%b = (/1._SRK,2._SRK,3._SRK,4._SRK/)
+      ELSE
+        distrVec1%b = (/1.0_SRK,1.0_SRK/)
+      END IF
+
+      CALL BLAS_matvec(THISMATRIX=thisMatrix,X=distrVec1,Y=distrVec2,alpha=1.0_SRK,beta=0.0_SRK)
+      IF (rank == 0) THEN
+        bool = distrVec2%b(1) == 5._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = distrVec2%b(2) == 6._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = distrVec2%b(3) == 39._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = distrVec2%b(4) == 46._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+      ELSE
+        ASSERT(ALL(ABS(distrVec2%b-1) < 1E-6),'banded%matvec(...)')
+      END IF
+
+      WRITE(*,*) '  Passed: CALL banded%matvec(...)'
+      DEALLOCATE(thisMatrix)
+      CALL pList%clear()
+#endif
+    ENDSUBROUTINE testDistrBlockBandMatrix
+
+
 ENDPROGRAM testMatrixTypesParallel

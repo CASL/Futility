@@ -35,13 +35,15 @@ MODULE MatrixTypes_Base
 
   PUBLIC :: MatrixType_Paramsflag
   !> set enumeration scheme for matrix types
-  INTEGER(SIK),PARAMETER,PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3
-  INTEGER(SIK),PARAMETER,PUBLIC :: BANDED=4,DISTRIBUTED_BANDED=5
+  INTEGER(SIK),PARAMETER,PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3, &
+                                   BANDED=4,DISTRIBUTED_BANDED=5,DISTR_BLOCKBANDED=6
   PUBLIC :: SparseMatrixType_reqParams,SparseMatrixType_optParams
   PUBLIC :: TriDiagMatrixType_reqParams,TriDiagMatrixType_optParams
   PUBLIC :: BandedMatrixType_reqParams,BandedMatrixType_optParams
   PUBLIC :: DistributedBandedMatrixType_reqParams, &
     DistributedBandedMatrixType_optParams
+  PUBLIC :: DistributedBlockBandedMatrixType_reqParams, &
+    DistributedBlockBandedMatrixType_optParams
   PUBLIC :: DenseRectMatrixType_reqParams,DenseRectMatrixType_optParams
   PUBLIC :: DenseSquareMatrixType_reqParams,DenseSquareMatrixType_optParams
   PUBLIC :: DistributedMatrixType_reqParams,DistributedMatrixType_optParams
@@ -195,9 +197,13 @@ MODULE MatrixTypes_Base
   !> initialization for a Distributed Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: DistributedMatrixType_reqParams, DistributedMatrixType_optParams
 
-!> The parameter lists to use when validating a parameter list for
+  !> The parameter lists to use when validating a parameter list for
   !> initialization for a Banded Matrix Type.
   TYPE(ParamType),PROTECTED,SAVE :: DistributedBandedMatrixType_reqParams, DistributedBandedMatrixType_optParams
+
+  !> The parameter lists to use when validating a parameter list for
+  !> initialization for a Banded Matrix Type.
+  TYPE(ParamType),PROTECTED,SAVE :: DistributedBlockBandedMatrixType_reqParams, DistributedBlockBandedMatrixType_optParams
 
   !> Logical flag to check whether the required and optional parameter lists
   !> have been created yet for the Matrix Types.
@@ -241,7 +247,7 @@ MODULE MatrixTypes_Base
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
     SUBROUTINE MatrixTypes_Declare_ValidParams()
-      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal
+      INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal,blockSize
       LOGICAL(SBK) :: isSym
 
       !Setup the required and optional parameter lists
@@ -254,6 +260,7 @@ MODULE MatrixTypes_Base
       matType=1
       MPI_COMM_ID=1
       nlocal=-1
+      blockSize = -1
       !Sparse Matrix Type - Required
       CALL SparseMatrixType_reqParams%add('MatrixType->n',n)
       CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz)
@@ -279,6 +286,8 @@ MODULE MatrixTypes_Base
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->n',n)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
+      !Distributed Block Banded Matrix Type - Required
+      CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->blockSize',blockSize)
 
 
       !There are no optional parameters at this time.

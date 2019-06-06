@@ -353,7 +353,7 @@ MODULE LinearSolverTypes
         CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
       ENDIF
 
-      IF (matType == DISTRIBUTED_BANDED) THEN
+      IF (matType == DISTRIBUTED_BANDED .OR. matType == DISTR_BLOCKBANDED) THEN
         CALL validParams%add('LinearSolverType->x->VectorType->vecType',DISTRIBUTED_NATIVE)
         CALL validParams%add('LinearSolverType->b->VectorType->vecType',DISTRIBUTED_NATIVE)
       END IF
@@ -596,6 +596,7 @@ MODULE LinearSolverTypes
                 !set preconditioner
                 IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
                   CALL KSPGetPC(solver%ksp,solver%pc,iperr)
+                  WRITE(*,*) TRIM(PreCondType)
                   IF(TRIM(PreCondType)=='SOR') THEN
                     CALL PCSetType(solver%pc,PCSOR,iperr)
                   ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
@@ -619,8 +620,9 @@ MODULE LinearSolverTypes
                     CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,iperr)
                     CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,iperr)
 ! Disabling nopc option for PETSC because it breaks a lot of things
-!                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
-!                    CALL PCSetType(solver%pc,PCNONE,iperr)
+                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
+                    WRITE(*,*) "Setting nopc, defying code comments"
+                    CALL PCSetType(solver%pc,PCNONE,iperr)
                   ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
                     CALL PCSetType(solver%pc,PCBJACOBI,iperr)
                   ENDIF
@@ -1152,7 +1154,6 @@ MODULE LinearSolverTypes
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
                   SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
                     CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
-
                     IF(ierr==0) solver%info=0
                   ENDSELECT
                 ENDSELECT
@@ -1438,7 +1439,7 @@ MODULE LinearSolverTypes
               resid%b=-b%b
             ENDSELECT
           ENDSELECT
-          CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
+          CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid,ALPHA=1.0_SRK,BETA=1.0_SRK)
 #endif
         ENDIF
       ENDIF
@@ -1659,8 +1660,8 @@ MODULE LinearSolverTypes
         ALLOCATE(RealVectorType :: Vy)
       TYPE IS(NativeDistributedVectorType)
         CALL vecPlist%add('VectorType -> n',thisLS%A%n)
-        CALL vecPlist%add('VectorType -> nlocal',nLocal)
         CALL vecPlist%add('VectorType -> MPI_Comm_ID',thisLS%MPIparallelEnv%comm)
+        CALL vecPlist%add('VectorType -> chunkSize',x%chunkSize)
         ALLOCATE(NativeDistributedVectorType :: u)
         ALLOCATE(NativeDistributedVectorType :: Vy)
       CLASS DEFAULT

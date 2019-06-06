@@ -1488,7 +1488,7 @@ PROGRAM testMatrixTypes
         TYPE IS(BandedMatrixType)
           CALL thisMatrix%assemble()
           WRITE(*,*) "calling matvec"
-          CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2)
+          CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
           WRITE(*,*) "finished matvec call"
           DO i=1,4
             bool = ABS(dummyvec2(i)) < 1E-6
@@ -1499,7 +1499,7 @@ PROGRAM testMatrixTypes
       dummyvec=(/1._SRK,2._SRK,3._SRK,4._SRK/)
       SELECTTYPE(thisMatrix)
         TYPE IS(BandedMatrixType)
-        CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2)
+        CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
         bool = dummyvec2(1) == 5._SRK
         ASSERT(bool, 'banded%matvec(...)')
         bool = dummyvec2(2) == 6._SRK

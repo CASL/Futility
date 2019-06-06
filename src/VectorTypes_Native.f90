@@ -98,11 +98,9 @@ MODULE VectorTypes_Native
     INTEGER(SIK) :: comm=-1
     !> total number of local values
     INTEGER(SIK) :: nlocal=-1
+    !> Chunk size (minimum # of elements to subdivide to)
+    INTEGER(SIK) :: chunkSize=1
 
-    !TYPE(MPI_EnvType) :: commType
-
-    !!! TODO: Edit vectortypes_base appropriately
-    !
     !List of Type Bound Procedures
     CONTAINS
       !> @copybrief VectorTypes::clear_NativeDistributedVectorType
@@ -430,7 +428,7 @@ MODULE VectorTypes_Native
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, nlocal, comm, nProc,rank,mpierr
+      INTEGER(SIK) :: n, nlocal, chunksize, comm, nProc,rank,mpierr
       !TYPE(MPI_EnvType) :: commType
 
       !Check to set up required and optional param lists.
@@ -443,20 +441,27 @@ MODULE VectorTypes_Native
       !Pull Data from Parameter List
       CALL validParams%get('VectorType->n',n)
       CALL validParams%get('VectorType->MPI_Comm_ID',comm)
-      !CALL validParams%get('VectorType->nlocal',nlocal)
+      
+      chunksize = 1
+      IF (validParams%has('VectorType->chunkSize')) THEN
+        CALL validParams%get('VectorType->chunkSize',chunkSize)
+      ENDIF
 
       REQUIRE(.NOT. thisVector%isInit)
       REQUIRE(n > 1)
+      REQUIRE(chunkSize > 0)
+      REQUIRE(MOD(n,chunkSize)==0)
 
       thisVector%isInit=.TRUE.
       thisVector%n=n
-      !CALL commType%init(comm)
+      thisVector%chunkSize = chunkSize
       thisVector%comm = comm
-      !thisVector%commType = commType
 
       CALL MPI_Comm_rank(comm,rank,mpierr)
       CALL MPI_Comm_size(comm,nproc,mpierr)
-      ! Default to greedy partitioning
+      
+      ! Default to greedy partitioning, respecting chunk size
+      n = n/chunkSize
       IF(rank < MOD(n,nproc)) THEN
         thisVector%offset = (rank)*(n/nproc + 1)
         thisVector%nlocal = n/nproc + 1
@@ -464,6 +469,9 @@ MODULE VectorTypes_Native
         thisVector%offset = (rank)*(n/nproc) + MOD(n,nproc)
         thisVector%nlocal = n/nproc
       ENDIF
+      thisVector%offset = thisVector%offset*chunkSize
+      thisVector%nlocal = thisVector%nlocal*chunkSize
+
       ALLOCATE(thisVector%b(thisVector%nlocal))
 
       CALL validParams%clear()

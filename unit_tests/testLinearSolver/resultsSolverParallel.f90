@@ -88,7 +88,7 @@ PROGRAM resultsSolverParallel
 !-------------------------------------------------------------------------------
   
     SUBROUTINE setup()
-      INTEGER(SIK) :: n,nnz,i,j,rank,mpierr,ios,lowIdx,highIdx
+      INTEGER(SIK) :: n,nnz,i,j,rank,mpierr,ios,lowIdx,highIdx,nnz_banded
       REAL(SRK) :: tmpreal
       CHARACTER(200)::tempcharacter,dirname
       TYPE(TimerType) :: bandAssemble,petscAssemble
@@ -102,6 +102,7 @@ PROGRAM resultsSolverParallel
 
       n = 148716
       nnz = 6015708
+      nnz_banded = 583848
 
       WRITE(*,*) "Setting plists"
       CALL petscPlist%clear()
@@ -126,12 +127,14 @@ PROGRAM resultsSolverParallel
       CALL nativePlist%add('LinearSolverType->MPI_Comm_ID',PE_COMM_WORLD)
       CALL nativePlist%add('LinearSolverType->numberOMP',1_SNK)
       CALL nativePlist%add('LinearSolverType->timerName','testTimer')
-      CALL nativePlist%add('LinearSolverType->matType',DISTRIBUTED_BANDED)
+      CALL nativePlist%add('LinearSolverType->matType',DISTR_BLOCKBANDED)
       CALL nativePlist%add('LinearSolverType->A->MatrixType->n',n)
-      CALL nativePlist%add('LinearSolverType->A->MatrixType->m',n)
-      CALL nativePlist%add('LinearSolverType->A->MatrixType->nnz',nnz)
+      CALL nativePlist%add('LinearSolverType->A->MatrixType->blockSize',51_SIK)
+      CALL nativePlist%add('LinearSolverType->A->MatrixType->nnz',nnz_banded)
       CALL nativePlist%add('LinearSolverType->x->VectorType->n',n)
+      CALL nativePlist%add('LinearSolverType->x->VectorType->chunkSize',51_SIK)
       CALL nativePlist%add('LinearSolverType->b->VectorType->n',n)
+      CALL nativePlist%add('LinearSolverType->b->VectorType->chunkSize',51_SIK)
 
       CALL petscVec%clear()
       CALL petscVec%add('VectorType->n',n)
@@ -139,6 +142,7 @@ PROGRAM resultsSolverParallel
 
       CALL nativeVec%clear()
       CALL nativeVec%add('VectorType->n',n)
+      CALL nativeVec%add('VectorType->chunkSize',51_SIK)
       CALL nativeVec%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
 
       WRITE(*,*) "Calling %init's"
@@ -193,8 +197,8 @@ PROGRAM resultsSolverParallel
         CALL A%setRow(matrix_row(lowIdx),matrix_col(lowIdx:highIdx),matrix_val(lowIdx:highIdx))
       END DO
       END SELECT
-
-      SELECT TYPE(A => nativeLS%A); TYPE IS(DistributedBandedMatrixType)
+      
+      SELECT TYPE(A => nativeLS%A); TYPE IS(DistributedBlockBandedMatrixType)
         lowIdx = A%iOffsets(rank+1)
         highIdx = A%iOffsets(rank+2)
       END SELECT
@@ -240,7 +244,7 @@ PROGRAM resultsSolverParallel
 
       CALL bandSolve%setTimerName('Banded Solver Time')
 
-      SELECT TYPE(A => nativeLS%A); TYPE IS(DistributedBandedMatrixType)
+      SELECT TYPE(A => nativeLS%A); TYPE IS(DistributedBlockBandedMatrixType)
         IF (.NOT. A%isAssembled) CALL A%assemble()
       END SELECT
 
@@ -282,45 +286,42 @@ PROGRAM resultsSolverParallel
     END SUBROUTINE timePetscSolve
 
     SUBROUTINE checkResult()
-      REAL(SRK),ALLOCATABLE :: petscLocal(:)
+      REAL(SRK),ALLOCATABLE :: dummyvec(:),dummyvec2(:)
       REAL(SRK) :: resid_norm
-      CLASS(VectorType),ALLOCATABLE :: resid
-      INTEGER(SIK) :: nlocal,offset  
+      TYPE(NativeDistributedVectorType) :: resid
+      INTEGER(SIK) :: i,rank,nproc,mpierr,lowIdx,highIdx,iperr,iters
+      INTEGER(SIK),ALLOCATABLE :: nlocal(:),offset(:)
  
-      nlocal = -1
-      SELECT TYPE(x => nativeLS%X); TYPE IS(NativeDistributedVectorType)
-        nlocal = SIZE(x%b)
-        offset = x%offset
-      END SELECT
- 
-      SELECTTYPE(x => petscLS%X); TYPE IS(PetscVectorType)
-        ALLOCATE(petscLocal(nlocal))
-        CALL x%getRange(offset+1,offset+nlocal,petscLocal)
-      ENDSELECT
+      ALLOCATE(dummyvec(nativeLS%X%n))      
+      CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+      CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
 
+      ALLOCATE(nlocal(nproc))
+      ALLOCATE(offset(nproc))
       SELECT TYPE(x => nativeLS%X); TYPE IS(NativeDistributedVectorType)
-        ASSERT(MAXVAL(ABS(petscLocal - x%b)) < 1.0e-6_SRK,"Solutions match")
+        CALL MPI_Allgather(x%nlocal,1,MPI_INTEGER,nlocal,1,MPI_INTEGER,x%comm,mpierr)
+        CALL MPI_Allgather(x%offset,1,MPI_INTEGER,offset,1,MPI_INTEGER,x%comm,mpierr)
+        CALL MPI_Allgatherv(x%b,x%nlocal,MPI_DOUBLE_PRECISION,dummyvec,nlocal,offset,MPI_DOUBLE_PRECISION,&
+          x%comm,mpierr)
       END SELECT
+     
+      SELECT TYPE(x => petscLS%X); TYPE IS(PetscVectorType) 
+        CALL VecGetOwnershipRange(x%b,lowIdx,highIdx,iperr)
+        lowIdx = lowIdx + 1
 
-      CALL nativeLS%getResidual(resid)
-      SELECT TYPE(resid); CLASS IS(NativeVectorType)
-        resid_norm = BLAS_dot(resid%b,resid%b)
-      END SELECT
-      CALL nativeLS%MPIparallelEnv%allReduce_scalar(resid_norm)
-      resid_norm = SQRT(resid_norm)
-      WRITE(*,*) "Banded Residual is:",resid_norm
+        ALLOCATE(dummyvec2(highIdx - lowIdx+1))
 
-      SELECT TYPE(x => nativeLS%X); TYPE IS(NativeDistributedVectorType)
-        x%b = petscLocal
+        DO i=lowIdx,highIdx
+          CALL x%get(i,dummyvec2(i-lowIdx+1))
+        ENDDO
       END SELECT
-      CALL nativeLS%getResidual(resid)
-      SELECT TYPE(resid); CLASS IS(NativeVectorType)
-        resid_norm = BLAS_dot(resid%b,resid%b)
-      END SELECT
-      CALL nativeLS%MPIparallelEnv%allReduce_scalar(resid_norm)
-      resid_norm = SQRT(resid_norm)
-      WRITE(*,*) "PETSc Residual is:",resid_norm
       
+      ASSERT(ALL(ABS(dummyvec2 - dummyvec(lowIdx:highIdx)) < 1.0e-6),'solutions match')
+
+      WRITE(*,*) "nativeLS residual",nativeLS%residual
+      
+      CALL petscLS%getIterResidual_LinearSolverType_Iterative(iters,resid_norm)
+      WRITE(*,*) "PETSc Residual is:",resid_norm
       
      
     END SUBROUTINE checkResult
