@@ -57,6 +57,8 @@ class Requirement:
 
     Args:
        ID (int): Numeric identifier for this requirement
+       testName (str): The name of the test that shows up in the test report. This is 
+                       nominally the test name created by CMake that appears on CDash.
        testFile (str): The name of the file where this requirement was found
        rawReqBlock (list): See above documentation for a detailed description.  Passing None means this
           is not a requirement.
@@ -77,7 +79,10 @@ class Requirement:
 
     def __init__(self, ID, testName, testFile, rawReqBlock):
         self.ID = ID
-        self.tfile = testFile[len(args.path)+1:]
+        if "/" ==  args.path[-1]:
+            self.tfile = testFile[len(args.path):]
+        else:
+            self.tfile = testFile[len(args.path)+1:]
         self.tname = testName
         if self.tname is None:
             self.tname = ""
@@ -159,16 +164,17 @@ class File_RequirementParser:
             return
 
         cdash_test_name = None
-        if os.path.isfile(args.cdash_test_names):
-            f_tnames = open(args.cdash_test_names, 'r')
-            fline = f_tnames.readline()
-            while fline:
-                cdash_test_input = fline.split(" ")[1]
-                cdash_test_input = cdash_test_input.rstrip("\n")
-                if cdash_test_input in testFile:
-                   cdash_test_name = fline.split(" ")[0]
-                   break
+        if args.cdash_test_names:
+            if os.path.isfile(args.cdash_test_names):
+                f_tnames = open(args.cdash_test_names, 'r')
                 fline = f_tnames.readline()
+                while fline:
+                    cdash_test_input = fline.split(" ")[1]
+                    cdash_test_input = cdash_test_input.rstrip("\n")
+                    if cdash_test_input in testFile:
+                       cdash_test_name = fline.split(" ")[0]
+                       break
+                    fline = f_tnames.readline()
 
         if sys.version_info[0] < 3:
             fobject = open(testFile, 'r')
@@ -311,7 +317,7 @@ def ConvertToLatex(df):
     ws = '                   '
 
     latex_table = '\\begin{longtable}[!ht]{|p{1.4cm}|p{14cm}|}\n' + \
-                  '\\caption{MPACT Requirements}\\label{tab:req}\\\\\n' + \
+                  '\\caption{Requirements}\\label{tab:req}\\\\\n' + \
                   '\n\\hline\n' + \
                   '\\multirow{4}{*}{\\textbf{Req. ID}} & \\cellcolor{caslheader}\\textcolor{white}{\\textit{Requirement Description}} \\\\\\cline{2-2}\n' + \
                   ws + '& \cellcolor{caslcolor1} \\textit{Test Name} \\\\\\cline{2-2}\n' + \
@@ -336,9 +342,11 @@ def ConvertToLatex(df):
     #Data
     i=0
     for index, row in df.iterrows():
-      #Trim the last entry, which looks like a return.  Escape % and escape _.
+      #Trim the last entry, which looks like a return.  Escape %, &, and escape _.
       reqdesc = str(row['Requirement Description'])[:-1].replace('%',r'\%')
       reqdesc = reqdesc.replace('_',r'\_')
+      reqdesc = reqdesc.replace('&',r'\&')
+
       #Escape % and escape _.
       testfile = row['Test File'].replace('%',r'\%')
       testfile = testfile.replace('_',r'\_')
