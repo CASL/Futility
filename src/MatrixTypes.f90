@@ -531,11 +531,11 @@ MODULE MatrixTypes
                 y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
               ENDDO
             ELSE
-              DO bIdx=1,SIZE(thisMatrix%bandIdx) 
+              DO bIdx=1,SIZE(thisMatrix%bandIdx)
                 idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
                 y(idxMult) = y(idxMult) + a * thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
               ENDDO
-            ENDIF 
+            ENDIF
 
             IF(t /= 'n') THEN
               CALL thisMatrix%transpose()
@@ -689,7 +689,7 @@ MODULE MatrixTypes
                 SELECT TYPE(thisMatrix)
                   CLASS IS(DistributedBandedMatrixType)
                     CALL matvec_DistrBandedMatrixType(thisMatrix,x%b,y%b,t,ul,d,incx,a,b)
-                    
+
                   CLASS DEFAULT
                     CALL eMatrixType%raiseError('Incorrect call to '// &
                          modName//'::'//myName//' - This interface is not available.')
@@ -709,7 +709,7 @@ MODULE MatrixTypes
 !
 !-------------------------------------------------------------------------------
 
-    SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b) 
+    SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
       CHARACTER(LEN=*),PARAMETER :: myName='matvec_DistrBandedMatrixTypeNativeVectorType'
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
       REAL(SRK),INTENT(INOUT) :: x(:)
@@ -726,7 +726,7 @@ MODULE MatrixTypes
       INTEGER(SIK) :: lowIdx,highIdx
 
       ! NOTE: incx,ul,d,t are NOT USED
- 
+
       ! Get rank; initialize requests/counters
       CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
 
@@ -748,13 +748,17 @@ MODULE MatrixTypes
 
       ! First, take care of locally held data.
       SELECT TYPE(thisMatrix); TYPE IS(DistributedBlockBandedMatrixType)
-        DO k=1,thisMatrix%nlocalBlocks
-          lowIdx = (k-1)*thisMatrix%blockSize+1
-          highIdx = lowIdx-1 + thisMatrix%blockSize
-          CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx),Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
-        ENDDO
+        IF (.NOT. thisMatrix%blockMask) THEN
+          DO k=1,thisMatrix%nlocalBlocks
+            lowIdx = (k-1)*thisMatrix%blockSize+1
+            highIdx = lowIdx-1 + thisMatrix%blockSize
+            CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx),Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
+          ENDDO
+        ELSE
+          tmpProduct = 0.0_SRK
+        ENDIF
       END SELECT
-      
+
       ! On each rank, loop over the chunks held (top to bottom)
       DO i=1,SIZE(thisMatrix%iOffsets)-1
         count = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
@@ -763,7 +767,7 @@ MODULE MatrixTypes
           IF (thisMatrix%chunks(i)%isInit) THEN
             CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
           END IF
-          
+
           ! Find which other chunks in this row we need to
           ! communicate with
           DO k=1,SIZE(thisMatrix%contrib,1)

@@ -257,7 +257,7 @@ MODULE MatrixTypes_Native
       ! The assemble routine will remain unchanged
 
       ! The setRow routine will remain unchanged (unimplemented)
-      
+
       !> @copybrief MatrixTypes::set_DistributedBlockBandedMatrixType
       !> @copydetails MatrixTypes::set_DistributedBlockBandedMatrixType
       PROCEDURE,PASS :: set => set_DistributedBlockBandedMatrixType
@@ -265,7 +265,7 @@ MODULE MatrixTypes_Native
       !> @copydetails MatrixTypes::get_DistributedBlockBandedMatrixType
       PROCEDURE,PASS :: get => get_DistributedBlockBandedMatrixType
       ! the transpose routine will remain unchanged (unimplemented)
-      
+
       !> @copybrief MatrixTypes::zeroentries_DistributedBlockBandedMatrixType
       !> @copydetails MatrixTypes::zeroentries_DistributedBlockBandedMatrixType
       PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBlockBandedMatrixType
@@ -512,7 +512,7 @@ MODULE MatrixTypes_Native
       CALL validParams%get('MatrixType->m',m)
       CALL validParams%get('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
       CALL validParams%get('MatrixType->nnz',nnz)
-      
+
       blockSize = 1
       IF (validParams%has('MatrixType->blockSize')) THEN
         CALL validParams%get('MatrixType->blockSize',blockSize)
@@ -617,7 +617,7 @@ MODULE MatrixTypes_Native
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
       CALL validParams%get('MatrixType->blockSize',blockSize)
-      
+
       REQUIRE(.NOT. matrix%isInit)
       REQUIRE(blockSize > 1)
       REQUIRE(MOD(n,blockSize)==0)
@@ -626,12 +626,12 @@ MODULE MatrixTypes_Native
 
       ! Allocate the blocks, then adjust the parameter list and proceed to
       ! %parent%
-      
+
       ! Default to greedy partitioning, respecting blockSize
       CALL MPI_Comm_rank(MPI_COMM_ID,rank,mpierr)
       CALL MPI_Comm_size(MPI_COMM_ID,nproc,mpierr)
       REQUIRE(n/blockSize >= nproc)
-        
+
 
       n = n/blockSize
       IF(rank < MOD(n,nproc)) THEN
@@ -646,7 +646,7 @@ MODULE MatrixTypes_Native
       CALL blockParams%clear()
       CALL blockParams%add('MatrixType->n',blockSize)
       CALL blockParams%add('MatrixType->isSym',.FALSE.)
-     
+
       DO i=1,matrix%nlocalblocks
         CALL matrix%blocks(i)%init(blockParams)
       ENDDO
@@ -1017,12 +1017,12 @@ MODULE MatrixTypes_Native
       matrix%blockSize = 0
       matrix%nLocalBlocks = 0
       matrix%blockOffset = 0
-      
+
       DO i=1,SIZE(matrix%blocks)
         CALL matrix%blocks(i)%clear()
       END DO
       DEALLOCATE(matrix%blocks)
-      
+
       CALL matrix%DistributedBandedMatrixType%clear()
 #endif
      ENDSUBROUTINE clear_DistributedBlockBandedMatrixType
@@ -1246,10 +1246,12 @@ MODULE MatrixTypes_Native
       ELSE
         IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
           .AND. (i>=1) .AND. (j >= 1)) THEN
-          offset = ((i-1)/matrix%blockSize)*matrix%blockSize
-          IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
-            CALL matrix%blocks((j-1)/matrix%blockSize - matrix%blockOffset+1)%set(i-offset,j-offset,setval)
-          END IF
+          IF (.NOT. matrix%blockMask) THEN
+            offset = ((i-1)/matrix%blockSize)*matrix%blockSize
+            IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
+              CALL matrix%blocks((j-1)/matrix%blockSize - matrix%blockOffset+1)%set(i-offset,j-offset,setval)
+            ENDIF
+          ENDIF
         ENDIF
       ENDIF
 #endif
@@ -1445,11 +1447,13 @@ MODULE MatrixTypes_Native
       CALL MPI_Comm_Rank(matrix%comm,rank,mpierr)
       IF ((i-1)/matrix%blockSize /= (j-1)/matrix%blockSize) THEN
         CALL matrix%DistributedBandedMatrixType%get(i,j,getVal)
-      ELSE
+      ELSE IF (.NOT. matrix%blockMask) THEN
         offset = ((i-1)/matrix%blockSize)*matrix%blockSize
         IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
           CALL matrix%blocks(i/matrix%blockSize - matrix%blockOffset)%get(i-offset,j-offset,getVal)
         END IF
+      ELSE
+        getval = 0.0_SRK
       END IF
 #endif
     ENDSUBROUTINE get_DistributedBlockBandedMatrixType
@@ -1862,8 +1866,8 @@ MODULE MatrixTypes_Native
     SUBROUTINE setBlockMask_DistributedBlockBandedMatrixType(matrix,maskVal)
       CHARACTER(LEN=*),PARAMETER :: myName='setBlockMask_DistributedBlockBandedMatrixType'
       CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
-      LOGICAL(SBK),INTENT(IN) :: maskVal     
- 
+      LOGICAL(SBK),INTENT(IN) :: maskVal
+
       REQUIRE(matrix%isInit)
       matrix%blockMask = maskVal
     ENDSUBROUTINE setBlockMask_DistributedBlockBandedMatrixType
