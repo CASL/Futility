@@ -746,25 +746,24 @@ MODULE MatrixTypes
       ALLOCATE(sendResult(thisMatrix%iOffsets(2),2))
       ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)-thisMatrix%iOffsets(rank+1)))
 
+      ! First, take care of locally held data.
+      SELECT TYPE(thisMatrix); TYPE IS(DistributedBlockBandedMatrixType)
+        DO k=1,thisMatrix%nlocalBlocks
+          lowIdx = (k-1)*thisMatrix%blockSize+1
+          highIdx = lowIdx-1 + thisMatrix%blockSize
+          CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx),Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
+        ENDDO
+      END SELECT
+      
       ! On each rank, loop over the chunks held (top to bottom)
       DO i=1,SIZE(thisMatrix%iOffsets)-1
         count = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
         IF (rank+1 == i) THEN
           ! We will be receiving data from other processes
-          ! Do local product
           IF (thisMatrix%chunks(i)%isInit) THEN
-            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
-          ELSE
-            tmpProduct = 0.0_SRK
+            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
           END IF
-          SELECT TYPE(thisMatrix); TYPE IS(DistributedBlockBandedMatrixType)
-            DO k=1,thisMatrix%nlocalBlocks
-              lowIdx = (k-1)*thisMatrix%blockSize+1
-              highIdx = lowIdx-1 + thisMatrix%blockSize
-              CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx),Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=1.0_SRK)
-            ENDDO
-          END SELECT
-
+          
           ! Find which other chunks in this row we need to
           ! communicate with
           DO k=1,SIZE(thisMatrix%contrib,1)
@@ -805,7 +804,7 @@ MODULE MatrixTypes
       IF (sendRequests(MOD(sendCounter+1,2)+1) /= 0) THEN
         CALL MPI_Wait(sendRequests(MOD(sendCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
       END IF
-      IF (recvRequests(MOD(sendCounter,2)+1) /= 0) THEN
+      IF (sendRequests(MOD(sendCounter,2)+1) /= 0) THEN
         CALL MPI_Wait(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
       END IF
 
