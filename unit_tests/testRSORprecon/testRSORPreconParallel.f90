@@ -28,8 +28,8 @@ PROGRAM testRSORPreconParallel
 
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec,PListRSOR
-  CLASS(MatrixType),ALLOCATABLE :: testBandedMatrix
-  CLASS(VectorType),ALLOCATABLE :: testVector,testDummy,refVector
+  CLASS(MatrixType),ALLOCATABLE :: testBandedMatrix,testBlockBandedMatrix
+  TYPE(NativeDistributedVectorType) :: testVector,workVector,refVector
   CLASS(VectorType),ALLOCATABLE :: testVec_1g,testVec_mg
   INTEGER(SIK) :: nerrors1,nerrors2
 
@@ -64,20 +64,19 @@ PROGRAM testRSORPreconParallel
 
         CALL PListRSOR%add('PCType->numblocks',3_SIK)
         CALL PListRSOR%add('PCType->omega',1.0_SRK)
-        CALL PListRSOR%add('PCType->comm',MPI_COMM_WORLD)
+        CALL PListRSOR%add('PCType->MPI_Comm_ID',PE_COMM_WORLD)
         CALL PListVec%add('VectorType->n',9_SIK)
-        ALLOCATE(RealVectorType :: testVector)
-        ALLOCATE(RealVectorType :: refVector)
+        CALL PListVec%add('VectorType->chunkSize',3_SIK)
+        CALL PListVec%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
         CALL testVector%init(PListVec)
         CALL refVector%init(PListVec)
         CALL PListMat%add('MatrixType->n',9_SIK)
         CALL PListMat%add('MatrixType->m',9_SIK)
-        CALL PListMat%add('MatrixType->isSym',.FALSE.)
-        CALL PListMat%add('MatrixType->comm',MPI_COMM_WORLD)
+        CALL PListMat%add('MatrixType->blockSize',3)
+        CALL PListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
 
-
-        CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
-        CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+        CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
+        CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
 
         ASSERT(nproc==2, 'nproc valid')
 
@@ -104,7 +103,9 @@ PROGRAM testRSORPreconParallel
 
         !setup the banded version of the matrix
         ALLOCATE(DistributedBandedMatrixType :: testBandedMatrix)
+        ALLOCATE(DistributedBlockBandedMatrixType :: testBlockBandedMatrix)
         CALL testBandedMatrix%init(PListMat)
+        CALL testBlockBandedMatrix%init(PListMat)
         SELECTTYPE(testBandedMatrix); TYPE IS(DistributedBandedMatrixType)
             DO i=1,9
                 DO j=1,9
@@ -115,6 +116,17 @@ PROGRAM testRSORPreconParallel
             END DO
             CALL testBandedMatrix%assemble()
         ENDSELECT
+        SELECTTYPE(testBlockBandedMatrix); TYPE IS(DistributedBlockBandedMatrixType)
+            DO i=1,9
+                DO j=1,9
+                    IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
+                        CALL testBlockBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
+                    END IF
+                END DO
+            END DO
+            CALL testBlockBandedMatrix%assemble()
+        ENDSELECT
+
 
         tmpreal2=(/-16.0_SRK,&
                 -1.95943487863577E-15_SRK,&
@@ -126,9 +138,8 @@ PROGRAM testRSORPreconParallel
                 -1.95943487863576E-15_SRK,&
                 16.0000000000000_SRK/)
 
-        DO i=1,9
-            CALL testVector%set(i,tmpreal2(i))
-        END DO
+        IF (rank == 0) testVector%b = tmpreal2(1:6)
+        IF (rank == 1) testVector%b = tmpreal2(7:9)
 
         tmpreal2=(/0.15182522957531913_SRK,&
                 7.4014868308343768E-018_SRK,&
@@ -140,9 +151,8 @@ PROGRAM testRSORPreconParallel
                 7.4014868308343768E-018_SRK,&
                 -0.15182522957531916_SRK/)
 
-        DO i=1,9
-            CALL refVector%set(i,tmpreal2(i))
-        END DO
+        IF (rank == 0) refVector%b = tmpreal2(1:6)
+        IF (rank == 1) refVector%b = tmpreal2(7:9)
 #endif
 
     ENDSUBROUTINE setupRSORTest
@@ -213,22 +223,58 @@ PROGRAM testRSORPreconParallel
             END DO
 
             ! Check %apply
-            CALL testSORP%apply(testVector)
-            SELECTTYPE(tv => testVector); TYPE IS(RealVectorType)
-                SELECTTYPE(rv => refVector); TYPE IS(RealVectorType)
-                    ASSERT(ALL(tv%b .APPROXEQA. rv%b),'BandedMatrixType RSOR%apply(vector)')
-                    FINFO() 'Result:',tv%b,'Solution:',rv%b
-                ENDSELECT
-            ENDSELECT
+            workVector = testVector
+            CALL testSORP%apply(workVector)
+            CALL testBandedMatrix%get(2,2,tmpreal)
+            WRITE(*,*) "testBandedMatrix(2,2): ",tmpreal
+            ASSERT(ALL(workVector%b .APPROXEQA. refVector%b),'BandedMatrixType RSOR%apply(vector)')
+            FINFO() 'Result:',workVector%b,'Solution:',refVector%b
 
             ! Check %clear
             CALL testSORP%clear()
             ASSERT(.NOT.(testSORP%isInit),'BandedMatrixType .NOT.(RSOR%SOR%isInit)')
             ASSERT(.NOT.(ASSOCIATED(testSORP%A)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
-            ASSERT(.NOT.(ALLOCATED(testSORP%LpU)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+            ASSERT(.NOT.(ASSOCIATED(testSORP%LpU)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
 
         ELSE
             ASSERT(testBandedMatrix%isInit,'TestBandedMatrix Initialization')
+            ASSERT(testVector%isInit,'TestVector Initialization')
+        ENDIF
+
+        COMPONENT_TEST('RSOR_PreCondType, BlockBandedMatrixType')
+        IF(testBlockBandedMatrix%isInit .AND. testVector%isInit) THEN
+
+            ! Check %init
+            CALL testSORP%init(testBlockBandedMatrix,PListRSOR)
+            ASSERT(testSORP%isInit,'BlockBandedMatrixType RSOR%isInit')
+            ASSERT(ASSOCIATED(testSORP%A),'BlockBandedMatrixType ASSOCIATED(RSOR%LU%A)')
+            ASSERT(testSORP%LpU%isInit,'BlockBandedMatrixType RSOR%LpU%isInit')
+
+            ! Check %setup
+            CALL testSORP%setup()
+            DO k=testSORP%myFirstBlock,testSORP%myFirstBlock+testSORP%myNumBlocks-1
+                SELECTTYPE(LU => testSORP%LU(k-testSORP%myFirstBlock+1)); TYPE IS(DenseSquareMatrixType)
+                    ASSERT(ALL(LU%a .APPROXEQA. refLU(:,:,k)),'RSOR%LU(k)%a Correct')
+                    FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
+                ENDSELECT
+            END DO
+
+            ! Check %apply
+            workVector = testVector
+            CALL testSORP%apply(workVector)
+            CALL testBandedMatrix%get(2,2,tmpreal)
+            WRITE(*,*) "testBandedMatrix(2,2): ",tmpreal
+            ASSERT(ALL(workVector%b .APPROXEQA. refVector%b),'BlockBandedMatrixType RSOR%apply(vector)')
+            FINFO() 'Result:',workVector%b,'Solution:',refVector%b
+
+            ! Check %clear
+            CALL testSORP%clear()
+            ASSERT(.NOT.(testSORP%isInit),'BlockBandedMatrixType .NOT.(RSOR%SOR%isInit)')
+            ASSERT(.NOT.(ASSOCIATED(testSORP%A)),'BlockBandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+            ASSERT(.NOT.(ASSOCIATED(testSORP%LpU)),'BlockBandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+
+        ELSE
+            ASSERT(testBandedMatrix%isInit,'TestBlockBandedMatrix Initialization')
             ASSERT(testVector%isInit,'TestVector Initialization')
         ENDIF
 
@@ -246,13 +292,15 @@ PROGRAM testRSORPreconParallel
       CALL MatrixTypes_Clear_ValidParams()
       IF(ALLOCATED(testVec_1g)) CALL testVec_1g%clear()
       IF(ALLOCATED(testVec_mg)) CALL testVec_mg%clear()
-      IF(ALLOCATED(testVector)) CALL testVector%clear()
-      IF(ALLOCATED(testDummy)) CALL testDummy%clear()
+      IF(ALLOCATED(testBandedMatrix)) CALL testBandedMatrix%clear()
+      IF(ALLOCATED(testBlockBandedMatrix)) CALL testBlockBandedMatrix%clear()
+      CALL testVector%clear()
 
       IF(ALLOCATED(testVec_1g)) DEALLOCATE(testVec_1g)
       IF(ALLOCATED(testVec_mg)) DEALLOCATE(testVec_mg)
-      IF(ALLOCATED(testVector)) DEALLOCATE(testVector)
-      IF(ALLOCATED(testDummy)) DEALLOCATE(testDummy)
+      IF(ALLOCATED(testBandedMatrix)) DEALLOCATE(testBandedMatrix)
+      IF(ALLOCATED(testBlockBandedMatrix)) DEALLOCATE(testBlockBandedMatrix)
+
 #endif
 
     ENDSUBROUTINE clearTest

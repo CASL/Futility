@@ -138,17 +138,20 @@ CONTAINS
       ! Use default initial guess (all ones)
 
       SELECTTYPE(b => thisLS%b); TYPE IS(NativeDistributedVectorType)
-        CALL b%set(1.0_SRK)
+        b%b = 1.0_SRK
       ENDSELECT
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,20_SIK,8_SIK)
       ENDSELECT
 
 
       !solve it
       CALL thisLS%solve()
+      SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+        WRITE(*,*) thisLS%iters
+      ENDSELECT
 
       !Store expected solution (from MATLAB) in B
       IF (mpiTestEnv%rank == 0) THEN
@@ -165,6 +168,7 @@ CONTAINS
             IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
             ALLOCATE(dummyvec(X%nLocal))
             dummyvec = X%b
+            WRITE(*,*) dummyvec
             IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
               match=.FALSE.
               EXIT

@@ -356,6 +356,10 @@ MODULE LinearSolverTypes
       IF (matType == DISTRIBUTED_BANDED .OR. matType == DISTR_BLOCKBANDED) THEN
         CALL validParams%add('LinearSolverType->x->VectorType->vecType',DISTRIBUTED_NATIVE)
         CALL validParams%add('LinearSolverType->b->VectorType->vecType',DISTRIBUTED_NATIVE)
+      ELSEIF (matType == BANDED) THEN
+        CALL validParams%add('LinearSolverType->x->VectorType->vecType',REAL_NATIVE)
+        CALL validParams%add('LinearSolverType->b->VectorType->vecType',REAL_NATIVE)
+
       END IF
 
       ! pull data for matrix and vector parameter lists
@@ -562,6 +566,16 @@ MODULE LinearSolverTypes
                   solver%PCTypeName='NOPC'
                   solver%pciters=0
                   solver%pcsetup=0
+                ELSEIF(PreCondType=='JACOBI') THEN
+                  ALLOCATE(Jacobi_PreCondType :: solver%PreCondType)
+                  solver%PCTypeName='JACOBI'
+                  solver%pciters=0
+                  solver%pcsetup=0
+                ELSEIF(PreCondType=='DISTR_RSOR') THEN
+                  ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
+                  solver%PCTypeName='DISTR_RSOR'
+                  solver%pciters=0
+                  solver%pcsetup=0
                 ELSE
                   solver%PCTypeName=PreCondType
                   solver%pciters=0
@@ -703,6 +717,8 @@ MODULE LinearSolverTypes
                     CALL solver%PreCondType%init(solver%A,params)
                 TYPE IS(DistributedRSOR_PreCondType)
                     CALL solver%PreCondType%init(solver%A,params)
+                TYPE IS(Jacobi_PreCondType)
+                    CALL solver%PreCondType%init(solver%A)
             ENDSELECT
             CALL solver%PreCondType%setup()
           ELSE
@@ -1180,7 +1196,7 @@ MODULE LinearSolverTypes
                 CALL Belos_solve(solver%Belos_solver)
 #endif
               CLASS DEFAULT
-                IF(solver%pciters /= 0) THEN
+                IF(solver%PCTypeName /= 'NOPC') THEN
                   CALL solveGMRES(solver,solver%PreCondType)
                 ELSE
                   CALL solveGMRES(solver)
@@ -1613,6 +1629,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: nIters,outerIt
       LOGICAL(SBK) :: converged
 
+      WRITE(*,*) "Entered solvegmres",PRESENT(thisPC)
       IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
       thisLS%iters = 0
       DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
@@ -1625,6 +1642,7 @@ MODULE LinearSolverTypes
 
         IF (converged) EXIT
       END DO
+      WRITE(*,*) "Convergence status",converged
 
     ENDSUBROUTINE solveGMRES
 
@@ -1691,6 +1709,10 @@ MODULE LinearSolverTypes
 
       ! Check if initial guess is already solution
       CALL thisLS%getResidual(u)
+      IF (PRESENT(thisPC)) THEN
+        CALL thisPC%apply(u)
+      END IF
+
       ! Compute norm of u
       norm_r0 = BLAS_dot(u%b,u%b)
       CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
@@ -1726,10 +1748,9 @@ MODULE LinearSolverTypes
         divTmp = 1.0/h
         V(krylovIdx)%b = u%b*divTmp
 
+        CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx),Y=u,BETA=0.0_SRK)
         IF (PRESENT(thisPC)) THEN
-          !TODO: Add support for preconditioning
-        ELSE
-          CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx),Y=u,BETA=0.0_SRK)
+          CALL thisPC%apply(u)
         END IF
         ! Create orthogonal basis
         h = BLAS_dot(V(1)%b,u%b)
@@ -1771,13 +1792,9 @@ MODULE LinearSolverTypes
           DO i=1,krylovIdx
             Vy%b = Vy%b + V(i)%b*y(i)
           END DO
-          IF (PRESENT(thisPC)) THEN
-            ! TODO: Support preconditioning
-          ELSE
-            SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
-              x%b = x%b - Vy%b
-            END SELECT
-          END IF
+          SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
+            x%b = x%b - Vy%b
+          END SELECT
           EXIT
         END IF
 

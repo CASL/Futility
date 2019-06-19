@@ -260,7 +260,7 @@ MODULE MatrixTypes_Base
       matType=1
       MPI_COMM_ID=1
       nlocal=-1
-      blockSize = -1
+      blockSize = 1
       !Sparse Matrix Type - Required
       CALL SparseMatrixType_reqParams%add('MatrixType->n',n)
       CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz)
@@ -287,7 +287,9 @@ MODULE MatrixTypes_Base
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
       !Distributed Block Banded Matrix Type - Required
+      WRITE(*,*) "hunch 1/2"
       CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->blockSize',blockSize)
+      WRITE(*,*) "hunch 2/2"
 
 
       !There are no optional parameters at this time.
@@ -323,6 +325,8 @@ MODULE MatrixTypes_Base
       CALL DistributedMatrixType_reqParams%clear()
       !Distributed Banded Matrix Type
       CALL DistributedBandedMatrixType_reqParams%clear()
+      !Distributed Block Banded Matrix Type
+      CALL DistributedBlockBandedMatrixType_reqParams%clear()
 
       !There are no optional parameters at this time.
       CALL DistributedMatrixType_optParams%clear()

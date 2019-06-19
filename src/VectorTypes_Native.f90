@@ -441,7 +441,7 @@ MODULE VectorTypes_Native
       !Pull Data from Parameter List
       CALL validParams%get('VectorType->n',n)
       CALL validParams%get('VectorType->MPI_Comm_ID',comm)
-      
+
       chunksize = 1
       IF (validParams%has('VectorType->chunkSize')) THEN
         CALL validParams%get('VectorType->chunkSize',chunkSize)
@@ -459,7 +459,7 @@ MODULE VectorTypes_Native
 
       CALL MPI_Comm_rank(comm,rank,mpierr)
       CALL MPI_Comm_size(comm,nproc,mpierr)
-      
+
       ! Default to greedy partitioning, respecting chunk size
       n = n/chunkSize
       IF(rank < MOD(n,nproc)) THEN
@@ -599,12 +599,14 @@ MODULE VectorTypes_Native
 
       REQUIRE(thisVector%isInit)
       REQUIRE(0 < istt .AND. istp <= thisVector%n)
+      REQUIRE(istt <= istp)
 
       IF(istt <= (thisVector%offset + thisVector%nlocal)  .OR. istp > thisVector%offset) THEN
-        thisVector%b(MAX(istt,thisVector%offset+1):MIN(istp,thisVector%offset+thisVector%nlocal)) = setval
+        thisVector%b(MAX(istt,thisVector%offset+1) - thisVector%offset : &
+                     MIN(istp,thisVector%offset+thisVector%nlocal) - thisVector%offset) = setval
       ENDIF
 
-      IF(PRESENT(ierr)) ierr=ierrc
+      IF(PRESENT(ierr)) ierr=0
     END SUBROUTINE setRange_scalar_NativeDistributedVectorType
 !
 !-------------------------------------------------------------------------------

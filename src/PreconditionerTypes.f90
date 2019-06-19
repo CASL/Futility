@@ -80,6 +80,7 @@ MODULE PreconditionerTypes
   PUBLIC :: RSOR_PreCondType
   PUBLIC :: DistributedSOR_PreCondType
   PUBLIC :: DistributedRSOR_PreCondType
+  PUBLIC :: Jacobi_PreCondType
   PUBLIC :: ePreCondType
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -205,7 +206,7 @@ MODULE PreconditionerTypes
     !> Array of LU matrices for each diagonal block, will be dense!
     CLASS(MatrixType),ALLOCATABLE :: LU(:)
     !> Lower and upper portions of matrix with diagonal blocks removed
-    CLASS(MatrixType),ALLOCATABLE :: LpU
+    CLASS(MatrixType),POINTER :: LpU
     !> Number of elements belonging to each processor
     INTEGER(SIK),ALLOCATABLE :: psize(:)
     !> Offset for elements belonging to each processor
@@ -237,6 +238,45 @@ MODULE PreconditionerTypes
       !> @copydetails MatrixTypes::apply_DistributedRSOR_PreCondType
       PROCEDURE,PASS :: apply => apply_DistributedRSOR_PreCondType
   ENDTYPE DistributedRSOR_PreCondType
+
+  TYPE,EXTENDS(PreConditionerType) :: Jacobi_PreCondType
+    !> Inverse diagonal elements
+    REAL(SRK),ALLOCATABLE :: invDiag(:)
+
+    CONTAINS
+      !> @copybrief PreconditionerTypes::init_Jacobi_PreCondType
+      !> @copydetails PreconditionerTypes::init_Jacobi_PreCondType
+      PROCEDURE,PASS :: init => init_Jacobi_PreCondType
+      !> @copybrief PreconditionerTypes::clear_Jacobi_PreCondType
+      !> @copydetails PreconditionerTypes::clear_Jacobi_PreCondType
+      PROCEDURE,PASS :: clear => clear_Jacobi_PreCondType
+      !> @copybrief PreconditionerTypes::setup_Jacobi_PreCondType
+      !> @copydetails PreconditionerTypes::setup_Jacobi_PreCondType
+      PROCEDURE,PASS :: setup => setup_Jacobi_PreCondType
+      !> @copybrief PreconditionerTypes::apply_Jacobi_PreCondType
+      !> @copydetails PreconditionerTypes::apply_Jacobi_PreCondType
+      PROCEDURE,PASS :: apply => apply_Jacobi_PreCondType
+
+  ENDTYPE Jacobi_PreCondType
+
+#if 0
+  TYPE,EXTENDS(Distributed_PreCondType) :: DistributedJacobi_PreCondType
+    CONTAINS
+      !> @copybrief PreconditionerTypes::init_DistributedJacobi_PreCondType
+      !> @copydetails PreconditionerTypes::init_DistributedJacobi_PreCondType
+      PROCEDURE,PASS :: init => init_DistributedJacobi_PreCondType
+      !> @copybrief PreconditionerTypes::clear_DistributedJacobi_PreCondType
+      !> @copydetails PreconditionerTypes::clear_DistributedJacobi_PreCondType
+      PROCEDURE,PASS :: clear => clear_DistributedJacobi_PreCondType
+      !> @copybrief PreconditionerTypes::setup_DistributedJacobi_PreCondType
+      !> @copydetails PreconditionerTypes::setup_DistributedJacobi_PreCondType
+      PROCEDURE,PASS :: setup => setup_DistributedJacobi_PreCondType
+      !> @copybrief PreconditionerTypes::apply_DistributedJacobi_PreCondType
+      !> @copydetails PreconditionerTypes::apply_DistributedJacobi_PreCondType
+      PROCEDURE,PASS :: apply => apply_DistributedJacobi_PreCondType
+
+  ENDTYPE DistributedJacobi_PrecondType
+#endif
 !
 !List of Abstract Interfaces
   !> Explicitly defines the interface for the init routine of all preconditioner types
@@ -762,7 +802,7 @@ MODULE PreconditionerTypes
       !gets the number of blocks from the parameter list
       CALL params%get('PCType->numBlocks',thisPC%numBlocks)
       CALL params%get('PCType->omega',thisPC%omega)
-      CALL params%get('PCType->comm',thisPC%comm)
+      CALL params%get('PCType->MPI_Comm_ID',thisPC%comm)
 
 
       !makes sure that the number of blocks is valid
@@ -779,7 +819,7 @@ MODULE PreconditionerTypes
       !calculate how many blocks this processor gets and which ones
       CALL MPI_Comm_rank(thisPC%comm,rank,mpierr)
       CALL MPI_Comm_size(thisPC%comm,nproc,mpierr)
-      ALLOCATE(thisPC%psize(nproc),thisPC%pdispl(nproc))
+      !ALLOCATE(thisPC%psize(nproc),thisPC%pdispl(nproc))
       thisPC%myNumBlocks=INT(thisPC%numBlocks/nproc)
       stdblocks=INT(thisPC%numBlocks/nproc)
       extrablocks=MOD(thisPC%numBlocks,nproc)
@@ -787,15 +827,15 @@ MODULE PreconditionerTypes
       thisPC%myFirstBlock=thisPC%myNumBlocks*rank+1
       IF(rank+1 .GT. extrablocks)thisPC%myFirstBlock=thisPC%myFirstBlock+extrablocks
 
-      DO i=1,extrablocks
-        thisPC%psize(i)=(stdblocks+1)*thisPC%blockSize
-        thisPC%pdispl(i)=(i-1)*thisPC%psize(i)
-      END DO
+      !DO i=1,extrablocks
+      !  thisPC%psize(i)=(stdblocks+1)*thisPC%blockSize
+      !  thisPC%pdispl(i)=(i-1)*thisPC%psize(i)
+      !END DO
 
-      DO i=extrablocks+1,nproc
-        thisPC%psize(i)=stdblocks*thisPC%blockSize
-        thisPC%pdispl(i)=(i-1)*thisPC%psize(i)+extrablocks*thisPC%blockSize
-      END DO
+      !DO i=extrablocks+1,nproc
+      !  thisPC%psize(i)=stdblocks*thisPC%blockSize
+      !  thisPC%pdispl(i)=(i-1)*thisPC%psize(i)+extrablocks*thisPC%blockSize
+      !END DO
       !makes a lu matrix for each diagonal block in an array
       ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%myNumBlocks))
       !initializes those matrices
@@ -810,10 +850,14 @@ MODULE PreconditionerTypes
           ALLOCATE(DistributedBandedMatrixType :: thisPC%LpU)
           ! Assign A to LpU
           SELECTTYPE(LpU => thisPC%LpU); TYPE IS(DistributedBandedMatrixType)
-              LpU=mat
+              LpU = mat
           ENDSELECT
           REQUIRE(thisPC%LpU%isInit)
           thisPC%isInit=.TRUE.
+
+        TYPE IS(DistributedBlockBandedMatrixType)
+          thisPC%LpU => mat
+          ThisPC%isInit=.TRUE.
 
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
@@ -832,10 +876,17 @@ MODULE PreconditionerTypes
 #ifdef HAVE_MPI
 
       IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
-      IF(ALLOCATED(thisPC%LpU)) THEN
-        CALL thisPC%LpU%clear()
-        DEALLOCATE(thisPC%LpU)
+      IF(ASSOCIATED(thisPC%LpU)) THEN
+        SELECTTYPE(LpU => thisPC%LpU)
+        TYPE IS(DistributedBlockBandedMatrixType)
+          NULLIFY(thisPC%LpU)
+        CLASS DEFAULT
+          CALL LpU%clear()
+          DEALLOCATE(LpU)
+        ENDSELECT
       ENDIF
+      IF(ALLOCATED(thisPC%pdispl)) DEALLOCATE(thisPC%pdispl)
+      IF(ALLOCATED(thisPC%psize)) DEALLOCATE(thisPC%psize)
       IF(ALLOCATED(thisPC%LU)) THEN
         !gotta loop through, clear only works on a single matrix
         DO i=1,thisPC%myNumBlocks
@@ -859,7 +910,7 @@ MODULE PreconditionerTypes
 
       !make sure everything is initialized and allocated
       REQUIRE(thisPC%isinit)
-      REQUIRE(ALLOCATED(thisPC%LpU))
+      REQUIRE(ASSOCIATED(thisPC%LpU))
       REQUIRE(thisPC%LpU%isInit)
 
       ! make sure each LU block is initialized
@@ -867,36 +918,51 @@ MODULE PreconditionerTypes
         REQUIRE(thisPC%LU(k)%isInit)
       END DO
 
-      !setup the Upper and Lower portion of the diagonal
-      DO k=1,thisPC%numBlocks
-        IF(k .GE. thisPC%myFirstBlock .AND. k .LE. thisPC%myFirstBlock+thisPC%myNumBlocks-1)THEN
-          DO i=1,thisPC%blockSize
-              DO j=1,thisPC%blockSize
-                  CALL thisPC%A%get((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,tempreal)
-                  CALL thisPC%LU(k-thisPC%myFirstBlock+1)%set(i,j,tempreal)
-                  IF(tempreal .NE. 0.0_SRK)THEN
-                      CALL thisPC%LpU%set((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,0.0_SRK)
-                  END IF
-              END DO
-          END DO
-        ELSE
-          DO i=1,thisPC%blockSize
-              DO j=1,thisPC%blockSize
-                  CALL thisPC%A%get((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,tempreal)
-                  IF(tempreal .NE. 0.0_SRK)THEN
-                      CALL thisPC%LpU%set((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,0.0_SRK)
-                  END IF
-              END DO
-          END DO
-        END IF
-      END DO
-      !do LU factorization on the diagonal blocks
-      DO k=1,thisPC%myNumBlocks
-        SELECTTYPE(mat => thisPC%LU(k))
-          CLASS IS(DenseSquareMatrixType)
-            CALL doolittle_LU_RSOR(mat)
-        ENDSELECT
-      END DO
+      ! If the matrix A is block-banded we have the blocks readily available
+      ! and can do LU factorization from these into the LU(:) containers
+      ! Otherwise, we need to get them first, then do LU in place
+
+      SELECTTYPE(A => thisPC%A)
+      TYPE IS(DistributedBlockBandedMatrixType)
+        !do LU factorization on the diagonal blocks
+        DO k=1,thisPC%myNumBlocks
+          SELECTTYPE(LU => thisPC%LU(k)); TYPE IS(DenseSquareMatrixType)
+            CALL doolittle_LU_RSOR(A%blocks(k),LU)
+          ENDSELECT
+        END DO
+        ! blocks do not need to be set to zero because we have the block mask
+      CLASS DEFAULT
+        !setup the Upper and Lower portion of the diagonal
+        DO k=1,thisPC%numBlocks
+          IF(k .GE. thisPC%myFirstBlock .AND. k .LE. thisPC%myFirstBlock+thisPC%myNumBlocks-1)THEN
+            DO i=1,thisPC%blockSize
+                DO j=1,thisPC%blockSize
+                    CALL A%get((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,tempreal)
+                    CALL thisPC%LU(k-thisPC%myFirstBlock+1)%set(i,j,tempreal)
+                    IF(tempreal .NE. 0.0_SRK)THEN
+                        CALL thisPC%LpU%set((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,0.0_SRK)
+                    END IF
+                END DO
+            END DO
+          ELSE
+            DO i=1,thisPC%blockSize
+                DO j=1,thisPC%blockSize
+                    CALL A%get((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,tempreal)
+                    IF(tempreal .NE. 0.0_SRK)THEN
+                        CALL thisPC%LpU%set((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,0.0_SRK)
+                    END IF
+                END DO
+            END DO
+          END IF
+        END DO
+        !do LU factorization on the diagonal blocks
+        DO k=1,thisPC%myNumBlocks
+          SELECTTYPE(mat => thisPC%LU(k))
+            CLASS IS(DenseSquareMatrixType)
+              CALL doolittle_LU_RSOR(mat)
+          ENDSELECT
+        END DO
+      ENDSELECT
     ENDSUBROUTINE setup_DistributedRSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
@@ -907,8 +973,8 @@ MODULE PreconditionerTypes
     SUBROUTINE apply_DistributedRSOR_PreCondType(thisPC,v)
       CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
-      CHARACTER(LEN=*),PARAMETER :: myName='apply_RSOR_PreCondType'
-      TYPE(RealVectorType)::w(4),tempw
+      CHARACTER(LEN=*),PARAMETER :: myName='apply_DistributedRSOR_PreCondType'
+      TYPE(NativeDistributedVectorType)::w(4),tempw
       TYPE(ParamType)::PListVec_RSOR
       INTEGER(SIK)::k,i,mpierr
       REAL(SRK)::tmpreal
@@ -919,57 +985,61 @@ MODULE PreconditionerTypes
       REQUIRE(ALLOCATED(v))
       REQUIRE(v%isInit)
 
-      CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
-      CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
-      CALL w(1)%init(PListVec_RSOR)
-      CALL w(2)%init(PListVec_RSOR)
-      CALL w(3)%init(PListVec_RSOR)
-      CALL w(4)%init(PListVec_RSOR)
-      CALL tempw%init(PListVec_RSOR)
       SELECTTYPE(v)
-        CLASS IS(RealVectorType)
-            w(3)%b=v%b
+      CLASS IS(NativeDistributedVectorType)
+        CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
+        CALL PListVec_RSOR%add('VectorType->chunkSize',thisPC%blockSize)
+        CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',thisPC%comm)
+        CALL w(1)%init(PListVec_RSOR)
+        CALL w(2)%init(PListVec_RSOR)
+        CALL w(3)%init(PListVec_RSOR)
+        CALL w(4)%init(PListVec_RSOR)
+        CALL tempw%init(PListVec_RSOR)
+        w(3)%b=v%b
 
-            DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
-              SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
-                CLASS IS(DenseSquareMatrixType)
-                  CALL RSORsolveL(mat,v,w(1),k)
-                  CALL RSORsolveU(mat,w(1),w(2),k)
-              ENDSELECT
-            END DO
+        DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
+          SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
+            CLASS IS(DenseSquareMatrixType)
+              CALL RSORsolveL(mat,v,w(1),k)
+              CALL RSORsolveU(mat,w(1),w(2),k)
+          ENDSELECT
+        END DO
 
-            CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
-              ,MPI_DOUBLE_PRECISION,w(2)%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
-              thisPC%comm,mpierr)
+        !CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
+        !  ,MPI_DOUBLE_PRECISION,w(2)%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
+        !  thisPC%comm,mpierr)
 
-            REQUIRE(mpierr .EQ. 0)
+        !REQUIRE(mpierr .EQ. 0)
 
-            SELECTTYPE(LpU => thisPC%LpU)
-                CLASS IS(DistributedBandedMatrixType)
-                    CALL BLAS_matvec(THISMATRIX=LpU,X=w(2)%b,Y=tempw%b)
-                    w(3)%b=w(3)%b-thisPC%omega*tempw%b
-                CLASS DEFAULT
-                    CALL BLAS_matvec(THISMATRIX=LpU,X=w(2),Y=w(3),&
-                        &BETA=1.0_SRK,TRANS='N',ALPHA=-thisPC%omega)
-            ENDSELECT
+        SELECTTYPE(LpU => thisPC%LpU); TYPE IS(DistributedBlockBandedMatrixType)
+          CALL LpU%setBlockMask(.TRUE.)
+        ENDSELECT
 
-            DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
-              SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
-                CLASS IS(DenseSquareMatrixType)
-                  CALL RSORsolveL(mat,w(3),w(4),k)
-                  CALL RSORsolveU(mat,w(4),v,k)
-              ENDSELECT
-            END DO
+        CALL thisPC%LpU%get(2,2,tmpreal)
+        CALL BLAS_matvec(THISMATRIX=thisPC%LpU,X=w(2),Y=w(3),BETA=1.0_SRK,&
+                         ALPHA=-thisPC%omega)
 
-            CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
-              ,MPI_DOUBLE_PRECISION,v%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
-              thisPC%comm,mpierr)
+        SELECTTYPE(LpU => thisPC%LpU); TYPE IS(DistributedBlockBandedMatrixType)
+          CALL LpU%setBlockMask(.FALSE.)
+        ENDSELECT
 
-            REQUIRE(mpierr .EQ. 0)
+        DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
+          SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
+            CLASS IS(DenseSquareMatrixType)
+              CALL RSORsolveL(mat,w(3),w(4),k)
+              CALL RSORsolveU(mat,w(4),v,k)
+          ENDSELECT
+        END DO
 
-        CLASS DEFAULT
-          CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-            ' - Vector type is not support by this PreconditionerType.')
+        !CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
+        !  ,MPI_DOUBLE_PRECISION,v%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
+        !  thisPC%comm,mpierr)
+
+        !REQUIRE(mpierr .EQ. 0)
+
+      CLASS DEFAULT
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Vector type is not support by this PreconditionerType.')
       ENDSELECT
 #endif
     ENDSUBROUTINE apply_DistributedRSOR_PreCondType
@@ -981,12 +1051,15 @@ MODULE PreconditionerTypes
 !> the factorization this matrix then holds both the L and U matrices. The L
 !> matrix has 1s on the diagonal, so the diagonal of the matrix coming out has
 !> the diagonals of of the U matrix
+!> @param dest Optional parameter; if omitted, factorization is done in-place
+!> if present, LU factorization is dumped there
 !>
-    SUBROUTINE doolittle_LU_RSOR(thisLU)
+    SUBROUTINE doolittle_LU_RSOR(thisLU,dest)
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
+      CLASS(DenseSquareMatrixType),OPTIONAL,INTENT(INOUT) :: dest
       CHARACTER(LEN=*),PARAMETER :: myName='doolittle_LU_RSOR'
       INTEGER(SIK)::k,i,j,l
-      REAL(SRK)::Ltemp(thisLU%n,thisLU%n),Utemp(thisLU%n,thisLU%n)
+      REAL(SRK) :: Ltemp(thisLU%n,thisLU%n),Utemp(thisLU%n,thisLU%n)
 
       !these need to be 0 at start since they accumulate
       Utemp(:,:)=0
@@ -1012,15 +1085,25 @@ MODULE PreconditionerTypes
       !L is always 1 on diagonals, so set diagonals to U values
       DO i=1,thisLU%n
         DO j=i,thisLU%n
+          IF (PRESENT(dest)) THEN
+            CALL dest%set(i,j,Utemp(i,j))
+          ELSE
             CALL thisLU%set(i,j,Utemp(i,j))
+          ENDIF
         END DO
       END DO
       DO i=2,thisLU%n
         DO j=1,i-1
+          IF (PRESENT(dest)) THEN
+            CALL dest%set(i,j,Ltemp(i,j))
+          ELSE
             CALL thisLU%set(i,j,Ltemp(i,j))
+          ENDIF
         END DO
       END DO
     ENDSUBROUTINE doolittle_LU_RSOR
+
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Solve a problem of Lx=b with parameters
@@ -1032,8 +1115,8 @@ MODULE PreconditionerTypes
     SUBROUTINE RSORsolveL(thisLU,b,x,k)
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
       CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveL'
-      TYPE(RealVectorType),INTENT(INOUT)::b
-      TYPE(RealVectorType),INTENT(INOUT)::x
+      CLASS(NativeVectorType),INTENT(INOUT)::b
+      CLASS(NativeVectorType),INTENT(INOUT)::x
       INTEGER(SIK),INTENT(IN)::k
       INTEGER(SIK)::i,j
       REAL(SRK)::tempreal(3)
@@ -1062,8 +1145,8 @@ MODULE PreconditionerTypes
     SUBROUTINE RSORsolveU(thisLU,b,x,k)
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
       CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveU'
-      TYPE(RealVectorType),INTENT(INOUT)::b
-      TYPE(RealVectorType),INTENT(INOUT)::x
+      CLASS(NativeVectorType),INTENT(INOUT)::b
+      CLASS(NativeVectorType),INTENT(INOUT)::x
       INTEGER(SIK),INTENT(IN)::k
       INTEGER(SIK)::i,j
       REAL(SRK)::tempreal(3)
@@ -1084,6 +1167,102 @@ MODULE PreconditionerTypes
       END DO
 
     ENDSUBROUTINE RSORsolveU
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Initialize serial jacobi preconditioner
+!> @param params The parameter list
+!> @param thisPC The preconditioner to act on
+!> @param A The matrix to precondition
+    SUBROUTINE init_Jacobi_PreCondType(thisPC,A,params)
+      CHARACTER(LEN=*),PARAMETER :: myName='init_Jacobi_PreCondType'
+      CLASS(Jacobi_PrecondType),INTENT(INOUT) :: thisPC
+      CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
+      TYPE(ParamType),INTENT(IN),OPTIONAL :: params
+
+      IF(thisPC%isinit) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Preconditioner is already initialized!')
+        RETURN
+      ENDIF
+
+      IF(.NOT. PRESENT(A) .OR. .NOT.(ALLOCATED(A))) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Matrix being used for LU Preconditioner is not allocated!')
+        RETURN
+      ENDIF
+      IF(.NOT.(A%isInit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Matrix being used for LU Preconditioner is not initialized!')
+        RETURN
+      ENDIF
+      thisPC%A => A
+      ALLOCATE(thisPC%invDiag(A%n))
+
+      thisPC%isInit = .TRUE.
+
+    ENDSUBROUTINE init_Jacobi_PreCondType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Setup serial jacobi preconditioner
+!> @param thisPC The preconditioner to act on
+    SUBROUTINE setup_Jacobi_PreCondType(thisPC)
+      CHARACTER(LEN=*),PARAMETER :: myName='setup_Jacobi_PreCondType'
+      CLASS(Jacobi_PrecondType),INTENT(INOUT) :: thisPC
+      INTEGER(SIK) :: i
+
+      DO i=1,SIZE(thisPC%invDiag)
+        CALL thisPC%A%get(i,i,thisPC%invDiag(i))
+        thisPC%invDiag(i) = 1.0_SRK/thisPC%invDiag(i)
+      ENDDO
+    ENDSUBROUTINE setup_Jacobi_PreCondType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Applies the Jacobi Preconditioner Type
+!> @param thisPC The preconditioner to act on
+!> @param v The matrix to apply the preconditioner to
+    SUBROUTINE apply_Jacobi_PreCondType(thisPC,v)
+      CLASS(Jacobi_PrecondType),INTENT(INOUT) :: thisPC
+      CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
+      CHARACTER(LEN=*),PARAMETER :: myName='apply_Jacobi_PreCondType'
+
+      IF(.NOT.(thisPC%isInit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - Preconditioner is not initialized.')
+      ELSEIF(.NOT.(ALLOCATED(v))) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - VectorType is not allocated.')
+      ELSEIF(.NOT.(v%isInit)) THEN
+        CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+          ' - VectorType is not initialized.')
+      ELSE
+        SELECTTYPE(v)
+          CLASS IS(RealVectorType)
+            v%b(:) = thisPC%invDiag(:)*v%b(:)
+          CLASS DEFAULT
+            CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
+              ' - Vector type is not support by this PreconditionerType.')
+        ENDSELECT
+      ENDIF
+
+    ENDSUBROUTINE apply_Jacobi_PreCondType
+
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Clear serial jacobi preconditioner
+!> @param thisPC The preconditioner to act on
+    SUBROUTINE clear_Jacobi_PreCondType(thisPC)
+      CHARACTER(LEN=*),PARAMETER :: myName='clear_Jacobi_PreCondType'
+      CLASS(Jacobi_PrecondType),INTENT(INOUT) :: thisPC
+
+      IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
+      IF(ALLOCATED(thisPC%invDiag))  DEALLOCATE(thisPC%invDiag)
+
+    ENDSUBROUTINE clear_Jacobi_PreCondType
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the matrix multiplication where the diagonal matrix is on the left

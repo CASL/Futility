@@ -517,14 +517,11 @@ MODULE MatrixTypes
               y = y*b
             END IF
 
-            IF(PRESENT(alpha)) THEN
-              a = alpha
-            END IF
-
             IF(t /= 'n') THEN
               CALL thisMatrix%transpose()
             END IF
 
+            ! This can probably be optimized for the a /= 1 case
             IF (a==1.0_SRK) THEN
               DO bIdx=1,SIZE(thisMatrix%bandIdx)
                 idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
@@ -542,10 +539,8 @@ MODULE MatrixTypes
             END IF
 
           CLASS IS(DistributedBandedMatrixType)
-#ifdef HAVE_MPI
-          CALL eMatrixType%raiseError('Incorrect call to '// &
+            CALL eMatrixType%raiseError('Incorrect call to '// &
                modName//'::'//myName//' - This interface is not available.')
-#endif
           CLASS DEFAULT
             CALL eMatrixType%raiseError('Incorrect call to '// &
                  modName//'::'//myName//' - This interface is not available.')
@@ -670,8 +665,10 @@ MODULE MatrixTypes
                         thisMatrix%ja,thisMatrix%a,x%b,y%b)
                     ENDIF
                   TYPE IS(BandedMatrixType)
-                    CALL eMatrixType%raiseError('Incorrect call to '// &
-                         modName//'::'//myName//' - This interface is not available.')
+                    CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+                                           Y=y%b,uplo=ul,diag=d,incx_in=incx)
+                    !CALL eMatrixType%raiseError('Incorrect call to '// &
+                    !     modName//'::'//myName//' - This interface is not available.')
                   CLASS IS(DistributedBandedMatrixType)
                     CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                            Y=y%b,uplo=ul,diag=d,incx_in=incx)
@@ -765,7 +762,12 @@ MODULE MatrixTypes
         IF (rank+1 == i) THEN
           ! We will be receiving data from other processes
           IF (thisMatrix%chunks(i)%isInit) THEN
-            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+            SELECT TYPE(thisMatrix)
+            TYPE IS(DistributedBlockBandedMatrixType)
+              CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+            CLASS DEFAULT
+              CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+            ENDSELECT
           END IF
 
           ! Find which other chunks in this row we need to

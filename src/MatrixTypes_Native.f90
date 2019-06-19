@@ -1207,7 +1207,7 @@ MODULE MatrixTypes_Native
         ENDIF
       ELSE
         CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
-        IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+1)) THEN
+        IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
           DO k=1,SIZE(matrix%jOffsets)-1
             IF (i > matrix%iOffsets(k) .AND. i <= matrix%iOffsets(k+1)) THEN
               IF (matrix%chunks(k)%isInit) THEN
