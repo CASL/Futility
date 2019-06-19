@@ -55,19 +55,30 @@ MODULE ElementsIsotopes
      'BI','PO','AT','RN','FR','RA','AC','TH','PA',' U','NP','PU','AM','CM','BK','CF','ES'/)
 
   !> Invalid decay enumeration
-  INTEGER(SIK),PARAMETER,PUBLIC :: ISO_DECAY_NULL=0
-  !> Emission of 2 protons and 2 neutrons
-  INTEGER(SIK),PARAMETER,PUBLIC :: ISO_DECAY_ALPHA=1
-  !> Conversion of neutron into a proton
-  INTEGER(SIK),PARAMETER,PUBLIC :: ISO_DECAY_BETAMINUS=2
-  !> Conversion of proton into a neutron
-  INTEGER(SIK),PARAMETER,PUBLIC :: ISO_DECAY_BETAPLUS=3
-  !> Any decay of a metastable isotope into another state of the same isotope; the resulting
-  !> state may or may not be metastable as well
-  INTEGER(SIK),PARAMETER,PUBLIC :: ISO_DECAY_DEEXCITE=4
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_NULL=0
+  !> Beta- to excited state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAMINUS_EXCITED=1
+  !> Beta+ to ground state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAPLUS_GROUND=2
+  !> Beta+ to excited state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAPLUS_EXCITED=3
+  !> Alpha decay
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_ALPHA=4
+  !> Isomeric decay (de-excitation)
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_ISOMERIC=5
+  !> Spontaneous fission
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_FISSION=6
+  !> beta+ + neutron
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAPLUSNEUTRON=7
+  !> beta- to ground state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAMINUS_GROUND=8
+  !> Number of valid decay enumerations
+  INTEGER(SIK),PARAMETER,PUBLIC :: N_VALID_DECAY=8
   !> List of all valid decay enumerations
-  INTEGER(SIK),PARAMETER,PUBLIC :: VALID_ISO_DECAY(4)=(/ISO_DECAY_ALPHA,ISO_DECAY_BETAMINUS, &
-      ISO_DECAY_BETAPLUS,ISO_DECAY_DEEXCITE/)
+  INTEGER(SIK),PARAMETER,PUBLIC :: VALID_DECAY(N_VALID_DECAY)=(/ &
+      DECAY_BETAMINUS_EXCITED,DECAY_BETAPLUS_GROUND,DECAY_BETAPLUS_EXCITED, &
+      DECAY_ALPHA,DECAY_ISOMERIC,DECAY_FISSION,DECAY_BETAPLUSNEUTRON, &
+      DECAY_BETAMINUS_GROUND/)
 
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='ELEMENTS_ISOTOPES'
@@ -140,7 +151,7 @@ MODULE ElementsIsotopes
 !> @param product_metastable logical indicating that the product is metastable; optional
 !> @returns reaction the enumeration for the reaction type
 !>
-!> Returns @c ISO_DECAY_NULL if no known reaction can be calculated.
+!> Returns @c DECAY_NULL if no known reaction can be calculated.
 !>
     FUNCTION getDecayType_ZAID(source,product,source_metastable,product_metastable) RESULT(reaction)
       INTEGER(SIK),INTENT(IN) :: source
@@ -156,7 +167,7 @@ MODULE ElementsIsotopes
       REQUIRE(source > 1000)
       REQUIRE(product > 1000)
 
-      reaction=ISO_DECAY_NULL
+      reaction=DECAY_NULL
       CALL elemIso%init()
 
       lmetasource=.FALSE.
@@ -166,7 +177,7 @@ MODULE ElementsIsotopes
 
       !De-excitation - same ZAID, but source is metastable
       IF(lmetasource .AND. source == product) THEN
-        reaction=ISO_DECAY_DEEXCITE
+        reaction=DECAY_ISOMERIC
         RETURN
       ENDIF
 
@@ -178,14 +189,24 @@ MODULE ElementsIsotopes
 
       !Beta+ - Same mass, one less proton
       IF(sourceZZ-1 == productZZ .AND. sourceAAA == productAAA) THEN
-        reaction=ISO_DECAY_BETAPLUS
+        IF(lmetaproduct) THEN
+          reaction=DECAY_BETAPLUS_EXCITED
+        ELSE
+          reaction=DECAY_BETAPLUS_GROUND
+        ENDIF
       !Beta- - Same mass, one more proton
       ELSEIF(sourceZZ+1 == productZZ .AND. sourceAAA == productAAA) THEN
-        reaction=ISO_DECAY_BETAMINUS
+        IF(lmetaproduct) THEN
+          reaction=DECAY_BETAMINUS_EXCITED
+        ELSE
+          reaction=DECAY_BETAMINUS_GROUND
+        ENDIF
       !Alpha - two fewer protons, two fewer neutrons
       ELSEIF(sourceZZ-2 == productZZ .AND. sourceAAA-4 == productAAA) THEN
-        reaction=ISO_DECAY_ALPHA
+        reaction=DECAY_ALPHA
       ENDIF
+
+      ENSURE(reaction == DECAY_NULL .OR. ANY(reaction == VALID_DECAY))
 
     ENDFUNCTION getDecayType_ZAID
 !
