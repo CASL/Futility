@@ -30,11 +30,30 @@ PROGRAM testElementsIsotopes
   REGISTER_SUBTEST('isMetastable',testisMetastable)
   REGISTER_SUBTEST('Clear',testClear)
 
+  REGISTER_SUBTEST('getDecayType',testGetDecayType)
 
   FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetDecayType()
+
+      COMPONENT_TEST('ZAID')
+      ASSERT_EQ(getDecayType(1001,1001),ISO_DECAY_NULL,'(1001,1001)')
+      ASSERT_EQ(getDecayType(1001,1001,.FALSE.,.FALSE.),ISO_DECAY_NULL,'(1001,1001,.FALSE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(1001,1001,.FALSE.,.TRUE.),ISO_DECAY_NULL,'(1001,1001,.FALSE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(1001,1001,.TRUE.,.FALSE.),ISO_DECAY_DEEXCITE,'(1001,1001,.TRUE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(1001,1001,.TRUE.,.TRUE.),ISO_DECAY_DEEXCITE,'(1001,1001,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(1001,1002,.TRUE.,.TRUE.),ISO_DECAY_NULL,'(1001,1002,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(2002,1002,.TRUE.,.TRUE.),ISO_DECAY_BETAPLUS,'(2002,2001,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(1002,2002,.TRUE.,.TRUE.),ISO_DECAY_BETAMINUS,'(1002,2002,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(3005,1001,.TRUE.,.TRUE.),ISO_DECAY_ALPHA,'(3005,1001,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(3005,1001),ISO_DECAY_ALPHA,'(3005,1001)')
+      ASSERT_EQ(getDecayType(27155,26185),ISO_DECAY_NULL,'(27155,26185)')
+
+    ENDSUBROUTINE testGetDecayType
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
