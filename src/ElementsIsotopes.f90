@@ -36,6 +36,14 @@ MODULE ElementsIsotopes
 ! List of public members
   PUBLIC :: eElementsIsotopes
   PUBLIC :: ElementsIsotopesType
+  PUBLIC :: getDecayType
+
+  INTERFACE getDecayType
+    !> @copybrief ElementsIsotopes::getDecayType_ZAID
+    !> @copydetails ElementsIsotopes::getDecayType_ZAID
+    MODULE PROCEDURE getDecayType_ZAID
+    !Could be useful to add a "string" version too, but not needed right now
+  ENDINTERFACE getDecayType
 
   ! List of element names for string matching
   CHARACTER(LEN=2) :: elementlist(99)=(/' H','HE','LI','BE',' B',' C',' N', &
@@ -45,6 +53,32 @@ MODULE ElementsIsotopes
      ' I','XE','CS','BA','LA','CE','PR','ND','PM','SM','EU','GD','TB','DY','HO', &
      'ER','TM','YB','LU','HF','TA',' W','RE','OS','IR','PT','AU','HG','TL','PB', &
      'BI','PO','AT','RN','FR','RA','AC','TH','PA',' U','NP','PU','AM','CM','BK','CF','ES'/)
+
+  !> Invalid decay enumeration
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_NULL=0
+  !> Beta- to excited state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAMINUS_EXCITED=1
+  !> Beta+ to ground state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAPLUS_GROUND=2
+  !> Beta+ to excited state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAPLUS_EXCITED=3
+  !> Alpha decay
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_ALPHA=4
+  !> Isomeric decay (de-excitation)
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_ISOMERIC=5
+  !> Spontaneous fission
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_FISSION=6
+  !> beta+ + neutron
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAPLUSNEUTRON=7
+  !> beta- to ground state
+  INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_BETAMINUS_GROUND=8
+  !> Number of valid decay enumerations
+  INTEGER(SIK),PARAMETER,PUBLIC :: N_VALID_DECAY=8
+  !> List of all valid decay enumerations
+  INTEGER(SIK),PARAMETER,PUBLIC :: VALID_DECAY(N_VALID_DECAY)=(/ &
+      DECAY_BETAMINUS_EXCITED,DECAY_BETAPLUS_GROUND,DECAY_BETAPLUS_EXCITED, &
+      DECAY_ALPHA,DECAY_ISOMERIC,DECAY_FISSION,DECAY_BETAPLUSNEUTRON, &
+      DECAY_BETAMINUS_GROUND/)
 
   !> Name of module
   CHARACTER(LEN=*),PARAMETER :: modName='ELEMENTS_ISOTOPES'
@@ -108,6 +142,73 @@ MODULE ElementsIsotopes
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief Calculates the type of radioactive decay from one isotope to another
+!> @param source the source isotope ZAID
+!> @param product the product isotope ZAID
+!> @param source_metastable logical indicating that the source is metastable; optional
+!> @param product_metastable logical indicating that the product is metastable; optional
+!> @returns reaction the enumeration for the reaction type
+!>
+!> Returns @c DECAY_NULL if no known reaction can be calculated.
+!>
+    FUNCTION getDecayType_ZAID(source,product,source_metastable,product_metastable) RESULT(reaction)
+      INTEGER(SIK),INTENT(IN) :: source
+      INTEGER(SIK),INTENT(IN) :: product
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: source_metastable
+      LOGICAL(SBK),INTENT(IN),OPTIONAL :: product_metastable
+      INTEGER(SIK) :: reaction
+      !
+      LOGICAL(SBK) :: lmetasource,lmetaproduct
+      INTEGER(SIK) :: sourceZZ,productZZ,sourceAAA,productAAA
+      TYPE(ElementsIsotopesType) :: elemIso
+
+      REQUIRE(source > 1000)
+      REQUIRE(product > 1000)
+
+      reaction=DECAY_NULL
+      CALL elemIso%init()
+
+      lmetasource=.FALSE.
+      lmetaproduct=.FALSE.
+      IF(PRESENT(source_metastable)) lmetasource=source_metastable
+      IF(PRESENT(product_metastable)) lmetaproduct=product_metastable
+
+      !De-excitation - same ZAID, but source is metastable
+      IF(lmetasource .AND. source == product) THEN
+        reaction=DECAY_ISOMERIC
+        RETURN
+      ENDIF
+
+      !Decompose ZAIDs to check for other reaction types
+      sourceZZ=elemIso%getAtomicNumber(source)
+      sourceAAA=elemIso%getMassNumber(source)
+      productZZ=elemIso%getAtomicNumber(product)
+      productAAA=elemIso%getMassNumber(product)
+
+      !Beta+ - Same mass, one less proton
+      IF(sourceZZ-1 == productZZ .AND. sourceAAA == productAAA) THEN
+        IF(lmetaproduct) THEN
+          reaction=DECAY_BETAPLUS_EXCITED
+        ELSE
+          reaction=DECAY_BETAPLUS_GROUND
+        ENDIF
+      !Beta- - Same mass, one more proton
+      ELSEIF(sourceZZ+1 == productZZ .AND. sourceAAA == productAAA) THEN
+        IF(lmetaproduct) THEN
+          reaction=DECAY_BETAMINUS_EXCITED
+        ELSE
+          reaction=DECAY_BETAMINUS_GROUND
+        ENDIF
+      !Alpha - two fewer protons, two fewer neutrons
+      ELSEIF(sourceZZ-2 == productZZ .AND. sourceAAA-4 == productAAA) THEN
+        reaction=DECAY_ALPHA
+      ENDIF
+
+      ENSURE(reaction == DECAY_NULL .OR. ANY(reaction == VALID_DECAY))
+
+    ENDFUNCTION getDecayType_ZAID
 !
 !-------------------------------------------------------------------------------
 !> @brief Constructor for the element and isotope converter
