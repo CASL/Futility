@@ -724,7 +724,7 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='apply_RSOR_PreCondType'
       TYPE(RealVectorType)::w(4),tempw
       TYPE(ParamType)::PListVec_RSOR
-      INTEGER(SIK)::k,i
+      INTEGER(SIK)::k,i,lowIdx,highIdx
       REAL(SRK)::tmpreal
 
       REQUIRE(thisPC%isInit)
@@ -746,27 +746,25 @@ MODULE PreconditionerTypes
             DO k=1,thisPC%numBlocks
               SELECTTYPE(mat => thisPC%LU(k))
                 CLASS IS(DenseSquareMatrixType)
-                  CALL RSORsolveL(mat,v,w(1),k)
-                  CALL RSORsolveU(mat,w(1),w(2),k)
+                  lowIdx = (k-1)*thisPC%blockSize + 1
+                  highIdx = lowIdx + thisPC%blockSize-1
+                  CALL RSORsolveL(mat,v%b(lowIdx:highIdx),w(1)%b(lowIdx:highIdx))
+                  CALL RSORsolveU(mat,w(1)%b(lowIdx:highIdx),w(2)%b(lowIdx:highIdx))
               ENDSELECT
             END DO
 
             !multiply
-            SELECT TYPE(LpU => thisPC%LpU)
-                CLASS IS(DistributedBandedMatrixType)
-                  CALL BLAS_matvec(THISMATRIX=LpU,X=w(2)%b,Y=tempw%b)
-                  w(3)%b=w(3)%b-thisPC%omega*tempw%b
-                CLASS DEFAULT
-                    CALL BLAS_matvec(THISMATRIX=LpU,X=w(2),Y=w(3),&
-                        &BETA=1.0_SRK,TRANS='n',ALPHA=-thisPC%omega)
-            ENDSELECT
+            CALL BLAS_matvec(THISMATRIX=thisPC%LpU,X=w(2),Y=w(3),&
+              &BETA=1.0_SRK,ALPHA=-thisPC%omega)
 
             !solves the L and U problems for each block
             DO k=1,thisPC%numBlocks
               SELECTTYPE(mat => thisPC%LU(k))
                 CLASS IS(DenseSquareMatrixType)
-                  CALL RSORsolveL(mat,w(3),w(4),k)
-                  CALL RSORsolveU(mat,w(4),v,k)
+                  lowIdx = (k-1)*thisPC%blockSize + 1
+                  highIdx = lowIdx + thisPC%blockSize-1
+                  CALL RSORsolveL(mat,w(3)%b(lowIdx:highIdx),w(4)%b(lowIdx:highIdx))
+                  CALL RSORsolveU(mat,w(4)%b(lowIdx:highIdx),v%b(lowIdx:highIdx))
               ENDSELECT
             END DO
 
@@ -976,7 +974,7 @@ MODULE PreconditionerTypes
       CHARACTER(LEN=*),PARAMETER :: myName='apply_DistributedRSOR_PreCondType'
       TYPE(NativeDistributedVectorType)::w(4),tempw
       TYPE(ParamType)::PListVec_RSOR
-      INTEGER(SIK)::k,i,mpierr
+      INTEGER(SIK)::k,i,mpierr,lowIdx,highIdx
       REAL(SRK)::tmpreal
       REAL(SRK)::tmpreal1,tmpreal2
 #ifdef HAVE_MPI
@@ -997,19 +995,15 @@ MODULE PreconditionerTypes
         CALL tempw%init(PListVec_RSOR)
         w(3)%b=v%b
 
-        DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
-          SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
+        DO k=1,thisPC%myNumBlocks
+          SELECTTYPE(mat => thisPC%LU(k))
             CLASS IS(DenseSquareMatrixType)
-              CALL RSORsolveL(mat,v,w(1),k)
-              CALL RSORsolveU(mat,w(1),w(2),k)
+              lowIdx = (k-1)*thisPC%blockSize + 1
+              highIdx = lowIdx + thisPC%blockSize-1
+              CALL RSORsolveL(mat,v%b(lowIdx:highIdx), w(1)%b(lowIdx:highIdx))
+              CALL RSORsolveU(mat,w(1)%b(lowIdx:highIdx),w(2)%b(lowIdx:highIdx))
           ENDSELECT
         END DO
-
-        !CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
-        !  ,MPI_DOUBLE_PRECISION,w(2)%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
-        !  thisPC%comm,mpierr)
-
-        !REQUIRE(mpierr .EQ. 0)
 
         SELECTTYPE(LpU => thisPC%LpU); TYPE IS(DistributedBlockBandedMatrixType)
           CALL LpU%setBlockMask(.TRUE.)
@@ -1023,19 +1017,15 @@ MODULE PreconditionerTypes
           CALL LpU%setBlockMask(.FALSE.)
         ENDSELECT
 
-        DO k=thisPC%myFirstBlock,thisPC%myFirstBlock+thisPC%myNumBlocks-1
-          SELECTTYPE(mat => thisPC%LU(k-thisPC%myFirstBlock+1))
+        DO k=1,thisPC%myNumBlocks
+          SELECTTYPE(mat => thisPC%LU(k))
             CLASS IS(DenseSquareMatrixType)
-              CALL RSORsolveL(mat,w(3),w(4),k)
-              CALL RSORsolveU(mat,w(4),v,k)
+              lowIdx = (k-1)*thisPC%blockSize + 1
+              highIdx = lowIdx + thisPC%blockSize-1
+              CALL RSORsolveL(mat,w(3)%b(lowIdx:highIdx),w(4)%b(lowIdx:highIdx))
+              CALL RSORsolveU(mat,w(4)%b(lowIdx:highIdx),v%b(lowIdx:highIdx))
           ENDSELECT
         END DO
-
-        !CALL MPI_Allgatherv(MPI_IN_PLACE,thisPC%myNumBlocks*thisPC%blockSize&
-        !  ,MPI_DOUBLE_PRECISION,v%b(1),thisPC%psize,thisPC%pdispl,MPI_DOUBLE_PRECISION,&
-        !  thisPC%comm,mpierr)
-
-        !REQUIRE(mpierr .EQ. 0)
 
       CLASS DEFAULT
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
@@ -1086,18 +1076,18 @@ MODULE PreconditionerTypes
       DO i=1,thisLU%n
         DO j=i,thisLU%n
           IF (PRESENT(dest)) THEN
-            CALL dest%set(i,j,Utemp(i,j))
+            CALL dest%set(j,i,Utemp(i,j))
           ELSE
-            CALL thisLU%set(i,j,Utemp(i,j))
+            CALL thisLU%set(j,i,Utemp(i,j))
           ENDIF
         END DO
       END DO
       DO i=2,thisLU%n
         DO j=1,i-1
           IF (PRESENT(dest)) THEN
-            CALL dest%set(i,j,Ltemp(i,j))
+            CALL dest%set(j,i,Ltemp(i,j))
           ELSE
-            CALL thisLU%set(i,j,Ltemp(i,j))
+            CALL thisLU%set(j,i,Ltemp(i,j))
           ENDIF
         END DO
       END DO
@@ -1112,26 +1102,34 @@ MODULE PreconditionerTypes
 !> @param x The vector being solved for
 !> @param k The offset for the portion of the vector being solved for
 !>
-    SUBROUTINE RSORsolveL(thisLU,b,x,k)
+    SUBROUTINE RSORsolveL(thisLU,b,x)
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
       CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveL'
-      CLASS(NativeVectorType),INTENT(INOUT)::b
-      CLASS(NativeVectorType),INTENT(INOUT)::x
-      INTEGER(SIK),INTENT(IN)::k
+      REAL(SRK),INTENT(INOUT)::b(:)
+      REAL(SRK),INTENT(INOUT)::x(:)
+      !INTEGER(SIK),INTENT(IN)::k
       INTEGER(SIK)::i,j
       REAL(SRK)::tempreal(3)
 
-      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      ! Unoptimized general case, kept for posterity
+      ! CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      ! DO i=1,thisLU%n
+      !     CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
+      !     CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
+      !     DO j=1,i-1
+      !         CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+      !         CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
+      !         CALL thisLU%get(i,j,tempreal(3))
+      !         CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
+      !     END DO
+      ! END DO
       DO i=1,thisLU%n
-          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
-          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
-          DO j=1,i-1
-              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
-              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
-              CALL thisLU%get(i,j,tempreal(3))
-              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
-          END DO
-      END DO
+        x(i) = b(i)
+        DO j=1,i-1
+          x(i) = x(i) - x(j)*thisLU%A(j,i)
+        ENDDO
+      ENDDO
+
 
     ENDSUBROUTINE RSORsolveL
 !
@@ -1142,29 +1140,37 @@ MODULE PreconditionerTypes
 !> @param x The vector being solved for
 !> @param k The offset for the portion of the vector being solved for
 !>
-    SUBROUTINE RSORsolveU(thisLU,b,x,k)
+    SUBROUTINE RSORsolveU(thisLU,b,x)
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
       CHARACTER(LEN=*),PARAMETER :: myName='RSORsolveU'
-      CLASS(NativeVectorType),INTENT(INOUT)::b
-      CLASS(NativeVectorType),INTENT(INOUT)::x
-      INTEGER(SIK),INTENT(IN)::k
+      REAL(SRK),INTENT(INOUT)::b(:)
+      REAL(SRK),INTENT(INOUT)::x(:)
       INTEGER(SIK)::i,j
       REAL(SRK)::tempreal(3)
 
-      CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      ! Unoptimized general case, kept for posterity
+      ! CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
+      ! DO i=thisLU%n,1,-1
+      !     CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
+      !     CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
+      !     DO j=thisLU%n,i+1,-1
+      !         CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+      !         CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
+      !         CALL thisLU%get(i,j,tempreal(3))
+      !         CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
+      !     END DO
+      !     CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
+      !     CALL thisLU%get(i,i,tempreal(2))
+      !     CALL x%setone((k-1)*thisLU%n+i,tempreal(1)/tempreal(2))
+      ! END DO
+
       DO i=thisLU%n,1,-1
-          CALL b%getone((k-1)*thisLU%n+i,tempreal(1))
-          CALL x%setone((k-1)*thisLU%n+i,tempreal(1))
-          DO j=thisLU%n,i+1,-1
-              CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
-              CALL x%getone((k-1)*thisLU%n+j,tempreal(2))
-              CALL thisLU%get(i,j,tempreal(3))
-              CALL x%setone((k-1)*thisLU%n+i,tempreal(1)-tempreal(2)*tempreal(3))
-          END DO
-          CALL x%getone((k-1)*thisLU%n+i,tempreal(1))
-          CALL thisLU%get(i,i,tempreal(2))
-          CALL x%setone((k-1)*thisLU%n+i,tempreal(1)/tempreal(2))
-      END DO
+        x(i) = b(i)
+        DO j=thisLU%n,i+1,-1
+          x(i) = x(i) - x(j)*thisLU%A(j,i)
+        ENDDO
+        x(i) = x(i) / thisLU%A(i,i)
+      ENDDO
 
     ENDSUBROUTINE RSORsolveU
 

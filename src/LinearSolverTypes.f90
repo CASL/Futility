@@ -610,7 +610,6 @@ MODULE LinearSolverTypes
                 !set preconditioner
                 IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
                   CALL KSPGetPC(solver%ksp,solver%pc,iperr)
-                  WRITE(*,*) TRIM(PreCondType)
                   IF(TRIM(PreCondType)=='SOR') THEN
                     CALL PCSetType(solver%pc,PCSOR,iperr)
                   ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
@@ -1629,7 +1628,6 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: nIters,outerIt
       LOGICAL(SBK) :: converged
 
-      WRITE(*,*) "Entered solvegmres",PRESENT(thisPC)
       IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
       thisLS%iters = 0
       DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
@@ -1642,7 +1640,6 @@ MODULE LinearSolverTypes
 
         IF (converged) EXIT
       END DO
-      WRITE(*,*) "Convergence status",converged
 
     ENDSUBROUTINE solveGMRES
 
@@ -1700,8 +1697,9 @@ MODULE LinearSolverTypes
       ! Check if solving null system
       IF (norm_b <= EPSILON(0.0)) THEN
         CALL thisLS%X%set(0.0_SRK)
-        thisLS%iters = 0
         thisLS%residual = 0.0
+        nIters = 0
+        converged = .TRUE.
         RETURN
       END IF
 
@@ -1709,9 +1707,6 @@ MODULE LinearSolverTypes
 
       ! Check if initial guess is already solution
       CALL thisLS%getResidual(u)
-      IF (PRESENT(thisPC)) THEN
-        CALL thisPC%apply(u)
-      END IF
 
       ! Compute norm of u
       norm_r0 = BLAS_dot(u%b,u%b)
@@ -1719,9 +1714,14 @@ MODULE LinearSolverTypes
       norm_r0 = SQRT(norm_r0)
 
       IF (norm_r0 <= EPSILON(0.0)) THEN
-        thisLS%iters = 0
         thisLS%residual = norm_r0
+        nIters = 0
+        converged = .TRUE.
         RETURN
+      END IF
+
+      IF (PRESENT(thisPC)) THEN
+        CALL thisPC%apply(u)
       END IF
 
       ! Allocate Data storage arrays
