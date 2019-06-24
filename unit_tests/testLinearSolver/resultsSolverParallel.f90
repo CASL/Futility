@@ -44,7 +44,7 @@ PROGRAM resultsSolverParallel
 #endif
 #endif
 
-!#define PETSC_ALL
+#define PETSC_ALL
 
 #ifdef PETSC_ALL
 #define PETSC_NOPC
@@ -166,7 +166,7 @@ PROGRAM resultsSolverParallel
       CALL rsorPlist%clear()
       CALL rsorPlist%add('PCType->numBlocks',n/51)
       CALL rsorPlist%add('PCType->MPI_Comm_ID',PE_COMM_WORLD)
-      CALL rsorPlist%add('PCType->omega',0.9_SRK)
+      CALL rsorPlist%add('PCType->omega',1.0_SRK)
 
       CALL petscPlist%validate(petscPlist)
       CALL petscLS%init(petscPlist)
@@ -261,11 +261,13 @@ PROGRAM resultsSolverParallel
         CALL b%assemble()
       END SELECT
 
-
+      
       SELECT TYPE(xNative => nativeLS%X); TYPE IS(NativeDistributedVectorType)
       SELECT TYPE(xNative_prec => nativeLS_prec%X); TYPE IS(NativeDistributedVectorType)
       SELECT TYPE(xPetsc => petscLS%X); TYPE IS(PetscVectorType)
       SELECT TYPE(xPetsc_prec => petscLS_prec%X); TYPE IS(PetscVectorType)
+        lowIdx = xNative%offset
+        highIdx = lowIdx + xNative%nlocal
         DO i=1,SIZE(sol_idx)
           IF (sol_idx(i) > lowIdx .AND. sol_idx(i) <= highIdx) THEN
             CALL xNative%set(sol_idx(i),sol_val(i))

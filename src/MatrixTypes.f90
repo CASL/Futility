@@ -717,10 +717,11 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),INTENT(IN) :: ul
       CHARACTER(LEN=1),INTENT(IN) :: d
       INTEGER(SIK),INTENT(IN) :: incx
-      INTEGER(SIK) :: countS(2),countR(2),i,rank,mpierr,k,count
+      INTEGER(SIK) :: i,rank,mpierr,k,l,count,ctDefault
+      INTEGER(SIK),ALLOCATABLE :: recvIdx(:,:), sendIdx(:,:)
       REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
-      INTEGER(SIK) :: sendRequests(2),recvRequests(2),sendCounter,recvCounter
-      INTEGER(SIK) :: lowIdx,highIdx
+      INTEGER(SIK) :: sendRequests(2),sendIdxRequests(2),recvRequests(2),recvIdxRequests(2),ctRecv(2)
+      INTEGER(SIK) :: lowIdx,highIdx,idxTmp, sendCounter, recvCounter
 
       ! NOTE: incx,ul,d,t are NOT USED
 
@@ -734,12 +735,16 @@ MODULE MatrixTypes
       sendCounter = 0
       recvCounter = 0
       sendRequests = 0
+      sendIdxRequests = 0
       recvRequests = 0
+      recvIdxRequests = 0
       ! The recv/sendResult array will sometimes hold it's full length,
       ! and sometimes less.
       ! The variable "count" will be used to determine this at
       ! each iteration
+      ALLOCATE(recvIdx(thisMatrix%iOffsets(2),2))
       ALLOCATE(recvResult(thisMatrix%iOffsets(2),2))
+      ALLOCATE(sendIdx(thisMatrix%iOffsets(2),2))
       ALLOCATE(sendResult(thisMatrix%iOffsets(2),2))
       ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)-thisMatrix%iOffsets(rank+1)))
 
@@ -758,7 +763,7 @@ MODULE MatrixTypes
 
       ! On each rank, loop over the chunks held (top to bottom)
       DO i=1,SIZE(thisMatrix%iOffsets)-1
-        count = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
+        ctDefault = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
         IF (rank+1 == i) THEN
           ! We will be receiving data from other processes
           IF (thisMatrix%chunks(i)%isInit) THEN
@@ -772,47 +777,69 @@ MODULE MatrixTypes
 
           ! Find which other chunks in this row we need to
           ! communicate with
-          DO k=1,SIZE(thisMatrix%contrib,1)
-            IF (thisMatrix%contrib(k,i) .AND. i /= k) THEN
-              recvCounter = recvCounter + 1
-              ! If we've filled up the available storage, we need
-              ! to wait for communication to finish up
-              IF (recvCounter > 2) THEN
-                CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-                tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
+          DO k=1,SIZE(thisMatrix%bandSizes,1)
+            !IF (thisMatrix%contrib(k,i) .AND. i /= k) THEN
+            IF (ASSOCIATED(thisMatrix%bandSizes(k)%p)) THEN
+              IF (thisMatrix%bandSizes(k)%p(1) < 0) THEN
+                ! We are receiving a whole vector at once
+                recvCounter = recvCounter + 1
+                idxTmp = MOD(recvCounter,2)+1
+                ! If we've filled up the available storage, we need
+                ! to wait for communication to finish up
+                CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, idxTmp, recvRequests, recvIdxRequests)
+                ctRecv(MOD(recvCounter,2)+1) = ctDefault
+                CALL MPI_IRecv(recvResult(1:ctDefault,idxTmp),ctDefault,MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(idxTmp),mpierr)
+              ELSE
+                ! We are receiving multiple sparse chunks
+                DO l=1,SIZE(thisMatrix%bandSizes(k)%p)
+                  recvCounter = recvCounter + 1
+                  idxTmp = MOD(recvCounter,2)+1
+                  ! If we've filled up the available storage, we need
+                  ! to wait for communication to finish up
+                  CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, idxTmp, recvRequests, recvIdxRequests)
+                  ctRecv(idxTmp) = -thisMatrix%bandSizes(k)%p(l)
+                  CALL MPI_IRecv(recvIdx(1:ctRecv(idxTmp),idxTmp),-ctRecv(idxTmp),MPI_INTEGER,k-1,0,thisMatrix%comm,recvIdxRequests(idxTmp),mpierr)
+                  CALL MPI_IRecv(recvResult(1:ctRecv(idxTmp),idxTmp),-ctRecv(idxTmp),MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(idxTmp),mpierr)
+                ENDDO
               END IF
-              CALL MPI_IRecv(recvResult(1:count,MOD(recvCounter,2)+1),count,MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(MOD(recvCounter,2)+1),mpierr)
             END IF
           END DO
           ! We've finished calling irecv. Wait for remaining
           ! requests to finish:
-          IF (recvRequests(MOD(recvCounter+1,2)+1) /= 0) THEN
-            CALL MPI_Wait(recvRequests(MOD(recvCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
-            tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter+1,2)+1)
-          END IF
-          IF (recvRequests(MOD(recvCounter,2)+1) /= 0) THEN
-            CALL MPI_Wait(recvRequests(MOD(recvCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-            tmpProduct = tmpProduct + recvResult(1:count,MOD(recvCounter,2)+1)
-          END IF
+          CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, 1, recvRequests, recvIdxRequests)
+          CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, 2, recvRequests, recvIdxRequests)
         ELSE
           ! We will be sending data to some other process
           IF (thismatrix%chunks(i)%isInit) THEN
-            sendCounter = sendCounter + 1
-            ! Check if we can safely write to sendRequests
-            IF (sendCounter > 2) THEN
-              CALL MPI_WAIT(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-            END IF
-            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=sendResult(1:count,MOD(sendCounter,2)+1),ALPHA=1.0_SRK,BETA=0.0_SRK)
-            CALL MPI_ISend(sendResult(1:count,MOD(sendCounter,2)+1), count, MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, sendRequests(MOD(sendCounter,2)+1),mpierr)
+            ! Decide whether to send whole vector or multiple sparse
+            IF (2*thisMatrix%chunks(i)%nnz/3 >= thisMatrix%chunks(i)%n) THEN
+              sendCounter = sendCounter + 1
+              idxTmp = MOD(sendCounter,2)+1
+              ! Check if we can safely write to sendRequests
+              CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, sendIdxRequests)
+              CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=sendResult(1:ctDefault,MOD(sendCounter,2)+1),ALPHA=1.0_SRK,BETA=0.0_SRK)
+              CALL MPI_ISend(sendResult(1:ctDefault,idxTmp), ctDefault, MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, sendRequests(idxTmp),mpierr)
+            ELSE
+              ! Send several sparse vectors
+              DO l=1,SIZE(thisMatrix%chunks(i)%bandIdx)
+                sendCounter = sendCounter + 1
+                idxTmp = MOD(sendCounter,2)+1
+                CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, sendIdxRequests)
+
+                ! compute destination indices
+                ! perform special-case multiplication from single band here
+                count = SIZE(thisMatrix%chunks(i)%bands(l)%jIdx)
+                sendIdx(1:count,idxTmp) = thisMatrix%chunks(i)%bands(l)%jIdx - thisMatrix%chunks(i)%bandIdx(l)
+                CALL MPI_ISend(sendIdx(1:count,idxTmp),count,MPI_INTEGER,i-1,0,thisMatrix%comm,sendIdxRequests(idxTmp),mpierr)
+                sendResult(1:count,idxTmp) = thisMatrix%chunks(i)%bands(l)%elem * x(thisMatrix%chunks(i)%bands(l)%jIdx)
+                CALL MPI_ISend(sendResult(1:count,idxTmp),count,MPI_DOUBLE_PRECISION,i-1,0,thisMatrix%comm,sendRequests(idxTmp),mpierr)
+              ENDDO
+            ENDIF
           END IF
         END IF
       END DO
-      IF (sendRequests(MOD(sendCounter+1,2)+1) /= 0) THEN
-        CALL MPI_Wait(sendRequests(MOD(sendCounter+1,2)+1),MPI_STATUS_IGNORE,mpierr)
-      END IF
-      IF (sendRequests(MOD(sendCounter,2)+1) /= 0) THEN
-        CALL MPI_Wait(sendRequests(MOD(sendCounter,2)+1),MPI_STATUS_IGNORE,mpierr)
-      END IF
+      CALL pop_send(sendResult, sendIdx, 1, sendRequests, sendIdxRequests)
+      CALL pop_send(sendResult, sendIdx, 2, sendRequests, sendIdxRequests)
 
       ! do y = alpha * reduce + beta*y
       IF (a == 1.0_SRK) THEN
@@ -841,6 +868,58 @@ MODULE MatrixTypes
     ENDSUBROUTINE matvec_DistrBandedMatrixType
 
 
+    SUBROUTINE pop_recv(acc, valBuf, idxBuf, ctBuf, idx, req, idxReq)
+      !> The accumulating vector
+      REAL(SRK), INTENT(INOUT) :: acc(:)
+      !> The recv buffer for values
+      REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
+      !> Count for each buffer slot
+      INTEGER(SIK), INTENT(INOUT) :: ctBuf(2)
+      !> The recv buffer for indices
+      INTEGER(SIK), INTENT(INOUT) :: idxBuf(:,:)
+      !> The buffer slot to pop 
+      INTEGER(SIK), INTENT(IN) :: idx
+      !> The array of requests for data
+      INTEGER(SIK), INTENT(INOUT) :: req(2)
+      !> The array of requests for indices
+      INTEGER(SIK), INTENT(INOUT) :: idxReq(2)
+      INTEGER(SIK) :: mpierr
+
+      IF (req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
+
+      CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
+      IF (ctBuf(idx) > 0) THEN
+        acc(1:ctBuf(idx)) = acc(1:ctBuf(idx)) + valBuf(1:ctBuf(idx),idx)
+      ELSE
+        CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
+        idxReq(idx) = 0
+        acc(idxBuf(1:-ctBuf(idx),idx)) = acc(idxBuf(1:-ctBuf(idx),idx)) + valBuf(1:-ctBuf(idx),idx)
+      ENDIF
+
+    ENDSUBROUTINE pop_recv
+
+    SUBROUTINE pop_send(valBuf, idxBuf, idx, req, idxReq)
+      !> The send buffer for values
+      REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
+      !> The send buffer for indices
+      INTEGER(SIK), INTENT(INOUT) :: idxBuf(:,:)
+      !> The buffer slot to pop 
+      INTEGER(SIK), INTENT(IN) :: idx
+      !> The array of requests for data
+      INTEGER(SIK), INTENT(INOUT) :: req(2)
+      !> The array of requests for indices
+      INTEGER(SIK), INTENT(INOUT) :: idxReq(2)
+      INTEGER(SIK) :: mpierr
+
+      IF (req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
+
+      CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
+      IF (idxReq(idx) /= 0) THEN
+        CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
+        idxReq(idx) = 0
+      ENDIF
+
+    ENDSUBROUTINE pop_send
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a sparse triangular matrix linear system.

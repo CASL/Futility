@@ -141,6 +141,10 @@ MODULE MatrixTypes_Native
     REAL(SRK), ALLOCATABLE :: elem(:)
   ENDTYPE Band
 
+  TYPE IntPtr
+    INTEGER(SIK),POINTER :: p(:) => NULL()
+  ENDTYPE IntPtr
+
   !> @brief The basic banded matrix type
   TYPE,EXTENDS(MatrixType) :: BandedMatrixType
     !> Map of band indices stored (-m to n)
@@ -157,6 +161,7 @@ MODULE MatrixTypes_Native
     INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
     REAL(SRK),ALLOCATABLE :: elemTmp(:)
     LOGICAL(SBK) :: isAssembled, isReversed
+
 !
 !List of Type Bound Procedures
     CONTAINS
@@ -198,8 +203,10 @@ MODULE MatrixTypes_Native
     INTEGER(SIK) :: m
     !> Block size (smallest indivisble unit)
     INTEGER(SIK) :: blockSize
-    !> Map of which ranks contribute to a matvec at this location
-    LOGICAL(SBK), ALLOCATABLE :: contrib(:,:)
+    !> For those ranks that contribute at row = rank, holds array of band sizes
+    !> Used for matvec; if contrib(i,j) is false, bandSizes(i,j) is unassociated
+    !> If size 0, it is unused. Otherwise, it is used for sparse data transfer
+    TYPE(IntPtr), ALLOCATABLE :: bandSizes(:)
     !> Temporary containers used before (and deallocated after) assembly
     INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
     REAL(SRK),ALLOCATABLE :: elemTmp(:)
@@ -572,7 +579,7 @@ MODULE MatrixTypes_Native
           ALLOCATE(matrix%iTmp(2*nnz/nProc))
           ALLOCATE(matrix%jTmp(2*nnz/nProc))
           ALLOCATE(matrix%elemTmp(2*nnz/nProc))
-          ALLOCATE(matrix%contrib(nProc,nProc))
+          ALLOCATE(matrix%bandSizes(nProc))
 
           matrix%nlocal = 0
           matrix%isInit=.TRUE.
@@ -735,14 +742,15 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
       TYPE(ParamType) :: bandedPList
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK) :: mpierr, rank, nproc, i, j
-      INTEGER(SIK),ALLOCATABLE :: nnzPerChunk(:)
+      INTEGER(SIK) :: mpierr, rank, nproc, i, j, nBandLocal
+      INTEGER(SIK),ALLOCATABLE :: nnzPerChunk(:),nband(:),bandSizeTmp(:)
       LOGICAL(SBK) :: blockNonzero
 
       REQUIRE(thisMatrix%isInit)
       CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
       CALL MPI_Comm_size(thisMatrix%comm,nproc,mpierr)
       ALLOCATE(nnzPerChunk(nProc))
+      ALLOCATE(nBand(nProc))
       nnzPerChunk = 0_SIK
       DO i=1,thisMatrix%nLocal
         DO j=1,nproc
@@ -758,7 +766,6 @@ MODULE MatrixTypes_Native
       ALLOCATE(thisMatrix%chunks(nProc))
       DO i=1,nProc
         blockNonzero = nnzPerChunk(i) > 0
-        CALL MPI_Allgather(blockNonzero,1,MPI_LOGICAL,thisMatrix%contrib(:,i),1,MPI_LOGICAL,thismatrix%comm,mpierr)
         IF (blockNonzero) THEN
           CALL bandedPList%add('MatrixType->nnz',nnzPerChunk(i))
           CALL bandedPList%add('MatrixType->n',thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i))
@@ -773,6 +780,48 @@ MODULE MatrixTypes_Native
           END DO
           CALL thisMatrix%chunks(i)%assemble()
           CALL bandedPList%clear()
+        ENDIF
+        ! Set self var
+        IF (thisMatrix%chunks(i)%isInit) THEN
+          IF (2*thisMatrix%chunks(i)%nnz/3 < thisMatrix%chunks(i)%n) THEN
+            nBandLocal = SIZE(thisMatrix%chunks(i)%bandIdx)
+          ELSE
+            nBandLocal = -1
+          ENDIF
+        ELSE
+          nBandLocal = 0
+        ENDIF
+        
+        ! Gather to rank j-1 into nBand(:)
+        CALL MPI_Gather(nBandLocal, 1, MPI_INTEGER, nband(1), 1, MPI_INTEGER, i-1, thisMatrix%comm, mpierr)
+        ! Have rank j-1 allocate
+        IF (rank == i-1) THEN
+          DO j=1,nProc
+            IF (j == i) THEN
+              NULLIFY(thisMatrix%bandSizes(i)%p)
+            ELSE
+              IF (nBand(j) > 0) THEN
+                ALLOCATE(thisMatrix%bandSizes(j)%p(nBand(j)))
+                CALL MPI_Recv(thisMatrix%bandSizes(j)%p(1), nBand(j), MPI_INTEGER, j-1, 0, thisMatrix%comm, MPI_STATUS_IGNORE, mpierr)
+              ELSE
+                IF (nBand(j) == 0) THEN
+                  NULLIFY(thisMatrix%bandSizes(j)%p)
+                ELSE
+                  ALLOCATE(thisMatrix%bandSizes(j)%p(1))
+                  thisMatrix%bandSizes(j)%p(1) = -1
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDDO
+        ELSE
+          IF (nBandLocal > 0) THEN
+            ALLOCATE(bandSizeTmp(nBandLocal))
+            DO j=1,nBandLocal
+              bandSizeTmp(j) = SIZE(thisMatrix%chunks(i)%bands(j)%elem)
+            ENDDO
+            CALL MPI_Send(bandSizeTmp(:), nBandLocal, MPI_INTEGER, i-1, 0, thisMatrix%comm, mpierr)
+            DEALLOCATE(bandSizeTmp)
+          ENDIF
         END IF
       END DO
 
@@ -996,9 +1045,12 @@ MODULE MatrixTypes_Native
       IF(ALLOCATED(matrix%elemTmp)) THEN
         DEALLOCATE(matrix%elemTmp)
       ENDIF
-      IF(ALLOCATEd(matrix%contrib)) THEN
-        DEALLOCATE(matrix%contrib)
-      END IF
+      IF(ALLOCATED(matrix%bandSizes)) THEN
+        DO i=1,SIZE(matrix%bandSizes)
+          IF(ASSOCIATED(matrix%bandSizes(i)%p)) DEALLOCATE(matrix%bandSizes(i)%p)
+        ENDDO
+        DEALLOCATE(matrix%bandSizes)
+      ENDIF
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
 #endif
      ENDSUBROUTINE clear_DistributedBandedMatrixType
