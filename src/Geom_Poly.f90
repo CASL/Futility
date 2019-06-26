@@ -103,6 +103,12 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::isCircle_PolygonType
       !> @copydetails Geom_Poly::isCircle_PolygonType
       PROCEDURE,PASS :: isCircle => isCircle_PolygonType
+      !> @copybrief Geom_Poly::isSector_PolygonType
+      !> @copydetails Geom_Poly::isSector_PolygonType
+      PROCEDURE,PASS :: isSector => isSector_PolygonType
+      !> @copybrief Geom_Poly::isSection_PolygonType
+      !> @copydetails Geom_Poly::isSection_PolygonType
+      PROCEDURE,PASS :: isSection => isSection_PolygonType
       !> @copybrief Geom_Poly::intersectLine_PolygonType
       !> @copydetails Geom_Poly::intersectLine_PolygonType
       PROCEDURE,PASS :: intersectLine => intersectLine_PolygonType
@@ -112,6 +118,12 @@ MODULE Geom_Poly
       !> @copybrief Geom_Poly::getRadius_PolygonType
       !> @copydetails Geom_Poly::getRadius_PolygonType
       PROCEDURE,PASS :: getRadius => getRadius_PolygonType
+      !> @copybrief Geom_Poly::getInnerRadius_PolygonType
+      !> @copydetails Geom_Poly::getInnerRadius_PolygonType
+      PROCEDURE,PASS :: getInnerRadius => getInnerRadius_PolygonType
+      !> @copybrief Geom_Poly::getOuterRadius_PolygonType
+      !> @copydetails Geom_Poly::getOuterRadius_PolygonType
+      PROCEDURE,PASS :: getOuterRadius => getOuterRadius_PolygonType
       !> @copybrief Geom_Poly::subtractSubVolume_PolygonType
       !> @copydetails Geom_Poly::subtractSubVolume_PolygonType
       PROCEDURE,PASS :: subtractSubVolume => subtractSubVolume_PolygonType
@@ -299,7 +311,7 @@ MODULE Geom_Poly
           ENDDO
         ENDIF
         CALL thisPoly%centroid%init(DIM=2,X=xcent/thisPoly%area,Y=ycent/thisPoly%area)
-        thisPoly%isinit=.TRUE.
+        thisPoly%isInit=.TRUE.
       ENDIF
     ENDSUBROUTINE set_PolygonType
 !
@@ -352,7 +364,7 @@ MODULE Geom_Poly
       LOGICAL(SBK) :: bool
       INTEGER(SIK) :: i
       bool=.FALSE.
-      IF(thisPoly%isinit .AND. (thisPoly%nVert == thisPoly%nQuadEdge)) THEN
+      IF(thisPoly%isInit .AND. (thisPoly%nVert == thisPoly%nQuadEdge)) THEN
         bool=.TRUE.
         DO i=2,thisPoly%nQuadEdge
           bool=bool .AND. ALL(thisPoly%quadEdge(:,i) .APPROXEQA. thisPoly%quadEdge(:,1))
@@ -361,18 +373,134 @@ MODULE Geom_Poly
     ENDFUNCTION isCircle_PolygonType
 !
 !-------------------------------------------------------------------------------
+!> @brief Determines whether a polygon meets the criteria for being an arc
+!>        sector. In short, the polygon must have exactly two quadratic edges
+!>        and exactly two non-quadratic edges. A circle is not an arc sector.
+!> @param thisPoly The polygon type to query
+!> @param bool The logical result of the operation
+!>
+    ELEMENTAL FUNCTION isSector_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: nNonQuadEdges!,i
+      ! REAL(SRK) :: dist,dist_old
+      bool=.FALSE.
+      IF(thisPoly%isInit) THEN
+        !nVert should be equal to the total number of edges
+        nNonQuadEdges=thisPoly%nVert-thisPoly%nQuadEdge
+        bool=(thisPoly%nQuadEdge == 2) .AND. (nNonQuadEdges == 2)
+        !The following code can be used to check if the lengths of the
+        !non-quadratic edges are equal. This might become relevant if the
+        !sector is required to be "ideal". Leaving commented now for speed.
+        ! dist_old=-1.0_SRK
+        ! IF(ALLOCATED(thisPoly%quad2edge)) THEN
+        !   DO i=1,thisPoly%nVert
+        !     IF(.NOT.ANY(thisPoly%quad2edge == i)) THEN
+        !       dist=Distance(thisPoly%vert(thisPoly%edge(1,i)), &
+        !         thisPoly%vert(thisPoly%edge(2,i)))
+        !       IF(dist_old > 0.0_SRK) THEN
+        !         bool=bool .AND. (dist .APPROXEQA. dist_old)
+        !       ELSE
+        !         dist_old=dist
+        !       ENDIF
+        !     ENDIF
+        !   ENDDO
+        ! ENDIF
+      ENDIF
+    ENDFUNCTION isSector_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a polygon meets the criteria for being a circle
+!>        section. In short, the polygon must have exactly one quadratic edge
+!>        and exactly two non-quadratic edges, or be a full circle.
+!> @param thisPoly The polygon type to query
+!> @param bool The logical result of the operation
+!>
+    ELEMENTAL FUNCTION isSection_PolygonType(thisPoly) RESULT(bool)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: nNonQuadEdges!,i
+      ! REAL(SRK) :: dist,dist_old
+      bool=.FALSE.
+      IF(thisPoly%isInit) THEN
+        IF(thisPoly%isCircle()) THEN
+          bool=.TRUE.
+        ELSE
+          !nVert should be equal to the total number of edges
+          nNonQuadEdges=thisPoly%nVert-thisPoly%nQuadEdge
+          bool=(thisPoly%nQuadEdge == 1) .AND. (nNonQuadEdges == 2)
+          !The following code can be used to check if the lengths of the
+          !non-quadratic edges are equal. This might become relevant if the
+          !section is required to be "ideal". Leaving commented now for speed.
+          ! dist_old=-1.0_SRK
+          ! IF(ALLOCATED(thisPoly%quad2edge)) THEN
+          !   DO i=1,thisPoly%nVert
+          !     IF(.NOT.ANY(thisPoly%quad2edge == i)) THEN
+          !       dist=Distance(thisPoly%vert(thisPoly%edge(1,i)), &
+          !         thisPoly%vert(thisPoly%edge(2,i)))
+          !       IF(dist_old > 0.0_SRK) THEN
+          !         bool=bool .AND. (dist .APPROXEQA. dist_old)
+          !       ELSE
+          !         dist_old=dist
+          !       ENDIF
+          !     ENDIF
+          !   ENDDO
+          ! ENDIF
+        ENDIF
+      ENDIF
+    ENDFUNCTION isSection_PolygonType
+!
+!-------------------------------------------------------------------------------
 !> @brief This routine will query a polygon type, check if it meets the criteria
-!>        to be a circle, and if so it will return the radius for the circle.
+!>        to be a circle or circle section, and if so it will return the radius.
 !> @param thisPoly The polygon type from which to get the radius
-!> @param r The radius if thisPoly is a circle.  It will be 0.0 for all other
-!>        cases.
+!> @param r The radius if thisPoly is a circle or circle section. It will be 0.0
+!>         for all other cases.
 !>
     ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
       CLASS(PolygonType),INTENT(IN) :: thisPoly
       REAL(SRK) :: r
       r=0.0_SRK
-      IF(thisPoly%isCircle()) r=thisPoly%quadEdge(3,1)
+      IF(thisPoly%isInit) THEN
+        r=MERGE(thisPoly%quadEdge(3,1),0.0_SRK,thisPoly%isSection())
+      ENDIF
     ENDFUNCTION getRadius_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will query a polygon type, check if it meets the criteria
+!>        to be an arc sector, and if so it will return the inner radius.
+!> @param thisPoly The polygon type from which to get the inner radius
+!> @param r The inner radius if thisPoly is an arc sector.  It will be 0.0 for
+!>        all other cases.
+!>
+    ELEMENTAL FUNCTION getInnerRadius_PolygonType(thisPoly) RESULT(r)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      REAL(SRK) :: r
+      r=0.0_SRK
+      IF(thisPoly%isInit) THEN
+        r=MERGE(MINVAL(thisPoly%quadEdge(3,:)),0.0_SRK,thisPoly%isSector())
+      ENDIF
+    ENDFUNCTION getInnerRadius_PolygonType
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will query a polygon type, check if it meets the criteria
+!>        to be an arc sector, and if so it will return the outer radius.
+!> @param thisPoly The polygon type from which to get the outer radius
+!> @param r The outer radius if thisPoly is an arc sector.  It will be the
+!>        radius for all other cases.
+!>
+    ELEMENTAL FUNCTION getOuterRadius_PolygonType(thisPoly) RESULT(r)
+      CLASS(PolygonType),INTENT(IN) :: thisPoly
+      REAL(SRK) :: r
+      r=0.0_SRK
+      IF(thisPoly%isInit) THEN
+        IF(thisPoly%isSection()) THEN
+          r=thisPoly%getRadius()
+        ELSEIF(thisPoly%isSector()) THEN
+          r=MAXVAL(thisPoly%quadEdge(3,:))
+        ENDIF
+      ENDIF
+    ENDFUNCTION getOuterRadius_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine determines if a given point lies on the surface of a
@@ -394,7 +522,7 @@ MODULE Geom_Poly
       TYPE(PointType) :: centroid
       TYPE(LineType) :: line
 
-      IF(thisPoly%isinit .AND. point%dim == 2) THEN
+      IF(thisPoly%isInit .AND. point%dim == 2) THEN
         bool=.FALSE.
         !Check if its one of the vertices
         DO i=1,thisPoly%nVert
@@ -592,7 +720,7 @@ MODULE Geom_Poly
 
       bool=.FALSE.
 
-      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      IF(thisPoly%isInit .AND. thatPoly%isinit) THEN
         bool=.TRUE.
         !1. make sure all vertices are inside bounding polygon
         DO i=1,thatPoly%nVert
@@ -956,7 +1084,7 @@ MODULE Geom_Poly
 
       bool=.FALSE.
 
-      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      IF(thisPoly%isInit .AND. thatPoly%isinit) THEN
         !2. Check intersections between combinations of edges of two polygons (ignore intersections that are vertices)
         ALLOCATE(Lines(thisPoly%nVert-thisPoly%nQuadEdge))
         IF(thisPoly%nQuadEdge > 0) ALLOCATE(Circs(thisPoly%nQuadEdge))
@@ -1302,7 +1430,7 @@ MODULE Geom_Poly
       TYPE(LineType),ALLOCATABLE :: theseLines(:),thoseLines(:)
       TYPE(CircleType),ALLOCATABLE :: theseCircs(:),thoseCircs(:)
 
-      IF(thisPoly%isinit .AND. thatPoly%isinit) THEN
+      IF(thisPoly%isInit .AND. thatPoly%isinit) THEN
         !Set up all the lines for both polygons
         ALLOCATE(theseLines(thisPoly%nVert))
         ALLOCATE(thoseLines(thatPoly%nVert))
@@ -1634,7 +1762,7 @@ MODULE Geom_Poly
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine will return a polygon type for a given cylindrical geometry.
-!> This routine converts a 3D cylinder to a 2D polygon for visualization. 
+!> This routine converts a 3D cylinder to a 2D polygon for visualization.
 !> @param cylinder The cylinder type to be turned into a polygon
 !> @param polygon The polygon type that corresponds to the cylinder type.
 !>
