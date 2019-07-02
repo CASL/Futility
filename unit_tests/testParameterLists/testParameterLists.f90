@@ -5469,7 +5469,7 @@ PROGRAM testParameterLists
     TYPE(StringType) :: str0
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
 
-    CALL testParam%verifyList(testParam2,bool)
+    CALL testParam%verifyList(testParam2,e,bool)
     ASSERT(bool,'empty lists')
 
     !Testing addition of SBK routine to parameter list
@@ -5682,17 +5682,16 @@ PROGRAM testParameterLists
 
     !assign the same PL
     testParam2=testParam
-    CALL testParam%verifyList(testParam2,bool)
+    CALL testParam%verifyList(testParam2,e,bool)
     ASSERT(bool,'verify the copy')
 
     nerror=eParams%getCounter(EXCEPTION_ERROR)
     CALL testParam2%clear()
-    CALL testParam%verifyList(testParam2,bool)
+    CALL testParam%verifyList(testParam2,e,bool)
     ASSERT(.NOT.bool,'arg uninit')
     ASSERT(nerror == eParams%getCounter(EXCEPTION_ERROR),'arg uninit')
-    FINFO() nerror,eParams%getCounter(EXCEPTION_ERROR)
     nerror=eParams%getCounter(EXCEPTION_ERROR)
-    CALL testParam2%verifyList(testParam,bool)
+    CALL testParam2%verifyList(testParam,e,bool)
     ASSERT(.NOT.bool,'this uninit')
     ASSERT(nerror+44 == eParams%getCounter(EXCEPTION_ERROR),'this uninit')
 
