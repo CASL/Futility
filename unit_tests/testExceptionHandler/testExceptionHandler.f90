@@ -30,6 +30,7 @@ PROGRAM testExceptionHandler
   REGISTER_SUBTEST('Surrogate',testSurrogate)
   REGISTER_SUBTEST('ASSIGNMENT(=)',testAssignment)
   REGISTER_SUBTEST('Reset',testReset)
+  REGISTER_SUBTEST('SetCounter',testSetCounter)
 
   CLOSE(testE%getLogFileUnit(),STATUS='DELETE')
 
@@ -320,5 +321,22 @@ PROGRAM testExceptionHandler
       ASSERT(testE%getLastMessage() == '','%getLastMessage()')
       ASSERT(.NOT.testE%isLogActive(),'%isLogActive')
     ENDSUBROUTINE testReset
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSetCounter()
+      ASSERT(ALL(testE%getCounterAll() == 0),'getCounterAll()')
+      CALL testE%setCounter((/-1,-1,-1,-1,1/))
+      ASSERT(ALL(testE%getCounterAll() == (/0,0,0,0,1/)),'setCounterAll() -1 for first 4')
+      CALL testE%setCounter(EXCEPTION_INFORMATION,2)
+      ASSERT(ALL(testE%getCounterAll() == (/2,0,0,0,1/)),'setCounter() Info')
+      CALL testE%setCounter(EXCEPTION_WARNING,3)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,0,0,1/)),'setCounter() Warning')
+      CALL testE%setCounter(EXCEPTION_DEBUG,4)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,4,0,1/)),'setCounter() Debug')
+      CALL testE%setCounter(EXCEPTION_ERROR,5)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,4,5,1/)),'setCounter() Error')
+      CALL testE%setCounter(EXCEPTION_FATAL_ERROR,6)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,4,5,6/)),'setCounter() Error')
+    ENDSUBROUTINE testSetCounter
 !
 ENDPROGRAM testExceptionHandler
