@@ -2743,14 +2743,19 @@ MODULE ParameterLists
 !> @param reqParams
 !> @param isMatch
 !>
-    SUBROUTINE verifyList_Paramtype(thisParam,reqParams,isMatch)
+    SUBROUTINE verifyList_Paramtype(thisParam,reqParams,e,isMatch)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
+      CLASS(ExceptionHandlerType),INTENT(IN) :: e
       LOGICAL(SBK),INTENT(OUT) :: isMatch
       LOGICAL(SBK) :: isValid
+      INTEGER(SIK) :: tmpcount(EXCEPTION_SIZE)
+      TYPE(ExceptionHandlerType) :: tmpe
 
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
+      tmpe=eParams
+      eParams=e
       isValid=.TRUE.
       isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
@@ -2758,6 +2763,9 @@ MODULE ParameterLists
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
+      tmpcount=eParams%getCounterAll()
+      eParams=tmpe
+      CALL eParams%setCounter(tmpcount)
     ENDSUBROUTINE verifyList_Paramtype
 !
 !-------------------------------------------------------------------------------
