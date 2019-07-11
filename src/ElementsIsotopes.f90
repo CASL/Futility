@@ -105,6 +105,9 @@ MODULE ElementsIsotopes
       !> @copybrief ElementsIsotopes::getZAID_ElemIso
       !> @copydetails ElementsIsotopes::getZAID_ElemIso
       PROCEDURE,PASS :: getZAID => getZAID_ElemIso
+      !> @copybrief ElementsIsotopes::getZZZAAAI_ElemIso
+      !> @copydetails ElementsIsotopes::getZZZAAAI_ElemIso
+      PROCEDURE,PASS :: getZZZAAAI => getZZZAAAI_ElemIso
       !> @copybrief ElementsIsotopes::getIsoName_ElemIso
       !> @copydetails ElementsIsotopes::getIsoName_ElemIso
       PROCEDURE,PASS :: getIsoName => getIsoName_ElemIso
@@ -330,6 +333,45 @@ MODULE ElementsIsotopes
     ENDFUNCTION getZAID_ElemIso
 !
 !-------------------------------------------------------------------------------
+!> @brief Routine returns the ZZZAAAI based on a specified isotope name
+!> @param this the object
+!> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!>
+    FUNCTION getZZZAAAI_ElemIso(this,isoName) RESULT(ZZZAAAI)
+      CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+      CHARACTER(LEN=*),INTENT(IN) :: isoName
+      INTEGER(SIK) :: ZZZAAAI
+      !
+      CHARACTER(LEN=6) :: tmpChar
+      INTEGER(SIK) :: dashloc,Z,A,i
+
+      REQUIRE(this%isInit)
+      REQUIRE(this%isValidIsoName(isoName))
+
+      tmpChar=TRIM(ADJUSTL(isoName))
+      CALL toUpper(tmpChar)
+      IF(this%isMetastable(tmpChar)) THEN
+        i=1
+        tmpChar=tmpChar(1:LEN_TRIM(tmpChar)-1)
+      ELSE
+        i=0
+      ENDIF
+      dashloc=INDEX(tmpChar,"-")
+      IF(dashloc==2) THEN
+        Z=strarraymatchind(elementlist," "//tmpChar(1:1))
+      ELSE
+        Z=strarraymatchind(elementlist,tmpChar(dashloc-2:dashloc-1))
+      ENDIF
+      IF(INDEX(tmpChar(dashloc+1:LEN(tmpChar)),"NAT")>0) THEN
+        A=0
+      ELSE
+        READ(tmpChar(dashloc+1:LEN(tmpChar)),*) A
+      ENDIF
+
+      ZZZAAAI=Z*10000+A*10+i
+    ENDFUNCTION getZZZAAAI_ElemIso
+!
+!-------------------------------------------------------------------------------
 !> @brief Routine returns the isotope name based on user specified ZAID
 !> @param this the object
 !> @param zaid the integer representation of the atomic number and mass number: Z*1000+A
@@ -352,7 +394,11 @@ MODULE ElementsIsotopes
       ELSE
         WRITE(massName,"(i3)") A
       ENDIF
-      isoName=TRIM(ADJUSTL(elementlist(Z)//"-"//ADJUSTL(massName)))
+      IF(Z > SIZE(elementlist)) THEN
+        isoName=TRIM(ADJUSTL(str(Z)//'-'//ADJUSTL(massName)))
+      ELSE
+        isoName=TRIM(ADJUSTL(elementlist(Z)//"-"//ADJUSTL(massName)))
+      ENDIF
     ENDFUNCTION getIsoName_ElemIso
 !
 !-------------------------------------------------------------------------------
