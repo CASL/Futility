@@ -5468,6 +5468,7 @@ PROGRAM testParameterLists
     REAL(SDK),ALLOCATABLE :: sdk2(:,:),sdk3(:,:,:)
     TYPE(StringType) :: str0
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
+    TYPE(ExceptionHandlerType) :: tmpe
 
     CALL testParam%verifyList(testParam2,e,bool)
     ASSERT(bool,'empty lists')
@@ -5681,17 +5682,35 @@ PROGRAM testParameterLists
     CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
 
     !assign the same PL
+    !Test a dummy exception handler
+    tmpe=e
     testParam2=testParam
-    CALL testParam%verifyList(testParam2,e,bool)
+    CALL testParam%verifyList(testParam2,tmpe,bool)
+    ASSERT(bool,'verify the copy')
+
+    nerror=tmpe%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%clear()
+    CALL testParam%verifyList(testParam2,tmpe,bool)
+    ASSERT(.NOT.bool,'arg uninit')
+    ASSERT(nerror == tmpe%getCounter(EXCEPTION_ERROR),'arg uninit')
+    nerror=tmpe%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%verifyList(testParam,tmpe,bool)
+    ASSERT(.NOT.bool,'this uninit')
+    ASSERT(nerror+44 == tmpe%getCounter(EXCEPTION_ERROR),'this uninit')
+
+    !assign the same PL
+    !Test using the eParams exception handler
+    testParam2=testParam
+    CALL testParam%verifyList(testParam2,eParams,bool)
     ASSERT(bool,'verify the copy')
 
     nerror=eParams%getCounter(EXCEPTION_ERROR)
     CALL testParam2%clear()
-    CALL testParam%verifyList(testParam2,e,bool)
+    CALL testParam%verifyList(testParam2,eParams,bool)
     ASSERT(.NOT.bool,'arg uninit')
     ASSERT(nerror == eParams%getCounter(EXCEPTION_ERROR),'arg uninit')
     nerror=eParams%getCounter(EXCEPTION_ERROR)
-    CALL testParam2%verifyList(testParam,e,bool)
+    CALL testParam2%verifyList(testParam,eParams,bool)
     ASSERT(.NOT.bool,'this uninit')
     ASSERT(nerror+44 == eParams%getCounter(EXCEPTION_ERROR),'this uninit')
 
