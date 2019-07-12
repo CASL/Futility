@@ -2403,14 +2403,15 @@ MODULE ParameterLists
 !> @returns isValid logical indicating that all the required parameters exist
 !>          in @c thisParam and are of the correct type.
 !>
-    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,validType,isMatch) &
-      RESULT(isValid)
+    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,validType, &
+        isMatch,e) RESULT(isValid)
       CHARACTER(LEN=*),PARAMETER :: myName='validateReq_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
       INTEGER(SIK),INTENT(IN) :: validType
       LOGICAL(SBK),INTENT(OUT) :: isMatch
+      CLASS(ExceptionHandlerType),INTENT(INOUT),OPTIONAL :: e
       LOGICAL(SBK) :: isValid,tmpbool
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
@@ -2425,7 +2426,7 @@ MODULE ParameterLists
           IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
               (validType == VALIDTYPE_VERIFYLIST)) THEN
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,validType,isMatch)
+              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,validType,isMatch,e)
           ELSE
             IF(ASSOCIATED(p%pdat)) &
               isValid=validateReq_ParamType(thisParam,p%pdat,prefix,validType,tmpbool)
@@ -2438,7 +2439,7 @@ MODULE ParameterLists
               IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
                   (validType == VALIDTYPE_VERIFYLIST)) THEN
                 IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->',validType,isMatch)) ntrue=ntrue+1
+                  prefix//p%name//'->',validType,isMatch,e)) ntrue=ntrue+1
               ELSE
                 IF(validateReq_ParamType(thisParam,p%pList(i), &
                   prefix//p%name//'->',validType,tmpbool)) ntrue=ntrue+1
@@ -2454,13 +2455,25 @@ MODULE ParameterLists
               SELECTCASE(validType)
                 CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
                   isMatch=.FALSE.
-                  CALL eParams%raiseError(modName//'::'//myName// &
-                      ' - When verifying that parameters are equal, the parameter "'// &
-                      prefix//p%name//'" was not found on both lists!')
+                  IF(PRESENT(e)) THEN
+                    CALL e%raiseError(modName//'::'//myName// &
+                        ' - When verifying that parameters are equal, the parameter "'// &
+                        prefix//p%name//'" was not found on both lists!')
+                  ELSE
+                    CALL eParams%raiseError(modName//'::'//myName// &
+                        ' - When verifying that parameters are equal, the parameter "'// &
+                        prefix//p%name//'" was not found on both lists!')
+                  ENDIF
                 CASE DEFAULT
-                  CALL eParams%raiseError(modName//'::'//myName// &
-                      ' - Failed to locate required parameter "'//prefix// &
-                      p%name//'"!')
+                  IF(PRESENT(e)) THEN
+                    CALL e%raiseError(modName//'::'//myName// &
+                        ' - Failed to locate required parameter "'//prefix// &
+                        p%name//'"!')
+                  ELSE
+                    CALL eParams%raiseError(modName//'::'//myName// &
+                        ' - Failed to locate required parameter "'//prefix// &
+                        p%name//'"!')
+                  ENDIF
               ENDSELECT
             ELSE
               IF(SAME_TYPE_AS(tmpParam,p)) THEN
@@ -2469,12 +2482,18 @@ MODULE ParameterLists
                   CASE(VALIDTYPE_VERIFYTEST)
                     isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
                   CASE(VALIDTYPE_VERIFYLIST)
-                    isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix)
+                    isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
                 ENDSELECT
               ELSE
-                CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
-                    tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+                IF(PRESENT(e)) THEN
+                  CALL e%raiseError(modName//'::'//myName// &
+                    ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                      tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+                ELSE
+                  CALL eParams%raiseError(modName//'::'//myName// &
+                    ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                      tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+                ENDIF
               ENDIF
             ENDIF
           ENDIF
@@ -2486,13 +2505,25 @@ MODULE ParameterLists
             SELECTCASE(validType)
               CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
                 isMatch=.FALSE.
-                CALL eParams%raiseError(modName//'::'//myName// &
-                    ' - When verifying that parameters are equal, the parameter "'// &
-                    prefix//p%name//'" was not found on both lists!')
+                IF(PRESENT(e)) THEN
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - When verifying that parameters are equal, the parameter "'// &
+                      prefix//p%name//'" was not found on both lists!')
+                ELSE
+                  CALL eParams%raiseError(modName//'::'//myName// &
+                      ' - When verifying that parameters are equal, the parameter "'// &
+                      prefix//p%name//'" was not found on both lists!')
+                ENDIF
               CASE DEFAULT
-                CALL eParams%raiseError(modName//'::'//myName// &
-                    ' - Failed to locate required parameter "'//prefix// &
-                    p%name//'"!')
+                IF(PRESENT(e)) THEN
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - Failed to locate required parameter "'//prefix// &
+                      p%name//'"!')
+                ELSE
+                  CALL eParams%raiseError(modName//'::'//myName// &
+                      ' - Failed to locate required parameter "'//prefix// &
+                      p%name//'"!')
+                ENDIF
             ENDSELECT
           ELSE
             IF(SAME_TYPE_AS(tmpParam,p)) THEN
@@ -2501,12 +2532,18 @@ MODULE ParameterLists
                 CASE(VALIDTYPE_VERIFYTEST)
                   isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
                 CASE(VALIDTYPE_VERIFYLIST)
-                  isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix)
+                  isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
               ENDSELECT
             ELSE
-              CALL eParams%raiseError(modName//'::'//myName// &
-                ' - Required parameter "'//prefix//p%name//'" has type "'// &
-                  tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+              IF(PRESENT(e)) THEN
+                CALL e%raiseError(modName//'::'//myName// &
+                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                    tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+              ELSE
+                CALL eParams%raiseError(modName//'::'//myName// &
+                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                    tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+              ENDIF
             ENDIF
           ENDIF
       ENDSELECT
@@ -2739,33 +2776,28 @@ MODULE ParameterLists
 !>        the structure AND values in two parameter lists.  If they are a match,
 !>        isMatch will be returned as true.  If not, false.  Assertion failures
 !>        will be printed for the parameter list values that fail.
-!> @param thisParam
-!> @param reqParams
-!> @param isMatch
+!> @param thisParam The parameter list on which to verify the values
+!> @param reqParams The reference parameter list and values
+!> @param e The exception handler to pass
+!> @param isMatch The logical if all parameter names and values are the same
 !>
     SUBROUTINE verifyList_Paramtype(thisParam,reqParams,e,isMatch)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
-      CLASS(ExceptionHandlerType),INTENT(IN) :: e
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(OUT) :: isMatch
       LOGICAL(SBK) :: isValid
-      INTEGER(SIK) :: tmpcount(EXCEPTION_SIZE)
-      TYPE(ExceptionHandlerType) :: tmpe
 
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
-      tmpe=eParams
-      eParams=e
       isValid=.TRUE.
       isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
-        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYLIST,isMatch)
+        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYLIST, &
+            isMatch,e)
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
-      tmpcount=eParams%getCounterAll()
-      eParams=tmpe
-      CALL eParams%setCounter(tmpcount)
     ENDSUBROUTINE verifyList_Paramtype
 !
 !-------------------------------------------------------------------------------
@@ -3154,11 +3186,12 @@ MODULE ParameterLists
 !> the function results in true.  If not, false.  An error is reported if the 
 !> comparison fails.
 !> 
-    FUNCTION matchList_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+    FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
       CHARACTER(LEN=*),PARAMETER :: myName='matchList_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN),TARGET :: thatParam
       CHARACTER(LEN=*),INTENT(IN) :: prefix
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK) :: bool
       TYPE(StringType) :: errmesstt,errmess,errmesstp
       CLASS(ParamType),POINTER :: paramPtr
@@ -3449,7 +3482,7 @@ MODULE ParameterLists
           CONTINUE
       ENDSELECT
       !Error message.
-      IF(.NOT. bool) CALL eParams%raiseError(modName//'::'//myName// &
+      IF(.NOT. bool) CALL e%raiseError(modName//'::'//myName// &
           errmesstt//errmess//errmesstp)
     ENDFUNCTION matchList_ParamType
 !
