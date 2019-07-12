@@ -769,7 +769,11 @@ MODULE MatrixTypes
           IF (thisMatrix%chunks(i)%isInit) THEN
             SELECT TYPE(thisMatrix)
             TYPE IS(DistributedBlockBandedMatrixType)
-              CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+              IF (.NOT. thisMatrix%blockMask) THEN
+                CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+              ELSE
+                CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+              ENDIF 
             CLASS DEFAULT
               CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
             ENDSELECT
@@ -847,20 +851,36 @@ MODULE MatrixTypes
           y = tmpProduct + y
         ELSE IF (b == 0.0_SRK) THEN
           y = tmpProduct
+        ELSE IF (b == -1.0_SRK) THEN
+          y = tmpProduct - y
         ELSE
           y = tmpProduct + b*y
         END IF
       ELSE IF (a == 0.0_SRK) THEN
         IF (b == 0.0_SRK) THEN
           y = 0.0_SRK
-        ELSE
+        ELSE IF (b == -1.0_SRK) THEN
+          y = -y
+        ELSE IF (b /= 1.0_SRK) THEN
           y = b*y
         END IF
+      ELSE IF (a == -1.0_SRK) THEN
+        IF (b == 1.0_SRK) THEN
+          y = y - tmpProduct
+        ELSE IF (b == 0.0_SRK) THEN
+          y = -tmpProduct
+        ELSE IF (b == -1.0_SRK) THEN
+          y = -tmpProduct - y
+        ELSE
+          y = b*y - tmpProduct
+        ENDIF
       ELSE
         IF (b == 1.0_SRK) THEN
           y = a*tmpProduct + y
         ELSE IF (b == 0.0_SRK) THEN
           y = a*tmpProduct
+        ELSE IF (b == -1.0_SRK) THEN
+          y = a*tmpProduct - y
         ELSE
           y = a*tmpProduct + b*y
         END IF

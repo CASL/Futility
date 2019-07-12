@@ -428,7 +428,7 @@ MODULE VectorTypes_Native
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, nlocal, chunksize, comm, nProc,rank,mpierr
+      INTEGER(SIK) :: n, chunksize, comm, nProc,rank,mpierr
       !TYPE(MPI_EnvType) :: commType
 
       !Check to set up required and optional param lists.
@@ -436,7 +436,7 @@ MODULE VectorTypes_Native
 
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(DistributedVectorType_reqParams,DistributedVectorType_optParams)
+      CALL validParams%validate(NativeDistributedVectorType_reqParams,NativeDistributedVectorType_optParams)
 
       !Pull Data from Parameter List
       CALL validParams%get('VectorType->n',n)

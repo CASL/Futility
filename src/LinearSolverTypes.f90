@@ -576,6 +576,11 @@ MODULE LinearSolverTypes
                   solver%PCTypeName='DISTR_RSOR'
                   solver%pciters=0
                   solver%pcsetup=0
+                ELSEIF(PreCondType=='DISTR_JACOBI') THEN
+                  ALLOCATE(DistributedJacobi_PreCondType :: solver%PreCondType)
+                  solver%PCTypeName='DISTR_JACOBI'
+                  solver%pciters=0
+                  solver%pcsetup=0
                 ELSE
                   solver%PCTypeName=PreCondType
                   solver%pciters=0
@@ -718,6 +723,8 @@ MODULE LinearSolverTypes
                     CALL solver%PreCondType%init(solver%A,params)
                 TYPE IS(Jacobi_PreCondType)
                     CALL solver%PreCondType%init(solver%A)
+                TYPE IS(DistributedJacobi_PreCondType)
+                    CALL solver%PreCondType%init(solver%A,params)
             ENDSELECT
             CALL solver%PreCondType%setup()
           ELSE

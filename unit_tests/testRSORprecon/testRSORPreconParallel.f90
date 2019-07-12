@@ -219,7 +219,7 @@ PROGRAM testRSORPreconParallel
               SELECTTYPE(LU => testSORP%LU(k-testSORP%myFirstBlock+1)); TYPE IS(DenseSquareMatrixType)
                 DO i=1,testSORP%blockSize
                   DO j=1,testSORP%blockSize
-                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(j,i,k),'RSOR%LU(k)%a Correct')
+                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
                   ENDDO
                 ENDDO
                 FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
@@ -255,14 +255,12 @@ PROGRAM testRSORPreconParallel
             ASSERT(testSORP%LpU%isInit,'BlockBandedMatrixType RSOR%LpU%isInit')
 
             ! Check %setup
-            ! Note: for performance reasons, the LU factorized blocks 
-            ! are stored transposed to take advantage of data locality
             CALL testSORP%setup()
             DO k=testSORP%myFirstBlock,testSORP%myFirstBlock+testSORP%myNumBlocks-1
               SELECTTYPE(LU => testSORP%LU(k-testSORP%myFirstBlock+1)); TYPE IS(DenseSquareMatrixType)
                 DO i=1,LU%n
                   DO j=1,LU%n
-                    ASSERT(LU%a(j,i) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
+                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
                   ENDDO
                 ENDDO
                 FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
@@ -270,10 +268,8 @@ PROGRAM testRSORPreconParallel
             END DO
 
             ! Check %apply
-            workVector = testVector
+            workVector%b = testVector%b
             CALL testSORP%apply(workVector)
-            CALL testBandedMatrix%get(2,2,tmpreal)
-            WRITE(*,*) "testBandedMatrix(2,2): ",tmpreal
             ASSERT(ALL(workVector%b .APPROXEQA. refVector%b),'BlockBandedMatrixType RSOR%apply(vector)')
             FINFO() 'Result:',workVector%b,'Solution:',refVector%b
 

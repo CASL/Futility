@@ -1046,9 +1046,6 @@ MODULE MatrixTypes_Native
         DEALLOCATE(matrix%elemTmp)
       ENDIF
       IF(ALLOCATED(matrix%bandSizes)) THEN
-        DO i=1,SIZE(matrix%bandSizes)
-          IF(ASSOCIATED(matrix%bandSizes(i)%p)) DEALLOCATE(matrix%bandSizes(i)%p)
-        ENDDO
         DEALLOCATE(matrix%bandSizes)
       ENDIF
       IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
@@ -1249,7 +1246,7 @@ MODULE MatrixTypes_Native
           IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
             matrix%nLocal = matrix%nLocal + 1
             IF (matrix%nLocal > 2*matrix%nnz/nproc) THEN
-              CALL eMatrixType%raiseError('Matrix Element inbalance '// &
+              CALL eMatrixType%raiseError('Matrix Element imbalance '// &
                 modName//'::'//myName//' - Check nnz or use a different type')
             END IF
             matrix%iTmp(matrix%nLocal) = i
@@ -1458,26 +1455,21 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK) :: bandLoc, elemidx, k, mpierr, rank
-      REAL(SRK) :: val
       LOGICAL(SBK) :: found
 
-      val = 0.0_SRK
+      getval = 0.0_SRK
       CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
       IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
         DO k=1,SIZE(matrix%jOffsets)-1
           IF (i > matrix%iOffsets(k) .AND. i <= matrix%iOffsets(k+1)) THEN
             IF (matrix%chunks(k)%isInit) THEN
-              CALL matrix%chunks(k)%get(i-matrix%iOffsets(k),j-matrix%jOffsets(rank+1),val)
+              CALL matrix%chunks(k)%get(i-matrix%iOffsets(k),j-matrix%jOffsets(rank+1),getval)
               EXIT
             END IF
           END IF
         END DO
       END IF
 
-#if HAVE_MPI
-      CALL MPI_ALLREDUCE(val, getval, 1, MPI_DOUBLE_PRECISION, MPI_SUM, &
-              matrix%comm, mpierr)
-#endif
     ENDSUBROUTINE get_DistributedBandedMatrixType
 
 !
@@ -1495,6 +1487,7 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(INOUT) :: getval
       INTEGER(SIK) :: rank,mpierr,offset
+      REAL(SRK) :: val
 #if HAVE_MPI
       CALL MPI_Comm_Rank(matrix%comm,rank,mpierr)
       IF ((i-1)/matrix%blockSize /= (j-1)/matrix%blockSize) THEN
@@ -1502,7 +1495,7 @@ MODULE MatrixTypes_Native
       ELSE IF (.NOT. matrix%blockMask) THEN
         offset = ((i-1)/matrix%blockSize)*matrix%blockSize
         IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
-          CALL matrix%blocks(i/matrix%blockSize - matrix%blockOffset)%get(i-offset,j-offset,getVal)
+          getval = matrix%blocks((i-1)/matrix%blockSize - matrix%blockOffset + 1)%A(i-offset,j-offset)
         END IF
       ELSE
         getval = 0.0_SRK

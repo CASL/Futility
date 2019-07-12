@@ -52,6 +52,7 @@ MODULE VectorTypes_Base
   PUBLIC :: DistributedVectorType
   PUBLIC :: RealVectorType_reqParams,RealVectorType_optParams
   PUBLIC :: DistributedVectorType_reqParams,DistributedVectorType_optParams
+  PUBLIC :: NativeDistributedVectorType_reqParams,NativeDistributedVectorType_optParams
   PUBLIC :: VectorType_Paramsflag
   INTEGER(SIK),PARAMETER,PUBLIC :: REAL_NATIVE=0,DISTRIBUTED_NATIVE=1
   PUBLIC :: VectorType_Declare_ValidParams
@@ -269,7 +270,7 @@ MODULE VectorTypes_Base
 
   !> The parameter lists to use when validating a parameter list for
   !> initialization for the Real Vector Type.
-  TYPE(ParamType),PROTECTED,SAVE :: RealVectorType_reqParams,RealVectorType_optParams
+  TYPE(ParamType),PROTECTED,SAVE :: RealVectorType_reqParams,RealVectorType_optParams,NativeDistributedVectorType_reqParams,NativeDistributedVectorType_optParams
 
   !> The parameter lists to use when validating a parameter list for
   !> initialization for the Distributed Vector Type.
@@ -293,10 +294,11 @@ MODULE VectorTypes_Base
 !> The optional parameters for the Distributed Vector Type do not exist.
 !>
     SUBROUTINE VectorType_Declare_ValidParams()
-      INTEGER(SIK) :: n,MPI_Comm,nlocal
+      INTEGER(SIK) :: n,MPI_Comm,nlocal,chunkSize
 
       !Setup the required and optional parameter lists
       n=1
+      chunkSize =1
       MPI_Comm=1
       nlocal=-1
       !Real Vector Type - Required
@@ -308,6 +310,13 @@ MODULE VectorTypes_Base
 
       !There are no optional parameters at this time.
       CALL DistributedVectorType_optParams%add('VectorType->nlocal',nlocal)
+
+      !Native Distributed vector - Required
+      CALL NativeDistributedVectorType_reqParams%add('VectorType->n',n)
+      CALL NativeDistributedVectorType_reqParams%add('VectorType->MPI_Comm_ID',MPI_Comm)
+      CALL NativeDistributedVectorType_reqParams%add('VectorType->chunkSize',chunkSize)
+
+      CALL NativeDistributedVectorType_optParams%clear()
 
       !Set flag to true since the defaults have been set for this type.
       VectorType_Paramsflag=.TRUE.
@@ -329,6 +338,9 @@ MODULE VectorTypes_Base
       CALL DistributedVectorType_reqParams%clear()
       !There are no optional parameters at this time.
       CALL DistributedVectorType_optParams%clear()
+
+      CALL NativeDistributedVectorType_optParams%clear()
+      CALL NativeDistributedVectorType_optParams%clear()
 
     ENDSUBROUTINE VectorType_Clear_ValidParams
 
