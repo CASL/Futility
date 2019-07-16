@@ -675,20 +675,26 @@ MODULE MatrixTypes_Native
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK),ALLOCATABLE :: numOnDiag(:),diagRank(:)
+      INTEGER(SIK),ALLOCATABLE :: numOnDiag(:)
       INTEGER(SIK) :: counter,currIdx,currBand,nBands,i,j
+      INTEGER(SLK) :: iLong,jLong,nLong,mLong
+      INTEGER(SLK),ALLOCATABLE :: diagRank(:)
 
       REQUIRE(thisMatrix%isInit)
       REQUIRE(thisMatrix%nnz == thisMatrix%counter)
 
       ALLOCATE(diagRank(SIZE(thisMatrix%iTmp)))
       DO i=1,SIZE(thisMatrix%iTmp)
+        iLong = INT(thisMatrix%iTmp(i),kind=SLK)
+        jLong = INT(thisMatrix%jTmp(i),kind=SLK)
+        nLong = INT(thisMatrix%n,kind=SLK)
+        mLong = INT(thisMatrix%m,kind=SLK)
         IF (thisMatrix%n - thisMatrix%iTmp(i) + 1 + thisMatrix%jTmp(i) <= MAX(thisMatrix%m,thisMatrix%n)) THEN
-          diagRank(i) = thisMatrix%jTmp(i) - 1 + ((thisMatrix%n - thisMatrix%iTmp(i) + thisMatrix%jTmp(i) - 1)*(thisMatrix%n - thisMatrix%iTmp(i) + thisMatrix%jTmp(i)))/2
-          diagRank(i) = diagRank(i) - thisMatrix%m*thisMatrix%n/2
+          diagRank(i) = jLong - 1 + ((nLong - iLong + jLong - 1)*(nLong - iLong + jLong))/2
+          diagRank(i) = diagRank(i) - mLong*nLong/2
         ELSE
-          diagRank(i) = thisMatrix%m - thisMatrix%jTmp(i) + ((thisMatrix%iTmp(i) + thisMatrix%m - thisMatrix%jTmp(i) - 1)*(thisMatrix%iTmp(i) + thisMatrix%m - thisMatrix%jTmp(i)))/2
-          diagRank(i) = thisMatrix%n*thisMatrix%m/2 - diagRank(i)
+          diagRank(i) = mLong - jLong + ((iLong + mLong - jLong - 1)*(iLong + mLong - jLong))/2
+          diagRank(i) = nLong*mLong/2 - diagRank(i)
         END IF
       END DO
 

@@ -580,7 +580,7 @@ MODULE Sorting
     PURE RECURSIVE SUBROUTINE qsort_diagonal(diagRank, iValues, jValues, rValues)
       INTEGER(SIK),INTENT(INOUT) :: iValues(:)
       INTEGER(SIK),INTENT(INOUT) :: jValues(:)
-      INTEGER(SIK),INTENT(INOUT) :: diagRank(:)
+      INTEGER(SLK),INTENT(INOUT) :: diagRank(:)
       REAL(SRK),INTENT(INOUT) :: rValues(:)
 
       INTEGER(SIK) :: n,l,p,c
@@ -591,19 +591,19 @@ MODULE Sorting
         !median of 3 pivot
         c=n/2+1
         IF (diagRank(c) < diagRank(1)) THEN
-          CALL swap_int(diagRank,c,1)
+          CALL swap_long(diagRank,c,1)
           CALL swap_int(iValues,c,1)
           CALL swap_int(jValues,c,1)
           CALL swap_real(rValues,c,1)
         END IF
         IF (diagRank(n) < diagRank(1)) THEN
-          CALL swap_int(diagRank,1,n)
+          CALL swap_long(diagRank,1,n)
           CALL swap_int(iValues,1,n)
           CALL swap_int(jValues,1,n)
           CALL swap_real(rValues,1,n)
         END IF
         IF (diagRank(n) < diagRank(c)) THEN
-          CALL swap_int(diagRank,c,n)
+          CALL swap_long(diagRank,c,n)
           CALL swap_int(iValues,c,n)
           CALL swap_int(jValues,c,n)
           CALL swap_real(rValues,c,n)
@@ -614,7 +614,7 @@ MODULE Sorting
         CALL qsort_diagonal(diagRank(l+1:n),iValues(l+1:n),jValues(l+1:n),rValues(l+1:n))
       ELSE IF (n==2) THEN
         IF (diagRank(1) > diagRank(2)) THEN
-          CALL swap_int(diagRank,1,2)
+          CALL swap_long(diagRank,1,2)
           CALL swap_int(iValues,1,2)
           CALL swap_int(jValues,1,2)
           CALL swap_real(rValues,1,2)
@@ -632,24 +632,25 @@ MODULE Sorting
 !> @param i Index of the partition element once A is partitioned
 !>
     PURE SUBROUTINE partition_array_qsort_diagonal(diagRank,iValues,jValues,rValues,p,i)
-      INTEGER(SIK),INTENT(INOUT) :: diagRank(:)
+      INTEGER(SLK),INTENT(INOUT) :: diagRank(:)
       INTEGER(SIK),INTENT(INOUT) :: iValues(:)
       INTEGER(SIK),INTENT(INOUT) :: jValues(:)
       REAL(SRK),INTENT(INOUT) :: rValues(:)
       INTEGER(SIK),INTENT(IN) :: p
       INTEGER(SIK),INTENT(OUT) :: i
 
-      INTEGER(SIK) :: j,n,pval
+      INTEGER(SIK) :: j,n
+      INTEGER(SLK) :: pval
 
       pval=diagRank(p)
       n=SIZE(diagRank)
       IF (p>1) THEN
         ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
-        CALL swap_int(diagRank,1,2)
+        CALL swap_long(diagRank,1,2)
         CALL swap_int(iValues,1,2)
         CALL swap_int(jValues,1,2)
         CALL swap_real(rValues,1,2)
-        CALL swap_int(diagRank,1,p)
+        CALL swap_long(diagRank,1,p)
         CALL swap_int(iValues,1,p)
         CALL swap_int(jValues,1,p)
         CALL swap_real(rValues,1,p)
@@ -658,7 +659,7 @@ MODULE Sorting
       i=2
       DO j=2,n
         IF (diagRank(j)<pval) THEN
-          CALL swap_int(diagRank,i,j)
+          CALL swap_long(diagRank,i,j)
           CALL swap_int(iValues,i,j)
           CALL swap_int(jValues,i,j)
           CALL swap_real(rValues,i,j)
@@ -666,7 +667,7 @@ MODULE Sorting
         ENDIF
       ENDDO
       i=i-1
-      CALL swap_int(diagRank,1,i)
+      CALL swap_long(diagRank,1,i)
       CALL swap_int(iValues,1,i)
       CALL swap_int(jValues,1,i)
       CALL swap_real(rValues,1,i)
@@ -688,6 +689,23 @@ MODULE Sorting
       A(i)=A(j)
       A(j)=tmp
     ENDSUBROUTINE swap_int
+!
+!-------------------------------------------------------------------------------
+!> @brief Swap location of 2 locations in 1D long integer array.
+!> @param A 1D integer array, modified in place and returned partioned
+!> @param i Index of location 1
+!> @param j Index of location 2
+!>
+
+    PURE SUBROUTINE swap_long(A,i,j)
+      INTEGER(SLK),INTENT(INOUT) :: A(:)
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: j
+      INTEGER(SLK) :: tmp
+      tmp=A(i)
+      A(i)=A(j)
+      A(j)=tmp
+    ENDSUBROUTINE swap_long
 !
 !-------------------------------------------------------------------------------
 !> @brief QuickSort 1D real array

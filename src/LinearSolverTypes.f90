@@ -1727,16 +1727,16 @@ MODULE LinearSolverTypes
         RETURN
       END IF
 
-      IF (PRESENT(thisPC)) THEN
-        CALL thisPC%apply(u)
-      END IF
+      !IF (PRESENT(thisPC)) THEN
+      !  CALL thisPC%apply(u)
+      !END IF
 
       ! Allocate Data storage arrays
       SELECT TYPE(x => thisLS%X)
       TYPE IS(RealVectorType)
-        ALLOCATE(RealVectorType :: V(thisLS%nRestart))
+        ALLOCATE(RealVectorType :: V(thisLS%nRestart+1))
       TYPE IS(NativeDistributedVectorType)
-        ALLOCATE(NativeDistributedVectorType :: V(thisLS%nRestart))
+        ALLOCATE(NativeDistributedVectorType :: V(thisLS%nRestart+1))
       END SELECT
 
       ALLOCATE(R(thisLS%nRestart,thisLS%nRestart))
@@ -1747,18 +1747,24 @@ MODULE LinearSolverTypes
 
       ! Initialize relevant quantities
       currResid = norm_r0
-      h = norm_r0
+      divTmp = -1.0_SRK/norm_r0
       R(:,:) = 0.0
       CALL V(1)%init(vecPlist)
+      V(1)%b = u%b*divTmp
 
       DO krylovIdx = 1,thisLS%nRestart
-        divTmp = 1.0/h
-        V(krylovIdx)%b = u%b*divTmp
+        ! Use next space of V as temporary storage:
+        CALL V(krylovIdx+1)%init(vecPlist)
 
-        CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx),Y=u,BETA=0.0_SRK)
+        ! Apply PC in-place and multiply in to u for orthogonalization
         IF (PRESENT(thisPC)) THEN
-          CALL thisPC%apply(u)
-        END IF
+          V(krylovIdx+1)%b = V(krylovIdx)%b
+          CALL thisPC%apply(V(krylovIdx+1))
+          CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx+1),Y=u,BETA=0.0_SRK)
+        ELSE
+          CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx),Y=u,BETA=0.0_SRK)
+        ENDIF       
+ 
         ! Create orthogonal basis
         h = BLAS_dot(V(1)%b,u%b)
         CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
@@ -1779,6 +1785,12 @@ MODULE LinearSolverTypes
         CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
         h = SQRT(h)
 
+        IF (h > 0.0_SRK) THEN
+          V(krylovIdx+1)%b = u%b/h
+        ELSE
+          V(krylovIdx+1)%b = 0.0_SRK
+        ENDIF  
+
         IF (t >= 0) THEN
           temp = SQRT(t*t+h*h)
         ELSE
@@ -1794,18 +1806,17 @@ MODULE LinearSolverTypes
         IF (ABS(currResid) <= tol .OR. krylovIdx == thisLS%nRestart) THEN
           y(1:krylovIdx)=f(1:krylovIdx)
           CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),y(1:krylovIdx))
-          !CALL BLAS_matvec(V(1:krylovIdx),y(1:krylovIdx),0.0_SRK,u%b)
           Vy%b = 0.0
           DO i=1,krylovIdx
             Vy%b = Vy%b + V(i)%b*y(i)
           END DO
+          IF (PRESENT(thisPC)) CALL thisPC%apply(Vy)
           SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
-            x%b = x%b - Vy%b
+            x%b = x%b + Vy%b
           END SELECT
           EXIT
         END IF
 
-        CALL V(krylovIdx+1)%init(vecPlist)
       END DO
 
       CALL thisLS%getResidual(u)
@@ -1816,12 +1827,15 @@ MODULE LinearSolverTypes
 
       nIters = krylovIdx
       converged = ABS(currResid) <= tol
-
+ 
       DEALLOCATE(R)
       DEALLOCATE(givens_cos)
       DEALLOCATE(givens_sin)
       DEALLOCATE(f)
       DEALLOCATE(y)
+      DO i=1,SIZE(V)
+        IF (V(i)%isInit) CALL V(i)%clear()
+      ENDDO
       DEALLOCATE(V)
       DEALLOCATE(u)
       DEALLOCATE(Vy)

@@ -963,7 +963,7 @@ MODULE PreconditionerTypes
       CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
       CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
       CHARACTER(LEN=*),PARAMETER :: myName='apply_DistributedRSOR_PreCondType'
-      TYPE(NativeDistributedVectorType)::w(4),tempw
+      TYPE(NativeDistributedVectorType)::w
       TYPE(ParamType)::PListVec_RSOR
       INTEGER(SIK)::k,i,rank,mpierr,lowIdx,highIdx
       REAL(SRK)::tmpreal
@@ -979,20 +979,21 @@ MODULE PreconditionerTypes
         CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
         CALL PListVec_RSOR%add('VectorType->chunkSize',thisPC%blockSize)
         CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',thisPC%comm)
-        CALL w(1)%init(PListVec_RSOR)
-        CALL w(2)%init(PListVec_RSOR)
-        CALL w(3)%init(PListVec_RSOR)
-        CALL w(4)%init(PListVec_RSOR)
-        CALL tempw%init(PListVec_RSOR)
-        w(3)%b=v%b
+        CALL w%init(PListVec_RSOR)
+        w%b=v%b
 
         DO k=1,thisPC%myNumBlocks
           SELECTTYPE(mat => thisPC%LU(k))
             CLASS IS(DenseSquareMatrixType)
               lowIdx = (k-1)*thisPC%blockSize + 1
               highIdx = lowIdx + thisPC%blockSize-1
-              CALL RSORsolveL(mat,v%b(lowIdx:highIdx), w(1)%b(lowIdx:highIdx))
-              CALL RSORsolveU(mat,w(1)%b(lowIdx:highIdx),w(2)%b(lowIdx:highIdx))
+              !CALL RSORsolveL(mat,v%b(lowIdx:highIdx), w(1)%b(lowIdx:highIdx))
+              !CALL RSORsolveU(mat,w(1)%b(lowIdx:highIdx),w(2)%b(lowIdx:highIdx))
+              
+              ! This is not a matvec call, but a call to the triangular solver
+              ! dtrsv_all
+              CALL BLAS_matvec('L','N','U',mat%A,w%b(lowIdx:highIdx),1)
+              CALL BLAS_matvec('U','N','N',mat%A,w%b(lowIdx:highIdx),1)
           ENDSELECT
         END DO
 
@@ -1000,7 +1001,7 @@ MODULE PreconditionerTypes
           CALL LpU%setBlockMask(.TRUE.)
         ENDSELECT
     
-        CALL BLAS_matvec(THISMATRIX=thisPC%LpU,X=w(2),Y=w(3),BETA=1.0_SRK,&
+        CALL BLAS_matvec(THISMATRIX=thisPC%LpU,X=w,Y=v,BETA=1.0_SRK,&
                           ALPHA=-thisPC%omega)
 
         SELECTTYPE(LpU => thisPC%LpU); TYPE IS(DistributedBlockBandedMatrixType)
@@ -1012,8 +1013,10 @@ MODULE PreconditionerTypes
             CLASS IS(DenseSquareMatrixType)
               lowIdx = (k-1)*thisPC%blockSize + 1
               highIdx = lowIdx + thisPC%blockSize-1
-              CALL RSORsolveL(mat,w(3)%b(lowIdx:highIdx), w(4)%b(lowIdx:highIdx))
-              CALL RSORsolveU(mat,w(4)%b(lowIdx:highIdx),v%b(lowIdx:highIdx))
+              !CALL RSORsolveL(mat,w(3)%b(lowIdx:highIdx), w(4)%b(lowIdx:highIdx))
+              !CALL RSORsolveU(mat,w(4)%b(lowIdx:highIdx),v%b(lowIdx:highIdx))
+              CALL BLAS_matvec('L','N','U',mat%A,v%b(lowIdx:highIdx),1)
+              CALL BLAS_matvec('U','N','N',mat%A,v%b(lowIdx:highIdx),1)
           ENDSELECT
         END DO
       
@@ -1136,7 +1139,7 @@ MODULE PreconditionerTypes
       REAL(SRK),INTENT(INOUT)::b(:)
       REAL(SRK),INTENT(INOUT)::x(:)
       INTEGER(SIK)::i,j
-      REAL(SRK)::tempreal(3)
+      REAL(SRK)::tempreal
 
       ! Unoptimized general case, kept for posterity
       ! CALL x%setrange_scalar((k-1)*thisLU%n+1,k*thisLU%n,0.0_SRK)
@@ -1154,10 +1157,11 @@ MODULE PreconditionerTypes
       !     CALL x%setone((k-1)*thisLU%n+i,tempreal(1)/tempreal(2))
       ! END DO
 
-      DO i=thisLU%n,1,-1
+      x(thisLU%n) = b(thisLU%n)/thisLU%A(thisLU%n,thisLU%n)
+      DO i=thisLU%n-1,1,-1
         x(i) = b(i)
         DO j=thisLU%n,i+1,-1
-          x(i) = x(i) - x(j)*thisLU%A(i,j)
+          x(i) = x(i) - thisLU%A(i,j)*x(j)
         ENDDO
         x(i) = x(i) / thisLU%A(i,i)
       ENDDO

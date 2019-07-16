@@ -339,7 +339,7 @@ MODULE VectorTypes_Base
       !There are no optional parameters at this time.
       CALL DistributedVectorType_optParams%clear()
 
-      CALL NativeDistributedVectorType_optParams%clear()
+      CALL NativeDistributedVectorType_reqParams%clear()
       CALL NativeDistributedVectorType_optParams%clear()
 
     ENDSUBROUTINE VectorType_Clear_ValidParams

@@ -261,7 +261,7 @@ MODULE VectorTypes
       SELECTCASE(engine)
         CASE(VM_NATIVE)
           SELECTCASE(vecType)
-          CASE(REAL_NATIVE)
+            CASE(REAL_NATIVE)
               ALLOCATE(RealVectorType :: vector)
             CASE(DISTRIBUTED_NATIVE)
               ALLOCATE(NativeDistributedVectorType :: vector)
