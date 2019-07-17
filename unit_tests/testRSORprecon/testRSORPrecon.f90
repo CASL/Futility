@@ -232,7 +232,7 @@ PROGRAM testRSORPrecon
               SELECTTYPE(LU => testSOR%LU(k)); TYPE IS(DenseSquareMatrixType)
                 DO i=1,3
                   DO j=1,3
-                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(j,i,k),'RSOR%LU(k)%a Correct')
+                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
                   ENDDO
                 ENDDO
                 FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
@@ -293,7 +293,7 @@ PROGRAM testRSORPrecon
               SELECTTYPE(LU => testSOR%LU(k)); TYPE IS(DenseSquareMatrixType)
                 DO i=1,3
                   DO j=1,3
-                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(j,i,k),'RSOR%LU(k)%a Correct')
+                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
                   ENDDO
                 ENDDO
                 FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)
@@ -341,7 +341,7 @@ PROGRAM testRSORPrecon
               SELECTTYPE(LU => testSOR%LU(k)); TYPE IS(DenseSquareMatrixType)
                 DO i=1,3
                   DO j=1,3
-                    ASSERT(LU%a(j,i) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
+                    ASSERT(LU%a(i,j) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
                   ENDDO
                 ENDDO
                 FINFO() 'Result:',LU%a,'Solution:',refLU(:,:,k)

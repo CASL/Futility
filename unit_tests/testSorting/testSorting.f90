@@ -544,7 +544,8 @@ PROGRAM testSorting
 
     SUBROUTINE testDiagSort()
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: iVals(16), jVals(16), diagRank(16), i
+      INTEGER(SIK) :: iVals(16), jVals(16), i
+      INTEGER(SLK) :: diagRank(16)
       REAL(SRK) :: values(16)
 
       ! 9  5  2  0
@@ -556,8 +557,8 @@ PROGRAM testSorting
         jVals(i) = MOD(i-1,4)+1
         iVals(i) = (i-1)/4 + 1
       END DO
-      diagRank = jVals + ((jVals - iVals)*(jVals - iVals) &
-                 + 7*(jVals - iVals))/2
+      diagRank = int(jVals + ((jVals - iVals)*(jVals - iVals) &
+                 + 7*(jVals - iVals))/2, 8)
 
       values(1) = 9.0_SRK
       values(2) = 5.0_SRK

@@ -1668,11 +1668,12 @@ MODULE LinearSolverTypes
       CLASS(NativeVectorType),ALLOCATABLE :: V(:)
       CLASS(NativeVectorType),ALLOCATABLE :: u,Vy ! Generic vector container
       REAL(SRK),ALLOCATABLE :: R(:,:) ! Array of basis vector coeffs for sol.
-      REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:),y(:)
+      REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:),y(:),h(:)
       TYPE(ParamType) :: vecPlist
       REAL(SRK) :: norm_b,norm_r0,currResid
-      REAL(SRK) :: divTmp,h,t,temp,tol
-      INTEGER(SIK) :: krylovIdx,orthogIdx,nLocal,i,j,oi1
+      REAL(SRK) :: divTmp,t,temp,tol
+      INTEGER(SIK) :: krylovIdx,orthogIdx,nLocal,i,j,oi1,mpierr
+      INTEGER(SIK),ALLOCATABLE :: orthogReq(:)
 
       CALL vecPlist%clear()
       SELECT TYPE(x => thisLS%X)
@@ -1702,7 +1703,7 @@ MODULE LinearSolverTypes
       norm_b = SQRT(norm_b)
 
       ! Check if solving null system
-      IF (norm_b <= EPSILON(0.0)) THEN
+      IF (norm_b <= EPSILON(0.0_SRK)) THEN
         CALL thisLS%X%set(0.0_SRK)
         thisLS%residual = 0.0
         nIters = 0
@@ -1720,16 +1721,12 @@ MODULE LinearSolverTypes
       CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
       norm_r0 = SQRT(norm_r0)
 
-      IF (norm_r0 <= EPSILON(0.0)) THEN
+      IF (norm_r0 <= EPSILON(0.0_SRK)) THEN
         thisLS%residual = norm_r0
         nIters = 0
         converged = .TRUE.
         RETURN
       END IF
-
-      !IF (PRESENT(thisPC)) THEN
-      !  CALL thisPC%apply(u)
-      !END IF
 
       ! Allocate Data storage arrays
       SELECT TYPE(x => thisLS%X)
@@ -1744,6 +1741,8 @@ MODULE LinearSolverTypes
       ALLOCATE(givens_sin(thisLS%nRestart))
       ALLOCATE(f(thisLS%nRestart))
       ALLOCATE(y(thisLS%nRestart))
+      ALLOCATE(h(thisLS%nRestart))
+      ALLOCATE(orthogReq(thisLS%nRestart))
 
       ! Initialize relevant quantities
       currResid = norm_r0
@@ -1766,38 +1765,58 @@ MODULE LinearSolverTypes
         ENDIF       
  
         ! Create orthogonal basis
-        h = BLAS_dot(V(1)%b,u%b)
-        CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
+        !h = BLAS_dot(V(1)%b,u%b)
+        !CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
 
-        u%b = u%b - h*V(1)%b
-        t = h
-        DO orthogIdx=2,krylovIdx
-          h = BLAS_dot(V(orthogIdx)%b,u%b)
-          CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
-          u%b = u%b - h*V(orthogIdx)%b
+        !u%b = u%b - h*V(1)%b
+        !t = h
+        !DO orthogIdx=2,krylovIdx
+        !  h = BLAS_dot(V(orthogIdx)%b,u%b)
+        !  CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
+        !  u%b = u%b - h*V(orthogIdx)%b
 
-          oi1 = orthogIdx - 1
-          R(oi1,krylovIdx) = givens_cos(oi1)*t + givens_sin(oi1)*h
-          t = givens_cos(oi1)*h - givens_sin(oi1)*t
-        END DO
+        !  oi1 = orthogIdx - 1
+        !  R(oi1,krylovIdx) = givens_cos(oi1)*t + givens_sin(oi1)*h
+        !  t = givens_cos(oi1)*h - givens_sin(oi1)*t
+        !END DO
 
-        h = BLAS_dot(u%b,u%b)
-        CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
-        h = SQRT(h)
+        ! Perform distributed dot, masking communication
+        orthogReq = 0
+        DO orthogIdx=1,krylovIdx
+          h(orthogIdx) = BLAS_dot(V(orthogIdx)%b,u%b)
+          CALL MPI_IAllReduce(MPI_IN_PLACE,h(orthogIdx),1,MPI_DOUBLE_PRECISION,MPI_SUM,thisLS%MPIParallelEnv%comm,orthogReq(orthogIdx),mpierr)
+        ENDDO
 
-        IF (h > 0.0_SRK) THEN
-          V(krylovIdx+1)%b = u%b/h
+        ! Subtract vector components
+        DO orthogIdx=1,krylovIdx
+          CALL MPI_Wait(orthogReq(orthogIdx),MPI_STATUS_IGNORE,mpierr)
+          u%b = u%b - h(orthogIdx)*V(orthogIdx)%b
+          IF (orthogIdx == 1) THEN
+            t = h(1)
+          ELSE
+            oi1 = orthogIdx - 1
+            R(oi1,krylovIdx) = givens_cos(oi1)*t + givens_sin(oi1)*h(orthogIdx)
+            t = givens_cos(oi1)*h(orthogIdx) - givens_sin(oi1)*t
+          ENDIF
+        ENDDO
+
+        h(1) = BLAS_dot(u%b,u%b)
+        CALL thisLS%MPIparallelEnv%allReduce_scalar(h(1))
+        h(1) = SQRT(h(1))
+
+        IF (h(1) > 0.0_SRK) THEN
+          V(krylovIdx+1)%b = u%b/h(1)
         ELSE
           V(krylovIdx+1)%b = 0.0_SRK
         ENDIF  
 
         IF (t >= 0) THEN
-          temp = SQRT(t*t+h*h)
+          temp = SQRT(t*t+h(1)*h(1))
         ELSE
-          temp = -SQRT(t*t+h*h)
+          temp = -SQRT(t*t+h(1)*h(1))
         END IF
         givens_cos(krylovIdx) = t/temp
-        givens_sin(krylovIdx) = h/temp
+        givens_sin(krylovIdx) = h(1)/temp
 
         R(krylovIdx,krylovIdx) = temp
         f(krylovIdx) = givens_cos(krylovIdx)*currResid
@@ -1819,20 +1838,23 @@ MODULE LinearSolverTypes
 
       END DO
 
-      CALL thisLS%getResidual(u)
-      norm_r0 = BLAS_dot(u%b,u%b)
-      CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
-      norm_r0 = SQRT(norm_r0)
-      thisLS%residual = norm_r0
+      !CALL thisLS%getResidual(u)
+      !norm_r0 = BLAS_dot(u%b,u%b)
+      !CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
+      !norm_r0 = SQRT(norm_r0)
+      !thisLS%residual = norm_r0
 
       nIters = krylovIdx
       converged = ABS(currResid) <= tol
- 
+      thisLS%residual = ABS(currResid) 
+
       DEALLOCATE(R)
       DEALLOCATE(givens_cos)
       DEALLOCATE(givens_sin)
       DEALLOCATE(f)
       DEALLOCATE(y)
+      DEALLOCATE(h)
+      DEALLOCATE(orthogReq)
       DO i=1,SIZE(V)
         IF (V(i)%isInit) CALL V(i)%clear()
       ENDDO
