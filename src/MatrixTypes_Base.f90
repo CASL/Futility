@@ -286,8 +286,18 @@ MODULE MatrixTypes_Base
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->n',n)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
       CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
+      CALL DistributedBandedMatrixType_reqParams%add('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
+      !Distributed Banded Matrix Type - Optional
+      CALL DistributedBandedMatrixType_optParams%add('MatrixType->blockSize',blockSize)
+      CALL DistributedBandedMatrixType_optParams%add('MatrixType->nlocal',nlocal) 
       !Distributed Block Banded Matrix Type - Required
+      CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->n',n)
+      CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->m',m)
+      CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
+      CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
       CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->blockSize',blockSize)
+      !Distributed Block Banded Matrix Type - Optional
+      CALL DistributedBlockBandedMatrixType_optParams%add('MatrixType->nlocal',nlocal) 
 
       !There are no optional parameters at this time.
       CALL DistributedMatrixType_optParams%add('MatrixType->nlocal',nlocal)
@@ -322,8 +332,10 @@ MODULE MatrixTypes_Base
       CALL DistributedMatrixType_reqParams%clear()
       !Distributed Banded Matrix Type
       CALL DistributedBandedMatrixType_reqParams%clear()
+      CALL DistributedBandedMatrixType_optParams%clear()
       !Distributed Block Banded Matrix Type
       CALL DistributedBlockBandedMatrixType_reqParams%clear()
+      CALL DistributedBlockBandedMatrixType_optParams%clear()
 
       !There are no optional parameters at this time.
       CALL DistributedMatrixType_optParams%clear()

@@ -314,9 +314,9 @@ MODULE VectorTypes_Base
       !Native Distributed vector - Required
       CALL NativeDistributedVectorType_reqParams%add('VectorType->n',n)
       CALL NativeDistributedVectorType_reqParams%add('VectorType->MPI_Comm_ID',MPI_Comm)
-      CALL NativeDistributedVectorType_reqParams%add('VectorType->chunkSize',chunkSize)
 
-      CALL NativeDistributedVectorType_optParams%clear()
+      CALL NativeDistributedVectorType_optParams%add('VectorType->chunkSize',chunkSize)
+      CALL NativeDistributedVectorType_optParams%add('VectorType->nlocal',nlocal)
 
       !Set flag to true since the defaults have been set for this type.
       VectorType_Paramsflag=.TRUE.

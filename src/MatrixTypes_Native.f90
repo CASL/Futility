@@ -503,7 +503,7 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc,i,blocksize
+      INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc,i,blocksize,nlocal
       LOGICAL(SBK) :: bool
 #ifdef HAVE_MPI
 
@@ -512,22 +512,17 @@ MODULE MatrixTypes_Native
 
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(BandedMatrixType_reqParams)
+      CALL validParams%validate(DistributedBandedMatrixType_reqParams,DistributedBandedMatrixType_optParams)
 
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->m',m)
       CALL validParams%get('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
       CALL validParams%get('MatrixType->nnz',nnz)
-
-      blockSize = 1
-      IF (validParams%has('MatrixType->blockSize')) THEN
-        CALL validParams%get('MatrixType->blockSize',blockSize)
-      ENDIF
+      CALL validParams%get('MatrixType->blockSize',blockSize)
+      CALL validParams%get('MatrixType->nlocal',nlocal)
       CALL validParams%clear()
 
-      ! be greater than 1 and n < 1 are not logically equivalent. is this
-      ! desired behavior?
       IF(.NOT. matrix%isInit) THEN
         IF(n < 1) THEN
           CALL eMatrixType%raiseError('Incorrect input to '// &
@@ -552,36 +547,50 @@ MODULE MatrixTypes_Native
           REQUIRE(MOD(n,blockSize)==0)
           REQUIRE(MOD(m,blockSize)==0)
 
+          ALLOCATE(matrix%jOffsets(nproc+1))
+          ALLOCATE(matrix%iOffsets(nproc+1))
+          matrix%jOffsets(1) = 0
+          matrix%iOffsets(1) = 0
+          
+          matrix%nlocal = 0
           n = n/blockSize
           m = m/blockSize
+          IF (nlocal < 0) THEN
+            ALLOCATE(matrix%iTmp(2*nnz/nProc))
+            ALLOCATE(matrix%jTmp(2*nnz/nProc))
+            ALLOCATE(matrix%elemTmp(2*nnz/nProc))
+            DO i=2,nproc+1
+              matrix%jOffsets(i) = matrix%jOffsets(i-1) + m/nproc
+              IF (MOD(m,nproc) > i-2) THEN
+                matrix%jOffsets(i) = matrix%jOffsets(i) + 1
+              END IF
+            END DO
 
-          ALLOCATE(matrix%jOffsets(nproc+1))
-          matrix%jOffsets(1) = 0
-          DO i=2,nproc+1
-            matrix%jOffsets(i) = matrix%jOffsets(i-1) + m/nproc
-            IF (MOD(m,nproc) > i-2) THEN
-              matrix%jOffsets(i) = matrix%jOffsets(i) + 1
-            END IF
-          END DO
+            DO i=2,nproc+1
+              matrix%iOffsets(i) = matrix%iOffsets(i-1) + n/nproc
+              IF (MOD(n,nproc) > i-2) THEN
+                matrix%iOffsets(i) = matrix%iOffsets(i) + 1
+              END IF
+            END DO
+            matrix%iOffsets = matrix%iOffsets*blockSize
+            matrix%jOffsets = matrix%jOffsets*blockSize
+          ELSE
+            REQUIRE(MOD(nlocal,blockSize)==0)
+            REQUIRE(m == n)
+            ALLOCATE(matrix%iTmp(2*nlocal*blockSize))
+            ALLOCATE(matrix%jTmp(2*nlocal*blockSize))
+            ALLOCATE(matrix%elemTmp(2*nlocal*blockSize))
+            ! Gather all nlocal and sum going forward
+            CALL MPI_AllGather(nlocal,1,MPI_INTEGER,matrix%iOffsets(2),1,MPI_INTEGER,matrix%comm,mpierr)
+            DO i=2,nproc+1
+              matrix%iOffsets(i) = matrix%iOffsets(i) + matrix%iOffsets(i-1)
+            ENDDO
+            REQUIRE(matrix%iOffsets(SIZE(matrix%iOffsets)) == matrix%n*blockSize)
+            matrix%jOffsets(:) = matrix%iOffsets(:)
+          ENDIF
 
-          ALLOCATE(matrix%iOffsets(nproc+1))
-          matrix%iOffsets(1) = 0
-          DO i=2,nproc+1
-            matrix%iOffsets(i) = matrix%iOffsets(i-1) + n/nproc
-            IF (MOD(n,nproc) > i-2) THEN
-              matrix%iOffsets(i) = matrix%iOffsets(i) + 1
-            END IF
-          END DO
-
-          matrix%iOffsets = matrix%iOffsets*blockSize
-          matrix%jOffsets = matrix%jOffsets*blockSize
-
-          ALLOCATE(matrix%iTmp(2*nnz/nProc))
-          ALLOCATE(matrix%jTmp(2*nnz/nProc))
-          ALLOCATE(matrix%elemTmp(2*nnz/nProc))
           ALLOCATE(matrix%bandSizes(nProc))
 
-          matrix%nlocal = 0
           matrix%isInit=.TRUE.
           matrix%isAssembled=.FALSE.
           matrix%isReversed=.FALSE.
@@ -609,7 +618,7 @@ MODULE MatrixTypes_Native
       CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams,blockParams
-      INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc,i,blockSize
+      INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc,i,blockSize,nlocal
       LOGICAL(SBK) :: bool
 #ifdef HAVE_MPI
 
@@ -618,7 +627,7 @@ MODULE MatrixTypes_Native
 
       !Validate against the reqParams and OptParams
       validParams=Params
-      CALL validParams%validate(DistributedBlockBandedMatrixType_reqParams)
+      CALL validParams%validate(DistributedBlockBandedMatrixType_reqParams,DistributedBlockBandedMatrixType_optParams)
 
       ! Pull Data From Parameter List
       CALL validParams%get('MatrixType->n',n)

@@ -31,6 +31,10 @@ MODULE VectorTypes_Native
 
   IMPLICIT NONE
 
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
+
   PRIVATE
 
 !
@@ -428,7 +432,8 @@ MODULE VectorTypes_Native
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       TYPE(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams
-      INTEGER(SIK) :: n, chunksize, comm, nProc,rank,mpierr
+      INTEGER(SIK) :: n, chunksize, comm, nProc,rank,mpierr,nlocal
+      INTEGER(SIK),ALLOCATABLE :: offsets(:)
       !TYPE(MPI_EnvType) :: commType
 
       !Check to set up required and optional param lists.
@@ -441,6 +446,7 @@ MODULE VectorTypes_Native
       !Pull Data from Parameter List
       CALL validParams%get('VectorType->n',n)
       CALL validParams%get('VectorType->MPI_Comm_ID',comm)
+      CALL validParams%get('VectorType->nlocal',nlocal)
 
       chunksize = 1
       IF (validParams%has('VectorType->chunkSize')) THEN
@@ -461,16 +467,24 @@ MODULE VectorTypes_Native
       CALL MPI_Comm_size(comm,nproc,mpierr)
 
       ! Default to greedy partitioning, respecting chunk size
-      n = n/chunkSize
-      IF(rank < MOD(n,nproc)) THEN
-        thisVector%offset = (rank)*(n/nproc + 1)
-        thisVector%nlocal = n/nproc + 1
+      IF (nlocal < 0) THEN
+        n = n/chunkSize
+        IF(rank < MOD(n,nproc)) THEN
+          thisVector%offset = (rank)*(n/nproc + 1)
+          thisVector%nlocal = n/nproc + 1
+        ELSE
+          thisVector%offset = (rank)*(n/nproc) + MOD(n,nproc)
+          thisVector%nlocal = n/nproc
+        ENDIF
+        thisVector%offset = thisVector%offset*chunkSize
+        thisVector%nlocal = thisVector%nlocal*chunkSize
       ELSE
-        thisVector%offset = (rank)*(n/nproc) + MOD(n,nproc)
-        thisVector%nlocal = n/nproc
+        REQUIRE(MOD(nlocal,chunksize)==0)
+        thisVector%nlocal = nlocal
+        ALLOCATE(offsets(nproc))
+        CALL MPI_AllGather(nlocal,1,MPI_INTEGER,offsets(1),1,MPI_INTEGER,comm,mpierr)
+        thisVector%offset = SUM(offsets(1:rank))
       ENDIF
-      thisVector%offset = thisVector%offset*chunkSize
-      thisVector%nlocal = thisVector%nlocal*chunkSize
 
       ALLOCATE(thisVector%b(thisVector%nlocal))
 
