@@ -752,7 +752,7 @@ MODULE MeshTransfer
       h=maxX-minX
       cent=0.5_SRK*(maxX+minX)
 
-      CALL myPL%add('LinearSolverType->TPLType',NATIVE)
+      CALL myPL%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL myPL%add('LinearSolverType->solverMethod',LU)
       CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL myPL%add('LinearSolverType->numberOMP',1_SNK)
@@ -873,7 +873,7 @@ MODULE MeshTransfer
       h=(maxX-minX)
       cent=0.5_SRK*(maxX+minX)
 
-      CALL myPL%add('LinearSolverType->TPLType',NATIVE)
+      CALL myPL%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL myPL%add('LinearSolverType->solverMethod',LU)
       CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL myPL%add('LinearSolverType->numberOMP',1_SNK)
@@ -1093,7 +1093,7 @@ MODULE MeshTransfer
 
       nin=SIZE(mesh_in)
 
-      CALL myPL%add('LinearSolverType->TPLType',NATIVE)
+      CALL myPL%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL myPL%add('LinearSolverType->solverMethod',LU)
       CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL myPL%add('LinearSolverType->numberOMP',1_SNK)
@@ -1212,7 +1212,7 @@ MODULE MeshTransfer
 
       nin=SIZE(mesh_in)-1
 
-      CALL myPL%add('LinearSolverType->TPLType',NATIVE)
+      CALL myPL%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL myPL%add('LinearSolverType->solverMethod',LU)
       CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL myPL%add('LinearSolverType->numberOMP',1_SNK)

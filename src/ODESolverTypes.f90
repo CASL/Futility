@@ -445,7 +445,7 @@ MODULE ODESolverTypes
           solver%substep_size=substep
         ENDIF
 
-        CALL tmpPL%add('LinearSolverType->TPLType',NATIVE)
+        CALL tmpPL%add('LinearSolverType->TPLType',LS_NATIVE)
         CALL tmpPL%add('LinearSolverType->solverMethod',GE)
         CALL tmpPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
         CALL tmpPL%add('LinearSolverType->numberOMP',1_SNK)

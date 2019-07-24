@@ -44,7 +44,7 @@ PROGRAM testLinearSolver_Multigrid
 
   !> set up default parameter list
   CALL optListLS%clear()
-  CALL optListLS%add('LinearSolverType->TPLType',NATIVE)
+  CALL optListLS%add('LinearSolverType->TPLType',LS_NATIVE)
   CALL optListLS%add('LinearSolverType->solverMethod',1_SNK) ! GE or BICGSTAB
   CALL optListLS%add('LinearSolverType->MPI_Comm_ID',mpiTestEnv%comm)
   CALL optListLS%add('LinearSolverType->numberOMP',1_SNK)

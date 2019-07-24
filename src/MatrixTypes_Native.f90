@@ -555,10 +555,10 @@ MODULE MatrixTypes_Native
           matrix%nlocal = 0
           n = n/blockSize
           m = m/blockSize
+          ALLOCATE(matrix%iTmp(2*nnz/nProc))
+          ALLOCATE(matrix%jTmp(2*nnz/nProc))
+          ALLOCATE(matrix%elemTmp(2*nnz/nProc))
           IF (nlocal < 0) THEN
-            ALLOCATE(matrix%iTmp(2*nnz/nProc))
-            ALLOCATE(matrix%jTmp(2*nnz/nProc))
-            ALLOCATE(matrix%elemTmp(2*nnz/nProc))
             DO i=2,nproc+1
               matrix%jOffsets(i) = matrix%jOffsets(i-1) + m/nproc
               IF (MOD(m,nproc) > i-2) THEN
@@ -577,15 +577,12 @@ MODULE MatrixTypes_Native
           ELSE
             REQUIRE(MOD(nlocal,blockSize)==0)
             REQUIRE(m == n)
-            ALLOCATE(matrix%iTmp(2*nlocal*blockSize))
-            ALLOCATE(matrix%jTmp(2*nlocal*blockSize))
-            ALLOCATE(matrix%elemTmp(2*nlocal*blockSize))
             ! Gather all nlocal and sum going forward
-            CALL MPI_AllGather(nlocal,1,MPI_INTEGER,matrix%iOffsets(2),1,MPI_INTEGER,matrix%comm,mpierr)
+            CALL MPI_AllGather(nlocal,1,MPI_INTEGER,matrix%iOffsets(2),1,MPI_INTEGER,MPI_Comm_ID,mpierr)
             DO i=2,nproc+1
               matrix%iOffsets(i) = matrix%iOffsets(i) + matrix%iOffsets(i-1)
             ENDDO
-            REQUIRE(matrix%iOffsets(SIZE(matrix%iOffsets)) == matrix%n*blockSize)
+            REQUIRE(matrix%iOffsets(SIZE(matrix%iOffsets)) == n*blockSize)
             matrix%jOffsets(:) = matrix%iOffsets(:)
           ENDIF
 
@@ -619,6 +616,7 @@ MODULE MatrixTypes_Native
       CLASS(ParamType),INTENT(IN) :: Params
       TYPE(ParamType) :: validParams,blockParams
       INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc,i,blockSize,nlocal
+      INTEGER(SIK),ALLOCATABLE :: blkOffsetTmp(:)
       LOGICAL(SBK) :: bool
 #ifdef HAVE_MPI
 
@@ -633,9 +631,10 @@ MODULE MatrixTypes_Native
       CALL validParams%get('MatrixType->n',n)
       CALL validParams%get('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
       CALL validParams%get('MatrixType->blockSize',blockSize)
+      CALL validParams%get('MatrixType->nlocal',nlocal)
 
       REQUIRE(.NOT. matrix%isInit)
-      REQUIRE(blockSize > 1)
+      REQUIRE(blockSize > 0)
       REQUIRE(MOD(n,blockSize)==0)
 
       matrix%blockMask = .FALSE.
@@ -650,12 +649,22 @@ MODULE MatrixTypes_Native
 
 
       n = n/blockSize
-      IF(rank < MOD(n,nproc)) THEN
-        matrix%nlocalBlocks = n/nproc + 1
-        matrix%blockOffset = (rank)*(n/nproc + 1)
+      ! If nlocal < 0, default to greedy partitioning
+      IF (nlocal < 0) THEN
+        IF(rank < MOD(n,nproc)) THEN
+          matrix%nlocalBlocks = n/nproc + 1
+          matrix%blockOffset = (rank)*(n/nproc + 1)
+        ELSE
+          matrix%nlocalBlocks = n/nproc
+          matrix%blockOffset = (rank)*(n/nproc) + MOD(n,nproc)
+        ENDIF
       ELSE
-        matrix%nlocalBlocks = n/nproc
-        matrix%blockOffset = (rank)*(n/nproc) + MOD(n,nproc)
+        ALLOCATE(blkOffsetTmp(nproc))
+        REQUIRE(MOD(nlocal,blockSize)==0)
+        matrix%nlocalBlocks = nlocal/blockSize
+        CALL MPI_AllGather(matrix%nlocalBlocks,1,MPI_INTEGER,blkOffsetTmp,1,MPI_INTEGER,MPI_Comm_ID,mpierr)
+        matrix%blockOffset = SUM(blkOffsetTmp(1:rank))
+        DEALLOCATE(blkOffsetTmp)
       ENDIF
 
       ALLOCATE(matrix%blocks(matrix%nlocalBlocks))
@@ -1249,7 +1258,9 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK) :: rank,nproc,mpierr,nHeldLower,bandLoc,elemIdx,k
+      LOGICAL(SBK) :: flag
 #ifdef HAVE_MPI
+      flag = .FALSE.
       REQUIRE(matrix%isInit)
       IF(.NOT. matrix%isAssembled) THEN
         IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
@@ -1267,6 +1278,7 @@ MODULE MatrixTypes_Native
             matrix%iTmp(matrix%nLocal) = i
             matrix%jTmp(matrix%nLocal) = j
             matrix%elemTmp(matrix%nLocal) = setval
+            flag = .TRUE.
           END IF
         ENDIF
       ELSE
@@ -1276,12 +1288,15 @@ MODULE MatrixTypes_Native
             IF (i > matrix%iOffsets(k) .AND. i <= matrix%iOffsets(k+1)) THEN
               IF (matrix%chunks(k)%isInit) THEN
                 CALL matrix%chunks(k)%set(i-matrix%iOffsets(k),j-matrix%jOffsets(rank+1),setval)
+                flag = .TRUE.
                 EXIT
               END IF
             END IF
           END DO
         END IF
       END IF
+      IF (.NOT. flag) WRITE(*,*) "Invalid matrix set encountered in rank",rank,"at",i,j
+
 #endif
     ENDSUBROUTINE set_DistributedBandedMatrixType
 
@@ -1300,13 +1315,16 @@ MODULE MatrixTypes_Native
       INTEGER(SIK),INTENT(IN) :: j
       REAL(SRK),INTENT(IN) :: setval
       INTEGER(SIK) :: rank,mpierr,offset
+      LOGICAL(SBK) :: flag
 #ifdef HAVE_MPI
       REQUIRE(matrix%isInit)
 
+      flag = .FALSE.
       CALL MPI_Comm_Rank(matrix%comm,rank,mpierr)
       ! Check if element is in a block; if not call parent
       IF ((i-1)/matrix%blockSize /= (j-1)/matrix%blockSize) THEN
         CALL matrix%DistributedBandedMatrixType%set(i,j,setval)
+        flag = .TRUE.
       ELSE
         IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
           .AND. (i>=1) .AND. (j >= 1)) THEN
@@ -1314,10 +1332,12 @@ MODULE MatrixTypes_Native
             offset = ((i-1)/matrix%blockSize)*matrix%blockSize
             IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
               CALL matrix%blocks((j-1)/matrix%blockSize - matrix%blockOffset+1)%set(i-offset,j-offset,setval)
+              flag = .TRUE.
             ENDIF
           ENDIF
         ENDIF
       ENDIF
+      IF (.NOT. flag) WRITE(*,*) "Invalid matrix set encountered in rank",rank,"at",i,j
 #endif
     ENDSUBROUTINE set_DistributedBlockBandedMatrixType
 

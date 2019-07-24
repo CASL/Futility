@@ -62,18 +62,18 @@ PROGRAM testRSORPreconParallel
         REAL(SRK)::tmpreal1(9*9),tmpreal2(9),tempreal
 #ifdef HAVE_MPI
 
-        CALL PListRSOR%add('PCType->numblocks',3_SIK)
         CALL PListRSOR%add('PCType->omega',1.0_SRK)
-        CALL PListRSOR%add('PCType->MPI_Comm_ID',PE_COMM_WORLD)
         CALL PListVec%add('VectorType->n',9_SIK)
         CALL PListVec%add('VectorType->chunkSize',3_SIK)
         CALL PListVec%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
+        CALL PListVec%add('VectorType->nlocal',-1)
         CALL testVector%init(PListVec)
         CALL refVector%init(PListVec)
         CALL PListMat%add('MatrixType->n',9_SIK)
         CALL PListMat%add('MatrixType->m',9_SIK)
         CALL PListMat%add('MatrixType->blockSize',3)
         CALL PListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
+        CALL PListVec%add('MatrixType->nlocal',-1)
 
         CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
         CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
@@ -215,8 +215,8 @@ PROGRAM testRSORPreconParallel
 
             ! Check %setup
             CALL testSORP%setup()
-            DO k=testSORP%myFirstBlock,testSORP%myFirstBlock+testSORP%myNumBlocks-1
-              SELECTTYPE(LU => testSORP%LU(k-testSORP%myFirstBlock+1)); TYPE IS(DenseSquareMatrixType)
+            DO k=testSORP%blockOffset+1,testSORP%blockOffset+testSORP%nLocalBlocks
+              SELECTTYPE(LU => testSORP%LU(k-testSORP%blockOffset)); TYPE IS(DenseSquareMatrixType)
                 DO i=1,testSORP%blockSize
                   DO j=1,testSORP%blockSize
                     ASSERT(LU%a(i,j) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')
@@ -229,8 +229,6 @@ PROGRAM testRSORPreconParallel
             ! Check %apply
             workVector = testVector
             CALL testSORP%apply(workVector)
-            CALL testBandedMatrix%get(2,2,tmpreal)
-            WRITE(*,*) "testBandedMatrix(2,2): ",tmpreal
             ASSERT(ALL(workVector%b .APPROXEQA. refVector%b),'BandedMatrixType RSOR%apply(vector)')
             FINFO() 'Result:',workVector%b,'Solution:',refVector%b
 
@@ -256,8 +254,8 @@ PROGRAM testRSORPreconParallel
 
             ! Check %setup
             CALL testSORP%setup()
-            DO k=testSORP%myFirstBlock,testSORP%myFirstBlock+testSORP%myNumBlocks-1
-              SELECTTYPE(LU => testSORP%LU(k-testSORP%myFirstBlock+1)); TYPE IS(DenseSquareMatrixType)
+            DO k=testSORP%blockOffset+1,testSORP%blockOffset+testSORP%nLocalBlocks
+              SELECTTYPE(LU => testSORP%LU(k-testSORP%blockOffset)); TYPE IS(DenseSquareMatrixType)
                 DO i=1,LU%n
                   DO j=1,LU%n
                     ASSERT(LU%a(i,j) .APPROXEQA. refLU(i,j,k),'RSOR%LU(k)%a Correct')

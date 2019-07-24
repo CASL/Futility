@@ -329,7 +329,7 @@ PROGRAM testPreconditionerTypes
         ASSERT(testLU%LU%isInit,'DenseSquareMatrixType ILU%LU%isInit')
         SELECTTYPE(LU => testLU%LU); TYPE IS(DenseSquareMatrixType)
           SELECTTYPE(A => testLU%A); TYPE IS(DenseSquareMatrixType)
-            ASSERT(ALL(LU%a .APPROXEQA. A%a),'DenseSquareMatrixType ILU%LU%a')
+            ASSERT(ALL(LU%a .APPROXEQR. A%a),'DenseSquareMatrixType ILU%LU%a')
           ENDSELECT
         CLASS DEFAULT
           ASSERT(.FALSE.,'DenseSquareMatrixType ILU%LU TYPE IS(DenseSquareMatrixType)')
@@ -342,11 +342,11 @@ PROGRAM testPreconditionerTypes
           k=0
           DO j=1,LU%n
             DO i=1,LU%n
-              IF(LU%a(j,i) .APPROXEQA. 0.0_SRK) THEN
+              IF(LU%a(j,i) .APPROXEQR. 0.0_SRK) THEN
                 CYCLE
               ELSE
                 k=k+1
-                ASSERT(LU%a(j,i) .APPROXEQA. tmpreal(k),'testLU%LU%a')
+                ASSERT(LU%a(j,i) .APPROXEQR. tmpreal(k),'testLU%LU%a')
                 FINFO() 'row:',j,'column',i,'result:',LU%a(j,i),'solution:',tmpreal(k)
               ENDIF
             ENDDO
@@ -358,7 +358,7 @@ PROGRAM testPreconditionerTypes
           tempVector=testVector
         ENDSELECT
         CALL testLU%apply(tempVector)
-        ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
+        ASSERT(ALL(tempVector%b .APPROXEQR. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
         FINFO() 'Result:',tempVector%b,'Solution:',tmpreal2
 
 
@@ -393,7 +393,7 @@ PROGRAM testPreconditionerTypes
 !        ! Check %setup
         CALL testLU%setup()
         SELECTTYPE(LU => testLU%LU); TYPE IS(SparseMatrixType)
-          ASSERT(ALL(LU%a .APPROXEQA. tmpreal),'SparseMatrixtype ILU%L%a')
+          ASSERT(ALL(LU%a .APPROXEQR. tmpreal),'SparseMatrixtype ILU%L%a')
           FINFO() 'Result:',LU%a,'Solution:',tmpreal
         ENDSELECT
 
@@ -402,7 +402,10 @@ PROGRAM testPreconditionerTypes
           tempVector=testVector
         ENDSELECT
         CALL testLU%apply(tempVector)
-        ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'SparseMatrixType ILU%apply(vector)')
+        ASSERT(ALL(tempVector%b .APPROXEQR. tmpreal2),'SparseMatrixType ILU%apply(vector)')
+        WRITE(*,*) tempVector%b .APPROXEQR. tmpreal2
+        WRITE(*,*) ABS(tempVector%b - tmpreal2)
+        !WRITE(*,*) MAX(tempVector%b(:) - tmpreal2(:))
         FINFO() 'Result:',tempVector%b,'Solution:',tmpreal2
 
         ! Check %clear

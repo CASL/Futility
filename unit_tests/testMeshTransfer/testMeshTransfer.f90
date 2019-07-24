@@ -134,7 +134,7 @@ PROGRAM testMeshTransfer
       CALL testMT%init_base(testPL)
 
       CALL testPL%clear()
-      CALL testPL%add('LinearSolverType->TPLType',NATIVE)
+      CALL testPL%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL testPL%add('LinearSolverType->solverMethod',LU)
       CALL testPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL testPL%add('LinearSolverType->numberOMP',1_SNK)

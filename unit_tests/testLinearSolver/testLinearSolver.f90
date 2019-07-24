@@ -39,7 +39,7 @@ PROGRAM testLinearSolver
 
   !> set up default parameter list
   CALL optListLS%clear()
-  CALL optListLS%add('LinearSolverType->TPLType',NATIVE)
+  CALL optListLS%add('LinearSolverType->TPLType',LS_NATIVE)
   CALL optListLS%add('LinearSolverType->solverMethod',1_SNK) ! GE or BICGSTAB
   CALL optListLS%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
   CALL optListLS%add('LinearSolverType->numberOMP',1_SNK)
@@ -234,7 +234,7 @@ CONTAINS
       !Bad input
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',-1_SNK)
       CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
       CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
@@ -246,7 +246,7 @@ CONTAINS
 
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->timerName','testTimer')
       CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
@@ -259,7 +259,7 @@ CONTAINS
 
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
       CALL pList%add('LinearSolverType->timerName','testTimer')
@@ -274,7 +274,7 @@ CONTAINS
       !first test a correct use case, with timer name
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -297,7 +297,7 @@ CONTAINS
       !first test a correct use case, with no timer name
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -323,7 +323,7 @@ CONTAINS
       !Bad input
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',-1_SNK)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -338,7 +338,7 @@ CONTAINS
 
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->timerName','testTimer')
       CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
@@ -351,7 +351,7 @@ CONTAINS
 
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -367,7 +367,7 @@ CONTAINS
       !first test a correct use case, with timer name
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -417,7 +417,7 @@ CONTAINS
       !first test a correct use case, with no timer name
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -458,7 +458,7 @@ CONTAINS
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -496,7 +496,7 @@ CONTAINS
       ! initialize linear system
       CALL pList%clear()
       CALL pList%add('LinearSolverType->matType',SPARSE)
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -531,7 +531,7 @@ CONTAINS
     !Test GE (Dense-Square)
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GE)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -572,7 +572,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -640,7 +640,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -723,7 +723,7 @@ CONTAINS
       ! get result, the details will be tested in CGNR
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GE)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -795,7 +795,7 @@ CONTAINS
       !The result will be checked later.
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GE)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -844,7 +844,7 @@ CONTAINS
       !Dense square
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -889,7 +889,7 @@ CONTAINS
       ! Normal Case (non-singular)
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -987,7 +987,7 @@ CONTAINS
       !Tridiagonal (singular case)
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1026,7 +1026,7 @@ CONTAINS
       ! Tridiagonal (non-singular case)
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1105,7 +1105,7 @@ CONTAINS
       !just make sure we get the output statement.
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1142,7 +1142,7 @@ CONTAINS
       ! get result, the details will be test in CGNR
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GE)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1210,7 +1210,7 @@ CONTAINS
       !The result will be checked later.
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',LU)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1424,7 +1424,7 @@ CONTAINS
     !Test GE (Dense-Square)
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',QR)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1504,7 +1504,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1577,7 +1577,7 @@ CONTAINS
       !Bad input
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1661,7 +1661,7 @@ CONTAINS
 
         CALL pList%clear()
         CALL pList%add('LinearSolverType->matType',SPARSE)
-        CALL pList%add('LinearSolverType->TPLType',NATIVE)
+        CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
         CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
         CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
         CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1688,7 +1688,7 @@ CONTAINS
       !Correct input
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1795,7 +1795,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -1909,7 +1909,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2001,7 +2001,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2042,7 +2042,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2315,7 +2315,7 @@ CONTAINS
       !test CGNR
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',CGNR)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2368,7 +2368,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',CGNR)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2429,7 +2429,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',CGNR)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2484,7 +2484,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',CGNR)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2546,7 +2546,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',CGNR)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2722,7 +2722,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GMRES)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2784,6 +2784,7 @@ CONTAINS
       ! This forces GMRES to take longer and thus require a restart,
       ! which tests this portion of the solver
       ALLOCATE(thisX(9))
+      thisX=0.0_SRK
       thisX(1)=1.0_SRK
       thisX(9)=-1.0_SRK
 
@@ -2797,7 +2798,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,100_SIK,3_SIK)
       ENDSELECT
 
       !solve it
@@ -2835,10 +2836,10 @@ CONTAINS
       DEALLOCATE(thisX)
 
     !test with A being densesquare
-      COMPONENT_TEST('DenseRectMatrixType')
+      COMPONENT_TEST('DenseSquareMatrixType')
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GMRES)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2867,6 +2868,7 @@ CONTAINS
       ! This forces GMRES to take longer and thus require a restart,
       ! which tests this portion of the solver
       ALLOCATE(thisX(9))
+      thisX=0.0_SRK
       thisX(1)=1.0_SRK
       thisX(9)=-1.0_SRK
 
@@ -2881,7 +2883,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,100_SIK,3_SIK)
       ENDSELECT
 
       !solve
@@ -2912,23 +2914,6 @@ CONTAINS
         ENDSELECT
       ENDDO
       ASSERT(match, 'Iterative%solve() - GMRES')
-      !test to see how it performs with an already decomposed M
-      !reset X to 1.0s
-      match=.TRUE.
-      DO i=1,SIZE(thisB)
-        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          CALL X%set(1.0_SRK)
-          CALL thisLS%solve()
-          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-          ALLOCATE(dummyvec(X%n))
-          CALL X%get(dummyvec)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-            match=.FALSE.
-            EXIT
-          ENDIF
-        ENDSELECT
-      ENDDO
-      ASSERT(match, 'Iterative%solve() - GMRES')
       CALL thisLS%A%clear()
       CALL thisLS%clear()
 
@@ -2937,7 +2922,7 @@ CONTAINS
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GMRES)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -2975,11 +2960,12 @@ CONTAINS
       CALL thisLS%clear()
       DEALLOCATE(thisX)
 
-    !DenseRect matrix
+      !DenseRect matrix
+      COMPONENT_TEST('DenseRectMatrixType')
 
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GMRES)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -3017,7 +3003,7 @@ CONTAINS
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
         CALL thisLS%setX0(thisX)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,30_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,100_SIK,3_SIK)
       ENDSELECT
 
       !Solve it
@@ -3034,7 +3020,7 @@ CONTAINS
       COMPONENT_TEST('BandedMatrixType')
       ! initialize linear system
       CALL pList%clear()
-      CALL pList%add('LinearSolverType->TPLType',NATIVE)
+      CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
       CALL pList%add('LinearSolverType->solverMethod',GMRES)
       CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
       CALL pList%add('LinearSolverType->numberOMP',1_SNK)
@@ -3067,6 +3053,7 @@ CONTAINS
       ! This forces GMRES to take longer and thus require a restart,
       ! which tests this portion of the solver
       ALLOCATE(thisX(9))
+      thisX=0.0_SRK
       thisX(1)=1.0_SRK
       thisX(9)=-1.0_SRK
 
@@ -3081,7 +3068,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,100_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,100_SIK,3_SIK)
       ENDSELECT
 
       !solve
@@ -3102,23 +3089,6 @@ CONTAINS
       ENDSELECT
       DO i=1,SIZE(thisB)
         SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-          ALLOCATE(dummyvec(X%n))
-          CALL X%get(dummyvec)
-          IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-            match=.FALSE.
-            EXIT
-          ENDIF
-        ENDSELECT
-      ENDDO
-      ASSERT(match, 'Iterative%solve() - GMRES')
-      !test to see how it performs with an already decomposed M
-      !reset X to 1.0s
-      match=.TRUE.
-      DO i=1,SIZE(thisB)
-        SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-          CALL X%set(1.0_SRK)
-          CALL thisLS%solve()
           IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
           ALLOCATE(dummyvec(X%n))
           CALL X%get(dummyvec)
@@ -3202,6 +3172,7 @@ CONTAINS
       ! This forces GMRES to take longer and thus require a restart,
       ! which tests this portion of the solver
       ALLOCATE(thisX(9))
+      thisX=0.0_SRK
       thisX(1)=1.0_SRK
       thisX(9)=-1.0_SRK
 
@@ -3215,7 +3186,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,1000_SIK,3_SIK)
       ENDSELECT
 
       !solve it
@@ -3286,6 +3257,7 @@ CONTAINS
       ! This forces GMRES to take longer and thus require a restart,
       ! which tests this portion of the solver
       ALLOCATE(thisX(9))
+      thisX=0.0_SRK
       thisX(1)=1.0_SRK
       thisX(9)=-1.0_SRK
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
@@ -3298,7 +3270,7 @@ CONTAINS
 
       !set iterations and convergence information and build/set M
       SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-        CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,3_SIK)
+        CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,1000_SIK,3_SIK)
       ENDSELECT
 
       !solve

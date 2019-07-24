@@ -292,7 +292,6 @@ MODULE MatrixTypes_Base
       CALL DistributedBandedMatrixType_optParams%add('MatrixType->nlocal',nlocal) 
       !Distributed Block Banded Matrix Type - Required
       CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->n',n)
-      CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->m',m)
       CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
       CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
       CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->blockSize',blockSize)
