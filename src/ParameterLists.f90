@@ -2749,11 +2749,11 @@ MODULE ParameterLists
 !> @param e The exception handler to pass
 !> @param isMatch The logical if all parameter names and values are the same
 !>
-    SUBROUTINE verifyList_Paramtype(thisParam,reqParams,e,isMatch)
+    SUBROUTINE verifyList_Paramtype(thisParam,reqParams,isMatch,e)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
-      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(OUT) :: isMatch
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK) :: isValid
 
       !Assume the list is valid, check it only if the required parameter
