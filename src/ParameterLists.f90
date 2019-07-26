@@ -2412,7 +2412,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN) :: validType
       LOGICAL(SBK),INTENT(OUT) :: isValid
       LOGICAL(SBK),INTENT(OUT) :: isMatch
-      CLASS(ExceptionHandlerType),INTENT(INOUT),OPTIONAL :: e
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK) :: tmpbool
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
@@ -2430,7 +2430,7 @@ MODULE ParameterLists
               CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,isMatch,e)
           ELSE
             IF(ASSOCIATED(p%pdat)) &
-              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,tmpbool)
+              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,tmpbool,e)
           ENDIF
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
@@ -2444,7 +2444,7 @@ MODULE ParameterLists
                 IF(isValid) ntrue=ntrue+1
               ELSE
                 CALL validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->',validType,isValid,tmpbool)
+                  prefix//p%name//'->',validType,isValid,tmpbool,e)
                 IF(isValid) ntrue=ntrue+1
               ENDIF
             ENDDO
@@ -2458,25 +2458,13 @@ MODULE ParameterLists
               SELECTCASE(validType)
                 CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
                   isMatch=.FALSE.
-                  IF(PRESENT(e)) THEN
-                    CALL e%raiseError(modName//'::'//myName// &
-                        ' - When verifying that parameters are equal, the parameter "'// &
-                        prefix//p%name//'" was not found on both lists!')
-                  ELSE
-                    CALL eParams%raiseError(modName//'::'//myName// &
-                        ' - When verifying that parameters are equal, the parameter "'// &
-                        prefix//p%name//'" was not found on both lists!')
-                  ENDIF
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - When verifying that parameters are equal, the parameter "'// &
+                      prefix//p%name//'" was not found on both lists!')
                 CASE DEFAULT
-                  IF(PRESENT(e)) THEN
-                    CALL e%raiseError(modName//'::'//myName// &
-                        ' - Failed to locate required parameter "'//prefix// &
-                        p%name//'"!')
-                  ELSE
-                    CALL eParams%raiseError(modName//'::'//myName// &
-                        ' - Failed to locate required parameter "'//prefix// &
-                        p%name//'"!')
-                  ENDIF
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - Failed to locate required parameter "'//prefix// &
+                      p%name//'"!')
               ENDSELECT
             ELSE
               IF(SAME_TYPE_AS(tmpParam,p)) THEN
@@ -2488,15 +2476,9 @@ MODULE ParameterLists
                     isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
                 ENDSELECT
               ELSE
-                IF(PRESENT(e)) THEN
-                  CALL e%raiseError(modName//'::'//myName// &
+                CALL e%raiseError(modName//'::'//myName// &
                     ' - Required parameter "'//prefix//p%name//'" has type "'// &
-                      tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
-                ELSE
-                  CALL eParams%raiseError(modName//'::'//myName// &
-                    ' - Required parameter "'//prefix//p%name//'" has type "'// &
-                      tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
-                ENDIF
+                    tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
               ENDIF
             ENDIF
           ENDIF
@@ -2508,25 +2490,13 @@ MODULE ParameterLists
             SELECTCASE(validType)
               CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
                 isMatch=.FALSE.
-                IF(PRESENT(e)) THEN
-                  CALL e%raiseError(modName//'::'//myName// &
-                      ' - When verifying that parameters are equal, the parameter "'// &
-                      prefix//p%name//'" was not found on both lists!')
-                ELSE
-                  CALL eParams%raiseError(modName//'::'//myName// &
-                      ' - When verifying that parameters are equal, the parameter "'// &
-                      prefix//p%name//'" was not found on both lists!')
-                ENDIF
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - When verifying that parameters are equal, the parameter "'// &
+                    prefix//p%name//'" was not found on both lists!')
               CASE DEFAULT
-                IF(PRESENT(e)) THEN
-                  CALL e%raiseError(modName//'::'//myName// &
-                      ' - Failed to locate required parameter "'//prefix// &
-                      p%name//'"!')
-                ELSE
-                  CALL eParams%raiseError(modName//'::'//myName// &
-                      ' - Failed to locate required parameter "'//prefix// &
-                      p%name//'"!')
-                ENDIF
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - Failed to locate required parameter "'//prefix// &
+                    p%name//'"!')
             ENDSELECT
           ELSE
             IF(SAME_TYPE_AS(tmpParam,p)) THEN
@@ -2538,15 +2508,9 @@ MODULE ParameterLists
                   isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
               ENDSELECT
             ELSE
-              IF(PRESENT(e)) THEN
-                CALL e%raiseError(modName//'::'//myName// &
+              CALL e%raiseError(modName//'::'//myName// &
                   ' - Required parameter "'//prefix//p%name//'" has type "'// &
-                    tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
-              ELSE
-                CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
-                    tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
-              ENDIF
+                  tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
             ENDIF
           ENDIF
       ENDSELECT
@@ -2730,7 +2694,8 @@ MODULE ParameterLists
       !list is not empty.
       isValid=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) &
-          CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VALIDATE,isValid,tmpbool)
+          CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VALIDATE, &
+          isValid,tmpbool,eParams)
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
           CALL validateOpt_Paramtype(thisParam,optParams,'')
@@ -2767,7 +2732,8 @@ MODULE ParameterLists
       isValid=.TRUE.
       isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
-        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYTEST,isValid,isMatch)
+        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYTEST, &
+            isValid,isMatch,eParams)
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
