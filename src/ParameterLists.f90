@@ -2403,16 +2403,17 @@ MODULE ParameterLists
 !> @returns isValid logical indicating that all the required parameters exist
 !>          in @c thisParam and are of the correct type.
 !>
-    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,validType, &
-        isMatch,e) RESULT(isValid)
+    RECURSIVE SUBROUTINE validateReq_ParamType(thisParam,reqParams,prefix,validType, &
+        isValid,isMatch,e)
       CHARACTER(LEN=*),PARAMETER :: myName='validateReq_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
       INTEGER(SIK),INTENT(IN) :: validType
+      LOGICAL(SBK),INTENT(OUT) :: isValid
       LOGICAL(SBK),INTENT(OUT) :: isMatch
       CLASS(ExceptionHandlerType),INTENT(INOUT),OPTIONAL :: e
-      LOGICAL(SBK) :: isValid,tmpbool
+      LOGICAL(SBK) :: tmpbool
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
 
@@ -2426,10 +2427,10 @@ MODULE ParameterLists
           IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
               (validType == VALIDTYPE_VERIFYLIST)) THEN
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,validType,isMatch,e)
+              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,isMatch,e)
           ELSE
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,validType,tmpbool)
+              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,tmpbool)
           ENDIF
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
@@ -2438,11 +2439,13 @@ MODULE ParameterLists
             DO i=1,SIZE(p%pList)
               IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
                   (validType == VALIDTYPE_VERIFYLIST)) THEN
-                IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->',validType,isMatch,e)) ntrue=ntrue+1
+                CALL validateReq_ParamType(thisParam,p%pList(i), &
+                  prefix//p%name//'->',validType,isValid,isMatch,e)
+                IF(isValid) ntrue=ntrue+1
               ELSE
-                IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->',validType,tmpbool)) ntrue=ntrue+1
+                CALL validateReq_ParamType(thisParam,p%pList(i), &
+                  prefix//p%name//'->',validType,isValid,tmpbool)
+                IF(isValid) ntrue=ntrue+1
               ENDIF
             ENDDO
             isValid=(ntrue == SIZE(p%pList))
@@ -2547,7 +2550,7 @@ MODULE ParameterLists
             ENDIF
           ENDIF
       ENDSELECT
-    ENDFUNCTION validateReq_ParamType
+    ENDSUBROUTINE validateReq_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Searches a parameter (thisParam) for a set of optional parameters
@@ -2727,8 +2730,7 @@ MODULE ParameterLists
       !list is not empty.
       isValid=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) &
-        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VALIDATE,tmpbool)
-
+          CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VALIDATE,isValid,tmpbool)
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
           CALL validateOpt_Paramtype(thisParam,optParams,'')
@@ -2765,7 +2767,7 @@ MODULE ParameterLists
       isValid=.TRUE.
       isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
-        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYTEST,isMatch)
+        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYTEST,isValid,isMatch)
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
@@ -2793,8 +2795,8 @@ MODULE ParameterLists
       isValid=.TRUE.
       isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
-        isValid=validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYLIST, &
-            isMatch,e)
+        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYLIST, &
+            isValid,isMatch,e)
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
