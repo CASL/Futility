@@ -5470,7 +5470,7 @@ PROGRAM testParameterLists
     TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
     TYPE(ExceptionHandlerType) :: tmpe
 
-    CALL testParam%verifyList(testParam2,e,bool)
+    CALL testParam%verifyList(testParam2,bool,e)
     ASSERT(bool,'empty lists')
 
     !Testing addition of SBK routine to parameter list
@@ -5685,32 +5685,32 @@ PROGRAM testParameterLists
     !Test a dummy exception handler
     tmpe=e
     testParam2=testParam
-    CALL testParam%verifyList(testParam2,tmpe,bool)
+    CALL testParam%verifyList(testParam2,bool,tmpe)
     ASSERT(bool,'verify the copy')
 
     nerror=tmpe%getCounter(EXCEPTION_ERROR)
     CALL testParam2%clear()
-    CALL testParam%verifyList(testParam2,tmpe,bool)
+    CALL testParam%verifyList(testParam2,bool,tmpe)
     ASSERT(.NOT.bool,'arg uninit')
     ASSERT(nerror == tmpe%getCounter(EXCEPTION_ERROR),'arg uninit')
     nerror=tmpe%getCounter(EXCEPTION_ERROR)
-    CALL testParam2%verifyList(testParam,tmpe,bool)
+    CALL testParam2%verifyList(testParam,bool,tmpe)
     ASSERT(.NOT.bool,'this uninit')
     ASSERT(nerror+44 == tmpe%getCounter(EXCEPTION_ERROR),'this uninit')
 
     !assign the same PL
     !Test using the eParams exception handler
     testParam2=testParam
-    CALL testParam%verifyList(testParam2,eParams,bool)
+    CALL testParam%verifyList(testParam2,bool,eParams)
     ASSERT(bool,'verify the copy')
 
     nerror=eParams%getCounter(EXCEPTION_ERROR)
     CALL testParam2%clear()
-    CALL testParam%verifyList(testParam2,eParams,bool)
+    CALL testParam%verifyList(testParam2,bool,eParams)
     ASSERT(.NOT.bool,'arg uninit')
     ASSERT(nerror == eParams%getCounter(EXCEPTION_ERROR),'arg uninit')
     nerror=eParams%getCounter(EXCEPTION_ERROR)
-    CALL testParam2%verifyList(testParam,eParams,bool)
+    CALL testParam2%verifyList(testParam,bool,eParams)
     ASSERT(.NOT.bool,'this uninit')
     ASSERT(nerror+44 == eParams%getCounter(EXCEPTION_ERROR),'this uninit')
 
