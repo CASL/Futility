@@ -621,7 +621,7 @@ MODULE FileType_HDF5
 
       ! Store the access mode
       mode_in=mode
-      CALL toUPPER(mode_in)
+      mode_in = mode_in%upper()
       SELECTCASE(TRIM(mode_in))
         CASE('READ')
           INQUIRE(FILE=filename,EXIST=exists)
@@ -6969,7 +6969,7 @@ MODULE FileType_HDF5
        INTEGER(HID_T) :: atype_id, attr_id, dspace_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
        INTEGER(SIZE_T) :: attr_len
-       CHARACTER(LEN=LEN(attr_val),KIND=C_CHAR),TARGET :: valss
+       CHARACTER(LEN=:,KIND=C_CHAR),ALLOCATABLE :: valss
        num_dims=1
        dims(1)=1
        attr_val=TRIM(attr_val)

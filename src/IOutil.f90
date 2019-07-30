@@ -216,7 +216,7 @@ MODULE IOutil
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE GET_CURRENT_DIRECTORY_char(dir,length,status)
-      CHARACTER(LEN=*),INTENT(OUT) :: dir
+      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: dir
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: length
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
       TYPE(StringType) :: tmp

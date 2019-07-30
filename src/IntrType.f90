@@ -103,6 +103,7 @@ MODULE IntrType
   PUBLIC :: SOFTGT
   PUBLIC :: isNAN
   PUBLIC :: isINF
+  PUBLIC :: isNumeric
 !
 ! Variables
   !> @name Private Variables
@@ -1001,6 +1002,33 @@ MODULE IntrType
 !!      READ(c, '(i16)') iArr
 !    ENDSUBROUTINE
 !
+!
+!-------------------------------------------------------------------------------
+!> @brief Checks to see if every character in a character str is a numeric
+!> value, i.e. [0-9]
+!> @param char_str the character string being checked
+!> @param bool the logical indicating whether it is numeric or not
+!>
+  FUNCTION isNumeric(char_str) RESULT(bool)
+    CHARACTER(LEN=*),INTENT(IN) :: char_str
+    LOGICAL(SBK) :: bool
+    INTEGER(SIK) :: i
+
+    bool = .FALSE.
+    IF(LEN(char_str) < 1) THEN
+      RETURN 
+    ELSE
+      DO i=1,LEN(char_str)
+        ! 0-9 are represented by ASCII codes 48-57
+        IF(.NOT.(IACHAR(char_str(i:i)) > 47 .AND. IACHAR(char_str(i:i)) < 58)) THEN
+          ! If any character isn't between those codes, it isn't an integer
+          RETURN
+        ENDIF
+      ENDDO
+    ENDIF
+    bool = .TRUE.
+
+  ENDFUNCTION isNumeric
 
 ENDMODULE IntrType
 

@@ -319,7 +319,6 @@ PROGRAM testHDF5
 
       CALL h5%fclose()
 
-
     ENDSUBROUTINE testHDF5FileTypeSetup
 !
 !-------------------------------------------------------------------------------

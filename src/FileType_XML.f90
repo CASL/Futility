@@ -1422,7 +1422,7 @@ MODULE FileType_XML
       TYPE(StringType),INTENT(IN) :: s
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fmt
       REAL(SDK) :: val
-      CHARACTER(LEN=s%n) :: tmpChar
+      CHARACTER(LEN=:),ALLOCATABLE :: tmpChar
       INTEGER(SIK) :: ierr
 
       tmpChar=s

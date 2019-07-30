@@ -360,8 +360,8 @@ MODULE Times
 !> Names are 20 characters or less.
     FUNCTION getTimerName(myTimer) RESULT(name)
       CLASS(TimerType),INTENT(IN) :: myTimer
-      CHARACTER(LEN=myTimer%name%n) :: name
-      name=TRIM(myTimer%name)
+      CHARACTER(LEN=:),ALLOCATABLE :: name
+      name=myTimer%name
     ENDFUNCTION getTimerName
 !
 !-------------------------------------------------------------------------------

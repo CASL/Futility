@@ -27,6 +27,7 @@ PROGRAM testParameterLists
   INTEGER(SLK) :: valslk
   LOGICAL(SBK) :: valsbk
   CHARACTER(LEN=100) :: valchar
+  CHARACTER(:),ALLOCATABLE :: valchar1
   TYPE(StringType) :: valstr
   REAL(SSK),ALLOCATABLE :: valsska1(:)
   REAL(SDK),ALLOCATABLE :: valsdka1(:)
@@ -809,17 +810,17 @@ PROGRAM testParameterLists
     CALL testParam%init('testCHAR',TRIM(valchar),'The value is test')
     CALL testParam%get('testCHAR',someParam)
     ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
-    CALL someParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'test','someParam valchar')
+    CALL someParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'test','someParam valchar')
     valchar='testing'
-    CALL testParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'test','testParam valchar')
-    CALL testParam%get('testError',valchar)
+    CALL testParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'test','testParam valchar')
+    CALL testParam%get('testError',valchar1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
       ' - unable to locate parameter "testError" in ""!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
-    CALL someParam%get('testError',valchar)
+    CALL someParam%get('testError',valchar1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
       ' - parameter name mismatch "testError" in "testCHAR"!'
@@ -827,7 +828,7 @@ PROGRAM testParameterLists
     ALLOCATE(testParam2%pdat)
     testParam2%pdat%name='testCHAR'
     testParam2%pdat%datatype='test_type'
-    CALL testParam2%get('testCHAR',valchar)
+    CALL testParam2%get('testCHAR',valchar1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
       ' - parameter data type mismatch! Parameter testCHAR type is test_type and'// &
@@ -839,14 +840,14 @@ PROGRAM testParameterLists
     COMPONENT_TEST('%set(...)')
     valchar='testing'
     CALL testParam%set('testCHAR',valchar,'The value is testing')
-    CALL testParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'testing','valchar')
+    CALL testParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'testing','valchar')
     ASSERT(testParam%pdat%name == 'testCHAR','%name')
     ASSERT(testParam%pdat%description == 'The value is testing','%description')
     valchar='more tests'
     CALL someParam%set('testCHAR',TRIM(valchar),'The value is more tests')
-    CALL someParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'more tests','valchar')
+    CALL someParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'more tests','valchar')
     ASSERT(someParam%name == 'testCHAR','someParam%name')
     ASSERT(someParam%datatype == 'TYPE(StringType)','someParam%datatype')
     ASSERT(someParam%description == 'The value is more tests','someParam%description')
