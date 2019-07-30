@@ -87,6 +87,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%getSubPL(...)',testGetSubPL)
   REGISTER_SUBTEST('%validate(...)',testValidate)
   REGISTER_SUBTEST('%verify(...)',testVerify)
+  REGISTER_SUBTEST('%verifyList(...)',testVerifyList)
   REGISTER_SUBTEST('Partial Matching',testPartialMatch)
 
   REGISTER_SUBTEST('%initFromXML',testInitFromXML)
@@ -5440,6 +5441,7 @@ PROGRAM testParameterLists
     ASSERT(.NOT.bool,'arg uninit')
     CALL testParam2%verify(testParam,bool)
     ASSERT(.NOT.bool,'this uninit')
+    FINFO() bool
 
     !Deallocate locals
     DEALLOCATE(snk2)
@@ -5455,6 +5457,277 @@ PROGRAM testParameterLists
 
     CALL clear_test_vars()
   ENDSUBROUTINE testVerify
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testVerifyList()
+    LOGICAL(SBK) :: bool
+    INTEGER(SIK) :: nerror
+    INTEGER(SNK),ALLOCATABLE :: snk2(:,:),snk3(:,:,:)
+    INTEGER(SLK),ALLOCATABLE :: slk2(:,:),slk3(:,:,:)
+    REAL(SSK),ALLOCATABLE :: ssk2(:,:),ssk3(:,:,:)
+    REAL(SDK),ALLOCATABLE :: sdk2(:,:),sdk3(:,:,:)
+    TYPE(StringType) :: str0
+    TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
+    TYPE(ExceptionHandlerType) :: tmpe
+
+    CALL testParam%verifyList(testParam2,bool,e)
+    ASSERT(bool,'empty lists')
+
+    !Testing addition of SBK routine to parameter list
+    CALL testParam%add('testPL->testSBK',.TRUE.)
+    CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
+
+    !Testing addition of SSK routine to parameter list
+    CALL testParam%add('testPL->testSSK',7.0_SSK)
+    CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
+
+    !Testing addition of SDK routine to parameter list
+    CALL testParam%add('testPL->testSDK',7.0_SDK)
+    CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
+
+    !Testing addition of SNK routine to parameter list
+    CALL testParam%add('testPL->testSNK',7_SNK)
+    CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
+
+    !Testing addition of SLK routine to parameter list
+    CALL testParam%add('testPL->testSLK',7_SLK)
+    CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
+
+    !Testing addition of STR routine to parameter list
+    str0='string1'
+    CALL testParam%add('testPL->testSTR',str0)
+    str0='string2'
+    CALL testParam%add('testPL->testSTR2',str0,'comment')
+
+    !Testing addition of CHAR routine to parameter list
+    CALL testParam%add('testPL->testCHAR','char1')
+    CALL testParam%add('testPL->testCHAR2','char2','comment')
+
+    !Testing addition of 1-D array SSK routine to parameter list
+    CALL testParam%add('testPL->testSSKa1',(/1.5_SSK,1.6_SSK/))
+    CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
+
+    !Testing addition of 1-D array SDK routine to parameter list
+    CALL testParam%add('testPL->testSDKa1',(/2.5_SDK,2.6_SDK/))
+    CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
+
+    !Testing addition of 1-D array SNK routine to parameter list
+    CALL testParam%add('testPL->testSNKa1',(/-2_SNK,-3_SNK/))
+    CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
+
+    !Testing addition of 1-D array SLK routine to parameter list
+    CALL testParam%add('testPL->testSLKa1',(/-4_SLK,-5_SLK/))
+    CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
+
+    !Testing addition of 1-D array SBK routine to parameter list
+    CALL testParam%add('testPL->testSBKa1',(/.TRUE.,.FALSE./))
+    CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
+
+    !Testing addition of 1-D array STR routine to parameter list
+    ALLOCATE(str1(2))
+    str1(1)='stringarray1'
+    str1(2)='stringarray2'
+    CALL testParam%add('testPL->testSTRa1',str1)
+    str1(1)='stringarray3'
+    str1(2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
+
+    !Testing addition of 2-D array SSK routine to parameter list
+    ALLOCATE(ssk2(2,2))
+    ssk2(1,1)=1.1_SSK
+    ssk2(2,1)=2.1_SSK
+    ssk2(1,2)=1.2_SSK
+    ssk2(2,2)=2.2_SSK
+    CALL testParam%add('testPL->testSSKa2',ssk2)
+    ssk2(1,1)=3.1_SSK
+    ssk2(2,1)=4.1_SSK
+    ssk2(1,2)=3.2_SSK
+    ssk2(2,2)=4.2_SSK
+    CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
+
+    !Testing addition of 2-D array SDK routine to parameter list
+    ALLOCATE(sdk2(2,2))
+    sdk2(1,1)=11.0_SDK
+    sdk2(2,1)=21.0_SDK
+    sdk2(1,2)=12.0_SDK
+    sdk2(2,2)=22.0_SDK
+    CALL testParam%add('testPL->testSDKa2',sdk2)
+    sdk2(1,1)=31.0_SDK
+    sdk2(2,1)=41.0_SDK
+    sdk2(1,2)=32.0_SDK
+    sdk2(2,2)=42.0_SDK
+    CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
+
+    !Testing addition of 2-D array SNK routine to parameter list
+    ALLOCATE(snk2(2,2))
+    snk2(1,1)=11
+    snk2(2,1)=21
+    snk2(1,2)=12
+    snk2(2,2)=22
+    CALL testParam%add('testPL->testSNKa2',snk2)
+    snk2(1,1)=31
+    snk2(2,1)=41
+    snk2(1,2)=32
+    snk2(2,2)=42
+    CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
+
+    !Testing addition of 2-D array SLK routine to parameter list
+    ALLOCATE(slk2(2,2))
+    slk2(1,1)=110
+    slk2(2,1)=210
+    slk2(1,2)=120
+    slk2(2,2)=220
+    CALL testParam%add('testPL->testSLKa2',slk2)
+    slk2(1,1)=310
+    slk2(2,1)=410
+    slk2(1,2)=320
+    slk2(2,2)=420
+    CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
+
+    !Testing addition of 2-D array STR routine to parameter list
+    ALLOCATE(str2(2,2))
+    str2(1,1)='stringarray1'
+    str2(2,1)='stringarray2'
+    str2(1,2)='stringarray3'
+    str2(2,2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa2',str2)
+    str2(1,1)='stringarray5'
+    str2(2,1)='stringarray6'
+    str2(1,2)='stringarray7'
+    str2(2,2)='stringarray8'
+    CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
+
+    !Testing addition of 3-D array SSK routine to parameter list
+    ALLOCATE(ssk3(2,2,2))
+    ssk3(1,1,1)=1.11_SSK
+    ssk3(2,1,1)=2.11_SSK
+    ssk3(1,2,1)=1.21_SSK
+    ssk3(2,2,1)=2.21_SSK
+    ssk3(1,1,2)=1.12_SSK
+    ssk3(2,1,2)=2.12_SSK
+    ssk3(1,2,2)=1.22_SSK
+    ssk3(2,2,2)=2.22_SSK
+    CALL testParam%add('testPL->testSSKa3',ssk3)
+    ssk3(1,1,1)=3.11_SSK
+    ssk3(2,1,1)=4.11_SSK
+    ssk3(1,2,1)=3.21_SSK
+    ssk3(2,2,1)=4.21_SSK
+    ssk3(1,1,2)=3.12_SSK
+    ssk3(2,1,2)=4.12_SSK
+    ssk3(1,2,2)=3.22_SSK
+    ssk3(2,2,2)=4.22_SSK
+    CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
+
+    !Testing addition of 3-D array SDK routine to parameter list
+    ALLOCATE(sdk3(2,2,2))
+    sdk3(1,1,1)=11.1_SDK
+    sdk3(2,1,1)=21.1_SDK
+    sdk3(1,2,1)=12.1_SDK
+    sdk3(2,2,1)=22.1_SDK
+    sdk3(1,1,2)=11.2_SDK
+    sdk3(2,1,2)=21.2_SDK
+    sdk3(1,2,2)=12.2_SDK
+    sdk3(2,2,2)=22.2_SDK
+    CALL testParam%add('testPL->testSDKa3',sdk3)
+    sdk3(1,1,1)=31.1_SDK
+    sdk3(2,1,1)=41.1_SDK
+    sdk3(1,2,1)=32.1_SDK
+    sdk3(2,2,1)=42.1_SDK
+    sdk3(1,1,2)=31.2_SDK
+    sdk3(2,1,2)=41.2_SDK
+    sdk3(1,2,2)=32.2_SDK
+    sdk3(2,2,2)=42.2_SDK
+    CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
+
+    !Testing addition of 3-D array SNK routine to parameter list
+    ALLOCATE(snk3(2,2,2))
+    snk3(1,1,1)=111
+    snk3(2,1,1)=211
+    snk3(1,2,1)=121
+    snk3(2,2,1)=221
+    snk3(1,1,2)=112
+    snk3(2,1,2)=212
+    snk3(1,2,2)=122
+    snk3(2,2,2)=222
+    CALL testParam%add('testPL->testSNKa3',snk3)
+    snk3(1,1,1)=311
+    snk3(2,1,1)=411
+    snk3(1,2,1)=321
+    snk3(2,2,1)=421
+    snk3(1,1,2)=312
+    snk3(2,1,2)=412
+    snk3(1,2,2)=322
+    snk3(2,2,2)=422
+    CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
+
+    !Testing addition of 3-D array SLK routine to parameter list
+    ALLOCATE(slk3(2,2,2))
+    slk3(1,1,1)=111
+    slk3(2,1,1)=211
+    slk3(1,2,1)=121
+    slk3(2,2,1)=221
+    slk3(1,1,2)=112
+    slk3(2,1,2)=212
+    slk3(1,2,2)=122
+    slk3(2,2,2)=222
+    CALL testParam%add('testPL->testSLKa3',slk3)
+    slk3(1,1,1)=311
+    slk3(2,1,1)=411
+    slk3(1,2,1)=321
+    slk3(2,2,1)=421
+    slk3(1,1,2)=312
+    slk3(2,1,2)=412
+    slk3(1,2,2)=322
+    slk3(2,2,2)=422
+    CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
+
+    !assign the same PL
+    !Test a dummy exception handler
+    tmpe=e
+    testParam2=testParam
+    CALL testParam%verifyList(testParam2,bool,tmpe)
+    ASSERT(bool,'verify the copy')
+
+    nerror=tmpe%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%clear()
+    CALL testParam%verifyList(testParam2,bool,tmpe)
+    ASSERT(.NOT.bool,'arg uninit')
+    ASSERT(nerror == tmpe%getCounter(EXCEPTION_ERROR),'arg uninit')
+    nerror=tmpe%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%verifyList(testParam,bool,tmpe)
+    ASSERT(.NOT.bool,'this uninit')
+    ASSERT(nerror+44 == tmpe%getCounter(EXCEPTION_ERROR),'this uninit')
+
+    !assign the same PL
+    !Test using the eParams exception handler
+    testParam2=testParam
+    CALL testParam%verifyList(testParam2,bool,eParams)
+    ASSERT(bool,'verify the copy')
+
+    nerror=eParams%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%clear()
+    CALL testParam%verifyList(testParam2,bool,eParams)
+    ASSERT(.NOT.bool,'arg uninit')
+    ASSERT(nerror == eParams%getCounter(EXCEPTION_ERROR),'arg uninit')
+    nerror=eParams%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%verifyList(testParam,bool,eParams)
+    ASSERT(.NOT.bool,'this uninit')
+    ASSERT(nerror+44 == eParams%getCounter(EXCEPTION_ERROR),'this uninit')
+
+    !Deallocate locals
+    DEALLOCATE(snk2)
+    DEALLOCATE(snk3)
+    DEALLOCATE(slk2)
+    DEALLOCATE(slk3)
+    DEALLOCATE(ssk2)
+    DEALLOCATE(ssk3)
+    DEALLOCATE(sdk2)
+    DEALLOCATE(sdk3)
+    DEALLOCATE(str1)
+    DEALLOCATE(str2)
+
+    CALL clear_test_vars()
+  ENDSUBROUTINE testVerifyList
 !
 !-------------------------------------------------------------------------------
 !Test to make sure we've eliminated a long standing bug.
@@ -5494,7 +5767,7 @@ PROGRAM testParameterLists
     DEALLOCATE(astr)
     CALL testParam2%add('CASEID->ASSEMBLIES->ASSEMBLY_ASSY1->SpacerGrids',testParam3)
     str='ASSY1'
-    CALL testParam2%add('CASEID->ASSEMBLIES->label',str)
+    CALL testParam2%add('CASEID->ASSEMBLIES->Assembly_ASSY1->label',str)
 
     CALL testParam%clear()
     CALL testParam%initFromXML('testInit.xml')

@@ -115,6 +115,11 @@ MODULE ParameterLists
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
   INTEGER(SIK),PARAMETER :: MAX_1D_LEN=10
 
+  !> Verification enumerations
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VALIDATE=0
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYTEST=1
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYLIST=2
+
   !> Exception handler for the module
   TYPE(ExceptionHandlerType),SAVE :: eParams
 
@@ -482,9 +487,12 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
       PROCEDURE,PASS :: validate => validate_ParamType
-      !> @copybrief ParameterLists::verify_ParamType
-      !> @copydoc ParameterLists::verify_ParamType
-      PROCEDURE,PASS :: verify => verify_ParamType
+      !> @copybrief ParameterLists::verifyTest_ParamType
+      !> @copydoc ParameterLists::verifyTest_ParamType
+      PROCEDURE,PASS :: verify => verifyTest_ParamType
+      !> @copybrief ParameterLists::verifyTest_ParamType
+      !> @copydoc ParameterLists::verifyTest_ParamType
+      PROCEDURE,PASS :: verifyList => verifyList_ParamType
       !> @copybrief ParameterLists::edit_ParamType
       !> @copydoc ParameterLists::edit_ParamType
       PROCEDURE,PASS :: edit => edit_ParamType
@@ -2395,14 +2403,17 @@ MODULE ParameterLists
 !> @returns isValid logical indicating that all the required parameters exist
 !>          in @c thisParam and are of the correct type.
 !>
-    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,isMatch) &
-      RESULT(isValid)
+    RECURSIVE SUBROUTINE validateReq_ParamType(thisParam,reqParams,prefix,validType, &
+        isValid,isMatch,e)
       CHARACTER(LEN=*),PARAMETER :: myName='validateReq_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
-      LOGICAL(SBK),INTENT(OUT),OPTIONAL :: isMatch
-      LOGICAL(SBK) :: isValid
+      INTEGER(SIK),INTENT(IN) :: validType
+      LOGICAL(SBK),INTENT(OUT) :: isValid
+      LOGICAL(SBK),INTENT(OUT) :: isMatch
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK) :: tmpbool
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
 
@@ -2413,43 +2424,60 @@ MODULE ParameterLists
       SELECTTYPE(p=>reqParams)
         TYPE IS(ParamType)
           !Call validate on the required parameter's value
-          IF(PRESENT(isMatch)) THEN
+          IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+              (validType == VALIDTYPE_VERIFYLIST)) THEN
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,isMatch)
+              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,isMatch,e)
           ELSE
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix)
+              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,tmpbool,e)
           ENDIF
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
           IF(ALLOCATED(p%pList)) THEN
             ntrue=0
             DO i=1,SIZE(p%pList)
-              IF(PRESENT(isMatch)) THEN
-                IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->',isMatch)) ntrue=ntrue+1
+              IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+                  (validType == VALIDTYPE_VERIFYLIST)) THEN
+                CALL validateReq_ParamType(thisParam,p%pList(i), &
+                  prefix//p%name//'->',validType,isValid,isMatch,e)
+                IF(isValid) ntrue=ntrue+1
               ELSE
-                IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->')) ntrue=ntrue+1
+                CALL validateReq_ParamType(thisParam,p%pList(i), &
+                  prefix//p%name//'->',validType,isValid,tmpbool,e)
+                IF(isValid) ntrue=ntrue+1
               ENDIF
             ENDDO
-            IF(ntrue == SIZE(p%pList)) isValid=.TRUE.
+            isValid=(ntrue == SIZE(p%pList))
           ELSE
             !The required list is not allocated, which means we do not
             !check any of it's possible subparameters, but we must at least
             !check that the list exists
             CALL thisParam%getParam(prefix//p%name,tmpParam)
             IF(.NOT.ASSOCIATED(tmpParam)) THEN
-              CALL eParams%raiseError(modName//'::'//myName// &
-                ' - Failed to locate required parameter "'//prefix// &
-                  p%name//'"!')
+              SELECTCASE(validType)
+                CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+                  isMatch=.FALSE.
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - When verifying that parameters are equal, the parameter "'// &
+                      prefix//p%name//'" was not found on both lists!')
+                CASE DEFAULT
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - Failed to locate required parameter "'//prefix// &
+                      p%name//'"!')
+              ENDSELECT
             ELSE
               IF(SAME_TYPE_AS(tmpParam,p)) THEN
                 isValid=.TRUE.
-                IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
+                SELECTCASE(validType)
+                  CASE(VALIDTYPE_VERIFYTEST)
+                    isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+                  CASE(VALIDTYPE_VERIFYLIST)
+                    isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
+                ENDSELECT
               ELSE
-                CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - Required parameter "'//prefix//p%name//'" has type "'// &
                     tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
               ENDIF
             ENDIF
@@ -2459,20 +2487,34 @@ MODULE ParameterLists
           !required parameter's name and check its type
           CALL thisParam%getParam(prefix//p%name,tmpParam)
           IF(.NOT.ASSOCIATED(tmpParam)) THEN
-            CALL eParams%raiseError(modName//'::'//myName// &
-              ' - Failed to locate required parameter "'//prefix//p%name//'"!')
+            SELECTCASE(validType)
+              CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+                isMatch=.FALSE.
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - When verifying that parameters are equal, the parameter "'// &
+                    prefix//p%name//'" was not found on both lists!')
+              CASE DEFAULT
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - Failed to locate required parameter "'//prefix// &
+                    p%name//'"!')
+            ENDSELECT
           ELSE
             IF(SAME_TYPE_AS(tmpParam,p)) THEN
               isValid=.TRUE.
-              IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
+              SELECTCASE(validType)
+                CASE(VALIDTYPE_VERIFYTEST)
+                  isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+                CASE(VALIDTYPE_VERIFYLIST)
+                  isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
+              ENDSELECT
             ELSE
-              CALL eParams%raiseError(modName//'::'//myName// &
-                ' - Required parameter "'//prefix//p%name//'" has type "'// &
+              CALL e%raiseError(modName//'::'//myName// &
+                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
                   tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
             ENDIF
           ENDIF
       ENDSELECT
-    ENDFUNCTION validateReq_ParamType
+    ENDSUBROUTINE validateReq_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Searches a parameter (thisParam) for a set of optional parameters
@@ -2645,15 +2687,15 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: reqParams
       CLASS(ParamType),INTENT(IN),OPTIONAL :: optParams
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isValid,tmpbool
       TYPE(ParamType) :: nullParam
 
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) &
-        isValid=validateReq_ParamType(thisParam,reqParams,'')
-
+          CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VALIDATE, &
+          isValid,tmpbool,eParams)
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
           CALL validateOpt_Paramtype(thisParam,optParams,'')
@@ -2679,7 +2721,7 @@ MODULE ParameterLists
 !> @param reqParams
 !> @param isMatch
 !>
-    SUBROUTINE verify_Paramtype(thisParam,reqParams,isMatch)
+    SUBROUTINE verifyTest_Paramtype(thisParam,reqParams,isMatch)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       LOGICAL(SBK),INTENT(OUT) :: isMatch
@@ -2688,28 +2730,61 @@ MODULE ParameterLists
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
-      isMatch=.FALSE.
+      isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
-        isValid=validateReq_ParamType(thisParam,reqParams,'',isMatch)
+        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYTEST, &
+            isValid,isMatch,eParams)
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
-    ENDSUBROUTINE verify_Paramtype
+    ENDSUBROUTINE verifyTest_Paramtype
 !
 !-------------------------------------------------------------------------------
-!> @brief This function assumes that thisParam and thatParam are of the same
-!>        extended ParamType.  It also assumes that there is a "gettable" value
-!>        that is of thisParam%name on the ParamType.  This function determines
-!>        the extended type, then "gets" the appropriate parameter from both
-!>        lists, then checks their equivalence.  If they are equal or
-!>        approximately equal, the function results in true.  If not, false.
-!>        The function also performs unit test harness assertions when checking
-!>        the values.
+!> @brief Verify should only be used in a unit test setting.  It is for checking
+!>        the structure AND values in two parameter lists.  If they are a match,
+!>        isMatch will be returned as true.  If not, false.  Assertion failures
+!>        will be printed for the parameter list values that fail.
+!> @param thisParam The parameter list on which to verify the values
+!> @param reqParams The reference parameter list and values
+!> @param e The exception handler to pass
+!> @param isMatch The logical if all parameter names and values are the same
+!>
+    SUBROUTINE verifyList_Paramtype(thisParam,reqParams,isMatch,e)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: reqParams
+      LOGICAL(SBK),INTENT(OUT) :: isMatch
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK) :: isValid
+
+      !Assume the list is valid, check it only if the required parameter
+      !list is not empty.
+      isValid=.TRUE.
+      isMatch=.TRUE.
+      IF(ASSOCIATED(reqParams%pdat)) THEN
+        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYLIST, &
+            isValid,isMatch,e)
+      ELSE
+        isMatch=.NOT.ASSOCIATED(thisParam%pdat)
+      ENDIF
+    ENDSUBROUTINE verifyList_Paramtype
+!
+!-------------------------------------------------------------------------------
+!> @brief This function checks the values of thisParam and thatParam and returns 
+!>        if they are equal or approximately equal.
 !> @param thisParam  The parameter list being validated
 !> @param thatParam  The parameter list being checked against
 !> @param bool The logical result of the checked parameters.
 !>
-    FUNCTION match_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+!> The assumptions of this routine are that the parameters passed in are the 
+!> same extended ParamType.  It also assumes that there is a "gettable" value
+!> that is of thisParam%name on the ParamType.  This function determines
+!> the extended type, then "gets" the appropriate parameter from both lists,
+!> then checks their equivalence.  If they are equal or approximately equal, 
+!> the function results in true.  If not, false.  The function also performs 
+!> unit test harness assertions when checking the values.
+!>
+    FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='matchTest_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN),TARGET :: thatParam
       CHARACTER(LEN=*),INTENT(IN) :: prefix
@@ -3062,7 +3137,322 @@ MODULE ParameterLists
         CLASS DEFAULT
           CONTINUE
       ENDSELECT
-    ENDFUNCTION match_ParamType
+    ENDFUNCTION matchTest_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief This function checks the values of thisParam and thatParam and returns 
+!>        if they are equal or approximately equal.
+!> @param thisParam  The parameter list being validated
+!> @param thatParam  The parameter list being checked against
+!> @param bool The logical result of the checked parameters.
+!>
+!> The assumptions of this routine are that the parameters passed in are the 
+!> same extended ParamType.  It also assumes that there is a "gettable" value
+!> that is of thisParam%name on the ParamType.  This function determines
+!> the extended type, then "gets" the appropriate parameter from both lists,
+!> then checks their equivalence.  If they are equal or approximately equal, 
+!> the function results in true.  If not, false.  An error is reported if the 
+!> comparison fails.
+!> 
+    FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='matchList_ParamType'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN),TARGET :: thatParam
+      CHARACTER(LEN=*),INTENT(IN) :: prefix
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK) :: bool
+      TYPE(StringType) :: errmesstt,errmess,errmesstp
+      CLASS(ParamType),POINTER :: paramPtr
+      INTEGER(SIK) :: i,j
+      LOGICAL(SBK) :: tmpsbk1,tmpsbk2
+      LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
+      REAL(SSK) :: tmpssk1,tmpssk2
+      REAL(SSK),ALLOCATABLE :: tmpsska11(:),tmpsska21(:,:),tmpsska31(:,:,:)
+      REAL(SSK),ALLOCATABLE :: tmpsska12(:),tmpsska22(:,:),tmpsska32(:,:,:)
+      REAL(SDK) :: tmpsdk1,tmpsdk2
+      REAL(SDK),ALLOCATABLE :: tmpsdka11(:),tmpsdka21(:,:),tmpsdka31(:,:,:)
+      REAL(SDK),ALLOCATABLE :: tmpsdka12(:),tmpsdka22(:,:),tmpsdka32(:,:,:)
+      INTEGER(SNK) :: tmpsnk1,tmpsnk2
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka11(:),tmpsnka21(:,:),tmpsnka31(:,:,:)
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka12(:),tmpsnka22(:,:),tmpsnka32(:,:,:)
+      INTEGER(SLK) :: tmpslk1,tmpslk2
+      INTEGER(SLK),ALLOCATABLE :: tmpslka11(:),tmpslka21(:,:),tmpslka31(:,:,:)
+      INTEGER(SLK),ALLOCATABLE :: tmpslka12(:),tmpslka22(:,:),tmpslka32(:,:,:)
+      TYPE(StringType) :: tmpstr1,tmpstr2
+      TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
+      TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
+
+      !Point to the intent(in) param to use the get function
+      paramPtr => NULL()
+      bool=.FALSE.
+      !Find the extended parameter type, then use the appropriate variable
+      !and "get" the data to check.
+      errmesstt=' - The values' 
+      errmess=' of the two parameter lists with parameter path "'//prefix//thisParam%name//'"'
+      errmesstp=' are not equal!'
+      SELECTTYPE(paramPtr => thatParam)
+        TYPE IS(ParamType_SSK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
+          bool=(tmpssk1 .APPROXEQ. tmpssk2)
+        TYPE IS(ParamType_SDK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
+          bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
+          IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+        TYPE IS(ParamType_SNK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
+          bool=(tmpsnk1 == tmpsnk2)
+        TYPE IS(ParamType_SLK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
+          bool=(tmpslk1 == tmpslk2)
+        TYPE IS(ParamType_SBK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
+          bool=(tmpsbk1 .EQV. tmpsbk2)
+        TYPE IS(ParamType_STR)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
+          bool=(tmpstr1 == tmpstr2)
+        TYPE IS(ParamType_SSK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
+          bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
+        TYPE IS(ParamType_SDK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
+          bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
+            IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
+        TYPE IS(ParamType_SNK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
+          bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsnka11 == tmpsnka12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
+        TYPE IS(ParamType_SLK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
+          bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpslka11 == tmpslka12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
+        TYPE IS(ParamType_SBK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
+          bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsbka11 .EQV. tmpsbka12)
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
+        TYPE IS(ParamType_STR_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
+          bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
+          IF(bool) THEN
+            DO i=1,SIZE(tmpstra11)
+              bool=tmpstra11(i) == tmpstra12(i)
+              IF(.NOT. bool) EXIT
+            ENDDO
+            !clear?
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
+        TYPE IS(ParamType_SSK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
+          bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
+        TYPE IS(ParamType_SDK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
+          bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
+        TYPE IS(ParamType_SNK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
+          bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsnka21 == tmpsnka22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
+        TYPE IS(ParamType_SLK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
+          bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpslka21 == tmpslka22)
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
+        TYPE IS(ParamType_STR_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
+          bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
+            IF(bool) THEN
+              outer : DO j=1,SIZE(tmpstra21,DIM=2)
+                DO i=1,SIZE(tmpstra21,DIM=1)
+                  bool=tmpstra21(i,j) == tmpstra22(i,j)
+                  IF(.NOT.bool) EXIT outer
+                ENDDO
+              ENDDO outer
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          !clear?
+          DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
+        TYPE IS(ParamType_SSK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
+          bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
+        TYPE IS(ParamType_SDK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
+          bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
+        TYPE IS(ParamType_SNK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
+          bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsnka31 == tmpsnka32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
+        TYPE IS(ParamType_SLK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
+          bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpslka31 == tmpslka32)
+              ELSE
+                errmesstt=' - Dimension 3' 
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2' 
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1' 
+          ENDIF
+          DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
+        TYPE IS(ParamType_List)
+          bool=SAME_TYPE_AS(thisParam,paramPtr)
+          errmesstt=' - The parameters' 
+          errmesstp=' are not the same type!'
+        CLASS DEFAULT
+          CONTINUE
+      ENDSELECT
+      !Error message.
+      IF(.NOT. bool) CALL e%raiseError(modName//'::'//myName// &
+          errmesstt//errmess//errmesstp)
+    ENDFUNCTION matchList_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes a ParamType object as a parameter list
