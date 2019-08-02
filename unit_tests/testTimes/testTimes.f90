@@ -17,7 +17,6 @@ PROGRAM testTimes
   TYPE(TimerType) :: testTimer
 
   INTEGER :: idum1,idum2,idum3,ioerr
-  LOGICAL(SBK) :: bool
   CHARACTER(LEN=1) :: adum1,adum2
   CHARACTER(LEN=5) :: adum3
   CHARACTER(LEN=2) :: adum4

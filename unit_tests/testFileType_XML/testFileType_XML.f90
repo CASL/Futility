@@ -111,7 +111,7 @@ PROGRAM testXMLFileType
     nch=SIZE(getChildren)
     ALLOCATE(setChildren(nch-1))
     nch=nch-1
-    setChildren => getChildren(1:nch)
+    setChildren=getChildren(1:nch)
     NULLIFY(getChildren)
     CALL root%setChildren(setChildren)
 
