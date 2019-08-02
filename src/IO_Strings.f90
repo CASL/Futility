@@ -398,7 +398,7 @@ MODULE IO_Strings
         stp=bangloc(1)-1
         DEALLOCATE(bangloc)
       ENDIF
-      string=string(stt:stp)
+      string = string(stt:stp)
     ENDSUBROUTINE stripComment_char
 !
 !-------------------------------------------------------------------------------
@@ -407,7 +407,6 @@ MODULE IO_Strings
 !>
     PURE SUBROUTINE stripComment_string(string)
       TYPE(StringType),INTENT(INOUT) :: string
-      TYPE(StringType) :: tempString
       INTEGER(SIK) :: stt,stp
       INTEGER(SIK),ALLOCATABLE :: bangloc(:)
 
@@ -420,8 +419,7 @@ MODULE IO_Strings
         stp=bangloc(1)-1
         DEALLOCATE(bangloc)
       ENDIF
-      CALL getSubString(string,tempString,stt,stp)
-      string=tempString
+      string = string%at(stt,stp)
     ENDSUBROUTINE stripComment_string
 !
 !-------------------------------------------------------------------------------
@@ -485,7 +483,8 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
 
-      bool = MERGE(INDEX(string,pattern)>0,.FALSE.,LEN(pattern) > 0)
+      bool = MERGE(INDEX(string,pattern)>0,.FALSE., &
+          (LEN(pattern)>0 .AND. LEN(string)>0))
     ENDFUNCTION strmatch_char
 !
 !-------------------------------------------------------------------------------
@@ -503,7 +502,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
 
-      bool=strmatch(CHAR(string),pattern)
+      bool = strmatch(CHAR(string),pattern)
     ENDFUNCTION strmatch_string
 !
 !-------------------------------------------------------------------------------
@@ -558,7 +557,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: findp
       CHARACTER(LEN=*),INTENT(IN) :: repp
       CHARACTER(LEN=:),ALLOCATABLE :: tmp
-      tmp=string
+      tmp = CHAR(string)
       CALL strrep_char_char_char(tmp,findp,repp)
       string=tmp
     ENDSUBROUTINE strrep_string_char_char
@@ -759,7 +758,7 @@ MODULE IO_Strings
       INTEGER(SIK) :: ierr
       TYPE(StringType) :: tmpField
       CALL getField_char_string(i,string,tmpField,ierr)
-      field=tmpField
+      field = CHAR(tmpField)
       IF(LEN(tmpField) > LEN(field)) THEN
         ierr=666
         field=''
@@ -1261,9 +1260,9 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: valstr
       CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: fmtstr
       TYPE(StringType) :: vstr,fstr
-      vstr=valstr
+      vstr = valstr
       CALL getRealFormat_str_str(vstr,fstr)
-      fmtstr=fstr
+      fmtstr = CHAR(fstr)
     ENDSUBROUTINE getRealFormat_char_char
 !
 !-------------------------------------------------------------------------------
@@ -1273,7 +1272,7 @@ MODULE IO_Strings
       CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: fmtstr
       TYPE(StringType) :: fstr
       CALL getRealFormat_str_str(valstr,fstr)
-      fmtstr=fstr
+      fmtstr = CHAR(fstr)
     ENDSUBROUTINE getRealFormat_str_char
 !
 !-------------------------------------------------------------------------------
@@ -1282,7 +1281,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: valstr
       TYPE(StringType),INTENT(INOUT) :: fmtstr
       TYPE(StringType) :: vstr
-      vstr=valstr
+      vstr = valstr
       CALL getRealFormat_str_str(vstr,fmtstr)
     ENDSUBROUTINE getRealFormat_char_str
 !
@@ -1298,9 +1297,9 @@ MODULE IO_Strings
       TYPE(StringType) :: vstr
 
       fmtstr=''
-      vstr=valstr
+      vstr = valstr
       IF(LEN_TRIM(vstr) == 0) RETURN
-      tmpChar=vstr
+      tmpChar = CHAR(vstr)
       READ(tmpChar,*,IOSTAT=ioerr) tmpval
       IF(ioerr == 0) THEN
         vstr=TRIM(ADJUSTL(vstr)) !eliminate whitespace
@@ -1393,7 +1392,6 @@ MODULE IO_Strings
       WRITE(string,'(i0)') i
 
     ENDFUNCTION str_SNK
-!
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts an integer to a character and pads with leading 0s
@@ -1557,19 +1555,6 @@ MODULE IO_Strings
       isLower = 97 <= val .AND. val <= 122
 
    ENDFUNCTION isCharLow
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of a character
-!> string to an array of strings
-!> @param dArr the array of strings
-!> @param c the character value
-!    SUBROUTINE charToStringArray(sArr,c)
-!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
-!      TYPE(StringType),INTENT(IN) :: c
-!      CHARACTER(LEN=100) :: tmpStr
-!      TYPE(StringType) :: tmpElt
-!      INTEGER(SIK) :: numElts
-!      INTEGER(SIK) :: i,j,k
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts a single precision real to a character

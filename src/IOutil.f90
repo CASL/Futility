@@ -221,7 +221,7 @@ MODULE IOutil
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: status
       TYPE(StringType) :: tmp
       CALL GET_CURRENT_DIRECTORY_string(tmp,length,status)
-      dir=tmp
+      dir=CHAR(tmp)
     ENDSUBROUTINE GET_CURRENT_DIRECTORY_char
 !
 !-------------------------------------------------------------------------------

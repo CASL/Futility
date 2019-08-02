@@ -229,7 +229,7 @@ MODULE FileType_Base
     PURE FUNCTION getFilePath_file(file) RESULT(path)
       CLASS(BaseFileType),INTENT(IN) :: file
       CHARACTER(LEN=:),ALLOCATABLE :: path
-      path=file%path
+      path=CHAR(file%path)
     ENDFUNCTION getFilePath_file
 !
 !-------------------------------------------------------------------------------
@@ -240,7 +240,7 @@ MODULE FileType_Base
     PURE FUNCTION getFileName_file(file) RESULT(fname)
       CLASS(BaseFileType),INTENT(IN) :: file
       CHARACTER(LEN=:),ALLOCATABLE :: fname
-      fname=file%name
+      fname=CHAR(file%name)
     ENDFUNCTION getFileName_file
 !
 !-------------------------------------------------------------------------------
@@ -251,7 +251,7 @@ MODULE FileType_Base
     PURE FUNCTION getFileExt_file(file) RESULT(ext)
       CLASS(BaseFileType),INTENT(IN) :: file
       CHARACTER(LEN=:),ALLOCATABLE :: ext
-      ext=file%ext
+      ext=CHAR(file%ext)
     ENDFUNCTION getFileExt_file
 !
 !-------------------------------------------------------------------------------

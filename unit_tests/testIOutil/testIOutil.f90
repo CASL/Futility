@@ -19,8 +19,7 @@ PROGRAM testIOutil
   IMPLICIT NONE
 
   CHARACTER(LEN=256) :: string
-  CHARACTER(LEN=1) :: shortstring2,shortstring3
-  CHARACTER(LEN=:),ALLOCATABLE :: string1,shortstring1,string2
+  CHARACTER(LEN=:),ALLOCATABLE :: string1,string2
   TYPE(ExceptionHandlerType),TARGET :: e
 
   CREATE_TEST('IOUTIL')

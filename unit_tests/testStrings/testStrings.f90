@@ -75,7 +75,7 @@ CONTAINS
 
     !Test assigning a string to a character
     COMPONENT_TEST('Assignment String Scalar to Char')
-    char_str=testString
+    char_str=CHAR(testString)
     ASSERT_EQ(char_str,'variable','char_str')
 
     !Test assigning a string to a string
@@ -169,7 +169,6 @@ CONTAINS
   SUBROUTINE testAssign_arrays()
     TYPE(StringType),ALLOCATABLE :: s1a(:),s1a2(:),s2a(:,:),s2a2(:,:)
     TYPE(StringType) :: testString2
-    LOGICAL(SBK) :: bool
     !Test assigning a char to a 1-D string array
     COMPONENT_TEST('Assignment char to 1-D String Array')
     ALLOCATE(s1a(2))
