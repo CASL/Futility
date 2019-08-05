@@ -125,10 +125,11 @@ MODULE Strings
       !> copybrief StringType::at_string
       !> copydetails StringType::at_string
       PROCEDURE,PASS :: at_string
-      !> copybrief StringType::at_string_slice
-      !> copydetails StringType::at_string_slice
-      PROCEDURE,PASS :: at_string_slice
-      GENERIC :: at => at_string, at_string_slice
+      GENERIC :: at => at_string
+      !> copybrief StringType::substr_str
+      !> copydetails StringType::substr_str
+      PROCEDURE,PASS :: substr_str
+      GENERIC :: substr => substr_str
       !> copybrief StringType::replace_slice
       !> copydetails StringType::replace_slice
       PROCEDURE,PASS :: replace => replace_slice
@@ -463,20 +464,26 @@ MODULE Strings
 !> out of range, then the ascii null character is returned
 !> @param this the string being sliced
 !> @param stt the first index of the slice
-!> @param stp the last index of the slice
+!> @param stp the last index of the slice OPTIONAL: Default = LEN(this)
 !
-  PURE FUNCTION at_string_slice(this,stt,stp) RESULT(slice)
+  PURE FUNCTION substr_str(this,stt,stp) RESULT(slice)
     CLASS(StringType),INTENT(IN) :: this
     INTEGER(SIK),INTENT(IN) :: stt
-    INTEGER(SIK),INTENT(IN) :: stp
+    INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
     CHARACTER(LEN=:),ALLOCATABLE :: slice
+    INTEGER(SIK) :: sub_stp
 
-    IF((stt <= stp) .AND. (stt > 0) .AND. (stp <= LEN(this))) THEN
-      slice = this%s(stt:stp)
+    IF(PRESENT(stp)) THEN
+      sub_stp = stp
+    ELSE
+      sub_stp = LEN(this)
+    ENDIF
+    IF((stt <= sub_stp) .AND. (stt > 0) .AND. (sub_stp <= LEN(this))) THEN
+      slice = this%s(stt:sub_stp)
     ELSE
       ALLOCATE(CHARACTER(0) :: slice)
     ENDIF
-  ENDFUNCTION at_string_slice
+  ENDFUNCTION substr_str
 !
 !-------------------------------------------------------------------------------
 !> @brief Utility function takes a string and converts all upper case letters to
@@ -1008,7 +1015,7 @@ MODULE Strings
       CHARACTER(LEN=*),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) :: rhs
       CHARACTER(LEN=:),ALLOCATABLE :: out_str
-      out_str = lhs//CHAR(rhs)
+      out_str = (lhs//CHAR(rhs))
     ENDFUNCTION concatenate_StringType_onto_char
 !
 !-------------------------------------------------------------------------------
@@ -1026,7 +1033,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: lhs
       CHARACTER(LEN=*),INTENT(IN) :: rhs
       CHARACTER(LEN=:),ALLOCATABLE :: out_str
-      out_str = CHAR(lhs)//rhs
+      out_str = (CHAR(lhs)//rhs)
     ENDFUNCTION concatenate_char_onto_StringType
 !
 !-------------------------------------------------------------------------------
@@ -1043,7 +1050,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) :: rhs
       CHARACTER(LEN=:),ALLOCATABLE :: out_str
-      out_str = CHAR(lhs)//CHAR(rhs)
+      out_str = (CHAR(lhs)//CHAR(rhs))
     ENDFUNCTION concatenate_StringType_onto_StringType
 !
 !-------------------------------------------------------------------------------
@@ -1060,7 +1067,7 @@ MODULE Strings
       CHARACTER(LEN=*),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) ::rhs
       LOGICAL(SBK) :: bool
-      bool = lhs == CHAR(rhs)
+      bool = (lhs == CHAR(rhs))
     ENDFUNCTION equalto_char_StringType
 !
 !-------------------------------------------------------------------------------
@@ -1077,7 +1084,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) ::lhs
       CHARACTER(LEN=*),INTENT(IN) :: rhs
       LOGICAL(SBK) :: bool
-        bool =  CHAR(lhs) == rhs
+        bool =  (CHAR(lhs) == rhs)
     ENDFUNCTION equalto_StringType_char
 !
 !-------------------------------------------------------------------------------
@@ -1094,7 +1101,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) :: rhs
       LOGICAL(SBK) :: bool
-      bool = CHAR(lhs) == CHAR(rhs)
+      bool = (CHAR(lhs) == CHAR(rhs))
     ENDFUNCTION equalto_StringType_StringType
 !
 !-------------------------------------------------------------------------------
@@ -1111,7 +1118,7 @@ MODULE Strings
       CHARACTER(LEN=*),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) :: rhs
       LOGICAL(SBK) :: bool
-      bool = lhs /= CHAR(rhs)
+      bool = (lhs /= CHAR(rhs))
     ENDFUNCTION notequalto_char_StringType
 !
 !-------------------------------------------------------------------------------
@@ -1128,7 +1135,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: lhs
       CHARACTER(LEN=*),INTENT(IN) :: rhs
       LOGICAL(SBK) :: bool
-      bool = CHAR(lhs) /= rhs
+      bool = (CHAR(lhs) /= rhs)
     ENDFUNCTION notequalto_StringType_char
 !
 !-------------------------------------------------------------------------------
@@ -1145,7 +1152,7 @@ MODULE Strings
       CLASS(StringType),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) :: rhs
       LOGICAL(SBK) :: bool
-      bool = CHAR(lhs) /= CHAR(rhs)
+      bool = (CHAR(lhs) /= CHAR(rhs))
     ENDFUNCTION notequalto_StringType_StringType
 !
 !-------------------------------------------------------------------------------

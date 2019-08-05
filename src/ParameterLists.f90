@@ -10021,7 +10021,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              oVal = param%description%at(idx,LEN_TRIM(param%description))
+              oVal = param%description%substr(idx,LEN_TRIM(param%description))
               oSingleVal=CHAR(oVal)
               CALL param%get(TRIM(param%name),singleVal)
 
@@ -10039,7 +10039,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              oVal = param%description%at(idx,LEN_TRIM(param%description))
+              oVal = param%description%substr(idx,LEN_TRIM(param%description))
               oDoubleVal=CHAR(oVal)
               CALL param%get(TRIM(param%name),doubleVal)
 
@@ -10064,7 +10064,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              oVal = param%description%at(idx,LEN_TRIM(param%description))
+              oVal = param%description%substr(idx,LEN_TRIM(param%description))
               CALL char_to_double_array(oDoubleArry,CHAR(oVal))
               CALL param%get(TRIM(param%name),doubleArry)
 

@@ -1078,7 +1078,7 @@ MODULE FileType_HDF5
         CALL strfind(TRIM(CHAR(path2)),FSLASH,slashloc)
         nslash=SIZE(slashloc)
         DO i=1,nslash-1
-          tmppath = path2%at(1,slashloc(i+1)-1)
+          tmppath = path2%substr(1,slashloc(i+1)-1)
           IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(tmppath)))) THEN
             CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(tmppath)),group_id,error)
             CALL h5gclose_f(group_id,error)
@@ -6282,7 +6282,7 @@ MODULE FileType_HDF5
             !Convert back to PL style pathing
             CALL strrep(plpath,'/','->')
             !Skip the first arrow that will be there
-            h5path = plpath%at(3,LEN(plpath))
+            h5path = plpath%substr(3)
             CALL read_pList(thisHDF5File,CHAR(h5path),vals)
           !Get all the necessary information to read in the data
           ELSE
@@ -6323,7 +6323,7 @@ MODULE FileType_HDF5
 
       tmpstr=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
       CALL strrep(tmpstr,'/','->')
-      plpath = tmpstr%at(3,LEN(tmpstr))
+      plpath = tmpstr%substr(3)
       !Open the dataset so we can get the precision
       CALL h5dopen_f(thisHDF5File%file_id,CHAR(h5path),dset_id,error)
       !Get dataspace so we can get dimensions for allocation (rank)

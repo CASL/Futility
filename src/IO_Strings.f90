@@ -419,7 +419,7 @@ MODULE IO_Strings
         stp=bangloc(1)-1
         DEALLOCATE(bangloc)
       ENDIF
-      string = string%at(stt,stp)
+      string = string%substr(stt,stp)
     ENDSUBROUTINE stripComment_string
 !
 !-------------------------------------------------------------------------------

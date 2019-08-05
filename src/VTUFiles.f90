@@ -544,8 +544,6 @@ MODULE VTUFiles
       fileobj%numDataSet=0
     ENDSUBROUTINE writepvtu_VTUXMLFileType
 !
-!TODO doubtful this functionality should even be here, not that it did what it said in the first place
-! In reality this is what std::vector does. Oh how nice a vector class would be.
 !-------------------------------------------------------------------------------
 !> @brief Appends a StringType to an array of StringTypes.
 !> @param str_list array of StringTypes

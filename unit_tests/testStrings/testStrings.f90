@@ -57,7 +57,7 @@ CONTAINS
     WRITE(*,*) CHAR(testString)
     ASSERT_EQ(CHAR(testString),'constant','CHAR(testString) (=''constant'')')
     ASSERT_EQ(testString%at(1),'c','CHAR(testString,1,1) (=''constant'')')
-    ASSERT_EQ(testString%at(2,3),'on','CHAR(testString,2,3) (=''constant'')')
+    ASSERT_EQ(testString%substr(2,3),'on','CHAR(testString,2,3) (=''constant'')')
     !ASSERT(testString%at(-1,100) == 'constant','CHAR(testString,-1,100) (=''constant'')')
     ASSERT_EQ(LEN(testString),8,'LEN(testString) (=''constant'')')
     ASSERT_EQ(LEN_TRIM(testString),8,'LEN_TRIM(testString) (=''constant'')')
@@ -164,7 +164,6 @@ CONTAINS
   ENDSUBROUTINE testAssign_nums
 !
 !-------------------------------------------------------------------------------
-!> @brief 
 !>
   SUBROUTINE testAssign_arrays()
     TYPE(StringType),ALLOCATABLE :: s1a(:),s1a2(:),s2a(:,:),s2a2(:,:)
@@ -266,7 +265,6 @@ CONTAINS
   ENDSUBROUTINE testAssign_arrays
 !
 !-------------------------------------------------------------------------------
-!> @brief 
 !>
   SUBROUTINE testIntrinsic()
     TYPE(StringType) :: testString,testString2
