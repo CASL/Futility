@@ -393,9 +393,9 @@ MODULE LinearSolverTypes
       ENDIF
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',comm)
-
       CALL vecxPList%add('VectorType->MPI_Comm_ID',comm)
       CALL vecbPList%add('VectorType->MPI_Comm_ID',comm)
+      CALL pcPList%add('PreCondType->MPI_Comm_ID',comm)
       !pull size from source vector
       CALL validParams%get('LinearSolverType->b->VectorType->n',n)
 
@@ -688,42 +688,48 @@ MODULE LinearSolverTypes
       IF(solver%isinit) THEN
         IF(ASSOCIATED(solver%A)) THEN
           IF(solver%A%isInit) THEN
-            ! Set up PreconditionerType
-            CALL solver%pcParams%get('PreCondType->pcType',pcTypeName)
+            IF (.NOT. ALLOCATED(solver%PreCondType)) THEN
+              ! Set up PreconditionerType
+              CALL solver%pcParams%get('PreCondType->pcType',pcTypeName)
 
-            ! If pciters < 0 then preconditioning will always be used
-            ! Otherwise, pciters will be decremented, and preconditioning will stop
-            ! when pciters == 0
+              ! If pciters < 0 then preconditioning will always be used
+              ! Otherwise, pciters will be decremented, and preconditioning will stop
+              ! when pciters == 0
 
-            ! If pcsetup < 0, the preconditioner will be set up every time.
-            ! If pcsetup == 0, it will only get set up once.
-            ! Otherwise, set it up every pcsetup iterations
-            
-            SELECT CASE(pcTypeName)
-            CASE('NOPC')
-              solver%PCTypeName='NOPC'
-            CASE('DEFAULT')
-              ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
-              solver%PCTypeName='DISTR_RSOR'
+              ! If pcsetup < 0, the preconditioner will be set up every time.
+              ! If pcsetup == 0, it will only get set up once.
+              ! Otherwise, set it up every pcsetup iterations
+              
+              SELECT CASE(pcTypeName)
+              CASE('NOPC')
+                solver%PCTypeName='NOPC'
+              CASE('DEFAULT')
+                ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
+                solver%PCTypeName='DISTR_RSOR'
+                CALL solver%pcParams%clear()
+                CALL solver%pcParams%add('PreCondType->omega',1.0_SRK)
+              CASE('ILU')
+                ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+                solver%PCTypeName='ILU'
+              CASE('DISTR_RSOR')
+                ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
+                solver%PCTypeName='DISTR_RSOR'
+              CASE('DISTR_JACOBI')
+                ALLOCATE(DistributedJacobi_PreCondType :: solver%PreCondType)
+                solver%PCTypeName='DISTR_JACOBI'
+              ENDSELECT
+
+              IF (solver%TPLType /= PETSC) THEN
+                CALL solver%PreCondType%init(solver%A,solver%pcParams)
+                CALL solver%PreCondType%setup()
+              ENDIF
               CALL solver%pcParams%clear()
-              CALL solver%pcParams%add('PreCondType->pcType','DISTR_RSOR')
-              CALL solver%pcParams%add('PreCondType->omega',1.0_SRK)
-            CASE('ILU')
-              ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
-              solver%PCTypeName='ILU'
-            CASE('DISTR_RSOR')
-              ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
-              solver%PCTypeName='DISTR_RSOR'
-            CASE('DISTR_JACOBI')
-              ALLOCATE(DistributedJacobi_PreCondType :: solver%PreCondType)
-              solver%PCTypeName='DISTR_JACOBI'
-            CASE DEFAULT
-              solver%PCTypeName=pcTypeName
-            ENDSELECT
-
-            CALL solver%PreCondType%init(solver%A,solver%pcParams)
-            CALL solver%PreCondType%setup()
-            CALL solver%pcParams%clear()
+            ELSE
+              IF (solver%TPLType /= PETSC) CALL solver%PreCondType%setup()
+            ENDIF
+            ! If pcsetup was 0, we've successfully set up the PC
+            ! Make it huge so it is never set up again.
+            IF (solver%pcsetup == 0) solver%pcsetup = HUGE(0_SIK)
           ELSE
             CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
               ' - LinearSolverType matrix is not initialized. Preconditioner cannot be set up.')
@@ -1199,7 +1205,8 @@ MODULE LinearSolverTypes
                 CALL Belos_solve(solver%Belos_solver)
 #endif
               CLASS DEFAULT
-                IF(solver%PCTypeName /= 'NOPC') THEN
+                IF(solver%PCTypeName /= 'NOPC' .AND. solver%pciters/=0) THEN
+                  ! Decrementing handled by calling function
                   CALL solveGMRES(solver,solver%PreCondType)
                 ELSE
                   CALL solveGMRES(solver)
