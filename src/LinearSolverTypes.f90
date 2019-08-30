@@ -1708,6 +1708,7 @@ MODULE LinearSolverTypes
         CALL vecPlist%add('VectorType -> n',thisLS%A%n)
         CALL vecPlist%add('VectorType -> MPI_Comm_ID',thisLS%MPIparallelEnv%comm)
         CALL vecPlist%add('VectorType -> chunkSize',x%chunkSize)
+        CALL vecPlist%add('VectorType -> nlocal',x%nlocal)
         ALLOCATE(NativeDistributedVectorType :: u)
         ALLOCATE(NativeDistributedVectorType :: Vy)
       CLASS DEFAULT
@@ -1719,11 +1720,12 @@ MODULE LinearSolverTypes
       CALL Vy%init(vecPlist)
 
       ! Compute norm of b
-      SELECT TYPE(b => thisLS%b); CLASS IS(NativeVectorType)
-        norm_b = BLAS_dot(b%b,b%b)
-      END SELECT
-      CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_b)
-      norm_b = SQRT(norm_b)
+      norm_b = BLAS_nrm2(thisLS%b)
+      !SELECT TYPE(b => thisLS%b); CLASS IS(NativeVectorType)
+      !  norm_b = BLAS_dot(b%b,b%b)
+      !END SELECT
+      !CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_b)
+      !norm_b = SQRT(norm_b)
 
       ! Check if solving null system
       IF (norm_b <= EPSILON(0.0_SRK)) THEN
@@ -1811,6 +1813,7 @@ MODULE LinearSolverTypes
         ENDDO
 
         ! Subtract vector components
+        ! TODO: Convert to WaitAny
         DO orthogIdx=1,krylovIdx
           CALL MPI_Wait(orthogReq(orthogIdx),MPI_STATUS_IGNORE,mpierr)
           u%b = u%b - h(orthogIdx)*V(orthogIdx)%b
@@ -1823,9 +1826,10 @@ MODULE LinearSolverTypes
           ENDIF
         ENDDO
 
-        h(1) = BLAS_dot(u%b,u%b)
-        CALL thisLS%MPIparallelEnv%allReduce_scalar(h(1))
-        h(1) = SQRT(h(1))
+        h(1) = BLAS_nrm2(u)
+        !h(1) = BLAS_dot(u%b,u%b)
+        !CALL thisLS%MPIparallelEnv%allReduce_scalar(h(1))
+        !h(1) = SQRT(h(1))
 
         IF (h(1) > 0.0_SRK) THEN
           V(krylovIdx+1)%b = u%b/h(1)

@@ -693,7 +693,9 @@ MODULE MatrixTypes_Native
       CHARACTER(LEN=*),PARAMETER :: myName='assemble_BandedMatrixType'
       CLASS(BandedMatrixType),INTENT(INOUT) :: thisMatrix
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-      INTEGER(SIK),ALLOCATABLE :: numOnDiag(:)
+      INTEGER(SIK),ALLOCATABLE :: numOnDiag(:),idxOrig(:)
+      INTEGER(SIK),ALLOCATABLE :: iSort(:),jSort(:)
+      REAL(SRK),ALLOCATABLE :: valSort(:)
       INTEGER(SIK) :: counter,currIdx,currBand,nBands,i,j
       INTEGER(SLK) :: iLong,jLong,nLong,mLong
       INTEGER(SLK),ALLOCATABLE :: diagRank(:)
@@ -702,27 +704,37 @@ MODULE MatrixTypes_Native
       REQUIRE(thisMatrix%nnz == thisMatrix%counter)
 
       ALLOCATE(diagRank(SIZE(thisMatrix%iTmp)))
+      ALLOCATE(idxOrig(SIZE(thisMatrix%iTmp)))
       DO i=1,SIZE(thisMatrix%iTmp)
         iLong = INT(thisMatrix%iTmp(i),kind=SLK)
         jLong = INT(thisMatrix%jTmp(i),kind=SLK)
         nLong = INT(thisMatrix%n,kind=SLK)
         mLong = INT(thisMatrix%m,kind=SLK)
+        idxOrig(i) = i
         IF (thisMatrix%n - thisMatrix%iTmp(i) + 1 + thisMatrix%jTmp(i) <= MAX(thisMatrix%m,thisMatrix%n)) THEN
-          diagRank(i) = jLong - 1 + ((nLong - iLong + jLong - 1)*(nLong - iLong + jLong))/2
-          diagRank(i) = diagRank(i) - mLong*nLong/2
+          diagRank(i) = -mLong*nLong/2
+          diagRank(i) = diagRank(i) + jLong - 1 + ((nLong - iLong + jLong - 1)*(nLong - iLong + jLong))/2
         ELSE
-          diagRank(i) = mLong - jLong + ((iLong + mLong - jLong - 1)*(iLong + mLong - jLong))/2
-          diagRank(i) = nLong*mLong/2 - diagRank(i)
+          diagRank(i) = nLong*mLong/2
+          diagRank(i) = diagRank(i) - (mLong - jLong + ((iLong + mLong - jLong - 1)*(iLong + mLong - jLong))/2)
         END IF
       END DO
 
-      CALL diagonal_sort(diagRank,thisMatrix%iTmp,thisMatrix%jTmp,thisMatrix%elemTmp)
+      CALL sort(diagRank,idxOrig)
+      ! Now update iTmp,jTmp,etc
+      ALLOCATE(iSort(SIZE(idxOrig)))
+      iSort = thisMatrix%iTmp(idxOrig)
+      DEALLOCATE(thisMatrix%iTmp)
+      jSort = thisMatrix%jTmp(idxOrig)
+      DEALLOCATE(thisMatrix%jTmp)
+      valSort = thisMatrix%elemTmp(idxOrig)
+      DEALLOCATE(thisMatrix%elemTmp)
 
       ! Find number of elements in each band
       ALLOCATE(numOnDiag(thisMatrix%m+thisMatrix%n-1))
       numOnDiag = 0_SIK
-      DO i=1,SIZE(thisMatrix%elemTmp)
-        numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%n) = 1 + numOnDiag(thisMatrix%jTmp(i)-thisMatrix%iTmp(i)+thisMatrix%n)
+      DO i=1,SIZE(iSort)
+        numOnDiag(jSort(i)-iSort(i)+thisMatrix%n) = 1 + numOnDiag(jSort(i)-iSort(i)+thisMatrix%n)
       END DO
       nBands = 0
       DO i=1,SIZE(numOnDiag)
@@ -744,16 +756,13 @@ MODULE MatrixTypes_Native
       counter = 1
       DO i=1,SIZE(thisMatrix%bandIdx)
         DO j=1,SIZE(thisMatrix%bands(i)%jIdx)
-          thisMatrix%bands(i)%jIdx(j) = thisMatrix%jTmp(counter)
-          thisMatrix%bands(i)%elem(j) = thisMatrix%elemTmp(counter)
+          thisMatrix%bands(i)%jIdx(j) = jSort(counter)
+          thisMatrix%bands(i)%elem(j) = valSort(counter)
           counter = counter + 1
         END DO
       END DO
 
       thisMatrix%isAssembled = .TRUE.
-      DEALLOCATE(thisMatrix%iTmp)
-      DEALLOCATE(thisMatrix%jTmp)
-      DEALLOCATE(thisMatrix%elemTmp)
     ENDSUBROUTINE assemble_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
