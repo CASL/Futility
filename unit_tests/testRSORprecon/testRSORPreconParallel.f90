@@ -62,7 +62,8 @@ PROGRAM testRSORPreconParallel
         REAL(SRK)::tmpreal1(9*9),tmpreal2(9),tempreal
 #ifdef HAVE_MPI
 
-        CALL PListRSOR%add('PCType->omega',1.0_SRK)
+        CALL PListRSOR%add('PreCondType->omega',1.0_SRK)
+        CALL PListRSOR%add('PreCondType->comm',PE_COMM_WORLD)
         CALL PListVec%add('VectorType->n',9_SIK)
         CALL PListVec%add('VectorType->chunkSize',3_SIK)
         CALL PListVec%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
@@ -107,24 +108,27 @@ PROGRAM testRSORPreconParallel
         CALL testBandedMatrix%init(PListMat)
         CALL testBlockBandedMatrix%init(PListMat)
         SELECTTYPE(testBandedMatrix); TYPE IS(DistributedBandedMatrixType)
-            DO i=1,9
-                DO j=1,9
-                    IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
-                        CALL testBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
-                    END IF
-                END DO
-            END DO
-            CALL testBandedMatrix%assemble()
-        ENDSELECT
         SELECTTYPE(testBlockBandedMatrix); TYPE IS(DistributedBlockBandedMatrixType)
-            DO i=1,9
-                DO j=1,9
-                    IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
-                        CALL testBlockBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
-                    END IF
-                END DO
-            END DO
-            CALL testBlockBandedMatrix%assemble()
+          DO i=1,9
+            IF (rank==0) THEN
+              DO j=1,6
+                IF(tmpreal1((i-1)*9+j) .NE. 0_SRK) THEN
+                  CALL testBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
+                  CALL testBlockBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
+                END IF
+              END DO
+             ELSE
+              DO j=7,9
+                IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
+                  CALL testBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
+                  CALL testBlockBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
+                END IF
+              END DO
+            END IF
+          END DO
+          CALL testBandedMatrix%assemble()
+          CALL testBlockBandedMatrix%assemble()
+        ENDSELECT
         ENDSELECT
 
 
@@ -229,7 +233,7 @@ PROGRAM testRSORPreconParallel
             ! Check %apply
             workVector = testVector
             CALL testSORP%apply(workVector)
-            ASSERT(ALL(workVector%b .APPROXEQA. refVector%b),'BandedMatrixType RSOR%apply(vector)')
+            ASSERT(ALL(workVector%b .APPROXEQR. refVector%b),'BandedMatrixType RSOR%apply(vector)')
             FINFO() 'Result:',workVector%b,'Solution:',refVector%b
 
             ! Check %clear
@@ -268,7 +272,7 @@ PROGRAM testRSORPreconParallel
             ! Check %apply
             workVector%b = testVector%b
             CALL testSORP%apply(workVector)
-            ASSERT(ALL(workVector%b .APPROXEQA. refVector%b),'BlockBandedMatrixType RSOR%apply(vector)')
+            ASSERT(ALL(workVector%b .APPROXEQR. refVector%b),'BlockBandedMatrixType RSOR%apply(vector)')
             FINFO() 'Result:',workVector%b,'Solution:',refVector%b
 
             ! Check %clear

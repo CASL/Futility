@@ -788,7 +788,9 @@ MODULE PreconditionerTypes
       thisPC%A => A
 
       !get omega from the parameter list
-      CALL params%get('PreCondType->omega',thisPC%omega)
+      thisPC%omega = 0.0_SRK
+      IF (params%has('PreCondType->omega')) &
+        CALL params%get('PreCondType->omega',thisPC%omega)
 
       !this preconditioner will only support the distr. banded matrices
       SELECTTYPE(A)

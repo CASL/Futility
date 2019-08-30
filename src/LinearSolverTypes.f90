@@ -703,6 +703,7 @@ MODULE LinearSolverTypes
               SELECT CASE(pcTypeName)
               CASE('NOPC')
                 solver%PCTypeName='NOPC'
+                RETURN
               CASE('DEFAULT')
                 ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
                 solver%PCTypeName='DISTR_RSOR'

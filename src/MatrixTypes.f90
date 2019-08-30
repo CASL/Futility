@@ -378,6 +378,10 @@ MODULE MatrixTypes
           ALLOCATE(TriDiagMatrixType :: dest)
         TYPE IS(BandedMatrixType)
           ALLOCATE(BandedMatrixType :: dest)
+        TYPE IS(DistributedBandedMatrixType)
+          ALLOCATE(DistributedBandedMatrixType :: dest)
+        TYPE IS(DistributedBlockBandedMatrixType)
+          ALLOCATE(DistributedBlockBandedMatrixType :: dest)
         TYPE IS(SparseMatrixType)
           ALLOCATE(SparseMatrixType :: dest)
 #ifdef FUTILITY_HAVE_PETSC
