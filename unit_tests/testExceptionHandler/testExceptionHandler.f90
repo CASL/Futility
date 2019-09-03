@@ -222,7 +222,7 @@ PROGRAM testExceptionHandler
       CALL testE%setLogFileUnit(OUTPUT_UNIT)
       CALL testE%setLogFileUnit(ERROR_UNIT)
       CALL testE%setLogFileUnit(-1)
-      ASSERT(testE%getCounter(EXCEPTION_WARNING) == 3,'%counter(WARN)')
+      ASSERT(testE%getCounter(EXCEPTION_WARNING) == 4,'%counter(WARN)')
       mesg='#### EXCEPTION_WARNING #### - '// &
         'Illegal unit number for log file. Log file unit not set.'
       ASSERT(TRIM(testE%getLastMessage()) == TRIM(mesg),'%getLastMessage')

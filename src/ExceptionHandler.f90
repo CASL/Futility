@@ -986,7 +986,7 @@ MODULE ExceptionHandler
       INTEGER(SIK),INTENT(IN) :: logUnit
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: mesg
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: prefix
-      INTEGER(SIK) :: ioerr1,ioerr2
+      INTEGER(SIK) :: ioerr1,ioerr2,prefixLen
 
       !Set the appropriate prefix and printing options
       SELECT CASE(eCode)
@@ -1035,8 +1035,8 @@ MODULE ExceptionHandler
       ENDIF
 
       !Set the message to be included as one line back to exception object
-      prefix = TRIM(prefix)//' - '
-      WRITE(mesg,'(a)') TRIM(prefix)//TRIM(mesg(1:EXCEPTION_MAX_MESG_LENGTH-LEN(TRIM(prefix))))
+      prefixLen = LEN_TRIM(prefix)+3
+      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg(1:EXCEPTION_MAX_MESG_LENGTH-prefixLen))
     ENDSUBROUTINE exceptionMessage
 !
 !-------------------------------------------------------------------------------
