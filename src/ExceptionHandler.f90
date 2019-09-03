@@ -60,7 +60,7 @@
 !>   CALL e%setLogFileUnit(23)
 !>   OPEN(UNIT=e%getLogFileUnit(),FILE='Exception.log', &
 !>        ACCESS='SEQUENTIAL',FORM='FORMATTED')
-!>   CALL e%setLogFileActive(.TRUE.)
+!>   CALL e%setLogActive(.TRUE.)
 !>
 !>   !Suppress reporting of exceptions to standard error
 !>   CALL e%setQuietMode(.TRUE.)
@@ -1035,7 +1035,8 @@ MODULE ExceptionHandler
       ENDIF
 
       !Set the message to be included as one line back to exception object
-      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg)
+      prefix = TRIM(prefix)//' - '
+      WRITE(mesg,'(a)') TRIM(prefix)//TRIM(mesg(1:EXCEPTION_MAX_MESG_LENGTH-LEN(TRIM(prefix))))
     ENDSUBROUTINE exceptionMessage
 !
 !-------------------------------------------------------------------------------
