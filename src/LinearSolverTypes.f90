@@ -1691,7 +1691,7 @@ MODULE LinearSolverTypes
       CLASS(NativeVectorType),ALLOCATABLE :: V(:)
       CLASS(NativeVectorType),ALLOCATABLE :: u,Vy ! Generic vector container
       REAL(SRK),ALLOCATABLE :: R(:,:) ! Array of basis vector coeffs for sol.
-      REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:),y(:),h(:)
+      REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:),h(:)
       TYPE(ParamType) :: vecPlist
       REAL(SRK) :: norm_b,norm_r0,currResid
       REAL(SRK) :: divTmp,t,temp,tol
@@ -1721,11 +1721,6 @@ MODULE LinearSolverTypes
 
       ! Compute norm of b
       norm_b = BLAS_nrm2(thisLS%b)
-      !SELECT TYPE(b => thisLS%b); CLASS IS(NativeVectorType)
-      !  norm_b = BLAS_dot(b%b,b%b)
-      !END SELECT
-      !CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_b)
-      !norm_b = SQRT(norm_b)
 
       ! Check if solving null system
       IF (norm_b <= EPSILON(0.0_SRK)) THEN
@@ -1765,7 +1760,6 @@ MODULE LinearSolverTypes
       ALLOCATE(givens_cos(thisLS%nRestart))
       ALLOCATE(givens_sin(thisLS%nRestart))
       ALLOCATE(f(thisLS%nRestart))
-      ALLOCATE(y(thisLS%nRestart))
       ALLOCATE(h(thisLS%nRestart))
       ALLOCATE(orthogReq(thisLS%nRestart))
 
@@ -1790,21 +1784,6 @@ MODULE LinearSolverTypes
         ENDIF       
  
         ! Create orthogonal basis
-        !h = BLAS_dot(V(1)%b,u%b)
-        !CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
-
-        !u%b = u%b - h*V(1)%b
-        !t = h
-        !DO orthogIdx=2,krylovIdx
-        !  h = BLAS_dot(V(orthogIdx)%b,u%b)
-        !  CALL thisLS%MPIparallelEnv%allReduce_scalar(h)
-        !  u%b = u%b - h*V(orthogIdx)%b
-
-        !  oi1 = orthogIdx - 1
-        !  R(oi1,krylovIdx) = givens_cos(oi1)*t + givens_sin(oi1)*h
-        !  t = givens_cos(oi1)*h - givens_sin(oi1)*t
-        !END DO
-
         ! Perform distributed dot, masking communication
         orthogReq = 0
         DO orthogIdx=1,krylovIdx
@@ -1816,7 +1795,7 @@ MODULE LinearSolverTypes
         ! TODO: Convert to WaitAny
         DO orthogIdx=1,krylovIdx
           CALL MPI_Wait(orthogReq(orthogIdx),MPI_STATUS_IGNORE,mpierr)
-          u%b = u%b - h(orthogIdx)*V(orthogIdx)%b
+          CALL BLAS_axpy(V(orthogIdx),u,-h(orthogIdx))
           IF (orthogIdx == 1) THEN
             t = h(1)
           ELSE
@@ -1827,9 +1806,6 @@ MODULE LinearSolverTypes
         ENDDO
 
         h(1) = BLAS_nrm2(u)
-        !h(1) = BLAS_dot(u%b,u%b)
-        !CALL thisLS%MPIparallelEnv%allReduce_scalar(h(1))
-        !h(1) = SQRT(h(1))
 
         IF (h(1) > 0.0_SRK) THEN
           V(krylovIdx+1)%b = u%b/h(1)
@@ -1850,13 +1826,10 @@ MODULE LinearSolverTypes
         currResid = -givens_sin(krylovIdx)*currResid
 
         IF (ABS(currResid) <= tol .OR. krylovIdx == thisLS%nRestart) THEN
-          y(1:krylovIdx)=f(1:krylovIdx)
-          ! Passing n = krylovIdx should ensure that BLAS doesn't try to access
-          ! unset elements
-          CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),y(1:krylovIdx))
+          CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),f(1:krylovIdx))
           Vy%b = 0.0
           DO i=1,krylovIdx
-            Vy%b = Vy%b + V(i)%b*y(i)
+            Vy%b = Vy%b + V(i)%b*f(i)
           END DO
           IF (PRESENT(thisPC)) CALL thisPC%apply(Vy)
           SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
@@ -1881,7 +1854,6 @@ MODULE LinearSolverTypes
       DEALLOCATE(givens_cos)
       DEALLOCATE(givens_sin)
       DEALLOCATE(f)
-      DEALLOCATE(y)
       DEALLOCATE(h)
       DEALLOCATE(orthogReq)
       DO i=1,SIZE(V)
