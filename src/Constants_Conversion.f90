@@ -144,6 +144,10 @@ MODULE Constants_Conversion
   !Temperature conversions
   !> Conversion factor from Celsius to Kelvin
   REAL(SRK),PUBLIC,PARAMETER :: C2K=273.15_SRK
+  !> Conversion factor from Rankine to Kelvin
+  REAL(SRK),PUBLIC,PARAMETER :: R2K=5.0_SRK/9.0_SRK
+  !> Conversion factor from Fahrenheit to Rankine
+  REAL(SRK),PUBLIC,PARAMETER :: F2R=459.67_SRK
 
   !> May be used for comparing real numbers relating to geometry
   !> Tolerance is 0.0001 cm

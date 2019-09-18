@@ -1038,7 +1038,7 @@ MODULE FileType_XML
             !Set the version
             IF(anames(1) == 'version') THEN
               IF(INDEX(avalues(1),'1.') == 1) THEN
-                version=str2double(avalues(1))
+                version=avalues(1)%stof()
                 IF(1.0_SRK < version .AND. version < 2.0_SRK) &
                   thisXMLFile%version=version
               ELSE
@@ -1411,53 +1411,6 @@ MODULE FileType_XML
         ENDIF
       ENDIF
     ENDSUBROUTINE DetermineNChildren
-!
-!-------------------------------------------------------------------------------
-!> @brief Converts a string to a double
-!> @param s the string to convert to a double
-!> @param fmt the format to use to process the double
-!> @returns val the double
-!>
-    PURE FUNCTION str2double(s,fmt) RESULT(val)
-      TYPE(StringType),INTENT(IN) :: s
-      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fmt
-      REAL(SDK) :: val
-      CHARACTER(LEN=s%n) :: tmpChar
-      INTEGER(SIK) :: ierr
-
-      tmpChar=s
-      IF(PRESENT(fmt)) THEN
-        READ(tmpChar,FMT=TRIM(fmt),IOSTAT=ierr) val
-      ELSE
-        READ(tmpChar,FMT=*,IOSTAT=ierr) val
-      ENDIF
-      !IF(PRESENT(iostat)) iostat=ierr
-    ENDFUNCTION str2double
-!
-!-------------------------------------------------------------------------------
-!> @brief Returns a substring of a string type as a string
-!> @param s the string containing the substring
-!> @param i1 the starting index
-!> @param i2 the ending index
-!> @returns val the substring
-!>
-!    PURE FUNCTION getSubString(s,i1,i2) RESULT(val)
-!      TYPE(StringType),INTENT(IN) :: s
-!      INTEGER(SIK),INTENT(IN) :: i1
-!      INTEGER(SIK),INTENT(IN) :: i2
-!      TYPE(StringType) :: val
-!      CHARACTER(LEN=s%n) :: tmpChar
-!      INTEGER(SIK) :: i
-!
-!      val=''
-!      IF(i1 < i2 .AND. i2-i1+1 < s%n) THEN
-!        tmpChar=''
-!        DO i=i1,i2
-!          tmpChar(i:i)=s%s(i)
-!        ENDDO
-!        val=TRIM(tmpChar)
-!      ENDIF
-!    ENDFUNCTION getSubString
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts a character array to a string
