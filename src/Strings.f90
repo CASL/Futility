@@ -139,9 +139,6 @@ MODULE Strings
       !> copybrief StringType::assign_char_to_StringType
       !> copydetails StringType::assign_char_to_StringType
       PROCEDURE,PASS :: assign_char_to_StringType
-      !> copybrief StringType::assign_cchar_to_StringType
-      !> copydetails StringType::assign_cchar_to_StringType
-      PROCEDURE,PASS :: assign_cchar_to_StringType
       !> @copybrief Strings::assign_Short_Integer_to_StringType
       !> @copydetails Strings::assign_Short_Integer_to_StringType
       PROCEDURE assign_Short_Integer_to_StringType
@@ -157,10 +154,10 @@ MODULE Strings
       !> copybrief StringType::assign_Logical_to_StringType
       !> copydetails StringType::assign_Logical_to_StringType
       PROCEDURE assign_Logical_to_StringType
-      GENERIC :: ASSIGNMENT(=) => assign_cchar_to_StringType, &
-          assign_char_to_StringType,assign_Logical_to_StringType, &
-          assign_Single_Real_to_StringType,assign_Double_Real_to_StringType, &
-          assign_Short_Integer_to_StringType,assign_Long_Integer_to_StringType
+      GENERIC :: ASSIGNMENT(=) => assign_char_to_StringType, &
+          assign_Logical_to_StringType,assign_Single_Real_to_StringType, &
+          assign_Double_Real_to_StringType,assign_Short_Integer_to_StringType, &
+          assign_Long_Integer_to_StringType
       !> copybrief StringType::str_to_sik
       !> copydetails StringType::str_to_sik
       PROCEDURE,PASS :: str_to_sik
@@ -328,25 +325,6 @@ MODULE Strings
     CHARACTER(LEN=*),INTENT(IN) :: rhs
     lhs%s = rhs
   ENDSUBROUTINE assign_char_to_StringType
-!
-!-------------------------------------------------------------------------------
-!> @brief Assigns an intrinsic character array to a string
-!> @param lhs the string type receiving the characters
-!> @param rhs the character string that will be assigned
-!>
-  SUBROUTINE assign_cchar_to_StringType(lhs,rhs)
-    CLASS(StringType),INTENT(INOUT) :: lhs
-    CHARACTER(LEN=1),INTENT(IN) :: rhs(:)
-
-    INTEGER(SIK) :: i
-
-    IF(ALLOCATED(lhs%s)) DEALLOCATE(lhs%s)
-    ALLOCATE(CHARACTER(SIZE(rhs)) :: lhs%s)
-    DO i=1,SIZE(rhs)
-      lhs%s(i:i) = rhs(i)
-    ENDDO
-
-  ENDSUBROUTINE assign_cchar_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief splits a StringType at specified delimiter and returns the substrings
