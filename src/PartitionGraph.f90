@@ -415,7 +415,8 @@ MODULE PartitionGraph
         ALLOCATE(thisGraph%partitionAlgArry(nPart))
         DO ipart=1,SIZE(partAlgs)
           thisGraph%partitionAlgArry(ipart)%p => NULL()
-          algName=partAlgs(ipart)%upper()
+          algName=partAlgs(ipart)
+          CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
             CASE('NONE')
             CASE('RECURSIVE EXPANSION BISECTION')
@@ -448,9 +449,10 @@ MODULE PartitionGraph
           !Use previous procedure if no new algorithm is specified
           IF(ALLOCATED(refAlgNames)) THEN
             IF(ipart <= SIZE(refAlgNames)) THEN
-              algName=refAlgNames(ipart)%upper()
+              algName=refAlgNames(ipart)
             ENDIF
           ENDIF
+          CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
             CASE('')     !Do nothing if nothing specified
             CASE('None') !Do nothing if nothing specified

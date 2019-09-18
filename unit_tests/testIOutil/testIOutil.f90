@@ -18,8 +18,8 @@ PROGRAM testIOutil
 
   IMPLICIT NONE
 
-  CHARACTER(LEN=256) :: string
-  CHARACTER(LEN=:),ALLOCATABLE :: string1,string2
+  CHARACTER(LEN=256) :: string,string1,string2,string3
+  CHARACTER(LEN=1) :: shortstring1,shortstring2,shortstring3
   TYPE(ExceptionHandlerType),TARGET :: e
 
   CREATE_TEST('IOUTIL')
@@ -53,8 +53,6 @@ PROGRAM testIOutil
       INTEGER :: stat
       INTEGER,ALLOCATABLE :: tmpint(:)
       CHARACTER(LEN=32) :: char
-      CHARACTER(LEN=52) :: test_phrase
-      CHARACTER(LEN=256) :: filepath,path,fname,ext
       TYPE(StringType) :: tmpStr,tmpStr2,tmpStrArray(10)
 
       COMPONENT_TEST('strmatch')
@@ -90,6 +88,11 @@ PROGRAM testIOutil
       ASSERT_EQ(strarrayeqind(tmpStrArray,'test8'),9,'testing test8')
       ASSERT_EQ(strarrayeqind(tmpStrArray,'test8',.FALSE.),9,'testing test8 F reverse')
       ASSERT_EQ(strarrayeqind(tmpStrArray,'test8',.TRUE.),10,'testing test8 reverse')
+
+      COMPONENT_TEST('nmatchstr')
+      ASSERT_EQ(nmatchstr('testing','test'),1,'testing')
+      ASSERT_EQ(nmatchstr('TEAM','I'),0,'TEAM')
+      ASSERT_EQ(nmatchstr('t e s t',' '),3 ,'t e s t')
 
       COMPONENT_TEST('strfind')
       CALL strfind('stesting','test',tmpint)
@@ -190,6 +193,10 @@ PROGRAM testIOutil
       CALL getField(1,string,string2,stat)
       ASSERT_EQ(TRIM(string2),'/some dir/file','filepath (field)')
       ASSERT_EQ(stat,0,'filepath (stat)')
+      CALL getField(1,string,shortstring1,stat)
+      CALL getField(1,string,shortstring1)
+      ASSERT_EQ(TRIM(shortstring1),'','shortstring (field)')
+      ASSERT_EQ(stat,666,'shortstring (stat)')
       CALL getField(2,string,string2,stat)
       ASSERT_EQ(TRIM(string2),'arg2','filepath 2 (field)')
       ASSERT_EQ(stat,0,'filepath 2 (stat)')
@@ -228,6 +235,10 @@ PROGRAM testIOutil
       CALL getField(1,tmpStr,tmpStr2,stat)
       ASSERT_EQ(TRIM(tmpStr2),'/some dir/file','filepath (field)')
       ASSERT_EQ(stat,0,'filepath (stat)')
+      CALL getField(1,tmpStr,shortstring1,stat)
+      CALL getField(1,tmpStr,shortstring1)
+      ASSERT_EQ(TRIM(shortstring1),'','shortstring (field)')
+      ASSERT_EQ(stat,666,'shortstring (stat)')
       CALL getField(2,tmpStr,tmpStr2,stat)
       ASSERT_EQ(TRIM(tmpStr2),'arg2','filepath 2 (field)')
       ASSERT_EQ(stat,0,'filepath 2 (stat)')
@@ -348,138 +359,140 @@ PROGRAM testIOutil
       CALL toUPPER(string)
       ASSERT_EQ(TRIM(string),'239P84UYQH;JNDF:JKDFH./','gibberish (char)')
       tmpStr='239p84uyqh;jndf:JKDFH./'
-      ASSERT_EQ(TRIM(tmpStr%upper()),'239P84UYQH;JNDF:JKDFH./','gibberish (string)')
+      CALL toUPPER(tmpStr)
+      ASSERT_EQ(TRIM(tmpStr),'239P84UYQH;JNDF:JKDFH./','gibberish (string)')
 
       COMPONENT_TEST('toLower')
       string='239p84uyqh;jndf:JKDFH./'
       CALL toLower(string)
       ASSERT_EQ(TRIM(string),'239p84uyqh;jndf:jkdfh./','gibberish (char)')
       tmpStr='239p84uyqh;jndf:JKDFH./'
-      ASSERT_EQ(TRIM(tmpstr%lower()),'239p84uyqh;jndf:jkdfh./','gibberish (string)')
+      CALL toLower(tmpStr)
+      ASSERT_EQ(TRIM(tmpstr),'239p84uyqh;jndf:jkdfh./','gibberish (string)')
 
       COMPONENT_TEST('getFilePath')
-      filepath='C:\fullpath\dir1\filenoext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
-      filepath='..\relpath\..\dir1\filenoext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
-      filepath='/fullpath/dir1/filenoext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
-      filepath='../relpath/../dir1/filenoext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
-      filepath='C:\fullpath\dir1\file.two.ext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
-      filepath='..\relpath\..\dir1\file.two.ext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
-      filepath='/fullpath/dir1/file.two.ext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
-      filepath='../relpath/../dir1/file.two.ext'
-      CALL getFilePath(filepath,path)
-      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
+      string='C:\fullpath\dir1\filenoext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string)
+      string='..\relpath\..\dir1\filenoext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string)
+      string='/fullpath/dir1/filenoext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string)
+      string='../relpath/../dir1/filenoext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string)
+      string='C:\fullpath\dir1\file.two.ext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string)
+      string='..\relpath\..\dir1\file.two.ext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string)
+      string='/fullpath/dir1/file.two.ext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string)
+      string='../relpath/../dir1/file.two.ext'
+      CALL getFilePath(string,string2)
+      ASSERT_EQ(TRIM(string2),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string)
 
       COMPONENT_TEST('getFileName')
-      filepath='C:\fullpath\dir1\filenoext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
-      filepath='..\relpath\..\dir1\filenoext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
-      filepath='/fullpath/dir1/filenoext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
-      filepath='../relpath/../dir1/filenoext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
-      filepath='C:\fullpath\dir1\file.two.ext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
-      filepath='..\relpath\..\dir1\file.two.ext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
-      filepath='/fullpath/dir1/file.two.ext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
-      filepath='../relpath/../dir1/file.two.ext'
-      CALL getFileName(filepath,fname)
-      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
+      string='C:\fullpath\dir1\filenoext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'filenoext',string)
+      string='..\relpath\..\dir1\filenoext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'filenoext',string)
+      string='/fullpath/dir1/filenoext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'filenoext',string)
+      string='../relpath/../dir1/filenoext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'filenoext',string)
+      string='C:\fullpath\dir1\file.two.ext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'file.two.ext',string)
+      string='..\relpath\..\dir1\file.two.ext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'file.two.ext',string)
+      string='/fullpath/dir1/file.two.ext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'file.two.ext',string)
+      string='../relpath/../dir1/file.two.ext'
+      CALL getFileName(string,string2)
+      ASSERT_EQ(TRIM(string2),'file.two.ext',string)
 
       COMPONENT_TEST('getFileNameExt')
-      filepath='C:\fullpath\dir1\filenoext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'',filepath)
-      filepath='..\relpath\..\dir1\filenoext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'',filepath)
-      filepath='/fullpath/dir1/filenoext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'',filepath)
-      filepath='../relpath/../dir1/filenoext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'',filepath)
-      filepath='C:\fullpath\dir1\file.two.ext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'.ext',filepath)
-      filepath='..\relpath\..\dir1\file.two.ext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'.ext',filepath)
-      filepath='/fullpath/dir1/file.two.ext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'.ext',filepath)
-      filepath='../relpath/../dir1/file.two.ext'
-      CALL getFileNameExt(filepath,ext)
-      ASSERT_EQ(TRIM(ext),'.ext',filepath)
+      string='C:\fullpath\dir1\filenoext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'',string)
+      string='..\relpath\..\dir1\filenoext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'',string)
+      string='/fullpath/dir1/filenoext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'',string)
+      string='../relpath/../dir1/filenoext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'',string)
+      string='C:\fullpath\dir1\file.two.ext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'.ext',string)
+      string='..\relpath\..\dir1\file.two.ext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'.ext',string)
+      string='/fullpath/dir1/file.two.ext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'.ext',string)
+      string='../relpath/../dir1/file.two.ext'
+      CALL getFileNameExt(string,string2)
+      ASSERT_EQ(TRIM(string2),'.ext',string)
 
       COMPONENT_TEST('getFileParts')
       string='C:\fullpath\dir1\filenoext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
-      ASSERT_EQ(TRIM(ext),'',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(string3),'',string//' ext')
       string='..\relpath\..\dir1\filenoext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
-      ASSERT_EQ(TRIM(ext),'',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(string3),'',string//' ext')
       string='/fullpath/dir1/filenoext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
-      ASSERT_EQ(TRIM(ext),'',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(string3),'',string//' ext')
       string='../relpath/../dir1/filenoext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
-      ASSERT_EQ(TRIM(ext),'',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(string3),'',string//' ext')
       string='C:\fullpath\dir1\file.two.ext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
-      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'file.two',string//' name')
+      ASSERT_EQ(TRIM(string3),'.ext',string//' ext')
       string='..\relpath\..\dir1\file.two.ext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
-      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'file.two',string//' name')
+      ASSERT_EQ(TRIM(string3),'.ext',string//' ext')
       string='/fullpath/dir1/file.two.ext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
-      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'file.two',string//' name')
+      ASSERT_EQ(TRIM(string3),'.ext',string//' ext')
       string='../relpath/../dir1/file.two.ext'
-      CALL getFileParts(string,filepath,fname,ext)
-      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
-      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
-      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
+      CALL getFileParts(string,string1,string2,string3)
+      ASSERT_EQ(TRIM(string1),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' path')
+      ASSERT_EQ(TRIM(string2),'file.two',string//' name')
+      ASSERT_EQ(TRIM(string3),'.ext',string//' ext')
 
-      !COMPONENT_TEST('Error Checking')
-      !CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
-      !CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
+      COMPONENT_TEST('Error Checking')
+      CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
+      CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
 
       COMPONENT_TEST('getRealFormat')
       string='1'
@@ -541,27 +554,12 @@ PROGRAM testIOutil
       ASSERT_EQ(str(-5000.0_SDK),'-5.000000000000000E+03','str(SDK)')
       ASSERT_EQ(str(-5000.0_SDK,5),'-5.00000E+03','str(SDK,nDecimal)')
 
-      COMPONENT_TEST('nmatchstr')
-      ASSERT_EQ(nmatchstr('a','a'),1,'test')
-      ASSERT_EQ(nmatchstr('aa','a'),2,'test')
-      ASSERT_EQ(nmatchstr('aaaa','aa'),3,'test')
-      ASSERT_EQ(nmatchstr('aaaab','b'),1,'test')
-      test_phrase = "    The quick brown fox jumped over the lazy dog.   "
-      ASSERT_EQ(nmatchstr(test_phrase,'ab'),0,'test')
-      ASSERT_EQ(nmatchstr(test_phrase,'o'),4,'test')
-      ASSERT_EQ(nmatchstr(test_phrase,'T'),1,'test')
-      ASSERT_EQ(nmatchstr(test_phrase,'s'),0,'test')
-      ASSERT_EQ(nmatchstr('t   e   s   t','  '),6 ,'t  e  s  t')
-      ASSERT_EQ(nmatchstr(test_phrase,' '),15,'test')
-      ASSERT_EQ(nmatchstr(test_phrase,''),52,'test')
-
     ENDSUBROUTINE testIO_Strings
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testRTEnv()
       INTEGER :: n,stat,n0
-      CHARACTER(LEN=1024) :: varname,tmpChar
-      CHARACTER(:),ALLOCATABLE :: tmpCharStr
+      CHARACTER(LEN=1024) :: tmpChar,varname
       TYPE(StringType) :: tmpStr
 
       COMPONENT_TEST('GET_COMMAND')
@@ -604,9 +602,9 @@ PROGRAM testIOutil
       ASSERT(strmatch(CHAR(tmpStr),'testIOutil'),'DIR (string)')
       ASSERT_EQ(n,LEN(tmpStr),'LENGTH (string)')
       n0=n; n=0;
-      CALL GET_CURRENT_DIRECTORY(DIR=tmpCharStr,LENGTH=n,STATUS=stat)
+      CALL GET_CURRENT_DIRECTORY(DIR=tmpChar,LENGTH=n,STATUS=stat)
       ASSERT_EQ(n,n0,'LENGTH (char)')
-      ASSERT(strmatch(TRIM(tmpCharStr),CHAR(tmpStr)),'DIR (char)')
+      ASSERT(strmatch(TRIM(tmpChar),CHAR(tmpStr)),'DIR (char)')
       ASSERT_EQ(stat,0,'STATUS (char)')
       CALL GET_CURRENT_DIRECTORY(LENGTH=n,STATUS=stat)
       ASSERT_EQ(n,n0,'LENGTH')

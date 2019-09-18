@@ -237,8 +237,8 @@ MODULE CommandLineProcessor
 !>
     PURE FUNCTION getExecName(clp) RESULT(execname)
       CLASS(CmdLineProcType),INTENT(IN) :: clp
-      CHARACTER(LEN=:),ALLOCATABLE :: execname
-      execname=CHAR(clp%execname)
+      CHARACTER(LEN=clp%execname%n) :: execname
+      execname=clp%execname
     ENDFUNCTION getExecName
 !
 !-------------------------------------------------------------------------------
@@ -449,10 +449,10 @@ MODULE CommandLineProcessor
     PURE SUBROUTINE getCmdArg_char(clp,iarg,argout)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: iarg
-      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: argout
+      CHARACTER(LEN=*),INTENT(OUT) :: argout
       TYPE(StringType) :: tmpStr
       CALL getCmdArg_string(clp,iarg,tmpStr)
-      argout=CHAR(tmpStr)
+      argout=tmpStr
     ENDSUBROUTINE getCmdArg_char
 !
 !-------------------------------------------------------------------------------

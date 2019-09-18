@@ -276,8 +276,8 @@ MODULE FileType_Input
           ENDIF
         ENDDO
       ENDIF
-      IF(LEN(oneline) > 0) THEN
-        file%probe=oneline%at(1)
+      IF(ALLOCATED(oneline%s)) THEN
+        file%probe=oneline%s(1)
       ELSE
         file%probe=''
         oneline=' '

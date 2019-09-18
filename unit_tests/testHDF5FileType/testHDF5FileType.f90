@@ -319,6 +319,7 @@ PROGRAM testHDF5
 
       CALL h5%fclose()
 
+
     ENDSUBROUTINE testHDF5FileTypeSetup
 !
 !-------------------------------------------------------------------------------
@@ -326,7 +327,7 @@ PROGRAM testHDF5
       TYPE(HDF5FileType) :: h5
       ASSERT(.NOT.h5%isinit,'%isinit')
       ASSERT(.NOT.h5%isNew(),'%newstat')
-      ASSERT_EQ(LEN(h5%fullname),0,'%fullname')
+      ASSERT_EQ(h5%fullname%n,0,'%fullname')
       ASSERT_EQ(h5%getUnitNo(),-1,'%unitno')
       ASSERT_EQ(h5%file_id,0,'%file_id')
     ENDSUBROUTINE testHDF5FileTypeUninit

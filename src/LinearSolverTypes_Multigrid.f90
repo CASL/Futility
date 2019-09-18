@@ -168,7 +168,7 @@ MODULE LinearSolverTypes_Multigrid
       INTEGER(SIK) :: matType,matEngine
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
       LOGICAL(SBK) :: manuallySetLevelInfo
-      CHARACTER(LEN=:),ALLOCATABLE :: timerName
+      CHARACTER(LEN=256) :: timerName
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode :: iperr
 #else
@@ -188,6 +188,7 @@ MODULE LinearSolverTypes_Multigrid
       MPI_Comm_ID=-1
       matType=-1
       matEngine=-1
+      timerName=''
       numberOMP=-1
       CALL validParams%get('LinearSolverType->TPLType',TPLType)
       CALL validParams%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)

@@ -19,7 +19,6 @@ PROGRAM testCmdLineProc
 
   TYPE(CmdLineProcType) :: testCLP
   CHARACTER(LEN=128) :: str
-  CHARACTER(LEN=:),ALLOCATABLE :: str1
   TYPE(ExceptionHandlerType),TARGET :: e
 
   !Configure exception handler of CmdLineProc for testing
@@ -95,7 +94,7 @@ PROGRAM testCmdLineProc
       TYPE(StringType) :: tmpStr
 
       CALL testCLP%clearCmdLine()
-      CALL testCLP%getCmdArg(1,str1)
+      CALL testCLP%getCmdArg(1,str)
       CALL testCLP%setCmdLine('')
       CALL testCLP%clearCmdLine()
       CALL testCLP%setCmdLine()
@@ -106,8 +105,8 @@ PROGRAM testCmdLineProc
       CALL testCLP%setCmdLine()
       ASSERT(testCLP%getNargs() == 1,'%getNargs()')
       str=''
-      CALL testCLP%getCmdArg(1,str1)
-      ASSERT_EQ(TRIM(str1(1:2)),'te','%getCmdArg(...)')
+      CALL testCLP%getCmdArg(1,str(1:2))
+      ASSERT(TRIM(str) == 'te','%getCmdArg(...)')
       CALL testCLP%getCmdArg(1,tmpStr)
       ASSERT(tmpStr == 'test.inp','%getCmdArg(...)')
 
