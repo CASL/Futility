@@ -90,6 +90,7 @@ MODULE IO_Strings
   PUBLIC :: getRealFormat
   PUBLIC :: nFields
   PUBLIC :: getField
+  PUBLIC :: getSubstring
   PUBLIC :: toUPPER
   PUBLIC :: toLower
   PUBLIC :: strfind
@@ -225,6 +226,9 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::toUPPER_char
     !> @copydetails IO_Strings::toUPPER_char
     MODULE PROCEDURE toUPPER_char
+    !> @copybrief IO_Strings::toUPPER_string
+    !> @copydetails IO_Strings::toUPPER_string
+    MODULE PROCEDURE toUPPER_string
   ENDINTERFACE toUPPER
 
   !> @brief Generic interface for toLower
@@ -235,6 +239,9 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::toLower_char
     !> @copydetails IO_Strings::toLower_char
     MODULE PROCEDURE toLower_char
+    !> @copybrief IO_Strings::toLower_string
+    !> @copydetails IO_Strings::toLower_string
+    MODULE PROCEDURE toLower_string
   ENDINTERFACE toLower
 
   !> @brief Generic interface for nFields
@@ -381,6 +388,47 @@ MODULE IO_Strings
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+!> Returns a StringType object which is a section of the input StringType object
+!> @param string the StringType object to get substring from
+!> @param substring the substring stored as a StringType object
+!> @param stt the index of input string at which the substring starts
+!> @param stp the index of input string at which the substring stops
+!>
+    PURE SUBROUTINE getSubstring(string,substring,stt,stp)
+      TYPE(StringType),INTENT(IN) :: string
+      TYPE(StringType),INTENT(OUT) :: substring
+      INTEGER(SIK),INTENT(IN) :: stt,stp
+      INTEGER(SIK) :: i,sublen
+
+      IF(stp >= stt) THEN
+        IF(stp <= string%n) THEN
+          IF(stt > 0) THEN
+            sublen=stp-stt+1
+            ALLOCATE(substring%s(sublen))
+            substring%n=sublen
+            DO i=stt,stp
+              substring%s(i-stt+1)=string%s(i)
+            ENDDO
+            substring%ntrim=substring%n
+            DO i=sublen,1,-1
+              IF(substring%s(i) == ' ') THEN
+                substring%ntrim=substring%ntrim-1
+              ELSE
+                EXIT
+              ENDIF
+            ENDDO
+          ELSE
+            substring=string
+          ENDIF
+        ELSE
+          substring=string
+        ENDIF
+      ELSE
+        substring=' '
+      ENDIF
+    ENDSUBROUTINE getSubstring
+!
+!-------------------------------------------------------------------------------
 !> Strips the end of a line based on the comment symbol (BANG)
 !> @param string the character array to strip any ending comments from
 !>
@@ -398,7 +446,7 @@ MODULE IO_Strings
         stp=bangloc(1)-1
         DEALLOCATE(bangloc)
       ENDIF
-      string = string(stt:stp)
+      string=string(stt:stp)
     ENDSUBROUTINE stripComment_char
 !
 !-------------------------------------------------------------------------------
@@ -407,6 +455,7 @@ MODULE IO_Strings
 !>
     PURE SUBROUTINE stripComment_string(string)
       TYPE(StringType),INTENT(INOUT) :: string
+      TYPE(StringType) :: tempString
       INTEGER(SIK) :: stt,stp
       INTEGER(SIK),ALLOCATABLE :: bangloc(:)
 
@@ -419,7 +468,8 @@ MODULE IO_Strings
         stp=bangloc(1)-1
         DEALLOCATE(bangloc)
       ENDIF
-      string = string%substr(stt,stp)
+      CALL getSubString(string,tempString,stt,stp)
+      string=tempString
     ENDSUBROUTINE stripComment_string
 !
 !-------------------------------------------------------------------------------
@@ -482,9 +532,18 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: i
 
-      bool = MERGE(INDEX(string,pattern)>0,.FALSE., &
-          (LEN(pattern)>0 .AND. LEN(string)>0))
+      bool=.FALSE.
+      IF(LEN(pattern) > 0) THEN
+        DO i=1,LEN(string)
+          IF(i+LEN(pattern)-1 > LEN(string)) EXIT
+          IF(string(i:i+LEN(pattern)-1) == pattern) THEN
+            bool=.TRUE.
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
     ENDFUNCTION strmatch_char
 !
 !-------------------------------------------------------------------------------
@@ -502,7 +561,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
 
-      bool = strmatch(CHAR(string),pattern)
+      bool=strmatch_char(CHAR(string),pattern)
     ENDFUNCTION strmatch_string
 !
 !-------------------------------------------------------------------------------
@@ -556,11 +615,25 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(INOUT) :: string
       CHARACTER(LEN=*),INTENT(IN) :: findp
       CHARACTER(LEN=*),INTENT(IN) :: repp
-      CHARACTER(LEN=:),ALLOCATABLE :: tmp
-      tmp = CHAR(string)
+      CHARACTER(LEN=string%n) :: tmp
+      tmp=string
       CALL strrep_char_char_char(tmp,findp,repp)
       string=tmp
     ENDSUBROUTINE strrep_string_char_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Utility function takes a string and converts all lower case letters to
+!> upper case letters.
+!> @param word input is a string, output has all upper case letters
+!>
+    PURE SUBROUTINE toUPPER_string(word)
+      TYPE(StringType),INTENT(INOUT) :: word
+      INTEGER(SIK) :: i
+      DO i=1,LEN(word)
+        IF('a' <= word%s(i) .AND. word%s(i) <= 'z') &
+          word%s(i)=ACHAR(IACHAR(word%s(i))-32)
+      ENDDO
+    ENDSUBROUTINE toUPPER_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Utility function takes a character array and converts all lower case
@@ -575,6 +648,20 @@ MODULE IO_Strings
           word(i:i)=ACHAR(IACHAR(word(i:i))-32)
       ENDDO
     ENDSUBROUTINE toUPPER_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Utility function takes a string and converts all upper case letters to
+!> lower case letters.
+!> @param word input is a string, output has all lower case letters
+!>
+    PURE SUBROUTINE toLower_string(word)
+      TYPE(StringType),INTENT(INOUT) :: word
+      INTEGER(SIK) :: i
+      DO i=1,LEN(word)
+        IF('A' <= word%s(i) .AND. word%s(i) <= 'Z') &
+          word%s(i)=ACHAR(IACHAR(word%s(i))+32)
+      ENDDO
+    ENDSUBROUTINE toLower_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Utility function takes a character array and converts all upper case
@@ -753,12 +840,12 @@ MODULE IO_Strings
     PURE SUBROUTINE getField_char_char(i,string,field,ierrout)
       INTEGER(SIK),INTENT(IN) :: i
       CHARACTER(LEN=*),INTENT(IN) :: string
-      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: field
+      CHARACTER(LEN=*),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       INTEGER(SIK) :: ierr
       TYPE(StringType) :: tmpField
       CALL getField_char_string(i,string,tmpField,ierr)
-      field = CHAR(tmpField)
+      field=tmpField
       IF(LEN(tmpField) > LEN(field)) THEN
         ierr=666
         field=''
@@ -795,7 +882,7 @@ MODULE IO_Strings
     PURE SUBROUTINE getField_string_char(i,string,field,ierrout)
       INTEGER(SIK),INTENT(IN) :: i
       TYPE(StringType),INTENT(IN) :: string
-      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: field
+      CHARACTER(LEN=*),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       CALL getField_char_char(i,CHAR(string),field,ierrout)
     ENDSUBROUTINE getField_string_char
@@ -814,7 +901,7 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: string
       INTEGER(SIK),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-      CHARACTER(LEN=:),ALLOCATABLE :: char_field
+      CHARACTER(LEN=LEN_TRIM(string)) :: char_field
 
       CALL getField_char_char(i,CHAR(string),char_field,ierrout)
       IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
@@ -834,7 +921,7 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: string
       REAL(SRK),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-      CHARACTER(LEN=:),ALLOCATABLE :: char_field
+      CHARACTER(LEN=LEN_TRIM(string)) :: char_field
 
       CALL getField_char_char(i,CHAR(string),char_field,ierrout)
       IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
@@ -1021,6 +1108,7 @@ MODULE IO_Strings
 !> @brief
 !> @param
 !>
+!>
     FUNCTION printCentered(string,width) RESULT(line)
       CHARACTER(LEN=*),PARAMETER :: myName='printCentered'
       CHARACTER(LEN=*),INTENT(IN) :: string
@@ -1053,7 +1141,7 @@ MODULE IO_Strings
 
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(string(i),pattern)
+        bool=strmatch_char(string(i),pattern)
         IF(bool) EXIT
       ENDDO
     ENDFUNCTION strarraymatch_char
@@ -1077,7 +1165,7 @@ MODULE IO_Strings
 
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch(CHAR(string(i)),pattern)
+        bool=strmatch_char(CHAR(string(i)),pattern)
         IF(bool) EXIT
       ENDDO
     ENDFUNCTION strarraymatch_string
@@ -1109,7 +1197,7 @@ MODULE IO_Strings
         ENDIF
       ENDIF
       DO i=istt,istp,incr
-        bool=strmatch(string(i),pattern)
+        bool=strmatch_char(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
@@ -1143,7 +1231,7 @@ MODULE IO_Strings
         ENDIF
       ENDIF
       DO i=istt,istp,incr
-        bool=strmatch(string(i),pattern)
+        bool=strmatch_string(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
@@ -1258,21 +1346,23 @@ MODULE IO_Strings
 !> @brief
     PURE SUBROUTINE getRealFormat_char_char(valstr,fmtstr)
       CHARACTER(LEN=*),INTENT(IN) :: valstr
-      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: fmtstr
+      CHARACTER(LEN=*),INTENT(INOUT) :: fmtstr
       TYPE(StringType) :: vstr,fstr
-      vstr = valstr
+      vstr=valstr
+      fstr=fmtstr
       CALL getRealFormat_str_str(vstr,fstr)
-      fmtstr = CHAR(fstr)
+      fmtstr=fstr
     ENDSUBROUTINE getRealFormat_char_char
 !
 !-------------------------------------------------------------------------------
 !> @brief
     PURE SUBROUTINE getRealFormat_str_char(valstr,fmtstr)
       TYPE(StringType),INTENT(IN) :: valstr
-      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: fmtstr
+      CHARACTER(LEN=*),INTENT(INOUT) :: fmtstr
       TYPE(StringType) :: fstr
+      fstr=fmtstr
       CALL getRealFormat_str_str(valstr,fstr)
-      fmtstr = CHAR(fstr)
+      fmtstr=fstr
     ENDSUBROUTINE getRealFormat_str_char
 !
 !-------------------------------------------------------------------------------
@@ -1281,7 +1371,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: valstr
       TYPE(StringType),INTENT(INOUT) :: fmtstr
       TYPE(StringType) :: vstr
-      vstr = valstr
+      vstr=valstr
       CALL getRealFormat_str_str(vstr,fmtstr)
     ENDSUBROUTINE getRealFormat_char_str
 !
@@ -1291,15 +1381,15 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: valstr
       TYPE(StringType),INTENT(INOUT) :: fmtstr
 
-      CHARACTER(LEN=:),ALLOCATABLE :: tmpchar
+      CHARACTER(LEN=32) :: tmpchar
       INTEGER(SIK) :: w,d,e,ioerr
       REAL(SRK) :: tmpval
       TYPE(StringType) :: vstr
 
       fmtstr=''
-      vstr = valstr
+      vstr=valstr
       IF(LEN_TRIM(vstr) == 0) RETURN
-      tmpChar = CHAR(vstr)
+      tmpChar=vstr
       READ(tmpChar,*,IOSTAT=ioerr) tmpval
       IF(ioerr == 0) THEN
         vstr=TRIM(ADJUSTL(vstr)) !eliminate whitespace
@@ -1350,6 +1440,7 @@ MODULE IO_Strings
       CALL SlashRep_c(cstring)
       string=cstring
     ENDSUBROUTINE SlashRep_s
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Pure routine replaces slash character in file path names with
@@ -1392,6 +1483,7 @@ MODULE IO_Strings
       WRITE(string,'(i0)') i
 
     ENDFUNCTION str_SNK
+!
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts an integer to a character and pads with leading 0s
@@ -1525,36 +1617,57 @@ MODULE IO_Strings
 !-------------------------------------------------------------------------------
 !> @brief Determines whether a character is capitilized using ASCII format
 !> @param letter character to check
-!> @returns isUpper logical representing if the letter is a capital alphabetic
+!> @returns isValid logical representing if the letter is a capital alphabetic
 !> character
 !>
-   FUNCTION isCharCap(letter) RESULT(isUpper)
+   FUNCTION isCharCap(letter) RESULT(isValid)
       CHARACTER(LEN=1), INTENT(IN) :: letter
 
-      LOGICAL(SBK) :: isUpper
+      LOGICAL(SBK) :: isValid
       INTEGER(SIK) :: val
 
       val = IACHAR(letter)
-      isUpper = 65 <= val .AND. val <= 90
+
+      isValid = .FALSE.
+      IF (65 <= val .AND. val <= 90) THEN
+         isValid = .TRUE.
+      END IF
 
    ENDFUNCTION isCharCap
 !
 !-------------------------------------------------------------------------------
 !> @brief Determines whether a character is lower case using ASCII format
 !> @param letter character to check
-!> @returns isLower logical representing if the letter is a lower alphabetic
+!> @returns isValid logical representing if the letter is a lower alphabetic
 !> character
 !>
-   FUNCTION isCharLow(letter) RESULT(isLower)
+   FUNCTION isCharLow(letter) RESULT(isValid)
       CHARACTER(LEN=1), INTENT(IN) :: letter
 
-      LOGICAL(SBK) :: isLower
+      LOGICAL(SBK) :: isValid
       INTEGER(SIK) :: val
 
       val = IACHAR(letter)
-      isLower = 97 <= val .AND. val <= 122
+
+      isValid = .FALSE.
+      IF (97 <= val .AND. val <= 122) THEN
+         isValid = .TRUE.
+      END IF
 
    ENDFUNCTION isCharLow
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an assignment of a character
+!> string to an array of strings
+!> @param dArr the array of strings
+!> @param c the character value
+!    SUBROUTINE charToStringArray(sArr,c)
+!      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: sArr(:)
+!      TYPE(StringType),INTENT(IN) :: c
+!      CHARACTER(LEN=100) :: tmpStr
+!      TYPE(StringType) :: tmpElt
+!      INTEGER(SIK) :: numElts
+!      INTEGER(SIK) :: i,j,k
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts a single precision real to a character

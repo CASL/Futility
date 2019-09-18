@@ -719,6 +719,7 @@ MODULE Allocs
       CHARACTER(LEN=8) :: err_char
       TYPE(StringType) :: alloc_mesg
 
+      alloc_mesg=''
       IF(err /= 0) THEN
         WRITE(err_char,'(i4)') err; err_char=ADJUSTL(err_char)
         alloc_mesg='ALLOCS: Memory Allocation Error. Attempted to allocate '// &

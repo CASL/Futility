@@ -305,8 +305,7 @@ MODULE LinearSolverTypes
       INTEGER(SIK) :: ReqTPLType,TPLType,solverMethod,pciters,pcsetup
       INTEGER(SIK) :: matType,matEngine
       INTEGER(SIK) :: MPI_Comm_ID,numberOMP
-      CHARACTER(LEN=256) :: ReqTPLTypeStr,TPLTypeStr
-      CHARACTER(LEN=:),ALLOCATABLE :: timerName,PreCondType
+      CHARACTER(LEN=256) :: timerName,ReqTPLTypeStr,TPLTypeStr,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
       KSP :: ksp_temp
       PC :: pc
@@ -335,6 +334,8 @@ MODULE LinearSolverTypes
       matEngine=-1
       pciters=-1
       pcsetup=-1
+      PreCondType=''
+      timerName=''
       CALL validParams%get('LinearSolverType->TPLType',TPLType)
       CALL validParams%get('LinearSolverType->solverMethod',solverMethod)
       CALL validParams%get('LinearSolverType->MPI_Comm_ID',MPI_Comm_ID)

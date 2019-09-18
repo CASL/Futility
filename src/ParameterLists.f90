@@ -1270,7 +1270,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(INOUT) :: addr
       CLASS(ParamType),POINTER,INTENT(OUT) :: param
 
-      CHARACTER(LEN=LEN_TRIM(addr)) :: addrIn,newAddr
+      CHARACTER(LEN=addr%ntrim) :: addrIn,newAddr
       INTEGER(SIK) :: istp,ip
       TYPE(StringType) :: tmpAddr
       CLASS(ParamType),POINTER :: tmpParam,nextParam,parentParam
@@ -1579,8 +1579,7 @@ MODULE ParameterLists
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname
-      CHARACTER(LEN=:),ALLOCATABLE :: pname
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
       INTEGER(SIK) :: ipos,i
       CLASS(ParamType),POINTER :: tmpParam
       LOGICAL(SBK),SAVE :: partial_match=.TRUE.
@@ -1592,6 +1591,7 @@ MODULE ParameterLists
         thisname=ADJUSTL(name(1:ipos-1))
         nextname=ADJUSTL(name(ipos+2:LEN(name)))
       ENDIF
+      pname=''
 
       param => NULL()
       IF(LEN_TRIM(thisname) > 0) THEN
@@ -1600,7 +1600,8 @@ MODULE ParameterLists
             CALL toUPPER(thisname)
             IF(LEN_TRIM(nextname) > 0) THEN
               !Set names to upper case for matching
-              pname=CHAR(thisParam%name%upper())
+              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
+              CALL toUPPER(pname)
 
               !Search the list for nextname (thisname must match parameter name)
               IF(TRIM(pname) == TRIM(thisname) .AND. &
@@ -1615,7 +1616,9 @@ MODULE ParameterLists
               ENDIF
             ELSE
               !End of search list, check search name against list name
-              pname=CHAR(thisParam%name%upper())
+              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) &
+                pname=thisParam%name
+              CALL toUPPER(pname)
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 !Search name is thisParam's name
                 param => thisParam
@@ -1635,7 +1638,9 @@ MODULE ParameterLists
             CALL toUPPER(thisname)
             IF(ASSOCIATED(thisParam%pdat)) THEN
               !Set names to upper case for matching
-              pname=CHAR(thisParam%pdat%name%upper())
+              IF(LEN(pname) >= LEN_TRIM(thisParam%pdat%name)) &
+                pname=thisParam%pdat%name
+              CALL toUPPER(pname)
 
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 !Found the match
@@ -1659,7 +1664,8 @@ MODULE ParameterLists
                 ENDIF
               ENDIF
             ELSE
-              pname=CHAR(thisParam%name%upper())
+              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
+              CALL toUPPER(pname)
               IF(TRIM(pname) == TRIM(thisname) .AND. LEN_TRIM(nextName) == 0) &
                 param => thisParam
             ENDIF
@@ -1739,8 +1745,9 @@ MODULE ParameterLists
               nextname=''
             ENDIF
 
-            pname=thisParam%name%upper()
-            thisname = thisname%upper()
+            pname=thisParam%name
+            CALL toUPPER(thisname)
+            CALL toUPPER(pname)
             IF(TRIM(pname) == TRIM(thisname)) THEN
               !only search if it's not the last name in the
               !full address. last name is guaranteed not to exist
@@ -1759,7 +1766,8 @@ MODULE ParameterLists
                 DO i=1,np
                   listName=''
                   IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                    listName=TRIM(thisParam%pList(i)%pdat%name%upper())
+                    listName=TRIM(thisParam%pList(i)%pdat%name)
+                  CALL toUPPER(listName)
                   IF(TRIM(listName) == TRIM(thisName)) THEN
                     tmpParam => thisParam%pList(i)%pdat
                     EXIT
@@ -1805,15 +1813,17 @@ MODULE ParameterLists
 
               !Search within the list to avoid duplicates.
               IF(LEN_TRIM(newParam%name) == 0 .AND. ASSOCIATED(newParam%pdat)) THEN
-                thisname=newParam%pdat%name%upper()
+                thisname=newParam%pdat%name
               ELSE
-                thisname=newParam%name%upper()
+                thisname=newParam%name
               ENDIF
+              CALL toUPPER(thisName)
               NULLIFY(tmpParam)
               DO i=1,np
                 listName=''
                 IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                  listName=TRIM(thisParam%pList(i)%pdat%name%upper())
+                  listName=TRIM(thisParam%pList(i)%pdat%name)
+                CALL toUPPER(listName)
                 IF(TRIM(listName) == TRIM(thisName)) THEN
                   tmpParam => thisParam%pList(i)%pdat
                   EXIT
@@ -1870,8 +1880,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='remove_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname
-      CHARACTER(LEN=:),ALLOCATABLE :: pname
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
       INTEGER(SIK) :: i,ipos,np,npnew
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
 
@@ -1882,13 +1891,15 @@ MODULE ParameterLists
         thisname=ADJUSTL(name(1:ipos-1))
         nextname=ADJUSTL(name(ipos+2:LEN(name)))
       ENDIF
+      pname=''
 
       IF(LEN_TRIM(thisname) > 0) THEN
         SELECTTYPE(thisParam)
           TYPE IS(ParamType_List)
             IF(LEN_TRIM(nextname) > 0) THEN
               !Set names to upper case for matching
-              pname=CHAR(thisParam%name%upper())
+              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
+              CALL toUPPER(pname)
               CALL toUPPER(thisname)
 
               !Search the list for nextname (thisname must match parameter name)
@@ -1963,7 +1974,9 @@ MODULE ParameterLists
           CLASS DEFAULT
             IF(ASSOCIATED(thisParam%pdat)) THEN
               !Set names to upper case for matching
-              pname=CHAR(thisParam%pdat%name%upper())
+              IF(LEN(pname) >= LEN_TRIM(thisParam%pdat%name)) &
+                pname=thisParam%pdat%name
+              CALL toUPPER(pname)
               CALL toUPPER(thisname)
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 IF(LEN_TRIM(nextname) > 0) THEN
@@ -1999,7 +2012,6 @@ MODULE ParameterLists
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
-      TYPE(StringType) :: tmpStr
 
       IF(PRESENT(sskfmt)) THEN
         sskfmtDef=sskfmt
@@ -2019,24 +2031,20 @@ MODULE ParameterLists
             !Error, can't do anything with a Plist.
           TYPE IS(ParamType_SSK)
             WRITE(tmpchar,TRIM(sskfmtDef)) param%val
-            tmpStr=tmpChar
           TYPE IS(ParamType_SDK)
             WRITE(tmpchar,TRIM(sdkfmtDef)) param%val
-            tmpStr=tmpChar
           TYPE IS(ParamType_SNK)
             WRITE(tmpchar,'(i0)') param%val
-            tmpStr=tmpChar
           TYPE IS(ParamType_SLK)
             WRITE(tmpchar,'(i0)') param%val
-            tmpStr=tmpChar
           TYPE IS(ParamType_SBK)
-            tmpStr=param%val
+            WRITE(tmpchar,'(L1)') param%val
           TYPE IS(ParamType_STR)
-            tmpStr=param%val
+            tmpchar=param%val
           CLASS DEFAULT
             !Error, not a scalar...
         ENDSELECT
-        string=TRIM(ADJUSTL(tmpStr))
+        string=TRIM(ADJUSTL(tmpchar))
       ENDIF
     ENDSUBROUTINE getString_ParamType_scalar
 !
@@ -3507,7 +3515,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j
       TYPE(StringType) :: sprefix,sdtype
 
@@ -3517,8 +3525,7 @@ MODULE ParameterLists
         sdtype=thisParam%datatype
         IF(PRESENT(paddtw)) THEN
           IF(paddtw) THEN
-            ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-            dtype=CHAR(thisParam%dataType)
+            dtype=thisParam%dataType
             sdtype=dtype
           ENDIF
         ENDIF
@@ -3828,7 +3835,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
 
@@ -3838,8 +3845,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4084,7 +4090,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
 
@@ -4094,8 +4100,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4340,7 +4345,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
 
@@ -4350,8 +4355,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4591,7 +4595,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
@@ -4602,8 +4606,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4843,7 +4846,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
@@ -4854,8 +4857,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -5090,7 +5092,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype,sval,sdesc
@@ -5102,8 +5104,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -5363,11 +5364,11 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR'
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
-      CHARACTER(LEN=:),ALLOCATABLE,INTENT(INOUT) :: val
+      CHARACTER(LEN=*),INTENT(INOUT) :: val
       TYPE(StringType) :: s
 
       CALL get_ParamType_STR(thisParam,name,s)
-      val=CHAR(s)
+      val=s
       s=''
     ENDSUBROUTINE get_ParamType_CHAR
 !1111111111111111111111111111111111111111111111111111111111111111111111111111111
@@ -5437,7 +5438,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=:), ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -5448,8 +5449,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -5736,7 +5736,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -5747,8 +5747,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6036,7 +6035,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=:), ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -6047,8 +6046,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6334,7 +6332,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -6345,8 +6343,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6629,7 +6626,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -6640,8 +6637,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6923,7 +6919,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype,sval,sdesc
 
@@ -6935,8 +6931,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6981,9 +6976,7 @@ MODULE ParameterLists
       DO i=SIZE(thisParam%val),1,-1
         thisParam%val(i)=''
       ENDDO
-      IF(ALLOCATED(thisParam%val)) THEN
-        DEALLOCATE(thisParam%val)
-      ENDIF
+      DEALLOCATE(thisParam%val)
       thisParam%name=''
       thisParam%dataType=''
       thisParam%description=''
@@ -7235,7 +7228,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -7246,8 +7239,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -7527,7 +7519,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -7538,8 +7530,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -7819,7 +7810,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -7830,8 +7821,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -8111,7 +8101,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -8122,8 +8112,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -8399,9 +8388,11 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
+      !Compiler problem for gnu-4.6.3.  It is fixed in gnu-4.7.0.
+      !CHARACTER(LEN=MAXVAL(LEN(thisParam%val))) :: tmpstr(SIZE(thisParam%val))
 
       i=1
       j=6
@@ -8410,8 +8401,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -8708,7 +8698,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -8719,8 +8709,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -9007,7 +8996,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -9018,8 +9007,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -9306,7 +9294,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -9317,8 +9305,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -9605,7 +9592,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=:),ALLOCATABLE :: dtype
+      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -9616,8 +9603,7 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
-          dtype=CHAR(thisParam%dataType)
+          dtype=thisParam%dataType
           sdtype=dtype
         ENDIF
       ENDIF
@@ -9874,11 +9860,12 @@ MODULE ParameterLists
         tmpPath=currentPath//' -> '
         iXMLE => children(ic)
 
-        elname=iXMLE%name%upper()
+        elname=iXMLE%name
+        CALL toUPPER(elname)
         IF(elname == 'PARAMETER') THEN
           tmpStr='type'
           CALL iXMLE%getAttributeValue(tmpStr,typval)
-          typval = typval%upper()
+          CALL toUPPER(typval)
           tmpStr='value'
           CALL iXMLE%getAttributeValue(tmpStr,attrVal)
           tmpStr='name'
@@ -10021,7 +10008,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              oVal = param%description%substr(idx,LEN_TRIM(param%description))
+              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
               oSingleVal=CHAR(oVal)
               CALL param%get(TRIM(param%name),singleVal)
 
@@ -10039,7 +10026,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              oVal = param%description%substr(idx,LEN_TRIM(param%description))
+              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
               oDoubleVal=CHAR(oVal)
               CALL param%get(TRIM(param%name),doubleVal)
 
@@ -10064,7 +10051,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              oVal = param%description%substr(idx,LEN_TRIM(param%description))
+              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
               CALL char_to_double_array(oDoubleArry,CHAR(oVal))
               CALL param%get(TRIM(param%name),doubleArry)
 
