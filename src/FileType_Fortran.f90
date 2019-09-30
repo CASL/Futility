@@ -476,7 +476,7 @@ MODULE FileType_Fortran
 !> @param file the fortran file type object
 !> @returns val the value of the unit number
 !>
-!> Guaranteed to return -1 prior to initialize being called and after clear being 
+!> Guaranteed to return -1 prior to initialize being called and after clear being
 !> called
     PURE FUNCTION getUnitNo_fortran_file(file) RESULT(val)
       CLASS(FortranFileType),INTENT(IN) :: file
@@ -567,6 +567,7 @@ MODULE FileType_Fortran
       CHARACTER(LEN=11) :: formvar
       CHARACTER(LEN=9) :: actionvar
       CHARACTER(LEN=3) :: padvar
+      CHARACTER(LEN=256) :: iomsg
       INTEGER(SIK) :: reclval
 
       !Get the appropriate clause values for the OPEN statement
@@ -626,13 +627,13 @@ MODULE FileType_Fortran
                 ACCESS=TRIM(accessvar),FORM=TRIM(formvar),RECL=reclval, &
                   ACTION=TRIM(actionvar),FILE=TRIM(file%getFilePath())// &
                     TRIM(file%getFileName())//TRIM(file%getFileExt()), &
-                      IOSTAT=ioerr)
+                      IOSTAT=ioerr,IOMSG=iomsg)
             ELSE
               !Omit the POSITION clause, and the PAD clause
               OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar),RECL=reclval, &
                 ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
                   ACTION=TRIM(actionvar),FILE=TRIM(file%getFilePath())// &
-                    TRIM(file%getFileName())//TRIM(file%getFileExt()))
+                    TRIM(file%getFileName())//TRIM(file%getFileExt()),IOMSG=iomsg)
             ENDIF
           ELSE
             IF(file%isFormatted()) THEN
@@ -641,14 +642,14 @@ MODULE FileType_Fortran
                 ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
                   POSITION=TRIM(file%posopt),ACTION=TRIM(actionvar), &
                     FILE=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
-                      TRIM(file%getFileExt()))
+                      TRIM(file%getFileExt()),IOMSG=iomsg)
             ELSE
               !Include the POSITION clause, omit the PAD clause
               OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar), &
                 ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
                   POSITION=TRIM(file%posopt),ACTION=TRIM(actionvar), &
                     FILE=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
-                      TRIM(file%getFileExt()))
+                      TRIM(file%getFileExt()),IOMSG=iomsg)
             ENDIF
           ENDIF
 
@@ -657,7 +658,8 @@ MODULE FileType_Fortran
               TRIM(file%getFilePath())//TRIM(file%getFileName())// &
                 TRIM(file%getFileExt())//'" (UNIT=',file%unitno, &
                   ') IOSTAT=',ioerr
-            CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
+            CALL file%e%raiseError(modName//'::'//myName//' - '//emesg &
+                //' IOMSG="'//TRIM(iomsg)//'"')
           ELSE
             CALL file%setOpenStat(.TRUE.)
             CALL file%setEOFStat(.FALSE.)
