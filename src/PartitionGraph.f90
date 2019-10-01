@@ -112,7 +112,7 @@ MODULE PartitionGraph
     !> Number of partitioning methods
     INTEGER(SIK) :: nPart=0
     !> Weighting factor used when normalizing computational weights
-    REAL(SRK) :: wtfactor=1.0_SRK
+    REAL(SRK) :: wtfactor=0.0_SRK
     !> Starting index of each group. Size [nGroup+1]
     INTEGER(SIK),ALLOCATABLE :: groupIdx(:)
     !> Vertex indices belonging to each group.
@@ -217,7 +217,7 @@ MODULE PartitionGraph
 !>        If only 1 is specified it will be used for all (sub)graph sizes
 !>    - Conditions (1D INTEGER)
 !>        List of minimum size(nvert) for each partitioning algorithm.
-!>    - wtfactor   (1D REAL)
+!>    - wtfactor   (REAL)
 !>        Weighting factor used to normalize vertex weights.
 !>    - wts        (1D REAL)
 !>        Weight of each vertex.
@@ -506,6 +506,7 @@ MODULE PartitionGraph
       thisGraph%maxneigh=0
       thisGraph%nGroups=0
       thisGraph%nPart=0
+      thisGraph%wtfactor=0.0_SRK
       IF(ALLOCATED(thisGraph%groupIdx)) DEALLOCATE(thisGraph%groupIdx)
       IF(ALLOCATED(thisGraph%groupList)) DEALLOCATE(thisGraph%groupList)
       IF(ALLOCATED(thisGraph%wts)) DEALLOCATE(thisGraph%wts)
