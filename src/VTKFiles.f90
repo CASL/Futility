@@ -89,6 +89,7 @@ MODULE VTKFiles
   PUBLIC :: VTKLegFileType
   PUBLIC :: eVTK
   PUBLIC :: OPERATOR(+)
+  PUBLIC :: sumMeshes_VTKMesh
 
   !>Interface for mesh addition
   INTERFACE OPERATOR(+)
@@ -200,9 +201,9 @@ MODULE VTKFiles
 !
 !List of type-bound procedures (methods) for the VTK Mesh type
     CONTAINS
-      !> @copybrief VTKFiles::removeRedundantPoints
-      !> @copydetails VTKFiles::removeRedundantPoints
-      PROCEDURE,PASS :: cleanupPoints => removeRedundantPts
+      !> @copybrief VTKFiles::cleanupPoints
+      !> @copydetails VTKFiles::cleanupPoints
+      PROCEDURE,PASS :: cleanupPoints
       !> @copybrief VTKFiles::convert_VTKMeshType
       !> @copydetails VTKFiles::convert_VTKMeshType
       PROCEDURE,PASS :: convert => convert_VTKMeshType
@@ -773,7 +774,7 @@ MODULE VTKFiles
 !> redundant points, reconstructs the point list, and alters the node list to
 !> reflect the new point list.
 !>
-    SUBROUTINE removeRedundantPts(thisVTKMesh)
+    SUBROUTINE cleanupPoints(thisVTKMesh)
       CLASS(VTKMeshType),INTENT(INOUT) :: thisVTKMesh
       LOGICAL(SBK),ALLOCATABLE :: isRedundant(:)
       INTEGER(SIK),ALLOCATABLE :: newPtList(:),partialPtList(:)
@@ -937,7 +938,7 @@ MODULE VTKFiles
         DEALLOCATE(isRedundant)
         DEALLOCATE(newPtList)
       ENDIF
-    ENDSUBROUTINE removeRedundantPts
+    ENDSUBROUTINE cleanupPoints
 !
 !-------------------------------------------------------------------------------
 !> @brief For use in the mergeSort subroutine. Creates one ordered array
@@ -1420,5 +1421,59 @@ MODULE VTKFiles
     newMesh%nodeList(SIZE(mesh1conv%nodeList)+1:)=mesh2conv%nodeList+ &
                                                   mesh1conv%numPoints
   ENDFUNCTION addMesh_VTKMesh
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds VTK mesh objects together so that a single mesh is formed
+!> @param meshes the array of meshes to add
+!> @returns mesh the resulting mesh object
+!>
+  FUNCTION sumMeshes_VTKMesh(meshes) RESULT(mesh)
+    TYPE(VTKMeshType),INTENT(IN) :: meshes(:)
+    TYPE(VTKMeshType) :: mesh
+    !
+    INTEGER(SIK) :: imesh,numPoints,numCells,numNodes,nMeshes
+    TYPE(VTKMeshType),ALLOCATABLE :: converted_meshes(:)
+
+    nMeshes=SIZE(meshes)
+    ALLOCATE(converted_meshes(nMeshes))
+    numPoints=0
+    numCells=0
+    numNodes=0
+    DO imesh=1,nMeshes
+      converted_meshes(imesh)=meshes(imesh)
+      CALL converted_meshes(imesh)%convert(VTK_UNSTRUCTURED_GRID)
+      numPoints=numPoints+converted_meshes(imesh)%numPoints
+      numCells=numCells+converted_meshes(imesh)%numCells
+      numNodes=numNodes+SIZE(converted_meshes(imesh)%nodeList)
+    ENDDO !imesh
+
+    ALLOCATE(mesh%x(numPoints))
+    ALLOCATE(mesh%y(numPoints))
+    ALLOCATE(mesh%z(numPoints))
+    ALLOCATE(mesh%cellList(numCells))
+    ALLOCATE(mesh%nodeList(numNodes))
+    mesh%numPoints=numPoints
+    mesh%numCells=numCells
+    mesh%meshType=VTK_UNSTRUCTURED_GRID
+
+    numPoints=0
+    numCells=0
+    numNodes=0
+    DO imesh=1,nMeshes
+      mesh%x(numPoints+1:numPoints+converted_meshes(imesh)%numPoints)=converted_meshes(imesh)%x
+      mesh%y(numPoints+1:numPoints+converted_meshes(imesh)%numPoints)=converted_meshes(imesh)%y
+      mesh%z(numPoints+1:numPoints+converted_meshes(imesh)%numPoints)=converted_meshes(imesh)%z
+      mesh%cellList(numCells+1:numCells+converted_meshes(imesh)%numCells)=converted_meshes(imesh)%cellList
+      mesh%nodeList(numNodes+1:numNodes+SIZE(converted_meshes(imesh)%nodeList))= &
+          converted_meshes(imesh)%nodeList+numPoints
+      numPoints=numPoints+converted_meshes(imesh)%numPoints
+      numCells=numCells+converted_meshes(imesh)%numCells
+      numNodes=numNodes+SIZE(converted_meshes(imesh)%nodeList)
+    ENDDO !imesh
+    DEALLOCATE(converted_meshes)
+
+    mesh%isInit = .TRUE.
+
+  ENDFUNCTION sumMeshes_VTKMesh
 !
 ENDMODULE VTKFiles
