@@ -2183,6 +2183,10 @@ MODULE ParameterLists
           CLASS DEFAULT
             !Error, not a scalar...
         ENDSELECT
+        IF(INDEX(string,',',.TRUE.) == LEN_TRIM(string)) THEN
+          CALL getSubstring(string,tmpstr,1,INDEX(string,',',.TRUE.)-1)
+          string=tmpstr
+        ENDIF
         string=TRIM(string)
       ENDIF
     ENDSUBROUTINE getString_ParamType_scalar
