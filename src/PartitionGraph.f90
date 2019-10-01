@@ -111,6 +111,8 @@ MODULE PartitionGraph
     INTEGER(SIK) :: nGroups=0
     !> Number of partitioning methods
     INTEGER(SIK) :: nPart=0
+    !> Weighting factor used when normalizing computational weights
+    REAL(SRK) :: wtfactor=1.0_SRK
     !> Starting index of each group. Size [nGroup+1]
     INTEGER(SIK),ALLOCATABLE :: groupIdx(:)
     !> Vertex indices belonging to each group.
@@ -215,6 +217,8 @@ MODULE PartitionGraph
 !>        If only 1 is specified it will be used for all (sub)graph sizes
 !>    - Conditions (1D INTEGER)
 !>        List of minimum size(nvert) for each partitioning algorithm.
+!>    - wtfactor   (1D REAL)
+!>        Weighting factor used to normalize vertex weights.
 !>    - wts        (1D REAL)
 !>        Weight of each vertex.
 !>    - neighwts   (2D REAL)
@@ -226,6 +230,7 @@ MODULE PartitionGraph
       TYPE(ParamType),INTENT(IN) :: params
       INTEGER(SIK) :: nerror,nvert,maxneigh,nGroups,nPart,dim
       INTEGER(SIK) :: ipart,pcond,iv
+      REAL(SRK) :: wtfactor
       TYPE(StringType) :: algName
       INTEGER(SIK),ALLOCATABLE :: neigh(:,:), cond(:)
       REAL(SRK),ALLOCATABLE :: wts(:),neighwts(:,:),coord(:,:)
@@ -340,6 +345,16 @@ MODULE PartitionGraph
           ENDIF
         ENDIF
 
+        !Check vertex weight factor (optional)
+        IF(params%has('PartitionGraph -> wtfactor')) THEN
+          CALL params%get('PartitionGraph -> wtfactor', wtfactor)
+          IF(wtfactor < 0.0_SRK) &
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - invalid vertex weighting factor, value must be positive!')
+        ELSE
+          wtfactor=1.0_SRK
+        ENDIF
+
         !Check vertex weights (optional)
         IF(params%has('PartitionGraph -> wts')) THEN
           CALL params%get('PartitionGraph -> wts', wts)
@@ -401,6 +416,7 @@ MODULE PartitionGraph
         thisGraph%maxneigh=maxneigh
         thisGraph%nGroups=nGroups
         thisGraph%nPart=nPart
+        thisGraph%wtfactor=wtfactor
 
         !Move allocated data onto the type
         CALL MOVE_ALLOC(neigh,thisGraph%neigh)
@@ -1701,28 +1717,42 @@ MODULE PartitionGraph
 !-------------------------------------------------------------------------------
 !> @brief Calculate metrics relevant to the quality of partition
 !> @param thisGraph the partitioned graph to check metrics of
+!> @param maxnsr the maximum number of source regions
 !> @param mmr the ratio of maximum sized(weighted) group to minimum
 !> @param srms the rms of the group size(weighted) difference from optimal
 !> @param ecut the total weight of edges cut
 !> @param comm the total weight of communication between groups
 !>
-    SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,mmr,srms,ecut,comm)
+    SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,maxnsr,mmr,srms,ecut,comm)
       CHARACTER(LEN=*),PARAMETER :: myName='calcDecompMetrics'
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
-      REAL(SRK),INTENT(OUT) :: mmr,srms,ecut,comm
+      REAL(SRK),INTENT(OUT) :: maxnsr,mmr,srms,ecut,comm
       INTEGER(SIK) :: ig,igstt,igstp,in,ineigh,iv,ivert,neighGrp
-      REAL(SRK) :: wtSum,wtGrp,lgroup,sgroup,optSize,wtDif
+      REAL(SRK) :: wtSum,wtGrp,lgroup,sgroup,optSize,wtDif,gwt
       INTEGER(SIK),ALLOCATABLE :: grpMap(:),uniqueGrps(:)
 
+      maxnsr=0.0_SRK
       mmr=0.0_SRK
       srms=0.0_SRK
       ecut=0.0_SRK
       comm=0.0_SRK
       IF(ALLOCATED(thisGraph%groupIdx)) THEN
+        !Compute the max number of source regions
+        DO ig=1,thisGraph%nGroups
+          igstt=thisGraph%groupIdx(ig)
+          igstp=thisGraph%groupIdx(ig+1)-1
+          gwt=0.0_SRK
+          DO iv=igstt,igstp
+            gwt=gwt+thisGraph%wts(thisGraph%groupList(iv))
+          ENDDO
+          maxnsr=MAX(maxnsr,REAL(gwt,SRK))
+        ENDDO
+        maxnsr=maxnsr/SUM(thisGraph%wts)
+
         !Compute the min/max ratio and rms difference from optimal
         lgroup=0.0_SRK
         sgroup=HUGE(1.0_SRK)
-        wtSum=SUM(thisGraph%wts)
+        wtSum=SUM(thisGraph%wts)*thisGraph%wtfactor
         optSize=wtSum/REAL(thisGraph%nGroups,SRK)
         DO ig=1,thisGraph%nGroups
 
@@ -1731,6 +1761,7 @@ MODULE PartitionGraph
           DO iv=thisGraph%groupIdx(ig),thisGraph%groupIdx(ig+1)-1
             wtGrp=wtGrp+thisGraph%wts(thisGraph%groupList(iv))
           ENDDO !iv
+          wtGrp=wtGrp*thisGraph%wtfactor
           !Determine min/max weights
           IF(wtGrp > lgroup) lgroup=wtGrp
           IF(wtGrp < sgroup) sgroup=wtGrp
