@@ -98,8 +98,8 @@ MODULE MemProf
       INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
       CHARACTER(LEN=16) :: filename
 
+      thisMP%pe=>pe
       IF(ASSOCIATED(myLog)) THEN
-        thisMP%pe=>pe
         thisMP%myLog=>myLog
 
         CALL getProcMemInfo(tmpL1,tmpL2)

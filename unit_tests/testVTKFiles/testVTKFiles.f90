@@ -8,35 +8,65 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testVTKFiles
 #include "UnitTest.h"
-  USE UnitTest
-  USE IntrType
-  USE ExceptionHandler
-  USE VTKFiles
+USE UnitTest
+USE IntrType
+USE ExceptionHandler
+USE VTKFiles
 
-  IMPLICIT NONE
+IMPLICIT NONE
 
-  CHARACTER(LEN=257) :: longstring
-  TYPE(ExceptionHandlerType),POINTER,SAVE :: e
-  TYPE(VTKMeshType),SAVE :: testVTKMesh, testVTKMesh2
-  TYPE(VTKDataType),SAVE :: testVTKData
-  TYPE(VTKLegFileType),SAVE :: testVTKFile
-  REAL(SRK),ALLOCATABLE :: xref(:),yref(:),zref(:)
-  LOGICAL(SBK),ALLOCATABLE :: testMask(:)
-  LOGICAL(SBK) :: bool
-  INTEGER(SIK) :: k,npartfail
+CHARACTER(LEN=257) :: longstring
+TYPE(ExceptionHandlerType),POINTER,SAVE :: e
+TYPE(VTKMeshType),SAVE :: testVTKMesh, testVTKMesh2
+TYPE(VTKDataType),SAVE :: testVTKData
+TYPE(VTKLegFileType),SAVE :: testVTKFile
+REAL(SRK),ALLOCATABLE :: xref(:),yref(:),zref(:),cellRef(:),nodeRef(:)
+LOGICAL(SBK),ALLOCATABLE :: testMask(:)
+LOGICAL(SBK) :: bool
+INTEGER(SIK) :: k,npartfail
 
-  CREATE_TEST('Test VTK Files')
+CREATE_TEST('Test VTK Files')
 
-  ALLOCATE(e)
-  CALL e%setStopOnError(.FALSE.)
-  CALL e%setQuietMode(.TRUE.)
+ALLOCATE(e)
+CALL e%setStopOnError(.FALSE.)
+CALL e%setQuietMode(.TRUE.)
 
-  !Check clear
+!Check clear
+REGISTER_SUBTEST('Clear',testClear)
+REGISTER_SUBTEST('Init',testInit)
+REGISTER_SUBTEST('Write',testWrite)
+REGISTER_SUBTEST('removeRedundantPoints',testRemoveRedundantPoints)
+REGISTER_SUBTEST('meshConversion',testMeshConversion)
+REGISTER_SUBTEST('meshTranslation',testMeshTranslation)
+REGISTER_SUBTEST('meshAddition',testMeshAddition)
+REGISTER_SUBTEST('cellRemoval',testCellRemoval)
+
+!
+DEALLOCATE(e)
+CALL testVTKMesh%clear()
+CALL testVTKMesh2%clear()
+CALL testVTKData%clear()
+CALL testVTKFile%clear()
+
+FINALIZE_TEST()
+!
+!===============================================================================
+CONTAINS
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testClear()
+
   CALL testVTKFile%clear()
+
+ENDSUBROUTINE testClear
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testInit()
+
   CALL testVTKFile%e%addSurrogate(e)
   CALL eVTK%addSurrogate(e)
 
-!Test Initialize and clear
+  !Test Initialize and clear
   CALL testVTKFile%initialize(666,'testVTK0.vtk')
   bool = testVTKFile%isInit() .AND. testVTKFile%isOpen()
   ASSERT(bool, 'testVTKFile%initialize(...)')
@@ -54,8 +84,12 @@ PROGRAM testVTKFiles
   longstring='testVTK0.vtk'
   longstring(257:257)='r'
   CALL testVTKFile%initialize(666,'testVTK1.vtk',STATUS=longstring)
+ENDSUBROUTINE testInit
 !
-!Test writeMesh for STRUCTURED_POINTS
+!-------------------------------------------------------------------------------
+SUBROUTINE testWrite()
+
+  COMPONENT_TEST('writeMesh, STRUCTURED_POINTS')
   CALL testVTKFile%writeMesh(testVTKMesh) !write with uninitialized file
   CALL testVTKFile%initialize(666,'testVTK1.vtk',STATUS='testVTK1.vtk')
   CALL testVTKFile%writeMesh(testVTKMesh) !write with unitialized mesh
@@ -68,8 +102,8 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKFile%hasMesh
   ASSERT(bool, 'testVTKFile%writeMesh(...) STRUCTURED_POINTS')
-!
-!Test writeScalarData
+
+  COMPONENT_TEST('writeScalarData')
   CALL SetupTest1_Data()
   CALL testVTKFile%writeScalarData(testVTKData) !Integer data
   testVTKData%vtkDataFormat='long'
@@ -85,7 +119,7 @@ PROGRAM testVTKFiles
   testVTKData%varname='VTK_cellIndex_double'
   CALL testVTKFile%writeScalarData(testVTKData) !write as double
 
-  !Error checking/coverage
+  COMPONENT_TEST('Error Checks')
   testVTKData%vtkDataFormat='char'
   CALL testVTKFile%writeScalarData(testVTKData) !bad data format
   testVTKData%dataSetType=VTK_DATA_TENSORS
@@ -100,8 +134,8 @@ PROGRAM testVTKFiles
   testVTKFile%hasMesh=.TRUE.
   CALL testVTKFile%fclose()
   CALL testVTKFile%writeScalarData(testVTKData) !closed file
-!
-!Test writeMesh for STRUCTURED_GRID
+
+  COMPONENT_TEST('STRUCTURED_GRID')
   CALL testVTKFile%clear()
   CALL testVTKFile%initialize(666,'testVTK2.vtk',STATUS='testVTK2')
   CALL SetupTest2_Mesh()
@@ -111,8 +145,8 @@ PROGRAM testVTKFiles
   !Write data on the mesh
   CALL SetupTest1_Data()
   CALL testVTKFile%writeScalarData(testVTKData)
-!
-!Test writeMesh for RECTILINEAR_GRID
+
+  COMPONENT_TEST('RECTILINEAR_GRID')
   CALL testVTKFile%clear()
   CALL testVTKFile%initialize(666,'testVTK3.vtk',STATUS='testVTK3')
   CALL SetupTest2_Mesh()
@@ -123,8 +157,8 @@ PROGRAM testVTKFiles
   !Write data on the mesh
   testVTKData%vtkDataFormat='double'
   CALL testVTKFile%writeScalarData(testVTKData)
-!
-!Test writeMesh for UNSTRUCTURED_GRID
+
+  COMPONENT_TEST('UNSTRUCTURED_GRID')
   CALL testVTKFile%clear()
   CALL testVTKFile%initialize(666,'testVTK4.vtk',STATUS='testVTK4')
   CALL SetupTest4_Mesh()
@@ -137,11 +171,16 @@ PROGRAM testVTKFiles
   testVTKData%varname='mat_val'
   testVTKData%vtkDataFormat='float'
   CALL testVTKFile%writeScalarData(testVTKData)
+
+ENDSUBROUTINE testWrite
 !
-!Test removeRedundantPoints for VTK UNSTRUCTURED_GRID
+!-------------------------------------------------------------------------------
+SUBROUTINE testRemoveRedundantPoints()
+
   CALL testVTKFile%clear()
   CALL testVTKFile%initialize(666,'testVTK5pre.vtk',STATUS='testVTK5pre')
   CALL SetupTest5_Mesh()
+
   !Mesh written before point cleanup, for comparison
   CALL testVTKFile%writeMesh(testVTKMesh)
   CALL testVTKMesh%cleanupPoints
@@ -172,8 +211,7 @@ PROGRAM testVTKFiles
     WRITE(*,*) 'WARNING: Partial failures n=',npartfail, &
       ' for "CALL testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID"'
   ENDIF
-  !
-  !Another test for redundant point removal
+
   CALL testVTKFile%clear()
   DEALLOCATE(xref)
   DEALLOCATE(yref)
@@ -195,8 +233,13 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref))
   ASSERT(bool, 'testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID')
-  !
-  !Test mesh conversion - structured points to unstructured grid
+
+ENDSUBROUTINE testRemoveRedundantPoints
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testMeshConversion()
+
+  COMPONENT_TEST('Unstructured to unstructured')
   CALL testVTKFile%clear()
   DEALLOCATE(testVTKMesh%x)
   DEALLOCATE(testVTKMesh%y)
@@ -209,8 +252,8 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKMesh%numPoints == 5445
   ASSERT(bool, 'testVTKMesh%convert(...) STRUCTURED_POINTS')
-!
-!Test mesh conversion - rectilinear grid to unstructured grid
+
+  COMPONENT_TEST('Rectilinear to unstructured')
   CALL testVTKFile%clear()
   DEALLOCATE(testVTKMesh%cellList)
   DEALLOCATE(testVTKMesh%nodeList)
@@ -221,8 +264,13 @@ PROGRAM testVTKFiles
   CALL testVTKFile%writeMesh(testVTKMesh)
   bool = testVTKMesh%numPoints == 5445
   ASSERT(bool, 'testVTKMesh%convert(...) RECTILINEAR_GRID')
+
+ENDSUBROUTINE testMeshConversion
 !
-!Test mesh translation - VTK_STRUCTURED_POINTS
+!-------------------------------------------------------------------------------
+SUBROUTINE testMeshTranslation()
+
+  COMPONENT_TEST('VTK_STRUCTURED_POINTS')
   CALL testVTKFile%clear()
   DEALLOCATE(testVTKMesh%x)
   DEALLOCATE(testVTKMesh%y)
@@ -249,8 +297,8 @@ PROGRAM testVTKFiles
          ((testVTKMesh%z(1) .APPROXEQ. zref(1)+3.0_SRK) .OR. &
          (testVTKMesh%z(2) .APPROXEQ. zref(2)))
   ASSERT(bool, 'testVTKMesh%translate(...) STRUCTURED_POINTS')
-!
-!Test mesh translation - VTK_STRUCTURED_GRID
+
+  COMPONENT_TEST('VTK_STRUCTURED_GRID')
   DEALLOCATE(xref)
   DEALLOCATE(yref)
   DEALLOCATE(zref)
@@ -268,8 +316,8 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref+2.0_SRK)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref+3.0_SRK))
   ASSERT(bool, 'testVTKMesh%translate(...) STRUCTURED_GRID')
-!
-!Test mesh translation - VTK_RECTILINEAR_GRID
+
+  COMPONENT_TEST('VTK_RECTILINEAR_GRID')
   DEALLOCATE(xref)
   DEALLOCATE(yref)
   DEALLOCATE(zref)
@@ -286,8 +334,8 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref+2.0_SRK)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref+3.0_SRK))
   ASSERT(bool, 'testVTKMesh%translate(...) RECTILINEAR_GRID')
-!
-!Test mesh translation - VTK_UNSTRUCTURED_GRID
+
+  COMPONENT_TEST('VTK_UNSTRUCTURED_GRID')
   DEALLOCATE(xref)
   DEALLOCATE(yref)
   DEALLOCATE(zref)
@@ -303,32 +351,112 @@ PROGRAM testVTKFiles
          ALL((testVTKMesh%y .APPROXEQ. yref+2.0_SRK)) .AND. &
          ALL((testVTKMesh%z .APPROXEQ. zref+3.0_SRK))
   ASSERT(bool, 'testVTKMesh%translate(...) UNSTRUCTURED_GRID')
+
+ENDSUBROUTINE testMeshTranslation
 !
-!Test mesh addition
+!-------------------------------------------------------------------------------
+SUBROUTINE testMeshAddition()
+  INTEGER(SIK) :: i
+  TYPE(VTKMeshType),ALLOCATABLE :: mesh_array(:)
+
+  COMPONENT_TEST('Binary')
   CALL testVTKFile%clear()
   DEALLOCATE(xref)
   DEALLOCATE(yref)
   DEALLOCATE(zref)
   CALL SetupTest14_Mesh()
   testVTKMesh=testVTKMesh+testVTKMesh2
-  CALL testVTKMesh%cleanupPoints()
   CALL testVTKFile%initialize(666,'testVTK14.vtk',STATUS='testVTK14')
   CALL testVTKFile%writeMesh(testVTKMesh)
-  ALLOCATE(xref(12))
-  ALLOCATE(yref(12))
-  ALLOCATE(zref(12))
-  xref=(/ 0.0,0.0,0.0,0.0,0.0,0.5,0.5,1.0,1.0,1.0,1.0,1.0 /)
-  yref=(/ 0.0,0.0,0.5,1.0,1.0,0.5,0.5,0.0,0.0,0.5,1.0,1.0 /)
-  zref=(/ 0.0,1.0,1.5,0.0,1.0,0.0,1.0,0.0,1.0,1.5,0.0,1.0 /)
-  bool = ALL((testVTKMesh%x .APPROXEQ. xref)) .AND. &
-         ALL((testVTKMesh%y .APPROXEQ. yref)) .AND. &
-         ALL((testVTKMesh%z .APPROXEQ. zref))
-  ASSERT(bool, 'VTKMeshType OPERATOR(+)')
+
+  ALLOCATE(xref(30))
+  ALLOCATE(yref(30))
+  ALLOCATE(zref(30))
+  ALLOCATE(cellRef(5))
+  ALLOCATE(nodeRef(30))
+  xref=(/0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,0.0_SRK,0.5_SRK,0.0_SRK,0.0_SRK, &
+    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK, &
+    0.5_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK/)
+  yref=(/0.0_SRK,0.0_SRK,0.5_SRK,0.0_SRK,0.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
+    0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
+    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK/)
+  zref=(/0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
+    1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
+    1.0_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK/)
+  cellRef=(/13,13,13,13,13/)
+  nodeRef=(/0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29/)
+  ASSERT(testVTKMesh%isInit,'%isInit')
+  ASSERT_EQ(testVTKMesh%meshType,VTK_UNSTRUCTURED_GRID,'%meshType')
+  ASSERT_EQ(testVTKMesh%numPoints,30,'%numPoints')
+  ASSERT_EQ(testVTKMesh%numCells,5,'%numCells')
+  DO i=1,30
+    ASSERT_APPROXEQ(testVTKMesh%x(i),xref(i),'%x')
+    ASSERT_APPROXEQ(testVTKMesh%y(i),yref(i),'%y')
+    ASSERT_APPROXEQ(testVTKMesh%z(i),zref(i),'%z')
+    ASSERT_EQ(testVTKMesh%nodeList(i),nodeRef(i),'%nodeList')
+  ENDDO !i
+  DO i=1,5
+    ASSERT_EQ(testVTKMesh%cellList(i),cellRef(i),'%cellList')
+  ENDDO !i
+
   DEALLOCATE(xref)
   DEALLOCATE(yref)
   DEALLOCATE(zref)
+  DEALLOCATE(cellRef)
+  DEALLOCATE(nodeRef)
+
+  COMPONENT_TEST('Array')
+  CALL testVTKFile%clear()
+  ALLOCATE(mesh_array(5))
+  DO i=1,5
+    mesh_array(i)=testVTKMesh2
+  ENDDO !i
+  testVTKMesh=sumMeshes_VTKMesh(mesh_array)
+  CALL testVTKFile%initialize(666,'testVTK14.vtk',STATUS='testVTK14')
+  CALL testVTKFile%writeMesh(testVTKMesh)
+
+  ALLOCATE(xref(30))
+  ALLOCATE(yref(30))
+  ALLOCATE(zref(30))
+  ALLOCATE(cellRef(5))
+  ALLOCATE(nodeRef(30))
+  xref=(/0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
+    1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
+    1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK/)
+  yref=(/0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
+    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
+    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK/)
+  zref=(/1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK, &
+    1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK, &
+    1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK/)
+  nodeRef=(/0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29/)
+  cellRef=(/13,13,13,13,13/)
+  ASSERT(testVTKMesh%isInit,'%isInit')
+  ASSERT_EQ(testVTKMesh%meshType,VTK_UNSTRUCTURED_GRID,'%meshType')
+  ASSERT_EQ(testVTKMesh%numPoints,30,'%numPoints')
+  ASSERT_EQ(testVTKMesh%numCells,5,'%numCells')
+  DO i=1,30
+    ASSERT_APPROXEQ(testVTKMesh%x(i),xref(i),'%x')
+    ASSERT_APPROXEQ(testVTKMesh%y(i),yref(i),'%y')
+    ASSERT_APPROXEQ(testVTKMesh%z(i),zref(i),'%z')
+    ASSERT_EQ(testVTKMesh%nodeList(i),nodeRef(i),'%nodeList')
+  ENDDO !i
+  DO i=1,5
+    ASSERT_EQ(testVTKMesh%cellList(i),cellRef(i),'%cellList')
+  ENDDO !i
+
+  DEALLOCATE(xref)
+  DEALLOCATE(yref)
+  DEALLOCATE(zref)
+  DEALLOCATE(cellRef)
+  DEALLOCATE(nodeRef)
+  DEALLOCATE(mesh_array)
+
+ENDSUBROUTINE testMeshAddition
 !
-!Test cell removal
+!-------------------------------------------------------------------------------
+SUBROUTINE testCellRemoval()
+
   CALL testVTKFile%clear()
   CALL testVTKFile%initialize(666,'testVTK15.vtk',STATUS='testVTK15')
   CALL SetupTest6_Mesh()
@@ -339,219 +467,210 @@ PROGRAM testVTKFiles
   bool = testVTKMesh%numCells == 3
   ASSERT(bool, 'VTKMeshType removeCells')
   DEALLOCATE(testMask)
-!
-  DEALLOCATE(e)
-  CALL testVTKMesh%clear()
-  CALL testVTKMesh2%clear()
-  CALL testVTKData%clear()
-  CALL testVTKFile%clear()
 
-  FINALIZE_TEST()
-!
-!===============================================================================
-  CONTAINS
+ENDSUBROUTINE testCellRemoval
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest1_Mesh()
-      !Initialize a VTK mesh by hand
-      testVTKMesh%dims=(/33,33,5/)
-      testVTKMesh%meshType=VTK_STRUCTURED_POINTS
-      testVTKMesh%numCells=(testVTKMesh%dims(1)-1)*(testVTKMesh%dims(2)-1)* &
-        (testVTKMesh%dims(3)-1)
-      ALLOCATE(testVTKMesh%x(2))
-      ALLOCATE(testVTKMesh%y(2))
-      ALLOCATE(testVTKMesh%z(2))
-      testVTKMesh%x(1)=0.0_SRK
-      testVTKMesh%x(2)=0.25_SRK
-      testVTKMesh%y(1)=0.0_SRK
-      testVTKMesh%y(2)=0.25_SRK
-      testVTKMesh%z(1)=0.0_SRK
-      testVTKMesh%z(2)=2.0_SRK
-      testVTKMesh%isInit=.TRUE.
-    ENDSUBROUTINE SetupTest1_Mesh
+SUBROUTINE SetupTest1_Mesh()
+  !Initialize a VTK mesh by hand
+  testVTKMesh%dims=(/33,33,5/)
+  testVTKMesh%meshType=VTK_STRUCTURED_POINTS
+  testVTKMesh%numCells=(testVTKMesh%dims(1)-1)*(testVTKMesh%dims(2)-1)* &
+    (testVTKMesh%dims(3)-1)
+  ALLOCATE(testVTKMesh%x(2))
+  ALLOCATE(testVTKMesh%y(2))
+  ALLOCATE(testVTKMesh%z(2))
+  testVTKMesh%x(1)=0.0_SRK
+  testVTKMesh%x(2)=0.25_SRK
+  testVTKMesh%y(1)=0.0_SRK
+  testVTKMesh%y(2)=0.25_SRK
+  testVTKMesh%z(1)=0.0_SRK
+  testVTKMesh%z(2)=2.0_SRK
+  testVTKMesh%isInit=.TRUE.
+ENDSUBROUTINE SetupTest1_Mesh
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest2_Mesh()
-      INTEGER(SIK) :: i
-      REAL(SRK) :: x
-      !Initialize a VTK mesh by hand
-      testVTKMesh%dims=(/33,33,5/)
-      testVTKMesh%meshType=VTK_STRUCTURED_GRID
-      testVTKMesh%numCells=(testVTKMesh%dims(1)-1)*(testVTKMesh%dims(2)-1)* &
-        (testVTKMesh%dims(3)-1)
-      testVTKMesh%numPoints=testVTKMesh%dims(1)*testVTKMesh%dims(2)* &
-        testVTKMesh%dims(3)
-      DEALLOCATE(testVTKMesh%x)
-      DEALLOCATE(testVTKMesh%y)
-      DEALLOCATE(testVTKMesh%z)
-      ALLOCATE(testVTKMesh%x(33))
-      ALLOCATE(testVTKMesh%y(33))
-      ALLOCATE(testVTKMesh%z(5))
-      x=0.0_SRK
-      DO i=1,testVTKMesh%dims(1)
-        testVTKMesh%x(i)=x
-        x=x+0.25_SRK
-      ENDDO
-      x=0.0_SRK
-      DO i=1,testVTKMesh%dims(2)
-        testVTKMesh%y(i)=x
-        x=x+0.25_SRK
-      ENDDO
-      x=0.0_SRK
-      DO i=1,testVTKMesh%dims(3)
-        testVTKMesh%z(i)=x
-        x=x+2.0_SRK
-      ENDDO
-      testVTKMesh%isInit=.TRUE.
-    ENDSUBROUTINE SetupTest2_Mesh
+SUBROUTINE SetupTest2_Mesh()
+  INTEGER(SIK) :: i
+  REAL(SRK) :: x
+  !Initialize a VTK mesh by hand
+  testVTKMesh%dims=(/33,33,5/)
+  testVTKMesh%meshType=VTK_STRUCTURED_GRID
+  testVTKMesh%numCells=(testVTKMesh%dims(1)-1)*(testVTKMesh%dims(2)-1)* &
+    (testVTKMesh%dims(3)-1)
+  testVTKMesh%numPoints=testVTKMesh%dims(1)*testVTKMesh%dims(2)* &
+    testVTKMesh%dims(3)
+  DEALLOCATE(testVTKMesh%x)
+  DEALLOCATE(testVTKMesh%y)
+  DEALLOCATE(testVTKMesh%z)
+  ALLOCATE(testVTKMesh%x(33))
+  ALLOCATE(testVTKMesh%y(33))
+  ALLOCATE(testVTKMesh%z(5))
+  x=0.0_SRK
+  DO i=1,testVTKMesh%dims(1)
+    testVTKMesh%x(i)=x
+    x=x+0.25_SRK
+  ENDDO
+  x=0.0_SRK
+  DO i=1,testVTKMesh%dims(2)
+    testVTKMesh%y(i)=x
+    x=x+0.25_SRK
+  ENDDO
+  x=0.0_SRK
+  DO i=1,testVTKMesh%dims(3)
+    testVTKMesh%z(i)=x
+    x=x+2.0_SRK
+  ENDDO
+  testVTKMesh%isInit=.TRUE.
+ENDSUBROUTINE SetupTest2_Mesh
 
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest4_Mesh()
-      INTEGER(SIK) :: i,j
-      !Initialize a VTK mesh by hand
-      testVTKMesh%numPoints=800
-      testVTKMesh%dims=testVTKMesh%numPoints
-      testVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
-      testVTKMesh%numCells=100
-      DEALLOCATE(testVTKMesh%x)
-      DEALLOCATE(testVTKMesh%y)
-      DEALLOCATE(testVTKMesh%z)
-      ALLOCATE(testVTKMesh%x(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%y(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%z(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
-      ALLOCATE(testVTKMesh%nodeList(800))
-      OPEN(unit=555,file='mesh3Points.txt',FORM='FORMATTED', &
-        ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
-      DO i=1,800
-        READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
-      ENDDO
-      CLOSE(555)
+SUBROUTINE SetupTest4_Mesh()
+  INTEGER(SIK) :: i,j
+  !Initialize a VTK mesh by hand
+  testVTKMesh%numPoints=800
+  testVTKMesh%dims=testVTKMesh%numPoints
+  testVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
+  testVTKMesh%numCells=100
+  DEALLOCATE(testVTKMesh%x)
+  DEALLOCATE(testVTKMesh%y)
+  DEALLOCATE(testVTKMesh%z)
+  ALLOCATE(testVTKMesh%x(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%y(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%z(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
+  ALLOCATE(testVTKMesh%nodeList(800))
+  OPEN(unit=555,file='mesh3Points.txt',FORM='FORMATTED', &
+    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+  DO i=1,800
+    READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
+  ENDDO
+  CLOSE(555)
 
-      testVTKMesh%cellList=12
-      j=0
-      DO i=1,800
-        testVTKMesh%nodeList(i)=i-1
-      ENDDO
-      testVTKMesh%isInit=.TRUE.
-    ENDSUBROUTINE SetupTest4_Mesh
+  testVTKMesh%cellList=12
+  j=0
+  DO i=1,800
+    testVTKMesh%nodeList(i)=i-1
+  ENDDO
+  testVTKMesh%isInit=.TRUE.
+ENDSUBROUTINE SetupTest4_Mesh
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest5_Mesh()
-      INTEGER(SIK) :: i,j
-      !Initialize a VTK mesh by hand
-      testVTKMesh%numPoints=800
-      testVTKMesh%dims=testVTKMesh%numPoints
-      testVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
-      testVTKMesh%numCells=100
-      DEALLOCATE(testVTKMesh%x)
-      DEALLOCATE(testVTKMesh%y)
-      DEALLOCATE(testVTKMesh%z)
-      DEALLOCATE(testVTKMesh%cellList)
-      DEALLOCATE(testVTKMesh%nodeList)
-      ALLOCATE(testVTKMesh%x(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%y(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%z(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
-      ALLOCATE(testVTKMesh%nodeList(800))
-      OPEN(unit=555,file='mesh3Points.txt',FORM='FORMATTED', &
-        ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
-      DO i=1,800
-        READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
-      ENDDO
-      CLOSE(555)
+SUBROUTINE SetupTest5_Mesh()
+  INTEGER(SIK) :: i,j
+  !Initialize a VTK mesh by hand
+  testVTKMesh%numPoints=800
+  testVTKMesh%dims=testVTKMesh%numPoints
+  testVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
+  testVTKMesh%numCells=100
+  DEALLOCATE(testVTKMesh%x)
+  DEALLOCATE(testVTKMesh%y)
+  DEALLOCATE(testVTKMesh%z)
+  DEALLOCATE(testVTKMesh%cellList)
+  DEALLOCATE(testVTKMesh%nodeList)
+  ALLOCATE(testVTKMesh%x(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%y(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%z(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
+  ALLOCATE(testVTKMesh%nodeList(800))
+  OPEN(unit=555,file='mesh3Points.txt',FORM='FORMATTED', &
+    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+  DO i=1,800
+    READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
+  ENDDO
+  CLOSE(555)
 
-      testVTKMesh%cellList=12
-      j=0
-      DO i=1,800
-        testVTKMesh%nodeList(i)=i-1
-      ENDDO
-      testVTKMesh%isInit=.TRUE.
-    ENDSUBROUTINE SetupTest5_Mesh
+  testVTKMesh%cellList=12
+  j=0
+  DO i=1,800
+    testVTKMesh%nodeList(i)=i-1
+  ENDDO
+  testVTKMesh%isInit=.TRUE.
+ENDSUBROUTINE SetupTest5_Mesh
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest6_Mesh()
-      !Initialize a VTK mesh by hand
-      testVTKMesh%numPoints=24
-      testVTKMesh%dims=testVTKMesh%numPoints
-      testVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
-      testVTKMesh%numCells=4
-      DEALLOCATE(testVTKMesh%x)
-      DEALLOCATE(testVTKMesh%y)
-      DEALLOCATE(testVTKMesh%z)
-      DEALLOCATE(testVTKMesh%cellList)
-      DEALLOCATE(testVTKMesh%nodeList)
-      ALLOCATE(testVTKMesh%x(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%y(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%z(testVTKMesh%numPoints))
-      ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
-      ALLOCATE(testVTKMesh%nodeList(24))
-      testVTKMesh%x=(/ 0.0,1.0,0.5,0.0,1.0,0.5,0.0,0.0,0.5,0.0,0.0,0.5, &
-                       0.0,1.0,0.5,0.0,1.0,0.5,1.0,1.0,0.5,1.0,1.0,0.5 /)
-      testVTKMesh%y=(/ 0.0,0.0,0.5,0.0,0.0,0.5,0.0,1.0,0.5,0.0,1.0,0.5, &
-                       1.0,1.0,0.5,1.0,1.0,0.5,0.0,1.0,0.5,0.0,1.0,0.5 /)
-      testVTKMesh%z=(/ 0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0, &
-                       0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0 /)
-      testVTKMesh%nodeList=(/ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, &
-                              16,17,18,19,20,21,22,23 /)
-      testVTKMesh%cellList=VTK_WEDGE
-      testVTKMesh%isInit=.TRUE.
-    ENDSUBROUTINE SetupTest6_Mesh
+SUBROUTINE SetupTest6_Mesh()
+  !Initialize a VTK mesh by hand
+  testVTKMesh%numPoints=24
+  testVTKMesh%dims=testVTKMesh%numPoints
+  testVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
+  testVTKMesh%numCells=4
+  DEALLOCATE(testVTKMesh%x)
+  DEALLOCATE(testVTKMesh%y)
+  DEALLOCATE(testVTKMesh%z)
+  DEALLOCATE(testVTKMesh%cellList)
+  DEALLOCATE(testVTKMesh%nodeList)
+  ALLOCATE(testVTKMesh%x(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%y(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%z(testVTKMesh%numPoints))
+  ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
+  ALLOCATE(testVTKMesh%nodeList(24))
+  testVTKMesh%x=(/ 0.0,1.0,0.5,0.0,1.0,0.5,0.0,0.0,0.5,0.0,0.0,0.5, &
+                   0.0,1.0,0.5,0.0,1.0,0.5,1.0,1.0,0.5,1.0,1.0,0.5 /)
+  testVTKMesh%y=(/ 0.0,0.0,0.5,0.0,0.0,0.5,0.0,1.0,0.5,0.0,1.0,0.5, &
+                   1.0,1.0,0.5,1.0,1.0,0.5,0.0,1.0,0.5,0.0,1.0,0.5 /)
+  testVTKMesh%z=(/ 0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0, &
+                   0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0 /)
+  testVTKMesh%nodeList=(/ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, &
+                          16,17,18,19,20,21,22,23 /)
+  testVTKMesh%cellList=VTK_WEDGE
+  testVTKMesh%isInit=.TRUE.
+ENDSUBROUTINE SetupTest6_Mesh
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest14_Mesh()
-      CALL SetupTest6_Mesh()
-      testVTKMesh2%numPoints=6
-      testVTKMesh2%numCells=1
-      ALLOCATE(testVTKMesh2%x(testVTKMesh2%numPoints))
-      ALLOCATE(testVTKMesh2%y(testVTKMesh2%numPoints))
-      ALLOCATE(testVTKMesh2%z(testVTKMesh2%numPoints))
-      ALLOCATE(testVTKMesh2%cellList(testVTKMesh2%numCells))
-      ALLOCATE(testVTKMesh2%nodeList(6))
-      testVTKMesh2%x=(/ 0.0,0.0,0.0,1.0,1.0,1.0 /)
-      testVTKMesh2%y=(/ 0.0,1.0,0.5,0.0,1.0,0.5 /)
-      testVTKMesh2%z=(/ 0.0,0.0,0.5,0.0,0.0,0.5 /)
-      testVTKMesh2%cellList=VTK_WEDGE
-      testVTKMesh2%nodeList=(/ 0,1,2,3,4,5 /)
-      testVTKMesh2%meshType=VTK_UNSTRUCTURED_GRID
-      testVTKMesh2%isInit=.TRUE.
-      CALL testVTKMesh2%translate(0.0_SRK,0.0_SRK,1.0_SRK)
-    ENDSUBROUTINE SetupTest14_Mesh
+SUBROUTINE SetupTest14_Mesh()
+  CALL SetupTest6_Mesh()
+  testVTKMesh2%numPoints=6
+  testVTKMesh2%numCells=1
+  ALLOCATE(testVTKMesh2%x(testVTKMesh2%numPoints))
+  ALLOCATE(testVTKMesh2%y(testVTKMesh2%numPoints))
+  ALLOCATE(testVTKMesh2%z(testVTKMesh2%numPoints))
+  ALLOCATE(testVTKMesh2%cellList(testVTKMesh2%numCells))
+  ALLOCATE(testVTKMesh2%nodeList(6))
+  testVTKMesh2%x=(/ 0.0,0.0,0.0,1.0,1.0,1.0 /)
+  testVTKMesh2%y=(/ 0.0,1.0,0.5,0.0,1.0,0.5 /)
+  testVTKMesh2%z=(/ 0.0,0.0,0.5,0.0,0.0,0.5 /)
+  testVTKMesh2%cellList=VTK_WEDGE
+  testVTKMesh2%nodeList=(/ 0,1,2,3,4,5 /)
+  testVTKMesh2%meshType=VTK_UNSTRUCTURED_GRID
+  testVTKMesh2%isInit=.TRUE.
+  CALL testVTKMesh2%translate(0.0_SRK,0.0_SRK,1.0_SRK)
+ENDSUBROUTINE SetupTest14_Mesh
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest1_Data()
-      INTEGER(SIK) :: i
+SUBROUTINE SetupTest1_Data()
+  INTEGER(SIK) :: i
 
-      !Initialize VTK data by hand
-      testVTKData%varname='VTK_cellIndex_int'
-      testVTKData%vtkDataFormat='int'
-      testVTKData%dataSetType=VTK_DATA_SCALARS
-      testVTKData%isCellData=.TRUE.
-      testVTKData%isInit=.TRUE.
-      IF(.NOT.ALLOCATED(testVTKData%dataList)) &
-        ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
-      DO i=1,testVTKMesh%numCells
-        testVTKData%dataList(i)=REAL(i,SRK)
-      ENDDO
-    ENDSUBROUTINE SetupTest1_Data
+  !Initialize VTK data by hand
+  testVTKData%varname='VTK_cellIndex_int'
+  testVTKData%vtkDataFormat='int'
+  testVTKData%dataSetType=VTK_DATA_SCALARS
+  testVTKData%isCellData=.TRUE.
+  testVTKData%isInit=.TRUE.
+  IF(.NOT.ALLOCATED(testVTKData%dataList)) &
+    ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
+  DO i=1,testVTKMesh%numCells
+    testVTKData%dataList(i)=REAL(i,SRK)
+  ENDDO
+ENDSUBROUTINE SetupTest1_Data
 !
 !-------------------------------------------------------------------------------
-    SUBROUTINE SetupTest4_Data()
-      INTEGER(SIK) :: i
+SUBROUTINE SetupTest4_Data()
+  INTEGER(SIK) :: i
 
-      !Initialize VTK data by hand
-      testVTKData%varname='material'
-      testVTKData%vtkDataFormat='int'
-      testVTKData%dataSetType=VTK_DATA_SCALARS
-      testVTKData%isCellData=.TRUE.
-      testVTKData%isInit=.TRUE.
-      IF(ALLOCATED(testVTKData%dataList)) DEALLOCATE(testVTKData%dataList)
-      ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
-      OPEN(unit=555,file='mesh3Data.txt',FORM='FORMATTED', &
-        ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
-      DO i=1,testVTKMesh%numCells
-        READ(555,*) testVTKData%dataList(i)
-      ENDDO
-      CLOSE(555)
-    ENDSUBROUTINE SetupTest4_Data
+  !Initialize VTK data by hand
+  testVTKData%varname='material'
+  testVTKData%vtkDataFormat='int'
+  testVTKData%dataSetType=VTK_DATA_SCALARS
+  testVTKData%isCellData=.TRUE.
+  testVTKData%isInit=.TRUE.
+  IF(ALLOCATED(testVTKData%dataList)) DEALLOCATE(testVTKData%dataList)
+  ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
+  OPEN(unit=555,file='mesh3Data.txt',FORM='FORMATTED', &
+    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+  DO i=1,testVTKMesh%numCells
+    READ(555,*) testVTKData%dataList(i)
+  ENDDO
+  CLOSE(555)
+  ENDSUBROUTINE SetupTest4_Data
 ENDPROGRAM testVTKFiles
