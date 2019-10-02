@@ -2001,7 +2001,7 @@ MODULE ParameterLists
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
-      TYPE(StringType) :: delimDef
+      TYPE(StringType) :: delimDef,tmpstr
 
       IF(PRESENT(sskfmt)) THEN
         sskfmtDef=sskfmt
@@ -2031,11 +2031,9 @@ MODULE ParameterLists
             WRITE(tmpchar,TRIM(sdkfmtDef)) param%val
             string=TRIM(ADJUSTL(tmpchar))
           TYPE IS(ParamType_SNK)
-            WRITE(tmpchar,'(i0)') param%val
-            string=TRIM(ADJUSTL(tmpchar))
+            string=str(param%val)
           TYPE IS(ParamType_SLK)
-            WRITE(tmpchar,'(i0)') param%val
-            string=TRIM(ADJUSTL(tmpchar))
+            string=str(param%val)
           TYPE IS(ParamType_SBK)
             WRITE(tmpchar,'(L1)') param%val
             string=TRIM(ADJUSTL(tmpchar))
@@ -2056,18 +2054,14 @@ MODULE ParameterLists
               string=string//delimDef//TRIM(ADJUSTL(tmpchar))
             ENDDO
           TYPE IS(ParamType_SNK_a1)
-            WRITE(tmpchar,'(i0)') param%val(1)
-            string=TRIM(ADJUSTL(tmpchar))
+            string=str(param%val(1))
             DO i=2,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string=string//delimDef//TRIM(ADJUSTL(tmpchar))
+              string=string//delimDef//str(param%val(i))
             ENDDO
           TYPE IS(ParamType_SLK_a1)
-            WRITE(tmpchar,'(i0)') param%val(1)
-            string=TRIM(ADJUSTL(tmpchar))
+            string=str(param%val(1))
             DO i=2,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string=string//delimDef//TRIM(ADJUSTL(tmpchar))
+              string=string//delimDef//str(param%val(i))
             ENDDO
           TYPE IS(ParamType_SBK_a1)
             WRITE(tmpchar,'(L1)') param%val(1)
@@ -2102,16 +2096,14 @@ MODULE ParameterLists
             string=''
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+                string=string//str(param%val(i,j))//delimDef
               ENDDO
             ENDDO
           TYPE IS(ParamType_SLK_a2)
             string=''
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+                string=string//str(param%val(i,j))//delimDef
               ENDDO
             ENDDO
 !          TYPE IS(ParamType_SBK_a2)
@@ -2152,8 +2144,7 @@ MODULE ParameterLists
             DO k=1,SIZE(param%val,DIM=3)
               DO j=1,SIZE(param%val,DIM=2)
                 DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+                  string=string//str(param%val(i,j,k))//delimDef
                 ENDDO
               ENDDO
             ENDDO
@@ -2162,8 +2153,7 @@ MODULE ParameterLists
             DO k=1,SIZE(param%val,DIM=3)
               DO j=1,SIZE(param%val,DIM=2)
                 DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+                  string=string//str(param%val(i,j,k))//delimDef
                 ENDDO
               ENDDO
             ENDDO
