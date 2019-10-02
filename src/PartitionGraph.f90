@@ -1720,7 +1720,7 @@ MODULE PartitionGraph
 !-------------------------------------------------------------------------------
 !> @brief Calculate metrics relevant to the quality of partition
 !> @param thisGraph the partitioned graph to check metrics of
-!> @param maxnsr the maximum number of source regions
+!> @param maxnsr the maximum ratio of the number of source regions
 !> @param mmr the ratio of maximum sized(weighted) group to minimum
 !> @param srms the rms of the group size(weighted) difference from optimal
 !> @param ecut the total weight of edges cut
@@ -1820,6 +1820,12 @@ MODULE PartitionGraph
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
           ' - graph is not partitioned!')
       ENDIF
+
+      ENSURE((maxnsr > 0.0_SRK) .AND. (maxnsr <= 1.0_SRK))
+      ENSURE((mmr > 0.0_SRK)
+      ENSURE((srms > 0.0_SRK) .AND. (srms <= 100.0_SRK))
+      ENSURE(ecut >= 0.0_SRK)
+      ENSURE(comm >= 0.0_SRK)
     ENDSUBROUTINE calcDecompMetrics_PartitionGraph
 !
 !-------------------------------------------------------------------------------
