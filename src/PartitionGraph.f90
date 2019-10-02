@@ -36,6 +36,8 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE PartitionGraph
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE Allocs
   USE Strings
@@ -1822,7 +1824,7 @@ MODULE PartitionGraph
       ENDIF
 
       ENSURE((maxnsr > 0.0_SRK) .AND. (maxnsr <= 1.0_SRK))
-      ENSURE((mmr > 0.0_SRK)
+      ENSURE(mmr > 0.0_SRK)
       ENSURE((srms > 0.0_SRK) .AND. (srms <= 100.0_SRK))
       ENSURE(ecut >= 0.0_SRK)
       ENSURE(comm >= 0.0_SRK)
