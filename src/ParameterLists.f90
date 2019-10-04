@@ -9839,12 +9839,14 @@ MODULE ParameterLists
       INTEGER(SIK) :: ic
 
       LOGICAL(SBK) :: boolVal
-      INTEGER(SIK) :: intVal
-      REAL(SSK) :: singleVal
-      REAL(SDK) :: doubleVal
+      INTEGER(SIK) :: intVal,tmpInt,readRet
+      REAL(SSK) :: singleVal,tmpSgl
+      REAL(SDK) :: doubleVal,tmpDbl
       INTEGER(SIK),ALLOCATABLE :: intArry(:)
       REAL(SDK),ALLOCATABLE :: doubleArry(:)
       TYPE(StringType),ALLOCATABLE :: strArry(:)
+      CHARACTER(LEN=64) :: tmpChar
+      CHARACTER(LEN=4) :: fmt
 
       NULLIFY(pList)
       CALL parent%getChildren(children)
@@ -9876,12 +9878,33 @@ MODULE ParameterLists
               boolVal=CHAR(attrVal)
               CALL thisParam%add(CHAR(tmpPath),boolVal)
             CASE('INT')
+              tmpChar = CHAR(attrVal)
+              tmpInt=LEN(tmpChar)
+              WRITE(fmt,'(i4)') tmpInt; fmt=ADJUSTL(fmt)
+              READ(tmpChar, '(I'//TRIM(fmt)//')',IOSTAT=readRet) tmpInt
+              IF (readRet/=0) & 
+                CALL eParams%raiseFatalError('Invalid read in '//modName//'::procXMLTree'// &
+                     ' - Invalid integer value '//TRIM(attrVal)//' for '//TRIM(nameVal))
               intVal=CHAR(attrVal)
               CALL thisParam%add(CHAR(tmpPath),intVal)
             CASE('FLOAT')
+              tmpChar = CHAR(attrVal)
+              tmpInt=LEN(tmpChar)
+              WRITE(fmt,'(i4)') tmpInt; fmt=ADJUSTL(fmt)
+              READ(tmpChar, '(f'//TRIM(fmt)//'.0)',IOSTAT=readRet) tmpSgl
+              IF (readRet/=0) &
+                CALL eParams%raiseFatalError('Invalid read in '//modName//'::procXMLTree'// &
+                     ' - Invalid real value '//TRIM(attrVal)//' for '//TRIM(nameVal))
               singleVal=CHAR(attrVal)
               CALL thisParam%add(CHAR(tmpPath),singleVal,'XML_IN_VAL='//attrval)
             CASE('DOUBLE')
+              tmpChar = CHAR(attrVal)
+              tmpInt=LEN(tmpChar)
+              WRITE(fmt,'(i4)') tmpInt; fmt=ADJUSTL(fmt)
+              READ(tmpChar, '(d'//TRIM(fmt)//'.0)',IOSTAT=readRet) tmpDbl
+              IF (readRet/=0) &
+                CALL eParams%raiseFatalError('Invalid read in '//modName//'::procXMLTree'// &
+                     ' - Invalid real value '//TRIM(attrVal)//' for '//TRIM(nameVal))
               doubleVal=CHAR(attrVal)
               CALL thisParam%add(CHAR(tmpPath),doubleVal,'XML_IN_VAL='//attrval)
             CASE('STRING')
