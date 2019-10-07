@@ -6,13 +6,14 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-
+INCLUDE(Futility_CreateUnitTest)
 TRIBITS_ADD_EXECUTABLE(testDBC
      SOURCES testDBC.f90
      NOEXEPREFIX
      LINKER_LANGUAGE Fortran
 )
 
+UNSET(TESTNAME_OUT)
 IF(${Futility_ENABLE_DBC})
   TRIBITS_ADD_ADVANCED_TEST(testDBC
     TIMEOUT ${DART_TESTING_TIMEOUT_IN}
@@ -47,6 +48,7 @@ IF(${Futility_ENABLE_DBC})
         NUM_MPI_PROCS 1
         ARGS 5
         ALWAYS_FAIL_ON_NONZERO_RETURN
+    ADDED_TEST_NAME_OUT TESTNAME_OUT
   )
 ELSE()
   TRIBITS_ADD_ADVANCED_TEST(testDBC
@@ -76,5 +78,7 @@ ELSE()
         NUM_MPI_PROCS 1
         ARGS 4
         ALWAYS_FAIL_ON_NONZERO_RETURN
+    ADDED_TEST_NAME_OUT TESTNAME_OUT
   )
 ENDIF()
+Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
