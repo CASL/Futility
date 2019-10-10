@@ -197,6 +197,22 @@ PROGRAM testExceptionHandler
       ASSERT(testE%getCounter(EXCEPTION_ERROR) == 0,'%counter(ERROR)')
       ASSERT(testE%getCounter(EXCEPTION_FATAL_ERROR) == 0,'%counter(FATAL)')
       ASSERT(testE%getLastMessage() == '','mesg')
+
+      ! Ensure ExceptionHandler does not crash if the message passed in exceeds
+      ! the length of the message internally, which is 512 characters.  Each line
+      ! of this message is 50 characters, so over 550 in total.
+      COMPONENT_TEST('raiseWarning_exceedCharLen')
+      CALL testE%raiseWarning('Very                                              '//&
+                              'long                                              '//&
+                              'message                                           '//&
+                              'exceeding                                         '//&
+                              'size                                              '//&
+                              'of                                                '//&
+                              'character                                         '//&
+                              'length                                            '//&
+                              'limit                                             '//&
+                              'of                                                '//&
+                              '512.....The remainder of this message will be truncated')
     ENDSUBROUTINE testRaise
 !
 !-------------------------------------------------------------------------------
@@ -206,7 +222,7 @@ PROGRAM testExceptionHandler
       CALL testE%setLogFileUnit(OUTPUT_UNIT)
       CALL testE%setLogFileUnit(ERROR_UNIT)
       CALL testE%setLogFileUnit(-1)
-      ASSERT(testE%getCounter(EXCEPTION_WARNING) == 3,'%counter(WARN)')
+      ASSERT(testE%getCounter(EXCEPTION_WARNING) == 4,'%counter(WARN)')
       mesg='#### EXCEPTION_WARNING #### - '// &
         'Illegal unit number for log file. Log file unit not set.'
       ASSERT(TRIM(testE%getLastMessage()) == TRIM(mesg),'%getLastMessage')

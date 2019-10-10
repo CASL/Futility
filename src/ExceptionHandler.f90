@@ -60,7 +60,7 @@
 !>   CALL e%setLogFileUnit(23)
 !>   OPEN(UNIT=e%getLogFileUnit(),FILE='Exception.log', &
 !>        ACCESS='SEQUENTIAL',FORM='FORMATTED')
-!>   CALL e%setLogFileActive(.TRUE.)
+!>   CALL e%setLogActive(.TRUE.)
 !>
 !>   !Suppress reporting of exceptions to standard error
 !>   CALL e%setQuietMode(.TRUE.)
@@ -986,7 +986,7 @@ MODULE ExceptionHandler
       INTEGER(SIK),INTENT(IN) :: logUnit
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: mesg
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: prefix
-      INTEGER(SIK) :: ioerr1,ioerr2
+      INTEGER(SIK) :: ioerr1,ioerr2,prefixLen
 
       !Set the appropriate prefix and printing options
       SELECT CASE(eCode)
@@ -1035,7 +1035,8 @@ MODULE ExceptionHandler
       ENDIF
 
       !Set the message to be included as one line back to exception object
-      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg)
+      prefixLen = LEN_TRIM(prefix)+3
+      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg(1:EXCEPTION_MAX_MESG_LENGTH-prefixLen))
     ENDSUBROUTINE exceptionMessage
 !
 !-------------------------------------------------------------------------------
