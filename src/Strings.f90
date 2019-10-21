@@ -175,6 +175,10 @@ MODULE Strings
       !> copybrief StringType::isNumeric_str
       !> copydetails StringType::isNumeric_str
       PROCEDURE,PASS :: isNumeric => isNumeric_str
+      !TODO deferred on account of a strange error with TAU_Stubs
+      !!> copybrief StringType::clean_str
+      !!> copydetails StringType::clean_str
+      !FINAL :: clean_str
   ENDTYPE StringType
 
   !> @brief Overloads the Fortran intrinsic procedure CHAR() so
@@ -317,6 +321,15 @@ MODULE Strings
 !
 !===============================================================================
   CONTAINS
+!!
+!!-------------------------------------------------------------------------------
+!!> @brief cleans up string objects
+!!> @param this the StringType being garbaged collected
+!!>
+!SUBROUTINE clean_str(this)
+!  TYPE(StringType),INTENT(INOUT) :: this
+!  IF(ALLOCATED(this%s)) DEALLOCATE(this%s)
+!ENDSUBROUTINE clean_str
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns an intrinsic character array to a string
@@ -326,7 +339,12 @@ MODULE Strings
   ELEMENTAL SUBROUTINE assign_char_to_StringType(lhs,rhs)
     CLASS(StringType),INTENT(INOUT) :: lhs
     CHARACTER(LEN=*),INTENT(IN) :: rhs
-    lhs%s = rhs
+    IF(ALLOCATED(lhs%s)) DEALLOCATE(lhs%s)
+    IF(LEN(rhs)>0) THEN
+      lhs%s = rhs
+    ELSE
+      ALLOCATE(CHARACTER(0) :: lhs%s)
+    ENDIF
   ENDSUBROUTINE assign_char_to_StringType
 !
 !-------------------------------------------------------------------------------
