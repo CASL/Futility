@@ -6,34 +6,7 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-
-FUNCTION(Futility_SetTestLabels TESTTMP)
-    # The test shall have one argument in the case Tribits failed to add the test
-    # This results in the test name being empty, which must be guarded against
-    SET(TESTNAME "INVALID")
-    SET(extra_args ${ARGN})
-    LIST(LENGTH extra_args num_args)
-    IF(${num_args} GREATER 0)
-      LIST(GET extra_args 0 TESTCAT)
-      SET(TESTNAME ${TESTTMP})
-    ENDIF()
-
-    IF(NOT "${TESTNAME}" STREQUAL "INVALID")
-      SET_PROPERTY(TEST ${TESTNAME} APPEND PROPERTY LABELS ${TESTCAT})
-      IF("${TESTCAT}" STREQUAL "BASIC")
-	SET_PROPERTY(TEST ${TESTNAME} APPEND PROPERTY LABELS "CONTINUOUS")
-	SET_PROPERTY(TEST ${TESTNAME} APPEND PROPERTY LABELS "NIGHTLY")
-	SET_PROPERTY(TEST ${TESTNAME} APPEND PROPERTY LABELS "HEAVY")
-      ELSEIF("${TESTCAT}" STREQUAL "CONTINUOUS")
-	SET_PROPERTY(TEST ${TESTNAME} APPEND PROPERTY LABELS "NIGHTLY")
-	SET_PROPERTY(TEST ${TESTNAME} APPEND PROPERTY LABELS "HEAVY")
-      ELSEIF("${TESTCAT}" STREQUAL "NIGHTLY")
-	SET_PROPERTY(TEST ${TESTNAME} APPEND PROPERTY LABELS "HEAVY")
-      ENDIF()
-      UNSET(TESTNAME)
-      UNSET(TESTTMP)
-    ENDIF()
-ENDFUNCTION()
+INCLUDE(SetTestLabels)
 
 FUNCTION(Futility_CreateUnitTest TESTNAME)
     TRIBITS_ADD_EXECUTABLE_AND_TEST(${TESTNAME}
@@ -43,7 +16,7 @@ FUNCTION(Futility_CreateUnitTest TESTNAME)
         TIMEOUT ${DART_TESTING_TIMEOUT_IN}
         ADDED_TESTS_NAMES_OUT TESTNAME_OUT
     )
-    Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
+    SetTestLabels(${TESTNAME_OUT} "BASIC")
     UNSET(TESTNAME)
 ENDFUNCTION()
 
@@ -55,7 +28,7 @@ FUNCTION(Futility_CreateParUnitTest TESTNAME NPROC)
         TIMEOUT ${DART_TESTING_TIMEOUT_IN}
         ADDED_TESTS_NAMES_OUT TESTNAME_OUT
     )
-    Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
+    SetTestLabels(${TESTNAME_OUT} "BASIC")
     UNSET(TESTNAME)
 ENDFUNCTION()
 
@@ -67,7 +40,7 @@ FUNCTION(Futility_CreateUnitTest_C TESTNAME)
         TIMEOUT ${DART_TESTING_TIMEOUT_IN}
         ADDED_TESTS_NAMES_OUT TESTNAME_OUT
     )
-    Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
+    SetTestLabels(${TESTNAME_OUT} "BASIC")
     UNSET(TESTNAME)
 ENDFUNCTION()
 
@@ -79,7 +52,7 @@ FUNCTION(Futility_CreateParUnitTest_C TESTNAME NPROC)
         TIMEOUT ${DART_TESTING_TIMEOUT_IN}
         ADDED_TESTS_NAMES_OUT TESTNAME_OUT
     )
-    Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
+    SetTestLabels(${TESTNAME_OUT} "BASIC")
     UNSET(TESTNAME)
 ENDFUNCTION()
 
@@ -91,7 +64,7 @@ FUNCTION(Futilty_CreateUnitTest_CPP TESTNAME)
         TIMEOUT ${DART_TESTING_TIMEOUT_IN}
         ADDED_TESTS_NAMES_OUT TESTNAME_OUT
     )
-    Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
+    SetTestLabels(${TESTNAME_OUT} "BASIC")
     UNSET(TESTNAME)
 ENDFUNCTION()
 
@@ -103,6 +76,6 @@ FUNCTION(Futility_CreateParUnitTest_CPP TESTNAME NPROC)
         TIMEOUT ${DART_TESTING_TIMEOUT_IN}
         ADDED_TESTS_NAMES_OUT TESTNAME_OUT
     )
-    Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
+    SetTestLabels(${TESTNAME_OUT} "BASIC")
     UNSET(TESTNAME)
 ENDFUNCTION()
