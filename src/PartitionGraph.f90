@@ -1728,31 +1728,34 @@ MODULE PartitionGraph
 !> @param ecut the total weight of edges cut
 !> @param comm the total weight of communication between groups
 !>
-    SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,maxnsr,mmr,srms,ecut,comm)
+    SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,mmr,srms,ecut,comm,maxnsr)
       CHARACTER(LEN=*),PARAMETER :: myName='calcDecompMetrics'
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
-      REAL(SRK),INTENT(OUT) :: maxnsr,mmr,srms,ecut,comm
+      REAL(SRK),INTENT(OUT) :: mmr,srms,ecut,comm
+      REAL(SRK),INTENT(OUT),OPTIONAL :: maxnsr
       INTEGER(SIK) :: ig,igstt,igstp,in,ineigh,iv,ivert,neighGrp
       REAL(SRK) :: wtSum,wtGrp,lgroup,sgroup,optSize,wtDif,gwt
       INTEGER(SIK),ALLOCATABLE :: grpMap(:),uniqueGrps(:)
 
-      maxnsr=0.0_SRK
+      IF(PRESENT(maxnsr)) maxnsr=0.0_SRK
       mmr=0.0_SRK
       srms=0.0_SRK
       ecut=0.0_SRK
       comm=0.0_SRK
       IF(ALLOCATED(thisGraph%groupIdx)) THEN
         !Compute the max number of source regions
-        DO ig=1,thisGraph%nGroups
-          igstt=thisGraph%groupIdx(ig)
-          igstp=thisGraph%groupIdx(ig+1)-1
-          gwt=0.0_SRK
-          DO iv=igstt,igstp
-            gwt=gwt+thisGraph%wts(thisGraph%groupList(iv))
+        IF(PRESENT(maxnsr)) THEN
+          DO ig=1,thisGraph%nGroups
+            igstt=thisGraph%groupIdx(ig)
+            igstp=thisGraph%groupIdx(ig+1)-1
+            gwt=0.0_SRK
+            DO iv=igstt,igstp
+              gwt=gwt+thisGraph%wts(thisGraph%groupList(iv))
+            ENDDO
+            maxnsr=MAX(maxnsr,REAL(gwt,SRK))
           ENDDO
-          maxnsr=MAX(maxnsr,REAL(gwt,SRK))
-        ENDDO
-        maxnsr=maxnsr/SUM(thisGraph%wts)
+          maxnsr=maxnsr/SUM(thisGraph%wts)
+        ENDIF
 
         !Compute the min/max ratio and rms difference from optimal
         lgroup=0.0_SRK
@@ -1823,7 +1826,9 @@ MODULE PartitionGraph
           ' - graph is not partitioned!')
       ENDIF
 
-      ENSURE((maxnsr > 0.0_SRK) .AND. (maxnsr <= 1.0_SRK))
+      IF(PRESENT(maxnsr)) THEN
+        ENSURE((maxnsr > 0.0_SRK) .AND. (maxnsr <= 1.0_SRK))
+      ENDIF
       ENSURE(mmr > 0.0_SRK)
       ENSURE((srms > 0.0_SRK) .AND. (srms <= 100.0_SRK))
       ENSURE(ecut >= 0.0_SRK)
