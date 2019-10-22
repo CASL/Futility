@@ -7,6 +7,7 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
+INCLUDE(SetTestLabels)
 TRIBITS_ADD_EXECUTABLE(testDBC
      SOURCES testDBC.f90
      NOEXEPREFIX
@@ -81,4 +82,4 @@ ELSE()
     ADDED_TEST_NAME_OUT TESTNAME_OUT
   )
 ENDIF()
-Futility_SetTestLabels(${TESTNAME_OUT} "BASIC")
+SetTestLabels(${TESTNAME_OUT} "BASIC")
