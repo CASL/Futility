@@ -848,7 +848,23 @@ PROGRAM testPartitionGraph
              11, 12, 13, 14, 15, 17, 18, 23, 24, &
              16, 19, 20, 21, 22, 25, 26, 27, 28/))
       !Calculate the metrics
-      CALL testPG%metrics(maxnsr,mmr,srms,ecut,comm)
+      CALL testPG%metrics(mmr,srms,ecut,comm)
+
+      !Test values
+      bool=(mmr .APPROXEQ. 1.0588235294117647_SRK)
+      ASSERT(bool,'max-min ratio')
+      FINFO() mmr
+      bool=(srms .APPROXEQ. 2.7196414661021060_SRK)
+      ASSERT(bool, 'group size rms (from optimal)')
+      FINFO() srms
+      bool=(ecut .APPROXEQ. 10.0_SRK)
+      ASSERT(bool, 'edges cut')
+      FINFO() ecut
+      bool=(comm .APPROXEQ. 18.0_SRK)
+      ASSERT(bool, 'communication')
+      FINFO() comm
+      !Calculate the metrics
+      CALL testPG%metrics(mmr,srms,ecut,comm,maxnsr)
 
       !Test values
       bool=(maxnsr .APPROXEQ. 0.34615384615384615_SRK)
