@@ -388,10 +388,10 @@ MODULE FileType_Fortran
 
         IF(TRIM(statusval) /= 'OLD') THEN
           fileobj%newstat=.TRUE.
-          IF(TRIM(statusval) == 'REPLACE') fileobj%overwrite=.TRUE.
+          fileobj%overwrite=(TRIM(statusval) == 'REPLACE')
         ENDIF
-        IF(TRIM(formval) == 'FORMATTED' ) fileobj%formatstat=.TRUE.
-        IF(TRIM(padval) ==  'YES') fileobj%padstat=.TRUE.
+        fileobj%formatstat=(TRIM(formval) == 'FORMATTED')
+        fileobj%padstat=(TRIM(padval) ==  'YES')
         IF(TRIM(accessval) == 'DIRECT' .OR. TRIM(accessval) == 'STREAM') THEN
           fileobj%accessstat=.TRUE.
           IF(fileobj%reclval < 1) CALL fileobj%e%raiseError(modName//'::'// &
