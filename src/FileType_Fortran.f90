@@ -985,6 +985,25 @@ MODULE FileType_Fortran
       ENDDO
     ENDSUBROUTINE getTableBounds
 !
+!------------------------------------------------------------------------------
+!> @brief This subroutine returns the formatted row string to separate rows and
+!>        to bound the top and bottom of the table
+!> @param maxcolsize The integer array of the width of each column, from
+!>        getTableBounds.
+!> @param rowstr The formatted row string
+!>
+    FUNCTION getRowStr(maxcolsize) RESULT(rowstr)
+      INTEGER(SIK),INTENT(IN) :: maxcolsize(:)
+      TYPE(StringType) :: rowstr
+      INTEGER(SIK) :: i,dashlen
+
+      rowstr='+'
+      DO i=1,SIZE(maxcolsize)
+        dashlen=maxcolsize(i)+2
+        rowstr=rowstr//REPEAT('-',dashlen)//'+'
+      ENDDO
+    ENDFUNCTION getRowStr
+!
 !-------------------------------------------------------------------------------
 !> @brief Returns a unit number that is presently not in use.
 !> @param istt optional input for where to start searching for an unused unit
