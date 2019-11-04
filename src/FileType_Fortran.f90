@@ -871,7 +871,8 @@ MODULE FileType_Fortran
 !>       routine looks for the whitespace.  Surround strings with quotes to have
 !>       them as a single field.
 !>
-    SUBROUTINE writeTable(file,tablevals)
+    SUBROUTINE writeTable_fortran_file(file,tablevals)
+      CHARACTER(LEN=*),PARAMETER :: myName='writeTable_fortran_file'
       CLASS(FortranFileType),INTENT(INOUT) :: file
       TYPE(StringType),INTENT(IN) :: tablevals(:,:)
       LOGICAL(SBK) :: hasString
@@ -894,7 +895,7 @@ MODULE FileType_Fortran
           !
           !Write the table here
           !Top row
-          WRITE(funit,'(3x,a)') CHAR(rowstr)
+          WRITE(file%getUnitNo(),'(3x,a)') CHAR(rowstr)
           !
           !Loop over the state variables, which are rows
           DO j=1,SIZE(tablevals,DIM=2)
@@ -931,18 +932,18 @@ MODULE FileType_Fortran
                   plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
                 ENDIF
               ENDDO
-              IF(hasString) WRITE(funit,'(3x,a)') CHAR(plstr)
+              IF(hasString) WRITE(file%getUnitNo(),'(3x,a)') CHAR(plstr)
             ENDDO
             !Row to separate state index
-            IF(j == 1) WRITE(funit,'(3x,a)') CHAR(rowstr)
+            IF(j == 1) WRITE(file%getUnitNo(),'(3x,a)') CHAR(rowstr)
           ENDDO
           !Bottom row
-          WRITE(funit,'(3x,a)') CHAR(rowstr)
+          WRITE(file%getUnitNo(),'(3x,a)') CHAR(rowstr)
           DEALLOCATE(maxcolsize)
           DEALLOCATE(maxrowsize)
         ENDIF !isOpen
       ENDIF !isinit
-    ENDSUBROUTINE writeTable
+    ENDSUBROUTINE writeTable_fortran_file
 !
 !------------------------------------------------------------------------------
 !> @brief This subroutine gets the maximum size of each column and row for a
