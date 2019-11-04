@@ -170,6 +170,9 @@ MODULE FileType_Fortran
       !> @copybrief FileType_Fortran::setStatus_fortran_file
       !> @copydetails FileType_Fortran::setStatus_fortran_file
       PROCEDURE,PASS :: setStatus => setStatus_fortran_file
+      !> @copybrief FileType_Fortran::writeTable_fortran_file
+      !> @copydetails FileType_Fortran::writeTable_fortran_file
+      PROCEDURE,PASS :: writeTable => writeTable_fortran_file
   ENDTYPE FortranFileType
 !
 !===============================================================================
@@ -856,6 +859,90 @@ MODULE FileType_Fortran
           'cannot be changed on uninitialized file!')
       ENDIF
     ENDSUBROUTINE setStatus_fortran_file
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine writes a 2-D array of strings to an output file as a
+!>        formatted table.
+!> @param funit The output unit of the file where the table is written.
+!> @param tablevals The 2-D array of strings to write.
+!>
+!> Note: The default delimiter for writing multi-row strings to a single cell is
+!>       the '; ', where the table functions check for the ';', and the getField
+!>       routine looks for the whitespace.  Surround strings with quotes to have
+!>       them as a single field.
+!>
+    SUBROUTINE writeTable(file,tablevals)
+      CLASS(FortranFileType),INTENT(INOUT) :: file
+      TYPE(StringType),INTENT(IN) :: tablevals(:,:)
+      LOGICAL(SBK) :: hasString
+      INTEGER(SIK),ALLOCATABLE :: maxcolsize(:),maxrowsize(:)
+      INTEGER(SIK) :: i,j,k,rightpad,ierr
+      TYPE(StringType) :: plstr,rowstr,field
+
+      IF(file%initstat) THEN
+        IF(file%isOpen()) THEN
+          !Loop over the string array and write the data and make it pretty.
+          !The only outstanding question is how to handle arrays? Add them in a row or column?
+          ALLOCATE(maxcolsize(SIZE(tablevals,DIM=1)))
+          ALLOCATE(maxrowsize(SIZE(tablevals,DIM=2)))
+          maxcolsize=0
+          maxrowsize=0
+          CALL getTableBounds(tablevals,maxcolsize,maxrowsize)
+          rowstr=getRowStr(maxcolsize)
+          rightpad=0
+
+          !
+          !Write the table here
+          !Top row
+          WRITE(funit,'(3x,a)') CHAR(rowstr)
+          !
+          !Loop over the state variables, which are rows
+          DO j=1,SIZE(tablevals,DIM=2)
+            !Loop over the columns in the row
+            DO k=1,maxrowsize(j)
+              plstr='|'
+              DO i=1,SIZE(tablevals,DIM=1)
+                !Always have 1 space on the right
+                !For the first row of a multirow
+                field=''
+                IF(k == 1) THEN
+                  !Force writing everything for now
+                  IF(i == 2) hasString=.TRUE.
+                  !If this table value is an array, get the kth value
+                  !Remember that getField uses the space as a delimiter.
+                  !We're using the comma+space so we have interoperability.
+                  IF(INDEX(tablevals(i,j),';') > 0) THEN
+                    CALL getField(k,tablevals(i,j),field)
+                  !If it's not an array
+                  ELSE
+                    field=tablevals(i,j)
+                  ENDIF
+                  !hasString=hasString .AND. field /= '-'
+                  rightpad=maxcolsize(i)-LEN_TRIM(field)+1
+                  plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
+                ELSE
+                  !If this table value is an array, get the kth value
+                  !Check ierr in case k > nfields, set to '' if it is.
+                  IF(INDEX(tablevals(i,j),';') > 0) THEN
+                    CALL getField(k,tablevals(i,j),field,ierr)
+                    IF(ierr /= 0) field=''
+                  ENDIF
+                  rightpad=maxcolsize(i)-LEN_TRIM(field)+1
+                  plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
+                ENDIF
+              ENDDO
+              IF(hasString) WRITE(funit,'(3x,a)') CHAR(plstr)
+            ENDDO
+            !Row to separate state index
+            IF(j == 1) WRITE(funit,'(3x,a)') CHAR(rowstr)
+          ENDDO
+          !Bottom row
+          WRITE(funit,'(3x,a)') CHAR(rowstr)
+          DEALLOCATE(maxcolsize)
+          DEALLOCATE(maxrowsize)
+        ENDIF !isOpen
+      ENDIF !isinit
+    ENDSUBROUTINE writeTable
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a unit number that is presently not in use.
