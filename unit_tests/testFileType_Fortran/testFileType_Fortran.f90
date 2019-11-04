@@ -36,7 +36,7 @@ PROGRAM testFileType_Fortran
 !-------------------------------------------------------------------------------
     SUBROUTINE testFortranFileType()
       CHARACTER(LEN=256) :: buffer
-      INTEGER(SIK) :: i,buffer_size,ioerr
+      INTEGER(SIK) :: i,ioerr
       TYPE(StringType) :: tmpstr
       TYPE(StringType),ALLOCATABLE :: table(:,:)
 
