@@ -186,10 +186,10 @@ MODULE Strings
   INTERFACE CHAR
     !> @copybrief Strings::CHAR_StringType
     !> @copydetails Strings::CHAR_StringType
-    MODULE PROCEDURE  CHAR_StringType
+    MODULE PROCEDURE CHAR_StringType
     !> copybrief Strings::cchar_to_fchar
     !> copydetails Strings::cchar_to_fchar
-    MODULE PROCEDURE :: cchar_to_fchar
+    MODULE PROCEDURE cchar_to_fchar
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure LEN() so
