@@ -944,6 +944,47 @@ MODULE FileType_Fortran
       ENDIF !isinit
     ENDSUBROUTINE writeTable
 !
+!------------------------------------------------------------------------------
+!> @brief This subroutine gets the maximum size of each column and row for a
+!>        given 2-D string array.  The maximum column size (width) is found by
+!>        looping over all entries within the column and finding the largest
+!>        entry. The maximum row size (height) is found by counting the
+!>        number of delimeters for all entries in a given row.
+!> @param tablevals The 2-D array of strings from which to find the row and
+!>        column bounds.
+!> @param maxcolsize The integer array of the width of each column.
+!> @param maxrowsize The integer array of the height of each row.
+!>
+    SUBROUTINE getTableBounds(tablevals,maxcolsize,maxrowsize)
+      TYPE(StringType),INTENT(IN) :: tablevals(:,:)
+      INTEGER(SIK),INTENT(OUT) :: maxcolsize(:)
+      INTEGER(SIK),INTENT(OUT) :: maxrowsize(:)
+      INTEGER(SIK) :: i,j,k,fieldlen
+      TYPE(StringType) :: field
+
+      !Get formatting bounds
+      DO i=1,SIZE(tablevals,DIM=1)
+        DO j=1,SIZE(tablevals,DIM=2)
+          maxrowsize(j)=MAX(maxrowsize(j),nmatchstr(CHAR(tablevals(i,j)),';')+1)
+        ENDDO
+        !Loop over rows, find array entries
+        DO j=1,SIZE(tablevals,DIM=2)
+          fieldlen=0
+          DO k=1,maxrowsize(j)
+            !array value
+            IF(nmatchstr(CHAR(tablevals(i,j)),';') > 0) THEN
+              CALL getField(k,tablevals(i,j),field)
+              fieldlen=MAX(fieldlen,LEN_TRIM(field))
+            !Scalar value
+            ELSE
+              fieldlen=LEN(tablevals(i,j))
+            ENDIF
+          ENDDO
+          maxcolsize(i)=MAX(maxcolsize(i),fieldlen)
+        ENDDO
+      ENDDO
+    ENDSUBROUTINE getTableBounds
+!
 !-------------------------------------------------------------------------------
 !> @brief Returns a unit number that is presently not in use.
 !> @param istt optional input for where to start searching for an unused unit
