@@ -79,7 +79,6 @@ MODULE LinearSolverTypes
 #ifdef FUTILITY_HAVE_Trilinos
   USE ForTeuchos_ParameterList
 #endif
-
   IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -91,10 +90,6 @@ MODULE LinearSolverTypes
 #endif
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
-#else
-#ifdef HAVE_MPI
-#include <mpif.h>
-#endif
 #endif
 
   PRIVATE
@@ -270,16 +265,6 @@ MODULE LinearSolverTypes
   !> initialization for a Linear Solver Type.
   TYPE(ParamType),PROTECTED,SAVE :: LinearSolverType_reqParams,LinearSolverType_optParams
 
-  !> Interface for preconditioned and unpreconditioned GMRES solvers
-  !INTERFACE solveGMRES
-  !  !> @copybrief LinearSolverTypes::solveGMRES_nopc
-  !  !> @copydetails LienarSolverTypes::solveGMRES_nopc
-  !  MODULE PROCEDURE solveGMRES_nopc
-  !  !> @copybrief LinearSolverTypes::solveGMRES_pc
-  !  !> @copydetails LinearSolverTypes::solveGMRES_pc
-  !  MODULE PROCEDURE solveGMRES_lpc
-  !ENDINTERFACE
-
   !> Exception Handler for use in MatrixTypes
   TYPE(ExceptionHandlerType),SAVE :: eLinearSolverType
 
@@ -362,7 +347,6 @@ MODULE LinearSolverTypes
       ELSEIF (matType == BANDED) THEN
         CALL validParams%add('LinearSolverType->x->VectorType->vecType',REAL_NATIVE)
         CALL validParams%add('LinearSolverType->b->VectorType->vecType',REAL_NATIVE)
-
       END IF
 
       ! pull data for matrix and vector parameter lists
@@ -379,18 +363,23 @@ MODULE LinearSolverTypes
         CALL validParams%get('LinearSolverType->PC->PreCondType->pcType',PreCondType)
 
         SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)
-        solver%pcIters = -1_SIK
-        IF (validParams%has('LinearSolverType->PC->PreCondType->pcIters')) &
-          CALL validParams%get('LinearSolverType->PC->PreCondType->pcIters',solver%pcIters)
-        solver%pcSetup = 0_SIK
-        IF (validParams%has('LinearSolverType->PC->PreCondType->pcSetup')) &
-          CALL validParams%get('LinearSolverType->PC->PreCondType->pcSetup',solver%pcSetup)
+          solver%pcIters = -1_SIK
+          IF (validParams%has('LinearSolverType->PC->PreCondType->pcIters')) &
+            CALL validParams%get('LinearSolverType->PC->PreCondType->pcIters',solver%pcIters)
+          solver%pcSetup = 0_SIK
+          IF (validParams%has('LinearSolverType->PC->PreCondType->pcSetup')) &
+            CALL validParams%get('LinearSolverType->PC->PreCondType->pcSetup',solver%pcSetup)
         ENDSELECT
       ELSE
         CALL pcPList%clear()
-        CALL pcPList%add('PreCondType->pcType','NOPC')
-        PreCondType = 'NOPC'
+        CALL pcPList%add('PreCondType->pcType','DEFAULT')
+        SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)
+          PreCondType = 'DEFAULT'
+          solver%pcIters = -1_SIK
+          solver%pcSetup = 0_SIK
+        ENDSELECT
       ENDIF
+
       !add mpi communicator to parameter lists
       CALL matPList%add('MatrixType->MPI_Comm_ID',comm)
       CALL vecxPList%add('VectorType->MPI_Comm_ID',comm)
@@ -614,8 +603,8 @@ MODULE LinearSolverTypes
                     CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,iperr)
                     CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,iperr)
 ! Disabling nopc option for PETSC because it breaks a lot of things
-                  !ELSEIF(TRIM(PreCondType)=='NOPC') THEN
-                  !  CALL PCSetType(solver%pc,PCNONE,iperr)
+!                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
+!                    CALL PCSetType(solver%pc,PCNONE,iperr)
                   ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
                     CALL PCSetType(solver%pc,PCBJACOBI,iperr)
                   ENDIF
@@ -1085,6 +1074,7 @@ MODULE LinearSolverTypes
                 SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
                   SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
                     CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+
                     IF(ierr==0) solver%info=0
                   ENDSELECT
                 ENDSELECT
@@ -2378,7 +2368,7 @@ MODULE LinearSolverTypes
       REAL(SRK) :: alpha,beta,error,z0_dot,z1_dot,convTol
       TYPE(RealVectorType) :: z,w,r,p,b
       TYPE(ParamType) :: pList,pList2
-      
+
       N=0
       N=solver%A%n
       M=N

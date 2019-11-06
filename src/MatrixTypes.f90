@@ -65,7 +65,7 @@
 !>   CALL sparse%set(3,2,50._SRK)
 !>   CALL sparse%set(3,3,60._SRK)
 !>   CALL sparse%clear()
-!>
+!>   
 !>   ! Create a PETSc matrix using the factory
 !>   CALL params%add("MatrixType->n",3_SIK)
 !>   CALL params%add("MatrixType->nnz",6_SIK)
@@ -76,7 +76,7 @@
 !>   ! Clean up
 !>   CALL matrix_p%clear()
 !>   DEALLOCATE(matrix_p)
-!>
+!>   
 !> ENDPROGRAM ExampleMatrix
 !> @endcode
 !>
@@ -186,7 +186,7 @@ MODULE MatrixTypes
 !> constructed matrix. Should be NULL
 !> @param params a parameter list to use to determine the type of and construct
 !> the matrix
-!>
+!> 
 !> This is an abstract factory routine for the base MatrixTypes. It uses the
 !> matType and engine parameters on the passed parameter list to determine which
 !> type of MatrixType to which the passed pointer should be allocated. It then
@@ -500,9 +500,9 @@ MODULE MatrixTypes
                 thisMatrix%ja,thisMatrix%a,x,y)
             ENDIF
           TYPE IS(BandedMatrixType)
-            IF(ul /= 'n' .OR. d /= 'n' .OR. incx /= 1) THEN
+            IF(ul /= 'n' .OR. d /= 'n' .OR. t /= 'n' .OR. incx /= 1) THEN
                CALL eMatrixType%raiseError('Incorrect call to '// &
-                    modName//'::'//myName//' - This interface is being implemented.')
+                    modName//'::'//myName//' - This interface is not implemented.')
             END IF
 
             !REQUIRE(thisMatrix%isInit)
@@ -521,26 +521,23 @@ MODULE MatrixTypes
               y = y*b
             END IF
 
-            IF(t /= 'n') THEN
-              CALL thisMatrix%transpose()
-            END IF
-
             ! This can probably be optimized for the a /= 1 case
             IF (a==1.0_SRK) THEN
               DO bIdx=1,SIZE(thisMatrix%bandIdx)
                 idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
                 y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
               ENDDO
-            ELSE
+            ELSEIF (a==-1.0_SRK) THEN
+              DO bIdx=1,SIZE(thisMatrix%bandIdx)
+                idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+                y(idxMult) = y(idxMult) - thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+              ENDDO
+            ELSEIF (a/=0.0_SRK) THEN
               DO bIdx=1,SIZE(thisMatrix%bandIdx)
                 idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
                 y(idxMult) = y(idxMult) + a * thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
               ENDDO
             ENDIF
-
-            IF(t /= 'n') THEN
-              CALL thisMatrix%transpose()
-            END IF
 
           CLASS IS(DistributedBandedMatrixType)
             CALL eMatrixType%raiseError('Incorrect call to '// &
