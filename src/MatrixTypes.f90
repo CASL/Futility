@@ -727,8 +727,11 @@ MODULE MatrixTypes
       ! NOTE: incx,ul,d,t are NOT USED
 
       ! Get rank; initialize requests/counters
+#ifdef HAVE_MPI
       CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
-
+#else
+      rank = 0
+#endif
       ! We will store our send/recv arrays in an array of length 2
       ! This allows one to be used for computation and one for
       ! communication.

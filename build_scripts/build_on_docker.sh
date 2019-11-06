@@ -4,8 +4,8 @@ TPL_DIR=/tools/vera/gcc-5.4.0/tpls/opt
 BLAS_LIBRARY_DIRS=${TPL_DIR}/lapack-3.3.1/lib
 LAPACK_LIBRARY_DIRS=${TPL_DIR}/lapack-3.3.1/lib
 
-PETSC_DIR=${TPL_DIR}/petsc-3.5.4
-SLEPC_DIR=${TPL_DIR}/slepc-3.5.4
+PETSC_DIR=${TPL_DIR}/petsc-3.6.4
+SLEPC_DIR=${TPL_DIR}/slepc-3.6.3
 HYPRE_DIR=${TPL_DIR}/hypre-2.9.1a
 SUNDIALS_DIR=${TPL_DIR}/sundials-2.9.0
 PETSC_INCLUDE_DIRS="${PETSC_DIR}/include;${HYPRE_DIR}/include"
@@ -16,8 +16,8 @@ SLEPC_LIBRARY_DIRS="${SLEPC_DIR}/lib"
 SUNDIALS_INCLUDE_DIRS="${SUNDIALS_DIR}/include"
 SUNDIALS_LIBRARY_DIRS="${SUNDIALS_DIR}/lib"
 HDF5_LIBRARY_NAMES="hdf5_hl;hdf5;hdf5_cpp;hdf5_fortran"
-HDF5_INCLUDE_DIRS=${TPL_DIR}/hdf5-1.8.10/include
-HDF5_LIBRARY_DIRS=${TPL_DIR}/hdf5-1.8.10/lib
+HDF5_INCLUDE_DIRS=${TPL_DIR}/hdf5-1.10.1/include
+HDF5_LIBRARY_DIRS=${TPL_DIR}/hdf5-1.10.1/lib
 
 cmake -Wno-dev                                  \
  -DCMAKE_BUILD_TYPE:STRING="RELEASE"            \

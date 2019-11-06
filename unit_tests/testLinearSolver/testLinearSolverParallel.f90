@@ -22,7 +22,7 @@ PROGRAM testLinearSolverParallel
 
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(MPI_EnvType) :: mpiTestEnv
-
+#ifdef HAVE_MPI
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
@@ -202,5 +202,5 @@ CONTAINS
       CALL thisLS%clear()
 
     ENDSUBROUTINE testIterativeSolve_GMRES
-
+#endif
 ENDPROGRAM testLinearSolverParallel

@@ -25,7 +25,7 @@ PROGRAM testRSORPreconParallel
 #ifdef HAVE_MPI
   INCLUDE 'mpif.h'
 #endif
-
+#ifdef HAVE_MPI
   TYPE(ExceptionHandlerType),TARGET :: e
   TYPE(ParamType) :: PListMat,PListVec,PListRSOR
   CLASS(MatrixType),ALLOCATABLE :: testBandedMatrix,testBlockBandedMatrix
@@ -33,7 +33,6 @@ PROGRAM testRSORPreconParallel
   CLASS(VectorType),ALLOCATABLE :: testVec_1g,testVec_mg
   INTEGER(SIK) :: nerrors1,nerrors2
 
-#ifdef HAVE_MPI
   INTEGER :: mpierr
   CALL MPI_Init(mpierr)
 
@@ -51,7 +50,6 @@ PROGRAM testRSORPreconParallel
 
   FINALIZE_TEST()
   CALL MPI_Finalize(mpierr)
-#endif
 !
 !===============================================================================
   CONTAINS
@@ -60,7 +58,6 @@ PROGRAM testRSORPreconParallel
     SUBROUTINE setupRSORTest()
         INTEGER(SIK)::ioerr,i,j,numnonzero,rank,nproc
         REAL(SRK)::tmpreal1(9*9),tmpreal2(9),tempreal
-#ifdef HAVE_MPI
 
         CALL PListRSOR%add('PreCondType->omega',1.0_SRK)
         CALL PListRSOR%add('PreCondType->comm',PE_COMM_WORLD)
@@ -157,7 +154,6 @@ PROGRAM testRSORPreconParallel
 
         IF (rank == 0) refVector%b = tmpreal2(1:6)
         IF (rank == 1) refVector%b = tmpreal2(7:9)
-#endif
 
     ENDSUBROUTINE setupRSORTest
 !
@@ -168,7 +164,6 @@ PROGRAM testRSORPreconParallel
         REAL(SRK)::tmpreal,trv1(9*9),trv2(3*3*3)
         REAL(SRK)::refLpU(9,9),refLU(3,3,3)
         REAL(SRK)::vecsave(9)
-#ifdef HAVE_MPI
 
         ALLOCATE(DistributedRSOR_PreCondType :: testSORP)
 
@@ -287,13 +282,11 @@ PROGRAM testRSORPreconParallel
         ENDIF
 
         DEALLOCATE(testSORP)
-#endif
 
     ENDSUBROUTINE testRSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE clearTest()
-#ifdef HAVE_MPI
 
       CALL PListMat%clear()
       CALL PListVec%clear()
@@ -309,8 +302,7 @@ PROGRAM testRSORPreconParallel
       IF(ALLOCATED(testBandedMatrix)) DEALLOCATE(testBandedMatrix)
       IF(ALLOCATED(testBlockBandedMatrix)) DEALLOCATE(testBlockBandedMatrix)
 
-#endif
 
     ENDSUBROUTINE clearTest
-!
+#endif
 ENDPROGRAM testRSORPreconParallel

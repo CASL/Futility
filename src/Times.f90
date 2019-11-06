@@ -170,7 +170,7 @@ MODULE Times
       !> @copydetails Times::getTimeHHMMSS
       PROCEDURE,PASS :: getTimeHHMMSS
       !> @copybrief Times::getTimeReal
-      !> @copydetails Times::getTimeHHMMSS
+      !> @copydetails Times::getTimeReal
       PROCEDURE,PASS :: getTimeReal
       !> @copybrief Times::getTimeChar
       !> @copydetails Times::getTimeChar
