@@ -4930,9 +4930,9 @@ PROGRAM testParameterLists
 
     ALLOCATE(reftable(4,3))
     reftable='-'
-    reftable(1,1)='Row1'; reftable(2,1)='10'; reftable(3,1)='T'; reftable(4,1)='TRUE' 
-    reftable(1,2)='testRow2'; reftable(2,2)='1000000'; reftable(3,2)='F'; reftable(4,2)='FALSE' 
-    reftable(1,3)='testRow3; Extra'; reftable(2,3)='2.300000000000000E+11'; reftable(3,3)='23.0E+10'; reftable(4,3)='-' 
+    reftable(1,1)='Row1'; reftable(2,1)='10'; reftable(3,1)='T'; reftable(4,1)='TRUE'
+    reftable(1,2)='testRow2'; reftable(2,2)='1000000'; reftable(3,2)='F'; reftable(4,2)='FALSE'
+    reftable(1,3)='testRow3; Extra'; reftable(2,3)='2.300000000000000E+11'; reftable(3,3)='23.0E+10'; reftable(4,3)='-'
 
     addr='TestPL->List1'
     CALL testParam%convertTo2DStringArray(addr,table)
