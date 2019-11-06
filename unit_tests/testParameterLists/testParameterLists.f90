@@ -82,6 +82,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%add(...)',testAdd)
   REGISTER_SUBTEST('%getString(...)',testGetString)
   REGISTER_SUBTEST('%has(...)',testHas)
+  REGISTER_SUBTEST('%convertTo2DStringArray(...)',testConvertTo2DStringArray)
   REGISTER_SUBTEST('%remove(...)',testRemove)
   REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
   REGISTER_SUBTEST('%getSubParams(...)',testGetSubParams)
@@ -4895,6 +4896,58 @@ PROGRAM testParameterLists
 
     CALL clear_test_vars()
   ENDSUBROUTINE testHas
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testConvertTo2DStringArray()
+    INTEGER(SIK) :: i,j
+    TYPE(StringType) :: addr
+    TYPE(StringType),ALLOCATABLE :: table(:,:),reftable(:,:)
+
+    !Test null call
+    CALL testParam%clear()
+    addr=''
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERT(.NOT. ALLOCATED(table),'empty call')
+
+    !Setup the PL
+    CALL testParam%add('TestPL->List1->1->Row1','Row1')
+    CALL testParam%add('TestPL->List1->1->testRow2','testRow2')
+    CALL testParam%add('TestPL->List1->1->testRow3; Extra','testRow3; Extra')
+    CALL testParam%add('TestPL->List1->2->Row1',10)
+    CALL testParam%add('TestPL->List1->2->testRow2',1000000)
+    CALL testParam%add('TestPL->List1->2->testRow3; Extra',23.0E+10_SRK)
+    CALL testParam%add('TestPL->List1->3->Row1',.TRUE.)
+    CALL testParam%add('TestPL->List1->3->testRow2',.FALSE.)
+    CALL testParam%add('TestPL->List1->3->testRow3; Extra','23.0E+10')
+    CALL testParam%add('TestPL->List1->4->Row1','TRUE')
+    CALL testParam%add('TestPL->List1->4->testRow2','FALSE')
+    CALL testParam%add('TestPL->List1->4->testRow3; Extra','-')
+
+    !Test bad addr call
+    addr='wrong'
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERT(.NOT. ALLOCATED(table),'bad addr call')
+
+    ALLOCATE(reftable(4,3))
+    reftable='-'
+    reftable(1,1)='Row1'; reftable(2,1)='10'; reftable(3,1)='T'; reftable(4,1)='TRUE' 
+    reftable(1,2)='testRow2'; reftable(2,2)='1000000'; reftable(3,2)='F'; reftable(4,2)='FALSE' 
+    reftable(1,3)='testRow3; Extra'; reftable(2,3)='2.300000000000000E+11'; reftable(3,3)='23.0E+10'; reftable(4,3)='-' 
+
+    addr='TestPL->List1'
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERTFAIL(ALLOCATED(table),'valid addr call')
+    ASSERTFAIL(SIZE(table,DIM=1) == 4,'table dim=1')
+    ASSERTFAIL(SIZE(table,DIM=2) == 3,'table dim=2')
+
+    DO j=1,SIZE(table,DIM=2)
+      DO i=1,SIZE(table,DIM=1)
+        ASSERT(reftable(i,j) == table(i,j),'reftable')
+        FINFO() i,j,CHAR(table(i,j))
+      ENDDO
+    ENDDO
+
+  ENDSUBROUTINE testConvertTo2DStringArray
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testGetNextParam()
