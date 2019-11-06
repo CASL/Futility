@@ -475,6 +475,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::has_ParamType
       !> @copydoc ParameterLists::has_ParamType
       PROCEDURE,PASS :: has => has_ParamType
+      !> @copybrief ParameterLists::convertTo2DStringArray_ParamType
+      !> @copydoc ParameterLists::convertTo2DStringArray_ParamType
+      PROCEDURE,PASS :: convertTo2DStringArray => convertTo2DStringArray_ParamType
       !> @copybrief ParameterLists::getNextParam_ParamType
       !> @copydoc ParameterLists::getNextParam_ParamType
       PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
@@ -2446,6 +2449,109 @@ MODULE ParameterLists
 
       tmpParam => NULL()
     ENDFUNCTION has_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief This subroutine will take a parameter list of parameter lists, where
+!>        each parameter list is a column to be added in the table.  The first 
+!>        parameter list must be the maximum number of rows and must be uniquely
+!>        labeled.  The ordering of the parameters on the first list is the
+!>        order they will be written to the table. The following columns of 
+!>        parameter lists must have a parameters with names that match those the
+!>        first column.  The value given to the parameter is arbitrary.
+!> @param thisParam The parameter list of parameter lists from which to create a
+!>        table.
+!> @param baseAddr The path used to extract the parameter list of parameter
+!>        lists.
+!> @param tablevals The 2-D string array that is allocated and returned.
+!>
+    SUBROUTINE convertTo2DStringArray_ParamType(thisParam,baseAddr,tablevals)
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      TYPE(StringType),INTENT(IN) :: baseAddr
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: tablevals(:,:)
+      INTEGER(SIK) :: i,j,ncol,nrow
+      TYPE(StringType) :: tmpstr,addr,plstr
+      TYPE(StringType),ALLOCATABLE :: rownames(:)
+      TYPE(ParamType) :: colListPL,rowListPL,tmpP,tmpPLast
+      CLASS(ParamType),POINTER :: colListPLPtr,rowListPLPtr,tmpPLPtr,tmpPLPtrLast
+
+      !Initialize data
+      !sdkfmt=''
+      !IF(PL%has(baseAddr//'->sdkfmt')) &
+          !CALL PL%get(baseAddr//'->sdkfmt',sdkfmt)
+      !Loop over all columns, get the number of columns for the table
+      ncol=0
+      nrow=0
+      addr=baseAddr
+      colListPLPtr => NULL()
+      CALL thisParam%getSubPL(addr,colListPLPtr)
+      DO WHILE(ASSOCIATED(colListPLPtr))
+        ncol=ncol+1
+        CALL thisParam%getSubPL(addr,colListPLPtr)
+      ENDDO
+
+      addr='1'
+      CALL thisParam%get(baseAddr//'->1',colListPLPtr)
+      !addr=baseAddr
+      !CALL PL%getNextParam(addr,colListPLPtr)
+      IF(ASSOCIATED(colListPLPtr)) THEN
+        colListPL=colListPLPtr
+        CALL colListPL%getNextParam(addr,rowListPLPtr)
+        !Loop over first column, get the number of rows for the table
+        DO WHILE(ASSOCIATED(rowListPLPtr))
+          nrow=nrow+1
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+        ENDDO
+      ENDIF
+      
+      IF((nrow > 0) .AND. (ncol > 0)) THEN
+        !Allocate data
+        ALLOCATE(tablevals(ncol,nrow))
+        ALLOCATE(rownames(nrow))
+        tablevals='-'
+        rownames=''
+
+        !Get rownames so they can be searched and indexed.
+        addr='1'
+        CALL thisParam%get(baseAddr//'->1',colListPLPtr)
+        !addr=baseAddr
+        !CALL PL%getNextParam(addr,colListPLPtr)
+        colListPL=colListPLPtr
+        DO j=1,nrow
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+          rowListPL=rowListPLPtr
+          CALL rowListPL%get(CHAR(rowListPL%pdat%name),rownames(j))
+          CALL rowListPL%getString(TRIM(rowListPL%pdat%name),plstr)
+          IF(LEN_TRIM(plstr) > 0) tablevals(1,j)=plstr
+        ENDDO
+
+        !Loop over all of the columns
+        DO i=2,ncol
+          !Init variables
+          tmpstr=i
+          addr=tmpstr
+          !Get the specified sub PL list to iterate over.
+          CALL thisParam%get(baseAddr//'->'//tmpstr,colListPLPtr)
+          colListPL=colListPLPtr
+          !Get the first parameter in the sublist and loop.
+          !CALL colListPL%getSubPL(addr,rowListPLPtr)
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+          DO WHILE(ASSOCIATED(rowListPLPtr))
+            rowListPL=rowListPLPtr
+            !Since we assume the PL is not a full fixed column, find the j index
+            j=strarrayeqind(rownames,rowListPL%pdat%name)
+            !Add data to string table
+            CALL rowListPL%getString(TRIM(rowListPL%pdat%name),plstr)
+            IF(LEN_TRIM(plstr) > 0) tablevals(i,j)=plstr
+            CALL colListPL%getNextParam(addr,rowListPLPtr)
+          ENDDO
+        ENDDO
+
+        !Deallocate and nullify variables
+        DEALLOCATE(rownames)
+        tmpPLPtr => NULL()
+        tmpPLPtrLast => NULL()
+      ENDIF
+    ENDSUBROUTINE convertTo2DStringArray_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Edits the information of a parameter
