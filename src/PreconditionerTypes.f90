@@ -78,10 +78,12 @@ MODULE PreconditionerTypes
   PUBLIC :: ILU_PreCondType
   PUBLIC :: SOR_PreCondType
   PUBLIC :: RSOR_PreCondType
+  PUBLIC :: Jacobi_PreCondType
+#ifdef HAVE_MPI
   PUBLIC :: DistributedSOR_PreCondType
   PUBLIC :: DistributedRSOR_PreCondType
-  PUBLIC :: Jacobi_PreCondType
   PUBLIC :: DistributedJacobi_PreCondType
+#endif
   PUBLIC :: ePreCondType
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -192,6 +194,7 @@ MODULE PreconditionerTypes
       PROCEDURE,PASS :: apply => apply_RSOR_PreCondType
   ENDTYPE RSOR_PreCondType
 
+#ifdef HAVE_MPI
   !> @brief The extended type for distributed SOR based preconditioners
   TYPE,ABSTRACT,EXTENDS(DistributedPrecond) :: DistributedSOR_PreCondType
     !> Size of the diagonal blocks
@@ -233,6 +236,7 @@ MODULE PreconditionerTypes
       !> @copydetails MatrixTypes::apply_DistributedRSOR_PreCondType
       PROCEDURE,PASS :: apply => apply_DistributedRSOR_PreCondType
   ENDTYPE DistributedRSOR_PreCondType
+#endif
 
   TYPE,EXTENDS(PreConditionerType) :: Jacobi_PreCondType
     !> Inverse diagonal elements
@@ -254,6 +258,7 @@ MODULE PreconditionerTypes
 
   ENDTYPE Jacobi_PreCondType
 
+#ifdef HAVE_MPI
   TYPE,EXTENDS(DistributedPreCond) :: DistributedJacobi_PreCondType
     TYPE(NativeDistributedVectorType) :: invDiag
     CONTAINS
@@ -271,6 +276,7 @@ MODULE PreconditionerTypes
       PROCEDURE,PASS :: apply => apply_DistributedJacobi_PreCondType
 
   ENDTYPE DistributedJacobi_PrecondType
+#endif
 !
 !List of Abstract Interfaces
   !> Explicitly defines the interface for the init routine of all preconditioner types
@@ -307,11 +313,13 @@ MODULE PreconditionerTypes
       CLASS(VectorType),INTENT(INOUT) :: v
     ENDSUBROUTINE precond_applySOR_absintfc
 
+#ifdef HAVE_MPI
     SUBROUTINE precond_applyDistributedSOR_absintfc(thisPC,v)
       IMPORT :: DistributedSOR_PreCondType,VectorType
       CLASS(DistributedSOR_PreCondType),INTENT(INOUT) :: thisPC
       CLASS(VectorType),INTENT(INOUT) :: v
     ENDSUBROUTINE precond_applyDistributedSOR_absintfc
+#endif
   ENDINTERFACE
 
   ABSTRACT INTERFACE
@@ -330,10 +338,12 @@ MODULE PreconditionerTypes
       CLASS(SOR_PreCondType),INTENT(INOUT) :: thisPC
     ENDSUBROUTINE precond_SOR_absintfc
 
+#ifdef HAVE_MPI
     SUBROUTINE precond_DistributedSOR_absintfc(thisPC)
       IMPORT :: DistributedSOR_PreCondType
       CLASS(DistributedSOR_PreCondType),INTENT(INOUT) :: thisPC
     ENDSUBROUTINE precond_DistributedSOR_absintfc
+#endif
   ENDINTERFACE
 
   CLASS(PreConditionerType),POINTER :: PETSC_PCSHELL_PC => NULL()
@@ -763,6 +773,8 @@ MODULE PreconditionerTypes
             ' - Vector type is not support by this PreconditionerType.')
       ENDSELECT
     ENDSUBROUTINE apply_RSOR_PreCondType
+
+#ifdef HAVE_MPI
 !
 !-------------------------------------------------------------------------------
 !> @brief Intializes up the Distributed SOR Preconditioner Type with a parameter
@@ -778,7 +790,6 @@ MODULE PreconditionerTypes
       TYPE(ParamType),INTENT(IN),OPTIONAL :: params
       TYPE(ParamType)::PListMat_LU
       INTEGER(SIK)::k,mpierr,rank,nproc,extrablocks,stdblocks,i
-#ifdef HAVE_MPI
 
       REQUIRE(.NOT. thisPC%isinit)
       REQUIRE(PRESENT(A))
@@ -832,7 +843,6 @@ MODULE PreconditionerTypes
           thisPC%LpU => mat
           ThisPC%isInit=.TRUE.
       ENDSELECT
-#endif
     ENDSUBROUTINE init_DistributedSOR_PreCondtype
 !
 !-------------------------------------------------------------------------------
@@ -842,7 +852,6 @@ MODULE PreconditionerTypes
     SUBROUTINE clear_DistributedSOR_PreCondtype(thisPC)
       CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
       INTEGER(SIK)::i
-#ifdef HAVE_MPI
 
       IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
       IF(ASSOCIATED(thisPC%LpU)) THEN
@@ -862,8 +871,8 @@ MODULE PreconditionerTypes
         DEALLOCATE(thisPC%LU)
       ENDIF
       thisPC%isInit=.FALSE.
-#endif
     ENDSUBROUTINE clear_DistributedSOR_PreCondtype
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets up the Distributed RSOR Preconditioner Type with a parameter list
@@ -935,7 +944,6 @@ MODULE PreconditionerTypes
       INTEGER(SIK)::k,i,rank,mpierr,lowIdx,highIdx
       REAL(SRK)::tmpreal
       REAL(SRK)::tmpreal1,tmpreal2
-#ifdef HAVE_MPI
 
       REQUIRE(thisPC%isInit)
       REQUIRE(ALLOCATED(v))
@@ -987,8 +995,8 @@ MODULE PreconditionerTypes
         CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Vector type is not support by this PreconditionerType.')
       ENDSELECT
-#endif
     ENDSUBROUTINE apply_DistributedRSOR_PreCondType
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Does LU factorization on a matrix using the Doolittle Algorithm with
@@ -1084,9 +1092,10 @@ MODULE PreconditionerTypes
 
     ENDSUBROUTINE init_Jacobi_PreCondType
 
+#ifdef HAVE_MPI
 !
 !-------------------------------------------------------------------------------
-!> @brief Initialize serial jacobi preconditioner
+!> @brief Initialize distr jacobi preconditioner
 !> @param params The parameter list
 !> @param thisPC The preconditioner to act on
 !> @param A The matrix to precondition
@@ -1131,7 +1140,7 @@ MODULE PreconditionerTypes
       thisPC%isInit = .TRUE.
 
     ENDSUBROUTINE init_DistributedJacobi_PreCondType
-
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Setup serial jacobi preconditioner
@@ -1148,9 +1157,10 @@ MODULE PreconditionerTypes
       ENDDO
     ENDSUBROUTINE setup_Jacobi_PreCondType
 
+#ifdef HAVE_MPI
 !
 !-------------------------------------------------------------------------------
-!> @brief Setup serial jacobi preconditioner
+!> @brief Setup distr jacobi preconditioner
 !> @param thisPC The preconditioner to act on
     SUBROUTINE setup_DistributedJacobi_PreCondType(thisPC)
       CHARACTER(LEN=*),PARAMETER :: myName='setup_Jacobi_PreCondType'
@@ -1164,7 +1174,7 @@ MODULE PreconditionerTypes
         thisPC%invDiag%b(i) = 1.0_SRK/thisPC%invDiag%b(i)
       ENDDO
     ENDSUBROUTINE setup_DistributedJacobi_PreCondType
-
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Applies the Jacobi Preconditioner Type
@@ -1196,6 +1206,7 @@ MODULE PreconditionerTypes
 
     ENDSUBROUTINE apply_Jacobi_PreCondType
 
+#ifdef HAVE_MPI
 !
 !-------------------------------------------------------------------------------
 !> @brief Applies the Jacobi Preconditioner Type
@@ -1226,7 +1237,7 @@ MODULE PreconditionerTypes
       ENDIF
 
     ENDSUBROUTINE apply_DistributedJacobi_PreCondType
-
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Clear serial jacobi preconditioner
@@ -1240,9 +1251,10 @@ MODULE PreconditionerTypes
 
     ENDSUBROUTINE clear_Jacobi_PreCondType
 
+#ifdef HAVE_MPI
 !
 !-------------------------------------------------------------------------------
-!> @brief Clear serial jacobi preconditioner
+!> @brief Clear distr jacobi preconditioner
 !> @param thisPC The preconditioner to act on
     SUBROUTINE clear_DistributedJacobi_PreCondType(thisPC)
       CHARACTER(LEN=*),PARAMETER :: myName='clear_Jacobi_PreCondType'
@@ -1254,7 +1266,7 @@ MODULE PreconditionerTypes
       thisPC%comm = MPI_COMM_NULL
 
     ENDSUBROUTINE clear_DistributedJacobi_PreCondType
-
+#endif
 
 !
 !-------------------------------------------------------------------------------

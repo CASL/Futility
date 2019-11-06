@@ -465,11 +465,12 @@ MODULE LinearSolverTypes
         CALL vecbPList%add('VectorType->engine',matEngine)
         ! allocate and initialize matrix (A)
         CALL MatrixFactory(solver%A, matPList)
+#ifdef HAVE_MPI
         SELECT TYPE(A => solver%A); CLASS IS(DistributedBandedMatrixType)
           CALL vecxPList%add('VectorType->chunksize',A%blockSize)
           CALL vecbPList%add('VectorType->chunksize',A%blockSize)
         ENDSELECT
-
+#endif
 #ifdef HAVE_PARDISO
         SELECTTYPE(solver); TYPE IS(LinearSolverType_Direct)
           solver%mtype=11 ! real and nonsymmetric
@@ -694,19 +695,26 @@ MODULE LinearSolverTypes
                 solver%PCTypeName='NOPC'
                 RETURN
               CASE('DEFAULT')
+#ifdef HAVE_MPI
                 ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
                 solver%PCTypeName='DISTR_RSOR'
                 CALL solver%pcParams%clear()
                 CALL solver%pcParams%add('PreCondType->omega',1.0_SRK)
+#else
+                ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+                solver%PCTypeName='ILU'
+#endif
               CASE('ILU')
                 ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
                 solver%PCTypeName='ILU'
+#ifdef HAVE_MPI
               CASE('DISTR_RSOR')
                 ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
                 solver%PCTypeName='DISTR_RSOR'
               CASE('DISTR_JACOBI')
                 ALLOCATE(DistributedJacobi_PreCondType :: solver%PreCondType)
                 solver%PCTypeName='DISTR_JACOBI'
+#endif
               ENDSELECT
 
               IF (solver%TPLType /= PETSC) THEN
@@ -1442,6 +1450,7 @@ MODULE LinearSolverTypes
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
                 modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
             ENDSELECT
+#ifdef HAVE_MPI
           TYPE IS(NativeDistributedVectorType)
             SELECTTYPE(resid)
             TYPE IS(NativeDistributedVectorType)
@@ -1451,6 +1460,7 @@ MODULE LinearSolverTypes
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
                 modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
             ENDSELECT
+#endif
           ENDSELECT
 #else
           !perform calculations using the BLAS system (intrinsic to Futility or
@@ -1465,6 +1475,7 @@ MODULE LinearSolverTypes
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
                 modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
             ENDSELECT
+#ifdef HAVE_MPI
           TYPE IS(NativeDistributedVectorType)
             SELECTTYPE(resid)
             TYPE IS(NativeDistributedVectorType)
@@ -1474,6 +1485,7 @@ MODULE LinearSolverTypes
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
                 modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
             ENDSELECT
+#endif
           ENDSELECT
 #endif
         ENDIF
@@ -1694,6 +1706,7 @@ MODULE LinearSolverTypes
         CALL vecPlist%add('VectorType -> n',thisLS%A%n)
         ALLOCATE(RealVectorType :: u)
         ALLOCATE(RealVectorType :: Vy)
+#ifdef HAVE_MPI
       TYPE IS(NativeDistributedVectorType)
         CALL vecPlist%add('VectorType -> n',thisLS%A%n)
         CALL vecPlist%add('VectorType -> MPI_Comm_ID',thisLS%MPIparallelEnv%comm)
@@ -1701,6 +1714,7 @@ MODULE LinearSolverTypes
         CALL vecPlist%add('VectorType -> nlocal',x%nlocal)
         ALLOCATE(NativeDistributedVectorType :: u)
         ALLOCATE(NativeDistributedVectorType :: Vy)
+#endif
       CLASS DEFAULT
         CALL eLinearSolverType%raiseError('Incorrect call to '// &
            modName//'::solveGMRES_partial'//' - Native solver does not support this vector type.')
@@ -1742,8 +1756,10 @@ MODULE LinearSolverTypes
       SELECT TYPE(x => thisLS%X)
       TYPE IS(RealVectorType)
         ALLOCATE(RealVectorType :: V(thisLS%nRestart+1))
+#ifdef HAVE_MPI
       TYPE IS(NativeDistributedVectorType)
         ALLOCATE(NativeDistributedVectorType :: V(thisLS%nRestart+1))
+#endif
       END SELECT
 
       ALLOCATE(R(thisLS%nRestart,thisLS%nRestart))
@@ -1778,13 +1794,17 @@ MODULE LinearSolverTypes
         orthogReq = 0
         DO orthogIdx=1,krylovIdx
           h(orthogIdx) = BLAS_dot(V(orthogIdx)%b,u%b)
+#ifdef HAVE_MPI
           CALL MPI_IAllReduce(MPI_IN_PLACE,h(orthogIdx),1,MPI_DOUBLE_PRECISION,MPI_SUM,thisLS%MPIParallelEnv%comm,orthogReq(orthogIdx),mpierr)
+#endif
         ENDDO
 
         ! Subtract vector components
         ! TODO: Convert to WaitAny
         DO orthogIdx=1,krylovIdx
+#ifdef HAVE_MPI
           CALL MPI_Wait(orthogReq(orthogIdx),MPI_STATUS_IGNORE,mpierr)
+#endif
           CALL BLAS_axpy(V(orthogIdx),u,-h(orthogIdx))
           IF (orthogIdx == 1) THEN
             t = h(1)

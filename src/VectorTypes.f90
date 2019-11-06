@@ -263,8 +263,10 @@ MODULE VectorTypes
           SELECTCASE(vecType)
             CASE(REAL_NATIVE)
               ALLOCATE(RealVectorType :: vector)
+#ifdef HAVE_MPI
             CASE(DISTRIBUTED_NATIVE)
               ALLOCATE(NativeDistributedVectorType :: vector)
+#endif
             CASE DEFAULT
               CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
                 "Unrecognized vector type requested")
@@ -337,6 +339,7 @@ MODULE VectorTypes
           IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
             CALL params%add("VectorType->MPI_Comm_Id",source%comm)
           ENDIF
+#ifdef HAVE_MPI
         TYPE IS(NativeDistributedVectorType)
           IF(.NOT. params%has("VectorType->chunkSize")) THEN
             CALL params%add("VectorType->chunkSize",source%chunkSize)
@@ -344,13 +347,16 @@ MODULE VectorTypes
           IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
             CALL params%add("VectorType->MPI_Comm_Id",source%comm)
           ENDIF
+#endif
       ENDSELECT
 
       SELECTTYPE(source)
         TYPE IS(RealVectorType)
           ALLOCATE(RealVectorType :: dest)
+#ifdef HAVE_MPI
         TYPE IS(NativeDistributedVectorType)
           ALLOCATE(NativeDistributedVectorType :: dest)
+#endif
 #ifdef FUTILITY_HAVE_PETSC
         TYPE IS(PETScVectorType)
           ALLOCATE(PETScVectorType :: dest)
@@ -448,6 +454,7 @@ MODULE VectorTypes
             CALL BLAS1_axpy(alpha,thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
+#ifdef HAVE_MPI
       TYPE IS(NativeDistributedVectorType)
         SELECTTYPE(newVector); TYPE IS(NativeDistributedVectorType)
           IF(PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -460,6 +467,7 @@ MODULE VectorTypes
             CALL BLAS1_axpy(alpha,thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
+#endif
 #ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
@@ -589,7 +597,7 @@ MODULE VectorTypes
             CALL BLAS1_copy(thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
-      
+#ifdef HAVE_MPI
       TYPE IS(NativeDistributedVectorType)
         SELECTTYPE(newVector); TYPE IS(NativeDistributedVectorType)
           IF(PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -602,6 +610,7 @@ MODULE VectorTypes
             CALL BLAS1_copy(thisVector%b,newVector%b)
           ENDIF
         ENDSELECT
+#endif
 #ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(newVector); TYPE IS(PETScVectorType)
@@ -662,6 +671,7 @@ MODULE VectorTypes
             r=BLAS1_dot(thisVector%b,thatVector%b)
           ENDIF
         ENDSELECT
+#ifdef HAVE_MPI
       TYPE IS(NativeDistributedVectorType)
         SELECTTYPE(thatVector); TYPE IS(NativeDistributedVectorType)
           IF(PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -675,6 +685,7 @@ MODULE VectorTypes
           ENDIF
           CALL MPI_Allreduce(MPI_IN_PLACE,r,1,MPI_DOUBLE_PRECISION,MPI_SUM,thisVector%comm,mpierr)
         ENDSELECT
+#endif
 #ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
@@ -798,7 +809,7 @@ MODULE VectorTypes
         ELSEIF(.NOT.PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
           norm2=BLAS1_nrm2(thisVector%b)
         ENDIF
-      
+#ifdef HAVE_MPI
       TYPE IS(NativeDistributedVectorType)
         IF(PRESENT(incx)) THEN
           norm2=BLAS1_dot(thisVector%b,thisVector%b)
@@ -807,7 +818,7 @@ MODULE VectorTypes
         ENDIF
         CALL MPI_Allreduce(MPI_IN_PLACE,norm2,1,MPI_DOUBLE_PRECISION,MPI_SUM,thisVector%comm,mpierr)
         norm2 = SQRT(norm2) 
-
+#endif
 #ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)

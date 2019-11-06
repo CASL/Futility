@@ -668,8 +668,6 @@ MODULE MatrixTypes
                   TYPE IS(BandedMatrixType)
                     CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                            Y=y%b,uplo=ul,diag=d,incx_in=incx)
-                    !CALL eMatrixType%raiseError('Incorrect call to '// &
-                    !     modName//'::'//myName//' - This interface is not available.')
                   CLASS IS(DistributedBandedMatrixType)
                     CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
                                            Y=y%b,uplo=ul,diag=d,incx_in=incx)
@@ -681,9 +679,10 @@ MODULE MatrixTypes
                 CALL eMatrixType%raiseError('Incorrect call to '// &
                      modName//'::'//myName//' - This interface is not available.')
             ENDSELECT
-          TYPE IS (NativeDistributedVectorType)
+#ifdef HAVE_MPI
+          TYPE IS(NativeDistributedVectorType)
             SELECT TYPE(y)
-              TYPE IS (NativeDistributedVectorType)
+              TYPE IS(NativeDistributedVectorType)
                 SELECT TYPE(thisMatrix)
                   CLASS IS(DistributedBandedMatrixType)
                     CALL matvec_DistrBandedMatrixType(thisMatrix,x%b,y%b,t,ul,d,incx,a,b)
@@ -691,11 +690,12 @@ MODULE MatrixTypes
                   CLASS DEFAULT
                     CALL eMatrixType%raiseError('Incorrect call to '// &
                          modName//'::'//myName//' - This interface is not available.')
-                END SELECT
+                ENDSELECT
               CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
                      modName//'::'//myName//' - This interface is not available.')
-            END SELECT
+            ENDSELECT
+#endif
           CLASS DEFAULT
                 CALL eMatrixType%raiseError('Incorrect call to '// &
                     modName//'::'//myName//' - This interface is not available.')
@@ -762,6 +762,7 @@ MODULE MatrixTypes
         ENDIF
       END SELECT
 
+#ifdef HAVE_MPI
       ! On each rank, loop over the chunks held (top to bottom)
       DO i=1,SIZE(thisMatrix%iOffsets)-1
         ctDefault = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
@@ -783,7 +784,6 @@ MODULE MatrixTypes
           ! Find which other chunks in this row we need to
           ! communicate with
           DO k=1,SIZE(thisMatrix%bandSizes,1)
-            !IF (thisMatrix%contrib(k,i) .AND. i /= k) THEN
             IF (ASSOCIATED(thisMatrix%bandSizes(k)%p)) THEN
               IF (thisMatrix%bandSizes(k)%p(1) < 0) THEN
                 ! We are receiving a whole vector at once
@@ -845,6 +845,7 @@ MODULE MatrixTypes
       END DO
       CALL pop_send(sendResult, sendIdx, 1, sendRequests, sendIdxRequests)
       CALL pop_send(sendResult, sendIdx, 2, sendRequests, sendIdxRequests)
+#endif
 
       ! do y = alpha * reduce + beta*y
       IF (a == 1.0_SRK) THEN
@@ -888,7 +889,7 @@ MODULE MatrixTypes
       END IF
     ENDSUBROUTINE matvec_DistrBandedMatrixType
 
-
+#ifdef HAVE_MPI
     SUBROUTINE pop_recv(acc, valBuf, idxBuf, ctBuf, idx, req, idxReq)
       !> The accumulating vector
       REAL(SRK), INTENT(INOUT) :: acc(:)
@@ -939,8 +940,8 @@ MODULE MatrixTypes
         CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
         idxReq(idx) = 0
       ENDIF
-
     ENDSUBROUTINE pop_send
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a sparse triangular matrix linear system.

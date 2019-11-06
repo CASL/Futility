@@ -41,7 +41,9 @@ MODULE VectorTypes_Native
 ! List of public members
   PUBLIC :: NativeVectorType
   PUBLIC :: RealVectorType
+#ifdef HAVE_MPI
   PUBLIC :: NativeDistributedVectorType
+#endif
 
   TYPE,ABSTRACT,EXTENDS(VectorType) :: NativeVectorType
     REAL(SRK),ALLOCATABLE :: b(:)
@@ -96,6 +98,7 @@ MODULE VectorTypes_Native
       PROCEDURE,PASS :: getRange => getRange_RealVectorType
   ENDTYPE RealVectorType
 
+#ifdef HAVE_MPI
   TYPE,EXTENDS(NativeVectorType) :: NativeDistributedVectorType
     INTEGER(SIK) :: offset=0
     !> MPI comm ID
@@ -149,7 +152,7 @@ MODULE VectorTypes_Native
       ! TODO: Add descr.
       !PROCEDURE,PASS :: inLocalMem => inLocalMem_NativeDistributedVectorType
   ENDTYPE NativeDistributedVectorType
-
+#endif
 
   INTEGER(SIK) :: ierrc
 
@@ -427,6 +430,7 @@ MODULE VectorTypes_Native
       IF(PRESENT(ierr)) ierr=ierrc
     ENDSUBROUTINE getRange_RealVectorType
 
+#ifdef HAVE_MPI
     SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
       CHARACTER(LEN=*),PARAMETER :: myName='init_NativeDistributedVectorType'
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
@@ -434,7 +438,6 @@ MODULE VectorTypes_Native
       TYPE(ParamType) :: validParams
       INTEGER(SIK) :: n, chunksize, comm, nProc,rank,mpierr,nlocal
       INTEGER(SIK),ALLOCATABLE :: offsets(:)
-      !TYPE(MPI_EnvType) :: commType
 
       !Check to set up required and optional param lists.
       IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
@@ -799,6 +802,7 @@ MODULE VectorTypes_Native
     SUBROUTINE assemble_NativeDistributedVectorType(thisVector,ierr)
       CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-
     ENDSUBROUTINE
+#endif
+
 END MODULE VectorTypes_Native
