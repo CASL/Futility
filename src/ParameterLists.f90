@@ -2471,7 +2471,7 @@ MODULE ParameterLists
       INTEGER(SIK) :: i,j,ncol,nrow
       TYPE(StringType) :: tmpstr,addr,plstr
       TYPE(StringType),ALLOCATABLE :: rownames(:)
-      TYPE(ParamType) :: colListPL,rowListPL,tmpP,tmpPLast
+      TYPE(ParamType) :: colListPL,rowListPL
       CLASS(ParamType),POINTER :: colListPLPtr,rowListPLPtr,tmpPLPtr,tmpPLPtrLast
 
       !Initialize data
