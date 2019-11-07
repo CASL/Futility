@@ -228,8 +228,8 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFilePath_file(file) RESULT(path)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: path
-      path=file%path
+      CHARACTER(LEN=:),ALLOCATABLE :: path
+      path=CHAR(file%path)
     ENDFUNCTION getFilePath_file
 !
 !-------------------------------------------------------------------------------
@@ -239,8 +239,8 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFileName_file(file) RESULT(fname)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: fname
-      fname=file%name
+      CHARACTER(LEN=:),ALLOCATABLE :: fname
+      fname=CHAR(file%name)
     ENDFUNCTION getFileName_file
 !
 !-------------------------------------------------------------------------------
@@ -250,8 +250,8 @@ MODULE FileType_Base
 !>
     PURE FUNCTION getFileExt_file(file) RESULT(ext)
       CLASS(BaseFileType),INTENT(IN) :: file
-      CHARACTER(LEN=MAX_FILE_STRING_LEN) :: ext
-      ext=file%ext
+      CHARACTER(LEN=:),ALLOCATABLE :: ext
+      ext=CHAR(file%ext)
     ENDFUNCTION getFileExt_file
 !
 !-------------------------------------------------------------------------------

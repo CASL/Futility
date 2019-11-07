@@ -321,10 +321,8 @@ MODULE VTUFiles
       !Increment data set number
       myVTKFile%numDataSet=myVTKFile%numDataSet+1
       !Append data set info to lists
-      CALL str_append(myVTKFile%varNameList,vtkData%varname, &
-        myVTKFile%numDataSet)
-      CALL str_append(myVTKFile%dataFormatList,vtkData%vtkDataFormat, &
-        myVTKFile%numDataSet)
+      CALL str_append(myVTKFile%varNameList,vtkData%varname)
+      CALL str_append(myVTKFile%dataFormatList,vtkData%vtkDataFormat)
       !
       IF(myVTKFile%hasMesh) THEN
         IF(myVTKFile%isOpen()) THEN
@@ -547,31 +545,23 @@ MODULE VTUFiles
     ENDSUBROUTINE writepvtu_VTUXMLFileType
 !
 !-------------------------------------------------------------------------------
-!> @brief Appends to StringType array.
-!> @param str_list input StringType array.
-!> @param str String to add to str_list.
-!> @param n New length of str_list.
+!> @brief Appends a StringType to an array of StringTypes.
+!> @param str_list array of StringTypes
+!> @param str StringType to be added to array
 !>
-!> This routine adds a string to a StringType array.
-!>
-    SUBROUTINE str_append(str_list,str,n)
-      CHARACTER(LEN=*),PARAMETER :: myName='str_append'
-      TYPE(StringType),ALLOCATABLE,DIMENSION(:),INTENT(INOUT) :: str_list
+    SUBROUTINE str_append(str_list,str)
+      TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: str_list(:)
       CHARACTER(LEN=*),INTENT(IN) :: str
-      INTEGER(SIK),INTENT(IN) :: n
-      TYPE(StringType),ALLOCATABLE,DIMENSION(:) :: temp
-      !
-      IF (.NOT.ALLOCATED(str_list)) THEN
-        ALLOCATE(str_list(n))
-        str_list=str
+      TYPE(StringType),ALLOCATABLE :: temp(:)
+
+      IF(ALLOCATED(str_list)) THEN
+        ALLOCATE(temp(SIZE(str_list)+1))
+        temp(1:SIZE(str_list))=str_list
+        temp(SIZE(temp))=str
+        CALL MOVE_ALLOC(temp,str_list)
       ELSE
-        ALLOCATE(temp(n))
-        temp(1:n-1)=str_list
-        temp(n)=str
-        DEALLOCATE(str_list)
-        ALLOCATE(str_list(n))
-        str_list=temp
-        DEALLOCATE(temp)
+        ALLOCATE(str_list(1))
+        str_list=str
       ENDIF
     ENDSUBROUTINE str_append
 !
