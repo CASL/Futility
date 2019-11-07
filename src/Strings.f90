@@ -353,10 +353,11 @@ MODULE Strings
   FUNCTION cchar_to_fchar(cchar) RESULT(fchar)
     CHARACTER(KIND=C_CHAR),TARGET,INTENT(IN) :: cchar(:)
     CHARACTER(LEN=:),ALLOCATABLE :: fchar
-    INTEGER(SIK) :: i
+    INTEGER(SIK) :: i,n
 
-    ALLOCATE(CHARACTER(SIZE(cchar)) :: fchar)
-    DO i=1,SIZE(cchar)
+    n = SIZE(cchar)
+    ALLOCATE(CHARACTER(n) :: fchar)
+    DO i=1,n
       fchar(i:i) = cchar(i)
     ENDDO
 
