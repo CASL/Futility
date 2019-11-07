@@ -52,7 +52,8 @@ CALL MPI_Init(ierr)
 CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #endif
 
-REGISTER_SUBTEST("Vector Types",testVector)
+REGISTER_SUBTEST("PETSc Distributed Type",testPetscVectorType)
+REGISTER_SUBTEST("Native Distributed Type",testNativeVectorType)
 
 #ifdef FUTILITY_HAVE_PETSC
 CALL PetscFinalize(ierr)
@@ -65,7 +66,7 @@ FINALIZE_TEST()
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE testVector()
+SUBROUTINE testPetscVectorType()
 #if defined(FUTILITY_HAVE_PETSC) && defined(HAVE_MPI)
   CLASS(VectorType),ALLOCATABLE :: thisVector
   TYPE(ParamType) :: pList
@@ -168,5 +169,109 @@ SUBROUTINE testVector()
   CALL pList%clear()
 
 #endif
-ENDSUBROUTINE testVector
+ENDSUBROUTINE testPetscVectorType
+
+SUBROUTINE testNativeVectorType()
+#if defined(HAVE_MPI)
+  CLASS(VectorType),ALLOCATABLE :: thisVector
+  TYPE(ParamType) :: pList
+  LOGICAL(SBK) :: bool
+  INTEGER(SIK) :: rank, nproc, mpierr, i
+  REAL(SRK) :: val
+  REAL(SRK),ALLOCATABLE :: getval(:)
+  CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
+  CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+  ASSERT(nproc==2, 'nproc valid')
+  !Perform test of init function
+  !first check intended init path (m provided)
+  CALL pList%clear()
+  CALL pList%add('VectorType->n',20)
+  CALL pList%add('VectorType->MPI_Comm_ID',MPI_COMM_WORLD)
+  CALL pList%add('VectorType->nlocal',10)
+  ALLOCATE(NativeDistributedVectorType :: thisVector)
+  CALL thisVector%init(pList)
+  SELECT TYPE(thisVector)
+    TYPE IS(NativeDistributedVectorType)
+      !check for success
+      bool = thisVector%isInit.AND.thisVector%n == 20
+      ASSERT(bool, 'NativeDistributedVectorType%init(...)')
+      !WRITE(*,*) SIZE(thisVector%b)
+      ASSERT(SIZE(thisVector%b) == 10, 'NativeDistributedVectorType%init(...)')
+  ENDSELECT
+
+  ! Test setting/getting single elements at a time
+  CALL thisVector%set(1,1._SRK)
+  CALL thisVector%set(2,2._SRK)
+  CALL thisVector%set(3,3._SRK)
+  CALL thisVector%set(18,18._SRK)
+  CALL thisVector%set(19,19._SRK)
+  CALL thisVector%set(20,20._SRK)
+
+  IF(rank==0) THEN
+    CALL thisVector%get(1,val)
+    ASSERT(val==1._SRK, "getOne")
+    CALL thisVector%get(2,val)
+    ASSERT(val==2._SRK, "getOne")
+    CALL thisVector%get(3,val)
+    ASSERT(val==3._SRK, "getOne")
+  ELSE
+    CALL thisVector%get(18,val)
+    ASSERT(val==18._SRK, "getOne")
+    CALL thisVector%get(19,val)
+    ASSERT(val==19._SRK, "getOne")
+    CALL thisVector%get(20,val)
+    ASSERT(val==20._SRK, "getOne")
+  ENDIF
+
+  ! Test setting/getting selected elements all at once
+  CALL thisVector%set([(REAL(i, SRK), i=1, 20)])
+  ALLOCATE(getval(10))
+  IF(rank==0) THEN
+     CALL thisVector%get([(i, i=1, 10)], getval)
+     ASSERT(ALL(getval==[(REAL(i, SRK), i=1, 10)]), 'getAll')
+  ELSE
+     CALL thisVector%get([(i, i=11, 20)], getval)
+     ASSERT(ALL(getval==[(REAL(i, SRK), i=11, 20)]), 'getAll')
+  ENDIF
+
+
+  ! Use getAll with same data
+  CALL thisVector%get(getval)
+  IF(rank==0) THEN
+     ASSERT(ALL(getval==[(REAL(i, SRK), i=1, 10)]), 'getAll')
+  ELSE
+     ASSERT(ALL(getval==[(REAL(i, SRK), i=11, 20)]), 'getAll')
+  ENDIF
+
+  ! Test setSelected by overwiting a few entries
+  CALL thisVector%set([1, 5, 15, 20], [100._SRK, 105._SRK, 115._SRK, 120._SRK])
+  DEALLOCATE(getval)
+  ALLOCATE(getval(2))
+  IF(rank==0) THEN
+     CALL thisVector%get([1, 5], getval)
+     ASSERT(getval(1)==100._SRK, 'set/getSelected')
+     ASSERT(getval(2)==105._SRK, 'set/getSelected')
+  ELSE
+     CALL thisVector%get([15, 20], getval)
+     ASSERT(getval(1)==115._SRK, 'set/getSelected')
+     ASSERT(getval(2)==120._SRK, 'set/getSelected')
+  ENDIF
+
+  ! Test setting/getting elemnts by range
+  CALL thisVector%set(1, 3, [1._SRK, 2._SRK, 3._SRK])
+  CALL thisVector%set(18, 20, [18._SRK, 19._SRK, 20._SRK])
+  DEALLOCATE(getval)
+  ALLOCATE(getval(3))
+  IF(rank==0) THEN
+     CALL thisVector%get(1, 3, getval)
+     ASSERT(ALL(getval==[1._SRK, 2._SRK, 3._SRK]), 'getRange')
+  ELSE
+     CALL thisVector%get(18, 20, getval)
+     ASSERT(ALL(getval==[18._SRK, 19._SRK, 20._SRK]), 'getRange')
+  ENDIF
+  DEALLOCATE(thisVector)
+  CALL pList%clear()
+#endif
+ENDSUBROUTINE testNativeVectorType
+
 ENDPROGRAM testVectorTypesParallel

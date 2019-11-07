@@ -25,9 +25,17 @@ REGISTER_SUBTEST('sort Real',testRealSort)
 REGISTER_SUBTEST('bubble sort',testBubbleSort)
 REGISTER_SUBTEST('insertion sort',testInsertSort)
 
+<<<<<<< HEAD
 REGISTER_SUBTEST('Speed Test - sort int',testSpeedInt)
 REGISTER_SUBTEST('Speed Test - sort real',testSpeedReal)
 FINALIZE_TEST()
+=======
+  REGISTER_SUBTEST('Speed Test - sort int',testSpeedInt)
+  REGISTER_SUBTEST('Speed Test - sort real',testSpeedReal)
+
+  REGISTER_SUBTEST('Sort Long-Key Int-Val', testKeySort)
+  FINALIZE_TEST()
+>>>>>>> Brought in changes from bandMat_pGMRES_rsor branch pertaining to datatypes
 !
 !
 !===============================================================================
@@ -518,6 +526,7 @@ SUBROUTINE testInt2DSort()
 ENDSUBROUTINE testInt2DSort
 !
 !-------------------------------------------------------------------------------
+<<<<<<< HEAD
 SUBROUTINE testRealSort()
   LOGICAL(SBK) :: bool
   REAL(SRK) :: tmprealarray(10)
@@ -539,5 +548,52 @@ SUBROUTINE testRealSort()
       20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array qsort')
 ENDSUBROUTINE testRealSort
+=======
+    SUBROUTINE testRealSort()
+      LOGICAL(SBK) :: bool
+      REAL(SRK) :: tmprealarray(10)
+
+      tmprealarray(1)=100.0_SRK
+      tmprealarray(2)=-5.0_SRK
+      tmprealarray(3)=60.0_SRK
+      tmprealarray(4)=10.0_SRK
+      tmprealarray(5)=45.0_SRK
+      tmprealarray(6)=-10.0_SRK
+      tmprealarray(7)=20.0_SRK
+      tmprealarray(8)=5.0_SRK
+      tmprealarray(9)=-30.0_SRK
+      tmprealarray(10)=20.0_SRK
+
+      CALL sort(tmprealarray)
+
+      bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
+        20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      ASSERT(bool,'1-D real array qsort')
+    ENDSUBROUTINE testRealSort
+
+    SUBROUTINE testKeySort()
+      LOGICAL(SBK) :: bool
+      INTEGER(SIK) :: idxOrig(16), i,iVal,jVal
+      INTEGER(SLK) :: diagRank(16)
+
+      ! 1  2  3  4
+      ! 5  6  7  8
+      ! 9  10 11 12
+      ! 13 14 15 16
+      DO i=1,16
+        idxOrig(i) = i
+        iVal = (i-1)/4+1
+        jVal = MOD(i-1,4)+1
+        diagRank(i) = INT(jVal - 1 + ((3-iVal+jVal)*(4-iVal+jVal))/2,8)
+      END DO
+
+      CALL sort(diagRank, idxOrig)
+
+      bool=ALL(idxOrig .EQ. (/13_SIK,9_SIK,14_SIK,5_SIK,10_SIK,15_SIK,1_SIK,6_SIK,11_SIK,16_SIK,2_SIK,7_SIK,12_SIK,3_SIK,8_SIK,4_SIK/))
+      WRITE(*,*) idxOrig
+      ASSERT(bool,'Diagonal Matrix Sort')
+
+    END SUBROUTINE testKeySort
+>>>>>>> Brought in changes from bandMat_pGMRES_rsor branch pertaining to datatypes
 !
 ENDPROGRAM testSorting

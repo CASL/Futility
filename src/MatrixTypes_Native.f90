@@ -16,8 +16,14 @@ USE ExceptionHandler
 USE ParameterLists
 USE Allocs
 USE MatrixTypes_Base
+USE ParallelEnv
+USE Sorting
 
 IMPLICIT NONE
+
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
 
 PRIVATE
 !
@@ -25,6 +31,9 @@ PRIVATE
 PUBLIC :: DenseSquareMatrixType
 PUBLIC :: DenseRectMatrixType
 PUBLIC :: TriDiagMatrixType
+PUBLIC :: BandedMatrixType
+PUBLIC :: DistributedBandedMatrixType
+PUBLIC :: DistributedBlockBandedMatrixType
 PUBLIC :: SparseMatrixType
 
 !> @brief The extended type for dense square matrices
@@ -114,6 +123,151 @@ TYPE,EXTENDS(SquareMatrixType) :: TriDiagMatrixType
     !> @copydetails MatrixTypes::zeroentries_TriDiagMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_TriDiagMatrixType
 ENDTYPE TriDiagMatrixType
+
+!> @brief Type used to hold the bands in the banded type
+TYPE Band
+  ! jIdx stores j index of each element in band
+  INTEGER(SIK), ALLOCATABLE :: jIdx(:)
+  REAL(SRK), ALLOCATABLE :: elem(:)
+ENDTYPE Band
+
+TYPE IntPtr
+  INTEGER(SIK),POINTER :: p(:) => NULL()
+ENDTYPE IntPtr
+
+!> @brief The basic banded matrix type
+TYPE,EXTENDS(MatrixType) :: BandedMatrixType
+  !> Map of band indices stored (-m to n)
+  INTEGER(SIK),ALLOCATABLE :: bandIdx(:)
+  !> The bands stored in the matrix
+  TYPE(Band),ALLOCATABLE :: bands(:)
+  !> Number of nonzero elements
+  INTEGER(SIK) :: nnz
+  !> Number of columns
+  INTEGER(SIK) :: m
+  !> Counter to keep track of added elements before assembly
+  INTEGER(SIK) :: counter
+  !> Temporary containers used before (and deallocated after) assembly
+  INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
+  REAL(SRK),ALLOCATABLE :: elemTmp(:)
+  LOGICAL(SBK) :: isAssembled, isReversed
+
+!
+!List of Type Bound Procedures
+  CONTAINS
+    !> @copybrief MatrixTypes::clear_BandedMatrixType
+    !> @copydetails MatrixTypes::clear_BandedMatrixType
+    PROCEDURE,PASS :: clear => clear_BandedMatrixType
+    !> @copybrief MatrixTypes::init_BandedMatrixType
+    !> @copydetails MatrixTypes::init_BandedMatrixType
+    PROCEDURE,PASS :: init => init_BandedMatrixParam
+    !> @copybrief MatrixTypes::assemble_BandedMatrixType
+    !> @copydetails MatrixTypes::assemble_BandedMatrixType
+    PROCEDURE,PASS :: assemble => assemble_BandedMatrixType
+    !> @copybrief MatrixTypes::set_BandedMatrixType
+    !> @copydetails MatrixTypes::set_BandedMatrixType
+    PROCEDURE,PASS :: set => set_BandedMatrixType
+    !> @copybrief MatrixTypes::get_BandedMatrixType
+    !> @copydetails MatrixTypes::get_BandedMatrixType
+    PROCEDURE,PASS :: get => get_BandedMatrixType
+    !> @copybrief MatrixTypes::transpose_BandedMatrixType
+    !> @copydetails MatrixTypes::transpose_BandedMatrixType
+    PROCEDURE,PASS :: transpose => transpose_BandedMatrixType
+    !> @copybrief MatrixTypes::zeroentries_BandedMatrixType
+    !> @copydetails MatrixTypes::zeroentries_BandedMatrixType
+    PROCEDURE,PASS :: zeroentries => zeroentries_BandedMatrixType
+    !> @copybrief MatrixTypes::binarySearch_BandedMatrixType
+    !> @copydetails MatrixTypes::binarySearch_BandedMatrixType
+    PROCEDURE,PASS,PRIVATE :: binarySearch => binarySearch_BandedMatrixType
+ENDTYPE BandedMatrixType
+
+!> @brief The basic banded matrix type
+TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
+  !> Map of band indices stored (-m to n)
+  INTEGER(SIK),ALLOCATABLE :: iOffsets(:),jOffsets(:)
+  !> The bands stored in the matrix
+  TYPE(BandedMatrixType),ALLOCATABLE :: chunks(:)
+  !> Number of nonzero elements
+  INTEGER(SIK) :: nnz
+  !> Number of columns
+  INTEGER(SIK) :: m
+  !> Block size (smallest indivisble unit)
+  INTEGER(SIK) :: blockSize
+  !> For those ranks that contribute at row = rank, holds array of band sizes
+  !> Used for matvec; if contrib(i,j) is false, bandSizes(i,j) is unassociated
+  !> If size 0, it is unused. Otherwise, it is used for sparse data transfer
+  TYPE(IntPtr), ALLOCATABLE :: bandSizes(:)
+  !> Temporary containers used before (and deallocated after) assembly
+  INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
+  REAL(SRK),ALLOCATABLE :: elemTmp(:)
+  LOGICAL(SBK) :: isReversed
+!
+!List of Type Bound Procedures
+  CONTAINS
+    !> @copybrief MatrixTypes::clear_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::clear_DistributedBandedMatrixType
+    PROCEDURE,PASS :: clear => clear_DistributedBandedMatrixType
+    !> @copybrief MatrixTypes::init_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::init_DistributedBandedMatrixType
+    PROCEDURE,PASS :: init => init_DistributedBandedMatrixParam
+    !> @copybrief MatrixTypes::assemble_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::assemble_DistributedBandedMatrixType
+    PROCEDURE,PASS :: assemble => assemble_DistributedBandedMatrixType
+    !> @copybrief MatrixTypes::setrow_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::setrow_DistributedBandedMatrixType
+    PROCEDURE,PASS :: setrow => setrow_DistributedBandedMatrixType
+    !> @copybrief MatrixTypes::set_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::set_DistributedBandedMatrixType
+    PROCEDURE,PASS :: set => set_DistributedBandedMatrixType
+    !> @copybrief MatrixTypes::get_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::get_DistributedBandedMatrixType
+    PROCEDURE,PASS :: get => get_DistributedBandedMatrixType
+    !> @copybrief MatrixTypes::transpose_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::transpose_DistributedBandedMatrixType
+    PROCEDURE,PASS :: transpose => transpose_DistributedBandedMatrixType
+    !> @copybrief MatrixTypes::zeroentries_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::zeroentries_DistributedBandedMatrixType
+    PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBandedMatrixType
+ENDTYPE DistributedBandedMatrixType
+
+!> @brief The block banded matrix type (designed for CMFD)
+!> for now, the blocks will be assumed to be only on main diag
+TYPE,EXTENDS(DistributedBandedMatrixType) :: DistributedBlockBandedMatrixType
+  !> The block size is set by parent (DistrBanded::blockSize)
+  !> The number of local blocks
+  INTEGER(SIK) :: nlocalBlocks
+  !> Block offset for this processor
+  INTEGER(SIK) :: blockOffset
+  !> Mask to effectively zero out block vals
+  LOGICAL(SBK) :: blockMask
+  !> The dense block container
+  TYPE(DenseSquareMatrixType),ALLOCATABLE :: blocks(:)
+!
+!List of Type Bound Procedures
+  CONTAINS
+    !> @copybrief MatrixTypes::clear_DistributedBlockBandedMatrixType
+    !> @copydetails MatrixTypes::clear_DistributedBlockBandedMatrixType
+    PROCEDURE,PASS :: clear => clear_DistributedBlockBandedMatrixType
+    !> @copybrief MatrixTypes::init_DistributedBlockBandedMatrixType
+    !> @copydetails MatrixTypes::init_DistributedBlockBandedMatrixType
+    PROCEDURE,PASS :: init => init_DistributedBlockBandedMatrixParam
+    ! The assemble routine will remain unchanged
+    ! The setRow routine will remain unchanged (unimplemented)
+    !> @copybrief MatrixTypes::set_DistributedBlockBandedMatrixType
+    !> @copydetails MatrixTypes::set_DistributedBlockBandedMatrixType
+    PROCEDURE,PASS :: set => set_DistributedBlockBandedMatrixType
+    !> @copybrief MatrixTypes::get_DistributedBlockBandedMatrixType
+    !> @copydetails MatrixTypes::get_DistributedBlockBandedMatrixType
+    PROCEDURE,PASS :: get => get_DistributedBlockBandedMatrixType
+    ! the transpose routine will remain unchanged (unimplemented)
+    !> @copybrief MatrixTypes::zeroentries_DistributedBlockBandedMatrixType
+    !> @copydetails MatrixTypes::zeroentries_DistributedBlockBandedMatrixType
+    PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBlockBandedMatrixType
+    !> @copybrief MatrixTypes::setBlockMask_DistributedBlockBandedMatrixType
+    !> @copydetails MatrixTypes::setBlockMask_DistributedBlockBandedMatrixType
+    PROCEDURE,PASS :: setBlockMask => setBlockMask_DistributedBlockBandedMatrixType
+ENDTYPE DistributedBlockBandedMatrixType
+
 
 !> @brief The basic sparse matrix type
 !>
@@ -267,6 +421,438 @@ SUBROUTINE init_TriDiagMatrixParam(matrix,Params)
 ENDSUBROUTINE init_TriDiagMatrixParam
 !
 !-------------------------------------------------------------------------------
+!> @brief Initializes Banded Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+SUBROUTINE init_BandedMatrixParam(matrix,Params)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_BandedMatrixParam'
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  CLASS(ParamType),INTENT(IN) :: Params
+  TYPE(ParamType) :: validParams
+  INTEGER(SIK) :: n,m,nnz
+  LOGICAL(SBK) :: bool
+
+  !Check to set up required and optional param lists.
+  IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
+
+  !Validate against the reqParams and OptParams
+  validParams=Params
+  CALL validParams%validate(BandedMatrixType_reqParams)
+
+  ! Pull Data From Parameter List
+  CALL validParams%get('MatrixType->n',n)
+  CALL validParams%get('MatrixType->m',m)
+  CALL validParams%get('MatrixType->nnz',nnz)
+  CALL validParams%clear()
+
+  ! be greater than 1 and n < 1 are note logically equivalent. is this
+  ! desired behavior?
+  IF(.NOT. matrix%isInit) THEN
+    IF(n < 1) THEN
+      CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName//' - Number of rows (n) must'// &
+          ' be greater than 1!')
+    ELSEIF(m < 1) THEN
+      CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName//' - Number of columns (m) must'// &
+          ' be greater than 1!')
+    ELSEIF(nnz < 1) THEN
+      CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName//' - Number of nonzero elements (nnz)'// &
+          ' must be greater than 0!')
+    ELSE
+      ALLOCATE(matrix%iTmp(nnz))
+      ALLOCATE(matrix%jTmp(nnz))
+      ALLOCATE(matrix%elemTmp(nnz))
+
+      matrix%isInit=.TRUE.
+      matrix%isAssembled=.FaLSE.
+      matrix%isReversed=.FALSE.
+      matrix%counter=0_SRK
+      matrix%n=n
+      matrix%m=m
+      matrix%nnz=nnz
+    ENDIF
+  ELSE
+    CALL eMatrixType%raiseError('Incorrect call to '// &
+      modName//'::'//myName//' - MatrixType already initialized')
+  ENDIF
+ENDSUBROUTINE init_BandedMatrixParam
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes Distributed Banded Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBandedMatrixParam'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  CLASS(ParamType),INTENT(IN) :: Params
+  TYPE(ParamType) :: validParams
+  INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc,i,blocksize,nlocal
+  LOGICAL(SBK) :: bool
+
+#ifdef HAVE_MPI
+  !Check to set up required and optional param lists.
+  IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
+
+  !Validate against the reqParams and OptParams
+  validParams=Params
+  CALL validParams%validate(DistributedBandedMatrixType_reqParams,DistributedBandedMatrixType_optParams)
+
+  ! Pull Data From Parameter List
+  CALL validParams%get('MatrixType->n',n)
+  CALL validParams%get('MatrixType->m',m)
+  CALL validParams%get('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
+  CALL validParams%get('MatrixType->nnz',nnz)
+  CALL validParams%get('MatrixType->blockSize',blockSize)
+  CALL validParams%get('MatrixType->nlocal',nlocal)
+  CALL validParams%clear()
+
+  IF(.NOT. matrix%isInit) THEN
+    IF(n < 1) THEN
+      CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName//' - Number of rows (n) must'// &
+          ' be greater than 1!')
+    ELSEIF(m < 1) THEN
+      CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName//' - Number of columns (m) must'// &
+          ' be greater than 1!')
+    ELSEIF(nnz < 1) THEN
+      CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName//' - Number of nonzero entries (nnz)'// &
+          ' must be greater than 0!')
+    ELSEIF(MPI_COMM_ID == MPI_COMM_NULL) THEN
+      CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName//' - MPI communicator cannot have the same'// &
+          ' value as MPI_COMM_NULL')
+    ELSE
+      CALL MPI_Comm_rank(MPI_COMM_ID,rank,mpierr)
+      CALL MPI_Comm_size(MPI_COMM_ID,nproc,mpierr)
+
+      REQUIRE(MOD(n,blockSize)==0)
+      REQUIRE(MOD(m,blockSize)==0)
+
+      ALLOCATE(matrix%jOffsets(nproc+1))
+      ALLOCATE(matrix%iOffsets(nproc+1))
+      matrix%jOffsets(1) = 0
+      matrix%iOffsets(1) = 0
+
+      matrix%nlocal = 0
+      n = n/blockSize
+      m = m/blockSize
+      ALLOCATE(matrix%iTmp(2*nnz/nProc))
+      ALLOCATE(matrix%jTmp(2*nnz/nProc))
+      ALLOCATE(matrix%elemTmp(2*nnz/nProc))
+      IF (nlocal < 0) THEN
+        DO i=2,nproc+1
+          matrix%jOffsets(i) = matrix%jOffsets(i-1) + m/nproc
+          IF (MOD(m,nproc) > i-2) THEN
+            matrix%jOffsets(i) = matrix%jOffsets(i) + 1
+          END IF
+        END DO
+
+        DO i=2,nproc+1
+          matrix%iOffsets(i) = matrix%iOffsets(i-1) + n/nproc
+          IF (MOD(n,nproc) > i-2) THEN
+            matrix%iOffsets(i) = matrix%iOffsets(i) + 1
+          END IF
+        END DO
+        matrix%iOffsets = matrix%iOffsets*blockSize
+        matrix%jOffsets = matrix%jOffsets*blockSize
+      ELSE
+        REQUIRE(MOD(nlocal,blockSize)==0)
+        REQUIRE(m == n)
+        ! Gather all nlocal and sum going forward
+        CALL MPI_AllGather(nlocal,1,MPI_INTEGER,matrix%iOffsets(2),1,MPI_INTEGER,MPI_Comm_ID,mpierr)
+        DO i=2,nproc+1
+          matrix%iOffsets(i) = matrix%iOffsets(i) + matrix%iOffsets(i-1)
+        ENDDO
+        REQUIRE(matrix%iOffsets(SIZE(matrix%iOffsets)) == n*blockSize)
+        matrix%jOffsets(:) = matrix%iOffsets(:)
+      ENDIF
+
+      ALLOCATE(matrix%bandSizes(nProc))
+
+      matrix%isInit=.TRUE.
+      matrix%isAssembled=.FALSE.
+      matrix%isReversed=.FALSE.
+      matrix%n=n*blockSize
+      matrix%m=m*blockSize
+      matrix%nnz=nnz
+      matrix%blockSize = blockSize
+      matrix%comm=MPI_COMM_ID
+    ENDIF
+  ELSE
+    CALL eMatrixType%raiseError('Incorrect call to '// &
+      modName//'::'//myName//' - MatrixType already initialized')
+  ENDIF
+#endif
+ENDSUBROUTINE init_DistributedBandedMatrixParam
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes Distributed Block-Banded Matrix Type with a Parameter List
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+SUBROUTINE init_DistributedBlockBandedMatrixParam(matrix,Params)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBlockBandedMatrixParam'
+  CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
+  CLASS(ParamType),INTENT(IN) :: Params
+  TYPE(ParamType) :: validParams,blockParams
+  INTEGER(SIK) :: n,m,nnz,MPI_COMM_ID,rank,mpierr,nproc,i,blockSize,nlocal
+  INTEGER(SIK),ALLOCATABLE :: blkOffsetTmp(:)
+  LOGICAL(SBK) :: bool
+
+#ifdef HAVE_MPI
+  !Check to set up required and optional param lists.
+  IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
+
+  !Validate against the reqParams and OptParams
+  validParams=Params
+  CALL validParams%validate(DistributedBlockBandedMatrixType_reqParams,DistributedBlockBandedMatrixType_optParams)
+
+  ! Pull Data From Parameter List
+  CALL validParams%get('MatrixType->n',n)
+  CALL validParams%get('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
+  CALL validParams%get('MatrixType->blockSize',blockSize)
+  CALL validParams%get('MatrixType->nlocal',nlocal)
+
+  REQUIRE(.NOT. matrix%isInit)
+  REQUIRE(blockSize > 0)
+  REQUIRE(MOD(n,blockSize)==0)
+
+  matrix%blockMask = .FALSE.
+
+  ! Allocate the blocks, then adjust the parameter list and proceed to
+  ! %parent%
+
+  ! Default to greedy partitioning, respecting blockSize
+  CALL MPI_Comm_rank(MPI_COMM_ID,rank,mpierr)
+  CALL MPI_Comm_size(MPI_COMM_ID,nproc,mpierr)
+  REQUIRE(n/blockSize >= nproc)
+
+
+  n = n/blockSize
+  ! If nlocal < 0, default to greedy partitioning
+  IF (nlocal < 0) THEN
+    IF(rank < MOD(n,nproc)) THEN
+      matrix%nlocalBlocks = n/nproc + 1
+      matrix%blockOffset = (rank)*(n/nproc + 1)
+    ELSE
+      matrix%nlocalBlocks = n/nproc
+      matrix%blockOffset = (rank)*(n/nproc) + MOD(n,nproc)
+    ENDIF
+  ELSE
+    ALLOCATE(blkOffsetTmp(nproc))
+    REQUIRE(MOD(nlocal,blockSize)==0)
+    matrix%nlocalBlocks = nlocal/blockSize
+    CALL MPI_AllGather(matrix%nlocalBlocks,1,MPI_INTEGER,blkOffsetTmp,1,MPI_INTEGER,MPI_Comm_ID,mpierr)
+    matrix%blockOffset = SUM(blkOffsetTmp(1:rank))
+    DEALLOCATE(blkOffsetTmp)
+  ENDIF
+
+  ALLOCATE(matrix%blocks(matrix%nlocalBlocks))
+  CALL blockParams%clear()
+  CALL blockParams%add('MatrixType->n',blockSize)
+  CALL blockParams%add('MatrixType->isSym',.FALSE.)
+
+  DO i=1,matrix%nlocalblocks
+    CALL matrix%blocks(i)%init(blockParams)
+  ENDDO
+
+  CALL validParams%add('MatrixType->m',n*blockSize)
+  CALL matrix%DistributedBandedMatrixType%init(validParams)
+#endif
+ENDSUBROUTINE init_DistributedBlockBandedMatrixParam
+
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Assembles Serial Banded Matrix Type. This rearranges values set into
+!>        matrix bands, and sets the structure to read-only
+!> @param matrix the matrix type to act on
+!> @param pList the parameter list
+!>
+SUBROUTINE assemble_BandedMatrixType(thisMatrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='assemble_BandedMatrixType'
+  CLASS(BandedMatrixType),INTENT(INOUT) :: thisMatrix
+  INTEGER(SIK),ALLOCATABLE :: numOnDiag(:),idxOrig(:)
+  INTEGER(SIK),ALLOCATABLE :: iSort(:),jSort(:)
+  REAL(SRK),ALLOCATABLE :: valSort(:)
+  INTEGER(SIK) :: counter,currIdx,currBand,nBands,i,j
+  INTEGER(SLK) :: iLong,jLong,nLong,mLong
+  INTEGER(SLK),ALLOCATABLE :: diagRank(:)
+
+  REQUIRE(thisMatrix%isInit)
+  REQUIRE(thisMatrix%nnz == thisMatrix%counter)
+
+  ALLOCATE(diagRank(SIZE(thisMatrix%iTmp)))
+  ALLOCATE(idxOrig(SIZE(thisMatrix%iTmp)))
+  DO i=1,SIZE(thisMatrix%iTmp)
+    iLong = INT(thisMatrix%iTmp(i),kind=SLK)
+    jLong = INT(thisMatrix%jTmp(i),kind=SLK)
+    nLong = INT(thisMatrix%n,kind=SLK)
+    mLong = INT(thisMatrix%m,kind=SLK)
+    idxOrig(i) = i
+    IF (thisMatrix%n - thisMatrix%iTmp(i) + 1 + thisMatrix%jTmp(i) <= MAX(thisMatrix%m,thisMatrix%n)) THEN
+      diagRank(i) = -mLong*nLong/2
+      diagRank(i) = diagRank(i) + jLong - 1 + ((nLong - iLong + jLong - 1)*(nLong - iLong + jLong))/2
+    ELSE
+      diagRank(i) = nLong*mLong/2
+      diagRank(i) = diagRank(i) - (mLong - jLong + ((iLong + mLong - jLong - 1)*(iLong + mLong - jLong))/2)
+    END IF
+  END DO
+
+  CALL sort(diagRank,idxOrig)
+  ! Now update iTmp,jTmp,etc
+  ALLOCATE(iSort(SIZE(idxOrig)))
+  iSort = thisMatrix%iTmp(idxOrig)
+  DEALLOCATE(thisMatrix%iTmp)
+  jSort = thisMatrix%jTmp(idxOrig)
+  DEALLOCATE(thisMatrix%jTmp)
+  valSort = thisMatrix%elemTmp(idxOrig)
+  DEALLOCATE(thisMatrix%elemTmp)
+
+  ! Find number of elements in each band
+  ALLOCATE(numOnDiag(thisMatrix%m+thisMatrix%n-1))
+  numOnDiag = 0_SIK
+  DO i=1,SIZE(iSort)
+    numOnDiag(jSort(i)-iSort(i)+thisMatrix%n) = 1 + numOnDiag(jSort(i)-iSort(i)+thisMatrix%n)
+  END DO
+  nBands = 0
+  DO i=1,SIZE(numOnDiag)
+    IF (numOnDiag(i)/=0) THEN
+      nBands = nBands + 1
+    END IF
+  END DO
+  ALLOCATE(thisMatrix%bandIdx(nBands))
+  ALLOCATE(thisMatrix%bands(nBands))
+  counter = 1
+  DO i=1,SIZE(numOnDiag)
+    IF (numOnDiag(i)/=0) THEN
+      ALLOCATE(thisMatrix%bands(counter)%jIdx(numOnDiag(i)))
+      ALLOCATE(thisMatrix%bands(counter)%elem(numOnDiag(i)))
+      thisMatrix%bandIdx(counter) = i - thisMatrix%n
+      counter = counter + 1
+    END IF
+  END DO
+  counter = 1
+  DO i=1,SIZE(thisMatrix%bandIdx)
+    DO j=1,SIZE(thisMatrix%bands(i)%jIdx)
+      thisMatrix%bands(i)%jIdx(j) = jSort(counter)
+      thisMatrix%bands(i)%elem(j) = valSort(counter)
+      counter = counter + 1
+    END DO
+  END DO
+
+  thisMatrix%isAssembled = .TRUE.
+ENDSUBROUTINE assemble_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assembles Distributed Banded Matrix Type. This rearranges values set into
+!>        matrix bands, and sets the structure to read-only
+!> @param thisMatrix the matrix type to act on
+!>
+SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix,ierr)
+  CHARACTER(LEN=*),PARAMETER :: myName='assemble_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+  TYPE(ParamType) :: bandedPList
+  INTEGER(SIK) :: mpierr, rank, nproc, i, j, nBandLocal
+  INTEGER(SIK),ALLOCATABLE :: nnzPerChunk(:),nband(:),bandSizeTmp(:)
+  LOGICAL(SBK) :: blockNonzero
+
+#ifdef HAVE_MPI
+  REQUIRE(thisMatrix%isInit)
+  CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
+  CALL MPI_Comm_size(thisMatrix%comm,nproc,mpierr)
+  ALLOCATE(nnzPerChunk(nProc))
+  ALLOCATE(nBand(nProc))
+  nnzPerChunk = 0_SIK
+  DO i=1,thisMatrix%nLocal
+    DO j=1,nproc
+      IF (thisMatrix%iTmp(i) > thisMatrix%iOffsets(j) .AND. &
+          thisMatrix%iTmp(i) <= thisMatrix%iOffsets(j+1)) THEN
+        nnzPerChunk(j) = nnzPerChunk(j) + 1
+        EXIT
+      END IF
+    END DO
+  END DO
+  CALL bandedPList%clear()
+
+  ALLOCATE(thisMatrix%chunks(nProc))
+  DO i=1,nProc
+    blockNonzero = nnzPerChunk(i) > 0
+    IF (blockNonzero) THEN
+      CALL bandedPList%add('MatrixType->nnz',nnzPerChunk(i))
+      CALL bandedPList%add('MatrixType->n',thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i))
+      CALL bandedPList%add('MatrixType->m',thisMatrix%jOffsets(rank+2) - thisMatrix%jOffsets(rank+1))
+      CALL thisMatrix%chunks(i)%init(bandedPList)
+
+      DO j=1,thisMatrix%nLocal
+        IF (thisMatrix%iTmp(j) > thisMatrix%iOffsets(i) .AND. &
+            thisMatrix%iTmp(j) <= thisMatrix%iOffsets(i+1)) THEN
+          CALL thisMatrix%chunks(i)%set(thisMatrix%iTmp(j)-thisMatrix%iOffsets(i),thisMatrix%jTmp(j)-thisMatrix%jOffsets(rank+1),thisMatrix%elemTmp(j))
+        END IF
+      END DO
+      CALL thisMatrix%chunks(i)%assemble()
+      CALL bandedPList%clear()
+    ENDIF
+    ! Set self var
+    IF (thisMatrix%chunks(i)%isInit) THEN
+      IF (2*thisMatrix%chunks(i)%nnz/3 < thisMatrix%chunks(i)%n) THEN
+        nBandLocal = SIZE(thisMatrix%chunks(i)%bandIdx)
+      ELSE
+        nBandLocal = -1
+      ENDIF
+    ELSE
+      nBandLocal = 0
+    ENDIF
+
+    ! Gather to rank j-1 into nBand(:)
+    CALL MPI_Gather(nBandLocal, 1, MPI_INTEGER, nband(1), 1, MPI_INTEGER, i-1, thisMatrix%comm, mpierr)
+    ! Have rank j-1 allocate
+    IF (rank == i-1) THEN
+      DO j=1,nProc
+        IF (j == i) THEN
+          NULLIFY(thisMatrix%bandSizes(i)%p)
+        ELSE
+          IF (nBand(j) > 0) THEN
+            ALLOCATE(thisMatrix%bandSizes(j)%p(nBand(j)))
+            CALL MPI_Recv(thisMatrix%bandSizes(j)%p(1), nBand(j), MPI_INTEGER, j-1, 0, thisMatrix%comm, MPI_STATUS_IGNORE, mpierr)
+          ELSE
+            IF (nBand(j) == 0) THEN
+              NULLIFY(thisMatrix%bandSizes(j)%p)
+            ELSE
+              ALLOCATE(thisMatrix%bandSizes(j)%p(1))
+              thisMatrix%bandSizes(j)%p(1) = -1
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDDO
+    ELSE
+      IF (nBandLocal > 0) THEN
+        ALLOCATE(bandSizeTmp(nBandLocal))
+        DO j=1,nBandLocal
+          bandSizeTmp(j) = SIZE(thisMatrix%chunks(i)%bands(j)%elem)
+        ENDDO
+        CALL MPI_Send(bandSizeTmp(:), nBandLocal, MPI_INTEGER, i-1, 0, thisMatrix%comm, mpierr)
+        DEALLOCATE(bandSizeTmp)
+      ENDIF
+    END IF
+  END DO
+
+  thisMatrix%isAssembled = .TRUE.
+  DEALLOCATE(thisMatrix%iTmp)
+  DEALLOCATE(thisMatrix%jTmp)
+  DEALLOCATE(thisMatrix%elemTmp)
+#endif
+ENDSUBROUTINE assemble_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes Dense Rectangular Matrix Type with a Parameter List
 !> @param matrix the matrix type to act on
 !> @param pList the parameter list
@@ -402,6 +988,112 @@ SUBROUTINE clear_TriDiagMatrixType(matrix)
  ENDSUBROUTINE clear_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------
+!> @brief Clears the banded matrix
+!> @param matrix the matrix type to act on
+!>
+SUBROUTINE clear_BandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='clear_BandedMatrixType'
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: i
+  matrix%isInit=.FALSE.
+  matrix%isAssembled=.FALSE.
+  matrix%n=0
+  matrix%m=0
+  matrix%counter=0
+  IF(ALLOCATED(matrix%bands)) THEN
+    DO i=1,SIZE(matrix%bandIdx)
+      IF(ALLOCATED(matrix%bands(i)%elem)) THEN
+        DEALLOCATE(matrix%bands(i)%elem)
+      END IF
+    ENDDO
+    DEALLOCATE(matrix%bands)
+  ENDIF
+  IF(ALLOCATED(matrix%bandIdx)) THEN
+    DEALLOCATE(matrix%bandIdx)
+  ENDIF
+  IF(ALLOCATED(matrix%iTmp)) THEN
+    DEALLOCATE(matrix%iTmp)
+  ENDIF
+  IF(ALLOCATED(matrix%jTmp)) THEN
+    DEALLOCATE(matrix%jTmp)
+  ENDIF
+  IF(ALLOCATED(matrix%elemTmp)) THEN
+    DEALLOCATE(matrix%elemTmp)
+  ENDIF
+  matrix%nnz = 0
+  IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
+ ENDSUBROUTINE clear_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the distributed banded matrix
+!> @param matrix the matrix type to act on
+!>
+SUBROUTINE clear_DistributedBandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='clear_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: i
+#ifdef HAVE_MPI
+  matrix%isInit=.FALSE.
+  matrix%isCreated=.FALSE.
+  matrix%isAssembled=.FALSE.
+  matrix%comm=MPI_COMM_NULL
+  matrix%n=0
+  matrix%m=0
+  matrix%nnz=0
+  matrix%nLocal=0
+  IF(ALLOCATED(matrix%chunks)) THEN
+    DO i=1,SIZE(matrix%chunks)
+      CALL matrix%chunks(i)%clear()
+    ENDDO
+    DEALLOCATE(matrix%chunks)
+  ENDIF
+  IF(ALLOCATED(matrix%iOffsets)) THEN
+    DEALLOCATE(matrix%iOffsets)
+  ENDIF
+  IF(ALLOCATED(matrix%jOffsets)) THEN
+    DEALLOCATE(matrix%jOffsets)
+  ENDIF
+  IF(ALLOCATED(matrix%iTmp)) THEN
+    DEALLOCATE(matrix%iTmp)
+  ENDIF
+  IF(ALLOCATED(matrix%jTmp)) THEN
+    DEALLOCATE(matrix%jTmp)
+  ENDIF
+  IF(ALLOCATED(matrix%elemTmp)) THEN
+    DEALLOCATE(matrix%elemTmp)
+  ENDIF
+  IF(ALLOCATED(matrix%bandSizes)) THEN
+    DEALLOCATE(matrix%bandSizes)
+  ENDIF
+  IF(MatrixType_Paramsflag) CALL MatrixTypes_Clear_ValidParams()
+#endif
+ ENDSUBROUTINE clear_DistributedBandedMatrixType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the distributed block banded matrix
+!> @param matrix the matrix type to act on
+!>
+SUBROUTINE clear_DistributedBlockBandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='clear_DistributedBlockBandedMatrixType'
+  CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: i
+#ifdef HAVE_MPI
+  matrix%blockMask = .FALSE.
+  matrix%blockSize = 0
+  matrix%nLocalBlocks = 0
+  matrix%blockOffset = 0
+
+  DO i=1,SIZE(matrix%blocks)
+    CALL matrix%blocks(i)%clear()
+  END DO
+  DEALLOCATE(matrix%blocks)
+
+  CALL matrix%DistributedBandedMatrixType%clear()
+#endif
+ ENDSUBROUTINE clear_DistributedBlockBandedMatrixType
+!
+!-------------------------------------------------------------------------------
 !> @brief Clears the dense rectangular matrix
 !> @param matrix the matrix type to act on
 !>
@@ -462,6 +1154,7 @@ ENDSUBROUTINE set_SparseMatrixtype
 !> If setShape has previously been applied to the same sparse matrix.
 !>
 SUBROUTINE setRow_SparseMatrixType(matrix,i,j,setval)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_SparseMatrixType'
   CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK),INTENT(IN) :: j(:)
@@ -537,6 +1230,153 @@ SUBROUTINE set_TriDiagMatrixType(matrix,i,j,setval)
     ENDIF
   ENDIF
 ENDSUBROUTINE set_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the distributed banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+SUBROUTINE set_DistributedBandedMatrixType(matrix,i,j,setval)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  REAL(SRK),INTENT(IN) :: setval
+  INTEGER(SIK) :: rank,nproc,mpierr,nHeldLower,bandLoc,elemIdx,k
+  LOGICAL(SBK) :: flag
+#ifdef HAVE_MPI
+  flag = .FALSE.
+  REQUIRE(matrix%isInit)
+  IF(.NOT. matrix%isAssembled) THEN
+    IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+        .AND. (i>=1) .AND. (j >= 1)) THEN
+
+      CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
+      CALL MPI_Comm_size(matrix%comm,nproc,mpierr)
+
+      IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
+        matrix%nLocal = matrix%nLocal + 1
+        IF (matrix%nLocal > 2*matrix%nnz/nproc) THEN
+          CALL eMatrixType%raiseError('Matrix Element imbalance '// &
+            modName//'::'//myName//' - Check nnz or use a different type')
+        END IF
+        matrix%iTmp(matrix%nLocal) = i
+        matrix%jTmp(matrix%nLocal) = j
+        matrix%elemTmp(matrix%nLocal) = setval
+        flag = .TRUE.
+      END IF
+    ENDIF
+  ELSE
+    CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
+    IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
+      DO k=1,SIZE(matrix%jOffsets)-1
+        IF (i > matrix%iOffsets(k) .AND. i <= matrix%iOffsets(k+1)) THEN
+          IF (matrix%chunks(k)%isInit) THEN
+            CALL matrix%chunks(k)%set(i-matrix%iOffsets(k),j-matrix%jOffsets(rank+1),setval)
+            flag = .TRUE.
+            EXIT
+          END IF
+        END IF
+      END DO
+    END IF
+  END IF
+  IF (.NOT. flag) WRITE(*,*) "Invalid matrix set encountered in rank",rank,"at",i,j
+
+#endif
+ENDSUBROUTINE set_DistributedBandedMatrixType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the distributed block banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+SUBROUTINE set_DistributedBlockBandedMatrixType(matrix,i,j,setval)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_DistributedBlockBandedMatrixType'
+  CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  REAL(SRK),INTENT(IN) :: setval
+  INTEGER(SIK) :: rank,mpierr,offset
+  LOGICAL(SBK) :: flag
+#ifdef HAVE_MPI
+  REQUIRE(matrix%isInit)
+
+  flag = .FALSE.
+  CALL MPI_Comm_Rank(matrix%comm,rank,mpierr)
+  ! Check if element is in a block; if not call parent
+  IF ((i-1)/matrix%blockSize /= (j-1)/matrix%blockSize) THEN
+    CALL matrix%DistributedBandedMatrixType%set(i,j,setval)
+    flag = .TRUE.
+  ELSE
+    IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+      .AND. (i>=1) .AND. (j >= 1)) THEN
+      IF (.NOT. matrix%blockMask) THEN
+        offset = ((i-1)/matrix%blockSize)*matrix%blockSize
+        IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
+          CALL matrix%blocks((j-1)/matrix%blockSize - matrix%blockOffset+1)%set(i-offset,j-offset,setval)
+          flag = .TRUE.
+        ENDIF
+      ENDIF
+    ENDIF
+  ENDIF
+  IF (.NOT. flag) WRITE(*,*) "Invalid matrix set encountered in rank",rank,"at",i,j
+#endif
+ENDSUBROUTINE set_DistributedBlockBandedMatrixType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the distributed banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+SUBROUTINE setrow_DistributedBandedMatrixType(matrix,i,j,setval)
+  CHARACTER(LEN=*),PARAMETER :: myName='setrow_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j(:)
+  REAL(SRK),INTENT(IN) :: setval(:)
+  CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
+    ' - routine is not implemented!')
+ENDSUBROUTINE setrow_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the values in the banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+SUBROUTINE set_BandedMatrixType(matrix,i,j,setval)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_BandedMatrixType'
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  REAL(SRK),INTENT(IN) :: setval
+  INTEGER(SIK) :: bandLoc, elemIdx
+
+  REQUIRE(matrix%isInit)
+  IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
+     .AND. (i>=1) .AND. (j >= 1)) THEN
+    IF(.NOT. matrix%isAssembled) THEN
+      matrix%counter = matrix%counter + 1
+      matrix%iTmp(matrix%counter) = i
+      matrix%jTmp(matrix%counter) = j
+      matrix%elemTmp(matrix%counter) = setval
+    ELSE
+      CALL binarySearch_BandedMatrixType(matrix,i,j,bandLoc,elemIdx)
+      IF (bandLoc >= 0 .AND. elemIdx >= 0) THEN
+        matrix%bands(bandLoc)%elem(elemIdx) = setVal
+      END IF
+    END IF
+  END IF
+ENDSUBROUTINE set_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values in the dense rectangular matrix
@@ -619,6 +1459,93 @@ SUBROUTINE get_TriDiagMatrixType(matrix,i,j,getval)
     ENDIF
   ENDIF
 ENDSUBROUTINE get_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the distributed banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+SUBROUTINE get_DistributedBandedMatrixType(matrix,i,j,getval)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  REAL(SRK),INTENT(INOUT) :: getval
+  INTEGER(SIK) :: bandLoc, elemidx, k, mpierr, rank
+  LOGICAL(SBK) :: found
+
+#ifdef HAVE_MPI
+  getval = 0.0_SRK
+  CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
+  IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
+    DO k=1,SIZE(matrix%jOffsets)-1
+      IF (i > matrix%iOffsets(k) .AND. i <= matrix%iOffsets(k+1)) THEN
+        IF (matrix%chunks(k)%isInit) THEN
+          CALL matrix%chunks(k)%get(i-matrix%iOffsets(k),j-matrix%jOffsets(rank+1),getval)
+          EXIT
+        END IF
+      END IF
+    END DO
+  END IF
+#endif
+ENDSUBROUTINE get_DistributedBandedMatrixType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the distributed block banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+SUBROUTINE get_DistributedBlockBandedMatrixType(matrix,i,j,getval)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_DistributedBlockBandedMatrixType'
+  CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  REAL(SRK),INTENT(INOUT) :: getval
+  INTEGER(SIK) :: rank,mpierr,offset
+  REAL(SRK) :: val
+#if HAVE_MPI
+  CALL MPI_Comm_Rank(matrix%comm,rank,mpierr)
+  IF ((i-1)/matrix%blockSize /= (j-1)/matrix%blockSize) THEN
+    CALL matrix%DistributedBandedMatrixType%get(i,j,getVal)
+  ELSE IF (.NOT. matrix%blockMask) THEN
+    offset = ((i-1)/matrix%blockSize)*matrix%blockSize
+    IF (j > matrix%jOffsets(rank+1) .AND. j <= matrix%jOffsets(rank+2)) THEN
+      getval = matrix%blocks((i-1)/matrix%blockSize - matrix%blockOffset + 1)%A(i-offset,j-offset)
+    END IF
+  ELSE
+    getval = 0.0_SRK
+  END IF
+#endif
+ENDSUBROUTINE get_DistributedBlockBandedMatrixType
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the values in the banded matrix
+!> @param matrix the matrix type to act on
+!> @param i the ith location in the matrix
+!> @param j the jth location in the matrix
+!> @param setval the value to be set
+!>
+SUBROUTINE get_BandedMatrixType(matrix,i,j,getval)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_BandedMatrixType'
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  REAL(SRK),INTENT(INOUT) :: getval
+  INTEGER(SIK) :: bandLoc,elemIdx
+
+  CALL binarySearch_BandedMatrixType(matrix,i,j,bandLoc,elemIdx)
+  getval = 0.0_SRK
+  IF (bandLoc >= 0 .AND. elemIdx >= 0) THEN
+    getval = matrix%bands(bandLoc)%elem(elemIdx)
+  END IF
+
+ENDSUBROUTINE get_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the values in the dense rectangular matrix
@@ -746,7 +1673,48 @@ ENDSUBROUTINE transpose_TriDiagMatrixType
 !> @param matrix declare the matrix type to act on
 !>
 !>
+SUBROUTINE transpose_DistributedBandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='transpose_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: mTmp,i
+
+  CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
+    ' - routine is not implemented!')
+
+ENDSUBROUTINE transpose_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief tranpose the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
+SUBROUTINE transpose_BandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='transpose_BandedMatrixType'
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: mTmp,i
+
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
+
+  mTmp = matrix%n
+  matrix%n = matrix%m
+  matrix%m = mTmp
+
+  DO i=1,SIZE(matrix%bandIdx)
+    matrix%bands(i)%jIdx = matrix%bands(i)%jIdx - matrix%bandIdx(i)
+  END DO
+  matrix%bandIdx = -matrix%bandIdx
+  matrix%isReversed = .NOT. matrix%isReversed
+
+ENDSUBROUTINE transpose_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief tranpose the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
 SUBROUTINE transpose_SparseMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='transpose_SparseMatrixType'
   CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
 
   INTEGER(SIK),ALLOCATABLE :: tmp_ia(:),tmp_ja(:),A(:,:),tmp(:),Row(:,:),n_Row(:)
@@ -866,10 +1834,166 @@ ENDSUBROUTINE zeroentries_TriDiagMatrixType
 !> @param matrix declare the matrix type to act on
 !>
 !>
+SUBROUTINE  zeroentries_DistributedBandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName=&
+                  'zeroentries_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: i
+
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
+
+  DO i=1,SIZE(matrix%iOffsets)-1
+    IF (matrix%chunks(i)%isInit) THEN
+      CALL matrix%chunks(i)%zeroentries()
+    END IF
+  END DO
+
+ENDSUBROUTINE zeroentries_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
+SUBROUTINE  zeroentries_DistributedBlockBandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName=&
+                  'zeroentries_DistributedBlockBandedMatrixType'
+  CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: i
+
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
+
+  DO i=1,SIZE(matrix%blocks)
+    CALL matrix%blocks(i)%zeroEntries()
+  END DO
+  CALL matrix%DistributedBandedMatrixType%zeroEntries()
+
+ENDSUBROUTINE zeroentries_DistributedBlockBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
+SUBROUTINE  zeroentries_BandedMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_BandedMatrixType'
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: i
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
+  DO i=1,SIZE(matrix%bandIdx)
+    IF(ALLOCATED(matrix%bands(i)%elem)) matrix%bands(i)%elem=0.0_SRK
+  ENDDO
+  !matrix%bandIdx = 0_SIK
+ENDSUBROUTINE zeroentries_BandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief zero the matrix
+!> @param matrix declare the matrix type to act on
+!>
+!>
 SUBROUTINE  zeroentries_DenseRectMatrixType(matrix)
+  CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_DenseRectMatrixType'
   CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
   REQUIRE(matrix%isInit)
   matrix%a=0.0_SRK
 ENDSUBROUTINE zeroentries_DenseRectMatrixType
 !
+!-------------------------------------------------------------------------------
+!> @brief Set the block mask for distribed block-banded matrix
+!> setting to True will make all values in the block appear to be zero
+!> without actually setting them. Setting to false restores these values.
+!> @param matrix declare the matrix type to act on
+!>
+!>
+SUBROUTINE setBlockMask_DistributedBlockBandedMatrixType(matrix,maskVal)
+  CHARACTER(LEN=*),PARAMETER :: myName='setBlockMask_DistributedBlockBandedMatrixType'
+  CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
+  LOGICAL(SBK),INTENT(IN) :: maskVal
+
+  REQUIRE(matrix%isInit)
+  matrix%blockMask = maskVal
+ENDSUBROUTINE setBlockMask_DistributedBlockBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief performs binary search for (i,j) in the matrix
+!> @param matrix declare the matrix type to act on
+!> @param i the desired row index
+!> @param j the desired col index
+!> @param bandLoc the index of the band (i,j) is located in (negative -> not there)
+!> @param elemIdx the index of the elem(:) array (i,j) is located at (negative -> not there)
+!>
+SUBROUTINE binarySearch_BandedMatrixType(matrix, i, j, bandLoc, elemIdx)
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  INTEGER(SIK),INTENT(OUT) :: bandLoc
+  INTEGER(SIK),INTENT(OUT) :: elemIdx
+  INTEGER(SIK) :: bIdx,lo,hi,mid
+  LOGICAL(SBK) :: found
+
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
+  REQUIRE((j <= matrix%m) .AND. (i <= matrix%n) .AND. (i>=1) .AND. (j >= 1))
+
+  found=.FALSE.
+
+  !Check if band is contained (binary search)
+  bIdx = j - i
+  IF (matrix%isReversed) THEN
+    bIdx = -bIdx
+    matrix%bandIdx = -matrix%bandIdx
+  END IF
+  lo = 1
+  hi = SIZE(matrix%bandIdx)
+
+  IF (bIdx < matrix%bandIdx(1) .OR. bIdx > matrix%bandIdx(hi)) THEN
+    bandLoc = -1
+  ELSE
+    DO WHILE (lo <= hi .AND. .NOT. found)
+      mid = (hi+lo)/2
+      IF (bIdx < matrix%bandIdx(mid)) THEN
+        hi = mid-1
+      ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
+        lo = mid+1
+      ELSE
+        found = .TRUE.
+        EXIT
+      END IF
+    END DO
+    IF (found) THEN
+      bandLoc = mid
+      lo = 1
+      hi = SIZE(matrix%bands(bandLoc)%elem)
+      found = .FALSE.
+      IF (j < matrix%bands(bandLoc)%jIdx(lo) .OR. j > matrix%bands(bandLoc)%jIdx(hi)) THEN
+        elemIdx = -1
+      ELSE
+        DO WHILE (lo <= hi .AND. .NOT. found)
+          mid = (hi+lo)/2
+          IF (j < matrix%bands(bandLoc)%jIdx(mid)) THEN
+            hi = mid-1
+          ELSE IF (j > matrix%bands(bandLoc)%jIdx(mid)) THEN
+            lo = mid+1
+          ELSE
+            found = .TRUE.
+            EXIT
+          END IF
+        END DO
+      END IF
+      elemIdx = -1
+      IF (found) THEN
+        elemIdx = mid
+      END IF
+    ELSE
+      bandLoc = -1
+    END IF
+  END IF
+  IF (matrix%isReversed) THEN
+    matrix%bandIdx = -matrix%bandIdx
+  END IF
+END SUBROUTINE binarySearch_BandedMatrixType
+
 ENDMODULE MatrixTypes_Native

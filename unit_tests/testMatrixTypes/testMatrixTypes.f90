@@ -97,7 +97,7 @@ SUBROUTINE testMatrix()
   INTEGER(SIK) :: ja_vals(6)
   REAL(SRK) :: a_vals(6),x(3),y(3),val
   REAL(SRK) :: dummy
-  REAL(SRK),ALLOCATABLE :: dummyvec(:)
+  REAL(SRK),ALLOCATABLE :: dummyvec(:), dummyvec2(:)
   LOGICAL(SBK) :: bool
 #ifdef FUTILITY_HAVE_PETSC
   INTEGER(SIK) :: matsize1,matsize2
@@ -145,115 +145,115 @@ SUBROUTINE testMatrix()
     ALLOCATE(thisMatrix%a(100))
     ALLOCATE(thisMatrix%ja(100))
     thisMatrix%ia(101)=101
-  ENDSELECT
+ENDSELECT
 
-  !clear it
-  CALL thisMatrix%clear()
+!clear it
+CALL thisMatrix%clear()
 
-  SELECTTYPE(thisMatrix)
+SELECTTYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     !check for success
     bool = ((thisMatrix%jPrev == 0).AND.(thisMatrix%iPrev == 0)) &
-        .AND.(((.NOT.thisMatrix%isInit).AND.(thisMatrix%jCount == 0)) &
-        .AND.((thisMatrix%nnz == 0).AND.(thisMatrix%n == 0)))
+      .AND.(((.NOT.thisMatrix%isInit).AND.(thisMatrix%jCount == 0)) &
+      .AND.((thisMatrix%nnz == 0).AND.(thisMatrix%n == 0)))
     ASSERT(bool, 'sparse%clear()')
     bool = (.NOT.ALLOCATED(thisMatrix%a) .AND. .NOT.ALLOCATED(thisMatrix%ja)) &
-        .AND. .NOT.ALLOCATED(thisMatrix%ia)
+            .AND. .NOT.ALLOCATED(thisMatrix%ia)
     ASSERT(bool, 'sparse%clear()')
     WRITE(*,*) '  Passed: CALL sparse%clear()'
-  ENDSELECT
+ENDSELECT
 
-  !check init
+!check init
 
-  ! build parameter list
-  CALL pList%add('MatrixType->n',10_SNK)
-  CALL pList%add('MatrixType->nnz',10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+! build parameter list
+CALL pList%add('MatrixType->n',10_SNK)
+CALL pList%add('MatrixType->nnz',10_SNK)
+CALL pList%validate(pList,optListMat)
+CALL thisMatrix%init(pList)
+SELECTTYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     !check for success
     bool = (((thisMatrix%isInit) .OR. (thisMatrix%jCount == 0)) &
-        .OR. ((thisMatrix%nnz == 10) .OR. (thisMatrix%n == 10))) &
-        .OR. ((thisMatrix%jPrev ==0) .OR. (thisMatrix%iPrev ==0))
+      .OR. ((thisMatrix%nnz == 10) .OR. (thisMatrix%n == 10))) &
+      .OR. ((thisMatrix%jPrev ==0) .OR. (thisMatrix%iPrev ==0))
     ASSERT(bool, 'sparse%init(...)')
     bool = ((SIZE(thisMatrix%a) == 10).OR.(SIZE(thisMatrix%ja) == 10)) &
-        .OR.((SIZE(thisMatrix%ia) == 11).OR.(thisMatrix%ia(11) == 11))
+      .OR.((SIZE(thisMatrix%ia) == 11).OR.(thisMatrix%ia(11) == 11))
     ASSERT(bool, 'sparse%init(...)')
-  ENDSELECT
-  CALL thisMatrix%clear()
-  CALL pList%clear()
+ENDSELECT
+CALL thisMatrix%clear()
+CALL pList%clear()
 
-  !now check init without m being provided
-  CALL pList%add('MatrixType->n',10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  bool = .NOT. thisMatrix%isInit
-  ASSERT(bool, 'sparse%init(...)')
-  CALL thisMatrix%clear()
+!now check init without m being provided
+CALL pList%add('MatrixType->n',10_SNK)
+CALL pList%validate(pList,optListMat)
+CALL thisMatrix%init(pList) !expect exception
+bool = .NOT. thisMatrix%isInit
+ASSERT(bool, 'sparse%init(...)')
+CALL thisMatrix%clear()
 
-  !init it twice so on 2nd init, isInit==.TRUE.
-  CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+!init it twice so on 2nd init, isInit==.TRUE.
+CALL thisMatrix%init(pList)
+SELECTTYPE(thisMatrix)
   TYPE IS(SparseMatrixType); thisMatrix%nnz=1
-  ENDSELECT
-  CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+ENDSELECT
+CALL thisMatrix%init(pList)
+SELECTTYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     ASSERT(thisMatrix%nnz==1, 'sparse%init(...)')
-  ENDSELECT
-  !init with n<1
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  CALL pList%add('MatrixType->n',-1_SNK)
-  CALL pList%add('MatrixType->nnz',10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  !n<1, and m not provided
-  CALL pList%add('MatrixType->n',-1_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  !init with m<1
-  CALL pList%add('MatrixType->n',10_SNK)
-  CALL pList%add('MatrixType->nnz',-10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-  WRITE(*,*) '  Passed: CALL sparse%init(...)'
-  !test setShape
-  !intend to make: [1 0 2]
-  !                [0 0 3]
-  !                [4 5 6]
-  DO i=1,6
-    a_vals(i)=i
-  ENDDO
-  ja_vals(1)=1
-  ja_vals(2)=3
-  ja_vals(3)=3
-  ja_vals(4)=1
-  ja_vals(5)=2
-  ja_vals(6)=3
-  ia_vals(1)=1
-  ia_vals(2)=3
-  ia_vals(3)=4
-  ia_vals(4)=7
+ENDSELECT
+!init with n<1
+CALL thisMatrix%clear()
+CALL pList%clear()
+CALL pList%add('MatrixType->n',-1_SNK)
+CALL pList%add('MatrixType->nnz',10_SNK)
+CALL pList%validate(pList,optListMat)
+CALL thisMatrix%init(pList) !expect exception
+ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
+CALL thisMatrix%clear()
+CALL pList%clear()
+!n<1, and m not provided
+CALL pList%add('MatrixType->n',-1_SNK)
+CALL pList%validate(pList,optListMat)
+CALL thisMatrix%init(pList) !expect exception
+ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
+CALL thisMatrix%clear()
+CALL pList%clear()
+!init with m<1
+CALL pList%add('MatrixType->n',10_SNK)
+CALL pList%add('MatrixType->nnz',-10_SNK)
+CALL pList%validate(pList,optListMat)
+CALL thisMatrix%init(pList) !expect exception
+ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
+CALL thisMatrix%clear()
+WRITE(*,*) '  Passed: CALL sparse%init(...)'
+!test setShape
+!intend to make: [1 0 2]
+!                [0 0 3]
+!                [4 5 6]
+DO i=1,6
+  a_vals(i)=i
+ENDDO
+ja_vals(1)=1
+ja_vals(2)=3
+ja_vals(3)=3
+ja_vals(4)=1
+ja_vals(5)=2
+ja_vals(6)=3
+ia_vals(1)=1
+ia_vals(2)=3
+ia_vals(3)=4
+ia_vals(4)=7
 
-  ! build parameter list
-  CALL pList%clear()
-  CALL pList%add('MatrixType->n',3_SNK)
-  CALL pList%add('MatrixType->nnz',6_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%clear()
-  CALL thisMatrix%init(pList)
+! build parameter list
+CALL pList%clear()
+CALL pList%add('MatrixType->n',3_SNK)
+CALL pList%add('MatrixType->nnz',6_SNK)
+CALL pList%validate(pList,optListMat)
+CALL thisMatrix%clear()
+CALL thisMatrix%init(pList)
 
-  SELECTTYPE(thisMatrix)
+SELECTTYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     CALL thisMatrix%setShape(1,1,1._SRK)
     CALL thisMatrix%setShape(1,3,2._SRK)
@@ -1281,25 +1281,256 @@ SUBROUTINE testMatrix()
   WRITE(*,*) '  Passed: CALL tridiag%get(...)'
   DEALLOCATE(thisMatrix)
 !
+!Test for banded matrices
+      ALLOCATE(BandedMatrixType :: thisMatrix)
+      SELECT TYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          !test clear
+          !make matrix w/out using untested init
+          thisMatrix%isInit=.TRUE.
+          thisMatrix%n=10
+          thisMatrix%m=15
+          thisMatrix%nnz=16
+          ALLOCATE(thisMatrix%bands(4))
+          ALLOCATE(thisMatrix%bandIdx(4))
+          ALLOCATE(thisMatrix%bands(2)%elem(5))
+      END SELECT
+      CALL thisMatrix%clear()
+      SELECT TYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          bool = (.NOT.(thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+              .AND.((thisMatrix%m == 0) &
+              .AND.(thisMatrix%nnz == 0) &
+              .AND.(.NOT.ALLOCATED(thisMatrix%bands)))
+          ASSERT(bool, 'banded%clear()')
+          WRITE(*,*) '  Passed: CALL banded%clear()'
+      END SELECT
+      !check init
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',15_SNK)
+      CALL pList%add('MatrixType->nnz',12_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+              .AND.((thisMatrix%m == 15).AND.(thisMatrix%nnz == 12))
+          ASSERT(bool, 'banded%init(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      !test with double init (isInit==true on 2nd try)
+
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType); thisMatrix%m=1
+      ENDSELECT
+      CALL thisMatrix%init(pList)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          bool = thisMatrix%m == 1
+          ASSERT(bool, 'banded%init(...)')
+      ENDSELECT
+      CALL thisMatrix%clear()
+      !test with n<1
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',-1_SNK)
+      CALL pList%add('MatrixType->m',10_SNK)
+      CALL pList%add('MatrixType->nnz',12_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      !test with m<1
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',-1_SNK)
+      CALL pList%add('MatrixType->nnz',12_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      !test with nnz<1
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',10_SNK)
+      CALL pList%add('MatrixType->m',15_SNK)
+      CALL pList%add('MatrixType->nnz',-1_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList) !expect exception
+      bool = .NOT.thisMatrix%isInit
+      ASSERT(bool, 'banded%init(...)')
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL banded%init(...)'
+
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+
+      !check set
+      !test normal diag use case
+      !want to build:
+      ![1 2 0 0]
+      ![0 3 0 0]
+      ![0 0 5 6]
+      ![0 9 0 7]
+
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nnz',7_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      CALL thisMatrix%set(4,2,9._SRK)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          CALL thisMatrix%assemble()
+          bool = .TRUE.
+          bool = bool .AND. thisMatrix%bands(2)%elem(1) == 1
+          bool = bool .AND. thisMatrix%bands(2)%elem(2) == 3
+          bool = bool .AND. thisMatrix%bands(2)%elem(3) == 5
+          bool = bool .AND. thisMatrix%bands(2)%elem(4) == 7
+          bool = bool .AND. thisMatrix%bands(3)%elem(1) == 2
+          bool = bool .AND. thisMatrix%bands(3)%elem(2) == 6
+          bool = bool .AND. thisMatrix%bands(1)%elem(1) == 9
+          ASSERT(bool, 'banded%set(...)')
+      ENDSELECT
+      WRITE(*,*) '  Passed: CALL banded%set(...)'
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+
+      !check get functionality
+      ![1 2 0 0]
+      ![0 3 0 0]
+      ![0 0 5 6]
+      ![0 9 0 7]
+      !
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nnz',7_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      CALL thisMatrix%set(4,2,9._SRK)
+
+      SELECT TYPE(thisMatrix)
+      TYPE IS(BandedMatrixType)
+        CALL thisMatrix%assemble()
+      END SELECT
+
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(10))
+      dummyvec=0
+      CALL thisMatrix%get(1,1,dummyvec(1))
+      CALL thisMatrix%get(1,2,dummyvec(2))
+      CALL thisMatrix%get(2,2,dummyvec(3))
+      CALL thisMatrix%get(2,3,dummyvec(4))
+      CALL thisMatrix%get(3,3,dummyvec(5))
+      CALL thisMatrix%get(3,4,dummyvec(6))
+      CALL thisMatrix%get(4,4,dummyvec(7))
+      CALL thisMatrix%get(3,1,dummyvec(8))
+      CALL thisMatrix%get(4,2,dummyvec(9))
+      CALL thisMatrix%get(1,4,dummyvec(10))
+
+      bool = .TRUE.
+      bool = bool .AND. dummyvec(1) == 1
+      bool = bool .AND. dummyvec(2) == 2
+      bool = bool .AND. dummyvec(3) == 3
+      bool = bool .AND. dummyvec(4) == 0
+      bool = bool .AND. dummyvec(5) == 5
+      bool = bool .AND. dummyvec(6) == 6
+      bool = bool .AND. dummyvec(7) == 7
+      bool = bool .AND. dummyvec(8) == 0
+      bool = bool .AND. dummyvec(9) == 9
+      bool = bool .AND. dummyvec(10) == 0
+      ASSERT(bool, 'banded%get(...)')
+
+      CALL thisMatrix%clear()
+      WRITE(*,*) '  Passed: CALL banded%get(...)'
+      !check matvec functionality
+      ![1 2 0 0]
+      ![0 3 0 0]
+      ![0 0 5 6]
+      ![0 9 0 7]
+      !with main diagonal split [1,3],[5,7]
+      CALL thisMatrix%clear()
+      CALL pList%clear()
+      CALL pList%add('MatrixType->n',4_SNK)
+      CALL pList%add('MatrixType->m',4_SNK)
+      CALL pList%add('MatrixType->nnz',7_SNK)
+      CALL pList%validate(pList,optListMat)
+      CALL thisMatrix%init(pList)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,2,2._SRK)
+      CALL thisMatrix%set(2,2,3._SRK)
+      CALL thisMatrix%set(3,3,5._SRK)
+      CALL thisMatrix%set(3,4,6._SRK)
+      CALL thisMatrix%set(4,4,7._SRK)
+      CALL thisMatrix%set(4,2,9._SRK)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      IF(ALLOCATED(dummyvec2)) DEALLOCATE(dummyvec2)
+      ALLOCATE(dummyvec(4))
+      ALLOCATE(dummyvec2(4))
+      ! Check zero vector
+      dummyvec=0
+      dummyvec2=1
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+          CALL thisMatrix%assemble()
+          WRITE(*,*) "calling matvec"
+          CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
+          WRITE(*,*) "finished matvec call"
+          DO i=1,4
+            bool = ABS(dummyvec2(i)) < 1E-6
+            ASSERT(bool, 'banded%matvec(...)')
+          ENDDO
+      ENDSELECT
+      ! Check for non-trivial vector
+      dummyvec=(/1._SRK,2._SRK,3._SRK,4._SRK/)
+      SELECTTYPE(thisMatrix)
+        TYPE IS(BandedMatrixType)
+        CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
+        bool = dummyvec2(1) == 5._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = dummyvec2(2) == 6._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = dummyvec2(3) == 39._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+        bool = dummyvec2(4) == 46._SRK
+        ASSERT(bool, 'banded%matvec(...)')
+      ENDSELECT
+      WRITE(*,*) '  Passed: CALL banded%matvec(...)'
+      DEALLOCATE(thisMatrix)
+!
 !Test for dense rectangular matrices
   ALLOCATE(DenseRectMatrixType :: thisMatrix)
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    !test clear
-    !make matrix w/out using untested init
-    thisMatrix%isInit=.TRUE.
-    thisMatrix%n=10
-    thisMatrix%m=15
-    ALLOCATE(thisMatrix%a(10,15))
+    TYPE IS(DenseRectMatrixType)
+      !test clear
+      !make matrix w/out using untested init
+      thisMatrix%isInit=.TRUE.
+      thisMatrix%n=10
+      thisMatrix%m=15
+      ALLOCATE(thisMatrix%a(10,15))
   ENDSELECT
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
-        .AND.((thisMatrix%m == 0) &
-        .AND.(.NOT.ALLOCATED(thisMatrix%a)))
-    ASSERT(bool, 'denserect%clear()')
-    WRITE(*,*) '  Passed: CALL denserect%clear()'
+    TYPE IS(DenseRectMatrixType)
+      bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+          .AND.((thisMatrix%m == 0) &
+          .AND.(.NOT.ALLOCATED(thisMatrix%a)))
+      ASSERT(bool, 'denserect%clear()')
+      WRITE(*,*) '  Passed: CALL denserect%clear()'
   ENDSELECT
   !check init
   CALL pList%clear()
@@ -1308,25 +1539,25 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-        .AND.((thisMatrix%m == 15))
-    ASSERT(bool, 'denserect%init(...)')
-    bool = (SIZE(thisMatrix%a,1) == 10) &
+    TYPE IS(DenseRectMatrixType)
+      bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+          .AND.((thisMatrix%m == 15))
+      ASSERT(bool, 'denserect%init(...)')
+      bool = (SIZE(thisMatrix%a,1) == 10) &
         .AND.(SIZE(thisMatrix%a,2) == 15)
-    ASSERT(bool, 'denserect%init(...)')
+      ASSERT(bool, 'denserect%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with double init (isInit==true on 2nd try)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType); thisMatrix%m=1
+    TYPE IS(DenseRectMatrixType); thisMatrix%m=1
   ENDSELECT
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    bool = thisMatrix%m == 1
-    ASSERT(bool, 'denserect%init(...)')
+    TYPE IS(DenseRectMatrixType)
+      bool = thisMatrix%m == 1
+      ASSERT(bool, 'denserect%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with n<1
@@ -1367,11 +1598,11 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,2,5._SRK)
   CALL thisMatrix%set(2,3,6._SRK)
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    DO i=1,3
-      bool = (thisMatrix%a(1,i)== i).AND.(thisMatrix%a(2,i)== 3+i)
-      ASSERT(bool, 'denserect%set(...)')
-    ENDDO
+    TYPE IS(DenseRectMatrixType)
+      DO i=1,3
+        bool = (thisMatrix%a(1,i)== i).AND.(thisMatrix%a(2,i)== 3+i)
+        ASSERT(bool, 'denserect%set(...)')
+      ENDDO
   ENDSELECT
 
   !Test BLAS_matvec
@@ -1453,51 +1684,51 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->m',3_SNK)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    CALL thisMatrix%set(1,1,1._SRK)
-    CALL thisMatrix%set(1,3,2._SRK)
-    CALL thisMatrix%set(2,1,4._SRK)
-    CALL thisMatrix%set(2,2,5._SRK)
-    CALL thisMatrix%set(2,3,3._SRK)
-    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-    ALLOCATE(dummyvec(6))
-    CALL thisMatrix%get(1,1,dummyvec(1))
-    CALL thisMatrix%get(2,1,dummyvec(2))
-    CALL thisMatrix%get(1,2,dummyvec(3))
-    CALL thisMatrix%get(2,2,dummyvec(4))
-    CALL thisMatrix%get(1,3,dummyvec(5))
-    CALL thisMatrix%get(2,3,dummyvec(6))
-    bool = (dummyvec(1) == 1._SRK)  .AND. &
-        (dummyvec(2) == 4._SRK)
-    ASSERT(bool, 'densesquare%get(...)') !column one check
-    bool = (dummyvec(3) == 0._SRK).AND. &
-           (dummyvec(4) == 5._SRK)
-    ASSERT(bool, 'densesquare%get(...)')
-    bool = (dummyvec(5) == 2._SRK).AND. &
-           (dummyvec(6) == 3._SRK)
-    ASSERT(bool, 'densesquare%get(...)')
+    TYPE IS(DenseRectMatrixType)
+      CALL thisMatrix%set(1,1,1._SRK)
+      CALL thisMatrix%set(1,3,2._SRK)
+      CALL thisMatrix%set(2,1,4._SRK)
+      CALL thisMatrix%set(2,2,5._SRK)
+      CALL thisMatrix%set(2,3,3._SRK)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(6))
+      CALL thisMatrix%get(1,1,dummyvec(1))
+      CALL thisMatrix%get(2,1,dummyvec(2))
+      CALL thisMatrix%get(1,2,dummyvec(3))
+      CALL thisMatrix%get(2,2,dummyvec(4))
+      CALL thisMatrix%get(1,3,dummyvec(5))
+      CALL thisMatrix%get(2,3,dummyvec(6))
+      bool = (dummyvec(1) == 1._SRK)  .AND. &
+          (dummyvec(2) == 4._SRK)
+      ASSERT(bool, 'densesquare%get(...)') !column one check
+      bool = (dummyvec(3) == 0._SRK).AND. &
+              (dummyvec(4) == 5._SRK)
+      ASSERT(bool, 'densesquare%get(...)')
+      bool = (dummyvec(5) == 2._SRK).AND. &
+              (dummyvec(6) == 3._SRK)
+      ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    CALL thisMatrix%get(4,2,dummy)
-    bool = dummy == -1051._SRK
-    ASSERT(bool, 'densesquare%get(...)')
-    CALL thisMatrix%get(-1,2,dummy)
-    bool = dummy==-1051._SRK
-    ASSERT(bool, 'densesquare%get(...)')
-    CALL thisMatrix%get(2,-1,dummy)
-    bool = dummy==-1051._SRK
-    ASSERT(bool, 'densesquare%get(...)')
+    TYPE IS(DenseRectMatrixType)
+      CALL thisMatrix%get(4,2,dummy)
+      bool = dummy == -1051._SRK
+      ASSERT(bool, 'densesquare%get(...)')
+      CALL thisMatrix%get(-1,2,dummy)
+      bool = dummy == -1051._SRK
+      ASSERT(bool, 'densesquare%get(...)')
+      CALL thisMatrix%get(2,-1,dummy)
+      bool = dummy == -1051._SRK
+      ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-  TYPE IS(DenseRectMatrixType)
-    dummy=0.0_SRK
-    CALL thisMatrix%get(1,1,dummy)
-    bool = dummy == 0.0_SRK
-    ASSERT(bool, 'densesquare%get(...)')
+    TYPE IS(DenseRectMatrixType)
+      dummy=0.0_SRK
+      CALL thisMatrix%get(1,1,dummy)
+      bool = dummy == 0.0_SRK
+      ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL densesquare%get(...)'
@@ -3543,8 +3774,10 @@ ENDSUBROUTINE  testMatrixMultRect
 !-------------------------------------------------------------------------------
 SUBROUTINE testTransposeMatrix()
   CLASS(SparseMatrixType),ALLOCATABLE :: testA
+  CLASS(MatrixType),POINTER :: mat_p
   LOGICAL(SBK) :: bool
   TYPE(ParamType) :: tmpPlist
+  REAL(SRK) :: dummy
 #ifdef FUTILITY_HAVE_PETSC
   CLASS(DistributedMatrixType),POINTER :: dmat_p
   REAL(SRK) :: aij
@@ -3575,6 +3808,68 @@ SUBROUTINE testTransposeMatrix()
   ASSERT(bool,"wrong a")
   CALL tmpPlist%clear()
 
+  ! Banded Matrix
+  !want to build:
+  ![1 2 0 0 0]
+  ![0 3 4 0 0]
+  ![8 0 5 6 0]
+  ![0 9 0 7 0]
+  !transpose to
+  ![1 0 8 0]
+  ![2 3 0 9]
+  ![0 4 5 0]
+  ![0 0 6 7]
+  ![0 0 0 0]
+  ALLOCATE(BandedMatrixType :: mat_p)
+
+  COMPONENT_TEST('Banded')
+  CALL tmpPlist%add('MatrixType->n',4)
+  CALL tmpPlist%add('MatrixType->m',5)
+  CALL tmpPlist%add('MatrixType->nnz',9)
+  CALL mat_p%init(tmpPlist)
+  CALL mat_p%set(1,1,1._SRK)
+  CALL mat_p%set(1,2,2._SRK)
+  CALL mat_p%set(2,2,3._SRK)
+  CALL mat_p%set(2,3,4._SRK)
+  CALL mat_p%set(3,3,5._SRK)
+  CALL mat_p%set(3,4,6._SRK)
+  CALL mat_p%set(4,4,7._SRK)
+  CALL mat_p%set(3,1,8._SRK)
+  CALL mat_p%set(4,2,9._SRK)
+
+  SELECTTYPE(mat_p)
+    TYPE IS(BandedMatrixType)
+      CALL mat_p%assemble()
+      CALL mat_p%transpose()
+      bool = (mat_p%n == 5).AND.(mat_p%m == 4)
+      ASSERT(bool,"banded%transpose()")
+      bool = .TRUE.
+      CALL mat_p%get(1,1,dummy)
+      bool = bool .AND. dummy == 1.0_SRK
+      CALL mat_p%get(1,3,dummy)
+      bool = bool .AND. dummy == 8.0_SRK
+      CALL mat_p%get(2,1,dummy)
+      bool = bool .AND. dummy == 2.0_SRK
+      CALL mat_p%get(2,2,dummy)
+      bool = bool .AND. dummy == 3.0_SRK
+      CALL mat_p%get(2,4,dummy)
+      bool = bool .AND. dummy == 9.0_SRK
+      CALL mat_p%get(3,2,dummy)
+      bool = bool .AND. dummy == 4.0_SRK
+      CALL mat_p%get(3,3,dummy)
+      bool = bool .AND. dummy == 5.0_SRK
+      CALL mat_p%get(4,3,dummy)
+      bool = bool .AND. dummy == 6.0_SRK
+      CALL mat_p%get(4,4,dummy)
+      bool = bool .AND. dummy == 7.0_SRK
+      CALL mat_p%get(1,2,dummy)
+      bool = bool .AND. dummy == 0.0_SRK
+      ASSERT(bool,"banded%transpose()")
+  ENDSELECT
+  CALL mat_p%clear()
+  DEALLOCATE(mat_p)
+  NULLIFY(mat_p)
+  CALL tmpPlist%clear()
 
 #ifdef FUTILITY_HAVE_PETSC
   COMPONENT_TEST('PETSc')
@@ -3639,13 +3934,13 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
   SELECTTYPE(mat_p)
-  TYPE IS(DenseSquareMatrixType)
-    DO i=1,mat_p%n
-      DO j=1,mat_p%n
-        bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,"wrong zeroentries")
+    TYPE IS(DenseSquareMatrixType)
+      DO i=1,mat_p%n
+        DO j=1,mat_p%n
+          bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+          ASSERT(bool,"wrong zeroentries")
+        ENDDO
       ENDDO
-    ENDDO
   ENDSELECT
   CALL mat_p%clear()
   DEALLOCATE(mat_p)
@@ -3661,20 +3956,20 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
   SELECTTYPE(mat_p)
-  TYPE IS(DenseRectMatrixType)
-    DO i=1,mat_p%n
-      DO j=1,mat_p%n
-        bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,"wrong zeroentries")
+    TYPE IS(DenseRectMatrixType)
+      DO i=1,mat_p%n
+        DO j=1,mat_p%n
+          bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+          ASSERT(bool,"wrong zeroentries")
+        ENDDO
       ENDDO
-    ENDDO
   ENDSELECT
   CALL mat_p%clear()
   DEALLOCATE(mat_p)
   NULLIFY(mat_p)
   CALL params%clear()
 
-  ! Dense Square matrix
+  ! TriDiag matrix
   ALLOCATE(TridiagMatrixType :: mat_p)
   CALL params%add("MatrixType->n",4)
   CALL params%add("MatrixType->isSym",.FALSE.)
@@ -3683,13 +3978,45 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
   SELECTTYPE(mat_p)
-  TYPE IS(TridiagMatrixType)
-    DO i=1,SIZE(mat_p%a,DIM=1)
-      DO j=1,mat_p%n
-        bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
-        ASSERT(bool,"wrong zeroentries")
+    TYPE IS(TridiagMatrixType)
+      DO i=1,SIZE(mat_p%a,DIM=1)
+        DO j=1,mat_p%n
+          bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+          ASSERT(bool,"wrong zeroentries")
+        ENDDO
       ENDDO
-    ENDDO
+  ENDSELECT
+  CALL mat_p%clear()
+  DEALLOCATE(mat_p)
+  NULLIFY(mat_p)
+  CALL params%clear()
+
+  ! Banded Matrix
+  ALLOCATE(BandedMatrixType :: mat_p)
+  CALL params%add('MatrixType->n',4)
+  CALL params%add('MatrixType->m',4)
+  CALL params%add('MatrixType->nnz',9)
+  CALL mat_p%init(params)
+  CALL mat_p%set(1,1,1._SRK)
+  CALL mat_p%set(1,2,2._SRK)
+  CALL mat_p%set(2,2,3._SRK)
+  CALL mat_p%set(2,3,4._SRK)
+  CALL mat_p%set(3,3,5._SRK)
+  CALL mat_p%set(3,4,6._SRK)
+  CALL mat_p%set(4,4,7._SRK)
+  CALL mat_p%set(3,1,8._SRK)
+  CALL mat_p%set(4,2,9._SRK)
+  SELECTTYPE(mat_p)
+    TYPE IS(BandedMatrixType)
+      CALL mat_p%assemble()
+      CALL mat_p%zeroentries()
+
+      DO i=1,SIZE(mat_p%bands)
+        DO j=1,SIZE(mat_p%bands(i)%elem)
+          bool=(mat_p%bands(i)%elem(j) .APPROXEQ. 0.0_SRK)
+          ASSERT(bool,"banded%zeroentries()")
+        ENDDO
+      ENDDO
   ENDSELECT
   CALL mat_p%clear()
   DEALLOCATE(mat_p)
@@ -3713,8 +4040,8 @@ SUBROUTINE testzeroEntriesMatrix()
 
   CALL testA%zeroentries()
   SELECTTYPE(mat_p)
-  TYPE IS(SparseMatrixType)
-    bool=ALL(testA%a(:) .APPROXEQ. (/0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK/))
+    TYPE IS(SparseMatrixType)
+      bool=ALL(testA%a(:) .APPROXEQ. (/0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK/))
   ENDSELECT
   ASSERT(bool,"wrong a")
   CALL tmpPlist%clear()

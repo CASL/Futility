@@ -81,6 +81,10 @@ USE MatrixTypes_PETSc
 USE trilinos_interfaces
 IMPLICIT NONE
 
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
+
 PRIVATE
 !
 ! List of public members
@@ -92,7 +96,8 @@ PUBLIC :: SquareMatrixType
 PUBLIC :: RectMatrixType
 PUBLIC :: DistributedMatrixType
 ! Matrix structure enumerations
-PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG
+PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG, &
+     BANDED,DISTRIBUTED_BANDED,DISTR_BLOCKBANDED
 ! Matrix-Vector engine enumerations
 PUBLIC :: VM_PETSC,VM_TRILINOS,VM_NATIVE
 ! Parameter list setup/teardown
@@ -102,6 +107,9 @@ PUBLIC :: MatrixTypes_Clear_ValidParams
 PUBLIC :: DenseSquareMatrixType
 PUBLIC :: DenseRectMatrixType
 PUBLIC :: TriDiagMatrixType
+PUBLIC :: BandedMatrixType
+PUBLIC :: DistributedBandedMatrixType
+PUBLIC :: DistributedBlockBandedMatrixType
 PUBLIC :: SparseMatrixType
 ! PETSc implementations
 #ifdef FUTILITY_HAVE_PETSC
@@ -215,6 +223,12 @@ SUBROUTINE MatrixFactory(matrix, params)
       ALLOCATE(SparseMatrixType :: matrix)
     CASE(TRIDIAG)
       ALLOCATE(TriDiagMatrixType :: matrix)
+    CASE(BANDED)
+      ALLOCATE(BandedMatrixType :: matrix)
+    CASE(DISTRIBUTED_BANDED)
+      ALLOCATE(DistributedBandedMatrixType :: matrix)
+    CASE(DISTR_BLOCKBANDED)
+      ALLOCATE(DistributedBlockBandedMatrixType :: matrix)
     CASE DEFAULT
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
           "Unrecognized matrix structure requested")
@@ -343,6 +357,12 @@ SUBROUTINE MatrixResemble(dest, source, params)
     ALLOCATE(DenseRectMatrixType :: dest)
   TYPE IS(TriDiagMatrixType)
     ALLOCATE(TriDiagMatrixType :: dest)
+  TYPE IS(BandedMatrixType)
+    ALLOCATE(BandedMatrixType :: dest)
+  TYPE IS(DistributedBandedMatrixType)
+    ALLOCATE(DistributedBandedMatrixType :: dest)
+  TYPE IS(DistributedBlockBandedMatrixType)
+    ALLOCATE(DistributedBlockBandedMatrixType :: dest)
   TYPE IS(SparseMatrixType)
     ALLOCATE(SparseMatrixType :: dest)
 #ifdef FUTILITY_HAVE_PETSC
@@ -455,6 +475,54 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
             thisMatrix%ja,thisMatrix%a,x,y)
+    TYPE IS(BandedMatrixType)
+      IF(ul /= 'n' .OR. d /= 'n' .OR. t /= 'n' .OR. incx /= 1) THEN
+        CALL eMatrixType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - This interface is not implemented.')
+      ENDIF
+
+      !REQUIRE(thisMatrix%isInit)
+      !REQUIRE(thisMatrix%isAssembled)
+      !REQUIRE(SIZE(x) == thisMatrix%m)
+      !REQUIRE(SIZE(y) == thisMatrix%n)
+
+      a = 1.0_SRK
+      b = 1.0_SRK
+      IF (PRESENT(alpha)) a = alpha
+      IF (PRESENT(beta)) b = beta
+
+      IF(b == 0.0_SRK) THEN
+        y = 0.0_SRK
+      ELSE IF (b /= 1.0_SRK) THEN
+        y = y*b
+      END IF
+
+      ! This can probably be optimized for the a /= 1 case
+      IF (a==1.0_SRK) THEN
+        DO bIdx=1,SIZE(thisMatrix%bandIdx)
+          idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+          y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+        ENDDO
+      ELSEIF (a==-1.0_SRK) THEN
+        DO bIdx=1,SIZE(thisMatrix%bandIdx)
+          idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+          y(idxMult) = y(idxMult) - thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+        ENDDO
+      ELSEIF (a/=0.0_SRK) THEN
+        DO bIdx=1,SIZE(thisMatrix%bandIdx)
+          idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
+          y(idxMult) = y(idxMult) + a * thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+        ENDDO
+      ENDIF
+
+    CLASS IS(DistributedBandedMatrixType)
+      CALL eMatrixType%raiseError('Incorrect call to '// &
+         modName//'::'//myName//' - This interface is not available.')
+    CLASS DEFAULT
+      CALL eMatrixType%raiseError('Incorrect call to '// &
+           modName//'::'//myName//' - This interface is not available.')
+    ENDSELECT
+
       ENDIF
     CLASS DEFAULT
       CALL eMatrixType%raiseError('Incorrect call to '// &
@@ -492,8 +560,11 @@ SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag
   CHARACTER(LEN=1),INTENT(IN),OPTIONAL :: diag
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx_in
   CHARACTER(LEN=1) :: t,ul,d
-  INTEGER(SIK) :: incx
+  INTEGER(SIK) :: incx,countS(2),countR(2),i,rank,mpierr,k,count
   REAL(SRK) :: a,b
+  REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
+  INTEGER(SIK) :: sendRequests(2),recvRequests(2),sendCounter,recvCounter
+  INTEGER(SIK) :: lowIdx,highIdx
 
 #ifdef FUTILITY_HAVE_PETSC
   SELECTTYPE(mat => thisMatrix); TYPE IS(PETScMatrixType)
@@ -576,11 +647,33 @@ SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag
             CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
                 thisMatrix%ja,thisMatrix%a,x%b,y%b)
           ENDIF
+        TYPE IS(BandedMatrixType)
+          CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+                                 Y=y%b,uplo=ul,diag=d,incx_in=incx)
+        CLASS IS(DistributedBandedMatrixType)
+          CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+                                 Y=y%b,uplo=ul,diag=d,incx_in=incx)
         CLASS DEFAULT
           CALL eMatrixType%raiseError('Incorrect call to '// &
               modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
       ENDSELECT
+#ifdef HAVE_MPI
+    TYPE IS(NativeDistributedVectorType)
+      SELECT TYPE(y)
+      TYPE IS(NativeDistributedVectorType)
+        SELECT TYPE(thisMatrix)
+        CLASS IS(DistributedBandedMatrixType)
+          CALL matvec_DistrBandedMatrixType(thisMatrix,x%b,y%b,t,ul,d,incx,a,b)
+        CLASS DEFAULT
+          CALL eMatrixType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - This interface is not available.')
+        ENDSELECT
+      CLASS DEFAULT
+        CALL eMatrixType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - This interface is not available.')
+      ENDSELECT
+#endif
     CLASS DEFAULT
       CALL eMatrixType%raiseError('Incorrect call to '// &
           modName//'::'//myName//' - This interface is not available.')
