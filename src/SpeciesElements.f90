@@ -49,7 +49,7 @@ MODULE SpeciesElementsModule
       DO i=1, LEN(formula)
          coeff = 1.0
          ! Gets the value in the formula
-         letter = CHAR(formula,i,i)
+         letter = formula%at(i)
          ! Test to see if its a letter         
          IF (isChar(letter)) THEN
             ! Test to see if its capital
@@ -57,7 +57,7 @@ MODULE SpeciesElementsModule
                element = letter
                IF (i /= LEN(formula)) THEN
                   ! Gets the next letter to see if its lower or upper.
-                  nextLetter = CHAR(formula,i+1,i+1)
+                  nextLetter = formula%at(i+1)
                ELSE
                   nextLetter = 'A'
                END IF
