@@ -8,6 +8,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testStrings
 #include "UnitTest.h"
+  USE ISO_C_BINDING
   USE UnitTest
   USE IntrType
   USE Strings
@@ -269,10 +270,17 @@ CONTAINS
   SUBROUTINE testIntrinsic()
     TYPE(StringType) :: testString,testString2
     CHARACTER(LEN=10) :: char10
+    CHARACTER(KIND=C_CHAR) :: cchar(5)
     INTEGER(SIK) :: i
+    TYPE(StringType) :: tstString
     TYPE(StringType) :: testStringArray(10)
     TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
     TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
+
+    !Test the CHAR interface for converting c_chars to StringType
+    cchar = (/"c","C","h","a","r"/)
+    tstString = CHAR(cchar)
+    ASSERT(CHAR(tstString) == "cChar","c character conversion to StringType")
 
     !Test ADJUSTL and ADJUSTR
     COMPONENT_TEST('ADJUSTL')
