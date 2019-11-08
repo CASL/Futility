@@ -2016,7 +2016,7 @@ MODULE ParameterLists
       IF(PRESENT(delim)) THEN
         delimDef=delim
       ELSE
-        delimDef=', '
+        delimDef='; '
       ENDIF
       string=''
       CALL thisParam%get(name,param)
@@ -2173,8 +2173,8 @@ MODULE ParameterLists
           CLASS DEFAULT
             !Error, not a scalar...
         ENDSELECT
-        IF(INDEX(string,',',.TRUE.) == LEN_TRIM(string)) THEN
-          CALL getSubstring(string,tmpstr,1,INDEX(string,',',.TRUE.)-1)
+        IF(INDEX(string,TRIM(delimDef),.TRUE.) == LEN_TRIM(string)) THEN
+          CALL getSubstring(string,tmpstr,1,INDEX(string,TRIM(delimDef),.TRUE.)-1)
           string=tmpstr
         ENDIF
         string=TRIM(string)
