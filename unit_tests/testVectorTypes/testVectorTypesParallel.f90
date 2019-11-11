@@ -179,9 +179,11 @@ SUBROUTINE testNativeVectorType()
   INTEGER(SIK) :: rank, nproc, mpierr, i
   REAL(SRK) :: val
   REAL(SRK),ALLOCATABLE :: getval(:)
+
   CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
   CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
   ASSERT(nproc==2, 'nproc valid')
+
   !Perform test of init function
   !first check intended init path (m provided)
   CALL pList%clear()
@@ -195,19 +197,14 @@ SUBROUTINE testNativeVectorType()
       !check for success
       bool = thisVector%isInit.AND.thisVector%n == 20
       ASSERT(bool, 'NativeDistributedVectorType%init(...)')
-      !WRITE(*,*) SIZE(thisVector%b)
       ASSERT(SIZE(thisVector%b) == 10, 'NativeDistributedVectorType%init(...)')
   ENDSELECT
 
   ! Test setting/getting single elements at a time
-  CALL thisVector%set(1,1._SRK)
-  CALL thisVector%set(2,2._SRK)
-  CALL thisVector%set(3,3._SRK)
-  CALL thisVector%set(18,18._SRK)
-  CALL thisVector%set(19,19._SRK)
-  CALL thisVector%set(20,20._SRK)
-
   IF(rank==0) THEN
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,2._SRK)
+    CALL thisVector%set(3,3._SRK)
     CALL thisVector%get(1,val)
     ASSERT(val==1._SRK, "getOne")
     CALL thisVector%get(2,val)
@@ -215,6 +212,9 @@ SUBROUTINE testNativeVectorType()
     CALL thisVector%get(3,val)
     ASSERT(val==3._SRK, "getOne")
   ELSE
+    CALL thisVector%set(18,18._SRK)
+    CALL thisVector%set(19,19._SRK)
+    CALL thisVector%set(20,20._SRK)
     CALL thisVector%get(18,val)
     ASSERT(val==18._SRK, "getOne")
     CALL thisVector%get(19,val)
@@ -233,7 +233,6 @@ SUBROUTINE testNativeVectorType()
      CALL thisVector%get([(i, i=11, 20)], getval)
      ASSERT(ALL(getval==[(REAL(i, SRK), i=11, 20)]), 'getAll')
   ENDIF
-
 
   ! Use getAll with same data
   CALL thisVector%get(getval)
