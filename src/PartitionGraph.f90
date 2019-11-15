@@ -362,7 +362,7 @@ MODULE PartitionGraph
           CALL params%get('PartitionGraph -> wts', wts)
           IF(SIZE(wts) == nvert) THEN
             !Check weights are valid (>0)
-            IF(ANY(wts < 0)) THEN
+            IF(ANY(wts < 0.0_SRK)) THEN
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
                 ' - vertex weights must be > 0!')
             ENDIF
@@ -382,7 +382,7 @@ MODULE PartitionGraph
           IF((SIZE(neighwts, DIM=1) == maxneigh) .AND. &
              (SIZE(neighwts,DIM=2) == nvert)) THEN
             !Check weights are valid (>0)
-            IF(ANY(neighwts < 0)) THEN
+            IF(ANY(neighwts < 0.0_SRK)) THEN
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
                 ' - edge weights must be > 0!')
             ENDIF
@@ -1828,7 +1828,7 @@ MODULE PartitionGraph
         ENSURE((maxnsr > 0.0_SRK) .AND. (maxnsr <= 1.0_SRK))
       ENDIF
       ENSURE(mmr > 0.0_SRK)
-      ENSURE((srms > 0.0_SRK) .AND. (srms <= 100.0_SRK))
+      ENSURE((srms >= 0.0_SRK) .AND. (srms <= 100.0_SRK))
       ENSURE(ecut >= 0.0_SRK)
       ENSURE(comm >= 0.0_SRK)
     ENDSUBROUTINE calcDecompMetrics_PartitionGraph
