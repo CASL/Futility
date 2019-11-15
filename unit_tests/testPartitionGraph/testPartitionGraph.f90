@@ -84,13 +84,11 @@ PROGRAM testPartitionGraph
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
       LOGICAL(SBK) :: bool
       INTEGER(SIK),ALLOCATABLE :: refd(:),refneigh(:,:)
-      REAL(SRK) :: refwtfactor
       REAL(SRK),ALLOCATABLE :: refwts(:),refnwts(:,:),refunwt(:,:),refCoord(:,:)
       TYPE(StringType) :: refAlgNames(2),tmpAlgNames(3)
 
       !Copy parameter list and get reference data
       tparams=refInitParams !Copy good parameter list
-      CALL tparams%get('PartitionGraph -> wtfactor', refwtfactor)
       CALL tparams%get('PartitionGraph -> wts', refwts)
       CALL tparams%get('PartitionGraph -> neigh', refneigh)
       CALL tparams%get('PartitionGraph -> neighwts', refnwts)
@@ -102,7 +100,7 @@ PROGRAM testPartitionGraph
 
       msg=e%getLastMessage()
       refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-          'init_PartitionGraph - invalid number of partitioning groups!'
+        'init_PartitionGraph - invalid number of partitioning groups!'
       ASSERT(msg == refmsg, '%init(...) invalid nGroups')
       FINFO() 'Reference: ',refmsg
       FINFO() 'Test:      ',msg
@@ -204,18 +202,6 @@ PROGRAM testPartitionGraph
       FINFO() refmsg
       FINFO() msg
       CALL tparams%set('PartitionGraph -> wts',refwts)
-
-      !Test invalid wtfactor
-      CALL tparams%set('PartitionGraph -> wtfactor',-1.0_SRK)
-      CALL testPG%initialize(tparams)
-      msg=e%getLastMessage()
-      refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-          'init_PartitionGraph - invalid vertex weighting factor, value '//&
-          'must be positive!'
-      ASSERT(msg == refmsg, '%init(...) invalid wts')
-      FINFO() refmsg
-      FINFO() msg
-      CALL tparams%set('PartitionGraph -> wtfactor',refwtfactor)
 
       !Test invalid(mssing) Conditions
       CALL tparams%remove('PartitionGraph -> Conditions')
@@ -386,7 +372,6 @@ PROGRAM testPartitionGraph
                          5, 0, 0, 0/),(/4,6/))
       CALL params%add('PartitionGraph -> neigh', refneigh)
       refwts=(/1.0_SRK,2.0_SRK,3.0_SRK,2.0_SRK,1.0_SRK,1.0_SRK/)
-      CALL params%add('PartitionGraph -> wtfactor', 10.0_SRK)
       CALL params%add('PartitionGraph -> wts', refwts)
       refnwts=RESHAPE((/1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
                         1.0_SRK, 2.0_SRK, 3.0_SRK, 0.0_SRK, &
@@ -412,11 +397,10 @@ PROGRAM testPartitionGraph
       CALL testPG%clear()
       CALL params%clear()
       ASSERT(testPG%nvert == 0,'%clear(...)%nvert')
-      ASSERT(testPG%dim == 0,'%clear(...)%dim')
-      ASSERT(testPG%maxneigh == 0,'%clear(...)%maxneigh')
-      ASSERT(testPG%nGroups == 0,'%clear(...)%nGroups')
-      ASSERT(testPG%nPart == 0,'%clear(...)%nPart')
-      ASSERT(testPG%wtfactor == 0.0_SRK,'%clear(...)%wtfactor')
+      ASSERT(testPG%dim == 0,'%clear(...)%nvert')
+      ASSERT(testPG%maxneigh == 0,'%clear(...)%nvert')
+      ASSERT(testPG%nGroups == 0,'%clear(...)%nvert')
+      ASSERT(testPG%nPart == 0,'%clear(...)%nvert')
       bool=(.NOT. ALLOCATED(testPG%groupIdx))
       ASSERT(bool,'%clear(...)%groupIdx')
 
@@ -835,12 +819,10 @@ PROGRAM testPartitionGraph
 !-------------------------------------------------------------------------------
     SUBROUTINE testMetrics()
       LOGICAL(SBK) :: bool
-      REAL(SRK) :: maxnsr,mmr,srms,ecut,comm
+      REAL(SRK) :: mmr,srms,ecut,comm
 
       !Initialize the graph
-      CALL refG3Params%set('PartitionGraph->wtfactor',2000.0_SRK)
       CALL testPG%initialize(refG3Params)
-      CALL refG3Params%set('PartitionGraph->wtfactor',1.0_SRK)
       !Partition the graph manually
       CALL testPG%setGroups( &
           (/1,11,20,29/), & !GroupIdx
@@ -848,12 +830,9 @@ PROGRAM testPartitionGraph
              11, 12, 13, 14, 15, 17, 18, 23, 24, &
              16, 19, 20, 21, 22, 25, 26, 27, 28/))
       !Calculate the metrics
-      CALL testPG%metrics(maxnsr,mmr,srms,ecut,comm)
+      CALL testPG%metrics(mmr,srms,ecut,comm)
 
       !Test values
-      bool=(maxnsr .APPROXEQ. 0.34615384615384615_SRK)
-      ASSERT(bool,'max-nsr ratio')
-      FINFO() maxnsr
       bool=(mmr .APPROXEQ. 1.0588235294117647_SRK)
       ASSERT(bool,'max-min ratio')
       FINFO() mmr
@@ -958,7 +937,6 @@ PROGRAM testPartitionGraph
                   2, 5, 0, 0, &
                   3, 4, 6, 0, &
                   5, 0, 0, 0/),(/4,6/)))
-      CALL refInitParams%add('PartitionGraph -> wtfactor',1.0_SRK)
       CALL refInitParams%add('PartitionGraph -> wts', &
         (/1.0_SRK, 2.0_SRK, 3.0_SRK, 2.0_SRK, 1.0_SRK, 1.0_SRK/))
       CALL refInitParams%add('PartitionGraph -> neighwts', &
@@ -1142,7 +1120,6 @@ PROGRAM testPartitionGraph
       !Add to parameter list
       CALL params%add('PartitionGraph -> nvert', nvert)
       CALL params%add('PartitionGraph -> neigh', neigh)
-      CALL params%add('PartitionGraph -> wtfactor',1.0_SRK)
       CALL params%add('PartitionGraph -> wts', wts)
       CALL params%add('PartitionGraph -> coord', coord)
 
