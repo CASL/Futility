@@ -1984,10 +1984,15 @@ MODULE ParameterLists
     ENDSUBROUTINE remove_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        whatever intrinsic parameter type it finds into a scalar string. This
+!>        will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a string
+!> @param string The output scalar string type
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
+!> @param delim The optional delimiter to separate array values
 !>
     SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt,delim)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_scalar'
@@ -2106,12 +2111,6 @@ MODULE ParameterLists
                 string=string//str(param%val(i,j))//delimDef
               ENDDO
             ENDDO
-!          TYPE IS(ParamType_SBK_a2)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
           TYPE IS(ParamType_STR_a2)
             string=''
             DO j=1,SIZE(param%val,DIM=2)
@@ -2157,24 +2156,11 @@ MODULE ParameterLists
                 ENDDO
               ENDDO
             ENDDO
-!          TYPE IS(ParamType_SBK_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
-!          TYPE IS(ParamType_STR_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO j=1,SIZE(param%val,DIM=2))
-!              DO i=1,SIZE(param%val,DIM=1))
-!                string(i,j)=param%val(i,j)
-!              ENDDO
-!            ENDDO
           CLASS DEFAULT
-            !Error, not a scalar...
+            !Error, not a supported parameter type...
         ENDSELECT
         IF(INDEX(string,TRIM(delimDef),.TRUE.) == LEN_TRIM(string)) THEN
-          CALL getSubstring(string,tmpstr,1,INDEX(string,TRIM(delimDef),.TRUE.)-1)
+          tmpstr=string%substr(1,INDEX(string,TRIM(delimDef),.TRUE.)-1)
           string=tmpstr
         ENDIF
         string=TRIM(string)
@@ -2182,19 +2168,22 @@ MODULE ParameterLists
     ENDSUBROUTINE getString_ParamType_scalar
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 1-D intrinsic parameter type it finds into a 1-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a string
+!> @param string The output scalar string type
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
-    SUBROUTINE getString_ParamType_a1(thisParam,name,string,sskfmt,sdkfmt,delim)
+    SUBROUTINE getString_ParamType_a1(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a1'
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: string(:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
-      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: delim
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
@@ -2214,8 +2203,6 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
           TYPE IS(ParamType_SSK_a1)
             ALLOCATE(string(SIZE(param%val,DIM=1)))
             DO i=1,SIZE(param%val)
@@ -2231,14 +2218,12 @@ MODULE ParameterLists
           TYPE IS(ParamType_SNK_a1)
             ALLOCATE(string(SIZE(param%val,DIM=1)))
             DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
+              string(i)=str(param%val(i))
             ENDDO
           TYPE IS(ParamType_SLK_a1)
             ALLOCATE(string(SIZE(param%val,DIM=1)))
             DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
+              string(i)=str(param%val(i))
             ENDDO
           TYPE IS(ParamType_SBK_a1)
             ALLOCATE(string(SIZE(param%val,DIM=1)))
@@ -2252,25 +2237,28 @@ MODULE ParameterLists
               string(i)=param%val(i)
             ENDDO
           CLASS DEFAULT
-            !Error, not a scalar...
+            !Error, not a 1-D array...
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 2-D intrinsic parameter type it finds into a 2-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a string
+!> @param string The output scalar string type
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
-    SUBROUTINE getString_ParamType_a2(thisParam,name,string,sskfmt,sdkfmt,delim)
+    SUBROUTINE getString_ParamType_a2(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a2'
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: string(:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
-      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: delim
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
@@ -2290,8 +2278,6 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
           TYPE IS(ParamType_SSK_a2)
             ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
             DO j=1,SIZE(param%val,DIM=2)
@@ -2312,24 +2298,16 @@ MODULE ParameterLists
             ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
+                string(i,j)=str(param%val(i,j))
               ENDDO
             ENDDO
           TYPE IS(ParamType_SLK_a2)
             ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
+                string(i,j)=str(param%val(i,j))
               ENDDO
             ENDDO
-!          TYPE IS(ParamType_SBK_a2)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
           TYPE IS(ParamType_STR_a2)
             ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
             DO j=1,SIZE(param%val,DIM=2)
@@ -2338,25 +2316,28 @@ MODULE ParameterLists
               ENDDO
             ENDDO
           CLASS DEFAULT
-            !Error, not a scalar...
+            !Error, not a 2-D array...
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a2
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 3-D intrinsic parameter type it finds into a 3-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a string
+!> @param string The output scalar string type
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
-    SUBROUTINE getString_ParamType_a3(thisParam,name,string,sskfmt,sdkfmt,delim)
+    SUBROUTINE getString_ParamType_a3(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a3'
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: string(:,:,:)
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
-      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: delim
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
@@ -2376,8 +2357,6 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
           TYPE IS(ParamType_SSK_a3)
             ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
             DO k=1,SIZE(param%val,DIM=3)
@@ -2403,8 +2382,7 @@ MODULE ParameterLists
             DO k=1,SIZE(param%val,DIM=3)
               DO j=1,SIZE(param%val,DIM=2)
                 DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
+                  string(i,j,k)=str(param%val(i,j,k))
                 ENDDO
               ENDDO
             ENDDO
@@ -2413,26 +2391,12 @@ MODULE ParameterLists
             DO k=1,SIZE(param%val,DIM=3)
               DO j=1,SIZE(param%val,DIM=2)
                 DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
+                  string(i,j,k)=str(param%val(i,j,k))
                 ENDDO
               ENDDO
             ENDDO
-!          TYPE IS(ParamType_SBK_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
-!          TYPE IS(ParamType_STR_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO j=1,SIZE(param%val,DIM=2))
-!              DO i=1,SIZE(param%val,DIM=1))
-!                string(i,j)=param%val(i,j)
-!              ENDDO
-!            ENDDO
           CLASS DEFAULT
-            !Error, not a scalar...
+            !Error, not a 3-D array...
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a3
