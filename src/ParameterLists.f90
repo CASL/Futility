@@ -2157,7 +2157,8 @@ MODULE ParameterLists
             ENDDO
           ENDDO
         CLASS DEFAULT
-          !Error, not a supported parameter type...
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a String!')
         ENDSELECT
         IF(INDEX(string,TRIM(delimDef),.TRUE.) == LEN_TRIM(string)) THEN
           tmpstr=string%substr(1,INDEX(string,TRIM(delimDef),.TRUE.)-1)
@@ -2172,7 +2173,8 @@ MODULE ParameterLists
 !>        the 1-D intrinsic parameter type it finds into a 1-D array of strings.
 !>        This will not work if the parameter type is a parameter list.
 !> @param thisParam The parameter type to be searched
-!> @param name The path name to the parameter to be converted to a string
+!> @param name The path name to the parameter to be converted to a 1-D array of
+!>        strings
 !> @param string The output scalar string type
 !> @param sskfmt The optional single floating point format character string
 !> @param sdkfmt The optional double floating point format character string
@@ -2237,7 +2239,9 @@ MODULE ParameterLists
             string(i)=param%val(i)
           ENDDO
         CLASS DEFAULT
-          !Error, not a 1-D array...
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 1-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a1
@@ -2247,7 +2251,8 @@ MODULE ParameterLists
 !>        the 2-D intrinsic parameter type it finds into a 2-D array of strings.
 !>        This will not work if the parameter type is a parameter list.
 !> @param thisParam The parameter type to be searched
-!> @param name The path name to the parameter to be converted to a string
+!> @param name The path name to the parameter to be converted to a 2-D array of
+!>        strings
 !> @param string The output scalar string type
 !> @param sskfmt The optional single floating point format character string
 !> @param sdkfmt The optional double floating point format character string
@@ -2316,7 +2321,9 @@ MODULE ParameterLists
             ENDDO
           ENDDO
         CLASS DEFAULT
-          !Error, not a 2-D array...
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 2-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a2
@@ -2326,7 +2333,8 @@ MODULE ParameterLists
 !>        the 3-D intrinsic parameter type it finds into a 3-D array of strings.
 !>        This will not work if the parameter type is a parameter list.
 !> @param thisParam The parameter type to be searched
-!> @param name The path name to the parameter to be converted to a string
+!> @param name The path name to the parameter to be converted to a 3-D array of
+!>        strings
 !> @param string The output scalar string type
 !> @param sskfmt The optional single floating point format character string
 !> @param sdkfmt The optional double floating point format character string
@@ -2396,7 +2404,9 @@ MODULE ParameterLists
             ENDDO
           ENDDO
         CLASS DEFAULT
-          !Error, not a 3-D array...
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 3-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a3
