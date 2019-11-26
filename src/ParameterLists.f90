@@ -2175,7 +2175,7 @@ MODULE ParameterLists
 !> @param thisParam The parameter type to be searched
 !> @param name The path name to the parameter to be converted to a 1-D array of
 !>        strings
-!> @param string The output scalar string type
+!> @param string The output 1-D array of strings
 !> @param sskfmt The optional single floating point format character string
 !> @param sdkfmt The optional double floating point format character string
 !>
@@ -2253,7 +2253,7 @@ MODULE ParameterLists
 !> @param thisParam The parameter type to be searched
 !> @param name The path name to the parameter to be converted to a 2-D array of
 !>        strings
-!> @param string The output scalar string type
+!> @param string The output 2-D array of strings
 !> @param sskfmt The optional single floating point format character string
 !> @param sdkfmt The optional double floating point format character string
 !>
@@ -2335,7 +2335,7 @@ MODULE ParameterLists
 !> @param thisParam The parameter type to be searched
 !> @param name The path name to the parameter to be converted to a 3-D array of
 !>        strings
-!> @param string The output scalar string type
+!> @param string The output 3-D array of strings
 !> @param sskfmt The optional single floating point format character string
 !> @param sdkfmt The optional double floating point format character string
 !>

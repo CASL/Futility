@@ -4640,11 +4640,9 @@ PROGRAM testParameterLists
     CALL testParam%getString('testPL->testSSKa1_2',tmpstr)
     ASSERT_EQ(CHAR(tmpstr),'1.700000E+00; 1.800000E+00','testSSKa1_2 string')
     CALL testParam%getString('testPL->testSDKa1',tmpstr)
-    tmpbool=(tmpstr == '2.500000000000000E+00; 2.600000000000000E+00')
-    ASSERT(tmpbool,'testSDKa1 string')
+    ASSERT_EQ(CHAR(tmpstr),'2.500000000000000E+00; 2.600000000000000E+00','testSDKa1 string')
     CALL testParam%getString('testPL->testSDKa1_2',tmpstr)
-    tmpbool=tmpstr == '2.700000000000000E+00; 2.800000000000000E+00'
-    ASSERT(tmpbool,'testSDKa1_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'2.700000000000000E+00; 2.800000000000000E+00','testSDKa1_2 string')
     CALL testParam%getString('testPL->testSNKa1',tmpstr)
     ASSERT_EQ(CHAR(tmpstr),'-2; -3','testSNKa1 string')
     CALL testParam%getString('testPL->testSNKa1_2',tmpstr)
