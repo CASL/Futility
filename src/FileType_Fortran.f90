@@ -864,7 +864,7 @@ MODULE FileType_Fortran
 !------------------------------------------------------------------------------
 !> @brief This subroutine writes a 1-D array of strings to an output file as
 !>        lines.
-!> @param funit The output unit of the file where the lines are written.
+!> @param file The fortran file where the lines are written.
 !> @param lines The 1-D array of strings to write.
 !>
     SUBROUTINE write_str_1a_fortran_file(file,lines)
