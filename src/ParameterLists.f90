@@ -2004,7 +2004,7 @@ MODULE ParameterLists
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
-      TYPE(StringType) :: delim,tmpstr
+      TYPE(StringType) :: delim
 
       IF(PRESENT(sskfmt)) THEN
         sskfmtDef=sskfmt
