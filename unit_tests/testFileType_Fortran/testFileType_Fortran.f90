@@ -149,7 +149,7 @@ PROGRAM testFileType_Fortran
       lines(4)='| Test2 | 10  |'
       lines(5)='+-------+-----+'
       CALL testFile%fwrite(lines)
-      !DEALLOCATE(lines)
+
       ioerr=0
       !Be kind, rewind since we wrote the table as well.
       REWIND(testFile%getUnitNo())
@@ -177,7 +177,7 @@ PROGRAM testFileType_Fortran
       lines(8)='| or True          |                   |                 |'
       lines(9)='+------------------+-------------------+-----------------+'
       CALL testFile%fwrite(lines)
-      !DEALLOCATE(lines)
+
       ioerr=0
       !Be kind, rewind since we wrote the other table as well.
       REWIND(testFile%getUnitNo())
@@ -204,7 +204,6 @@ PROGRAM testFileType_Fortran
       ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(9)),"lines line 14")
       DEALLOCATE(lines)
       CALL testFile%fclose()
-      !CALL testFile%fdelete()
       CALL testFile%clear()
 
       ! Ensure unit number is as expected

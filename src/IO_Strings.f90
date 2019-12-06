@@ -1634,7 +1634,8 @@ MODULE IO_Strings
 !> @brief This subroutine writes a 2-D array of strings to an output file as a
 !>        formatted table.
 !> @param funit The output unit of the file where the table is written.
-!> @param tablevals The 2-D array of strings to write.
+!> @param tablevals The 2-D array of strings to write. The indexing of this
+!>        array is (col,row) or (xpos,ypos).
 !>
 !> Note: The default delimiter for writing multi-row strings to a single cell is
 !>       the '; ', where the table functions check for the ';', and the getField
@@ -1688,7 +1689,6 @@ MODULE IO_Strings
               ELSE
                 field=tablevals(i,j)
               ENDIF
-              !hasString=hasString .AND. field /= '-'
               rightpad=maxcolsize(i)-LEN_TRIM(field)+1
               plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
             ELSE

@@ -66,8 +66,9 @@
 !>   @date 07/06/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_Fortran
-
   USE ISO_FORTRAN_ENV
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE Strings
   USE ExceptionHandler
@@ -873,14 +874,12 @@ MODULE FileType_Fortran
       TYPE(StringType),INTENT(IN) :: lines(:)
       INTEGER(SIK) :: i
 
-      IF(file%initstat) THEN
-        IF(file%isOpen()) THEN
-          !Loop over the lines, write them
-          DO i=1,SIZE(lines)
-            WRITE(file%getUnitNo(),'(3x,a)') CHAR(lines(i))
-          ENDDO
-        ENDIF !isOpen
-      ENDIF !isinit
+      REQUIRE(file%initstat)
+      REQUIRE(file%isOpen())
+      !Loop over the lines, write them
+      DO i=1,SIZE(lines)
+        WRITE(file%getUnitNo(),'(3x,a)') CHAR(lines(i))
+      ENDDO
     ENDSUBROUTINE write_str_1a_fortran_file
 !
 !-------------------------------------------------------------------------------
