@@ -1992,21 +1992,19 @@ MODULE ParameterLists
 !> @param string The output scalar string type
 !> @param sskfmt The optional single floating point format character string
 !> @param sdkfmt The optional double floating point format character string
-!> @param delim The optional delimiter to separate array values
 !>
-    SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt,delim)
+    SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_scalar'
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       TYPE(StringType),INTENT(OUT) :: string
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
-      CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: delim
       INTEGER(SIK) :: i,j,k
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
-      TYPE(StringType) :: delimDef,tmpstr
+      TYPE(StringType) :: delim,tmpstr
 
       IF(PRESENT(sskfmt)) THEN
         sskfmtDef=sskfmt
@@ -2018,11 +2016,7 @@ MODULE ParameterLists
       ELSE
         sdkfmtDef='(es23.15)'
       ENDIF
-      IF(PRESENT(delim)) THEN
-        delimDef=delim
-      ELSE
-        delimDef='; '
-      ENDIF
+      delim='"'
       string=''
       CALL thisParam%get(name,param)
       IF(ASSOCIATED(param)) THEN
@@ -2046,47 +2040,46 @@ MODULE ParameterLists
           string=param%val
         TYPE IS(ParamType_SSK_a1)
           WRITE(tmpchar,TRIM(sskfmtDef)) param%val(1)
-          string=TRIM(ADJUSTL(tmpchar))
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
           DO i=2,SIZE(param%val)
             WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
-            string=string//delimDef//TRIM(ADJUSTL(tmpchar))
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
           ENDDO
         TYPE IS(ParamType_SDK_a1)
           WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(1)
-          string=TRIM(ADJUSTL(tmpchar))
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
           DO i=2,SIZE(param%val)
             WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
-            string=string//delimDef//TRIM(ADJUSTL(tmpchar))
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
           ENDDO
         TYPE IS(ParamType_SNK_a1)
-          string=str(param%val(1))
+          string=delim//str(param%val(1))//delim//' '
           DO i=2,SIZE(param%val)
-            string=string//delimDef//str(param%val(i))
+            string=string//delim//str(param%val(i))//delim//' '
           ENDDO
         TYPE IS(ParamType_SLK_a1)
-          string=str(param%val(1))
+          string=delim//str(param%val(1))//delim//' '
           DO i=2,SIZE(param%val)
-            string=string//delimDef//str(param%val(i))
+            string=string//delim//str(param%val(i))//delim//' '
           ENDDO
         TYPE IS(ParamType_SBK_a1)
           WRITE(tmpchar,'(L1)') param%val(1)
-          string=TRIM(ADJUSTL(tmpchar))
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
           DO i=2,SIZE(param%val)
             WRITE(tmpchar,'(L1)') param%val(i)
-            string=string//delimDef//TRIM(ADJUSTL(tmpchar))
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
           ENDDO
         TYPE IS(ParamType_STR_a1)
-          string=''
-          string=param%val(1)
+          string=delim//param%val(1)//delim//' '
           DO i=2,SIZE(param%val)
-            string=string//delimDef//param%val(i)
+            string=string//delim//param%val(i)//delim//' '
           ENDDO
         TYPE IS(ParamType_SSK_a2)
           string=''
           DO j=1,SIZE(param%val,DIM=2)
             DO i=1,SIZE(param%val,DIM=1)
               WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
-              string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+              string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
             ENDDO
           ENDDO
         TYPE IS(ParamType_SDK_a2)
@@ -2094,28 +2087,28 @@ MODULE ParameterLists
           DO j=1,SIZE(param%val,DIM=2)
             DO i=1,SIZE(param%val,DIM=1)
               WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
-              string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+              string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
             ENDDO
           ENDDO
         TYPE IS(ParamType_SNK_a2)
           string=''
           DO j=1,SIZE(param%val,DIM=2)
             DO i=1,SIZE(param%val,DIM=1)
-              string=string//str(param%val(i,j))//delimDef
+              string=string//delim//str(param%val(i,j))//delim//' '
             ENDDO
           ENDDO
         TYPE IS(ParamType_SLK_a2)
           string=''
           DO j=1,SIZE(param%val,DIM=2)
             DO i=1,SIZE(param%val,DIM=1)
-              string=string//str(param%val(i,j))//delimDef
+              string=string//delim//str(param%val(i,j))//delim//' '
             ENDDO
           ENDDO
         TYPE IS(ParamType_STR_a2)
           string=''
           DO j=1,SIZE(param%val,DIM=2)
             DO i=1,SIZE(param%val,DIM=1)
-              string=string//param%val(i,j)//delimDef
+              string=string//delim//param%val(i,j)//delim//' '
             ENDDO
           ENDDO
         TYPE IS(ParamType_SSK_a3)
@@ -2124,7 +2117,7 @@ MODULE ParameterLists
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
                 WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
-                string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
               ENDDO
             ENDDO
           ENDDO
@@ -2134,7 +2127,7 @@ MODULE ParameterLists
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
                 WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
-                string=string//TRIM(ADJUSTL(tmpchar))//delimDef
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
               ENDDO
             ENDDO
           ENDDO
@@ -2143,7 +2136,7 @@ MODULE ParameterLists
           DO k=1,SIZE(param%val,DIM=3)
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
-                string=string//str(param%val(i,j,k))//delimDef
+                string=string//delim//str(param%val(i,j,k))//delim//' '
               ENDDO
             ENDDO
           ENDDO
@@ -2152,7 +2145,7 @@ MODULE ParameterLists
           DO k=1,SIZE(param%val,DIM=3)
             DO j=1,SIZE(param%val,DIM=2)
               DO i=1,SIZE(param%val,DIM=1)
-                string=string//str(param%val(i,j,k))//delimDef
+                string=string//delim//str(param%val(i,j,k))//delim//' '
               ENDDO
             ENDDO
           ENDDO
@@ -2160,10 +2153,6 @@ MODULE ParameterLists
           CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
               'is unknown or undefined, so it cannot be converted to a String!')
         ENDSELECT
-        IF(INDEX(string,TRIM(delimDef),.TRUE.) == LEN_TRIM(string)) THEN
-          tmpstr=string%substr(1,INDEX(string,TRIM(delimDef),.TRUE.)-1)
-          string=tmpstr
-        ENDIF
         string=TRIM(string)
       ENDIF
     ENDSUBROUTINE getString_ParamType_scalar

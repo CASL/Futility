@@ -4636,92 +4636,92 @@ PROGRAM testParameterLists
     CALL testParam%getString('testPL->testCHAR2',tmpstr)
     ASSERT(tmpstr == 'char2','testCHAR2 string')
     CALL testParam%getString('testPL->testSSKa1',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'1.500000E+00; 1.600000E+00','testSSKa1 string')
+    ASSERT_EQ(CHAR(tmpstr),'"1.500000E+00" "1.600000E+00"','testSSKa1 string')
     CALL testParam%getString('testPL->testSSKa1_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'1.700000E+00; 1.800000E+00','testSSKa1_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"1.700000E+00" "1.800000E+00"','testSSKa1_2 string')
     CALL testParam%getString('testPL->testSDKa1',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'2.500000000000000E+00; 2.600000000000000E+00','testSDKa1 string')
+    ASSERT_EQ(CHAR(tmpstr),'"2.500000000000000E+00" "2.600000000000000E+00"','testSDKa1 string')
     CALL testParam%getString('testPL->testSDKa1_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'2.700000000000000E+00; 2.800000000000000E+00','testSDKa1_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"2.700000000000000E+00" "2.800000000000000E+00"','testSDKa1_2 string')
     CALL testParam%getString('testPL->testSNKa1',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'-2; -3','testSNKa1 string')
+    ASSERT_EQ(CHAR(tmpstr),'"-2" "-3"','testSNKa1 string')
     CALL testParam%getString('testPL->testSNKa1_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'2; 3','testSNKa1_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"2" "3"','testSNKa1_2 string')
     CALL testParam%getString('testPL->testSLKa1',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'-4; -5','testSLKa1 string')
+    ASSERT_EQ(CHAR(tmpstr),'"-4" "-5"','testSLKa1 string')
     CALL testParam%getString('testPL->testSLKa1_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'4; 5','testSLKa1_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"4" "5"','testSLKa1_2 string')
     CALL testParam%getString('testPL->testSBKa1',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'T; F','testSBKa1 string')
+    ASSERT_EQ(CHAR(tmpstr),'"T" "F"','testSBKa1 string')
     CALL testParam%getString('testPL->testSBKa1_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'F; F','testSBKa1_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"F" "F"','testSBKa1_2 string')
     CALL testParam%getString('testPL->testSTRa1',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'stringarray1; stringarray2','testSTRa1 string')
+    ASSERT_EQ(CHAR(tmpstr),'"stringarray1" "stringarray2"','testSTRa1 string')
     CALL testParam%getString('testPL->testSTRa1_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'stringarray3; stringarray4','testSTRa1_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"stringarray3" "stringarray4"','testSTRa1_2 string')
 
     !Test 2-D arrays
     CALL testParam%getString('testPL->testSSKa2',tmpstr)
-    tmpbool=(tmpstr == '1.100000E+00; 2.100000E+00; 1.200000E+00; 2.200000E+00')
+    tmpbool=(tmpstr == '"1.100000E+00" "2.100000E+00" "1.200000E+00" "2.200000E+00"')
     ASSERT(tmpbool,'testSSKa2 string')
     FINFO() CHAR(tmpstr)
     CALL testParam%getString('testPL->testSSKa2_2',tmpstr)
-    tmpbool=(tmpstr == '3.100000E+00; 4.100000E+00; 3.200000E+00; 4.200000E+00')
+    tmpbool=(tmpstr == '"3.100000E+00" "4.100000E+00" "3.200000E+00" "4.200000E+00"')
     ASSERT(tmpbool,'testSSKa2_2 string')
     FINFO() CHAR(tmpstr)
     CALL testParam%getString('testPL->testSDKa2',tmpstr)
-    tmpbool=(tmpstr == '1.100000000000000E+01; 2.100000000000000E+01; '// &
-        '1.200000000000000E+01; 2.200000000000000E+01')
+    tmpbool=(tmpstr == '"1.100000000000000E+01" "2.100000000000000E+01" '// &
+        '"1.200000000000000E+01" "2.200000000000000E+01"')
     ASSERT(tmpbool,'testSDKa2 string')
     CALL testParam%getString('testPL->testSDKa2_2',tmpstr)
-    tmpbool=(tmpstr == '3.100000000000000E+01; 4.100000000000000E+01; '// &
-        '3.200000000000000E+01; 4.200000000000000E+01')
+    tmpbool=(tmpstr == '"3.100000000000000E+01" "4.100000000000000E+01" '// &
+        '"3.200000000000000E+01" "4.200000000000000E+01"')
     ASSERT(tmpbool,'testSDKa2_2 string')
     CALL testParam%getString('testPL->testSNKa2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'11; 21; 12; 22','testSNKa2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"11" "21" "12" "22"','testSNKa2 string')
     CALL testParam%getString('testPL->testSNKa2_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'31; 41; 32; 42','testSNKa2_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"31" "41" "32" "42"','testSNKa2_2 string')
     CALL testParam%getString('testPL->testSLKa2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'110; 210; 120; 220','testSLKa2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"110" "210" "120" "220"','testSLKa2 string')
     CALL testParam%getString('testPL->testSLKa2_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'310; 410; 320; 420','testSLKa2_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"310" "410" "320" "420"','testSLKa2_2 string')
     CALL testParam%getString('testPL->testSTRa2',tmpstr)
-    tmpbool=(tmpstr == 'stringarray1; stringarray2; stringarray3; stringarray4')
+    tmpbool=(tmpstr == '"stringarray1" "stringarray2" "stringarray3" "stringarray4"')
     ASSERT(tmpbool,'testSTRa2 string')
     CALL testParam%getString('testPL->testSTRa2_2',tmpstr)
-    tmpbool=(tmpstr == 'stringarray5; stringarray6; stringarray7; stringarray8')
+    tmpbool=(tmpstr == '"stringarray5" "stringarray6" "stringarray7" "stringarray8"')
     ASSERT(tmpbool,'testSTRa2_2 string')
 
     !Test 3-D arrays
     CALL testParam%getString('testPL->testSSKa3',tmpstr)
-    tmpbool=(tmpstr == '1.110000E+00; 2.110000E+00; 1.210000E+00; 2.210000E+00; '// &
-        '1.120000E+00; 2.120000E+00; 1.220000E+00; 2.220000E+00')
+    tmpbool=(tmpstr == '"1.110000E+00" "2.110000E+00" "1.210000E+00" "2.210000E+00" '// &
+        '"1.120000E+00" "2.120000E+00" "1.220000E+00" "2.220000E+00"')
     ASSERT(tmpbool,'testSSKa3 string')
     CALL testParam%getString('testPL->testSSKa3_2',tmpstr)
-    tmpbool=(tmpstr == '3.110000E+00; 4.110000E+00; 3.210000E+00; 4.210000E+00; '// &
-        '3.120000E+00; 4.120000E+00; 3.220000E+00; 4.220000E+00')
+    tmpbool=(tmpstr == '"3.110000E+00" "4.110000E+00" "3.210000E+00" "4.210000E+00" '// &
+        '"3.120000E+00" "4.120000E+00" "3.220000E+00" "4.220000E+00"')
     ASSERT(tmpbool,'testSSKa3_2 string')
     CALL testParam%getString('testPL->testSDKa3',tmpstr)
-    tmpbool=(tmpstr == '1.110000000000000E+01; 2.110000000000000E+01; '// &
-        '1.210000000000000E+01; 2.210000000000000E+01; '// &
-        '1.120000000000000E+01; 2.120000000000000E+01; '// &
-        '1.220000000000000E+01; 2.220000000000000E+01')
+    tmpbool=(tmpstr == '"1.110000000000000E+01" "2.110000000000000E+01" '// &
+        '"1.210000000000000E+01" "2.210000000000000E+01" '// &
+        '"1.120000000000000E+01" "2.120000000000000E+01" '// &
+        '"1.220000000000000E+01" "2.220000000000000E+01"')
     ASSERT(tmpbool,'testSDKa3 string')
     FINFO() CHAR(tmpstr)
     CALL testParam%getString('testPL->testSDKa3_2',tmpstr)
-    tmpbool=(tmpstr == '3.110000000000000E+01; 4.110000000000000E+01; '// &
-        '3.210000000000000E+01; 4.210000000000000E+01; '// &
-        '3.120000000000000E+01; 4.120000000000000E+01; '// &
-        '3.220000000000000E+01; 4.220000000000000E+01')
+    tmpbool=(tmpstr == '"3.110000000000000E+01" "4.110000000000000E+01" '// &
+        '"3.210000000000000E+01" "4.210000000000000E+01" '// &
+        '"3.120000000000000E+01" "4.120000000000000E+01" '// &
+        '"3.220000000000000E+01" "4.220000000000000E+01"')
     ASSERT(tmpbool,'testSDKa3_2 string')
     CALL testParam%getString('testPL->testSNKa3',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'111; 211; 121; 221; 112; 212; 122; 222','testSNKa3 string')
+    ASSERT_EQ(CHAR(tmpstr),'"111" "211" "121" "221" "112" "212" "122" "222"','testSNKa3 string')
     CALL testParam%getString('testPL->testSNKa3_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'311; 411; 321; 421; 312; 412; 322; 422','testSNKa3_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"311" "411" "321" "421" "312" "412" "322" "422"','testSNKa3_2 string')
     CALL testParam%getString('testPL->testSLKa3',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'111; 211; 121; 221; 112; 212; 122; 222','testSLKa3 string')
+    ASSERT_EQ(CHAR(tmpstr),'"111" "211" "121" "221" "112" "212" "122" "222"','testSLKa3 string')
     CALL testParam%getString('testPL->testSLKa3_2',tmpstr)
-    ASSERT_EQ(CHAR(tmpstr),'311; 411; 321; 421; 312; 412; 322; 422','testSLKa3_2 string')
+    ASSERT_EQ(CHAR(tmpstr),'"311" "411" "321" "421" "312" "412" "322" "422"','testSLKa3_2 string')
 
     !Test 1-D arrays
     CALL testParam%getString('testPL->testSSKa1',tmpstr1)
