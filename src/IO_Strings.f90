@@ -1677,30 +1677,18 @@ MODULE IO_Strings
             !Always have 1 space on the right
             !For the first row of a multirow
             field=''
+            !Get the scalar or kth array value with getField
+            CALL getField(k,tablevals(i,j),field,ierr)
             IF(k == 1) THEN
-              !Force writing everything for now
+              !Force writing everything for now. Logic check for a two column table
               IF(i == 2) hasString=.TRUE.
-              !If this table value is an array, get the kth value
-              !Remember that getField uses the space as a delimiter.
-              !We're using the comma+space so we have interoperability.
-              IF(INDEX(tablevals(i,j),';') > 0) THEN
-                CALL getField(k,tablevals(i,j),field)
-              !If it's not an array
-              ELSE
-                field=tablevals(i,j)
-              ENDIF
-              rightpad=maxcolsize(i)-LEN_TRIM(field)+1
-              plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
             ELSE
               !If this table value is an array, get the kth value
               !Check ierr in case k > nfields, set to '' if it is.
-              IF(INDEX(tablevals(i,j),';') > 0) THEN
-                CALL getField(k,tablevals(i,j),field,ierr)
-                IF(ierr /= 0) field=''
-              ENDIF
-              rightpad=maxcolsize(i)-LEN_TRIM(field)+1
-              plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
+              IF(ierr /= 0) field=''
             ENDIF
+            rightpad=maxcolsize(i)-LEN_TRIM(field)+1
+            plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
           ENDDO
           IF(hasString) lines(nrow)=plstr
         ENDDO
@@ -1737,20 +1725,15 @@ MODULE IO_Strings
       !Get formatting bounds
       DO i=1,SIZE(tablevals,DIM=1)
         DO j=1,SIZE(tablevals,DIM=2)
-          maxrowsize(j)=MAX(maxrowsize(j),nmatchstr(CHAR(tablevals(i,j)),';')+1)
+          maxrowsize(j)=MAX(maxrowsize(j),nfields(CHAR(tablevals(i,j))))
         ENDDO
         !Loop over rows, find array entries
         DO j=1,SIZE(tablevals,DIM=2)
           fieldlen=0
           DO k=1,maxrowsize(j)
-            !array value
-            IF(nmatchstr(CHAR(tablevals(i,j)),';') > 0) THEN
-              CALL getField(k,tablevals(i,j),field)
-              fieldlen=MAX(fieldlen,LEN_TRIM(field))
-            !Scalar value
-            ELSE
-              fieldlen=LEN(tablevals(i,j))
-            ENDIF
+            !Get the scalar or array value with getField
+            CALL getField(k,tablevals(i,j),field)
+            fieldlen=MAX(fieldlen,LEN_TRIM(field))
           ENDDO
           maxcolsize(i)=MAX(maxcolsize(i),fieldlen)
         ENDDO

@@ -559,13 +559,13 @@ PROGRAM testIOutil
       COMPONENT_TEST('stringTableToLines')
       ALLOCATE(tablevals(4,5))
       tablevals='-'
-      tablevals(1,1)='Title column 1'; tablevals(2,1)='Title; column2'
-      tablevals(3,1)='Title; column; 3'; tablevals(4,1)='#4'
+      tablevals(1,1)='"Title column 1"'; tablevals(2,1)='"Title" "column2"'
+      tablevals(3,1)='"Title" "column" "3"'; tablevals(4,1)='#4'
       tablevals(1,2)='100'; tablevals(2,2)='1.00'; tablevals(3,2)='T'; tablevals(4,2)='string'
-      tablevals(1,3)='20; 30'; tablevals(2,3)='2.0; 3.0'; tablevals(3,3)='F; F'; tablevals(4,3)='string1; string2'
-      tablevals(1,4)='"White   space"; test'; tablevals(2,4)='"A Different"; "amount of; space"'
-      tablevals(3,4)='"semi-colons_missingquote;;;;'; tablevals(4,4)='quote  check'
-      tablevals(1,5)='top'; tablevals(2,5)='; middle'; tablevals(3,5)='; ; bottom'
+      tablevals(1,3)='"20" "30"'; tablevals(2,3)='"2.0" "3.0"'; tablevals(3,3)='"F" "F"'; tablevals(4,3)='"string1" "string2"'
+      tablevals(1,4)='"White   space" "test"'; tablevals(2,4)='"A Different" "amount of; space"'
+      tablevals(3,4)='"semi-colons_missingquote;;;;'; tablevals(4,4)='"quote  check" "" "" "" ""'
+      tablevals(1,5)='"top"'; tablevals(2,5)='"" "middle"'; tablevals(3,5)='"" "" "bottom"'
       CALL stringTableToLines(tablevals,lines)
       tmpStr='+----------------+------------------+--------+--------------+'
       ASSERT_EQ(TRIM(tmpStr),TRIM(lines(1)),'line 1')
