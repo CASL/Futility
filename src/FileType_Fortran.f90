@@ -66,8 +66,9 @@
 !>   @date 07/06/2011
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_Fortran
-
   USE ISO_FORTRAN_ENV
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE Strings
   USE ExceptionHandler
@@ -170,6 +171,10 @@ MODULE FileType_Fortran
       !> @copybrief FileType_Fortran::setStatus_fortran_file
       !> @copydetails FileType_Fortran::setStatus_fortran_file
       PROCEDURE,PASS :: setStatus => setStatus_fortran_file
+      !> @copybrief FileType_Fortran::write_str_1a_fortran_file
+      !> @copydetails FileType_Fortran::write_str_1a_fortran_file
+      PROCEDURE,PASS,PRIVATE :: write_str_1a => write_str_1a_fortran_file
+      GENERIC :: fwrite => write_str_1a
   ENDTYPE FortranFileType
 !
 !===============================================================================
@@ -385,10 +390,10 @@ MODULE FileType_Fortran
 
         IF(TRIM(statusval) /= 'OLD') THEN
           fileobj%newstat=.TRUE.
-          IF(TRIM(statusval) == 'REPLACE') fileobj%overwrite=.TRUE.
+          fileobj%overwrite=(TRIM(statusval) == 'REPLACE')
         ENDIF
-        IF(TRIM(formval) == 'FORMATTED' ) fileobj%formatstat=.TRUE.
-        IF(TRIM(padval) ==  'YES') fileobj%padstat=.TRUE.
+        fileobj%formatstat=(TRIM(formval) == 'FORMATTED')
+        fileobj%padstat=(TRIM(padval) ==  'YES')
         IF(TRIM(accessval) == 'DIRECT' .OR. TRIM(accessval) == 'STREAM') THEN
           fileobj%accessstat=.TRUE.
           IF(fileobj%reclval < 1) CALL fileobj%e%raiseError(modName//'::'// &
@@ -856,6 +861,26 @@ MODULE FileType_Fortran
           'cannot be changed on uninitialized file!')
       ENDIF
     ENDSUBROUTINE setStatus_fortran_file
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine writes a 1-D array of strings to an output file as
+!>        lines.
+!> @param file The fortran file where the lines are written.
+!> @param lines The 1-D array of strings to write.
+!>
+    SUBROUTINE write_str_1a_fortran_file(file,lines)
+      CHARACTER(LEN=*),PARAMETER :: myName='writeTable_fortran_file'
+      CLASS(FortranFileType),INTENT(INOUT) :: file
+      TYPE(StringType),INTENT(IN) :: lines(:)
+      INTEGER(SIK) :: i
+
+      REQUIRE(file%initstat)
+      REQUIRE(file%isOpen())
+      !Loop over the lines, write them
+      DO i=1,SIZE(lines)
+        WRITE(file%getUnitNo(),'(3x,a)') CHAR(lines(i))
+      ENDDO
+    ENDSUBROUTINE write_str_1a_fortran_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a unit number that is presently not in use.

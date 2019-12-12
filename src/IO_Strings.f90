@@ -103,6 +103,7 @@ MODULE IO_Strings
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
   PUBLIC :: str
+  PUBLIC :: stringTableToLines
   PUBLIC :: isChar
   PUBLIC :: isCharCap
   PUBLIC :: isCharLow
@@ -1628,5 +1629,134 @@ MODULE IO_Strings
       WRITE(string,'(es'//str(length)//'.'//str(nDecimal)//')') r
 
     ENDFUNCTION str_SDK_nDecimal
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine writes a 2-D array of strings to an output file as a
+!>        formatted table.
+!> @param funit The output unit of the file where the table is written.
+!> @param tablevals The 2-D array of strings to write. The indexing of this
+!>        array is (col,row) or (xpos,ypos).
+!>
+!> Note: The default delimiter for writing multi-row strings to a single cell is
+!>       the '; ', where the table functions check for the ';', and the getField
+!>       routine looks for the whitespace.  Surround strings with quotes to have
+!>       them as a single field.
+!>
+    SUBROUTINE stringTableToLines(tablevals,lines)
+      CHARACTER(LEN=*),PARAMETER :: myName='stringTableToLines'
+      TYPE(StringType),INTENT(IN) :: tablevals(:,:)
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: lines(:)
+      LOGICAL(SBK) :: hasString
+      INTEGER(SIK),ALLOCATABLE :: maxcolsize(:),maxrowsize(:)
+      INTEGER(SIK) :: i,j,k,rightpad,ierr,nrow
+      TYPE(StringType) :: plstr,rowstr,field
+
+      !Loop over the string array and write the data and make it pretty.
+      ALLOCATE(maxcolsize(SIZE(tablevals,DIM=1)))
+      ALLOCATE(maxrowsize(SIZE(tablevals,DIM=2)))
+      maxcolsize=0
+      maxrowsize=0
+      CALL getTableBounds(tablevals,maxcolsize,maxrowsize)
+
+      !Three for the top, first row, and last row separator strings.
+      ALLOCATE(lines(SUM(maxrowsize)+3))
+      rowstr=getRowStr(maxcolsize)
+      nrow=1
+      lines(nrow)=rowstr
+      rightpad=0
+
+      !
+      !Loop over the rows
+      DO j=1,SIZE(tablevals,DIM=2)
+        !Loop over an entry with multiple rows
+        DO k=1,maxrowsize(j)
+          plstr='|'
+          nrow=nrow+1
+          !Loop over the columns in the row
+          DO i=1,SIZE(tablevals,DIM=1)
+            !Always have 1 space on the right
+            !For the first row of a multirow
+            field=''
+            !Get the scalar or kth array value with getField
+            CALL getField(k,tablevals(i,j),field,ierr)
+            IF(k == 1) THEN
+              !Force writing everything for now. Logic check for a two column table
+              IF(i == 2) hasString=.TRUE.
+            ELSE
+              !If this table value is an array, get the kth value
+              !Check ierr in case k > nfields, set to '' if it is.
+              IF(ierr /= 0) field=''
+            ENDIF
+            rightpad=maxcolsize(i)-LEN_TRIM(field)+1
+            plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
+          ENDDO
+          IF(hasString) lines(nrow)=plstr
+        ENDDO
+        !Row to separate state index
+        IF(j == 1) THEN
+          nrow=nrow+1
+          IF(hasString) lines(nrow)=rowstr
+        ENDIF
+      ENDDO
+      !Bottom row
+      lines(SIZE(lines))=rowstr
+      DEALLOCATE(maxcolsize)
+      DEALLOCATE(maxrowsize)
+    ENDSUBROUTINE stringTableToLines
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine gets the maximum size of each column and row for a
+!>        given 2-D string array.  The maximum column size (width) is found by
+!>        looping over all entries within the column and finding the largest
+!>        entry. The maximum row size (height) is found by counting the
+!>        number of delimeters for all entries in a given row.
+!> @param tablevals The 2-D array of strings from which to find the row and
+!>        column bounds.
+!> @param maxcolsize The integer array of the width of each column.
+!> @param maxrowsize The integer array of the height of each row.
+!>
+    SUBROUTINE getTableBounds(tablevals,maxcolsize,maxrowsize)
+      TYPE(StringType),INTENT(IN) :: tablevals(:,:)
+      INTEGER(SIK),INTENT(OUT) :: maxcolsize(:)
+      INTEGER(SIK),INTENT(OUT) :: maxrowsize(:)
+      INTEGER(SIK) :: i,j,k,fieldlen
+      TYPE(StringType) :: field
+
+      !Get formatting bounds
+      DO i=1,SIZE(tablevals,DIM=1)
+        DO j=1,SIZE(tablevals,DIM=2)
+          maxrowsize(j)=MAX(maxrowsize(j),nfields(CHAR(tablevals(i,j))))
+        ENDDO
+        !Loop over rows, find array entries
+        DO j=1,SIZE(tablevals,DIM=2)
+          fieldlen=0
+          DO k=1,maxrowsize(j)
+            !Get the scalar or array value with getField
+            CALL getField(k,tablevals(i,j),field)
+            fieldlen=MAX(fieldlen,LEN_TRIM(field))
+          ENDDO
+          maxcolsize(i)=MAX(maxcolsize(i),fieldlen)
+        ENDDO
+      ENDDO
+    ENDSUBROUTINE getTableBounds
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine returns the formatted row string to separate rows and
+!>        to bound the top and bottom of the table
+!> @param maxcolsize The integer array of the width of each column, from
+!>        getTableBounds.
+!> @param rowstr The formatted row string
+!>
+    FUNCTION getRowStr(maxcolsize) RESULT(rowstr)
+      INTEGER(SIK),INTENT(IN) :: maxcolsize(:)
+      TYPE(StringType) :: rowstr
+      INTEGER(SIK) :: i,dashlen
+
+      rowstr='+'
+      DO i=1,SIZE(maxcolsize)
+        dashlen=maxcolsize(i)+2
+        rowstr=rowstr//REPEAT('-',dashlen)//'+'
+      ENDDO
+    ENDFUNCTION getRowStr
 !
 ENDMODULE IO_Strings
