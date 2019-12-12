@@ -1984,10 +1984,14 @@ MODULE ParameterLists
     ENDSUBROUTINE remove_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        whatever intrinsic parameter type it finds into a scalar string. This
+!>        will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a string
+!> @param string The output scalar string type
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_scalar'
@@ -1996,10 +2000,11 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(OUT) :: string
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
+      INTEGER(SIK) :: i,j,k
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
-      TYPE(StringType) :: tmpStr
+      TYPE(StringType) :: delim
 
       IF(PRESENT(sskfmt)) THEN
         sskfmtDef=sskfmt
@@ -2011,40 +2016,157 @@ MODULE ParameterLists
       ELSE
         sdkfmtDef='(es23.15)'
       ENDIF
+      delim='"'
       string=''
       CALL thisParam%get(name,param)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK)
-            WRITE(tmpchar,TRIM(sskfmtDef)) param%val
-            tmpStr=tmpChar
-          TYPE IS(ParamType_SDK)
-            WRITE(tmpchar,TRIM(sdkfmtDef)) param%val
-            tmpStr=tmpChar
-          TYPE IS(ParamType_SNK)
-            WRITE(tmpchar,'(i0)') param%val
-            tmpStr=tmpChar
-          TYPE IS(ParamType_SLK)
-            WRITE(tmpchar,'(i0)') param%val
-            tmpStr=tmpChar
-          TYPE IS(ParamType_SBK)
-            tmpStr=param%val
-          TYPE IS(ParamType_STR)
-            tmpStr=param%val
-          CLASS DEFAULT
-            !Error, not a scalar...
+        TYPE IS(ParamType_List)
+          !Error, can't do anything with a Plist.
+        TYPE IS(ParamType_SSK)
+          WRITE(tmpchar,TRIM(sskfmtDef)) param%val
+          string=TRIM(ADJUSTL(tmpchar))
+        TYPE IS(ParamType_SDK)
+          WRITE(tmpchar,TRIM(sdkfmtDef)) param%val
+          string=TRIM(ADJUSTL(tmpchar))
+        TYPE IS(ParamType_SNK)
+          string=str(param%val)
+        TYPE IS(ParamType_SLK)
+          string=str(param%val)
+        TYPE IS(ParamType_SBK)
+          WRITE(tmpchar,'(L1)') param%val
+          string=TRIM(ADJUSTL(tmpchar))
+        TYPE IS(ParamType_STR)
+          string=param%val
+        TYPE IS(ParamType_SSK_a1)
+          WRITE(tmpchar,TRIM(sskfmtDef)) param%val(1)
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          DO i=2,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SDK_a1)
+          WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(1)
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          DO i=2,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SNK_a1)
+          string=delim//str(param%val(1))//delim//' '
+          DO i=2,SIZE(param%val)
+            string=string//delim//str(param%val(i))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SLK_a1)
+          string=delim//str(param%val(1))//delim//' '
+          DO i=2,SIZE(param%val)
+            string=string//delim//str(param%val(i))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SBK_a1)
+          WRITE(tmpchar,'(L1)') param%val(1)
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          DO i=2,SIZE(param%val)
+            WRITE(tmpchar,'(L1)') param%val(i)
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_STR_a1)
+          string=delim//param%val(1)//delim//' '
+          DO i=2,SIZE(param%val)
+            string=string//delim//param%val(i)//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SSK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
+              string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
+              string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string=string//delim//str(param%val(i,j))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string=string//delim//str(param%val(i,j))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_STR_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string=string//delim//param%val(i,j)//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SSK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string=string//delim//str(param%val(i,j,k))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string=string//delim//str(param%val(i,j,k))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a String!')
         ENDSELECT
-        string=TRIM(ADJUSTL(tmpStr))
+        string=TRIM(string)
       ENDIF
     ENDSUBROUTINE getString_ParamType_scalar
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 1-D intrinsic parameter type it finds into a 1-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a 1-D array of
+!>        strings
+!> @param string The output 1-D array of strings
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_a1(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a1'
@@ -2072,54 +2194,57 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SDK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SNK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SLK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SBK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(L1)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_STR_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              string(i)=param%val(i)
-            ENDDO
-          CLASS DEFAULT
-            !Error, not a scalar...
+        TYPE IS(ParamType_SSK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
+            string(i)=TRIM(ADJUSTL(tmpchar))
+          ENDDO
+        TYPE IS(ParamType_SDK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
+            string(i)=TRIM(ADJUSTL(tmpchar))
+          ENDDO
+        TYPE IS(ParamType_SNK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            string(i)=str(param%val(i))
+          ENDDO
+        TYPE IS(ParamType_SLK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            string(i)=str(param%val(i))
+          ENDDO
+        TYPE IS(ParamType_SBK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            WRITE(tmpchar,'(L1)') param%val(i)
+            string(i)=TRIM(ADJUSTL(tmpchar))
+          ENDDO
+        TYPE IS(ParamType_STR_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            string(i)=param%val(i)
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 1-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 2-D intrinsic parameter type it finds into a 2-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a 2-D array of
+!>        strings
+!> @param string The output 2-D array of strings
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_a2(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a2'
@@ -2147,64 +2272,61 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+        TYPE IS(ParamType_SSK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
+              string(i,j)=TRIM(ADJUSTL(tmpchar))
             ENDDO
-          TYPE IS(ParamType_SDK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
+              string(i,j)=TRIM(ADJUSTL(tmpchar))
             ENDDO
-          TYPE IS(ParamType_SNK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string(i,j)=str(param%val(i,j))
             ENDDO
-          TYPE IS(ParamType_SLK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string(i,j)=str(param%val(i,j))
             ENDDO
-!          TYPE IS(ParamType_SBK_a2)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
-          TYPE IS(ParamType_STR_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                string(i,j)=param%val(i,j)
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_STR_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string(i,j)=param%val(i,j)
             ENDDO
-          CLASS DEFAULT
-            !Error, not a scalar...
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 2-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a2
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 3-D intrinsic parameter type it finds into a 3-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a 3-D array of
+!>        strings
+!> @param string The output 3-D array of strings
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_a3(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a3'
@@ -2232,63 +2354,48 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+        TYPE IS(ParamType_SSK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
+                string(i,j,k)=TRIM(ADJUSTL(tmpchar))
               ENDDO
             ENDDO
-          TYPE IS(ParamType_SDK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
+                string(i,j,k)=TRIM(ADJUSTL(tmpchar))
               ENDDO
             ENDDO
-          TYPE IS(ParamType_SNK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string(i,j,k)=str(param%val(i,j,k))
               ENDDO
             ENDDO
-          TYPE IS(ParamType_SLK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string(i,j,k)=str(param%val(i,j,k))
               ENDDO
             ENDDO
-!          TYPE IS(ParamType_SBK_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
-!          TYPE IS(ParamType_STR_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO j=1,SIZE(param%val,DIM=2))
-!              DO i=1,SIZE(param%val,DIM=1))
-!                string(i,j)=param%val(i,j)
-!              ENDDO
-!            ENDDO
-          CLASS DEFAULT
-            !Error, not a scalar...
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 3-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a3
