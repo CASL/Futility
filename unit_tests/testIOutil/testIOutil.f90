@@ -56,6 +56,7 @@ PROGRAM testIOutil
       CHARACTER(LEN=52) :: test_phrase
       CHARACTER(LEN=256) :: filepath,path,fname,ext
       TYPE(StringType) :: tmpStr,tmpStr2,tmpStrArray(10)
+      TYPE(StringType),ALLOCATABLE :: lines(:),tablevals(:,:)
 
       COMPONENT_TEST('strmatch')
       ASSERT(strmatch('testing','test'),'testing')
@@ -554,6 +555,51 @@ PROGRAM testIOutil
       ASSERT_EQ(nmatchstr('t   e   s   t','  '),6 ,'t  e  s  t')
       ASSERT_EQ(nmatchstr(test_phrase,' '),15,'test')
       ASSERT_EQ(nmatchstr(test_phrase,''),52,'test')
+
+      COMPONENT_TEST('stringTableToLines')
+      ALLOCATE(tablevals(4,5))
+      tablevals='-'
+      tablevals(1,1)='"Title column 1"'; tablevals(2,1)='"Title" "column2"'
+      tablevals(3,1)='"Title" "column" "3"'; tablevals(4,1)='#4'
+      tablevals(1,2)='100'; tablevals(2,2)='1.00'; tablevals(3,2)='T'; tablevals(4,2)='string'
+      tablevals(1,3)='"20" "30"'; tablevals(2,3)='"2.0" "3.0"'; tablevals(3,3)='"F" "F"'; tablevals(4,3)='"string1" "string2"'
+      tablevals(1,4)='"White   space" "test"'; tablevals(2,4)='"A Different" "amount of; space"'
+      tablevals(3,4)='"semi-colons_missingquote;;;;'; tablevals(4,4)='"quote  check" "" "" "" ""'
+      tablevals(1,5)='"top"'; tablevals(2,5)='"" "middle"'; tablevals(3,5)='"" "" "bottom"'
+      CALL stringTableToLines(tablevals,lines)
+      tmpStr='+----------------+------------------+--------+--------------+'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(1)),'line 1')
+      tmpStr='| Title column 1 | Title            | Title  | #4           |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(2)),'line 2')
+      tmpStr='|                | column2          | column |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(3)),'line 3')
+      tmpStr='|                |                  | 3      |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(4)),'line 4')
+      tmpStr='+----------------+------------------+--------+--------------+'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(5)),'line 5')
+      tmpStr='| 100            | 1.00             | T      | string       |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(6)),'line 6')
+      tmpStr='| 20             | 2.0              | F      | string1      |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(7)),'line 7')
+      tmpStr='| 30             | 3.0              | F      | string2      |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(8)),'line 8')
+      tmpStr='| White   space  | A Different      |        | quote  check |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(9)),'line 9')
+      tmpStr='| test           | amount of; space |        |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(10)),'line 10')
+      tmpStr='|                |                  |        |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(11)),'line 11')
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(12)),'line 12')
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(13)),'line 13')
+      tmpStr='| top            |                  |        | -            |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(14)),'line 14')
+      tmpStr='|                | middle           |        |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(15)),'line 15')
+      tmpStr='|                |                  | bottom |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(16)),'line 16')
+      tmpStr='+----------------+------------------+--------+--------------+'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(17)),'line 17')
+      DEALLOCATE(tablevals,lines)
 
     ENDSUBROUTINE testIO_Strings
 !
