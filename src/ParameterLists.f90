@@ -2452,12 +2452,44 @@ MODULE ParameterLists
 !
 !-------------------------------------------------------------------------------
 !> @brief This subroutine will take a parameter list of parameter lists, where
-!>        each parameter list is a column to be added in the table.  The first
+!>        each parameter list is a column to be added in the table. The first
 !>        parameter list must be the maximum number of rows and must be uniquely
-!>        labeled.  The ordering of the parameters on the first list is the
+!>        labeled. The ordering of the parameters on the first list is the
 !>        order they will be written to the table. The following columns of
-!>        parameter lists must have a parameters with names that match those the
-!>        first column.  The value given to the parameter is arbitrary.
+!>        parameter lists must have parameters with names that match those the
+!>        first column. The value given to the parameter is arbitrary. This
+!>        ensures that the parameter will be placed in the desired location.
+!>
+!> Example:
+!>    thisParam:
+!>    'TestPL->List1->1->"TitleRow"','"TitleRow"'
+!>                   '1->"Scalar Row1"','"Scalar Row1"'
+!>                   '1->"1-D Row2"','"1-D Row2"'
+!>                   '1->"2-D Row3"','"2-D Row3"'
+!>                   '1->"3-D Row4"','"3-D Row4"'
+!>            'List1->2->"TitleRow"','SNK'
+!>                   '2->"Scalar Row1"',1_SNK
+!>                   '2->"1-D Row2"',(/2_SNK,3_SNK/)
+!>                   '2->"2-D Row3"',RESHAPE((/4_SNK,5_SNK,6_SNK,7_SNK/),(/2,2/))
+!>                   '2->"3-D Row4"',RESHAPE((/8_SNK,9_SNK,11_SNK,12_SNK,
+!>                                             13_SNK,14_SNK,15_SNK,16_SNK/),(/2,2,2/))
+!>            'List1->3->"TitleRow"','SLK'
+!>                   '3->"Scalar Row1"',1_SLK
+!>                   '3->"1-D Row2"',(/2_SLK,3_SLK/)
+!>                   '3->"2-D Row3"',RESHAPE((/4_SLK,5_SLK,6_SLK,7_SLK/),(/2,2/))
+!>                   '3->"3-D Row4"',RESHAPE((/8_SLK,9_SLK,11_SLK,12_SLK,
+!>                                             13_SLK,14_SLK,15_SLK,16_SLK/),(/2,2,2/))
+!>
+!>    baseAddr='TestPL->List1'
+!>    CALL thisParam%convertTo2DStringArray(baseAddr,table)
+!>    table:
+!>      x=    1           2                                      3
+!>  y=1  "Title Row"      SNK                                    SLK
+!>    2  "Scalar Row1"    1                                      1
+!>    3  "1-D Row2"       "2" "3"                                "2" "3"
+!>    4  "2-D Row3"       "4" "5" "6" "7"                        "4" "5" "6" "7"
+!>    5  "3-D Row4"       "8" "9" "11" "12" "13" "14" "15" "16"  "8" "9" "11" "12" "13" "14" "15" "16"
+!>
 !> @param thisParam The parameter list of parameter lists from which to create a
 !>        table.
 !> @param baseAddr The path used to extract the parameter list of parameter
@@ -2475,9 +2507,6 @@ MODULE ParameterLists
       CLASS(ParamType),POINTER :: colListPLPtr,rowListPLPtr,tmpPLPtr,tmpPLPtrLast
 
       !Initialize data
-      !sdkfmt=''
-      !IF(PL%has(baseAddr//'->sdkfmt')) &
-          !CALL PL%get(baseAddr//'->sdkfmt',sdkfmt)
       !Loop over all columns, get the number of columns for the table
       ncol=0
       nrow=0
@@ -2491,8 +2520,6 @@ MODULE ParameterLists
 
       addr='1'
       CALL thisParam%get(baseAddr//'->1',colListPLPtr)
-      !addr=baseAddr
-      !CALL PL%getNextParam(addr,colListPLPtr)
       IF(ASSOCIATED(colListPLPtr)) THEN
         colListPL=colListPLPtr
         CALL colListPL%getNextParam(addr,rowListPLPtr)
@@ -2513,8 +2540,6 @@ MODULE ParameterLists
         !Get rownames so they can be searched and indexed.
         addr='1'
         CALL thisParam%get(baseAddr//'->1',colListPLPtr)
-        !addr=baseAddr
-        !CALL PL%getNextParam(addr,colListPLPtr)
         colListPL=colListPLPtr
         DO j=1,nrow
           CALL colListPL%getNextParam(addr,rowListPLPtr)
@@ -2533,7 +2558,6 @@ MODULE ParameterLists
           CALL thisParam%get(baseAddr//'->'//tmpstr,colListPLPtr)
           colListPL=colListPLPtr
           !Get the first parameter in the sublist and loop.
-          !CALL colListPL%getSubPL(addr,rowListPLPtr)
           CALL colListPL%getNextParam(addr,rowListPLPtr)
           DO WHILE(ASSOCIATED(rowListPLPtr))
             rowListPL=rowListPLPtr
