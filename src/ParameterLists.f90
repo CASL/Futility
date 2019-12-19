@@ -2501,10 +2501,10 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(IN) :: baseAddr
       TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: tablevals(:,:)
       INTEGER(SIK) :: i,j,ncol,nrow
-      TYPE(StringType) :: tmpstr,addr,plstr
+      TYPE(StringType) :: addr,plstr
       TYPE(StringType),ALLOCATABLE :: rownames(:)
       TYPE(ParamType) :: colListPL,rowListPL
-      CLASS(ParamType),POINTER :: colListPLPtr,rowListPLPtr,tmpPLPtr,tmpPLPtrLast
+      CLASS(ParamType),POINTER :: colListPLPtr,rowListPLPtr
 
       !Initialize data
       !Loop over all columns, get the number of columns for the table
@@ -2552,10 +2552,9 @@ MODULE ParameterLists
         !Loop over all of the columns
         DO i=2,ncol
           !Init variables
-          tmpstr=i
-          addr=tmpstr
+          addr=i
           !Get the specified sub PL list to iterate over.
-          CALL thisParam%get(baseAddr//'->'//tmpstr,colListPLPtr)
+          CALL thisParam%get(baseAddr//'->'//addr,colListPLPtr)
           colListPL=colListPLPtr
           !Get the first parameter in the sublist and loop.
           CALL colListPL%getNextParam(addr,rowListPLPtr)
@@ -2572,8 +2571,8 @@ MODULE ParameterLists
 
         !Deallocate and nullify variables
         DEALLOCATE(rownames)
-        tmpPLPtr => NULL()
-        tmpPLPtrLast => NULL()
+        colListPLPtr => NULL()
+        rowListPLPtr => NULL()
       ENDIF
     ENDSUBROUTINE convertTo2DStringArray_ParamType
 !
