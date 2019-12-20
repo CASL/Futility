@@ -280,8 +280,10 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     ENDIF()
 
     SET(Fortran_FLAGS_DEBUG
-        ${CSYM}O0
+        ${CSYM}Og
         ${CSYM}Wall
+        ${CSYM}Wextra
+        ${CSYM}Wno-maybe-uninitialized
         ${CSYM}Wno-surprising
         ${CSYM}fcheck=all
         ${CSYM}fbacktrace
@@ -495,6 +497,8 @@ UNSET(Fortran_FLAGS_STRING)
 UNSET(Fortran_FLAGS_DEBUG)
 UNSET(Fortran_FLAGS_DEBUG_STRING)
 UNSET(Fortran_FLAGS_RELEASE)
+UNSET(CXX_FLAGS_RELEASE)
+UNSET(C_FLAGS_RELEASE)
 UNSET(Fortran_FLAGS_RELEASE_STRING)
 UNSET(CXX_FLAGS)
 UNSET(CMAKE_CXX_FLAGS_TEMP)
