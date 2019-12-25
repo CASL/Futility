@@ -109,8 +109,11 @@
 !>     as input.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ExceptionHandler
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE ISO_FORTRAN_ENV
   USE IntrType
+  USE ExceptionTypes
 
   IMPLICIT NONE
   PRIVATE !Default private for module contents
@@ -175,6 +178,13 @@ MODULE ExceptionHandler
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),PRIVATE :: lastMesg=''
     !> Surrogate exception handler to which most functions are delegated.
     TYPE(ExceptionHandlerType),POINTER,PRIVATE :: surrogate => NULL()
+    !> Default exception registry
+    TYPE(BaseExecptionType) :: exceptionRegistry = (/ &
+        ExceptionTypeInformation,       &
+        ExceptionTypeWarning,  &
+        ExceptionTypeDebug,     &
+        ExceptionTypeError, &
+        ExceptionTypeFatal /)
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
@@ -823,6 +833,59 @@ MODULE ExceptionHandler
       bool=e%stopOnError
       IF(ASSOCIATED(e%surrogate)) bool=e%surrogate%stopOnError
     ENDFUNCTION isStopOnError
+!
+!-------------------------------------------------------------------------------
+!> @brief Raise a runtime error
+!> @param e the exception object
+!> @param mesg an informative message about the exception that was raised
+!> @param userExceptionClass the class of error to raise
+!>
+!> This routine raises a user defined exception
+!>
+  SUBROUTINE raiseRuntimeError(e,userExceptionClass,mesg)
+    CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+    CLASS(BaseExecptionType),INTENT(IN) :: userExceptionClass
+    CHARACTER(LEN=*),INTENT(IN) :: mesg
+    INTEGER(SIK) :: nRe, i
+
+    IF(ASSOCIATED(e%surrogate)) THEN
+      nRe = SIZE(e%surrogate%exceptionRegistry)
+      DO i=1,nRe
+        SELECT TYPE(e%surrogate%exceptionRegistry(i))
+          CLASS IS (userExceptionClass)
+            CALL e%surrogate%exceptionRegistry(i)%onRaise( &
+            .TRUE., e%surrogate%logFileActive, e%surrogate%logFileUnit, mesg)
+        END SELECT
+      ENDDO
+    ELSE
+      nRe = SIZE(e%exceptionRegistry)
+      DO i=1,nRe
+        SELECT TYPE(e%exceptionRegistry(i))
+          CLASS IS (userExceptionClass)
+            CALL e%exceptionRegistry(i)%onRaise( &
+            .TRUE., e%logFileActive, e%logFileUnit, mesg)
+        END SELECT
+      ENDDO
+    ENDIF
+
+  ENDSUBROUTINE raiseRuntimeError
+!
+!-------------------------------------------------------------------------------
+!> @brief Register a new exception type with the exception handler
+!> @param e the exception object
+!> @param mesg an informative message about the exception that was raised
+!> @param userException the class of error to raise
+!>
+!> This routine registers a new exception
+!>
+  SUBROUTINE registerException(e,userException)
+    CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+    TYPE(BaseExecptionType),INTENT(IN) :: userException
+
+    ! Append new exception type to registry if not already present
+    e%exceptionRegistry = [e%exceptionRegistry, userException]
+
+  ENDSUBROUTINE registerException
 !
 !-------------------------------------------------------------------------------
 !> @brief Raise an information exception in the exception handler.
