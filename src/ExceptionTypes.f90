@@ -24,19 +24,20 @@ MODULE ExceptionTypes
   PUBLIC :: ExceptionTypeError
   PUBLIC :: ExceptionTypeWarning
   PUBLIC :: ExceptionTypeFatal
+  PUBLIC :: ExceptionTypeDebug
   PUBLIC :: ExceptionTypeInformation
-  PUBLIC :: EXCEPTION_MAX_MESG_LENGTH
+  PUBLIC :: EXCEPTION_MAX_MESG_LEN
 
   !> The maximum size of an exception message
-  INTEGER(SIK),PARAMETER :: EXCEPTION_MAX_MESG_LENGTH=512
+  INTEGER(SIK),PARAMETER :: EXCEPTION_MAX_MESG_LEN=512
 
   TYPE, ABSTRACT :: ExceptionTypeBase
-    !> Exception identifier
-    INTEGER(SIK),PRIVATE :: tag=-1_SIK
     !> Counter for number of times this exception was raised
-    INTEGER(SIK),PRIVATE :: counter=0_SIK
-    !> Counter for number of times this exception was raised
+    INTEGER(SIK),PRIVATE :: counter=0
+    !> Stopmode
     LOGICAL(SBK),PRIVATE :: stopmode=.FALSE.
+    !> Quiet
+    LOGICAL(SBK),PRIVATE :: quiet=.FALSE.
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
@@ -46,6 +47,9 @@ MODULE ExceptionTypes
       !> @copybrief ExceptionTypes::setStopMode_ExceptionTypeBase
       !> @copydetails ExceptionTypes::setStopMode_ExceptionTypeBase
       PROCEDURE,PASS :: setStopMode => setStopMode_ExceptionTypeBase
+      !> @copybrief ExceptionTypes::setQuiet_ExceptionTypeBase
+      !> @copydetails ExceptionTypes::setQuiet_ExceptionTypeBase
+      PROCEDURE,PASS :: setQuiet => setQuiet_ExceptionTypeBase
       !> @copybrief ExceptionTypes::resetCounter_ExceptionTypeBase
       !> @copydetails ExceptionTypes::resetCounter_ExceptionTypeBase
       PROCEDURE,PASS :: resetCounter => resetCounter_ExceptionTypeBase
@@ -60,54 +64,62 @@ MODULE ExceptionTypes
       !>
       !> @copybrief ExceptionTypes::et_genprefix_absintfc
       !> @copydetails ExceptionTypes::et_genprefix_absintfc
-      PROCEDURE(et_genprefix_absintfc),DEFERRED,PASS genPrefix
+      PROCEDURE(et_genprefix_absintfc),DEFERRED,PASS :: genPrefix
+      PROCEDURE(et_gettag_absintfc),DEFERRED,PASS :: getTag
 
       !> @
   ENDTYPE ExceptionTypeBase
 
-!> Concrete type for Error exception
-  TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeError
-    INTEGER(SIK),PRIVATE :: tag=4_SIK
+!> Concrete type for Information exception
+  TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeInformation
     CONTAINS
-      PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeError
-  ENDTYPE ExceptionTypeError
+      PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeInformation
+      PROCEDURE,PASS :: getTag => getTag_ExceptionTypeInformation
+  ENDTYPE ExceptionTypeInformation
 
 !> Concrete type for Warning exception
   TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeWarning
-    INTEGER(SIK),PRIVATE :: tag=2_SIK
     CONTAINS
       PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeWarning
+      PROCEDURE,PASS :: getTag => getTag_ExceptionTypeWarning
   ENDTYPE ExceptionTypeWarning
-
-!> Concrete type for Fatal exception
-  TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeFatal
-    INTEGER(SIK),PRIVATE :: tag=5_SIK
-    LOGICAL(SBK),PRIVATE :: stopmode=.TRUE.
-    CONTAINS
-      PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeFatal
-  ENDTYPE ExceptionTypeFatal
 
 !> Concrete type for Debug exception
   TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeDebug
-    INTEGER(SIK),PRIVATE :: tag=3_SIK
     CONTAINS
       PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeDebug
+      PROCEDURE,PASS :: getTag => getTag_ExceptionTypeDebug
   ENDTYPE ExceptionTypeDebug
 
-!> Concrete type for Information exception
-  TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeInformation
-    INTEGER(SIK),PRIVATE :: tag=1_SIK
+!> Concrete type for Error exception
+  TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeError
     CONTAINS
-      PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeInformation
-  ENDTYPE ExceptionTypeInformation
+      PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeError
+      PROCEDURE,PASS :: getTag => getTag_ExceptionTypeError
+  ENDTYPE ExceptionTypeError
+
+!> Concrete type for Fatal exception
+  TYPE,EXTENDS(ExceptionTypeBase) :: ExceptionTypeFatal
+    CONTAINS
+      PROCEDURE,PASS :: genPrefix => genPrefix_ExceptionTypeFatal
+      PROCEDURE,PASS :: getTag => getTag_ExceptionTypeFatal
+  ENDTYPE ExceptionTypeFatal
 !
 ABSTRACT INTERFACE
   !> @brief Abstract interface for logging error msg
   SUBROUTINE et_genprefix_absintfc(this,prefix)
     IMPORT :: ExceptionTypeBase
-    CLASS(ExceptionTypeBase),INTENT(IN)
-    CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: prefix
-  ENDSUBROUTINE et_message_absintfc
+    IMPORT :: EXCEPTION_MAX_MESG_LEN
+    CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
+    CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
+  ENDSUBROUTINE et_genprefix_absintfc
+  !> @brief Abstract interface to get error tag
+  SUBROUTINE et_gettag_absintfc(this,tag)
+    IMPORT :: ExceptionTypeBase
+    IMPORT :: SIK
+    CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
+    INTEGER(SIK),INTENT(OUT) :: tag
+  ENDSUBROUTINE et_gettag_absintfc
 ENDINTERFACE
 !
 !===============================================================================
@@ -116,16 +128,14 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Executed on raise
 !>
-    SUBROUTINE onRaise_ExceptionTypeBase(this,isQuiet,isLogActive,logUnit,mesg)
+    SUBROUTINE onRaise_ExceptionTypeBase(this,isLogActive,logUnit,mesg)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(IN) :: eCode
-      LOGICAL(SBK),INTENT(INOUT) :: isQuiet
       LOGICAL(SBK),INTENT(IN) :: isLogActive
       INTEGER(SIK),INTENT(IN) :: logUnit
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: mesg
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: mesg
 
-      this%counter = this%counter + 1_SIK
-      CALL this%logMessage(isQuiet,isLogActive,logUnit,mesg)
+      this%counter = this%counter + 1
+      CALL this%logMessage(this%quiet,isLogActive,logUnit,mesg)
       CALL exceptionStop(this%stopmode)
 
     ENDSUBROUTINE onRaise_ExceptionTypeBase
@@ -135,11 +145,22 @@ ENDINTERFACE
 !>
     SUBROUTINE setStopMode_ExceptionTypeBase(this,stopmode)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(IN) :: stopmode
+      LOGICAL(SBK),INTENT(IN) :: stopmode
 
       this%stopmode = stopmode
 
     ENDSUBROUTINE setStopMode_ExceptionTypeBase
+!
+!-------------------------------------------------------------------------------
+!> @brief Set the quiet mode
+!>
+    SUBROUTINE setQuiet_ExceptionTypeBase(this,quiet)
+      CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
+      LOGICAL(SBK),INTENT(IN) :: quiet
+
+      this%quiet = quiet
+
+    ENDSUBROUTINE setQuiet_ExceptionTypeBase
 !
 !-------------------------------------------------------------------------------
 !> @brief Resets the error counter
@@ -147,32 +168,31 @@ ENDINTERFACE
     SUBROUTINE resetCounter_ExceptionTypeBase(this)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
 
-      this%counter = 0_SIK
+      this%counter = 0
 
     ENDSUBROUTINE resetCounter_ExceptionTypeBase
 !
 !-------------------------------------------------------------------------------
 !> @brief Get the current counter value
 !>
-    SUBROUTINE getCounter_ExceptionTypeBase(this,counterOut)
+    FUNCTION getCounter_ExceptionTypeBase(this) RESULT(counterOut)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(OUT) :: counterOut
+      INTEGER(SIK) :: counterOut
 
       counterOut = this%counter
 
-    ENDSUBROUTINE getCounter_ExceptionTypeBase
+    ENDFUNCTION getCounter_ExceptionTypeBase
 !
 !-------------------------------------------------------------------------------
 !> @brief Logs mesg to file
 !>
-    SUBROUTINE logMessage_ExceptionTypeBase(this,isQuiet,isLogActive,logUnit)
+    SUBROUTINE logMessage_ExceptionTypeBase(this,isQuiet,isLogActive,logUnit,mesg)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(IN) :: eCode
-      LOGICAL(SBK),INTENT(INOUT) :: isQuiet
+      LOGICAL(SBK),INTENT(IN) :: isQuiet
       LOGICAL(SBK),INTENT(IN) :: isLogActive
       INTEGER(SIK),INTENT(IN) :: logUnit
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: mesg
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: prefix
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: mesg
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN) :: prefix
       INTEGER(SIK) :: ioerr1,ioerr2,prefixLen
 
       CALL this%genPrefix(prefix)
@@ -208,7 +228,8 @@ ENDINTERFACE
 
       !Set the message to be included as one line back to exception object
       prefixLen = LEN_TRIM(prefix)+3
-      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg(1:EXCEPTION_MAX_MESG_LENGTH-prefixLen))
+      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg(1:EXCEPTION_MAX_MESG_LEN-prefixLen))
+    ENDSUBROUTINE logMessage_ExceptionTypeBase
 !
 !-------------------------------------------------------------------------------
 !> @brief Stops execution based on value of stopmode
@@ -234,54 +255,99 @@ ENDINTERFACE
 !>
     SUBROUTINE genPrefix_ExceptionTypeError(this,prefix)
       CLASS(ExceptionTypeError),INTENT(INOUT) :: this
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: prefix
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
 
       WRITE(prefix,'(a)')  '#### EXCEPTION_ERROR ####'
 
     ENDSUBROUTINE genPrefix_ExceptionTypeError
 !
 !-------------------------------------------------------------------------------
+!> @brief Get tag
+!>
+    SUBROUTINE getTag_ExceptionTypeError(this,tag)
+      CLASS(ExceptionTypeError),INTENT(INOUT) :: this
+      INTEGER(SIK),INTENT(OUT) :: tag
+      tag = 3
+    ENDSUBROUTINE getTag_ExceptionTypeError
+!
+!-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeWarning
 !>
     SUBROUTINE genPrefix_ExceptionTypeWarning(this,prefix)
       CLASS(ExceptionTypeWarning),INTENT(INOUT) :: this
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: prefix
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
 
       WRITE(prefix,'(a)')  '#### EXCEPTION_WARNING ####'
 
     ENDSUBROUTINE genPrefix_ExceptionTypeWarning
 !
 !-------------------------------------------------------------------------------
+!> @brief Get tag
+!>
+    SUBROUTINE getTag_ExceptionTypeWarning(this,tag)
+      CLASS(ExceptionTypeWarning),INTENT(INOUT) :: this
+      INTEGER(SIK),INTENT(OUT) :: tag
+      tag = 2
+    ENDSUBROUTINE getTag_ExceptionTypeWarning
+!
+!-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeInformation
 !>
     SUBROUTINE genPrefix_ExceptionTypeInformation(this,prefix)
       CLASS(ExceptionTypeInformation),INTENT(INOUT) :: this
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: prefix
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
 
       WRITE(prefix,'(a)')  '#### EXCEPTION_INFORMATION ####'
 
     ENDSUBROUTINE genPrefix_ExceptionTypeInformation
 !
 !-------------------------------------------------------------------------------
+!> @brief Get tag
+!>
+    SUBROUTINE getTag_ExceptionTypeInformation(this,tag)
+      CLASS(ExceptionTypeInformation),INTENT(INOUT) :: this
+      INTEGER(SIK),INTENT(OUT) :: tag
+      tag = 1
+    ENDSUBROUTINE getTag_ExceptionTypeInformation
+!
+!-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeFatal
 !>
     SUBROUTINE genPrefix_ExceptionTypeFatal(this,prefix)
       CLASS(ExceptionTypeFatal),INTENT(INOUT) :: this
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: prefix
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
 
       WRITE(prefix,'(a)')  '#### EXCEPTION_FATAL ####'
 
     ENDSUBROUTINE genPrefix_ExceptionTypeFatal
 !
 !-------------------------------------------------------------------------------
+!> @brief Get tag
+!>
+    SUBROUTINE getTag_ExceptionTypeFatal(this,tag)
+      CLASS(ExceptionTypeFatal),INTENT(INOUT) :: this
+      INTEGER(SIK),INTENT(OUT) :: tag
+      tag = 5
+    ENDSUBROUTINE getTag_ExceptionTypeFatal
+!
+!-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeDebug
 !>
     SUBROUTINE genPrefix_ExceptionTypeDebug(this,prefix)
       CLASS(ExceptionTypeDebug),INTENT(INOUT) :: this
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: prefix
+      CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
 
       WRITE(prefix,'(a)')  '#### EXCEPTION_DEBUG ####'
 
     ENDSUBROUTINE genPrefix_ExceptionTypeDebug
+!
+!-------------------------------------------------------------------------------
+!> @brief Get tag
+!>
+    SUBROUTINE getTag_ExceptionTypeDebug(this,tag)
+      CLASS(ExceptionTypeDebug),INTENT(INOUT) :: this
+      INTEGER(SIK),INTENT(OUT) :: tag
+      tag = 3
+    ENDSUBROUTINE getTag_ExceptionTypeDebug
 !
 ENDMODULE ExceptionTypes

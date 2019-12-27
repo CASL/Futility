@@ -56,6 +56,7 @@ TRIBITS_ADD_LIBRARY(Utils
       Geom_Poly.f90
       Geom.f90
       ExceptionHandler.f90
+      ExceptionTypes.f90
       Allocs.f90
       ExpTables.f90
       ParallelEnv.f90

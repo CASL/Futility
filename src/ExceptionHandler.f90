@@ -147,6 +147,11 @@ MODULE ExceptionHandler
   !> The maximum size of an exception message
   INTEGER(SIK),PARAMETER :: EXCEPTION_MAX_MESG_LENGTH=512
 
+  !> @brief Contains pointer to an ExceptionType object
+  TYPE,PUBLIC :: ExceptionContainer
+    CLASS(ExceptionTypeBase),POINTER :: expobj
+  ENDTYPE ExceptionContainer
+
   !> @brief Definition for a basic Exception Handler object.
   !>
   !> All the attributes are private. The type bound procedures (methods)
@@ -178,13 +183,8 @@ MODULE ExceptionHandler
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),PRIVATE :: lastMesg=''
     !> Surrogate exception handler to which most functions are delegated.
     TYPE(ExceptionHandlerType),POINTER,PRIVATE :: surrogate => NULL()
-    !> Default exception registry
-    TYPE(BaseExecptionType) :: exceptionRegistry = (/ &
-        ExceptionTypeInformation,       &
-        ExceptionTypeWarning,  &
-        ExceptionTypeDebug,     &
-        ExceptionTypeError, &
-        ExceptionTypeFatal /)
+    !> Exception registry
+    TYPE(ExceptionContainer),ALLOCATABLE,PRIVATE :: exceptionRegistry(:)
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
@@ -293,6 +293,16 @@ MODULE ExceptionHandler
       !> @copybrief ExceptionHandler::raiseFatalError
       !> @copydetails ExceptionHandler::raiseFatalError
       PROCEDURE,PASS :: raiseFatalError
+      !>
+      !> @copybrief ExceptionHandler::raiseRuntimeError
+      !> @copydetails ExceptionHandler::raiseRuntimeError
+      PROCEDURE,PASS :: raiseRuntimeError
+      !> @copybrief ExceptionHandler::registerException
+      !> @copydetails ExceptionHandler::registerException
+      PROCEDURE,PASS :: registerException
+      !> @copybrief ExceptionHandler::getTagList
+      !> @copydetails ExceptionHandler::getTagList
+      PROCEDURE,PASS :: getTagList
   ENDTYPE ExceptionHandlerType
 
   INTERFACE ASSIGNMENT(=)
@@ -837,34 +847,37 @@ MODULE ExceptionHandler
 !-------------------------------------------------------------------------------
 !> @brief Raise a runtime error
 !> @param e the exception object
+!> @param tag  tag of error to raise
 !> @param mesg an informative message about the exception that was raised
-!> @param userExceptionClass the class of error to raise
 !>
 !> This routine raises a user defined exception
 !>
-  SUBROUTINE raiseRuntimeError(e,userExceptionClass,mesg)
+  SUBROUTINE raiseRuntimeError(e,tag,mesg)
     CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
-    CLASS(BaseExecptionType),INTENT(IN) :: userExceptionClass
+    INTEGER(SIK),INTENT(IN) :: tag
     CHARACTER(LEN=*),INTENT(IN) :: mesg
-    INTEGER(SIK) :: nRe, i
+    INTEGER(SIK) :: nRe, i, tmpTag
 
     IF(ASSOCIATED(e%surrogate)) THEN
+      e%surrogate%lastMesg=mesg
       nRe = SIZE(e%surrogate%exceptionRegistry)
       DO i=1,nRe
-        SELECT TYPE(e%surrogate%exceptionRegistry(i))
-          CLASS IS (userExceptionClass)
-            CALL e%surrogate%exceptionRegistry(i)%onRaise( &
-            .TRUE., e%surrogate%logFileActive, e%surrogate%logFileUnit, mesg)
-        END SELECT
+        CALL e%surrogate%exceptionRegistry(i)%expobj%getTag(tmpTag)
+        IF (tmpTag == tag) THEN
+          CALL e%surrogate%exceptionRegistry(i)%expobj%onRaise( &
+          e%surrogate%logFileActive, e%surrogate%logFileUnit, &
+          e%surrogate%lastMesg)
+        ENDIF
       ENDDO
     ELSE
+      e%lastMesg=mesg
       nRe = SIZE(e%exceptionRegistry)
       DO i=1,nRe
-        SELECT TYPE(e%exceptionRegistry(i))
-          CLASS IS (userExceptionClass)
-            CALL e%exceptionRegistry(i)%onRaise( &
-            .TRUE., e%logFileActive, e%logFileUnit, mesg)
-        END SELECT
+        CALL e%exceptionRegistry(i)%expobj%getTag(tmpTag)
+        IF (tmpTag == tag) THEN
+          CALL e%exceptionRegistry(i)%expobj%onRaise( &
+          e%logFileActive, e%logFileUnit, e%lastMesg)
+        ENDIF
       ENDDO
     ENDIF
 
@@ -880,12 +893,63 @@ MODULE ExceptionHandler
 !>
   SUBROUTINE registerException(e,userException)
     CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
-    TYPE(BaseExecptionType),INTENT(IN) :: userException
+    CLASS(ExceptionTypeBase),TARGET,INTENT(IN) :: userException
+    TYPE(ExceptionContainer),ALLOCATABLE,DIMENSION(:) :: tmpReg
+    INTEGER(SIK) :: nCurrentReg
 
     ! Append new exception type to registry if not already present
-    e%exceptionRegistry = [e%exceptionRegistry, userException]
+    IF(.NOT. ALLOCATED(e%exceptionRegistry)) THEN
+      ALLOCATE(e%exceptionRegistry(1))
+      e%exceptionRegistry(1)%expobj => userException
+    ELSE
+      nCurrentReg = SIZE(e%exceptionRegistry)
+      ALLOCATE(tmpReg(nCurrentReg))
+      tmpReg = e%exceptionRegistry
+      DEALLOCATE(e%exceptionRegistry)
+      ALLOCATE(e%exceptionRegistry(nCurrentReg+1))
+      e%exceptionRegistry(1:nCurrentReg) = tmpReg
+      e%exceptionRegistry(nCurrentReg+1)%expobj => userException
+      DEALLOCATE(tmpReg)
+    ENDIF
 
   ENDSUBROUTINE registerException
+!
+!-------------------------------------------------------------------------------
+!> @brief Get a list of tags and error counts
+!> @param e the exception object
+!> @param tags a list of tags
+!> @param counts a list of counts associated with each tag
+!>
+!> This routine yeilds a tag list to be used by client code to handle errors
+!> on a per tag basis
+!>
+  SUBROUTINE getTagList(e,tags,counts)
+    CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+    INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: tags(:)
+    INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: counts(:)
+    INTEGER(SIK) :: nRe, i
+
+    IF(ASSOCIATED(e%surrogate)) THEN
+      ALLOCATE(tags(SIZE(e%surrogate%exceptionRegistry)))
+      ALLOCATE(counts(SIZE(e%surrogate%exceptionRegistry)))
+
+      nRe = SIZE(e%surrogate%exceptionRegistry)
+      DO i=1,nRe
+        CALL e%surrogate%exceptionRegistry(i)%expobj%getTag(tags(i))
+        counts(i) = e%surrogate%exceptionRegistry(i)%expobj%getCounter()
+      ENDDO
+    ELSE
+      ALLOCATE(tags(SIZE(e%exceptionRegistry)))
+      ALLOCATE(counts(SIZE(e%exceptionRegistry)))
+
+      nRe = SIZE(e%exceptionRegistry)
+      DO i=1,nRe
+        CALL e%exceptionRegistry(i)%expobj%getTag(tags(i))
+        counts(i) = e%exceptionRegistry(i)%expobj%getCounter()
+      ENDDO
+    ENDIF
+
+  ENDSUBROUTINE getTagList
 !
 !-------------------------------------------------------------------------------
 !> @brief Raise an information exception in the exception handler.
