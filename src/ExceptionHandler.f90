@@ -1225,6 +1225,10 @@ MODULE ExceptionHandler
       e%nDebug=tmpE%nDebug
       e%verbose=tmpE%verbose
       e%lastMesg=tmpE%lastMesg
+      IF(ALLOCATED(tmpE%exceptionRegistry)) THEN
+        ALLOCATE(e%exceptionRegistry(SIZE(tmpE%exceptionRegistry)))
+        e%exceptionRegistry=tmpE%exceptionRegistry
+      ENDIF
       NULLIFY(tmpE)
     ENDSUBROUTINE copyFromSurrogate
 !
