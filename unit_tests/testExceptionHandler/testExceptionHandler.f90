@@ -364,6 +364,9 @@ PROGRAM testExceptionHandler
       INTEGER(SIK),ALLOCATABLE :: tags(:)
       INTEGER(SIK),ALLOCATABLE :: counts(:)
 
+      CALL myError%init(EXCEPTION_ERROR)
+      CALL myWarning%init(EXCEPTION_WARNING)
+
       CALL testE%registerException(myError)
       CALL testE%registerException(myWarning)
       CALL testE%getTagList(tags, counts)
