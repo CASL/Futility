@@ -12,6 +12,7 @@ PROGRAM testExceptionHandler
   USE UnitTest
   USE IntrType
   USE ExceptionHandler
+  USE ExceptionTypes
 
   IMPLICIT NONE
 
@@ -31,6 +32,7 @@ PROGRAM testExceptionHandler
   REGISTER_SUBTEST('ASSIGNMENT(=)',testAssignment)
   REGISTER_SUBTEST('Reset',testReset)
   REGISTER_SUBTEST('SetCounter',testSetCounter)
+  REGISTER_SUBTEST('RegisterException',testRegisterException)
 
   CLOSE(testE%getLogFileUnit(),STATUS='DELETE')
 
@@ -354,5 +356,36 @@ PROGRAM testExceptionHandler
       CALL testE%setCounter(EXCEPTION_FATAL_ERROR,6)
       ASSERT(ALL(testE%getCounterAll() == (/2,3,4,5,6/)),'setCounter() Error')
     ENDSUBROUTINE testSetCounter
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testRegisterException()
+      TYPE(ExceptionTypeError) :: myError
+      TYPE(ExceptionTypeWarning) :: myWarning
+      INTEGER(SIK),ALLOCATABLE :: tags(:)
+      INTEGER(SIK),ALLOCATABLE :: counts(:)
+
+      CALL testE%registerException(myError)
+      CALL testE%registerException(myWarning)
+      CALL testE%getTagList(tags, counts)
+
+      ASSERT(tags(1) == EXCEPTION_ERROR,'tag Error')
+      ASSERT(tags(2) == EXCEPTION_WARNING,'tag Warning')
+      ASSERT(ALL(counts == 0),'tag initial counts')
+      WRITE(*,*) tags
+      WRITE(*,*) counts
+
+      ! raise a warning
+      CALL testE%raiseRuntimeError(EXCEPTION_WARNING,"Test Warning")
+
+      ! check that warning counter was incremented
+      DEALLOCATE(tags)
+      DEALLOCATE(counts)
+      CALL testE%getTagList(tags, counts)
+      ASSERT(counts(1) == 0,'tag error final count')
+      ASSERT(counts(2) == 1,'tag warning final count')
+      WRITE(*,*) tags
+      WRITE(*,*) counts
+
+    ENDSUBROUTINE testRegisterException
 !
 ENDPROGRAM testExceptionHandler

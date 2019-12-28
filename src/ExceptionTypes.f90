@@ -38,6 +38,8 @@ MODULE ExceptionTypes
     LOGICAL(SBK),PRIVATE :: stopmode=.FALSE.
     !> Quiet
     LOGICAL(SBK),PRIVATE :: quiet=.FALSE.
+    !> Verbose
+    LOGICAL(SBK),PRIVATE :: verbose=.FALSE.
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
@@ -47,9 +49,12 @@ MODULE ExceptionTypes
       !> @copybrief ExceptionTypes::setStopMode_ExceptionTypeBase
       !> @copydetails ExceptionTypes::setStopMode_ExceptionTypeBase
       PROCEDURE,PASS :: setStopMode => setStopMode_ExceptionTypeBase
-      !> @copybrief ExceptionTypes::setQuiet_ExceptionTypeBase
-      !> @copydetails ExceptionTypes::setQuiet_ExceptionTypeBase
-      PROCEDURE,PASS :: setQuiet => setQuiet_ExceptionTypeBase
+      !> @copybrief ExceptionTypes::setQuietMode_ExceptionTypeBase
+      !> @copydetails ExceptionTypes::setQuietMode_ExceptionTypeBase
+      PROCEDURE,PASS :: setQuietMode => setQuietMode_ExceptionTypeBase
+      !> @copybrief ExceptionTypes::setVerboseMode_ExceptionTypeBase
+      !> @copydetails ExceptionTypes::setVerboseMode_ExceptionTypeBase
+      PROCEDURE,PASS :: setVerboseMode => setVerboseMode_ExceptionTypeBase
       !> @copybrief ExceptionTypes::resetCounter_ExceptionTypeBase
       !> @copydetails ExceptionTypes::resetCounter_ExceptionTypeBase
       PROCEDURE,PASS :: resetCounter => resetCounter_ExceptionTypeBase
@@ -114,12 +119,12 @@ ABSTRACT INTERFACE
     CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
   ENDSUBROUTINE et_genprefix_absintfc
   !> @brief Abstract interface to get error tag
-  SUBROUTINE et_gettag_absintfc(this,tag)
+  FUNCTION et_gettag_absintfc(this) RESULT(tag)
     IMPORT :: ExceptionTypeBase
     IMPORT :: SIK
     CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
-    INTEGER(SIK),INTENT(OUT) :: tag
-  ENDSUBROUTINE et_gettag_absintfc
+    INTEGER(SIK) :: tag
+  ENDFUNCTION et_gettag_absintfc
 ENDINTERFACE
 !
 !===============================================================================
@@ -154,13 +159,24 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Set the quiet mode
 !>
-    SUBROUTINE setQuiet_ExceptionTypeBase(this,quiet)
+    SUBROUTINE setQuietMode_ExceptionTypeBase(this,quiet)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
       LOGICAL(SBK),INTENT(IN) :: quiet
 
       this%quiet = quiet
 
-    ENDSUBROUTINE setQuiet_ExceptionTypeBase
+    ENDSUBROUTINE setQuietMode_ExceptionTypeBase
+!
+!-------------------------------------------------------------------------------
+!> @brief Set the quiet mode
+!>
+    SUBROUTINE setVerboseMode_ExceptionTypeBase(this,verbose)
+      CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
+      LOGICAL(SBK),INTENT(IN) :: verbose
+
+      this%verbose = verbose
+
+    ENDSUBROUTINE setVerboseMode_ExceptionTypeBase
 !
 !-------------------------------------------------------------------------------
 !> @brief Resets the error counter
@@ -264,11 +280,11 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Get tag
 !>
-    SUBROUTINE getTag_ExceptionTypeError(this,tag)
+    FUNCTION getTag_ExceptionTypeError(this) RESULT(tag)
       CLASS(ExceptionTypeError),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(OUT) :: tag
-      tag = 3
-    ENDSUBROUTINE getTag_ExceptionTypeError
+      INTEGER(SIK) :: tag
+      tag = 4
+    ENDFUNCTION getTag_ExceptionTypeError
 !
 !-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeWarning
@@ -284,11 +300,11 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Get tag
 !>
-    SUBROUTINE getTag_ExceptionTypeWarning(this,tag)
+    FUNCTION getTag_ExceptionTypeWarning(this) RESULT(tag)
       CLASS(ExceptionTypeWarning),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(OUT) :: tag
+      INTEGER(SIK) :: tag
       tag = 2
-    ENDSUBROUTINE getTag_ExceptionTypeWarning
+    ENDFUNCTION getTag_ExceptionTypeWarning
 !
 !-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeInformation
@@ -304,11 +320,11 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Get tag
 !>
-    SUBROUTINE getTag_ExceptionTypeInformation(this,tag)
+    FUNCTION getTag_ExceptionTypeInformation(this) RESULT(tag)
       CLASS(ExceptionTypeInformation),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(OUT) :: tag
+      INTEGER(SIK) :: tag
       tag = 1
-    ENDSUBROUTINE getTag_ExceptionTypeInformation
+    ENDFUNCTION getTag_ExceptionTypeInformation
 !
 !-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeFatal
@@ -324,11 +340,11 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Get tag
 !>
-    SUBROUTINE getTag_ExceptionTypeFatal(this,tag)
+    FUNCTION getTag_ExceptionTypeFatal(this) RESULT(tag)
       CLASS(ExceptionTypeFatal),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(OUT) :: tag
+      INTEGER(SIK) :: tag
       tag = 5
-    ENDSUBROUTINE getTag_ExceptionTypeFatal
+    ENDFUNCTION getTag_ExceptionTypeFatal
 !
 !-------------------------------------------------------------------------------
 !> @brief Prefix mesg for type ExceptionTypeDebug
@@ -344,10 +360,10 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Get tag
 !>
-    SUBROUTINE getTag_ExceptionTypeDebug(this,tag)
+    FUNCTION getTag_ExceptionTypeDebug(this) RESULT(tag)
       CLASS(ExceptionTypeDebug),INTENT(INOUT) :: this
-      INTEGER(SIK),INTENT(OUT) :: tag
+      INTEGER(SIK) :: tag
       tag = 3
-    ENDSUBROUTINE getTag_ExceptionTypeDebug
+    ENDFUNCTION getTag_ExceptionTypeDebug
 !
 ENDMODULE ExceptionTypes

@@ -862,7 +862,7 @@ MODULE ExceptionHandler
       e%surrogate%lastMesg=mesg
       nRe = SIZE(e%surrogate%exceptionRegistry)
       DO i=1,nRe
-        CALL e%surrogate%exceptionRegistry(i)%expobj%getTag(tmpTag)
+        tmpTag = e%surrogate%exceptionRegistry(i)%expobj%getTag()
         IF (tmpTag == tag) THEN
           CALL e%surrogate%exceptionRegistry(i)%expobj%onRaise( &
           e%surrogate%logFileActive, e%surrogate%logFileUnit, &
@@ -873,7 +873,7 @@ MODULE ExceptionHandler
       e%lastMesg=mesg
       nRe = SIZE(e%exceptionRegistry)
       DO i=1,nRe
-        CALL e%exceptionRegistry(i)%expobj%getTag(tmpTag)
+        tmpTag = e%exceptionRegistry(i)%expobj%getTag()
         IF (tmpTag == tag) THEN
           CALL e%exceptionRegistry(i)%expobj%onRaise( &
           e%logFileActive, e%logFileUnit, e%lastMesg)
@@ -892,25 +892,42 @@ MODULE ExceptionHandler
 !> This routine registers a new exception
 !>
   SUBROUTINE registerException(e,userException)
-    CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
-    CLASS(ExceptionTypeBase),TARGET,INTENT(IN) :: userException
+    CLASS(ExceptionHandlerType),TARGET,INTENT(INOUT) :: e
+    CLASS(ExceptionTypeBase),TARGET,INTENT(INOUT) :: userException
     TYPE(ExceptionContainer),ALLOCATABLE,DIMENSION(:) :: tmpReg
     INTEGER(SIK) :: nCurrentReg
+    INTEGER(SIK),ALLOCATABLE :: currentTags(:)
+    INTEGER(SIK),ALLOCATABLE :: currentCounts(:)
+    TYPE(ExceptionHandlerType),POINTER :: target_e
+
+    IF(ASSOCIATED(e%surrogate)) THEN
+      target_e = e%surrogate
+    ELSE
+      target_e => e
+    ENDIF
+
+    CALL target_e%getTagList(currentTags, currentCounts)
+    IF(ANY(currentTags == userException%getTag())) THEN
+      CALL target_e%raiseFatalError("Cannot register userException with existing tag.")
+      RETURN
+    ENDIF
 
     ! Append new exception type to registry if not already present
-    IF(.NOT. ALLOCATED(e%exceptionRegistry)) THEN
-      ALLOCATE(e%exceptionRegistry(1))
-      e%exceptionRegistry(1)%expobj => userException
+    IF(.NOT. ALLOCATED(target_e%exceptionRegistry)) THEN
+      ALLOCATE(target_e%exceptionRegistry(1))
+      target_e%exceptionRegistry(1)%expobj => userException
     ELSE
-      nCurrentReg = SIZE(e%exceptionRegistry)
+      nCurrentReg = SIZE(target_e%exceptionRegistry)
       ALLOCATE(tmpReg(nCurrentReg))
-      tmpReg = e%exceptionRegistry
-      DEALLOCATE(e%exceptionRegistry)
-      ALLOCATE(e%exceptionRegistry(nCurrentReg+1))
-      e%exceptionRegistry(1:nCurrentReg) = tmpReg
-      e%exceptionRegistry(nCurrentReg+1)%expobj => userException
+      tmpReg = target_e%exceptionRegistry
+      DEALLOCATE(target_e%exceptionRegistry)
+      ALLOCATE(target_e%exceptionRegistry(nCurrentReg+1))
+      target_e%exceptionRegistry(1:nCurrentReg) = tmpReg
+      target_e%exceptionRegistry(nCurrentReg+1)%expobj => userException
       DEALLOCATE(tmpReg)
     ENDIF
+
+  NULLIFY(target_e)
 
   ENDSUBROUTINE registerException
 !
@@ -935,7 +952,7 @@ MODULE ExceptionHandler
 
       nRe = SIZE(e%surrogate%exceptionRegistry)
       DO i=1,nRe
-        CALL e%surrogate%exceptionRegistry(i)%expobj%getTag(tags(i))
+        tags(i) = e%surrogate%exceptionRegistry(i)%expobj%getTag()
         counts(i) = e%surrogate%exceptionRegistry(i)%expobj%getCounter()
       ENDDO
     ELSE
@@ -944,7 +961,7 @@ MODULE ExceptionHandler
 
       nRe = SIZE(e%exceptionRegistry)
       DO i=1,nRe
-        CALL e%exceptionRegistry(i)%expobj%getTag(tags(i))
+        tags(i) = e%exceptionRegistry(i)%expobj%getTag()
         counts(i) = e%exceptionRegistry(i)%expobj%getCounter()
       ENDDO
     ENDIF
