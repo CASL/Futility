@@ -45,7 +45,7 @@ MODULE ExceptionTypes
     !> Quiet
     LOGICAL(SBK),PRIVATE :: quiet=.FALSE.
     !> Verbose
-    LOGICAL(SBK),PRIVATE :: verbose=.FALSE.
+    LOGICAL(SBK),PRIVATE :: verbose=.TRUE.
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
@@ -153,11 +153,13 @@ ENDINTERFACE
       LOGICAL(SBK),INTENT(IN) :: isLogActive
       INTEGER(SIK),INTENT(IN) :: logUnit
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: mesg
+      LOGICAL(SBK) :: doLog
 
       REQUIRE(this%isInit)
 
       this%counter = this%counter + 1
-      CALL this%logMessage(this%quiet,isLogActive,logUnit,mesg)
+      doLog = (isLogActive .AND. this%verbose)
+      CALL this%logMessage(this%quiet,doLog,logUnit,mesg)
       CALL exceptionStop(this%stopmode)
 
     ENDSUBROUTINE onRaise_ExceptionTypeBase
@@ -270,8 +272,8 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Get tag
 !>
-    FUNCTION getTag_ExceptionTypeBase(this) RESULT(tag)
-      CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
+    PURE FUNCTION getTag_ExceptionTypeBase(this) RESULT(tag)
+      CLASS(ExceptionTypeBase),INTENT(IN) :: this
       INTEGER(SIK) :: tag
 
       REQUIRE(this%isInit)

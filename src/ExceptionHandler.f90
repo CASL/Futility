@@ -893,7 +893,7 @@ MODULE ExceptionHandler
 !>
   SUBROUTINE registerException(e,userException)
     CLASS(ExceptionHandlerType),TARGET,INTENT(INOUT) :: e
-    CLASS(ExceptionTypeBase),TARGET,INTENT(INOUT) :: userException
+    CLASS(ExceptionTypeBase),TARGET,INTENT(IN) :: userException
     TYPE(ExceptionContainer),ALLOCATABLE,DIMENSION(:) :: tmpReg
     INTEGER(SIK) :: nCurrentReg
     INTEGER(SIK),ALLOCATABLE :: currentTags(:)
@@ -906,10 +906,12 @@ MODULE ExceptionHandler
       target_e => e
     ENDIF
 
-    CALL target_e%getTagList(currentTags, currentCounts)
-    IF(ANY(currentTags == userException%getTag())) THEN
-      CALL target_e%raiseFatalError("Cannot register userException with existing tag.")
-      RETURN
+    IF(ALLOCATED(target_e%exceptionRegistry)) THEN
+      CALL target_e%getTagList(currentTags, currentCounts)
+      IF(ANY(currentTags == userException%getTag())) THEN
+        CALL target_e%raiseFatalError("Cannot register userException with existing tag.")
+        RETURN
+      ENDIF
     ENDIF
 
     ! Append new exception type to registry if not already present
@@ -927,7 +929,7 @@ MODULE ExceptionHandler
       DEALLOCATE(tmpReg)
     ENDIF
 
-  NULLIFY(target_e)
+    NULLIFY(target_e)
 
   ENDSUBROUTINE registerException
 !
@@ -947,19 +949,19 @@ MODULE ExceptionHandler
     INTEGER(SIK) :: nRe, i
 
     IF(ASSOCIATED(e%surrogate)) THEN
-      ALLOCATE(tags(SIZE(e%surrogate%exceptionRegistry)))
-      ALLOCATE(counts(SIZE(e%surrogate%exceptionRegistry)))
-
+      REQUIRE(ALLOCATED(e%surrogate%exceptionRegistry))
       nRe = SIZE(e%surrogate%exceptionRegistry)
+      ALLOCATE(tags(nRe))
+      ALLOCATE(counts(nRe))
       DO i=1,nRe
         tags(i) = e%surrogate%exceptionRegistry(i)%expobj%getTag()
         counts(i) = e%surrogate%exceptionRegistry(i)%expobj%getCounter()
       ENDDO
     ELSE
-      ALLOCATE(tags(SIZE(e%exceptionRegistry)))
-      ALLOCATE(counts(SIZE(e%exceptionRegistry)))
-
+      REQUIRE(ALLOCATED(e%exceptionRegistry))
       nRe = SIZE(e%exceptionRegistry)
+      ALLOCATE(tags(nRe))
+      ALLOCATE(counts(nRe))
       DO i=1,nRe
         tags(i) = e%exceptionRegistry(i)%expobj%getTag()
         counts(i) = e%exceptionRegistry(i)%expobj%getCounter()
