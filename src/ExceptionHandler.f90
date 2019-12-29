@@ -303,6 +303,9 @@ MODULE ExceptionHandler
       !> @copybrief ExceptionHandler::getTagList
       !> @copydetails ExceptionHandler::getTagList
       PROCEDURE,PASS :: getTagList
+      !> @copybrief ExceptionHandler::getCountByTag
+      !> @copydetails ExceptionHandler::getCountByTag
+      PROCEDURE,PASS :: getCountByTag
   ENDTYPE ExceptionHandlerType
 
   INTERFACE ASSIGNMENT(=)
@@ -969,6 +972,47 @@ MODULE ExceptionHandler
     ENDIF
 
   ENDSUBROUTINE getTagList
+!
+!-------------------------------------------------------------------------------
+!> @brief Get count of error matching a tag
+!> @param e the exception object
+!> @param tag the tag of interest
+!>
+!> This routine yeilds the number of errors raised matching a tag
+!>
+    FUNCTION getCountByTag(e,tag) RESULT(ntag)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      INTEGER(SIK),INTENT(IN) :: tag
+      INTEGER(SIK):: tagIdx, ntag, i
+      INTEGER(SIK),ALLOCATABLE :: tags(:)
+      INTEGER(SIK),ALLOCATABLE :: counts(:)
+
+      IF(ASSOCIATED(e%surrogate)) THEN
+        IF(.NOT. ALLOCATED(e%surrogate%exceptionRegistry)) THEN
+          ntag = 0
+          RETURN
+        ENDIF
+        CALL e%surrogate%getTagList(tags, counts)
+      ELSE
+        IF(.NOT. ALLOCATED(e%exceptionRegistry)) THEN
+          ntag = 0
+          RETURN
+        ENDIF
+        CALL e%getTagList(tags, counts)
+      ENDIF
+
+      ! tagIdx = FINDLOC(tags, tag)
+      tagIdx = 0
+      DO i=1,SIZE(tags)
+        IF(tags(i) == tag) tagIdx = i
+      ENDDO
+      IF(tagIdx == 0) THEN
+        ntag = 0
+      ELSE
+        ntag = counts(tagIdx)
+      ENDIF
+
+    ENDFUNCTION getCountByTag
 !
 !-------------------------------------------------------------------------------
 !> @brief Raise an information exception in the exception handler.

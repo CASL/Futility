@@ -364,6 +364,9 @@ PROGRAM testExceptionHandler
       INTEGER(SIK),ALLOCATABLE :: tags(:)
       INTEGER(SIK),ALLOCATABLE :: counts(:)
 
+      ASSERT(testE%getCountByTag(EXCEPTION_ERROR) == 0,'Error')
+      ASSERT(testE%getCountByTag(EXCEPTION_WARNING) == 0,'Warning')
+
       CALL myError%init(EXCEPTION_ERROR)
       CALL myWarning%init(EXCEPTION_WARNING)
 
@@ -386,6 +389,8 @@ PROGRAM testExceptionHandler
       CALL testE%getTagList(tags, counts)
       ASSERT(counts(1) == 0,'tag error final count')
       ASSERT(counts(2) == 1,'tag warning final count')
+      ASSERT(testE%getCountByTag(EXCEPTION_ERROR) == 0,'Error')
+      ASSERT(testE%getCountByTag(EXCEPTION_WARNING) == 1,'Warning')
       WRITE(*,*) tags
       WRITE(*,*) counts
 
