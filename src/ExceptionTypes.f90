@@ -178,7 +178,7 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Set the quiet mode
 !>
-    SUBROUTINE setQuietMode_ExceptionTypeBase(this,quiet)
+    PURE SUBROUTINE setQuietMode_ExceptionTypeBase(this,quiet)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
       LOGICAL(SBK),INTENT(IN) :: quiet
 
@@ -189,7 +189,7 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Set the quiet mode
 !>
-    SUBROUTINE setVerboseMode_ExceptionTypeBase(this,verbose)
+    PURE SUBROUTINE setVerboseMode_ExceptionTypeBase(this,verbose)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
       LOGICAL(SBK),INTENT(IN) :: verbose
 
@@ -200,7 +200,7 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Resets the error counter
 !>
-    SUBROUTINE resetCounter_ExceptionTypeBase(this)
+    PURE SUBROUTINE resetCounter_ExceptionTypeBase(this)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
 
       this%counter = 0

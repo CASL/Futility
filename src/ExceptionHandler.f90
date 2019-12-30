@@ -158,7 +158,7 @@ MODULE ExceptionHandler
   !> provide interfaces to all the attributes.
   TYPE :: ExceptionHandlerType
     !> True if ExceptionHandler is initilized
-    LOGICAL(SBK),PRIVATE :: isInit=.FALSE.
+    LOGICAL(SBK),PUBLIC :: isInit=.FALSE.
     !> Defines whether or not to stop executaion when an error is raised
     LOGICAL(SBK),PRIVATE :: stopOnError=.TRUE.
     !> Defines whether or not to report exceptions to a log file
@@ -343,6 +343,7 @@ MODULE ExceptionHandler
     CALL myDebug%init(EXCEPTION_DEBUG)
     CALL myError%init(EXCEPTION_ERROR)
     CALL myFatal%init(EXCEPTION_FATAL_ERROR)
+    CALL myFatal%setStopMode(.TRUE.)
 
     ! create the default registry
     ALLOCATE(e%exceptionRegistry(5))
@@ -424,12 +425,18 @@ MODULE ExceptionHandler
 !>
     PURE SUBROUTINE initCounter(e)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      INTEGER(SIK) :: i
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       e%nInfo=0
       e%nWarn=0
       e%nError=0
       e%nFatal=0
       e%nDebug=0
+      IF(ALLOCATED(e%exceptionRegistry)) THEN
+        DO i=1,SIZE(e%exceptionRegistry)
+          CALL e%exceptionRegistry(i)%expobj%resetCounter()
+        ENDDO
+      ENDIF
       e%lastMesg=''
     ENDSUBROUTINE initCounter
 !
@@ -439,6 +446,7 @@ MODULE ExceptionHandler
 !>
     PURE SUBROUTINE reset(e)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      INTEGER(SIK) :: i
       NULLIFY(e%surrogate)
       e%nInfo=0
       e%nWarn=0
@@ -451,6 +459,14 @@ MODULE ExceptionHandler
       e%logFileActive=.FALSE.
       e%quiet=(/.FALSE.,.FALSE.,.TRUE.,.FALSE./)
       e%verbose=(/.TRUE.,.TRUE.,.FALSE.,.TRUE./)
+      IF(ALLOCATED(e%exceptionRegistry)) THEN
+        DO i=1,SIZE(e%exceptionRegistry)-1
+          CALL e%exceptionRegistry(i)%expobj%resetCounter()
+          CALL e%exceptionRegistry(i)%expobj%setQuietMode(e%quiet(i))
+          CALL e%exceptionRegistry(i)%expobj%setVerboseMode(e%verbose(i))
+        ENDDO
+      ENDIF
+
     ENDSUBROUTINE reset
 !
 !-------------------------------------------------------------------------------
