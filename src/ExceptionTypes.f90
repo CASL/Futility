@@ -70,6 +70,8 @@ MODULE ExceptionTypes
       !> @copybrief ExceptionTypes::resetCounter_ExceptionTypeBase
       !> @copydetails ExceptionTypes::resetCounter_ExceptionTypeBase
       PROCEDURE,PASS :: resetCounter => resetCounter_ExceptionTypeBase
+      !> @copybrief ExceptionTypes::setCounter_ExceptionTypeBase
+      !> @copydetails ExceptionTypes::setCounter_ExceptionTypeBase
       PROCEDURE,PASS :: setCounter => setCounter_ExceptionTypeBase
       !> @copybrief ExceptionTypes::getCounter_ExceptionTypeBase
       !> @copydetails ExceptionTypes::getCounter_ExceptionTypeBase
@@ -139,7 +141,7 @@ ENDINTERFACE
     SUBROUTINE init_ExceptionTypeBase(this,tag)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
       INTEGER(SIK),INTENT(IN) :: tag
-      REQUIRE(.NOT. this%isInit)
+      ! REQUIRE(.NOT. this%isInit)
 
       this%tag = tag
       this%isInit = .TRUE.

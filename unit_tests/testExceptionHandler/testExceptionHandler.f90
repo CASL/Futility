@@ -164,8 +164,6 @@ PROGRAM testExceptionHandler
       ASSERT(ALL(testE%getCounterAll() == (/1,0,0,0,0/)),'%counterall')
       ASSERT(testE%getCounter(EXCEPTION_INFORMATION) == 1,'%counter(INFO)')
       mesg='#### EXCEPTION_INFORMATION #### - Test information'
-      WRITE(*,*) TRIM(mesg)
-      WRITE(*,*) testE%getLastMessage()
       ASSERT(testE%getLastMessage() == TRIM(mesg),'mesg')
 
       COMPONENT_TEST('raiseWarning()')
@@ -180,8 +178,6 @@ PROGRAM testExceptionHandler
       ASSERT(ALL(testE%getCounterAll() == (/1,1,1,0,0/)),'%raiseDebug')
       ASSERT(testE%getCounter(EXCEPTION_DEBUG) == 1,'%counter(DEBUG)')
       mesg='#### EXCEPTION_DEBUG_MESG #### - Test debug'
-      WRITE(*,*) TRIM(mesg)
-      WRITE(*,*) testE%getLastMessage()
       ASSERT(testE%getLastMessage() == TRIM(mesg),'mesg')
 
       COMPONENT_TEST('raiseError()')
@@ -258,41 +254,40 @@ PROGRAM testExceptionHandler
       CALL testE%raiseError('Test error')
 
 !Verify the log file contents
-!       CLOSE(testE%getLogFileUnit())
-!       OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
-!            ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ')
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg=''
-!       WRITE(*,*) TRIM(mesg)
-!       WRITE(*,*) TRIM(mesg2)
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),'blank line')
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg='      EXCEPTION_INFORMATION: Test information'
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg='#### EXCEPTION_WARNING ####'
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg='      Test warning'
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg='#### EXCEPTION_DEBUG_MESG ####'
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg='      Test debug'
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg='#### EXCEPTION_ERROR ####'
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
-!       READ(testE%getLogFileUnit(),'(a)') mesg2
-!       mesg='      Test error'
-!       ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      CLOSE(testE%getLogFileUnit())
+      OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
+           ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ')
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='#### EXCEPTION_INFORMATION ####'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='      Test information'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='#### EXCEPTION_WARNING ####'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='      Test warning'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='#### EXCEPTION_DEBUG_MESG ####'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='      Test debug'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='#### EXCEPTION_ERROR ####'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
+      READ(testE%getLogFileUnit(),'(a)') mesg2
+      mesg='      Test error'
+      ASSERT(TRIM(mesg) == TRIM(mesg2),TRIM(mesg))
         CLOSE(testE%getLogFileUnit())
     ENDSUBROUTINE testLogFile
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testVerbosity()
       INTEGER(SIK) :: ioerr
+      IF(.NOT.testE%isInit) CALL testE%init()
       OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
            ACCESS='SEQUENTIAL',FORM='FORMATTED',STATUS='REPLACE')
       CALL testE%setQuietMode(.FALSE.)
@@ -315,7 +310,6 @@ PROGRAM testExceptionHandler
     SUBROUTINE testSurrogate()
       IF(.NOT.testE%isInit) CALL testE%init()
       IF(.NOT.testE2%isInit) CALL testE2%init()
-      IF(.NOT.testE3%isInit) CALL testE3%init()
       CALL testE2%addSurrogate(testE)
       ASSERT(testE2%isStopOnError() .EQV. testE%isStopOnError(),'isStopOnError')
       ASSERT(testE2%getLogFileUnit() == testE%getLogFileUnit(),'getLogFileUnit')

@@ -802,8 +802,14 @@ MODULE ExceptionHandler
     PURE SUBROUTINE setVerboseMode_all(e,bool)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: bool
+      INTEGER(SIK) :: i
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       e%verbose=bool
+      IF(ALLOCATED(e%exceptionRegistry)) THEN
+        DO i=1,SIZE(e%exceptionRegistry)-1
+          CALL e%exceptionRegistry(i)%expobj%setVerboseMode(e%verbose(i))
+        ENDDO
+      ENDIF
     ENDSUBROUTINE setVerboseMode_all
 !
 !-------------------------------------------------------------------------------
@@ -820,6 +826,8 @@ MODULE ExceptionHandler
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       IF(EXCEPTION_OK < eCode .AND. eCode < EXCEPTION_SIZE) &
         e%verbose(eCode)=bool
+      IF(EXCEPTION_OK < eCode .AND. eCode < EXCEPTION_SIZE) &
+        CALL e%exceptionRegistry(eCode)%expobj%setVerboseMode(bool)
     ENDSUBROUTINE setVerboseMode_eCode
 !
 !-------------------------------------------------------------------------------
@@ -832,10 +840,15 @@ MODULE ExceptionHandler
     PURE SUBROUTINE setVerboseMode_array(e,bool)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: bool(:)
-      INTEGER(SIK) :: n
+      INTEGER(SIK) :: n, i
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       n=MIN(EXCEPTION_SIZE-1,SIZE(bool))
       e%verbose(1:n)=bool(1:n)
+      IF(ALLOCATED(e%exceptionRegistry)) THEN
+        DO i=1,SIZE(e%exceptionRegistry)-1
+          CALL e%exceptionRegistry(i)%expobj%setVerboseMode(e%verbose(i))
+        ENDDO
+      ENDIF
     ENDSUBROUTINE setVerboseMode_array
 !
 !-------------------------------------------------------------------------------
@@ -1178,6 +1191,7 @@ MODULE ExceptionHandler
       e%verbose=tmpE%verbose
       e%lastMesg=tmpE%lastMesg
       IF(ALLOCATED(tmpE%exceptionRegistry)) THEN
+        IF(ALLOCATED(e%exceptionRegistry)) DEALLOCATE(e%exceptionRegistry)
         ALLOCATE(e%exceptionRegistry(SIZE(tmpE%exceptionRegistry)))
         e%exceptionRegistry=tmpE%exceptionRegistry
       ENDIF
