@@ -19,6 +19,7 @@ PROGRAM testExceptionHandler
   TYPE(ExceptionHandlerType),TARGET :: testE
   TYPE(ExceptionHandlerType) :: testE2
   TYPE(ExceptionHandlerType),POINTER :: testE3
+  TYPE(ExceptionHandlerType) :: testE4
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: mesg,mesg2
 
   CREATE_TEST('EXCEPTION HANDLER')
@@ -363,6 +364,8 @@ PROGRAM testExceptionHandler
       TYPE(ExceptionTypeWarning) :: myWarning
       INTEGER(SIK),ALLOCATABLE :: tags(:)
       INTEGER(SIK),ALLOCATABLE :: counts(:)
+      INTEGER(SIK),ALLOCATABLE :: tags_e4(:)
+      INTEGER(SIK),ALLOCATABLE :: counts_e4(:)
 
       ASSERT(testE%getCountByTag(EXCEPTION_ERROR) == 0,'Error')
       ASSERT(testE%getCountByTag(EXCEPTION_WARNING) == 0,'Warning')

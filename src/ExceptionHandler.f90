@@ -157,6 +157,8 @@ MODULE ExceptionHandler
   !> All the attributes are private. The type bound procedures (methods)
   !> provide interfaces to all the attributes.
   TYPE :: ExceptionHandlerType
+    !> True if ExceptionHandler is initilized
+    LOGICAL(SBK),PRIVATE :: isInit=.FALSE.
     !> Defines whether or not to stop executaion when an error is raised
     LOGICAL(SBK),PRIVATE :: stopOnError=.TRUE.
     !> Defines whether or not to report exceptions to a log file
@@ -188,6 +190,9 @@ MODULE ExceptionHandler
 !
 !List of type bound procedures (methods) for the Exception Handler object
     CONTAINS
+      !> @copybrief ExceptionHandler::init_ExceptionHandlerType
+      !> @copydoc ExceptionHandler::init_ExceptionHandlerType
+      PROCEDURE,PASS :: init => init_ExceptionHandlerType
       !> @copybrief ExceptionHandler::addSurrogate
       !> @copydetails ExceptionHandler::addSurrogate
       PROCEDURE,PASS :: addSurrogate
@@ -318,6 +323,45 @@ MODULE ExceptionHandler
   CONTAINS
 !
 !-------------------------------------------------------------------------------
+!> @brief ExceptionHandlerType custom initilization.
+!>
+!> Creates a default exception registry.
+!>
+  SUBROUTINE init_ExceptionHandlerType(e)
+    CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+    TYPE(ExceptionTypeFatal),TARGET,SAVE :: myFatal
+    TYPE(ExceptionTypeDebug),TARGET,SAVE :: myDebug
+    TYPE(ExceptionTypeInformation),TARGET,SAVE :: myInformation
+    TYPE(ExceptionTypeError),TARGET,SAVE :: myError
+    TYPE(ExceptionTypeWarning),TARGET,SAVE :: myWarning
+
+    REQUIRE(.NOT. e%isInit)
+    REQUIRE(.NOT. ALLOCATED(e%exceptionRegistry))
+
+    CALL myInformation%init(EXCEPTION_INFORMATION)
+    CALL myWarning%init(EXCEPTION_WARNING)
+    CALL myDebug%init(EXCEPTION_DEBUG)
+    CALL myError%init(EXCEPTION_ERROR)
+    CALL myFatal%init(EXCEPTION_FATAL_ERROR)
+
+    ! create the default registry
+    ALLOCATE(e%exceptionRegistry(5))
+    e%exceptionRegistry(EXCEPTION_ERROR)%expobj &
+      => myError
+    e%exceptionRegistry(EXCEPTION_WARNING)%expobj &
+      => myWarning
+    e%exceptionRegistry(EXCEPTION_DEBUG)%expobj &
+      => myDebug
+    e%exceptionRegistry(EXCEPTION_FATAL_ERROR)%expobj &
+      => myFatal
+    e%exceptionRegistry(EXCEPTION_INFORMATION)%expobj &
+      => myInformation
+
+    e%isInit = .TRUE.
+
+  ENDSUBROUTINE init_ExceptionHandlerType
+!
+!-------------------------------------------------------------------------------
 !> @brief Overloads assignment operator
 !> @param e right hand side of assignment operator
 !> @param e2 left hand side of assignment operator
@@ -328,6 +372,7 @@ MODULE ExceptionHandler
     SUBROUTINE assign_etype(e,e2)
       TYPE(ExceptionHandlerType),INTENT(OUT) :: e
       TYPE(ExceptionHandlerType),INTENT(IN) :: e2
+      e%isInit=e2%isInit
       e%nInfo=e2%nInfo
       e%nWarn=e2%nWarn
       e%nDebug=e2%nDebug
@@ -339,6 +384,11 @@ MODULE ExceptionHandler
       e%logFileActive=e2%logFileActive
       e%quiet=e2%quiet
       e%verbose=e2%verbose
+      IF(.NOT. ALLOCATED(e%exceptionRegistry) &
+         .AND. ALLOCATED(e2%exceptionRegistry)) THEN
+        ALLOCATE(e%exceptionRegistry(SIZE(e2%exceptionRegistry)))
+      ENDIF
+      e%exceptionRegistry=e2%exceptionRegistry
       e%surrogate => e2%surrogate
     ENDSUBROUTINE assign_etype
 !
