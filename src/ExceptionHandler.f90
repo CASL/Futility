@@ -388,8 +388,8 @@ MODULE ExceptionHandler
       IF(.NOT. ALLOCATED(e%exceptionRegistry) &
          .AND. ALLOCATED(e2%exceptionRegistry)) THEN
         ALLOCATE(e%exceptionRegistry(SIZE(e2%exceptionRegistry)))
+        e%exceptionRegistry=e2%exceptionRegistry
       ENDIF
-      e%exceptionRegistry=e2%exceptionRegistry
       e%surrogate => e2%surrogate
     ENDSUBROUTINE assign_etype
 !

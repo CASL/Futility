@@ -341,6 +341,7 @@ ENDINTERFACE
       CLASS(ExceptionTypeFatal),INTENT(INOUT) :: this
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
 
+      this%stopmode = .TRUE.
       WRITE(prefix,'(a)')  '#### EXCEPTION_FATAL ####'
 
     ENDSUBROUTINE genPrefix_ExceptionTypeFatal
