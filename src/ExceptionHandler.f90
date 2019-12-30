@@ -346,7 +346,7 @@ MODULE ExceptionHandler
     CALL myFatal%setStopMode(.TRUE.)
 
     ! create the default registry
-    ALLOCATE(e%exceptionRegistry(5))
+    ALLOCATE(e%exceptionRegistry(EXCEPTION_SIZE))
     e%exceptionRegistry(EXCEPTION_ERROR)%expobj &
       => myError
     e%exceptionRegistry(EXCEPTION_WARNING)%expobj &
@@ -358,6 +358,7 @@ MODULE ExceptionHandler
     e%exceptionRegistry(EXCEPTION_INFORMATION)%expobj &
       => myInformation
 
+    CALL e%reset()
     e%isInit = .TRUE.
 
   ENDSUBROUTINE init_ExceptionHandlerType
@@ -427,11 +428,6 @@ MODULE ExceptionHandler
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       INTEGER(SIK) :: i
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
-      e%nInfo=0
-      e%nWarn=0
-      e%nError=0
-      e%nFatal=0
-      e%nDebug=0
       IF(ALLOCATED(e%exceptionRegistry)) THEN
         DO i=1,SIZE(e%exceptionRegistry)
           CALL e%exceptionRegistry(i)%expobj%resetCounter()
@@ -448,11 +444,6 @@ MODULE ExceptionHandler
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       INTEGER(SIK) :: i
       NULLIFY(e%surrogate)
-      e%nInfo=0
-      e%nWarn=0
-      e%nError=0
-      e%nFatal=0
-      e%nDebug=0
       e%lastMesg=''
       e%logFileUnit=666
       e%stopOnError=.TRUE.
@@ -479,17 +470,27 @@ MODULE ExceptionHandler
       INTEGER(SIK) :: counter(EXCEPTION_SIZE)
 
       IF(ASSOCIATED(e%surrogate)) THEN
-        counter(EXCEPTION_INFORMATION)=e%surrogate%nInfo
-        counter(EXCEPTION_WARNING)=e%surrogate%nWarn
-        counter(EXCEPTION_ERROR)=e%surrogate%nError
-        counter(EXCEPTION_FATAL_ERROR)=e%surrogate%nFatal
-        counter(EXCEPTION_DEBUG)=e%surrogate%nDebug
+        counter(EXCEPTION_INFORMATION)=&
+          e%surrogate%exceptionRegistry(EXCEPTION_INFORMATION)%expobj%getCounter()
+        counter(EXCEPTION_WARNING)=&
+          e%surrogate%exceptionRegistry(EXCEPTION_WARNING)%expobj%getCounter()
+        counter(EXCEPTION_ERROR)=&
+          e%surrogate%exceptionRegistry(EXCEPTION_ERROR)%expobj%getCounter()
+        counter(EXCEPTION_FATAL_ERROR)=&
+          e%surrogate%exceptionRegistry(EXCEPTION_FATAL_ERROR)%expobj%getCounter()
+        counter(EXCEPTION_DEBUG)=&
+          e%surrogate%exceptionRegistry(EXCEPTION_DEBUG)%expobj%getCounter()
       ELSE
-        counter(EXCEPTION_INFORMATION)=e%nInfo
-        counter(EXCEPTION_WARNING)=e%nWarn
-        counter(EXCEPTION_ERROR)=e%nError
-        counter(EXCEPTION_FATAL_ERROR)=e%nFatal
-        counter(EXCEPTION_DEBUG)=e%nDebug
+        counter(EXCEPTION_INFORMATION)=&
+          e%exceptionRegistry(EXCEPTION_INFORMATION)%expobj%getCounter()
+        counter(EXCEPTION_WARNING)=&
+          e%exceptionRegistry(EXCEPTION_WARNING)%expobj%getCounter()
+        counter(EXCEPTION_ERROR)=&
+          e%exceptionRegistry(EXCEPTION_ERROR)%expobj%getCounter()
+        counter(EXCEPTION_FATAL_ERROR)=&
+          e%exceptionRegistry(EXCEPTION_FATAL_ERROR)%expobj%getCounter()
+        counter(EXCEPTION_DEBUG)=&
+          e%exceptionRegistry(EXCEPTION_DEBUG)%expobj%getCounter()
       ENDIF
     ENDFUNCTION getCounterAll
 !
@@ -504,32 +505,12 @@ MODULE ExceptionHandler
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK) :: count
       count=-1
+      IF(i > EXCEPTION_SIZE) RETURN
+      IF(i < 1) RETURN
       IF(ASSOCIATED(e%surrogate)) THEN
-        SELECTCASE(i)
-          CASE(EXCEPTION_INFORMATION)
-            count=e%surrogate%nInfo
-          CASE(EXCEPTION_WARNING)
-            count=e%surrogate%nWarn
-          CASE(EXCEPTION_DEBUG)
-            count=e%surrogate%nDebug
-          CASE(EXCEPTION_ERROR)
-            count=e%surrogate%nError
-          CASE(EXCEPTION_FATAL_ERROR)
-            count=e%surrogate%nFatal
-        ENDSELECT
+        count=e%surrogate%exceptionRegistry(i)%expobj%getCounter()
       ELSE
-        SELECTCASE(i)
-          CASE(EXCEPTION_INFORMATION)
-            count=e%nInfo
-          CASE(EXCEPTION_WARNING)
-            count=e%nWarn
-          CASE(EXCEPTION_DEBUG)
-            count=e%nDebug
-          CASE(EXCEPTION_ERROR)
-            count=e%nError
-          CASE(EXCEPTION_FATAL_ERROR)
-            count=e%nFatal
-        ENDSELECT
+        count=e%exceptionRegistry(i)%expobj%getCounter()
       ENDIF
     ENDFUNCTION getCounter
 !
@@ -546,17 +527,27 @@ MODULE ExceptionHandler
       lcounter=counter
       WHERE(counter < 0) lcounter=0
       IF(ASSOCIATED(e%surrogate)) THEN
-        e%surrogate%nInfo=lcounter(EXCEPTION_INFORMATION)
-        e%surrogate%nWarn=lcounter(EXCEPTION_WARNING)
-        e%surrogate%nError=lcounter(EXCEPTION_ERROR)
-        e%surrogate%nFatal=lcounter(EXCEPTION_FATAL_ERROR)
-        e%surrogate%nDebug=lcounter(EXCEPTION_DEBUG)
+        CALL e%surrogate%exceptionRegistry(EXCEPTION_INFORMATION)%expobj%setCounter( &
+          lcounter(EXCEPTION_INFORMATION))
+        CALL e%surrogate%exceptionRegistry(EXCEPTION_WARNING)%expobj%setCounter( &
+          lcounter(EXCEPTION_WARNING))
+        CALL e%surrogate%exceptionRegistry(EXCEPTION_ERROR)%expobj%setCounter( &
+          lcounter(EXCEPTION_ERROR))
+        CALL e%surrogate%exceptionRegistry(EXCEPTION_FATAL_ERROR)%expobj%setCounter( &
+          lcounter(EXCEPTION_FATAL_ERROR))
+        CALL e%surrogate%exceptionRegistry(EXCEPTION_DEBUG)%expobj%setCounter( &
+          lcounter(EXCEPTION_DEBUG))
       ELSE
-        e%nInfo=lcounter(EXCEPTION_INFORMATION)
-        e%nWarn=lcounter(EXCEPTION_WARNING)
-        e%nError=lcounter(EXCEPTION_ERROR)
-        e%nFatal=lcounter(EXCEPTION_FATAL_ERROR)
-        e%nDebug=lcounter(EXCEPTION_DEBUG)
+        CALL e%exceptionRegistry(EXCEPTION_INFORMATION)%expobj%setCounter( &
+          lcounter(EXCEPTION_INFORMATION))
+        CALL e%exceptionRegistry(EXCEPTION_WARNING)%expobj%setCounter( &
+          lcounter(EXCEPTION_WARNING))
+        CALL e%exceptionRegistry(EXCEPTION_ERROR)%expobj%setCounter( &
+          lcounter(EXCEPTION_ERROR))
+        CALL e%exceptionRegistry(EXCEPTION_FATAL_ERROR)%expobj%setCounter( &
+          lcounter(EXCEPTION_FATAL_ERROR))
+        CALL e%exceptionRegistry(EXCEPTION_DEBUG)%expobj%setCounter( &
+          lcounter(EXCEPTION_DEBUG))
       ENDIF
     ENDSUBROUTINE setCounter_all
 !
@@ -574,31 +565,9 @@ MODULE ExceptionHandler
       lcount=0
       IF(count > 0) lcount=count
       IF(ASSOCIATED(e%surrogate)) THEN
-        SELECTCASE(i)
-          CASE(EXCEPTION_INFORMATION)
-            e%surrogate%nInfo=lcount
-          CASE(EXCEPTION_WARNING)
-            e%surrogate%nWarn=lcount
-          CASE(EXCEPTION_DEBUG)
-            e%surrogate%nDebug=lcount
-          CASE(EXCEPTION_ERROR)
-            e%surrogate%nError=lcount
-          CASE(EXCEPTION_FATAL_ERROR)
-            e%surrogate%nFatal=lcount
-        ENDSELECT
+        CALL e%surrogate%exceptionRegistry(i)%expobj%setCounter(lcount)
       ELSE
-        SELECTCASE(i)
-          CASE(EXCEPTION_INFORMATION)
-            e%nInfo=lcount
-          CASE(EXCEPTION_WARNING)
-            e%nWarn=lcount
-          CASE(EXCEPTION_DEBUG)
-            e%nDebug=lcount
-          CASE(EXCEPTION_ERROR)
-            e%nError=lcount
-          CASE(EXCEPTION_FATAL_ERROR)
-            e%nFatal=lcount
-        ENDSELECT
+        CALL e%exceptionRegistry(i)%expobj%setCounter(lcount)
       ENDIF
     ENDSUBROUTINE setCounter_eCode
 !
@@ -622,7 +591,6 @@ MODULE ExceptionHandler
     RECURSIVE SUBROUTINE setLogFileUnit(e,unit)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       INTEGER(SIK),INTENT(IN) :: unit
-      LOGICAL(SBK) :: tmpQuiet
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
 
       !Try to set the log file unit number. Check that it is a valid
@@ -632,10 +600,7 @@ MODULE ExceptionHandler
       ELSE
         e%lastMesg='Illegal unit number for log file. '// &
                     'Log file unit not set.'
-        tmpQuiet=.FALSE.
-        e%nWarn=e%nWarn+1
-        CALL exceptionMessage(EXCEPTION_WARNING,tmpQuiet,.FALSE., &
-          ERROR_UNIT,e%lastMesg)
+        CALL e%raiseWarning(e%lastMesg)
       ENDIF
     ENDSUBROUTINE setLogFileUnit
 !
@@ -709,7 +674,7 @@ MODULE ExceptionHandler
       ELSE
         !Since the state of the log file can change (e.g. closed) check it's
         !integrity
-        nDebugOld=e%nDebug
+        nDebugOld=e%exceptionRegistry(EXCEPTION_DEBUG)%expobj%getCounter()
         e%logFileActive=.FALSE.
 
         !Test if the file is open
@@ -735,7 +700,8 @@ MODULE ExceptionHandler
 
         !If none of the checks produced a new warning then the log file check
         !passes the return value can be set to .TRUE. otherwise it is .FALSE.
-        IF(nDebugOld == e%nDebug) e%logFileActive=.TRUE.
+        IF(nDebugOld == e%exceptionRegistry(EXCEPTION_DEBUG)%expobj%getCounter())&
+          e%logFileActive=.TRUE.
       ENDIF
     ENDSUBROUTINE checkLogFileOK
 !
@@ -747,8 +713,14 @@ MODULE ExceptionHandler
     PURE SUBROUTINE setQuietMode_all(e,bool)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: bool
+      INTEGER(SIK) :: i
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       e%quiet=bool
+      IF(ALLOCATED(e%exceptionRegistry)) THEN
+        DO i=1,SIZE(e%exceptionRegistry)
+          CALL e%exceptionRegistry(i)%expobj%setQuietMode(bool)
+        ENDDO
+      ENDIF
     ENDSUBROUTINE setQuietMode_all
 !
 !-------------------------------------------------------------------------------
@@ -766,6 +738,8 @@ MODULE ExceptionHandler
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       IF(EXCEPTION_OK < eCode .AND. eCode < EXCEPTION_SIZE) &
         e%quiet(eCode)=bool
+      IF(EXCEPTION_OK < eCode .AND. eCode < EXCEPTION_SIZE) &
+        CALL e%exceptionRegistry(eCode)%expobj%setQuietMode(bool)
     ENDSUBROUTINE setQuietMode_eCode
 !
 !-------------------------------------------------------------------------------
@@ -779,10 +753,15 @@ MODULE ExceptionHandler
     PURE SUBROUTINE setQuietMode_array(e,bool)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       LOGICAL(SBK),INTENT(IN) :: bool(:)
-      INTEGER(SIK) :: n
+      INTEGER(SIK) :: n, i
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       n=MIN(EXCEPTION_SIZE-1,SIZE(bool))
       e%quiet(1:n)=bool(1:n)
+      IF(ALLOCATED(e%exceptionRegistry)) THEN
+        DO i=1,SIZE(e%exceptionRegistry)-1
+          CALL e%exceptionRegistry(i)%expobj%setQuietMode(e%quiet(i))
+        ENDDO
+      ENDIF
     ENDSUBROUTINE setQuietMode_array
 !
 !-------------------------------------------------------------------------------
@@ -899,6 +878,7 @@ MODULE ExceptionHandler
       LOGICAL(SBK),INTENT(IN) :: bool
       IF(ASSOCIATED(e%surrogate)) CALL copyFromSurrogate(e)
       e%stopOnError=bool
+      CALL e%exceptionRegistry(EXCEPTION_ERROR)%expobj%setStopMode(bool)
     ENDSUBROUTINE setStopOnError
 !
 !-------------------------------------------------------------------------------
@@ -1091,21 +1071,11 @@ MODULE ExceptionHandler
     SUBROUTINE raiseInformation(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-      LOGICAL(SBK) :: toLog
+      REQUIRE(e%isInit)
       IF(ASSOCIATED(e%surrogate)) THEN
-        e%surrogate%nInfo=e%surrogate%nInfo+1
-        e%surrogate%lastMesg=mesg
-        toLog=(e%surrogate%logFileActive .AND. &
-          e%surrogate%verbose(EXCEPTION_INFORMATION))
-        CALL exceptionMessage(EXCEPTION_INFORMATION, &
-          e%surrogate%quiet(EXCEPTION_INFORMATION),toLog, &
-          e%surrogate%logFileUnit,e%surrogate%lastMesg)
+        CALL e%surrogate%raiseRuntimeError(EXCEPTION_INFORMATION,mesg)
       ELSE
-        e%nInfo=e%nInfo+1
-        e%lastMesg=mesg
-        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_INFORMATION))
-        CALL exceptionMessage(EXCEPTION_INFORMATION, &
-          e%quiet(EXCEPTION_INFORMATION),toLog,e%logFileUnit,e%lastMesg)
+        CALL e%raiseRuntimeError(EXCEPTION_INFORMATION,mesg)
       ENDIF
     ENDSUBROUTINE raiseInformation
 !
@@ -1120,21 +1090,11 @@ MODULE ExceptionHandler
     SUBROUTINE raiseWarning(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-      LOGICAL(SBK) :: toLog
+      REQUIRE(e%isInit)
       IF(ASSOCIATED(e%surrogate)) THEN
-        e%surrogate%nWarn=e%surrogate%nWarn+1
-        e%surrogate%lastMesg=mesg
-        toLog=(e%surrogate%logFileActive .AND. &
-          e%surrogate%verbose(EXCEPTION_WARNING))
-        CALL exceptionMessage(EXCEPTION_WARNING, &
-          e%surrogate%quiet(EXCEPTION_WARNING),toLog, &
-          e%surrogate%logFileUnit,e%surrogate%lastMesg)
+        CALL e%surrogate%raiseRuntimeError(EXCEPTION_WARNING,mesg)
       ELSE
-        e%nWarn=e%nWarn+1
-        e%lastMesg=mesg
-        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_WARNING))
-        CALL exceptionMessage(EXCEPTION_WARNING,e%quiet(EXCEPTION_WARNING), &
-          toLog,e%logFileUnit,e%lastMesg)
+        CALL e%raiseRuntimeError(EXCEPTION_WARNING,mesg)
       ENDIF
     ENDSUBROUTINE raiseWarning
 !
@@ -1149,21 +1109,11 @@ MODULE ExceptionHandler
     SUBROUTINE raiseDebug(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-      LOGICAL(SBK) :: toLog
+      REQUIRE(e%isInit)
       IF(ASSOCIATED(e%surrogate)) THEN
-        e%surrogate%nDebug=e%surrogate%nDebug+1
-        e%surrogate%lastMesg=mesg
-        toLog=(e%surrogate%logFileActive .AND. &
-          e%surrogate%verbose(EXCEPTION_DEBUG))
-        CALL exceptionMessage(EXCEPTION_DEBUG, &
-          e%surrogate%quiet(EXCEPTION_DEBUG),toLog, &
-          e%surrogate%logFileUnit,e%surrogate%lastMesg)
+        CALL e%surrogate%raiseRuntimeError(EXCEPTION_DEBUG,mesg)
       ELSE
-        e%nDebug=e%nDebug+1
-        e%lastMesg=mesg
-        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_DEBUG))
-        CALL exceptionMessage(EXCEPTION_DEBUG,e%quiet(EXCEPTION_DEBUG),toLog, &
-          e%logFileUnit,e%lastMesg)
+        CALL e%raiseRuntimeError(EXCEPTION_DEBUG,mesg)
       ENDIF
     ENDSUBROUTINE raiseDebug
 !
@@ -1178,23 +1128,11 @@ MODULE ExceptionHandler
     SUBROUTINE raiseError(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-      LOGICAL(SBK) :: toLog
+      REQUIRE(e%isInit)
       IF(ASSOCIATED(e%surrogate)) THEN
-        e%surrogate%nError=e%surrogate%nError+1
-        e%surrogate%lastMesg=mesg
-        toLog=(e%surrogate%logFileActive .AND. &
-          e%surrogate%verbose(EXCEPTION_ERROR))
-        CALL exceptionMessage(EXCEPTION_ERROR, &
-          e%surrogate%quiet(EXCEPTION_ERROR),toLog, &
-          e%surrogate%logFileUnit,e%surrogate%lastMesg)
-        CALL exceptionStop(e%surrogate%stopOnError)
+        CALL e%surrogate%raiseRuntimeError(EXCEPTION_ERROR,mesg)
       ELSE
-        e%nError=e%nError+1
-        e%lastMesg=mesg
-        toLog=(e%logFileActive .AND. e%verbose(EXCEPTION_ERROR))
-        CALL exceptionMessage(EXCEPTION_ERROR,e%quiet(EXCEPTION_ERROR),toLog, &
-          e%logFileUnit,e%lastMesg)
-        CALL exceptionStop(e%stopOnError)
+        CALL e%raiseRuntimeError(EXCEPTION_ERROR,mesg)
       ENDIF
     ENDSUBROUTINE raiseError
 !
@@ -1210,109 +1148,13 @@ MODULE ExceptionHandler
     SUBROUTINE raiseFatalError(e,mesg)
       CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
       CHARACTER(LEN=*),INTENT(IN) :: mesg
-      LOGICAL(SBK) :: tmpQuiet
-      tmpQuiet=.FALSE.
+      REQUIRE(e%isInit)
       IF(ASSOCIATED(e%surrogate)) THEN
-        e%surrogate%nFatal=e%surrogate%nFatal+1
-        e%surrogate%lastMesg=mesg
-        CALL exceptionMessage(EXCEPTION_FATAL_ERROR,tmpQuiet, &
-          e%surrogate%logFileActive,e%surrogate%logFileUnit, &
-          e%surrogate%lastMesg)
+        CALL e%surrogate%raiseRuntimeError(EXCEPTION_FATAL_ERROR,mesg)
       ELSE
-        e%nFatal=e%nFatal+1
-        e%lastMesg=mesg
-        CALL exceptionMessage(EXCEPTION_FATAL_ERROR,tmpQuiet,e%logFileActive, &
-          e%logFileUnit,e%lastMesg)
+        CALL e%raiseRuntimeError(EXCEPTION_FATAL_ERROR,mesg)
       ENDIF
-      CALL exceptionStop(.TRUE.)
     ENDSUBROUTINE raiseFatalError
-!
-!-------------------------------------------------------------------------------
-!> @brief A private routine for printing an exception message.
-!> @param eCode the exception code
-!> @param isQuiet whether or not the message will be output to standard error
-!> @param isLogActive whether or not the message will be output to the exception log file
-!> @param logUnit the output unit number for the exception log file
-!> @param mesg an informative message about the exception
-!>
-    SUBROUTINE exceptionMessage(eCode,isQuiet,isLogActive,logUnit,mesg)
-      INTEGER(SIK),INTENT(IN) :: eCode
-      LOGICAL(SBK),INTENT(INOUT) :: isQuiet
-      LOGICAL(SBK),INTENT(IN) :: isLogActive
-      INTEGER(SIK),INTENT(IN) :: logUnit
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: mesg
-      CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: prefix
-      INTEGER(SIK) :: ioerr1,ioerr2,prefixLen
-
-      !Set the appropriate prefix and printing options
-      SELECT CASE(eCode)
-        CASE(EXCEPTION_INFORMATION)
-          prefix=''
-          WRITE(mesg,'(a)')  'EXCEPTION_INFORMATION: '//TRIM(mesg)
-          IF(isLogActive) isQuiet=.TRUE.
-        CASE(EXCEPTION_WARNING)
-          WRITE(prefix,'(a)')  '#### EXCEPTION_WARNING ####'
-        CASE(EXCEPTION_ERROR)
-          WRITE(prefix,'(a)')  '#### EXCEPTION_ERROR ####'
-        CASE(EXCEPTION_FATAL_ERROR)
-          WRITE(prefix,'(a)')  '#### EXCEPTION_FATAL_ERROR ####'
-          isQuiet=.FALSE.
-        CASE(EXCEPTION_DEBUG)
-          WRITE(prefix,'(a)')  '#### EXCEPTION_DEBUG_MESG ####'
-      ENDSELECT
-
-      !Write to the default standard error output
-      IF(.NOT.isQuiet) THEN
-        WRITE(ERROR_UNIT,'(a)') TRIM(prefix)
-        WRITE(ERROR_UNIT,'(6x,a)') TRIM(mesg)
-        FLUSH(ERROR_UNIT)
-      ENDIF
-
-      !Write to the log file
-      IF(isLogActive) THEN
-        WRITE(logUnit,'(a)',IOSTAT=ioerr1) TRIM(prefix)
-        WRITE(logUnit,'(6x,a)',IOSTAT=ioerr2) TRIM(mesg)
-        FLUSH(logUnit)
-
-        !Additional error message if problem writing to log file
-        IF(ioerr1 /= 0 .OR. ioerr2 /= 0) THEN
-          WRITE(ERROR_UNIT,'(a)') '#### EXCEPTION_INFORMATION ####'
-          IF(isQuiet) THEN
-            !If quiet mode, then print the message that failed.
-            WRITE(ERROR_UNIT,'(6x,a)') 'Problem writing to log file.'
-            WRITE(ERROR_UNIT,'(6x,a)') 'Original Message: "'// &
-                                       TRIM(prefix)//' - '//TRIM(mesg)//'"'
-          ELSE
-            !Message was already printed.
-            WRITE(ERROR_UNIT,'(6x,a)') 'Problem writing above message '// &
-                                       'to log file.'
-          ENDIF
-        ENDIF
-      ENDIF
-
-      !Set the message to be included as one line back to exception object
-      prefixLen = LEN_TRIM(prefix)+3
-      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg(1:EXCEPTION_MAX_MESG_LENGTH-prefixLen))
-    ENDSUBROUTINE exceptionMessage
-!
-!-------------------------------------------------------------------------------
-!> @brief Stops execution based on value of stopmode
-!> @param stopmode boolean to indicate whether or not to stop execution
-!>
-    SUBROUTINE exceptionStop(stopmode)
-#ifdef HAVE_MPI
-      INCLUDE 'mpif.h'
-      INTEGER(SIK) :: ierr
-#endif
-      LOGICAL(SBK),INTENT(IN) :: stopmode
-#ifdef HAVE_MPI
-      IF(stopmode) CALL MPI_Abort(MPI_COMM_WORLD,666,ierr)
-#else
-      IF(stopmode) THEN
-        STOP 666
-      ENDIF
-#endif
-    ENDSUBROUTINE exceptionStop
 !
 !-------------------------------------------------------------------------------
 !> @brief Copies the attributes from the surrogate to the passed exception

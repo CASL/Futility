@@ -70,6 +70,7 @@ MODULE ExceptionTypes
       !> @copybrief ExceptionTypes::resetCounter_ExceptionTypeBase
       !> @copydetails ExceptionTypes::resetCounter_ExceptionTypeBase
       PROCEDURE,PASS :: resetCounter => resetCounter_ExceptionTypeBase
+      PROCEDURE,PASS :: setCounter => setCounter_ExceptionTypeBase
       !> @copybrief ExceptionTypes::getCounter_ExceptionTypeBase
       !> @copydetails ExceptionTypes::getCounter_ExceptionTypeBase
       PROCEDURE,PASS :: getCounter => getCounter_ExceptionTypeBase
@@ -167,7 +168,7 @@ ENDINTERFACE
 !-------------------------------------------------------------------------------
 !> @brief Set the stopmode
 !>
-    SUBROUTINE setStopMode_ExceptionTypeBase(this,stopmode)
+    PURE SUBROUTINE setStopMode_ExceptionTypeBase(this,stopmode)
       CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
       LOGICAL(SBK),INTENT(IN) :: stopmode
 
@@ -208,13 +209,22 @@ ENDINTERFACE
     ENDSUBROUTINE resetCounter_ExceptionTypeBase
 !
 !-------------------------------------------------------------------------------
+!> @brief Resets the error counter
+!>
+    PURE SUBROUTINE setCounter_ExceptionTypeBase(this,counter)
+      CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
+      INTEGER(SIK),INTENT(IN) :: counter
+
+      this%counter = counter
+
+    ENDSUBROUTINE setCounter_ExceptionTypeBase
+!
+!-------------------------------------------------------------------------------
 !> @brief Get the current counter value
 !>
-    FUNCTION getCounter_ExceptionTypeBase(this) RESULT(counterOut)
-      CLASS(ExceptionTypeBase),INTENT(INOUT) :: this
+    PURE FUNCTION getCounter_ExceptionTypeBase(this) RESULT(counterOut)
+      CLASS(ExceptionTypeBase),INTENT(IN) :: this
       INTEGER(SIK) :: counterOut
-
-      REQUIRE(this%isInit)
 
       counterOut = this%counter
 
@@ -275,8 +285,6 @@ ENDINTERFACE
     PURE FUNCTION getTag_ExceptionTypeBase(this) RESULT(tag)
       CLASS(ExceptionTypeBase),INTENT(IN) :: this
       INTEGER(SIK) :: tag
-
-      REQUIRE(this%isInit)
 
       tag = this%tag
 
@@ -353,7 +361,7 @@ ENDINTERFACE
       CLASS(ExceptionTypeDebug),INTENT(INOUT) :: this
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LEN),INTENT(INOUT) :: prefix
 
-      WRITE(prefix,'(a)')  '#### EXCEPTION_DEBUG ####'
+      WRITE(prefix,'(a)')  '#### EXCEPTION_DEBUG_MESG ####'
 
     ENDSUBROUTINE genPrefix_ExceptionTypeDebug
 !
