@@ -8,83 +8,88 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testStrings
 #include "UnitTest.h"
-  USE ISO_C_BINDING
-  USE UnitTest
-  USE IntrType
-  USE Strings
+USE ISO_C_BINDING
+USE UnitTest
+USE IntrType
+USE Strings
 
-  IMPLICIT NONE
+IMPLICIT NONE
 
-  CREATE_TEST('TEST STRINGS')
-  REGISTER_SUBTEST('Un-Iniitialized State',testUnInit)
-  REGISTER_SUBTEST('Character Assignments',testAssign_chars)
-  REGISTER_SUBTEST('Numberal Assignments',testAssign_nums)
-  REGISTER_SUBTEST('Array Assignments',testAssign_arrays)
-  REGISTER_SUBTEST('Intrinsics',testIntrinsic)
-  REGISTER_SUBTEST('string_functs',testStrFunct)
-  FINALIZE_TEST()
+CREATE_TEST('TEST STRINGS')
+REGISTER_SUBTEST('Un-Iniitialized State',testUnInit)
+REGISTER_SUBTEST('Character Assignments',testAssign_chars)
+REGISTER_SUBTEST('Numberal Assignments',testAssign_nums)
+REGISTER_SUBTEST('Array Assignments',testAssign_arrays)
+REGISTER_SUBTEST('Intrinsics',testIntrinsic)
+REGISTER_SUBTEST('string_functs',testStrFunct)
+FINALIZE_TEST()
 !
 !-------------------------------------------------------------------------------
 CONTAINS
 !
 !-------------------------------------------------------------------------------
 !>
-  SUBROUTINE testUnInit()
-    TYPE(StringType) :: testString
-    COMPONENT_TEST('Test Unitialized')
-    !Test methods for uninitialized state
-    ASSERT_EQ(LEN(testString),0,'LEN(testString) (uninit)')
-    ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (uninit)')
-    ASSERT_EQ(CHAR(testString),'','CHAR(testString) (uninit)')
-    ASSERT_EQ(TRIM(testString),'','TRIM(testString) (uninit)')
-  ENDSUBROUTINE testUnInit
+SUBROUTINE testUnInit()
+  TYPE(StringType) :: testString
+  COMPONENT_TEST('Test Unitialized')
+  !Test methods for uninitialized state
+  ASSERT_EQ(LEN(testString),0,'LEN(testString) (uninit)')
+  ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (uninit)')
+  ASSERT_EQ(CHAR(testString),'','CHAR(testString) (uninit)')
+  ASSERT_EQ(TRIM(testString),'','TRIM(testString) (uninit)')
+
+  COMPONENT_TEST('Test Clear')
+  CALL testString%clear()
+  ASSERT_EQ(LEN(testString),0,'LEN(testString) (uninit)')
+  ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (uninit)')
+  ASSERT_EQ(CHAR(testString),'','CHAR(testString) (uninit)')
+  ASSERT_EQ(TRIM(testString),'','TRIM(testString) (uninit)')
+ENDSUBROUTINE testUnInit
 !
 !-------------------------------------------------------------------------------
 !>
-  SUBROUTINE testAssign_chars()
-    TYPE(StringType) :: testString,testString2
-    CHARACTER(LEN=:),ALLOCATABLE :: char_str
+SUBROUTINE testAssign_chars()
+  TYPE(StringType) :: testString,testString2
+  CHARACTER(LEN=:),ALLOCATABLE :: char_str
 
-    COMPONENT_TEST('Assignment Char to String Scalar')
-    !Test assigning a zero length character to a string
-    testString=""
-    ASSERT_EQ(CHAR(testString),"",'CHAR(testString) (zero-length)')
-    ASSERT_EQ(LEN(testString),0,'LEN(testString) (zero-length)')
-    ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (zero-length)')
-    ASSERT_EQ(TRIM(testString),'','TRIM(testString) (zero-length)')
+  COMPONENT_TEST('Assignment Char to String Scalar')
+  !Test assigning a zero length character to a string
+  testString=""
+  ASSERT_EQ(CHAR(testString),"",'CHAR(testString) (zero-length)')
+  ASSERT_EQ(LEN(testString),0,'LEN(testString) (zero-length)')
+  ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (zero-length)')
+  ASSERT_EQ(TRIM(testString),'','TRIM(testString) (zero-length)')
 
-    !Test assigning a non-empty character to a string from a constant
-    testString='constant'
-    WRITE(*,*) CHAR(testString)
-    ASSERT_EQ(CHAR(testString),'constant','CHAR(testString) (=''constant'')')
-    ASSERT_EQ(testString%at(1),'c','CHAR(testString,1,1) (=''constant'')')
-    ASSERT_EQ(testString%substr(2,3),'on','CHAR(testString,2,3) (=''constant'')')
-    !ASSERT(testString%at(-1,100) == 'constant','CHAR(testString,-1,100) (=''constant'')')
-    ASSERT_EQ(LEN(testString),8,'LEN(testString) (=''constant'')')
-    ASSERT_EQ(LEN_TRIM(testString),8,'LEN_TRIM(testString) (=''constant'')')
-    ASSERT_EQ(TRIM(testString),'constant','TRIM(testString) (=''constant'')')
+  !Test assigning a non-empty character to a string
+  testString='constant '
+  ASSERT_EQ(CHAR(testString),'constant ','CHAR(testString) (="constant")')
+  ASSERT_EQ(testString%at(1),'c','%at(1) return 1st character')
+  ASSERT_EQ(testString%at(-1),'','%at(-1) return null string')
+  ASSERT_EQ(testString%substr(2,3),'on','%substr(2,3) return 2nd and 3rd char')
+  ASSERT_EQ(LEN(testString),9,'LEN(testString) (=''constant'')')
+  ASSERT_EQ(LEN_TRIM(testString),8,'LEN_TRIM(testString) (=''constant'')')
+  ASSERT_EQ(TRIM(testString),'constant','TRIM(testString) (=''constant'')')
 
-    !Test assigning a non-empty character to a string from a variable
-    ALLOCATE(CHARACTER(10) :: char_str)
-    char_str='variable  '
-    testString=char_str
-    ASSERT_EQ(CHAR(testString),'variable  ','CHAR(testString) (=''variable'')')
-    ASSERT_EQ(LEN(testString),10,'LEN(testString) (=''variable'')')
-    ASSERT_EQ(LEN_TRIM(testString),8,'LEN_TRIM(testString) (=''variable'')')
-    ASSERT_EQ(TRIM(testString),'variable','TRIM(testString) (=''variable'')')
-    DEALLOCATE(char_str)
+  !Test assigning a non-empty character to a string from a variable
+  ALLOCATE(CHARACTER(10) :: char_str)
+  char_str='variable  '
+  testString=char_str
+  ASSERT_EQ(CHAR(testString),'variable  ','CHAR(testString) (=''variable'')')
+  ASSERT_EQ(LEN(testString),10,'LEN(testString) (=''variable'')')
+  ASSERT_EQ(LEN_TRIM(testString),8,'LEN_TRIM(testString) (=''variable'')')
+  ASSERT_EQ(TRIM(testString),'variable','TRIM(testString) (=''variable'')')
+  DEALLOCATE(char_str)
 
-    !Test assigning a string to a character
-    COMPONENT_TEST('Assignment String Scalar to Char')
-    char_str=CHAR(testString)
-    ASSERT_EQ(char_str,'variable','char_str')
+  !Test assigning a string to a character
+  COMPONENT_TEST('Assignment String Scalar to Char')
+  char_str=CHAR(testString)
+  ASSERT_EQ(char_str,'variable','char_str')
 
-    !Test assigning a string to a string
-    COMPONENT_TEST('Assignment String Scalar to String Scalar')
-    testString2='testString2'
-    testString2=testString
-    ASSERT_EQ(CHAR(testString2),'variable','variable')
-  ENDSUBROUTINE testAssign_chars
+  !Test assigning a string to a string
+  COMPONENT_TEST('Assignment String Scalar to String Scalar')
+  testString2=testString
+  ASSERT_EQ(CHAR(testString2),'variable','variable')
+ENDSUBROUTINE testAssign_chars
 !
 !-------------------------------------------------------------------------------
 !>
@@ -452,11 +457,6 @@ CONTAINS
     ASSERT(.NOT.ALL(test3a,test3a2),'ALL 3-D & 3-D')
     ASSERT(ALL(test3a,test3a2,.TRUE.),'ALL 3-D & 3-D, w/ NOT=T')
     ASSERT(.NOT.ALL(test3a,test3a2,.FALSE.),'ALL 3-D & 3-D, w/ NOT=F')
-
-    !Test replacing characters in a string
-    testString="this_and_that"
-    CALL testString%replace(1,4,"that")
-    ASSERT_EQ(CHAR(testString),"that_and_that","replace this")
    
   ENDSUBROUTINE testIntrinsic
 !
@@ -466,6 +466,17 @@ CONTAINS
     TYPE(StringType) :: str
     TYPE(StringType), ALLOCATABLE :: str_list(:),ref_list(:)
     INTEGER(SIK) :: iWord
+    COMPONENT_TEST('String Split')
+    str = "the"
+    str_list = str%split()
+    ASSERT_EQ(SIZE(str_list),1,"splits count")
+    ASSERT_EQ(CHAR(str_list(1)),'the',"splits")
+
+    str = "the"
+    str_list = str%split('the')
+    ASSERT_EQ(SIZE(str_list),1,"splits count")
+    ASSERT_EQ(CHAR(str_list(1)),'',"splits")
+
     ALLOCATE(ref_list(9))
     ref_list(1) = "The"
     ref_list(2) = "quick"
@@ -478,17 +489,154 @@ CONTAINS
     ref_list(9) = "dog."
 
     str = "The quick brown fox jumped over a lazy dog."
+    str_list = str%split(' ')
+    ASSERT_EQ(SIZE(str_list),9,"splits count")
+    DO iWord=1,SIZE(str_list)
+      ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits")
+    ENDDO
+    DEALLOCATE(str_list)
     str_list = str%split()
     ASSERT_EQ(SIZE(str_list),9,"splits count")
     DO iWord=1,SIZE(str_list)
       ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits")
     ENDDO
-    str = "    The   quick   brown   fox   jumped    over a lazy   dog.   "
+    DEALLOCATE(str_list)
+
+    str = "   The   quick   brown   fox   jumped   over   a   lazy   dog.   "
     str_list = str%split()
+    ASSERT_EQ(SIZE(str_list),9,"splits count")
     DO iWord=1,SIZE(str_list)
       ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits2")
     ENDDO
+    DEALLOCATE(ref_list)
+    ALLOCATE(ref_list(12))
+    ref_list(1) = ""
+    ref_list(2) = "The"
+    ref_list(3) = "quick"
+    ref_list(4) = "brown"
+    ref_list(5) = "fox"
+    ref_list(6) = "jumped"
+    ref_list(7) = "over"
+    ref_list(8) = "a"
+    ref_list(9) = "lazy"
+    ref_list(10) = ""
+    ref_list(11) = ""
+    ref_list(12) = "dog."
+    str = " The quick brown fox jumped over a lazy   dog. "
+    str_list = str%split(' ')
+    ASSERT_EQ(SIZE(str_list),12,"splits count")
+    DO iWord=1,SIZE(str_list)
+      ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits2")
+    ENDDO
+    DEALLOCATE(str_list)
+
+    COMPONENT_TEST('%isInteger')
+    str = ''
+    ASSERT(.NOT.str%isInteger(),'empty')
+    str = '13579'
+    ASSERT(str%isInteger(),'13579')
+    str = '03579'
+    ASSERT(str%isInteger(),'with 0')
+    str = '+13579'
+    ASSERT(str%isInteger(),'with +')
+    str = '-13579'
+    ASSERT(str%isInteger(),'with -')
+    str = 'e13579'
+    ASSERT(.NOT.str%isInteger(),'with e')
+    str = '$13579'
+    ASSERT(.NOT.str%isInteger(),'with $')
+
+    COMPONENT_TEST('%isFloat')
+    str = ''
+    ASSERT(.NOT.str%isFloat(),'empty')
+    str = '0.2468'
+    ASSERT(str%isFloat(),'0.2468')
+    str = '+0.2468'
+    ASSERT(str%isFloat(),'with +')
+    str = '-0.2468'
+    ASSERT(str%isFloat(),'with -')
+    str = '-0.2468E000'
+    ASSERT(str%isFloat(),'with e000')
+    str = '-0.2468d000'
+    ASSERT(str%isFloat(),'with e000')
+    str = '-0.2468e000'
+    ASSERT(str%isFloat(),'with e000')
+    str = '-0.2468e+000'
+    ASSERT(str%isFloat(),'with e+000')
+    str = '-0.2468e-000'
+    ASSERT(str%isFloat(),'with e-000')
+    str = '-.2468e-000'
+    ASSERT(.NOT.str%isFloat(),'no leading digit')
+    str = '-0.2468-000'
+    ASSERT(.NOT.str%isFloat(),'mixing exponent symbol')
+    str = '-0.2a68000'
+    ASSERT(.NOT.str%isFloat(),'with a')
+    str = '-0.2a68e-000'
+    ASSERT(.NOT.str%isFloat(),'with a and exponent')
+    str = '-0.2468e-'
+    ASSERT(.NOT.str%isFloat(),'missing exponent')
+    str = '-0.2468e'
+    ASSERT(.NOT.str%isFloat(),'missing exponent')
     
+    COMPONENT_TEST('%isNumeric')
+    str = ''
+    ASSERT(.NOT.str%isNumeric(),'empty')
+    str = '13579'
+    ASSERT(str%isNumeric(),'13579')
+    str = '03579'
+    ASSERT(str%isNumeric(),'with 0')
+    str = '+13579'
+    ASSERT(str%isNumeric(),'with +')
+    str = '-13579'
+    ASSERT(str%isNumeric(),'with -')
+    str = 'e13579'
+    ASSERT(.NOT.str%isNumeric(),'with e')
+    str = '$13579'
+    ASSERT(.NOT.str%isNumeric(),'with $')
+    str = '0.2468'
+    ASSERT(str%isNumeric(),'0.2468')
+    str = '+0.2468'
+    ASSERT(str%isNumeric(),'with +')
+    str = '-0.2468'
+    ASSERT(str%isNumeric(),'with -')
+    str = '-0.2468E000'
+    ASSERT(str%isNumeric(),'with e000')
+    str = '-0.2468d000'
+    ASSERT(str%isNumeric(),'with e000')
+    str = '-0.2468e000'
+    ASSERT(str%isNumeric(),'with e000')
+    str = '-0.2468e+000'
+    ASSERT(str%isNumeric(),'with e+000')
+    str = '-0.2468e-000'
+    ASSERT(str%isNumeric(),'with e-000')
+    str = '-.2468e-000'
+    ASSERT(.NOT.str%isNumeric(),'no leading digit')
+    str = '-0.2468-000'
+    ASSERT(.NOT.str%isNumeric(),'mixing exponent symbol')
+    str = '-0.2a68000'
+    ASSERT(.NOT.str%isNumeric(),'with a')
+    str = '-0.2a68e-000'
+    ASSERT(.NOT.str%isNumeric(),'with a and exponent')
+    str = '-0.2468e-'
+    ASSERT(.NOT.str%isNumeric(),'missing exponent')
+    str = '-0.2468e'
+    ASSERT(.NOT.str%isNumeric(),'missing exponent')
+
+    COMPONENT_TEST('%replace')
+    !Test replacing characters in a string
+    str="AABBAA"
+    str = str%replace("A","B")
+    ASSERT_EQ(CHAR(str),"BBBBBB","replace")
+    str="AACAACAA"
+    str = str%replace("A","Bb")
+    ASSERT_EQ(CHAR(str),"BbBbCBbBbCBbBb","replace")
+    str="AACAACAACC"
+    str = str%replace("AA","c")
+    ASSERT_EQ(CHAR(str),"cCcCcCC","replace")
+    str="AACCAA"
+    str = str%replace("AAA","c")
+    ASSERT_EQ(CHAR(str),"AACCAA","replace")
+   
   ENDSUBROUTINE testStrFunct
 !
 ENDPROGRAM testStrings

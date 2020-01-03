@@ -107,8 +107,6 @@ MODULE IO_Strings
   PUBLIC :: isChar
   PUBLIC :: isCharCap
   PUBLIC :: isCharLow
-  !
-  !PUBLIC :: charToStringArray
 
   !> Character representing a space symbol
   CHARACTER(LEN=*),PARAMETER :: BLANK=" "
@@ -387,19 +385,13 @@ MODULE IO_Strings
 !>
     PURE SUBROUTINE stripComment_char(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
-      INTEGER(SIK) :: stt,stp
-      INTEGER(SIK),ALLOCATABLE :: bangloc(:)
+      INTEGER(SIK) :: stp,bangloc
 
-      stt=1
-      stp=LEN(string)
-      IF(strmatch(string,BANG)) THEN
-        !Determine the location of the first '!' character and remove all
-        !text after this character (including the '!' character)
-        CALL strfind(string,BANG,bangloc)
-        stp=bangloc(1)-1
-        DEALLOCATE(bangloc)
-      ENDIF
-      string = string(stt:stp)
+      !Determine the location of the first '!' character and remove all
+      !text after this character (including the '!' character)
+      bangloc = INDEX(string,BANG)
+      stp = MERGE(bangloc-1,LEN(string),bangloc > 0)
+      string = string(1:stp)
     ENDSUBROUTINE stripComment_char
 !
 !-------------------------------------------------------------------------------
@@ -408,19 +400,13 @@ MODULE IO_Strings
 !>
     PURE SUBROUTINE stripComment_string(string)
       TYPE(StringType),INTENT(INOUT) :: string
-      INTEGER(SIK) :: stt,stp
-      INTEGER(SIK),ALLOCATABLE :: bangloc(:)
+      INTEGER(SIK) :: stp,bangloc
 
-      stt=1
-      stp=LEN(string)
-      IF(strmatch(string,BANG)) THEN
-        !Determine the location of the first '!' character and remove all
-        !text after this character (including the '!' character)
-        CALL strfind(CHAR(string),BANG,bangloc)
-        stp=bangloc(1)-1
-        DEALLOCATE(bangloc)
-      ENDIF
-      string = string%substr(stt,stp)
+      !Determine the location of the first '!' character and remove all
+      !text after this character (including the '!' character)
+      bangloc = INDEX(string,BANG)
+      stp = MERGE(bangloc-1,LEN(string),bangloc > 0)
+      string = string%substr(1,stp)
     ENDSUBROUTINE stripComment_string
 !
 !-------------------------------------------------------------------------------
@@ -605,7 +591,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: aline
       INTEGER(SIK) :: i,multidcol,n,ncol,nmult,ioerr
       LOGICAL(SIK) :: nonblankd,nonblank,multidata,inQuotes
-!
+
       !Check for single-quoted strings, if the number of single quotes is odd
       !then return with a value of -1 to signal an error
       IF(MOD(nmatchstr(TRIM(aline),"'"),2) /= 0) THEN
@@ -1144,7 +1130,7 @@ MODULE IO_Strings
         ENDIF
       ENDIF
       DO i=istt,istp,incr
-        bool=strmatch(string(i),pattern)
+        bool = INDEX(string(i),pattern) > 0
         IF(bool) THEN
           ind=i
           EXIT
