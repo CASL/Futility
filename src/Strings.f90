@@ -124,44 +124,42 @@ MODULE Strings
       PROCEDURE,PASS :: lower => toLower_string
       !> copybrief StringType::at_string
       !> copydetails StringType::at_string
-      PROCEDURE,PASS :: at_string
-      GENERIC :: at => at_string
+      PROCEDURE,PASS :: at => at_string
       !> copybrief StringType::substr_str
       !> copydetails StringType::substr_str
-      PROCEDURE,PASS :: substr_str
-      GENERIC :: substr => substr_str
+      PROCEDURE,PASS :: substr => substr_str
       !> copybrief StringType::replace_slice
       !> copydetails StringType::replace_slice
-      PROCEDURE,PASS :: replace_slice
+      PROCEDURE,PASS,PRIVATE :: replace_slice
       !> copybrief StringType::replace_pattern
       !> copydetails StringType::replace_pattern
-      PROCEDURE,PASS :: replace_pattern
+      PROCEDURE,PASS,PRIVATE :: replace_pattern
       GENERIC :: replace => replace_slice,replace_pattern
       !> copybrief StringType:: split_string
       !> copydetails StringType:: split_string
-      PROCEDURE,PASS :: split_string
+      PROCEDURE,PASS,PRIVATE :: split_string
       !> copybrief StringType::split_string_space
       !> copydetails StringType::split_string_space
-      PROCEDURE,PASS :: split_string_space
+      PROCEDURE,PASS,PRIVATE :: split_string_space
       GENERIC :: split => split_string, split_string_space
       !> copybrief StringType::assign_char_to_StringType
       !> copydetails StringType::assign_char_to_StringType
-      PROCEDURE,PASS :: assign_char_to_StringType
-      !> @copybrief Strings::assign_Short_Integer_to_StringType
-      !> @copydetails Strings::assign_Short_Integer_to_StringType
-      PROCEDURE assign_Short_Integer_to_StringType
-      !> @copybrief Strings::assign_Long_Integer_to_StringType
-      !> @copydetails Strings::assign_Long_Integer_to_StringType
-      PROCEDURE assign_Long_Integer_to_StringType
-      !> @copybrief Strings::assign_Single_Real_to_StringType
-      !> @copydetails Strings::assign_Single_Real_to_StringType
-      PROCEDURE assign_Single_Real_to_StringType
-      !> @copybrief Strings::assign_Double_Real_to_StringType
-      !> @copydetails Strings::assign_Double_Real_to_StringType
-      PROCEDURE assign_Double_Real_to_StringType
+      PROCEDURE,PASS,PRIVATE :: assign_char_to_StringType
+      !> @copybrief StringType::assign_Short_Integer_to_StringType
+      !> @copydetails StringType::assign_Short_Integer_to_StringType
+      PROCEDURE,PASS,PRIVATE :: assign_Short_Integer_to_StringType
+      !> @copybrief StringType::assign_Long_Integer_to_StringType
+      !> @copydetails StringType::assign_Long_Integer_to_StringType
+      PROCEDURE,PASS,PRIVATE :: assign_Long_Integer_to_StringType
+      !> @copybrief StringType::assign_Single_Real_to_StringType
+      !> @copydetails StringType::assign_Single_Real_to_StringType
+      PROCEDURE,PASS,PRIVATE :: assign_Single_Real_to_StringType
+      !> @copybrief StringType::assign_Double_Real_to_StringType
+      !> @copydetails StringType::assign_Double_Real_to_StringType
+      PROCEDURE,PASS,PRIVATE :: assign_Double_Real_to_StringType
       !> copybrief StringType::assign_Logical_to_StringType
       !> copydetails StringType::assign_Logical_to_StringType
-      PROCEDURE assign_Logical_to_StringType
+      PROCEDURE,PASS,PRIVATE :: assign_Logical_to_StringType
       GENERIC :: ASSIGNMENT(=) => assign_char_to_StringType, &
           assign_Logical_to_StringType,assign_Single_Real_to_StringType, &
           assign_Double_Real_to_StringType,assign_Short_Integer_to_StringType, &
@@ -191,65 +189,65 @@ MODULE Strings
   !> @brief Overloads the Fortran intrinsic procedure CHAR() so
   !> a string type argument may be passed.
   INTERFACE CHAR
-    !> @copybrief Strings::CHAR_StringType
-    !> @copydetails Strings::CHAR_StringType
+    !> @copybrief StringType::CHAR_StringType
+    !> @copydetails StringType::CHAR_StringType
     MODULE PROCEDURE CHAR_StringType
-    !> copybrief Strings::cchar_to_fchar
-    !> copydetails Strings::cchar_to_fchar
+    !> copybrief StringType::cchar_to_fchar
+    !> copydetails StringType::cchar_to_fchar
     MODULE PROCEDURE cchar_to_fchar
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure LEN() so
   !> a string type argument may be passed.
   INTERFACE LEN
-    !> @copybrief Strings::LEN_StringType
-    !> @copydetails Strings::LEN_StringType
+    !> @copybrief StringType::LEN_StringType
+    !> @copydetails StringType::LEN_StringType
     MODULE PROCEDURE LEN_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure LEN_TRIM() so
   !> a string type argument may be passed.
   INTERFACE LEN_TRIM
-    !> @copybrief Strings::LEN_TRIM_StringType
-    !> @copydetails Strings::LEN_TRIM_StringType
+    !> @copybrief StringType::LEN_TRIM_StringType
+    !> @copydetails StringType::LEN_TRIM_StringType
     MODULE PROCEDURE LEN_TRIM_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure TRIM() so
   !> a string type argument may be passed.
   INTERFACE TRIM
-    !> @copybrief Strings::TRIM_StringType
-    !> @copydetails Strings::TRIM_StringType
+    !> @copybrief StringType::TRIM_StringType
+    !> @copydetails StringType::TRIM_StringType
     MODULE PROCEDURE TRIM_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure ADJUSTL() so
   !> a string type argument may be passed.
   INTERFACE ADJUSTL
-    !> @copybrief Strings::ADJUSTL_StringType
-    !> @copydetails Strings::ADJUSTL_StringType
+    !> @copybrief StringType::ADJUSTL_StringType
+    !> @copydetails StringType::ADJUSTL_StringType
     MODULE PROCEDURE ADJUSTL_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure ADJUSTR() so
   !> a string type argument may be passed.
   INTERFACE ADJUSTR
-    !> @copybrief Strings::ADJUSTR_StringType
-    !> @copydetails Strings::ADJUSTR_StringType
+    !> @copybrief StringType::ADJUSTR_StringType
+    !> @copydetails StringType::ADJUSTR_StringType
     MODULE PROCEDURE ADJUSTR_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure INDEX() so
   !> string type arguments may be passed.
   INTERFACE INDEX
-    !> @copybrief Strings::INDEX_StringType_char
-    !> @copydetails Strings::INDEX_StringType_char
+    !> @copybrief StringType::INDEX_StringType_char
+    !> @copydetails StringType::INDEX_StringType_char
     MODULE PROCEDURE INDEX_StringType_char
-    !> @copybrief Strings::INDEX_char_StringType
-    !> @copydetails Strings::INDEX_char_StringType
+    !> @copybrief StringType::INDEX_char_StringType
+    !> @copydetails StringType::INDEX_char_StringType
     MODULE PROCEDURE INDEX_char_StringType
-    !> @copybrief Strings::INDEX_StringType_StringType
-    !> @copydetails Strings::INDEX_StringType_StringType
+    !> @copybrief StringType::INDEX_StringType_StringType
+    !> @copydetails StringType::INDEX_StringType_StringType
     MODULE PROCEDURE INDEX_StringType_StringType
   ENDINTERFACE
 
@@ -287,42 +285,42 @@ MODULE Strings
   !> @brief Overloads the Fortran intrinsic operator for concatenating
   !> character strings.
   INTERFACE OPERATOR(//)
-    !> @copybrief Strings::concatenate_char_onto_StringType
-    !> @copydetails Strings::concatenate_char_onto_StringType
+    !> @copybrief StringType::concatenate_char_onto_StringType
+    !> @copydetails StringType::concatenate_char_onto_StringType
     MODULE PROCEDURE concatenate_char_onto_StringType
-    !> @copybrief Strings::concatenate_StringType_onto_char
-    !> @copydetails Strings::concatenate_StringType_onto_char
+    !> @copybrief StringType::concatenate_StringType_onto_char
+    !> @copydetails StringType::concatenate_StringType_onto_char
     MODULE PROCEDURE concatenate_StringType_onto_char
-    !> @copybrief Strings::concatenate_StringType_onto_StringType
-    !> @copydetails Strings::concatenate_StringType_onto_StringType
+    !> @copybrief StringType::concatenate_StringType_onto_StringType
+    !> @copydetails StringType::concatenate_StringType_onto_StringType
     MODULE PROCEDURE concatenate_StringType_onto_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two variables to see if they are equal
   INTERFACE OPERATOR(==)
-    !> @copybrief Strings::equalto_char_StringType
-    !> @copydetails Strings::equalto_char_StringType
+    !> @copybrief StringType::equalto_char_StringType
+    !> @copydetails StringType::equalto_char_StringType
     MODULE PROCEDURE equalto_char_StringType
-    !> @copybrief Strings::equalto_StringType_char
-    !> @copydetails Strings::equalto_StringType_char
+    !> @copybrief StringType::equalto_StringType_char
+    !> @copydetails StringType::equalto_StringType_char
     MODULE PROCEDURE equalto_StringType_char
-    !> @copybrief Strings::equalto_StringType_StringType
-    !> @copydetails Strings::equalto_StringType_StringType
+    !> @copybrief StringType::equalto_StringType_StringType
+    !> @copydetails StringType::equalto_StringType_StringType
     MODULE PROCEDURE equalto_StringType_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two variables to see if they are not equal
   INTERFACE OPERATOR(/=)
-    !> @copybrief Strings::notequalto_char_StringType
-    !> @copydetails Strings::notequalto_char_StringType
+    !> @copybrief StringType::notequalto_char_StringType
+    !> @copydetails StringType::notequalto_char_StringType
     MODULE PROCEDURE notequalto_char_StringType
-    !> @copybrief Strings::notequalto_StringType_char
-    !> @copydetails Strings::notequalto_StringType_char
+    !> @copybrief StringType::notequalto_StringType_char
+    !> @copydetails StringType::notequalto_StringType_char
     MODULE PROCEDURE notequalto_StringType_char
-    !> @copybrief Strings::notequalto_StringType_StringType
-    !> @copydetails Strings::notequalto_StringType_StringType
+    !> @copybrief StringType::notequalto_StringType_StringType
+    !> @copydetails StringType::notequalto_StringType_StringType
     MODULE PROCEDURE notequalto_StringType_StringType
   ENDINTERFACE
 !
@@ -373,7 +371,10 @@ ENDSUBROUTINE clear_str
 !-------------------------------------------------------------------------------
 !> @brief splits a StringType using a single space as the delimiter. This
 !> routine consumes consecutive spaces as a if they were a single space. The
-!> returned array of strings is will not contain any empty strings. If the
+!> @param this the StringType being split
+!> @returns sub_str an array of substings
+!>
+!> The returned array of strings is will not contain any empty strings. If the
 !> string being split is empty the returned array will be size 0. If there were
 !> no separators found to split on the array will be size 1, and contain the
 !> original string.
@@ -438,8 +439,8 @@ ENDFUNCTION split_string_space
 !> @brief splits a StringType at specified delimiter and returns the substrings
 !> in an array of StringTypes.
 !> @param this the string to be split
-!> @param sub_str the returned array of substrings
 !> @param separator the delimiter for split locations
+!> @returns sub_str the returned array of substrings
 !>
   FUNCTION split_string(this,separator) RESULT(sub_str)
     CLASS(StringType),INTENT(IN) :: this
@@ -488,9 +489,14 @@ ENDFUNCTION split_string_space
 !
 !-------------------------------------------------------------------------------
 !> @brief returns a copy of the string with every occurrence of a specified
-!> search pattern with the designated replacement pattern. This routine will
-!> automatically account for size changes of the underlying character array. If
-!> the search pattern is not found, then the original string is returned
+!> search pattern with the designated replacement pattern.
+!> @param this the StringType being operated on
+!> @param oldPat the pattern being replaced
+!> @param newPat the pattern being inserted
+!> @returns retStr the newly formed string
+!> This routine will automatically account for size changes of the underlying
+!> character array. If the search pattern is not found, then the original string
+!> is returned
 !>
 FUNCTION replace_pattern(this,oldPat,newPat) RESULT(retStr)
   CLASS(StringType),INTENT(IN) :: this
@@ -538,6 +544,7 @@ ENDFUNCTION replace_pattern
 !> @param stt the start of the slice to be replaced
 !> @param stp the end of the slice to be replaced
 !> @param in_char the characters that will be subbed in
+!> @returns retStr the newly formed string
 !>
   FUNCTION replace_slice(this,stt,stp,in_char) RESULT(retStr)
     CLASS(StringType),INTENT(INOUT) :: this
@@ -579,6 +586,7 @@ ENDFUNCTION replace_pattern
 !> or the string is not allocated then the ascii null character is returned.
 !> @param this the string being indexed into
 !> @param pos the index the character should be taken from
+!> @returns letter the character being returned
 !>
   PURE FUNCTION at_string(this,pos) RESULT(letter)
     CLASS(StringType),INTENT(IN) :: this
@@ -598,6 +606,7 @@ ENDFUNCTION replace_pattern
 !> @param this the string being sliced
 !> @param stt the first index of the slice
 !> @param stp the last index of the slice OPTIONAL: Default = LEN(this)
+!> @returns slice the character(s) being returned
 !
   PURE FUNCTION substr_str(this,stt,stp) RESULT(slice)
     CLASS(StringType),INTENT(IN) :: this
@@ -622,16 +631,17 @@ ENDFUNCTION replace_pattern
 !> @brief Utility function takes a string and converts all upper case letters to
 !> lower case letters.
 !> @param word input is a string, output has all lower case letters
+!> @lower_str the lower cased version of this
 !>
-    PURE FUNCTION toLower_string(word) RESULT(upper_str)
+    PURE FUNCTION toLower_string(word) RESULT(lower_str)
       CLASS(StringType),INTENT(IN) :: word
       INTEGER(SIK) :: i
       !
-      TYPE(StringType) :: upper_str
-      upper_str = word
+      TYPE(StringType) :: lower_str
+      lower_str = word
       DO i=1,LEN(word)
         IF('A' <= word%s(i:i) .AND. word%s(i:i) <= 'Z') &
-          upper_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))+32)
+          lower_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))+32)
       ENDDO
     ENDFUNCTION toLower_string
 !
@@ -639,16 +649,17 @@ ENDFUNCTION replace_pattern
 !> @brief Utility function takes a string and converts all lower case letters to
 !> upper case letters.
 !> @param word input is a string, output has all upper case letters
+!> @upper_str the upper cased version of this
 !>
-    PURE FUNCTION toupper_string(word) RESULT(lower_str)
+    PURE FUNCTION toupper_string(word) RESULT(upper_str)
       CLASS(StringType),INTENT(IN) :: word
       INTEGER(SIK) :: i
       !
-      TYPE(StringType) :: lower_str
-      lower_str = word
+      TYPE(StringType) :: upper_str
+      upper_str = word
       DO i=1,LEN(word)
         IF('a' <= word%s(i:i) .AND. word%s(i:i) <= 'z') &
-          lower_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))-32)
+          upper_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))-32)
       ENDDO
     ENDFUNCTION toupper_string
 !
@@ -700,10 +711,7 @@ ENDFUNCTION replace_pattern
 !> @brief Returns the contents of the string excluding all trailing whitespace
 !> as an intrinsic character type variable.
 !> @param this the string object
-!> @returns str the character string
-!>
-!> The intent is that this behaves exactly the same way as the intrinsic
-!> function @c TRIM does for character variables.
+!> @returns str this trimmed of trailing whitespace
 !>
     PURE FUNCTION TRIM_StringType(this) RESULT(str)
       CLASS(StringType),INTENT(IN) :: this
@@ -719,10 +727,7 @@ ENDFUNCTION replace_pattern
 !> @brief Returns the contents of the string as an intrinsic character type
 !> variable with all preceding whitespace moved to the end.
 !> @param thisStr the string object
-!> @returns s the character string
-!>
-!> The intent is that this behaves exactly the same way as the intrinsic
-!> function @c ADJUSTL does for character variables.
+!> @returns s left aligned version of this
 !>
     PURE FUNCTION ADJUSTL_StringType(thisStr) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
@@ -734,10 +739,7 @@ ENDFUNCTION replace_pattern
 !> @brief Returns the contents of the string as an intrinsic character type
 !> variable with all trailing whitespace moved to the beginning.
 !> @param thisStr the string object
-!> @returns s the character string
-!>
-!> The intent is that this behaves exactly the same way as the intrinsic
-!> function @c ADJUSTR does for character variables.
+!> @returns s right aligned version of this
 !>
     PURE FUNCTION ADJUSTR_StringType(thisStr) RESULT(s)
       CLASS(StringType),INTENT(IN) :: thisStr
@@ -753,9 +755,6 @@ ENDFUNCTION replace_pattern
 !> @param back a logical indicating whether or not to return the position of
 !>        the first or last instance of the @c substring within @c string
 !> @returns ipos the position in @c string of the @c substring
-!>
-!> The intent is that this behaves exactly the same way as the intrinsic
-!> function @c INDEX does for character variables.
 !>
     ELEMENTAL FUNCTION INDEX_StringType_char(string,substring,back) RESULT(ipos)
       CLASS(StringType),INTENT(IN) :: string
@@ -774,9 +773,6 @@ ENDFUNCTION replace_pattern
 !>        the first or last instance of the @c substring within @c string
 !> @returns ipos the position in @c string of the @c substring
 !>
-!> The intent is that this behaves exactly the same way as the intrinsic
-!> function @c INDEX does for character variables.
-!>
     ELEMENTAL FUNCTION INDEX_char_StringType(string,substring,back) RESULT(ipos)
       CHARACTER(LEN=*),INTENT(IN) :: string
       CLASS(StringType),INTENT(IN) :: substring
@@ -793,9 +789,6 @@ ENDFUNCTION replace_pattern
 !> @param back a logical indicating whether or not to return the position of
 !>        the first or last instance of the @c substring within @c string
 !> @returns ipos the position in @c string of the @c substring
-!>
-!> The intent is that this behaves exactly the same way as the intrinsic
-!> function @c INDEX does for character variables.
 !>
     ELEMENTAL FUNCTION INDEX_StringType_StringType(string,substring,back) RESULT(ipos)
       CLASS(StringType),INTENT(IN) :: string
@@ -1059,77 +1052,65 @@ ENDFUNCTION replace_pattern
 !-------------------------------------------------------------------------------
 !> @brief Assigns a short integer to a StringType.
 !> @param lhs the string object
-!> @param i short integer
+!> @param rhs short integer
 !>
-!> The intent is that this will overload the assignment operator so a short
-!> (32-bit) integer can be assigned to a StringType.
-!>
-    ELEMENTAL SUBROUTINE assign_Short_Integer_to_StringType(lhs,i)
+    ELEMENTAL SUBROUTINE assign_Short_Integer_to_StringType(lhs,rhs)
       CLASS(StringType),INTENT(INOUT) :: lhs
-      INTEGER(SNK),INTENT(IN) :: i
+      INTEGER(SNK),INTENT(IN) :: rhs
       CHARACTER(LEN=11) :: l
-      WRITE(l,'(i11)') i
+      WRITE(l,'(i11)') rhs
       lhs = TRIM(ADJUSTL(l))
     ENDSUBROUTINE assign_Short_Integer_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns a long integer to a StringType.
-!> @param hs the string object
-!> @param i long integer
+!> @param lhs the string object
+!> @param rhs long integer
 !>
-!> The intent is that this will overload the assignment operator so a long
-!> (64-bit) integer can be assigned to a StringType.
-!>
-    ELEMENTAL SUBROUTINE assign_Long_Integer_to_StringType(lhs,i)
+    ELEMENTAL SUBROUTINE assign_Long_Integer_to_StringType(lhs,rhs)
       CLASS(StringType),INTENT(INOUT) ::lhs
-      INTEGER(SLK),INTENT(IN) :: i
+      INTEGER(SLK),INTENT(IN) :: rhs
       CHARACTER(LEN=20) :: l
-      WRITE(l,'(i20)') i
+      WRITE(l,'(i20)') rhs
       lhs = TRIM(ADJUSTL(l))
     ENDSUBROUTINE assign_Long_Integer_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns a single real to a StringType.
 !> @param lhs the string object
-!> @param r single real
+!> @param rhs single real
 !>
-!> The intent is that this will overload the assignment operator so a single
-!> (32-bit) real can be assigned to a StringType.
-!>
-    ELEMENTAL SUBROUTINE assign_Single_Real_to_StringType(lhs,r)
+    ELEMENTAL SUBROUTINE assign_Single_Real_to_StringType(lhs,rhs)
       CLASS(StringType),INTENT(INOUT) :: lhs
-      REAL(SSK),INTENT(IN) :: r
+      REAL(SSK),INTENT(IN) :: rhs
       CHARACTER(LEN=15) :: l
-      WRITE(l,'(es15.5)') r
+      WRITE(l,'(es15.5)') rhs
       lhs = TRIM(ADJUSTL(l))
     ENDSUBROUTINE assign_Single_Real_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns a double real to a StringType.
 !> @param lhs the string object
-!> @param r double real
+!> @param rhs double real
 !>
-!> The intent is that this will overload the assignment operator so a double
-!> (64-bit) real can be assigned to a StringType.
-!>
-    ELEMENTAL SUBROUTINE assign_Double_Real_to_StringType(lhs,r)
+    ELEMENTAL SUBROUTINE assign_Double_Real_to_StringType(lhs,rhs)
       CLASS(StringType),INTENT(INOUT) :: lhs
-      REAL(SDK),INTENT(IN) :: r
+      REAL(SDK),INTENT(IN) :: rhs
       CHARACTER(LEN=22) :: l
-      WRITE(l,'(es22.15)') r
+      WRITE(l,'(es22.15)') rhs
       lhs = TRIM(ADJUSTL(l))
     ENDSUBROUTINE assign_Double_Real_to_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns a logical to a StringType.
 !> @param lhs the string object
-!> @param bool the logical to be written
+!> @param rhs the logical to be written
 !>
-  SUBROUTINE assign_Logical_to_StringType(lhs,bool)
+  SUBROUTINE assign_Logical_to_StringType(lhs,rhs)
     CLASS(StringType),INTENT(INOUT) :: lhs
-    LOGICAL(SBK),INTENT(IN) :: bool
+    LOGICAL(SBK),INTENT(IN) :: rhs
     CHARACTER(LEN=1) :: tmp
-    WRITE(tmp,'(L1)') bool
+    WRITE(tmp,'(L1)') rhs
     lhs = tmp
   ENDSUBROUTINE assign_Logical_to_StringType
 !
@@ -1140,9 +1121,6 @@ ENDFUNCTION replace_pattern
 !> @param s the length of the string
 !> @returns newstring a character string that is a concatenation of a
 !> @c StringType and character string
-!>
-!> The intent is that this will overload the // operator so a
-!> @c CHARACTER type can be concatenated with a @c StringType.
 !>
     PURE FUNCTION concatenate_StringType_onto_char(lhs,rhs) RESULT(out_str)
       CHARACTER(LEN=*),INTENT(IN) :: lhs
@@ -1159,9 +1137,6 @@ ENDFUNCTION replace_pattern
 !> @returns newstring a character string that is a concatenation of a
 !> @c StringType and character string
 !>
-!> The intent is that this will overload the // operator so a
-!> @c CHARACTER type can be concatenated with a @c StringType.
-!>
     PURE FUNCTION concatenate_char_onto_StringType(lhs,rhs) RESULT(out_str)
       CLASS(StringType),INTENT(IN) :: lhs
       CHARACTER(LEN=*),INTENT(IN) :: rhs
@@ -1175,9 +1150,6 @@ ENDFUNCTION replace_pattern
 !> @param s2 the string object
 !> @returns newstring a character string that is a concatenation of a
 !> two @c StringTypes
-!>
-!> The intent is that this will overload the // operator so a
-!> @c StringType can be concatenated with a @c StringType.
 !>
     PURE FUNCTION concatenate_StringType_onto_StringType(lhs,rhs) RESULT(out_str)
       CLASS(StringType),INTENT(IN) :: lhs
@@ -1193,9 +1165,6 @@ ENDFUNCTION replace_pattern
 !> @param rhs a @c StringType object
 !> @returns bool the result of the == operation
 !>
-!> The intent is that this will overload the == operator so a
-!> @c CHARACTER type can compared with a @c StringType.
-!>
     ELEMENTAL FUNCTION equalto_char_StringType(lhs,rhs) RESULT(bool)
       CHARACTER(LEN=*),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) ::rhs
@@ -1209,9 +1178,6 @@ ENDFUNCTION replace_pattern
 !> @param lhs a @c StringType object
 !> @param rhs a @c CHARACTER type
 !> @returns bool the result of the == operation
-!>
-!> The intent is that this will overload the == operator so a
-!> @c CHARACTER type can compared with a @c StringType.
 !>
     ELEMENTAL FUNCTION equalto_StringType_char(lhs,rhs) RESULT(bool)
       CLASS(StringType),INTENT(IN) ::lhs
@@ -1227,9 +1193,6 @@ ENDFUNCTION replace_pattern
 !> @param rhs another @c StringType object
 !> @returns bool the result of the == operation
 !>
-!> The intent is that this will overload the == operator so a
-!> @c StringType type can compared with a @c StringType.
-!>
     ELEMENTAL FUNCTION equalto_StringType_StringType(lhs,rhs) RESULT(bool)
       CLASS(StringType),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) :: rhs
@@ -1243,9 +1206,6 @@ ENDFUNCTION replace_pattern
 !> @param lhs a @c CHARACTER type
 !> @param rhs a @c StringType object
 !> @returns bool the result of the /= operation
-!>
-!> The intent is that this will overload the /= operator so a
-!> @c CHARACTER type can compared with a @c StringType.
 !>
     ELEMENTAL FUNCTION notequalto_char_StringType(lhs,rhs) RESULT(bool)
       CHARACTER(LEN=*),INTENT(IN) :: lhs
@@ -1261,9 +1221,6 @@ ENDFUNCTION replace_pattern
 !> @param rhs a @c CHARACTER type
 !> @returns bool the result of the /= operation
 !>
-!> The intent is that this will overload the /= operator so a
-!> @c CHARACTER type can compared with a @c StringType.
-!>
     ELEMENTAL FUNCTION notequalto_StringType_char(lhs,rhs) RESULT(bool)
       CLASS(StringType),INTENT(IN) :: lhs
       CHARACTER(LEN=*),INTENT(IN) :: rhs
@@ -1278,9 +1235,6 @@ ENDFUNCTION replace_pattern
 !> @param rhs another @c StringType object
 !> @returns bool the result of the /= operation
 !>
-!> The intent is that this will overload the /= operator so a
-!> @c StringType type can compared with a @c StringType.
-!>
     ELEMENTAL FUNCTION notequalto_StringType_StringType(lhs,rhs) RESULT(bool)
       CLASS(StringType),INTENT(IN) :: lhs
       CLASS(StringType),INTENT(IN) :: rhs
@@ -1291,9 +1245,9 @@ ENDFUNCTION replace_pattern
 !-------------------------------------------------------------------------------
 !> @brief convert a string to an int
 !> @param this the string being converted
-!> @param i the integer that will be output
 !> @param stt position for starting conversion
 !> @param stp end of conversion
+!> @returns i the integer that will be output
 !>
   FUNCTION str_to_sik(this,stt,stp) RESULT(i)
     CLASS(StringType),INTENT(IN) :: this
@@ -1319,7 +1273,9 @@ ENDFUNCTION replace_pattern
 !-------------------------------------------------------------------------------
 !> @brief convert a string to a float
 !> @param this the string being converted
-!> @param i the integer that will be output
+!> @param stt position for starting conversion
+!> @param stp end of conversion
+!> @returns i the integer that will be output
 !>
   FUNCTION str_to_srk(this,stt,stp) RESULT(i)
     CLASS(StringType),INTENT(IN) :: this

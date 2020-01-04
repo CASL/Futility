@@ -59,6 +59,11 @@ SUBROUTINE testAssign_chars()
   ASSERT_EQ(LEN(testString),0,'LEN(testString) (zero-length)')
   ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (zero-length)')
   ASSERT_EQ(TRIM(testString),'','TRIM(testString) (zero-length)')
+  CALL testString%clear()
+  ASSERT_EQ(LEN(testString),0,'LEN(testString) (uninit)')
+  ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (uninit)')
+  ASSERT_EQ(CHAR(testString),'','CHAR(testString) (uninit)')
+  ASSERT_EQ(TRIM(testString),'','TRIM(testString) (uninit)')
 
   !Test assigning a non-empty character to a string
   testString='constant '
