@@ -38,7 +38,7 @@ SUBROUTINE testUnInit()
   ASSERT_EQ(CHAR(testString),'','CHAR(testString) (uninit)')
   ASSERT_EQ(TRIM(testString),'','TRIM(testString) (uninit)')
 
-  COMPONENT_TEST('Test Clear')
+  COMPONENT_TEST('Test Clear Un-init')
   CALL testString%clear()
   ASSERT_EQ(LEN(testString),0,'LEN(testString) (uninit)')
   ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (uninit)')
@@ -59,6 +59,7 @@ SUBROUTINE testAssign_chars()
   ASSERT_EQ(LEN(testString),0,'LEN(testString) (zero-length)')
   ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (zero-length)')
   ASSERT_EQ(TRIM(testString),'','TRIM(testString) (zero-length)')
+  COMPONENT_TEST('Test Clear Assigned string')
   CALL testString%clear()
   ASSERT_EQ(LEN(testString),0,'LEN(testString) (uninit)')
   ASSERT_EQ(LEN_TRIM(testString),0,'LEN_TRIM(testString) (uninit)')
@@ -472,6 +473,16 @@ ENDSUBROUTINE testAssign_chars
     TYPE(StringType), ALLOCATABLE :: str_list(:),ref_list(:)
     INTEGER(SIK) :: iWord
     COMPONENT_TEST('String Split')
+    str = ''
+    str_list = str%split()
+    ASSERT_EQ(SIZE(str_list),1,"splits count")
+    ASSERT_EQ(CHAR(str_list(1)),'',"splits")
+    !Deallocating here just to ensure the proper function of split
+    DEALLOCATE(str_list)
+    str = ''
+    str_list = str%split(' ')
+    ASSERT_EQ(SIZE(str_list),1,"splits count")
+    ASSERT_EQ(CHAR(str_list(1)),'',"splits")
     str = "the"
     str_list = str%split()
     ASSERT_EQ(SIZE(str_list),1,"splits count")

@@ -116,138 +116,138 @@ MODULE Strings
     !> The stored intrinsic character string
     CHARACTER(LEN=:),ALLOCATABLE,PRIVATE :: s
     CONTAINS
-      !> copybrief StringType::toupper_string
-      !> copydetails StringType::toupper_string
+      !> copybrief Strings::toupper_string
+      !> copydetails Strings::toupper_string
       PROCEDURE,PASS :: upper => toupper_string
-      !> copybrief StringType::toLower_string
-      !> copydetails StringType::toLower_string
+      !> copybrief Strings::toLower_string
+      !> copydetails Strings::toLower_string
       PROCEDURE,PASS :: lower => toLower_string
-      !> copybrief StringType::at_string
-      !> copydetails StringType::at_string
+      !> copybrief Strings::at_string
+      !> copydetails Strings::at_string
       PROCEDURE,PASS :: at => at_string
-      !> copybrief StringType::substr_str
-      !> copydetails StringType::substr_str
+      !> copybrief Strings::substr_str
+      !> copydetails Strings::substr_str
       PROCEDURE,PASS :: substr => substr_str
-      !> copybrief StringType::replace_slice
-      !> copydetails StringType::replace_slice
+      !> copybrief Strings::replace_slice
+      !> copydetails Strings::replace_slice
       PROCEDURE,PASS,PRIVATE :: replace_slice
-      !> copybrief StringType::replace_pattern
-      !> copydetails StringType::replace_pattern
+      !> copybrief Strings::replace_pattern
+      !> copydetails Strings::replace_pattern
       PROCEDURE,PASS,PRIVATE :: replace_pattern
       GENERIC :: replace => replace_slice,replace_pattern
-      !> copybrief StringType:: split_string
-      !> copydetails StringType:: split_string
+      !> copybrief Strings:: split_string
+      !> copydetails Strings:: split_string
       PROCEDURE,PASS,PRIVATE :: split_string
-      !> copybrief StringType::split_string_space
-      !> copydetails StringType::split_string_space
+      !> copybrief Strings::split_string_space
+      !> copydetails Strings::split_string_space
       PROCEDURE,PASS,PRIVATE :: split_string_space
       GENERIC :: split => split_string, split_string_space
-      !> copybrief StringType::assign_char_to_StringType
-      !> copydetails StringType::assign_char_to_StringType
+      !> copybrief Strings::assign_char_to_StringType
+      !> copydetails Strings::assign_char_to_StringType
       PROCEDURE,PASS,PRIVATE :: assign_char_to_StringType
-      !> @copybrief StringType::assign_Short_Integer_to_StringType
-      !> @copydetails StringType::assign_Short_Integer_to_StringType
+      !> @copybrief Strings::assign_Short_Integer_to_StringType
+      !> @copydetails Strings::assign_Short_Integer_to_StringType
       PROCEDURE,PASS,PRIVATE :: assign_Short_Integer_to_StringType
-      !> @copybrief StringType::assign_Long_Integer_to_StringType
-      !> @copydetails StringType::assign_Long_Integer_to_StringType
+      !> @copybrief Strings::assign_Long_Integer_to_StringType
+      !> @copydetails Strings::assign_Long_Integer_to_StringType
       PROCEDURE,PASS,PRIVATE :: assign_Long_Integer_to_StringType
-      !> @copybrief StringType::assign_Single_Real_to_StringType
-      !> @copydetails StringType::assign_Single_Real_to_StringType
+      !> @copybrief Strings::assign_Single_Real_to_StringType
+      !> @copydetails Strings::assign_Single_Real_to_StringType
       PROCEDURE,PASS,PRIVATE :: assign_Single_Real_to_StringType
-      !> @copybrief StringType::assign_Double_Real_to_StringType
-      !> @copydetails StringType::assign_Double_Real_to_StringType
+      !> @copybrief Strings::assign_Double_Real_to_StringType
+      !> @copydetails Strings::assign_Double_Real_to_StringType
       PROCEDURE,PASS,PRIVATE :: assign_Double_Real_to_StringType
-      !> copybrief StringType::assign_Logical_to_StringType
-      !> copydetails StringType::assign_Logical_to_StringType
+      !> copybrief Strings::assign_Logical_to_StringType
+      !> copydetails Strings::assign_Logical_to_StringType
       PROCEDURE,PASS,PRIVATE :: assign_Logical_to_StringType
       GENERIC :: ASSIGNMENT(=) => assign_char_to_StringType, &
           assign_Logical_to_StringType,assign_Single_Real_to_StringType, &
           assign_Double_Real_to_StringType,assign_Short_Integer_to_StringType, &
           assign_Long_Integer_to_StringType
-      !> copybrief StringType::str_to_sik
-      !> copydetails StringType::str_to_sik
+      !> copybrief Strings::str_to_sik
+      !> copydetails Strings::str_to_sik
       PROCEDURE,PASS :: str_to_sik
       GENERIC :: stoi => str_to_sik
-      !> copybrief StringType::str_to_srk
-      !> copydetails StringType::str_to_srk
+      !> copybrief Strings::str_to_srk
+      !> copydetails Strings::str_to_srk
       PROCEDURE,PASS :: str_to_srk
       GENERIC :: stof => str_to_srk
-      !> copybrief StringType::isInteger
-      !> copydetails StringType::isInteger
+      !> copybrief Strings::isInteger
+      !> copydetails Strings::isInteger
       PROCEDURE,PASS :: isInteger
-      !> copybrief StringType::isFloat
-      !> copydetails StringType::isFloat
+      !> copybrief Strings::isFloat
+      !> copydetails Strings::isFloat
       PROCEDURE,PASS :: isFloat
-      !> copybrief StringType::isNumeric_str
-      !> copydetails StringType::isNumeric_str
+      !> copybrief Strings::isNumeric_str
+      !> copydetails Strings::isNumeric_str
       PROCEDURE,PASS :: isNumeric => isNumeric_str
-      !> copybrief StringType::clean_str
-      !> copydetails StringType::clean_str
+      !> copybrief Strings::clean_str
+      !> copydetails Strings::clean_str
       PROCEDURE,PASS :: clear => clear_str
   ENDTYPE StringType
 
   !> @brief Overloads the Fortran intrinsic procedure CHAR() so
   !> a string type argument may be passed.
   INTERFACE CHAR
-    !> @copybrief StringType::CHAR_StringType
-    !> @copydetails StringType::CHAR_StringType
+    !> @copybrief Strings::CHAR_StringType
+    !> @copydetails Strings::CHAR_StringType
     MODULE PROCEDURE CHAR_StringType
-    !> copybrief StringType::cchar_to_fchar
-    !> copydetails StringType::cchar_to_fchar
+    !> copybrief Strings::cchar_to_fchar
+    !> copydetails Strings::cchar_to_fchar
     MODULE PROCEDURE cchar_to_fchar
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure LEN() so
   !> a string type argument may be passed.
   INTERFACE LEN
-    !> @copybrief StringType::LEN_StringType
-    !> @copydetails StringType::LEN_StringType
+    !> @copybrief Strings::LEN_StringType
+    !> @copydetails Strings::LEN_StringType
     MODULE PROCEDURE LEN_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure LEN_TRIM() so
   !> a string type argument may be passed.
   INTERFACE LEN_TRIM
-    !> @copybrief StringType::LEN_TRIM_StringType
-    !> @copydetails StringType::LEN_TRIM_StringType
+    !> @copybrief Strings::LEN_TRIM_StringType
+    !> @copydetails Strings::LEN_TRIM_StringType
     MODULE PROCEDURE LEN_TRIM_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure TRIM() so
   !> a string type argument may be passed.
   INTERFACE TRIM
-    !> @copybrief StringType::TRIM_StringType
-    !> @copydetails StringType::TRIM_StringType
+    !> @copybrief Strings::TRIM_StringType
+    !> @copydetails Strings::TRIM_StringType
     MODULE PROCEDURE TRIM_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure ADJUSTL() so
   !> a string type argument may be passed.
   INTERFACE ADJUSTL
-    !> @copybrief StringType::ADJUSTL_StringType
-    !> @copydetails StringType::ADJUSTL_StringType
+    !> @copybrief Strings::ADJUSTL_StringType
+    !> @copydetails Strings::ADJUSTL_StringType
     MODULE PROCEDURE ADJUSTL_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure ADJUSTR() so
   !> a string type argument may be passed.
   INTERFACE ADJUSTR
-    !> @copybrief StringType::ADJUSTR_StringType
-    !> @copydetails StringType::ADJUSTR_StringType
+    !> @copybrief Strings::ADJUSTR_StringType
+    !> @copydetails Strings::ADJUSTR_StringType
     MODULE PROCEDURE ADJUSTR_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic procedure INDEX() so
   !> string type arguments may be passed.
   INTERFACE INDEX
-    !> @copybrief StringType::INDEX_StringType_char
-    !> @copydetails StringType::INDEX_StringType_char
+    !> @copybrief Strings::INDEX_StringType_char
+    !> @copydetails Strings::INDEX_StringType_char
     MODULE PROCEDURE INDEX_StringType_char
-    !> @copybrief StringType::INDEX_char_StringType
-    !> @copydetails StringType::INDEX_char_StringType
+    !> @copybrief Strings::INDEX_char_StringType
+    !> @copydetails Strings::INDEX_char_StringType
     MODULE PROCEDURE INDEX_char_StringType
-    !> @copybrief StringType::INDEX_StringType_StringType
-    !> @copydetails StringType::INDEX_StringType_StringType
+    !> @copybrief Strings::INDEX_StringType_StringType
+    !> @copydetails Strings::INDEX_StringType_StringType
     MODULE PROCEDURE INDEX_StringType_StringType
   ENDINTERFACE
 
@@ -285,42 +285,42 @@ MODULE Strings
   !> @brief Overloads the Fortran intrinsic operator for concatenating
   !> character strings.
   INTERFACE OPERATOR(//)
-    !> @copybrief StringType::concatenate_char_onto_StringType
-    !> @copydetails StringType::concatenate_char_onto_StringType
+    !> @copybrief Strings::concatenate_char_onto_StringType
+    !> @copydetails Strings::concatenate_char_onto_StringType
     MODULE PROCEDURE concatenate_char_onto_StringType
-    !> @copybrief StringType::concatenate_StringType_onto_char
-    !> @copydetails StringType::concatenate_StringType_onto_char
+    !> @copybrief Strings::concatenate_StringType_onto_char
+    !> @copydetails Strings::concatenate_StringType_onto_char
     MODULE PROCEDURE concatenate_StringType_onto_char
-    !> @copybrief StringType::concatenate_StringType_onto_StringType
-    !> @copydetails StringType::concatenate_StringType_onto_StringType
+    !> @copybrief Strings::concatenate_StringType_onto_StringType
+    !> @copydetails Strings::concatenate_StringType_onto_StringType
     MODULE PROCEDURE concatenate_StringType_onto_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two variables to see if they are equal
   INTERFACE OPERATOR(==)
-    !> @copybrief StringType::equalto_char_StringType
-    !> @copydetails StringType::equalto_char_StringType
+    !> @copybrief Strings::equalto_char_StringType
+    !> @copydetails Strings::equalto_char_StringType
     MODULE PROCEDURE equalto_char_StringType
-    !> @copybrief StringType::equalto_StringType_char
-    !> @copydetails StringType::equalto_StringType_char
+    !> @copybrief Strings::equalto_StringType_char
+    !> @copydetails Strings::equalto_StringType_char
     MODULE PROCEDURE equalto_StringType_char
-    !> @copybrief StringType::equalto_StringType_StringType
-    !> @copydetails StringType::equalto_StringType_StringType
+    !> @copybrief Strings::equalto_StringType_StringType
+    !> @copydetails Strings::equalto_StringType_StringType
     MODULE PROCEDURE equalto_StringType_StringType
   ENDINTERFACE
 
   !> @brief Overloads the Fortran intrinsic operator for comparing
   !> two variables to see if they are not equal
   INTERFACE OPERATOR(/=)
-    !> @copybrief StringType::notequalto_char_StringType
-    !> @copydetails StringType::notequalto_char_StringType
+    !> @copybrief Strings::notequalto_char_StringType
+    !> @copydetails Strings::notequalto_char_StringType
     MODULE PROCEDURE notequalto_char_StringType
-    !> @copybrief StringType::notequalto_StringType_char
-    !> @copydetails StringType::notequalto_StringType_char
+    !> @copybrief Strings::notequalto_StringType_char
+    !> @copydetails Strings::notequalto_StringType_char
     MODULE PROCEDURE notequalto_StringType_char
-    !> @copybrief StringType::notequalto_StringType_StringType
-    !> @copydetails StringType::notequalto_StringType_StringType
+    !> @copybrief Strings::notequalto_StringType_StringType
+    !> @copydetails Strings::notequalto_StringType_StringType
     MODULE PROCEDURE notequalto_StringType_StringType
   ENDINTERFACE
 !
@@ -374,7 +374,7 @@ ENDSUBROUTINE clear_str
 !> @param this the StringType being split
 !> @returns sub_str an array of substings
 !>
-!> The returned array of strings is will not contain any empty strings. If the
+!> The returned array of strings will not contain any empty strings. If the
 !> string being split is empty the returned array will be size 0. If there were
 !> no separators found to split on the array will be size 1, and contain the
 !> original string.
@@ -383,12 +383,10 @@ FUNCTION split_string_space(this) RESULT(sub_str)
   CLASS(StringType),INTENT(IN) :: this
   TYPE(StringType),ALLOCATABLE :: sub_str(:)
   !
-  CHARACTER(LEN=:),ALLOCATABLE :: separator
   INTEGER(SIK) :: iSplit,nSplits,stt,stp,sepLoc
 
-  separator = ' '
   stp = LEN(this%s)
-  sepLoc = MERGE(INDEX(this%s,separator),0,stp > 1)
+  sepLoc = MERGE(INDEX(this%s,' '),0,stp > 1)
   IF(sepLoc == 0) THEN
     !This indicates that either the string or the separator were empty, or
     !the separator was not found in the string.
@@ -408,7 +406,7 @@ FUNCTION split_string_space(this) RESULT(sub_str)
     ENDIF
     ! Increment to the next delimiter
     stt = stt + sepLoc
-    sepLoc = INDEX(this%s(stt:stp),separator)
+    sepLoc = INDEX(this%s(stt:stp),' ')
   ENDDO
   !Account for strings that don't end in a delimiter
   IF(stt <= stp) nSplits = nSplits + 1
@@ -417,21 +415,20 @@ FUNCTION split_string_space(this) RESULT(sub_str)
   ! Split along delimiters and store in the provided array
   stt = 1
   iSplit = 0
-  sepLoc = INDEX(this%s(stt:stp),separator)
+  sepLoc = INDEX(this%s(stt:stp),' ')
   DO WHILE(sepLoc > 0)
     IF(sepLoc > 1) THEN
       iSplit = iSplit + 1
       ! Strip out the string...subtract 2 (1 for exclusive, 1 for delimiter)
-      sub_str(iSplit) = &
-          this%s(stt:stt+INDEX(this%s(stt:stp),separator) - 2)
+      sub_str(iSplit) = this%s(stt:stt+sepLoc-2)
     ENDIF
     stt = stt + sepLoc
-    sepLoc = INDEX(this%s(stt:stp),separator)
+    sepLoc = INDEX(this%s(stt:stp),' ')
   ENDDO
   ! If the string ends with a word, then it wasn't snatched out before
-  IF(.NOT.(this%s(stp:stp) == separator)) THEN
+  IF(.NOT.(this%s(stp:stp) == ' ')) THEN
     sub_str(nSplits) = &
-        this%s(INDEX(this%s(1:stp),separator,.TRUE.)+1:stp)
+        this%s(INDEX(this%s(1:stp),' ',.TRUE.)+1:stp)
   ENDIF
 ENDFUNCTION split_string_space
 !
@@ -513,11 +510,8 @@ FUNCTION replace_pattern(this,oldPat,newPat) RESULT(retStr)
   !Set-up the new string
   IF(SIZE(tokens) > 1) THEN
     retStr = ''
-  ELSEIF(SIZE(tokens) == 1) THEN
-    retStr = char(tokens(1))
-    RETURN
   ELSE
-    retStr = ''
+    retStr = char(tokens(1))
     RETURN
   ENDIF
 

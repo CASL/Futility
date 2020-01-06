@@ -1130,7 +1130,7 @@ MODULE IO_Strings
         ENDIF
       ENDIF
       DO i=istt,istp,incr
-        bool = INDEX(string(i),pattern) > 0
+        bool=strmatch(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
