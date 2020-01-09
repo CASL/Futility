@@ -109,9 +109,6 @@ PROGRAM testIOutil
       string='testing'
       CALL strrep(string,'t','TT')
       ASSERT_EQ(TRIM(string),'TTesTTing','testing')
-      tmpStr='testing  '
-      CALL strrep(tmpStr,'t','TT')
-      ASSERT_EQ(TRIM(tmpStr),'TTesTTing','testing')
       string='A->B->C->D->EFGH'
       CALL strrep(string,'->','/')
       ASSERT_EQ(TRIM(string),'A/B/C/D/EFGH','-> to /')
