@@ -5673,7 +5673,7 @@ MODULE FileType_HDF5
         ELSE
           vals=valsc(1)(1:length_max)
         ENDIF
-        CALL strrep(vals,C_NULL_CHAR,'')
+        vals = vals%replace(C_NULL_CHAR,'')
       ENDIF
       CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 
@@ -5812,7 +5812,7 @@ MODULE FileType_HDF5
 
         !Find replace C_NULL_CHARs from HDF5
         DO i=1,SIZE(vals)
-          CALL strrep(vals(i),C_NULL_CHAR,'')
+          vals(i) = vals(i)%replace(C_NULL_CHAR,'')
         ENDDO
       ENDIF
       CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
@@ -5969,7 +5969,7 @@ MODULE FileType_HDF5
         !Find replace C_NULL_CHARs from HDF5
         DO j=1,SIZE(vals,DIM=2)
           DO i=1,SIZE(vals,DIM=1)
-            CALL strrep(vals(i,j),C_NULL_CHAR,'')
+            vals(i,j) = vals(i,j)%replace(C_NULL_CHAR,'')
           ENDDO
         ENDDO
       ENDIF
@@ -6133,7 +6133,7 @@ MODULE FileType_HDF5
         DO k=1,SIZE(vals,DIM=3)
           DO j=1,SIZE(vals,DIM=2)
             DO i=1,SIZE(vals,DIM=1)
-              CALL strrep(vals(i,j,k),C_NULL_CHAR,'')
+              vals(i,j,k) = vals(i,j,k)%replace(C_NULL_CHAR,'')
             ENDDO
           ENDDO
         ENDDO
@@ -6266,7 +6266,7 @@ MODULE FileType_HDF5
 
       ! Create root directory
       baseh5path=TRIM(dsetname)
-      CALL strrep(baseh5path,'->','/')
+      baseh5path = baseh5path%replace('->','/')
       baseh5path='/'//baseh5path
       !Check to make sure there are objects/groups to be read
       CALL ls_HDF5FileType(thisHDF5File,dsetname,lsobjs)
@@ -6280,7 +6280,7 @@ MODULE FileType_HDF5
           IF(isgrp_HDF5FileType(thisHDF5File,CHAR(h5path))) THEN
             plpath=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
             !Convert back to PL style pathing
-            CALL strrep(plpath,'/','->')
+            plpath = plpath%replace('/','->')
             !Skip the first arrow that will be there
             h5path = plpath%substr(3)
             CALL read_pList(thisHDF5File,CHAR(h5path),vals)
@@ -6322,7 +6322,7 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:)
 
       tmpstr=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
-      CALL strrep(tmpstr,'/','->')
+      tmpstr = tmpstr%replace('/','->')
       plpath = tmpstr%substr(3)
       !Open the dataset so we can get the precision
       CALL h5dopen_f(thisHDF5File%file_id,CHAR(h5path),dset_id,error)
@@ -6419,7 +6419,7 @@ MODULE FileType_HDF5
             !Get the string, then check if it's a boolean.
             CALL read_st0_helper(thisHDF5File,CHAR(plpath),st0)
             !Find replace C_NULL_CHARs from HDF5
-            CALL strrep(st0,C_NULL_CHAR,'')
+            st0 = st0%replace(C_NULL_CHAR,'')
             isbool=(st0 == 'T') .OR. (st0 == 'F')
             IF(isbool) THEN
               CALL read_b0(thisHDF5File,CHAR(plpath),l0)
@@ -6432,7 +6432,7 @@ MODULE FileType_HDF5
             CALL read_st1_helper(thisHDF5File,CHAR(plpath),st1)
             !Find replace C_NULL_CHARs from HDF5
             DO i=1,SIZE(st1)
-              CALL strrep(st1(i),C_NULL_CHAR,'')
+              st1(i) = st1(i)%replace(C_NULL_CHAR,'')
             ENDDO
             isbool=.TRUE.
             DO i=1,SIZE(st1)
@@ -6451,7 +6451,7 @@ MODULE FileType_HDF5
             !Find replace C_NULL_CHARs from HDF5
             DO j=1,SIZE(st2,DIM=2)
               DO i=1,SIZE(st2,DIM=1)
-                CALL strrep(st2(i,j),C_NULL_CHAR,'')
+                st2(i,j) = st2(i,j)%replace(C_NULL_CHAR,'')
               ENDDO
             ENDDO
             isbool=.TRUE.
@@ -6479,7 +6479,7 @@ MODULE FileType_HDF5
             DO k=1,SIZE(st3,DIM=3)
               DO j=1,SIZE(st3,DIM=2)
                 DO i=1,SIZE(st3,DIM=1)
-                  CALL strrep(st3(i,j,k),C_NULL_CHAR,'')
+                  st3(i,j,k) = st3(i,j,k)%replace(C_NULL_CHAR,'')
                 ENDDO
               ENDDO
             ENDDO
@@ -6544,8 +6544,12 @@ MODULE FileType_HDF5
       CHARACTER(LEN=LEN(path)+1) :: newPath
       TYPE(StringType) :: tmp
       tmp=TRIM(path)
-      CALL strrep(tmp,'->','/')
-      newPath='/'//tmp
+      tmp = tmp%replace('->','/')
+      IF(INDEX(tmp,'/') /= 1) THEN
+        newPath='/'//tmp
+      ELSE
+        newPath = trim(tmp)
+      ENDIF
     ENDFUNCTION convertPath
 #ifdef FUTILITY_HAVE_HDF5
 !
