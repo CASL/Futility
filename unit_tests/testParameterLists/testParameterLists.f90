@@ -82,6 +82,7 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%add(...)',testAdd)
   REGISTER_SUBTEST('%getString(...)',testGetString)
   REGISTER_SUBTEST('%has(...)',testHas)
+  REGISTER_SUBTEST('%convertTo2DStringArray(...)',testConvertTo2DStringArray)
   REGISTER_SUBTEST('%remove(...)',testRemove)
   REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
   REGISTER_SUBTEST('%getSubParams(...)',testGetSubParams)
@@ -4895,6 +4896,103 @@ PROGRAM testParameterLists
 
     CALL clear_test_vars()
   ENDSUBROUTINE testHas
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testConvertTo2DStringArray()
+    INTEGER(SIK) :: i,j
+    TYPE(StringType) :: addr
+    TYPE(StringType),ALLOCATABLE :: str1a(:),str2a(:,:),table(:,:),reftable(:,:)
+
+    !Test null call
+    CALL testParam%clear()
+    addr=''
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERT(.NOT. ALLOCATED(table),'empty call')
+
+    !Setup the PL
+    CALL testParam%add('TestPL->List1->1->"TitleRow"','"TitleRow"')
+    CALL testParam%add('TestPL->List1->1->"Scalar Row1"','"Scalar Row1"')
+    CALL testParam%add('TestPL->List1->1->"1-D testRow2"','"1-D testRow2"')
+    CALL testParam%add('TestPL->List1->1->"2-D testRow3" "Extra"','"2-D testRow3" "Extra"')
+    CALL testParam%add('TestPL->List1->1->"3-D testRow4"','"3-D testRow4"')
+    CALL testParam%add('TestPL->List1->2->"TitleRow"','SSK')
+    CALL testParam%add('TestPL->List1->2->"Scalar Row1"',1.0_SSK)
+    CALL testParam%add('TestPL->List1->2->"1-D testRow2"',(/2.0_SSK,3.0_SSK/))
+    CALL testParam%add('TestPL->List1->2->"2-D testRow3" "Extra"', &
+        RESHAPE((/4.0_SSK,5.0_SSK,6.0_SSK,7.0_SSK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->2->"3-D testRow4"', &
+        RESHAPE((/8.0_SSK,9.0_SSK,1.1_SSK,1.2_SSK,1.3_SSK,1.4_SSK,1.5_SSK,1.6_SSK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->3->"TitleRow"','SDK')
+    CALL testParam%add('TestPL->List1->3->"Scalar Row1"',1.0_SDK)
+    CALL testParam%add('TestPL->List1->3->"1-D testRow2"',(/2.0_SDK,3.0_SDK/))
+    CALL testParam%add('TestPL->List1->3->"2-D testRow3" "Extra"', &
+        RESHAPE((/4.0_SDK,5.0_SDK,6.0_SDK,7.0_SDK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->3->"3-D testRow4"', &
+        RESHAPE((/8.0_SDK,9.0_SDK,1.1_SDK,1.2_SDK,1.3_SDK,1.4_SDK,1.5_SDK,1.6_SDK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->4->"TitleRow"','SNK')
+    CALL testParam%add('TestPL->List1->4->"Scalar Row1"',1_SNK)
+    CALL testParam%add('TestPL->List1->4->"1-D testRow2"',(/2_SNK,3_SNK/))
+    CALL testParam%add('TestPL->List1->4->"2-D testRow3" "Extra"', &
+        RESHAPE((/4_SNK,5_SNK,6_SNK,7_SNK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->4->"3-D testRow4"', &
+        RESHAPE((/8_SNK,9_SNK,11_SNK,12_SNK,13_SNK,14_SNK,15_SNK,16_SNK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->5->"TitleRow"','SLK')
+    CALL testParam%add('TestPL->List1->5->"Scalar Row1"',1_SLK)
+    CALL testParam%add('TestPL->List1->5->"1-D testRow2"',(/2_SLK,3_SLK/))
+    CALL testParam%add('TestPL->List1->5->"2-D testRow3" "Extra"', &
+        RESHAPE((/4_SLK,5_SLK,6_SLK,7_SLK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->5->"3-D testRow4"', &
+        RESHAPE((/8_SLK,9_SLK,11_SLK,12_SLK,13_SLK,14_SLK,15_SLK,16_SLK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->6->"TitleRow"','SBK')
+    CALL testParam%add('TestPL->List1->6->"Scalar Row1"',.TRUE.)
+    CALL testParam%add('TestPL->List1->6->"1-D testRow2"',(/.FALSE.,.TRUE./))
+    CALL testParam%add('TestPL->List1->7->"TitleRow"','STR')
+    CALL testParam%add('TestPL->List1->7->"Scalar Row1"','"Scalar String"')
+    ALLOCATE(str1a(2)); str1a(1)='test 1-D 1'; str1a(2)='test 1-D 2'
+    CALL testParam%add('TestPL->List1->7->"1-D testRow2"',str1a)
+    ALLOCATE(str2a(2,2)); str2a(1,1)='2-D 1'; str2a(2,1)='2-D 2'
+    str2a(1,2)='2-D 3'; str2a(2,2)='2-D 4'
+    CALL testParam%add('TestPL->List1->7->"2-D testRow3" "Extra"',str2a)
+
+    !Test bad addr call
+    addr='wrong'
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERT(.NOT. ALLOCATED(table),'bad addr call')
+
+    ALLOCATE(reftable(7,5))
+    reftable='-'
+    reftable(1,1)='"TitleRow"'; reftable(2,1)='SSK'; reftable(3,1)='SDK'; reftable(4,1)='SNK'
+    reftable(5,1)='SLK'; reftable(6,1)='SBK'; reftable(7,1)='STR'
+    reftable(1,2)='"Scalar Row1"'; reftable(2,2)='1.000000E+00'; reftable(3,2)='1.000000000000000E+00'
+    reftable(4,2)='1'; reftable(5,2)='1'; reftable(6,2)='T'; reftable(7,2)='"Scalar String"'
+    reftable(1,3)='"1-D testRow2"'; reftable(2,3)='"2.000000E+00" "3.000000E+00"'
+    reftable(3,3)='"2.000000000000000E+00" "3.000000000000000E+00"'; reftable(4,3)='"2" "3"'
+    reftable(5,3)='"2" "3"'; reftable(6,3)='"F" "T"'; reftable(7,3)='"test 1-D 1" "test 1-D 2"'
+    reftable(1,4)='"2-D testRow3" "Extra"'; reftable(2,4)='"4.000000E+00" "5.000000E+00" "6.000000E+00" "7.000000E+00"'
+    reftable(3,4)='"4.000000000000000E+00" "5.000000000000000E+00" "6.000000000000000E+00" "7.000000000000000E+00"'
+    reftable(4,4)='"4" "5" "6" "7"'; reftable(5,4)='"4" "5" "6" "7"'; reftable(6,4)='-'
+    reftable(7,4)='"2-D 1" "2-D 2" "2-D 3" "2-D 4"'
+    reftable(1,5)='"3-D testRow4"'; reftable(2,5)='"8.000000E+00" "9.000000E+00" "1.100000E+00"'// &
+        ' "1.200000E+00" "1.300000E+00" "1.400000E+00" "1.500000E+00" "1.600000E+00"'
+    reftable(3,5)='"8.000000000000000E+00" "9.000000000000000E+00" "1.100000000000000E+00" '// &
+        '"1.200000000000000E+00" "1.300000000000000E+00" "1.400000000000000E+00" '// &
+        '"1.500000000000000E+00" "1.600000000000000E+00"'
+    reftable(4,5)='"8" "9" "11" "12" "13" "14" "15" "16"'; reftable(5,5)='"8" "9" "11" "12" "13" "14" "15" "16"'
+
+    addr='TestPL->List1'
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERTFAIL(ALLOCATED(table),'valid addr call')
+    ASSERTFAIL(SIZE(table,DIM=1) == 7,'table dim=1')
+    ASSERTFAIL(SIZE(table,DIM=2) == 5,'table dim=2')
+
+    DO j=1,SIZE(table,DIM=2)
+      DO i=1,SIZE(table,DIM=1)
+        ASSERT(reftable(i,j) == table(i,j),'reftable')
+        FINFO() i,j,CHAR(table(i,j))
+      ENDDO
+    ENDDO
+
+  ENDSUBROUTINE testConvertTo2DStringArray
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testGetNextParam()

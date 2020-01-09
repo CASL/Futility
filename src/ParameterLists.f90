@@ -475,6 +475,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::has_ParamType
       !> @copydoc ParameterLists::has_ParamType
       PROCEDURE,PASS :: has => has_ParamType
+      !> @copybrief ParameterLists::convertTo2DStringArray_ParamType
+      !> @copydoc ParameterLists::convertTo2DStringArray_ParamType
+      PROCEDURE,PASS :: convertTo2DStringArray => convertTo2DStringArray_ParamType
       !> @copybrief ParameterLists::getNextParam_ParamType
       !> @copydoc ParameterLists::getNextParam_ParamType
       PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
@@ -2448,6 +2451,132 @@ MODULE ParameterLists
     ENDFUNCTION has_ParamType
 !
 !-------------------------------------------------------------------------------
+!> @brief This subroutine will take a parameter list of parameter lists, where
+!>        each parameter list is a column to be added in the table. The first
+!>        parameter list must be the maximum number of rows and must be uniquely
+!>        labeled. The ordering of the parameters on the first list is the
+!>        order they will be written to the table. The following columns of
+!>        parameter lists must have parameters with names that match those the
+!>        first column. The value given to the parameter is arbitrary. This
+!>        ensures that the parameter will be placed in the desired location.
+!>
+!> Example:
+!>    thisParam:
+!>    'TestPL->List1->1->"TitleRow"','"TitleRow"'
+!>                   '1->"Scalar Row1"','"Scalar Row1"'
+!>                   '1->"1-D Row2"','"1-D Row2"'
+!>                   '1->"2-D Row3"','"2-D Row3"'
+!>                   '1->"3-D Row4"','"3-D Row4"'
+!>            'List1->2->"TitleRow"','SNK'
+!>                   '2->"Scalar Row1"',1_SNK
+!>                   '2->"1-D Row2"',(/2_SNK,3_SNK/)
+!>                   '2->"2-D Row3"',RESHAPE((/4_SNK,5_SNK,6_SNK,7_SNK/),(/2,2/))
+!>                   '2->"3-D Row4"',RESHAPE((/8_SNK,9_SNK,11_SNK,12_SNK,
+!>                                             13_SNK,14_SNK,15_SNK,16_SNK/),(/2,2,2/))
+!>            'List1->3->"TitleRow"','SLK'
+!>                   '3->"Scalar Row1"',1_SLK
+!>                   '3->"1-D Row2"',(/2_SLK,3_SLK/)
+!>                   '3->"2-D Row3"',RESHAPE((/4_SLK,5_SLK,6_SLK,7_SLK/),(/2,2/))
+!>                   '3->"3-D Row4"',RESHAPE((/8_SLK,9_SLK,11_SLK,12_SLK,
+!>                                             13_SLK,14_SLK,15_SLK,16_SLK/),(/2,2,2/))
+!>
+!>    baseAddr='TestPL->List1'
+!>    CALL thisParam%convertTo2DStringArray(baseAddr,table)
+!>    table:
+!>      x=    1           2                                      3
+!>  y=1  "Title Row"      SNK                                    SLK
+!>    2  "Scalar Row1"    1                                      1
+!>    3  "1-D Row2"       "2" "3"                                "2" "3"
+!>    4  "2-D Row3"       "4" "5" "6" "7"                        "4" "5" "6" "7"
+!>    5  "3-D Row4"       "8" "9" "11" "12" "13" "14" "15" "16"  "8" "9" "11" "12" "13" "14" "15" "16"
+!>
+!> @param thisParam The parameter list of parameter lists from which to create a
+!>        table.
+!> @param baseAddr The path used to extract the parameter list of parameter
+!>        lists.
+!> @param tablevals The 2-D string array that is allocated and returned.
+!>
+    SUBROUTINE convertTo2DStringArray_ParamType(thisParam,baseAddr,tablevals)
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      TYPE(StringType),INTENT(IN) :: baseAddr
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: tablevals(:,:)
+      INTEGER(SIK) :: i,j,ncol,nrow
+      TYPE(StringType) :: addr,plstr
+      TYPE(StringType),ALLOCATABLE :: rownames(:)
+      TYPE(ParamType) :: colListPL,rowListPL
+      CLASS(ParamType),POINTER :: colListPLPtr,rowListPLPtr
+
+      !Initialize data
+      !Loop over all columns, get the number of columns for the table
+      ncol=0
+      nrow=0
+      addr=baseAddr
+      colListPLPtr => NULL()
+      CALL thisParam%getSubPL(addr,colListPLPtr)
+      DO WHILE(ASSOCIATED(colListPLPtr))
+        ncol=ncol+1
+        CALL thisParam%getSubPL(addr,colListPLPtr)
+      ENDDO
+
+      addr='1'
+      CALL thisParam%get(baseAddr//'->1',colListPLPtr)
+      IF(ASSOCIATED(colListPLPtr)) THEN
+        colListPL=colListPLPtr
+        CALL colListPL%getNextParam(addr,rowListPLPtr)
+        !Loop over first column, get the number of rows for the table
+        DO WHILE(ASSOCIATED(rowListPLPtr))
+          nrow=nrow+1
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+        ENDDO
+      ENDIF
+
+      IF((nrow > 0) .AND. (ncol > 0)) THEN
+        !Allocate data
+        ALLOCATE(tablevals(ncol,nrow))
+        ALLOCATE(rownames(nrow))
+        tablevals='-'
+        rownames=''
+
+        !Get rownames so they can be searched and indexed.
+        addr='1'
+        CALL thisParam%get(baseAddr//'->1',colListPLPtr)
+        colListPL=colListPLPtr
+        DO j=1,nrow
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+          rowListPL=rowListPLPtr
+          CALL rowListPL%get(CHAR(rowListPL%pdat%name),rownames(j))
+          CALL rowListPL%getString(TRIM(rowListPL%pdat%name),plstr)
+          IF(LEN_TRIM(plstr) > 0) tablevals(1,j)=plstr
+        ENDDO
+
+        !Loop over all of the columns
+        DO i=2,ncol
+          !Init variables
+          addr=i
+          !Get the specified sub PL list to iterate over.
+          CALL thisParam%get(baseAddr//'->'//addr,colListPLPtr)
+          colListPL=colListPLPtr
+          !Get the first parameter in the sublist and loop.
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+          DO WHILE(ASSOCIATED(rowListPLPtr))
+            rowListPL=rowListPLPtr
+            !Since we assume the PL is not a full fixed column, find the j index
+            j=strarrayeqind(rownames,rowListPL%pdat%name)
+            !Add data to string table
+            CALL rowListPL%getString(TRIM(rowListPL%pdat%name),plstr)
+            IF(LEN_TRIM(plstr) > 0) tablevals(i,j)=plstr
+            CALL colListPL%getNextParam(addr,rowListPLPtr)
+          ENDDO
+        ENDDO
+
+        !Deallocate and nullify variables
+        DEALLOCATE(rownames)
+        colListPLPtr => NULL()
+        rowListPLPtr => NULL()
+      ENDIF
+    ENDSUBROUTINE convertTo2DStringArray_ParamType
+!
+!-------------------------------------------------------------------------------
 !> @brief Edits the information of a parameter
 !> @param thisParam the parameter to edit
 !> @param funit the unit number to edit the parameter to
@@ -2868,18 +2997,18 @@ MODULE ParameterLists
     ENDSUBROUTINE verifyList_Paramtype
 !
 !-------------------------------------------------------------------------------
-!> @brief This function checks the values of thisParam and thatParam and returns 
+!> @brief This function checks the values of thisParam and thatParam and returns
 !>        if they are equal or approximately equal.
 !> @param thisParam  The parameter list being validated
 !> @param thatParam  The parameter list being checked against
 !> @param bool The logical result of the checked parameters.
 !>
-!> The assumptions of this routine are that the parameters passed in are the 
+!> The assumptions of this routine are that the parameters passed in are the
 !> same extended ParamType.  It also assumes that there is a "gettable" value
 !> that is of thisParam%name on the ParamType.  This function determines
 !> the extended type, then "gets" the appropriate parameter from both lists,
-!> then checks their equivalence.  If they are equal or approximately equal, 
-!> the function results in true.  If not, false.  The function also performs 
+!> then checks their equivalence.  If they are equal or approximately equal,
+!> the function results in true.  If not, false.  The function also performs
 !> unit test harness assertions when checking the values.
 !>
     FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
@@ -3239,20 +3368,20 @@ MODULE ParameterLists
     ENDFUNCTION matchTest_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief This function checks the values of thisParam and thatParam and returns 
+!> @brief This function checks the values of thisParam and thatParam and returns
 !>        if they are equal or approximately equal.
 !> @param thisParam  The parameter list being validated
 !> @param thatParam  The parameter list being checked against
 !> @param bool The logical result of the checked parameters.
 !>
-!> The assumptions of this routine are that the parameters passed in are the 
+!> The assumptions of this routine are that the parameters passed in are the
 !> same extended ParamType.  It also assumes that there is a "gettable" value
 !> that is of thisParam%name on the ParamType.  This function determines
 !> the extended type, then "gets" the appropriate parameter from both lists,
-!> then checks their equivalence.  If they are equal or approximately equal, 
-!> the function results in true.  If not, false.  An error is reported if the 
+!> then checks their equivalence.  If they are equal or approximately equal,
+!> the function results in true.  If not, false.  An error is reported if the
 !> comparison fails.
-!> 
+!>
     FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
       CHARACTER(LEN=*),PARAMETER :: myName='matchList_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
@@ -3286,7 +3415,7 @@ MODULE ParameterLists
       bool=.FALSE.
       !Find the extended parameter type, then use the appropriate variable
       !and "get" the data to check.
-      errmesstt=' - The values' 
+      errmesstt=' - The values'
       errmess=' of the two parameter lists with parameter path "'//prefix//thisParam%name//'"'
       errmesstp=' are not equal!'
       SELECTTYPE(paramPtr => thatParam)
@@ -3322,7 +3451,7 @@ MODULE ParameterLists
           IF(bool) THEN
             bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
         TYPE IS(ParamType_SDK_a1)
@@ -3333,7 +3462,7 @@ MODULE ParameterLists
             bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
             IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
         TYPE IS(ParamType_SNK_a1)
@@ -3343,7 +3472,7 @@ MODULE ParameterLists
           IF(bool) THEN
             bool=ALL(tmpsnka11 == tmpsnka12)
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
         TYPE IS(ParamType_SLK_a1)
@@ -3353,7 +3482,7 @@ MODULE ParameterLists
           IF(bool) THEN
             bool=ALL(tmpslka11 == tmpslka12)
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
         TYPE IS(ParamType_SBK_a1)
@@ -3363,7 +3492,7 @@ MODULE ParameterLists
           IF(bool) THEN
             bool=ALL(tmpsbka11 .EQV. tmpsbka12)
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
         TYPE IS(ParamType_STR_a1)
@@ -3377,7 +3506,7 @@ MODULE ParameterLists
             ENDDO
             !clear?
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
         TYPE IS(ParamType_SSK_a2)
@@ -3389,10 +3518,10 @@ MODULE ParameterLists
             IF(bool) THEN
               bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
         TYPE IS(ParamType_SDK_a2)
@@ -3404,10 +3533,10 @@ MODULE ParameterLists
             IF(bool) THEN
               bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
         TYPE IS(ParamType_SNK_a2)
@@ -3419,10 +3548,10 @@ MODULE ParameterLists
             IF(bool) THEN
               bool=ALL(tmpsnka21 == tmpsnka22)
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
         TYPE IS(ParamType_SLK_a2)
@@ -3434,10 +3563,10 @@ MODULE ParameterLists
             IF(bool) THEN
               bool=ALL(tmpslka21 == tmpslka22)
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
         TYPE IS(ParamType_STR_a2)
@@ -3454,10 +3583,10 @@ MODULE ParameterLists
                 ENDDO
               ENDDO outer
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           !clear?
           DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
@@ -3472,13 +3601,13 @@ MODULE ParameterLists
               IF(bool) THEN
                 bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
               ELSE
-                errmesstt=' - Dimension 3' 
+                errmesstt=' - Dimension 3'
               ENDIF
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
         TYPE IS(ParamType_SDK_a3)
@@ -3492,13 +3621,13 @@ MODULE ParameterLists
               IF(bool) THEN
                 bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
               ELSE
-                errmesstt=' - Dimension 3' 
+                errmesstt=' - Dimension 3'
               ENDIF
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
         TYPE IS(ParamType_SNK_a3)
@@ -3512,13 +3641,13 @@ MODULE ParameterLists
               IF(bool) THEN
                 bool=ALL(tmpsnka31 == tmpsnka32)
               ELSE
-                errmesstt=' - Dimension 3' 
+                errmesstt=' - Dimension 3'
               ENDIF
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
         TYPE IS(ParamType_SLK_a3)
@@ -3532,18 +3661,18 @@ MODULE ParameterLists
               IF(bool) THEN
                 bool=ALL(tmpslka31 == tmpslka32)
               ELSE
-                errmesstt=' - Dimension 3' 
+                errmesstt=' - Dimension 3'
               ENDIF
             ELSE
-              errmesstt=' - Dimension 2' 
+              errmesstt=' - Dimension 2'
             ENDIF
           ELSE
-            errmesstt=' - Dimension 1' 
+            errmesstt=' - Dimension 1'
           ENDIF
           DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
         TYPE IS(ParamType_List)
           bool=SAME_TYPE_AS(thisParam,paramPtr)
-          errmesstt=' - The parameters' 
+          errmesstt=' - The parameters'
           errmesstp=' are not the same type!'
         CLASS DEFAULT
           CONTINUE
@@ -10374,4 +10503,3 @@ MODULE ParameterLists
     ENDSUBROUTINE string_array_to_string
 !
 ENDMODULE ParameterLists
-
