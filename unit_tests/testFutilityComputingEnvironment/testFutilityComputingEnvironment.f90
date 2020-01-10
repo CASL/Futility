@@ -46,7 +46,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testTimers()
-  TYPE(TimerType),POINTER :: timer
+  CLASS(TimerType),POINTER :: timer
 
   COMPONENT_TEST('addTimer')
   ASSERT_EQ(testCompEnv%nTimers,0,'%nTimers')
