@@ -812,18 +812,18 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transB
       CHARACTER(LEN=1) :: tA
       CHARACTER(LEN=1) :: tB
-
 #ifdef FUTILITY_HAVE_PETSC
+      CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
       SELECTTYPE(A); TYPE IS(PETScMatrixType)
         SELECTTYPE(B); TYPE IS(PETScMatrixType)
           SELECTTYPE(C); TYPE IS(PETScMatrixType)
             CALL matmult_PETSc(A,B,C,alpha,beta,transA,transB)
           CLASS DEFAULT
-            CALL eMatrixType%raiseError(modName//"::matmult_MatrixType - "// &
+            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
               "Interface not implemented")
           ENDSELECT
         CLASS DEFAULT
-            CALL eMatrixType%raiseError(modName//"::matmult_MatrixType - "// &
+            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
               "Interface not implemented")
         ENDSELECT
         RETURN
