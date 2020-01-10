@@ -18,8 +18,8 @@ PROGRAM testIOutil
 
   IMPLICIT NONE
 
-  CHARACTER(LEN=256) :: string,string1,string2,string3
-  CHARACTER(LEN=1) :: shortstring1,shortstring2,shortstring3
+  CHARACTER(LEN=256) :: string
+  CHARACTER(LEN=:),ALLOCATABLE :: string1,string2
   TYPE(ExceptionHandlerType),TARGET :: e
 
   CREATE_TEST('IOUTIL')
@@ -50,11 +50,13 @@ PROGRAM testIOutil
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testIO_Strings()
-      LOGICAL :: bool
       INTEGER :: stat
       INTEGER,ALLOCATABLE :: tmpint(:)
       CHARACTER(LEN=32) :: char
+      CHARACTER(LEN=52) :: test_phrase
+      CHARACTER(LEN=256) :: filepath,path,fname,ext
       TYPE(StringType) :: tmpStr,tmpStr2,tmpStrArray(10)
+      TYPE(StringType),ALLOCATABLE :: lines(:),tablevals(:,:)
 
       COMPONENT_TEST('strmatch')
       ASSERT(strmatch('testing','test'),'testing')
@@ -72,28 +74,23 @@ PROGRAM testIOutil
       ASSERT(.NOT.strarraymatch(tmpStrArray,'11'),'testing 11')
 
       COMPONENT_TEST('strarraymatchind')
-      ASSERT(strarraymatchind(tmpStrArray,'test') == 1,'testing')
-      ASSERT(strarraymatchind(tmpStrArray,'1') == 2,'testing 1')
-      ASSERT(strarraymatchind(tmpStrArray,'8') == 9,'testing 8')
-      ASSERT(strarraymatchind(tmpStrArray,'8',.FALSE.) == 9,'testing 8')
-      ASSERT(strarraymatchind(tmpStrArray,'8',.TRUE.) == 10,'testing 8 reverse')
-      ASSERT(strarraymatchind(tmpStrArray,'11') == -1,'testing 11')
+      ASSERT_EQ(strarraymatchind(tmpStrArray,'test'),1,'testing')
+      ASSERT_EQ(strarraymatchind(tmpStrArray,'1'),2,'testing 1')
+      ASSERT_EQ(strarraymatchind(tmpStrArray,'8'),9,'testing 8')
+      ASSERT_EQ(strarraymatchind(tmpStrArray,'8',.FALSE.),9,'testing 8')
+      ASSERT_EQ(strarraymatchind(tmpStrArray,'8',.TRUE.),10,'testing 8 reverse')
+      ASSERT_EQ(strarraymatchind(tmpStrArray,'11'),-1,'testing 11')
 
       COMPONENT_TEST('strarrayeqind')
-      ASSERT(strarrayeqind(tmpStrArray,'test') == -1,'match not eq testing')
-      ASSERT(strarrayeqind(tmpStrArray,'test1') == 2,'testing')
-      ASSERT(strarrayeqind(tmpStrArray,'1') == -1,'match not eq testing 1')
-      ASSERT(strarrayeqind(tmpStrArray,'test7') == 8,'testing test7')
-      ASSERT(strarrayeqind(tmpStrArray,'test7',.FALSE.) == 8,'testing test7 F reverse')
-      ASSERT(strarrayeqind(tmpStrArray,'test7',.TRUE.) == 8,'testing test7 reverse')
-      ASSERT(strarrayeqind(tmpStrArray,'test8') == 9,'testing test8')
-      ASSERT(strarrayeqind(tmpStrArray,'test8',.FALSE.) == 9,'testing test8 F reverse')
-      ASSERT(strarrayeqind(tmpStrArray,'test8',.TRUE.) == 10,'testing test8 reverse')
-
-      COMPONENT_TEST('nmatchstr')
-      ASSERT(nmatchstr('testing','test') == 1,'testing')
-      ASSERT(nmatchstr('TEAM','I') == 0,'TEAM')
-      ASSERT(nmatchstr('t e s t',' ') == 3 ,'t e s t')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test'),-1,'match not eq testing')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test1'),2,'testing')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'1'),-1,'match not eq testing 1')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test7'),8,'testing test7')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test7',.FALSE.),8,'testing test7 F reverse')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test7',.TRUE.),8,'testing test7 reverse')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test8'),9,'testing test8')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test8',.FALSE.),9,'testing test8 F reverse')
+      ASSERT_EQ(strarrayeqind(tmpStrArray,'test8',.TRUE.),10,'testing test8 reverse')
 
       COMPONENT_TEST('strfind')
       CALL strfind('stesting','test',tmpint)
@@ -111,447 +108,425 @@ PROGRAM testIOutil
       COMPONENT_TEST('strrep')
       string='testing'
       CALL strrep(string,'t','TT')
-      ASSERT(TRIM(string) == 'TTesTTing','testing')
+      ASSERT_EQ(TRIM(string),'TTesTTing','testing')
       tmpStr='testing  '
       CALL strrep(tmpStr,'t','TT')
-      ASSERT(TRIM(tmpStr) == 'TTesTTing','testing')
+      ASSERT_EQ(TRIM(tmpStr),'TTesTTing','testing')
       string='A->B->C->D->EFGH'
       CALL strrep(string,'->','/')
-      ASSERT(TRIM(string) == 'A/B/C/D/EFGH','-> to /')
+      ASSERT_EQ(TRIM(string),'A/B/C/D/EFGH','-> to /')
       CALL strrep(string,'/','->')
-      ASSERT(TRIM(string) == 'A->B->C->D->EFGH','/ to ->')
+      ASSERT_EQ(TRIM(string),'A->B->C->D->EFGH','/ to ->')
 
       COMPONENT_TEST('nFields (character)')
       string=''
-      ASSERT(nFields(string) == 0,'blank')
+      ASSERT_EQ(nFields(string),0,'blank')
       string=' '
-      ASSERT(nFields(string) == 0,'" "')
+      ASSERT_EQ(nFields(string),0,'" "')
       string='''arg1'
-      ASSERT(nFields(string) == -1,'bad single-quote')
+      ASSERT_EQ(nFields(string),-1,'bad single-quote')
       string='"arg1'
-      ASSERT(nFields(string) == -2,'bad double-quote')
+      ASSERT_EQ(nFields(string),-2,'bad double-quote')
       string='1'
-      ASSERT(nFields(string) == 1,'1')
+      ASSERT_EQ(nFields(string),1,'1')
       string='XSMACRO "core mat mod" 0'
-      ASSERT(nFields(string) == 3,'quotes')
+      ASSERT_EQ(nFields(string),3,'quotes')
       string=' XSMACRO "core mat mod" 0'
-      ASSERT(nFields(string) == 3,'quotes')
+      ASSERT_EQ(nFields(string),3,'quotes')
       string='XSMACRO "core mat mod" 0 '
-      ASSERT(nFields(string) == 3,'quotes')
+      ASSERT_EQ(nFields(string),3,'quotes')
       string=' XSMACRO "core mat mod" 0 '
-      ASSERT(nFields(string) == 3,'quotes')
+      ASSERT_EQ(nFields(string),3,'quotes')
       string=' XSMACRO "core mat mod" 0 "number 2"'
-      ASSERT(nFields(string) == 4,'quotes')
+      ASSERT_EQ(nFields(string),4,'quotes')
       string='arg1 nmult*arg2'
-      ASSERT(nFields(string) == 2,'bad multi-arg')
+      ASSERT_EQ(nFields(string),2,'bad multi-arg')
       string='arg1 2*arg2'
-      ASSERT(nFields(string) == 3,'good multi-arg')
+      ASSERT_EQ(nFields(string),3,'good multi-arg')
       string='arg1 2*"arg 2"'
-      ASSERT(nFields(string) == 3,'good "multi-arg"')
+      ASSERT_EQ(nFields(string),3,'good "multi-arg"')
       string='cardname 1 1 2 3 1 0.2'
-      ASSERT(nFields(string) == 7,'card')
+      ASSERT_EQ(nFields(string),7,'card')
       string='     cardname 200*3.1 15*0.2'
-      ASSERT(nFields(string) == 216,'card multi-arg')
+      ASSERT_EQ(nFields(string),216,'card multi-arg')
 
       COMPONENT_TEST('nFields (string)')
       tmpStr=''
-      ASSERT(nFields(tmpStr) == 0,'blank')
+      ASSERT_EQ(nFields(tmpStr),0,'blank')
       tmpStr=' '
-      ASSERT(nFields(tmpStr) == 0,'" "')
+      ASSERT_EQ(nFields(tmpStr),0,'" "')
       tmpStr='''arg1'
-      ASSERT(nFields(tmpStr) == -1,'bad single-quote')
+      ASSERT_EQ(nFields(tmpStr),-1,'bad single-quote')
       tmpStr='"arg1'
-      ASSERT(nFields(tmpStr) == -2,'bad double-quote')
+      ASSERT_EQ(nFields(tmpStr),-2,'bad double-quote')
       tmpStr='1'
-      ASSERT(nFields(tmpStr) == 1,'1')
+      ASSERT_EQ(nFields(tmpStr),1,'1')
       tmpStr='arg1 nmult*arg2'
-      ASSERT(nFields(tmpStr) == 2,'bad multi-arg')
+      ASSERT_EQ(nFields(tmpStr),2,'bad multi-arg')
       tmpStr='arg1 2*arg2'
-      ASSERT(nFields(tmpStr) == 3,'good multi-arg')
+      ASSERT_EQ(nFields(tmpStr),3,'good multi-arg')
       tmpStr='arg1 2*"arg 2"'
-      ASSERT(nFields(tmpStr) == 3,'good "multi-arg"')
+      ASSERT_EQ(nFields(tmpStr),3,'good "multi-arg"')
       tmpStr='cardname 1 1 2 3 1 0.2'
-      ASSERT(nFields(tmpStr) == 7,'card')
+      ASSERT_EQ(nFields(tmpStr),7,'card')
       tmpStr='     cardname 200*3.1 15*0.2'
-      ASSERT(nFields(tmpStr) == 216,'card multi-arg')
+      ASSERT_EQ(nFields(tmpStr),216,'card multi-arg')
 
       COMPONENT_TEST('getField (char,char)')
       string='     cardname 200*3.1 15*0.2'
       CALL getField(50,string,string2,stat)
-      ASSERT(TRIM(string2) == '3.1','50th (field)')
-      ASSERT(stat == 0,'50th (stat)')
+      ASSERT_EQ(TRIM(string2),'3.1','50th (field)')
+      ASSERT_EQ(stat,0,'50th (stat)')
       CALL getField(205,string,string2,stat)
-      ASSERT(TRIM(string2) == '0.2','205th (field)')
-      ASSERT(stat == 0,'205th (stat)')
+      ASSERT_EQ(TRIM(string2),'0.2','205th (field)')
+      ASSERT_EQ(stat,0,'205th (stat)')
       string='cardname 1 1 2 3 1 0.2'
       CALL getField(50,string,string2,stat)
-      ASSERT(LEN_TRIM(string2) == 0,'too many (field)')
-      ASSERT(stat == IOSTAT_END,'too many (stat)')
+      ASSERT_EQ(LEN_TRIM(string2),0,'too many (field)')
+      ASSERT_EQ(stat,IOSTAT_END,'too many (stat)')
       CALL getField(5,string,string2,stat)
-      ASSERT(TRIM(string2) == '3','normal (field)')
-      ASSERT(stat == 0,'normal (stat)')
+      ASSERT_EQ(TRIM(string2),'3','normal (field)')
+      ASSERT_EQ(stat,0,'normal (stat)')
       string='''/some dir/file'' arg2'
       CALL getField(1,string,string2,stat)
-      ASSERT(TRIM(string2) == '/some dir/file','filepath (field)')
-      ASSERT(stat == 0,'filepath (stat)')
-      CALL getField(1,string,shortstring1,stat)
-      CALL getField(1,string,shortstring1)
-      ASSERT(TRIM(shortstring1) == '','shortstring (field)')
-      ASSERT(stat == 666,'shortstring (stat)')
+      ASSERT_EQ(TRIM(string2),'/some dir/file','filepath (field)')
+      ASSERT_EQ(stat,0,'filepath (stat)')
       CALL getField(2,string,string2,stat)
-      ASSERT(TRIM(string2) == 'arg2','filepath 2 (field)')
-      ASSERT(stat == 0,'filepath 2 (stat)')
+      ASSERT_EQ(TRIM(string2),'arg2','filepath 2 (field)')
+      ASSERT_EQ(stat,0,'filepath 2 (stat)')
       string='arg1 2*"arg 2"'
       CALL getField(2,string,string2,stat)
-      ASSERT(TRIM(string2) == 'arg 2','multi-arg double-quote 2 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 2 (stat)')
+      ASSERT_EQ(TRIM(string2),'arg 2','multi-arg double-quote 2 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 2 (stat)')
       string2=''
       CALL getField(3,string,string2,stat)
-      ASSERT(TRIM(string2) == 'arg 2','multi-arg double-quote 3 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 3 (stat)')
+      ASSERT_EQ(TRIM(string2),'arg 2','multi-arg double-quote 3 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 3 (stat)')
       string='../../file.inp 40*2'
       CALL getField(1,string,string2,stat)
-      ASSERT(TRIM(string2) == '../../file.inp','mult-arg filepath 3 (field)')
-      ASSERT(stat == 0,'mult-arg filepath 3 (stat)')
+      ASSERT_EQ(TRIM(string2),'../../file.inp','mult-arg filepath 3 (field)')
+      ASSERT_EQ(stat,0,'mult-arg filepath 3 (stat)')
       CALL getField(35,string,string2,stat)
-      ASSERT(TRIM(string2) == '2','multi-arg filepath 35 (field)')
-      ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
+      ASSERT_EQ(TRIM(string2),'2','multi-arg filepath 35 (field)')
+      ASSERT_EQ(stat,0,'multi-arg filepath 35 (stat)')
 
       COMPONENT_TEST('getField (string,char)')
       tmpStr='     cardname 200*3.1 15*0.2'
       CALL getField(50,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '3.1','50th (field)')
-      ASSERT(stat == 0,'50th (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'3.1','50th (field)')
+      ASSERT_EQ(stat,0,'50th (stat)')
       CALL getField(205,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '0.2','205th (field)')
-      ASSERT(stat == 0,'205th (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'0.2','205th (field)')
+      ASSERT_EQ(stat,0,'205th (stat)')
       tmpStr='cardname 1 1 2 3 1 0.2'
       CALL getField(50,tmpStr,tmpStr2,stat)
-      ASSERT(LEN_TRIM(tmpStr2) == 0,'too many (field)')
-      ASSERT(stat == IOSTAT_END,'too many (stat)')
+      ASSERT_EQ(LEN_TRIM(tmpStr2),0,'too many (field)')
+      ASSERT_EQ(stat,IOSTAT_END,'too many (stat)')
       CALL getField(5,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '3','normal (field)')
-      ASSERT(stat == 0,'normal (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'3','normal (field)')
+      ASSERT_EQ(stat,0,'normal (stat)')
       tmpStr='''/some dir/file'' arg2'
       CALL getField(1,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '/some dir/file','filepath (field)')
-      ASSERT(stat == 0,'filepath (stat)')
-      CALL getField(1,tmpStr,shortstring1,stat)
-      CALL getField(1,tmpStr,shortstring1)
-      ASSERT(TRIM(shortstring1) == '','shortstring (field)')
-      ASSERT(stat == 666,'shortstring (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'/some dir/file','filepath (field)')
+      ASSERT_EQ(stat,0,'filepath (stat)')
       CALL getField(2,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg2','filepath 2 (field)')
-      ASSERT(stat == 0,'filepath 2 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg2','filepath 2 (field)')
+      ASSERT_EQ(stat,0,'filepath 2 (stat)')
       tmpStr='arg1 2*"arg 2"'
       CALL getField(2,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg 2','multi-arg double-quote 2 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 2 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg 2','multi-arg double-quote 2 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 2 (stat)')
       tmpStr2=''
       CALL getField(3,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg 2','multi-arg double-quote 3 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 3 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg 2','multi-arg double-quote 3 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 3 (stat)')
       tmpStr='../../file.inp 40*2'
       CALL getField(1,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '../../file.inp','mult-arg filepath 3 (field)')
-      ASSERT(stat == 0,'mult-arg filepath 3 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'../../file.inp','mult-arg filepath 3 (field)')
+      ASSERT_EQ(stat,0,'mult-arg filepath 3 (stat)')
       CALL getField(35,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '2','multi-arg filepath 35 (field)')
-      ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'2','multi-arg filepath 35 (field)')
+      ASSERT_EQ(stat,0,'multi-arg filepath 35 (stat)')
 
       COMPONENT_TEST('getField (char,string)')
       string='     cardname 200*3.1 15*0.2'
       CALL getField(50,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '3.1','50th (field)')
-      ASSERT(stat == 0,'50th (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'3.1','50th (field)')
+      ASSERT_EQ(stat,0,'50th (stat)')
       CALL getField(205,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '0.2','205th (field)')
-      ASSERT(stat == 0,'205th (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'0.2','205th (field)')
+      ASSERT_EQ(stat,0,'205th (stat)')
       string='cardname 1 1 2 3 1 0.2'
       CALL getField(50,string,tmpStr2,stat)
-      ASSERT(LEN_TRIM(tmpStr2) == 0,'too many (field)')
-      ASSERT(stat == IOSTAT_END,'too many (stat)')
+      ASSERT_EQ(LEN_TRIM(tmpStr2),0,'too many (field)')
+      ASSERT_EQ(stat,IOSTAT_END,'too many (stat)')
       CALL getField(5,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '3','normal (field)')
-      ASSERT(stat == 0,'normal (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'3','normal (field)')
+      ASSERT_EQ(stat,0,'normal (stat)')
       string='''/some dir/file'' arg2'
       CALL getField(1,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '/some dir/file','filepath (field)')
-      ASSERT(stat == 0,'filepath (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'/some dir/file','filepath (field)')
+      ASSERT_EQ(stat,0,'filepath (stat)')
       CALL getField(2,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg2','filepath 2 (field)')
-      ASSERT(stat == 0,'filepath 2 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg2','filepath 2 (field)')
+      ASSERT_EQ(stat,0,'filepath 2 (stat)')
       string='arg1 2*"arg 2"'
       CALL getField(2,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg 2','multi-arg double-quote 2 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 2 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg 2','multi-arg double-quote 2 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 2 (stat)')
       tmpStr2=''
       CALL getField(3,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg 2','multi-arg double-quote 3 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 3 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg 2','multi-arg double-quote 3 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 3 (stat)')
       string='../../file.inp 40*2'
       CALL getField(1,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '../../file.inp','mult-arg filepath 3 (field)')
-      ASSERT(stat == 0,'mult-arg filepath 3 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'../../file.inp','mult-arg filepath 3 (field)')
+      ASSERT_EQ(stat,0,'mult-arg filepath 3 (stat)')
       CALL getField(35,string,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '2','multi-arg filepath 35 (field)')
-      ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'2','multi-arg filepath 35 (field)')
+      ASSERT_EQ(stat,0,'multi-arg filepath 35 (stat)')
 
       COMPONENT_TEST('getField (string,string)')
       tmpStr='     cardname 200*3.1 15*0.2'
       CALL getField(50,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '3.1','50th (field)')
-      ASSERT(stat == 0,'50th (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'3.1','50th (field)')
+      ASSERT_EQ(stat,0,'50th (stat)')
       CALL getField(205,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '0.2','205th (field)')
-      ASSERT(stat == 0,'205th (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'0.2','205th (field)')
+      ASSERT_EQ(stat,0,'205th (stat)')
       tmpStr='cardname 1 1 2 3 1 0.2'
       CALL getField(50,tmpStr,tmpStr2,stat)
-      ASSERT(LEN_TRIM(tmpStr2) == 0,'too many (field)')
-      ASSERT(stat == IOSTAT_END,'too many (stat)')
+      ASSERT_EQ(LEN_TRIM(tmpStr2),0,'too many (field)')
+      ASSERT_EQ(stat,IOSTAT_END,'too many (stat)')
       CALL getField(5,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '3','normal (field)')
-      ASSERT(stat == 0,'normal (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'3','normal (field)')
+      ASSERT_EQ(stat,0,'normal (stat)')
       tmpStr='''/some dir/file'' arg2'
       CALL getField(1,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '/some dir/file','filepath (field)')
-      ASSERT(stat == 0,'filepath (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'/some dir/file','filepath (field)')
+      ASSERT_EQ(stat,0,'filepath (stat)')
       CALL getField(2,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg2','filepath 2 (field)')
-      ASSERT(stat == 0,'filepath 2 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg2','filepath 2 (field)')
+      ASSERT_EQ(stat,0,'filepath 2 (stat)')
       tmpStr='arg1 2*"arg 2"'
       CALL getField(2,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg 2','multi-arg double-quote 2 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 2 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg 2','multi-arg double-quote 2 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 2 (stat)')
       tmpStr2=''
       CALL getField(3,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == 'arg 2','multi-arg double-quote 3 (field)')
-      ASSERT(stat == 0,'multi-arg double-quote 3 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'arg 2','multi-arg double-quote 3 (field)')
+      ASSERT_EQ(stat,0,'multi-arg double-quote 3 (stat)')
       tmpStr='../../file.inp 40*2'
       CALL getField(1,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '../../file.inp','mult-arg filepath 3 (field)')
-      ASSERT(stat == 0,'mult-arg filepath 3 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'../../file.inp','mult-arg filepath 3 (field)')
+      ASSERT_EQ(stat,0,'mult-arg filepath 3 (stat)')
       CALL getField(35,tmpStr,tmpStr2,stat)
-      ASSERT(TRIM(tmpStr2) == '2','multi-arg filepath 35 (field)')
-      ASSERT(stat == 0,'multi-arg filepath 35 (stat)')
+      ASSERT_EQ(TRIM(tmpStr2),'2','multi-arg filepath 35 (field)')
+      ASSERT_EQ(stat,0,'multi-arg filepath 35 (stat)')
 
       COMPONENT_TEST('stripComment')
       string='some data !a comment !another comment?'
       CALL stripComment(string)
-      ASSERT(TRIM(string) == 'some data','2 comments')
+      ASSERT_EQ(TRIM(string),'some data','2 comments')
       string='some data !a comment'
       CALL stripComment(string)
-      ASSERT(TRIM(string) == 'some data','one comment')
+      ASSERT_EQ(TRIM(string),'some data','one comment')
       string='!a comment'
       CALL stripComment(string)
-      ASSERT(LEN_TRIM(string) == 0,'only comment')
+      ASSERT_EQ(LEN_TRIM(string),0,'only comment')
       string=' !a comment'
       CALL stripComment(string)
-      ASSERT(LEN_TRIM(string) == 0,' leading whitespace only comment')
+      ASSERT_EQ(LEN_TRIM(string),0,' leading whitespace only comment')
       string=''
       CALL stripComment(string)
-      ASSERT(LEN_TRIM(string) == 0,'empty')
+      ASSERT_EQ(LEN_TRIM(string),0,'empty')
       string='some data'
       CALL stripComment(string)
-      ASSERT(TRIM(string) == 'some data','no comment')
+      ASSERT_EQ(TRIM(string),'some data','no comment')
 
       COMPONENT_TEST('toUPPER')
       string='239p84uyqh;jndf:JKDFH./'
       CALL toUPPER(string)
-      ASSERT(TRIM(string) == '239P84UYQH;JNDF:JKDFH./','gibberish (char)')
+      ASSERT_EQ(TRIM(string),'239P84UYQH;JNDF:JKDFH./','gibberish (char)')
       tmpStr='239p84uyqh;jndf:JKDFH./'
-      CALL toUPPER(tmpStr)
-      ASSERT(TRIM(tmpStr) == '239P84UYQH;JNDF:JKDFH./','gibberish (string)')
+      ASSERT_EQ(TRIM(tmpStr%upper()),'239P84UYQH;JNDF:JKDFH./','gibberish (string)')
+
+      COMPONENT_TEST('toLower')
+      string='239p84uyqh;jndf:JKDFH./'
+      CALL toLower(string)
+      ASSERT_EQ(TRIM(string),'239p84uyqh;jndf:jkdfh./','gibberish (char)')
+      tmpStr='239p84uyqh;jndf:JKDFH./'
+      ASSERT_EQ(TRIM(tmpstr%lower()),'239p84uyqh;jndf:jkdfh./','gibberish (string)')
 
       COMPONENT_TEST('getFilePath')
-      string='C:\fullpath\dir1\filenoext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == 'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string)
-      string='..\relpath\..\dir1\filenoext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == '..'//SLASH//'relpath'//SLASH//'..'//SLASH// &
-        'dir1'//SLASH)
-      ASSERT(bool,string)
-      string='/fullpath/dir1/filenoext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string)
-      string='../relpath/../dir1/filenoext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == '..'//SLASH//'relpath'//SLASH// &
-        '..'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string)
-      string='C:\fullpath\dir1\file.two.ext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == 'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string)
-      string='..\relpath\..\dir1\file.two.ext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == '..'//SLASH//'relpath'//SLASH// &
-        '..'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string)
-      string='/fullpath/dir1/file.two.ext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string)
-      string='../relpath/../dir1/file.two.ext'
-      CALL getFilePath(string,string2)
-      bool=(TRIM(string2) == '..'//SLASH//'relpath'//SLASH// &
-        '..'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string)
+      filepath='C:\fullpath\dir1\filenoext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
+      filepath='..\relpath\..\dir1\filenoext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
+      filepath='/fullpath/dir1/filenoext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
+      filepath='../relpath/../dir1/filenoext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
+      filepath='C:\fullpath\dir1\file.two.ext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
+      filepath='..\relpath\..\dir1\file.two.ext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
+      filepath='/fullpath/dir1/file.two.ext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),SLASH//'fullpath'//SLASH//'dir1'//SLASH,filepath)
+      filepath='../relpath/../dir1/file.two.ext'
+      CALL getFilePath(filepath,path)
+      ASSERT_EQ(TRIM(path),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,filepath)
 
       COMPONENT_TEST('getFileName')
-      string='C:\fullpath\dir1\filenoext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'filenoext',string)
-      string='..\relpath\..\dir1\filenoext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'filenoext',string)
-      string='/fullpath/dir1/filenoext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'filenoext',string)
-      string='../relpath/../dir1/filenoext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'filenoext',string)
-      string='C:\fullpath\dir1\file.two.ext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'file.two.ext',string)
-      string='..\relpath\..\dir1\file.two.ext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'file.two.ext',string)
-      string='/fullpath/dir1/file.two.ext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'file.two.ext',string)
-      string='../relpath/../dir1/file.two.ext'
-      CALL getFileName(string,string2)
-      ASSERT(TRIM(string2) == 'file.two.ext',string)
+      filepath='C:\fullpath\dir1\filenoext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
+      filepath='..\relpath\..\dir1\filenoext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
+      filepath='/fullpath/dir1/filenoext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
+      filepath='../relpath/../dir1/filenoext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'filenoext',filepath)
+      filepath='C:\fullpath\dir1\file.two.ext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
+      filepath='..\relpath\..\dir1\file.two.ext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
+      filepath='/fullpath/dir1/file.two.ext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
+      filepath='../relpath/../dir1/file.two.ext'
+      CALL getFileName(filepath,fname)
+      ASSERT_EQ(TRIM(fname),'file.two.ext',filepath)
 
       COMPONENT_TEST('getFileNameExt')
-      string='C:\fullpath\dir1\filenoext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '',string)
-      string='..\relpath\..\dir1\filenoext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '',string)
-      string='/fullpath/dir1/filenoext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '',string)
-      string='../relpath/../dir1/filenoext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '',string)
-      string='C:\fullpath\dir1\file.two.ext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '.ext',string)
-      string='..\relpath\..\dir1\file.two.ext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '.ext',string)
-      string='/fullpath/dir1/file.two.ext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '.ext',string)
-      string='../relpath/../dir1/file.two.ext'
-      CALL getFileNameExt(string,string2)
-      ASSERT(TRIM(string2) == '.ext',string)
+      filepath='C:\fullpath\dir1\filenoext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'',filepath)
+      filepath='..\relpath\..\dir1\filenoext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'',filepath)
+      filepath='/fullpath/dir1/filenoext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'',filepath)
+      filepath='../relpath/../dir1/filenoext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'',filepath)
+      filepath='C:\fullpath\dir1\file.two.ext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'.ext',filepath)
+      filepath='..\relpath\..\dir1\file.two.ext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'.ext',filepath)
+      filepath='/fullpath/dir1/file.two.ext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'.ext',filepath)
+      filepath='../relpath/../dir1/file.two.ext'
+      CALL getFileNameExt(filepath,ext)
+      ASSERT_EQ(TRIM(ext),'.ext',filepath)
 
       COMPONENT_TEST('getFileParts')
       string='C:\fullpath\dir1\filenoext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == 'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'filenoext',string//' name')
-      ASSERT(TRIM(string3) == '',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(ext),'',string//' ext')
       string='..\relpath\..\dir1\filenoext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == '..'//SLASH//'relpath'//SLASH// &
-        '..'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'filenoext',string//' name')
-      ASSERT(TRIM(string3) == '',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(ext),'',string//' ext')
       string='/fullpath/dir1/filenoext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'filenoext',string//' name')
-      ASSERT(TRIM(string3) == '',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(ext),'',string//' ext')
       string='../relpath/../dir1/filenoext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == '..'//SLASH//'relpath'//SLASH// &
-        '..'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'filenoext',string//' name')
-      ASSERT(TRIM(string3) == '',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'filenoext',string//' name')
+      ASSERT_EQ(TRIM(ext),'',string//' ext')
       string='C:\fullpath\dir1\file.two.ext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == 'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'file.two',string//' name')
-      ASSERT(TRIM(string3) == '.ext',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),'C:'//SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
+      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
       string='..\relpath\..\dir1\file.two.ext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == '..'//SLASH//'relpath'//SLASH// &
-        '..'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'file.two',string//' name')
-      ASSERT(TRIM(string3) == '.ext',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
+      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
       string='/fullpath/dir1/file.two.ext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == SLASH//'fullpath'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'file.two',string//' name')
-      ASSERT(TRIM(string3) == '.ext',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),SLASH//'fullpath'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
+      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
       string='../relpath/../dir1/file.two.ext'
-      CALL getFileParts(string,string1,string2,string3)
-      bool=(TRIM(string1) == '..'//SLASH//'relpath'//SLASH// &
-        '..'//SLASH//'dir1'//SLASH)
-      ASSERT(bool,string//' path')
-      ASSERT(TRIM(string2) == 'file.two',string//' name')
-      ASSERT(TRIM(string3) == '.ext',string//' ext')
+      CALL getFileParts(string,filepath,fname,ext)
+      ASSERT_EQ(TRIM(filepath),'..'//SLASH//'relpath'//SLASH//'..'//SLASH//'dir1'//SLASH,string//' filepath')
+      ASSERT_EQ(TRIM(fname),'file.two',string//' name')
+      ASSERT_EQ(TRIM(ext),'.ext',string//' ext')
 
-      COMPONENT_TEST('Error Checking')
-      CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
-      CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
+      !COMPONENT_TEST('Error Checking')
+      !CALL getFileParts(string,shortstring1,shortstring2,shortstring3)
+      !CALL getFileParts(string,shortstring1,shortstring2,shortstring3,e)
 
       COMPONENT_TEST('getRealFormat')
       string='1'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == 'f2.0','1')
+      ASSERT_EQ(string1,'f2.0','1')
       string='1.'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == 'f2.0','1.')
+      ASSERT_EQ(string1,'f2.0','1.')
       string='1.0001'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == 'f6.4','1.0001')
+      ASSERT_EQ(string1,'f6.4','1.0001')
       string='1e-6'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == 'es5.0e1','1e-6')
+      ASSERT_EQ(string1,'es5.0e1','1e-6')
       string='1e-06'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == 'es6.0e2','1e-06')
+      ASSERT_EQ(string1,'es6.0e2','1e-06')
       string='-3.21e+02'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == 'es9.2e2','-3.21e+02')
+      ASSERT_EQ(string1,'es9.2e2','-3.21e+02')
       string='3.21e'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == '','3.21e')
+      ASSERT_EQ(string1,'','3.21e')
       string='3.21e1'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == 'es7.2e1','3.21e1')
+      ASSERT_EQ(string1,'es7.2e1','3.21e1')
       string='hello'
       CALL getRealFormat(string,string1)
-      ASSERT(string1 == '','hello')
+      ASSERT_EQ(string1,'','hello')
       FINFO() '"'//string1//'"'
 
       COMPONENT_TEST('str')
       !SNK
+      ASSERT_EQ(str(0_SNK),'0','str(SNK)')
       ASSERT_EQ(str(2_SNK),'2','str(SNK)')
       ASSERT_EQ(str(-2_SNK),'-2','str(SNK)')
+      ASSERT_EQ(str(0_SNK,4),'0000','str(SNK,pad)')
       ASSERT_EQ(str(375_SNK,9),'000000375','str(SNK,pad)')
       ASSERT_EQ(str(3_SNK,3),'003','str(SNK,pad)')
       ASSERT_EQ(str(-3_SNK,3),'-003','str(SNK,pad)')
       ASSERT_EQ(str(-375_SNK,9),'-000000375','str(SNK,pad)')
       !SLK
+      ASSERT_EQ(str(0_SLK),'0','str(SLK)')
       ASSERT_EQ(str(3_SLK),'3','str(SLK)')
       ASSERT_EQ(str(-3_SLK),'-3','str(SLK)')
+      ASSERT_EQ(str(0_SLK,4),'0000','str(SLK,pad)')
       ASSERT_EQ(str(375_SLK,9),'000000375','str(SLK,pad)')
       ASSERT_EQ(str(3_SLK,3),'003','str(SLK,pad)')
       ASSERT_EQ(str(-3_SLK,3),'-003','str(SLK,pad)')
@@ -567,12 +542,72 @@ PROGRAM testIOutil
       ASSERT_EQ(str(-5000.0_SDK),'-5.000000000000000E+03','str(SDK)')
       ASSERT_EQ(str(-5000.0_SDK,5),'-5.00000E+03','str(SDK,nDecimal)')
 
+      COMPONENT_TEST('nmatchstr')
+      ASSERT_EQ(nmatchstr('a','a'),1,'test')
+      ASSERT_EQ(nmatchstr('aa','a'),2,'test')
+      ASSERT_EQ(nmatchstr('aaaa','aa'),3,'test')
+      ASSERT_EQ(nmatchstr('aaaab','b'),1,'test')
+      test_phrase = "    The quick brown fox jumped over the lazy dog.   "
+      ASSERT_EQ(nmatchstr(test_phrase,'ab'),0,'test')
+      ASSERT_EQ(nmatchstr(test_phrase,'o'),4,'test')
+      ASSERT_EQ(nmatchstr(test_phrase,'T'),1,'test')
+      ASSERT_EQ(nmatchstr(test_phrase,'s'),0,'test')
+      ASSERT_EQ(nmatchstr('t   e   s   t','  '),6 ,'t  e  s  t')
+      ASSERT_EQ(nmatchstr(test_phrase,' '),15,'test')
+      ASSERT_EQ(nmatchstr(test_phrase,''),52,'test')
+
+      COMPONENT_TEST('stringTableToLines')
+      ALLOCATE(tablevals(4,5))
+      tablevals='-'
+      tablevals(1,1)='"Title column 1"'; tablevals(2,1)='"Title" "column2"'
+      tablevals(3,1)='"Title" "column" "3"'; tablevals(4,1)='#4'
+      tablevals(1,2)='100'; tablevals(2,2)='1.00'; tablevals(3,2)='T'; tablevals(4,2)='string'
+      tablevals(1,3)='"20" "30"'; tablevals(2,3)='"2.0" "3.0"'; tablevals(3,3)='"F" "F"'; tablevals(4,3)='"string1" "string2"'
+      tablevals(1,4)='"White   space" "test"'; tablevals(2,4)='"A Different" "amount of; space"'
+      tablevals(3,4)='"semi-colons_missingquote;;;;'; tablevals(4,4)='"quote  check" "" "" "" ""'
+      tablevals(1,5)='"top"'; tablevals(2,5)='"" "middle"'; tablevals(3,5)='"" "" "bottom"'
+      CALL stringTableToLines(tablevals,lines)
+      tmpStr='+----------------+------------------+--------+--------------+'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(1)),'line 1')
+      tmpStr='| Title column 1 | Title            | Title  | #4           |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(2)),'line 2')
+      tmpStr='|                | column2          | column |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(3)),'line 3')
+      tmpStr='|                |                  | 3      |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(4)),'line 4')
+      tmpStr='+----------------+------------------+--------+--------------+'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(5)),'line 5')
+      tmpStr='| 100            | 1.00             | T      | string       |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(6)),'line 6')
+      tmpStr='| 20             | 2.0              | F      | string1      |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(7)),'line 7')
+      tmpStr='| 30             | 3.0              | F      | string2      |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(8)),'line 8')
+      tmpStr='| White   space  | A Different      |        | quote  check |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(9)),'line 9')
+      tmpStr='| test           | amount of; space |        |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(10)),'line 10')
+      tmpStr='|                |                  |        |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(11)),'line 11')
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(12)),'line 12')
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(13)),'line 13')
+      tmpStr='| top            |                  |        | -            |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(14)),'line 14')
+      tmpStr='|                | middle           |        |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(15)),'line 15')
+      tmpStr='|                |                  | bottom |              |'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(16)),'line 16')
+      tmpStr='+----------------+------------------+--------+--------------+'
+      ASSERT_EQ(TRIM(tmpStr),TRIM(lines(17)),'line 17')
+      DEALLOCATE(tablevals,lines)
+
     ENDSUBROUTINE testIO_Strings
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testRTEnv()
       INTEGER :: n,stat,n0
-      CHARACTER(LEN=1024) :: tmpChar,varname
+      CHARACTER(LEN=1024) :: varname,tmpChar
+      CHARACTER(:),ALLOCATABLE :: tmpCharStr
       TYPE(StringType) :: tmpStr
 
       COMPONENT_TEST('GET_COMMAND')
@@ -583,7 +618,7 @@ PROGRAM testIOutil
         !The environment variable exists, execute the test
         CALL GET_COMMAND(COMMAND=tmpStr)
         CALL GET_COMMAND(COMMAND=tmpChar)
-        ASSERT(TRIM(tmpChar) == TRIM(tmpStr),'command')
+        ASSERT_EQ(TRIM(tmpChar),TRIM(tmpStr),'command')
       ELSE
         INFO(0) 'Could not run test for GET_COMMAND'
       ENDIF
@@ -604,28 +639,28 @@ PROGRAM testIOutil
         !The environment variable exists, execute the test
         CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpStr)
         CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpChar)
-        ASSERT(TRIM(tmpChar) == TRIM(tmpStr),'value')
+        ASSERT_EQ(TRIM(tmpChar),TRIM(tmpStr),'value')
       ELSE
         INFO(0) 'Could not run test for GET_ENVIRONMENT_VARIABLE'
       ENDIF
 
       COMPONENT_TEST('GET_CURRENT_DIRECTORY')
       CALL GET_CURRENT_DIRECTORY(DIR=tmpStr,LENGTH=n,STATUS=stat)
-      ASSERT(stat == 0,'STATUS (string)')
+      ASSERT_EQ(stat,0,'STATUS (string)')
       ASSERT(strmatch(CHAR(tmpStr),'testIOutil'),'DIR (string)')
-      ASSERT(n == LEN(tmpStr),'LENGTH (string)')
+      ASSERT_EQ(n,LEN(tmpStr),'LENGTH (string)')
       n0=n; n=0;
-      CALL GET_CURRENT_DIRECTORY(DIR=tmpChar,LENGTH=n,STATUS=stat)
-      ASSERT(n == n0,'LENGTH (char)')
-      ASSERT(strmatch(TRIM(tmpChar),CHAR(tmpStr)),'DIR (char)')
-      ASSERT(stat == 0,'STATUS (char)')
+      CALL GET_CURRENT_DIRECTORY(DIR=tmpCharStr,LENGTH=n,STATUS=stat)
+      ASSERT_EQ(n,n0,'LENGTH (char)')
+      ASSERT(strmatch(TRIM(tmpCharStr),CHAR(tmpStr)),'DIR (char)')
+      ASSERT_EQ(stat,0,'STATUS (char)')
       CALL GET_CURRENT_DIRECTORY(LENGTH=n,STATUS=stat)
-      ASSERT(n == n0,'LENGTH')
-      ASSERT(stat == 0,'STATUS')
+      ASSERT_EQ(n,n0,'LENGTH')
+      ASSERT_EQ(stat,0,'STATUS')
       CALL GET_CURRENT_DIRECTORY(LENGTH=n)
-      ASSERT(n == n0,'LENGTH')
+      ASSERT_EQ(n,n0,'LENGTH')
       CALL GET_CURRENT_DIRECTORY(STATUS=stat)
-      ASSERT(stat == 0,'STATUS')
+      ASSERT_EQ(stat,0,'STATUS')
     ENDSUBROUTINE testRTEnv
 !
 !-------------------------------------------------------------------------------
@@ -641,28 +676,28 @@ PROGRAM testIOutil
       char_dir='d1/d 2'
       str_dir='d1/d 2/d3'
       CALL MAKE_DIRECTORY(char_dir,STATUS=mystat)
-      ASSERT(mystat == 0,'d1/d 2 STAT')
+      ASSERT_EQ(mystat,0,'d1/d 2 STAT')
       CALL MAKE_DIRECTORY(str_dir,STATUS=mystat)
-      ASSERT(mystat == 0,'str_dir')
+      ASSERT_EQ(mystat,0,'str_dir')
       !Test if directories already exist
       CALL MAKE_DIRECTORY(char_dir,STATUS=mystat)
-      ASSERT(mystat == 0,'char_dir')
+      ASSERT_EQ(mystat,0,'char_dir')
       CALL MAKE_DIRECTORY(str_dir,STATUS=mystat)
-      ASSERT(mystat == 0,'str_dir')
+      ASSERT_EQ(mystat,0,'str_dir')
 
       !Clean up tests, remove directories
       tmp='rmdir "d1/d 2/d3"'
       CALL SlashRep(tmp)
       mystat=SYSTEM(tmp)
-      ASSERT(mystat == 0,'d1/d 2/d3 does not exist')
+      ASSERT_EQ(mystat,0,'d1/d 2/d3 does not exist')
       tmp='rmdir "d1/d 2"'
       CALL SlashRep(tmp)
       mystat=SYSTEM(tmp)
-      ASSERT(mystat == 0,'d1/d 2 does not exist')
+      ASSERT_EQ(mystat,0,'d1/d 2 does not exist')
       tmp='rmdir d1'
       CALL SlashRep(tmp)
       mystat=SYSTEM(tmp)
-      ASSERT(mystat == 0,'d1 does not exist')
+      ASSERT_EQ(mystat,0,'d1 does not exist')
     ENDSUBROUTINE testMKDIR
 !
 !-------------------------------------------------------------------------------
@@ -678,9 +713,9 @@ PROGRAM testIOutil
 #endif
 
       CALL SlashRep(char_dir)
-      ASSERT(char_dir == 'd1'//SLASH//'d 2','char')
+      ASSERT_EQ(char_dir,'d1'//SLASH//'d 2','char')
       CALL SlashRep(str_dir)
-      ASSERT(str_dir == 'd1'//SLASH//'d 2'//SLASH//'d3','string')
+      ASSERT_EQ(TRIM(str_dir),'d1'//SLASH//'d 2'//SLASH//'d3','string')
     ENDSUBROUTINE testSlashRep
 !
 ENDPROGRAM testIOutil

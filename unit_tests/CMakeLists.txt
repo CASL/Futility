@@ -60,11 +60,13 @@ SET(UNIT_TEST_NAMES
     testMultigridMesh
     testEigenvalueSolver
     testODESolver
+    testNonLinearSolver
     testAndersonAcceleration
     testStochasticSampler
     testPartitionGraph
     testFutilityComputingEnvironment
     testSchemaParser
+    testSpeciesElements
 )
 
 IF("${PROJECT_NAME}" STREQUAL "Futility" OR "${PROJECT_NAME}" STREQUAL "MPACT")

@@ -27,6 +27,7 @@ PROGRAM testParameterLists
   INTEGER(SLK) :: valslk
   LOGICAL(SBK) :: valsbk
   CHARACTER(LEN=100) :: valchar
+  CHARACTER(:),ALLOCATABLE :: valchar1
   TYPE(StringType) :: valstr
   REAL(SSK),ALLOCATABLE :: valsska1(:)
   REAL(SDK),ALLOCATABLE :: valsdka1(:)
@@ -81,12 +82,14 @@ PROGRAM testParameterLists
   REGISTER_SUBTEST('%add(...)',testAdd)
   REGISTER_SUBTEST('%getString(...)',testGetString)
   REGISTER_SUBTEST('%has(...)',testHas)
+  REGISTER_SUBTEST('%convertTo2DStringArray(...)',testConvertTo2DStringArray)
   REGISTER_SUBTEST('%remove(...)',testRemove)
   REGISTER_SUBTEST('%getNextParam(...)',testGetNextParam)
   REGISTER_SUBTEST('%getSubParams(...)',testGetSubParams)
   REGISTER_SUBTEST('%getSubPL(...)',testGetSubPL)
   REGISTER_SUBTEST('%validate(...)',testValidate)
   REGISTER_SUBTEST('%verify(...)',testVerify)
+  REGISTER_SUBTEST('%verifyList(...)',testVerifyList)
   REGISTER_SUBTEST('Partial Matching',testPartialMatch)
 
   REGISTER_SUBTEST('%initFromXML',testInitFromXML)
@@ -808,17 +811,17 @@ PROGRAM testParameterLists
     CALL testParam%init('testCHAR',TRIM(valchar),'The value is test')
     CALL testParam%get('testCHAR',someParam)
     ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
-    CALL someParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'test','someParam valchar')
+    CALL someParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'test','someParam valchar')
     valchar='testing'
-    CALL testParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'test','testParam valchar')
-    CALL testParam%get('testError',valchar)
+    CALL testParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'test','testParam valchar')
+    CALL testParam%get('testError',valchar1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
       ' - unable to locate parameter "testError" in ""!'
     ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
-    CALL someParam%get('testError',valchar)
+    CALL someParam%get('testError',valchar1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
       ' - parameter name mismatch "testError" in "testCHAR"!'
@@ -826,7 +829,7 @@ PROGRAM testParameterLists
     ALLOCATE(testParam2%pdat)
     testParam2%pdat%name='testCHAR'
     testParam2%pdat%datatype='test_type'
-    CALL testParam2%get('testCHAR',valchar)
+    CALL testParam2%get('testCHAR',valchar1)
     msg=eParams%getLastMessage()
     refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
       ' - parameter data type mismatch! Parameter testCHAR type is test_type and'// &
@@ -838,14 +841,14 @@ PROGRAM testParameterLists
     COMPONENT_TEST('%set(...)')
     valchar='testing'
     CALL testParam%set('testCHAR',valchar,'The value is testing')
-    CALL testParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'testing','valchar')
+    CALL testParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'testing','valchar')
     ASSERT(testParam%pdat%name == 'testCHAR','%name')
     ASSERT(testParam%pdat%description == 'The value is testing','%description')
     valchar='more tests'
     CALL someParam%set('testCHAR',TRIM(valchar),'The value is more tests')
-    CALL someParam%get('testCHAR',valchar)
-    ASSERT(TRIM(valchar) == 'more tests','valchar')
+    CALL someParam%get('testCHAR',valchar1)
+    ASSERT(TRIM(valchar1) == 'more tests','valchar')
     ASSERT(someParam%name == 'testCHAR','someParam%name')
     ASSERT(someParam%datatype == 'TYPE(StringType)','someParam%datatype')
     ASSERT(someParam%description == 'The value is more tests','someParam%description')
@@ -4478,6 +4481,7 @@ PROGRAM testParameterLists
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testGetString()
+    LOGICAL(SBK) :: tmpbool
     INTEGER(SNK),ALLOCATABLE :: snk2(:,:),snk3(:,:,:)
     INTEGER(SLK),ALLOCATABLE :: slk2(:,:),slk3(:,:,:)
     REAL(SSK),ALLOCATABLE :: ssk2(:,:),ssk3(:,:,:)
@@ -4632,6 +4636,93 @@ PROGRAM testParameterLists
     ASSERT(tmpstr == 'char1','testCHAR string')
     CALL testParam%getString('testPL->testCHAR2',tmpstr)
     ASSERT(tmpstr == 'char2','testCHAR2 string')
+    CALL testParam%getString('testPL->testSSKa1',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"1.500000E+00" "1.600000E+00"','testSSKa1 string')
+    CALL testParam%getString('testPL->testSSKa1_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"1.700000E+00" "1.800000E+00"','testSSKa1_2 string')
+    CALL testParam%getString('testPL->testSDKa1',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"2.500000000000000E+00" "2.600000000000000E+00"','testSDKa1 string')
+    CALL testParam%getString('testPL->testSDKa1_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"2.700000000000000E+00" "2.800000000000000E+00"','testSDKa1_2 string')
+    CALL testParam%getString('testPL->testSNKa1',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"-2" "-3"','testSNKa1 string')
+    CALL testParam%getString('testPL->testSNKa1_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"2" "3"','testSNKa1_2 string')
+    CALL testParam%getString('testPL->testSLKa1',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"-4" "-5"','testSLKa1 string')
+    CALL testParam%getString('testPL->testSLKa1_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"4" "5"','testSLKa1_2 string')
+    CALL testParam%getString('testPL->testSBKa1',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"T" "F"','testSBKa1 string')
+    CALL testParam%getString('testPL->testSBKa1_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"F" "F"','testSBKa1_2 string')
+    CALL testParam%getString('testPL->testSTRa1',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"stringarray1" "stringarray2"','testSTRa1 string')
+    CALL testParam%getString('testPL->testSTRa1_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"stringarray3" "stringarray4"','testSTRa1_2 string')
+
+    !Test 2-D arrays
+    CALL testParam%getString('testPL->testSSKa2',tmpstr)
+    tmpbool=(tmpstr == '"1.100000E+00" "2.100000E+00" "1.200000E+00" "2.200000E+00"')
+    ASSERT(tmpbool,'testSSKa2 string')
+    FINFO() CHAR(tmpstr)
+    CALL testParam%getString('testPL->testSSKa2_2',tmpstr)
+    tmpbool=(tmpstr == '"3.100000E+00" "4.100000E+00" "3.200000E+00" "4.200000E+00"')
+    ASSERT(tmpbool,'testSSKa2_2 string')
+    FINFO() CHAR(tmpstr)
+    CALL testParam%getString('testPL->testSDKa2',tmpstr)
+    tmpbool=(tmpstr == '"1.100000000000000E+01" "2.100000000000000E+01" '// &
+        '"1.200000000000000E+01" "2.200000000000000E+01"')
+    ASSERT(tmpbool,'testSDKa2 string')
+    CALL testParam%getString('testPL->testSDKa2_2',tmpstr)
+    tmpbool=(tmpstr == '"3.100000000000000E+01" "4.100000000000000E+01" '// &
+        '"3.200000000000000E+01" "4.200000000000000E+01"')
+    ASSERT(tmpbool,'testSDKa2_2 string')
+    CALL testParam%getString('testPL->testSNKa2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"11" "21" "12" "22"','testSNKa2 string')
+    CALL testParam%getString('testPL->testSNKa2_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"31" "41" "32" "42"','testSNKa2_2 string')
+    CALL testParam%getString('testPL->testSLKa2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"110" "210" "120" "220"','testSLKa2 string')
+    CALL testParam%getString('testPL->testSLKa2_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"310" "410" "320" "420"','testSLKa2_2 string')
+    CALL testParam%getString('testPL->testSTRa2',tmpstr)
+    tmpbool=(tmpstr == '"stringarray1" "stringarray2" "stringarray3" "stringarray4"')
+    ASSERT(tmpbool,'testSTRa2 string')
+    CALL testParam%getString('testPL->testSTRa2_2',tmpstr)
+    tmpbool=(tmpstr == '"stringarray5" "stringarray6" "stringarray7" "stringarray8"')
+    ASSERT(tmpbool,'testSTRa2_2 string')
+
+    !Test 3-D arrays
+    CALL testParam%getString('testPL->testSSKa3',tmpstr)
+    tmpbool=(tmpstr == '"1.110000E+00" "2.110000E+00" "1.210000E+00" "2.210000E+00" '// &
+        '"1.120000E+00" "2.120000E+00" "1.220000E+00" "2.220000E+00"')
+    ASSERT(tmpbool,'testSSKa3 string')
+    CALL testParam%getString('testPL->testSSKa3_2',tmpstr)
+    tmpbool=(tmpstr == '"3.110000E+00" "4.110000E+00" "3.210000E+00" "4.210000E+00" '// &
+        '"3.120000E+00" "4.120000E+00" "3.220000E+00" "4.220000E+00"')
+    ASSERT(tmpbool,'testSSKa3_2 string')
+    CALL testParam%getString('testPL->testSDKa3',tmpstr)
+    tmpbool=(tmpstr == '"1.110000000000000E+01" "2.110000000000000E+01" '// &
+        '"1.210000000000000E+01" "2.210000000000000E+01" '// &
+        '"1.120000000000000E+01" "2.120000000000000E+01" '// &
+        '"1.220000000000000E+01" "2.220000000000000E+01"')
+    ASSERT(tmpbool,'testSDKa3 string')
+    FINFO() CHAR(tmpstr)
+    CALL testParam%getString('testPL->testSDKa3_2',tmpstr)
+    tmpbool=(tmpstr == '"3.110000000000000E+01" "4.110000000000000E+01" '// &
+        '"3.210000000000000E+01" "4.210000000000000E+01" '// &
+        '"3.120000000000000E+01" "4.120000000000000E+01" '// &
+        '"3.220000000000000E+01" "4.220000000000000E+01"')
+    ASSERT(tmpbool,'testSDKa3_2 string')
+    CALL testParam%getString('testPL->testSNKa3',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"111" "211" "121" "221" "112" "212" "122" "222"','testSNKa3 string')
+    CALL testParam%getString('testPL->testSNKa3_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"311" "411" "321" "421" "312" "412" "322" "422"','testSNKa3_2 string')
+    CALL testParam%getString('testPL->testSLKa3',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"111" "211" "121" "221" "112" "212" "122" "222"','testSLKa3 string')
+    CALL testParam%getString('testPL->testSLKa3_2',tmpstr)
+    ASSERT_EQ(CHAR(tmpstr),'"311" "411" "321" "421" "312" "412" "322" "422"','testSLKa3_2 string')
 
     !Test 1-D arrays
     CALL testParam%getString('testPL->testSSKa1',tmpstr1)
@@ -4805,6 +4896,103 @@ PROGRAM testParameterLists
 
     CALL clear_test_vars()
   ENDSUBROUTINE testHas
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testConvertTo2DStringArray()
+    INTEGER(SIK) :: i,j
+    TYPE(StringType) :: addr
+    TYPE(StringType),ALLOCATABLE :: str1a(:),str2a(:,:),table(:,:),reftable(:,:)
+
+    !Test null call
+    CALL testParam%clear()
+    addr=''
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERT(.NOT. ALLOCATED(table),'empty call')
+
+    !Setup the PL
+    CALL testParam%add('TestPL->List1->1->"TitleRow"','"TitleRow"')
+    CALL testParam%add('TestPL->List1->1->"Scalar Row1"','"Scalar Row1"')
+    CALL testParam%add('TestPL->List1->1->"1-D testRow2"','"1-D testRow2"')
+    CALL testParam%add('TestPL->List1->1->"2-D testRow3" "Extra"','"2-D testRow3" "Extra"')
+    CALL testParam%add('TestPL->List1->1->"3-D testRow4"','"3-D testRow4"')
+    CALL testParam%add('TestPL->List1->2->"TitleRow"','SSK')
+    CALL testParam%add('TestPL->List1->2->"Scalar Row1"',1.0_SSK)
+    CALL testParam%add('TestPL->List1->2->"1-D testRow2"',(/2.0_SSK,3.0_SSK/))
+    CALL testParam%add('TestPL->List1->2->"2-D testRow3" "Extra"', &
+        RESHAPE((/4.0_SSK,5.0_SSK,6.0_SSK,7.0_SSK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->2->"3-D testRow4"', &
+        RESHAPE((/8.0_SSK,9.0_SSK,1.1_SSK,1.2_SSK,1.3_SSK,1.4_SSK,1.5_SSK,1.6_SSK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->3->"TitleRow"','SDK')
+    CALL testParam%add('TestPL->List1->3->"Scalar Row1"',1.0_SDK)
+    CALL testParam%add('TestPL->List1->3->"1-D testRow2"',(/2.0_SDK,3.0_SDK/))
+    CALL testParam%add('TestPL->List1->3->"2-D testRow3" "Extra"', &
+        RESHAPE((/4.0_SDK,5.0_SDK,6.0_SDK,7.0_SDK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->3->"3-D testRow4"', &
+        RESHAPE((/8.0_SDK,9.0_SDK,1.1_SDK,1.2_SDK,1.3_SDK,1.4_SDK,1.5_SDK,1.6_SDK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->4->"TitleRow"','SNK')
+    CALL testParam%add('TestPL->List1->4->"Scalar Row1"',1_SNK)
+    CALL testParam%add('TestPL->List1->4->"1-D testRow2"',(/2_SNK,3_SNK/))
+    CALL testParam%add('TestPL->List1->4->"2-D testRow3" "Extra"', &
+        RESHAPE((/4_SNK,5_SNK,6_SNK,7_SNK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->4->"3-D testRow4"', &
+        RESHAPE((/8_SNK,9_SNK,11_SNK,12_SNK,13_SNK,14_SNK,15_SNK,16_SNK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->5->"TitleRow"','SLK')
+    CALL testParam%add('TestPL->List1->5->"Scalar Row1"',1_SLK)
+    CALL testParam%add('TestPL->List1->5->"1-D testRow2"',(/2_SLK,3_SLK/))
+    CALL testParam%add('TestPL->List1->5->"2-D testRow3" "Extra"', &
+        RESHAPE((/4_SLK,5_SLK,6_SLK,7_SLK/),(/2,2/)))
+    CALL testParam%add('TestPL->List1->5->"3-D testRow4"', &
+        RESHAPE((/8_SLK,9_SLK,11_SLK,12_SLK,13_SLK,14_SLK,15_SLK,16_SLK/),(/2,2,2/)))
+    CALL testParam%add('TestPL->List1->6->"TitleRow"','SBK')
+    CALL testParam%add('TestPL->List1->6->"Scalar Row1"',.TRUE.)
+    CALL testParam%add('TestPL->List1->6->"1-D testRow2"',(/.FALSE.,.TRUE./))
+    CALL testParam%add('TestPL->List1->7->"TitleRow"','STR')
+    CALL testParam%add('TestPL->List1->7->"Scalar Row1"','"Scalar String"')
+    ALLOCATE(str1a(2)); str1a(1)='test 1-D 1'; str1a(2)='test 1-D 2'
+    CALL testParam%add('TestPL->List1->7->"1-D testRow2"',str1a)
+    ALLOCATE(str2a(2,2)); str2a(1,1)='2-D 1'; str2a(2,1)='2-D 2'
+    str2a(1,2)='2-D 3'; str2a(2,2)='2-D 4'
+    CALL testParam%add('TestPL->List1->7->"2-D testRow3" "Extra"',str2a)
+
+    !Test bad addr call
+    addr='wrong'
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERT(.NOT. ALLOCATED(table),'bad addr call')
+
+    ALLOCATE(reftable(7,5))
+    reftable='-'
+    reftable(1,1)='"TitleRow"'; reftable(2,1)='SSK'; reftable(3,1)='SDK'; reftable(4,1)='SNK'
+    reftable(5,1)='SLK'; reftable(6,1)='SBK'; reftable(7,1)='STR'
+    reftable(1,2)='"Scalar Row1"'; reftable(2,2)='1.000000E+00'; reftable(3,2)='1.000000000000000E+00'
+    reftable(4,2)='1'; reftable(5,2)='1'; reftable(6,2)='T'; reftable(7,2)='"Scalar String"'
+    reftable(1,3)='"1-D testRow2"'; reftable(2,3)='"2.000000E+00" "3.000000E+00"'
+    reftable(3,3)='"2.000000000000000E+00" "3.000000000000000E+00"'; reftable(4,3)='"2" "3"'
+    reftable(5,3)='"2" "3"'; reftable(6,3)='"F" "T"'; reftable(7,3)='"test 1-D 1" "test 1-D 2"'
+    reftable(1,4)='"2-D testRow3" "Extra"'; reftable(2,4)='"4.000000E+00" "5.000000E+00" "6.000000E+00" "7.000000E+00"'
+    reftable(3,4)='"4.000000000000000E+00" "5.000000000000000E+00" "6.000000000000000E+00" "7.000000000000000E+00"'
+    reftable(4,4)='"4" "5" "6" "7"'; reftable(5,4)='"4" "5" "6" "7"'; reftable(6,4)='-'
+    reftable(7,4)='"2-D 1" "2-D 2" "2-D 3" "2-D 4"'
+    reftable(1,5)='"3-D testRow4"'; reftable(2,5)='"8.000000E+00" "9.000000E+00" "1.100000E+00"'// &
+        ' "1.200000E+00" "1.300000E+00" "1.400000E+00" "1.500000E+00" "1.600000E+00"'
+    reftable(3,5)='"8.000000000000000E+00" "9.000000000000000E+00" "1.100000000000000E+00" '// &
+        '"1.200000000000000E+00" "1.300000000000000E+00" "1.400000000000000E+00" '// &
+        '"1.500000000000000E+00" "1.600000000000000E+00"'
+    reftable(4,5)='"8" "9" "11" "12" "13" "14" "15" "16"'; reftable(5,5)='"8" "9" "11" "12" "13" "14" "15" "16"'
+
+    addr='TestPL->List1'
+    CALL testParam%convertTo2DStringArray(addr,table)
+    ASSERTFAIL(ALLOCATED(table),'valid addr call')
+    ASSERTFAIL(SIZE(table,DIM=1) == 7,'table dim=1')
+    ASSERTFAIL(SIZE(table,DIM=2) == 5,'table dim=2')
+
+    DO j=1,SIZE(table,DIM=2)
+      DO i=1,SIZE(table,DIM=1)
+        ASSERT(reftable(i,j) == table(i,j),'reftable')
+        FINFO() i,j,CHAR(table(i,j))
+      ENDDO
+    ENDDO
+
+  ENDSUBROUTINE testConvertTo2DStringArray
 !
 !-------------------------------------------------------------------------------
   SUBROUTINE testGetNextParam()
@@ -5440,6 +5628,7 @@ PROGRAM testParameterLists
     ASSERT(.NOT.bool,'arg uninit')
     CALL testParam2%verify(testParam,bool)
     ASSERT(.NOT.bool,'this uninit')
+    FINFO() bool
 
     !Deallocate locals
     DEALLOCATE(snk2)
@@ -5455,6 +5644,277 @@ PROGRAM testParameterLists
 
     CALL clear_test_vars()
   ENDSUBROUTINE testVerify
+!
+!-------------------------------------------------------------------------------
+  SUBROUTINE testVerifyList()
+    LOGICAL(SBK) :: bool
+    INTEGER(SIK) :: nerror
+    INTEGER(SNK),ALLOCATABLE :: snk2(:,:),snk3(:,:,:)
+    INTEGER(SLK),ALLOCATABLE :: slk2(:,:),slk3(:,:,:)
+    REAL(SSK),ALLOCATABLE :: ssk2(:,:),ssk3(:,:,:)
+    REAL(SDK),ALLOCATABLE :: sdk2(:,:),sdk3(:,:,:)
+    TYPE(StringType) :: str0
+    TYPE(StringType),ALLOCATABLE :: str1(:),str2(:,:)
+    TYPE(ExceptionHandlerType) :: tmpe
+
+    CALL testParam%verifyList(testParam2,bool,e)
+    ASSERT(bool,'empty lists')
+
+    !Testing addition of SBK routine to parameter list
+    CALL testParam%add('testPL->testSBK',.TRUE.)
+    CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
+
+    !Testing addition of SSK routine to parameter list
+    CALL testParam%add('testPL->testSSK',7.0_SSK)
+    CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
+
+    !Testing addition of SDK routine to parameter list
+    CALL testParam%add('testPL->testSDK',7.0_SDK)
+    CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
+
+    !Testing addition of SNK routine to parameter list
+    CALL testParam%add('testPL->testSNK',7_SNK)
+    CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
+
+    !Testing addition of SLK routine to parameter list
+    CALL testParam%add('testPL->testSLK',7_SLK)
+    CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
+
+    !Testing addition of STR routine to parameter list
+    str0='string1'
+    CALL testParam%add('testPL->testSTR',str0)
+    str0='string2'
+    CALL testParam%add('testPL->testSTR2',str0,'comment')
+
+    !Testing addition of CHAR routine to parameter list
+    CALL testParam%add('testPL->testCHAR','char1')
+    CALL testParam%add('testPL->testCHAR2','char2','comment')
+
+    !Testing addition of 1-D array SSK routine to parameter list
+    CALL testParam%add('testPL->testSSKa1',(/1.5_SSK,1.6_SSK/))
+    CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
+
+    !Testing addition of 1-D array SDK routine to parameter list
+    CALL testParam%add('testPL->testSDKa1',(/2.5_SDK,2.6_SDK/))
+    CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
+
+    !Testing addition of 1-D array SNK routine to parameter list
+    CALL testParam%add('testPL->testSNKa1',(/-2_SNK,-3_SNK/))
+    CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
+
+    !Testing addition of 1-D array SLK routine to parameter list
+    CALL testParam%add('testPL->testSLKa1',(/-4_SLK,-5_SLK/))
+    CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
+
+    !Testing addition of 1-D array SBK routine to parameter list
+    CALL testParam%add('testPL->testSBKa1',(/.TRUE.,.FALSE./))
+    CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
+
+    !Testing addition of 1-D array STR routine to parameter list
+    ALLOCATE(str1(2))
+    str1(1)='stringarray1'
+    str1(2)='stringarray2'
+    CALL testParam%add('testPL->testSTRa1',str1)
+    str1(1)='stringarray3'
+    str1(2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
+
+    !Testing addition of 2-D array SSK routine to parameter list
+    ALLOCATE(ssk2(2,2))
+    ssk2(1,1)=1.1_SSK
+    ssk2(2,1)=2.1_SSK
+    ssk2(1,2)=1.2_SSK
+    ssk2(2,2)=2.2_SSK
+    CALL testParam%add('testPL->testSSKa2',ssk2)
+    ssk2(1,1)=3.1_SSK
+    ssk2(2,1)=4.1_SSK
+    ssk2(1,2)=3.2_SSK
+    ssk2(2,2)=4.2_SSK
+    CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
+
+    !Testing addition of 2-D array SDK routine to parameter list
+    ALLOCATE(sdk2(2,2))
+    sdk2(1,1)=11.0_SDK
+    sdk2(2,1)=21.0_SDK
+    sdk2(1,2)=12.0_SDK
+    sdk2(2,2)=22.0_SDK
+    CALL testParam%add('testPL->testSDKa2',sdk2)
+    sdk2(1,1)=31.0_SDK
+    sdk2(2,1)=41.0_SDK
+    sdk2(1,2)=32.0_SDK
+    sdk2(2,2)=42.0_SDK
+    CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
+
+    !Testing addition of 2-D array SNK routine to parameter list
+    ALLOCATE(snk2(2,2))
+    snk2(1,1)=11
+    snk2(2,1)=21
+    snk2(1,2)=12
+    snk2(2,2)=22
+    CALL testParam%add('testPL->testSNKa2',snk2)
+    snk2(1,1)=31
+    snk2(2,1)=41
+    snk2(1,2)=32
+    snk2(2,2)=42
+    CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
+
+    !Testing addition of 2-D array SLK routine to parameter list
+    ALLOCATE(slk2(2,2))
+    slk2(1,1)=110
+    slk2(2,1)=210
+    slk2(1,2)=120
+    slk2(2,2)=220
+    CALL testParam%add('testPL->testSLKa2',slk2)
+    slk2(1,1)=310
+    slk2(2,1)=410
+    slk2(1,2)=320
+    slk2(2,2)=420
+    CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
+
+    !Testing addition of 2-D array STR routine to parameter list
+    ALLOCATE(str2(2,2))
+    str2(1,1)='stringarray1'
+    str2(2,1)='stringarray2'
+    str2(1,2)='stringarray3'
+    str2(2,2)='stringarray4'
+    CALL testParam%add('testPL->testSTRa2',str2)
+    str2(1,1)='stringarray5'
+    str2(2,1)='stringarray6'
+    str2(1,2)='stringarray7'
+    str2(2,2)='stringarray8'
+    CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
+
+    !Testing addition of 3-D array SSK routine to parameter list
+    ALLOCATE(ssk3(2,2,2))
+    ssk3(1,1,1)=1.11_SSK
+    ssk3(2,1,1)=2.11_SSK
+    ssk3(1,2,1)=1.21_SSK
+    ssk3(2,2,1)=2.21_SSK
+    ssk3(1,1,2)=1.12_SSK
+    ssk3(2,1,2)=2.12_SSK
+    ssk3(1,2,2)=1.22_SSK
+    ssk3(2,2,2)=2.22_SSK
+    CALL testParam%add('testPL->testSSKa3',ssk3)
+    ssk3(1,1,1)=3.11_SSK
+    ssk3(2,1,1)=4.11_SSK
+    ssk3(1,2,1)=3.21_SSK
+    ssk3(2,2,1)=4.21_SSK
+    ssk3(1,1,2)=3.12_SSK
+    ssk3(2,1,2)=4.12_SSK
+    ssk3(1,2,2)=3.22_SSK
+    ssk3(2,2,2)=4.22_SSK
+    CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
+
+    !Testing addition of 3-D array SDK routine to parameter list
+    ALLOCATE(sdk3(2,2,2))
+    sdk3(1,1,1)=11.1_SDK
+    sdk3(2,1,1)=21.1_SDK
+    sdk3(1,2,1)=12.1_SDK
+    sdk3(2,2,1)=22.1_SDK
+    sdk3(1,1,2)=11.2_SDK
+    sdk3(2,1,2)=21.2_SDK
+    sdk3(1,2,2)=12.2_SDK
+    sdk3(2,2,2)=22.2_SDK
+    CALL testParam%add('testPL->testSDKa3',sdk3)
+    sdk3(1,1,1)=31.1_SDK
+    sdk3(2,1,1)=41.1_SDK
+    sdk3(1,2,1)=32.1_SDK
+    sdk3(2,2,1)=42.1_SDK
+    sdk3(1,1,2)=31.2_SDK
+    sdk3(2,1,2)=41.2_SDK
+    sdk3(1,2,2)=32.2_SDK
+    sdk3(2,2,2)=42.2_SDK
+    CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
+
+    !Testing addition of 3-D array SNK routine to parameter list
+    ALLOCATE(snk3(2,2,2))
+    snk3(1,1,1)=111
+    snk3(2,1,1)=211
+    snk3(1,2,1)=121
+    snk3(2,2,1)=221
+    snk3(1,1,2)=112
+    snk3(2,1,2)=212
+    snk3(1,2,2)=122
+    snk3(2,2,2)=222
+    CALL testParam%add('testPL->testSNKa3',snk3)
+    snk3(1,1,1)=311
+    snk3(2,1,1)=411
+    snk3(1,2,1)=321
+    snk3(2,2,1)=421
+    snk3(1,1,2)=312
+    snk3(2,1,2)=412
+    snk3(1,2,2)=322
+    snk3(2,2,2)=422
+    CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
+
+    !Testing addition of 3-D array SLK routine to parameter list
+    ALLOCATE(slk3(2,2,2))
+    slk3(1,1,1)=111
+    slk3(2,1,1)=211
+    slk3(1,2,1)=121
+    slk3(2,2,1)=221
+    slk3(1,1,2)=112
+    slk3(2,1,2)=212
+    slk3(1,2,2)=122
+    slk3(2,2,2)=222
+    CALL testParam%add('testPL->testSLKa3',slk3)
+    slk3(1,1,1)=311
+    slk3(2,1,1)=411
+    slk3(1,2,1)=321
+    slk3(2,2,1)=421
+    slk3(1,1,2)=312
+    slk3(2,1,2)=412
+    slk3(1,2,2)=322
+    slk3(2,2,2)=422
+    CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
+
+    !assign the same PL
+    !Test a dummy exception handler
+    tmpe=e
+    testParam2=testParam
+    CALL testParam%verifyList(testParam2,bool,tmpe)
+    ASSERT(bool,'verify the copy')
+
+    nerror=tmpe%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%clear()
+    CALL testParam%verifyList(testParam2,bool,tmpe)
+    ASSERT(.NOT.bool,'arg uninit')
+    ASSERT(nerror == tmpe%getCounter(EXCEPTION_ERROR),'arg uninit')
+    nerror=tmpe%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%verifyList(testParam,bool,tmpe)
+    ASSERT(.NOT.bool,'this uninit')
+    ASSERT(nerror+44 == tmpe%getCounter(EXCEPTION_ERROR),'this uninit')
+
+    !assign the same PL
+    !Test using the eParams exception handler
+    testParam2=testParam
+    CALL testParam%verifyList(testParam2,bool,eParams)
+    ASSERT(bool,'verify the copy')
+
+    nerror=eParams%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%clear()
+    CALL testParam%verifyList(testParam2,bool,eParams)
+    ASSERT(.NOT.bool,'arg uninit')
+    ASSERT(nerror == eParams%getCounter(EXCEPTION_ERROR),'arg uninit')
+    nerror=eParams%getCounter(EXCEPTION_ERROR)
+    CALL testParam2%verifyList(testParam,bool,eParams)
+    ASSERT(.NOT.bool,'this uninit')
+    ASSERT(nerror+44 == eParams%getCounter(EXCEPTION_ERROR),'this uninit')
+
+    !Deallocate locals
+    DEALLOCATE(snk2)
+    DEALLOCATE(snk3)
+    DEALLOCATE(slk2)
+    DEALLOCATE(slk3)
+    DEALLOCATE(ssk2)
+    DEALLOCATE(ssk3)
+    DEALLOCATE(sdk2)
+    DEALLOCATE(sdk3)
+    DEALLOCATE(str1)
+    DEALLOCATE(str2)
+
+    CALL clear_test_vars()
+  ENDSUBROUTINE testVerifyList
 !
 !-------------------------------------------------------------------------------
 !Test to make sure we've eliminated a long standing bug.
@@ -5494,7 +5954,7 @@ PROGRAM testParameterLists
     DEALLOCATE(astr)
     CALL testParam2%add('CASEID->ASSEMBLIES->ASSEMBLY_ASSY1->SpacerGrids',testParam3)
     str='ASSY1'
-    CALL testParam2%add('CASEID->ASSEMBLIES->label',str)
+    CALL testParam2%add('CASEID->ASSEMBLIES->Assembly_ASSY1->label',str)
 
     CALL testParam%clear()
     CALL testParam%initFromXML('testInit.xml')

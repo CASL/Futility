@@ -482,6 +482,9 @@ MODULE FileType_HDF5
       !> @copybrief FileType_HDF5::write_attribute_st0
       !> @copyoc FileType_HDF5_write_attribute_st0
       PROCEDURE,PASS,PRIVATE :: write_attribute_st0
+      !> @copybrief FileType_HDF5::write_attribute_c0
+      !> @copyoc FileType_HDF5_write_attribute_c0
+      PROCEDURE,PASS,PRIVATE :: write_attribute_c0
       !> @copybrief FileType_HDF5::write_attribute_i0
       !> @copyoc FileType_HDF5_write_attribute_i0
       PROCEDURE,PASS,PRIVATE :: write_attribute_i0
@@ -489,11 +492,14 @@ MODULE FileType_HDF5
       !> @copyoc FileType_HDF5_write_attribute_d0
       PROCEDURE,PASS,PRIVATE :: write_attribute_d0
       !> Generic typebound interface for all @c attribute writes
-      GENERIC ::  write_attribute => write_attribute_st0, write_attribute_i0,&
-        write_attribute_d0
+      GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
+        write_attribute_i0, write_attribute_d0
       !> @copybrief FileType_HDF5::read_str_attribure_help
       !> @copyoc FileType_HDF5_read_str_attribure_help
       PROCEDURE,PASS,PRIVATE :: read_attribute_st0
+      !> @copybrief FileType_HDF5::read_attribute_c0
+      !> @copyoc FileType_HDF5_read_attribute_c0
+      PROCEDURE,PASS,PRIVATE :: read_attribute_c0
       !> @copybrief FileType_HDF5::read_attribute_i0
       !> @copyoc FileType_HDF5_read_attribute_i0
       PROCEDURE,PASS,PRIVATE :: read_attribute_i0
@@ -501,8 +507,8 @@ MODULE FileType_HDF5
       !> @copyoc FileType_HDF5_read_attribute_d0
       PROCEDURE,PASS,PRIVATE :: read_attribute_d0
       !> Generic typebound interface for all @c attribute writes
-      GENERIC :: read_attribute => read_attribute_st0, read_attribute_i0,&
-        read_attribute_d0
+      GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
+        read_attribute_i0, read_attribute_d0
   ENDTYPE
 
   !> @brief Type that is a container so as to have an array of pointers to HDF5 files
@@ -511,10 +517,12 @@ MODULE FileType_HDF5
     TYPE(HDF5FileType),POINTER :: h5 => NULL()
   ENDTYPE HDF5FilePtrArrayType
 
+#ifdef FUTILITY_HAVE_HDF5
   !> Variable for keeping track of the number of hdf5 files initialized
   !> This variable will be used in logic to call the h5close_f(error)
   !> which closes the interface.
   INTEGER(SIK),SAVE :: nhdf5fileinuse=0
+#endif
   !> Variable to make sure that the hdf5 interface was opened, and thus
   !> can then be closed.
   LOGICAL(SBK),SAVE :: libh5Open=.FALSE.
@@ -613,7 +621,7 @@ MODULE FileType_HDF5
 
       ! Store the access mode
       mode_in=mode
-      CALL toUPPER(mode_in)
+      mode_in = mode_in%upper()
       SELECTCASE(TRIM(mode_in))
         CASE('READ')
           INQUIRE(FILE=filename,EXIST=exists)
@@ -1070,7 +1078,7 @@ MODULE FileType_HDF5
         CALL strfind(TRIM(CHAR(path2)),FSLASH,slashloc)
         nslash=SIZE(slashloc)
         DO i=1,nslash-1
-          CALL getSubstring(path2,tmppath,1,slashloc(i+1)-1)
+          tmppath = path2%substr(1,slashloc(i+1)-1)
           IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(tmppath)))) THEN
             CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(tmppath)),group_id,error)
             CALL h5gclose_f(group_id,error)
@@ -5665,7 +5673,7 @@ MODULE FileType_HDF5
         ELSE
           vals=valsc(1)(1:length_max)
         ENDIF
-        CALL strrep(vals,C_NULL_CHAR,'')
+        vals = vals%replace(C_NULL_CHAR,'')
       ENDIF
       CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 
@@ -5804,7 +5812,7 @@ MODULE FileType_HDF5
 
         !Find replace C_NULL_CHARs from HDF5
         DO i=1,SIZE(vals)
-          CALL strrep(vals(i),C_NULL_CHAR,'')
+          vals(i) = vals(i)%replace(C_NULL_CHAR,'')
         ENDDO
       ENDIF
       CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
@@ -5961,7 +5969,7 @@ MODULE FileType_HDF5
         !Find replace C_NULL_CHARs from HDF5
         DO j=1,SIZE(vals,DIM=2)
           DO i=1,SIZE(vals,DIM=1)
-            CALL strrep(vals(i,j),C_NULL_CHAR,'')
+            vals(i,j) = vals(i,j)%replace(C_NULL_CHAR,'')
           ENDDO
         ENDDO
       ENDIF
@@ -6125,7 +6133,7 @@ MODULE FileType_HDF5
         DO k=1,SIZE(vals,DIM=3)
           DO j=1,SIZE(vals,DIM=2)
             DO i=1,SIZE(vals,DIM=1)
-              CALL strrep(vals(i,j,k),C_NULL_CHAR,'')
+              vals(i,j,k) = vals(i,j,k)%replace(C_NULL_CHAR,'')
             ENDDO
           ENDDO
         ENDDO
@@ -6258,7 +6266,7 @@ MODULE FileType_HDF5
 
       ! Create root directory
       baseh5path=TRIM(dsetname)
-      CALL strrep(baseh5path,'->','/')
+      baseh5path = baseh5path%replace('->','/')
       baseh5path='/'//baseh5path
       !Check to make sure there are objects/groups to be read
       CALL ls_HDF5FileType(thisHDF5File,dsetname,lsobjs)
@@ -6272,9 +6280,9 @@ MODULE FileType_HDF5
           IF(isgrp_HDF5FileType(thisHDF5File,CHAR(h5path))) THEN
             plpath=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
             !Convert back to PL style pathing
-            CALL strrep(plpath,'/','->')
+            plpath = plpath%replace('/','->')
             !Skip the first arrow that will be there
-            CALL getSubstring(plpath,h5path,3,LEN(plpath))
+            h5path = plpath%substr(3)
             CALL read_pList(thisHDF5File,CHAR(h5path),vals)
           !Get all the necessary information to read in the data
           ELSE
@@ -6314,8 +6322,8 @@ MODULE FileType_HDF5
       TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:)
 
       tmpstr=h5path//REPEAT(' ',nmatchstr(CHAR(h5path),'/'))
-      CALL strrep(tmpstr,'/','->')
-      CALL getSubstring(tmpstr,plpath,3,LEN(tmpstr))
+      tmpstr = tmpstr%replace('/','->')
+      plpath = tmpstr%substr(3)
       !Open the dataset so we can get the precision
       CALL h5dopen_f(thisHDF5File%file_id,CHAR(h5path),dset_id,error)
       !Get dataspace so we can get dimensions for allocation (rank)
@@ -6411,7 +6419,7 @@ MODULE FileType_HDF5
             !Get the string, then check if it's a boolean.
             CALL read_st0_helper(thisHDF5File,CHAR(plpath),st0)
             !Find replace C_NULL_CHARs from HDF5
-            CALL strrep(st0,C_NULL_CHAR,'')
+            st0 = st0%replace(C_NULL_CHAR,'')
             isbool=(st0 == 'T') .OR. (st0 == 'F')
             IF(isbool) THEN
               CALL read_b0(thisHDF5File,CHAR(plpath),l0)
@@ -6424,7 +6432,7 @@ MODULE FileType_HDF5
             CALL read_st1_helper(thisHDF5File,CHAR(plpath),st1)
             !Find replace C_NULL_CHARs from HDF5
             DO i=1,SIZE(st1)
-              CALL strrep(st1(i),C_NULL_CHAR,'')
+              st1(i) = st1(i)%replace(C_NULL_CHAR,'')
             ENDDO
             isbool=.TRUE.
             DO i=1,SIZE(st1)
@@ -6443,7 +6451,7 @@ MODULE FileType_HDF5
             !Find replace C_NULL_CHARs from HDF5
             DO j=1,SIZE(st2,DIM=2)
               DO i=1,SIZE(st2,DIM=1)
-                CALL strrep(st2(i,j),C_NULL_CHAR,'')
+                st2(i,j) = st2(i,j)%replace(C_NULL_CHAR,'')
               ENDDO
             ENDDO
             isbool=.TRUE.
@@ -6471,7 +6479,7 @@ MODULE FileType_HDF5
             DO k=1,SIZE(st3,DIM=3)
               DO j=1,SIZE(st3,DIM=2)
                 DO i=1,SIZE(st3,DIM=1)
-                  CALL strrep(st3(i,j,k),C_NULL_CHAR,'')
+                  st3(i,j,k) = st3(i,j,k)%replace(C_NULL_CHAR,'')
                 ENDDO
               ENDDO
             ENDDO
@@ -6536,8 +6544,12 @@ MODULE FileType_HDF5
       CHARACTER(LEN=LEN(path)+1) :: newPath
       TYPE(StringType) :: tmp
       tmp=TRIM(path)
-      CALL strrep(tmp,'->','/')
-      newPath='/'//tmp
+      tmp = tmp%replace('->','/')
+      IF(INDEX(tmp,'/') /= 1) THEN
+        newPath='/'//tmp
+      ELSE
+        newPath = trim(tmp)
+      ENDIF
     ENDFUNCTION convertPath
 #ifdef FUTILITY_HAVE_HDF5
 !
@@ -6961,11 +6973,11 @@ MODULE FileType_HDF5
        INTEGER(HID_T) :: atype_id, attr_id, dspace_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
        INTEGER(SIZE_T) :: attr_len
-       CHARACTER(LEN=LEN(attr_val),KIND=C_CHAR),TARGET :: valss
+       CHARACTER(LEN=:,KIND=C_CHAR),ALLOCATABLE :: valss
        num_dims=1
        dims(1)=1
        attr_val=TRIM(attr_val)
-       valss=attr_val
+       valss=CHAR(attr_val)
        attr_len=INT(LEN(attr_val),SDK)
 
        !Prepare the File and object for the attribute
@@ -6988,6 +7000,26 @@ MODULE FileType_HDF5
        CALL close_object(this,obj_id)
 #endif
     END SUBROUTINE write_attribute_st0
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and string value to a known dataset
+!>
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+    SUBROUTINE write_attribute_c0(this,obj_name,attr_name,attr_val)
+       CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_c0_HDF5FileType'
+       CLASS(HDF5FileType),INTENT(INOUT) :: this
+       CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+       CHARACTER(LEN=*) :: attr_val
+
+       TYPE(StringType) :: str_val
+
+       str_val=TRIM(attr_val)
+       CALL this%write_attribute(obj_name,attr_name,str_val)
+
+    END SUBROUTINE write_attribute_c0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and integer  value to a known dataset
@@ -7093,6 +7125,26 @@ MODULE FileType_HDF5
        CALL close_object(this,obj_id)
 #endif
     End SUBROUTINE read_attribute_st0
+!
+!-------------------------------------------------------------------------------
+!> @brief Set-up to read  a string value attribute from a known dataset
+!>
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+    SUBROUTINE read_attribute_c0(this,obj_name,attr_name,attr_val)
+       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
+       CLASS(HDF5FileType),INTENT(INOUT) :: this
+       CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+       CHARACTER(LEN=*),INTENT(INOUT)::attr_val
+
+       TYPE(StringType) :: str_val
+
+       CALL this%read_attribute(obj_name,attr_name,str_val)
+
+       attr_val=CHAR(str_val)
+    End SUBROUTINE read_attribute_c0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a string value attribute from a known dataset

@@ -170,7 +170,7 @@ MODULE Times
       !> @copydetails Times::getTimeHHMMSS
       PROCEDURE,PASS :: getTimeHHMMSS
       !> @copybrief Times::getTimeReal
-      !> @copydetails Times::getTimeHHMMSS
+      !> @copydetails Times::getTimeReal
       PROCEDURE,PASS :: getTimeReal
       !> @copybrief Times::getTimeChar
       !> @copydetails Times::getTimeChar
@@ -360,8 +360,8 @@ MODULE Times
 !> Names are 20 characters or less.
     FUNCTION getTimerName(myTimer) RESULT(name)
       CLASS(TimerType),INTENT(IN) :: myTimer
-      CHARACTER(LEN=myTimer%name%n) :: name
-      name=TRIM(myTimer%name)
+      CHARACTER(LEN=:),ALLOCATABLE :: name
+      name=CHAR(myTimer%name)
     ENDFUNCTION getTimerName
 !
 !-------------------------------------------------------------------------------
@@ -690,17 +690,23 @@ MODULE Times
         ENDIF
 
         !Process the strings
-        ind1=INDEX(fmt1,'Y'); ind2=INDEX(fmt1,'Y',.TRUE.)
+        ind1=INDEX(fmt1,'Y')
+        ind2=INDEX(fmt1,'Y',.TRUE.)
         READ(Date1(ind1:ind2),'(i4)') Date1year
-        ind1=INDEX(fmt1,'M'); ind2=INDEX(fmt1,'M',.TRUE.)
+        ind1=INDEX(fmt1,'M')
+        ind2=INDEX(fmt1,'M',.TRUE.)
         READ(Date1(ind1:ind2),'(i2)') Date1month
-        ind1=INDEX(fmt1,'D'); ind2=INDEX(fmt1,'D',.TRUE.)
+        ind1=INDEX(fmt1,'D')
+        ind2=INDEX(fmt1,'D',.TRUE.)
         READ(Date1(ind1:ind2),'(i2)') Date1day
-        ind1=INDEX(fmt2,'Y'); ind2=INDEX(fmt2,'Y',.TRUE.)
+        ind1=INDEX(fmt2,'Y')
+        ind2=INDEX(fmt2,'Y',.TRUE.)
         READ(Date2(ind1:ind2),'(i4)') Date2year
-        ind1=INDEX(fmt2,'M'); ind2=INDEX(fmt2,'M',.TRUE.)
+        ind1=INDEX(fmt2,'M')
+        ind2=INDEX(fmt2,'M',.TRUE.)
         READ(Date2(ind1:ind2),'(i2)') Date2month
-        ind1=INDEX(fmt2,'D'); ind2=INDEX(fmt2,'D',.TRUE.)
+        ind1=INDEX(fmt2,'D')
+        ind2=INDEX(fmt2,'D',.TRUE.)
         READ(Date2(ind1:ind2),'(i2)') Date2day
 
         !Convert years and months to days from 0.

@@ -8,11 +8,11 @@ before_install:
  - docker pull dalg24/vera_tpls
 
 script:
- - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; cmake /mnt/Futility; make -j2 |& tee /mnt/Futility/make.out; ctest -j2"
+ - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build && cd /build && cmake -DFutility_ENABLE_DBC:BOOL=ON /mnt/Futility && make -j2 |& tee /mnt/Futility/make.out && ctest -j2"
  - ls
  - (exit `grep -i -B 4 'Unused variable' make.out | grep 'f90' | wc -l`)
  - git clone https://github.com/trilinos/Trilinos.git; cd Trilinos; git checkout 6c776f530a29eb; cd ..
- - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build; cd /build; /bin/bash /mnt/Futility/build_scripts/build_on_docker.sh /mnt/Futility -DFutility_ENABLE_Stratimikos=OFF; make -j2; ctest -j2"
+ - docker run -v $PWD:/mnt/Futility dalg24/vera_tpls /bin/bash -c "mkdir /build && cd /build && /bin/bash /mnt/Futility/build_scripts/build_on_docker.sh -DFutility_ENABLE_DBC:BOOL=ON /mnt/Futility -DFutility_ENABLE_Stratimikos=OFF && make -j2 && ctest -j2"
 
 branches:
   only:

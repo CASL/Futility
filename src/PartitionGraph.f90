@@ -36,6 +36,8 @@
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE PartitionGraph
+#include "Futility_DBC.h"
+  USE Futility_DBC
   USE IntrType
   USE Allocs
   USE Strings
@@ -111,6 +113,8 @@ MODULE PartitionGraph
     INTEGER(SIK) :: nGroups=0
     !> Number of partitioning methods
     INTEGER(SIK) :: nPart=0
+    !> Weighting factor used when normalizing computational weights
+    REAL(SRK) :: wtfactor=0.0_SRK
     !> Starting index of each group. Size [nGroup+1]
     INTEGER(SIK),ALLOCATABLE :: groupIdx(:)
     !> Vertex indices belonging to each group.
@@ -215,6 +219,8 @@ MODULE PartitionGraph
 !>        If only 1 is specified it will be used for all (sub)graph sizes
 !>    - Conditions (1D INTEGER)
 !>        List of minimum size(nvert) for each partitioning algorithm.
+!>    - wtfactor   (REAL)
+!>        Weighting factor used to normalize vertex weights.
 !>    - wts        (1D REAL)
 !>        Weight of each vertex.
 !>    - neighwts   (2D REAL)
@@ -226,6 +232,7 @@ MODULE PartitionGraph
       TYPE(ParamType),INTENT(IN) :: params
       INTEGER(SIK) :: nerror,nvert,maxneigh,nGroups,nPart,dim
       INTEGER(SIK) :: ipart,pcond,iv
+      REAL(SRK) :: wtfactor
       TYPE(StringType) :: algName
       INTEGER(SIK),ALLOCATABLE :: neigh(:,:), cond(:)
       REAL(SRK),ALLOCATABLE :: wts(:),neighwts(:,:),coord(:,:)
@@ -339,6 +346,15 @@ MODULE PartitionGraph
               ' - invalid number of refinement algorithms specified!')
           ENDIF
         ENDIF
+        !Check vertex weight factor (optional)
+        IF(params%has('PartitionGraph -> wtfactor')) THEN
+          CALL params%get('PartitionGraph -> wtfactor', wtfactor)
+          IF(wtfactor < 0.0_SRK) &
+            CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+              ' - invalid vertex weighting factor, value must be positive!')
+        ELSE
+          wtfactor=1.0_SRK
+        ENDIF
 
         !Check vertex weights (optional)
         IF(params%has('PartitionGraph -> wts')) THEN
@@ -401,6 +417,7 @@ MODULE PartitionGraph
         thisGraph%maxneigh=maxneigh
         thisGraph%nGroups=nGroups
         thisGraph%nPart=nPart
+        thisGraph%wtfactor=wtfactor
 
         !Move allocated data onto the type
         CALL MOVE_ALLOC(neigh,thisGraph%neigh)
@@ -415,8 +432,7 @@ MODULE PartitionGraph
         ALLOCATE(thisGraph%partitionAlgArry(nPart))
         DO ipart=1,SIZE(partAlgs)
           thisGraph%partitionAlgArry(ipart)%p => NULL()
-          algName=partAlgs(ipart)
-          CALL toUPPER(algName)
+          algName=partAlgs(ipart)%upper()
           SELECTCASE(TRIM(algName))
             CASE('NONE')
             CASE('RECURSIVE EXPANSION BISECTION')
@@ -449,10 +465,9 @@ MODULE PartitionGraph
           !Use previous procedure if no new algorithm is specified
           IF(ALLOCATED(refAlgNames)) THEN
             IF(ipart <= SIZE(refAlgNames)) THEN
-              algName=refAlgNames(ipart)
+              algName=refAlgNames(ipart)%upper()
             ENDIF
           ENDIF
-          CALL toUPPER(algName)
           SELECTCASE(TRIM(algName))
             CASE('')     !Do nothing if nothing specified
             CASE('None') !Do nothing if nothing specified
@@ -490,6 +505,7 @@ MODULE PartitionGraph
       thisGraph%maxneigh=0
       thisGraph%nGroups=0
       thisGraph%nPart=0
+      thisGraph%wtfactor=0.0_SRK
       IF(ALLOCATED(thisGraph%groupIdx)) DEALLOCATE(thisGraph%groupIdx)
       IF(ALLOCATED(thisGraph%groupList)) DEALLOCATE(thisGraph%groupList)
       IF(ALLOCATED(thisGraph%wts)) DEALLOCATE(thisGraph%wts)
@@ -1708,23 +1724,39 @@ MODULE PartitionGraph
 !> @param ecut the total weight of edges cut
 !> @param comm the total weight of communication between groups
 !>
-    SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,mmr,srms,ecut,comm)
+    SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,mmr,srms,ecut,comm,maxnsr)
       CHARACTER(LEN=*),PARAMETER :: myName='calcDecompMetrics'
       CLASS(PartitionGraphType),INTENT(IN) :: thisGraph
       REAL(SRK),INTENT(OUT) :: mmr,srms,ecut,comm
+      REAL(SRK),INTENT(OUT),OPTIONAL :: maxnsr
       INTEGER(SIK) :: ig,igstt,igstp,in,ineigh,iv,ivert,neighGrp
-      REAL(SRK) :: wtSum,wtGrp,lgroup,sgroup,optSize,wtDif
+      REAL(SRK) :: wtSum,wtGrp,lgroup,sgroup,optSize,wtDif,gwt
       INTEGER(SIK),ALLOCATABLE :: grpMap(:),uniqueGrps(:)
 
+      IF(PRESENT(maxnsr)) maxnsr=0.0_SRK
       mmr=0.0_SRK
       srms=0.0_SRK
       ecut=0.0_SRK
       comm=0.0_SRK
       IF(ALLOCATED(thisGraph%groupIdx)) THEN
+        !Compute the max number of source regions
+        IF(PRESENT(maxnsr)) THEN
+          DO ig=1,thisGraph%nGroups
+            igstt=thisGraph%groupIdx(ig)
+            igstp=thisGraph%groupIdx(ig+1)-1
+            gwt=0.0_SRK
+            DO iv=igstt,igstp
+              gwt=gwt+thisGraph%wts(thisGraph%groupList(iv))
+            ENDDO
+            maxnsr=MAX(maxnsr,REAL(gwt,SRK))
+          ENDDO
+          maxnsr=maxnsr/SUM(thisGraph%wts)
+        ENDIF
+
         !Compute the min/max ratio and rms difference from optimal
         lgroup=0.0_SRK
         sgroup=HUGE(1.0_SRK)
-        wtSum=SUM(thisGraph%wts)
+        wtSum=SUM(thisGraph%wts)*thisGraph%wtfactor
         optSize=wtSum/REAL(thisGraph%nGroups,SRK)
         DO ig=1,thisGraph%nGroups
 
@@ -1733,6 +1765,7 @@ MODULE PartitionGraph
           DO iv=thisGraph%groupIdx(ig),thisGraph%groupIdx(ig+1)-1
             wtGrp=wtGrp+thisGraph%wts(thisGraph%groupList(iv))
           ENDDO !iv
+          wtGrp=wtGrp*thisGraph%wtfactor
           !Determine min/max weights
           IF(wtGrp > lgroup) lgroup=wtGrp
           IF(wtGrp < sgroup) sgroup=wtGrp
@@ -1788,6 +1821,13 @@ MODULE PartitionGraph
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
           ' - graph is not partitioned!')
       ENDIF
+      IF(PRESENT(maxnsr)) THEN
+        ENSURE((maxnsr > 0.0_SRK) .AND. (maxnsr <= 1.0_SRK))
+      ENDIF
+      ENSURE(mmr >= 0.0_SRK)
+      ENSURE((srms >= 0.0_SRK) .AND. (srms <= 100.0_SRK))
+      ENSURE(ecut >= 0.0_SRK)
+      ENSURE(comm >= 0.0_SRK)
     ENDSUBROUTINE calcDecompMetrics_PartitionGraph
 !
 !-------------------------------------------------------------------------------

@@ -103,6 +103,7 @@ MODULE IntrType
   PUBLIC :: SOFTGT
   PUBLIC :: isNAN
   PUBLIC :: isINF
+  PUBLIC :: isNumeric
 !
 ! Variables
   !> @name Private Variables
@@ -391,18 +392,6 @@ MODULE IntrType
     !> @copybrief IntrType::assign_char_to_double
     !> @copydetails IntrType::assign_char_to_double
     MODULE PROCEDURE assign_char_to_double
-    !> @copybrief IntrType::assign_char_to_string
-    !> @copydetails IntrType::assign_char_to_string
-!    MODULE PROCEDURE assign_char_to_string
-!    !> @copybrief IntrType::assign_char_to_array_int
-!    !> @copydetails IntrType::assign_char_to_array_int
-!    MODULE PROCEDURE assign_char_to_array_int
-!    !> @copybrief IntrType::assign_char_to_array_double
-!    !> @copydetails IntrType::assign_char_to_array_double
-!    MODULE PROCEDURE assign_char_to_array_double
-!    !> @copybrief IntrType::assign_char_to_array_string
-!    !> @copydetails IntrType::assign_char_to_array_string
-!    MODULE PROCEDURE assign_char_to_array_string
   ENDINTERFACE
 !
 !===============================================================================
@@ -963,44 +952,32 @@ MODULE IntrType
     ENDSUBROUTINE assign_char_to_double
 !
 !-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an assignment of a character
-!> string to an array of integers
-!> @param iArr the array of integers
-!> @param c the character value
-!TODO arrays
-!    SUBROUTINE assign_char_to_array_int(iArr,c)
-!      INTEGER(SIK),INTENT(OUT) :: iArr
-!      CHARACTER(LEN=*),INTENT(IN) :: c
-!      CHARACTER(LEN=50) :: tmpStr
-!      INTEGER(SIK) :: tmpInt
-!      INTEGER(SIK) :: i,j,k
-!
-!      j=1
-!      k=1 ! iArr index
-!      DO i=2,LEN(c)-1
-!        IF(c(i:i) /= ',') THEN
-!          tmpStr(j:j)=c(i:i)
-!          j=j+1
-!        ELSE
-!          tmpStr=tmpStr(1:j)
-!          READ(tmpStr, '(I12)') tmpInt
-!          !iArr(k:k)=tmpInt
-!          !Read string into integer
-!          !How to have it only read a certain amount?
-!          j=1
-!          k=k+1
-!        ENDIF
-!      ENDDO
-!      !for char : c
-!      !  if char != ','
-!      !    push to tmpStr
-!      !  else
-!      !    convert tmpStr to int
-!      !    add int to iArr
-!      !end
-!!      READ(c, '(i16)') iArr
-!    ENDSUBROUTINE
-!
+!> @brief Checks to see if every character in a character str is a numeric
+!> value, i.e. [0-9]
+!> @param char_str the character string being checked
+!> @param bool the logical indicating whether it is numeric or not
+!>
+  FUNCTION isNumeric(char_str) RESULT(bool)
+    CHARACTER(LEN=*),INTENT(IN) :: char_str
+    LOGICAL(SBK) :: bool
+    INTEGER(SIK) :: i,val
+
+    bool = .FALSE.
+    IF(LEN(char_str) < 1) THEN
+      RETURN 
+    ELSE
+      DO i=1,LEN(char_str)
+        ! 0-9 are represented by ASCII codes 48-57
+        val = IACHAR(char_str(i:i))
+        IF(.NOT.(val > 47 .AND. val < 58)) THEN
+          ! If any character isn't between those codes, it isn't an integer
+          RETURN
+        ENDIF
+      ENDDO
+    ENDIF
+    bool = .TRUE.
+
+  ENDFUNCTION isNumeric
 
 ENDMODULE IntrType
 

@@ -11,6 +11,7 @@ PROGRAM testFileType_Fortran
   USE ISO_FORTRAN_ENV
   USE UnitTest
   USE IntrType
+  USE Strings
   USE ExceptionHandler
   USE FileType_Fortran
 
@@ -34,6 +35,9 @@ PROGRAM testFileType_Fortran
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testFortranFileType()
+      CHARACTER(LEN=256) :: buffer
+      INTEGER(SIK) :: i,ioerr
+      TYPE(StringType),ALLOCATABLE :: lines(:)
 
       COMPONENT_TEST('%clear()')
       CALL testFile%clear()
@@ -132,6 +136,74 @@ PROGRAM testFileType_Fortran
         ACTION='READ',FORM='UNFORMATTED')
       CALL testFile%fopen()
       CALL testFile%fdelete()
+      CALL testFile%clear()
+
+      COMPONENT_TEST('%fwrite()')
+      CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='NEW', &
+        POSITION='REWIND')
+      CALL testFile%fopen()
+      ALLOCATE(lines(5))
+      lines(1)='+-------+-----+'
+      lines(2)='| Test1 | 1.0 |'
+      lines(3)='+-------+-----+'
+      lines(4)='| Test2 | 10  |'
+      lines(5)='+-------+-----+'
+      CALL testFile%fwrite(lines)
+
+      ioerr=0
+      !Be kind, rewind since we wrote the table as well.
+      REWIND(testFile%getUnitNo())
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(1)),"lines line 1")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(2)),"lines line 2")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(3)),"lines line 3")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(4)),"lines line 4")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(5)),"lines line 5")
+      DEALLOCATE(lines)
+
+      !Another table
+      ALLOCATE(lines(9))
+      lines(1)='+------------------+-------------------+-----------------+'
+      lines(2)='| "Some Quotes"    | semi-             | more            |'
+      lines(3)='|                  | colon             | than            |'
+      lines(4)='|                  |                   | one semi colon  |'
+      lines(5)='+------------------+-------------------+-----------------+'
+      lines(6)='| True             | loooooooooooooong | -               |'
+      lines(7)='| Mostly False-ish | 1.000E+23         | 100,000,000,000 |'
+      lines(8)='| or True          |                   |                 |'
+      lines(9)='+------------------+-------------------+-----------------+'
+      CALL testFile%fwrite(lines)
+
+      ioerr=0
+      !Be kind, rewind since we wrote the other table as well.
+      REWIND(testFile%getUnitNo())
+      DO i=1,5
+        READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ENDDO
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(1)),"lines line 6")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(2)),"lines line 7")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(3)),"lines line 8")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(4)),"lines line 9")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(5)),"table line 10")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(6)),"lines line 11")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(7)),"lines line 12")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(8)),"lines line 13")
+      READ(UNIT=testfile%getUnitNo(),FMT='(a)',ADVANCE='NO',IOSTAT=ioerr) buffer
+      ASSERT_EQ(TRIM(buffer),'   '//CHAR(lines(9)),"lines line 14")
+      DEALLOCATE(lines)
+      CALL testFile%fclose()
       CALL testFile%clear()
 
       ! Ensure unit number is as expected

@@ -90,8 +90,8 @@ MODULE IO_Strings
   PUBLIC :: getRealFormat
   PUBLIC :: nFields
   PUBLIC :: getField
-  PUBLIC :: getSubstring
   PUBLIC :: toUPPER
+  PUBLIC :: toLower
   PUBLIC :: strfind
   PUBLIC :: strmatch
   PUBLIC :: strarraymatch
@@ -103,8 +103,10 @@ MODULE IO_Strings
   PUBLIC :: SlashRep
   PUBLIC :: printCentered
   PUBLIC :: str
-  !
-  !PUBLIC :: charToStringArray
+  PUBLIC :: stringTableToLines
+  PUBLIC :: isChar
+  PUBLIC :: isCharCap
+  PUBLIC :: isCharLow
 
   !> Character representing a space symbol
   CHARACTER(LEN=*),PARAMETER :: BLANK=" "
@@ -222,10 +224,17 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::toUPPER_char
     !> @copydetails IO_Strings::toUPPER_char
     MODULE PROCEDURE toUPPER_char
-    !> @copybrief IO_Strings::toUPPER_string
-    !> @copydetails IO_Strings::toUPPER_string
-    MODULE PROCEDURE toUPPER_string
   ENDINTERFACE toUPPER
+
+  !> @brief Generic interface for toLower
+  !>
+  !> This interfaces allows for the input argument to be either a
+  !> character array or a StringType.
+  INTERFACE toLower
+    !> @copybrief IO_Strings::toLower_char
+    !> @copydetails IO_Strings::toLower_char
+    MODULE PROCEDURE toLower_char
+  ENDINTERFACE toLower
 
   !> @brief Generic interface for nFields
   !>
@@ -371,65 +380,18 @@ MODULE IO_Strings
   CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> Returns a StringType object which is a section of the input StringType object
-!> @param string the StringType object to get substring from
-!> @param substring the substring stored as a StringType object
-!> @param stt the index of input string at which the substring starts
-!> @param stp the index of input string at which the substring stops
-!>
-    PURE SUBROUTINE getSubstring(string,substring,stt,stp)
-      TYPE(StringType),INTENT(IN) :: string
-      TYPE(StringType),INTENT(OUT) :: substring
-      INTEGER(SIK),INTENT(IN) :: stt,stp
-      INTEGER(SIK) :: i,sublen
-
-      IF(stp >= stt) THEN
-        IF(stp <= string%n) THEN
-          IF(stt > 0) THEN
-            sublen=stp-stt+1
-            ALLOCATE(substring%s(sublen))
-            substring%n=sublen
-            DO i=stt,stp
-              substring%s(i-stt+1)=string%s(i)
-            ENDDO
-            substring%ntrim=substring%n
-            DO i=sublen,1,-1
-              IF(substring%s(i) == ' ') THEN
-                substring%ntrim=substring%ntrim-1
-              ELSE
-                EXIT
-              ENDIF
-            ENDDO
-          ELSE
-            substring=string
-          ENDIF
-        ELSE
-          substring=string
-        ENDIF
-      ELSE
-        substring=' '
-      ENDIF
-    ENDSUBROUTINE getSubstring
-!
-!-------------------------------------------------------------------------------
 !> Strips the end of a line based on the comment symbol (BANG)
 !> @param string the character array to strip any ending comments from
 !>
     PURE SUBROUTINE stripComment_char(string)
       CHARACTER(LEN=*),INTENT(INOUT) :: string
-      INTEGER(SIK) :: stt,stp
-      INTEGER(SIK),ALLOCATABLE :: bangloc(:)
+      INTEGER(SIK) :: stp,bangloc
 
-      stt=1
-      stp=LEN(string)
-      IF(strmatch(string,BANG)) THEN
-        !Determine the location of the first '!' character and remove all
-        !text after this character (including the '!' character)
-        CALL strfind(string,BANG,bangloc)
-        stp=bangloc(1)-1
-        DEALLOCATE(bangloc)
-      ENDIF
-      string=string(stt:stp)
+      !Determine the location of the first '!' character and remove all
+      !text after this character (including the '!' character)
+      bangloc = INDEX(string,BANG)
+      stp = MERGE(bangloc-1,LEN(string),bangloc > 0)
+      string = string(1:stp)
     ENDSUBROUTINE stripComment_char
 !
 !-------------------------------------------------------------------------------
@@ -438,21 +400,13 @@ MODULE IO_Strings
 !>
     PURE SUBROUTINE stripComment_string(string)
       TYPE(StringType),INTENT(INOUT) :: string
-      TYPE(StringType) :: tempString
-      INTEGER(SIK) :: stt,stp
-      INTEGER(SIK),ALLOCATABLE :: bangloc(:)
+      INTEGER(SIK) :: stp,bangloc
 
-      stt=1
-      stp=LEN(string)
-      IF(strmatch(string,BANG)) THEN
-        !Determine the location of the first '!' character and remove all
-        !text after this character (including the '!' character)
-        CALL strfind(CHAR(string),BANG,bangloc)
-        stp=bangloc(1)-1
-        DEALLOCATE(bangloc)
-      ENDIF
-      CALL getSubString(string,tempString,stt,stp)
-      string=tempString
+      !Determine the location of the first '!' character and remove all
+      !text after this character (including the '!' character)
+      bangloc = INDEX(string,BANG)
+      stp = MERGE(bangloc-1,LEN(string),bangloc > 0)
+      string = string%substr(1,stp)
     ENDSUBROUTINE stripComment_string
 !
 !-------------------------------------------------------------------------------
@@ -515,18 +469,9 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: string
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
-      INTEGER(SIK) :: i
 
-      bool=.FALSE.
-      IF(LEN(pattern) > 0) THEN
-        DO i=1,LEN(string)
-          IF(i+LEN(pattern)-1 > LEN(string)) EXIT
-          IF(string(i:i+LEN(pattern)-1) == pattern) THEN
-            bool=.TRUE.
-            EXIT
-          ENDIF
-        ENDDO
-      ENDIF
+      bool = MERGE(INDEX(string,pattern)>0,.FALSE., &
+          (LEN(pattern)>0 .AND. LEN(string)>0))
     ENDFUNCTION strmatch_char
 !
 !-------------------------------------------------------------------------------
@@ -544,7 +489,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: pattern
       LOGICAL(SBK) :: bool
 
-      bool=strmatch_char(CHAR(string),pattern)
+      bool = strmatch(CHAR(string),pattern)
     ENDFUNCTION strmatch_string
 !
 !-------------------------------------------------------------------------------
@@ -598,25 +543,11 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(INOUT) :: string
       CHARACTER(LEN=*),INTENT(IN) :: findp
       CHARACTER(LEN=*),INTENT(IN) :: repp
-      CHARACTER(LEN=string%n) :: tmp
-      tmp=string
+      CHARACTER(LEN=:),ALLOCATABLE :: tmp
+      tmp = CHAR(string)
       CALL strrep_char_char_char(tmp,findp,repp)
       string=tmp
     ENDSUBROUTINE strrep_string_char_char
-!
-!-------------------------------------------------------------------------------
-!> @brief Utility function takes a string and converts all lower case letters to
-!> upper case letters.
-!> @param word input is a string, output has all upper case letters
-!>
-    PURE SUBROUTINE toUPPER_string(word)
-      TYPE(StringType),INTENT(INOUT) :: word
-      INTEGER(SIK) :: i
-      DO i=1,LEN(word)
-        IF('a' <= word%s(i) .AND. word%s(i) <= 'z') &
-          word%s(i)=ACHAR(IACHAR(word%s(i))-32)
-      ENDDO
-    ENDSUBROUTINE toUPPER_string
 !
 !-------------------------------------------------------------------------------
 !> @brief Utility function takes a character array and converts all lower case
@@ -633,6 +564,20 @@ MODULE IO_Strings
     ENDSUBROUTINE toUPPER_char
 !
 !-------------------------------------------------------------------------------
+!> @brief Utility function takes a character array and converts all upper case
+!> letters to lower case letters.
+!> @param word input is a character array, output has all lower case letters
+!>
+    PURE SUBROUTINE toLower_char(word)
+      CHARACTER(LEN=*),INTENT(INOUT) :: word
+      INTEGER(SIK) :: i
+      DO i=1,LEN(word)
+        IF('A' <= word(i:i) .AND. word(i:i) <= 'Z') &
+          word(i:i)=ACHAR(IACHAR(word(i:i))+32)
+      ENDDO
+    ENDSUBROUTINE toLower_char
+!
+!-------------------------------------------------------------------------------
 !> @brief Counts the number of non-blank entries on a line. An "entry" is
 !> recognized as a character that is not a space that precedes a space.
 !> @param aline input character array
@@ -646,7 +591,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: aline
       INTEGER(SIK) :: i,multidcol,n,ncol,nmult,ioerr
       LOGICAL(SIK) :: nonblankd,nonblank,multidata,inQuotes
-!
+
       !Check for single-quoted strings, if the number of single quotes is odd
       !then return with a value of -1 to signal an error
       IF(MOD(nmatchstr(TRIM(aline),"'"),2) /= 0) THEN
@@ -795,12 +740,12 @@ MODULE IO_Strings
     PURE SUBROUTINE getField_char_char(i,string,field,ierrout)
       INTEGER(SIK),INTENT(IN) :: i
       CHARACTER(LEN=*),INTENT(IN) :: string
-      CHARACTER(LEN=*),INTENT(OUT) :: field
+      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       INTEGER(SIK) :: ierr
       TYPE(StringType) :: tmpField
       CALL getField_char_string(i,string,tmpField,ierr)
-      field=tmpField
+      field = CHAR(tmpField)
       IF(LEN(tmpField) > LEN(field)) THEN
         ierr=666
         field=''
@@ -837,7 +782,7 @@ MODULE IO_Strings
     PURE SUBROUTINE getField_string_char(i,string,field,ierrout)
       INTEGER(SIK),INTENT(IN) :: i
       TYPE(StringType),INTENT(IN) :: string
-      CHARACTER(LEN=*),INTENT(OUT) :: field
+      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
       CALL getField_char_char(i,CHAR(string),field,ierrout)
     ENDSUBROUTINE getField_string_char
@@ -856,7 +801,7 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: string
       INTEGER(SIK),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-      CHARACTER(LEN=LEN_TRIM(string)) :: char_field
+      CHARACTER(LEN=:),ALLOCATABLE :: char_field
 
       CALL getField_char_char(i,CHAR(string),char_field,ierrout)
       IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
@@ -876,7 +821,7 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: string
       REAL(SRK),INTENT(OUT) :: field
       INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-      CHARACTER(LEN=LEN_TRIM(string)) :: char_field
+      CHARACTER(LEN=:),ALLOCATABLE :: char_field
 
       CALL getField_char_char(i,CHAR(string),char_field,ierrout)
       IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
@@ -1063,7 +1008,6 @@ MODULE IO_Strings
 !> @brief
 !> @param
 !>
-!>
     FUNCTION printCentered(string,width) RESULT(line)
       CHARACTER(LEN=*),PARAMETER :: myName='printCentered'
       CHARACTER(LEN=*),INTENT(IN) :: string
@@ -1096,7 +1040,7 @@ MODULE IO_Strings
 
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch_char(string(i),pattern)
+        bool=strmatch(string(i),pattern)
         IF(bool) EXIT
       ENDDO
     ENDFUNCTION strarraymatch_char
@@ -1120,7 +1064,7 @@ MODULE IO_Strings
 
       bool=.FALSE.
       DO i=1,SIZE(string,DIM=1)
-        bool=strmatch_char(CHAR(string(i)),pattern)
+        bool=strmatch(CHAR(string(i)),pattern)
         IF(bool) EXIT
       ENDDO
     ENDFUNCTION strarraymatch_string
@@ -1152,7 +1096,7 @@ MODULE IO_Strings
         ENDIF
       ENDIF
       DO i=istt,istp,incr
-        bool=strmatch_char(string(i),pattern)
+        bool=strmatch(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
@@ -1186,7 +1130,7 @@ MODULE IO_Strings
         ENDIF
       ENDIF
       DO i=istt,istp,incr
-        bool=strmatch_string(string(i),pattern)
+        bool=strmatch(string(i),pattern)
         IF(bool) THEN
           ind=i
           EXIT
@@ -1301,23 +1245,21 @@ MODULE IO_Strings
 !> @brief
     PURE SUBROUTINE getRealFormat_char_char(valstr,fmtstr)
       CHARACTER(LEN=*),INTENT(IN) :: valstr
-      CHARACTER(LEN=*),INTENT(INOUT) :: fmtstr
+      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: fmtstr
       TYPE(StringType) :: vstr,fstr
-      vstr=valstr
-      fstr=fmtstr
+      vstr = valstr
       CALL getRealFormat_str_str(vstr,fstr)
-      fmtstr=fstr
+      fmtstr = CHAR(fstr)
     ENDSUBROUTINE getRealFormat_char_char
 !
 !-------------------------------------------------------------------------------
 !> @brief
     PURE SUBROUTINE getRealFormat_str_char(valstr,fmtstr)
       TYPE(StringType),INTENT(IN) :: valstr
-      CHARACTER(LEN=*),INTENT(INOUT) :: fmtstr
+      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: fmtstr
       TYPE(StringType) :: fstr
-      fstr=fmtstr
       CALL getRealFormat_str_str(valstr,fstr)
-      fmtstr=fstr
+      fmtstr = CHAR(fstr)
     ENDSUBROUTINE getRealFormat_str_char
 !
 !-------------------------------------------------------------------------------
@@ -1326,7 +1268,7 @@ MODULE IO_Strings
       CHARACTER(LEN=*),INTENT(IN) :: valstr
       TYPE(StringType),INTENT(INOUT) :: fmtstr
       TYPE(StringType) :: vstr
-      vstr=valstr
+      vstr = valstr
       CALL getRealFormat_str_str(vstr,fmtstr)
     ENDSUBROUTINE getRealFormat_char_str
 !
@@ -1336,15 +1278,15 @@ MODULE IO_Strings
       TYPE(StringType),INTENT(IN) :: valstr
       TYPE(StringType),INTENT(INOUT) :: fmtstr
 
-      CHARACTER(LEN=32) :: tmpchar
+      CHARACTER(LEN=:),ALLOCATABLE :: tmpchar
       INTEGER(SIK) :: w,d,e,ioerr
       REAL(SRK) :: tmpval
       TYPE(StringType) :: vstr
 
       fmtstr=''
-      vstr=valstr
+      vstr = valstr
       IF(LEN_TRIM(vstr) == 0) RETURN
-      tmpChar=vstr
+      tmpChar = CHAR(vstr)
       READ(tmpChar,*,IOSTAT=ioerr) tmpval
       IF(ioerr == 0) THEN
         vstr=TRIM(ADJUSTL(vstr)) !eliminate whitespace
@@ -1395,7 +1337,6 @@ MODULE IO_Strings
       CALL SlashRep_c(cstring)
       string=cstring
     ENDSUBROUTINE SlashRep_s
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Pure routine replaces slash character in file path names with
@@ -1428,13 +1369,16 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
-      IF(i < 0) length=length+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+        IF(i < 0) length=length+1
+      ENDIF
       ALLOCATE(CHARACTER(length) :: string)
       WRITE(string,'(i0)') i
 
     ENDFUNCTION str_SNK
-!
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts an integer to a character and pads with leading 0s
@@ -1452,7 +1396,11 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+      ENDIF
       REQUIRE(nPadZero >= length)
 
       length=nPadZero
@@ -1478,8 +1426,12 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
-      IF(i < 0) length=length+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+        IF(i < 0) length=length+1
+      ENDIF
       ALLOCATE(CHARACTER(length) :: string)
       WRITE(string,'(i0)') i
 
@@ -1502,7 +1454,11 @@ MODULE IO_Strings
       !
       INTEGER(SIK) :: length
 
-      length=FLOOR(ABS(LOG10(ABS(REAL(i)))))+1
+      IF(i == 0) THEN
+        length=1
+      ELSE
+        length=FLOOR(LOG10(ABS(REAL(i))))+1
+      ENDIF
       REQUIRE(nPadZero >= length)
 
       length=nPadZero
@@ -1537,6 +1493,55 @@ MODULE IO_Strings
       WRITE(string,'(es'//str(length)//'.7)') r
 
     ENDFUNCTION str_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a character is in the alphabet using ASCII format
+!> @param letter character to check
+!> @returns isValid logical representing if the letter is an alphabetic
+!> character
+!>
+   FUNCTION isChar(letter) RESULT(isValid)
+      CHARACTER(LEN=1), INTENT(IN) :: letter
+
+      LOGICAL(SBK) :: isValid
+
+      isValid = isCharCap(letter) .OR. isCharLow(letter)
+
+   ENDFUNCTION isChar
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a character is capitilized using ASCII format
+!> @param letter character to check
+!> @returns isUpper logical representing if the letter is a capital alphabetic
+!> character
+!>
+   FUNCTION isCharCap(letter) RESULT(isUpper)
+      CHARACTER(LEN=1), INTENT(IN) :: letter
+
+      LOGICAL(SBK) :: isUpper
+      INTEGER(SIK) :: val
+
+      val = IACHAR(letter)
+      isUpper = 65 <= val .AND. val <= 90
+
+   ENDFUNCTION isCharCap
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a character is lower case using ASCII format
+!> @param letter character to check
+!> @returns isLower logical representing if the letter is a lower alphabetic
+!> character
+!>
+   FUNCTION isCharLow(letter) RESULT(isLower)
+      CHARACTER(LEN=1), INTENT(IN) :: letter
+
+      LOGICAL(SBK) :: isLower
+      INTEGER(SIK) :: val
+
+      val = IACHAR(letter)
+      isLower = 97 <= val .AND. val <= 122
+
+   ENDFUNCTION isCharLow
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts a single precision real to a character
@@ -1610,5 +1615,134 @@ MODULE IO_Strings
       WRITE(string,'(es'//str(length)//'.'//str(nDecimal)//')') r
 
     ENDFUNCTION str_SDK_nDecimal
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine writes a 2-D array of strings to an output file as a
+!>        formatted table.
+!> @param funit The output unit of the file where the table is written.
+!> @param tablevals The 2-D array of strings to write. The indexing of this
+!>        array is (col,row) or (xpos,ypos).
+!>
+!> Note: The default delimiter for writing multi-row strings to a single cell is
+!>       the '; ', where the table functions check for the ';', and the getField
+!>       routine looks for the whitespace.  Surround strings with quotes to have
+!>       them as a single field.
+!>
+    SUBROUTINE stringTableToLines(tablevals,lines)
+      CHARACTER(LEN=*),PARAMETER :: myName='stringTableToLines'
+      TYPE(StringType),INTENT(IN) :: tablevals(:,:)
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: lines(:)
+      LOGICAL(SBK) :: hasString
+      INTEGER(SIK),ALLOCATABLE :: maxcolsize(:),maxrowsize(:)
+      INTEGER(SIK) :: i,j,k,rightpad,ierr,nrow
+      TYPE(StringType) :: plstr,rowstr,field
+
+      !Loop over the string array and write the data and make it pretty.
+      ALLOCATE(maxcolsize(SIZE(tablevals,DIM=1)))
+      ALLOCATE(maxrowsize(SIZE(tablevals,DIM=2)))
+      maxcolsize=0
+      maxrowsize=0
+      CALL getTableBounds(tablevals,maxcolsize,maxrowsize)
+
+      !Three for the top, first row, and last row separator strings.
+      ALLOCATE(lines(SUM(maxrowsize)+3))
+      rowstr=getRowStr(maxcolsize)
+      nrow=1
+      lines(nrow)=rowstr
+      rightpad=0
+
+      !
+      !Loop over the rows
+      DO j=1,SIZE(tablevals,DIM=2)
+        !Loop over an entry with multiple rows
+        DO k=1,maxrowsize(j)
+          plstr='|'
+          nrow=nrow+1
+          !Loop over the columns in the row
+          DO i=1,SIZE(tablevals,DIM=1)
+            !Always have 1 space on the right
+            !For the first row of a multirow
+            field=''
+            !Get the scalar or kth array value with getField
+            CALL getField(k,tablevals(i,j),field,ierr)
+            IF(k == 1) THEN
+              !Force writing everything for now. Logic check for a two column table
+              IF(i == 2) hasString=.TRUE.
+            ELSE
+              !If this table value is an array, get the kth value
+              !Check ierr in case k > nfields, set to '' if it is.
+              IF(ierr /= 0) field=''
+            ENDIF
+            rightpad=maxcolsize(i)-LEN_TRIM(field)+1
+            plstr=plstr//' '//field//REPEAT(' ',rightpad)//'|'
+          ENDDO
+          IF(hasString) lines(nrow)=plstr
+        ENDDO
+        !Row to separate state index
+        IF(j == 1) THEN
+          nrow=nrow+1
+          IF(hasString) lines(nrow)=rowstr
+        ENDIF
+      ENDDO
+      !Bottom row
+      lines(SIZE(lines))=rowstr
+      DEALLOCATE(maxcolsize)
+      DEALLOCATE(maxrowsize)
+    ENDSUBROUTINE stringTableToLines
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine gets the maximum size of each column and row for a
+!>        given 2-D string array.  The maximum column size (width) is found by
+!>        looping over all entries within the column and finding the largest
+!>        entry. The maximum row size (height) is found by counting the
+!>        number of delimeters for all entries in a given row.
+!> @param tablevals The 2-D array of strings from which to find the row and
+!>        column bounds.
+!> @param maxcolsize The integer array of the width of each column.
+!> @param maxrowsize The integer array of the height of each row.
+!>
+    SUBROUTINE getTableBounds(tablevals,maxcolsize,maxrowsize)
+      TYPE(StringType),INTENT(IN) :: tablevals(:,:)
+      INTEGER(SIK),INTENT(OUT) :: maxcolsize(:)
+      INTEGER(SIK),INTENT(OUT) :: maxrowsize(:)
+      INTEGER(SIK) :: i,j,k,fieldlen
+      TYPE(StringType) :: field
+
+      !Get formatting bounds
+      DO i=1,SIZE(tablevals,DIM=1)
+        DO j=1,SIZE(tablevals,DIM=2)
+          maxrowsize(j)=MAX(maxrowsize(j),nfields(CHAR(tablevals(i,j))))
+        ENDDO
+        !Loop over rows, find array entries
+        DO j=1,SIZE(tablevals,DIM=2)
+          fieldlen=0
+          DO k=1,maxrowsize(j)
+            !Get the scalar or array value with getField
+            CALL getField(k,tablevals(i,j),field)
+            fieldlen=MAX(fieldlen,LEN_TRIM(field))
+          ENDDO
+          maxcolsize(i)=MAX(maxcolsize(i),fieldlen)
+        ENDDO
+      ENDDO
+    ENDSUBROUTINE getTableBounds
+!
+!------------------------------------------------------------------------------
+!> @brief This subroutine returns the formatted row string to separate rows and
+!>        to bound the top and bottom of the table
+!> @param maxcolsize The integer array of the width of each column, from
+!>        getTableBounds.
+!> @param rowstr The formatted row string
+!>
+    FUNCTION getRowStr(maxcolsize) RESULT(rowstr)
+      INTEGER(SIK),INTENT(IN) :: maxcolsize(:)
+      TYPE(StringType) :: rowstr
+      INTEGER(SIK) :: i,dashlen
+
+      rowstr='+'
+      DO i=1,SIZE(maxcolsize)
+        dashlen=maxcolsize(i)+2
+        rowstr=rowstr//REPEAT('-',dashlen)//'+'
+      ENDDO
+    ENDFUNCTION getRowStr
 !
 ENDMODULE IO_Strings

@@ -21,6 +21,7 @@ PROGRAM testElementsIsotopes
 
   REGISTER_SUBTEST('Initialize',testInit)
   REGISTER_SUBTEST('isValidIsoName',testIsValidIsoName)
+  REGISTER_SUBTEST('isValidElemName',testIsValidElemName)
   REGISTER_SUBTEST('getZAID',testGetZAID)
   REGISTER_SUBTEST('getIsoName',testGetIsotopeName)
   REGISTER_SUBTEST('getElementName',testGetElementName)
@@ -29,11 +30,53 @@ PROGRAM testElementsIsotopes
   REGISTER_SUBTEST('isMetastable',testisMetastable)
   REGISTER_SUBTEST('Clear',testClear)
 
+  REGISTER_SUBTEST('getDecayType_ZAID',testGetDecayType_ZAID)
 
   FINALIZE_TEST()
 !
 !===============================================================================
   CONTAINS
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testGetDecayType_ZAID()
+
+      COMPONENT_TEST('NULL')
+      ASSERT_EQ(getDecayType(1001,1001),DECAY_NULL,'(1001,1001)')
+      ASSERT_EQ(getDecayType(1001,1001,.FALSE.,.FALSE.),DECAY_NULL,'(1001,1001,.FALSE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(1001,1001,.FALSE.,.TRUE.),DECAY_NULL,'(1001,1001,.FALSE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(1001,1002,.TRUE.,.TRUE.),DECAY_NULL,'(1001,1002,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(27155,26185),DECAY_NULL,'(27155,26185)')
+
+      COMPONENT_TEST('BETAMINUS_EXCITED')
+      ASSERT_EQ(getDecayType(1002,2002,.TRUE.,.TRUE.),DECAY_BETAMINUS_EXCITED,'(1002,2002,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(1002,2002,.FALSE.,.TRUE.),DECAY_BETAMINUS_EXCITED,'(1002,2002,.FALSE.,.TRUE.)')
+
+      COMPONENT_TEST('BETAPLUS_GROUND')
+      ASSERT_EQ(getDecayType(2002,1002,.TRUE.,.FALSE.),DECAY_BETAPLUS_GROUND,'(2002,2001,.TRUE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(2002,1002,.FALSE.,.FALSE.),DECAY_BETAPLUS_GROUND,'(2002,2001,.FALSE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(2002,1002),DECAY_BETAPLUS_GROUND,'(2002,2001)')
+
+      COMPONENT_TEST('BETAPLUS_EXCITED')
+      ASSERT_EQ(getDecayType(2002,1002,.TRUE.,.TRUE.),DECAY_BETAPLUS_EXCITED,'(2002,2001,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(2002,1002,.FALSE.,.TRUE.),DECAY_BETAPLUS_EXCITED,'(2002,2001,.FALSE.,.TRUE.)')
+
+      COMPONENT_TEST('ALPHA')
+      ASSERT_EQ(getDecayType(3005,1001,.TRUE.,.TRUE.),DECAY_ALPHA,'(3005,1001,.TRUE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(3005,1001,.FALSE.,.TRUE.),DECAY_ALPHA,'(3005,1001,.FALSE.,.TRUE.)')
+      ASSERT_EQ(getDecayType(3005,1001,.TRUE.,.FALSE.),DECAY_ALPHA,'(3005,1001,.TRUE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(3005,1001,.FALSE.,.FALSE.),DECAY_ALPHA,'(3005,1001,.FALSE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(3005,1001),DECAY_ALPHA,'(3005,1001)')
+
+      COMPONENT_TEST('ISOMERIC')
+      ASSERT_EQ(getDecayType(1001,1001,.TRUE.,.FALSE.),DECAY_ISOMERIC,'(1001,1001,.TRUE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(1001,1001,.TRUE.,.TRUE.),DECAY_ISOMERIC,'(1001,1001,.TRUE.,.TRUE.)')
+
+      COMPONENT_TEST('BETAMINUS_GROUND')
+      ASSERT_EQ(getDecayType(1002,2002,.TRUE.,.FALSE.),DECAY_BETAMINUS_GROUND,'(1002,2002,.TRUE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(1002,2002,.FALSE.,.FALSE.),DECAY_BETAMINUS_GROUND,'(1002,2002,.FALSE.,.FALSE.)')
+      ASSERT_EQ(getDecayType(1002,2002),DECAY_BETAMINUS_GROUND,'(1002,2002)')
+
+    ENDSUBROUTINE testGetDecayType_ZAID
 !
 !-------------------------------------------------------------------------------
     SUBROUTINE testInit()
@@ -65,6 +108,20 @@ PROGRAM testElementsIsotopes
     ENDSUBROUTINE testIsValidIsoName
 !
 !-------------------------------------------------------------------------------
+    SUBROUTINE testIsValidElemName()
+      ASSERT(myEI%isValidElemName('H'),'H')
+      ASSERT(myEI%isValidElemName(' H'),' H')
+      ASSERT(myEI%isValidElemName(' H '),' H ')
+      ASSERT(myEI%isValidElemName('H '),'H ')
+      ASSERT(myEI%isValidElemName('He'),'He')
+      ASSERT(myEI%isValidElemName(' He'),' He')
+      ASSERT(myEI%isValidElemName(' He '),' He ')
+      ASSERT(myEI%isValidElemName('He '),'He ')
+      ASSERT(.NOT.myEI%isValidElemName('Z'),'Bad Name')
+      ASSERT(.NOT.myEI%isValidElemName('Z-12'),'Isotope, not element')
+    ENDSUBROUTINE testIsValidElemName
+!
+!-------------------------------------------------------------------------------
     SUBROUTINE testGetZAID()
       ASSERT_EQ(myEI%getZAID('H-2'),1002,'H-2')
       ASSERT_EQ(myEI%getZAID(' H-2'),1002,' H-2')
@@ -88,7 +145,7 @@ PROGRAM testElementsIsotopes
 
       ASSERT_EQ(myEI%getElementName(1),'H','1')
       ASSERT_EQ(myEI%getElementName(47),'AG','47')
-      
+
       ASSERT_EQ(myEI%getElementName('U-235'),'U','U-235')
       ASSERT_EQ(myEI%getElementName('xe-135m'),'XE','xe-135m')
     ENDSUBROUTINE testGetElementName
@@ -97,10 +154,10 @@ PROGRAM testElementsIsotopes
     SUBROUTINE testGetAtomicNumber()
       ASSERT_EQ(myEI%getAtomicNumber(1002),1,'1002')
       ASSERT_EQ(myEI%getAtomicNumber(47710),47,'47710')
-      
+
       ASSERT_EQ(myEI%getAtomicNumber('U  '),92,'U')
       ASSERT_EQ(myEI%getAtomicNumber('pu'),94,'pu')
-      
+
       ASSERT_EQ(myEI%getAtomicNumber('U-235'),92,'U-235')
       ASSERT_EQ(myEI%getAtomicNumber('F-18m'),9,'F-18m')
     ENDSUBROUTINE testGetAtomicNumber

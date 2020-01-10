@@ -101,6 +101,18 @@ PROGRAM testArrayUtils
                     (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.)
       bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
       ASSERT(bool,'getUnion deltaout=.TRUE.')
+      CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,2.0_SRK/), &
+                    (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-15_SRK)
+      bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
+      ASSERT(bool,'getUnion deltaout=.TRUE.')
+      CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,2.0_SRK/), &
+                    (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-08_SRK)
+      bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
+      ASSERT(bool,'getUnion deltaout=.TRUE.')
+      CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,0.0000000001_SRK,2.0_SRK/), &
+                    (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-08_SRK)
+      bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
+      ASSERT(bool,'getUnion deltaout=.TRUE.')
       !
       COMPONENT_TEST('findNUnique 1-D Array')
       tmprealarray(1)=1.0_SRK
@@ -364,14 +376,6 @@ PROGRAM testArrayUtils
       ASSERT(findIndex(tmprealarray,0.0_SRK,.TRUE.,INCL=2) == 2,'index == 2')
       ASSERT(findIndex(tmprealarray,65.0_SRK,.TRUE.,INCL=2) == -2,'index == -2')
 
-      COMPONENT_TEST('boundCheck 1-D Reals')
-      ASSERT(boundCheck(tmprealarray,3),'in bounds not-allocatable')
-      ASSERT(.NOT.boundCheck(tmprealarray,13),'out of bounds not-allocatable')
-      IF(ALLOCATED(tmpr)) DEALLOCATE(tmpr)
-      ALLOCATE(tmpr(-5:10))
-      ASSERT(boundCheck(tmpr,-3),'in bounds allocatable')
-      ASSERT(.NOT.boundCheck(tmpr,-8),'out of bounds allocatable')
-      DEALLOCATE(tmpr)
     ENDSUBROUTINE test1DReals
 !
 !-------------------------------------------------------------------------------
@@ -458,14 +462,6 @@ PROGRAM testArrayUtils
       CALL getUnique(tmpintarray(1:0),tmpi)
       ASSERT(.NOT. ALLOCATED(tmpi),'getUnique, size 0 array')
 
-      COMPONENT_TEST('boundCheck 1-D Ints')
-      ASSERT(boundCheck(tmpintarray,3),'in bounds not-allocatable')
-      ASSERT(.NOT.boundCheck(tmpintarray,13),'out of bounds not-allocatable')
-      IF(ALLOCATED(tmpi)) DEALLOCATE(tmpi)
-      ALLOCATE(tmpi(-8:-2))
-      ASSERT(boundCheck(tmpi,-2),'in bounds allocatable')
-      ASSERT(.NOT.boundCheck(tmpi,1),'out of bounds allocatable')
-      DEALLOCATE(tmpi)
     ENDSUBROUTINE test1DInts
 !
 !-------------------------------------------------------------------------------
@@ -526,14 +522,6 @@ PROGRAM testArrayUtils
         tmps1(5) == 'seven' .AND. tmps1(6) == 'eight' .AND. tmps1(7) == 'nine'
       ASSERT(bool,'3 duplicates unique array')
 
-      COMPONENT_TEST('boundCheck 1-D StringType')
-      ASSERT(boundCheck(tmpstr1a,3),'in bounds not-allocatable')
-      ASSERT(.NOT.boundCheck(tmpstr1a,13),'out of bounds not-allocatable')
-      IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
-      ALLOCATE(tmps1(5:10))
-      ASSERT(boundCheck(tmps1,7),'in bounds allocatable')
-      ASSERT(.NOT.boundCheck(tmps1,2),'out of bounds allocatable')
-      DEALLOCATE(tmps1)
     ENDSUBROUTINE test1DStrings
 !
 !-------------------------------------------------------------------------------

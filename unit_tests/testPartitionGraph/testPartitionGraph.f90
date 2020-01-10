@@ -819,10 +819,13 @@ PROGRAM testPartitionGraph
 !-------------------------------------------------------------------------------
     SUBROUTINE testMetrics()
       LOGICAL(SBK) :: bool
-      REAL(SRK) :: mmr,srms,ecut,comm
+      REAL(SRK) :: mmr,srms,ecut,comm,maxnsr
 
       !Initialize the graph
+      CALL refG3Params%set('PartitionGraph->wtfactor',2000.0_SRK)
       CALL testPG%initialize(refG3Params)
+      CALL refG3Params%set('PartitionGraph->wtfactor',1.0_SRK)
+
       !Partition the graph manually
       CALL testPG%setGroups( &
           (/1,11,20,29/), & !GroupIdx
@@ -845,6 +848,27 @@ PROGRAM testPartitionGraph
       bool=(comm .APPROXEQ. 18.0_SRK)
       ASSERT(bool, 'communication')
       FINFO() comm
+
+      !Calculate the metrics
+      CALL testPG%metrics(mmr,srms,ecut,comm,maxnsr)
+
+      !Test values
+      bool=(maxnsr .APPROXEQ. 0.34615384615384615_SRK)
+      ASSERT(bool,'max-nsr ratio')
+      FINFO() maxnsr
+      bool=(mmr .APPROXEQ. 1.0588235294117647_SRK)
+      ASSERT(bool,'max-min ratio')
+      FINFO() mmr
+      bool=(srms .APPROXEQ. 2.7196414661021060_SRK)
+      ASSERT(bool, 'group size rms (from optimal)')
+      FINFO() srms
+      bool=(ecut .APPROXEQ. 10.0_SRK)
+      ASSERT(bool, 'edges cut')
+      FINFO() ecut
+      bool=(comm .APPROXEQ. 18.0_SRK)
+      ASSERT(bool, 'communication')
+      FINFO() comm
+
       !Clear
       CALL testPG%clear()
     ENDSUBROUTINE testMetrics
@@ -939,6 +963,7 @@ PROGRAM testPartitionGraph
                   5, 0, 0, 0/),(/4,6/)))
       CALL refInitParams%add('PartitionGraph -> wts', &
         (/1.0_SRK, 2.0_SRK, 3.0_SRK, 2.0_SRK, 1.0_SRK, 1.0_SRK/))
+      CALL refInitParams%add('PartitionGraph->wtfactor',1.0_SRK)
       CALL refInitParams%add('PartitionGraph -> neighwts', &
         RESHAPE((/1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
                   1.0_SRK, 2.0_SRK, 3.0_SRK, 0.0_SRK, &
@@ -1010,6 +1035,7 @@ PROGRAM testPartitionGraph
                          2,2,1,0,0,0, &
                          2,2,1,0,0,0/),(/6,6/)),SRK)
       CALL map2Graph(map,refG3Params)
+      CALL refG3Params%add('PartitionGraph->wtfactor',1.0_SRK)
       CALL refG3Params%add('PartitionGraph -> nGroups',3)
       CALL refG3Params%add('PartitionGraph -> Algorithms',refAlgNames(1:1))
       DEALLOCATE(map)

@@ -60,7 +60,7 @@
 !>   CALL e%setLogFileUnit(23)
 !>   OPEN(UNIT=e%getLogFileUnit(),FILE='Exception.log', &
 !>        ACCESS='SEQUENTIAL',FORM='FORMATTED')
-!>   CALL e%setLogFileActive(.TRUE.)
+!>   CALL e%setLogActive(.TRUE.)
 !>
 !>   !Suppress reporting of exceptions to standard error
 !>   CALL e%setQuietMode(.TRUE.)
@@ -196,6 +196,14 @@ MODULE ExceptionHandler
       !> @copybrief ExceptionHandler::getCounter
       !> @copydetails ExceptionHandler::getCounter
       PROCEDURE,PASS :: getCounter
+      !> @copybrief ExceptionHandler::setCounter_all
+      !> @copydetails ExceptionHandler::setCounter_all
+      PROCEDURE,PASS,PRIVATE :: setCounter_all
+      !> @copybrief ExceptionHandler::setCounter_eCode
+      !> @copydetails ExceptionHandler::setCounter_eCode
+      PROCEDURE,PASS,PRIVATE :: setCounter_eCode
+      !>
+      GENERIC :: setCounter => setCounter_all,setCounter_eCode
       !> @copybrief ExceptionHandler::getLastMessage
       !> @copydetails ExceptionHandler::getLastMessage
       PROCEDURE,PASS :: getLastMessage
@@ -435,6 +443,75 @@ MODULE ExceptionHandler
         ENDSELECT
       ENDIF
     ENDFUNCTION getCounter
+!
+!-------------------------------------------------------------------------------
+!> @brief Set the counters for the exception object.
+!> @param e the exception object
+!> @param counter array with counter values
+!>
+    SUBROUTINE setCounter_all(e,counter)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      INTEGER(SIK),INTENT(IN) :: counter(EXCEPTION_SIZE)
+      INTEGER(SIK) :: lcounter(EXCEPTION_SIZE)
+
+      lcounter=counter
+      WHERE(counter < 0) lcounter=0
+      IF(ASSOCIATED(e%surrogate)) THEN
+        e%surrogate%nInfo=lcounter(EXCEPTION_INFORMATION)
+        e%surrogate%nWarn=lcounter(EXCEPTION_WARNING)
+        e%surrogate%nError=lcounter(EXCEPTION_ERROR)
+        e%surrogate%nFatal=lcounter(EXCEPTION_FATAL_ERROR)
+        e%surrogate%nDebug=lcounter(EXCEPTION_DEBUG)
+      ELSE
+        e%nInfo=lcounter(EXCEPTION_INFORMATION)
+        e%nWarn=lcounter(EXCEPTION_WARNING)
+        e%nError=lcounter(EXCEPTION_ERROR)
+        e%nFatal=lcounter(EXCEPTION_FATAL_ERROR)
+        e%nDebug=lcounter(EXCEPTION_DEBUG)
+      ENDIF
+    ENDSUBROUTINE setCounter_all
+!
+!-------------------------------------------------------------------------------
+!> @brief Set a count of one exception type for the exception object.
+!> @param e the exception object
+!> @param i the index of the exception type
+!> @param count the number of a certain exception type
+!>
+    SUBROUTINE setCounter_eCode(e,i,count)
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      INTEGER(SIK),INTENT(IN) :: i
+      INTEGER(SIK),INTENT(IN) :: count
+      INTEGER(SIK) :: lcount
+      lcount=0
+      IF(count > 0) lcount=count
+      IF(ASSOCIATED(e%surrogate)) THEN
+        SELECTCASE(i)
+          CASE(EXCEPTION_INFORMATION)
+            e%surrogate%nInfo=lcount
+          CASE(EXCEPTION_WARNING)
+            e%surrogate%nWarn=lcount
+          CASE(EXCEPTION_DEBUG)
+            e%surrogate%nDebug=lcount
+          CASE(EXCEPTION_ERROR)
+            e%surrogate%nError=lcount
+          CASE(EXCEPTION_FATAL_ERROR)
+            e%surrogate%nFatal=lcount
+        ENDSELECT
+      ELSE
+        SELECTCASE(i)
+          CASE(EXCEPTION_INFORMATION)
+            e%nInfo=lcount
+          CASE(EXCEPTION_WARNING)
+            e%nWarn=lcount
+          CASE(EXCEPTION_DEBUG)
+            e%nDebug=lcount
+          CASE(EXCEPTION_ERROR)
+            e%nError=lcount
+          CASE(EXCEPTION_FATAL_ERROR)
+            e%nFatal=lcount
+        ENDSELECT
+      ENDIF
+    ENDSUBROUTINE setCounter_eCode
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the last exception message.
@@ -909,7 +986,7 @@ MODULE ExceptionHandler
       INTEGER(SIK),INTENT(IN) :: logUnit
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH),INTENT(INOUT) :: mesg
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: prefix
-      INTEGER(SIK) :: ioerr1,ioerr2
+      INTEGER(SIK) :: ioerr1,ioerr2,prefixLen
 
       !Set the appropriate prefix and printing options
       SELECT CASE(eCode)
@@ -958,7 +1035,8 @@ MODULE ExceptionHandler
       ENDIF
 
       !Set the message to be included as one line back to exception object
-      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg)
+      prefixLen = LEN_TRIM(prefix)+3
+      WRITE(mesg,'(a)') TRIM(prefix)//' - '//TRIM(mesg(1:EXCEPTION_MAX_MESG_LENGTH-prefixLen))
     ENDSUBROUTINE exceptionMessage
 !
 !-------------------------------------------------------------------------------

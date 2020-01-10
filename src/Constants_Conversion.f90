@@ -83,15 +83,71 @@ MODULE Constants_Conversion
   !> Conversion factor from mg to g
   REAL(SRK),PUBLIC,PARAMETER :: mg2g=ONE/g2mg
 
+  !Energy conversions
+  !> Conversion factor from eV to J
+  REAL(SRK),PUBLIC,PARAMETER :: eV2J=1.602176487e-19_SRK
+  !> Conversion factor from J to eV
+  REAL(SRK),PUBLIC,PARAMETER :: J2eV=ONE/eV2J
+
+  !Time conversions
+  !> Conversion factor from min to s
+  REAL(SRK),PUBLIC,PARAMETER :: min2s=60.0_SRK
+  !> Conversion factor from hr to min
+  REAL(SRK),PUBLIC,PARAMETER :: hr2min=60.0_SRK
+  !> Conversion factor from day to hr
+  REAL(SRK),PUBLIC,PARAMETER :: day2hr=24.0_SRK
+  !> Conversion factor from year to day
+  REAL(SRK),PUBLIC,PARAMETER :: yr2day=365.25_SRK
+  !> Conversion factor from hr to sec
+  REAL(SRK),PUBLIC,PARAMETER :: hr2s=hr2min*min2s
+  !> Conversion factor from day to sec
+  REAL(SRK),PUBLIC,PARAMETER :: day2s=day2hr*hr2s
+  !> Conversion factor from year to sec
+  REAL(SRK),PUBLIC,PARAMETER :: yr2s=yr2day*day2s
+  !> Conversion factor from day to min
+  REAL(SRK),PUBLIC,PARAMETER :: day2min=day2hr*hr2min
+  !> Conversion factor from year to min
+  REAL(SRK),PUBLIC,PARAMETER :: yr2min=yr2day*day2min
+  !> Conversion factor from year to hr
+  REAL(SRK),PUBLIC,PARAMETER :: yr2hr=yr2day*day2hr
+  !> Conversion factor from s to min
+  REAL(SRK),PUBLIC,PARAMETER :: s2min=ONE/min2s
+  !> Conversion factor from min to hr
+  REAL(SRK),PUBLIC,PARAMETER :: min2hr=ONE/hr2min
+  !> Conversion factor from hr to day
+  REAL(SRK),PUBLIC,PARAMETER :: hr2day=ONE/day2hr
+  !> Conversion factor from day to year
+  REAL(SRK),PUBLIC,PARAMETER :: day2yr=ONE/yr2day
+  !> Conversion factor from s to hr
+  REAL(SRK),PUBLIC,PARAMETER :: s2hr=ONE/hr2s
+  !> Conversion factor from s to day
+  REAL(SRK),PUBLIC,PARAMETER :: s2day=ONE/day2s
+  !> Conversion factor from s to year
+  REAL(SRK),PUBLIC,PARAMETER :: s2yr=ONE/yr2s
+  !> Conversion factor from min to day
+  REAL(SRK),PUBLIC,PARAMETER :: min2day=ONE/day2min
+  !> Conversion factor from min to year
+  REAL(SRK),PUBLIC,PARAMETER :: min2yr=ONE/yr2min
+  !> Conversion factor from hr to year
+  REAL(SRK),PUBLIC,PARAMETER :: hr2yr=ONE/yr2hr
+
   !Length conversions
   !> Conversion factor from m to cm
   REAL(SRK),PUBLIC,PARAMETER :: m2cm=100.0_SRK
   !> Conversion factor from cm to m
   REAL(SRK),PUBLIC,PARAMETER :: cm2m=ONE/m2cm
+  !> Conversion factor from ft to cm
+  REAL(SRK),PUBLIC,PARAMETER :: ft2cm=30.48_SRK
+  !> Conversion factor from cm to ft
+  REAL(SRK),PUBLIC,PARAMETER :: cm2ft=ONE/ft2cm
 
   !Temperature conversions
   !> Conversion factor from Celsius to Kelvin
   REAL(SRK),PUBLIC,PARAMETER :: C2K=273.15_SRK
+  !> Conversion factor from Rankine to Kelvin
+  REAL(SRK),PUBLIC,PARAMETER :: R2K=5.0_SRK/9.0_SRK
+  !> Conversion factor from Fahrenheit to Rankine
+  REAL(SRK),PUBLIC,PARAMETER :: F2R=459.67_SRK
 
   !> May be used for comparing real numbers relating to geometry
   !> Tolerance is 0.0001 cm

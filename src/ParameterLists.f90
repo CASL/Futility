@@ -115,6 +115,11 @@ MODULE ParameterLists
   CHARACTER(LEN=*),PARAMETER :: modName='PARAMETERLISTS'
   INTEGER(SIK),PARAMETER :: MAX_1D_LEN=10
 
+  !> Verification enumerations
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VALIDATE=0
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYTEST=1
+  INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYLIST=2
+
   !> Exception handler for the module
   TYPE(ExceptionHandlerType),SAVE :: eParams
 
@@ -470,6 +475,9 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::has_ParamType
       !> @copydoc ParameterLists::has_ParamType
       PROCEDURE,PASS :: has => has_ParamType
+      !> @copybrief ParameterLists::convertTo2DStringArray_ParamType
+      !> @copydoc ParameterLists::convertTo2DStringArray_ParamType
+      PROCEDURE,PASS :: convertTo2DStringArray => convertTo2DStringArray_ParamType
       !> @copybrief ParameterLists::getNextParam_ParamType
       !> @copydoc ParameterLists::getNextParam_ParamType
       PROCEDURE,PASS :: getNextParam => getNextParam_ParamType
@@ -482,9 +490,12 @@ MODULE ParameterLists
       !> @copybrief ParameterLists::validate_ParamType
       !> @copydoc ParameterLists::validate_ParamType
       PROCEDURE,PASS :: validate => validate_ParamType
-      !> @copybrief ParameterLists::verify_ParamType
-      !> @copydoc ParameterLists::verify_ParamType
-      PROCEDURE,PASS :: verify => verify_ParamType
+      !> @copybrief ParameterLists::verifyTest_ParamType
+      !> @copydoc ParameterLists::verifyTest_ParamType
+      PROCEDURE,PASS :: verify => verifyTest_ParamType
+      !> @copybrief ParameterLists::verifyTest_ParamType
+      !> @copydoc ParameterLists::verifyTest_ParamType
+      PROCEDURE,PASS :: verifyList => verifyList_ParamType
       !> @copybrief ParameterLists::edit_ParamType
       !> @copydoc ParameterLists::edit_ParamType
       PROCEDURE,PASS :: edit => edit_ParamType
@@ -1262,7 +1273,7 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(INOUT) :: addr
       CLASS(ParamType),POINTER,INTENT(OUT) :: param
 
-      CHARACTER(LEN=addr%ntrim) :: addrIn,newAddr
+      CHARACTER(LEN=LEN_TRIM(addr)) :: addrIn,newAddr
       INTEGER(SIK) :: istp,ip
       TYPE(StringType) :: tmpAddr
       CLASS(ParamType),POINTER :: tmpParam,nextParam,parentParam
@@ -1571,7 +1582,8 @@ MODULE ParameterLists
       CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CLASS(ParamType),POINTER,INTENT(INOUT) :: param
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname
+      CHARACTER(LEN=:),ALLOCATABLE :: pname
       INTEGER(SIK) :: ipos,i
       CLASS(ParamType),POINTER :: tmpParam
       LOGICAL(SBK),SAVE :: partial_match=.TRUE.
@@ -1583,7 +1595,6 @@ MODULE ParameterLists
         thisname=ADJUSTL(name(1:ipos-1))
         nextname=ADJUSTL(name(ipos+2:LEN(name)))
       ENDIF
-      pname=''
 
       param => NULL()
       IF(LEN_TRIM(thisname) > 0) THEN
@@ -1592,8 +1603,7 @@ MODULE ParameterLists
             CALL toUPPER(thisname)
             IF(LEN_TRIM(nextname) > 0) THEN
               !Set names to upper case for matching
-              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
-              CALL toUPPER(pname)
+              pname=CHAR(thisParam%name%upper())
 
               !Search the list for nextname (thisname must match parameter name)
               IF(TRIM(pname) == TRIM(thisname) .AND. &
@@ -1608,9 +1618,7 @@ MODULE ParameterLists
               ENDIF
             ELSE
               !End of search list, check search name against list name
-              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) &
-                pname=thisParam%name
-              CALL toUPPER(pname)
+              pname=CHAR(thisParam%name%upper())
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 !Search name is thisParam's name
                 param => thisParam
@@ -1630,9 +1638,7 @@ MODULE ParameterLists
             CALL toUPPER(thisname)
             IF(ASSOCIATED(thisParam%pdat)) THEN
               !Set names to upper case for matching
-              IF(LEN(pname) >= LEN_TRIM(thisParam%pdat%name)) &
-                pname=thisParam%pdat%name
-              CALL toUPPER(pname)
+              pname=CHAR(thisParam%pdat%name%upper())
 
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 !Found the match
@@ -1656,8 +1662,7 @@ MODULE ParameterLists
                 ENDIF
               ENDIF
             ELSE
-              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
-              CALL toUPPER(pname)
+              pname=CHAR(thisParam%name%upper())
               IF(TRIM(pname) == TRIM(thisname) .AND. LEN_TRIM(nextName) == 0) &
                 param => thisParam
             ENDIF
@@ -1737,9 +1742,8 @@ MODULE ParameterLists
               nextname=''
             ENDIF
 
-            pname=thisParam%name
-            CALL toUPPER(thisname)
-            CALL toUPPER(pname)
+            pname=thisParam%name%upper()
+            thisname = thisname%upper()
             IF(TRIM(pname) == TRIM(thisname)) THEN
               !only search if it's not the last name in the
               !full address. last name is guaranteed not to exist
@@ -1758,8 +1762,7 @@ MODULE ParameterLists
                 DO i=1,np
                   listName=''
                   IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                    listName=TRIM(thisParam%pList(i)%pdat%name)
-                  CALL toUPPER(listName)
+                    listName=TRIM(thisParam%pList(i)%pdat%name%upper())
                   IF(TRIM(listName) == TRIM(thisName)) THEN
                     tmpParam => thisParam%pList(i)%pdat
                     EXIT
@@ -1805,17 +1808,15 @@ MODULE ParameterLists
 
               !Search within the list to avoid duplicates.
               IF(LEN_TRIM(newParam%name) == 0 .AND. ASSOCIATED(newParam%pdat)) THEN
-                thisname=newParam%pdat%name
+                thisname=newParam%pdat%name%upper()
               ELSE
-                thisname=newParam%name
+                thisname=newParam%name%upper()
               ENDIF
-              CALL toUPPER(thisName)
               NULLIFY(tmpParam)
               DO i=1,np
                 listName=''
                 IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                  listName=TRIM(thisParam%pList(i)%pdat%name)
-                CALL toUPPER(listName)
+                  listName=TRIM(thisParam%pList(i)%pdat%name%upper())
                 IF(TRIM(listName) == TRIM(thisName)) THEN
                   tmpParam => thisParam%pList(i)%pdat
                   EXIT
@@ -1872,7 +1873,8 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='remove_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
-      CHARACTER(LEN=LEN(name)) :: thisname,nextname,pname
+      CHARACTER(LEN=LEN(name)) :: thisname,nextname
+      CHARACTER(LEN=:),ALLOCATABLE :: pname
       INTEGER(SIK) :: i,ipos,np,npnew
       TYPE(ParamType),ALLOCATABLE :: tmpList(:)
 
@@ -1883,15 +1885,13 @@ MODULE ParameterLists
         thisname=ADJUSTL(name(1:ipos-1))
         nextname=ADJUSTL(name(ipos+2:LEN(name)))
       ENDIF
-      pname=''
 
       IF(LEN_TRIM(thisname) > 0) THEN
         SELECTTYPE(thisParam)
           TYPE IS(ParamType_List)
             IF(LEN_TRIM(nextname) > 0) THEN
               !Set names to upper case for matching
-              IF(LEN(pname) >= LEN_TRIM(thisParam%name)) pname=thisParam%name
-              CALL toUPPER(pname)
+              pname=CHAR(thisParam%name%upper())
               CALL toUPPER(thisname)
 
               !Search the list for nextname (thisname must match parameter name)
@@ -1966,9 +1966,7 @@ MODULE ParameterLists
           CLASS DEFAULT
             IF(ASSOCIATED(thisParam%pdat)) THEN
               !Set names to upper case for matching
-              IF(LEN(pname) >= LEN_TRIM(thisParam%pdat%name)) &
-                pname=thisParam%pdat%name
-              CALL toUPPER(pname)
+              pname=CHAR(thisParam%pdat%name%upper())
               CALL toUPPER(thisname)
               IF(TRIM(pname) == TRIM(thisname)) THEN
                 IF(LEN_TRIM(nextname) > 0) THEN
@@ -1989,10 +1987,14 @@ MODULE ParameterLists
     ENDSUBROUTINE remove_ParamType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        whatever intrinsic parameter type it finds into a scalar string. This
+!>        will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a string
+!> @param string The output scalar string type
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_scalar'
@@ -2001,9 +2003,11 @@ MODULE ParameterLists
       TYPE(StringType),INTENT(OUT) :: string
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
+      INTEGER(SIK) :: i,j,k
       CLASS(ParamType),POINTER :: param
       CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
       CHARACTER(LEN=128) :: tmpchar
+      TYPE(StringType) :: delim
 
       IF(PRESENT(sskfmt)) THEN
         sskfmtDef=sskfmt
@@ -2015,36 +2019,157 @@ MODULE ParameterLists
       ELSE
         sdkfmtDef='(es23.15)'
       ENDIF
+      delim='"'
       string=''
       CALL thisParam%get(name,param)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK)
-            WRITE(tmpchar,TRIM(sskfmtDef)) param%val
-          TYPE IS(ParamType_SDK)
-            WRITE(tmpchar,TRIM(sdkfmtDef)) param%val
-          TYPE IS(ParamType_SNK)
-            WRITE(tmpchar,'(i0)') param%val
-          TYPE IS(ParamType_SLK)
-            WRITE(tmpchar,'(i0)') param%val
-          TYPE IS(ParamType_SBK)
-            WRITE(tmpchar,'(L1)') param%val
-          TYPE IS(ParamType_STR)
-            tmpchar=param%val
-          CLASS DEFAULT
-            !Error, not a scalar...
+        TYPE IS(ParamType_List)
+          !Error, can't do anything with a Plist.
+        TYPE IS(ParamType_SSK)
+          WRITE(tmpchar,TRIM(sskfmtDef)) param%val
+          string=TRIM(ADJUSTL(tmpchar))
+        TYPE IS(ParamType_SDK)
+          WRITE(tmpchar,TRIM(sdkfmtDef)) param%val
+          string=TRIM(ADJUSTL(tmpchar))
+        TYPE IS(ParamType_SNK)
+          string=str(param%val)
+        TYPE IS(ParamType_SLK)
+          string=str(param%val)
+        TYPE IS(ParamType_SBK)
+          WRITE(tmpchar,'(L1)') param%val
+          string=TRIM(ADJUSTL(tmpchar))
+        TYPE IS(ParamType_STR)
+          string=param%val
+        TYPE IS(ParamType_SSK_a1)
+          WRITE(tmpchar,TRIM(sskfmtDef)) param%val(1)
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          DO i=2,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SDK_a1)
+          WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(1)
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          DO i=2,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SNK_a1)
+          string=delim//str(param%val(1))//delim//' '
+          DO i=2,SIZE(param%val)
+            string=string//delim//str(param%val(i))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SLK_a1)
+          string=delim//str(param%val(1))//delim//' '
+          DO i=2,SIZE(param%val)
+            string=string//delim//str(param%val(i))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SBK_a1)
+          WRITE(tmpchar,'(L1)') param%val(1)
+          string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          DO i=2,SIZE(param%val)
+            WRITE(tmpchar,'(L1)') param%val(i)
+            string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+          ENDDO
+        TYPE IS(ParamType_STR_a1)
+          string=delim//param%val(1)//delim//' '
+          DO i=2,SIZE(param%val)
+            string=string//delim//param%val(i)//delim//' '
+          ENDDO
+        TYPE IS(ParamType_SSK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
+              string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
+              string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string=string//delim//str(param%val(i,j))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string=string//delim//str(param%val(i,j))//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_STR_a2)
+          string=''
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string=string//delim//param%val(i,j)//delim//' '
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SSK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string=string//delim//str(param%val(i,j,k))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a3)
+          string=''
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string=string//delim//str(param%val(i,j,k))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a String!')
         ENDSELECT
-        string=TRIM(ADJUSTL(tmpchar))
+        string=TRIM(string)
       ENDIF
     ENDSUBROUTINE getString_ParamType_scalar
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 1-D intrinsic parameter type it finds into a 1-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a 1-D array of
+!>        strings
+!> @param string The output 1-D array of strings
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_a1(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a1'
@@ -2072,54 +2197,57 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SDK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SNK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SLK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(i0)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_SBK_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              WRITE(tmpchar,'(L1)') param%val(i)
-              string(i)=TRIM(ADJUSTL(tmpchar))
-            ENDDO
-          TYPE IS(ParamType_STR_a1)
-            ALLOCATE(string(SIZE(param%val,DIM=1)))
-            DO i=1,SIZE(param%val)
-              string(i)=param%val(i)
-            ENDDO
-          CLASS DEFAULT
-            !Error, not a scalar...
+        TYPE IS(ParamType_SSK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
+            string(i)=TRIM(ADJUSTL(tmpchar))
+          ENDDO
+        TYPE IS(ParamType_SDK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
+            string(i)=TRIM(ADJUSTL(tmpchar))
+          ENDDO
+        TYPE IS(ParamType_SNK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            string(i)=str(param%val(i))
+          ENDDO
+        TYPE IS(ParamType_SLK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            string(i)=str(param%val(i))
+          ENDDO
+        TYPE IS(ParamType_SBK_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            WRITE(tmpchar,'(L1)') param%val(i)
+            string(i)=TRIM(ADJUSTL(tmpchar))
+          ENDDO
+        TYPE IS(ParamType_STR_a1)
+          ALLOCATE(string(SIZE(param%val,DIM=1)))
+          DO i=1,SIZE(param%val)
+            string(i)=param%val(i)
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 1-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a1
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 2-D intrinsic parameter type it finds into a 2-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a 2-D array of
+!>        strings
+!> @param string The output 2-D array of strings
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_a2(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a2'
@@ -2147,64 +2275,61 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+        TYPE IS(ParamType_SSK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j)
+              string(i,j)=TRIM(ADJUSTL(tmpchar))
             ENDDO
-          TYPE IS(ParamType_SDK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j)
+              string(i,j)=TRIM(ADJUSTL(tmpchar))
             ENDDO
-          TYPE IS(ParamType_SNK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string(i,j)=str(param%val(i,j))
             ENDDO
-          TYPE IS(ParamType_SLK_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                WRITE(tmpchar,'(i0)') param%val(i,j)
-                string(i,j)=TRIM(ADJUSTL(tmpchar))
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string(i,j)=str(param%val(i,j))
             ENDDO
-!          TYPE IS(ParamType_SBK_a2)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
-          TYPE IS(ParamType_STR_a2)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
-            DO j=1,SIZE(param%val,DIM=2)
-              DO i=1,SIZE(param%val,DIM=1)
-                string(i,j)=param%val(i,j)
-              ENDDO
+          ENDDO
+        TYPE IS(ParamType_STR_a2)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2)))
+          DO j=1,SIZE(param%val,DIM=2)
+            DO i=1,SIZE(param%val,DIM=1)
+              string(i,j)=param%val(i,j)
             ENDDO
-          CLASS DEFAULT
-            !Error, not a scalar...
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 2-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a2
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param thisParam
-!> @param name
-!> @param hasname
+!> @brief This subroutine takes a parameter type and a path, and converts
+!>        the 3-D intrinsic parameter type it finds into a 3-D array of strings.
+!>        This will not work if the parameter type is a parameter list.
+!> @param thisParam The parameter type to be searched
+!> @param name The path name to the parameter to be converted to a 3-D array of
+!>        strings
+!> @param string The output 3-D array of strings
+!> @param sskfmt The optional single floating point format character string
+!> @param sdkfmt The optional double floating point format character string
 !>
     SUBROUTINE getString_ParamType_a3(thisParam,name,string,sskfmt,sdkfmt)
       CHARACTER(LEN=*),PARAMETER :: myName='getString_ParamType_a3'
@@ -2232,63 +2357,48 @@ MODULE ParameterLists
       IF(ALLOCATED(string)) DEALLOCATE(string)
       IF(ASSOCIATED(param)) THEN
         SELECTTYPE(param)
-          TYPE IS(ParamType_List)
-            !Error, can't do anything with a Plist.
-          TYPE IS(ParamType_SSK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+        TYPE IS(ParamType_SSK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k)
+                string(i,j,k)=TRIM(ADJUSTL(tmpchar))
               ENDDO
             ENDDO
-          TYPE IS(ParamType_SDK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+          ENDDO
+        TYPE IS(ParamType_SDK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k)
+                string(i,j,k)=TRIM(ADJUSTL(tmpchar))
               ENDDO
             ENDDO
-          TYPE IS(ParamType_SNK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+          ENDDO
+        TYPE IS(ParamType_SNK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string(i,j,k)=str(param%val(i,j,k))
               ENDDO
             ENDDO
-          TYPE IS(ParamType_SLK_a3)
-            ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
-            DO k=1,SIZE(param%val,DIM=3)
-              DO j=1,SIZE(param%val,DIM=2)
-                DO i=1,SIZE(param%val,DIM=1)
-                  WRITE(tmpchar,'(i0)') param%val(i,j,k)
-                  string(i,j,k)=TRIM(ADJUSTL(tmpchar))
-                ENDDO
+          ENDDO
+        TYPE IS(ParamType_SLK_a3)
+          ALLOCATE(string(SIZE(param%val,DIM=1),SIZE(param%val,DIM=2),SIZE(param%val,DIM=3)))
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string(i,j,k)=str(param%val(i,j,k))
               ENDDO
             ENDDO
-!          TYPE IS(ParamType_SBK_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO i=1,SIZE(param%val)
-!              WRITE(tmpchar,'(L1)') param%val(i)
-!              string(i)=TRIM(ADJUSTL(tmpchar))
-!            ENDDO
-!          TYPE IS(ParamType_STR_a3)
-!            ALLOCATE(string(SIZE(param%val))
-!            DO j=1,SIZE(param%val,DIM=2))
-!              DO i=1,SIZE(param%val,DIM=1))
-!                string(i,j)=param%val(i,j)
-!              ENDDO
-!            ENDDO
-          CLASS DEFAULT
-            !Error, not a scalar...
+          ENDDO
+        CLASS DEFAULT
+          CALL eParams%raiseError(modName//'::'//myName//' - The ParamType '// &
+              'is unknown or undefined, so it cannot be converted to a 3-D '// &
+              'String Array!')
         ENDSELECT
       ENDIF
     ENDSUBROUTINE getString_ParamType_a3
@@ -2339,6 +2449,132 @@ MODULE ParameterLists
 
       tmpParam => NULL()
     ENDFUNCTION has_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief This subroutine will take a parameter list of parameter lists, where
+!>        each parameter list is a column to be added in the table. The first
+!>        parameter list must be the maximum number of rows and must be uniquely
+!>        labeled. The ordering of the parameters on the first list is the
+!>        order they will be written to the table. The following columns of
+!>        parameter lists must have parameters with names that match those the
+!>        first column. The value given to the parameter is arbitrary. This
+!>        ensures that the parameter will be placed in the desired location.
+!>
+!> Example:
+!>    thisParam:
+!>    'TestPL->List1->1->"TitleRow"','"TitleRow"'
+!>                   '1->"Scalar Row1"','"Scalar Row1"'
+!>                   '1->"1-D Row2"','"1-D Row2"'
+!>                   '1->"2-D Row3"','"2-D Row3"'
+!>                   '1->"3-D Row4"','"3-D Row4"'
+!>            'List1->2->"TitleRow"','SNK'
+!>                   '2->"Scalar Row1"',1_SNK
+!>                   '2->"1-D Row2"',(/2_SNK,3_SNK/)
+!>                   '2->"2-D Row3"',RESHAPE((/4_SNK,5_SNK,6_SNK,7_SNK/),(/2,2/))
+!>                   '2->"3-D Row4"',RESHAPE((/8_SNK,9_SNK,11_SNK,12_SNK,
+!>                                             13_SNK,14_SNK,15_SNK,16_SNK/),(/2,2,2/))
+!>            'List1->3->"TitleRow"','SLK'
+!>                   '3->"Scalar Row1"',1_SLK
+!>                   '3->"1-D Row2"',(/2_SLK,3_SLK/)
+!>                   '3->"2-D Row3"',RESHAPE((/4_SLK,5_SLK,6_SLK,7_SLK/),(/2,2/))
+!>                   '3->"3-D Row4"',RESHAPE((/8_SLK,9_SLK,11_SLK,12_SLK,
+!>                                             13_SLK,14_SLK,15_SLK,16_SLK/),(/2,2,2/))
+!>
+!>    baseAddr='TestPL->List1'
+!>    CALL thisParam%convertTo2DStringArray(baseAddr,table)
+!>    table:
+!>      x=    1           2                                      3
+!>  y=1  "Title Row"      SNK                                    SLK
+!>    2  "Scalar Row1"    1                                      1
+!>    3  "1-D Row2"       "2" "3"                                "2" "3"
+!>    4  "2-D Row3"       "4" "5" "6" "7"                        "4" "5" "6" "7"
+!>    5  "3-D Row4"       "8" "9" "11" "12" "13" "14" "15" "16"  "8" "9" "11" "12" "13" "14" "15" "16"
+!>
+!> @param thisParam The parameter list of parameter lists from which to create a
+!>        table.
+!> @param baseAddr The path used to extract the parameter list of parameter
+!>        lists.
+!> @param tablevals The 2-D string array that is allocated and returned.
+!>
+    SUBROUTINE convertTo2DStringArray_ParamType(thisParam,baseAddr,tablevals)
+      CLASS(ParamType),INTENT(IN) :: thisParam
+      TYPE(StringType),INTENT(IN) :: baseAddr
+      TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: tablevals(:,:)
+      INTEGER(SIK) :: i,j,ncol,nrow
+      TYPE(StringType) :: addr,plstr
+      TYPE(StringType),ALLOCATABLE :: rownames(:)
+      TYPE(ParamType) :: colListPL,rowListPL
+      CLASS(ParamType),POINTER :: colListPLPtr,rowListPLPtr
+
+      !Initialize data
+      !Loop over all columns, get the number of columns for the table
+      ncol=0
+      nrow=0
+      addr=baseAddr
+      colListPLPtr => NULL()
+      CALL thisParam%getSubPL(addr,colListPLPtr)
+      DO WHILE(ASSOCIATED(colListPLPtr))
+        ncol=ncol+1
+        CALL thisParam%getSubPL(addr,colListPLPtr)
+      ENDDO
+
+      addr='1'
+      CALL thisParam%get(baseAddr//'->1',colListPLPtr)
+      IF(ASSOCIATED(colListPLPtr)) THEN
+        colListPL=colListPLPtr
+        CALL colListPL%getNextParam(addr,rowListPLPtr)
+        !Loop over first column, get the number of rows for the table
+        DO WHILE(ASSOCIATED(rowListPLPtr))
+          nrow=nrow+1
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+        ENDDO
+      ENDIF
+
+      IF((nrow > 0) .AND. (ncol > 0)) THEN
+        !Allocate data
+        ALLOCATE(tablevals(ncol,nrow))
+        ALLOCATE(rownames(nrow))
+        tablevals='-'
+        rownames=''
+
+        !Get rownames so they can be searched and indexed.
+        addr='1'
+        CALL thisParam%get(baseAddr//'->1',colListPLPtr)
+        colListPL=colListPLPtr
+        DO j=1,nrow
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+          rowListPL=rowListPLPtr
+          CALL rowListPL%get(CHAR(rowListPL%pdat%name),rownames(j))
+          CALL rowListPL%getString(TRIM(rowListPL%pdat%name),plstr)
+          IF(LEN_TRIM(plstr) > 0) tablevals(1,j)=plstr
+        ENDDO
+
+        !Loop over all of the columns
+        DO i=2,ncol
+          !Init variables
+          addr=i
+          !Get the specified sub PL list to iterate over.
+          CALL thisParam%get(baseAddr//'->'//addr,colListPLPtr)
+          colListPL=colListPLPtr
+          !Get the first parameter in the sublist and loop.
+          CALL colListPL%getNextParam(addr,rowListPLPtr)
+          DO WHILE(ASSOCIATED(rowListPLPtr))
+            rowListPL=rowListPLPtr
+            !Since we assume the PL is not a full fixed column, find the j index
+            j=strarrayeqind(rownames,rowListPL%pdat%name)
+            !Add data to string table
+            CALL rowListPL%getString(TRIM(rowListPL%pdat%name),plstr)
+            IF(LEN_TRIM(plstr) > 0) tablevals(i,j)=plstr
+            CALL colListPL%getNextParam(addr,rowListPLPtr)
+          ENDDO
+        ENDDO
+
+        !Deallocate and nullify variables
+        DEALLOCATE(rownames)
+        colListPLPtr => NULL()
+        rowListPLPtr => NULL()
+      ENDIF
+    ENDSUBROUTINE convertTo2DStringArray_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Edits the information of a parameter
@@ -2395,14 +2631,17 @@ MODULE ParameterLists
 !> @returns isValid logical indicating that all the required parameters exist
 !>          in @c thisParam and are of the correct type.
 !>
-    RECURSIVE FUNCTION validateReq_ParamType(thisParam,reqParams,prefix,isMatch) &
-      RESULT(isValid)
+    RECURSIVE SUBROUTINE validateReq_ParamType(thisParam,reqParams,prefix,validType, &
+        isValid,isMatch,e)
       CHARACTER(LEN=*),PARAMETER :: myName='validateReq_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       CHARACTER(LEN=*),INTENT(IN) :: prefix
-      LOGICAL(SBK),INTENT(OUT),OPTIONAL :: isMatch
-      LOGICAL(SBK) :: isValid
+      INTEGER(SIK),INTENT(IN) :: validType
+      LOGICAL(SBK),INTENT(OUT) :: isValid
+      LOGICAL(SBK),INTENT(OUT) :: isMatch
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK) :: tmpbool
       INTEGER(SIK) :: i,ntrue
       CLASS(ParamType),POINTER :: tmpParam
 
@@ -2413,43 +2652,60 @@ MODULE ParameterLists
       SELECTTYPE(p=>reqParams)
         TYPE IS(ParamType)
           !Call validate on the required parameter's value
-          IF(PRESENT(isMatch)) THEN
+          IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+              (validType == VALIDTYPE_VERIFYLIST)) THEN
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix,isMatch)
+              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,isMatch,e)
           ELSE
             IF(ASSOCIATED(p%pdat)) &
-              isValid=validateReq_ParamType(thisParam,p%pdat,prefix)
+              CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,tmpbool,e)
           ENDIF
         TYPE IS(ParamType_List)
           !Loop over all parameters in the list and check each
           IF(ALLOCATED(p%pList)) THEN
             ntrue=0
             DO i=1,SIZE(p%pList)
-              IF(PRESENT(isMatch)) THEN
-                IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->',isMatch)) ntrue=ntrue+1
+              IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+                  (validType == VALIDTYPE_VERIFYLIST)) THEN
+                CALL validateReq_ParamType(thisParam,p%pList(i), &
+                  prefix//p%name//'->',validType,isValid,isMatch,e)
+                IF(isValid) ntrue=ntrue+1
               ELSE
-                IF(validateReq_ParamType(thisParam,p%pList(i), &
-                  prefix//p%name//'->')) ntrue=ntrue+1
+                CALL validateReq_ParamType(thisParam,p%pList(i), &
+                  prefix//p%name//'->',validType,isValid,tmpbool,e)
+                IF(isValid) ntrue=ntrue+1
               ENDIF
             ENDDO
-            IF(ntrue == SIZE(p%pList)) isValid=.TRUE.
+            isValid=(ntrue == SIZE(p%pList))
           ELSE
             !The required list is not allocated, which means we do not
             !check any of it's possible subparameters, but we must at least
             !check that the list exists
             CALL thisParam%getParam(prefix//p%name,tmpParam)
             IF(.NOT.ASSOCIATED(tmpParam)) THEN
-              CALL eParams%raiseError(modName//'::'//myName// &
-                ' - Failed to locate required parameter "'//prefix// &
-                  p%name//'"!')
+              SELECTCASE(validType)
+                CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+                  isMatch=.FALSE.
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - When verifying that parameters are equal, the parameter "'// &
+                      prefix//p%name//'" was not found on both lists!')
+                CASE DEFAULT
+                  CALL e%raiseError(modName//'::'//myName// &
+                      ' - Failed to locate required parameter "'//prefix// &
+                      p%name//'"!')
+              ENDSELECT
             ELSE
               IF(SAME_TYPE_AS(tmpParam,p)) THEN
                 isValid=.TRUE.
-                IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
+                SELECTCASE(validType)
+                  CASE(VALIDTYPE_VERIFYTEST)
+                    isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+                  CASE(VALIDTYPE_VERIFYLIST)
+                    isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
+                ENDSELECT
               ELSE
-                CALL eParams%raiseError(modName//'::'//myName// &
-                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - Required parameter "'//prefix//p%name//'" has type "'// &
                     tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
               ENDIF
             ENDIF
@@ -2459,20 +2715,34 @@ MODULE ParameterLists
           !required parameter's name and check its type
           CALL thisParam%getParam(prefix//p%name,tmpParam)
           IF(.NOT.ASSOCIATED(tmpParam)) THEN
-            CALL eParams%raiseError(modName//'::'//myName// &
-              ' - Failed to locate required parameter "'//prefix//p%name//'"!')
+            SELECTCASE(validType)
+              CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+                isMatch=.FALSE.
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - When verifying that parameters are equal, the parameter "'// &
+                    prefix//p%name//'" was not found on both lists!')
+              CASE DEFAULT
+                CALL e%raiseError(modName//'::'//myName// &
+                    ' - Failed to locate required parameter "'//prefix// &
+                    p%name//'"!')
+            ENDSELECT
           ELSE
             IF(SAME_TYPE_AS(tmpParam,p)) THEN
               isValid=.TRUE.
-              IF(PRESENT(isMatch)) isMatch=match_ParamType(tmpParam,p,prefix)
+              SELECTCASE(validType)
+                CASE(VALIDTYPE_VERIFYTEST)
+                  isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+                CASE(VALIDTYPE_VERIFYLIST)
+                  isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
+              ENDSELECT
             ELSE
-              CALL eParams%raiseError(modName//'::'//myName// &
-                ' - Required parameter "'//prefix//p%name//'" has type "'// &
+              CALL e%raiseError(modName//'::'//myName// &
+                  ' - Required parameter "'//prefix//p%name//'" has type "'// &
                   tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
             ENDIF
           ENDIF
       ENDSELECT
-    ENDFUNCTION validateReq_ParamType
+    ENDSUBROUTINE validateReq_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Searches a parameter (thisParam) for a set of optional parameters
@@ -2645,15 +2915,15 @@ MODULE ParameterLists
       CLASS(ParamType),INTENT(IN) :: reqParams
       CLASS(ParamType),INTENT(IN),OPTIONAL :: optParams
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: printExtras
-      LOGICAL(SBK) :: isValid
+      LOGICAL(SBK) :: isValid,tmpbool
       TYPE(ParamType) :: nullParam
 
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) &
-        isValid=validateReq_ParamType(thisParam,reqParams,'')
-
+          CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VALIDATE, &
+          isValid,tmpbool,eParams)
       IF(isValid) THEN
         IF(PRESENT(optParams)) THEN
           CALL validateOpt_Paramtype(thisParam,optParams,'')
@@ -2679,7 +2949,7 @@ MODULE ParameterLists
 !> @param reqParams
 !> @param isMatch
 !>
-    SUBROUTINE verify_Paramtype(thisParam,reqParams,isMatch)
+    SUBROUTINE verifyTest_Paramtype(thisParam,reqParams,isMatch)
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN) :: reqParams
       LOGICAL(SBK),INTENT(OUT) :: isMatch
@@ -2688,28 +2958,61 @@ MODULE ParameterLists
       !Assume the list is valid, check it only if the required parameter
       !list is not empty.
       isValid=.TRUE.
-      isMatch=.FALSE.
+      isMatch=.TRUE.
       IF(ASSOCIATED(reqParams%pdat)) THEN
-        isValid=validateReq_ParamType(thisParam,reqParams,'',isMatch)
+        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYTEST, &
+            isValid,isMatch,eParams)
       ELSE
         isMatch=.NOT.ASSOCIATED(thisParam%pdat)
       ENDIF
-    ENDSUBROUTINE verify_Paramtype
+    ENDSUBROUTINE verifyTest_Paramtype
 !
 !-------------------------------------------------------------------------------
-!> @brief This function assumes that thisParam and thatParam are of the same
-!>        extended ParamType.  It also assumes that there is a "gettable" value
-!>        that is of thisParam%name on the ParamType.  This function determines
-!>        the extended type, then "gets" the appropriate parameter from both
-!>        lists, then checks their equivalence.  If they are equal or
-!>        approximately equal, the function results in true.  If not, false.
-!>        The function also performs unit test harness assertions when checking
-!>        the values.
+!> @brief Verify should only be used in a unit test setting.  It is for checking
+!>        the structure AND values in two parameter lists.  If they are a match,
+!>        isMatch will be returned as true.  If not, false.  Assertion failures
+!>        will be printed for the parameter list values that fail.
+!> @param thisParam The parameter list on which to verify the values
+!> @param reqParams The reference parameter list and values
+!> @param e The exception handler to pass
+!> @param isMatch The logical if all parameter names and values are the same
+!>
+    SUBROUTINE verifyList_Paramtype(thisParam,reqParams,isMatch,e)
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN) :: reqParams
+      LOGICAL(SBK),INTENT(OUT) :: isMatch
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK) :: isValid
+
+      !Assume the list is valid, check it only if the required parameter
+      !list is not empty.
+      isValid=.TRUE.
+      isMatch=.TRUE.
+      IF(ASSOCIATED(reqParams%pdat)) THEN
+        CALL validateReq_ParamType(thisParam,reqParams,'',VALIDTYPE_VERIFYLIST, &
+            isValid,isMatch,e)
+      ELSE
+        isMatch=.NOT.ASSOCIATED(thisParam%pdat)
+      ENDIF
+    ENDSUBROUTINE verifyList_Paramtype
+!
+!-------------------------------------------------------------------------------
+!> @brief This function checks the values of thisParam and thatParam and returns
+!>        if they are equal or approximately equal.
 !> @param thisParam  The parameter list being validated
 !> @param thatParam  The parameter list being checked against
 !> @param bool The logical result of the checked parameters.
 !>
-    FUNCTION match_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+!> The assumptions of this routine are that the parameters passed in are the
+!> same extended ParamType.  It also assumes that there is a "gettable" value
+!> that is of thisParam%name on the ParamType.  This function determines
+!> the extended type, then "gets" the appropriate parameter from both lists,
+!> then checks their equivalence.  If they are equal or approximately equal,
+!> the function results in true.  If not, false.  The function also performs
+!> unit test harness assertions when checking the values.
+!>
+    FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='matchTest_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN),TARGET :: thatParam
       CHARACTER(LEN=*),INTENT(IN) :: prefix
@@ -3062,7 +3365,322 @@ MODULE ParameterLists
         CLASS DEFAULT
           CONTINUE
       ENDSELECT
-    ENDFUNCTION match_ParamType
+    ENDFUNCTION matchTest_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief This function checks the values of thisParam and thatParam and returns
+!>        if they are equal or approximately equal.
+!> @param thisParam  The parameter list being validated
+!> @param thatParam  The parameter list being checked against
+!> @param bool The logical result of the checked parameters.
+!>
+!> The assumptions of this routine are that the parameters passed in are the
+!> same extended ParamType.  It also assumes that there is a "gettable" value
+!> that is of thisParam%name on the ParamType.  This function determines
+!> the extended type, then "gets" the appropriate parameter from both lists,
+!> then checks their equivalence.  If they are equal or approximately equal,
+!> the function results in true.  If not, false.  An error is reported if the
+!> comparison fails.
+!>
+    FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
+      CHARACTER(LEN=*),PARAMETER :: myName='matchList_ParamType'
+      CLASS(ParamType),INTENT(INOUT) :: thisParam
+      CLASS(ParamType),INTENT(IN),TARGET :: thatParam
+      CHARACTER(LEN=*),INTENT(IN) :: prefix
+      CLASS(ExceptionHandlerType),INTENT(INOUT) :: e
+      LOGICAL(SBK) :: bool
+      TYPE(StringType) :: errmesstt,errmess,errmesstp
+      CLASS(ParamType),POINTER :: paramPtr
+      INTEGER(SIK) :: i,j
+      LOGICAL(SBK) :: tmpsbk1,tmpsbk2
+      LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
+      REAL(SSK) :: tmpssk1,tmpssk2
+      REAL(SSK),ALLOCATABLE :: tmpsska11(:),tmpsska21(:,:),tmpsska31(:,:,:)
+      REAL(SSK),ALLOCATABLE :: tmpsska12(:),tmpsska22(:,:),tmpsska32(:,:,:)
+      REAL(SDK) :: tmpsdk1,tmpsdk2
+      REAL(SDK),ALLOCATABLE :: tmpsdka11(:),tmpsdka21(:,:),tmpsdka31(:,:,:)
+      REAL(SDK),ALLOCATABLE :: tmpsdka12(:),tmpsdka22(:,:),tmpsdka32(:,:,:)
+      INTEGER(SNK) :: tmpsnk1,tmpsnk2
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka11(:),tmpsnka21(:,:),tmpsnka31(:,:,:)
+      INTEGER(SNK),ALLOCATABLE :: tmpsnka12(:),tmpsnka22(:,:),tmpsnka32(:,:,:)
+      INTEGER(SLK) :: tmpslk1,tmpslk2
+      INTEGER(SLK),ALLOCATABLE :: tmpslka11(:),tmpslka21(:,:),tmpslka31(:,:,:)
+      INTEGER(SLK),ALLOCATABLE :: tmpslka12(:),tmpslka22(:,:),tmpslka32(:,:,:)
+      TYPE(StringType) :: tmpstr1,tmpstr2
+      TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
+      TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
+
+      !Point to the intent(in) param to use the get function
+      paramPtr => NULL()
+      bool=.FALSE.
+      !Find the extended parameter type, then use the appropriate variable
+      !and "get" the data to check.
+      errmesstt=' - The values'
+      errmess=' of the two parameter lists with parameter path "'//prefix//thisParam%name//'"'
+      errmesstp=' are not equal!'
+      SELECTTYPE(paramPtr => thatParam)
+        TYPE IS(ParamType_SSK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
+          bool=(tmpssk1 .APPROXEQ. tmpssk2)
+        TYPE IS(ParamType_SDK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
+          bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
+          IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+        TYPE IS(ParamType_SNK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
+          bool=(tmpsnk1 == tmpsnk2)
+        TYPE IS(ParamType_SLK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
+          bool=(tmpslk1 == tmpslk2)
+        TYPE IS(ParamType_SBK)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
+          bool=(tmpsbk1 .EQV. tmpsbk2)
+        TYPE IS(ParamType_STR)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
+          bool=(tmpstr1 == tmpstr2)
+        TYPE IS(ParamType_SSK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
+          bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
+        TYPE IS(ParamType_SDK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
+          bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
+            IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
+        TYPE IS(ParamType_SNK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
+          bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsnka11 == tmpsnka12)
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
+        TYPE IS(ParamType_SLK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
+          bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpslka11 == tmpslka12)
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
+        TYPE IS(ParamType_SBK_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
+          bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
+          IF(bool) THEN
+            bool=ALL(tmpsbka11 .EQV. tmpsbka12)
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
+        TYPE IS(ParamType_STR_a1)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
+          bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
+          IF(bool) THEN
+            DO i=1,SIZE(tmpstra11)
+              bool=tmpstra11(i) == tmpstra12(i)
+              IF(.NOT. bool) EXIT
+            ENDDO
+            !clear?
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
+        TYPE IS(ParamType_SSK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
+          bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
+        TYPE IS(ParamType_SDK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
+          bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
+        TYPE IS(ParamType_SNK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
+          bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpsnka21 == tmpsnka22)
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
+        TYPE IS(ParamType_SLK_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
+          bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
+            IF(bool) THEN
+              bool=ALL(tmpslka21 == tmpslka22)
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
+        TYPE IS(ParamType_STR_a2)
+          CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
+          bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
+            IF(bool) THEN
+              outer : DO j=1,SIZE(tmpstra21,DIM=2)
+                DO i=1,SIZE(tmpstra21,DIM=1)
+                  bool=tmpstra21(i,j) == tmpstra22(i,j)
+                  IF(.NOT.bool) EXIT outer
+                ENDDO
+              ENDDO outer
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          !clear?
+          DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
+        TYPE IS(ParamType_SSK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
+          bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
+              ELSE
+                errmesstt=' - Dimension 3'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
+        TYPE IS(ParamType_SDK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
+          bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
+              ELSE
+                errmesstt=' - Dimension 3'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
+        TYPE IS(ParamType_SNK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
+          bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpsnka31 == tmpsnka32)
+              ELSE
+                errmesstt=' - Dimension 3'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
+        TYPE IS(ParamType_SLK_a3)
+          CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
+          CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
+          bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
+          IF(bool) THEN
+            bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
+            IF(bool) THEN
+              bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
+              IF(bool) THEN
+                bool=ALL(tmpslka31 == tmpslka32)
+              ELSE
+                errmesstt=' - Dimension 3'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 2'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 1'
+          ENDIF
+          DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
+        TYPE IS(ParamType_List)
+          bool=SAME_TYPE_AS(thisParam,paramPtr)
+          errmesstt=' - The parameters'
+          errmesstp=' are not the same type!'
+        CLASS DEFAULT
+          CONTINUE
+      ENDSELECT
+      !Error message.
+      IF(.NOT. bool) CALL e%raiseError(modName//'::'//myName// &
+          errmesstt//errmess//errmesstp)
+    ENDFUNCTION matchList_ParamType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes a ParamType object as a parameter list
@@ -3125,7 +3743,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j
       TYPE(StringType) :: sprefix,sdtype
 
@@ -3135,7 +3753,8 @@ MODULE ParameterLists
         sdtype=thisParam%datatype
         IF(PRESENT(paddtw)) THEN
           IF(paddtw) THEN
-            dtype=thisParam%dataType
+            ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+            dtype=CHAR(thisParam%dataType)
             sdtype=dtype
           ENDIF
         ENDIF
@@ -3445,7 +4064,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
 
@@ -3455,7 +4074,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -3700,7 +4320,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
 
@@ -3710,7 +4330,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -3955,7 +4576,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
 
@@ -3965,7 +4586,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4205,7 +4827,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
@@ -4216,7 +4838,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4456,7 +5079,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype
@@ -4467,7 +5090,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4702,7 +5326,7 @@ MODULE ParameterLists
       INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       CHARACTER(LEN=12) :: fmt
       INTEGER(SIK) :: i
       TYPE(StringType) :: sprefix,sdtype,sval,sdesc
@@ -4714,7 +5338,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -4974,11 +5599,11 @@ MODULE ParameterLists
       CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR'
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
-      CHARACTER(LEN=*),INTENT(INOUT) :: val
+      CHARACTER(LEN=:),ALLOCATABLE,INTENT(INOUT) :: val
       TYPE(StringType) :: s
 
       CALL get_ParamType_STR(thisParam,name,s)
-      val=s
+      val=CHAR(s)
       s=''
     ENDSUBROUTINE get_ParamType_CHAR
 !1111111111111111111111111111111111111111111111111111111111111111111111111111111
@@ -5048,7 +5673,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:), ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -5059,7 +5684,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -5346,7 +5972,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -5357,7 +5983,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -5645,7 +6272,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:), ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -5656,7 +6283,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -5942,7 +6570,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -5953,7 +6581,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6236,7 +6865,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype
 
@@ -6247,7 +6876,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6529,7 +7159,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k
       TYPE(StringType) :: sprefix,sdtype,sval,sdesc
 
@@ -6541,7 +7171,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -6586,7 +7217,9 @@ MODULE ParameterLists
       DO i=SIZE(thisParam%val),1,-1
         thisParam%val(i)=''
       ENDDO
-      DEALLOCATE(thisParam%val)
+      IF(ALLOCATED(thisParam%val)) THEN
+        DEALLOCATE(thisParam%val)
+      ENDIF
       thisParam%name=''
       thisParam%dataType=''
       thisParam%description=''
@@ -6838,7 +7471,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -6849,7 +7482,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -7129,7 +7763,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -7140,7 +7774,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -7420,7 +8055,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -7431,7 +8066,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -7711,7 +8347,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
 
@@ -7722,7 +8358,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -7998,11 +8635,9 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l
       TYPE(StringType) :: sprefix,sdtype
-      !Compiler problem for gnu-4.6.3.  It is fixed in gnu-4.7.0.
-      !CHARACTER(LEN=MAXVAL(LEN(thisParam%val))) :: tmpstr(SIZE(thisParam%val))
 
       i=1
       j=6
@@ -8011,7 +8646,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -8308,7 +8944,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -8319,7 +8955,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -8606,7 +9243,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -8617,7 +9254,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -8904,7 +9542,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -8915,7 +9553,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -9202,7 +9841,7 @@ MODULE ParameterLists
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
       CHARACTER(LEN=12) :: fmt,fmt2,fmt3
-      CHARACTER(LEN=PARAM_MAX_DAT_LEN) dtype
+      CHARACTER(LEN=:),ALLOCATABLE :: dtype
       INTEGER(SIK) :: i,j,k,l,m
       TYPE(StringType) :: sprefix,sdtype
 
@@ -9213,7 +9852,8 @@ MODULE ParameterLists
       sdtype=thisParam%datatype
       IF(PRESENT(paddtw)) THEN
         IF(paddtw) THEN
-          dtype=thisParam%dataType
+          ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+          dtype=CHAR(thisParam%dataType)
           sdtype=dtype
         ENDIF
       ENDIF
@@ -9470,12 +10110,11 @@ MODULE ParameterLists
         tmpPath=currentPath//' -> '
         iXMLE => children(ic)
 
-        elname=iXMLE%name
-        CALL toUPPER(elname)
+        elname=iXMLE%name%upper()
         IF(elname == 'PARAMETER') THEN
           tmpStr='type'
           CALL iXMLE%getAttributeValue(tmpStr,typval)
-          CALL toUPPER(typval)
+          typval = typval%upper()
           tmpStr='value'
           CALL iXMLE%getAttributeValue(tmpStr,attrVal)
           tmpStr='name'
@@ -9618,7 +10257,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
+              oVal = param%description%substr(idx,LEN_TRIM(param%description))
               oSingleVal=CHAR(oVal)
               CALL param%get(TRIM(param%name),singleVal)
 
@@ -9636,7 +10275,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
+              oVal = param%description%substr(idx,LEN_TRIM(param%description))
               oDoubleVal=CHAR(oVal)
               CALL param%get(TRIM(param%name),doubleVal)
 
@@ -9661,7 +10300,7 @@ MODULE ParameterLists
             idx=INDEX(param%description,'XML_IN_VAL=')
             IF(idx > 0) THEN
               idx=idx+11
-              CALL getSubString(param%description,oVal,idx,LEN_TRIM(param%description))
+              oVal = param%description%substr(idx,LEN_TRIM(param%description))
               CALL char_to_double_array(oDoubleArry,CHAR(oVal))
               CALL param%get(TRIM(param%name),doubleArry)
 
@@ -9864,4 +10503,3 @@ MODULE ParameterLists
     ENDSUBROUTINE string_array_to_string
 !
 ENDMODULE ParameterLists
-

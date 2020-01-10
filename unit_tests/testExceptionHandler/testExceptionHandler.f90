@@ -30,6 +30,7 @@ PROGRAM testExceptionHandler
   REGISTER_SUBTEST('Surrogate',testSurrogate)
   REGISTER_SUBTEST('ASSIGNMENT(=)',testAssignment)
   REGISTER_SUBTEST('Reset',testReset)
+  REGISTER_SUBTEST('SetCounter',testSetCounter)
 
   CLOSE(testE%getLogFileUnit(),STATUS='DELETE')
 
@@ -196,6 +197,22 @@ PROGRAM testExceptionHandler
       ASSERT(testE%getCounter(EXCEPTION_ERROR) == 0,'%counter(ERROR)')
       ASSERT(testE%getCounter(EXCEPTION_FATAL_ERROR) == 0,'%counter(FATAL)')
       ASSERT(testE%getLastMessage() == '','mesg')
+
+      ! Ensure ExceptionHandler does not crash if the message passed in exceeds
+      ! the length of the message internally, which is 512 characters.  Each line
+      ! of this message is 50 characters, so over 550 in total.
+      COMPONENT_TEST('raiseWarning_exceedCharLen')
+      CALL testE%raiseWarning('Very                                              '//&
+                              'long                                              '//&
+                              'message                                           '//&
+                              'exceeding                                         '//&
+                              'size                                              '//&
+                              'of                                                '//&
+                              'character                                         '//&
+                              'length                                            '//&
+                              'limit                                             '//&
+                              'of                                                '//&
+                              '512.....The remainder of this message will be truncated')
     ENDSUBROUTINE testRaise
 !
 !-------------------------------------------------------------------------------
@@ -205,7 +222,7 @@ PROGRAM testExceptionHandler
       CALL testE%setLogFileUnit(OUTPUT_UNIT)
       CALL testE%setLogFileUnit(ERROR_UNIT)
       CALL testE%setLogFileUnit(-1)
-      ASSERT(testE%getCounter(EXCEPTION_WARNING) == 3,'%counter(WARN)')
+      ASSERT(testE%getCounter(EXCEPTION_WARNING) == 4,'%counter(WARN)')
       mesg='#### EXCEPTION_WARNING #### - '// &
         'Illegal unit number for log file. Log file unit not set.'
       ASSERT(TRIM(testE%getLastMessage()) == TRIM(mesg),'%getLastMessage')
@@ -320,5 +337,22 @@ PROGRAM testExceptionHandler
       ASSERT(testE%getLastMessage() == '','%getLastMessage()')
       ASSERT(.NOT.testE%isLogActive(),'%isLogActive')
     ENDSUBROUTINE testReset
+!
+!-------------------------------------------------------------------------------
+    SUBROUTINE testSetCounter()
+      ASSERT(ALL(testE%getCounterAll() == 0),'getCounterAll()')
+      CALL testE%setCounter((/-1,-1,-1,-1,1/))
+      ASSERT(ALL(testE%getCounterAll() == (/0,0,0,0,1/)),'setCounterAll() -1 for first 4')
+      CALL testE%setCounter(EXCEPTION_INFORMATION,2)
+      ASSERT(ALL(testE%getCounterAll() == (/2,0,0,0,1/)),'setCounter() Info')
+      CALL testE%setCounter(EXCEPTION_WARNING,3)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,0,0,1/)),'setCounter() Warning')
+      CALL testE%setCounter(EXCEPTION_DEBUG,4)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,4,0,1/)),'setCounter() Debug')
+      CALL testE%setCounter(EXCEPTION_ERROR,5)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,4,5,1/)),'setCounter() Error')
+      CALL testE%setCounter(EXCEPTION_FATAL_ERROR,6)
+      ASSERT(ALL(testE%getCounterAll() == (/2,3,4,5,6/)),'setCounter() Error')
+    ENDSUBROUTINE testSetCounter
 !
 ENDPROGRAM testExceptionHandler

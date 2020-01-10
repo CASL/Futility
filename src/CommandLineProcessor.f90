@@ -117,6 +117,7 @@ MODULE CommandLineProcessor
   USE ISO_FORTRAN_ENV
   USE IntrType
   USE Strings
+  USE ParameterLists
   USE ExceptionHandler
   USE IO_Strings
   USE IOutil
@@ -236,8 +237,8 @@ MODULE CommandLineProcessor
 !>
     PURE FUNCTION getExecName(clp) RESULT(execname)
       CLASS(CmdLineProcType),INTENT(IN) :: clp
-      CHARACTER(LEN=clp%execname%n) :: execname
-      execname=clp%execname
+      CHARACTER(LEN=:),ALLOCATABLE :: execname
+      execname=CHAR(clp%execname)
     ENDFUNCTION getExecName
 !
 !-------------------------------------------------------------------------------
@@ -448,10 +449,10 @@ MODULE CommandLineProcessor
     PURE SUBROUTINE getCmdArg_char(clp,iarg,argout)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK),INTENT(IN) :: iarg
-      CHARACTER(LEN=*),INTENT(OUT) :: argout
+      CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: argout
       TYPE(StringType) :: tmpStr
       CALL getCmdArg_string(clp,iarg,tmpStr)
-      argout=tmpStr
+      argout=CHAR(tmpStr)
     ENDSUBROUTINE getCmdArg_char
 !
 !-------------------------------------------------------------------------------
@@ -468,21 +469,24 @@ MODULE CommandLineProcessor
 !> @brief This routine controls execution based on command line arguments
 !> @param clp command line processor object
 !> @param userSubroutine the name of the subroutine defined outside the module
+!> @param plist optional parameter list to process arguments into
 !> that processes the command line arguments.
 !>
-    SUBROUTINE ProcCmdLineArgs(clp,userSubroutine)
+    SUBROUTINE ProcCmdLineArgs(clp,userSubroutine,plist)
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
+      TYPE(ParamType),INTENT(INOUT),OPTIONAL :: plist
       !> This is the definition of the interface to the user subroutine
       !> defined elsewhere.
       INTERFACE
-        SUBROUTINE userSubroutine(uclp)
-          IMPORT :: CmdLineProcType
+        SUBROUTINE userSubroutine(uclp,plist)
+          IMPORT :: CmdLineProcType,ParamType
           CLASS(CmdLineProcType),INTENT(INOUT) :: uclp
+          TYPE(ParamType),INTENT(INOUT),OPTIONAL :: plist
         ENDSUBROUTINE
       ENDINTERFACE
 
       !Call the other subroutine that was passed in.
-      CALL userSubroutine(clp)
+      CALL userSubroutine(clp,plist)
 
     ENDSUBROUTINE ProcCmdLineArgs
 !
