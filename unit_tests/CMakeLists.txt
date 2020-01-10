@@ -65,6 +65,7 @@ SET(UNIT_TEST_NAMES
     testStochasticSampler
     testPartitionGraph
     testFutilityComputingEnvironment
+    testSchemaParser
     testSpeciesElements
 )
 
