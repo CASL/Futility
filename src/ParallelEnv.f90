@@ -422,10 +422,10 @@ MODULE ParallelEnv
     MODULE PROCEDURE assign_ParEnvType
   ENDINTERFACE
 
+#ifdef HAVE_MPI
   !> Private scratch variable for the mpierr
   INTEGER(SIK) :: mpierr
-
-#ifndef HAVE_MPI
+#else
   INTEGER(SIK),SAVE :: MAX_PE_COMM_ID=1
 #endif
 
