@@ -89,7 +89,6 @@ MODULE MemProf
 !>
 !TODO  Need to get control rod movement passed in
     SUBROUTINE init_MemProf(thisMP,pe,mylog,params)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_MemProf'
       CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
       TYPE(ParallelEnvType),TARGET,INTENT(IN) :: pe
       TYPE(LogFileType),POINTER,INTENT(INOUT) :: myLog

@@ -462,7 +462,6 @@ MODULE ParallelEnv
 !> 0-nremainder
 !>
     SUBROUTINE partition_indices_ParEnvType(myPE,n1,n2,ipart,istt,istp)
-      CHARACTER(LEN=*),PARAMETER :: myName='partition_greedy_ParEnvType'
       CLASS(ParEnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n1
       INTEGER(SIK),INTENT(IN) :: n2
@@ -733,7 +732,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE send_CHAR_MPI_Env_type(myPE,sendbuf,destProc,tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='send_CHAR_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       CHARACTER(LEN=*),INTENT(IN) :: sendbuf
       INTEGER(SIK),INTENT(IN) :: destProc
@@ -753,7 +751,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE send_INT_MPI_Env_type(myPE,sendbuf,destProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='send_INT_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: sendbuf
       INTEGER(SIK),INTENT(IN) :: destProc
@@ -779,7 +776,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE send_INT1_MPI_Env_type(myPE,sendbuf,n,destProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='send_INT1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: sendbuf(*)
       INTEGER(SIK),INTENT(IN) :: n
@@ -805,7 +801,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE send_REAL_MPI_Env_type(myPE,sendbuf,destProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='send_REAL_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SRK),INTENT(IN) :: sendbuf
       INTEGER(SIK),INTENT(IN) :: destProc
@@ -831,7 +826,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE send_REAL1_MPI_Env_type(myPE,sendbuf,n,destProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='send_REAL1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SRK),INTENT(IN) :: sendbuf(*)
       INTEGER(SIK),INTENT(IN) :: n
@@ -857,7 +851,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE recv_CHAR_MPI_Env_type(myPE,recvbuf,srcProc,tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='recv_CHAR_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       CHARACTER(LEN=*),INTENT(OUT) :: recvbuf
       INTEGER(SIK),INTENT(IN) :: srcProc
@@ -880,7 +873,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE recv_REAL_MPI_Env_type(myPE,recvbuf,srcProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='recv_REAL_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SRK),INTENT(INOUT) :: recvbuf
       INTEGER(SIK),INTENT(IN) :: srcProc
@@ -907,7 +899,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE recv_REAL1_MPI_Env_type(myPE,recvbuf,n,srcProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='recv_REAL_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SRK),INTENT(INOUT) :: recvbuf(:)
       INTEGER(SIK),INTENT(IN) :: n
@@ -934,7 +925,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE recv_INT_MPI_Env_type(myPE,recvbuf,srcProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='recv_INT_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(INOUT) :: recvbuf
       INTEGER(SIK),INTENT(IN) :: srcProc
@@ -961,7 +951,6 @@ MODULE ParallelEnv
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
     SUBROUTINE recv_INT1_MPI_Env_type(myPE,recvbuf,n,srcProc,in_tag)
-      CHARACTER(LEN=*),PARAMETER :: myName='recv_INT1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(INOUT) :: recvbuf(:)
       INTEGER(SIK),INTENT(IN) :: n
@@ -989,7 +978,6 @@ MODULE ParallelEnv
 !> @param recvbuf the data which is to be sent
 !> @param root the rank of the root process
     SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='gather_SIK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: sendbuf
       INTEGER(SIK),INTENT(INOUT) :: recvbuf(:)
@@ -1015,7 +1003,6 @@ MODULE ParallelEnv
 !> @param recvbuf the data which is to be sent
 !> @param root the rank of the root process
     SUBROUTINE gather_SIK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='gather_SIK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: sendbuf(:)
       INTEGER(SIK),INTENT(INOUT) :: recvbuf(:,:)
@@ -1052,7 +1039,6 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather
     SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='gather_SLK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
@@ -1074,7 +1060,6 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather
     SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='gather_SLK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf(:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
@@ -1104,7 +1089,6 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Scatter
     SUBROUTINE scatter_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='scatter_SLK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf(:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf
@@ -1126,7 +1110,6 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Scatter
     SUBROUTINE scatter_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='scatter_SLK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: sendbuf(:,:)
       INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
@@ -1162,7 +1145,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SNK0_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SNK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SNK),INTENT(IN) :: buf
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1185,7 +1167,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SNK1_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SNK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SNK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1208,7 +1189,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SLK0_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SLK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: buf
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1231,7 +1211,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SLK1_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SLK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SLK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1254,7 +1233,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SSK0_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1277,7 +1255,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SSK1_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1300,7 +1277,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SSK2_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK2_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1323,7 +1299,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SDK0_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1346,7 +1321,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SDK1_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1369,7 +1343,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SDK2_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK2_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1392,7 +1365,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SSK3_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK3_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1415,7 +1387,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SDK3_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK3_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1438,7 +1409,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SSK4_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SSK4_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SSK),INTENT(IN) :: buf(:,:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1461,7 +1431,6 @@ MODULE ParallelEnv
 !> If @c root is not present, it default to 0 (master).
 !>
     SUBROUTINE bcast_SDK4_MPI_Env_type(myPE,buf,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='bcast_SDK4_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SDK),INTENT(IN) :: buf(:,:,:,:)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root

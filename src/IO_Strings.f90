@@ -1009,7 +1009,6 @@ MODULE IO_Strings
 !> @param
 !>
     FUNCTION printCentered(string,width) RESULT(line)
-      CHARACTER(LEN=*),PARAMETER :: myName='printCentered'
       CHARACTER(LEN=*),INTENT(IN) :: string
       INTEGER(SIK),INTENT(IN):: width
       !
@@ -1629,7 +1628,6 @@ MODULE IO_Strings
 !>       them as a single field.
 !>
     SUBROUTINE stringTableToLines(tablevals,lines)
-      CHARACTER(LEN=*),PARAMETER :: myName='stringTableToLines'
       TYPE(StringType),INTENT(IN) :: tablevals(:,:)
       TYPE(StringType),ALLOCATABLE,INTENT(OUT) :: lines(:)
       LOGICAL(SBK) :: hasString

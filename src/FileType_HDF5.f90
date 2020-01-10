@@ -554,7 +554,6 @@ MODULE FileType_HDF5
 !> @brief   Enable/disable HDF5 exception writing
 !> @param   quiet Set to .TRUE. to disable HDF5 exceptions from being printed
     SUBROUTINE HDF5Quiet(quiet)
-      CHARACTER(LEN=*),PARAMETER :: myName='HDF5Quiet'
       LOGICAL,INTENT(IN) :: quiet
 #ifdef FUTILITY_HAVE_HDF5
       IF(quiet) THEN
@@ -699,7 +698,6 @@ MODULE FileType_HDF5
 !> was taken from the Fortran file.
 !>
     SUBROUTINE clear_HDF5FileType(thisHDF5File,ldel)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: ldel
 #ifdef FUTILITY_HAVE_HDF5
@@ -737,7 +735,6 @@ MODULE FileType_HDF5
 !> be overwritable.
 !>
     SUBROUTINE setOverwriteStat_file(file,bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='setOverwriteStat_file'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
       LOGICAL(SBK),INTENT(IN) :: bool
       file%overwriteStat=bool
@@ -1207,7 +1204,6 @@ MODULE FileType_HDF5
 !> @c path exists or not.
 !>
     FUNCTION pathexists_HDF5FileType(thisHDF5File,path) RESULT(bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='pathexists_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
       LOGICAL(SBK) :: bool
@@ -1420,7 +1416,6 @@ MODULE FileType_HDF5
 !> dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals
@@ -1471,7 +1466,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals(:)
@@ -1522,7 +1516,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals(:,:)
@@ -1574,7 +1567,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals(:,:,:)
@@ -1627,7 +1619,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d4(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals(:,:,:,:)
@@ -1682,7 +1673,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d5(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals(:,:,:,:,:)
@@ -1737,7 +1727,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d6(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals(:,:,:,:,:,:)
@@ -1793,7 +1782,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_d7(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writed7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(IN) :: vals(:,:,:,:,:,:,:)
@@ -1850,7 +1838,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals
@@ -1901,7 +1888,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals(:)
@@ -1952,7 +1938,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals(:,:)
@@ -2004,7 +1989,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals(:,:,:)
@@ -2057,7 +2041,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s4(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals(:,:,:,:)
@@ -2111,7 +2094,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s5(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals(:,:,:,:,:)
@@ -2166,7 +2148,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s6(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals(:,:,:,:,:,:)
@@ -2222,7 +2203,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_s7(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writes7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(IN) :: vals(:,:,:,:,:,:,:)
@@ -2279,7 +2259,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_b0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writeb0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(IN) :: vals
@@ -2336,7 +2315,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_b1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writeb1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(IN) :: vals(:)
@@ -2393,7 +2371,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_b2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writeb2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(IN) :: vals(:,:)
@@ -2450,7 +2427,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_b3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writeb3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(IN) :: vals(:,:,:)
@@ -2509,7 +2485,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals
@@ -2559,7 +2534,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals(:)
@@ -2610,7 +2584,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals(:,:)
@@ -2662,7 +2635,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals(:,:,:)
@@ -2715,7 +2687,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n4(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals(:,:,:,:)
@@ -2769,7 +2740,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n5(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals(:,:,:,:,:)
@@ -2824,7 +2794,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n6(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals(:,:,:,:,:,:)
@@ -2880,7 +2849,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_n7(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writen7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(IN) :: vals(:,:,:,:,:,:,:)
@@ -2939,7 +2907,6 @@ MODULE FileType_HDF5
 !> write interface in the HDF5 library.
 !>
     SUBROUTINE write_l0(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst
@@ -2994,7 +2961,6 @@ MODULE FileType_HDF5
 !> integer write interface in the HDF5 library.
 !>
     SUBROUTINE write_l1(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst(:)
@@ -3050,7 +3016,6 @@ MODULE FileType_HDF5
 !> integer write interface in the HDF5 library.
 !>
     SUBROUTINE write_l2(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst(:,:)
@@ -3107,7 +3072,6 @@ MODULE FileType_HDF5
 !> integer write interface in the HDF5 library.
 !>
     SUBROUTINE write_l3(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst(:,:,:)
@@ -3165,7 +3129,6 @@ MODULE FileType_HDF5
 !> integer write interface in the HDF5 library.
 !>
     SUBROUTINE write_l4(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst(:,:,:,:)
@@ -3224,7 +3187,6 @@ MODULE FileType_HDF5
 !> integer write interface in the HDF5 library.
 !>
     SUBROUTINE write_l5(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst(:,:,:,:,:)
@@ -3285,7 +3247,6 @@ MODULE FileType_HDF5
 !> integer write interface in the HDF5 library.
 !>
     SUBROUTINE write_l6(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst(:,:,:,:,:,:)
@@ -3347,7 +3308,6 @@ MODULE FileType_HDF5
 !> integer write interface in the HDF5 library.
 !>
     SUBROUTINE write_l7(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writel7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(IN) :: valst(:,:,:,:,:,:,:)
@@ -3409,7 +3369,6 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writest0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),INTENT(IN) :: vals
@@ -3468,7 +3427,6 @@ MODULE FileType_HDF5
 !> the value in @c length_max, and calls the @c fwrite routine.
 !>
     SUBROUTINE write_st1_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: MyName='writest1helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:)
@@ -3500,7 +3458,6 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writest1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:)
@@ -3563,7 +3520,6 @@ MODULE FileType_HDF5
 !> the value in @c length_max, and calls the @c fwrite routine.
 !>
     SUBROUTINE write_st2_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: MyName='writest2helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:,:)
@@ -3599,7 +3555,6 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writest2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),INTENT(IN) :: length_max
@@ -3664,7 +3619,6 @@ MODULE FileType_HDF5
 !> the value in @c length_max, and calls the @c fwrite routine.
 !>
     SUBROUTINE write_st3_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: MyName='writest3helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:,:,:)
@@ -3702,7 +3656,6 @@ MODULE FileType_HDF5
 !> StringsTypes are represented as rank-1 arrays of characters.
 !>
     SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writest3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(IN) :: vals(:,:,:)
@@ -3771,7 +3724,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_c1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
-      CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       CHARACTER(LEN=*),INTENT(IN) :: vals
@@ -3964,7 +3916,6 @@ MODULE FileType_HDF5
 !> the value in @c vals
 !>
     SUBROUTINE read_d0(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),INTENT(INOUT) :: vals
@@ -3996,7 +3947,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_d1(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
@@ -4039,7 +3989,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_d2(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
@@ -4082,7 +4031,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_d3(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
@@ -4125,7 +4073,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_d4(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
@@ -4168,7 +4115,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_d5(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
@@ -4211,7 +4157,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_d6(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
@@ -4254,7 +4199,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_d7(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
@@ -4297,7 +4241,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_dp4(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readd4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SDK),POINTER,INTENT(INOUT) :: vals(:,:,:,:)
@@ -4340,7 +4283,6 @@ MODULE FileType_HDF5
 !> and stores the value in @c vals
 !>
     SUBROUTINE read_s0(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),INTENT(INOUT) :: vals
@@ -4372,7 +4314,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_s1(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
@@ -4415,7 +4356,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_s2(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
@@ -4458,7 +4398,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_s3(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
@@ -4501,7 +4440,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_s4(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
@@ -4544,7 +4482,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_s5(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
@@ -4587,7 +4524,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_s6(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
@@ -4630,7 +4566,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_s7(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='reads7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
@@ -4673,7 +4608,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n0(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),INTENT(INOUT) :: vals
@@ -4707,7 +4641,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n1(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
@@ -4750,7 +4683,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n2(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
@@ -4793,7 +4725,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n3(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
@@ -4836,7 +4767,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n4(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
@@ -4879,7 +4809,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n5(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
@@ -4922,7 +4851,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n6(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
@@ -4965,7 +4893,6 @@ MODULE FileType_HDF5
 !> and stores the values in @c vals
 !>
     SUBROUTINE read_n7(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readn7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
@@ -5398,7 +5325,6 @@ MODULE FileType_HDF5
 !> 'T' or 'F' then converted to a logical.
 !>
     SUBROUTINE read_b0(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readb0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),INTENT(INOUT) :: vals
@@ -5439,7 +5365,6 @@ MODULE FileType_HDF5
 !> 'T' or 'F' then converted to logicals.
 !>
     SUBROUTINE read_b1(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readb1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
@@ -5493,7 +5418,6 @@ MODULE FileType_HDF5
 !> 'T' or 'F' then converted to logicals.
 !>
     SUBROUTINE read_b2(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readb2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
@@ -5547,7 +5471,6 @@ MODULE FileType_HDF5
 !> 'T' or 'F' then converted to logicals.
 !>
     SUBROUTINE read_b3(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readb3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
@@ -5602,7 +5525,6 @@ MODULE FileType_HDF5
 !> of characters then converted to a stringType.
 !>
     SUBROUTINE read_st0_helper(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst0_helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),INTENT(INOUT) :: vals
@@ -5644,7 +5566,6 @@ MODULE FileType_HDF5
 !> of characters then converted to a stringType.
 !>
     SUBROUTINE read_st0(thisHDF5File,dsetname,length_max,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),INTENT(IN) :: length_max
@@ -5687,7 +5608,6 @@ MODULE FileType_HDF5
 !> @param vals variable to hold read data
 !>
     SUBROUTINE read_ca0(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readca1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),INTENT(INOUT) :: vals
@@ -5730,7 +5650,6 @@ MODULE FileType_HDF5
 !> dsetname and stores the values in @c vals.
 !>
     SUBROUTINE read_st1_helper(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst1_helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:)
@@ -5774,7 +5693,6 @@ MODULE FileType_HDF5
 !> null terminated character string then converted to a stringType.
 !>
     SUBROUTINE read_st1(thisHDF5File,dsetname,length_max,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),INTENT(IN) :: length_max
@@ -5831,7 +5749,6 @@ MODULE FileType_HDF5
 !> of characters then converted to a stringType.
 !>
     SUBROUTINE read_ca1(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readca1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:)
@@ -5884,7 +5801,6 @@ MODULE FileType_HDF5
 !> dsetname and stores the values in @c vals.
 !>
     SUBROUTINE read_st2_helper(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst2_helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
@@ -5928,7 +5844,6 @@ MODULE FileType_HDF5
 !> null terminated character string then converted to a stringType.
 !>
     SUBROUTINE read_st2(thisHDF5File,dsetname,length_max,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),INTENT(IN) :: length_max
@@ -5989,7 +5904,6 @@ MODULE FileType_HDF5
 !> of characters then converted to a stringType.
 !>
     SUBROUTINE read_ca2(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readca2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
@@ -6044,7 +5958,6 @@ MODULE FileType_HDF5
 !> dsetname and stores the values in @c vals.
 !>
     SUBROUTINE read_st3_helper(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst3_helper_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
@@ -6088,7 +6001,6 @@ MODULE FileType_HDF5
 !> null terminated character string then converted to a stringType.
 !>
     SUBROUTINE read_st3(thisHDF5File,dsetname,length_max,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readst3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SIK),INTENT(IN) :: length_max
@@ -6153,7 +6065,6 @@ MODULE FileType_HDF5
 !> of characters then converted to a stringType.
 !>
     SUBROUTINE read_ca3(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readca3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
@@ -6210,7 +6121,6 @@ MODULE FileType_HDF5
 !> 'T' or 'F' then converted to logicals.
 !>
     SUBROUTINE read_c1(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readc1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       CHARACTER(LEN=*),INTENT(INOUT) :: vals
@@ -6255,7 +6165,6 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     RECURSIVE SUBROUTINE read_pList(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='read_pList_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       TYPE(ParamType),INTENT(INOUT) :: vals
@@ -6963,7 +6872,6 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
     SUBROUTINE write_attribute_st0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_st0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        TYPE(StringType) :: attr_val
@@ -7009,7 +6917,6 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
     SUBROUTINE write_attribute_c0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_c0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        CHARACTER(LEN=*) :: attr_val
@@ -7029,7 +6936,6 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
     SUBROUTINE write_attribute_i0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_i0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        INTEGER(SNK),INTENT(IN) :: attr_val
@@ -7067,7 +6973,6 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
    SUBROUTINE write_attribute_d0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='write_attribute_d0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        REAL(SDK),INTENT(IN) :: attr_val
@@ -7105,7 +7010,6 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
     SUBROUTINE read_attribute_st0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        TYPE(StringType),INTENT(INOUT)::attr_val
@@ -7134,7 +7038,6 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
     SUBROUTINE read_attribute_c0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        CHARACTER(LEN=*),INTENT(INOUT)::attr_val
@@ -7155,7 +7058,6 @@ MODULE FileType_HDF5
 !>
 #ifdef FUTILITY_HAVE_HDF5
     SUBROUTINE read_attribute_st0_helper(attr_id,length_max,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_st0_helper_HDF5FileType'
        TYPE(StringType),INTENT(INOUT)::attr_val
        INTEGER(SDK),INTENT(IN) :: length_max
 

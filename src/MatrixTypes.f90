@@ -803,7 +803,6 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c C
 !>
     SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
-      CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
       CLASS(MatrixType),INTENT(INOUT) :: A
       CLASS(MatrixType),INTENT(INOUT) :: B
       CLASS(MatrixType),INTENT(INOUT) :: C
@@ -820,11 +819,11 @@ MODULE MatrixTypes
           SELECTTYPE(C); TYPE IS(PETScMatrixType)
             CALL matmult_PETSc(A,B,C,alpha,beta,transA,transB)
           CLASS DEFAULT
-            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+            CALL eMatrixType%raiseError(modName//"::matmult_MatrixType - "// &
               "Interface not implemented")
           ENDSELECT
         CLASS DEFAULT
-            CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+            CALL eMatrixType%raiseError(modName//"::matmult_MatrixType - "// &
               "Interface not implemented")
         ENDSELECT
         RETURN

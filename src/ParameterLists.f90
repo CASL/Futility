@@ -3012,7 +3012,6 @@ MODULE ParameterLists
 !> unit test harness assertions when checking the values.
 !>
     FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='matchTest_ParamType'
       CLASS(ParamType),INTENT(INOUT) :: thisParam
       CLASS(ParamType),INTENT(IN),TARGET :: thatParam
       CHARACTER(LEN=*),INTENT(IN) :: prefix
@@ -5596,7 +5595,6 @@ MODULE ParameterLists
 !> @param val the current value of the parameter with @c name
 !>
     SUBROUTINE get_ParamType_CHAR(thisParam,name,val)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR'
       CLASS(ParamType),INTENT(IN) :: thisParam
       CHARACTER(LEN=*),INTENT(IN) :: name
       CHARACTER(LEN=:),ALLOCATABLE,INTENT(INOUT) :: val
