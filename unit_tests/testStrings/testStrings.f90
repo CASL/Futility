@@ -282,7 +282,6 @@ ENDSUBROUTINE testAssign_arrays
     TYPE(StringType) :: testString,testString2
     CHARACTER(LEN=:),ALLOCATABLE :: char10
     CHARACTER(KIND=C_CHAR) :: cchar(5)
-    INTEGER(SIK) :: i
     TYPE(StringType) :: tstString
     TYPE(StringType) :: testStringArray(10)
     TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
