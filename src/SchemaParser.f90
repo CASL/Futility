@@ -315,7 +315,6 @@ CONTAINS
 !> The constructor for the schema parser
 !>
 SUBROUTINE init_SchPar(this)
-  CHARACTER(LEN=*),PARAMETER :: myName='init_SchPar'
   CLASS(SchemaParser),INTENT(INOUT) :: this
 
   ALLOCATE(this%block(0))
@@ -1271,7 +1270,6 @@ ENDSUBROUTINE parseSBKa1_SchEnt
 !> @param pListPathCrd the card parameter list path
 !>
 SUBROUTINE parseSTRa1_SchEnt(this,entryStr,paramList,pListPathCrd)
-  CHARACTER(LEN=*),PARAMETER :: myName='parseSTRa1_SchEnt'
   CLASS(SchemaEntrySTRa1),INTENT(IN) :: this
   CLASS(StringType),INTENT(IN) :: entryStr
   CLASS(ParamType),INTENT(INOUT) :: paramList

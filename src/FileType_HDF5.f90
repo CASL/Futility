@@ -589,17 +589,15 @@ MODULE FileType_HDF5
 !> routine.
 !>
     SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: filename
       CHARACTER(LEN=*),INTENT(IN) :: mode
       INTEGER(SIK),INTENT(IN),OPTIONAL :: zlibOpt
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='init_HDF5FileType'
       TYPE(StringType) :: fpath,fname,fext,mode_in
       INTEGER(SIK) :: unitno
       LOGICAL(SBK) :: ostat,exists
-#endif
-#ifdef FUTILITY_HAVE_HDF5
       IF(thisHDF5File%isinit) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
           ' - HDF5file '//thisHDF5File%getFileName()// &
@@ -750,9 +748,9 @@ MODULE FileType_HDF5
 !> the file.
 !>
     SUBROUTINE open_HDF5FileType(file)
-      CHARACTER(LEN=*),PARAMETER :: myName='open_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='open_HDF5FileType'
       INTEGER :: acc
       INTEGER(HID_T) :: plist_id
 
@@ -803,9 +801,9 @@ MODULE FileType_HDF5
 !> This routine implements the abstract @c fclose routine in the base file type.
 !>
     SUBROUTINE close_HDF5FileType(file)
-      CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
       LOGICAL(SBK) :: lastStopOnError
       lastStopOnError=file%e%isStopOnError()
       CALL file%e%setStopOnError(.FALSE.)
@@ -841,9 +839,9 @@ MODULE FileType_HDF5
 !> after it is deleted.
 !>
     SUBROUTINE delete_HDF5FileType(file)
-      CHARACTER(LEN=*),PARAMETER :: myName='delete_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: file
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='delete_HDF5FileType'
       CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
 
       IF(file%isinit) THEN
@@ -921,11 +919,11 @@ MODULE FileType_HDF5
 !> the objects in the group.
 !>
     SUBROUTINE ls_HDF5FileType(thisHDF5File,path,objs)
-      CHARACTER(LEN=*),PARAMETER :: myName='ls_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
       TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: objs(:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='ls_HDF5FileType'
       CHARACTER(LEN=1024) :: tmpchar
       TYPE(StringType) :: path2
       INTEGER(HSIZE_T) :: i
@@ -984,10 +982,10 @@ MODULE FileType_HDF5
 !> called if the file has write access.
 !>
     SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
-      CHARACTER(LEN=*),PARAMETER :: myNAme='mkdir_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myNAme='mkdir_HDF5FileType'
       TYPE(StringType) :: path2
       INTEGER(HID_T) :: group_id
       LOGICAL :: dset_exists
@@ -1045,10 +1043,10 @@ MODULE FileType_HDF5
 !> called if the file has write access.
 !>
     SUBROUTINE mkalldir_HDF5FileType(thisHDF5File,path)
-      CHARACTER(LEN=*),PARAMETER :: myNAme='mkalldir_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myNAme='mkalldir_HDF5FileType'
       INTEGER(SIK) :: i,nslash
       INTEGER(SIK),ALLOCATABLE :: slashloc(:)
       TYPE(StringType) :: path2,tmppath
@@ -1107,11 +1105,11 @@ MODULE FileType_HDF5
 !> This function returns how many objects are in the group @c path.
 !>
     FUNCTION ngrp_HDF5FileType(thisHDF5File,path) RESULT(ngrp)
-      CHARACTER(LEN=*),PARAMETER :: myName='ngrp_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
       INTEGER(SIK) :: ngrp
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='ngrp_HDF5FileType'
       TYPE(StringType) :: path2
       INTEGER(HID_T) :: grp_id
       INTEGER :: store_type,nlinks,max_corder
@@ -1160,11 +1158,11 @@ MODULE FileType_HDF5
 !> by @c path is a group or not.
 !>
     FUNCTION isgrp_HDF5FileType(thisHDF5File,path) RESULT(bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='isgrp_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: path
       LOGICAL(SBK) :: bool
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='isgrp_HDF5FileType'
       TYPE(StringType) :: path2
       INTEGER(HID_T) :: obj_id
       INTEGER(SIK) :: type
@@ -1360,11 +1358,11 @@ MODULE FileType_HDF5
 !>
 !>
     SUBROUTINE createHardLink_HDF5FileType(thisHDF5File,source_path,link_path)
-      CHARACTER(LEN=*),PARAMETER :: myName='createHardLink_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: source_path
       CHARACTER(LEN=*),INTENT(IN) :: link_path
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='createHardLink_HDF5FileType'
       INTEGER(HID_T) :: src_obj_id
       TYPE(StringType) :: spath,lpath
 
@@ -3774,13 +3772,13 @@ MODULE FileType_HDF5
 !> and path @c dsetname using the shape @c gdims_in, if present.
 !>
     SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in,first_dir)
-      CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       CLASS(ParamType),INTENT(IN) :: vals
       INTEGER(SIK),INTENT(IN),OPTIONAL :: gdims_in
       LOGICAL(SBK),INTENT(IN),OPTIONAL :: first_dir
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='writec1_HDF5FileType'
       TYPE(StringType) :: address,address2,path,root
       CLASS(ParamType),POINTER :: nextParam
       LOGICAL(SBK) :: fdir
@@ -4936,11 +4934,11 @@ MODULE FileType_HDF5
 !> compensate for the lack of a long integer read interface in the HDF5 library.
 !>
     SUBROUTINE read_l0(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl0_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl0_HDF5FileType'
       REAL(SDK) :: valst
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims
@@ -4976,11 +4974,11 @@ MODULE FileType_HDF5
 !> library.
 !>
     SUBROUTINE read_l1(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl1_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl1_HDF5FileType'
       INTEGER(SNK),ALLOCATABLE :: valst(:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(1) :: dims
@@ -5026,11 +5024,11 @@ MODULE FileType_HDF5
 !> library.
 !>
     SUBROUTINE read_l2(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl2_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl2_HDF5FileType'
       INTEGER(SNK),ALLOCATABLE :: valst(:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(2) :: dims
@@ -5076,11 +5074,11 @@ MODULE FileType_HDF5
 !> library.
 !>
     SUBROUTINE read_l3(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl3_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl3_HDF5FileType'
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(3) :: dims
@@ -5126,11 +5124,11 @@ MODULE FileType_HDF5
 !> library.
 !>
     SUBROUTINE read_l4(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl4_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl4_HDF5FileType'
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(4) :: dims
@@ -5176,11 +5174,11 @@ MODULE FileType_HDF5
 !> library.
 !>
     SUBROUTINE read_l5(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl5_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl5_HDF5FileType'
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(5) :: dims
@@ -5226,11 +5224,11 @@ MODULE FileType_HDF5
 !> library.
 !>
     SUBROUTINE read_l6(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl6_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl6_HDF5FileType'
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(6) :: dims
@@ -5276,11 +5274,11 @@ MODULE FileType_HDF5
 !> library.
 !>
     SUBROUTINE read_l7(thisHDF5File,dsetname,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='readl7_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       CHARACTER(LEN=*),INTENT(IN) :: dsetname
       INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: vals(:,:,:,:,:,:,:)
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='readl7_HDF5FileType'
       INTEGER(SNK),ALLOCATABLE :: valst(:,:,:,:,:,:,:)
       CHARACTER(LEN=LEN(dsetname)+1) :: path
       INTEGER(HSIZE_T),DIMENSION(7) :: dims
@@ -6208,11 +6206,11 @@ MODULE FileType_HDF5
 !------------------------------------------------------------------------------
 !>
     SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
-      CHARACTER(LEN=*),PARAMETER :: myName='read_pList_HDF5FileType'
       CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
       TYPE(StringType),INTENT(IN) :: h5path
       TYPE(ParamType),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
+      CHARACTER(LEN=*),PARAMETER :: myName='read_pList_HDF5FileType'
       INTEGER(SIK) :: i,j,k,error,ndims,class_type
       INTEGER(HID_T) :: dset_id,dspace_id,dtype
       INTEGER(SIZE_T) :: dtype_prec
@@ -7081,12 +7079,12 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
     SUBROUTINE read_attribute_i0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_i0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        INTEGER(SNK),INTENT(INOUT) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
+       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_i0_HDF5FileType'
        INTEGER(HID_T) :: attr_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
        dims(1)=1
@@ -7114,12 +7112,12 @@ MODULE FileType_HDF5
 !> @param attr_value the desired value of the attrbute
 !>
     SUBROUTINE read_attribute_d0(this,obj_name,attr_name,attr_val)
-       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_d0_HDF5FileType'
        CLASS(HDF5FileType),INTENT(INOUT) :: this
        CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
        REAL(SDK),INTENT(INOUT) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
+       CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_d0_HDF5FileType'
        INTEGER(HID_T) :: attr_id, obj_id
        INTEGER(HSIZE_T),DIMENSION(1) :: dims
        dims(1)=1

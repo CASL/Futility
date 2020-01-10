@@ -607,7 +607,9 @@ MODULE ParallelEnv
 !-------------------------------------------------------------------------------
 !> @brief Initializes an MPI environment type object.
     SUBROUTINE init_MPI_Env_type(myPE,PEparam)
+#ifdef HAVE_MPI || FUTILITY_HAVE_PETSC
       CHARACTER(LEN=*),PARAMETER :: myName='init_MPI_Env_type'
+#endif
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
       INTEGER(SIK) :: icomm
@@ -696,7 +698,9 @@ MODULE ParallelEnv
 !>
 !> If the communicator is not MPI_COMM_WORLD then it is also freed.
     SUBROUTINE clear_MPI_Env_type(myPE)
+#ifdef HAVE_MPI
       CHARACTER(LEN=*),PARAMETER :: myName='clear_MPI_Env_type'
+#endif
       CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
 
       IF(myPE%initstat) THEN
@@ -1453,10 +1457,10 @@ MODULE ParallelEnv
 !> This routine only performs a sum operation and only for reals.
 !>
     SUBROUTINE allReduceR_scalar_MPI_Env_type(myPE,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_scalar_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SRK),INTENT(INOUT) :: x
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_scalar_MPI_Env_type'
       REAL(SRK) :: rbuf
       REQUIRE(myPE%initstat)
 #ifdef DBL
@@ -1485,12 +1489,11 @@ MODULE ParallelEnv
 !> This routine only performs a sum operation and only for reals.
 !>
     SUBROUTINE allReduceR_array_MPI_Env_type(myPE,n,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_array_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
-!      REAL(SRK) :: rbuf(n)
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_array_MPI_Env_type'
       REAL(SRK),ALLOCATABLE :: rbuf(:)
       REQUIRE(myPE%initstat)
       ALLOCATE(rbuf(n))
@@ -1521,10 +1524,10 @@ MODULE ParallelEnv
 !> This routine only performs a max operation and only for reals.
 !>
     SUBROUTINE allReduceMaxR_scalar_MPI_Env_type(myPE,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxR_scalar_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SRK),INTENT(INOUT) :: x
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxR_scalar_MPI_Env_type'
       REAL(SRK) :: rbuf
       REQUIRE(myPE%initstat)
 #ifdef DBL
@@ -1551,11 +1554,11 @@ MODULE ParallelEnv
 !> This routine only performs a max operation and only for reals.
 !>
     SUBROUTINE allReduceMaxR_array_MPI_Env_type(myPE,n,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_array_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_array_MPI_Env_type'
       REAL(SRK) :: rbuf(n)
       REQUIRE(myPE%initstat)
 #ifdef DBL
@@ -1584,10 +1587,10 @@ MODULE ParallelEnv
 !> This routine only performs a min operation and only for reals.
 !>
     SUBROUTINE allReduceMinR_scalar_MPI_Env_type(myPE,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinR_scalar_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       REAL(SRK),INTENT(INOUT) :: x
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinR_scalar_MPI_Env_type'
       REAL(SRK) :: rbuf
       REQUIRE(myPE%initstat)
 #ifdef DBL
@@ -1614,11 +1617,11 @@ MODULE ParallelEnv
 !> This routine only performs a min operation and only for reals.
 !>
     SUBROUTINE allReduceMinR_array_MPI_Env_type(myPE,n,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_array_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_array_MPI_Env_type'
       REAL(SRK) :: rbuf(n)
       REQUIRE(myPE%initstat)
 #ifdef DBL
@@ -1650,13 +1653,13 @@ MODULE ParallelEnv
 !> This routine only performs a maxloc operation and only for reals.
 !>
     SUBROUTINE reduceMaxLocR_MPI_Env_type(myPE,n,x,i,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='reduceMaxLocR_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
       INTEGER(SLK),INTENT(INOUT) :: i(*)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='reduceMaxLocR_MPI_Env_type'
       REAL(SRK) :: sbuf(2,n)
       REAL(SRK) :: rbuf(2,n)
       INTEGER(SIK) :: rank
@@ -1696,13 +1699,13 @@ MODULE ParallelEnv
 !> This routine only performs a min operation and only for reals.
 !>
     SUBROUTINE reduceMinLocR_MPI_Env_type(myPE,n,x,i,root)
-      CHARACTER(LEN=*),PARAMETER :: myName='reduceMinLocR_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       REAL(SRK),INTENT(INOUT) :: x(*)
       INTEGER(SLK),INTENT(INOUT) :: i(*)
       INTEGER(SIK),INTENT(IN),OPTIONAL :: root
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='reduceMinLocR_MPI_Env_type'
       REAL(SRK) :: sbuf(2,n)
       REAL(SRK) :: rbuf(2,n)
       INTEGER(SIK) :: rank
@@ -1739,10 +1742,10 @@ MODULE ParallelEnv
 !> This routine only performs a sum operation and only for integers.
 !>
     SUBROUTINE allReduceI_scalar_MPI_Env_type(myPE,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceI_scalar_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(INOUT) :: x
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceI_scalar_MPI_Env_type'
       INTEGER(SIK) :: rbuf
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_SUM,myPE%comm,mpierr)
@@ -1765,11 +1768,11 @@ MODULE ParallelEnv
 !> This routine only performs a sum operation and only for integers.
 !>
     SUBROUTINE allReduceI_array_MPI_Env_type(myPE,n,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceI_array_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceI_array_MPI_Env_type'
       INTEGER(SIK) :: rbuf(n)
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_SUM, &
@@ -1779,7 +1782,6 @@ MODULE ParallelEnv
           myName//' - call to MPI_Allreduce returned an error!')
       ELSE
         !Copy the result to the output argument
-        !CALL BLAS_copy(n,rbuf,1,x,1)
         x(1:n)=rbuf ! No BLAS_copy for integers
       ENDIF
 #endif
@@ -1794,10 +1796,10 @@ MODULE ParallelEnv
 !> This routine only performs a max operation and only for integers.
 !>
     SUBROUTINE allReduceMaxI_scalar_MPI_Env_type(myPE,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxI_scalar_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(INOUT) :: x
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxI_scalar_MPI_Env_type'
       INTEGER(SIK) :: rbuf
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MAX, &
@@ -1821,11 +1823,11 @@ MODULE ParallelEnv
 !> This routine only performs a max operation and only for integers.
 !>
     SUBROUTINE allReduceMaxI_array_MPI_Env_type(myPE,n,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxI_array_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxI_array_MPI_Env_type'
       INTEGER(SIK) :: rbuf(n)
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MAX, &
@@ -1850,10 +1852,10 @@ MODULE ParallelEnv
 !> This routine only performs a min operation and only for integers.
 !>
     SUBROUTINE allReduceMinI_scalar_MPI_Env_type(myPE,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinI_scalar_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(INOUT) :: x
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinI_scalar_MPI_Env_type'
       INTEGER(SIK) :: rbuf
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MIN, &
@@ -1877,11 +1879,11 @@ MODULE ParallelEnv
 !> This routine only performs a min operation and only for integers.
 !>
     SUBROUTINE allReduceMinI_array_MPI_Env_type(myPE,n,x)
-      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinI_array_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       INTEGER(SIK),INTENT(IN) :: n
       INTEGER(SIK),INTENT(INOUT) :: x(*)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinI_array_MPI_Env_type'
       INTEGER(SIK) :: rbuf(n)
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MIN, &
@@ -1904,10 +1906,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'and' operation
 !>
     SUBROUTINE trueForAll_SBK0_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK0_MPI_Env_type'
       LOGICAL(SBK) :: lrbuf
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LAND, &
@@ -1928,10 +1930,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'and' operation
 !>
     SUBROUTINE trueForAll_SBK1_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK1_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:)
       INTEGER(SIK) :: n1
       REQUIRE(myPE%initstat)
@@ -1956,10 +1958,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'and' operation
 !>
     SUBROUTINE trueForAll_SBK2_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK2_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:,:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK2_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:,:)
       INTEGER(SIK) :: n1,n2
       REQUIRE(myPE%initstat)
@@ -1985,10 +1987,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'and' operation
 !>
     SUBROUTINE trueForAll_SBK3_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK3_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:,:,:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK3_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:,:,:)
       INTEGER(SIK) :: n1,n2,n3
       REQUIRE(myPE%initstat)
@@ -2015,10 +2017,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'and' operation
 !>
     SUBROUTINE trueForAll_SBK4_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK4_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:,:,:,:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK4_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:,:,:,:)
       INTEGER(SIK) :: n1,n2,n3,n4
       REQUIRE(myPE%initstat)
@@ -2046,10 +2048,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'or' operation
 !>
     SUBROUTINE trueForAny_SBK0_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK0_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK0_MPI_Env_type'
       LOGICAL(SBK) :: lrbuf
       REQUIRE(myPE%initstat)
       CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LOR, &
@@ -2070,10 +2072,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'or' operation
 !>
     SUBROUTINE trueForAny_SBK1_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK1_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK1_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:)
       INTEGER(SIK) :: n1
       REQUIRE(myPE%initstat)
@@ -2098,10 +2100,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'or' operation
 !>
     SUBROUTINE trueForAny_SBK2_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK2_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:,:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK2_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:,:)
       INTEGER(SIK) :: n1,n2
       REQUIRE(myPE%initstat)
@@ -2127,10 +2129,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'or' operation
 !>
     SUBROUTINE trueForAny_SBK3_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK3_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:,:,:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK3_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:,:,:)
       INTEGER(SIK) :: n1,n2,n3
       REQUIRE(myPE%initstat)
@@ -2157,10 +2159,10 @@ MODULE ParallelEnv
 !> @param lstat logical that is set to the status of the logical 'or' operation
 !>
     SUBROUTINE trueForAny_SBK4_MPI_Env_type(myPE,lstat)
-      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK4_MPI_Env_type'
       CLASS(MPI_EnvType),INTENT(IN) :: myPE
       LOGICAL(SBK),INTENT(INOUT) :: lstat(:,:,:,:)
 #ifdef HAVE_MPI
+      CHARACTER(LEN=*),PARAMETER :: myName='trueForAny_SBK4_MPI_Env_type'
       LOGICAL(SBK),ALLOCATABLE :: lrbuf(:,:,:,:)
       INTEGER(SIK) :: n1,n2,n3,n4
       REQUIRE(myPE%initstat)
@@ -2349,7 +2351,6 @@ MODULE ParallelEnv
 !> @brief Initializes an OpenMP environment type object.
     SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
       CHARACTER(LEN=*),PARAMETER :: myName='init_ParEnvType'
-      LOGICAL(SBK),DIMENSION(3),PARAMETER :: isPeriodic=(/.FALSE.,.FALSE.,.FALSE./)
       CLASS(ParallelEnvType),INTENT(INOUT) :: myPE
       INTEGER(SIK),INTENT(IN) :: commWorld
       INTEGER(SIK),INTENT(IN) :: nspace
@@ -2359,6 +2360,7 @@ MODULE ParallelEnv
       CHARACTER(LEN=12) ::  nproc, selproc
       INTEGER(SIK) :: nerror,commDims(3)
 #ifdef HAVE_MPI
+      LOGICAL(SBK),DIMENSION(3),PARAMETER :: isPeriodic=(/.FALSE.,.FALSE.,.FALSE./)
       INTEGER(SIK) :: tmpcomm
       LOGICAL(SBK) :: activeCommDim(3)
       CHARACTER(LEN=12) :: smpierr
