@@ -950,11 +950,9 @@ ENDSUBROUTINE clear_SchCrd
 SUBROUTINE addPLPath_SchEnt(this,pListPath)
   CLASS(SchemaEntry),INTENT(IN) :: this
   TYPE(StringType),INTENT(INOUT) :: pListPath
-  TYPE(StringType) :: tmpStr
 
   IF(this%pListPath == '') THEN
-    CALL getSubstring(pListPath,tmpStr,1,LEN(pListPath)-2) !Trims off the '->' from the end
-    pListPath=tmpStr
+    pListPath=pListPath%substr(1,LEN(pListPath)-2)
   ELSE
     pListPath=pListPath//this%pListPath
   ENDIF
@@ -1090,7 +1088,7 @@ SUBROUTINE parseSBK_SchEnt(this,entryStr,paramList,pListPathCrd)
     RETURN
   ENDIF
   CALL getField(1,entryStr,entry,ierr)
-  CALL toUPPER(entry)
+  entry = entry%upper()
   IF(entry == 'TRUE' .OR. entry == 'T') THEN
     entrySBK=.TRUE.
   ELSE
@@ -1252,7 +1250,7 @@ SUBROUTINE parseSBKa1_SchEnt(this,entryStr,paramList,pListPathCrd)
         ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(entry)//'"!')
       RETURN
     ENDIF
-    CALL toUPPER(entry)
+    entry = entry%upper()
     IF(entry == 'TRUE' .OR. entry == 'T') THEN
       entrySBK(ientry)=.TRUE.
     ELSE
@@ -1420,7 +1418,7 @@ FUNCTION isSBKEntry(string) RESULT(isSBK)
   REQUIRE(isScalarEntry(string))
 
   CALL getField(1,string,entry)
-  CALL toUPPER(entry)
+  entry = entry%upper()
   isSBK=(entry == 'TRUE' .OR. entry == 'T' .OR. entry == 'FALSE' .OR. entry == 'F')
 ENDFUNCTION isSBKEntry
 !
