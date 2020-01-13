@@ -244,7 +244,6 @@ MODULE MortonOrdering
 !> addChild routines and updateIndices routines to form a complete tree.
 !>
     SUBROUTINE ZTree_initSingle(node,x1,x2,y1,y2,z1,z2,istt,nsubd)
-      CHARACTER(LEN=*),PARAMETER :: myName='ZTree_initSingle'
       CLASS(ZTreeNodeType),INTENT(INOUT) :: node
       INTEGER(SIK),INTENT(IN) :: x1,x2
       INTEGER(SIK),INTENT(IN) :: y1,y2
@@ -291,7 +290,6 @@ MODULE MortonOrdering
 !> the normal init routine.
 !>
     FUNCTION ZTree_addChild(node,x1,x2,y1,y2,z1,z2,nsubd) RESULT(child)
-      CHARACTER(LEN=*),PARAMETER :: myName='ZTree_addChild'
       CLASS(ZTreeNodeType),INTENT(INOUT) :: node
       INTEGER(SIK),INTENT(IN) :: x1
       INTEGER(SIK),INTENT(IN) :: x2

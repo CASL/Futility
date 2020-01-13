@@ -668,13 +668,13 @@ MODULE LinearSolverTypes_Multigrid
 !> @param iLevel level index, in PETSc notation where 0=coarsest
 !>
     SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smooth)
-      CHARACTER(LEN=*),PARAMETER :: myName='setSmoother_LinearSolverType_Multigrid'
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(IN) :: smoother
       INTEGER(SIK),INTENT(IN),OPTIONAL :: iLevel
       INTEGER(SIK),INTENT(IN),OPTIONAL :: num_smooth
 
 #ifdef FUTILITY_HAVE_PETSC
+      CHARACTER(LEN=*),PARAMETER :: myName='setSmoother_LinearSolverType_Multigrid'
       INTEGER(SIK) :: i,istt,istp
       KSP :: ksp_temp
       PC :: pc_temp
@@ -926,7 +926,6 @@ MODULE LinearSolverTypes_Multigrid
 !> @param solver The linear solver to act on
 !>
     SUBROUTINE updatedA_LinearSolverType_Multigrid(solver)
-      CHARACTER(LEN=*),PARAMETER :: myName='updatedA_LinearSolverType_Multigrid'
       CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
 #ifdef FUTILITY_HAVE_PETSC
       PetscErrorCode  :: iperr

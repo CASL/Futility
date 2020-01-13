@@ -2092,7 +2092,6 @@ MODULE PartitionGraph
 !> @param wtSum The total weight of the graph
 !>
     RECURSIVE SUBROUTINE recursivePartitioning(thisGraph,Order,nv1,cw1,wtSum)
-      CHARACTER(LEN=*),PARAMETER :: myName="recursivePartitioning"
       CLASS(PartitionGraphType),INTENT(INOUT) :: thisGraph
       INTEGER(SIK),POINTER,INTENT(INOUT) :: Order(:)
       INTEGER(SIK),INTENT(INOUT) :: nv1

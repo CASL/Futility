@@ -11,7 +11,6 @@ PROGRAM testDBC
   USE Futility_DBC
   USE IntrType
   IMPLICIT NONE
-  CHARACTER(LEN=*),PARAMETER :: modName="testDBC"
   INTEGER(SIK) :: iopt
   CHARACTER(LEN=5) :: arg
 #ifdef HAVE_MPI

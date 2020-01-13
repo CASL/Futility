@@ -869,7 +869,6 @@ MODULE FileType_Fortran
 !> @param lines The 1-D array of strings to write.
 !>
     SUBROUTINE write_str_1a_fortran_file(file,lines)
-      CHARACTER(LEN=*),PARAMETER :: myName='writeTable_fortran_file'
       CLASS(FortranFileType),INTENT(INOUT) :: file
       TYPE(StringType),INTENT(IN) :: lines(:)
       INTEGER(SIK) :: i

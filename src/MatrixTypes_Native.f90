@@ -373,7 +373,6 @@ MODULE MatrixTypes_Native
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_SparseMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -392,7 +391,6 @@ MODULE MatrixTypes_Native
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_DenseSquareMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -406,7 +404,6 @@ MODULE MatrixTypes_Native
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_TriDiagMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -420,7 +417,6 @@ MODULE MatrixTypes_Native
 !> @param matrix the matrix type to act on
 !>
     SUBROUTINE clear_DenseRectMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       matrix%isInit=.FALSE.
       matrix%n=0
@@ -440,7 +436,6 @@ MODULE MatrixTypes_Native
 !> If setShape has previously been applied to the same sparse matrix.
 !>
     SUBROUTINE set_SparseMatrixType(matrix,i,j,setval)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -478,7 +473,6 @@ MODULE MatrixTypes_Native
 !> If setShape has previously been applied to the same sparse matrix.  
 !>
     SUBROUTINE setRow_SparseMatrixType(matrix,i,j,setval)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j(:)
@@ -513,7 +507,6 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE set_DenseSquareMatrixType(matrix,i,j,setval)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -535,7 +528,6 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE set_TriDiagMatrixType(matrix,i,j,setval)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -565,7 +557,6 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE set_DenseRectMatrixType(matrix,i,j,setval)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -589,7 +580,6 @@ MODULE MatrixTypes_Native
 !> will be ignored.
 !>
     SUBROUTINE set_shape_SparseMatrixType(matrix,i,j,setval)
-      CHARACTER(LEN=*),PARAMETER :: myName='set_shape_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -620,7 +610,6 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE get_TriDiagMatrixType(matrix,i,j,getval)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -650,7 +639,6 @@ MODULE MatrixTypes_Native
 !> @param setval the value to be set
 !>
     SUBROUTINE get_DenseRectMatrixType(matrix,i,j,getval)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -674,7 +662,6 @@ MODULE MatrixTypes_Native
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
     SUBROUTINE get_DenseSquareMatrixType(matrix,i,j,getval)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -701,7 +688,6 @@ MODULE MatrixTypes_Native
 !> bounds, fails if DBC is enabled.
 !>
     SUBROUTINE get_SparseMatrixType(matrix,i,j,getval)
-      CHARACTER(LEN=*),PARAMETER :: myName='get_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       INTEGER(SIK),INTENT(IN) :: i
       INTEGER(SIK),INTENT(IN) :: j
@@ -772,7 +758,6 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE transpose_SparseMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='transpose_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
 
       INTEGER(SIK),ALLOCATABLE :: tmp_ia(:),tmp_ja(:),A(:,:),tmp(:),Row(:,:),n_Row(:)
@@ -860,7 +845,6 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_SparseMatrixType(matrix)
-    CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_SparseMatrixType'
       CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
       REQUIRE(matrix%isInit)
       matrix%a=0.0_SRK
@@ -872,7 +856,6 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_DenseSquareMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_DenseSquareMatrixType'
       CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
       REQUIRE(matrix%isInit)
       matrix%a=0.0_SRK
@@ -884,7 +867,6 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_TriDiagMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_TriDiagMatrixType'
       CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
       REQUIRE(matrix%isInit)
       matrix%a=0.0_SRK
@@ -896,7 +878,6 @@ MODULE MatrixTypes_Native
 !>
 !>
     SUBROUTINE  zeroentries_DenseRectMatrixType(matrix)
-      CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_DenseRectMatrixType'
       CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
       REQUIRE(matrix%isInit)
       matrix%a=0.0_SRK

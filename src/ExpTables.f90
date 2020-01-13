@@ -181,7 +181,6 @@ MODULE ExpTables
 !> @param ans The return value
 !>
     ELEMENTAL FUNCTION EXPT(myET,x,ipol) RESULT(ans)
-      CHARACTER(LEN=*),PARAMETER :: myName="EXPT"
       CLASS(ExpTableType),INTENT(IN) :: myET
       REAL(SRK),INTENT(IN) :: x
       INTEGER(SIK),INTENT(IN),OPTIONAL :: ipol

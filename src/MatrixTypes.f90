@@ -803,7 +803,6 @@ MODULE MatrixTypes
 !> @param beta the scalar used to scale @c C
 !>
     SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
-      CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
       CLASS(MatrixType),INTENT(INOUT) :: A
       CLASS(MatrixType),INTENT(INOUT) :: B
       CLASS(MatrixType),INTENT(INOUT) :: C
@@ -813,8 +812,8 @@ MODULE MatrixTypes
       CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: transB
       CHARACTER(LEN=1) :: tA
       CHARACTER(LEN=1) :: tB
-
 #ifdef FUTILITY_HAVE_PETSC
+      CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
       SELECTTYPE(A); TYPE IS(PETScMatrixType)
         SELECTTYPE(B); TYPE IS(PETScMatrixType)
           SELECTTYPE(C); TYPE IS(PETScMatrixType)

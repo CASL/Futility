@@ -1413,7 +1413,6 @@ MODULE LinearSolverTypes
 !-------------------------------------------------------------------------------
 !>
     SUBROUTINE getIterResidual_LinearSolverType_Iterative(solver,niters,resid)
-      CHARACTER(LEN=*),PARAMETER :: myName='getIterResidual'
       CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
       INTEGER(SIK),INTENT(INOUT) :: niters
       REAL(SRK),INTENT(INOUT) :: resid

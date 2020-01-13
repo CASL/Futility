@@ -916,7 +916,6 @@ MODULE FileType_XML
 !> @param fname the file name to use on disk
 !>
     SUBROUTINE exportToDisk_XMLFileType(thisXMLFile,fname)
-      CHARACTER(LEN=*),PARAMETER :: myName='exportToDisk_XMLFileType'
       CLASS(XMLFileType),INTENT(INOUT) :: thisXMLFile
       CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fname
       CHARACTER(LEN=4) :: version

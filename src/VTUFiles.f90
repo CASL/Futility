@@ -397,7 +397,6 @@ MODULE VTUFiles
 !> Checks if the VTU File has the specified data name and type.
 !>
     SUBROUTINE hasData_VTUXMLFileType(fileobj,varName,varFormat,bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='hasData_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
       CHARACTER(LEN=*),INTENT(IN) :: varName,varFormat
       LOGICAL(SBK),INTENT(INOUT) :: bool
@@ -421,7 +420,6 @@ MODULE VTUFiles
 !> Checks if the VTU File has the specified file (which is written to pvtu).
 !>
     SUBROUTINE hasFile_VTUXMLFileType(fileobj,fname,bool)
-      CHARACTER(LEN=*),PARAMETER :: myName='hasFile_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: fileobj
       CHARACTER(LEN=*),INTENT(IN) :: fname
       LOGICAL(SBK),INTENT(INOUT) :: bool
@@ -445,7 +443,6 @@ MODULE VTUFiles
 !> Closes the file by adding standard XML structure closures.
 !>
     SUBROUTINE close_VTUXMLFileType(myVTKFile)
-      CHARACTER(LEN=*),PARAMETER :: myName='close_VTUXMLFileType'
       CLASS(VTUXMLFileType),INTENT(INOUT) :: myVTKFile
       INTEGER(SIK) :: funit
       !
