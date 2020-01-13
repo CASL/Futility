@@ -26,13 +26,6 @@
 !>  - @ref Strings::ADJUSTL_StringType "ADJUSTL": @copybrief Strings::ADJUSTL_StringType
 !>  - @ref Strings::ADJUSTR_StringType "ADJUSTR": @copybrief Strings::ADJUSTR_StringType
 !>  - @c INDEX
-!>
-!> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>
-!> @author Brendan Kochunas
-!>   @date 07/25/2012
-!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Strings
 USE ISO_C_BINDING
@@ -351,7 +344,7 @@ ENDFUNCTION split_string_space
 !>
 FUNCTION split_string(this,separator) RESULT(sub_str)
   CLASS(StringType),INTENT(IN) :: this
-  CHARACTER(LEN=*),INTENT(IN) :: separator 
+  CHARACTER(LEN=*),INTENT(IN) :: separator
   TYPE(StringType),ALLOCATABLE :: sub_str(:)
   !
   INTEGER(SIK) :: iSplit,nSplits,stt,stp,sepLoc

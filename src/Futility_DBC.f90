@@ -27,72 +27,68 @@
 !>   ENSURE(y>0.0_SRK)
 !> ENDSUBROUTINE foo
 !> @endcode
-!>
-!>
-!> @author Benjamin Collins
-!>    @date 09/19/2017
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Futility_DBC
-  USE ISO_FORTRAN_ENV
-  IMPLICIT NONE
+USE ISO_FORTRAN_ENV
+IMPLICIT NONE
 
 #ifdef HAVE_MPI
-  INCLUDE "mpif.h"
+INCLUDE "mpif.h"
 #endif
 
-  PRIVATE
+PRIVATE
 !
 ! List of Public items
-  PUBLIC :: DBC_FAIL
-  PUBLIC :: DBC_STOP_ON_FAIL
-  PUBLIC :: DBC_COUNTER
+PUBLIC :: DBC_FAIL
+PUBLIC :: DBC_STOP_ON_FAIL
+PUBLIC :: DBC_COUNTER
 
 ! These variables are created to be used in unit testing DBC
-  !This logical disables the "stop" from being called if DBC_FAIL is called
-  !  The user should be very careful when setting this to FALSE to set back to TRUE
-  !  as soon as possible to ensure DBC is working properly where intended
-  !  This logical should ONLY be changed in unit test code and NEVER in a routine.
-  LOGICAL :: DBC_STOP_ON_FAIL=.TRUE.
-  !This integer counts the total number of DBC_FAIL statements called 
-  INTEGER :: DBC_COUNTER=0
+!This logical disables the "stop" from being called if DBC_FAIL is called
+!  The user should be very careful when setting this to FALSE to set back to TRUE
+!  as soon as possible to ensure DBC is working properly where intended
+!  This logical should ONLY be changed in unit test code and NEVER in a routine.
+LOGICAL :: DBC_STOP_ON_FAIL=.TRUE.
+!This integer counts the total number of DBC_FAIL statements called
+INTEGER :: DBC_COUNTER=0
 !
 !===============================================================================
-  CONTAINS
+CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Design by Contract Failure
 !>
 !> Self-explanatory.
 !>
-  SUBROUTINE DBC_FAIL(test_char,mod_name,line)
-    CHARACTER(LEN=*),INTENT(IN) :: test_char
-    CHARACTER(LEN=*),INTENT(IN) :: mod_name
-    INTEGER,INTENT(IN) :: line
-    !> Variables for MPI tests
-    INTEGER :: rank,nproc
+SUBROUTINE DBC_FAIL(test_char,mod_name,line)
+  CHARACTER(LEN=*),INTENT(IN) :: test_char
+  CHARACTER(LEN=*),INTENT(IN) :: mod_name
+  INTEGER,INTENT(IN) :: line
+  !> Variables for MPI tests
+  INTEGER :: rank,nproc
 #ifdef HAVE_MPI
-    INTEGER :: mpierr
-    LOGICAL :: mpiInit
-    CALL MPI_Initialized(mpiInit,mpierr)
-    IF(mpiInit) THEN
-      CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
-      CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
-   ELSE
-      rank=0
-      nproc=1
-   ENDIF
-#else
+  INTEGER :: mpierr
+  LOGICAL :: mpiInit
+  CALL MPI_Initialized(mpiInit,mpierr)
+  IF(mpiInit) THEN
+    CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
+    CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
+ ELSE
     rank=0
     nproc=1
+ ENDIF
+#else
+  rank=0
+  nproc=1
 #endif
-    DBC_COUNTER=DBC_COUNTER+1
-    WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
-      mod_name//" on line",line,":  process",rank+1," of",nproc
+  DBC_COUNTER=DBC_COUNTER+1
+  WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
+    mod_name//" on line",line,":  process",rank+1," of",nproc
 
 #ifndef __INTEL_COMPILER
-    CALL backtrace()
+  CALL backtrace()
 #endif
-    IF(DBC_STOP_ON_FAIL) STOP 2
-  ENDSUBROUTINE DBC_FAIL
+  IF(DBC_STOP_ON_FAIL) STOP 2
+ENDSUBROUTINE DBC_FAIL
 !
 ENDMODULE Futility_DBC

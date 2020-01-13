@@ -24,11 +24,6 @@
 !> is an external routine with a defined interface that processes the command
 !> line. The example below shows how this is done.
 !>
-!> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>  - @ref ExceptionHandler "Exceptionhandler": @copybrief ExceptionHandler
-!>  - @ref IOutil "IOutil": @copybrief IOutil
-!>
 !> @par EXAMPLE
 !> @code
 !> PROGRAM CmdLineExample
@@ -103,15 +98,6 @@
 !>
 !> END PROGRAM
 !> @endcode
-!>
-!> @author Brendan Kochunas
-!>   @date 05/12/2011
-!>
-!> @par Revisions:
-!> (07/05/2011) - Brendan Kochunas
-!>   - Modified to be a derived type with type bound procedures
-!>   - Updated unit test and documentation
-!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE CommandLineProcessor
   USE ISO_FORTRAN_ENV

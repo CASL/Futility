@@ -9,21 +9,6 @@
 !> @brief The global geometry module, collecting all public members of
 !> other geometry modules. This is the module that should be used elsewhere
 !> in the code.
-!>
-!> @par Module Dependencies
-!>  - @ref Geom_Points "Geom_Points": @copybrief Geom_Points
-!>  - @ref Geom_Line "Geom_Line": @copybrief Geom_Line
-!>  - @ref Geom_Plane "Geom_Plane": @copybrief Geom_Plane
-!>  - @ref Geom_CircCyl "Geom_CircCyl": @copybrief Geom_CircCyl
-!>  - @ref Geom_Box "Geom_Box": @copybrief Geom_Box
-!>  - @ref ParameterLists "ParameterLists": @copybrief ParameterLists
-!>
-!> @author Brendan Kochunas
-!>    @date 5/26/2011
-!>
-!> @par Revisions:
-!> (06/01/2015) - Brendan Kochunas
-!>   - Added parameter list based constructors
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom
   USE IntrType
