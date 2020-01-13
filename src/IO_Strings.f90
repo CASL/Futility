@@ -211,9 +211,6 @@ MODULE IO_Strings
     !> @copybrief IO_Strings::strrep_char_char_char
     !> @copydetails IO_Strings::strrep_char_char_char
     MODULE PROCEDURE strrep_char_char_char
-    !> @copybrief IO_Strings::strrep_string_char_char
-    !> @copydetails IO_Strings::strrep_string_char_char
-    MODULE PROCEDURE strrep_string_char_char
   ENDINTERFACE strrep
 
   !> @brief Generic interface for toUPPER
@@ -530,24 +527,6 @@ MODULE IO_Strings
       ENDIF
       DEALLOCATE(indices)
     ENDSUBROUTINE strrep_char_char_char
-!
-!-------------------------------------------------------------------------------
-!> @brief Replaces a substring pattern with a different substring in a string
-!> @param string the string which will have substrings replaced
-!> @param findp the substring pattern to find and replace
-!> @param repp the new substring that will be replace parts of string
-!>
-!> Adapter for @ref strrep_char_char_char so that a string may be passed.
-!>
-    PURE SUBROUTINE strrep_string_char_char(string,findp,repp)
-      TYPE(StringType),INTENT(INOUT) :: string
-      CHARACTER(LEN=*),INTENT(IN) :: findp
-      CHARACTER(LEN=*),INTENT(IN) :: repp
-      CHARACTER(LEN=:),ALLOCATABLE :: tmp
-      tmp = CHAR(string)
-      CALL strrep_char_char_char(tmp,findp,repp)
-      string=tmp
-    ENDSUBROUTINE strrep_string_char_char
 !
 !-------------------------------------------------------------------------------
 !> @brief Utility function takes a character array and converts all lower case
