@@ -143,7 +143,7 @@ ENDSUBROUTINE GET_COMMAND_internal
 !> not need to worry about encountering a value larger than the size of value.
 !>
 SUBROUTINE GET_ENVIRONMENT_VARIABLE_string(name,value,length,status, &
-  trim_name)
+    trim_name)
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),INTENT(INOUT),OPTIONAL :: value
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: length
@@ -159,7 +159,7 @@ SUBROUTINE GET_ENVIRONMENT_VARIABLE_string(name,value,length,status, &
   IF(PRESENT(value)) THEN
     value=''
     CALL GET_ENVIRONMENT_VARIABLE(NAME=name,VALUE=tmpVal,LENGTH=len, &
-      STATUS=stat)
+        STATUS=stat)
     IF(len > 0) THEN
       !Variable exists and has a value
       IF(PRESENT(trim_name)) trm_nm=trim_name
@@ -188,7 +188,7 @@ SUBROUTINE GET_ENVIRONMENT_VARIABLE_internal(str,varname,nchar,ltrim,stat)
   CHARACTER(LEN=nchar) :: tmpChar
 
   CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpChar, &
-    STATUS=stat,TRIM_NAME=ltrim)
+      STATUS=stat,TRIM_NAME=ltrim)
   IF(stat == 0) str=tmpChar
 ENDSUBROUTINE GET_ENVIRONMENT_VARIABLE_internal
 !

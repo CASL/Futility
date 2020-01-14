@@ -447,7 +447,7 @@ FUNCTION WaterSatProperties_GetPres(T) RESULT(P)
     it=INT(T)
     dT=T-REAL(it,SRK)
     IF(273 < it .AND. it < 675) &
-      P=eostable(PRESSURE,it+1)*dT-eostable(PRESSURE,it)*dT+eostable(PRESSURE,it)
+        P=eostable(PRESSURE,it+1)*dT-eostable(PRESSURE,it)*dT+eostable(PRESSURE,it)
   ENDIF
 ENDFUNCTION WaterSatProperties_GetPres
 !
@@ -477,7 +477,7 @@ FUNCTION WaterSatProperties_GetTemp(P) RESULT(T)
     ENDDO
     !In normal exit iplo=iphi+1
     IF(iplo < 648 .AND. iphi > 273) &
-      T=REAL(iphi,SRK)+(P-eostable(PRESSURE,iphi))/(eostable(PRESSURE,iplo)-eostable(PRESSURE,iphi))
+        T=REAL(iphi,SRK)+(P-eostable(PRESSURE,iphi))/(eostable(PRESSURE,iplo)-eostable(PRESSURE,iphi))
   ENDIF
 ENDFUNCTION WaterSatProperties_GetTemp
 !
@@ -502,7 +502,7 @@ FUNCTION WaterSatProperties_GetVapDens(P,T) RESULT(vrho)
       it=INT(T_local)
       dT=T_local-REAL(it,SRK)
       IF(273 < it .AND. it < 675) &
-        vrho=eostable(RHOV,it+1)*dT-eostable(RHOV,it)*dT+eostable(RHOV,it)
+          vrho=eostable(RHOV,it+1)*dT-eostable(RHOV,it)*dT+eostable(RHOV,it)
     ENDIF
   ENDIF
 ENDFUNCTION WaterSatProperties_GetVapDens
@@ -528,7 +528,7 @@ FUNCTION WaterSatProperties_GetLiqDens(P,T) RESULT(lrho)
       it=INT(T_local)
       dT=T_local-REAL(it,SRK)
       IF(273 < it .AND. it < 675) &
-        lrho=eostable(RHOL,it+1)*dT-eostable(RHOL,it)*dT+eostable(RHOL,it)
+          lrho=eostable(RHOL,it+1)*dT-eostable(RHOL,it)*dT+eostable(RHOL,it)
     ENDIF
   ENDIF
 ENDFUNCTION WaterSatProperties_GetLiqDens

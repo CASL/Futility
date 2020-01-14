@@ -250,8 +250,8 @@ ENDFUNCTION getClockTime
 !> -# "Month, day year" (length 13 characters)
 FUNCTION getDate(opt) RESULT(strdate)
   CHARACTER(LEN=4),DIMENSION(12),PARAMETER :: &
-  mon=(/'Jan.','Feb.','Mar.','Apr.','May ','June', &
-        'July','Aug.','Sep.','Oct.','Nov.','Dec.'/)
+      mon=(/'Jan.','Feb.','Mar.','Apr.','May ','June', &
+            'July','Aug.','Sep.','Oct.','Nov.','Dec.'/)
   INTEGER(SIK),OPTIONAL,INTENT(IN) :: opt
   CHARACTER(LEN=13) :: strdate
   CHARACTER(LEN=8) :: adate
@@ -492,7 +492,7 @@ SUBROUTINE toc(myTimer)
     myTimer%lastcount=count
     count=count+myTimer%clockcycleshift
     myTimer%elapsedtime=myTimer%elapsedtime+ &
-                       REAL((count-myTimer%count),SDK)*myTimer%count2sec
+        REAL((count-myTimer%count),SDK)*myTimer%count2sec
   ENDIF
 ENDSUBROUTINE toc
 !
@@ -658,15 +658,15 @@ FUNCTION getTimeFromDate(Date1_inp,Date2_inp,outputunit_inp,fmt1_inp,fmt2_inp) R
     outputunit='DAY'
     IF(PRESENT(outputunit_inp)) THEN
       IF(outputunit_inp == 'HOUR' .OR. outputunit_inp == 'MIN' .OR. &
-        outputunit_inp == 'SEC') outputunit=outputunit_inp
+          outputunit_inp == 'SEC') outputunit=outputunit_inp
     ENDIF
     IF(PRESENT(fmt1_inp)) THEN
       IF((INDEX(fmt1_inp,"Y") > 0) .AND. (INDEX(fmt1_inp,"M") > 0) .AND. &
-        (INDEX(fmt1_inp,"D") > 0)) fmt1=fmt1_inp
+          (INDEX(fmt1_inp,"D") > 0)) fmt1=fmt1_inp
     ENDIF
     IF(PRESENT(fmt2_inp)) THEN
       IF((INDEX(fmt2_inp,"Y") > 0) .AND. (INDEX(fmt2_inp,"M") > 0) .AND. &
-        (INDEX(fmt2_inp,"D") > 0)) fmt2=fmt2_inp
+          (INDEX(fmt2_inp,"D") > 0)) fmt2=fmt2_inp
     ENDIF
 
     !Process the strings

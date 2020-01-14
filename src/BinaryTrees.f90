@@ -119,7 +119,7 @@ RECURSIVE SUBROUTINE SortedBinaryTree_Index(t,stt,sorted_list)
    t%val=sorted_list(p)
    IF(p > 1) CALL SortedBinaryTree_Index(t%left,stt,sorted_list(1:p-1))
    IF(p+1 <= n) CALL SortedBinaryTree_Index(t%right,t%index+1, &
-     sorted_list(p+1:SIZE(sorted_list)))
+       sorted_list(p+1:SIZE(sorted_list)))
  ENDIF
 ENDSUBROUTINE SortedBinaryTree_Index
 !

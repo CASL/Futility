@@ -138,7 +138,7 @@ SUBROUTINE setFilePath_file(file,pathstr)
   CHARACTER(LEN=*),INTENT(IN) :: pathstr
   IF(file%openstat) THEN
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot change path of file while it is open!')
+        'Cannot change path of file while it is open!')
   ELSE
     file%path=TRIM(ADJUSTL(pathstr))
     file%pathlen=LEN_TRIM(file%path)
@@ -157,7 +157,7 @@ SUBROUTINE setFileName_file(file,namestr)
   CHARACTER(LEN=*),INTENT(IN) :: namestr
   IF(file%openstat) THEN
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot change name of file while it is open!')
+        'Cannot change name of file while it is open!')
   ELSE
     file%name=TRIM(ADJUSTL(namestr))
     file%fnamelen=LEN_TRIM(file%name)
@@ -176,7 +176,7 @@ SUBROUTINE setFileExt_file(file,extstr)
   CHARACTER(LEN=*),INTENT(IN) :: extstr
   IF(file%openstat) THEN
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot change extension of file while it is open!')
+        'Cannot change extension of file while it is open!')
   ELSE
     file%ext=TRIM(ADJUSTL(extstr))
     file%extlen=LEN_TRIM(file%ext)
@@ -305,7 +305,7 @@ SUBROUTINE setEOFstat_file(file,bool)
     file%EOFstat=bool
   ELSE
     CALL file%e%raiseDebug(modName//'::'//myName// &
-      ' - EOF status cannot be changed on a file that is not open!')
+        ' - EOF status cannot be changed on a file that is not open!')
   ENDIF
 ENDSUBROUTINE setEOFstat_file
 !
@@ -334,7 +334,7 @@ SUBROUTINE setReadStat_file(file,bool)
   LOGICAL(SBK),INTENT(IN) :: bool
   IF(file%openstat) THEN
     CALL file%e%raiseDebug(modName//'::'//myName// &
-      ' - Cannot change read status of a file if it is open!')
+        ' - Cannot change read status of a file if it is open!')
   ELSE
     file%readstat=bool
   ENDIF
@@ -352,7 +352,7 @@ SUBROUTINE setWriteStat_file(file,bool)
   LOGICAL(SBK),INTENT(IN) :: bool
   IF(file%openstat) THEN
     CALL file%e%raiseDebug(modName//'::'//myName// &
-      ' - Cannot change write status of a file if it is open!')
+        ' - Cannot change write status of a file if it is open!')
   ELSE
     file%writestat=bool
   ENDIF

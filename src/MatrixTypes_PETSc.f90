@@ -110,7 +110,7 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
   CALL validParams%get('MatrixType->n',n)
   isSym=.FALSE.
   IF(validParams%has('MatrixType->isSym')) &
-    CALL validParams%get('MatrixType->isSym',isSym)
+      CALL validParams%get('MatrixType->isSym',isSym)
   CALL validParams%get('MatrixType->matType',matType)
   CALL validParams%get('MatrixType->MPI_COMM_ID',MPI_COMM_ID)
   CALL validParams%get('MatrixType->nlocal',nlocal)
@@ -119,9 +119,9 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
   mlocal=nlocal
   IF(.NOT. isSym) THEN
     IF(validParams%has('MatrixType->m')) &
-      CALL validParams%get('MatrixType->m',m)
+        CALL validParams%get('MatrixType->m',m)
     IF(validParams%has('MatrixType->mlocal')) &
-      CALL validParams%get('MatrixType->mlocal',mlocal)
+        CALL validParams%get('MatrixType->mlocal',mlocal)
   ENDIF
 
   ALLOCATE(dnnz(nlocal))
@@ -133,7 +133,7 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
   IF(.NOT. matrix%isInit) THEN
     IF(n < 1 .OR. m < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of rows (n) and cols (m) '// &
+          modName//'::'//myName//' - Number of rows (n) and cols (m) '// &
           'must be greater than 0!')
     ELSE
       matrix%isInit=.TRUE.
@@ -167,8 +167,8 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
         CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
       ELSE
         CALL eMatrixType%raiseError('Invalid matrix type in '// &
-          modName//'::'//myName//' - Only sparse and dense square '// &
-          'matrices are available with PETSc.')
+            modName//'::'//myName//' - Only sparse and dense square '// &
+            'matrices are available with PETSc.')
       ENDIF
 
       IF(MINVAL(dnnz) > 0_SIK .AND. MINVAL(onnz) >= 0_SIK) THEN
@@ -183,7 +183,7 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - MatrixType already initialized')
+        modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
 ENDSUBROUTINE init_PETScMatrixParam
 
@@ -222,7 +222,7 @@ SUBROUTINE set_PETScMatrixType(matrix,i,j,setval)
 
   IF(matrix%isInit) THEN
     IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
-      .AND. ((j > 0) .AND. (i > 0))) THEN
+        .AND. ((j > 0) .AND. (i > 0))) THEN
       CALL MatSetValues(matrix%a,1,i-1,1,j-1,setval,INSERT_VALUES,ierr)
       IF(matrix%isSymmetric) THEN
         CALL MatSetValues(matrix%a,1,j-1,1,i-1,setval,INSERT_VALUES,ierr)
@@ -315,7 +315,7 @@ SUBROUTINE transpose_PETScMatrixType(matrix)
   IF(.NOT.matrix%isAssembled) CALL matrix%assemble()
   !This is to avoid a deadlock in IBarrier in MPICH
   CALL PetscCommBuildTwoSidedSetType(matrix%comm, &
-    PETSC_BUILDTWOSIDED_ALLREDUCE,iperr)
+      PETSC_BUILDTWOSIDED_ALLREDUCE,iperr)
   CALL MatTranspose(matrix%a,MAT_REUSE_MATRIX,matrix%a,iperr)
 ENDSUBROUTINE transpose_PETScMatrixType
 !
@@ -355,7 +355,7 @@ SUBROUTINE matvec_PETScVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
 
   IF(.NOT. thisMatrix%isInit) THEN
     CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-      "Matrix not initialized.")
+        "Matrix not initialized.")
     RETURN
   ENDIF
 
@@ -388,16 +388,16 @@ SUBROUTINE matvec_PETScVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CALL y%get(tmpy)
       IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          alpha,tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+            alpha,tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
       ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          alpha,tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+            alpha,tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
       ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
+            tmpmat,thisMatrix%n,tmpvec,1,beta,tmpy,1)
       ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
+            tmpmat,thisMatrix%n,tmpvec,1,tmpy,1)
       ENDIF
       ! set into return vector
       CALL y%set(tmpy)
@@ -423,8 +423,8 @@ SUBROUTINE matvec_PETScVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
       CALL dummy%clear()
     ENDSELECT
     CLASS DEFAULT
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - This interface is not available.')
+      CALL eMatrixType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 ENDSUBROUTINE matvec_PETScVector
 !
@@ -479,16 +479,16 @@ SUBROUTINE matvec_PETSc(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
 
         IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            alpha,tmpmat,thisMatrix%n,x,1,beta,y,1)
+              alpha,tmpmat,thisMatrix%n,x,1,beta,y,1)
         ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            alpha,tmpmat,thisMatrix%n,x,1,y,1)
+              alpha,tmpmat,thisMatrix%n,x,1,y,1)
         ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            tmpmat,thisMatrix%n,x,1,beta,y,1)
+              tmpmat,thisMatrix%n,x,1,beta,y,1)
         ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            tmpmat,thisMatrix%n,x,1,y,1)
+              tmpmat,thisMatrix%n,x,1,y,1)
         ENDIF
         DEALLOCATE(tmpmat)
   ENDIF

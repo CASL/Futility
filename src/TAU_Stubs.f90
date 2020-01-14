@@ -323,13 +323,13 @@ SUBROUTINE TAU_PROFILE_START(profileID)
           !Store as bytes
           CALL PAPIF_get_dmem_info(values,perr)
           activeThreadProfiler%memUsage(2,1)= &
-            values(PAPIF_DMEM_VMSIZE)*1024_C_LONG_LONG
+              values(PAPIF_DMEM_VMSIZE)*1024_C_LONG_LONG
           activeThreadProfiler%memUsage(2,2)= &
-            values(PAPIF_DMEM_HIGH_WATER)*1024_C_LONG_LONG
+              values(PAPIF_DMEM_HIGH_WATER)*1024_C_LONG_LONG
         ENDIF
         IF(TauStubLibData%nPAPImetrics > 0) THEN
           CALL PAPIF_read(TauStubLibData%PAPIEventSetHandle, &
-            activeThreadProfiler%tmpCounts(:,1),perr)
+              activeThreadProfiler%tmpCounts(:,1),perr)
         ENDIF
         CALL PAPIF_get_real_nsec(ptime)
         activeThreadProfiler%ompTime=REAL(ptime,SDK)
@@ -373,23 +373,23 @@ SUBROUTINE TAU_PROFILE_STOP(profileID)
         CALL PAPIF_get_real_nsec(ptime)
         IF(TauStubLibData%nPAPImetrics > 0) THEN
           CALL PAPIF_read(TauStubLibData%PAPIEventSetHandle, &
-            activeThreadProfiler%tmpCounts(:,2),perr)
+              activeThreadProfiler%tmpCounts(:,2),perr)
           activeThreadProfiler%papiCounts=activeThreadProfiler%papiCounts+ &
-            REAL(activeThreadProfiler%tmpCounts(:,2)- &
+              REAL(activeThreadProfiler%tmpCounts(:,2)- &
               activeThreadProfiler%tmpCounts(:,1),SDK)
         ENDIF
         activeThreadProfiler%timer%elapsedTime= &
-          activeThreadProfiler%timer%elapsedTime+(REAL(ptime,SDK)- &
+            activeThreadProfiler%timer%elapsedTime+(REAL(ptime,SDK)- &
             activeThreadProfiler%ompTime)*1.0e-9_SDK
         IF(TauStubLibData%memProf) THEN
           !Store as bytes
           CALL PAPIF_get_dmem_info(values,perr)
           activeThreadProfiler%memUsage(1,1)=activeThreadProfiler%memUsage(1,1)+ &
-            values(PAPIF_DMEM_VMSIZE)*1024_C_LONG_LONG- &
+              values(PAPIF_DMEM_VMSIZE)*1024_C_LONG_LONG- &
               activeThreadProfiler%memUsage(2,1)
           CALL PAPIF_get_dmem_info(values,perr)
           activeThreadProfiler%memUsage(1,2)=activeThreadProfiler%memUsage(1,2)+ &
-            values(PAPIF_DMEM_HIGH_WATER)*1024_C_LONG_LONG- &
+              values(PAPIF_DMEM_HIGH_WATER)*1024_C_LONG_LONG- &
               activeThreadProfiler%memUsage(2,2)
         ENDIF
 #else
@@ -398,15 +398,15 @@ SUBROUTINE TAU_PROFILE_STOP(profileID)
           CALL activeThreadProfiler%timer%toc() !2 Flops on each call
         ELSE
 !$            activeThreadProfiler%timer%elapsedTime= &
-!$              activeThreadProfiler%timer%elapsedTime+OMP_GET_WTIME()- &
+!$                activeThreadProfiler%timer%elapsedTime+OMP_GET_WTIME()- &
 !$                activeThreadProfiler%ompTime
         ENDIF
         IF(TauStubLibData%memProf) THEN
           CALL getProcMemInfo(values(1),values(2))
           activeThreadProfiler%memUsage(1,1)=activeThreadProfiler%memUsage(1,1)+ &
-            values(1)-activeThreadProfiler%memUsage(2,1)
+              values(1)-activeThreadProfiler%memUsage(2,1)
           activeThreadProfiler%memUsage(1,2)=activeThreadProfiler%memUsage(1,2)+ &
-            values(2)-activeThreadProfiler%memUsage(2,2)
+              values(2)-activeThreadProfiler%memUsage(2,2)
         ENDIF
 #endif
         activeThreadProfiler%isStart=.FALSE.
@@ -437,7 +437,7 @@ SUBROUTINE TAUSTUB_CHECK_MEMORY()
   WRITE(OUTPUT_UNIT,*) '######## TAUSTUB_CHECK_MEMORY: Message Begin'
   WRITE(OUTPUT_UNIT,*) '     Virtual    |    Resident    |    HighWater   |      Heap'
   WRITE(OUTPUT_UNIT,*) ' '//TRIM(getMemChar(memUsage(1)))//' | '// &
-    TRIM(getMemChar(memUsage(2)))//' | '//TRIM(getMemChar(memUsage(3))) &
+      TRIM(getMemChar(memUsage(2)))//' | '//TRIM(getMemChar(memUsage(3))) &
       //' | '//TRIM(getMemChar(memUsage(4)))
   WRITE(OUTPUT_UNIT,*) '######## TAUSTUB_CHECK_MEMORY: Message End'
   WRITE(OUTPUT_UNIT,*)
@@ -531,39 +531,39 @@ SUBROUTINE Write_Profile_metric(funit,outdir,metric_name,i)
     fname='profile.'//TRIM(ADJUSTL(rankstr))//'.0.'//TRIM(ADJUSTL(tidstr))
     IF(TauStubLibData%nProfiles(it) > 0) THEN
       OPEN(UNIT=funit,ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='WRITE', &
-        STATUS='REPLACE',FILE=outdir//SLASH//CHAR(fname),IOSTAT=ierr)
+          STATUS='REPLACE',FILE=outdir//SLASH//CHAR(fname),IOSTAT=ierr)
       IF(ierr == 0) THEN
 !
 !Write the profile data to disk
         !Header
         WRITE(tmpIstr,'(i16)') TauStubLibData%nProfiles(it)
         tline=TRIM(ADJUSTL(tmpIstr))//' templated_functions_MULTI_'// &
-          CHAR(metric_name(i))
+            CHAR(metric_name(i))
         WRITE(UNIT=funit,FMT='(a)',IOSTAT=ierr) CHAR(tline)
 
         !Metadata
         WRITE(tmpRstr,'(g9.3)') TauStubLibData%tOverhead
         tline='# Name Calls Subrs Excl Incl ProfileCalls # <metadata>'
         tline=tline//'<attribute>'// &
-          '<name>Metric Name</name><value>'//CHAR(metric_name(i))// &
-         '</value></attribute><attribute>'// &
-          '<name>TAU Version</name><value>TAU Stub Library (Futility)</value>'// &
-         '</attribute><attribute>'// &
-          '<name>Est. overhead per call</name><value>'//TRIM(ADJUSTL(tmpRstr))// &
+            '<name>Metric Name</name><value>'//CHAR(metric_name(i))// &
+            '</value></attribute><attribute>'// &
+            '<name>TAU Version</name><value>TAU Stub Library (Futility)</value>'// &
+            '</attribute><attribute>'// &
+            '<name>Est. overhead per call</name><value>'//TRIM(ADJUSTL(tmpRstr))// &
             ' nsecs.</value>'// &
-         '</attribute><attribute>'// &
+            '</attribute><attribute>'// &
 #ifdef HAVE_PAPI
-           '<name>PAPI Version</name><value>'//TRIM(Get_PAPI_VERSION())// &
-          '</value>'//'</attribute><attribute>'// &
+            '<name>PAPI Version</name><value>'//TRIM(Get_PAPI_VERSION())// &
+            '</value>'//'</attribute><attribute>'// &
 #endif
-          '<name>TAU_PROFILE_FORMAT</name><value>profile</value>'// &
-         '</attribute>'
+            '<name>TAU_PROFILE_FORMAT</name><value>profile</value>'// &
+            '</attribute>'
         IF(TauStubLibData%nPAPImetrics > 0) THEN
           DO j=1,TauStubLibData%nPAPImetrics
             WRITE(tmpRstr,'(g11.5)') TauStubLibData%metricOverhead(j)
             tline=tline//'<attribute>'//'<name>Est. overhead per call for '// &
-              CHAR(metric_name(j))//'</name><value>'//TRIM(ADJUSTL(tmpRstr))// &
-            '</value></attribute>'
+                CHAR(metric_name(j))//'</name><value>'//TRIM(ADJUSTL(tmpRstr))// &
+                '</value></attribute>'
           ENDDO
         ENDIF
         tline=tline//'</metadata>'
@@ -595,8 +595,8 @@ SUBROUTINE Write_Profile_metric(funit,outdir,metric_name,i)
           ENDIF
           WRITE(tmpIstr,'(i16)') activeProfiler%num_calls
           tline='"'//CHAR(activeProfiler%name)//'" '//TRIM(ADJUSTL(tmpIstr))// &
-            ' 0 '//TRIM(ADJUSTL(tmpRstr))//' '//TRIM(ADJUSTL(tmpRstr))// &
-            ' 0 GROUP="TAU_STUB"'
+              ' 0 '//TRIM(ADJUSTL(tmpRstr))//' '//TRIM(ADJUSTL(tmpRstr))// &
+              ' 0 GROUP="TAU_STUB"'
           WRITE(UNIT=funit,FMT='(a)',IOSTAT=ierr) CHAR(tline)
           activeProfiler => activeProfiler%nextProfiler
         ENDDO
@@ -621,9 +621,9 @@ RECURSIVE SUBROUTINE Clear_ProfilerType(thisProfiler)
     CALL Clear_ProfilerType(thisProfiler%nextProfiler)
     thisProfiler%name=''
     IF(ALLOCATED(thisProfiler%papiCounts)) &
-      DEALLOCATE(thisProfiler%papiCounts)
+        DEALLOCATE(thisProfiler%papiCounts)
     IF(ALLOCATED(thisProfiler%tmpCounts)) &
-      DEALLOCATE(thisProfiler%tmpCounts)
+        DEALLOCATE(thisProfiler%tmpCounts)
     DEALLOCATE(thisProfiler)
   ENDIF
 ENDSUBROUTINE Clear_ProfilerType
@@ -676,7 +676,7 @@ SUBROUTINE CreateProfDirs(dirnames,eventNames)
     ALLOCATE(eventCodes(TauStubLibData%nPAPImetrics))
     nevents=TauStubLibData%nPAPImetrics
     CALL PAPIF_list_events(TauStubLibData%PAPIEventSetHandle,eventCodes,&
-      nevents,perr)
+        nevents,perr)
     DO i=1,TauStubLibData%nPAPImetrics
       CALL PAPIF_event_code_to_name(eventCodes(i),papi_eventName,perr)
       IF(perr == PAPI_OK) THEN
@@ -756,10 +756,10 @@ ENDSUBROUTINE Init_PAPI_Event_Set
 FUNCTION GET_PAPI_VERSION() RESULT(pver)
   CHARACTER(LEN=7) :: pver
   WRITE(pver,'(4(i1,a1))') &
-    IAND(ISHFT(PAPI_VER_CURRENT,-24),255),'.', & !Major Version
-    IAND(ISHFT(PAPI_VER_CURRENT,-16),255),'.', & !Minor Version
-    IAND(ISHFT(PAPI_VER_CURRENT,-8),255),'.', &  !Revision
-    IAND(PAPI_VER_CURRENT,255)                   !Increment
+      IAND(ISHFT(PAPI_VER_CURRENT,-24),255),'.', & !Major Version
+      IAND(ISHFT(PAPI_VER_CURRENT,-16),255),'.', & !Minor Version
+      IAND(ISHFT(PAPI_VER_CURRENT,-8),255),'.', &  !Revision
+      IAND(PAPI_VER_CURRENT,255)                   !Increment
 ENDFUNCTION
 #endif
 !
@@ -778,11 +778,11 @@ SUBROUTINE EstimateOverhead()
   ALLOCATE(TauStubLibData%threadProfilesDB(1)%profiler)
   IF(TauStubLibData%nPAPImetrics > 0) THEN
     ALLOCATE(TauStubLibData%threadProfilesDB(1)% &
-      profiler%papiCounts(TauStubLibData%nPAPImetrics))
+        profiler%papiCounts(TauStubLibData%nPAPImetrics))
     TauStubLibData%threadProfilesDB(1)% &
-      profiler%papiCounts=0.0_SDK
+        profiler%papiCounts=0.0_SDK
     ALLOCATE(TauStubLibData%threadProfilesDB(1)% &
-      profiler%tmpCounts(TauStubLibData%nPAPImetrics,2))
+        profiler%tmpCounts(TauStubLibData%nPAPImetrics,2))
     ALLOCATE(TauStubLibData%metricOverhead(TauStubLibData%nPAPImetrics))
   ENDIF
 
@@ -811,14 +811,12 @@ SUBROUTINE EstimateOverhead()
 #endif
   ENDDO
   TauStubLibData%tOverhead=1.e9_SDK* &
-    TauStubLibData%threadProfilesDB(1)%profiler%timer%getTimeReal()/ &
+      TauStubLibData%threadProfilesDB(1)%profiler%timer%getTimeReal()/ &
       REAL(TauStubLibData%threadProfilesDB(1)%profiler%num_calls,SDK)
-  !TauStubLibData%tOverhead=1.e6_SDK*t/ &
-  !  REAL(TauStubLibData%threadProfilesDB(1)%profiler%num_calls,SDK)
 
   IF(TauStubLibData%nPAPImetrics > 0) THEN
     TauStubLibData%metricOverhead= &
-      TauStubLibData%threadProfilesDB(1)%profiler%papiCounts/ &
+        TauStubLibData%threadProfilesDB(1)%profiler%papiCounts/ &
         REAL(TauStubLibData%threadProfilesDB(1)%profiler%num_calls,SDK)
   ENDIF
   TauStubLibData%nProfiles(1)=0

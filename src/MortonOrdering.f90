@@ -247,7 +247,7 @@ SUBROUTINE ZTree_initSingle(node,x1,x2,y1,y2,z1,z2,istt,nsubd)
 
   !Check for valid input
   IF(.NOT.(istt < 0 .OR. x2 < x1 .OR. y2 < y1 .OR. z2 < z1 .OR. &
-    x1 < 1 .OR. y1 < 1 .OR. z1 < 1 .OR. node%istt /= -1)) THEN
+      x1 < 1 .OR. y1 < 1 .OR. z1 < 1 .OR. node%istt /= -1)) THEN
 
     !Assign values to this node based on inputs
     node%istt=istt
@@ -350,7 +350,7 @@ ENDFUNCTION ZTree_addChild
 !> cannot be split.
 !>
 PURE RECURSIVE SUBROUTINE ZTree_Create(thisZTreeNode,x1,x2,y1,y2,z1,z2, &
-  istt,construct)
+    istt,construct)
   CLASS(ZTreeNodeType),INTENT(INOUT) :: thisZTreeNode
   INTEGER(SIK),INTENT(IN) :: x1,x2
   INTEGER(SIK),INTENT(IN) :: y1,y2
@@ -369,7 +369,7 @@ PURE RECURSIVE SUBROUTINE ZTree_Create(thisZTreeNode,x1,x2,y1,y2,z1,z2, &
 
   !Check for valid input
   IF(.NOT.(istt < 0 .OR. x2 < x1 .OR. y2 < y1 .OR. z2 < z1 .OR. &
-    x1 < 1 .OR. y1 < 1 .OR. z1 < 1 .OR. thisZTreeNode%istt /= -1)) THEN
+      x1 < 1 .OR. y1 < 1 .OR. z1 < 1 .OR. thisZTreeNode%istt /= -1)) THEN
 
     !Assign values to this node based on inputs
     thisZTreeNode%istt=istt
@@ -458,7 +458,7 @@ PURE RECURSIVE SUBROUTINE ZTree_Create(thisZTreeNode,x1,x2,y1,y2,z1,z2, &
           DO ix=1,ndx
             id=id+1
             CALL thisZTreeNode%subdomains(id)%init(nxdstt(ix),nxdstp(ix), &
-              nydstt(iy),nydstp(iy),nzdstt(iz),nzdstp(iz),idstt)
+                nydstt(iy),nydstp(iy),nzdstt(iz),nzdstp(iz),idstt)
             idstt=thisZTreeNode%subdomains(id)%istpMax()+1
           ENDDO
         ENDDO
@@ -508,9 +508,9 @@ PURE FUNCTION ZTree_istpMax(thisZTreeNode) RESULT(istp)
   INTEGER(SIK) :: istp
   istp=-1
   IF(.NOT.thisZTreeNode%istt == -1) istp=thisZTreeNode%istt-1+ &
-    (thisZTreeNode%x(2)-thisZTreeNode%x(1)+1)* &
+      (thisZTreeNode%x(2)-thisZTreeNode%x(1)+1)* &
       (thisZTreeNode%y(2)-thisZTreeNode%y(1)+1)* &
-        (thisZTreeNode%z(2)-thisZTreeNode%z(1)+1)
+      (thisZTreeNode%z(2)-thisZTreeNode%z(1)+1)
 ENDFUNCTION ZTree_istpMax
 !
 !-------------------------------------------------------------------------------
@@ -532,18 +532,18 @@ PURE RECURSIVE FUNCTION ZTree_ijk_to_1D(thisZTreeNode,i,j,k) RESULT(index)
 
   index=-1
   IF(thisZTreeNode%x(1) <= i .AND. i <= thisZTreeNode%x(2) .AND. &
-     thisZTreeNode%y(1) <= j .AND. j <= thisZTreeNode%y(2) .AND. &
-     thisZTreeNode%z(1) <= k .AND. k <= thisZTreeNode%z(2)) THEN
+      thisZTreeNode%y(1) <= j .AND. j <= thisZTreeNode%y(2) .AND. &
+      thisZTreeNode%z(1) <= k .AND. k <= thisZTreeNode%z(2)) THEN
     IF(thisZTreeNode%nsubdomains == 0) THEN
       index=thisZTreeNode%istt
     ELSE
       DO id=1,thisZTreeNode%nsubdomains
         IF(thisZTreeNode%subdomains(id)%x(1) <= i .AND. &
-          i <= thisZTreeNode%subdomains(id)%x(2) .AND. &
+            i <= thisZTreeNode%subdomains(id)%x(2) .AND. &
             thisZTreeNode%subdomains(id)%y(1) <= j .AND. &
-              j <= thisZTreeNode%subdomains(id)%y(2) .AND. &
-                thisZTreeNode%subdomains(id)%z(1) <= k .AND. &
-                  k <= thisZTreeNode%subdomains(id)%z(2)) THEN
+            j <= thisZTreeNode%subdomains(id)%y(2) .AND. &
+            thisZTreeNode%subdomains(id)%z(1) <= k .AND. &
+            k <= thisZTreeNode%subdomains(id)%z(2)) THEN
           index=thisZTreeNode%subdomains(id)%ijk2oneD(i,j,k)
           EXIT
         ENDIF
@@ -679,7 +679,7 @@ PURE RECURSIVE SUBROUTINE ZTree_getSubNodeBounds(thisZTreeNode,il,in,istt,istp)
       IF(ndstt <= in .AND. in <= ndstp) THEN
         !The node index lies within this subdomain
         CALL thisZTreeNode%subdomains(id)% &
-          getSubNodeBounds(il-1,in-ndstt+1,istt,istp)
+            getSubNodeBounds(il-1,in-ndstt+1,istt,istp)
         EXIT
       ENDIF
       ndstt=ndstp+1
@@ -720,7 +720,7 @@ RECURSIVE SUBROUTINE ZTree_getSubNodePointer(thisZTreeNode,il,in,subnode)
       IF(ndstt <= in .AND. in <= ndstp) THEN
         !The node index lies within this subdomain
         CALL thisZTreeNode%subdomains(id)% &
-          getSubNodePointer(il-1,in-ndstt+1,subnode)
+            getSubNodePointer(il-1,in-ndstt+1,subnode)
         EXIT
       ENDIF
       ndstt=ndstp+1
@@ -750,7 +750,7 @@ RECURSIVE SUBROUTINE ZTree_getLeafNodePointer(thisZTreeNode,idx,leafnode)
 
   leafnode => NULL()
   IF(thisZTreeNode%istt <= idx .AND. idx <= thisZTreeNode%istp &
-     .AND. idx > 0) THEN
+      .AND. idx > 0) THEN
     IF(idx == thisZTreeNode%istt .AND. idx == thisZTreeNode%istp) THEN
       SELECTTYPE(thisZTreeNode); TYPE IS(ZTreeNodeType)
         leafnode => thisZTreeNode
@@ -764,7 +764,7 @@ RECURSIVE SUBROUTINE ZTree_getLeafNodePointer(thisZTreeNode,idx,leafnode)
         IF(ndstt <= idx .AND. idx <= ndstp) THEN
           !The node index lies within this subdomain
           CALL thisZTreeNode%subdomains(id)% &
-            getLeafNodePointer(idx,leafnode)
+              getLeafNodePointer(idx,leafnode)
           EXIT
         ENDIF
       ENDDO
@@ -805,7 +805,7 @@ SUBROUTINE ZTree_flattenLeafs(thisZTreeNode)
             CALL thisZTreeNode%getSubNodePointer(nlevels-2,ip,pZTreeParent)
             DO idp=1,pZTreeParent%nsubdomains
               IF(pZTreeParent%subdomains(idp)%istt == pZTree%istt .AND. &
-                pZTreeParent%subdomains(idp)%istp == pZTree%istp) &
+                  pZTreeParent%subdomains(idp)%istp == pZTree%istp) &
                 EXIT FindParent
             ENDDO
           ENDDO FindParent
@@ -884,7 +884,7 @@ PURE RECURSIVE SUBROUTINE ZTree_addToLeafs(thisZTreeNode,xdim,ydim,zdim)
       zstt=thisZTreeNode%z(1)
       CALL thisZTreeNode%clear()
       CALL thisZTreeNode%init(xstt,xstt+xdim-1,ystt,ystt+ydim-1, &
-        zstt,zstt+zdim-1,istt)
+          zstt,zstt+zdim-1,istt)
     ELSE
       !This is an intermediate level, so modify the dimensions
       !and update istp then the subdomains. The starting index
@@ -894,8 +894,8 @@ PURE RECURSIVE SUBROUTINE ZTree_addToLeafs(thisZTreeNode,xdim,ydim,zdim)
       thisZTreeNode%z(2)=thisZTreeNode%z(2)*zdim
 
       thisZTreeNode%istp=thisZTreeNode%istt-1+ &
-      (thisZTreeNode%x(2)-thisZTreeNode%x(1)+1)* &
-        (thisZTreeNode%y(2)-thisZTreeNode%y(1)+1)* &
+          (thisZTreeNode%x(2)-thisZTreeNode%x(1)+1)* &
+          (thisZTreeNode%y(2)-thisZTreeNode%y(1)+1)* &
           (thisZTreeNode%z(2)-thisZTreeNode%z(1)+1)
 
       !Update subdomains
@@ -962,18 +962,18 @@ PURE RECURSIVE SUBROUTINE ZTree_Shave(thisZTreeNode,x,y,z)
 !
 !This node is entirely within the range, so clear the node and all subnodes
     IF(x(1) <= thisZTreeNode%x(1) .AND. thisZTreeNode%x(2) <= x(2) .AND. &
-       y(1) <= thisZTreeNode%y(1) .AND. thisZTreeNode%y(2) <= y(2) .AND. &
-       z(1) <= thisZTreeNode%z(1) .AND. thisZTreeNode%z(2) <= z(2)) THEN
+        y(1) <= thisZTreeNode%y(1) .AND. thisZTreeNode%y(2) <= y(2) .AND. &
+        z(1) <= thisZTreeNode%z(1) .AND. thisZTreeNode%z(2) <= z(2)) THEN
 
       CALL thisZTreeNode%clear()
 !
 !Some part of the shave range is within the domain
     ELSEIF((thisZTreeNode%x(1) <= x(1) .AND. x(1) <= thisZTreeNode%x(2)) &
-      .OR. (thisZTreeNode%x(1) <= x(2) .AND. x(2) <= thisZTreeNode%x(2)) &
-      .OR. (thisZTreeNode%y(1) <= y(1) .AND. y(1) <= thisZTreeNode%y(2)) &
-      .OR. (thisZTreeNode%y(1) <= y(2) .AND. y(2) <= thisZTreeNode%y(2)) &
-      .OR. (thisZTreeNode%z(1) <= z(1) .AND. z(1) <= thisZTreeNode%z(2)) &
-      .OR. (thisZTreeNode%z(1) <= z(2) .AND. z(2) <= thisZTreeNode%z(2))) THEN
+        .OR. (thisZTreeNode%x(1) <= x(2) .AND. x(2) <= thisZTreeNode%x(2)) &
+        .OR. (thisZTreeNode%y(1) <= y(1) .AND. y(1) <= thisZTreeNode%y(2)) &
+        .OR. (thisZTreeNode%y(1) <= y(2) .AND. y(2) <= thisZTreeNode%y(2)) &
+        .OR. (thisZTreeNode%z(1) <= z(1) .AND. z(1) <= thisZTreeNode%z(2)) &
+        .OR. (thisZTreeNode%z(1) <= z(2) .AND. z(2) <= thisZTreeNode%z(2))) THEN
 
       !Loop over the subdomains, find those that are also partially
       !within the shave range and shave them
@@ -990,7 +990,7 @@ PURE RECURSIVE SUBROUTINE ZTree_Shave(thisZTreeNode,x,y,z)
         !Shave the subdomain
         idstp=thisZTreeNode%subdomains(id)%istp
         IF(x(1) <= x(2) .AND. y(1) <= y(2) .AND. z(1) <= z(2)) &
-          CALL thisZTreeNode%subdomains(id)%shave(sdx,sdy,sdz)
+            CALL thisZTreeNode%subdomains(id)%shave(sdx,sdy,sdz)
 
         IF(thisZTreeNode%subdomains(id)%istt == -1) THEN
           !If the parenet domain only contain the subdomain which will be cleared,
@@ -1013,9 +1013,9 @@ PURE RECURSIVE SUBROUTINE ZTree_Shave(thisZTreeNode,x,y,z)
               thisZTreeNode%subdomains(id2)%istt=tmpSubDomains(id2)%istt
               thisZTreeNode%subdomains(id2)%istp=tmpSubDomains(id2)%istp
               thisZTreeNode%subdomains(id2)%nsubdomains= &
-                tmpSubDomains(id2)%nsubdomains
+                  tmpSubDomains(id2)%nsubdomains
               thisZTreeNode%subdomains(id2)%subdomains => &
-                tmpSubDomains(id2)%subdomains
+                  tmpSubDomains(id2)%subdomains
               idstt=thisZTreeNode%subdomains(id2)%istp+1
             ENDDO
             DO id2=id+1,thisZTreeNode%nsubdomains+1
@@ -1025,9 +1025,9 @@ PURE RECURSIVE SUBROUTINE ZTree_Shave(thisZTreeNode,x,y,z)
               thisZTreeNode%subdomains(id2-1)%istt=tmpSubDomains(id2)%istt
               thisZTreeNode%subdomains(id2-1)%istp=tmpSubDomains(id2)%istp
               thisZTreeNode%subdomains(id2-1)%nsubdomains= &
-                tmpSubDomains(id2)%nsubdomains
+                  tmpSubDomains(id2)%nsubdomains
               thisZTreeNode%subdomains(id2-1)%subdomains => &
-                tmpSubDomains(id2)%subdomains
+                  tmpSubDomains(id2)%subdomains
               CALL thisZTreeNode%subdomains(id2-1)%renumber(idstt)
               idstt=thisZTreeNode%subdomains(id2-1)%istp+1
             ENDDO
@@ -1043,11 +1043,11 @@ PURE RECURSIVE SUBROUTINE ZTree_Shave(thisZTreeNode,x,y,z)
           !subdomains downstream of this subdomains.
           DO id2=id+1,thisZTreeNode%nsubdomains
             CALL thisZTreeNode%subdomains(id2)% &
-              renumber(thisZTreeNode%subdomains(id2-1)%istp+1)
+                renumber(thisZTreeNode%subdomains(id2-1)%istp+1)
           ENDDO
           !Update the stopping index for this domain
           thisZTreeNode%istp= &
-            thisZTreeNode%subdomains(thisZTreeNode%nsubdomains)%istp
+              thisZTreeNode%subdomains(thisZTreeNode%nsubdomains)%istp
         ENDIF
       ENDDO
     ENDIF
@@ -1102,7 +1102,7 @@ PURE SUBROUTINE ZTree_Partition(thisZTreeNode,npart,ipart,istt,istp)
   istt=-1
   istp=-1
   IF(thisZTreeNode%istt /= -1 .AND. npart > 0 .AND. 0 <= ipart .AND. &
-    ipart <= npart-1) THEN
+      ipart <= npart-1) THEN
 
     !Check for trivial case of 1-to-1 mapping
     IF(npart == thisZTreeNode%istp-thisZTreeNode%istt+1) THEN
@@ -1126,7 +1126,7 @@ PURE SUBROUTINE ZTree_Partition(thisZTreeNode,npart,ipart,istt,istp)
         !A sufficient number of domains has not been found,
         !Try the last level of the tree, only if its completely filled.
         IF(thisZTreeNode%getNDomains(maxLevels) == &
-          thisZTreeNode%istp-thisZTreeNode%istt+1) &
+            thisZTreeNode%istp-thisZTreeNode%istt+1) &
             ndlevel=thisZTreeNode%istp-thisZTreeNode%istt+1
       ENDIF
 
@@ -1155,7 +1155,7 @@ PURE SUBROUTINE ZTree_Partition(thisZTreeNode,npart,ipart,istt,istp)
 
           !Check if there is sufficient work yet over the given domains
           lenoughWork=(avgNperP < REAL(ipstp-ipstt+1,SRK) .OR. &
-            (avgNperP .APPROXEQA. REAL(ipstp-ipstt+1,SRK)))
+              (avgNperP .APPROXEQA. REAL(ipstp-ipstt+1,SRK)))
 
           !Increment to the next partition if we have enough work for it,
           !or if there are an equal # of partitions and nodes remaining

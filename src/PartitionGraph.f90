@@ -231,12 +231,12 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       !Must have atleast 1 vertex
       IF(nvert < 1) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - invalid number of vertices!')
+            ' - invalid number of vertices!')
         RETURN
       ENDIF
     ELSE
       CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - nvert is required for PartitionGraph initialization!')
+          ' - nvert is required for PartitionGraph initialization!')
       RETURN
     ENDIF
 
@@ -245,11 +245,11 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       CALL params%get('PartitionGraph -> nGroups', nGroups)
       !Must partition into at least 1 group
       IF(nGroups < 1 .OR. nGroups > nvert) &
-        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
           ' - invalid number of partitioning groups!')
     ELSE
       CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - nGroups is required for PartitionGraph initialization!')
+          ' - nGroups is required for PartitionGraph initialization!')
     ENDIF
 
     !Check neighbor matrix
@@ -257,7 +257,7 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       CALL params%get('PartitionGraph -> neigh', neigh)
     ELSE
       CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - neigh is required for PartitionGraph initialization!')
+          ' - neigh is required for PartitionGraph initialization!')
     ENDIF
 
     !Check partitioning algorithm list
@@ -267,7 +267,7 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       nPart=SIZE(partAlgs)
     ELSE
       CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - Algorithms is required for PartitionGraph initialization!')
+          ' - Algorithms is required for PartitionGraph initialization!')
     ENDIF
 
     !If more than 1 algorithm there must be an input condition list
@@ -276,13 +276,13 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
         CALL params%get('PartitionGraph -> Conditions', cond)
       ELSE
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-          ' - Conditions must be specified if more than 1 algorithm is'// &
+            ' - Conditions must be specified if more than 1 algorithm is'// &
           ' to be used!')
       ENDIF
     ENDIF
   ELSE
     CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-      ' - partition graph is already initialized!')
+        ' - partition graph is already initialized!')
   ENDIF
 
   !If no errors then check validity of input and optional inputs
@@ -292,11 +292,11 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
     IF(SIZE(neigh,DIM=2) == nvert) THEN
       IF(ANY(neigh < 0) .OR. ANY(neigh > nvert)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-          ' - invalid neighbor matrix!')
+            ' - invalid neighbor matrix!')
       ENDIF
     ELSE
       CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-        ' - neighbor matrix is incorrect size!')
+          ' - neighbor matrix is incorrect size!')
     ENDIF
 
     !Check the condition list
@@ -309,16 +309,16 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
             pcond=cond(ipart-1)
             IF(pcond <= cond(ipart)) THEN
               CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-                ' - partitioning algorithm size conditions are invalid!')
+                  ' - partitioning algorithm size conditions are invalid!')
             ENDIF
           ENDDO !ipart
         ELSE
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - partitioning algorithm size conditions are invalid (< 0)!')
+              ' - partitioning algorithm size conditions are invalid (< 0)!')
         ENDIF
       ELSE
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-          ' - Wrong number of conditions specified!')
+            ' - Wrong number of conditions specified!')
       ENDIF
     ENDIF
 
@@ -327,14 +327,14 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       CALL params%get('PartitionGraph -> Refinement', refAlgNames)
       IF((SIZE(refAlgNames) /= 1) .AND. (SIZE(refAlgNames) /= nPart)) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-          ' - invalid number of refinement algorithms specified!')
+            ' - invalid number of refinement algorithms specified!')
       ENDIF
     ENDIF
     !Check vertex weight factor (optional)
     IF(params%has('PartitionGraph -> wtfactor')) THEN
       CALL params%get('PartitionGraph -> wtfactor', wtfactor)
       IF(wtfactor < 0.0_SRK) &
-        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
           ' - invalid vertex weighting factor, value must be positive!')
     ELSE
       wtfactor=1.0_SRK
@@ -347,11 +347,11 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
         !Check weights are valid (>0)
         IF(ANY(wts < 0)) THEN
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - vertex weights must be > 0!')
+              ' - vertex weights must be > 0!')
         ENDIF
       ELSE
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-          ' - input vertex weights array is incorrect size!')
+            ' - input vertex weights array is incorrect size!')
       ENDIF
     ELSE
       ALLOCATE(wts(nvert))
@@ -363,15 +363,15 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       CALL params%get('PartitionGraph -> neighwts', neighwts)
       !Check it is the correct size
       IF((SIZE(neighwts, DIM=1) == maxneigh) .AND. &
-         (SIZE(neighwts,DIM=2) == nvert)) THEN
+          (SIZE(neighwts,DIM=2) == nvert)) THEN
         !Check weights are valid (>0)
         IF(ANY(neighwts < 0)) THEN
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - edge weights must be > 0!')
+              ' - edge weights must be > 0!')
         ENDIF
       ELSE
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-          ' - input edge weights matrix is incorrect size!')
+            ' - input edge weights matrix is incorrect size!')
       ENDIF
     ELSE
       ALLOCATE(neighwts(maxneigh, nvert))
@@ -387,7 +387,7 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       dim=SIZE(coord,DIM=1)
       IF(SIZE(coord,DIM=2) /= nvert) THEN
         CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-          ' - coordinate matrix is incorrect size!')
+            ' - coordinate matrix is incorrect size!')
       ENDIF
     ENDIF
   ENDIF
@@ -429,14 +429,14 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
 #else
         CASE('RECURSIVE SPECTRAL BISECTION')
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
+              ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
         CASE('RECURSIVE INERTIAL BISECTION')
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
+              ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
 #endif
         CASE DEFAULT
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - Partitioning algorithm "'//TRIM(algName)//'" not recognized!')
+              ' - Partitioning algorithm "'//TRIM(algName)//'" not recognized!')
       ENDSELECT
     ENDDO !ipart
 
@@ -461,7 +461,7 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
           thisGraph%refineAlgArry(ipart)%r => SpatialKernighanLin_PartitionGraph
         CASE DEFAULT
           CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-            ' - Refinement algorithm "'//TRIM(algName)//'" not recognized!')
+              ' - Refinement algorithm "'//TRIM(algName)//'" not recognized!')
       ENDSELECT
       ipart=ipart+1
     ENDDO !ipart
@@ -650,7 +650,7 @@ RECURSIVE SUBROUTINE partition_PartitionGraph(thisGraph)
 
     !Call the correct partitioning algorithm
     IF(ASSOCIATED(thisGraph%partitionAlgArry(corAlg)%p)) &
-      CALL thisGraph%partitionAlgArry(corAlg)%p(thisGraph)
+        CALL thisGraph%partitionAlgArry(corAlg)%p(thisGraph)
   ELSE
     !Single group graph...it will contain all the vertices
     ALLOCATE(thisGraph%groupIdx(2))
@@ -691,7 +691,7 @@ SUBROUTINE refine_PartitionGraph(thisGraph,L1,L2)
 
   !Call the correct refminement algorithm
   IF(ASSOCIATED(thisGraph%refineAlgArry(corAlg)%r)) &
-     CALL thisGraph%refineAlgArry(corAlg)%r(thisGraph,L1,L2)
+      CALL thisGraph%refineAlgArry(corAlg)%r(thisGraph,L1,L2)
 ENDSUBROUTINE refine_PartitionGraph
 !
 !-------------------------------------------------------------------------------
@@ -726,7 +726,7 @@ RECURSIVE SUBROUTINE RecursiveExpansionBisection(thisGraph)
 
   IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
     CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-      ' - cannot use REB method to partition without coordinates!')
+        ' - cannot use REB method to partition without coordinates!')
   ELSE
     !Initial guess for group sizes
     nvert=thisGraph%nvert
@@ -790,8 +790,8 @@ RECURSIVE SUBROUTINE RecursiveExpansionBisection(thisGraph)
             DO kn=1,thisGraph%maxneigh
               kv=thisGraph%neigh(kn,jv)
               IF((kv /= 0) .AND. &
-                ANY(kv == thisGraph%neigh(1:thisGraph%maxneigh,soiv))) &
-                count=count+1
+                  ANY(kv == thisGraph%neigh(1:thisGraph%maxneigh,soiv))) &
+                  count=count+1
             ENDDO !kn
           ENDIF
           IF(count >= 2) THEN
@@ -1072,7 +1072,7 @@ RECURSIVE SUBROUTINE RecursiveSpectralBisection(thisGraph)
   DEALLOCATE(Order)
 #else
   CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-    ' - must recompile with PETSc and SLEPc to use RSB!')
+      ' - must recompile with PETSc and SLEPc to use RSB!')
 #endif
 ENDSUBROUTINE RecursiveSpectralBisection
 !
@@ -1095,7 +1095,7 @@ RECURSIVE SUBROUTINE RecursiveInertialBisection(thisGraph)
 
   IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
     CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-      ' - cannot use REB method to partition without coordinates!')
+        ' - cannot use REB method to partition without coordinates!')
   ELSE
     !Transform the graph coordinates so the origin is at weighted centroid
     dim=thisGraph%dim
@@ -1194,7 +1194,7 @@ RECURSIVE SUBROUTINE RecursiveInertialBisection(thisGraph)
   ENDIF
 #else
   CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-    ' - must recompile with PETSc and SLEPc to use RIB!')
+      ' - must recompile with PETSc and SLEPc to use RIB!')
 #endif
 ENDSUBROUTINE RecursiveInertialBisection
 !
@@ -1262,10 +1262,10 @@ SUBROUTINE detSoI(thisGraph,iv,linL1,r,Scalc,S,SI,SE)
           kv=thisGraph%neigh(kn,jv)
           !Check 2nd-degree neighbor exists, and is not a 1st degree neighbor
           IF((kv /= 0) .AND. (kv /= iv) .AND. &
-             .NOT. ANY(kv == S(1:maxEl,iv))) THEN
+              .NOT. ANY(kv == S(1:maxEl,iv))) THEN
             !Calculate distance to this vertex
             cr=distance(thisGraph%coord(1:thisGraph%dim,iv), &
-                        thisGraph%coord(1:thisGraph%dim,kv))
+                thisGraph%coord(1:thisGraph%dim,kv))
             IF(cr .APPROXLE. r) THEN
               csi=csi+1
               S(csi,iv)=kv
@@ -1492,7 +1492,7 @@ SUBROUTINE SpatialKernighanLin_PartitionGraph(thisGraph,L1,L2)
 
   IF(.NOT. ALLOCATED(thisGraph%coord)) THEN
     CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-      ' - cannot use SKL method to refine without coordinates!')
+        ' - cannot use SKL method to refine without coordinates!')
   ELSE
     !Allocate memory
     nneigh=thisGraph%maxneigh
@@ -1792,7 +1792,7 @@ SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,mmr,srms,ecut,comm,maxnsr)
             !Accumulate communication between groups
             neighGrp=grpMap(ineigh)
             IF((neighGrp /= ig) .AND. &
-               (.NOT. ANY(neighGrp == uniqueGrps))) THEN
+                (.NOT. ANY(neighGrp == uniqueGrps))) THEN
               uniqueGrps(in)=neighGrp
               comm=comm+thisGraph%neighwts(in,ivert)
             ENDIF
@@ -1803,7 +1803,7 @@ SUBROUTINE calcDecompMetrics_PartitionGraph(thisGraph,mmr,srms,ecut,comm,maxnsr)
     ecut=0.5_SRK*ecut
   ELSE
     CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-      ' - graph is not partitioned!')
+        ' - graph is not partitioned!')
   ENDIF
   IF(PRESENT(maxnsr)) THEN
     ENSURE((maxnsr > 0.0_SRK) .AND. (maxnsr <= 1.0_SRK))
@@ -1893,7 +1893,7 @@ SUBROUTINE getEigenVecs(A,lsmall,numvecs,V)
   CALL EPSDestroy(eps,ierr)
 #else
   CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-    ' - eigenvector solves only available through SLEPC!')
+      ' - eigenvector solves only available through SLEPC!')
 #endif
 ENDSUBROUTINE getEigenVecs
 !
@@ -2007,10 +2007,10 @@ RECURSIVE SUBROUTINE recursiveEigenOrder(evecs, Order, lpos, dot)
           !Use dot-product approach on eigen-vectors
           IF(d(iv) .APPROXGE. 0.0_SRK) THEN
             CALL recursiveEigenOrder(evecs(2:numvecs),Order(iv:iv+numeq),.TRUE., &
-              dot(1:dim, iv:iv+numeq))
+                dot(1:dim, iv:iv+numeq))
           ELSE
             CALL recursiveEigenOrder(evecs(2:numvecs),Order(iv:iv+numeq),.FALSE., &
-              dot(1:dim, iv:iv+numeq))
+                dot(1:dim, iv:iv+numeq))
           ENDIF
         ELSE
           !Get only the range of the eigenvectors which is needed

@@ -188,122 +188,119 @@ PURE SUBROUTINE sgemm_all(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc)
   ENDIF
   !Input argument check
   IF(m > 0 .AND. n > 0 .AND. k > 0 .AND. ldc >= MAX(1,m)) THEN
-  !.AND. &
-  IF (  lda >= MAX(1,amaxval) .AND. ldb >= MAX(1,bmaxval) .AND. &
-      .NOT.(alpha == 0.0_SSK .AND. beta == 1.0_SSK)) THEN
-  !.AND. &
-   IF(     (transa == 't' .OR. transa == 'T' .OR. transa == 'c' .OR. transa == 'C' .OR. &
+    IF (  lda >= MAX(1,amaxval) .AND. ldb >= MAX(1,bmaxval) .AND. &
+        .NOT.(alpha == 0.0_SSK .AND. beta == 1.0_SSK)) THEN
+      IF(     (transa == 't' .OR. transa == 'T' .OR. transa == 'c' .OR. transa == 'C' .OR. &
           transa == 'n' .OR. transa == 'N')) THEN
-   !.AND.
-   IF (transb == 't' .OR. transb == 'T' &
+        IF (transb == 't' .OR. transb == 'T' &
             .OR. transb == 'c' .OR. transb == 'C' .OR. transb == 'n' .OR. transb == 'N') THEN
 
-    !Compute beta*C for alpha=0. C := beta*C
-    IF(alpha == 0.0_SSK) THEN
-      !All entries become zero if alpha and beta are 0.
-      IF(beta == 0.0_SSK) THEN
-        !Possibly increase the IF branch to check n and m individually,
-        !and accelerate individually
-        IF(n*m > 10000) THEN
-          DO j=1,n
-            DO i=1,m
-              c(i,j)=0.0_SSK
-            ENDDO
-          ENDDO
-        ELSE
-          c(1:m,1:n)=0.0_SSK
-        ENDIF
-      ELSE
-        IF(n*m > 10000) THEN
-          DO j=1,n
-            DO i=1,m
-              c(i,j)=beta*c(i,j)
-            ENDDO
-          ENDDO
-        ELSE
-          c(1:m,1:n)=beta*c(1:m,1:n)
-        ENDIF
-      ENDIF
-    !Alpha /= 0.
-    ELSE
-      IF(.NOT.ltransa) THEN
-        !Operation 1, untransposed. Form  C := alpha*A*B + beta*C.
-        IF(.NOT.ltransb) THEN
-          DO j=1,n
+          !Compute beta*C for alpha=0. C := beta*C
+          IF(alpha == 0.0_SSK) THEN
+            !All entries become zero if alpha and beta are 0.
             IF(beta == 0.0_SSK) THEN
-              DO i=1,m
-                c(i,j)=0.0_SSK
-              ENDDO
-            ELSEIF(beta /= 1.0_SSK) THEN
-              DO i=1,m
-                c(i,j)=beta*c(i,j)
-              ENDDO
-            ENDIF
-            DO l=1,k
-              IF(b(l,j) /= 0.0_SSK) THEN
-                tmp=alpha*b(l,j)
-                DO i=1,m
-                  c(i,j)=c(i,j)+tmp*a(i,l)
+              !Possibly increase the IF branch to check n and m individually,
+              !and accelerate individually
+              IF(n*m > 10000) THEN
+                DO j=1,n
+                  DO i=1,m
+                    c(i,j)=0.0_SSK
+                  ENDDO
                 ENDDO
+              ELSE
+                c(1:m,1:n)=0.0_SSK
               ENDIF
-            ENDDO
-          ENDDO
-        !Operation 2, B transposed. Form  C := alpha*A*B^T + beta*C.
-        ELSE
-          DO j=1,n
-            IF(beta == 0.0_SSK) THEN
-              DO i=1,m
-                c(i,j)=0.0_SSK
-              ENDDO
             ELSE
-              DO i=1,m
-                c(i,j)=beta*c(i,j)
-              ENDDO
+              IF(n*m > 10000) THEN
+                DO j=1,n
+                  DO i=1,m
+                    c(i,j)=beta*c(i,j)
+                  ENDDO
+                ENDDO
+              ELSE
+                c(1:m,1:n)=beta*c(1:m,1:n)
+              ENDIF
             ENDIF
-            DO l=1,k
-              IF(b(j,l) /= 0.0_SSK) THEN
-                tmp=alpha*b(j,l)
-                DO i=1,m
-                  c(i,j)=c(i,j)+tmp*a(i,l)
+          !Alpha /= 0.
+          ELSE
+            IF(.NOT.ltransa) THEN
+              !Operation 1, untransposed. Form  C := alpha*A*B + beta*C.
+              IF(.NOT.ltransb) THEN
+                DO j=1,n
+                  IF(beta == 0.0_SSK) THEN
+                    DO i=1,m
+                      c(i,j)=0.0_SSK
+                    ENDDO
+                  ELSEIF(beta /= 1.0_SSK) THEN
+                    DO i=1,m
+                      c(i,j)=beta*c(i,j)
+                    ENDDO
+                  ENDIF
+                  DO l=1,k
+                    IF(b(l,j) /= 0.0_SSK) THEN
+                      tmp=alpha*b(l,j)
+                      DO i=1,m
+                        c(i,j)=c(i,j)+tmp*a(i,l)
+                      ENDDO
+                    ENDIF
+                  ENDDO
+                ENDDO
+              !Operation 2, B transposed. Form  C := alpha*A*B^T + beta*C.
+              ELSE
+                DO j=1,n
+                  IF(beta == 0.0_SSK) THEN
+                    DO i=1,m
+                      c(i,j)=0.0_SSK
+                    ENDDO
+                  ELSE
+                    DO i=1,m
+                      c(i,j)=beta*c(i,j)
+                    ENDDO
+                  ENDIF
+                  DO l=1,k
+                    IF(b(j,l) /= 0.0_SSK) THEN
+                      tmp=alpha*b(j,l)
+                      DO i=1,m
+                        c(i,j)=c(i,j)+tmp*a(i,l)
+                      ENDDO
+                    ENDIF
+                  ENDDO
                 ENDDO
               ENDIF
-            ENDDO
-          ENDDO
-        ENDIF
-      ELSE
-        !Operation 3, A transposed. Form  C := alpha*A^T*B + beta*C.
-        IF(.NOT.ltransb) THEN
-          DO j=1,n
-            DO i=1,m
-              tmp=0.0_SSK
-              DO l=1,k
-                tmp=tmp+a(l,i)*b(l,j)
-              ENDDO
-              IF(beta == 0.0_SSK) THEN
-                c(i,j)=alpha*tmp
+            ELSE
+              !Operation 3, A transposed. Form  C := alpha*A^T*B + beta*C.
+              IF(.NOT.ltransb) THEN
+                DO j=1,n
+                  DO i=1,m
+                    tmp=0.0_SSK
+                    DO l=1,k
+                      tmp=tmp+a(l,i)*b(l,j)
+                    ENDDO
+                    IF(beta == 0.0_SSK) THEN
+                      c(i,j)=alpha*tmp
+                    ELSE
+                      c(i,j)=alpha*tmp+beta*c(i,j)
+                    ENDIF
+                  ENDDO
+                ENDDO
+              !Operation 4, A & B transposed. Form  C := alpha*A^T*B^T + beta*C.
               ELSE
-                c(i,j)=alpha*tmp+beta*c(i,j)
+                DO j=1,n
+                  DO i=1,m
+                    tmp=0.0_SSK
+                    DO l=1,k
+                      tmp=tmp+a(l,i)*b(j,l)
+                    ENDDO
+                    IF(beta == 0.0_SSK) THEN
+                      c(i,j)=alpha*tmp
+                    ELSE
+                      c(i,j)=alpha*tmp+beta*c(i,j)
+                    ENDIF
+                  ENDDO
+                ENDDO
               ENDIF
-            ENDDO
-          ENDDO
-        !Operation 4, A & B transposed. Form  C := alpha*A^T*B^T + beta*C.
-        ELSE
-          DO j=1,n
-            DO i=1,m
-              tmp=0.0_SSK
-              DO l=1,k
-                tmp=tmp+a(l,i)*b(j,l)
-              ENDDO
-              IF(beta == 0.0_SSK) THEN
-                c(i,j)=alpha*tmp
-              ELSE
-                c(i,j)=alpha*tmp+beta*c(i,j)
-              ENDIF
-            ENDDO
-          ENDDO
-        ENDIF
-      ENDIF
-    ENDIF
+            ENDIF
+          ENDIF
           ENDIF
       ENDIF
   ENDIF
@@ -758,11 +755,11 @@ PURE SUBROUTINE dgemm_all(transa,transb,m,n,k,alpha,a,lda,b,ldb,beta,c,ldc)
   ENDIF
   !Input argument check
   IF(m > 0 .AND. n > 0 .AND. k > 0 .AND. ldc >= MAX(1,m) .AND. &
-    lda >= MAX(1,amaxval) .AND. ldb >= MAX(1,bmaxval) .AND. &
+      lda >= MAX(1,amaxval) .AND. ldb >= MAX(1,bmaxval) .AND. &
       .NOT.(alpha == 0.0_SSK .AND. beta == 1.0_SSK) .AND. &
-        (transa == 't' .OR. transa == 'T' .OR. transa == 'c' .OR. transa == 'C' .OR. &
-          transa == 'n' .OR. transa == 'N') .AND. (transb == 't' .OR. transb == 'T' &
-            .OR. transb == 'c' .OR. transb == 'C' .OR. transb == 'n' .OR. transb == 'N')) THEN
+      (transa == 't' .OR. transa == 'T' .OR. transa == 'c' .OR. transa == 'C' .OR. &
+      transa == 'n' .OR. transa == 'N') .AND. (transb == 't' .OR. transb == 'T' &
+      .OR. transb == 'c' .OR. transb == 'C' .OR. transb == 'n' .OR. transb == 'N')) THEN
 
     !Compute beta*C for alpha=0. C := beta*C
     IF(alpha == 0.0_SSK) THEN

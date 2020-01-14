@@ -197,18 +197,18 @@ SUBROUTINE init_CheckPointFileType(thisCPF,myBaseFile)
           myDA32File => myBaseFile
         ELSE
            CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-            'The passed DA32FileType must be initialized!')
+               'The passed DA32FileType must be initialized!')
         ENDIF
       TYPE IS(HDF5FileType)
         IF(myBaseFile%isInit) THEN
           myHDF5File => myBaseFile
         ELSE
           CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-            'The passed HDF5FileType must be initialized!')
+              'The passed HDF5FileType must be initialized!')
         ENDIF
       CLASS DEFAULT
         CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-          'The passed base file type must be either a DA32FileType '// &
+            'The passed base file type must be either a DA32FileType '// &
             'or HDF5FileType!')
     ENDSELECT
 
@@ -227,7 +227,7 @@ SUBROUTINE init_CheckPointFileType(thisCPF,myBaseFile)
     ENDIF
   ELSE
     CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-      'The passed base file type must be associated!')
+        'The passed base file type must be associated!')
   ENDIF
 ENDSUBROUTINE init_CheckPointFileType
 !
@@ -245,7 +245,7 @@ SUBROUTINE setInterruptFile(thisCPF,fname)
     thisCPF%interrupt_file=fname
   ELSE
     CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot set interrupt file for checkpoint file if it '// &
+        'Cannot set interrupt file for checkpoint file if it '// &
         'is not initialized!')
   ENDIF
 ENDSUBROUTINE setInterruptFile
@@ -264,7 +264,7 @@ SUBROUTINE setExportOnInterrupt(thisCPF,bool)
     thisCPF%export_on_interrupt=bool
   ELSE
     CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot "set export on interrupt" for checkpoint file if it '// &
+        'Cannot "set export on interrupt" for checkpoint file if it '// &
         'is not initialized!')
   ENDIF
 ENDSUBROUTINE setExportOnInterrupt
@@ -279,7 +279,7 @@ SUBROUTINE checkForFileInterrupt(thisCPF)
   IF(thisCPF%export_on_interrupt .AND. thisCPF%isInit) THEN
     file_exists=.FALSE.
     IF(LEN_TRIM(thisCPF%interrupt_file) > 0) &
-      INQUIRE(FILE=TRIM(thisCPF%interrupt_file),EXIST=file_exists)
+        INQUIRE(FILE=TRIM(thisCPF%interrupt_file),EXIST=file_exists)
     IF(file_exists) THEN
       thisCPF%interrupted=.TRUE.
       CALL thisCPF%exportFile()
@@ -333,7 +333,7 @@ SUBROUTINE fopen_CheckpointFileType(file)
     CALL file%basefile%fopen()
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot open checkpoint file if it is not initialized!')
+        'Cannot open checkpoint file if it is not initialized!')
   ENDIF
 ENDSUBROUTINE fopen_CheckpointFileType
 !
@@ -348,7 +348,7 @@ SUBROUTINE fclose_CheckpointFileType(file)
     CALL file%basefile%fclose()
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot close checkpoint file if it is not initialized!')
+        'Cannot close checkpoint file if it is not initialized!')
   ENDIF
 ENDSUBROUTINE fclose_CheckpointFileType
 !
@@ -363,7 +363,7 @@ SUBROUTINE fdelete_CheckpointFileType(file)
     CALL file%basefile%fdelete()
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot delete checkpoint file if it is not initialized!')
+        'Cannot delete checkpoint file if it is not initialized!')
   ENDIF
 ENDSUBROUTINE fdelete_CheckpointFileType
 !
@@ -381,7 +381,7 @@ SUBROUTINE setFilePath_CheckpointFileType(file,pathstr)
     file%pathlen=LEN_TRIM(file%basefile%getFilePath())
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot change path of checkpoint file if it is not initialized!')
+        'Cannot change path of checkpoint file if it is not initialized!')
   ENDIF
 ENDSUBROUTINE setFilePath_CheckpointFileType
 !
@@ -399,7 +399,7 @@ SUBROUTINE setFileName_CheckpointFileType(file,namestr)
     file%fnamelen=LEN_TRIM(file%basefile%getFileName())
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot change name of checkpoint file if it is not initialized!')
+        'Cannot change name of checkpoint file if it is not initialized!')
   ENDIF
 ENDSUBROUTINE setFileName_CheckpointFileType
 !
@@ -417,7 +417,7 @@ SUBROUTINE setFileExt_CheckpointFileType(file,extstr)
     file%extlen=LEN_TRIM(file%basefile%getFileExt())
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-     'Cannot change extension of checkpoint file if it is not initialized!')
+        'Cannot change extension of checkpoint file if it is not initialized!')
   ENDIF
 ENDSUBROUTINE setFileExt_CheckpointFileType
 !
@@ -511,7 +511,7 @@ SUBROUTINE setEOFstat_CheckpointFileType(file,bool)
     CALL file%basefile%setEOFstat(bool)
   ELSE
     CALL file%e%raiseError(modName//'::'//myName// &
-      ' - EOF status cannot be changed for uninitialized checkpoint file!')
+        ' - EOF status cannot be changed for uninitialized checkpoint file!')
   ENDIF
 ENDSUBROUTINE setEOFstat_CheckpointFileType
 !
@@ -530,7 +530,7 @@ SUBROUTINE setOpenStat_CheckpointFileType(file,bool)
     CALL file%basefile%setOpenStat(bool)
   ELSE
     CALL file%e%raiseError(modName//'::'//myName// &
-      ' - Open status cannot be changed for uninitialized checkpoint file!')
+        ' - Open status cannot be changed for uninitialized checkpoint file!')
   ENDIF
 ENDSUBROUTINE setOpenStat_CheckpointFileType
 !
@@ -548,7 +548,7 @@ SUBROUTINE setReadStat_CheckpointFileType(file,bool)
     CALL file%basefile%setReadstat(bool)
   ELSE
     CALL file%e%raiseError(modName//'::'//myName// &
-      ' - Read status cannot be changed for uninitialized checkpoint file!')
+        ' - Read status cannot be changed for uninitialized checkpoint file!')
   ENDIF
 ENDSUBROUTINE setReadStat_CheckpointFileType
 !
@@ -566,7 +566,7 @@ SUBROUTINE setWriteStat_CheckpointFileType(file,bool)
     CALL file%basefile%setWritestat(bool)
   ELSE
     CALL file%e%raiseError(modName//'::'//myName// &
-     ' - Write status cannot be changed for uninitialized checkpoint file!')
+        ' - Write status cannot be changed for uninitialized checkpoint file!')
   ENDIF
 ENDSUBROUTINE setWriteStat_CheckpointFileType
 !

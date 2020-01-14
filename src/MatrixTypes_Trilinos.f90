@@ -122,19 +122,19 @@ SUBROUTINE init_TrilinosMatrixParam(matrix,Params)
   IF(.NOT. matrix%isInit) THEN
     IF(n < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of rows (n) must be '// &
+          modName//'::'//myName//' - Number of rows (n) must be '// &
           'greater than 0!')
     ELSEIF(nlocal < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of local rows (nlocal) must '// &
+          modName//'::'//myName//' - Number of local rows (nlocal) must '// &
           'be greater than 0!')
     ELSEIF(rnnz < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of non-zero elements (dnnz,onnz) '// &
+          modName//'::'//myName//' - Number of non-zero elements (dnnz,onnz) '// &
           'must be greater than 0!')
     ELSEIF(isSym) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Symmetric matrices are not supported.')
+          modName//'::'//myName//' - Symmetric matrices are not supported.')
     ELSE
       matrix%isInit=.TRUE.
       matrix%n=n
@@ -157,13 +157,13 @@ SUBROUTINE init_TrilinosMatrixParam(matrix,Params)
 
       IF (matType /= SPARSE) THEN
         CALL eMatrixType%raiseError('Invalid matrix type in '// &
-          modName//'::'//myName//' - Only sparse square '// &
-          'matrices are available with Trilinos.')
+            modName//'::'//myName//' - Only sparse square '// &
+            'matrices are available with Trilinos.')
       ENDIF
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - MatrixType already initialized')
+        modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
 ENDSUBROUTINE init_TrilinosMatrixParam
 !
@@ -211,7 +211,7 @@ SUBROUTINE set_TrilinosMatrixType(matrix,i,j,setval)
     ! the values from the previous row.  Do not mix calling set and setRow.
     REQUIRE(.NOT.matrix%setByRow)
     IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
-      .AND. ((j > 0) .AND. (i > 0))) THEN
+        .AND. ((j > 0) .AND. (i > 0))) THEN
       IF(matrix%isAssembled) CALL ForPETRA_MatReset(matrix%A)
       IF(i==matrix%currow) THEN
         matrix%ncol=matrix%ncol+1
@@ -278,7 +278,7 @@ SUBROUTINE setShape_TrilinosMatrixType(matrix,i,j,setval)
 
   IF(matrix%isInit) THEN
     IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
-      .AND. ((j > 0) .AND. (i > 0))) THEN
+        .AND. ((j > 0) .AND. (i > 0))) THEN
       IF(i==matrix%currow) THEN
         matrix%ncol=matrix%ncol+1
         matrix%jloc(matrix%ncol)=j
@@ -350,8 +350,8 @@ SUBROUTINE assemble_TrilinosMatrixType(thisMatrix,ierr)
   CHARACTER(LEN=*),PARAMETER :: myName='assemble_TrilinosMatrixType'
   IF(PRESENT(ierr)) ierr=-1
   CALL eMatrixType%raiseFatalError('Incorrect call to '// &
-     modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-     'need to recompile with Trilinos enabled to use this feature.')
+      modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+      'need to recompile with Trilinos enabled to use this feature.')
 #endif
 ENDSUBROUTINE assemble_TrilinosMatrixType
 !
@@ -364,7 +364,7 @@ SUBROUTINE transpose_TrilinosMatrixType(matrix)
   CHARACTER(LEN=*),PARAMETER :: myName='transpose_TrilinosMatrixType'
   CLASS(TrilinosMatrixType),INTENT(INOUT) :: matrix
   CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
-    ' - routine is not implemented!')
+      ' - routine is not implemented!')
 ENDSUBROUTINE transpose_TrilinosMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -403,7 +403,7 @@ SUBROUTINE matvec_TrilinosVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_
 
   IF(.NOT. thisMatrix%isInit) THEN
     CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-      "Matrix not initialized.")
+        "Matrix not initialized.")
     RETURN
   ENDIF
   t='n'

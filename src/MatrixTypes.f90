@@ -183,7 +183,7 @@ SUBROUTINE MatrixFactory(matrix, params)
 
   IF(ASSOCIATED(matrix)) THEN
     CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-      "Matrix pointer already allocated")
+        "Matrix pointer already allocated")
     RETURN
   ENDIF
 
@@ -201,7 +201,7 @@ SUBROUTINE MatrixFactory(matrix, params)
     CALL params%get("MatrixType->matType", matType)
   ELSE
     CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-      "no matrix TYPE specified")
+        "no matrix TYPE specified")
   ENDIF
 
   SELECTCASE(engine)
@@ -217,7 +217,7 @@ SUBROUTINE MatrixFactory(matrix, params)
           ALLOCATE(TriDiagMatrixType :: matrix)
         CASE DEFAULT
           CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-            "Unrecognized matrix structure requested")
+              "Unrecognized matrix structure requested")
       ENDSELECT
     CASE(VM_TRILINOS)
       CALL DistributedMatrixFactory(dist_p, params)
@@ -229,7 +229,7 @@ SUBROUTINE MatrixFactory(matrix, params)
       RETURN
     CASE DEFAULT
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-        "Unsupported matrix engine requested.")
+          "Unsupported matrix engine requested.")
   ENDSELECT
 
   CALL matrix%init(params)
@@ -256,7 +256,7 @@ SUBROUTINE DistributedMatrixFactory(matrix, params)
 
   IF(ASSOCIATED(matrix)) THEN
     CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-      "Matrix pointer already allocated")
+        "Matrix pointer already allocated")
     RETURN
   ENDIF
 
@@ -277,11 +277,11 @@ SUBROUTINE DistributedMatrixFactory(matrix, params)
         ALLOCATE(TrilinosMatrixType :: matrix)
       ELSE
         CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "Trilinos matrix should be sparse")
+            "Trilinos matrix should be sparse")
       ENDIF
 #else
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-        "Futility was not compiled with Trilinos support. Recompile "// &
+          "Futility was not compiled with Trilinos support. Recompile "// &
         "with Trilinos to create PETSc matrices.")
 #endif
     CASE(VM_PETSC)
@@ -290,16 +290,16 @@ SUBROUTINE DistributedMatrixFactory(matrix, params)
         ALLOCATE(PETScMatrixType :: matrix)
       ELSE
         CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "PETSc matrix should be sparse")
+            "PETSc matrix should be sparse")
       ENDIF
 #else
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-        "Futility was not compiled with PETSc support. Recompile with "// &
+          "Futility was not compiled with PETSc support. Recompile with "// &
         "PETSc to create PETSc matrices.")
 #endif
     CASE DEFAULT
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-        "Unsupported distributed matrix engine requested.")
+          "Unsupported distributed matrix engine requested.")
   ENDSELECT
 
   CALL matrix%init(params)
@@ -326,13 +326,13 @@ SUBROUTINE MatrixResemble(dest, source, params)
 
   IF(.NOT. ASSOCIATED(source)) THEN
     CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-      "Source matrix is not associated")
+        "Source matrix is not associated")
     RETURN
   ENDIF
 
   IF(ASSOCIATED(dest)) THEN
     CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-      "Destination pointer is already associated")
+        "Destination pointer is already associated")
     RETURN
   ENDIF
 
@@ -355,7 +355,7 @@ SUBROUTINE MatrixResemble(dest, source, params)
 #endif
     CLASS DEFAULT
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-        "Unsupported source matrix type")
+          "Unsupported source matrix type")
   ENDSELECT
   CALL dest%init(params)
 ENDSUBROUTINE MatrixResemble
@@ -414,30 +414,30 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
           CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y,incx)
         ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+              alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
         ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
+              alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
         ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+              thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
         ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-            thisMatrix%a,thisMatrix%n,x,1,y,1)
+              thisMatrix%a,thisMatrix%n,x,1,y,1)
         ENDIF
       TYPE IS(DenseRectMatrixType)
         IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-            alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+              alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
         ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-            alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
+              alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
         ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-            thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+              thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
         ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-            thisMatrix%a,thisMatrix%n,x,1,y,1)
+              thisMatrix%a,thisMatrix%n,x,1,y,1)
         ENDIF
       TYPE IS(SparseMatrixType)
         IF(ul /= 'n') THEN
@@ -445,20 +445,20 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
           CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y,incx)
         ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-            thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
+              thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
         ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-            thisMatrix%ja,thisMatrix%a,alpha,x,y)
+              thisMatrix%ja,thisMatrix%a,alpha,x,y)
         ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
           CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-            thisMatrix%ja,thisMatrix%a,x,beta,y)
+              thisMatrix%ja,thisMatrix%a,x,beta,y)
         ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
           CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-            thisMatrix%ja,thisMatrix%a,x,y)
+              thisMatrix%ja,thisMatrix%a,x,y)
         ENDIF
       CLASS DEFAULT
         CALL eMatrixType%raiseError('Incorrect call to '// &
-             modName//'::'//myName//' - This interface is not available.')
+            modName//'::'//myName//' - This interface is not available.')
     ENDSELECT
   ENDIF
 ENDSUBROUTINE matvec_MatrixType
@@ -532,30 +532,30 @@ SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag
               CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
             ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
             ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
             ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                  thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
             ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                  thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
             ENDIF
           TYPE IS(DenseRectMatrixType)
             IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
             ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
             ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+                  thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
             ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
               CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+                  thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
             ENDIF
           TYPE IS(SparseMatrixType)
             IF(ul /= 'n') THEN
@@ -563,25 +563,25 @@ SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag
               CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
             ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
+                  thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
             ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
+                  thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
             ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
+                  thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
             ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
               CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                thisMatrix%ja,thisMatrix%a,x%b,y%b)
+                  thisMatrix%ja,thisMatrix%a,x%b,y%b)
             ENDIF
           CLASS DEFAULT
             CALL eMatrixType%raiseError('Incorrect call to '// &
-                 modName//'::'//myName//' - This interface is not available.')
+                modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
       ENDSELECT
     CLASS DEFAULT
-            CALL eMatrixType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - This interface is not available.')
+      CALL eMatrixType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - This interface is not available.')
     ENDSELECT
   ENDIF
 ENDSUBROUTINE matvec_MatrixTypeVectorType
@@ -621,7 +621,7 @@ PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
   ENDIF
   ! Check inputs
   IF((trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-       trans == 'n' .OR. trans == 'N') .AND. &
+      trans == 'n' .OR. trans == 'N') .AND. &
       (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
       (diag == 'u' .OR. diag == 'U' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
@@ -802,10 +802,10 @@ SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
         CALL matmult_PETSc(A,B,C,alpha,beta,transA,transB)
       CLASS DEFAULT
         CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "Interface not implemented")
+            "Interface not implemented")
       ENDSELECT
     CLASS DEFAULT
-        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+      CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
           "Interface not implemented")
     ENDSELECT
     RETURN

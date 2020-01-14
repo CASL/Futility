@@ -252,11 +252,11 @@ MODULE CommandLineProcessor
 
       IF(n < 1) THEN
         CALL clp%e%raiseError(modName//'::'//myName// &
-          ' - illegal input, number of options is less than 1!')
+            ' - illegal input, number of options is less than 1!')
       ELSE
         IF(clp%nopts /= 0) THEN
           CALL clp%e%raiseDebug(modName//'::'//myName// &
-            ' - number of command line options already set!')
+              ' - number of command line options already set!')
         ELSE
           clp%nopts=n
           ALLOCATE(clp%opts(1:n))
@@ -286,7 +286,7 @@ MODULE CommandLineProcessor
       TYPE(StringType),INTENT(INOUT) :: optName
       optName=''
       IF(0 < iopt .AND. iopt <= clp%nopts) &
-        optName=TRIM(ADJUSTL(clp%opts(iopt)%name))
+          optName=TRIM(ADJUSTL(clp%opts(iopt)%name))
     ENDSUBROUTINE getOptName
 !
 !-------------------------------------------------------------------------------
@@ -307,10 +307,10 @@ MODULE CommandLineProcessor
       IF(0 < iopt .AND. iopt <= clp%nopts) THEN
         !Warn for bad input
         IF(LEN_TRIM(name) == 0) &
-          CALL clp%e%raiseDebug(modName//'::'//myName// &
+            CALL clp%e%raiseDebug(modName//'::'//myName// &
             ' - option name is empty!')
         IF(LEN_TRIM(description) == 0) &
-          CALL clp%e%raiseDebug(modName//'::'//myName// &
+            CALL clp%e%raiseDebug(modName//'::'//myName// &
             ' - option description is empty!')
         !Set option name and description for help message
         clp%opts(iopt)%name=TRIM(name)
@@ -318,7 +318,7 @@ MODULE CommandLineProcessor
       ELSE
         !Report error for illegal value of iopt
         WRITE(emsg,'(2(a,i4),a)') modName//'::'//myName//' - Option ',iopt, &
-          ' is less than 0 or greater than ',clp%nopts,'.'
+            ' is less than 0 or greater than ',clp%nopts,'.'
         CALL clp%e%raiseError(TRIM(emsg))
       ENDIF
     ENDSUBROUTINE defineOpt

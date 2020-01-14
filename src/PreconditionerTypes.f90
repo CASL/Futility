@@ -145,18 +145,18 @@ SUBROUTINE init_LU_PreCondtype(thisPC,A)
 
   IF(thisPC%isinit) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-      ' - Preconditioner is already initialized!')
+        ' - Preconditioner is already initialized!')
     RETURN
   ENDIF
 
   IF(.NOT. PRESENT(A) .OR. .NOT.(ALLOCATED(A))) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-      ' - Matrix being used for LU Preconditioner is not allocated!')
+        ' - Matrix being used for LU Preconditioner is not allocated!')
     RETURN
   ENDIF
   IF(.NOT.(A%isInit)) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-      ' - Matrix being used for LU Preconditioner is not initialized!')
+        ' - Matrix being used for LU Preconditioner is not initialized!')
     RETURN
   ENDIF
   thisPC%A => A
@@ -175,7 +175,7 @@ SUBROUTINE init_LU_PreCondtype(thisPC,A)
         thisPC%isInit=.TRUE.
       ELSE
         CALL ePreCondtype%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - In LU Preconditioner initialization, LU was not properly initialized!')
+            ' - In LU Preconditioner initialization, LU was not properly initialized!')
       ENDIF
     TYPE IS(SparseMatrixType)
       SELECTTYPE(thisPC)
@@ -190,7 +190,7 @@ SUBROUTINE init_LU_PreCondtype(thisPC,A)
             thisPC%isInit=.TRUE.
           ELSE
             CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-              ' = In LU Preconditioner initialization, LU was not properly initialized!')
+                ' = In LU Preconditioner initialization, LU was not properly initialized!')
           ENDIF
       ENDSELECT
       ! This doesnt appear to work. It initializes L and U, which never get
@@ -217,7 +217,7 @@ SUBROUTINE init_LU_PreCondtype(thisPC,A)
     !   thisPC%isInit=.TRUE.
     CLASS DEFAULT
       CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-        ' - LU Preconditioners are not supported for input matrix type!')
+          ' - LU Preconditioners are not supported for input matrix type!')
   ENDSELECT
 ENDSUBROUTINE init_LU_PreCondtype
 !
@@ -249,14 +249,14 @@ SUBROUTINE apply_ILU_PreCondType(thisPC,v)
 
   IF(.NOT.(thisPC%isInit)) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-      ' - Preconditioner is not initialized.')
+        ' - Preconditioner is not initialized.')
   ELSEIF(.NOT.(ALLOCATED(v))) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-      ' - VectorType is not allocated.')
+        ' - VectorType is not allocated.')
   ELSE
     IF(.NOT.(v%isInit)) THEN
       CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-        ' - VectorType is not initialized.')
+          ' - VectorType is not initialized.')
     ELSE
       SELECTTYPE(v)
         CLASS IS(RealVectorType)
@@ -264,7 +264,7 @@ SUBROUTINE apply_ILU_PreCondType(thisPC,v)
           CALL BLAS_matvec(THISMATRIX=thisPC%LU,X=v,Y=v,UPLO='U',DIAG='N',TRANS='N')
         CLASS DEFAULT
           CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-            ' - Vector type is not support by this PreconditionerType.')
+              ' - Vector type is not support by this PreconditionerType.')
       ENDSELECT
     ENDIF
   ENDIF
@@ -284,14 +284,14 @@ SUBROUTINE setup_ILU_PreCondtype(thisPC)
 
   IF(.NOT.(thisPC%isinit)) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-      ' - Preconditioner is not initialized!')
+        ' - Preconditioner is not initialized!')
   ELSEIF(.NOT.(ALLOCATED(thisPC%LU))) THEN
       CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-        ' - Matrix being used for LU Preconditioner is not allocated!')
+          ' - Matrix being used for LU Preconditioner is not allocated!')
   ELSE
     IF(.NOT.(thisPC%LU%isInit)) THEN
       CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
-        ' - Matrix being used for LU Preconditioner is not initialized!')
+          ' - Matrix being used for LU Preconditioner is not initialized!')
     ELSE
       SELECTTYPE(LU => thisPC%LU)
         CLASS IS(DenseSquareMatrixType)

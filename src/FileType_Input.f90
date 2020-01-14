@@ -142,7 +142,7 @@ CONTAINS
 !> @param recl Optional input is not used by this routine.
 !>
 SUBROUTINE init_inp_file(fileobj,unit,file,status,access,form, &
-                             position,action,pad,recl)
+    position,action,pad,recl)
   CHARACTER(LEN=*),PARAMETER :: myName='init_inp_file'
   CLASS(InputFileType),INTENT(INOUT) :: fileobj
   INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
@@ -156,23 +156,23 @@ SUBROUTINE init_inp_file(fileobj,unit,file,status,access,form, &
   INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
 
   IF(PRESENT(status)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "STATUS" is being ignored. Value is "OLD".')
+      ' - Optional input "STATUS" is being ignored. Value is "OLD".')
   IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+      ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
   IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+      ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
   IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "ACTION" is being ignored. Value is "READ".')
+      ' - Optional input "ACTION" is being ignored. Value is "READ".')
   IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "PAD" is being ignored. Value is "YES".')
+      ' - Optional input "PAD" is being ignored. Value is "YES".')
   IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "POSITION" is being ignored. Value is "REWIND".')
+      ' - Optional input "POSITION" is being ignored. Value is "REWIND".')
   IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
+      ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
 
   !Initialize the input file
   CALL init_fortran_file(fileobj,unit,file,'OLD','SEQUENTIAL', &
-    'FORMATTED','REWIND','READ')
+      'FORMATTED','REWIND','READ')
 ENDSUBROUTINE init_inp_file
 !
 !-------------------------------------------------------------------------------
@@ -236,7 +236,7 @@ SUBROUTINE read_oneline_inp_file(file,oneline)
     DO WHILE(ioerr /= IOSTAT_EOR .AND. ioerr /= IOSTAT_END)
       !Repeatedly read chunks of current input file line into buffer
       READ(UNIT=file%getUnitNo(),FMT='(a)',SIZE=buffer_size,ADVANCE='NO', &
-        IOSTAT=ioerr) buffer
+          IOSTAT=ioerr) buffer
       IF(ioerr == IOSTAT_END) THEN
         !End of file
         CALL file%setEOFstat(.TRUE.)
@@ -250,7 +250,7 @@ SUBROUTINE read_oneline_inp_file(file,oneline)
             WRITE(sioerr,'(i4)') eioerr; sioerr=ADJUSTL(sioerr)
             WRITE(sunit,'(i4)') file%echounit; sunit=ADJUSTL(sunit)
             CALL file%e%raiseError(modName//'::'//myName// &
-              ' - Error echoing oneline to UNIT='//TRIM(sunit) //' (IOSTAT='// &
+                ' - Error echoing oneline to UNIT='//TRIM(sunit) //' (IOSTAT='// &
                 TRIM(sioerr)//')!')
           ENDIF
         ENDIF
@@ -259,7 +259,7 @@ SUBROUTINE read_oneline_inp_file(file,oneline)
         !Error reading line from input file
         WRITE(sioerr,'(i4)') ioerr; sioerr=ADJUSTL(sioerr)
         CALL file%e%raiseError(modName//'::'//myName// &
-          ' - Error reading one line from input file (IOSTAT='// &
+            ' - Error reading one line from input file (IOSTAT='// &
             TRIM(sioerr)//')!')
       ELSE
         !Still reading current line. Append buffer to oneline
@@ -314,7 +314,7 @@ SUBROUTINE setEchoUnit_inp_file(file,iunit)
     file%echounit=iunit
   ELSE
     CALL file%e%raiseError('Incorrect input to '//modName//'::'// &
-      myName//' - Illegal value for unit number!')
+        myName//' - Illegal value for unit number!')
   ENDIF
 ENDSUBROUTINE setEchoUnit_inp_file
 !

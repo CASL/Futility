@@ -62,7 +62,7 @@ INTEGER(SIK),PARAMETER,PUBLIC :: ODE_NATIVE=1,ODE_SUNDIALS=2,ODE_RYTHMOS=3
 INTEGER(SIK),PARAMETER,PUBLIC :: THETA_METHOD=0,BDF_METHOD=1
 !> bdf constants for LHS
 REAL(SRK),PARAMETER :: beta_bdf(5)=(/1.0_SRK,2.0_SRK/3.0_SRK,6.0_SRK/11.0_SRK, &
-  12.0_SRK/25.0_SRK,60.0_SRK/137.0_SRK/)
+    12.0_SRK/25.0_SRK,60.0_SRK/137.0_SRK/)
 !> bdf constants for RHS
 REAL(SRK),PARAMETER :: alpha_bdf(15)=(/                             -1.0_SRK,&
                                             -4.0_SRK/3.0_SRK,1.0_SRK/3.0_SRK,&
@@ -233,11 +233,11 @@ SUBROUTINE init_ODESolverType_Sundials(solver,Params,f)
   IF(.NOT. solver%isInit) THEN
     IF(n < 1) THEN
       CALL eODESolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSEIF(EXTERNAL_N > 0 .AND. EXTERNAL_N /= n) THEN
       CALL eODESolverType%raiseError('Unable to initialize '// &
-        modName//'::'//myName//' - Another ODE Solver has'// &
+          modName//'::'//myName//' - Another ODE Solver has'// &
           'already been created with a different n.')
     ELSE
       solver%n=n
@@ -245,15 +245,15 @@ SUBROUTINE init_ODESolverType_Sundials(solver,Params,f)
     ENDIF
 
     IF(solvetype == THETA_METHOD) THEN
-          CALL eODESolverType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Theta method is not supported with Sundials')
+      CALL eODESolverType%raiseError('Incorrect input to '// &
+          modName//'::'//myName//' - Theta method is not supported with Sundials')
     ELSEIF(solvetype == BDF_METHOD) THEN
       solver%solverMethod=solvetype
       IF(Params%has('ODESolverType->bdf_order')) THEN
         CALL Params%get('ODESolverType->bdf_order',bdf_order)
         IF(bdf_order<1 .OR. bdf_order>5) THEN
           CALL eODESolverType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - BDF order must be between 1 and 5')
+              modName//'::'//myName//' - BDF order must be between 1 and 5')
         ELSE
           solver%BDForder=bdf_order
         ENDIF
@@ -261,12 +261,12 @@ SUBROUTINE init_ODESolverType_Sundials(solver,Params,f)
       ENDIF
     ELSE
       CALL eODESolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Unknown Solver Type')
+          modName//'::'//myName//' - Unknown Solver Type')
     ENDIF
 
     IF(tol<=0.0_SRK) THEN
       CALL eODESolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Tolerance must be '// &
+          modName//'::'//myName//' - Tolerance must be '// &
           'greater than 0!')
     ELSE
       solver%tol=tol
@@ -283,7 +283,7 @@ SUBROUTINE init_ODESolverType_Sundials(solver,Params,f)
       SUNDIALS_rpar(1)=0.0_SRK
       !Calling malloc and assuming t=0 for in init.  This way we can call init then clear without a segfault
       CALL FCVMALLOC(0.0_SRK,solver%ytmp, 2, 2, 1, solver%tol, 1.0E-26_C_DOUBLE,SUNDIALS_IOUT, SUNDIALS_ROUT, &
-                  SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
+          SUNDIALS_IPAR, SUNDIALS_RPAR, ierr)
       CALL FCVDENSE(INT(solver%n,C_LONG),ierr)
       EXTERNAL_isInit=.TRUE.
     ENDIF
@@ -297,11 +297,11 @@ SUBROUTINE init_ODESolverType_Sundials(solver,Params,f)
     solver%isInit=.TRUE.
 #else
     CALL eODESolverType%raiseError('Error in '// &
-      modName//'::'//myName//' - Sundials interface is not available')
+        modName//'::'//myName//' - Sundials interface is not available')
 #endif
   ELSE
     CALL eODESolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - ODESolverType already initialized')
+        modName//'::'//myName//' - ODESolverType already initialized')
   ENDIF
 ENDSUBROUTINE init_ODESolverType_Sundials
 !
@@ -395,7 +395,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
   IF(.NOT. solver%isInit) THEN
     IF(n < 1) THEN
       CALL eODESolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSE
       solver%n=n
@@ -407,7 +407,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
         CALL Params%get('ODESolverType->theta',theta)
         IF(theta<0.0_SRK .OR. theta>1.0_SRK) THEN
           CALL eODESolverType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Theta must be between 0 and 1')
+              modName//'::'//myName//' - Theta must be between 0 and 1')
         ELSE
           solver%theta=theta
         ENDIF
@@ -418,7 +418,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
         CALL Params%get('ODESolverType->bdf_order',bdf_order)
         IF(bdf_order<1 .OR. bdf_order>5) THEN
           CALL eODESolverType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - BDF order must be between 1 and 5')
+              modName//'::'//myName//' - BDF order must be between 1 and 5')
         ELSE
           solver%BDForder=bdf_order
         ENDIF
@@ -426,12 +426,12 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
       ENDIF
     ELSE
       CALL eODESolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Unknown Solver Type')
+          modName//'::'//myName//' - Unknown Solver Type')
     ENDIF
 
     IF(tol<=0.0_SRK) THEN
       CALL eODESolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Tolerance must be '// &
+          modName//'::'//myName//' - Tolerance must be '// &
           'greater than 0!')
     ELSE
       solver%tol=tol
@@ -439,7 +439,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
 
     IF(substep <=0.0_SRK) THEN
       CALL eODESolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - substep size must be  '// &
+          modName//'::'//myName//' - substep size must be  '// &
           'greater than 0!')
     ELSE
       solver%substep_size=substep
@@ -463,7 +463,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
     solver%isInit=.TRUE.
   ELSE
     CALL eODESolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - ODESolverType already initialized')
+        modName//'::'//myName//' - ODESolverType already initialized')
   ENDIF
 ENDSUBROUTINE init_ODESolverType_Native
 !
@@ -555,7 +555,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
       DO j=1,i
         IF(ntmp>0) THEN
           CALL solve_bdf(solver%f,solver%myLS,i,ntmp,t,dt*m**(solver%BDForder-i),yf, &
-                ydot,solver%tol,ist,bdf_hist,.TRUE.)
+              ydot,solver%tol,ist,bdf_hist,.TRUE.)
           CALL BLAS_copy(yf,bdf_hist(j+1,i+1))
         ENDIF
         ntmp=N
@@ -563,7 +563,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
     ENDDO
     ist=solver%BDForder
     CALL solve_bdf(solver%f,solver%myLS,solver%BDForder,nstep-solver%BDForder+1,t,dt, &
-                yf,ydot,solver%tol,ist,bdf_hist)
+        yf,ydot,solver%tol,ist,bdf_hist)
     DO i=1,solver%BDForder
       DO j=1,solver%BDForder
         CALL bdf_hist(i,j)%clear()
@@ -629,7 +629,7 @@ SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in)
     CALL BLAS_scal(rhs,alpha_bdf(alpha_index(ord)))
     DO j=1,ord-1
       CALL BLAS_axpy(bdf_hist(ABS(MOD(ist-j-1+ord,ord))+1,ord), &
-                      rhs,alpha_bdf(alpha_index(ord)+j))
+          rhs,alpha_bdf(alpha_index(ord)+j))
     ENDDO
     CALL BLAS_scal(rhs,-1.0_SRK)
 

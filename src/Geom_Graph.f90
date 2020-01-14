@@ -255,7 +255,7 @@ ELEMENTAL FUNCTION nAdjacent_graphType(thisGraph,i) RESULT(n)
   n=0
   IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
     IF(0 < i .AND. i < SIZE(thisGraph%edgeMatrix,DIM=2)+1) &
-      n=SUM(ABS(thisGraph%edgeMatrix(:,i)))
+        n=SUM(ABS(thisGraph%edgeMatrix(:,i)))
   ENDIF
 ENDFUNCTION nAdjacent_graphType
 !
@@ -329,7 +329,7 @@ ELEMENTAL FUNCTION getCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
         !Search other vertices
         dcurr=(/0.0_SRK,-1.0_SRK/)
         IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
-          thisGraph%vertices(:,vPrev)
+            thisGraph%vertices(:,vPrev)
         dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
         isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
         DO i=1,nAdj
@@ -399,7 +399,7 @@ ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
         !Search other vertices
         dcurr=(/0.0_SRK,-1.0_SRK/)
         IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
-          thisGraph%vertices(:,vPrev)
+            thisGraph%vertices(:,vPrev)
         dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
         isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
         DO i=1,nAdj
@@ -620,9 +620,9 @@ PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
         r2=r2*r2
         d=SQRT(r1+r2)
         IF(d .APPROXEQA. 2.0_SRK*ABS(r)) &
-          thisGraph%quadEdges(3,v1,v2)=r !sign of r indicates which half
-                                         !of semi-circle, all other cases
-                                         !traverse shorter arc between points
+            thisGraph%quadEdges(3,v1,v2)=r !sign of r indicates which half
+                                           !of semi-circle, all other cases
+                                           !traverse shorter arc between points
         thisGraph%quadEdges(:,v2,v1)=thisGraph%quadEdges(:,v1,v2)
       ENDIF
     ENDIF
@@ -734,11 +734,11 @@ SUBROUTINE removeVertex_idx_graphType(thisGraph,idx)
     ENDDO
     CALL clear_graphType(thisGraph)
     IF(ALLOCATED(tmpVert)) &
-      CALL MOVE_ALLOC(tmpVert,thisGraph%vertices)
+        CALL MOVE_ALLOC(tmpVert,thisGraph%vertices)
     IF(ALLOCATED(tmpEdge)) &
-      CALL MOVE_ALLOC(tmpEdge,thisGraph%edgeMatrix)
+        CALL MOVE_ALLOC(tmpEdge,thisGraph%edgeMatrix)
     IF(ALLOCATED(tmpQE)) &
-      CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
+        CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
   ENDIF
 ENDSUBROUTINE removeVertex_idx_graphType
 !
@@ -922,12 +922,12 @@ SUBROUTINE extractPrimitive_graphType(thisGraph,v0,subgraph)
     nAdj=nAdjacent_graphType(thisGraph,vCurr)
     IF(nAdj == 1) THEN
       CALL removeFilament_vertIdx_graphType(thisGraph,vCurr, &
-        getAdjacentVert_graphType(thisGraph,vCurr,1))
+          getAdjacentVert_graphType(thisGraph,vCurr,1))
     ENDIF
     nAdj=nAdjacent_graphType(thisGraph,vNext)
     IF(nAdj == 1) THEN
       CALL removeFilament_vertIdx_graphType(thisGraph,vNext, &
-        getAdjacentVert_graphType(thisGraph,vNext,1))
+          getAdjacentVert_graphType(thisGraph,vNext,1))
     ENDIF
   ELSE
     !vCurr was visited earlier, but we do not have a minimal cycle
@@ -1160,7 +1160,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
           theta=0.5_SRK*(alp1+alp2)
           !Adjust theta for the appropriate half of the circle
           IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-                   (theta .APPROXLE. c1%thetastp))) theta=theta-PI
+              (theta .APPROXLE. c1%thetastp))) theta=theta-PI
           m(1)=c1%r*COS(theta)
           m(2)=c1%r*SIN(theta)
         ELSE
@@ -1249,17 +1249,17 @@ SUBROUTINE combine_GraphType(thisGraph,g)
                 theta=ATAN2PI(p1%coord(1)-c1%c%coord(1), &
                               p1%coord(2)-c1%c%coord(2))
                 IF(p1%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
-                  theta=theta+theta_shift
+                    theta=theta+theta_shift
                 IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-                  (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p1%clear()
+                    (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p1%clear()
               ENDIF
               IF(p2%dim == 2) THEN
                 theta=ATAN2PI(p2%coord(1)-c1%c%coord(1), &
                               p2%coord(2)-c1%c%coord(2))
                 IF(p2%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
-                  theta=theta+theta_shift
+                    theta=theta+theta_shift
                 IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-                  (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p2%clear()
+                    (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p2%clear()
               ENDIF
               IF(p1%dim == 2 .AND. p2%dim == 2) THEN
                 CALL removeEdge_graphType(g0,c,d)
@@ -1370,17 +1370,17 @@ SUBROUTINE combine_GraphType(thisGraph,g)
                 theta=ATAN2PI(p1%coord(1)-c2%c%coord(1), &
                               p1%coord(2)-c2%c%coord(2))
                 IF(p1%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
-                  theta=theta+theta_shift
+                    theta=theta+theta_shift
                 IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                  (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p1%clear()
+                    (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p1%clear()
               ENDIF
               IF(p2%dim == 2) THEN
                 theta=ATAN2PI(p2%coord(1)-c2%c%coord(1), &
                               p2%coord(2)-c2%c%coord(2))
                 IF(p2%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
-                  theta=theta+theta_shift
+                    theta=theta+theta_shift
                 IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                  (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p2%clear()
+                    (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p2%clear()
               ENDIF
               IF(p1%dim == 2 .AND. p2%dim == 2) THEN
                 !Compute arc midpoint
@@ -1391,7 +1391,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
                   theta=0.5_SRK*(alp1+alp2)
                   !Adjust theta for the appropriate half of the circle
                   IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                           (theta .APPROXLE. c2%thetastp))) theta=theta-PI
+                      (theta .APPROXLE. c2%thetastp))) theta=theta-PI
                   m(1)=c2%r*COS(theta)
                   m(2)=c2%r*SIN(theta)
                 ELSE
@@ -1441,7 +1441,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
         DO i=2,nVert_graphType(lineAB)
           CALL insertVertex_graphType(g0,lineAB%vertices(:,i))
           CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
-            lineAB%vertices(:,i))
+              lineAB%vertices(:,i))
         ENDDO
       ELSE
         !Sort vertices in clock-wise order.
@@ -1450,14 +1450,14 @@ SUBROUTINE combine_GraphType(thisGraph,g)
         ALLOCATE(vTheta(n));
         DO i=1,n
           vTheta(i)=ATAN2PI(lineAB%vertices(1,i)-c1%c%coord(1), &
-            lineAB%vertices(2,i)-c1%c%coord(2))
+              lineAB%vertices(2,i)-c1%c%coord(2))
         ENDDO
         IF(c1%thetastt > c1%thetastp) THEN
           !This arc crosses the positive x-axis, shift some angles by 2*PI
           !so vertex theta's can be ordered sequentially.
           DO i=1,n
             IF((0.0_SRK .APPROXLE. vTheta(i)) .AND. vTheta(i) < c1%thetastt) &
-              vTheta(i)=vTheta(i)+TWOPI
+                vTheta(i)=vTheta(i)+TWOPI
           ENDDO
         ENDIF
         DO i=1,n
@@ -1470,7 +1470,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
         DO i=2,nVert_graphType(lineAB)
           CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(i)))
           CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,cwVerts(i-1)), &
-            lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
+              lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
         ENDDO
         DEALLOCATE(vTheta,cwVerts)
       ENDIF
@@ -1638,7 +1638,7 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
         DO k=j+1,nEdges
           IF( .NOT. ALL(polEdges(:,k) == 0)) THEN
             IF(polEdges(1,j) == polEdges(2,k) &
-              .AND. polEdges(2,j) == polEdges(1,k)) THEN
+                .AND. polEdges(2,j) == polEdges(1,k)) THEN
               polEdges(:,j)=0
               polEdges(:,k)=0
             ENDIF
@@ -1660,11 +1660,11 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
   !Create edges of final triangulation
   DO i=1,nTri
     CALL thisGraph%defineEdge(thisGraph%vertices(:,v1(i)), &
-      thisGraph%vertices(:,v2(i)))
+        thisGraph%vertices(:,v2(i)))
     CALL thisGraph%defineEdge(thisGraph%vertices(:,v2(i)), &
-      thisGraph%vertices(:,v3(i)))
+        thisGraph%vertices(:,v3(i)))
     CALL thisGraph%defineEdge(thisGraph%vertices(:,v3(i)), &
-      thisGraph%vertices(:,v1(i)))
+        thisGraph%vertices(:,v1(i)))
   ENDDO
   !Remove superTriangle from arrays
   CALL thisGraph%removeVertex(superTri(:,1))
@@ -1705,9 +1705,9 @@ ELEMENTAL FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
 
   bool=.FALSE.
   IF((ALLOCATED(g0%isCycleEdge) .EQV. ALLOCATED(g1%isCycleEdge)) .AND. &
-    (ALLOCATED(g0%vertices) .EQV. ALLOCATED(g1%vertices)) .AND. &
-    (ALLOCATED(g0%edgeMatrix) .EQV. ALLOCATED(g1%edgeMatrix)) .AND. &
-    (ALLOCATED(g0%quadEdges) .EQV. ALLOCATED(g1%quadEdges))) THEN
+      (ALLOCATED(g0%vertices) .EQV. ALLOCATED(g1%vertices)) .AND. &
+      (ALLOCATED(g0%edgeMatrix) .EQV. ALLOCATED(g1%edgeMatrix)) .AND. &
+      (ALLOCATED(g0%quadEdges) .EQV. ALLOCATED(g1%quadEdges))) THEN
     IF(SIZE(g0%vertices,DIM=1) == SIZE(g1%vertices,DIM=1) .AND. &
         SIZE(g0%vertices,DIM=2) == SIZE(g1%vertices,DIM=2) .AND. &
         SIZE(g0%edgeMatrix,DIM=1) == SIZE(g1%edgeMatrix,DIM=1) .AND. &
@@ -1718,15 +1718,15 @@ ELEMENTAL FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
       bool=.TRUE.
       IF(ALLOCATED(g0%isCycleEdge)) THEN
         IF(SIZE(g0%isCycleEdge,DIM=1) == SIZE(g1%isCycleEdge,DIM=1) .AND. &
-           SIZE(g0%isCycleEdge,DIM=2) == SIZE(g1%isCycleEdge,DIM=2)) THEN
+            SIZE(g0%isCycleEdge,DIM=2) == SIZE(g1%isCycleEdge,DIM=2)) THEN
           bool=.TRUE.
         ELSE
           bool=.FALSE.
         ENDIF
       ENDIF
       bool=bool .AND. ALL(g0%vertices .APPROXEQA. g1%vertices) .AND. &
-        ALL(g0%edgeMatrix == g1%edgeMatrix) .AND. &
-        ALL(g0%quadEdges .APPROXEQA. g1%quadEdges)
+          ALL(g0%edgeMatrix == g1%edgeMatrix) .AND. &
+          ALL(g0%quadEdges .APPROXEQA. g1%quadEdges)
     ENDIF
   ENDIF
 ENDFUNCTION isequal_GraphType

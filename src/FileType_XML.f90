@@ -193,7 +193,7 @@ RECURSIVE SUBROUTINE init_XMLElementType(thisXMLE,cachedFile,itag,lines,tagBegin
       !Process the attributes
       CALL charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)), tmpStr)
       CALL processTagAttributes(CHAR(tmpStr),thisXMLE%nAttr, &
-        thisXMLE%attr_names,thisXMLE%attr_values,ierr)
+          thisXMLE%attr_names,thisXMLE%attr_values,ierr)
       IF(ierr /= 0) THEN
         !Oh No!
       ENDIF
@@ -208,7 +208,7 @@ RECURSIVE SUBROUTINE init_XMLElementType(thisXMLE,cachedFile,itag,lines,tagBegin
         !Verify matching element names
         CALL getTagName(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),ierr,startTagName)
         CALL getTagName(cachedFile(iTag(1,tagEnd):iTag(2,tagEnd)), &
-          ierr,endTagName)
+            ierr,endTagName)
         IF(startTagName == endTagName .AND. ierr == 0) THEN
           !Store the name
           thisXMLE%name=startTagName
@@ -216,21 +216,21 @@ RECURSIVE SUBROUTINE init_XMLElementType(thisXMLE,cachedFile,itag,lines,tagBegin
           !Process attributes
           CALL charArrytoStr(cachedFile(iTag(1,tagBegin):iTag(2,tagBegin)),tmpStr)
           CALL processTagAttributes(CHAR(tmpStr),thisXMLE%nAttr, &
-            thisXMLE%attr_names,thisXMLE%attr_values,ierr)
+              thisXMLE%attr_names,thisXMLE%attr_values,ierr)
           IF(ierr /= 0) THEN
             !Failed to process the attributes
           ENDIF
 
           !Determine the number of children
           CALL DetermineNChildren(tagBegin,tagEnd,iTag,nChildren, &
-            childTags,ierr)
+              childTags,ierr)
           IF(nChildren > 0) THEN
             !Process the children if any
             ALLOCATE(thisXMLE%children(nChildren))
             DO iChild=1,nChildren
               !Find the tag begin and end for the child
               CALL thisXMLE%children(ichild)%init(cachedFile,iTag,lines, &
-                childTags(1,iChild),childTags(2,iChild))
+                  childTags(1,iChild),childTags(2,iChild))
               SELECTTYPE(xmle => thisXMLE)
                 TYPE IS(XMLElementType); thisXMLE%children(ichild)%parent => xmle
               ENDSELECT
@@ -277,7 +277,7 @@ RECURSIVE SUBROUTINE write_XMLElementType(thisXMLE,unitNo,nindent)
       !Add attributes
       DO i=1,thisXMLE%nAttr
         tmpTag=tmpTag//' '//thisXMLE%attr_names(i)//'="'// &
-          thisXMLE%attr_values(i)//'"'
+            thisXMLE%attr_values(i)//'"'
       ENDDO
       tmpTag=tmpTag//'>'
       IF(nspace > 0) THEN
@@ -314,7 +314,7 @@ RECURSIVE SUBROUTINE write_XMLElementType(thisXMLE,unitNo,nindent)
       !Add attributes
       DO i=1,thisXMLE%nAttr
         tmpTag=tmpTag//' '//thisXMLE%attr_names(i)//'="'// &
-          thisXMLE%attr_values(i)//'"'
+            thisXMLE%attr_values(i)//'"'
       ENDDO
       tmpTag=tmpTag//'>'
       IF(nspace > 0) THEN
@@ -334,7 +334,7 @@ RECURSIVE SUBROUTINE write_XMLElementType(thisXMLE,unitNo,nindent)
       WRITE(sint,'(i16)',IOSTAT=ierr) LEN_TRIM(thisXMLE%content)
       fmt=fmt//',a'//TRIM(ADJUSTL(sint))//')'
       IF(thisXMLE%content /= LF) &
-        WRITE(unitNo,FMT=CHAR(fmt),IOSTAT=ierr) CHAR(thisXMLE%content)
+          WRITE(unitNo,FMT=CHAR(fmt),IOSTAT=ierr) CHAR(thisXMLE%content)
 
       !endtag
       tmpTag='</'//thisXMLE%name//'>'
@@ -354,7 +354,7 @@ RECURSIVE SUBROUTINE write_XMLElementType(thisXMLE,unitNo,nindent)
       !Add attributes
       DO i=1,thisXMLE%nAttr
         tmpTag=tmpTag//' '//thisXMLE%attr_names(i)//'="'// &
-          thisXMLE%attr_values(i)//'"'
+            thisXMLE%attr_values(i)//'"'
       ENDDO
       tmpTag=tmpTag//'/>'
       IF(nspace > 0) THEN
@@ -410,7 +410,7 @@ PURE FUNCTION isEmpty_XMLElementType(thisXMLE) RESULT(bool)
   CLASS(XMLElementType),INTENT(IN) :: thisXMLE
   LOGICAL(SBK) :: bool
   bool=(LEN_TRIM(thisXMLE%content) == 0 .AND. &
-    .NOT.ASSOCIATED(thisXMLE%children))
+      .NOT.ASSOCIATED(thisXMLE%children))
 ENDFUNCTION isEmpty_XMLElementType
 !
 !-------------------------------------------------------------------------------
@@ -632,7 +632,7 @@ SUBROUTINE init_XMLFileType(thisXMLFile,fname,lread)
     thisXMLFile%isInit=.TRUE.
   ELSE
     CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-      ' - File is already initialized!')
+        ' - File is already initialized!')
   ENDIF
 ENDSUBROUTINE init_XMLFileType
 !
@@ -681,28 +681,28 @@ SUBROUTINE fopen_XMLFileType(file)
 
     file%unitNo=funit
     fname=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
-      TRIM(file%getFileExt())
+        TRIM(file%getFileExt())
 
     IF(file%isRead()) THEN
       !Open the file for reading
       OPEN(UNIT=file%unitNo,FILE=CHAR(fname),STATUS='OLD', &
-        ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ',IOSTAT=ierr)
+          ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ',IOSTAT=ierr)
     ELSE
       !Open the file for writing
       OPEN(UNIT=file%unitNo,FILE=CHAR(fname),STATUS='REPLACE', &
-        ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='WRITE', &
+          ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='WRITE', &
           ENCODING=file%encoding,IOSTAT=ierr)
     ENDIF
     IF(ierr == 0) THEN
       CALL file%setOpenStat(.TRUE.)
     ELSE
       CALL file%e%raiseError(modName//'::'//myName// &
-        ' - Trouble opening file!')
+          ' - Trouble opening file!')
       CALL file%setOpenStat(.FALSE.)
     ENDIF
   ELSE
     CALL file%e%raiseError(modName//'::'//myName// &
-      ' - File is already open!')
+        ' - File is already open!')
   ENDIF
 ENDSUBROUTINE fopen_XMLFileType
 !
@@ -720,7 +720,7 @@ SUBROUTINE fclose_XMLFileType(file)
       CALL file%setOpenStat(.FALSE.)
     ELSE
       CALL file%e%raiseError(modName//'::'//myName// &
-        ' - trouble closing file!')
+          ' - trouble closing file!')
     ENDIF
   ENDIF
 ENDSUBROUTINE fclose_XMLFileType
@@ -743,7 +743,7 @@ SUBROUTINE fdelete_XMLFileType(file)
     CALL file%setOpenStat(.FALSE.)
   ELSE
     CALL file%e%raiseError(modName//'::'//myName// &
-      ' - trouble closing file!')
+        ' - trouble closing file!')
   ENDIF
 ENDSUBROUTINE fdelete_XMLFileType
 !
@@ -792,7 +792,7 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
       ENDDO
       IF(nopen /= nclose) THEN
         CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-          ' - mismatched markup characters!')
+            ' - mismatched markup characters!')
       ELSE
         !Store the locations of all the markup characters "<" and ">" lines
         nTags=nopen
@@ -820,7 +820,7 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
         DO i=1,nTags
           IF(itag(1,i) > itag(2,i)) THEN
             CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-              ' - mismatched markup characters!')
+                ' - mismatched markup characters!')
             EXIT
           ENDIF
         ENDDO
@@ -834,12 +834,12 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
             !Processing Instruction
             !Check closing marker to insure tag validity
             IF(INDEX(tagStr,'?>',.TRUE.) == LEN_TRIM(tagStr)-1) &
-              itag(3,i)=PROCESSING_INST_TAG
+                itag(3,i)=PROCESSING_INST_TAG
           ELSEIF(INDEX(tagStr,'<!--') == 1) THEN
             !Comment
             !Check closing marker to insure tag validity
             IF(INDEX(tagStr,'-->',.TRUE.) /= LEN_TRIM(tagStr)-1 .AND. &
-              INDEX(tagStr,'--->',.TRUE.) == 0) itag(3,i)=COMMENT_TAG
+                INDEX(tagStr,'--->',.TRUE.) == 0) itag(3,i)=COMMENT_TAG
           ELSEIF(INDEX(tagStr,'<!') == 1) THEN
             !Declaration (Not currently treated)
             itag(3,i)=DECLARATION_TAG
@@ -857,7 +857,7 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
           ENDIF
           IF(itag(3,i) == BAD_TAG) THEN
             CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-              ' - Unrecognizable markup in "'//tagStr//'"!')
+                ' - Unrecognizable markup in "'//tagStr//'"!')
           ENDIF
         ENDDO
 
@@ -867,8 +867,8 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
             rootTagBegin=i
             EXIT
           ELSEIF(itag(3,i) == END_TAG .OR. &
-            (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags)) THEN
-            CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
+              (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags)) THEN
+              CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
               ' - Could not locate start of root element!')
           ENDIF
         ENDDO
@@ -879,24 +879,24 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
             rootTagEnd=i
             EXIT
           ELSEIF(itag(3,i) == START_TAG .OR. &
-            (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags) .OR. &
+              (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags) .OR. &
               itag(3,i) == DECLARATION_TAG) THEN
-            CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
+              CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
               ' - Could not locate end of root element!')
           ENDIF
         ENDDO
 
         !Process the elements
         CALL thisXMLFile%root%init(cachedFile,itag,lines,rootTagBegin, &
-          rootTagEnd)
+            rootTagEnd)
       ENDIF
     ELSE
       CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-        ' - XML File could not be opened for reading!')
+          ' - XML File could not be opened for reading!')
     ENDIF
   ELSE
     CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-      ' - XML File could not be initialized!')
+        ' - XML File could not be initialized!')
   ENDIF
 ENDSUBROUTINE importFromDisk_XMLFileType
 !
@@ -920,14 +920,14 @@ SUBROUTINE exportToDisk_XMLFileType(thisXMLFile,fname)
     !Write the header
     WRITE(version,FMT='(f4.1)',IOSTAT=ierr) thisXMLFile%version
     header='<?xml version="'//TRIM(ADJUSTL(version))// &
-      '" encoding="'//TRIM(thisXMLFile%encoding)//'"?>'
+        '" encoding="'//TRIM(thisXMLFile%encoding)//'"?>'
     WRITE(tmpFile%unitNo,FMT='(a)') CHAR(header)
 
     !Write style-sheet info
     IF(LEN(thisXMLFile%style_sheet) > 0) THEN
       WRITE(tmpFile%unitNo,FMT='(a)') &
-        '<?xml-stylesheet version="1.0" type="text/xsl" href="'// &
-        thisXMLFile%style_sheet//'"?>'
+          '<?xml-stylesheet version="1.0" type="text/xsl" href="'// &
+          thisXMLFile%style_sheet//'"?>'
     ENDIF
 
     !Write the XML Elements
@@ -969,7 +969,7 @@ SUBROUTINE processXMLDecl(thisXMLFile)
     IF(ierr == IOSTAT_EOR) tmpChar=CHAR(10)
     IF(ierr == IOSTAT_END) THEN
       CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-        ' - Reached end of file before finding start of first tag "<"!')
+          ' - Reached end of file before finding start of first tag "<"!')
       EXIT !No more tags
     ENDIF
 
@@ -995,7 +995,7 @@ SUBROUTINE processXMLDecl(thisXMLFile)
       ELSE
         !Throw an exception end of file before end marker
         CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-          ' - Reached end of file before finding closing marker'// &
+            ' - Reached end of file before finding closing marker'// &
             ' ">" for XML tag!')
       ENDIF
       EXIT
@@ -1004,7 +1004,7 @@ SUBROUTINE processXMLDecl(thisXMLFile)
       IF(.NOT.(SCAN(tmpChar,SP//CR//LF//TB) > 0)) THEN
         !Throw an exception, illegal characters
         CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-          ' - Illegal characters between XML tags!')
+            ' - Illegal characters between XML tags!')
         EXIT
       ENDIF
     ENDIF
@@ -1029,16 +1029,16 @@ SUBROUTINE processXMLDecl(thisXMLFile)
           IF(INDEX(avalues(1),'1.') == 1) THEN
             version=avalues(1)%stof()
             IF(1.0_SRK < version .AND. version < 2.0_SRK) &
-              thisXMLFile%version=version
+                thisXMLFile%version=version
           ELSE
             !Illegal value for version
             CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-              ' - XML Version "'//TRIM(avalues(1))//'" is not supported!')
+                ' - XML Version "'//TRIM(avalues(1))//'" is not supported!')
           ENDIF
         ELSE
           !first attribute must be 'version'!
           CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-            ' - The first attribute must be the XML version!')
+              ' - The first attribute must be the XML version!')
         ENDIF
 
         !Check other attributes
@@ -1053,7 +1053,7 @@ SUBROUTINE processXMLDecl(thisXMLFile)
                 thisXMLFile%encoding='US-ASCII'
               ELSE
                 CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-                  ' - File encoding "'//TRIM(avalues(i))//'" is not supported!')
+                    ' - File encoding "'//TRIM(avalues(i))//'" is not supported!')
               ENDIF
 
               !Re-open file if it was not opened with the matching encoding
@@ -1064,10 +1064,10 @@ SUBROUTINE processXMLDecl(thisXMLFile)
 
                 !Open the file for reading
                 fname=TRIM(thisXMLFile%getFilePath())// &
-                  TRIM(thisXMLFile%getFileName())// &
+                    TRIM(thisXMLFile%getFileName())// &
                     TRIM(thisXMLFile%getFileExt())
                 OPEN(UNIT=thisXMLFile%unitNo,FILE=CHAR(fname),STATUS='OLD', &
-                  ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ', &
+                    ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ', &
                     ENCODING=fencoding,IOSTAT=ierr)
                 CALL thisXMLFile%setOpenStat(.TRUE.)
               ENDIF
@@ -1079,8 +1079,8 @@ SUBROUTINE processXMLDecl(thisXMLFile)
               ELSE
                 !Illegal value for 'standalone' attribute
                 CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-                  ' - illegal value "'//TRIM(avalues(i))// &
-                  '" for "standalone" attribute in XML declaration.')
+                    ' - illegal value "'//TRIM(avalues(i))// &
+                    '" for "standalone" attribute in XML declaration.')
               ENDIF
             ELSE
               !Illegal attribute
@@ -1093,12 +1093,12 @@ SUBROUTINE processXMLDecl(thisXMLFile)
       ELSE
         !Illegal number of attributes in declaration
         CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-          ' - illegal  number of attributes in XML declaration.')
+            ' - illegal  number of attributes in XML declaration.')
       ENDIF
     ELSE
       !Failed to process attributes for XMLDecl
       CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-        ' - Failed to process attributes in XML declaration.')
+          ' - Failed to process attributes in XML declaration.')
     ENDIF
   ENDIF
   REWIND(thisXMLFile%unitNo)
@@ -1187,8 +1187,8 @@ SUBROUTINE getTagName(fullTag,ierr,sname)
     inamechar=IACHAR(fullTag(istt))
 
     IF(inamechar == 58 .OR. inamechar == 95 .OR. &
-      (64 < inamechar .AND. inamechar < 91) .OR. &
-      (96 < inamechar .AND. inamechar < 123)) THEN
+        (64 < inamechar .AND. inamechar < 91) .OR. &
+        (96 < inamechar .AND. inamechar < 123)) THEN
 
       IF(nchar-istt > 2) THEN
         xml(1:1)=fullTag(istt)
@@ -1213,7 +1213,7 @@ SUBROUTINE getTagName(fullTag,ierr,sname)
 
         !Check that the character is valid in a name
         IF(.NOT.(charval == 45 .OR. charval == 96 .OR. &
-                  charval == 95 .OR. &
+                charval == 95 .OR. &
                 (64 < charval .AND. charval < 91) .OR. &
                 (96 < charval .AND. charval < 123) .OR. &
                 (47 < charval .AND. charval < 59))) THEN

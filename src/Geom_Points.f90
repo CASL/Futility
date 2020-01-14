@@ -328,7 +328,7 @@ ELEMENTAL FUNCTION isequal_PointType(p0,p1) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.FALSE.
   IF(p0%dim == p1%dim .AND. p0%dim > 0) &
-    bool=ALL(p0%coord == p1%coord)
+      bool=ALL(p0%coord == p1%coord)
 ENDFUNCTION isequal_PointType
 !
 !-------------------------------------------------------------------------------
@@ -343,7 +343,7 @@ ELEMENTAL FUNCTION notequal_PointType(p0,p1) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.TRUE.
   IF(p0%dim == p1%dim .AND. p0%dim > 0) &
-    bool=ANY(p0%coord /= p1%coord)
+      bool=ANY(p0%coord /= p1%coord)
 ENDFUNCTION notequal_PointType
 !
 !-------------------------------------------------------------------------------
@@ -359,7 +359,7 @@ ELEMENTAL FUNCTION approxequal_PointType(p0,p1) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.FALSE.
   IF(p0%dim == p1%dim .AND. p0%dim > 0) &
-    bool=ALL(p0%coord .APPROXEQA. p1%coord)
+      bool=ALL(p0%coord .APPROXEQA. p1%coord)
 ENDFUNCTION approxequal_PointType
 !
 !-------------------------------------------------------------------------------
@@ -399,10 +399,10 @@ ELEMENTAL FUNCTION coord2str_PointType(p,fmt_string) RESULT(cstring)
   IF(ALLOCATED(p%coord)) THEN
     IF(PRESENT(fmt_string)) THEN
       WRITE(cstring,FMT='(a,100('//fmt_string//',a))',IOSTAT=ioerr) &
-        '(',(p%coord(i),',',i=1,p%dim-1),p%coord(p%dim),')'
+          '(',(p%coord(i),',',i=1,p%dim-1),p%coord(p%dim),')'
     ELSE
       WRITE(cstring,'(a,100(es21.14,a))',IOSTAT=ioerr) &
-        '(',(p%coord(i),',',i=1,p%dim-1),p%coord(p%dim),')'
+          '(',(p%coord(i),',',i=1,p%dim-1),p%coord(p%dim),')'
     ENDIF
     IF(ioerr /= 0) cstring=''
   ENDIF
@@ -430,10 +430,10 @@ ELEMENTAL FUNCTION distance_2points(p0,p1) RESULT(d)
         d=ABS((p1%coord(1)-p0%coord(1)))
       CASE(2)
         d=SQRT((p1%coord(1)-p0%coord(1))*(p1%coord(1)-p0%coord(1))+ &
-          (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2)))
+            (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2)))
       CASE(3)
         d=SQRT((p1%coord(1)-p0%coord(1))*(p1%coord(1)-p0%coord(1))+ &
-          (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2))+ &
+            (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2))+ &
             (p1%coord(3)-p0%coord(3))*(p1%coord(3)-p0%coord(3)))
       CASE DEFAULT
         DO i=1,p0%dim
@@ -515,7 +515,7 @@ ELEMENTAL FUNCTION innerAngle_3points(p0,p1,p2) RESULT(angle)
         vec2(2)=p2%coord(2)-p1%coord(2)
         vec2(3)=p2%coord(3)-p1%coord(3)
         angle=ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
-          (d1*d2))
+            (d1*d2))
     ENDSELECT
   ENDIF
 ENDFUNCTION innerAngle_3points
@@ -557,7 +557,7 @@ ELEMENTAL FUNCTION outerAngle_3points(p0,p1,p2) RESULT(angle)
         vec2(2)=p2%coord(2)-p1%coord(2)
         vec2(3)=p2%coord(3)-p1%coord(3)
         angle=TWOPI-ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
-          (d1*d2))
+            (d1*d2))
     ENDSELECT
   ENDIF
 ENDFUNCTION outerAngle_3points

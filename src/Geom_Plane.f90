@@ -114,7 +114,7 @@ ELEMENTAL FUNCTION intersect_PlaneType_and_LineType(plane,line) RESULT(point)
   point%dim=-1
   !Verify dummy arguments have data
   IF((plane%v0%dim == 3 .AND. ALLOCATED(plane%v0%coord)) .AND. &
-    (line%p1%dim == 3 .AND. ALLOCATED(line%p1%coord)) .AND. &
+      (line%p1%dim == 3 .AND. ALLOCATED(line%p1%coord)) .AND. &
       (line%p2%dim == 3 .AND. ALLOCATED(line%p2%coord))) THEN
     u(1)=line%p2%coord(1)-line%p1%coord(1)
     u(2)=line%p2%coord(2)-line%p1%coord(2)

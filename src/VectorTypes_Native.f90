@@ -110,7 +110,7 @@ SUBROUTINE init_RealVectorType(thisVector,Params)
   IF(.NOT. thisVector%isInit) THEN
     IF(n < 1) THEN
       CALL eVectorType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSE
       thisVector%isInit=.TRUE.
@@ -119,7 +119,7 @@ SUBROUTINE init_RealVectorType(thisVector,Params)
     ENDIF
   ELSE
     CALL eVectorType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - VectorType already initialized')
+        modName//'::'//myName//' - VectorType already initialized')
   ENDIF
   CALL validParams%clear()
 ENDSUBROUTINE init_RealVectorType

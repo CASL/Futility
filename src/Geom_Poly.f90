@@ -180,7 +180,7 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
     !Setup initial points and edge point
     !Need to use the edgeMatrix to find the neighboring points, can't assume ordered.
     CALL thisPoly%vert(1)%init(DIM=2,X=thatGraph%vertices(1,1), &
-      Y=thatGraph%vertices(2,1))
+        Y=thatGraph%vertices(2,1))
     thisPoly%edge(1,1)=1
     !Loop over all vertices in the graphtype in CW ordering.
     !Logic here is for when we have our next point directly above the starting point.
@@ -192,11 +192,11 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
     xcent=0.0_SRK; ycent=0.0_SRK
     DO i=2,thisPoly%nVert
       CALL thisPoly%vert(i)%init(DIM=2,X=thatGraph%vertices(1,inext), &
-        Y=thatGraph%vertices(2,inext))
+          Y=thatGraph%vertices(2,inext))
       !Using the CW-th point, the area calc will be negative.  Hence the ABS()
       subarea=thisPoly%vert(i-1)%coord(1)* &
-        thisPoly%vert(i)%coord(2)-thisPoly%vert(i-1)%coord(2)* &
-        thisPoly%vert(i)%coord(1)
+          thisPoly%vert(i)%coord(2)-thisPoly%vert(i-1)%coord(2)* &
+          thisPoly%vert(i)%coord(1)
       thisPoly%area=thisPoly%area+subarea
       !When calculating the weighted means, we subtract because we're going CW instead of CCW
       xcent=xcent-subarea*(thisPoly%vert(i-1)%coord(1)+thisPoly%vert(i)%coord(1))
@@ -214,8 +214,8 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
     !Set last edge
     thisPoly%edge(2,thisPoly%nVert)=1
     subarea=thisPoly%vert(thisPoly%nVert)%coord(1)* &
-      thisPoly%vert(1)%coord(2)-thisPoly%vert(thisPoly%nVert)%coord(2)* &
-      thisPoly%vert(1)%coord(1)
+        thisPoly%vert(1)%coord(2)-thisPoly%vert(thisPoly%nVert)%coord(2)* &
+        thisPoly%vert(1)%coord(1)
     thisPoly%area=thisPoly%area+subarea
     !When calculating the weighted means, we subtract because we're going CW instead of CCW
     xcent=xcent-subarea*(thisPoly%vert(thisPoly%nVert)%coord(1)+thisPoly%vert(1)%coord(1))
@@ -262,11 +262,11 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
         IF(thisPoly%quadEdge(3,i) > 0.0_SRK) THEN
           CALL createArcFromQuad(thisPoly,i,circle)
           CALL point%init(DIM=2,X=thisPoly%quadEdge(1,i), &
-            Y=thisPoly%quadEdge(2,i))
+              Y=thisPoly%quadEdge(2,i))
           !Setup line to test whether to add or subtract
           iedge=thisPoly%quad2edge(i)
           CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
-            thisPoly%vert(thisPoly%edge(2,iedge)))
+              thisPoly%vert(thisPoly%edge(2,iedge)))
 
           R1=thisPoly%quadEdge(3,i)
 
@@ -529,7 +529,7 @@ PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(b
         ENDIF
         IF(.NOT.isQuadEdge) THEN
           CALL line%set(thisPoly%vert(thisPoly%edge(1,i)), &
-            thisPoly%vert(thisPoly%edge(2,i)))
+              thisPoly%vert(thisPoly%edge(2,i)))
           d=line%distance2Point(point)
           IF(d .APPROXEQA. 0.0_SRK) THEN
             bool=.TRUE.
@@ -545,16 +545,16 @@ PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(b
       DO i=1,thisPoly%nQuadEdge
         !First check if the point is on the surface of the circle
         IF(((point%coord(1)-thisPoly%quadEdge(1,i))* &
-          (point%coord(1)-thisPoly%quadEdge(1,i))+ &
-          (point%coord(2)-thisPoly%quadEdge(2,i))* &
-          (point%coord(2)-thisPoly%quadEdge(2,i))) .APPROXEQA. &
+            (point%coord(1)-thisPoly%quadEdge(1,i))+ &
+            (point%coord(2)-thisPoly%quadEdge(2,i))* &
+            (point%coord(2)-thisPoly%quadEdge(2,i))) .APPROXEQA. &
             (thisPoly%quadEdge(3,i)*thisPoly%quadEdge(3,i))) THEN
           !Check if the point is within the arc range
           CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i), &
-            Y=thisPoly%quadEdge(2,i))
+              Y=thisPoly%quadEdge(2,i))
           iedge=thisPoly%quad2edge(i)
           CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
-            thisPoly%vert(thisPoly%edge(2,iedge)))
+              thisPoly%vert(thisPoly%edge(2,iedge)))
           IF(line%pointIsLeft(centroid)) THEN
             !Centroid is on the left, the valid portion of the
             !arc lies to the right of the line.
@@ -648,7 +648,7 @@ PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bo
         iedge=thisPoly%quad2edge(i)
         CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,i),Y=thisPoly%quadEdge(2,i))
         CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
-          thisPoly%vert(thisPoly%edge(2,iedge)))
+            thisPoly%vert(thisPoly%edge(2,iedge)))
         CALL circ%set(centroid,thisPoly%quadEdge(3,i))
         !If it's approximately on the line consider it in the arc
         onLine=(line%distance2Point(point) .APPROXEQA. 0.0_SRK)
@@ -661,7 +661,7 @@ PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bo
           !Quad edge extends inside the polygon.
           !Check if the point is to the right of the edge and outside the circle
           inConcaveCirc=(line%pointIsRight(point) .OR. onLine) .AND. &
-            (circ%inside(point) .AND. .NOT.circ%onSurface(point))
+              (circ%inside(point) .AND. .NOT.circ%onSurface(point))
         ENDIF
         CALL circ%clear()
         CALL line%clear()
@@ -675,7 +675,7 @@ PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bo
       !Logic for inside the polygon and outside the subregions
       IF(inPoly .AND. .NOT.thisPoly%isSimple()) THEN
         inPoly=.NOT.point_inside_PolygonType(thisPoly%subregions,point,.TRUE.) &
-          .OR. onSurface_PolygonType(thisPoly%subregions,point,.FALSE.)
+            .OR. onSurface_PolygonType(thisPoly%subregions,point,.FALSE.)
       ENDIF
     ELSEIF(ASSOCIATED(thisPoly%nextPoly)) THEN
       inPoly=inPoly .OR. point_inside_PolygonType(thisPoly%nextPoly,point,.TRUE.)
@@ -728,12 +728,12 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
         IF(thisPoly%nQuadEdge > 0) THEN
           IF(ALL(thisPoly%quad2edge /= i)) THEN
             CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-              thisPoly%vert(thisPoly%edge(2,i)))
+                thisPoly%vert(thisPoly%edge(2,i)))
             j=j+1
           ENDIF
         ELSE
           CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-            thisPoly%vert(thisPoly%edge(2,i)))
+              thisPoly%vert(thisPoly%edge(2,i)))
           j=j+1
         ENDIF
       ENDDO
@@ -750,22 +750,22 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
           IF(thatPoly%nQuadEdge > 0) THEN
             IF(ALL(thatPoly%quad2edge /= j)) THEN
               CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-                thatPoly%vert(thatPoly%edge(2,j)))
+                  thatPoly%vert(thatPoly%edge(2,j)))
               p1=Lines(i)%intersectLine(tmpLine)
             ENDIF
           ELSE
             CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-              thatPoly%vert(thatPoly%edge(2,j)))
+                thatPoly%vert(thatPoly%edge(2,j)))
             p1=Lines(i)%intersectLine(tmpLine)
           ENDIF
           !Check if there was an intersection
           IF(p1%dim > 0) THEN
             !Clear the point if it happens to be one of the segment endpoints
             IF((p1 .APPROXEQA. Lines(i)%p1) .OR. &
-               (p1 .APPROXEQA. Lines(i)%p2) .OR. &
-               (p1 .APPROXEQA. tmpLine%p1) .OR. &
-               (p1 .APPROXEQA. tmpLine%p2)) &
-              CALL p1%clear()
+                (p1 .APPROXEQA. Lines(i)%p2) .OR. &
+                (p1 .APPROXEQA. tmpLine%p1) .OR. &
+                (p1 .APPROXEQA. tmpLine%p2)) &
+                CALL p1%clear()
           ENDIF
           IF(p1%dim > 0) THEN
             !Found an intersection! Polygon is outside!
@@ -784,22 +784,22 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
           !If line segment end points are on circle, intersections
           !are not returned, so we handle that special case here.
           IF(p1%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p1)) &
-            p1=Lines(i)%p1
+              p1=Lines(i)%p1
           IF(p2%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p2)) &
-            p2=Lines(i)%p2
+              p2=Lines(i)%p2
 
           iedge=thatPoly%quad2edge(j)
           !Exclude points not in the arc, or the endpoints of either the line or arc
           IF(.NOT.tmpCirc%onSurface(p1) .OR. &
-            (Lines(i)%p1 .APPROXEQA. p1) .OR. &
-            (Lines(i)%p2 .APPROXEQA. p1).OR. &
-            (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
-            (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
+              (Lines(i)%p1 .APPROXEQA. p1) .OR. &
+              (Lines(i)%p2 .APPROXEQA. p1).OR. &
+              (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
+              (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
           IF(.NOT.tmpCirc%onSurface(p2) .OR. &
-            (Lines(i)%p1 .APPROXEQA. p2) .OR. &
-            (Lines(i)%p2 .APPROXEQA. p2) .OR. &
-            (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
-            (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
+              (Lines(i)%p1 .APPROXEQA. p2) .OR. &
+              (Lines(i)%p2 .APPROXEQA. p2) .OR. &
+              (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
+              (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
 
           IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
             bool=.FALSE.
@@ -817,14 +817,14 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
             IF(thatPoly%nQuadEdge > 0) THEN
               IF(ALL(thatPoly%quad2edge /= i)) THEN
                 CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-                  thatPoly%vert(thatPoly%edge(2,j)))
+                    thatPoly%vert(thatPoly%edge(2,j)))
                 CALL Circs(i)%intersectLine(tmpLine,p1,p2)
               ELSE
                 CYCLE
               ENDIF
             ELSE
               CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-                thatPoly%vert(thatPoly%edge(2,j)))
+                  thatPoly%vert(thatPoly%edge(2,j)))
               CALL Circs(i)%intersectLine(tmpLine,p1,p2)
             ENDIF
 
@@ -833,22 +833,22 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
             !If line segment end points are on circle, intersections
             !are not returned, so we handle that special case here.
             IF(p1%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p1)) &
-              p1=tmpLine%p1
+                p1=tmpLine%p1
             IF(p2%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p2)) &
-              p2=tmpLine%p2
+                p2=tmpLine%p2
 
             iedge=thisPoly%quad2edge(i)
             !Exclude points not in the arc, or the endpoints of either the line or arc
             IF(.NOT.Circs(i)%onSurface(p1) .OR. &
-              (tmpLine%p1 .APPROXEQA. p1) .OR. &
-              (tmpLine%p2 .APPROXEQA. p1) .OR. &
-              (thisPoly%vert(thisPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
-              (thisPoly%vert(thisPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
+                (tmpLine%p1 .APPROXEQA. p1) .OR. &
+                (tmpLine%p2 .APPROXEQA. p1) .OR. &
+                (thisPoly%vert(thisPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
+                (thisPoly%vert(thisPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
             IF(.NOT.Circs(i)%onSurface(p2) .OR. &
-              (tmpLine%p1 .APPROXEQA. p2) .OR. &
-              (tmpLine%p2 .APPROXEQA. p2) .OR. &
-              (thisPoly%vert(thisPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
-              (thisPoly%vert(thisPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
+                (tmpLine%p1 .APPROXEQA. p2) .OR. &
+                (tmpLine%p2 .APPROXEQA. p2) .OR. &
+                (thisPoly%vert(thisPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
+                (thisPoly%vert(thisPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
 
             IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
               bool=.FALSE.
@@ -866,11 +866,11 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
             iedge=thatPoly%quad2edge(j)
             !Exclude points not in the arc, or the endpoints
             IF(.NOT.tmpCirc%onSurface(p1) .OR. &
-              (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
-              (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
+                (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
+                (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
             IF(.NOT.tmpCirc%onSurface(p2) .OR. &
-              (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
-              (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
+                (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
+                (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
 
             IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
               bool=.FALSE.
@@ -884,7 +884,7 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
     !3. make sure smaller polygon centroid is inside larger polygon
     IF(bool) THEN
       IF((.NOT. thisPoly%pointInside(thatPoly%centroid) .AND. &
-       thatPoly%pointInside(thatPoly%centroid))) bool=.FALSE.
+          thatPoly%pointInside(thatPoly%centroid))) bool=.FALSE.
     ENDIF
     !4. Evaluate against subregions (for each subregion)
     IF(bool) THEN
@@ -967,7 +967,7 @@ PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
 
   DO i=1,thisPolygon%nVert
     CALL lines(i)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
-      thisPolygon%vert(thisPolygon%edge(2,i)))
+        thisPolygon%vert(thisPolygon%edge(2,i)))
   ENDDO
   DO i=1,thisPolygon%nQuadEdge
     CALL createArcFromQuad(thisPolygon,i,circles(i))
@@ -980,7 +980,7 @@ PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
   ipoint=1
   Quad: DO i=1,thisPolygon%nQuadEdge
     CALL circles(i)%intersectArcLine(line,tmppoints(ipoint), &
-      tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+        tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
     !Check if the points are on the circle
     DO j=0,3
       IF(tmppoints(ipoint+j)%DIM == 2) THEN
@@ -988,7 +988,7 @@ PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
         x=tmppoints(ipoint+j)%coord(1)-circles(i)%c%coord(1)
         y=tmppoints(ipoint+j)%coord(2)-circles(i)%c%coord(2)
         IF(.NOT.(x*x+y*y .APPROXEQA. circles(i)%r*circles(i)%r)) &
-          CALL tmppoints(ipoint+j)%clear()
+            CALL tmppoints(ipoint+j)%clear()
         IF(tmppoints(ipoint+j)%dim > 0) THEN
           bool=.TRUE.
           EXIT Quad
@@ -1082,12 +1082,12 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
       IF(thisPoly%nQuadEdge > 0) THEN
         IF(ALL(thisPoly%quad2edge /= i)) THEN
           CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-            thisPoly%vert(thisPoly%edge(2,i)))
+              thisPoly%vert(thisPoly%edge(2,i)))
           j=j+1
         ENDIF
       ELSE
         CALL Lines(j)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-          thisPoly%vert(thisPoly%edge(2,i)))
+            thisPoly%vert(thisPoly%edge(2,i)))
         j=j+1
       ENDIF
     ENDDO
@@ -1104,22 +1104,22 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
         IF(thatPoly%nQuadEdge > 0) THEN
           IF(ALL(thatPoly%quad2edge /= j)) THEN
             CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-              thatPoly%vert(thatPoly%edge(2,j)))
+                thatPoly%vert(thatPoly%edge(2,j)))
             p1=Lines(i)%intersectLine(tmpLine)
           ENDIF
         ELSE
           CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-            thatPoly%vert(thatPoly%edge(2,j)))
+              thatPoly%vert(thatPoly%edge(2,j)))
           p1=Lines(i)%intersectLine(tmpLine)
         ENDIF
         !Check if there was an intersection
         IF(p1%dim > 0) THEN
           !Clear the point if it happens to be one of the segment endpoints
           IF((p1 .APPROXEQA. Lines(i)%p1) .OR. &
-             (p1 .APPROXEQA. Lines(i)%p2) .OR. &
-             (p1 .APPROXEQA. tmpLine%p1) .OR. &
-             (p1 .APPROXEQA. tmpLine%p2)) &
-            CALL p1%clear()
+              (p1 .APPROXEQA. Lines(i)%p2) .OR. &
+              (p1 .APPROXEQA. tmpLine%p1) .OR. &
+              (p1 .APPROXEQA. tmpLine%p2)) &
+              CALL p1%clear()
         ENDIF
         IF(p1%dim > 0) THEN
           !Found an intersection! Polygon is outside!
@@ -1138,17 +1138,17 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
         !If line segment end points are on circle, intersections
         !are not returned, so we handle that special case here.
         IF(p1%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p1)) &
-          p1=Lines(i)%p1
+            p1=Lines(i)%p1
         IF(p2%dim == 0 .AND. tmpCirc%onSurface(Lines(i)%p2)) &
-          p2=Lines(i)%p2
+            p2=Lines(i)%p2
 
         !Exclude points not in the arc, or the endpoints
         IF(.NOT.tmpCirc%onSurface(p1) .OR. &
-          (Lines(i)%p1 .APPROXEQA. p1) .OR. &
-          (Lines(i)%p2 .APPROXEQA. p1)) CALL p1%clear()
+            (Lines(i)%p1 .APPROXEQA. p1) .OR. &
+            (Lines(i)%p2 .APPROXEQA. p1)) CALL p1%clear()
         IF(.NOT.tmpCirc%onSurface(p2) .OR. &
-          (Lines(i)%p1 .APPROXEQA. p2) .OR. &
-          (Lines(i)%p2 .APPROXEQA. p2)) CALL p2%clear()
+            (Lines(i)%p1 .APPROXEQA. p2) .OR. &
+            (Lines(i)%p2 .APPROXEQA. p2)) CALL p2%clear()
 
         IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
           bool=.TRUE.
@@ -1166,14 +1166,14 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
           IF(thatPoly%nQuadEdge > 0) THEN
             IF(ALL(thatPoly%quad2edge /= j)) THEN
               CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-                thatPoly%vert(thatPoly%edge(2,j)))
+                  thatPoly%vert(thatPoly%edge(2,j)))
               CALL Circs(i)%intersectLine(tmpLine,p1,p2)
             ELSE
               CYCLE
             ENDIF
           ELSE
             CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
-              thatPoly%vert(thatPoly%edge(2,j)))
+                thatPoly%vert(thatPoly%edge(2,j)))
             CALL Circs(i)%intersectLine(tmpLine,p1,p2)
           ENDIF
 
@@ -1183,17 +1183,17 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
           !If line segment end points are on circle, intersections
           !are not returned, so we handle that special case here.
           IF(p1%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p1)) &
-            p1=tmpLine%p1
+              p1=tmpLine%p1
           IF(p2%dim == 0 .AND. Circs(i)%onSurface(tmpLine%p2)) &
-            p2=tmpLine%p2
+              p2=tmpLine%p2
 
           !Exclude points not in the arc, or the endpoints
           IF(.NOT.Circs(i)%onSurface(p1) .OR. &
-            (tmpLine%p1 .APPROXEQA. p1) .OR. &
-            (tmpLine%p2 .APPROXEQA. p1)) CALL p1%clear()
+              (tmpLine%p1 .APPROXEQA. p1) .OR. &
+              (tmpLine%p2 .APPROXEQA. p1)) CALL p1%clear()
           IF(.NOT.Circs(i)%onSurface(p2) .OR. &
-            (tmpLine%p1 .APPROXEQA. p2) .OR. &
-            (tmpLine%p2 .APPROXEQA. p2)) CALL p2%clear()
+              (tmpLine%p1 .APPROXEQA. p2) .OR. &
+              (tmpLine%p2 .APPROXEQA. p2)) CALL p2%clear()
 
           IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
             bool=.TRUE.
@@ -1211,11 +1211,11 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
           iedge=thatPoly%quad2edge(j)
           !Exclude points not in the arc, or the endpoints
           IF(.NOT.tmpCirc%onSurface(p1) .OR. &
-            (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
-            (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
+              (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p1) .OR. &
+              (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p1)) CALL p1%clear()
           IF(.NOT.tmpCirc%onSurface(p2) .OR. &
-            (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
-            (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
+              (thatPoly%vert(thatPoly%edge(1,iedge)) .APPROXEQA. p2) .OR. &
+              (thatPoly%vert(thatPoly%edge(2,iedge)) .APPROXEQA. p2)) CALL p2%clear()
 
           IF((p1%dim > 0) .OR. (p2%dim > 0)) THEN
             bool=.TRUE.
@@ -1299,13 +1299,13 @@ PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
         IF(.NOT.ANY(thisPolygon%quad2edge == i)) THEN
           j=j+1
           CALL lines(j)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
-            thisPolygon%vert(thisPolygon%edge(2,i)))
+              thisPolygon%vert(thisPolygon%edge(2,i)))
         ENDIF
       ENDDO
     ELSE
       DO i=1,thisPolygon%nVert
         CALL lines(i)%set(thisPolygon%vert(thisPolygon%edge(1,i)), &
-          thisPolygon%vert(thisPolygon%edge(2,i)))
+            thisPolygon%vert(thisPolygon%edge(2,i)))
       ENDDO
     ENDIF
     DO i=1,narcs
@@ -1339,9 +1339,9 @@ PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
         !If line segment end points are on circle, intersections
         !are not returned, so we handle that special case here.
         IF(p1%dim == 0 .AND. circles(i)%onSurface(line%p1)) &
-          p1=line%p1
+            p1=line%p1
         IF(p2%dim == 0 .AND. circles(i)%onSurface(line%p2)) &
-          p2=line%p2
+            p2=line%p2
 
         !Exclude points not in the arc
         IF(.NOT.circles(i)%onSurface(p1)) CALL p1%clear()
@@ -1425,23 +1425,23 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
     IF(thisPoly%nQuadEdge > 0) ALLOCATE(theseCircs(thisPoly%nQuadEdge))
     IF(thatPoly%nQuadEdge > 0) ALLOCATE(thoseCircs(thatPoly%nQuadEdge))
     ALLOCATE(tmppoints(thisPoly%nVert*thatPoly%nVert+4*thisPoly%nQuadEdge*thatPoly%nVert+ &
-      4*thatPoly%nQuadEdge*thisPoly%nVert+2*thisPoly%nQuadEdge*thatPoly%nQuadEdge))
+        4*thatPoly%nQuadEdge*thisPoly%nVert+2*thisPoly%nQuadEdge*thatPoly%nQuadEdge))
     DO i=1,thisPoly%nVert
       IF(thisPoly%nQuadEdge > 0) THEN
         IF(ALL(thisPoly%quad2edge /= i)) CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-          thisPoly%vert(thisPoly%edge(2,i)))
+            thisPoly%vert(thisPoly%edge(2,i)))
       ELSE
         CALL theseLines(i)%set(thisPoly%vert(thisPoly%edge(1,i)), &
-          thisPoly%vert(thisPoly%edge(2,i)))
+            thisPoly%vert(thisPoly%edge(2,i)))
       ENDIF
     ENDDO
     DO i=1,thatPoly%nVert
       IF(thatPoly%nQuadEdge > 0) THEN
         IF(ALL(thatPoly%quad2edge /= i)) CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
-          thatPoly%vert(thatPoly%edge(2,i)))
+            thatPoly%vert(thatPoly%edge(2,i)))
       ELSE
         CALL thoseLines(i)%set(thatPoly%vert(thatPoly%edge(1,i)), &
-          thatPoly%vert(thatPoly%edge(2,i)))
+            thatPoly%vert(thatPoly%edge(2,i)))
       ENDIF
     ENDDO
     DO i=1,thisPoly%nQuadEdge
@@ -1465,7 +1465,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
       !All lines with the those circles
       DO j=1,thatPoly%nQuadEdge
         CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(ipoint), &
-          tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+            tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
         !Check if the points are on the circle
         DO k=0,3
           IF(tmppoints(ipoint+k)%DIM == 2) THEN
@@ -1473,7 +1473,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
             x=tmppoints(ipoint+k)%coord(1)-thoseCircs(j)%c%coord(1)
             y=tmppoints(ipoint+k)%coord(2)-thoseCircs(j)%c%coord(2)
             IF(.NOT.(x*x+y*y .APPROXEQA. thoseCircs(j)%r*thoseCircs(j)%r)) &
-              CALL tmppoints(ipoint+k)%clear()
+                CALL tmppoints(ipoint+k)%clear()
           ENDIF
         ENDDO
         ipoint=ipoint+4
@@ -1484,7 +1484,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
     DO i=1,thisPoly%nQuadEdge
       DO j=1,thatPoly%nVert
         CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(ipoint), &
-          tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
+            tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
         !Check if the points are on the circle
         DO k=0,3
           IF(tmppoints(ipoint+k)%DIM == 2) THEN
@@ -1492,7 +1492,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
             x=tmppoints(ipoint+k)%coord(1)-theseCircs(i)%c%coord(1)
             y=tmppoints(ipoint+k)%coord(2)-theseCircs(i)%c%coord(2)
             IF(.NOT.(x*x+y*y .APPROXEQA. theseCircs(i)%r*theseCircs(i)%r)) &
-              CALL tmppoints(ipoint+k)%clear()
+                CALL tmppoints(ipoint+k)%clear()
           ENDIF
         ENDDO
         ipoint=ipoint+4
@@ -1500,7 +1500,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
       !ThoseCircs
       DO j=1,thatPoly%nQuadEdge
         CALL theseCircs(i)%intersectCircle(thoseCircs(j),tmppoints(ipoint), &
-          tmppoints(ipoint+1))
+            tmppoints(ipoint+1))
         ipoint=ipoint+2
       ENDDO
     ENDDO
@@ -1608,11 +1608,10 @@ SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
                 area=thisPoly%area+iPoly%area
                 !add the centroid back to this Poly
                 thisPoly%centroid%coord(1)=(thisPoly%centroid%coord(1)* &
-                  thisPoly%area+iPoly%area*iPoly%centroid%coord(1))/ &
+                    thisPoly%area+iPoly%area*iPoly%centroid%coord(1))/ &
                   area
                 thisPoly%centroid%coord(2)=(thisPoly%centroid%coord(2)* &
-                  thisPoly%area+iPoly%area*iPoly%centroid%coord(2))/ &
-                  area
+                    thisPoly%area+iPoly%area*iPoly%centroid%coord(2))/area
                 !add the area back to thisPoly
                 thisPoly%area=area
                 prevPoly%nextPoly => iPoly%nextPoly
@@ -1625,13 +1624,13 @@ SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
         ENDIF
         IF(.NOT.lintersect) THEN
           cent(1)=thisPoly%centroid%coord(1)*thisPoly%area- &
-            subPoly%centroid%coord(1)*subPoly%area
+              subPoly%centroid%coord(1)*subPoly%area
           cent(2)=thisPoly%centroid%coord(2)*thisPoly%area- &
-            subPoly%centroid%coord(2)*subPoly%area
+              subPoly%centroid%coord(2)*subPoly%area
           thisPoly%area=thisPoly%area-subPoly%area
           CALL thisPoly%centroid%clear()
           CALL thisPoly%centroid%init(DIM=2,X=cent(1)/thisPoly%area, &
-            Y=cent(2)/thisPoly%area)
+              Y=cent(2)/thisPoly%area)
         ENDIF
       ENDIF
     ENDIF
@@ -1713,7 +1712,7 @@ SUBROUTINE Polygonize_Circle(circle,polygon)
     r=circle%r
     c=circle%c%coord(1:2)
     IF((circle%thetastt .APPROXEQA. 0.0_SRK) .AND. &
-       (circle%thetastp .APPROXEQA. TWOPI)) THEN
+        (circle%thetastp .APPROXEQA. TWOPI)) THEN
 
       v0(1)=c(1)-r; v0(2)=c(2)
       v1(1)=c(1); v1(2)=c(2)+r
@@ -1765,7 +1764,7 @@ SUBROUTINE Polygonize_Cylinder(cylinder,polygon)
     r=cylinder%r
     c=cylinder%axis%p1%coord(1:3)
     IF((cylinder%thetastt .APPROXEQA. 0.0_SRK) .AND. &
-       (cylinder%thetastp .APPROXEQA. TWOPI)) THEN
+        (cylinder%thetastp .APPROXEQA. TWOPI)) THEN
 
       v0(1)=c(1)-r; v0(2)=c(2)
       v1(1)=c(1); v1(2)=c(2)+r
@@ -1882,20 +1881,20 @@ PURE RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
   bool=.FALSE.
   IF(p1%isinit .AND. p2%isinit) THEN
     IF((p1%area .APPROXEQA. p2%area) .AND. (p1%nVert == p2%nVert) .AND. &
-      (p1%nQuadEdge == p2%nQuadEdge) .AND. (p1%centroid .APPROXEQA. p2%centroid) .AND. &
-      (SIZE(p1%vert) == SIZE(p2%vert)) .AND. &
-      (SIZE(p1%edge,DIM=1) == SIZE(p2%edge,DIM=1)) .AND. &
-      (SIZE(p1%edge,DIM=2) == SIZE(p2%edge,DIM=2)) .AND. &
-      (ASSOCIATED(p1%nextPoly) .EQV. ASSOCIATED(p2%nextPoly)) .AND. &
+        (p1%nQuadEdge == p2%nQuadEdge) .AND. (p1%centroid .APPROXEQA. p2%centroid) .AND. &
+        (SIZE(p1%vert) == SIZE(p2%vert)) .AND. &
+        (SIZE(p1%edge,DIM=1) == SIZE(p2%edge,DIM=1)) .AND. &
+        (SIZE(p1%edge,DIM=2) == SIZE(p2%edge,DIM=2)) .AND. &
+        (ASSOCIATED(p1%nextPoly) .EQV. ASSOCIATED(p2%nextPoly)) .AND. &
         (ASSOCIATED(p1%subRegions) .EQV. ASSOCIATED(p2%subRegions))) THEN
       !
       bool=ALL(p1%vert .APPROXEQA. p2%vert) .AND. ALL(p1%edge == p2%edge)
       bool=bool .AND. (ALLOCATED(p1%quad2edge) .EQV. ALLOCATED(p2%quad2edge))
       IF(bool .AND. ALLOCATED(p1%quad2edge)) THEN
         IF(SIZE(p1%quadEdge,DIM=1) == SIZE(p2%quadEdge,DIM=1) .AND. &
-           SIZE(p1%quadEdge,DIM=2) == SIZE(p2%quadEdge,DIM=2)) THEN
+            SIZE(p1%quadEdge,DIM=2) == SIZE(p2%quadEdge,DIM=2)) THEN
           bool=bool .AND. ALL(p1%quad2edge == p2%quad2edge) .AND. &
-            ALL(p1%quadEdge .APPROXEQA. p2%quadEdge)
+              ALL(p1%quadEdge .APPROXEQA. p2%quadEdge)
         ELSE
           bool=.FALSE.
         ENDIF
@@ -1903,7 +1902,7 @@ PURE RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
       IF(bool .AND. ASSOCIATED(p1%nextPoly)) THEN
         bool=isequal_PolygonType(p1%nextPoly,p2%nextPoly)
         IF(bool .AND. ASSOCIATED(p1%subRegions)) &
-          bool=isequal_PolygonType(p1%subRegions,p2%subRegions)
+            bool=isequal_PolygonType(p1%subRegions,p2%subRegions)
       ENDIF
     ENDIF
   ENDIF
@@ -1929,9 +1928,9 @@ PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
       (iquad <= thisPoly%nQuadEdge)) THEN
     iedge=thisPoly%quad2edge(iquad)
     CALL edge%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
-      thisPoly%vert(thisPoly%edge(2,iedge)))
+        thisPoly%vert(thisPoly%edge(2,iedge)))
     CALL centroid%init(DIM=2,X=thisPoly%quadEdge(1,iquad), &
-      Y=thisPoly%quadEdge(2,iquad))
+        Y=thisPoly%quadEdge(2,iquad))
     !Need to get the starting and stopping angles...
     refpoint=centroid
     refpoint%coord(1)=refpoint%coord(1)+1.0_SRK
@@ -1966,7 +1965,7 @@ PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
     ENDIF
     IF(angstop < angstart) angstop=angstop+TWOPI
     CALL circle%set(centroid,thisPoly%quadEdge(3,iquad), &
-      ANGSTT=angstart,ANGSTP=angstop)
+        ANGSTT=angstart,ANGSTP=angstop)
     CALL centroid%clear()
     CALL refpoint%clear()
     CALL edge%clear()

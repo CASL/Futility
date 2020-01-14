@@ -83,10 +83,10 @@ INTEGER(SIK),PRIVATE,PARAMETER :: nRN=4
 
 !> Add description
 TYPE(RNGdataType),PRIVATE,PARAMETER :: generators(nRN)=(/ &
-         RNGdataType(              5_SLK**19, 0_SLK, 48, 152917_SLK, 5_SLK**19, 'mcnp std'),  &
-         RNGdataType(9219741426499971445_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer1'),  &
-         RNGdataType(2806196910506780709_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer2'),  &
-         RNGdataType(3249286849523012805_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer3') /)
+    RNGdataType(              5_SLK**19, 0_SLK, 48, 152917_SLK, 5_SLK**19, 'mcnp std'),  &
+    RNGdataType(9219741426499971445_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer1'),  &
+    RNGdataType(2806196910506780709_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer2'),  &
+    RNGdataType(3249286849523012805_SLK, 1_SLK, 63, 152917_SLK, 1_SLK,     'LEcuyer3') /)
 !                           mult              add  log2mod  stride   seed0        name
 
 !> Add description
@@ -221,7 +221,7 @@ SUBROUTINE init_Sampler(sampler,RNGid,seed0,skip,MPIparallelEnv,OMPparallelEnv)
       nproc=MPIparallelEnv%nproc
     ELSE
       CALL eStochasticSampler%raiseDebug(modName//'::'//myName// &
-        ' - MPI Env is not initialized, and will not be used.')
+          ' - MPI Env is not initialized, and will not be used.')
     ENDIF
   ENDIF
   IF(PRESENT(OMPparallelEnv)) THEN
@@ -230,7 +230,7 @@ SUBROUTINE init_Sampler(sampler,RNGid,seed0,skip,MPIparallelEnv,OMPparallelEnv)
       nthread=OMPparallelEnv%nproc
     ELSE
       CALL eStochasticSampler%raiseDebug(modName//'::'//myName// &
-        ' - OMP Env is not initialized, and will not be used.')
+          ' - OMP Env is not initialized, and will not be used.')
     ENDIF
   ENDIF
 
@@ -245,7 +245,7 @@ SUBROUTINE init_Sampler(sampler,RNGid,seed0,skip,MPIparallelEnv,OMPparallelEnv)
   ENDIF
 
   myskip=myskip+INT(mpirank,SLK)*INT(period/INT(nproc,SLK),SLK)+ &
-    INT(omprank,SLK)*INT(period/INT(nproc*nthread,SLK),SLK)
+      INT(omprank,SLK)*INT(period/INT(nproc*nthread,SLK),SLK)
 
   sampler%RNseed=RNGdata%RNseed0
   ! Add checks for constraints on seed0
@@ -288,7 +288,7 @@ FUNCTION rng_Sampler(sampler) RESULT(rang)
   CLASS(StochasticSamplingType),INTENT(INOUT) :: sampler
   REAL(SDK) :: rang
   sampler%RNseed=IAND(IAND(sampler%RNmult*sampler%RNseed,sampler%RNmask)+ &
-    sampler%RNadd,sampler%RNmask)
+      sampler%RNadd,sampler%RNmask)
   rang=sampler%RNseed*sampler%RNnorm
   sampler%counter=sampler%counter+1
 ENDFUNCTION rng_Sampler

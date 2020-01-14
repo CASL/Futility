@@ -98,7 +98,7 @@ TYPE :: StringType
     GENERIC :: ASSIGNMENT(=) => assign_char_to_StringType, &
         assign_Logical_to_StringType,assign_Single_Real_to_StringType, &
         assign_Double_Real_to_StringType,assign_Short_Integer_to_StringType, &
-        assign_Long_Integer_to_StringType
+            assign_Long_Integer_to_StringType
     !> copybrief Strings::str_to_sik
     !> copydetails Strings::str_to_sik
     PROCEDURE,PASS :: str_to_sik
@@ -537,7 +537,7 @@ PURE FUNCTION toLower_string(word) RESULT(lower_str)
   lower_str = word
   DO i=1,LEN(word)
     IF('A' <= word%s(i:i) .AND. word%s(i:i) <= 'Z') &
-      lower_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))+32)
+        lower_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))+32)
   ENDDO
 ENDFUNCTION toLower_string
 !
@@ -555,7 +555,7 @@ PURE FUNCTION toupper_string(word) RESULT(upper_str)
   upper_str = word
   DO i=1,LEN(word)
     IF('a' <= word%s(i:i) .AND. word%s(i:i) <= 'z') &
-      upper_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))-32)
+        upper_str%s(i:i)=ACHAR(IACHAR(word%s(i:i))-32)
   ENDDO
 ENDFUNCTION toupper_string
 !

@@ -144,10 +144,10 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copydetails ParallelEnv::recv_INT1_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: recv_INT1_MPI_Env_type
     GENERIC :: recv => recv_CHAR_MPI_Env_type, &
-                       recv_REAL_MPI_Env_type, &
-                       recv_INT_MPI_Env_type, &
-                       recv_REAL1_MPI_Env_type, &
-                       recv_INT1_MPI_Env_type
+        recv_REAL_MPI_Env_type, &
+        recv_INT_MPI_Env_type, &
+        recv_REAL1_MPI_Env_type, &
+        recv_INT1_MPI_Env_type
 
     !> @copybrief ParallelEnv::send_CHAR_MPI_Env_type
     !> @copydetails ParallelEnv::send_CHAR_MPI_Env_type
@@ -165,10 +165,10 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copydetails ParallelEnv::send_INT1_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: send_INT1_MPI_Env_type
     GENERIC :: send => send_CHAR_MPI_Env_type, &
-                       send_REAL_MPI_Env_type, &
-                       send_INT_MPI_Env_type, &
-                       send_REAL1_MPI_Env_type, &
-                       send_INT1_MPI_Env_type
+        send_REAL_MPI_Env_type, &
+        send_INT_MPI_Env_type, &
+        send_REAL1_MPI_Env_type, &
+        send_INT1_MPI_Env_type
 
     !> @copybrief ParallelEnv::gather_SIK0_MPI_Env_type
     !> @copydetails ParallelEnv::gather_SIK0_MPI_Env_type
@@ -184,9 +184,9 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     PROCEDURE,PASS,PRIVATE :: gather_SLK1_MPI_Env_type
     !>
     GENERIC :: gather => gather_SIK0_MPI_Env_type, &
-                         gather_SLK0_MPI_Env_type, &
-                         gather_SLK1_MPI_Env_type, &
-                         gather_SIK1_MPI_Env_type
+        gather_SLK0_MPI_Env_type, &
+        gather_SLK1_MPI_Env_type, &
+        gather_SIK1_MPI_Env_type
     !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
     !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: scatter_SLK0_MPI_Env_type
@@ -195,7 +195,7 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     PROCEDURE,PASS,PRIVATE :: scatter_SLK1_MPI_Env_type
     !>
     GENERIC :: scatter => scatter_SLK0_MPI_Env_type, &
-                          scatter_SLK1_MPI_Env_type
+        scatter_SLK1_MPI_Env_type
     !> @copybrief ParallelEnv::bcast_SNK0_MPI_Env_type
     !> @copydetails ParallelEnv::bcast_SNK0_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: bcast_SNK0_MPI_Env_type
@@ -240,19 +240,19 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     PROCEDURE,PASS,PRIVATE :: bcast_SDK4_MPI_Env_type
     !>
     GENERIC :: bcast => bcast_SNK0_MPI_Env_type, &
-                        bcast_SNK1_MPI_Env_type, &
-                        bcast_SLK0_MPI_Env_type, &
-                        bcast_SLK1_MPI_Env_type, &
-                        bcast_SSK0_MPI_Env_type, &
-                        bcast_SSK1_MPI_Env_type, &
-                        bcast_SSK2_MPI_Env_type, &
-                        bcast_SSK3_MPI_Env_type, &
-                        bcast_SSK4_MPI_Env_type, &
-                        bcast_SDK0_MPI_Env_type, &
-                        bcast_SDK1_MPI_Env_type, &
-                        bcast_SDK2_MPI_Env_type, &
-                        bcast_SDK3_MPI_Env_type, &
-                        bcast_SDK4_MPI_Env_type
+        bcast_SNK1_MPI_Env_type, &
+        bcast_SLK0_MPI_Env_type, &
+        bcast_SLK1_MPI_Env_type, &
+        bcast_SSK0_MPI_Env_type, &
+        bcast_SSK1_MPI_Env_type, &
+        bcast_SSK2_MPI_Env_type, &
+        bcast_SSK3_MPI_Env_type, &
+        bcast_SSK4_MPI_Env_type, &
+        bcast_SDK0_MPI_Env_type, &
+        bcast_SDK1_MPI_Env_type, &
+        bcast_SDK2_MPI_Env_type, &
+        bcast_SDK3_MPI_Env_type, &
+        bcast_SDK4_MPI_Env_type
     !> @copybrief ParallelEnv::allReduceR_scalar_MPI_Env_type
     !> @copydetails  ParallelEnv::allReduceR_scalar_MPI_Env_type
     PROCEDURE,PASS :: allReduce_scalar => allReduceR_scalar_MPI_Env_type
@@ -311,8 +311,8 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copydetails  ParallelEnv::trueForAll_SBK4_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: trueForAll_SBK4 => trueForAll_SBK4_MPI_Env_type
     GENERIC :: trueForAll => trueForAll_SBK0,trueForAll_SBK1, &
-                             trueForAll_SBK2,trueForAll_SBK3, &
-                             trueForAll_SBK4
+        trueForAll_SBK2,trueForAll_SBK3, &
+        trueForAll_SBK4
     !> @copybrief ParallelEnv::trueForAny_SBK0_MPI_Env_type
     !> @copydetails  ParallelEnv::trueForAny_SBK0_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: trueForAny_SBK0 => trueForAny_SBK0_MPI_Env_type
@@ -329,8 +329,8 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copydetails  ParallelEnv::trueForAny_SBK4_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: trueForAny_SBK4 => trueForAny_SBK4_MPI_Env_type
     GENERIC :: trueForAny => trueForAny_SBK0,trueForAny_SBK1, &
-                             trueForAny_SBK2,trueForAny_SBK3, &
-                             trueForAny_SBK4
+        trueForAny_SBK2,trueForAny_SBK3, &
+        trueForAny_SBK4
     !> @copybrief ParallelEnv::finalize_MPI_Env_type
     !> @copydetails  ParallelEnv::finalize_MPI_Env_type
     PROCEDURE,NOPASS :: finalize => finalize_MPI_Env_type
@@ -348,9 +348,9 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     PROCEDURE,PASS,PRIVATE :: scanSum_SRK_MPI_Env_type
     !>
     GENERIC :: scanSum => scanSum_SIK0_MPI_Env_type, &
-                          scanSum_SIK_MPI_Env_type, &
-                          scanSum_SRK0_MPI_Env_type, &
-                          scanSum_SRK_MPI_Env_type
+        scanSum_SIK_MPI_Env_type, &
+        scanSum_SRK0_MPI_Env_type, &
+        scanSum_SRK_MPI_Env_type
 ENDTYPE MPI_EnvType
 
 !> Type describes basic information about OpenMP environment
@@ -582,15 +582,15 @@ SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,idxmap)
         CALL demallocA(wsum)
       ELSE
         CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Illegal value for ipart or too many processors!')
+            ' - Illegal value for ipart or too many processors!')
       ENDIF
     ELSE
       CALL eParEnv%raiseError(modName//'::'//myName// &
-        ' - Error with dimensions of iwgt, n1, and n2!')
+          ' - Error with dimensions of iwgt, n1, and n2!')
     ENDIF
   ELSE
     CALL eParEnv%raiseError(modName//'::'//myName// &
-      ' - Parallel environment is not initialized!')
+        ' - Parallel environment is not initialized!')
   ENDIF
 ENDSUBROUTINE partition_greedy_ParEnvType
 !
@@ -618,12 +618,12 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
   !Initialize MPI if it has not been initialized
   CALL MPI_Initialized(isinit,mpierr)
   IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-    myName//' - call to MPI_Initialized returned an error!')
+      myName//' - call to MPI_Initialized returned an error!')
 
   IF(isinit == 0) THEN
     CALL MPI_Init(mpierr)
     IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Init returned an error!')
+        myName//' - call to MPI_Init returned an error!')
   ENDIF
 #endif
 
@@ -643,10 +643,10 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
 #ifdef HAVE_MPI
   CALL MPI_Comm_size(myPE%comm,myPE%nproc,mpierr)
   IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-    myName//' - call to MPI_Comm_size returned an error!')
+      myName//' - call to MPI_Comm_size returned an error!')
   CALL MPI_Comm_rank(myPE%comm,myPE%rank,mpierr)
   IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-    myName//' - call to MPI_Comm_rank returned an error!')
+      myName//' - call to MPI_Comm_rank returned an error!')
 #else
   myPE%nproc=1
   myPE%rank=0
@@ -664,12 +664,12 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
     allpetsc2=.FALSE.
     allpetsc2(myPE%rank)=petsc_isinit
     CALL MPI_Gather(petsc_isinit,1,MPI_LOGICAL, &
-                    allpetsc2(myPE%rank),1,MPI_LOGICAL,0,myPE%comm,mpierr)
+        allpetsc2(myPE%rank),1,MPI_LOGICAL,0,myPE%comm,mpierr)
     IF((ANY(allpetsc2) .AND. .NOT.ALL(allpetsc2)) .AND. myPE%master) THEN
       CALL eParEnv%raiseFatalError(modName//'::'//myName// &
-        ' - Something is wrong with your application. '// &
+          ' - Something is wrong with your application. '// &
           'PetscInitialized should return either .TRUE. or '// &
-            '.FALSE. for all processes in the communicator.')
+          '.FALSE. for all processes in the communicator.')
     ENDIF
     DEALLOCATE(allpetsc2)
   ENDIF
@@ -698,7 +698,7 @@ SUBROUTINE clear_MPI_Env_type(myPE)
     IF(myPE%comm /= MPI_COMM_WORLD .AND. myPE%comm /= MPI_COMM_SELF) THEN
       CALL MPI_Comm_free(myPE%comm,mpierr) !I think this is collective
       IF(mpierr /= MPI_SUCCESS) CALL eParEnv%raiseError(modName//'::'// &
-        myName//' - call to MPI_Comm_free returned an error!')
+          myName//' - call to MPI_Comm_free returned an error!')
     ENDIF
 #endif
 
@@ -984,7 +984,7 @@ SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(SIZE(recvbuf) == myPE%nproc)
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,1,MPI_INTEGER,recvbuf,1,MPI_INTEGER, &
-    rank,myPE%comm,mpierr)
+      rank,myPE%comm,mpierr)
 #else
   recvbuf(1)=sendbuf
 #endif
@@ -1015,11 +1015,11 @@ SUBROUTINE gather_SIK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
 #ifdef DBLINT
   !64 Bit integer
   CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-    MPI_INTEGER8,rank,myPE%comm,mpierr)
+      MPI_INTEGER8,rank,myPE%comm,mpierr)
 #else
   !32 Bit integer
   CALL MPI_Gather(sendbuf,count,MPI_INTEGER,recvbuf,count, &
-    MPI_INTEGER,rank,myPE%comm,mpierr)
+      MPI_INTEGER,rank,myPE%comm,mpierr)
 #endif
 #else
   DO n=1,count
@@ -1045,7 +1045,7 @@ SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(SIZE(recvbuf) == myPE%nproc)
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
-    rank,myPE%comm,mpierr)
+      rank,myPE%comm,mpierr)
 #else
   recvbuf(1)=sendbuf
 #endif
@@ -1070,7 +1070,7 @@ SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-    MPI_INTEGER8,rank,myPE%comm,mpierr)
+      MPI_INTEGER8,rank,myPE%comm,mpierr)
 #else
   DO n=1,count
     i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
@@ -1095,7 +1095,7 @@ SUBROUTINE scatter_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(SIZE(sendbuf) == myPE%nproc)
 #ifdef HAVE_MPI
   CALL MPI_Scatter(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
-    rank,myPE%comm,mpierr)
+      rank,myPE%comm,mpierr)
 #else
   recvbuf=sendbuf(1)
 #endif
@@ -1120,7 +1120,7 @@ SUBROUTINE scatter_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(SIZE(sendbuf) == myPE%nproc*count)
 #ifdef HAVE_MPI
   CALL MPI_Scatter(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-    MPI_INTEGER8,rank,myPE%comm,mpierr)
+      MPI_INTEGER8,rank,myPE%comm,mpierr)
 #else
   DO n=1,count
     i=MOD(n-1,SIZE(sendbuf,DIM=1))+1
@@ -1455,14 +1455,14 @@ SUBROUTINE allReduceR_scalar_MPI_Env_type(myPE,x)
   REQUIRE(myPE%initstat)
 #ifdef DBL
   CALL MPI_Allreduce(x,rbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #else
   CALL MPI_Allreduce(x,rbuf,1,MPI_SINGLE_PRECISION,MPI_SUM, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     x=rbuf
   ENDIF
@@ -1489,14 +1489,14 @@ SUBROUTINE allReduceR_array_MPI_Env_type(myPE,n,x)
   ALLOCATE(rbuf(n))
 #ifdef DBL
   CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #else
   CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     !Copy the result to the output argument
     CALL BLAS_copy(n,rbuf,1,x,1)
@@ -1527,7 +1527,7 @@ SUBROUTINE allReduceMaxR_scalar_MPI_Env_type(myPE,x)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMax returned an error!')
+        myName//' - call to MPI_AllreduceMax returned an error!')
   ELSE
     x=rbuf
   ENDIF
@@ -1553,14 +1553,14 @@ SUBROUTINE allReduceMaxR_array_MPI_Env_type(myPE,n,x)
   REQUIRE(myPE%initstat)
 #ifdef DBL
   CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MAX, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #else
   CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMax returned an error!')
+        myName//' - call to MPI_AllreduceMax returned an error!')
   ELSE
     !Copy the result to the output argument
     CALL BLAS_copy(n,rbuf,1,x,1)
@@ -1590,7 +1590,7 @@ SUBROUTINE allReduceMinR_scalar_MPI_Env_type(myPE,x)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMin returned an error!')
+        myName//' - call to MPI_AllreduceMin returned an error!')
   ELSE
     x=rbuf
   ENDIF
@@ -1616,14 +1616,14 @@ SUBROUTINE allReduceMinR_array_MPI_Env_type(myPE,n,x)
   REQUIRE(myPE%initstat)
 #ifdef DBL
   CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MIN, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #else
   CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMin returned an error!')
+        myName//' - call to MPI_AllreduceMin returned an error!')
   ELSE
     !Copy the result to the output argument
     CALL BLAS_copy(n,rbuf,1,x,1)
@@ -1662,13 +1662,13 @@ SUBROUTINE reduceMaxLocR_MPI_Env_type(myPE,n,x,i,root)
   sbuf(2,:)=i(1:n)
 #ifdef DBL
   CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MAXLOC, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #else
   CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MAXLOC,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMax returned an error!')
+        myName//' - call to MPI_AllreduceMax returned an error!')
   ELSE
     !Copy the result to the output argument
     x(1:n)=rbuf(1,:)
@@ -1708,13 +1708,13 @@ SUBROUTINE reduceMinLocR_MPI_Env_type(myPE,n,x,i,root)
   sbuf(2,:)=i(1:n)
 #ifdef DBL
   CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
 #else
   CALL MPI_Allreduce(sbuf,rbuf,n,MPI_2REAL,MPI_MINLOC,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMin returned an error!')
+        myName//' - call to MPI_AllreduceMin returned an error!')
   ELSE
     !Copy the result to the output argument
     x(1:n)=rbuf(1,:)
@@ -1741,7 +1741,7 @@ SUBROUTINE allReduceI_scalar_MPI_Env_type(myPE,x)
   CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_SUM,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     x=rbuf
   ENDIF
@@ -1766,10 +1766,10 @@ SUBROUTINE allReduceI_array_MPI_Env_type(myPE,n,x)
   INTEGER(SIK) :: rbuf(n)
   REQUIRE(myPE%initstat)
   CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_SUM, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     !Copy the result to the output argument
     x(1:n)=rbuf ! No BLAS_copy for integers
@@ -1793,10 +1793,10 @@ SUBROUTINE allReduceMaxI_scalar_MPI_Env_type(myPE,x)
   INTEGER(SIK) :: rbuf
   REQUIRE(myPE%initstat)
   CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MAX, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMax returned an error!')
+        myName//' - call to MPI_AllreduceMax returned an error!')
   ELSE
     x=rbuf
   ENDIF
@@ -1821,10 +1821,10 @@ SUBROUTINE allReduceMaxI_array_MPI_Env_type(myPE,n,x)
   INTEGER(SIK) :: rbuf(n)
   REQUIRE(myPE%initstat)
   CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MAX, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMax returned an error!')
+        myName//' - call to MPI_AllreduceMax returned an error!')
   ELSE
     !Copy the result to the output argument
     !CALL BLAS_copy(n,rbuf,1,x,1)
@@ -1849,10 +1849,10 @@ SUBROUTINE allReduceMinI_scalar_MPI_Env_type(myPE,x)
   INTEGER(SIK) :: rbuf
   REQUIRE(myPE%initstat)
   CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MIN, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMin returned an error!')
+        myName//' - call to MPI_AllreduceMin returned an error!')
   ELSE
     x=rbuf
   ENDIF
@@ -1877,10 +1877,10 @@ SUBROUTINE allReduceMinI_array_MPI_Env_type(myPE,n,x)
   INTEGER(SIK) :: rbuf(n)
   REQUIRE(myPE%initstat)
   CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MIN, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_AllreduceMin returned an error!')
+        myName//' - call to MPI_AllreduceMin returned an error!')
   ELSE
     !Copy the result to the output argument
     !CALL BLAS_copy(n,rbuf,1,x,1)
@@ -1903,10 +1903,10 @@ SUBROUTINE trueForAll_SBK0_MPI_Env_type(myPE,lstat)
   LOGICAL(SBK) :: lrbuf
   REQUIRE(myPE%initstat)
   CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LAND, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat=lrbuf
   ENDIF
@@ -1930,10 +1930,10 @@ SUBROUTINE trueForAll_SBK1_MPI_Env_type(myPE,lstat)
   n1=SIZE(lstat,DIM=1)
   ALLOCATE(lrbuf(n1))
   CALL MPI_Allreduce(lstat,lrbuf,n1,MPI_LOGICAL,MPI_LAND, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:)=lrbuf(:)
   ENDIF
@@ -1959,10 +1959,10 @@ SUBROUTINE trueForAll_SBK2_MPI_Env_type(myPE,lstat)
   n2=SIZE(lstat,DIM=2)
   ALLOCATE(lrbuf(n1,n2))
   CALL MPI_Allreduce(lstat,lrbuf,n1*n2,MPI_LOGICAL,MPI_LAND, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:,:)=lrbuf(:,:)
   ENDIF
@@ -1989,10 +1989,10 @@ SUBROUTINE trueForAll_SBK3_MPI_Env_type(myPE,lstat)
   n3=SIZE(lstat,DIM=3)
   ALLOCATE(lrbuf(n1,n2,n3))
   CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3,MPI_LOGICAL,MPI_LAND, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:,:,:)=lrbuf(:,:,:)
   ENDIF
@@ -2020,10 +2020,10 @@ SUBROUTINE trueForAll_SBK4_MPI_Env_type(myPE,lstat)
   n4=SIZE(lstat,DIM=4)
   ALLOCATE(lrbuf(n1,n2,n3,n4))
   CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3*n4,MPI_LOGICAL,MPI_LAND, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:,:,:,:)=lrbuf(:,:,:,:)
   ENDIF
@@ -2045,10 +2045,10 @@ SUBROUTINE trueForAny_SBK0_MPI_Env_type(myPE,lstat)
   LOGICAL(SBK) :: lrbuf
   REQUIRE(myPE%initstat)
   CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LOR, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat=lrbuf
   ENDIF
@@ -2072,10 +2072,10 @@ SUBROUTINE trueForAny_SBK1_MPI_Env_type(myPE,lstat)
   n1=SIZE(lstat,DIM=1)
   ALLOCATE(lrbuf(n1))
   CALL MPI_Allreduce(lstat,lrbuf,n1,MPI_LOGICAL,MPI_LOR, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:)=lrbuf(:)
   ENDIF
@@ -2101,10 +2101,10 @@ SUBROUTINE trueForAny_SBK2_MPI_Env_type(myPE,lstat)
   n2=SIZE(lstat,DIM=2)
   ALLOCATE(lrbuf(n1,n2))
   CALL MPI_Allreduce(lstat,lrbuf,n1*n2,MPI_LOGICAL,MPI_LOR, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:,:)=lrbuf(:,:)
   ENDIF
@@ -2131,10 +2131,10 @@ SUBROUTINE trueForAny_SBK3_MPI_Env_type(myPE,lstat)
   n3=SIZE(lstat,DIM=3)
   ALLOCATE(lrbuf(n1,n2,n3))
   CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3,MPI_LOGICAL,MPI_LOR, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:,:,:)=lrbuf(:,:,:)
   ENDIF
@@ -2162,10 +2162,10 @@ SUBROUTINE trueForAny_SBK4_MPI_Env_type(myPE,lstat)
   n4=SIZE(lstat,DIM=4)
   ALLOCATE(lrbuf(n1,n2,n3,n4))
   CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3*n4,MPI_LOGICAL,MPI_LOR, &
-    myPE%comm,mpierr)
+      myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
-      myName//' - call to MPI_Allreduce returned an error!')
+        myName//' - call to MPI_Allreduce returned an error!')
   ELSE
     lstat(:,:,:,:)=lrbuf(:,:,:,:)
   ENDIF
@@ -2360,21 +2360,21 @@ SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
   CALL myPE%world%init(commWorld)
 
   IF(nspace < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
-    ' - input nspace is less than 1!')
+      ' - input nspace is less than 1!')
   IF(nangle < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
-    ' - input nangle is less than 1!')
+      ' - input nangle is less than 1!')
   IF(nenergy < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
-    ' - input nenergy is less than 1!')
+      ' - input nenergy is less than 1!')
   IF(nthreads < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
-    ' - input nthreads is less than 1!')
+      ' - input nthreads is less than 1!')
   WRITE(nproc,'(i12)') myPE%world%nproc
   WRITE(selproc,'(i12)') nenergy*nspace*nangle
   IF(myPE%world%nproc < nenergy*nspace*nangle) &
-    CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
+      CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
       'available MPI processes ('//TRIM(ADJUSTL(nproc))//') is less than '// &
       'specified in the input ('//TRIM(ADJUSTL(selproc))//')!')
   IF(myPE%world%nproc > nenergy*nspace*nangle) &
-    CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
+      CALL eParEnv%raiseError(modName//'::'//myName//' - Number of '// &
       'available MPI processes ('//TRIM(ADJUSTL(nproc))//') is more than '// &
       'specified in the input ('//TRIM(ADJUSTL(selproc))//')!')
 
@@ -2386,7 +2386,7 @@ SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
 #ifdef HAVE_MPI
     !Create Virtual Cartesian Grid Topology from communicator
     CALL MPI_Cart_create(myPE%world%comm,3,commDims,isPeriodic,.TRUE., &
-      tmpcomm,mpierr)
+        tmpcomm,mpierr)
 
     IF(mpierr == MPI_SUCCESS .AND. tmpcomm /= MPI_COMM_NULL) THEN
       !Setup MPI Env object for the virtual topology
@@ -2402,7 +2402,7 @@ SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
       ELSE
         WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
         CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Unexpected error creating MPI communicator for spatial '// &
+            ' - Unexpected error creating MPI communicator for spatial '// &
             'decomp., mpierr='//TRIM(smpierr)//'!')
       ENDIF
 
@@ -2416,7 +2416,7 @@ SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
       ELSE
         WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
         CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Unexpected error creating MPI communicator for angular '// &
+            ' - Unexpected error creating MPI communicator for angular '// &
             'decomp., mpierr='//TRIM(smpierr)//'!')
       ENDIF
 
@@ -2430,7 +2430,7 @@ SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
       ELSE
         WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
         CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Unexpected error creating MPI communicator for energy '// &
+            ' - Unexpected error creating MPI communicator for energy '// &
             'decomp., mpierr='//TRIM(smpierr)//'!')
       ENDIF
 
@@ -2439,7 +2439,7 @@ SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
     ELSE
       WRITE(smpierr,'(i12)') mpierr; smpierr=ADJUSTL(smpierr)
       CALL eParEnv%raiseError(modName//'::'//myName// &
-        ' - MPI error when trying to create cartesian grid  '// &
+          ' - MPI error when trying to create cartesian grid  '// &
           'virtual topology, mpierr='//TRIM(smpierr)//'!')
     ENDIF
 #else

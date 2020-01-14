@@ -266,7 +266,7 @@ SUBROUTINE init_ExpTable(myET,Params)
   nerror=eExpTable%getcounter(EXCEPTION_ERROR)
   IF(myET%isinit) THEN
     CALL eExpTable%raiseError(modName//'::'//myName// &
-      ' - Exponent table is already initialized!')
+        ' - Exponent table is already initialized!')
   ELSE
     IF(PRESENT(Params)) tmpList=Params
     CALL tmpList%validate(ExpTableType_reqParams,ExpTableType_optParams)
@@ -276,7 +276,7 @@ SUBROUTINE init_ExpTable(myET,Params)
     !tableType = POLAR_EXP_TABLE
     IF(tableType > 6 .OR. tableType < 1) THEN
       CALL eExpTable%raiseDebug(modName//'::'//myName// &
-        ' - Exponent table type is not correct input!'// &
+          ' - Exponent table type is not correct input!'// &
           ' Using default table type!')
       !Get Default param
       CALL ExpTableType_optParams%get('ExpTables -> tabletype',tableType)
@@ -284,7 +284,7 @@ SUBROUTINE init_ExpTable(myET,Params)
 
     IF(tableType == POLAR_EXP_TABLE) THEN
       IF(.NOT.tmpList%has('ExpTables -> RSIN_polars')) &
-        CALL eExpTable%raiseError(modName//'::'//myName// &
+          CALL eExpTable%raiseError(modName//'::'//myName// &
           ' - POLAR_EXP_TABLE type requires 1/sin(polar_angle) on input!')
     ENDIF
 
@@ -295,27 +295,27 @@ SUBROUTINE init_ExpTable(myET,Params)
     CALL tmpList%get('ExpTables -> maxval',maxVal)
     IF(minVal >= 0._SRK) THEN
       CALL eExpTable%raiseDebug(modName//'::'//myName// &
-        ' - Minimum value of the range of the table is not negative!'// &
+          ' - Minimum value of the range of the table is not negative!'// &
           ' Using default table type!')
       !Get Default param
       CALL ExpTableType_optParams%get('ExpTables -> minval',minVal)
     ENDIF
     IF(maxVal > 0._SRK) THEN
       CALL eExpTable%raiseDebug(modName//'::'//myName// &
-        ' - Maximum value of the range of the table is positive!'// &
+          ' - Maximum value of the range of the table is positive!'// &
           ' Using default table type!')
       !Get Default param
       CALL ExpTableType_optParams%get('ExpTables -> maxval',maxVal)
     ENDIF
     IF(maxVal == minVal) &
-      CALL eExpTable%raiseError(modName//'::'//myName// &
+        CALL eExpTable%raiseError(modName//'::'//myName// &
         ' - Maximum value of the range of the table!'// &
-          ' is equal to the minimum value!')
+        ' is equal to the minimum value!')
     !Default value for ninterval
     CALL tmpList%get('ExpTables -> nintervals',nintervals)
     IF(nintervals <= 1) THEN
       CALL eExpTable%raiseDebug(modName//'::'//myName// &
-        ' - Number of intervals is less than or equal to 1!'// &
+          ' - Number of intervals is less than or equal to 1!'// &
           ' Using default value!')
       !Get Default param
       CALL ExpTableType_optParams%get('ExpTables -> nintervals',nintervals)
@@ -327,7 +327,7 @@ SUBROUTINE init_ExpTable(myET,Params)
       !Get the error to recalculate the nintervals
       CALL tmpList%get('ExpTables -> error',tableErr)
       CALL eExpTable%raiseDebug(modName//'::'//myName// &
-        ' - Number of intervals is overwritten by the value that'// &
+          ' - Number of intervals is overwritten by the value that'// &
           ' is determined from desired error!')
       SELECTCASE(tableType)
         CASE (EXACT_EXP_TABLE)
@@ -342,7 +342,7 @@ SUBROUTINE init_ExpTable(myET,Params)
           nintervals=NINT(ABS(9.630017699314371e-3_SRK/tableErr)**0.3333333333333333_SRK)
         CASE DEFAULT
           CALL eExpTable%raiseError(modName//'::'//myName// &
-            ' - Exponent table type is incorrect!')
+              ' - Exponent table type is incorrect!')
       ENDSELECT
     !Ignore the user error and keep the input nintervals
     ELSE
@@ -631,17 +631,17 @@ SUBROUTINE ExpTables_Declare_ValidParams()
   !Set names for required parameters
   !Set defaults for optional parameters
   CALL ExpTableType_optParams%add('ExpTables -> tabletype',LINEAR_EXP_TABLE, &
-    'The default ExpTable is just a linear level lookup table.')
+      'The default ExpTable is just a linear level lookup table.')
   CALL ExpTableType_optParams%add('ExpTables -> minval',-10._SRK, &
-    'The default minimum value in the exponential table.')
+      'The default minimum value in the exponential table.')
   CALL ExpTableType_optParams%add('ExpTables -> maxval',0._SRK, &
-    'The default maximum value in the exponential table.')
+      'The default maximum value in the exponential table.')
   CALL ExpTableType_optParams%add('ExpTables -> nintervals',1000, &
-    'The default value for the number of intervals in the exponential table.')
+      'The default value for the number of intervals in the exponential table.')
   CALL ExpTableType_optParams%add('ExpTables -> error',0.0005_SRK, &
-    'The default value for the error in the exponential table.')
+      'The default value for the error in the exponential table.')
   CALL ExpTableType_optParams%add('ExpTables -> errorflag',.FALSE., &
-    'The default value for the error in the exponential table.')
+      'The default value for the error in the exponential table.')
 
 ENDSUBROUTINE ExpTables_Declare_ValidParams
 

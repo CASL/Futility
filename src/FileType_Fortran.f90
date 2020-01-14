@@ -196,7 +196,7 @@ CONTAINS
 !> the value 'REPLACE'. It is made public for use by other extended types.
 !>
 SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
-                             position,action,pad,recl)
+    position,action,pad,recl)
   CHARACTER(LEN=*),PARAMETER :: myName='INIT_FORTRAN_FILE'
   CLASS(FortranFileType),INTENT(INOUT) :: fileobj
   INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
@@ -229,7 +229,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
 
   IF(fileobj%initstat) THEN
     CALL fileobj%e%raiseError(modName//'::'//myName//' - '// &
-      'Fortran file has already been initialized!')
+        'Fortran file has already been initialized!')
   ELSE
     !Initialize the file
     CALL getFileParts(file,fpath,fname,fext,fileobj%e)
@@ -240,21 +240,21 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     IF(PRESENT(unit)) THEN
       IF(unit == OUTPUT_UNIT) THEN
         CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-          'value for optional input argument UNIT! Value is equal to '// &
+            'value for optional input argument UNIT! Value is equal to '// &
             'default OUTPUT_UNIT.')
       ELSEIF(unit == ERROR_UNIT) THEN
         CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-          'value for optional input argument UNIT! Value is equal to '// &
+            'value for optional input argument UNIT! Value is equal to '// &
             'default ERROR_UNIT.')
       ELSEIF(unit == INPUT_UNIT) THEN
         CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-          'value for optional input argument UNIT! Value is equal to '// &
+            'value for optional input argument UNIT! Value is equal to '// &
             'default INPUT_UNIT.')
       ELSE
         INQUIRE(UNIT=unit,OPENED=ostat)
         IF(ostat) THEN
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value for optional input argument UNIT! Unit is being used'// &
+              'value for optional input argument UNIT! Unit is being used'// &
               ' by another file!')
         ELSE
           fileobj%unitno=unit
@@ -279,7 +279,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
           statusval='REPLACE'
         CASE DEFAULT
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value ('//status//') for optional input argument STATUS!')
+              'value ('//status//') for optional input argument STATUS!')
       ENDSELECT
     ELSE
       !Default value for status
@@ -297,7 +297,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
           accessval=access
         CASE DEFAULT
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value ('//access//') for optional input argument ACCESS!')
+              'value ('//access//') for optional input argument ACCESS!')
       ENDSELECT
     ELSE
       !Default value
@@ -313,7 +313,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
           formval=form
         CASE DEFAULT
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value ('//form//') for optional input argument FORM!')
+              'value ('//form//') for optional input argument FORM!')
       ENDSELECT
     ELSE
       !Default value
@@ -331,7 +331,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
           fileobj%posopt=position
         CASE DEFAULT
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value ('//position//') for optional input argument POSITION!')
+              'value ('//position//') for optional input argument POSITION!')
       ENDSELECT
     ENDIF
 
@@ -346,7 +346,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
           actionval=action
         CASE DEFAULT
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value ('//action//') for optional input argument ACTION!')
+              'value ('//action//') for optional input argument ACTION!')
       ENDSELECT
     ELSE
       !Default value
@@ -361,7 +361,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
           padval=pad
         CASE DEFAULT
           CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value ('//pad//') for optional input argument PAD!')
+              'value ('//pad//') for optional input argument PAD!')
       ENDSELECT
     ELSE
       !Fortran default value
@@ -371,7 +371,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     IF(PRESENT(recl)) THEN
       IF(recl < 1) THEN
         CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-          'value for input option RECL must be set to greater than 0!')
+            'value for input option RECL must be set to greater than 0!')
       ELSE
         fileobj%reclval=recl
       ENDIF
@@ -386,14 +386,14 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     IF(TRIM(accessval) == 'DIRECT' .OR. TRIM(accessval) == 'STREAM') THEN
       fileobj%accessstat=.TRUE.
       IF(fileobj%reclval < 1) CALL fileobj%e%raiseError(modName//'::'// &
-        myName//' - Record length must be set to greater than 0 for '// &
+          myName//' - Record length must be set to greater than 0 for '// &
           'direct access files!')
     ENDIF
 
     IF(TRIM(actionval) == 'READ') THEN
       CALL fileobj%setReadStat(.TRUE.)
       IF(fileobj%newstat) CALL fileobj%e%raiseError(modName//'::'// &
-        myName//' - Cannot have a new file with a read only status!')
+          myName//' - Cannot have a new file with a read only status!')
     ELSEIF(TRIM(actionval) == 'WRITE') THEN
       CALL fileobj%setWriteStat(.TRUE.)
     ELSEIF(TRIM(actionval) == 'READWRITE') THEN
@@ -403,7 +403,7 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
 
     IF(oldcnt < fileobj%e%getCounter(EXCEPTION_ERROR)) THEN
       CALL fileobj%e%raiseError(modName//'::'//myName//' - Exceptions '// &
-        'during file initialization! File not initialized!')
+          'during file initialization! File not initialized!')
       !Reset all attributes if initialization failed.
       fileobj%unitno=-1
       fileobj%formatstat=.FALSE.
@@ -568,7 +568,7 @@ SUBROUTINE open_fortran_file(file)
   IF(file%initstat) THEN
     IF(file%isOpen()) THEN
       WRITE(emesg,'(a,i4,a)') 'Cannot open file (UNIT=', &
-        file%unitno,') File is already open!'
+          file%unitno,') File is already open!'
       CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
     ELSE
       !STATUS clause value
@@ -618,40 +618,40 @@ SUBROUTINE open_fortran_file(file)
         IF(file%isFormatted()) THEN
           !Omit the POSITION clause, and include the PAD clause
           OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar),PAD=TRIM(padvar), &
-            ACCESS=TRIM(accessvar),FORM=TRIM(formvar),RECL=reclval, &
+              ACCESS=TRIM(accessvar),FORM=TRIM(formvar),RECL=reclval, &
               ACTION=TRIM(actionvar),FILE=TRIM(file%getFilePath())// &
-                TRIM(file%getFileName())//TRIM(file%getFileExt()), &
-                  IOSTAT=ioerr,IOMSG=iomsg)
+              TRIM(file%getFileName())//TRIM(file%getFileExt()), &
+              IOSTAT=ioerr,IOMSG=iomsg)
         ELSE
           !Omit the POSITION clause, and the PAD clause
           OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar),RECL=reclval, &
-            ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
+              ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
               ACTION=TRIM(actionvar),FILE=TRIM(file%getFilePath())// &
-                TRIM(file%getFileName())//TRIM(file%getFileExt()),IOMSG=iomsg)
+              TRIM(file%getFileName())//TRIM(file%getFileExt()),IOMSG=iomsg)
         ENDIF
       ELSE
         IF(file%isFormatted()) THEN
           !Include the POSITION clause, and the PAD clause
           OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar),PAD=TRIM(padvar), &
-            ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
+              ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
               POSITION=TRIM(file%posopt),ACTION=TRIM(actionvar), &
-                FILE=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
-                  TRIM(file%getFileExt()),IOMSG=iomsg)
+              FILE=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
+              TRIM(file%getFileExt()),IOMSG=iomsg)
         ELSE
           !Include the POSITION clause, omit the PAD clause
           OPEN(UNIT=file%unitno,STATUS=TRIM(statusvar), &
-            ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
+              ACCESS=TRIM(accessvar),FORM=TRIM(formvar),IOSTAT=ioerr, &
               POSITION=TRIM(file%posopt),ACTION=TRIM(actionvar), &
-                FILE=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
-                  TRIM(file%getFileExt()),IOMSG=iomsg)
+              FILE=TRIM(file%getFilePath())//TRIM(file%getFileName())// &
+              TRIM(file%getFileExt()),IOMSG=iomsg)
         ENDIF
       ENDIF
 
       IF(ioerr /= 0) THEN
         WRITE(emesg,'(a,i4,a,i4)') 'Error opening file "'// &
-          TRIM(file%getFilePath())//TRIM(file%getFileName())// &
+            TRIM(file%getFilePath())//TRIM(file%getFileName())// &
             TRIM(file%getFileExt())//'" (UNIT=',file%unitno, &
-              ') IOSTAT=',ioerr
+            ') IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg &
             //' IOMSG="'//TRIM(iomsg)//'"')
       ELSE
@@ -661,7 +661,7 @@ SUBROUTINE open_fortran_file(file)
     ENDIF
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - '// &
-      'Cannot open file! Object has not been initialized!')
+        'Cannot open file! Object has not been initialized!')
   ENDIF
 ENDSUBROUTINE open_fortran_file
 !
@@ -680,19 +680,19 @@ SUBROUTINE close_fortran_file(file)
       CLOSE(UNIT=file%unitno,STATUS='KEEP',IOSTAT=ioerr)
       IF(ioerr /= 0) THEN
         WRITE(emesg,'(a,i4,a,i4)') 'Error closing file (UNIT=', &
-          file%unitno,') IOSTAT=',ioerr
+            file%unitno,') IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ELSE
         CALL file%setOpenStat(.FALSE.)
       ENDIF
     ELSE
       WRITE(emesg,'(a,i4,a)') 'Cannot close file (UNIT=', &
-        file%unitno,') File is not open!'
+          file%unitno,') File is not open!'
       CALL file%e%raiseDebug(modName//'::'//myName//' - '//emesg)
     ENDIF
   ELSE
     CALL file%e%raiseDebug(modName//'::'//myName//' - '// &
-      'Cannot close file! File object has not been initialized!')
+        'Cannot close file! File object has not been initialized!')
   ENDIF
 ENDSUBROUTINE close_fortran_file
 !
@@ -711,24 +711,24 @@ SUBROUTINE delete_fortran_file(file)
       CLOSE(UNIT=file%unitno,STATUS='DELETE',IOSTAT=ioerr)
       IF(ioerr /= 0) THEN
         WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
-          file%unitno,') IOSTAT=',ioerr
+            file%unitno,') IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ELSE
         CALL file%setOpenStat(.FALSE.)
       ENDIF
     ELSE
       OPEN(UNIT=file%unitno,FILE=TRIM(file%getFilePath())// &
-        TRIM(file%getFileName())//TRIM(file%getFileExt()), &
+          TRIM(file%getFileName())//TRIM(file%getFileExt()), &
           IOSTAT=ioerr)
       IF(ioerr /= 0) THEN
         WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
-          file%unitno,') IOSTAT=',ioerr
+            file%unitno,') IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ENDIF
       CLOSE(UNIT=file%unitno,STATUS='DELETE',IOSTAT=ioerr)
       IF(ioerr /= 0) THEN
         WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
-          file%unitno,') IOSTAT=',ioerr
+            file%unitno,') IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ELSE
         CALL file%setOpenStat(.FALSE.)
@@ -736,7 +736,7 @@ SUBROUTINE delete_fortran_file(file)
     ENDIF
   ELSE
     CALL file%e%raiseDebug(modName//'::'//myName//' - '// &
-      'Cannot delete file! File object has not been initialized!')
+        'Cannot delete file! File object has not been initialized!')
   ENDIF
 ENDSUBROUTINE delete_fortran_file
 !
@@ -754,17 +754,17 @@ SUBROUTINE rewind_fortran_file(file)
       CALL file%setEOFstat(.FALSE.)
       IF(ioerr /= 0) THEN
         WRITE(emesg,'(a,i4,a,i4)') 'Error rewinding file (UNIT=', &
-          file%unitno,') IOSTAT=',ioerr
+            file%unitno,') IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ENDIF
     ELSE
       WRITE(emesg,'(a,i4,a)') 'Cannot rewind file (UNIT=',file%unitno, &
-        '). File not is not open!'
+          '). File not is not open!'
       CALL file%e%raiseDebug(modName//'::'//myName//' - '//emesg)
     ENDIF
   ELSE
     CALL file%e%raiseDebug(modName//'::'//myName//' - '// &
-      'Cannot rewind file! File object has not been initialized!')
+        'Cannot rewind file! File object has not been initialized!')
   ENDIF
 ENDSUBROUTINE rewind_fortran_file
 !
@@ -781,19 +781,19 @@ SUBROUTINE backspace_fortran_file(file)
       BACKSPACE(UNIT=file%unitno,IOSTAT=ioerr)
       IF(ioerr /= 0) THEN
         WRITE(emesg,'(a,i4,a,i4)') 'Error backspacing file (UNIT=', &
-          file%unitno,') IOSTAT=',ioerr
+            file%unitno,') IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ELSE
         IF(file%isEOF()) CALL file%setEOFstat(.FALSE.)
       ENDIF
     ELSE
       WRITE(emesg,'(a,i4,a)') 'Cannot backspace file (UNIT=',file%unitno, &
-        '). File not is not open!'
+          '). File not is not open!'
       CALL file%e%raiseDebug(modName//'::'//myName//' - '//emesg)
     ENDIF
   ELSE
     CALL file%e%raiseDebug(modName//'::'// myName//' - '// &
-      'Cannot backspace file! File object has not been initialized!')
+        'Cannot backspace file! File object has not been initialized!')
   ENDIF
 ENDSUBROUTINE backspace_fortran_file
 !
@@ -839,15 +839,15 @@ SUBROUTINE setStatus_fortran_file(file,status)
           file%overwrite=.TRUE.
         CASE DEFAULT
           CALL file%e%raiseError(modName//'::'//myName//' - Illegal '// &
-            'value ('//status//') for input argument STATUS!')
+              'value ('//status//') for input argument STATUS!')
       ENDSELECT
     ELSE
       CALL file%e%raiseError(modName//'::'//myName//' - File status '// &
-        'cannot be changed while file is open!')
+          'cannot be changed while file is open!')
     ENDIF
   ELSE
     CALL file%e%raiseError(modName//'::'//myName//' - File status '// &
-      'cannot be changed on uninitialized file!')
+        'cannot be changed on uninitialized file!')
   ENDIF
 ENDSUBROUTINE setStatus_fortran_file
 !

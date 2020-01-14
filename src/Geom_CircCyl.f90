@@ -218,7 +218,7 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_LineType(circle,line,p1,p2)
   p1%dim=-1
   p2%dim=-1
   IF(circle%c%dim == 2 .AND. line%p1%dim == 2 .AND. &
-    line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+      line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
     u(1)=line%p2%coord(1)-line%p1%coord(1)  !dx
     u(2)=line%p2%coord(2)-line%p1%coord(2)  !dy
     w(1)=line%p1%coord(1)-circle%c%coord(1)
@@ -300,7 +300,7 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_CircleType(c1,c2,p1,p2)
   p2%dim=-1
 
   IF(c1%c%dim==2 .AND. c2%c%dim==2 .AND. &
-    c1%r > 0.0_SRK .AND. c2%r > 0.0_SRK) THEN
+      c1%r > 0.0_SRK .AND. c2%r > 0.0_SRK) THEN
     d=Distance(c1%c,c2%c)
     s=c1%r+c2%r
     IF(d > s) THEN
@@ -405,7 +405,7 @@ ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p
   p3%dim=-1
   p4%dim=-1
   IF(circle%c%dim == 2 .AND. line%p1%dim == 2 .AND. &
-    line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+      line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
     u(1)=line%p2%coord(1)-line%p1%coord(1)  !dx
     u(2)=line%p2%coord(2)-line%p1%coord(2)  !dy
     w(1)=line%p1%coord(1)-circle%c%coord(1)
@@ -446,7 +446,7 @@ ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p
               IF(p1%coord(2)-circle%c%coord(2) > 0.0_SRK) theta=theta+TWOPI
             ENDIF
             IF((theta .APPROXLE. circle%thetastt) .OR. &
-              (circle%thetastp+theta_shift .APPROXLE. theta)) CALL p1%clear()
+                (circle%thetastp+theta_shift .APPROXLE. theta)) CALL p1%clear()
           ENDIF
         ENDIF
         IF(ZERO < t2 .AND. t2 < ONE) THEN
@@ -461,7 +461,7 @@ ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p
               IF(p2%coord(2)-circle%c%coord(2) > 0.0_SRK) theta=theta+TWOPI
             ENDIF
             IF((theta .APPROXLE. circle%thetastt) .OR. &
-              (circle%thetastp+theta_shift .APPROXLE. theta)) CALL p2%clear()
+                (circle%thetastp+theta_shift .APPROXLE. theta)) CALL p2%clear()
           ENDIF
         ENDIF
       ENDIF
@@ -487,8 +487,8 @@ ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p
               !The other surface is co-linear or disjoint
               !so we mark this as co-linear or disjoint
               IF(ALL(p3%coord .APPROXEQA. c0) .OR. &
-                 ALL(p3%coord .APPROXEQA. c1) .OR. &
-                 ALL(p3%coord .APPROXEQA. c2)) p3%dim=p4%dim
+                  ALL(p3%coord .APPROXEQA. c1) .OR. &
+                  ALL(p3%coord .APPROXEQA. c2)) p3%dim=p4%dim
             ELSEIF(p4%dim == 2) THEN
               IF(ALL(p3%coord .APPROXEQA. p4%coord)) THEN
                 p3%dim=-3
@@ -499,8 +499,8 @@ ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p
             !The other surface is co-linear or disjoint
             !so we mark this as co-linear or disjoint
             IF(ALL(p4%coord .APPROXEQA. c0) .OR. &
-               ALL(p4%coord .APPROXEQA. c1) .OR. &
-               ALL(p4%coord .APPROXEQA. c2)) p4%dim=p3%dim
+                ALL(p4%coord .APPROXEQA. c1) .OR. &
+                ALL(p4%coord .APPROXEQA. c2)) p4%dim=p3%dim
           ENDIF
         ELSE
           IF(p3%dim == 2 .AND. p4%dim == 2) THEN
@@ -585,7 +585,7 @@ ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
   p2%dim=-1
   !Check for valid input
   IF(cyl%axis%p1%dim == 3 .AND. cyl%axis%p2%dim == 3 .AND. &
-    line%p1%dim == 3 .AND. line%p2%dim == 3 .AND. cyl%r > zero) THEN
+      line%p1%dim == 3 .AND. line%p2%dim == 3 .AND. cyl%r > zero) THEN
     p1%dim=0
     p2%dim=0
 
@@ -660,7 +660,7 @@ ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
             p2%coord(3)=p2%coord(3)+tq*u(3)
           ENDIF
           IF((zero < wd .AND. wd < dd) .AND. &
-            (zero < wd+ud .AND. wd+ud < dd)) THEN
+              (zero < wd+ud .AND. wd+ud < dd)) THEN
             !Segment is totally inside cylinder and parallel to P->Q
             p1%dim=-6
             p2%dim=-6
@@ -697,7 +697,7 @@ ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
             IF(wd+t1*ud < zero) THEN
               tp=-wd/ud
               IF(((k+tp*(2._SRK*uw+tp*uu)) < zero) .AND.  &
-                (zero < tp .AND. tp < one)) THEN
+                  (zero < tp .AND. tp < one)) THEN
                 !Intersection with P-surface
                 p1=line%p1
                 p1%coord(1)=p1%coord(1)+tp*u(1)
@@ -707,7 +707,7 @@ ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
             ELSEIF(wd+t1*ud > dd) THEN
               tq=(dd-wd)/ud
               IF(((k+dd-2._SRK*wd+tq*(2._SRK*(uw-ud)+tq*uu)) < zero) .AND. &
-                (zero < tq .AND. tq < one)) THEN
+                  (zero < tq .AND. tq < one)) THEN
                 !Intersection with Q-surface
                 p1=line%p1
                 p1%coord(1)=p1%coord(1)+tq*u(1)
@@ -727,7 +727,7 @@ ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
             IF(wd+t2*ud < zero) THEN
               tp=-wd/ud
               IF(((k+tp*(2._SRK*uw+tp*uu)) < zero) .AND.  &
-                (zero < tp .AND. tp < one)) THEN
+                  (zero < tp .AND. tp < one)) THEN
                 !Intersection with P-surface
                 p2=line%p1
                 p2%coord(1)=p2%coord(1)+tp*u(1)
@@ -737,7 +737,7 @@ ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
             ELSEIF(wd+t2*ud > dd) THEN
               tq=(dd-wd)/ud
               IF(((k+dd-2._SRK*wd+tq*(2._SRK*(uw-ud)+tq*uu)) < zero) .AND. &
-                (zero < tq .AND. tq < one)) THEN
+                  (zero < tq .AND. tq < one)) THEN
                 !Intersection with Q-surface
                 p2=line%p1
                 p2%coord(1)=p2%coord(1)+tq*u(1)
@@ -772,14 +772,14 @@ ELEMENTAL FUNCTION inside_CircleType(circle,point) RESULT(bool)
       sinstt=SIN(circle%thetastt)
       sinstp=SIN(circle%thetastp)
       IF(COS(circle%thetastt)*y .APPROXGE. SIN(circle%thetastt)*x) &
-        bool=COS(circle%thetastp)*y .APPROXLE. SIN(circle%thetastp)*x
+          bool=COS(circle%thetastp)*y .APPROXLE. SIN(circle%thetastp)*x
     ELSEIF(dtheta < TWOPI) THEN
       cosstt=COS(circle%thetastt)
       cosstp=COS(circle%thetastp)
       sinstt=SIN(circle%thetastt)
       sinstp=SIN(circle%thetastp)
       bool=(COS(circle%thetastt)*y .APPROXGE. SIN(circle%thetastt)*x) &
-        .OR. (COS(circle%thetastp)*y .APPROXLE. SIN(circle%thetastp)*x)
+          .OR. (COS(circle%thetastp)*y .APPROXLE. SIN(circle%thetastp)*x)
     ELSE
       bool=.TRUE.
     ENDIF
@@ -804,9 +804,9 @@ ELEMENTAL FUNCTION onSurface_CircleType(circle,point) RESULT(bool)
       theta_shift=0.0_SRK
       IF(circle%thetastt > circle%thetastp) theta_shift=TWOPI
       IF(y > 0.0_SRK .OR. ((y .APPROXEQA. 0.0_SRK) .AND. &
-        (x .APPROXGE. 0.0_SRK))) theta=theta+theta_shift
+          (x .APPROXGE. 0.0_SRK))) theta=theta+theta_shift
       bool=(circle%thetastt .APPROXLE. theta) .AND. &
-           (theta .APPROXLE. circle%thetastp+theta_shift)
+          (theta .APPROXLE. circle%thetastp+theta_shift)
     ENDIF
   ENDIF
 ENDFUNCTION onSurface_CircleType
@@ -824,7 +824,7 @@ ELEMENTAL FUNCTION isequal_CircleType(c0,c1) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.FALSE.
   IF((c0%r .APPROXEQA. c1%r) .AND. (c0%thetastt .APPROXEQA. c1%thetastt) .AND. &
-    (c0%thetastp .APPROXEQA. c1%thetastp)) bool=(c0%c == c1%c)
+      (c0%thetastp .APPROXEQA. c1%thetastp)) bool=(c0%c == c1%c)
 ENDFUNCTION isequal_CircleType
 !
 !-------------------------------------------------------------------------------
@@ -840,7 +840,7 @@ ELEMENTAL FUNCTION isequal_CylinderType(c0,c1) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.FALSE.
   IF((c0%r .APPROXEQA. c1%r) .AND. (c0%thetastt .APPROXEQA. c1%thetastt) .AND. &
-    (c0%thetastp .APPROXEQA. c1%thetastp)) bool=(c0%axis == c1%axis)
+      (c0%thetastp .APPROXEQA. c1%thetastp)) bool=(c0%axis == c1%axis)
 ENDFUNCTION isequal_CylinderType
 !
 ENDMODULE Geom_CircCyl

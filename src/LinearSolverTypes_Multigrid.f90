@@ -97,7 +97,7 @@ TYPE,EXTENDS(LinearSolverType_Iterative) :: LinearSolverType_Multigrid
     !> @copybrief LinearSolverType_Multigrid::preAllocPETScInterpMat_LinearSolverType_Multigrid
     !> @copydetails LinearSolverType_Multigrid::preAllocPETScInterpMat_LinearSolverType_Multigrid
     PROCEDURE,PASS :: preAllocPETScInterpMat => &
-                        preAllocPETScInterpMat_LinearSolverType_Multigrid
+        preAllocPETScInterpMat_LinearSolverType_Multigrid
     !> @copybrief LinearSolverType_Multigrid::setupPETScMG_LinearSolverType_Multigrid
     !> @copydetails LinearSolverType_Multigrid::setupPETScMG_LinearSolverType_Multigrid
     PROCEDURE,PASS :: setupPETScMG => setupPETScMG_LinearSolverType_Multigrid
@@ -157,11 +157,11 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
   PetscErrorCode :: iperr
 #else
   CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-    "For now, LinearSolverType_Multigrid requires PETSc enabled.")
+      "For now, LinearSolverType_Multigrid requires PETSc enabled.")
 #endif
   !Check to set up required and optional param lists.
   IF(.NOT.LinearSolverType_Paramsflag) &
-    CALL LinearSolverType_Declare_ValidParams()
+      CALL LinearSolverType_Declare_ValidParams()
 
   !Validate against the reqParams and OptParams
   validParams=Params
@@ -202,7 +202,7 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
 
   IF(TPLType /= PETSC) THEN
     CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-      "For now, LinearSolverType_Multigrid only works with PETSC.")
+        "For now, LinearSolverType_Multigrid only works with PETSC.")
   ENDIF
 
   solver%solverMethod=MULTIGRID
@@ -236,7 +236,7 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
         CALL KSPSetOperators(solver%ksp,A%a,A%a,iperr)
 #else
         CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-          DIFFERENT_NONZERO_PATTERN,iperr)
+            DIFFERENT_NONZERO_PATTERN,iperr)
 #endif
       ENDSELECT
 #endif
@@ -252,26 +252,26 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
     manuallySetLevelInfo=.TRUE.
     IF(Params%has('LinearSolverType->Multigrid->manuallySetLevelInfo')) THEN
       CALL Params%get('LinearSolverType->Multigrid->manuallySetLevelInfo', &
-                      manuallySetLevelInfo)
+          manuallySetLevelInfo)
     ENDIF
     IF(manuallySetLevelInfo) THEN
       IF(.NOT.(Params%has('LinearSolverType->Multigrid->nLevels'))) &
-        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-               'Number of levels (nLevels) not provided!')
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          'Number of levels (nLevels) not provided!')
       IF(.NOT.(Params%has('LinearSolverType->Multigrid->level_info_local'))) &
-        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-               'level_info_local not provided!')
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          'level_info_local not provided!')
       IF(.NOT.(Params%has('LinearSolverType->Multigrid->level_info'))) &
-        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-               'level_info not provided!')
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          'level_info not provided!')
 
       CALL Params%get('LinearSolverType->Multigrid->nLevels',solver%nLevels)
       ALLOCATE(solver%level_info_local(2,solver%nLevels))
       CALL Params%get('LinearSolverType->Multigrid->level_info_local', &
-                          solver%level_info_local)
+          solver%level_info_local)
       ALLOCATE(solver%level_info(2,solver%nLevels))
       CALL Params%get('LinearSolverType->Multigrid->level_info', &
-                          solver%level_info)
+          solver%level_info)
     ELSE
       !The code in this else statement is mostly for testing.  It's an
       !  example of how to define the levels for a simple 1D problem on 1
@@ -291,8 +291,8 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
       solver%nLevels=MAX(1,solver%nLevels)
       IF(solver%nLevels < 2) &
           CALL eLinearSolverType%raiseDebug(modName//"::"//myName//" - "// &
-            'The grid is too small to coarsen, using multigrid with '// &
-            ' only 1 level!')
+          'The grid is too small to coarsen, using multigrid with '// &
+          ' only 1 level!')
       ALLOCATE(solver%level_info_local(2,solver%nLevels))
       solver%level_info_local(:,solver%nLevels)=(/num_eqns,nx*ny*nz/)
       DO iLevel=solver%nLevels-1,1,-1
@@ -309,14 +309,14 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
     !Sanity check:
     IF(PRODUCT(solver%level_info(:,solver%nLevels)) /= n) THEN
       CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-             'number of unknowns (n) does not match provided '// &
-             'npts,num_eqns')
+          'number of unknowns (n) does not match provided '// &
+          'npts,num_eqns')
     ENDIF
 
     solver%isOwnerOfInterpMats=.FALSE.
   ELSE
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - LinearSolverType already initialized')
+        modName//'::'//myName//' - LinearSolverType already initialized')
   ENDIF
   CALL vecbPList%clear()
   CALL vecxPList%clear()
@@ -335,7 +335,7 @@ ENDSUBROUTINE init_LinearSolverType_Multigrid
 !>             external to the processor in local row i
 !>
 SUBROUTINE preAllocPETScInterpMat_LinearSolverType_Multigrid(solver, &
-   iLevel,dnnz,onnz_in)
+    iLevel,dnnz,onnz_in)
   CHARACTER(LEN=*),PARAMETER :: myName='preAllocPETScInterpMat_LinearSolverType_Multigrid'
   CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
   INTEGER(SIK),INTENT(IN) :: iLevel,dnnz(:)
@@ -397,12 +397,12 @@ SUBROUTINE preAllocPETScInterpMat_LinearSolverType_Multigrid(solver, &
     DEALLOCATE(interpmat)
   ELSE
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - LinearSolverType must be initialized')
+        modName//'::'//myName//' - LinearSolverType must be initialized')
   ENDIF
 #else
   CALL eLinearSolverType%raiseError('Incorrect call to '// &
-    modName//'::'//myName//' - This subroutine can only be called if '// &
-    'PETSc is not enabled.')
+      modName//'::'//myName//' - This subroutine can only be called if '// &
+      'PETSc is not enabled.')
 #endif
 
   CALL matPList%clear()
@@ -421,7 +421,7 @@ ENDSUBROUTINE preAllocPETScInterpMat_LinearSolverType_Multigrid
 !>          This is false by default
 !>
 SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes, &
-             myWtStructure,preallocated)
+    myWtStructure,preallocated)
   CHARACTER(LEN=*),PARAMETER :: myName='fillInterpMats_LinearSolverType_Multigrid'
   CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
   TYPE(MultigridMeshStructureType),POINTER,INTENT(IN) :: myMMeshes
@@ -438,14 +438,14 @@ SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes, &
 #endif
 
   IF(solver%TPLType /= PETSC) &
-    CALL eLinearSolverType%raiseError('Incorrect call to '// &
+      CALL eLinearSolverType%raiseError('Incorrect call to '// &
       modName//'::'//myName//' - This subroutine does not have a '// &
       'non-PETSc implementation yet.')
 
 #ifdef FUTILITY_HAVE_PETSC
   IF(ASSOCIATED(solver%interpMats_PETSc)) THEN
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - interp. matrices already associated!')
+        modName//'::'//myName//' - interp. matrices already associated!')
   ELSE
     ALLOCATE(solver%interpMats_PETSc(solver%nLevels-1))
     solver%isOwnerOfInterpMats=.TRUE.
@@ -461,7 +461,7 @@ SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes, &
       IF(.NOT.PRESENT(preallocated) .OR. .NOT.preallocated) THEN
         IF(num_eqns == 1) THEN
           CALL solver%preAllocPETScInterpMat(iLevel-1, &
-                  2**myMMeshes%meshes(iLevel)%interpDegrees)
+              2**myMMeshes%meshes(iLevel)%interpDegrees)
         ELSE
           ALLOCATE(dnnz((mmesh%istt-1)*num_eqns+1:mmesh%istp*num_eqns))
           DO ip=mmesh%istt,mmesh%istp
@@ -476,7 +476,7 @@ SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes, &
       !Create the interpolation operator:
       DO ip=mmesh%istt,mmesh%istp
         CALL getFinalWtsAndIndices(mmesh,myWtStructure%wts_level(iLevel), &
-                                   ip,indices,wts,nindices)
+            ip,indices,wts,nindices)
         DO ieqn=1,num_eqns
           row=(ip-1)*num_eqns+ieqn
           DO i=1,nindices
@@ -491,8 +491,8 @@ SUBROUTINE fillInterpMats_LinearSolverType_Multigrid(solver,myMMeshes, &
   ENDDO !iLevel
 #else
   CALL eLinearSolverType%raiseError('Incorrect call to '// &
-    modName//'::'//myName//' - This subroutine does not have a '// &
-    'non-PETSc implementation yet.')
+      modName//'::'//myName//' - This subroutine does not have a '// &
+      'non-PETSc implementation yet.')
 #endif
 ENDSUBROUTINE fillInterpMats_LinearSolverType_Multigrid
 !
@@ -517,17 +517,17 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   PetscErrorCode  :: iperr
 
   IF(solver%TPLType /= PETSC) &
-    CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
       "This subroutine should only be called with PETSc.")
 
   IF(solver%isMultigridSetup) &
       CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-             'Multigrid linear system is already setup!')
+      'Multigrid linear system is already setup!')
 
   ALLOCATE(smootherMethod_list(solver%nLevels))
   IF(Params%has('LinearSolverType->Multigrid->smootherMethod_list')) THEN
-    CALL Params%get('LinearSolverType->Multigrid->smootherMethod_list', &
-            smootherMethod_list)
+      CALL Params%get('LinearSolverType->Multigrid->smootherMethod_list', &
+      smootherMethod_list)
   ELSE
     smootherMethod_list(1)=GMRES !grid 0 (coarsest grid) solver
     smootherMethod_list(2:solver%nLevels)=SOR !smoother for all other grids
@@ -538,8 +538,8 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   !KSPRICHARDSON+PCMG = Multigrid linear solver, not multigrid precon.
   precond_flag=.FALSE.
   IF(Params%has('LinearSolverType->Multigrid->precond_flag')) THEN
-    CALL Params%get('LinearSolverType->Multigrid->precond_flag', &
-                    precond_flag)
+      CALL Params%get('LinearSolverType->Multigrid->precond_flag', &
+      precond_flag)
   ENDIF
   IF(precond_flag) THEN
     CALL KSPSetType(solver%ksp,KSPGMRES,iperr)
@@ -559,7 +559,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
 
   !Need a smoother on all levels except the coarsest:
   IF(.NOT. ASSOCIATED(solver%interpMats_PETSc)) &
-    CALL eLinearSolverType%raiseError(modName//'::'//myName// &
+      CALL eLinearSolverType%raiseError(modName//'::'//myName// &
       ' - Cannot setup without interpolation operators!')
 
   num_smooth=-1
@@ -576,7 +576,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
     !Set the interpolation operator:
     CALL solver%interpMats_PETSc(iLevel)%assemble()
     CALL PCMGSetInterpolation(solver%pc,iLevel, &
-                              solver%interpMats_PETSc(iLevel)%a,iperr)
+        solver%interpMats_PETSc(iLevel)%a,iperr)
   ENDDO
 
   !Default is to do one smoother iteration on the way down, but none
@@ -596,7 +596,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
     cg_solver_its=1
   ELSE IF(Params%has('LinearSolverType->Multigrid->cg_solver_its')) THEN
     CALL Params%get('LinearSolverType->Multigrid->cg_solver_its', &
-            cg_solver_its)
+        cg_solver_its)
     cg_solver_its=MIN(cg_solver_its,PRODUCT(solver%level_info(:,1)))
   ELSE
     !Some reasonable number of GMRES iterations:
@@ -607,7 +607,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   IF(Params%has('LinearSolverType->Multigrid->cg_tol')) THEN
     CALL Params%get('LinearSolverType->Multigrid->cg_tol',cg_tol)
     IF(cg_tol > 0.0_SRK) &
-      CALL KSPSetNormType(ksp_temp,KSP_NORM_PRECONDITIONED,iperr)
+        CALL KSPSetNormType(ksp_temp,KSP_NORM_PRECONDITIONED,iperr)
   ENDIF
   CALL KSPSetTolerances(ksp_temp,cg_tol,cg_tol,1.E3_SRK,cg_solver_its,iperr)
   CALL KSPGMRESSetRestart(ksp_temp,cg_solver_its,iperr)
@@ -623,7 +623,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
     IF(log_flag) THEN
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=7))
       CALL PetscOptionsSetValue(PETSC_NULL_CHARACTER,"-pc_mg_log", &
-                                PETSC_NULL_CHARACTER,iperr)
+          PETSC_NULL_CHARACTER,iperr)
 #else
       CALL PetscOptionsSetValue("-pc_mg_log",PETSC_NULL_CHARACTER,iperr)
 #endif
@@ -639,8 +639,8 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   DEALLOCATE(smootherMethod_list)
 #else
   CALL eLinearSolverType%raiseError('Incorrect call to '// &
-    modName//'::'//myName//' - This subroutine can only be called if '// &
-    'PETSc is not enabled.')
+      modName//'::'//myName//' - This subroutine can only be called if '// &
+      'PETSc is not enabled.')
 #endif
 ENDSUBROUTINE setupPETScMG_LinearSolverType_Multigrid
 !
@@ -667,7 +667,7 @@ SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smo
 
 #ifdef FUTILITY_HAVE_PETSC
   IF(solver%TPLType /= PETSC) &
-    CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
       "This subroutine should only be called with PETSc.")
 
   !TODO when a non-petsc version is implemented, add a variable to track
@@ -682,7 +682,7 @@ SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smo
     istp=iLevel
     IF(iLevel >= solver%nLevels) THEN
       CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-        "iLevel must be strictly smaller than the number of levels!")
+          "iLevel must be strictly smaller than the number of levels!")
     ENDIF
   ENDIF
 
@@ -718,19 +718,18 @@ SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smo
     !  memory architectures)
 #ifndef PETSC_HAVE_SUPERLU_DIST
       IF(solver%MPIparallelEnv%nproc > 1) &
-        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
           "Cannot use LU in parallel in PETSc without SUPERLU_DIST!")
 #endif
       !Only for the coarsest level!
       IF(istt > 0) &
-        CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+          CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
           "LU should only be used on the coarsest level!")
       CALL KSPSetType(ksp_temp,KSPPREONLY,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL PCSetType(pc_temp,PCLU,iperr)
       IF(solver%MPIparallelEnv%nproc > 1) &
-        CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST, &
-                                         iperr)
+          CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
     ELSEIF(smoother == BJACOBI) THEN
       CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
@@ -741,12 +740,12 @@ SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smo
       CALL PCSetType(pc_temp,PCJACOBI,iperr)
     ELSE
       CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-        "Unrecognized smoother option!")
+          "Unrecognized smoother option!")
     ENDIF
 
     IF(PRESENT(num_smooth)) &
-      CALL KSPSetTolerances(ksp_temp,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL, &
-                            PETSC_DEFAULT_REAL,num_smooth,iperr)
+        CALL KSPSetTolerances(ksp_temp,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL, &
+        PETSC_DEFAULT_REAL,num_smooth,iperr)
 
     !On all levels except the finest, the initial guess should be zero
     !  since it is an error equation.
@@ -770,7 +769,7 @@ SUBROUTINE solve_LinearSolverType_Multigrid(solver)
   CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
 
   IF(.NOT. solver%isMultigridSetup) &
-    CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
       "Multigrid needs to be setup before it can be used to solve!")
 
   CALL solver%LinearSolverType_Iterative%solve()
@@ -822,8 +821,7 @@ ENDSUBROUTINE clear_LinearSolverType_Multigrid
 !> @param indices Indices to be returned
 !> @param wts Weights to be returned
 !>
-SUBROUTINE getFinalWtsAndIndices(myMesh,myWts, &
-                                 ip,indices,wts,nindices)
+SUBROUTINE getFinalWtsAndIndices(myMesh,myWts,ip,indices,wts,nindices)
   TYPE(MultigridMeshType),INTENT(IN) :: myMesh
   TYPE(InterpWeightsLevelType),INTENT(IN) :: myWts
   INTEGER(SIK),INTENT(IN) :: ip
@@ -838,7 +836,7 @@ SUBROUTINE getFinalWtsAndIndices(myMesh,myWts, &
   counter=1
   wt2=1.0_SRK
   CALL collectWtsAndIndices(myMesh,myWts,ip,tmpindices,tmpwts, &
-                            myMesh%interpDegrees(ip),counter,wt2)
+      myMesh%interpDegrees(ip),counter,wt2)
   counter=counter-1
 
   indices=0
@@ -851,7 +849,7 @@ SUBROUTINE getFinalWtsAndIndices(myMesh,myWts, &
     IF(tmpindices(i) < 1) CYCLE
     !TODO ZZZZ i should explain what this line does with a comment...
     ind=MINLOC(indices(1:nindices),DIM=1, &
-               MASK=(indices(1:nindices)==tmpindices(i)))
+        MASK=(indices(1:nindices)==tmpindices(i)))
     IF(ind == 0) THEN
       nindices=nindices+1
       indices(nindices)=tmpindices(i)
@@ -876,7 +874,7 @@ ENDSUBROUTINE getFinalWtsAndIndices
 !> @param parentwt weight from parent, to be multiplied with new weights
 !>
 RECURSIVE SUBROUTINE collectWtsAndIndices(myMesh,myWts,ip,indices,wts, &
-                                          interpdegree,counter,parentwt)
+    interpdegree,counter,parentwt)
   CLASS(MultigridMeshType),INTENT(IN) :: myMesh
   TYPE(InterpWeightsLevelType),INTENT(IN) :: myWts
   INTEGER(SIK),INTENT(IN) :: ip,interpdegree
@@ -898,7 +896,7 @@ RECURSIVE SUBROUTINE collectWtsAndIndices(myMesh,myWts,ip,indices,wts, &
       parentwt2=parentwt/(2*interpdegree)
       !parentwt2=myWts%wts_point(ip)%wts(:,ichild)*parentwt
       CALL collectWtsAndIndices(myMesh,myWts,ipn,indices,wts, &
-             myMesh%interpDegrees(ipn),counter,parentwt2)
+          myMesh%interpDegrees(ipn),counter,parentwt2)
     ENDDO
   ENDIF
 
@@ -933,11 +931,11 @@ SUBROUTINE setInterp_LinearSolverType_Multigrid(solver,interpMats)
   TYPE(PETScMatrixType),POINTER,INTENT(IN) :: interpMats(:)
 
   IF(.NOT. ASSOCIATED(interpMats)) &
-    CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
       "Attempt to set interpMats_PETSc with an unassociated pointer!")
   IF(solver%isOwnerOfInterpMats) THEN
     CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-      "This instance of solver already owns a set of interp matrices!")
+        "This instance of solver already owns a set of interp matrices!")
   ELSE IF(ASSOCIATED(solver%interpMats_PETSc)) THEN
     NULLIFY(solver%interpMats_PETSc)
   ENDIF
@@ -946,7 +944,7 @@ SUBROUTINE setInterp_LinearSolverType_Multigrid(solver,interpMats)
   CLASS(MatrixType),POINTER,INTENT(IN) :: interpMats(:)
 
   CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-    "PETSc must be enabled in Futility to call this subroutine!")
+      "PETSc must be enabled in Futility to call this subroutine!")
 #endif
 ENDSUBROUTINE setInterp_LinearSolverType_Multigrid
 

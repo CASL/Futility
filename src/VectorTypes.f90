@@ -219,7 +219,7 @@ SUBROUTINE VectorFactory(vector, params)
 
   IF(ASSOCIATED(vector)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Vector pointer is already allocated")
+        "Vector pointer is already allocated")
     RETURN
   ENDIF
 
@@ -243,7 +243,7 @@ SUBROUTINE VectorFactory(vector, params)
 #endif
     CASE DEFAULT
       CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-        "Unrecognized vector engine requested")
+          "Unrecognized vector engine requested")
   ENDSELECT
 
   CALL vector%init(params)
@@ -275,18 +275,18 @@ SUBROUTINE VectorResemble(dest, source, params)
 
   IF(.NOT. ASSOCIATED(source)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Source vector is not associated")
+        "Source vector is not associated")
     RETURN
   ENDIF
 
   IF(.NOT. source%isInit) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Source vector is not initialized")
+        "Source vector is not initialized")
   ENDIF
 
   IF(ASSOCIATED(dest)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Destination vector is already associated")
+        "Destination vector is already associated")
     RETURN
   ENDIF
 
@@ -356,7 +356,7 @@ FUNCTION asum_VectorType(thisVector,n,incx) RESULT(r)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 ENDFUNCTION asum_VectorType
 !
@@ -413,7 +413,7 @@ SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 ENDSUBROUTINE axpy_scalar_VectorType
 !
@@ -467,7 +467,7 @@ SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 
   IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -542,7 +542,7 @@ SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 ENDSUBROUTINE copy_VectorType
 !
@@ -594,7 +594,7 @@ FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 ENDFUNCTION dot_VectorType
 !
@@ -624,7 +624,7 @@ FUNCTION iamax_VectorType(thisVector,n,incx)  RESULT(imax)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 
   IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -666,7 +666,7 @@ FUNCTION iamin_VectorType(thisVector,n,incx)  RESULT(imin)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 
   IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -718,7 +718,7 @@ FUNCTION nrm2_VectorType(thisVector,n,incx)  RESULT(norm2)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 ENDFUNCTION nrm2_VectorType
 !
@@ -758,7 +758,7 @@ SUBROUTINE scal_scalar_VectorType(thisVector,a,n,incx)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 ENDSUBROUTINE scal_scalar_VectorType
 !
@@ -796,7 +796,7 @@ SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
 
   IF(PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -861,7 +861,7 @@ SUBROUTINE swap_VectorType(thisVector,thatVector,n,incx,incy)
 #endif
   CLASS DEFAULT
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
   ENDSUBROUTINE swap_VectorType
 !

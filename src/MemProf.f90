@@ -163,7 +163,7 @@ SUBROUTINE edit_MemProf(thisMP,name)
     IF(thisMP%verbose) THEN
       WRITE(tmpchar,'(a)') 'Memory Use at '//TRIM(name)//':'
       WRITE(thisMP%verbose_output%getUnitNo(),'(a,2(f10.3))') &
-        ADJUSTL(tmpchar), mem, dmem
+          ADJUSTL(tmpchar), mem, dmem
       FLUSH(thisMP%verbose_output%getUnitNo())
     ENDIF
 
@@ -193,7 +193,7 @@ SUBROUTINE enableEdits_MemProf(thisMP)
   thisMP%mem_edit=.TRUE.
 #ifndef FUTILITY_MEMPROF
     IF(ASSOCIATED(thisMP%myLog) .AND. thisMP%pe%world%master) &
-      CALL thisMP%myLog%message("Unable to enable memory edits.  Need to " &
+        CALL thisMP%myLog%message("Unable to enable memory edits.  Need to " &
         //"reconfigure with Memory Profiling on.",.FALSE.,.TRUE.)
 #endif
 ENDSUBROUTINE enableEdits_MemProf

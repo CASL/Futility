@@ -263,7 +263,7 @@ SUBROUTINE EigenvalueSolverFactory(solver,MPIEnv,M,params)
 
   IF(ASSOCIATED(solver)) THEN
     CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
-      "Solver pointer is already associated")
+        "Solver pointer is already associated")
     RETURN
   ENDIF
 
@@ -278,7 +278,7 @@ SUBROUTINE EigenvalueSolverFactory(solver,MPIEnv,M,params)
 #endif
     CLASS DEFAULT
       CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
-        "Unsupported matrix type")
+          "Unsupported matrix type")
   ENDSELECT
   IF(ASSOCIATED(solver)) THEN
     CALL solver%init(MPIEnv,params)
@@ -315,7 +315,7 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
 
   IF(.NOT. MPIEnv%isInit()) THEN
     CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-      modName//'::'//myName//' - MPI Environment is not initialized!')
+        modName//'::'//myName//' - MPI Environment is not initialized!')
   ELSE
     solver%MPIparallelEnv => MPIEnv
   ENDIF
@@ -332,12 +332,12 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
   CALL validParams%get('EigenvalueSolverType->tolerance',tol)
   CALL validParams%get('EigenvalueSolverType->max_iterations',maxit)
   IF(validParams%has('EigenvalueSolverType->SLEPc->cmdline_options')) &
-    CALL validParams%get('EigenvalueSolverType->SLEPc->cmdline_options',clops)
+      CALL validParams%get('EigenvalueSolverType->SLEPc->cmdline_options',clops)
 
   IF(.NOT. solver%isInit) THEN
     IF(n < 1) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSE
       solver%n=n
@@ -345,13 +345,13 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
 
     IF((nlocal < 1) .AND. (nlocal > n)) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (nlocal) must be '// &
+          modName//'::'//myName//' - Number of values (nlocal) must be '// &
           'greater than 0 and less than or equal to (n)!')
     ENDIF
 
     IF(tol<=0.0_SRK) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Tolerance must be '// &
+          modName//'::'//myName//' - Tolerance must be '// &
           'greater than 0!')
     ELSE
       solver%tol=tol
@@ -359,7 +359,7 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
 
     IF(maxit < 1) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Maximum Iterations must be '// &
+          modName//'::'//myName//' - Maximum Iterations must be '// &
           'greater than 0!')
     ELSE
       solver%maxit=maxit
@@ -367,7 +367,7 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
     CALL EPSCreate(solver%MPIparallelEnv%comm,solver%eps,ierr)
     CALL EPSSetProblemType(solver%eps,EPS_GNHEP,ierr)
     IF(ierr/=0) &
-      CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
+        CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
         ' - SLEPc failed to initialize.')
     SELECTCASE(solvertype)
       CASE(POWER_IT)
@@ -383,15 +383,15 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
         CALL EPSSetWhichEigenpairs(solver%eps,EPS_LARGEST_REAL,ierr)
       CASE DEFAULT
         CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-          modName//'::'//myName//' - Unknow solver type.')
+            modName//'::'//myName//' - Unknow solver type.')
     ENDSELECT
     IF(ierr/=0) &
         CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-          ' - SLEPc failed to set solver type')
+        ' - SLEPc failed to set solver type')
     CALL EPSSetTolerances(solver%eps,solver%tol,solver%maxit,ierr)
     IF(ierr/=0) &
         CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-          ' - SLEPc failed to set solver type')
+        ' - SLEPc failed to set solver type')
 
     !TODO: Need to set PC type
     CALL EPSGetST(solver%eps,st,ierr)
@@ -421,12 +421,12 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
     solver%isInit=.TRUE.
   ELSE
     CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - EigenvalueSolverType already initialized')
+        modName//'::'//myName//' - EigenvalueSolverType already initialized')
   ENDIF
   CALL validParams%clear()
 #else
   CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-    ' - SLEPc is not present in build')
+      ' - SLEPc is not present in build')
 #endif
 ENDSUBROUTINE init_EigenvalueSolverType_SLEPc
 
@@ -464,7 +464,7 @@ SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
 
   IF(.NOT. MPIEnv%isInit()) THEN
     CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-      modName//'::'//myName//' - MPI Environment is not initialized!')
+        modName//'::'//myName//' - MPI Environment is not initialized!')
   ELSE
     solver%MPIparallelEnv => MPIEnv
   ENDIF
@@ -484,7 +484,7 @@ SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
   IF(.NOT. solver%isInit) THEN
     IF(n < 1) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSE
       solver%n=n
@@ -492,13 +492,13 @@ SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
 
     IF((nlocal < 1) .AND. (nlocal > n)) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (nlocal) must be '// &
+          modName//'::'//myName//' - Number of values (nlocal) must be '// &
           'greater than 0 and less than or equal to (n)!')
     ENDIF
 
     IF(tol<=0.0_SRK) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Tolerance must be '// &
+          modName//'::'//myName//' - Tolerance must be '// &
           'greater than 0!')
     ELSE
       solver%tol=tol
@@ -506,7 +506,7 @@ SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
 
     IF(maxit < 1) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Maximum Iterations must be '// &
+          modName//'::'//myName//' - Maximum Iterations must be '// &
           'greater than 0!')
     ELSE
       solver%maxit=maxit
@@ -559,13 +559,13 @@ SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
     solver%isInit=.TRUE.
   ELSE
     CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - EigenvalueSolverType already initialized')
+        modName//'::'//myName//' - EigenvalueSolverType already initialized')
   ENDIF
   CALL validParams%clear()
 
 #else
   CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-    ' - Anasazi (Trilinos) is not present in build')
+      ' - Anasazi (Trilinos) is not present in build')
 #endif
 ENDSUBROUTINE init_EigenvalueSolverType_Anasazi
 
@@ -596,7 +596,7 @@ SUBROUTINE init_EigenvalueSolverType_SNES(solver,MPIEnv,Params)
 
   IF(.NOT. MPIEnv%isInit()) THEN
     CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-      modName//'::'//myName//' - MPI Environment is not initialized!')
+        modName//'::'//myName//' - MPI Environment is not initialized!')
   ELSE
     solver%MPIparallelEnv => MPIEnv
   ENDIF
@@ -616,7 +616,7 @@ SUBROUTINE init_EigenvalueSolverType_SNES(solver,MPIEnv,Params)
   IF(.NOT. solver%isInit) THEN
     IF(n < 1) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSE
       solver%n=n
@@ -624,13 +624,13 @@ SUBROUTINE init_EigenvalueSolverType_SNES(solver,MPIEnv,Params)
 
     IF((nlocal < 1) .AND. (nlocal > n)) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (nlocal) must be '// &
+          modName//'::'//myName//' - Number of values (nlocal) must be '// &
           'greater than 0 and less than or equal to (n)!')
     ENDIF
 
     IF(tol<=0.0_SRK) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Tolerance must be '// &
+          modName//'::'//myName//' - Tolerance must be '// &
           'greater than 0!')
     ELSE
       solver%tol=tol
@@ -638,7 +638,7 @@ SUBROUTINE init_EigenvalueSolverType_SNES(solver,MPIEnv,Params)
 
     IF(maxit < 1) THEN
       CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Maximum Iterations must be '// &
+          modName//'::'//myName//' - Maximum Iterations must be '// &
           'greater than 0!')
     ELSE
       solver%maxit=maxit
@@ -665,12 +665,12 @@ SUBROUTINE init_EigenvalueSolverType_SNES(solver,MPIEnv,Params)
     solver%isInit=.TRUE.
 #else
     CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
-      ' - SNES (PETSc) is not present in build')
+        ' - SNES (PETSc) is not present in build')
 #endif
 
   ELSE
     CALL eEigenvalueSolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - EigenvalueSolverType already initialized')
+        modName//'::'//myName//' - EigenvalueSolverType already initialized')
   ENDIF
   CALL validParams%clear()
 

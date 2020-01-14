@@ -285,12 +285,12 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     PROCEDURE,PASS,PRIVATE :: write_pList
     !> Generic typebound interface for all @c write operations
     GENERIC :: fwrite => write_d0, write_d1, write_d2, write_d3, write_d4,   &
-    write_d5, write_d6, write_d7, write_s0, write_s1, write_s2, write_s3, &
-    write_s4, write_s5, write_s6, write_s7, write_b0, write_b1, write_b2, &
-    write_b3, write_n0, write_n1, write_n2, write_n3, write_n4, write_n5, &
-    write_n6, write_n7, write_st0, write_st1_helper, write_st1, write_st2_helper,  &
-    write_st2, write_st3_helper, write_st3, write_l0, write_l1, write_l2, &
-    write_l3, write_l4, write_l5, write_l6, write_l7,write_c1, write_pList
+        write_d5, write_d6, write_d7, write_s0, write_s1, write_s2, write_s3, &
+        write_s4, write_s5, write_s6, write_s7, write_b0, write_b1, write_b2, &
+        write_b3, write_n0, write_n1, write_n2, write_n3, write_n4, write_n5, &
+        write_n6, write_n7, write_st0, write_st1_helper, write_st1, write_st2_helper,  &
+        write_st2, write_st3_helper, write_st3, write_l0, write_l1, write_l2, &
+        write_l3, write_l4, write_l5, write_l6, write_l7,write_c1, write_pList
     !> @copybrief FileType_HDF5::read_d0
     !> @copydoc FileType_HDF5::read_d0
     PROCEDURE,PASS,PRIVATE :: read_d0
@@ -434,12 +434,12 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     PROCEDURE,PASS,PRIVATE :: read_pList
     !> Generic typebound interface for all @c read operations
     GENERIC :: fread => read_d1, read_d2, read_d3, read_d4, read_d5, read_d6,&
-      read_d7, read_s1, read_s2, read_s3, read_s4, read_s5, read_s6, read_s7,&
-      read_l1, read_l2, read_l3, read_l4, read_l5, read_l6, read_l7, read_b1,&
-      read_b2, read_b3, read_st0_helper,read_st0, read_d0, read_s0, read_l0, &
-      read_b0, read_st1, read_st1_helper,read_st2, read_st2_helper, read_st3,&
-      read_st3_helper, read_n0, read_n1, read_n2, read_n3, read_n4, read_n5, &
-      read_n6, read_n7, read_c1, read_pList
+        read_d7, read_s1, read_s2, read_s3, read_s4, read_s5, read_s6, read_s7,&
+        read_l1, read_l2, read_l3, read_l4, read_l5, read_l6, read_l7, read_b1,&
+        read_b2, read_b3, read_st0_helper,read_st0, read_d0, read_s0, read_l0, &
+        read_b0, read_st1, read_st1_helper,read_st2, read_st2_helper, read_st3,&
+        read_st3_helper, read_n0, read_n1, read_n2, read_n3, read_n4, read_n5, &
+        read_n6, read_n7, read_c1, read_pList
     !> Generic typebound interface for pointer-based read operations
     GENERIC :: freadp => read_dp4
     !> @copybrief FileType_HDF5::write_attribute_st0
@@ -456,7 +456,7 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     PROCEDURE,PASS,PRIVATE :: write_attribute_d0
     !> Generic typebound interface for all @c attribute writes
     GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
-      write_attribute_i0, write_attribute_d0
+        write_attribute_i0, write_attribute_d0
     !> @copybrief FileType_HDF5::read_str_attribure_help
     !> @copyoc FileType_HDF5_read_str_attribure_help
     PROCEDURE,PASS,PRIVATE :: read_attribute_st0
@@ -471,7 +471,7 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     PROCEDURE,PASS,PRIVATE :: read_attribute_d0
     !> Generic typebound interface for all @c attribute writes
     GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
-      read_attribute_i0, read_attribute_d0
+        read_attribute_i0, read_attribute_d0
 ENDTYPE
 
 !> @brief Type that is a container so as to have an array of pointers to HDF5 files
@@ -563,8 +563,8 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
   LOGICAL(SBK) :: ostat,exists
   IF(thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - HDF5file '//thisHDF5File%getFileName()// &
-      ' is already initialized!')
+        ' - HDF5file '//thisHDF5File%getFileName()// &
+        ' is already initialized!')
     RETURN
   ENDIF
   CALL getFileParts(filename,fpath,fname,fext,thisHDF5File%e)
@@ -590,8 +590,8 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
         CALL thisHDF5File%setReadStat(.TRUE.)
       ELSE
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - HDF5 file '//filename//' is being opened with '// &
-          'mode READ but does not exist.')
+            ' - HDF5 file '//filename//' is being opened with '// &
+            'mode READ but does not exist.')
       ENDIF
     CASE('WRITE')
       INQUIRE(FILE=filename,EXIST=exists)
@@ -600,8 +600,8 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
         CALL thisHDF5File%setReadStat(.TRUE.)
       ELSE
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - HDF5 file '//filename//' is being opened with '// &
-          'mode WRITE but does not exist.')
+            ' - HDF5 file '//filename//' is being opened with '// &
+            'mode WRITE but does not exist.')
       ENDIF
     CASE('OVERWRITE')
       INQUIRE(FILE=filename,EXIST=exists)
@@ -611,8 +611,8 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
         CALL thisHDF5File%setReadStat(.TRUE.)
       ELSE
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - HDF5 file '//filename//' is being opened with '// &
-          'mode OVERWRITE but does not exist.')
+            ' - HDF5 file '//filename//' is being opened with '// &
+            'mode OVERWRITE but does not exist.')
       ENDIF
     CASE('NEW')
       CALL thisHDF5File%setWriteStat(.TRUE.)
@@ -620,7 +620,7 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
       CALL thisHDF5File%setReadStat(.TRUE.)
     CASE DEFAULT
       CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unrecognized access mode.')
+          ' - Unrecognized access mode.')
   ENDSELECT
 
   thisHDF5File%fullname=filename
@@ -645,7 +645,7 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
 #else
   ! We dont have HDF5, so we can't initialize
   CALL thisHDF5File%e%raiseWarning('The HDF5 library is not present in '// &
-    'this build')
+      'this build')
 #endif
 ENDSUBROUTINE init_HDF5FileType
 !
@@ -722,34 +722,34 @@ SUBROUTINE open_HDF5FileType(file)
     CALL h5pset_fclose_degree_f(plist_id,H5F_CLOSE_SEMI_F,error)
 
     IF (error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-      ' - Unable to create property list for open operation.')
+        ' - Unable to create property list for open operation.')
 
     ! Decide what access type to use
     IF(file%isNew()) THEN
       acc=H5F_ACC_TRUNC_F
       CALL h5fcreate_f(CHAR(file%fullname),acc,file%file_id,error, &
-        access_prp=plist_id)
+          access_prp=plist_id)
       ! If the file is NEW, change the mode to WRITE after
       ! Creating it so we don't keep truncating it repeatedly.
       CALL file%setNewStat(.FALSE.)
     ELSEIF(file%isWrite()) THEN
       acc=H5F_ACC_RDWR_F
       CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
-        access_prp=plist_id)
+          access_prp=plist_id)
     ELSEIF(file%isRead()) THEN
       acc=H5F_ACC_RDONLY_F
       CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
-        access_prp=plist_id)
+          access_prp=plist_id)
     ELSE
       CALL file%e%raiseError(modName//'::'//myName// &
-        ' - Unrecognized access mode! The file is not'// &
-        ' set as either new, read, or write!')
+          ' - Unrecognized access mode! The file is not'// &
+          ' set as either new, read, or write!')
     ENDIF
 
     CALL h5pclose_f(plist_id,error)
     IF(error /= 0) THEN
       CALL file%e%raiseError(modName//'::'//myName// &
-        ' - Unable to destroy property list.')
+          ' - Unable to destroy property list.')
     ELSE
       CALL file%setOpenStat(.TRUE.)
     ENDIF
@@ -773,7 +773,7 @@ SUBROUTINE close_HDF5FileType(file)
   !Check init status
   IF(.NOT.file%isinit) THEN
     CALL file%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
   ELSE
     !Check open status.
     IF(file%isopen()) THEN
@@ -781,7 +781,7 @@ SUBROUTINE close_HDF5FileType(file)
       file%file_id=0
       IF(error /= 0) THEN
         CALL file%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close HDF5 file.')
+            ' - Unable to close HDF5 file.')
       ELSE
         CALL file%setOpenStat(.FALSE.)
       ENDIF
@@ -812,11 +812,11 @@ SUBROUTINE delete_HDF5FileType(file)
     !fopen() operation.  So, regardless of the %isOpen() status, it needs
     !to be opened.
     OPEN(UNIT=file%unitno,FILE=TRIM(file%getFilePath())// &
-      TRIM(file%getFileName())//TRIM(file%getFileExt()), &
+        TRIM(file%getFileName())//TRIM(file%getFileExt()), &
         IOSTAT=error)
     IF(error /= 0) THEN
       WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
-        file%unitno,') IOSTAT=',error
+          file%unitno,') IOSTAT=',error
       CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
     ENDIF
     CLOSE(UNIT=file%unitno,STATUS='DELETE',IOSTAT=error)
@@ -831,7 +831,7 @@ SUBROUTINE delete_HDF5FileType(file)
 #else
   ! We dont have HDF5, so we can't initialize
   CALL file%e%raiseWarning('The HDF5 library is not present in '// &
-    'this build')
+      'this build')
 #endif
 ENDSUBROUTINE delete_HDF5FileType
 !
@@ -897,12 +897,12 @@ SUBROUTINE ls_HDF5FileType(thisHDF5File,path,objs)
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
   ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - HDF5file '//thisHDF5File%getFileName()// &
-       ' is not opened!')
+        ' - HDF5file '//thisHDF5File%getFileName()// &
+        ' is not opened!')
   ELSE
     IF(ALLOCATED(objs)) THEN
       !objs=''
@@ -912,11 +912,11 @@ SUBROUTINE ls_HDF5FileType(thisHDF5File,path,objs)
       path2=convertPath(path)
       CALL h5gopen_f(thisHDF5File%file_id,CHAR(path2),grp_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to open file.')
+          ' - Unable to open file.')
 
       CALL h5gget_info_f(grp_id,store_type,nlinks,max_corder,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to get group information.')
+          ' - Unable to get group information.')
 
       ALLOCATE(objs(nlinks))
 
@@ -925,12 +925,12 @@ SUBROUTINE ls_HDF5FileType(thisHDF5File,path,objs)
             H5_INDEX_NAME_F,H5_ITER_INC_F,i,tmpchar,error)
         objs(i+1)=TRIM(tmpchar)
         IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to get object name.')
+            ' - Unable to get object name.')
       ENDDO
 
       CALL h5gclose_f(grp_id, error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Unable to close group.')
+          ' - Unable to close group.')
     ENDIF
   ENDIF
 #endif
@@ -957,7 +957,7 @@ SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
   ! Ensure that we have write permissions to the file
   ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
     CALL thisHDF5File%e%raiseError(modName &
@@ -965,15 +965,15 @@ SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
   ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - HDF5file '//thisHDF5File%getFileName()// &
-       ' is already not opened!')
+        ' - HDF5file '//thisHDF5File%getFileName()// &
+        ' is already not opened!')
   ELSE
     ! Convert the path to use slashes
     path2=convertPath(path)
 
     CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-       ' - invalid group path:'//path)
+        ' - invalid group path:'//path)
 
     IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
       ! If group exists, do nothing, but only if overwrites are allowed
@@ -990,7 +990,7 @@ SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
             myName//' - Failed to close HDF group')
       ELSE
         CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-          ' - Failed to create HDF5 group.')
+            ' - Failed to create HDF5 group.')
       ENDIF
     ENDIF
   ENDIF
@@ -1019,7 +1019,7 @@ SUBROUTINE mkalldir_HDF5FileType(thisHDF5File,path)
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
   ! Ensure that we have write permissions to the file
   ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
     CALL thisHDF5File%e%raiseError(modName &
@@ -1027,8 +1027,8 @@ SUBROUTINE mkalldir_HDF5FileType(thisHDF5File,path)
   ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - HDF5file '//thisHDF5File%getFileName()// &
-       ' is already not opened!')
+        ' - HDF5file '//thisHDF5File%getFileName()// &
+        ' is already not opened!')
   ELSE
     error=0
     ! Convert the path to use slashes
@@ -1045,7 +1045,7 @@ SUBROUTINE mkalldir_HDF5FileType(thisHDF5File,path)
     DEALLOCATE(slashloc)
     ! Create the group
     IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(path2)))) &
-      CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(path2)),group_id,error)
+        CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(path2)),group_id,error)
 
     IF(error == 0) THEN
       ! Close the group
@@ -1054,7 +1054,7 @@ SUBROUTINE mkalldir_HDF5FileType(thisHDF5File,path)
           myName//' - Failed to close HDF group')
     ELSE
       CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-        ' - Failed to create HDF5 group.')
+          ' - Failed to create HDF5 group.')
     ENDIF
   ENDIF
 #endif
@@ -1081,23 +1081,23 @@ FUNCTION ngrp_HDF5FileType(thisHDF5File,path) RESULT(ngrp)
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
   ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - HDF5file '//thisHDF5File%getFileName()// &
-       ' is already not opened!')
+        ' - HDF5file '//thisHDF5File%getFileName()// &
+        ' is already not opened!')
   ELSE
 
     path2=convertPath(path)
 
     CALL h5gopen_f(thisHDF5File%file_id,CHAR(path2),grp_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not open group in HDF5 file.')
+        ' - Could not open group in HDF5 file.')
 
     CALL h5gget_info_f(grp_id, store_type,nlinks,max_corder,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not get group info in HDF5 file.')
+        ' - Could not get group info in HDF5 file.')
 
     ! Close the group
     CALL h5gclose_f(grp_id,error)
@@ -1253,9 +1253,9 @@ FUNCTION isCompressed_HDF5FileType(thisHDF5File,path) RESULT(bool)
     CALL h5pget_nfilters_f(dcpl,nfilters,error)
     DO i=0,nfilters-1
       CALL h5pget_filter_f(dcpl,i,flags,nelmts,cd_values, &
-        namelen,filter_name,filter_id,error)
+          namelen,filter_name,filter_id,error)
       bool=ANY(filter_id == (/H5Z_FILTER_DEFLATE_F, &
-        H5Z_FILTER_SZIP_F,H5Z_FILTER_NBIT_F,H5Z_FILTER_NBIT_F/))
+          H5Z_FILTER_SZIP_F,H5Z_FILTER_NBIT_F,H5Z_FILTER_NBIT_F/))
       IF(bool) EXIT
     ENDDO
   ELSE
@@ -1330,8 +1330,7 @@ SUBROUTINE createHardLink_HDF5FileType(thisHDF5File,source_path,link_path)
   TYPE(StringType) :: spath,lpath
 
   INTERFACE
-    FUNCTION H5Oclose(object_id) RESULT(herr_t) &
-      BIND(C,NAME="H5Oclose")
+    FUNCTION H5Oclose(object_id) RESULT(herr_t) BIND(C,NAME="H5Oclose")
       USE ISO_C_BINDING
       USE HDF5
       INTEGER(HID_T),VALUE :: object_id
@@ -1350,18 +1349,18 @@ SUBROUTINE createHardLink_HDF5FileType(thisHDF5File,source_path,link_path)
 
       !Create the link target object ID
       CALL H5Lcreate_hard_f(src_obj_id,CHAR(spath),thisHDF5File%file_id, &
-        CHAR(lpath),error)
+          CHAR(lpath),error)
 
       !Close the source object
       !CALL H5Oclose_f(src_obj_id,error)
       error=H5Oclose(src_obj_id)
     ELSE
       CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Location of new link already exists!')
+          ' - Location of new link already exists!')
     ENDIF
   ELSE
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Target of new link must exist in file!')
+        ' - Target of new link must exist in file!')
   ENDIF
 #endif
 ENDSUBROUTINE createHardLink_HDF5FileType
@@ -1409,9 +1408,9 @@ SUBROUTINE write_d0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d0
@@ -1459,9 +1458,9 @@ SUBROUTINE write_d1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d1
@@ -1510,9 +1509,9 @@ SUBROUTINE write_d2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d2
@@ -1562,9 +1561,9 @@ SUBROUTINE write_d3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d3
@@ -1616,9 +1615,9 @@ SUBROUTINE write_d4(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   !Commented out since we don't have a 4 dimensional parameter list... yet.
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d4
@@ -1670,9 +1669,9 @@ SUBROUTINE write_d5(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d5
@@ -1725,9 +1724,9 @@ SUBROUTINE write_d6(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d6
@@ -1781,9 +1780,9 @@ SUBROUTINE write_d7(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_DOUBLE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_d7
@@ -1831,9 +1830,9 @@ SUBROUTINE write_s0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s0
@@ -1881,9 +1880,9 @@ SUBROUTINE write_s1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s1
@@ -1932,9 +1931,9 @@ SUBROUTINE write_s2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s2
@@ -1984,9 +1983,9 @@ SUBROUTINE write_s3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s3
@@ -2037,9 +2036,9 @@ SUBROUTINE write_s4(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s4
@@ -2091,9 +2090,9 @@ SUBROUTINE write_s5(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s5
@@ -2146,9 +2145,9 @@ SUBROUTINE write_s6(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s6
@@ -2202,9 +2201,9 @@ SUBROUTINE write_s7(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_REAL
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_s7
@@ -2258,9 +2257,9 @@ SUBROUTINE write_b0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   ENDIF
   mem=H5T_NATIVE_CHARACTER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_b0
@@ -2314,9 +2313,9 @@ SUBROUTINE write_b1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   END FORALL
   mem=H5T_NATIVE_CHARACTER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_b1
@@ -2371,9 +2370,9 @@ SUBROUTINE write_b2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   END FORALL
   mem=H5T_NATIVE_CHARACTER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_b2
@@ -2429,9 +2428,9 @@ SUBROUTINE write_b3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   END FORALL
   mem=H5T_NATIVE_CHARACTER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,charvals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_b3
@@ -2478,9 +2477,9 @@ SUBROUTINE write_n0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n0
@@ -2527,9 +2526,9 @@ SUBROUTINE write_n1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n1
@@ -2578,9 +2577,9 @@ SUBROUTINE write_n2(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n2
@@ -2630,9 +2629,9 @@ SUBROUTINE write_n3(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n3
@@ -2683,9 +2682,9 @@ SUBROUTINE write_n4(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n4
@@ -2737,9 +2736,9 @@ SUBROUTINE write_n5(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n5
@@ -2792,9 +2791,9 @@ SUBROUTINE write_n6(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n6
@@ -2848,9 +2847,9 @@ SUBROUTINE write_n7(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_INTEGER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_n7
@@ -2901,11 +2900,11 @@ SUBROUTINE write_l0(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l0
@@ -2955,11 +2954,11 @@ SUBROUTINE write_l1(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l1
@@ -3011,11 +3010,11 @@ SUBROUTINE write_l2(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l2
@@ -3068,11 +3067,11 @@ SUBROUTINE write_l3(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l3
@@ -3126,11 +3125,11 @@ SUBROUTINE write_l4(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l4
@@ -3156,7 +3155,7 @@ SUBROUTINE write_l5(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
   INTEGER(SIK),DIMENSION(5),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
   REAL(SDK) :: vals(SIZE(valst,1),SIZE(valst,2),SIZE(valst,3), &
-    SIZE(valst,4),SIZE(valst,5))
+      SIZE(valst,4),SIZE(valst,5))
   CHARACTER(LEN=LEN(dsetname)+1) :: path
   INTEGER(HSIZE_T),DIMENSION(5) :: ldims,gdims,offset,cnt
   INTEGER,PARAMETER :: rank=5
@@ -3186,11 +3185,11 @@ SUBROUTINE write_l5(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l5
@@ -3216,7 +3215,7 @@ SUBROUTINE write_l6(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
   INTEGER(SIK),DIMENSION(6),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
   REAL(SDK) :: vals(SIZE(valst,1),SIZE(valst,2),SIZE(valst,3), &
-    SIZE(valst,4),SIZE(valst,5),SIZE(valst,6))
+      SIZE(valst,4),SIZE(valst,5),SIZE(valst,6))
   CHARACTER(LEN=LEN(dsetname)+1) :: path
   INTEGER(HSIZE_T),DIMENSION(6) :: ldims,gdims,offset,cnt
   INTEGER,PARAMETER :: rank=6
@@ -3247,11 +3246,11 @@ SUBROUTINE write_l6(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l6
@@ -3277,7 +3276,7 @@ SUBROUTINE write_l7(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
   INTEGER(SIK),DIMENSION(7),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
   REAL(SDK) :: vals(SIZE(valst,1),SIZE(valst,2),SIZE(valst,3), &
-    SIZE(valst,4),SIZE(valst,5),SIZE(valst,6),SIZE(valst,7))
+      SIZE(valst,4),SIZE(valst,5),SIZE(valst,6),SIZE(valst,7))
   CHARACTER(LEN=LEN(dsetname)+1) :: path
   INTEGER(HSIZE_T),DIMENSION(7) :: ldims,gdims,offset,cnt
   INTEGER,PARAMETER :: rank=7
@@ -3309,11 +3308,11 @@ SUBROUTINE write_l7(thisHDF5File,dsetname,valst,gdims_in,cnt_in,offset_in)
 
   mem=H5T_STD_I64LE
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   mem=H5T_NATIVE_DOUBLE
   vals=DBLE(valst)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_l7
@@ -3369,9 +3368,9 @@ SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   CALL h5tset_strpad_f(mem,0,error)
   CALL h5tset_size_f(mem,INT(LEN_TRIM(vals),SDK),error)
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   CALL h5tclose_f(mem,error)
 #endif
@@ -3462,9 +3461,9 @@ SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   CALL h5tset_strpad_f(mem,0,error)
   CALL h5tset_size_f(mem,INT(length_max,SDK),error)
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   CALL h5tclose_f(mem,error)
 #endif
@@ -3561,9 +3560,9 @@ SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   CALL h5tset_strpad_f(mem,0,error)
   CALL h5tset_size_f(mem,INT(length_max,SDK),error)
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   CALL h5tclose_f(mem,error)
 #endif
@@ -3666,9 +3665,9 @@ SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   CALL h5tset_strpad_f(mem,0,error)
   CALL h5tset_size_f(mem,INT(length_max,SDK),error)
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   CALL h5tclose_f(mem,error)
 #endif
@@ -3717,9 +3716,9 @@ SUBROUTINE write_c1(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   mem=H5T_NATIVE_CHARACTER
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
-    gspace_id,plist_id,error,cnt,offset)
+      gspace_id,plist_id,error,cnt,offset)
   IF(error == 0) &
-    CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
+      CALL h5dwrite_f(dset_id,mem,vals,gdims,error,dspace_id,gspace_id,plist_id)
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
 #endif
 ENDSUBROUTINE write_c1
@@ -3859,7 +3858,7 @@ SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in,first_dir)
           CALL thisHDF5File%write_l3(CHAR(path),id3)
         CASE DEFAULT
           CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - Unrecognized Parameter Type '//CHAR(nextParam%dataType)//'.')
+              ' - Unrecognized Parameter Type '//CHAR(nextParam%dataType)//'.')
       ENDSELECT
     ENDIF
     CALL vals%getNextParam(address,nextParam)
@@ -3893,7 +3892,7 @@ SUBROUTINE read_d0(thisHDF5File,dsetname,vals)
   CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
   mem=H5T_NATIVE_DOUBLE
   IF(error >= 0) &
-    CALL h5dread_f(dset_id,mem,vals,dims,error)
+      CALL h5dread_f(dset_id,mem,vals,dims,error)
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
 ENDSUBROUTINE read_d0
@@ -4260,7 +4259,7 @@ SUBROUTINE read_s0(thisHDF5File,dsetname,vals)
   mem=H5T_NATIVE_REAL
   CALL preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
   IF(error >= 0) &
-    CALL h5dread_f(dset_id,mem,vals,dims,error)
+      CALL h5dread_f(dset_id,mem,vals,dims,error)
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
 ENDSUBROUTINE read_s0
@@ -4919,7 +4918,7 @@ SUBROUTINE read_l0(thisHDF5File,dsetname,vals)
     ! Convert data type
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -4969,7 +4968,7 @@ SUBROUTINE read_l1(thisHDF5File,dsetname,vals)
     CALL h5dread_f(dset_id,mem,valst,dims,error)
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -5019,7 +5018,7 @@ SUBROUTINE read_l2(thisHDF5File,dsetname,vals)
     CALL h5dread_f(dset_id,mem,valst,dims,error)
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -5069,7 +5068,7 @@ SUBROUTINE read_l3(thisHDF5File,dsetname,vals)
     CALL h5dread_f(dset_id,mem,valst,dims,error)
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -5119,7 +5118,7 @@ SUBROUTINE read_l4(thisHDF5File,dsetname,vals)
     CALL h5dread_f(dset_id,mem,valst,dims,error)
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -5169,7 +5168,7 @@ SUBROUTINE read_l5(thisHDF5File,dsetname,vals)
     CALL h5dread_f(dset_id,mem,valst,dims,error)
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -5219,7 +5218,7 @@ SUBROUTINE read_l6(thisHDF5File,dsetname,vals)
     CALL h5dread_f(dset_id,mem,valst,dims,error)
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -5269,7 +5268,7 @@ SUBROUTINE read_l7(thisHDF5File,dsetname,vals)
     CALL h5dread_f(dset_id,mem,valst,dims,error)
     vals=INT(valst,SLK)
     CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-      ' - Converting from double to long integer!')
+        ' - Converting from double to long integer!')
   ENDIF
   CALL postRead(thisHDF5File,path,dset_id,dspace_id,error)
 #endif
@@ -5465,7 +5464,7 @@ SUBROUTINE read_b3(thisHDF5File,dsetname,vals)
     ! Convert from surrogate character array to boolean array
     vals(:,:,:)=.FALSE.
     FORALL(i=1:SIZE(vals,DIM=1),j=1:SIZE(vals,DIM=2),k=1:SIZE(vals,DIM=3), &
-      valsc(i,j,k) == 'T')
+        valsc(i,j,k) == 'T')
       vals(i,j,k)=.TRUE.
     ENDFORALL
 
@@ -6336,8 +6335,8 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
           !Disabled until PL support is added.
           CALL read_b2(thisHDF5File,CHAR(plpath),l2)
           CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ' - Unsupported Parameter Type 2-D Logical Array will not be '// &
-            'added to Parameter List.')
+              ' - Unsupported Parameter Type 2-D Logical Array will not be '// &
+              'added to Parameter List.')
           !CALL vals%add(CHAR(plpath),l2)
         ELSE
           CALL vals%add(CHAR(plpath),st2)
@@ -6368,13 +6367,13 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         IF(isbool) THEN
           CALL read_b3(thisHDF5File,CHAR(plpath),l3)
           CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ' - Unsupported Parameter Type 3-D Logical Array will not be '// &
-            'added to Parameter List.')
+              ' - Unsupported Parameter Type 3-D Logical Array will not be '// &
+              'added to Parameter List.')
           !CALL vals%add(CHAR(plpath),l3)
         ELSE
           CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ' - Unsupported Parameter Type 3-D String Array will not be '// &
-            'added to Parameter List.')
+              ' - Unsupported Parameter Type 3-D String Array will not be '// &
+              'added to Parameter List.')
           !CALL vals%add(CHAR(plpath),st3)
         ENDIF
     ENDSELECT
@@ -6454,17 +6453,17 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
     error=-1
   ! Check that the file is writable. Best to catch this before HDF5 does.
   ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - File is readonly!')
+        ' - File is readonly!')
     error=-2
   ! Check that the file is Open.
   ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - File is not Open!')
+        ' - File is not Open!')
     error=-3
   ELSE
     file_id=thisHDF5File%file_id
@@ -6483,33 +6482,33 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
     !Create an HDF5 parameter list for the dataset creation.
     CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not create parameter list.')
+        ' - Could not create parameter list.')
 
     IF(rank == 0) THEN
       CALL h5screate_f(H5S_SCALAR_F,gspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not create scalar dataspace.')
+          ' - Could not create scalar dataspace.')
       CALL h5screate_f(H5S_SCALAR_F,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not create scalar dataspace.')
+          ' - Could not create scalar dataspace.')
     ELSE
       ! Create the dataspace
       ! Global dataspace
       CALL h5screate_simple_f(rank,gdims,gspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not create dataspace.')
+          ' - Could not create dataspace.')
 
       ! Local dataspace
       CALL h5screate_simple_f(rank,ldims,dspace_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not create dataspace.')
+          ' - Could not create dataspace.')
 
       ! Setup the DSpace creation property list to use ZLIB compression
       ! (requires chunking).
       !
       ! Do not compress on scalar data sets.
       IF(thisHDF5File%hasCompression .AND. &
-        .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
+          .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
 
         !Compute optimal chunk size and specify in property list.
         CALL compute_chunk_size(mem,gdims,cdims)
@@ -6527,52 +6526,52 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
     ! Create the dataset, if necessary
     CALL h5lexists_f(file_id,path,dset_exists,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-       ' - invalid group path:'//path)
+        ' - invalid group path:'//path)
 
     IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
       ! Open group for overwrite if it already exists and the file has overwrite status
       CALL h5dopen_f(file_id,path,dset_id,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not open dataset:'//path)
+          ' - Could not open dataset:'//path)
 
       ! Get the old and new data type sizes
       CALL h5dget_type_f(dset_id,oldmem,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not retrieve data type:'//path)
+          ' - Could not retrieve data type:'//path)
       CALL h5tget_size_f(oldmem,oldsize,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not retrieve old data type size:'//path)
+          ' - Could not retrieve old data type size:'//path)
       CALL h5tget_size_f(mem,newsize,error)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not retrieve new data type size:'//path)
+          ' - Could not retrieve new data type size:'//path)
 
       ! Check that the size of the data type is equal to or less than the data type size
       ! in the dataset since there is currently no way to resize the dataset
       IF(oldsize < newsize) THEN
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Size of new data is greater than size of pre-existing data type:'//path)
+            ' - Size of new data is greater than size of pre-existing data type:'//path)
       ENDIF
 
       ! For non-scalar data, check that the size of the array equal to or less than the
       ! array size in the dataset since there is currently no way to resize the dataset
       CALL h5dget_storage_size_f(dset_id,oldsize,error)
       IF(oldsize < newsize*PRODUCT(gdims)) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Storage size of the pre-existing dataset is too small:'//path)
+          ' - Storage size of the pre-existing dataset is too small:'//path)
     ELSE
       CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not create dataset:'//path)
+          ' - Could not create dataset:'//path)
     ENDIF
 
     ! Destroy the property list
     CALL h5pclose_f(plist_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not close parameter list.')
+        ' - Could not close parameter list.')
 
     ! Select the global dataspace for the dataset
     CALL h5dget_space_f(dset_id,gspace_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not select global dataspace for the dataset.')
+        ' - Could not select global dataspace for the dataset.')
 
 !#ifdef HAVE_MPI
 !        ! Select a hyperslab subset of the global data space
@@ -6585,7 +6584,7 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
     ! Create a property list for the write operation
     CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not create property list for write operation.')
+        ' - Could not create property list for write operation.')
 !#ifdef HAVE_MPI
 !!We need checks here for PAR_HDF5, or something, because it won't work with serial!
 !!(facepalm)
@@ -6614,32 +6613,32 @@ SUBROUTINE postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
   ! Check that the file is writable. Best to catch this before HDF5 does.
   ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - File is not Writable!')
+        ' - File is not Writable!')
   ! Check that the file is Open.
   ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
     CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - File is not Open!')
+        ' - File is not Open!')
   ELSE
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - Could not write to the dataset.')
     ! Close the dataset
     CALL h5dclose_f(dset_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not close the dataset.')
+        ' - Could not close the dataset.')
     ! Close the dataspace
     CALL h5sclose_f(dspace_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not close the dataspace.')
+        ' - Could not close the dataspace.')
     CALL h5sclose_f(gspace_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not close the dataspace.')
+        ' - Could not close the dataspace.')
     CALL h5pclose_f(plist_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Could not close the parameter list.')
+        ' - Could not close the parameter list.')
   ENDIF
 ENDSUBROUTINE postWrite
 !
@@ -6664,34 +6663,34 @@ SUBROUTINE preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
     error=-1
   ELSEIF(.NOT.thisHDF5File%isRead()) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File is not Readable!')
+        '::'//myName//' - File is not Readable!')
     error=-2
   ELSE
     ! Open the dataset
     CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-       ' - Failed to open dataset.')
+        ' - Failed to open dataset.')
 
     ! Get dataset dimensions for allocation
     CALL h5dget_space_f(dset_id,dspace_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Failed to obtain the dataspace.')
+        ' - Failed to obtain the dataspace.')
 
     ! Make sure the rank is right
     IF(rank > 0) THEN
       CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
+          ' - Failed to retrieve number of dataspace dimensions.')
       IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+          ' - Using wrong read function for rank.')
       CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
       IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+          ' - Failed to retrieve dataspace dimensions.')
     ELSE
       dims=1
     ENDIF
@@ -6715,11 +6714,11 @@ SUBROUTINE postRead(thisHDF5File,path,dset_id,dspace_id,error)
   IF(.NOT.thisHDF5File%isinit) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File object not initialized.')
+        '::'//myName//' - File object not initialized.')
   ELSEIF(.NOT.thisHDF5File%isRead()) THEN
     CALL thisHDF5File%e%setStopOnError(.FALSE.)
     CALL thisHDF5File%e%raiseError(modName// &
-      '::'//myName//' - File is not Readable!')
+        '::'//myName//' - File is not Readable!')
   ELSE
     IF(error /= 0) THEN
       !See if failed read was due to OOM on decompress
@@ -6727,25 +6726,25 @@ SUBROUTINE postRead(thisHDF5File,path,dset_id,dspace_id,error)
         CALL getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
         IF(MAXVAL(cdims) > 16777216_HSIZE_T) THEN !This is 64/128MB
           CALL thisHDF5File%e%raiseWarning( &      !depending on dataset type.
-            modName//'::'//myName//' - Potentially high memory usage'// &
-            'when reading decompressed dataset "'//TRIM(path)//'".'// &
-            CHAR(10)//CHAR(10)//'Try decompressing file before rerunning:'// &
-            CHAR(10)//'$ h5repack -f NONE "'// &
-            TRIM(thisHDF5File%fullname)//'" "'// &
-            TRIM(thisHDF5File%fullname)//'.uncompressed"')
+              modName//'::'//myName//' - Potentially high memory usage'// &
+              'when reading decompressed dataset "'//TRIM(path)//'".'// &
+              CHAR(10)//CHAR(10)//'Try decompressing file before rerunning:'// &
+              CHAR(10)//'$ h5repack -f NONE "'// &
+              TRIM(thisHDF5File%fullname)//'" "'// &
+              TRIM(thisHDF5File%fullname)//'.uncompressed"')
         ENDIF
       ENDIF
       CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        '- Failed to read data from dataset"'//TRIM(path)//'".')
+          '- Failed to read data from dataset"'//TRIM(path)//'".')
     ENDIF
     ! Close the dataset
     CALL h5dclose_f(dset_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Failed to close dataset "'//TRIM(path)//'".')
+        ' - Failed to close dataset "'//TRIM(path)//'".')
     ! Close the dataspace
     CALL h5sclose_f(dspace_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Failed to close dataspace for "'//TRIM(path)//'".')
+        ' - Failed to close dataspace for "'//TRIM(path)//'".')
   ENDIF
 ENDSUBROUTINE postRead
 !
@@ -6815,12 +6814,12 @@ SUBROUTINE createAttribute(this,obj_id,attr_name,atype_id,dspace_id,attr_id)
      ! Open the attribute
      CALL h5aopen_f(obj_id,attr_name,attr_id,error)
      IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
-       ' - Unable to open attribute.')
+         ' - Unable to open attribute.')
    ELSE
      ! Create the attribute
      CALL h5acreate_f(obj_id,attr_name,atype_id,dspace_id,attr_id,error)
      IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
-       ' - Unable to create attribute.')
+         ' - Unable to create attribute.')
    ENDIF
 END SUBROUTINE createAttribute
 #endif
@@ -6917,7 +6916,7 @@ SUBROUTINE write_attribute_i0(this,obj_name,attr_name,attr_val)
 
    !Create and write to the attribute within the dataspce
    CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_INTEGER,&
-      dspace_id,attr_id)
+       dspace_id,attr_id)
    CALL h5awrite_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
 
    CALL h5sclose_f(dspace_id,error)
@@ -6954,7 +6953,7 @@ SUBROUTINE write_attribute_d0(this,obj_name,attr_name,attr_val)
 
    !Create and write to the attribute within the dataspce
    CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_DOUBLE,&
-      dspace_id,attr_id)
+       dspace_id,attr_id)
    CALL h5awrite_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
 
    CALL h5sclose_f(dspace_id,error)
@@ -7059,7 +7058,7 @@ SUBROUTINE read_attribute_i0(this,obj_name,attr_name,attr_val)
    CALL h5aread_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
    IF(error /= 0) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-      ' - Failed to read attribute.')
+         ' - Failed to read attribute.')
      RETURN
    ENDIF
    CALL close_attribute(this,attr_id)
@@ -7092,7 +7091,7 @@ SUBROUTINE read_attribute_d0(this,obj_name,attr_name,attr_val)
    CALL h5aread_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
    IF(error /= 0) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-      ' - Failed to read attribute.')
+         ' - Failed to read attribute.')
      RETURN
    ENDIF
 
@@ -7124,7 +7123,7 @@ SUBROUTINE open_object(this,obj_name,obj_id)
    CALL h5lexists_f(this%file_id,path,dset_exists,error)
    IF(.NOT. dset_exists) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-      ' - Incorrect path to object.')
+         ' - Incorrect path to object.')
      RETURN
    ENDIF
 
@@ -7132,7 +7131,7 @@ SUBROUTINE open_object(this,obj_name,obj_id)
    CALL h5Oopen_f(this%file_id,path,obj_id,error)
    IF(error /= 0) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-      ' - Failed to open object.')
+         ' - Failed to open object.')
      RETURN
    ENDIF
 END SUBROUTINE open_object
@@ -7151,7 +7150,7 @@ SUBROUTINE close_attribute(this,attr_id)
    CALL h5aclose_f(attr_id,error)
    IF (error /= 0) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-       ' - Failed to close objectt.')
+         ' - Failed to close objectt.')
      RETURN
    ENDIF
 END SUBROUTINE close_attribute
@@ -7170,7 +7169,7 @@ SUBROUTINE close_object(this,obj_id)
    CALL h5Oclose_f(obj_id,error)
    IF (error /= 0) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-       ' - Failed to close objectt.')
+         ' - Failed to close objectt.')
      RETURN
    ENDIF
 END SUBROUTINE close_object
@@ -7196,7 +7195,7 @@ SUBROUTINE open_attribute(this,obj_id,attr_name,attr_id)
    CALL h5aexists_f(obj_id,attr_name,attr_exists,error)
    IF (.NOT. attr_exists) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-       ' - Attribute does not exist for object.')
+         ' - Attribute does not exist for object.')
      RETURN
    ENDIF
 
@@ -7204,7 +7203,7 @@ SUBROUTINE open_attribute(this,obj_id,attr_name,attr_id)
    CALL h5aopen_f(obj_id,attr_name,attr_id,error)
    IF(error /= 0) THEN
      CALL this%e%raiseError(modName//'::'//myName// &
-      ' - Failed to open attribute.')
+         ' - Failed to open attribute.')
      RETURN
    ENDIF
 END SUBROUTINE open_attribute

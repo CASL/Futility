@@ -113,7 +113,7 @@ SUBROUTINE init_AndersonAccelerationType(solver,MPIEnv,Params)
 
   IF(.NOT. MPIEnv%isInit()) THEN
     CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
-      modName//'::'//myName//' - MPI Environment is not initialized!')
+        modName//'::'//myName//' - MPI Environment is not initialized!')
   ELSE
     solver%MPIparallelEnv => MPIEnv
   ENDIF
@@ -134,7 +134,7 @@ SUBROUTINE init_AndersonAccelerationType(solver,MPIEnv,Params)
   IF(.NOT. solver%isInit) THEN
     IF(n < 1) THEN
       CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSE
       solver%n=n
@@ -142,13 +142,13 @@ SUBROUTINE init_AndersonAccelerationType(solver,MPIEnv,Params)
 
     IF((nlocal < 1) .AND. (nlocal > n)) THEN
       CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (nlocal) must be '// &
+          modName//'::'//myName//' - Number of values (nlocal) must be '// &
           'greater than 0 and less than or equal to (n)!')
     ENDIF
 
     IF(depth < 0) THEN
       CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Depth values (depth) must be '// &
+          modName//'::'//myName//' - Depth values (depth) must be '// &
           'greater than or equal to 0!')
     ELSE
       solver%depth=depth
@@ -156,13 +156,13 @@ SUBROUTINE init_AndersonAccelerationType(solver,MPIEnv,Params)
 
     IF(start <= 0) THEN
       CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Starting iteration must be '// &
+          modName//'::'//myName//' - Starting iteration must be '// &
           'greater than to 0!')
     ENDIF
 
     IF((beta<=0.0_SRK) .OR. (beta>1.0_SRK)) THEN
       CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Beta must be '// &
+          modName//'::'//myName//' - Beta must be '// &
           'greater than 0 and less than or equal to 1!')
     ELSE
       solver%beta=beta
@@ -182,12 +182,12 @@ SUBROUTINE init_AndersonAccelerationType(solver,MPIEnv,Params)
     ENDSELECT
 #else
     CALL eAndersonAccelerationType%raiseError(modName//'::'//myName// &
-      ' - NOX (Trilinos) is not present in build')
+        ' - NOX (Trilinos) is not present in build')
 #endif
     solver%isInit=.TRUE.
   ELSE
     CALL eAndersonAccelerationType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - AndersonAccelerationType already initialized')
+        modName//'::'//myName//' - AndersonAccelerationType already initialized')
   ENDIF
 
 ENDSUBROUTINE init_AndersonAccelerationType

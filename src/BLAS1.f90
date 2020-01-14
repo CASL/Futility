@@ -540,7 +540,7 @@ PURE FUNCTION sasum_all(n,x,incx) RESULT(r)
         IF(m /= 0) tmpsum=SUM(ABS(x(1:m)))
         DO i=m+1,n,6
           tmpsum=tmpsum+ABS(x(i))+ABS(x(i+1))+ABS(x(i+2))+ABS(x(i+3))+ &
-            ABS(x(i+4))+ABS(x(i+5))
+              ABS(x(i+4))+ABS(x(i+5))
         ENDDO
       ELSE
         !Nothing special
@@ -657,7 +657,7 @@ PURE FUNCTION dasum_all(n,x,incx) RESULT(r)
         IF(m /= 0) tmpsum=SUM(ABS(x(1:m)))
         DO i=m+1,n,6
           tmpsum=tmpsum+ABS(x(i))+ABS(x(i+1))+ABS(x(i+2))+ABS(x(i+3))+ &
-            ABS(x(i+4))+ABS(x(i+5))
+              ABS(x(i+4))+ABS(x(i+5))
         ENDDO
       ELSE
         !Nothing special

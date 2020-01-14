@@ -155,7 +155,7 @@ ELEMENTAL FUNCTION intersect_LineType_and_LineType(l1,l2) RESULT(p)
   TYPE(PointType) :: p
   p%dim=-1
   IF(l1%p1%dim == l1%p2%dim .AND. l2%p1%dim == l2%p2%dim .AND. &
-    l1%p1%dim == l2%p1%dim .AND. l1%p1%dim > 0) THEN
+      l1%p1%dim == l2%p1%dim .AND. l1%p1%dim > 0) THEN
     SELECTCASE(l1%p1%dim)
       CASE(1)
         p%dim=-2 !Always collinear/overlap
@@ -203,7 +203,7 @@ ELEMENTAL FUNCTION intersect_lines2D(s1p0,s1p1,s2p0,s2p1) RESULT(p)
     s=s/d
     t=t/d
     IF(((0._SRK .APPROXLE. s) .AND. (s .APPROXLE. 1.0_SRK)) .AND. &
-       ((0._SRK .APPROXLE. t) .AND. (t .APPROXLE. 1.0_SRK))) THEN
+        ((0._SRK .APPROXLE. t) .AND. (t .APPROXLE. 1.0_SRK))) THEN
       !Success, intersection point was found.
       p=s1p0
       p%coord(1)=p%coord(1)+s*u(1)
@@ -252,7 +252,7 @@ TYPE(PointType),INTENT(IN) :: s1p0,s1p1,s2p0,s2p1
   thisDim=dis%p1%dim
   IF(thisDim > 0) THEN
     IF(0._SRK-EPSREAL_LOCAL <= mu1 .AND. mu1 <= 1._SRK+EPSREAL_LOCAL &
-      .AND. 0._SRK-EPSREAL_LOCAL <= mu2 .AND. mu2 <= 1._SRK+EPSREAL_LOCAL &
+        .AND. 0._SRK-EPSREAL_LOCAL <= mu2 .AND. mu2 <= 1._SRK+EPSREAL_LOCAL &
         .AND. dis%length() < EPSREAL_LOCAL) THEN
       p=dis%p1
     ENDIF
@@ -308,7 +308,7 @@ ELEMENTAL SUBROUTINE distance_LineType_to_LineType(s1,s2,dis,mu1,mu2)
     p43(3)=s2%p2%coord(3)-s2%p1%coord(3)
     !Check the line segment
     IF((ABS(p21(1)) > EPSREAL .OR. ABS(p21(2)) > EPSREAL &
-      .OR. ABS(p21(3)) > EPSREAL) .AND. (ABS(p43(1)) > EPSREAL &
+        .OR. ABS(p21(3)) > EPSREAL) .AND. (ABS(p43(1)) > EPSREAL &
         .OR. ABS(p43(2)) > EPSREAL .OR. ABS(p43(3)) > EPSREAL)) THEN
       p13(1)=s1%p1%coord(1)-s2%p1%coord(1)
       p13(2)=s1%p1%coord(2)-s2%p1%coord(2)
@@ -482,7 +482,7 @@ ELEMENTAL FUNCTION pointIsLeft_LineType(line,pt) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.FALSE.
   IF((pt%dim > 1) .AND. (line%getDim() > 1)) &
-    bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
+      bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
       (line%p2%coord(2)-line%p1%coord(2))*(pt%coord(1)-line%p1%coord(1)) > 0.0_SRK
 ENDFUNCTION pointIsLeft_LineType
 !
@@ -499,7 +499,7 @@ ELEMENTAL FUNCTION pointIsRight_LineType(line,pt) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.FALSE.
   IF((pt%dim > 1) .AND. (line%getDim() > 1)) &
-    bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
+      bool=(line%p2%coord(1)-line%p1%coord(1))*(pt%coord(2)-line%p1%coord(2))- &
       (line%p2%coord(2)-line%p1%coord(2))*(pt%coord(1)-line%p1%coord(1)) < 0.0_SRK
 ENDFUNCTION pointIsRight_LineType
 !

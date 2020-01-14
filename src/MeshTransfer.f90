@@ -246,7 +246,7 @@ SUBROUTINE init_1Dbase(this,pList)
       this%MapType_in=MapType_VOLUME
     CASE DEFAULT
       CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
-            "invalid incoming map type")
+          "invalid incoming map type")
   ENDSELECT
   IF(this%MapType_in == MapType_CONTINUOUS) THEN
     CALL pList%get('moments_in',this%nmesh_in)
@@ -268,7 +268,7 @@ SUBROUTINE init_1Dbase(this,pList)
       this%MapType_out=MapType_VOLUME
     CASE DEFAULT
       CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
-            "invalid outgoing map type")
+          "invalid outgoing map type")
   ENDSELECT
   IF(this%MapType_out == MapType_CONTINUOUS) THEN
     CALL pList%get('moments_out',this%nmesh_out)
@@ -682,10 +682,10 @@ SUBROUTINE setupP2V_cart(TM,mesh_in,mesh_out)
       ELSE
         TM(iout,iin)=TM(iout,iin)+ &
             HALF*dx*(TWO*mesh_in(iin+1)-union(iun)-union(iun-1))/ &
-                            (mesh_in(iin+1)-mesh_in(iin))
+            (mesh_in(iin+1)-mesh_in(iin))
         TM(iout,iin+1)=TM(iout,iin+1)+ &
             HALF*dx*(union(iun)+union(iun-1)-TWO*mesh_in(iin))/   &
-                            (mesh_in(iin+1)-mesh_in(iin))
+            (mesh_in(iin+1)-mesh_in(iin))
       ENDIF
       vsum=vsum+dx
     ENDIF

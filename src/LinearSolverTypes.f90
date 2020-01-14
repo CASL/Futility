@@ -421,7 +421,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     !print status of TPL post-heirarchy
     IF(ReqTPLType /= TPLType) THEN
       CALL eLinearSolverType%raiseDebug(modName//'::'// &
-        myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
+          myName//' - Requested TPL '//TRIM(ReqTPLTypeStr)// &
           ' is not enabled, will use '//TRIM(TPLTypeStr)//' solvers instead.')
     ENDIF
 
@@ -438,7 +438,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
 #endif
     IF(.NOT. ASSOCIATED(solver%A)) THEN
       CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
-        "Failed to create matrix A")
+          "Failed to create matrix A")
     ENDIF
 
     IF(PRESENT(A)) A=>solver%A
@@ -450,7 +450,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     SELECTTYPE(solver)
       CLASS IS(LinearSolverType_Direct) ! direct solver
         IF((solverMethod > 0) .AND. &
-           (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN
+            (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN
           !assign values to solver
           CALL solver%SolveTime%setTimerName(timerName)
           solver%solverMethod=solverMethod
@@ -458,7 +458,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
           solver%isInit=.TRUE.
         ELSE
           CALL eLinearSolverType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - invalid value of solverMethod')
+              modName//'::'//myName//' - invalid value of solverMethod')
         ENDIF
 #ifdef HAVE_PARDISO
         IF(solver%TPLtype == PARDISO_MKL) THEN
@@ -496,20 +496,20 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
 
 #else
             CALL eLinearSolverType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - invalid value of solverMethod')
+                modName//'::'//myName//' - invalid value of solverMethod')
 #endif
         ENDIF
 
       CLASS IS(LinearSolverType_Iterative) ! iterative solver
         IF((solverMethod > 0) .AND. &
-           (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN
+            (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN
 
           !only GMRES can handle when sparse LS of size 1
           IF(n==1 .AND. matType == SPARSE .AND. solverMethod/= GMRES) THEN
             solverMethod=GMRES
             CALL eLinearSolverType%raiseDebug(modName//'::'// &
-              myName//' - Only GMRES can handle sparse systems of size 1.  '// &
-              'Switching solver method to GMRES.')
+                myName//' - Only GMRES can handle sparse systems of size 1.  '// &
+                'Switching solver method to GMRES.')
           ENDIF
 
           solver%solverMethod=solverMethod
@@ -601,13 +601,13 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
 
 #else
             CALL eLinearSolverType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - invalid value of solverMethod')
+                modName//'::'//myName//' - invalid value of solverMethod')
 #endif
           ELSEIF(TPLType==TRILINOS) THEN
 #ifdef FUTILITY_HAVE_Trilinos
             IF(solverMethod/=GMRES) &
-              CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                  modName//'::'//myName//' - Only GMRES solver is supported with Trilinos')
+                CALL eLinearSolverType%raiseError('Incorrect call to '// &
+                modName//'::'//myName//' - Only GMRES solver is supported with Trilinos')
 
             ! PC option is hard-coded for now
             CALL belosParams%add('belos_options->pc_option', 2_SIK)
@@ -628,7 +628,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
             ENDSELECT
 #else
             CALL eLinearSolverType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - invalid value of solverMethod')
+                modName//'::'//myName//' - invalid value of solverMethod')
 #endif
           ENDIF
 
@@ -637,12 +637,12 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
           solver%isInit=.TRUE.
         ELSE
           CALL eLinearSolverType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - invalid value of solverMethod')
+              modName//'::'//myName//' - invalid value of solverMethod')
         ENDIF
     ENDSELECT
   ELSE
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - LinearSolverType already initialized')
+        modName//'::'//myName//' - LinearSolverType already initialized')
   ENDIF
   CALL vecbPList%clear()
   CALL vecxPList%clear()
@@ -669,15 +669,15 @@ SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver)
         CALL solver%PreCondType%setup()
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
-          ' - LinearSolverType matrix is not initialized. Preconditioner cannot be set up.')
+            ' - LinearSolverType matrix is not initialized. Preconditioner cannot be set up.')
       ENDIF
     ELSE
       CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
-        ' - LinearSolverType matrix is not allocated. Preconditioner cannot be set up.')
+          ' - LinearSolverType matrix is not allocated. Preconditioner cannot be set up.')
     ENDIF
   ELSE
     CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
-      ' - LinearSolverType is not initialized. Preconditioner cannot be set up.')
+        ' - LinearSolverType is not initialized. Preconditioner cannot be set up.')
   ENDIF
 ENDSUBROUTINE setup_PreCond_LinearSolverType_Iterative
 !
@@ -698,7 +698,7 @@ SUBROUTINE updatedA(solver)
     CALL KSPSetOperators(solver%ksp,A%a,A%a,iperr)
 #else
     CALL KSPSetOperators(solver%ksp,A%a,A%a, &
-      DIFFERENT_NONZERO_PATTERN,iperr)
+        DIFFERENT_NONZERO_PATTERN,iperr)
 #endif
   ENDSELECT
 #endif
@@ -763,7 +763,7 @@ SUBROUTINE clear_LinearSolverType_Iterative(solver)
 #ifdef FUTILITY_HAVE_PETSC
   PetscErrorCode  :: ierr
   IF(solver%TPLType==PETSC .AND. solver%isInit) &
-    CALL KSPDestroy(solver%ksp,ierr)
+      CALL KSPDestroy(solver%ksp,ierr)
 #endif
 
   CALL solver%MPIparallelEnv%clear()
@@ -837,7 +837,7 @@ SUBROUTINE solve_LinearSolverType_Direct(solver)
 
           TYPE IS(TriDiagMatrixType)
             IF(.NOT.solver%isDecomposed) &
-              CALL DecomposePLU_TriDiag(solver)
+                CALL DecomposePLU_TriDiag(solver)
             CALL solvePLU_TriDiag(solver)
 
           CLASS DEFAULT
@@ -847,7 +847,7 @@ SUBROUTINE solve_LinearSolverType_Direct(solver)
                 SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
                   SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
                     CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
-                      solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
+                        solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
                         solver%iparm,msglvl,b%b,x%b,error)
                      solver%phase=23
                   ENDSELECT
@@ -855,28 +855,26 @@ SUBROUTINE solve_LinearSolverType_Direct(solver)
               ENDSELECT
 #else
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - PARDISO not enabled.')
+                  modName//'::'//myName//' - PARDISO not enabled.')
 #endif
             ELSE
               !Should not use direct method, go to CGNR
               CALL solveCGNR(solver)
               IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                   myName//'- GE method for dense rectangular system '// &
-                    'and sparse system is not implemented, CGNR method '// &
-                      'is used instead.')
+                  'and sparse system is not implemented, CGNR method '// &
+                  'is used instead.')
             ENDIF
         ENDSELECT
       CASE(LU)
         SELECTTYPE(A => solver%A)
           TYPE IS(DenseSquareMatrixType)
-            IF(.NOT. solver%isDecomposed) &
-              CALL DecomposePLU_DenseSquare(solver)
+            IF(.NOT. solver%isDecomposed) CALL DecomposePLU_DenseSquare(solver)
             CALL solvePLU_DenseSquare(solver)
 
           TYPE IS(TriDiagMatrixType)
-            IF(.NOT.solver%isDecomposed) &
-              CALL DecomposePLU_TriDiag(solver)
+            IF(.NOT.solver%isDecomposed) CALL DecomposePLU_TriDiag(solver)
             CALL solvePLU_TriDiag(solver)
 #ifdef FUTILITY_HAVE_PETSC
           TYPE IS(PETScMatrixType)
@@ -910,7 +908,7 @@ SUBROUTINE solve_LinearSolverType_Direct(solver)
                 SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
                   SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
                     CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
-                      solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
+                        solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
                         solver%iparm,msglvl,b%b,x%b,error)
                      solver%phase=23
                   ENDSELECT
@@ -918,16 +916,16 @@ SUBROUTINE solve_LinearSolverType_Direct(solver)
               ENDSELECT
 #else
               CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - PARDISO not enabled.')
+                  modName//'::'//myName//' - PARDISO not enabled.')
 #endif
             ELSE
               !Should not use direct method, go to CGNR
               CALL solveCGNR(solver)
               IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
                   myName//'- LU method for dense rectangular system '// &
-                    'and sparse system is not implemented, CGNR method '// &
-                      'is used instead.')
+                  'and sparse system is not implemented, CGNR method '// &
+                  'is used instead.')
             ENDIF
         ENDSELECT
       CASE(QR)
@@ -936,7 +934,7 @@ SUBROUTINE solve_LinearSolverType_Direct(solver)
             CALL solveQR_Dense(solver)
 
           CLASS DEFAULT
-              CALL eLinearSolverType%raiseError('Incorrect call to '// &
+            CALL eLinearSolverType%raiseError('Incorrect call to '// &
                 modName//'::'//myName//' - QR only supported for DensRet Matrix.')
         ENDSELECT
     ENDSELECT
@@ -964,7 +962,7 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
       ENDSELECT
       solver%hasX0=.TRUE.
       CALL eLinearSolverType%raiseDebug(modName//'::'// &
-        myName//'- Initial X0 is set to 1.')
+          myName//'- Initial X0 is set to 1.')
     ENDIF
     CALL solver%SolveTime%tic()
     solver%info=-1
@@ -974,7 +972,7 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
         SELECTTYPE(A=>solver%A)
           TYPE IS(DenseSquareMatrixType)
             IF(.NOT. solver%isDecomposed) &
-              CALL DecomposeBiCGSTAB_DenseSquare(solver)
+                CALL DecomposeBiCGSTAB_DenseSquare(solver)
             CALL solveBiCGSTAB(solver)
 
           TYPE IS(SparseMatrixType)
@@ -988,9 +986,9 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
             CALL solvePLU_TriDiag(solver)
 
             IF(solver%info == 0) &
-              CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                CALL eLinearSolverType%raiseDebug(modName//'::'// &
                 myName//'- BiCGSTAB method for tridiagonal system '// &
-                  'is not implemented, GE method is used instead.')
+                'is not implemented, GE method is used instead.')
 
           TYPE IS(DenseRectMatrixType)
             !If the coefficient matrix is a rectangular matrix, CGNR method
@@ -998,9 +996,9 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
             CALL solveCGNR(solver)
 
             IF(solver%info == 0) &
-              CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                CALL eLinearSolverType%raiseDebug(modName//'::'// &
                 myName//'- BiCGSTAB method for dense rectangular system '// &
-                  'is not implemented, CGNR method is used instead.')
+                'is not implemented, CGNR method is used instead.')
 
 #ifdef FUTILITY_HAVE_PETSC
           TYPE IS(PETScMatrixType)
@@ -1032,18 +1030,18 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
             !If the coefficient matrix is tridiagonal PLU method will be
             !used instead.
             IF(.NOT.solver%isDecomposed) &
-              CALL DecomposePLU_TriDiag(solver)
+                CALL DecomposePLU_TriDiag(solver)
             CALL solvePLU_TriDiag(solver)
 
             IF(solver%info == 0) &
-              CALL eLinearSolverType%raiseDebug(modName//'::'// &
-              myName//'- CGNR method for tridiagonal system '// &
+                CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                myName//'- CGNR method for tridiagonal system '// &
                 'is not implemented, PLU method is used instead.')
           TYPE IS(SparseMatrixType)
             CALL solveBiCGSTAB(solver)
             IF(solver%info == 0) &
-              CALL eLinearSolverType%raiseDebug(modName//'::'// &
-              myName//'- CGNR method for sparse system '// &
+                CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                myName//'- CGNR method for sparse system '// &
                 'is not implemented, BiCGSTAB method is used instead.')
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -1080,12 +1078,12 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
             !If the coefficient matrix is tridiagonal PLU method will be
             !used instead.
             IF(.NOT.solver%isDecomposed) &
-              CALL DecomposePLU_TriDiag(solver)
+                CALL DecomposePLU_TriDiag(solver)
             CALL solvePLU_TriDiag(solver)
 
             IF(solver%info == 0) &
-              CALL eLinearSolverType%raiseDebug(modName//'::'// &
-              myName//'- GMRES method for tridiagonal system '// &
+                CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                myName//'- GMRES method for tridiagonal system '// &
                 'is not implemented, PLU method is used instead.')
           TYPE IS(DenseRectMatrixType)
             !If the coefficient matrix is a rectangular matrix, CGNR method
@@ -1093,9 +1091,9 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
             CALL solveCGNR(solver)
 
             IF(solver%info == 0) &
-              CALL eLinearSolverType%raiseDebug(modName//'::'// &
+                CALL eLinearSolverType%raiseDebug(modName//'::'// &
                 myName//'- GMRES method for dense rectangular system '// &
-                  'is not implemented, CGNR method is used instead.')
+                'is not implemented, CGNR method is used instead.')
 
 #ifdef FUTILITY_HAVE_PETSC
           TYPE IS(PETScMatrixType)
@@ -1187,38 +1185,38 @@ SUBROUTINE solve_checkInput(solver)
   solver%info=-1
   IF(.NOT. solver%isInit) THEN
     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-      '  - Linear solver object has not been initialized!')
+        '  - Linear solver object has not been initialized!')
     RETURN
   ENDIF
   IF(.NOT. ASSOCIATED(solver%A)) THEN
     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-      '  - The matrix A has not been associated!')
+        '  - The matrix A has not been associated!')
     RETURN
   ENDIF
   IF(.NOT. ASSOCIATED(solver%X)) THEN
     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-      '  - The unknowns X has not been associated!')
+        '  - The unknowns X has not been associated!')
     RETURN
   ENDIF
   IF(.NOT. ASSOCIATED(solver%b)) THEN
     CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-      '  - The right hand side has not been set!')
+        '  - The right hand side has not been set!')
     RETURN
   ENDIF
 
   SELECTTYPE(A=>solver%A)
     TYPE IS(DenseRectMatrixType)
       IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
-        .OR. A%n < 1 .OR. A%m < 1) THEN
-        CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+          .OR. A%n < 1 .OR. A%m < 1) THEN
+          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
           '  - The size of the matrix and vector do not conform!')
       ELSE
         solver%info=0
       ENDIF
     CLASS DEFAULT
       IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
-        .OR. A%n < 1) THEN
-        CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+          .OR. A%n < 1) THEN
+          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
           '  - The size of the matrix and vector do not conform!')
       ELSE
         solver%info=0
@@ -1264,8 +1262,7 @@ ENDSUBROUTINE setX0_LinearSolverType_Iterative
 !> This subroutine sets the convergence criterion for the iterative solver.
 !>
 SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,  &
-             relConvTol_in,absConvTol_in,maxIters_in,nRestart_in, &
-             dTol_in)
+    relConvTol_in,absConvTol_in,maxIters_in,nRestart_in,dTol_in)
   CHARACTER(LEN=*),PARAMETER :: myName='setConv_LinearSolverType_Iterative'
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
   INTEGER(SIK),INTENT(IN) :: normType_in
@@ -1300,31 +1297,31 @@ SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,  &
 #endif
   IF(normType <= -2) THEN
     CALL eLinearSolverType%raiseDebug(modName//'::'// &
-      myName//' - Incorrect input, normType should not be less '// &
+        myName//' - Incorrect input, normType should not be less '// &
         'than -1. Default value is used!')
     normType=2
   ENDIF
   IF(relConvTol < 0._SRK .OR. relConvTol >= 1._SRK) THEN
     CALL eLinearSolverType%raiseDebug(modName//'::'// &
-      myName//' - Incorrect input, relConvTol should be in '// &
+        myName//' - Incorrect input, relConvTol should be in '// &
         'the range of (0, 1). Default value is used!')
     relConvTol=0.001_SRK
   ENDIF
   IF(absConvTol < 0._SRK .OR. absConvTol >= 1._SRK) THEN
     CALL eLinearSolverType%raiseDebug(modName//'::'// &
-      myName//' - Incorrect input, absConvTol should be in '// &
+        myName//' - Incorrect input, absConvTol should be in '// &
         'the range of (0, 1). Default value is used!')
     absConvTol=0.001_SRK
   ENDIF
   IF(maxIters <= 1) THEN
     CALL eLinearSolverType%raiseDebug(modName//'::'// &
-      myName//' - Incorrect input, maxIters should not be less '// &
+        myName//' - Incorrect input, maxIters should not be less '// &
         'than or equal to 1. Default value is used!')
     maxIters=1000
   ENDIF
   IF(nRestart <= 1 .OR. .NOT.PRESENT(nRestart_in)) THEN
     CALL eLinearSolverType%raiseDebug(modName//'::'// &
-      myName//' - Incorrect input, nRestart should not be less '// &
+        myName//' - Incorrect input, nRestart should not be less '// &
         'than or equal to 1. Default value is used!')
     nRestart=30
   ENDIF
@@ -1345,16 +1342,16 @@ SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,  &
       IF(PRESENT(nRestart_in)) CALL KSPGMRESSetRestart(solver%ksp,nrst,ierr)
 #else
       CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
-         modName//'::'//myName//' - PETSc not enabled.  You will'// &
-         'need to recompile with PETSc enabled to use this feature.')
+          modName//'::'//myName//' - PETSc not enabled.  You will'// &
+          'need to recompile with PETSc enabled to use this feature.')
 #endif
     ELSEIF(solver%TPLType == TRILINOS) THEN
 #ifdef FUTILITY_HAVE_Trilinos
       CALL Belos_SetConvCrit(solver%Belos_solver,solver%absConvTol,solver%maxIters)
 #else
       CALL eLinearSolverType%raiseFatalError('Incorrect call to '// &
-         modName//'::'//myName//' - Trilinos not enabled.  You will'// &
-         'need to recompile with Trilinos enabled to use this feature.')
+          modName//'::'//myName//' - Trilinos not enabled.  You will'// &
+          'need to recompile with Trilinos enabled to use this feature.')
 #endif
     ENDIF
   ENDIF
@@ -1372,7 +1369,7 @@ SUBROUTINE getResidual_LinearSolverType_Iterative(solver,resid)
   TYPE(RealVectorType),INTENT(INOUT) :: resid
   !input check
   IF(solver%isInit .AND. ASSOCIATED(solver%b) .AND. ASSOCIATED(solver%A) &
-    .AND. ASSOCIATED(solver%X) .AND. resid%n > 0) THEN
+      .AND. ASSOCIATED(solver%X) .AND. resid%n > 0) THEN
     !Written assuming A is not decomposed.  Which is accurate, the correct
     !solve function will contain the decomposed A.
     IF(resid%n == solver%b%n) THEN
@@ -1870,7 +1867,7 @@ SUBROUTINE DecomposePLU_TriDiag(solver)
       IF(ABS(A%a(2,1))<ABS(A%a(3,1))) diagDom=.FALSE.
       DO i=2,A%n-1
         IF(ABS(A%a(2,i))<(ABS(A%a(1,i))+ABS(A%a(3,i)))) &
-          diagDom=.FALSE.; EXIT
+            diagDom=.FALSE.; EXIT
       ENDDO
       IF(ABS(A%a(2,A%n))<ABS(A%a(1,A%n))) diagDom=.FALSE.
 
@@ -1897,7 +1894,7 @@ SUBROUTINE DecomposePLU_TriDiag(solver)
 
       !Give the warning
       IF(.NOT. diagDom) CALL eLinearSolverType%raiseDebug(modName// &
-        '::'//myName//'- Tri-diagonal Matrix not diagonally dominant, '// &
+          '::'//myName//'- Tri-diagonal Matrix not diagonally dominant, '// &
           'solution might be not accurate')
     ENDSELECT
   ENDIF
@@ -2054,7 +2051,7 @@ SUBROUTINE solveGE_DenseSquare(solver)
     DO irow=i+1,N
       thisa(irow,i)=thisa(irow,i)/thisa(i,i)
       CALL BLAS_axpy(N-i,-thisa(irow,i),thisa(i:N,i+1),N, &
-        thisa(irow:N,i+1),N)
+          thisa(irow:N,i+1),N)
       thisb(irow)=thisb(irow)-thisa(irow,i)*thisb(i)
     ENDDO
   ENDDO
@@ -2221,7 +2218,7 @@ SUBROUTINE solvePLU_Sparse(solver)
     ENDSUBROUTINE dss_create
 
     PURE SUBROUTINE dss_define_structure(handle,opt,rowIndex,nRows,nCols, &
-      columns,nNonZeros)
+        columns,nNonZeros)
 !          CLASS(MKL_DSS_HANDLE),INTENT(OUT) :: handle
       INTEGER,OPTIONAL,INTENT(IN) :: handle
       INTEGER,OPTIONAL,INTENT(IN) :: opt

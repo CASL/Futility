@@ -692,8 +692,8 @@ SUBROUTINE AllocsError(err,errmesg,req)
   IF(err /= 0) THEN
     WRITE(err_char,'(i4)') err; err_char=ADJUSTL(err_char)
     alloc_mesg='ALLOCS: Memory Allocation Error. Attempted to allocate '// &
-      TRIM(ADJUSTL(getMemUsageChar_bytes(req)))//'. ALLOCATE statement '// &
-      'returned STAT='//TRIM(err_char)//' ERRMSG="'//TRIM(errmesg)//'".'
+        TRIM(ADJUSTL(getMemUsageChar_bytes(req)))//'. ALLOCATE statement '// &
+        'returned STAT='//TRIM(err_char)//' ERRMSG="'//TRIM(errmesg)//'".'
     CALL eAllocs%raiseError(CHAR(alloc_mesg))
   ENDIF
 ENDSUBROUTINE AllocsError
@@ -2505,10 +2505,10 @@ SUBROUTINE malloc_ps04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -2546,10 +2546,10 @@ SUBROUTINE malloc_pd04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -2587,10 +2587,10 @@ SUBROUTINE malloc_pi04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -2628,10 +2628,10 @@ SUBROUTINE malloc_pl04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -2669,10 +2669,10 @@ SUBROUTINE malloc_pb04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
@@ -2716,10 +2716,10 @@ SUBROUTINE malloc_ps05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -2761,10 +2761,10 @@ SUBROUTINE malloc_pd05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -2806,10 +2806,10 @@ SUBROUTINE malloc_pi05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -2851,10 +2851,10 @@ SUBROUTINE malloc_pl05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -2896,10 +2896,10 @@ SUBROUTINE malloc_pb05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
@@ -2947,10 +2947,10 @@ SUBROUTINE malloc_ps06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -2996,10 +2996,10 @@ SUBROUTINE malloc_pd06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -3045,10 +3045,10 @@ SUBROUTINE malloc_pi06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -3094,10 +3094,10 @@ SUBROUTINE malloc_pl06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -3143,10 +3143,10 @@ SUBROUTINE malloc_pb06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
@@ -3189,7 +3189,7 @@ ENDSUBROUTINE malloc_pb06
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_ps07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   REAL(SSK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -3198,10 +3198,10 @@ SUBROUTINE malloc_ps07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -3242,7 +3242,7 @@ ENDSUBROUTINE malloc_ps07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_pd07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   REAL(SDK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -3251,10 +3251,10 @@ SUBROUTINE malloc_pd07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -3295,7 +3295,7 @@ ENDSUBROUTINE malloc_pd07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_pi07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   INTEGER(SNK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -3304,10 +3304,10 @@ SUBROUTINE malloc_pi07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -3348,7 +3348,7 @@ ENDSUBROUTINE malloc_pi07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_pl07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   INTEGER(SLK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -3357,10 +3357,10 @@ SUBROUTINE malloc_pl07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -3401,7 +3401,7 @@ ENDSUBROUTINE malloc_pl07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_pb07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   LOGICAL(SBK),POINTER,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -3410,10 +3410,10 @@ SUBROUTINE malloc_pb07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ASSOCIATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
@@ -3961,10 +3961,10 @@ SUBROUTINE malloc_as04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -4002,10 +4002,10 @@ SUBROUTINE malloc_ad04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -4043,10 +4043,10 @@ SUBROUTINE malloc_ai04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -4084,10 +4084,10 @@ SUBROUTINE malloc_al04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -4125,10 +4125,10 @@ SUBROUTINE malloc_ab04(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
+      ALL((/nb1,nb2,nb3,nb4/) <= (/ne1,ne2,ne3,ne4/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
@@ -4172,10 +4172,10 @@ SUBROUTINE malloc_as05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -4217,10 +4217,10 @@ SUBROUTINE malloc_ad05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -4262,10 +4262,10 @@ SUBROUTINE malloc_ai05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -4307,10 +4307,10 @@ SUBROUTINE malloc_al05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -4352,10 +4352,10 @@ SUBROUTINE malloc_ab05(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5/) <= (/ne1,ne2,ne3,ne4,ne5/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5), &
-      STAT=alloc_err,ERRMSG=alloc_errmsg)
+        STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
@@ -4403,10 +4403,10 @@ SUBROUTINE malloc_as06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -4452,10 +4452,10 @@ SUBROUTINE malloc_ad06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -4501,10 +4501,10 @@ SUBROUTINE malloc_ai06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -4550,10 +4550,10 @@ SUBROUTINE malloc_al06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -4599,10 +4599,10 @@ SUBROUTINE malloc_ab06(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5,nb6,ne6)
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. &
-    ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
+      ALL((/nb1,nb2,nb3,nb4,nb5,nb6/) <= (/ne1,ne2,ne3,ne4,ne5,ne6/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)
@@ -4645,7 +4645,7 @@ ENDSUBROUTINE malloc_ab06
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_as07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -4654,10 +4654,10 @@ SUBROUTINE malloc_as07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SSK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SSK,SRK)
@@ -4698,7 +4698,7 @@ ENDSUBROUTINE malloc_as07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_ad07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -4707,10 +4707,10 @@ SUBROUTINE malloc_ad07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0.0_SDK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SDK,SRK)
@@ -4751,7 +4751,7 @@ ENDSUBROUTINE malloc_ad07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_ai07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -4760,10 +4760,10 @@ SUBROUTINE malloc_ai07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SNK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SNK,SRK)
@@ -4804,7 +4804,7 @@ ENDSUBROUTINE malloc_ai07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_al07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -4813,10 +4813,10 @@ SUBROUTINE malloc_al07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=0_SLK
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SLK,SRK)
@@ -4857,7 +4857,7 @@ ENDSUBROUTINE malloc_al07
 !> \e nb5 to \e ne5, \e nb6 to \e ne6, and \e nb7 to \e ne7.
 !>
 SUBROUTINE malloc_ab07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
-                       nb6,ne6,nb7,ne7)
+    nb6,ne6,nb7,ne7)
   INTEGER(SIK),INTENT(IN) :: nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5
   INTEGER(SIK),INTENT(IN) :: nb6,ne6,nb7,ne7
   LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: a(:,:,:,:,:,:,:)
@@ -4866,10 +4866,10 @@ SUBROUTINE malloc_ab07(a,nb1,ne1,nb2,ne2,nb3,ne3,nb4,ne4,nb5,ne5, &
   REAL(SRK) :: mysize,bsize
 
   IF(.NOT.ALLOCATED(a) .AND. ALL((/nb1,nb2,nb3,nb4,nb5,nb6,nb7/) <= &
-    (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
+      (/ne1,ne2,ne3,ne4,ne5,ne6,ne7/))) THEN
     alloc_errmsg=''
     ALLOCATE(a(nb1:ne1,nb2:ne2,nb3:ne3,nb4:ne4,nb5:ne5, &
-               nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
+        nb6:ne6,nb7:ne7),STAT=alloc_err,ERRMSG=alloc_errmsg)
     IF(alloc_err == 0) THEN
       a=.FALSE.
       Alloc_nbytes=Alloc_nbytes+REAL(SIZE(a)*SBK,SRK)

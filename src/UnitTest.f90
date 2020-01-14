@@ -67,11 +67,11 @@ TYPE(UTestElement),POINTER :: utest_curtest => NULL()
 !
 ! List of local variables
 CHARACTER(LEN=79),PARAMETER :: utest_hline='============================='// &
-  '=================================================='
+    '=================================================='
 CHARACTER(LEN=79),PARAMETER :: utest_pad='                               '// &
-  '                                                '
+    '                                                '
 CHARACTER(LEN=79),PARAMETER :: utest_dot='  .............................'// &
-  '................................................'
+    '................................................'
 
 #ifdef COLOR_LINUX
 CHARACTER(LEN=7),PARAMETER :: c_red=ACHAR(27)//'[31;1m'
@@ -217,11 +217,11 @@ SUBROUTINE UTest_Finalize()
     WRITE(*,'(A)') utest_hline
     WRITE(*,'(A,31x,A,31x,A)') '|','TEST STATISTICS','|'
     WRITE(*,'(A)') '|--------------------------------------------------'// &
-      '---------------------------|'
+        '---------------------------|'
     WRITE(*,'(A,24x,a)') '|  SUBTEST NAME','|    PASS    |    FAIL    |'// &
-      '    TOTAL   |'
+        '    TOTAL   |'
     WRITE(*,'(A)') '|--------------------------------------------------'// &
-      '---------------------------|'
+        '---------------------------|'
   ENDIF
   tmp => utest_firsttest
 
@@ -230,8 +230,8 @@ SUBROUTINE UTest_Finalize()
     !The master prints its stats first
     IF(utest_master) THEN
       WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
-        adjustl(tmp%subtestname//"                            "),&
-        tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+          adjustl(tmp%subtestname//"                            "),&
+          tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
     ENDIF
 
     !The other processes send there stats to the master
@@ -249,8 +249,8 @@ SUBROUTINE UTest_Finalize()
       ENDIF
       IF(i == rank) THEN
         WRITE(sendcharbuf,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
-          adjustl(tmp%subtestname//"                            "),&
-          tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+            adjustl(tmp%subtestname//"                            "),&
+            tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
         CALL MPI_Send(sendcharbuf,79,MPI_CHARACTER,0,1,MPI_COMM_WORLD,mpierr)
         IF(mpierr /= 0) THEN
           WRITE(*,*) 'MPI ERROR: UTest_FINALIZE :: MPI_Send FAILED'
@@ -263,8 +263,8 @@ SUBROUTINE UTest_Finalize()
     ENDDO
 #else
     WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") &
-      adjustl(tmp%subtestname//"                            "),&
-      tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
+        adjustl(tmp%subtestname//"                            "),&
+        tmp%npass,tmp%nfail,tmp%npass+tmp%nfail
 #endif
     npass=npass+tmp%npass
     nfail=nfail+tmp%nfail
@@ -293,9 +293,9 @@ SUBROUTINE UTest_Finalize()
 
   IF(utest_master) THEN
     WRITE(*,'(A)') '|--------------------------------------------------'// &
-      '---------------------------|'
+        '---------------------------|'
     WRITE(*,"('| ',A37,'| ',I10,' | ',I10,' | ',I10,' |')") 'Total                ', &
-      npass,nfail,npass+nfail
+        npass,nfail,npass+nfail
     WRITE(*,'(A)') utest_hline
   ENDIF
 
@@ -362,7 +362,7 @@ SUBROUTINE UTest_End_SubTest()
   ENDIF
 
   WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'SUBTEST '// &
-    TRIM(ADJUSTL(utest_curtest%subtestname))//utest_dot,pfstr
+      TRIM(ADJUSTL(utest_curtest%subtestname))//utest_dot,pfstr
   WRITE(*,*)
   utest_inmain=.TRUE.
 
@@ -407,7 +407,7 @@ SUBROUTINE UTest_Start_Component(componentname)
 
   WRITE(*,*)
   WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//'BEGIN COMPONENT '// &
-    TRIM(ADJUSTL(utest_componentname))
+      TRIM(ADJUSTL(utest_componentname))
 
   CALL UTest_incl()
 
@@ -431,7 +431,7 @@ SUBROUTINE UTest_End_Component()
   ENDIF
 
   WRITE(*,'(A71,A)') utest_pad(1:utest_lvl*2)//'COMPONENT '// &
-    TRIM(ADJUSTL(utest_componentname))//utest_dot,pfstr
+      TRIM(ADJUSTL(utest_componentname))//utest_dot,pfstr
 
   utest_component=.FALSE.
   utest_prefix=''
@@ -466,9 +466,9 @@ SUBROUTINE UTest_Assert(bool,line,msg)
     ENDIF
     utest_compfail=.TRUE.
     WRITE(*,'(A,I0,A,A)') utest_pad(1:utest_lvl*2)//c_red// &
-      'ASSERTION FAILED'//c_nrm//' on line ',line,':'
+        'ASSERTION FAILED'//c_nrm//' on line ',line,':'
     WRITE(*,'(A)') utest_pad(1:utest_lvl*2)//utest_prefix(1:utest_npfx)// &
-      TRIM(ADJUSTL(msg))
+        TRIM(ADJUSTL(msg))
     WRITE(*,*)
   ENDIF
 ENDSUBROUTINE UTest_Assert

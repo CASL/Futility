@@ -311,21 +311,21 @@ CONTAINS
 
     IF(.NOT.fileobj%isInit()) THEN
       IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-        ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+          ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
       IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-        ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+          ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
       IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-        ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
+          ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
       IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-        ' - Optional input "PAD" is being ignored. Value is "YES".')
+          ' - Optional input "PAD" is being ignored. Value is "YES".')
       IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-        ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
+          ' - Optional input "POSITION" is being ignored. Value is "APPEND".')
       IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-        ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
+          ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
 
       !Initialize the file, only support ascii for now
       CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
-        'FORMATTED','APPEND','WRITE')
+          'FORMATTED','APPEND','WRITE')
 
       !Open the file
       CALL fileobj%fopen()
@@ -334,7 +334,7 @@ CONTAINS
       IF(PRESENT(status)) THEN
         IF(LEN_TRIM(status) > 256) THEN
           CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-            ' - File title name is being truncated!')
+              ' - File title name is being truncated!')
           title=status(1:256)
         ELSE
           title=TRIM(status)
@@ -354,7 +354,7 @@ CONTAINS
       ENDIF
     ELSE
       CALL fileobj%e%raiseError(modName//'::'//myName// &
-        ' - VTK File is already initialized!')
+          ' - VTK File is already initialized!')
     ENDIF
   ENDSUBROUTINE init_VTKLegFileType
 !
@@ -487,9 +487,9 @@ CONTAINS
               ENDDO
               WRITE(funit,'(a)') TRIM(aline)
               WRITE(funit,'(a,3es17.8)') 'ORIGIN ', &
-                myVTKFile%mesh%x(1),myVTKFile%mesh%y(1),myVTKFile%mesh%z(1)
+                  myVTKFile%mesh%x(1),myVTKFile%mesh%y(1),myVTKFile%mesh%z(1)
               WRITE(funit,'(a,3es17.8)') 'SPACING ', &
-                myVTKFile%mesh%x(2),myVTKFile%mesh%y(2),myVTKFile%mesh%z(2)
+                  myVTKFile%mesh%x(2),myVTKFile%mesh%y(2),myVTKFile%mesh%z(2)
               WRITE(funit,'(a)') ''
             CASE(VTK_STRUCTURED_GRID)
               !Write a mesh that is a structured grid
@@ -506,7 +506,7 @@ CONTAINS
                 DO j=1,myVTKFile%mesh%dims(2)
                   DO i=1,myVTKFile%mesh%dims(1)
                     WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                      myVTKFile%mesh%y(j),myVTKFile%mesh%z(k)
+                        myVTKFile%mesh%y(j),myVTKFile%mesh%z(k)
                   ENDDO
                 ENDDO
               ENDDO
@@ -526,7 +526,7 @@ CONTAINS
               WRITE(funit,'(a)') 'X_COORDINATES '//sint//' float'
               DO i=1,myVTKFile%mesh%dims(1)-MOD(myVTKFile%mesh%dims(1),3),3
                 WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                      myVTKFile%mesh%x(i+1),myVTKFile%mesh%x(i+2)
+                    myVTKFile%mesh%x(i+1),myVTKFile%mesh%x(i+2)
               ENDDO
               IF(MOD(myVTKFile%mesh%dims(1),3) == 1) THEN
                 i=myVTKFile%mesh%dims(1)
@@ -534,7 +534,7 @@ CONTAINS
               ELSEIF(MOD(myVTKFile%mesh%dims(1),3) == 2) THEN
                 i=myVTKFile%mesh%dims(1)-1
                 WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                  myVTKFile%mesh%x(i+1)
+                    myVTKFile%mesh%x(i+1)
               ENDIF
 
               !Write the y coordinates
@@ -542,7 +542,7 @@ CONTAINS
               WRITE(funit,'(a)') 'Y_COORDINATES '//sint//' float'
               DO i=1,myVTKFile%mesh%dims(2)-MOD(myVTKFile%mesh%dims(2),3),3
                 WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
-                  myVTKFile%mesh%y(i+1),myVTKFile%mesh%y(i+2)
+                    myVTKFile%mesh%y(i+1),myVTKFile%mesh%y(i+2)
               ENDDO
               IF(MOD(myVTKFile%mesh%dims(2),3) == 1) THEN
                 i=myVTKFile%mesh%dims(2)
@@ -550,7 +550,7 @@ CONTAINS
               ELSEIF(MOD(myVTKFile%mesh%dims(2),3) == 2) THEN
                 i=myVTKFile%mesh%dims(2)-1
                 WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
-                  myVTKFile%mesh%y(i+1)
+                    myVTKFile%mesh%y(i+1)
               ENDIF
 
               !Write the z coordinates
@@ -565,7 +565,7 @@ CONTAINS
               ELSEIF(MOD(myVTKFile%mesh%dims(3),3) == 2) THEN
                 i=myVTKFile%mesh%dims(3)-1
                 WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i), &
-                  myVTKFile%mesh%z(i+1)
+                    myVTKFile%mesh%z(i+1)
               ENDIF
               WRITE(funit,'(a)') ''
             CASE(VTK_UNSTRUCTURED_GRID)
@@ -576,10 +576,8 @@ CONTAINS
               sint=myVTKFile%mesh%numPoints
               WRITE(funit,'(a)') 'POINTS '//TRIM(sint)//' float'
               DO i=1,myVTKFile%mesh%numPoints
-!                  WRITE(*,'(i0,a1,3es17.8)') i,':',myVTKFile%mesh%x(i), &
-!                    myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
                 WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                  myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
+                    myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
               ENDDO
               WRITE(funit,'(a)') ''
 
@@ -610,7 +608,7 @@ CONTAINS
                   CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
                   CASE DEFAULT
                     CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                      ' - VTK cell type is not supported!')
+                        ' - VTK cell type is not supported!')
                     n=0
                 ENDSELECT
                 IF(n > 0) THEN
@@ -635,23 +633,23 @@ CONTAINS
 
             CASE(VTK_POLYDATA)
               CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                ' - VTK DATASET "POLYDATA" not supported!')
+                  ' - VTK DATASET "POLYDATA" not supported!')
             CASE DEFAULT
               CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                ' - VTK DATASET type is not recognized!')
+                  ' - VTK DATASET type is not recognized!')
           ENDSELECT
           FLUSH(funit)
         ELSE
           CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-            ' - VTK Mesh is not initialized!')
+              ' - VTK Mesh is not initialized!')
         ENDIF
       ELSE
         CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-          ' - VTK File is not open for writing!')
+            ' - VTK File is not open for writing!')
       ENDIF
     ELSE
       CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-        ' - VTK File already has a mesh!')
+          ' - VTK File already has a mesh!')
     ENDIF
   ENDSUBROUTINE writeMesh_VTKLegFileType
 !
@@ -690,7 +688,7 @@ CONTAINS
                 CASE('float')
                   WRITE(funit,'(a)') TRIM(aline)
                   WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
-                    TRIM(vtkData%vtkDataFormat)
+                      TRIM(vtkData%vtkDataFormat)
                   WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
                   DO i=1,SIZE(vtkData%datalist),5
                     istp=i+4
@@ -703,7 +701,7 @@ CONTAINS
                 CASE('double')
                   WRITE(funit,'(a)') TRIM(aline)
                   WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
-                    TRIM(vtkData%vtkDataFormat)
+                      TRIM(vtkData%vtkDataFormat)
                   WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
                   DO i=1,SIZE(vtkData%datalist),3
                     istp=i+2
@@ -716,7 +714,7 @@ CONTAINS
                 CASE('int','short','long')
                   WRITE(funit,'(a)') TRIM(aline)
                   WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
-                    TRIM(vtkData%vtkDataFormat)
+                      TRIM(vtkData%vtkDataFormat)
                   WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
                   DO i=1,SIZE(vtkData%datalist),6
                     istp=i+5
@@ -728,29 +726,29 @@ CONTAINS
                   WRITE(funit,'(a)') ''
                 CASE DEFAULT
                   CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                    ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
+                      ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
                       '" data not yet supported!')
               ENDSELECT
               FLUSH(funit)
             ELSE
               CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-              ' - dataSetType is not yet supported!')
+                  ' - dataSetType is not yet supported!')
             ENDIF
           ELSE
             CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-              ' - Writing of point data is not yet supported!')
+                ' - Writing of point data is not yet supported!')
           ENDIF
         ELSE
           CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-            ' - VTK Data is not initialized!')
+              ' - VTK Data is not initialized!')
         ENDIF
       ELSE
         CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-          ' - VTK File is not open for writing!')
+            ' - VTK File is not open for writing!')
       ENDIF
     ELSE
       CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-        ' - VTK File has no mesh to write data for!')
+          ' - VTK File has no mesh to write data for!')
     ENDIF
   ENDSUBROUTINE writeScalarData_VTKLegFileType
 !
@@ -837,7 +835,7 @@ CONTAINS
       j=0
       DO WHILE(i < thisVTKMesh%numPoints)
         DO WHILE((thisVTKMesh%x(j+1) .APPROXEQA. thisVTKMesh%x(i)) .AND. &
-                  (thisVTKMesh%y(j+1) .APPROXEQA. thisVTKMesh%y(i)))
+            (thisVTKMesh%y(j+1) .APPROXEQA. thisVTKMesh%y(i)))
           j=j+1
           IF(j==thisVTKMesh%numPoints) EXIT
         ENDDO
@@ -881,7 +879,7 @@ CONTAINS
         i=i+1
         IF(i > thisVTKMesh%numPoints) EXIT
         DO WHILE((thisVTKMesh%x(i) .APPROXEQA. x) .AND. &
-          (thisVTKMesh%y(i) .APPROXEQA. y))
+            (thisVTKMesh%y(i) .APPROXEQA. y))
           IF(ABS(z-thisVTKMesh%z(i)) <= 2._SRK*EPSREAL) THEN
             isRedundant(i)=.TRUE.
           ELSE
@@ -1009,7 +1007,7 @@ CONTAINS
      CALL mergeSort(nl,leftArray,leftPoints)
      CALL mergeSort(nr,rightArray,rightPoints)
      CALL merger(nl,nr,n,leftPoints,rightPoints,leftArray,rightArray, &
-       array,pointList)
+         array,pointList)
    ENDIF
    CALL demallocA(rightArray)
    CALL demallocA(leftArray)
@@ -1040,22 +1038,22 @@ SUBROUTINE convert_VTKMeshType(thisVTKMesh,newVTKMeshType)
       CASE(VTK_STRUCTURED_POINTS)
         !Will be implemented later, print warning
         CALL eVTK%raiseError(modName//'::'//myName// &
-          ' - Conversion to type VTK_STRUCTURED_POINTS is not supported!')
+            ' - Conversion to type VTK_STRUCTURED_POINTS is not supported!')
       CASE(VTK_STRUCTURED_GRID)
         !Will be implemented later, print warning
         CALL eVTK%raiseError(modName//'::'//myName// &
-          ' - Conversion to type VTK_STRUCTURED_GRID is not supported!')
+            ' - Conversion to type VTK_STRUCTURED_GRID is not supported!')
       CASE(VTK_UNSTRUCTURED_GRID)
         SELECTCASE(thisVTKMesh%meshType)
           CASE(VTK_STRUCTURED_POINTS)
             thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
             thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
-                                  thisVTKMesh%dims(3)
+                thisVTKMesh%dims(3)
             CALL dmallocA(Xlist,thisVTKMesh%numPoints)
             CALL dmallocA(Ylist,thisVTKMesh%numPoints)
             CALL dmallocA(Zlist,thisVTKMesh%numPoints)
             CALL dmallocA(pointMap,thisVTKMesh%dims(1),thisVTKMesh%dims(2), &
-                          thisVTKMesh%dims(3))
+                thisVTKMesh%dims(3))
             n=0
             DO k=1,thisVTKMesh%dims(3)
               DO j=1,thisVTKMesh%dims(2)
@@ -1079,7 +1077,7 @@ SUBROUTINE convert_VTKMeshType(thisVTKMesh,newVTKMeshType)
             ThisVTKMesh%z=Zlist
             IF(thisVTKMesh%numCells == 0) THEN
               thisVTKMesh%numCells=(thisVTKMesh%dims(1)-1)* &
-              (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
+                  (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
             ENDIF
             CALL dmallocA(thisVTKMesh%cellList,thisVTKMesh%numCells)
             CALL dmallocA(thisVTKMesh%nodeList,thisVTKMesh%numCells*8)
@@ -1108,12 +1106,12 @@ SUBROUTINE convert_VTKMeshType(thisVTKMesh,newVTKMeshType)
           CASE(VTK_RECTILINEAR_GRID)
             thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
             thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
-                                  thisVTKMesh%dims(3)
+                thisVTKMesh%dims(3)
             CALL dmallocA(Xlist,thisVTKMesh%numPoints)
             CALL dmallocA(Ylist,thisVTKMesh%numPoints)
             CALL dmallocA(Zlist,thisVTKMesh%numPoints)
             CALL dmallocA(pointMap,thisVTKMesh%dims(1),thisVTKMesh%dims(2), &
-                          thisVTKMesh%dims(3))
+                thisVTKMesh%dims(3))
             n=0
             DO k=1,thisVTKMesh%dims(3)
               DO j=1,thisVTKMesh%dims(2)
@@ -1137,7 +1135,7 @@ SUBROUTINE convert_VTKMeshType(thisVTKMesh,newVTKMeshType)
             ThisVTKMesh%z=Zlist
             IF(thisVTKMesh%numCells == 0) THEN
               thisVTKMesh%numCells=(thisVTKMesh%dims(1)-1)* &
-              (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
+                  (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
             ENDIF
             CALL dmallocA(thisVTKMesh%cellList,thisVTKMesh%numCells)
             CALL dmallocA(thisVTKMesh%nodeList,thisVTKMesh%numCells*8)
@@ -1167,16 +1165,16 @@ SUBROUTINE convert_VTKMeshType(thisVTKMesh,newVTKMeshType)
           CASE DEFAULT
             !Print warning for VTKMesh object types not yet implemented
             CALL eVTK%raiseError(modName//'::'//myName// &
-              ' - VTKMesh type not supported for conversion!')
+                ' - VTKMesh type not supported for conversion!')
         ENDSELECT
       CASE(VTK_POLYDATA)
         !Will be implemented later, print warning
         CALL eVTK%raiseError(modName//'::'//myName// &
-          ' - Conversion to type VTK_POLYDATA is not supported!')
+            ' - Conversion to type VTK_POLYDATA is not supported!')
       CASE(VTK_RECTILINEAR_GRID)
         !Will be implemented later, print warning
         CALL eVTK%raiseError(modName//'::'//myName// &
-          ' - Conversion to type VTK_RECTILINEAR_GRID is not supported!')
+            ' - Conversion to type VTK_RECTILINEAR_GRID is not supported!')
     ENDSELECT
   ENDIF
 ENDSUBROUTINE convert_VTKMeshType
@@ -1208,7 +1206,7 @@ SUBROUTINE translate_VTKMeshType(thisVTKMesh,x_shift,y_shift,z_shift)
     thisVTKMesh%z=thisVTKMesh%z+z_shift
   ELSE
     CALL eVTK%raiseError(modName//'::'//myName// &
-      ' - VTKMesh type not supported!')
+        ' - VTKMesh type not supported!')
   ENDIF
 ENDSUBROUTINE translate_VTKMeshType
 !
@@ -1255,7 +1253,7 @@ SUBROUTINE removeCells_VTKMeshType(thisVTKMesh,cellNotPresent)
       CASE(VTK_QUADRATIC_HEXAHEDRON); q=q+20
       CASE DEFAULT
           CALL eVTK%raiseError(modName//'::'//myName// &
-          ' - VTK cell type is not supported!')
+              ' - VTK cell type is not supported!')
           n=0
     ENDSELECT
     ENDIF
@@ -1285,7 +1283,7 @@ SUBROUTINE removeCells_VTKMeshType(thisVTKMesh,cellNotPresent)
       CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
       CASE DEFAULT
           CALL eVTK%raiseError(modName//'::'//myName// &
-          ' - VTK cell type is not supported!')
+              ' - VTK cell type is not supported!')
           n=0
     ENDSELECT
     IF(.NOT. cellNotPresent(i)) THEN

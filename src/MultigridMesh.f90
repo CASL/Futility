@@ -198,7 +198,7 @@ SUBROUTINE init_MultigridMeshStructure(myMeshes,nLevels,num_eqns)
   INTEGER(SIK) :: iLevel
 
   IF(nLevels < 1) &
-    CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
       "nLevels must be a positive integer!")
 
   myMeshes%nLevels=nLevels
@@ -266,7 +266,7 @@ SUBROUTINE clear_MultigridMeshElement(myMeshElement)
   CLASS(MultigridMeshElementType),INTENT(INOUT) :: myMeshElement
 
   IF(ALLOCATED(myMeshElement%childIndices)) &
-          DEALLOCATE(myMeshElement%childIndices)
+      DEALLOCATE(myMeshElement%childIndices)
 
 ENDSUBROUTINE clear_MultigridMeshElement
 !
@@ -287,7 +287,7 @@ SUBROUTINE init_InterpWeightsStructure(myWtStructure,myMeshes,num_eqns)
   TYPE(MultigridMeshType),POINTER :: tmp_mesh_ptr => NULL()
 
   IF(.NOT. myMeshes%isInit) &
-    CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
+      CALL eLinearSolverType%raiseError(modName//"::"//myName//" - "// &
       "input MultigridMeshStructure must be initialized!")
 
   myWtStructure%myMeshes => myMeshes

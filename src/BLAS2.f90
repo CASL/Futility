@@ -273,9 +273,9 @@ PURE SUBROUTINE sgemv_all(trans,m,n,alpha,a,lda,x,incx,beta,y,incy)
   INTRINSIC MAX,MOD
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
-    .NOT.(alpha == 0.0_SSK .AND. beta == 1.0_SSK) .AND. lda >= MAX(1,m) .AND. &
+      .NOT.(alpha == 0.0_SSK .AND. beta == 1.0_SSK) .AND. lda >= MAX(1,m) .AND. &
       (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-        trans == 'n' .OR. trans == 'N')) THEN
+      trans == 'n' .OR. trans == 'N')) THEN
 
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
@@ -433,10 +433,10 @@ PURE SUBROUTINE sgemv_tmnaaxby(trans,m,n,alpha,a,x,beta,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL sgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
+          CALL sgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL sgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
+          CALL sgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE sgemv_tmnaaxby
@@ -465,7 +465,7 @@ PURE SUBROUTINE sgemv_mnaaxby(m,n,alpha,a,x,beta,y)
   REAL(SSK),INTENT(IN) :: beta
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL sgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
+      SIZE(y) >= m) CALL sgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_mnaaxby
 !
 !-------------------------------------------------------------------------------
@@ -493,7 +493,7 @@ PURE SUBROUTINE sgemv_tnaaxby(trans,n,alpha,a,x,beta,y)
   REAL(SSK),INTENT(IN) :: beta
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_all(trans,n,n,alpha,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL sgemv_all(trans,n,n,alpha,a,n,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_tnaaxby
 !
 !-------------------------------------------------------------------------------
@@ -518,7 +518,7 @@ PURE SUBROUTINE sgemv_naaxby(n,alpha,a,x,beta,y)
   REAL(SSK),INTENT(IN) :: beta
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_all('n',n,n,alpha,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL sgemv_all('n',n,n,alpha,a,n,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_naaxby
 !
 !-------------------------------------------------------------------------------
@@ -544,7 +544,7 @@ PURE SUBROUTINE sgemv_aaxby(alpha,a,x,beta,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL sgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
+      CALL sgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_aaxby
 !
 !-------------------------------------------------------------------------------
@@ -604,7 +604,7 @@ PURE SUBROUTINE sgemv_noalpha(trans,m,n,a,lda,x,incx,beta,y,incy)
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
       lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
-        trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
+      trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
       leny=m
@@ -755,10 +755,10 @@ PURE SUBROUTINE sgemv_tmnaxby(trans,m,n,a,x,beta,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL sgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
+          CALL sgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL sgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
+          CALL sgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE sgemv_tmnaxby
@@ -785,7 +785,7 @@ PURE SUBROUTINE sgemv_mnaxby(m,n,a,x,beta,y)
   REAL(SSK),INTENT(IN) :: beta
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL sgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
+      SIZE(y) >= m) CALL sgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_mnaxby
 !
 !-------------------------------------------------------------------------------
@@ -811,7 +811,7 @@ PURE SUBROUTINE sgemv_tnaxby(trans,n,a,x,beta,y)
   REAL(SSK),INTENT(IN) :: beta
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_noalpha(trans,n,n,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL sgemv_noalpha(trans,n,n,a,n,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_tnaxby
 !
 !-------------------------------------------------------------------------------
@@ -835,7 +835,7 @@ PURE SUBROUTINE sgemv_naxby(n,a,x,beta,y)
   REAL(SSK),INTENT(IN) :: beta
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_noalpha('n',n,n,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL sgemv_noalpha('n',n,n,a,n,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_naxby
 !
 !-------------------------------------------------------------------------------
@@ -860,7 +860,7 @@ PURE SUBROUTINE sgemv_axby(a,x,beta,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL sgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
+      CALL sgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
 ENDSUBROUTINE sgemv_axby
 !
 !-------------------------------------------------------------------------------
@@ -918,9 +918,9 @@ PURE SUBROUTINE sgemv_nobeta(trans,m,n,alpha,a,lda,x,incx,y,incy)
   INTRINSIC MAX,MOD
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
-    alpha /= 0.0_SSK .AND. lda >= MAX(1,m) .AND. (trans == 't' .OR. &
+      alpha /= 0.0_SSK .AND. lda >= MAX(1,m) .AND. (trans == 't' .OR. &
       trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-        trans == 'n' .OR. trans == 'N')) THEN
+      trans == 'n' .OR. trans == 'N')) THEN
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
       leny=m
@@ -1025,10 +1025,10 @@ PURE SUBROUTINE sgemv_tmnaaxy(trans,m,n,alpha,a,x,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL sgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
+          CALL sgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL sgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
+          CALL sgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE sgemv_tmnaaxy
@@ -1055,7 +1055,7 @@ PURE SUBROUTINE sgemv_mnaaxy(m,n,alpha,a,x,y)
   REAL(SSK),INTENT(IN) :: x(:)
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL sgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
+      SIZE(y) >= m) CALL sgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
 ENDSUBROUTINE sgemv_mnaaxy
 !
 !-------------------------------------------------------------------------------
@@ -1081,7 +1081,7 @@ PURE SUBROUTINE sgemv_tnaaxy(trans,n,alpha,a,x,y)
   REAL(SSK),INTENT(IN) :: x(:)
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_nobeta(trans,n,n,alpha,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL sgemv_nobeta(trans,n,n,alpha,a,n,x,1,y,1)
 ENDSUBROUTINE sgemv_tnaaxy
 !
 !-------------------------------------------------------------------------------
@@ -1104,7 +1104,7 @@ PURE SUBROUTINE sgemv_naaxy(n,alpha,a,x,y)
   REAL(SSK),INTENT(IN) :: x(:)
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_nobeta('n',n,n,alpha,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL sgemv_nobeta('n',n,n,alpha,a,n,x,1,y,1)
 ENDSUBROUTINE sgemv_naaxy
 !
 !-------------------------------------------------------------------------------
@@ -1129,7 +1129,7 @@ PURE SUBROUTINE sgemv_aaxy(alpha,a,x,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL sgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
+      CALL sgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
 ENDSUBROUTINE sgemv_aaxy
 !
 !-------------------------------------------------------------------------------
@@ -1187,7 +1187,7 @@ PURE SUBROUTINE sgemv_noalphabeta(trans,m,n,a,lda,x,incx,y,incy)
   INTRINSIC MAX,MOD
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
-    lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
+      lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
       trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
@@ -1289,10 +1289,10 @@ PURE SUBROUTINE sgemv_tmnaxy(trans,m,n,a,x,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL sgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
+          CALL sgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL sgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
+          CALL sgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE sgemv_tmnaxy
@@ -1318,7 +1318,7 @@ PURE SUBROUTINE sgemv_mnaxy(m,n,a,x,y)
   REAL(SSK),INTENT(IN) :: x(:)
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL sgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
+      SIZE(y) >= m) CALL sgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
 ENDSUBROUTINE sgemv_mnaxy
 !
 !-------------------------------------------------------------------------------
@@ -1342,7 +1342,7 @@ PURE SUBROUTINE sgemv_tnaxy(trans,n,a,x,y)
   REAL(SSK),INTENT(IN) :: x(:)
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_noalphabeta(trans,n,n,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL sgemv_noalphabeta(trans,n,n,a,n,x,1,y,1)
 ENDSUBROUTINE sgemv_tnaxy
 !
 !-------------------------------------------------------------------------------
@@ -1364,7 +1364,7 @@ PURE SUBROUTINE sgemv_naxy(n,a,x,y)
   REAL(SSK),INTENT(IN) :: x(:)
   REAL(SSK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL sgemv_noalphabeta('n',n,n,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL sgemv_noalphabeta('n',n,n,a,n,x,1,y,1)
 ENDSUBROUTINE sgemv_naxy
 !
 !-------------------------------------------------------------------------------
@@ -1387,7 +1387,7 @@ PURE SUBROUTINE sgemv_axy(a,x,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL sgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
+      CALL sgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
 ENDSUBROUTINE sgemv_axy
 !
 !-------------------------------------------------------------------------------
@@ -1524,9 +1524,9 @@ PURE SUBROUTINE dgemv_all(trans,m,n,alpha,a,lda,x,incx,beta,y,incy)
   INTRINSIC MAX,MOD
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
-    .NOT.(alpha == 0.0_SDK .AND. beta == 1.0_SDK) .AND. lda >= MAX(1,m) .AND. &
+      .NOT.(alpha == 0.0_SDK .AND. beta == 1.0_SDK) .AND. lda >= MAX(1,m) .AND. &
       (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-        trans == 'n' .OR. trans == 'N')) THEN
+      trans == 'n' .OR. trans == 'N')) THEN
 
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
@@ -1684,10 +1684,10 @@ PURE SUBROUTINE dgemv_tmnaaxby(trans,m,n,alpha,a,x,beta,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL dgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
+          CALL dgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL dgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
+          CALL dgemv_all(trans,m,n,alpha,a,m,x,1,beta,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE dgemv_tmnaaxby
@@ -1716,7 +1716,7 @@ PURE SUBROUTINE dgemv_mnaaxby(m,n,alpha,a,x,beta,y)
   REAL(SDK),INTENT(IN) :: beta
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL dgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
+      SIZE(y) >= m) CALL dgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_mnaaxby
 !
 !-------------------------------------------------------------------------------
@@ -1744,7 +1744,7 @@ PURE SUBROUTINE dgemv_tnaaxby(trans,n,alpha,a,x,beta,y)
   REAL(SDK),INTENT(IN) :: beta
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_all(trans,n,n,alpha,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL dgemv_all(trans,n,n,alpha,a,n,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_tnaaxby
 !
 !-------------------------------------------------------------------------------
@@ -1769,7 +1769,7 @@ PURE SUBROUTINE dgemv_naaxby(n,alpha,a,x,beta,y)
   REAL(SDK),INTENT(IN) :: beta
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_all('n',n,n,alpha,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL dgemv_all('n',n,n,alpha,a,n,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_naaxby
 !
 !-------------------------------------------------------------------------------
@@ -1795,7 +1795,7 @@ PURE SUBROUTINE dgemv_aaxby(alpha,a,x,beta,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL dgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
+      CALL dgemv_all('n',m,n,alpha,a,m,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_aaxby
 !
 !-------------------------------------------------------------------------------
@@ -1855,7 +1855,7 @@ PURE SUBROUTINE dgemv_noalpha(trans,m,n,a,lda,x,incx,beta,y,incy)
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
       lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
-        trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
+      trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
       leny=m
@@ -2006,10 +2006,10 @@ PURE SUBROUTINE dgemv_tmnaxby(trans,m,n,a,x,beta,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL dgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
+          CALL dgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL dgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
+          CALL dgemv_noalpha(trans,m,n,a,m,x,1,beta,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE dgemv_tmnaxby
@@ -2036,7 +2036,7 @@ PURE SUBROUTINE dgemv_mnaxby(m,n,a,x,beta,y)
   REAL(SDK),INTENT(IN) :: beta
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL dgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
+      SIZE(y) >= m) CALL dgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_mnaxby
 !
 !-------------------------------------------------------------------------------
@@ -2062,7 +2062,7 @@ PURE SUBROUTINE dgemv_tnaxby(trans,n,a,x,beta,y)
   REAL(SDK),INTENT(IN) :: beta
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_noalpha(trans,n,n,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL dgemv_noalpha(trans,n,n,a,n,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_tnaxby
 !
 !-------------------------------------------------------------------------------
@@ -2086,7 +2086,7 @@ PURE SUBROUTINE dgemv_naxby(n,a,x,beta,y)
   REAL(SDK),INTENT(IN) :: beta
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_noalpha('n',n,n,a,n,x,1,beta,y,1)
+      SIZE(y) >= n) CALL dgemv_noalpha('n',n,n,a,n,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_naxby
 !
 !-------------------------------------------------------------------------------
@@ -2111,7 +2111,7 @@ PURE SUBROUTINE dgemv_axby(a,x,beta,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL dgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
+      CALL dgemv_noalpha('n',m,n,a,m,x,1,beta,y,1)
 ENDSUBROUTINE dgemv_axby
 !
 !-------------------------------------------------------------------------------
@@ -2169,9 +2169,9 @@ PURE SUBROUTINE dgemv_nobeta(trans,m,n,alpha,a,lda,x,incx,y,incy)
   INTRINSIC MAX,MOD
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
-    alpha /= 0.0_SDK .AND. lda >= MAX(1,m) .AND. (trans == 't' .OR. &
+      alpha /= 0.0_SDK .AND. lda >= MAX(1,m) .AND. (trans == 't' .OR. &
       trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-        trans == 'n' .OR. trans == 'N')) THEN
+      trans == 'n' .OR. trans == 'N')) THEN
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
       leny=m
@@ -2276,10 +2276,10 @@ PURE SUBROUTINE dgemv_tmnaaxy(trans,m,n,alpha,a,x,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL dgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
+          CALL dgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL dgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
+          CALL dgemv_nobeta(trans,m,n,alpha,a,m,x,1,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE dgemv_tmnaaxy
@@ -2306,7 +2306,7 @@ PURE SUBROUTINE dgemv_mnaaxy(m,n,alpha,a,x,y)
   REAL(SDK),INTENT(IN) :: x(:)
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL dgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
+      SIZE(y) >= m) CALL dgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
 ENDSUBROUTINE dgemv_mnaaxy
 !
 !-------------------------------------------------------------------------------
@@ -2332,7 +2332,7 @@ PURE SUBROUTINE dgemv_tnaaxy(trans,n,alpha,a,x,y)
   REAL(SDK),INTENT(IN) :: x(:)
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_nobeta(trans,n,n,alpha,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL dgemv_nobeta(trans,n,n,alpha,a,n,x,1,y,1)
 ENDSUBROUTINE dgemv_tnaaxy
 !
 !-------------------------------------------------------------------------------
@@ -2355,7 +2355,7 @@ PURE SUBROUTINE dgemv_naaxy(n,alpha,a,x,y)
   REAL(SDK),INTENT(IN) :: x(:)
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_nobeta('n',n,n,alpha,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL dgemv_nobeta('n',n,n,alpha,a,n,x,1,y,1)
 ENDSUBROUTINE dgemv_naaxy
 !
 !-------------------------------------------------------------------------------
@@ -2380,7 +2380,7 @@ PURE SUBROUTINE dgemv_aaxy(alpha,a,x,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL dgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
+      CALL dgemv_nobeta('n',m,n,alpha,a,m,x,1,y,1)
 ENDSUBROUTINE dgemv_aaxy
 !
 !-------------------------------------------------------------------------------
@@ -2438,7 +2438,7 @@ PURE SUBROUTINE dgemv_noalphabeta(trans,m,n,a,lda,x,incx,y,incy)
   INTRINSIC MAX,MOD
 
   IF(m > 0 .AND. n > 0 .AND. incx /= 0 .AND. incy /= 0 .AND. &
-    lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
+      lda >= MAX(1,m) .AND. (trans == 't' .OR. trans == 'T' .OR. &
       trans == 'c' .OR. trans == 'C' .OR. trans == 'n' .OR. trans == 'N')) THEN
     IF(trans == 'n' .OR. trans == 'N') THEN
       lenx=n
@@ -2540,10 +2540,10 @@ PURE SUBROUTINE dgemv_tmnaxy(trans,m,n,a,x,y)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n) THEN
     IF(trans == 't' .OR. trans == 'T') THEN
       IF(SIZE(x) >= m .AND. SIZE(y) >= n) &
-        CALL dgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
+          CALL dgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
     ELSE
       IF(SIZE(x) >= n .AND. SIZE(y) >= m) &
-        CALL dgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
+          CALL dgemv_noalphabeta(trans,m,n,a,m,x,1,y,1)
     ENDIF
   ENDIF
 ENDSUBROUTINE dgemv_tmnaxy
@@ -2569,7 +2569,7 @@ PURE SUBROUTINE dgemv_mnaxy(m,n,a,x,y)
   REAL(SDK),INTENT(IN) :: x(:)
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= m .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= m) CALL dgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
+      SIZE(y) >= m) CALL dgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
 ENDSUBROUTINE dgemv_mnaxy
 !
 !-------------------------------------------------------------------------------
@@ -2593,7 +2593,7 @@ PURE SUBROUTINE dgemv_tnaxy(trans,n,a,x,y)
   REAL(SDK),INTENT(IN) :: x(:)
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_noalphabeta(trans,n,n,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL dgemv_noalphabeta(trans,n,n,a,n,x,1,y,1)
 ENDSUBROUTINE dgemv_tnaxy
 !
 !-------------------------------------------------------------------------------
@@ -2615,7 +2615,7 @@ PURE SUBROUTINE dgemv_naxy(n,a,x,y)
   REAL(SDK),INTENT(IN) :: x(:)
   REAL(SDK),INTENT(INOUT) :: y(:)
   IF(SIZE(a,DIM=1) >= n .AND. SIZE(a,DIM=2) >= n .AND. SIZE(x) >= n .AND. &
-    SIZE(y) >= n) CALL dgemv_noalphabeta('n',n,n,a,n,x,1,y,1)
+      SIZE(y) >= n) CALL dgemv_noalphabeta('n',n,n,a,n,x,1,y,1)
 ENDSUBROUTINE dgemv_naxy
 !
 !-------------------------------------------------------------------------------
@@ -2638,7 +2638,7 @@ PURE SUBROUTINE dgemv_axy(a,x,y)
   m=SIZE(a,DIM=1)
   n=SIZE(a,DIM=2)
   IF(m == SIZE(y) .AND. n == SIZE(x)) &
-    CALL dgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
+      CALL dgemv_noalphabeta('n',m,n,a,m,x,1,y,1)
 ENDSUBROUTINE dgemv_axy
 !
 !-------------------------------------------------------------------------------
@@ -2746,7 +2746,7 @@ PURE SUBROUTINE scsrmv_all(n,nnz,ia,ja,aa,alpha,x,beta,y)
   REAL(SSK) :: tmp
 
   IF(n > 0 .AND. nnz >= n .AND. .NOT.(alpha == 0.0_SSK .AND. &
-    beta == 1.0_SSK)) THEN
+      beta == 1.0_SSK)) THEN
 
     !Compute y <- beta*y
     IF(beta /= 1.0_SSK) CALL BLAS_scal(n,beta,y,1)
@@ -2816,7 +2816,7 @@ PURE SUBROUTINE scsrmv_noNNNZ(ia,ja,aa,alpha,x,beta,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL scsrmv_all(n,nnz,ia,ja,aa,alpha,x,beta,y)
+      CALL scsrmv_all(n,nnz,ia,ja,aa,alpha,x,beta,y)
 ENDSUBROUTINE scsrmv_noNNNZ
 !
 !-------------------------------------------------------------------------------
@@ -2914,7 +2914,7 @@ PURE SUBROUTINE scsrmv_noALPHANNNZ(ia,ja,aa,x,beta,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL scsrmv_noALPHA(n,nnz,ia,ja,aa,x,beta,y)
+      CALL scsrmv_noALPHA(n,nnz,ia,ja,aa,x,beta,y)
 ENDSUBROUTINE scsrmv_noALPHANNNZ
 !
 !-------------------------------------------------------------------------------
@@ -3007,7 +3007,7 @@ PURE SUBROUTINE scsrmv_noBETANNNZ(ia,ja,aa,alpha,x,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL scsrmv_noBETA(n,nnz,ia,ja,aa,alpha,x,y)
+      CALL scsrmv_noBETA(n,nnz,ia,ja,aa,alpha,x,y)
 ENDSUBROUTINE scsrmv_noBETANNNZ
 !
 !-------------------------------------------------------------------------------
@@ -3096,7 +3096,7 @@ PURE SUBROUTINE scsrmv_noALPHABETANNNZ(ia,ja,aa,x,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL scsrmv_noALPHABETA(n,nnz,ia,ja,aa,x,y)
+      CALL scsrmv_noALPHABETA(n,nnz,ia,ja,aa,x,y)
 ENDSUBROUTINE scsrmv_noALPHABETANNNZ
 !
 !-------------------------------------------------------------------------------
@@ -3128,7 +3128,7 @@ PURE SUBROUTINE dcsrmv_all(n,nnz,ia,ja,aa,alpha,x,beta,y)
   REAL(SDK) :: tmp
 
   IF(n > 0 .AND. nnz >= n .AND. .NOT.(alpha == 0.0_SDK .AND. &
-    beta == 1.0_SDK)) THEN
+      beta == 1.0_SDK)) THEN
 
     !Compute y <- beta*y
     IF(beta /= 1.0_SDK) CALL BLAS_scal(n,beta,y,1)
@@ -3198,7 +3198,7 @@ PURE SUBROUTINE dcsrmv_noNNNZ(ia,ja,aa,alpha,x,beta,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL dcsrmv_all(n,nnz,ia,ja,aa,alpha,x,beta,y)
+      CALL dcsrmv_all(n,nnz,ia,ja,aa,alpha,x,beta,y)
 ENDSUBROUTINE dcsrmv_noNNNZ
 !
 !-------------------------------------------------------------------------------
@@ -3296,7 +3296,7 @@ PURE SUBROUTINE dcsrmv_noALPHANNNZ(ia,ja,aa,x,beta,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL dcsrmv_noALPHA(n,nnz,ia,ja,aa,x,beta,y)
+      CALL dcsrmv_noALPHA(n,nnz,ia,ja,aa,x,beta,y)
 ENDSUBROUTINE dcsrmv_noALPHANNNZ
 !
 !-------------------------------------------------------------------------------
@@ -3389,7 +3389,7 @@ PURE SUBROUTINE dcsrmv_noBETANNNZ(ia,ja,aa,alpha,x,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL dcsrmv_noBETA(n,nnz,ia,ja,aa,alpha,x,y)
+      CALL dcsrmv_noBETA(n,nnz,ia,ja,aa,alpha,x,y)
 ENDSUBROUTINE dcsrmv_noBETANNNZ
 !
 !-------------------------------------------------------------------------------
@@ -3478,7 +3478,7 @@ PURE SUBROUTINE dcsrmv_noALPHABETANNNZ(ia,ja,aa,x,y)
   n=SIZE(x)
   nnz=SIZE(aa)
   IF(nnz == SIZE(ja) .AND. SIZE(y) == n .AND. SIZE(ia) == n+1) &
-    CALL dcsrmv_noALPHABETA(n,nnz,ia,ja,aa,x,y)
+      CALL dcsrmv_noALPHABETA(n,nnz,ia,ja,aa,x,y)
 ENDSUBROUTINE dcsrmv_noALPHABETANNNZ
 !
 !-------------------------------------------------------------------------------
@@ -3545,7 +3545,7 @@ PURE SUBROUTINE strsv_all(uplo,trans,diag,a,x,incx_in)
   ENDIF
   IF(n > 0 .AND. incx /= 0 .AND. &
       (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-        trans == 'n' .OR. trans == 'N') .AND. &
+      trans == 'n' .OR. trans == 'N') .AND. &
       (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
       (diag == 'u' .OR. diag == 'U' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
@@ -3733,7 +3733,7 @@ PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x,incx_in)
   ENDIF
   IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,N) .AND. &
       (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-        trans == 'n' .OR. trans == 'N') .AND. &
+      trans == 'n' .OR. trans == 'N') .AND. &
       (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
       (diag == 'u' .OR. diag == 'U' .OR. diag == 'n' .OR. diag == 'N')) THEN
 

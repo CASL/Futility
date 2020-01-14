@@ -299,29 +299,25 @@ ENDINTERFACE
 
 !> Definition of external C interfaces defined in CUtils.
 INTERFACE
-  PURE FUNCTION isNAN_float_c(x) RESULT(bool) &
-    BIND(C,NAME="isNAN_float_c")
+  PURE FUNCTION isNAN_float_c(x) RESULT(bool) BIND(C,NAME="isNAN_float_c")
     USE ISO_C_BINDING
     REAL(C_FLOAT),INTENT(IN) :: x
     INTEGER(C_INT) :: bool
   ENDFUNCTION isNAN_float_c
 
-  PURE FUNCTION isNAN_double_c(x) RESULT(bool) &
-    BIND(C,NAME="isNAN_double_c")
+  PURE FUNCTION isNAN_double_c(x) RESULT(bool) BIND(C,NAME="isNAN_double_c")
     USE ISO_C_BINDING
     REAL(C_DOUBLE),INTENT(IN) :: x
     INTEGER(C_INT) :: bool
   ENDFUNCTION isNAN_double_c
 
-  PURE FUNCTION isINF_float_c(x) RESULT(bool) &
-    BIND(C,NAME="isINF_float_c")
+  PURE FUNCTION isINF_float_c(x) RESULT(bool) BIND(C,NAME="isINF_float_c")
     USE ISO_C_BINDING
     REAL(C_FLOAT),INTENT(IN) :: x
     INTEGER(C_INT) :: bool
   ENDFUNCTION isINF_float_c
 
-  PURE FUNCTION isINF_double_c(x) RESULT(bool) &
-    BIND(C,NAME="isINF_double_c")
+  PURE FUNCTION isINF_double_c(x) RESULT(bool) BIND(C,NAME="isINF_double_c")
     USE ISO_C_BINDING
     REAL(C_DOUBLE),INTENT(IN) :: x
     INTEGER(C_INT) :: bool

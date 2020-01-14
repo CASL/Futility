@@ -83,7 +83,7 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
 #endif
   DBC_COUNTER=DBC_COUNTER+1
   WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
-    mod_name//" on line",line,":  process",rank+1," of",nproc
+      mod_name//" on line",line,":  process",rank+1," of",nproc
 
 #ifndef __INTEL_COMPILER
   CALL backtrace()

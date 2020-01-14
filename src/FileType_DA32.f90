@@ -490,7 +490,7 @@ ENDSUBROUTINE writeEmptyBlock
 !> data within the file by
 !>
 SUBROUTINE init_DA32_file(fileobj,unit,file,status,access,form, &
-                          position,action,pad,recl)
+    position,action,pad,recl)
   CHARACTER(LEN=*),PARAMETER :: myName='init_DA32_file'
   CLASS(DA32FileType),INTENT(INOUT) :: fileobj
   INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
@@ -505,15 +505,15 @@ SUBROUTINE init_DA32_file(fileobj,unit,file,status,access,form, &
   CHARACTER(LEN=9) :: actionval
 
   IF(PRESENT(access)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
-    ' - Optional argument "ACCESS='''//TRIM(ADJUSTL(access))// &
+      ' - Optional argument "ACCESS='''//TRIM(ADJUSTL(access))// &
       '''" is being ignored. DA32 File type is direct access.')
 
   IF(PRESENT(form)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
-    ' - Optional argument "FORM='''//TRIM(ADJUSTL(form))// &
+      ' - Optional argument "FORM='''//TRIM(ADJUSTL(form))// &
       '''" is being ignored. DA32 File type is unformatted.')
 
   IF(PRESENT(recl)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
-    ' - Optional argument "RECL" is being ignored. '// &
+      ' - Optional argument "RECL" is being ignored. '// &
       'DA32 File type has 1 kb records.')
 
   IF(PRESENT(action)) THEN
@@ -527,7 +527,7 @@ SUBROUTINE init_DA32_file(fileobj,unit,file,status,access,form, &
   !Initialize the Direct Acces File using 1KB records. This allows for a
   !maximum file size of 2 TB.
   CALL init_fortran_file(fileobj,unit,file,status,'DIRECT', &
-    'UNFORMATTED',position,actionval,pad,RECLSZ)
+      'UNFORMATTED',position,actionval,pad,RECLSZ)
 ENDSUBROUTINE init_DA32_file
 !
 !-------------------------------------------------------------------------------
@@ -621,7 +621,7 @@ SUBROUTINE writedat_basic(funit,iaddr,dat,ioerr,nword)
 
   bufdat=0
   IF(irec <= FileRecSize(funit)) &
-    READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
+      READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
   IF(ioerr == 0) THEN
     istt=1
     istp=MIN(nword,INT(WORDSREC-iword+1,SLK))

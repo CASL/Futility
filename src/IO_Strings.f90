@@ -538,7 +538,7 @@ PURE SUBROUTINE toUPPER_char(word)
   INTEGER(SIK) :: i
   DO i=1,LEN(word)
     IF('a' <= word(i:i) .AND. word(i:i) <= 'z') &
-      word(i:i)=ACHAR(IACHAR(word(i:i))-32)
+        word(i:i)=ACHAR(IACHAR(word(i:i))-32)
   ENDDO
 ENDSUBROUTINE toUPPER_char
 !
@@ -552,7 +552,7 @@ PURE SUBROUTINE toLower_char(word)
   INTEGER(SIK) :: i
   DO i=1,LEN(word)
     IF('A' <= word(i:i) .AND. word(i:i) <= 'Z') &
-      word(i:i)=ACHAR(IACHAR(word(i:i))+32)
+        word(i:i)=ACHAR(IACHAR(word(i:i))+32)
   ENDDO
 ENDSUBROUTINE toLower_char
 !
@@ -618,7 +618,7 @@ PURE FUNCTION nFields_char(aline)  RESULT(nfields)
         nonblank=.TRUE.
       ENDIF
       IF((.NOT.nonblankd .AND. nonblank) .OR. &
-         (nonblankd .AND. .NOT.nonblank)) THEN
+          (nonblankd .AND. .NOT.nonblank)) THEN
         n=n+1
       ENDIF
       IF(multidata .AND. (nonblankd .AND. .NOT.nonblank)) THEN
@@ -630,8 +630,8 @@ PURE FUNCTION nFields_char(aline)  RESULT(nfields)
         !If we are multiplying a quoted string need to subtract 1.
         IF(multidcol < ncol) THEN
           IF(aline(multidcol+1:multidcol+1) == '"' .OR. &
-             aline(multidcol+1:multidcol+1) == "'") &
-            n=n-1
+              aline(multidcol+1:multidcol+1) == "'") &
+              n=n-1
         ENDIF
 
         multidata=.FALSE.
@@ -895,10 +895,10 @@ SUBROUTINE getPath_string(string,path,e)
       IF(LEN_TRIM(string2(1:i)) > LEN(path)) THEN
         IF(PRESENT(e)) THEN
           CALL e%raiseError(modName//'::GETPATH_STRING - '// &
-            'Path is being truncated!')
+              'Path is being truncated!')
         ELSE
           CALL e2%raiseDebug(modName//'::GETPATH_STRING - '// &
-            'Path is being truncated!')
+              'Path is being truncated!')
         ENDIF
       ENDIF
       path=string2(1:i)
@@ -929,10 +929,10 @@ SUBROUTINE getFileName_string(string,fname,e)
       IF(LEN_TRIM(string2(i+1:LEN_TRIM(string2))) > LEN(fname)) THEN
         IF(PRESENT(e)) THEN
           CALL e%raiseError(modName//'::GETFILENAME_STRING - '// &
-            'File name is being truncated!')
+              'File name is being truncated!')
         ELSE
           CALL e2%raiseDebug(modName//'::GETFILENAME_STRING - '// &
-            'File name is being truncated!')
+              'File name is being truncated!')
         ENDIF
       ENDIF
       fname=string2(i+1:LEN_TRIM(string2))
@@ -971,10 +971,10 @@ SUBROUTINE getFileNameExt_string(string,ext,e)
       IF(LEN_TRIM(string2(i:LEN_TRIM(string2))) > LEN(ext)) THEN
         IF(PRESENT(e)) THEN
           CALL e%raiseError(modName//'::GETFILENAMEEXT_STRING - '// &
-            'File name extension is being truncated!')
+              'File name extension is being truncated!')
         ELSE
           CALL e2%raiseDebug(modName//'::GETFILENAMEEXT_STRING - '// &
-            'File name extension is being truncated!')
+              'File name extension is being truncated!')
         ENDIF
       ENDIF
       ext=string2(i:LEN_TRIM(string2))

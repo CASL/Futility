@@ -197,8 +197,8 @@ SUBROUTINE init_SparseMatrixParam(matrix,Params)
   IF(.NOT. matrix%isInit) THEN
     IF((n < 1).OR.(nnz < 1))  THEN
       CALL eMatrixType%raiseError('Incorrect   input to '// &
-      modName//'::'//myName//' - Input parameters must be '// &
-        'greater than 1!')
+          modName//'::'//myName//' - Input parameters must be '// &
+          'greater than 1!')
     ELSE
       matrix%isInit=.TRUE.
       matrix%n=n
@@ -216,7 +216,7 @@ SUBROUTINE init_SparseMatrixParam(matrix,Params)
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - MatrixType already initialized')
+        modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
 ENDSUBROUTINE init_SparseMatrixParam
 !
@@ -248,7 +248,7 @@ SUBROUTINE init_TriDiagMatrixParam(matrix,Params)
   IF(.NOT. matrix%isInit) THEN
     IF(n < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of rows (n) must be '// &
+          modName//'::'//myName//' - Number of rows (n) must be '// &
           'greater than 1!')
     ELSE
       matrix%isInit=.TRUE.
@@ -262,7 +262,7 @@ SUBROUTINE init_TriDiagMatrixParam(matrix,Params)
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - MatrixType already initialized')
+        modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
 ENDSUBROUTINE init_TriDiagMatrixParam
 !
@@ -293,11 +293,11 @@ SUBROUTINE init_DenseRectMatrixParam(matrix,Params)
   IF(.NOT. matrix%isInit) THEN
     IF(n < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of rows (n) must'// &
+          modName//'::'//myName//' - Number of rows (n) must'// &
           ' be greater than 1!')
     ELSEIF(m < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of columns (m) must'// &
+          modName//'::'//myName//' - Number of columns (m) must'// &
           ' be greater than 1!')
     ELSE
       matrix%isInit=.TRUE.
@@ -307,7 +307,7 @@ SUBROUTINE init_DenseRectMatrixParam(matrix,Params)
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - MatrixType already initialized')
+        modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
 ENDSUBROUTINE init_DenseRectMatrixParam
 !
@@ -339,7 +339,7 @@ SUBROUTINE init_DenseSquareMatrixParam(matrix,Params)
   IF(.NOT. matrix%isInit) THEN
     IF(n < 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of rows (n) must be '// &
+          modName//'::'//myName//' - Number of rows (n) must be '// &
           'greater than 1!')
     ELSE
       matrix%isInit=.TRUE.
@@ -353,7 +353,7 @@ SUBROUTINE init_DenseSquareMatrixParam(matrix,Params)
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - MatrixType already initialized')
+        modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
 ENDSUBROUTINE init_DenseSquareMatrixParam
 !
@@ -502,7 +502,7 @@ SUBROUTINE set_DenseSquareMatrixType(matrix,i,j,setval)
   REAL(SRK),INTENT(IN) :: setval
   IF(matrix%isInit) THEN
     IF(((j <= matrix%n) .AND. (i <= matrix%n)) &
-      .AND. ((j > 0) .AND. (i > 0))) THEN
+        .AND. ((j > 0) .AND. (i > 0))) THEN
       matrix%a(i,j)=setval
       IF(matrix%isSymmetric) matrix%a(j,i)=setval
     ENDIF
@@ -552,7 +552,7 @@ SUBROUTINE set_DenseRectMatrixType(matrix,i,j,setval)
   REAL(SRK),INTENT(IN) :: setval
   IF(matrix%isInit) THEN
     IF(((j <= matrix%m) .AND. (i <= matrix%n)) &
-      .AND. ((j > 0) .AND. (i > 0))) matrix%a(i,j)=setval
+        .AND. ((j > 0) .AND. (i > 0))) matrix%a(i,j)=setval
   ENDIF
 ENDSUBROUTINE set_DenseRectMatrixType
 !
@@ -714,7 +714,7 @@ SUBROUTINE transpose_DenseSquareMatrixType(matrix)
   CHARACTER(LEN=*),PARAMETER :: myName='transpose_DenseSquareMatrixType'
   CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
   CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
-    ' - routine is not implemented!')
+      ' - routine is not implemented!')
 ENDSUBROUTINE transpose_DenseSquareMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -726,7 +726,7 @@ SUBROUTINE transpose_DenseRectMatrixType(matrix)
   CHARACTER(LEN=*),PARAMETER :: myName='transpose_DenseRecMatrixType'
   CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
   CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
-    ' - routine is not implemented!')
+      ' - routine is not implemented!')
 ENDSUBROUTINE transpose_DenseRectMatrixType
 !
 !-------------------------------------------------------------------------------
@@ -738,7 +738,7 @@ SUBROUTINE transpose_TriDiagMatrixType(matrix)
   CHARACTER(LEN=*),PARAMETER :: myName='transpose_TriDiagMatrixType'
   CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
   CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
-    ' - routine is not implemented!')
+      ' - routine is not implemented!')
 ENDSUBROUTINE transpose_TriDiagMatrixType
 !
 !-------------------------------------------------------------------------------

@@ -251,7 +251,7 @@ PURE SUBROUTINE set_OBBoxType(thisBox,p0,e_in,u1_in,u2_in,u3_in)
 
         !Check that the vector lengths are non-zero and at a right angle
         IF(magn1 /= 0._SRK .AND. magn2 /= 0._SRK &
-          .AND. magn3 /= 0._SRK .AND. ABS(dotmp1) < EPSREAL &
+            .AND. magn3 /= 0._SRK .AND. ABS(dotmp1) < EPSREAL &
             .AND. ABS(dotmp2) < EPSREAL .AND. ABS(dotmp3) < EPSREAL) THEN
           thisBox%p0=p0
           thisBox%u(1,1)=u1(1)
@@ -338,18 +338,18 @@ ELEMENTAL SUBROUTINE intersect_OBBoxType_and_LineType(thisBox,line,p1,p2)
       coord(3)=line%p1%coord(3)-thisBox%p0%coord(3)
 
       dir(1)=dir_world(1)*thisBox%u(1,1)+dir_world(2)*thisBox%u(2,1)+ &
-        dir_world(3)*thisBox%u(3,1)
+          dir_world(3)*thisBox%u(3,1)
       dir(2)=dir_world(1)*thisBox%u(1,2)+dir_world(2)*thisBox%u(2,2)+ &
-        dir_world(3)*thisBox%u(3,2)
+          dir_world(3)*thisBox%u(3,2)
       dir(3)=dir_world(1)*thisBox%u(1,3)+dir_world(2)*thisBox%u(2,3)+ &
-        dir_world(3)*thisBox%u(3,3)
+          dir_world(3)*thisBox%u(3,3)
 
       coord_new(1)=coord(1)*thisBox%u(1,1)+coord(2)*thisBox%u(2,1)+ &
-        coord(3)*thisBox%u(3,1)
+          coord(3)*thisBox%u(3,1)
       coord_new(2)=coord(1)*thisBox%u(1,2)+coord(2)*thisBox%u(2,2)+ &
-        coord(3)*thisBox%u(3,2)
+          coord(3)*thisBox%u(3,2)
       coord_new(3)=coord(1)*thisBox%u(1,3)+coord(2)*thisBox%u(2,3)+ &
-        coord(3)*thisBox%u(3,3)
+          coord(3)*thisBox%u(3,3)
     ENDIF
 
     tmin=-1._SRK
@@ -359,7 +359,7 @@ ELEMENTAL SUBROUTINE intersect_OBBoxType_and_LineType(thisBox,line,p1,p2)
         !If segment is parallel to box, and if the coordinate for that
         !dimension is outside box then there is no intersection
         IF(coord_new(i) < 0._SRK-EPSREAL .OR. &
-          coord_new(i) > thisBox%e(i)+EPSREAL) RETURN
+            coord_new(i) > thisBox%e(i)+EPSREAL) RETURN
       ELSE
         invdir=1._SRK/dir(i)
         t1=(-coord_new(i))*invdir
@@ -409,13 +409,13 @@ PURE SUBROUTINE getLines_OBBoxType(thisBox,lines)
    lines(1)%p1=thisBox%p0
    lines(4)%p2=thisBox%p0
    CALL lines(1)%p2%init(DIM=2,X=thisBox%p0%coord(1)+thisBox%u(1,1)*thisBox%e(1), &
-     Y=thisBox%p0%coord(2)+thisBox%u(2,1)*thisBox%e(1))
+       Y=thisBox%p0%coord(2)+thisBox%u(2,1)*thisBox%e(1))
    lines(2)%p1=lines(1)%p2
    CALL lines(2)%p2%init(DIM=2,X=lines(2)%p1%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
-     Y=lines(2)%p1%coord(2)+thisBox%u(2,2)*thisBox%e(2))
+       Y=lines(2)%p1%coord(2)+thisBox%u(2,2)*thisBox%e(2))
    lines(3)%p1=lines(2)%p2
    CALL lines(3)%p2%init(DIM=2,X=thisBox%p0%coord(1)+thisBox%u(1,2)*thisBox%e(2), &
-     Y=thisBox%p0%coord(2)+thisBox%u(2,2)*thisBox%e(2))
+       Y=thisBox%p0%coord(2)+thisBox%u(2,2)*thisBox%e(2))
    lines(4)%p1=lines(3)%p2
  !ELSE
  ENDIF
@@ -433,28 +433,28 @@ PURE SUBROUTINE getPlanes_OBBoxType(thisBox,planes)
  TYPE(PlaneType),INTENT(OUT),ALLOCATABLE :: planes(:)
  TYPE(PointType) :: tmpPt
 
- IF(thisBox%p0%dim == 3) THEN
-   ALLOCATE(planes(6))
-   planes(1)%v0=thisBox%p0
-   planes(1)%n=thisBox%u(:,1)
-   planes(2)%v0=thisBox%p0
-   planes(1)%n=thisBox%u(:,2)
-   planes(3)%v0=thisBox%p0
-   planes(1)%n=thisBox%u(:,3)
-   CALL tmpPt%init(X=thisBox%p0%coord(1)+thisBox%u(1,1)*thisBox%e(1)+ &
-     thisBox%u(1,2)*thisBox%e(2)+thisBox%u(1,3)*thisBox%e(3), &
-     Y=thisBox%p0%coord(2)+thisBox%u(2,1)*thisBox%e(1)+ &
-     thisBox%u(2,2)*thisBox%e(2)+thisBox%u(2,3)*thisBox%e(3), &
-     Z=thisBox%p0%coord(3)+thisBox%u(3,1)*thisBox%e(1)+ &
-     thisBox%u(3,2)*thisBox%e(2)+thisBox%u(3,3)*thisBox%e(3))
-   planes(4)%v0=tmpPt
-   planes(4)%n=thisBox%u(:,1) !Does this need to be made negative?
-   planes(5)%v0=tmpPt
-   planes(4)%n=thisBox%u(:,2) !Does this need to be made negative?
-   planes(6)%v0=tmpPt
-   planes(4)%n=thisBox%u(:,3) !Does this need to be made negative?
- !ELSE
- ENDIF
+  IF(thisBox%p0%dim == 3) THEN
+    ALLOCATE(planes(6))
+    planes(1)%v0=thisBox%p0
+    planes(1)%n=thisBox%u(:,1)
+    planes(2)%v0=thisBox%p0
+    planes(1)%n=thisBox%u(:,2)
+    planes(3)%v0=thisBox%p0
+    planes(1)%n=thisBox%u(:,3)
+    CALL tmpPt%init(X=thisBox%p0%coord(1)+thisBox%u(1,1)*thisBox%e(1)+ &
+        thisBox%u(1,2)*thisBox%e(2)+thisBox%u(1,3)*thisBox%e(3), &
+        Y=thisBox%p0%coord(2)+thisBox%u(2,1)*thisBox%e(1)+ &
+        thisBox%u(2,2)*thisBox%e(2)+thisBox%u(2,3)*thisBox%e(3), &
+        Z=thisBox%p0%coord(3)+thisBox%u(3,1)*thisBox%e(1)+ &
+        thisBox%u(3,2)*thisBox%e(2)+thisBox%u(3,3)*thisBox%e(3))
+    planes(4)%v0=tmpPt
+    planes(4)%n=thisBox%u(:,1) !Does this need to be made negative?
+    planes(5)%v0=tmpPt
+    planes(4)%n=thisBox%u(:,2) !Does this need to be made negative?
+    planes(6)%v0=tmpPt
+    planes(4)%n=thisBox%u(:,3) !Does this need to be made negative?
+  !ELSE
+  ENDIF
 ENDSUBROUTINE getPlanes_OBBoxType
 !
 !-------------------------------------------------------------------------------
@@ -471,25 +471,25 @@ ELEMENTAL FUNCTION inside_OBBoxType(thisBox,point) RESULT(bool)
  TYPE(PointType) :: px,py
  REAL(SRK) :: pxmag,pymag,pxproj,pyproj
 
- bool=.FALSE.
- IF(point%dim == 2) THEN
-   CALL px%init(DIM=2,X=thisBox%u(1,1)*thisBox%e(1), &
-     Y=thisBox%u(2,1)*thisBox%e(1))
-   CALL py%init(DIM=2,X=thisBox%u(1,2)*thisBox%e(2), &
-     Y=thisBox%u(2,2)*thisBox%e(2))
-   pxmag=(px%coord(1)-thisBox%p0%coord(1))*(px%coord(1)-thisBox%p0%coord(1))+&
-     (px%coord(2)-thisBox%p0%coord(2))*(px%coord(2)-thisBox%p0%coord(2))
-   pymag=(py%coord(1)-thisBox%p0%coord(1))*(py%coord(1)-thisBox%p0%coord(1))+&
-     (py%coord(2)-thisBox%p0%coord(2))*(py%coord(2)-thisBox%p0%coord(2))
-   pxproj=(px%coord(1)-thisBox%p0%coord(1))*(point%coord(1)-thisBox%p0%coord(1))+ &
-     (px%coord(2)-thisBox%p0%coord(2))*(point%coord(2)-thisBox%p0%coord(2))
-   IF((0.0_SRK .APPROXLE. pxproj) .AND. (pxproj .APPROXLE. pxmag)) THEN
-     pyproj=(py%coord(1)-thisBox%p0%coord(1))*(point%coord(1)-thisBox%p0%coord(1))+ &
-     (py%coord(2)-thisBox%p0%coord(2))*(point%coord(2)-thisBox%p0%coord(2))
-     bool=(0.0_SRK .APPROXLE. pyproj) .AND. (pyproj .APPROXLE. pymag)
-   ENDIF
- ELSEIF(point%dim == 3) THEN
- ENDIF
+  bool=.FALSE.
+  IF(point%dim == 2) THEN
+    CALL px%init(DIM=2,X=thisBox%u(1,1)*thisBox%e(1), &
+        Y=thisBox%u(2,1)*thisBox%e(1))
+    CALL py%init(DIM=2,X=thisBox%u(1,2)*thisBox%e(2), &
+        Y=thisBox%u(2,2)*thisBox%e(2))
+    pxmag=(px%coord(1)-thisBox%p0%coord(1))*(px%coord(1)-thisBox%p0%coord(1))+&
+        (px%coord(2)-thisBox%p0%coord(2))*(px%coord(2)-thisBox%p0%coord(2))
+    pymag=(py%coord(1)-thisBox%p0%coord(1))*(py%coord(1)-thisBox%p0%coord(1))+&
+        (py%coord(2)-thisBox%p0%coord(2))*(py%coord(2)-thisBox%p0%coord(2))
+    pxproj=(px%coord(1)-thisBox%p0%coord(1))*(point%coord(1)-thisBox%p0%coord(1))+ &
+        (px%coord(2)-thisBox%p0%coord(2))*(point%coord(2)-thisBox%p0%coord(2))
+    IF((0.0_SRK .APPROXLE. pxproj) .AND. (pxproj .APPROXLE. pxmag)) THEN
+        pyproj=(py%coord(1)-thisBox%p0%coord(1))*(point%coord(1)-thisBox%p0%coord(1))+ &
+        (py%coord(2)-thisBox%p0%coord(2))*(point%coord(2)-thisBox%p0%coord(2))
+        bool=(0.0_SRK .APPROXLE. pyproj) .AND. (pyproj .APPROXLE. pymag)
+    ENDIF
+  ELSEIF(point%dim == 3) THEN
+  ENDIF
 ENDFUNCTION inside_OBBoxType
 !
 !-------------------------------------------------------------------------------
@@ -504,7 +504,7 @@ ELEMENTAL FUNCTION isequal_OBBoxType(b0,b1) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=.FALSE.
   IF(b0%p0 == b1%p0 .AND. ALL(b0%u .APPROXEQA. b1%u)) &
-    bool=ALL(b0%e.APPROXEQA. b1%e)
+      bool=ALL(b0%e.APPROXEQA. b1%e)
 ENDFUNCTION isequal_OBBoxType
 !
 !-------------------------------------------------------------------------------
@@ -534,7 +534,7 @@ ELEMENTAL SUBROUTINE set_ABBoxType(thisABB,xMin,xMax,yMin,yMax,zMin,zMax)
   ENDIF
   thisABB%isSet=.TRUE.
   thisABB%isOrigin=((xMin <= 0.0_SRK) .AND. (xMax >= 0.0_SRK) .AND. &
-    (yMin <= 0.0_SRK) .AND. (yMax >= 0.0_SRK))
+      (yMin <= 0.0_SRK) .AND. (yMax >= 0.0_SRK))
 
 ENDSUBROUTINE set_ABBoxType
 !
@@ -570,14 +570,14 @@ ELEMENTAL FUNCTION inside_ABBoxType(thisABB,p) RESULT(inside)
   inside=.FALSE.
   IF(p%dim > 1) THEN
     inside=((p%coord(1) > thisABB%xMin-fuzz) .AND. &
-      (p%coord(1) < thisABB%xMax+fuzz) .AND. &
-      (p%coord(2) > thisABB%yMin-fuzz) .AND. &
-      (p%coord(2) < thisABB%yMax+fuzz))
+        (p%coord(1) < thisABB%xMax+fuzz) .AND. &
+        (p%coord(2) > thisABB%yMin-fuzz) .AND. &
+        (p%coord(2) < thisABB%yMax+fuzz))
   ENDIF
   IF(p%dim == 3 .AND. thisABB%is3D) THEN
     inside=(inside .AND. &
-      (p%coord(3) > thisABB%zMin-fuzz) .AND. &
-      (p%coord(3) < thisABB%zMax+fuzz))
+        (p%coord(3) > thisABB%zMin-fuzz) .AND. &
+        (p%coord(3) < thisABB%zMax+fuzz))
   ENDIF
 
 ENDFUNCTION inside_ABBoxType

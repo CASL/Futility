@@ -120,7 +120,7 @@ CONTAINS
 !> @param recl Optional input is not used by this routine.
 !>
 SUBROUTINE init_log_file(fileobj,unit,file,status,access,form, &
-                             position,action,pad,recl)
+    position,action,pad,recl)
   CHARACTER(LEN=*),PARAMETER :: myName='init_log_file'
   CLASS(LogFileType),INTENT(INOUT) :: fileobj
   INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
@@ -136,19 +136,19 @@ SUBROUTINE init_log_file(fileobj,unit,file,status,access,form, &
 
   fname=''
   IF(PRESENT(status)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "STATUS" is being ignored. Value is "REPLACE".')
+      ' - Optional input "STATUS" is being ignored. Value is "REPLACE".')
   IF(PRESENT(access)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
+      ' - Optional input "ACCESS" is being ignored. Value is "SEQUENTIAL".')
   IF(PRESENT(form)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
+      ' - Optional input "FORM" is being ignored. Value is "FORMATTED".')
   IF(PRESENT(action)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
+      ' - Optional input "ACTION" is being ignored. Value is "WRITE".')
   IF(PRESENT(pad)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "PAD" is being ignored. Value is "YES".')
+      ' - Optional input "PAD" is being ignored. Value is "YES".')
   IF(PRESENT(position)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "POSITION" is being ignored. Value is "ASIS".')
+      ' - Optional input "POSITION" is being ignored. Value is "ASIS".')
   IF(PRESENT(recl)) CALL fileobj%e%raiseDebug(modName//'::'//myName// &
-    ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
+      ' - Optional input "RECL" is being ignored. File is "SEQUENTIAL".')
 
   !Initialize the timer for the log file
   CALL fileobj%timer%setTimerHiResMode(.TRUE.)
@@ -157,7 +157,7 @@ SUBROUTINE init_log_file(fileobj,unit,file,status,access,form, &
 
   !Initialize the rest of the log file
   CALL init_fortran_file(fileobj,unit,file,'REPLACE','SEQUENTIAL', &
-    'FORMATTED','ASIS','WRITE')
+      'FORMATTED','ASIS','WRITE')
 ENDSUBROUTINE init_log_file
 !
 !-------------------------------------------------------------------------------
@@ -229,20 +229,18 @@ SUBROUTINE message_log_file(file,mesg,timestamp,echo)
     CALL file%timer%toc()
     IF(file%isOpen()) THEN
       WRITE(file%getUnitNo(),'(2x,a)',IOSTAT=ioerr) &
-        TRIM(file%timer%getTimeHHMMSS())//' '//TRIM(mesg)
+          TRIM(file%timer%getTimeHHMMSS())//' '//TRIM(mesg)
       IF(ioerr /= 0) THEN
-        WRITE(emesg,'(a,i4)') 'Error writing message to log file! IOSTAT=' &
-          ,ioerr
+        WRITE(emesg,'(a,i4)') 'Error writing message to log file! IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ENDIF
     ENDIF
     !Write message to prompt
     IF(echostat) THEN
       WRITE(OUTPUT_UNIT,'(2x,a)',IOSTAT=ioerr)  &
-        TRIM(file%timer%getTimeHHMMSS())//' '//TRIM(mesg)
+          TRIM(file%timer%getTimeHHMMSS())//' '//TRIM(mesg)
       IF(ioerr /= 0) THEN
-        WRITE(emesg,'(a,i4)') 'Error writing message to prompt! IOSTAT=' &
-          ,ioerr
+        WRITE(emesg,'(a,i4)') 'Error writing message to prompt! IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ENDIF
     ENDIF
@@ -252,8 +250,7 @@ SUBROUTINE message_log_file(file,mesg,timestamp,echo)
     IF(file%isOpen()) THEN
       WRITE(file%getUnitNo(),'(12x,a)',IOSTAT=ioerr) TRIM(mesg)
       IF(ioerr /= 0) THEN
-        WRITE(emesg,'(a,i4)') 'Error writing message to log file! IOSTAT=' &
-          ,ioerr
+        WRITE(emesg,'(a,i4)') 'Error writing message to log file! IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ENDIF
     ENDIF
@@ -261,8 +258,7 @@ SUBROUTINE message_log_file(file,mesg,timestamp,echo)
     IF(echostat) THEN
       WRITE(OUTPUT_UNIT,'(12x,a)',IOSTAT=ioerr) TRIM(mesg)
       IF(ioerr /= 0) THEN
-        WRITE(emesg,'(a,i4)') 'Error writing message to prompt! IOSTAT=' &
-          ,ioerr
+        WRITE(emesg,'(a,i4)') 'Error writing message to prompt! IOSTAT=',ioerr
         CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
       ENDIF
     ENDIF

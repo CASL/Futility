@@ -106,11 +106,11 @@ SUBROUTINE init_TrilinosVectorType(thisVector,Params)
   IF(.NOT. thisVector%isInit) THEN
     IF(n < 1) THEN
       CALL eVectorType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of values (n) must be '// &
+          modName//'::'//myName//' - Number of values (n) must be '// &
           'greater than 0!')
     ELSEIF(nlocal<0) THEN
       CALL eVectorType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - Number of local values (nlocal) '// &
+          modName//'::'//myName//' - Number of local values (nlocal) '// &
           'must be greater than 0!')
     ELSE
       thisVector%isInit=.TRUE.
@@ -124,7 +124,7 @@ SUBROUTINE init_TrilinosVectorType(thisVector,Params)
     ENDIF
   ELSE
     CALL eVectorType%raiseError('Incorrect call to '// &
-      modName//'::'//myName//' - VectorType already initialized')
+        modName//'::'//myName//' - VectorType already initialized')
   ENDIF
   CALL validParams%clear()
 ENDSUBROUTINE init_TrilinosVectorType
@@ -209,7 +209,7 @@ SUBROUTINE setAll_array_TrilinosVectorType(thisVector,setval,ierr)
     IF(SIZE(setval) == thisVector%n) THEN
 !TODO
       CALL eVectorType%raiseFatalError('Incorrect call to '// &
-         modName//'::'//myName//' - This interface is not available.')
+          modName//'::'//myName//' - This interface is not available.')
     ENDIF
   ENDIF
   IF(PRESENT(ierr)) ierr=ierrc
@@ -235,7 +235,7 @@ SUBROUTINE setSelected_TrilinosVectorType(thisVector,indices,setval,ierr)
     ierrc=-3
 !TODO
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDIF
   IF(PRESENT(ierr)) ierr=ierrc
 ENDSUBROUTINE setSelected_TrilinosVectorType
@@ -350,7 +350,7 @@ SUBROUTINE getSelected_TrilinosVectorType(thisVector,indices,getval,ierr)
   IF(thisVector%isInit) THEN
 !TODO
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
-       modName//'::'//myName//' - This interface is not available.')
+        modName//'::'//myName//' - This interface is not available.')
   ENDIF
   IF(PRESENT(ierr)) ierr=ierrc
 ENDSUBROUTINE getSelected_TrilinosVectorType
@@ -373,7 +373,7 @@ SUBROUTINE getAll_TrilinosVectorType(thisVector,getval,ierr)
     IF(SIZE(getval) == thisVector%n) THEN
 !TODO
       CALL eVectorType%raiseFatalError('Incorrect call to '// &
-         modName//'::'//myName//' - This interface is not available.')
+          modName//'::'//myName//' - This interface is not available.')
     ENDIF
   ENDIF
   IF(PRESENT(ierr)) ierr=ierrc
