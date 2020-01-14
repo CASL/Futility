@@ -18,76 +18,76 @@
 !
 PROGRAM testMultigridMesh
 #include "UnitTest.h"
-  USE ISO_FORTRAN_ENV
-  USE UnitTest
-  USE IntrType
-  USE MultigridMesh
+USE ISO_FORTRAN_ENV
+USE UnitTest
+USE IntrType
+USE MultigridMesh
 
-  IMPLICIT NONE
+IMPLICIT NONE
 
-  CREATE_TEST('Test MultigridMesh')
+CREATE_TEST('Test MultigridMesh')
 
-  REGISTER_SUBTEST('Test Clear Structure',testClearStructure)
-  REGISTER_SUBTEST('Test Clear Mesh',testClearMesh)
-  REGISTER_SUBTEST('Test Init',testInit)
+REGISTER_SUBTEST('Test Clear Structure',testClearStructure)
+REGISTER_SUBTEST('Test Clear Mesh',testClearMesh)
+REGISTER_SUBTEST('Test Init',testInit)
 
-  FINALIZE_TEST()
+FINALIZE_TEST()
 !
 !===============================================================================
-  CONTAINS
+CONTAINS
 !
 !-------------------------------------------------------------------------------
-  SUBROUTINE testClearStructure
-    TYPE(MultigridMeshStructureType) :: myMMeshes
+SUBROUTINE testClearStructure
+  TYPE(MultigridMeshStructureType) :: myMMeshes
 
-    myMMeshes%nLevels=5
-    ALLOCATE(myMMeshes%meshes(4))
-    myMMeshes%isInit=.TRUE.
+  myMMeshes%nLevels=5
+  ALLOCATE(myMMeshes%meshes(4))
+  myMMeshes%isInit=.TRUE.
 
-    CALL myMMeshes%clear()
+  CALL myMMeshes%clear()
 
-    ASSERT(.NOT. myMMeshes%isInit,'should not be init')
-    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes),'meshes should not be allocated')
-  ENDSUBROUTINE testClearStructure
+  ASSERT(.NOT. myMMeshes%isInit,'should not be init')
+  ASSERT(.NOT. ALLOCATED(myMMeshes%meshes),'meshes should not be allocated')
+ENDSUBROUTINE testClearStructure
 !
 !-------------------------------------------------------------------------------
-  SUBROUTINE testClearMesh
-    TYPE(MultigridMeshStructureType) :: myMMeshes
+SUBROUTINE testClearMesh
+  TYPE(MultigridMeshStructureType) :: myMMeshes
 
-    myMMeshes%nLevels=5
-    ALLOCATE(myMMeshes%meshes(5))
-    myMMeshes%isInit=.TRUE.
+  myMMeshes%nLevels=5
+  ALLOCATE(myMMeshes%meshes(5))
+  myMMeshes%isInit=.TRUE.
 
-    !Test clearing for one particular level:
-    ALLOCATE(myMMeshes%meshes(3)%interpDegrees(10))
-    ALLOCATE(myMMeshes%meshes(3)%xyzMap(3,10))
-    ALLOCATE(myMMeshes%meshes(3)%mmData(10))
-    myMMeshes%meshes(3)%istt=1
-    myMMeshes%meshes(3)%istp=10
-    ALLOCATE(myMMeshes%meshes(3)%mmData(1)%childIndices(4))
-    CALL myMMeshes%meshes(3)%mmData(1)%clear()
-    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%mmData(1)%childIndices),'childindices not allocated')
-    CALL myMMeshes%meshes(3)%clear()
-    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%interpDegrees),'interpDegrees not allocated')
-    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%xyzMap),'xyzmap not allocated')
-    ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%mmData),'mmData not allocated')
+  !Test clearing for one particular level:
+  ALLOCATE(myMMeshes%meshes(3)%interpDegrees(10))
+  ALLOCATE(myMMeshes%meshes(3)%xyzMap(3,10))
+  ALLOCATE(myMMeshes%meshes(3)%mmData(10))
+  myMMeshes%meshes(3)%istt=1
+  myMMeshes%meshes(3)%istp=10
+  ALLOCATE(myMMeshes%meshes(3)%mmData(1)%childIndices(4))
+  CALL myMMeshes%meshes(3)%mmData(1)%clear()
+  ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%mmData(1)%childIndices),'childindices not allocated')
+  CALL myMMeshes%meshes(3)%clear()
+  ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%interpDegrees),'interpDegrees not allocated')
+  ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%xyzMap),'xyzmap not allocated')
+  ASSERT(.NOT. ALLOCATED(myMMeshes%meshes(3)%mmData),'mmData not allocated')
 
-    CALL myMMeshes%clear()
-  ENDSUBROUTINE testClearMesh
+  CALL myMMeshes%clear()
+ENDSUBROUTINE testClearMesh
 !
 !-------------------------------------------------------------------------------
-  SUBROUTINE testInit
-    TYPE(MultigridMeshStructureType) :: myMMeshes
-    INTEGER(SIK),PARAMETER :: nLevels=6
+SUBROUTINE testInit
+  TYPE(MultigridMeshStructureType) :: myMMeshes
+  INTEGER(SIK),PARAMETER :: nLevels=6
 
-    CALL myMMeshes%init(nLevels)
+  CALL myMMeshes%init(nLevels)
 
-    ASSERT(myMMeshes%isInit,'is init')
-    ASSERT(myMMeshes%nLevels == nLevels,'correct number of levels')
-    ASSERT(ALLOCATED(myMMeshes%meshes),'meshes allocated')
-    ASSERT(SIZE(myMMeshes%meshes) == nLevels,'meshes is the correct size')
+  ASSERT(myMMeshes%isInit,'is init')
+  ASSERT(myMMeshes%nLevels == nLevels,'correct number of levels')
+  ASSERT(ALLOCATED(myMMeshes%meshes),'meshes allocated')
+  ASSERT(SIZE(myMMeshes%meshes) == nLevels,'meshes is the correct size')
 
-    CALL myMMeshes%clear()
-  ENDSUBROUTINE testInit
+  CALL myMMeshes%clear()
+ENDSUBROUTINE testInit
 
 ENDPROGRAM testMultigridMesh
