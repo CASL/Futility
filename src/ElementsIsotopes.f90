@@ -220,7 +220,6 @@ MODULE ElementsIsotopes
 !> The constructor for the element and isotope converter
 !>
     SUBROUTINE init_ElemIso(this)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_ElemIso'
       CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
 
       this%isInit=.TRUE.

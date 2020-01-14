@@ -248,7 +248,6 @@ MODULE CommandLineProcessor
 !> @param usagestr the string with the usage syntax
 !>
     PURE SUBROUTINE defineUsage(clp,usagestr)
-      CHARACTER(LEN=*),PARAMETER :: myName='defineUsage'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       CHARACTER(LEN=*),INTENT(IN) :: usagestr
 
@@ -343,7 +342,6 @@ MODULE CommandLineProcessor
 !> @param clp command line processor object
 !>
     PURE SUBROUTINE clearOpts(clp)
-      CHARACTER(LEN=*),PARAMETER :: myName='clearOpts'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK) :: iopt
       clp%usage=''
@@ -412,7 +410,6 @@ MODULE CommandLineProcessor
 !> @param clp command line processor object
 !>
     PURE SUBROUTINE clearCmdLine(clp)
-      CHARACTER(LEN=*),PARAMETER :: myName='clearCmdLine'
       CLASS(CmdLineProcType),INTENT(INOUT) :: clp
       INTEGER(SIK) :: iarg
       clp%cmdline=''

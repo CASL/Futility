@@ -19,7 +19,6 @@ PROGRAM testTPLHDF5
   INTEGER :: mpierr
 #endif
 
-  CHARACTER(LEN=8),PARAMETER :: hdf_file='hdf01.h5'
 
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING HDF5 TPL...'
@@ -59,8 +58,8 @@ PROGRAM testTPLHDF5
       INTEGER :: i,j,node,nproc,l1,u1,l2,u2,npp,ndir
       INTEGER,DIMENSION(10,5) :: dataz
       DOUBLE PRECISION,ALLOCATABLE :: datal(:,:)
-
 #ifndef HAVE_MPI
+      CHARACTER(LEN=8),PARAMETER :: hdf_file='hdf01.h5'
 
       dims=(/10,5/)
 
@@ -164,9 +163,6 @@ PROGRAM testTPLHDF5
       DEALLOCATE(datal)
 
 #endif
-
-
-
 #endif
     ENDSUBROUTINE testHDF5
 

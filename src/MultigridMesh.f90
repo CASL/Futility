@@ -235,7 +235,6 @@ MODULE MultigridMesh
 !> @param myMeshes the mesh structure
 !>
     SUBROUTINE clear_MultigridMeshStructure(myMeshes)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_MultigridMeshStructure'
       CLASS(MultigridMeshStructureType),INTENT(INOUT) :: myMeshes
       INTEGER(SIK) :: iLevel
 
@@ -257,7 +256,6 @@ MODULE MultigridMesh
 !> @param myMesh the mesh
 !>
     SUBROUTINE clear_MultigridMesh(myMesh)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_MultigridMesh'
       CLASS(MultigridMeshType),INTENT(INOUT) :: myMesh
       INTEGER(SIK) :: i
 
@@ -281,7 +279,6 @@ MODULE MultigridMesh
 !> @param myMeshElement the mesh element
 !>
     SUBROUTINE clear_MultigridMeshElement(myMeshElement)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_MultigridMeshElement'
       CLASS(MultigridMeshElementType),INTENT(INOUT) :: myMeshElement
 
       IF(ALLOCATED(myMeshElement%childIndices)) &
@@ -329,7 +326,6 @@ MODULE MultigridMesh
 !> @param myWtStructure the interp weight structure instance
 !>
     SUBROUTINE clear_InterpWeightsStructure(myWtStructure)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_InterpWeightsStructure'
       CLASS(InterpWeightsStructureType),INTENT(INOUT) :: myWtStructure
 
       INTEGER(SIK) :: iLevel
@@ -364,7 +360,6 @@ MODULE MultigridMesh
 !> @param num_eqns number of equations (# of unknowns per spatial point)
 !>
     SUBROUTINE init_InterpWeightsLevel(myWts,meshes,num_eqns)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_InterpWeightsLevel'
       CLASS(InterpWeightsLevelType),INTENT(INOUT) :: myWts
       TYPE(MultigridMeshType),POINTER,INTENT(IN) :: meshes
       INTEGER(SIK),INTENT(IN) :: num_eqns
@@ -391,7 +386,6 @@ MODULE MultigridMesh
 !> @param myWts the interp weight level instance
 !>
     SUBROUTINE clear_InterpWeightsLevel(myWts)
-      CHARACTER(LEN=*),PARAMETER :: myName='clear_InterpWeightsLevel'
       CLASS(InterpWeightsLevelType),INTENT(INOUT) :: myWts
 
       INTEGER(SIK) :: i
