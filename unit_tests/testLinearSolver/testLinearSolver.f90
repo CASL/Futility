@@ -145,11 +145,11 @@ SUBROUTINE testClear()
   !check results
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
     bool = .NOT.thisLS%isInit .AND. thisLS%solverMethod == -1                   &
-      .AND. .NOT.thisLS%isDecomposed .AND. .NOT.ASSOCIATED(thisLS%A)            &
-      .AND. .NOT.ASSOCIATED(thisLS%X) .AND. thisLS%info == 0                    &
-      .AND. .NOT.ASSOCIATED(thisLS%b) .AND. .NOT.ALLOCATED(thisLS%IPIV)         &
-      .AND. .NOT.ALLOCATED(thisLS%M) .AND. .NOT.thisLS%MPIparallelEnv%isInit()  &
-      .AND. .NOT.thisLS%OMPparallelEnv%isInit()
+        .AND. .NOT.thisLS%isDecomposed .AND. .NOT.ASSOCIATED(thisLS%A)            &
+        .AND. .NOT.ASSOCIATED(thisLS%X) .AND. thisLS%info == 0                    &
+        .AND. .NOT.ASSOCIATED(thisLS%b) .AND. .NOT.ALLOCATED(thisLS%IPIV)         &
+        .AND. .NOT.ALLOCATED(thisLS%M) .AND. .NOT.thisLS%MPIparallelEnv%isInit()  &
+        .AND. .NOT.thisLS%OMPparallelEnv%isInit()
     ASSERT(bool, 'Direct%clear(...)')
   ENDSELECT
   DEALLOCATE(thisLS)
@@ -287,9 +287,9 @@ SUBROUTINE testInit()
   CALL thisLS%init(pList)
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
     bool = (thisLS%isInit .OR. thisLS%solverMethod /= 1        &
-       .OR. .NOT.thisLS%MPIparallelEnv%isInit()                &
-       .OR. .NOT.thisLS%OMPparallelEnv%isInit()                &
-       .OR. thisLS%SolveTime%getTimerName() /= 'testTimer')
+        .OR. .NOT.thisLS%MPIparallelEnv%isInit()                &
+        .OR. .NOT.thisLS%OMPparallelEnv%isInit()                &
+        .OR. thisLS%SolveTime%getTimerName() /= 'testTimer')
     ASSERT(bool, 'Direct%init(...)')
   ENDSELECT
   CALL thisLS%clear()
@@ -309,9 +309,9 @@ SUBROUTINE testInit()
   CALL thisLS%init(pList)
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Direct)
     bool = (thisLS%isInit .AND. thisLS%solverMethod == 1 &
-       .AND. thisLS%MPIparallelEnv%isInit()                &
-       .AND. thisLS%OMPparallelEnv%isInit()                &
-       .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')
+        .AND. thisLS%MPIparallelEnv%isInit()                &
+        .AND. thisLS%OMPparallelEnv%isInit()                &
+        .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')
     ASSERT(bool, 'Direct%init(...)')
   ENDSELECT
   CALL thisLS%clear()
@@ -385,9 +385,9 @@ SUBROUTINE testInit()
   SELECTTYPE(thisLS); TYPE IS(LinearSolvertype_Iterative)
 
     bool = (thisLS%isInit .AND. thisLS%solverMethod == 1 &
-       .AND. thisLS%MPIparallelEnv%isInit() &
-       .AND. thisLS%OMPparallelEnv%isInit() &
-       .AND. thisLS%SolveTime%getTimerName() == 'testTimer')
+        .AND. thisLS%MPIparallelEnv%isInit() &
+        .AND. thisLS%OMPparallelEnv%isInit() &
+        .AND. thisLS%SolveTime%getTimerName() == 'testTimer')
     ASSERT(bool, 'Iterative%init(...)')
       ! Check uninitialized A
     CALL thisLS%A%clear()
@@ -429,9 +429,9 @@ SUBROUTINE testInit()
   CALL thisLS%init(pList)
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
     bool = (thisLS%isInit .AND. thisLS%solverMethod == 1 &
-       .AND. thisLS%MPIparallelEnv%isInit() &
-       .AND. thisLS%OMPparallelEnv%isInit() &
-       .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')
+        .AND. thisLS%MPIparallelEnv%isInit() &
+        .AND. thisLS%OMPparallelEnv%isInit() &
+        .AND. thisLS%SolveTime%getTimerName() == 'LinearSolver Timer')
     ASSERT(bool, 'Iterative%init(...)')
   ENDSELECT
   CALL thisLS%clear()
@@ -628,10 +628,10 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 1._SRK) &
-       .AND. (dummyvec(2) .APPROXEQ. 1._SRK) &
-       .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
-       .AND. (dummyvec(4) .APPROXEQ. 1._SRK) &
-       .AND. (thisLS%info == 0) )
+        .AND. (dummyvec(2) .APPROXEQ. 1._SRK) &
+        .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
+        .AND. (dummyvec(4) .APPROXEQ. 1._SRK) &
+        .AND. (thisLS%info == 0) )
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
   CALL thisLS%clear()
@@ -678,15 +678,15 @@ SUBROUTINE testDirectSolve()
   !  [ 0   -.267  3.7333]
   SELECTTYPE(M => thisLS%M); TYPE IS(TriDiagMatrixType)
     bool = ((M%a(1,1) .APPROXEQ.  0.0_SRK)  &
-       .AND. (M%a(1,2) .APPROXEQ. -0.25_SRK) &
-       .AND. (M%a(1,3) .APPROXEQ. -0.266666666666666666_SRK) &
-       .AND. (M%a(2,1) .APPROXEQ.  0.25_SRK) &
-       .AND. (M%a(2,2) .APPROXEQ. (1.0_SRK/3.75_SRK)) &
-       .AND. (M%a(2,3) .APPROXEQ. (1.0_SRK/3.7333333333333334_SRK)) &
-       .AND. (M%a(3,1) .APPROXEQ. -1.0_SRK)  &
-       .AND. (M%a(3,2) .APPROXEQ. -1.0_SRK)  &
-       .AND. (M%a(3,3) .APPROXEQ.  0.0_SRK)  &
-       .AND. thisLS%isDecomposed)
+        .AND. (M%a(1,2) .APPROXEQ. -0.25_SRK) &
+        .AND. (M%a(1,3) .APPROXEQ. -0.266666666666666666_SRK) &
+        .AND. (M%a(2,1) .APPROXEQ.  0.25_SRK) &
+        .AND. (M%a(2,2) .APPROXEQ. (1.0_SRK/3.75_SRK)) &
+        .AND. (M%a(2,3) .APPROXEQ. (1.0_SRK/3.7333333333333334_SRK)) &
+        .AND. (M%a(3,1) .APPROXEQ. -1.0_SRK)  &
+        .AND. (M%a(3,2) .APPROXEQ. -1.0_SRK)  &
+        .AND. (M%a(3,3) .APPROXEQ.  0.0_SRK)  &
+        .AND. thisLS%isDecomposed)
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
 
@@ -696,9 +696,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-       .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-       .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-       .AND.   thisLS%info == 0)
+        .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+        .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        .AND.   thisLS%info == 0)
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
 
@@ -711,9 +711,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-       .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-       .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-       .AND.   thisLS%isDecomposed)
+        .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+        .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        .AND.   thisLS%isDecomposed)
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
   CALL thisLS%A%clear()
@@ -931,22 +931,22 @@ SUBROUTINE testDirectSolve()
   !   [2/3 -1/2  -9]
   SELECTTYPE(M => thisLS%M); TYPE IS(DenseSquareMatrixType)
     bool = ((M%A(1,1) .APPROXEQ.   3._SRK) &
-       .AND. (M%A(1,2) .APPROXEQ.   6._SRK) &
-       .AND. (M%A(1,3) .APPROXEQ.   9._SRK) &
-       .AND. (M%A(2,1) .APPROXEQ.   1._SRK/3._SRK) &
-       .AND. (M%A(2,2) .APPROXEQ.  -2._SRK) &
-       .AND. (M%A(2,3) .APPROXEQ.  -2._SRK) &
-       .AND. (M%A(3,1) .APPROXEQ.   2._SRK/3._SRK) &
-       .AND. (M%A(3,2) .APPROXEQ. -0.5_SRK) &
-       .AND. (M%A(3,3) .APPROXEQ.  -9._SRK) )
+        .AND. (M%A(1,2) .APPROXEQ.   6._SRK) &
+        .AND. (M%A(1,3) .APPROXEQ.   9._SRK) &
+        .AND. (M%A(2,1) .APPROXEQ.   1._SRK/3._SRK) &
+        .AND. (M%A(2,2) .APPROXEQ.  -2._SRK) &
+        .AND. (M%A(2,3) .APPROXEQ.  -2._SRK) &
+        .AND. (M%A(3,1) .APPROXEQ.   2._SRK/3._SRK) &
+        .AND. (M%A(3,2) .APPROXEQ. -0.5_SRK) &
+        .AND. (M%A(3,3) .APPROXEQ.  -9._SRK) )
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
 
   ! check IPIV: IPIV=[3 3 0]
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
     bool = thisLS%IPIV(1) == 3 &
-           .AND. thisLS%IPIV(2) == 3 &
-           .AND. thisLS%IPIV(3) == 0
+            .AND. thisLS%IPIV(2) == 3 &
+            .AND. thisLS%IPIV(3) == 0
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
 
@@ -956,9 +956,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 1._SRK) &
-       .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
-       .AND. (dummyvec(3) .APPROXEQ. 3._SRK) &
-       .AND. (thisLS%info == 0))
+        .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
+        .AND. (dummyvec(3) .APPROXEQ. 3._SRK) &
+        .AND. (thisLS%info == 0))
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
 
@@ -977,9 +977,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 3._SRK) &
-       .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
-       .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
-       .AND. (thisLS%info == 0))
+        .AND. (dummyvec(2) .APPROXEQ. 2._SRK) &
+        .AND. (dummyvec(3) .APPROXEQ. 1._SRK) &
+        .AND. (thisLS%info == 0))
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
   CALL thisLS%clear()
@@ -1064,15 +1064,15 @@ SUBROUTINE testDirectSolve()
   !  [ 0   -.267  3.7333]
   SELECTTYPE(M => thisLS%M); TYPE IS(TriDiagMatrixType)
     bool = ((M%a(1,1) .APPROXEQ.  0.0_SRK)  &
-       .AND. (M%a(1,2) .APPROXEQ. -.25_SRK)  &
-       .AND. (M%a(1,3) .APPROXEQ. -0.266666666666666666_SRK) &
-       .AND. (M%a(2,1) .APPROXEQ. 0.25_SRK)  &
-       .AND. (M%a(2,2) .APPROXEQ. (1.0_SRK/3.75_SRK)) &
-       .AND. (M%a(2,3) .APPROXEQ. (1.0_SRK/3.7333333333333334_SRK)) &
-       .AND. (M%a(3,1) .APPROXEQ. -1.0_SRK)  &
-       .AND. (M%a(3,2) .APPROXEQ. -1.0_SRK)  &
-       .AND. (M%a(3,3) .APPROXEQ.  0.0_SRK)  &
-       .AND. thisLS%isDecomposed)
+        .AND. (M%a(1,2) .APPROXEQ. -.25_SRK)  &
+        .AND. (M%a(1,3) .APPROXEQ. -0.266666666666666666_SRK) &
+        .AND. (M%a(2,1) .APPROXEQ. 0.25_SRK)  &
+        .AND. (M%a(2,2) .APPROXEQ. (1.0_SRK/3.75_SRK)) &
+        .AND. (M%a(2,3) .APPROXEQ. (1.0_SRK/3.7333333333333334_SRK)) &
+        .AND. (M%a(3,1) .APPROXEQ. -1.0_SRK)  &
+        .AND. (M%a(3,2) .APPROXEQ. -1.0_SRK)  &
+        .AND. (M%a(3,3) .APPROXEQ.  0.0_SRK)  &
+        .AND. thisLS%isDecomposed)
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
 
@@ -1082,9 +1082,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-       .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-       .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-       .AND.   thisLS%info == 0)
+        .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+        .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        .AND.   thisLS%info == 0)
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
 
@@ -1094,9 +1094,9 @@ SUBROUTINE testDirectSolve()
     CALL thisLS%solve()
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-       .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-       .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-       .AND.   thisLS%isDecomposed)
+        .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+        .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        .AND.   thisLS%isDecomposed)
     ASSERT(bool, 'Direct%solve() -LU method')
   ENDSELECT
   CALL thisLS%clear()
@@ -1296,9 +1296,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
-       .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
-       .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
-       .OR. thisLS%info /= 0
+        .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
+        .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
+        .OR. thisLS%info /= 0
     ASSERT(bool, 'PARDISODirect%solve()')
   ENDSELECT
   CALL thisLS%clear()
@@ -1347,9 +1347,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
-       .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
-       .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
-       .OR. thisLS%info /= 0
+        .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
+        .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
+        .OR. thisLS%info /= 0
     ASSERT(bool, 'PARDISODirect%solve()')
   ENDSELECT
   CALL thisLS%clear()
@@ -1401,9 +1401,9 @@ SUBROUTINE testDirectSolve()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = (SOFTEQ(dummyvec(1),1._SRK,1E-14_SRK)  &
-       .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
-       .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
-       .OR. thisLS%info /= 0
+        .AND.  SOFTEQ(dummyvec(2),2._SRK,1E-14_SRK)  &
+        .AND.  SOFTEQ(dummyvec(3),3._SRK,1E-14_SRK)) &
+        .OR. thisLS%info /= 0
     ASSERT(bool, 'SuperLU Direct%solve()')
   ENDSELECT
   CALL thisLS%clear()
@@ -1530,7 +1530,7 @@ SUBROUTINE testIterativeOthers()
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX2)
     bool = (ASSOCIATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
-       .AND.  thisLS%hasX0)
+        .AND.  thisLS%hasX0)
     ASSERT(bool, 'Iterative%setX0(...)')
   ENDSELECT
   DEALLOCATE(thisX2)
@@ -1566,7 +1566,7 @@ SUBROUTINE testIterativeOthers()
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX2)
     bool = (ASSOCIATED(thisLS%X) .AND. ASSOCIATED(thisX2) &
-       .AND.  thisLS%hasX0)
+        .AND.  thisLS%hasX0)
     ASSERT(bool, 'PETScIterative%setX0(...)')
   ENDSELECT
   DEALLOCATE(thisX2)
@@ -1595,8 +1595,8 @@ SUBROUTINE testIterativeOthers()
     CALL thisLS%setConv(-2,1.1_SRK,1.1_SRK,-1,-1)
     !Check if default value is used
     bool = thisLS%maxIters == 1000_SIK .AND. thisLS%normType == 2_SIK &
-      .AND. thisLS%relConvTol == 0.001_SRK .AND. thisLS%absConvTol == 0.001_SRK &
-      .AND. thisLS%nRestart == 30_SIK
+       .AND. thisLS%relConvTol == 0.001_SRK .AND. thisLS%absConvTol == 0.001_SRK &
+       .AND. thisLS%nRestart == 30_SIK
     ASSERT(bool, 'Iterative%setConv(...)')
     FINFO() thisLS%maxIters, thisLS%normType, thisLS%absConvTol, thisLS%nRestart
   ENDSELECT
@@ -1605,8 +1605,8 @@ SUBROUTINE testIterativeOthers()
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
     CALL thisLS%setConv(1_SIK,0.01_SRK,0.001_SRK,100_SIK,10_SIK)
     bool = thisLS%maxIters == 100_SIK .AND. thisLS%normType == 1_SIK &
-      .AND. thisLS%relConvTol == 0.01_SRK .AND. thisLS%absConvTol == 0.001_SRK &
-      .AND. thisLS%nRestart == 10_SIK
+       .AND. thisLS%relConvTol == 0.01_SRK .AND. thisLS%absConvTol == 0.001_SRK &
+       .AND. thisLS%nRestart == 10_SIK
     ASSERT(bool, 'Iterative%setConv(...)')
   ENDSELECT
   CALL thisLS%clear()
@@ -1637,7 +1637,7 @@ SUBROUTINE testIterativeOthers()
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
     restart=30
     bool = maxits == 1000_SIK .AND. rtol == 0.001_SRK &
-       .AND. abstol == 0.001_SRK .AND. restart == 30_SIK
+        .AND. abstol == 0.001_SRK .AND. restart == 30_SIK
     ASSERT(bool, 'PETScIterative%setConv(...)')
   ENDSELECT
 
@@ -1648,7 +1648,7 @@ SUBROUTINE testIterativeOthers()
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
     restart=10
     bool = maxits == 100_SIK .AND. rtol == 0.01_SRK &
-       .AND. abstol == 0.01_SRK .AND. restart == 10_SIK
+        .AND. abstol == 0.01_SRK .AND. restart == 10_SIK
     ASSERT(bool, 'PETScIterative%setConv(...)')
   ENDSELECT
   CALL thisLS%clear()
@@ -1760,7 +1760,7 @@ SUBROUTINE testIterativeOthers()
   CALL resid%init(vecPList)
   ALLOCATE(resid_soln(9))
   resid_soln=(/-8._SRK,-9._SRK,-8._SRK,-9._SRK,-10._SRK, &
-    -9._SRK,-8._SRK,-9._SRK,-8._SRK/)
+      -9._SRK,-8._SRK,-9._SRK,-8._SRK/)
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%getResidual(resid)
@@ -2418,7 +2418,7 @@ SUBROUTINE testIterativeSolve_CGNR()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = (SOFTEQ(dummyvec(1),2._SRK/3._SRK,1.0E-13_SRK) &
-       .AND. SOFTEQ(dummyvec(2),0.5_SRK,1.0E-13_SRK))
+        .AND. SOFTEQ(dummyvec(2),0.5_SRK,1.0E-13_SRK))
     ASSERT(bool, 'Iterative%solve()')
   ENDSELECT
 
@@ -2472,9 +2472,9 @@ SUBROUTINE testIterativeSolve_CGNR()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-           .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-           .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-           .AND.   thisLS%info == 0)
+            .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+            .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+            .AND.   thisLS%info == 0)
     ASSERT(bool, 'Iterative%solve() -CGNR method')
   ENDSELECT
 
@@ -2533,9 +2533,9 @@ SUBROUTINE testIterativeSolve_CGNR()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-       .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-       .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-       .AND.   thisLS%info == 0)
+        .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+        .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        .AND.   thisLS%info == 0)
     ASSERT(bool, 'Iterative%solve() -CGNR method')
   ENDSELECT
 
@@ -2631,9 +2631,9 @@ SUBROUTINE testIterativeSolve_CGNR()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-       .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-       .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-       .AND.   thisLS%info == 0)
+        .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+        .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        .AND.   thisLS%info == 0)
     ASSERT(bool, 'PETScIterative%solve() -CGNR method')
   ENDSELECT
 
@@ -2691,9 +2691,9 @@ SUBROUTINE testIterativeSolve_CGNR()
     ALLOCATE(dummyvec(X%n))
     CALL X%get(dummyvec)
     bool = ((dummyvec(1) .APPROXEQ. 0.46428571428571430_SRK) &
-       .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
-       .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
-       .AND.   thisLS%info == 0)
+        .AND.  (dummyvec(2) .APPROXEQ. 0.85714285714285721_SRK) &
+        .AND.  (dummyvec(3) .APPROXEQ. 0.96428571428571430_SRK) &
+        .AND.   thisLS%info == 0)
     ASSERT(bool, 'PETScIterative%solve() -CGNR method')
   ENDSELECT
 

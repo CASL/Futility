@@ -51,7 +51,7 @@ SUBROUTINE TestOBBox
   CALL box%clear()
 
   bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
-               .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
+      .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
   ASSERT(bool,'box%clear()')
 
 !Test for set
@@ -61,11 +61,11 @@ SUBROUTINE TestOBBox
   CALL point%clear()
   CALL point%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=0.3_SRK)
   CALL box%set(point,(/1._SRK,1._SRK,1._SRK/),(/1._SRK,0._SRK,0._SRK/), &
-    (/0._SRK,1._SRK,1._SRK/),(/0._SRK,0._SRK,0._SRK/))
+      (/0._SRK,1._SRK,1._SRK/),(/0._SRK,0._SRK,0._SRK/))
   CALL box%set(point,(/1._SRK,1._SRK/),(/1._SRK,0._SRK/), &
-    (/0._SRK,1._SRK/),(/0._SRK,1._SRK/))
+      (/0._SRK,1._SRK/),(/0._SRK,1._SRK/))
   CALL box%set(point,(/1._SRK,1._SRK,1._SRK/),(/1._SRK,0._SRK,1._SRK/), &
-    (/0._SRK,1._SRK,1._SRK/))
+      (/0._SRK,1._SRK,1._SRK/))
   CALL box%set(point,(/1._SRK,1._SRK/),(/1._SRK,0._SRK/),(/1._SRK,1._SRK/))
   CALL box%set(point,(/1._SRK,2._SRK/),(/0._SRK,0._SRK/),(/1._SRK,0._SRK/))
   CALL point%clear()
@@ -82,8 +82,8 @@ SUBROUTINE TestOBBox
   u3_2d=(/-1._SRK,1._SRK/)
   CALL box%set(point,e_2d,u1_2d,u2_2d,u3_2d)
   bool = .NOT.(box%p0 /= point .OR. ANY(box%e(1:2) /= e_2d) &
-               .OR. .NOT.(ALL(box%u(1:2,1) .APPROXEQ. u1_2d/SQRT(2._SRK))) &
-               .OR. .NOT.(ALL(box%u(1:2,2) .APPROXEQ. u2_2d/SQRT(2._SRK))))
+      .OR. .NOT.(ALL(box%u(1:2,1) .APPROXEQ. u1_2d/SQRT(2._SRK))) &
+      .OR. .NOT.(ALL(box%u(1:2,2) .APPROXEQ. u2_2d/SQRT(2._SRK))))
   ASSERT(bool, 'box%set(...)')
   !Test for set 3D
   CALL point%clear()
@@ -95,9 +95,9 @@ SUBROUTINE TestOBBox
   u3_3d=(/0._SRK,0._SRK,2._SRK/)
   CALL box%set(point,e_3d,u1_3d,u2_3d,u3_3d)
   bool = .NOT.(box%p0 /= point .OR. ANY(box%e /= e_3d) &
-              .OR. ANY(.NOT.(box%u(:,1) .APPROXEQ. u1_3d/SQRT(2._SRK))) &
-              .OR. ANY(.NOT.(box%u(:,2) .APPROXEQ. u2_3d/SQRT(2._SRK))) &
-              .OR. ANY(.NOT.(box%u(:,3) .APPROXEQ. u3_3d*0.5_SRK)) )
+      .OR. ANY(.NOT.(box%u(:,1) .APPROXEQ. u1_3d/SQRT(2._SRK))) &
+      .OR. ANY(.NOT.(box%u(:,2) .APPROXEQ. u2_3d/SQRT(2._SRK))) &
+      .OR. ANY(.NOT.(box%u(:,3) .APPROXEQ. u3_3d*0.5_SRK)) )
   ASSERT(bool, 'box%set(...)')
   CALL box%clear()
 
@@ -141,7 +141,7 @@ SUBROUTINE TestOBBox
   CALL points2(2)%clear()
   CALL box%intersectLine(line1,points2(1),points2(2))
   bool = .NOT.(ANY(points2(1)%coord /= (/0._SRK,2._SRK/)) &
-               .OR. ANY(points2(2)%coord /= (/0._SRK,4._SRK/)))
+      .OR. ANY(points2(2)%coord /= (/0._SRK,4._SRK/)))
   ASSERT(bool, 'box%intersectLine(...)')
   !Parallel
   CALL points(1)%clear()
@@ -154,7 +154,7 @@ SUBROUTINE TestOBBox
   CALL points2(2)%clear()
   CALL box%intersectLine(line1,points2(1),points2(2))
   bool = .NOT.(ANY(points2(1)%coord /= (/1._SRK,1._SRK/)) &
-               .OR. ANY(points2(2)%coord /= (/2._SRK,2._SRK/)))
+      .OR. ANY(points2(2)%coord /= (/2._SRK,2._SRK/)))
   ASSERT(bool, 'box%intersectLine(...)')
 
   !one point: overlap
@@ -168,7 +168,7 @@ SUBROUTINE TestOBBox
   CALL points2(2)%clear()
   CALL box%intersectLine(line1,points2(1),points2(2))
   bool = .NOT.(.NOT.(ANY(points2(1)%coord .APPROXEQ. (/2._SRK,2._SRK/))) &
-               .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/2._SRK,2._SRK/))))
+      .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/2._SRK,2._SRK/))))
   ASSERT(bool, 'box%intersectLine(...)')
   !one point
 
@@ -227,7 +227,7 @@ SUBROUTINE TestOBBox
   CALL points2(2)%clear()
   CALL box%intersectLine(line1,points2(1),points2(2))
   bool = .NOT.(ANY(.NOT.(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK,1._SRK/))) &
-               .OR. ANY(.NOT.(points2(1)%coord .APPROXEQ. (/0._SRK,4._SRK,1._SRK/))))
+      .OR. ANY(.NOT.(points2(1)%coord .APPROXEQ. (/0._SRK,4._SRK,1._SRK/))))
   ASSERT(bool, 'box%intersectLine(...)')
 
   !Parallel
@@ -241,7 +241,7 @@ SUBROUTINE TestOBBox
   CALL points2(2)%clear()
   CALL box%intersectLine(line1,points2(1),points2(2))
   bool = .NOT.(ANY(points2(1)%coord /= (/1._SRK,1._SRK,1._SRK/)) &
-          .OR. ANY(points2(2)%coord /= (/2._SRK,2._SRK,1._SRK/)))
+      .OR. ANY(points2(2)%coord /= (/2._SRK,2._SRK,1._SRK/)))
   ASSERT(bool, 'box%intersectLine(...)')
 
   !one point: overlap
@@ -255,7 +255,7 @@ SUBROUTINE TestOBBox
   CALL points2(2)%clear()
   CALL box%intersectLine(line1,points2(1),points2(2))
   bool = .NOT.(.NOT.(ANY(points2(1)%coord .APPROXEQ. (/2._SRK,2._SRK,1._SRK/))) &
-               .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/2._SRK,2._SRK,1._SRK/))))
+      .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/2._SRK,2._SRK,1._SRK/))))
   ASSERT(bool, 'box%intersectLine(...)')
 
   !one point
@@ -294,7 +294,7 @@ SUBROUTINE TestOBBox
   CALL points2(2)%clear()
   CALL box%intersectLine(line1,points2(1),points2(2))
   bool = .NOT.(.NOT.(ANY(points2(1)%coord .APPROXEQ. (/0._SRK,3._SRK,0._SRK/))) &
-               .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,3._SRK,0._SRK/))))
+      .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,3._SRK,0._SRK/))))
   ASSERT(bool, 'box%intersectLine(...)')
 
   !No point
@@ -361,9 +361,9 @@ SUBROUTINE TestOBBox
   CALL boxs%clear()
 
   bool = .NOT.(ANY(boxs(1)%u /= 0.0_SRK).OR. ANY(boxs(1)%e /= 0.0_SRK) &
-               .OR. boxs(1)%p0%dim /= 0 .OR. ALLOCATED(boxs(1)%p0%coord) &
-               .OR. ANY(boxs(2)%u /= 0.0_SRK).OR. ANY(boxs(2)%e /= 0.0_SRK) &
-               .OR. boxs(2)%p0%dim /= 0 .OR. ALLOCATED(boxs(2)%p0%coord))
+      .OR. boxs(1)%p0%dim /= 0 .OR. ALLOCATED(boxs(1)%p0%coord) &
+      .OR. ANY(boxs(2)%u /= 0.0_SRK).OR. ANY(boxs(2)%e /= 0.0_SRK) &
+      .OR. boxs(2)%p0%dim /= 0 .OR. ALLOCATED(boxs(2)%p0%coord))
   ASSERT(bool, 'box%clear()')
 
 !Test for intersection
@@ -382,9 +382,9 @@ SUBROUTINE TestOBBox
   CALL points3%clear()
   CALL boxs%intersectLine(lines,points2,points3)
   bool = .NOT.(.NOT.(ANY(points2(1)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
-               .OR. .NOT.(ANY(points3(1)%coord .APPROXEQ. (/0._SRK,4._SRK/))) &
-               .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
-               .OR. .NOT.(ANY(points3(2)%coord .APPROXEQ. (/0._SRK,4._SRK/))))
+      .OR. .NOT.(ANY(points3(1)%coord .APPROXEQ. (/0._SRK,4._SRK/))) &
+      .OR. .NOT.(ANY(points2(2)%coord .APPROXEQ. (/0._SRK,2._SRK/))) &
+      .OR. .NOT.(ANY(points3(2)%coord .APPROXEQ. (/0._SRK,4._SRK/))))
   ASSERT(bool, 'box%intersectLine(...)')
 ENDSUBROUTINE
 !

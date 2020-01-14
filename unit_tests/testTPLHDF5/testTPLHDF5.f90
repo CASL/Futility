@@ -84,7 +84,7 @@ SUBROUTINE testHDF5()
 
   ! Create a dataset
   CALL h5dcreate_f(file_id,'testdata',H5T_NATIVE_INTEGER,dspace_id, &
-    dset_id,error)
+      dset_id,error)
 
   ! Write data to the dataset
   CALL h5dwrite_f(dset_id,H5T_NATIVE_INTEGER,dataz,dims,error)
@@ -142,16 +142,16 @@ SUBROUTINE testHDF5()
   CALL h5screate_simple_f(rank,ldims,dspace_id,error)
   ! Create the dataset
   CALL h5dcreate_f(file_id, 'test', H5T_NATIVE_DOUBLE, gspace_id, &
-                   dset_id,error,plist_id)
+      dset_id,error,plist_id)
   CALL h5pclose_f(plist_id,error)
 
   CALL h5pcreate_f(H5P_DATASET_XFER_F, plist_id,error)
   CALL h5dget_space_f(dset_id,gspace_id,error)
   CALL h5pset_dxpl_mpio_f(plist_id,H5FD_MPIO_COLLECTIVE_F,error)
   CALL h5sselect_hyperslab_f(gspace_id,H5S_SELECT_SET_F,offset,one,error, &
-                             one,ldims)
+      one,ldims)
   CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, datal, gdims, error, &
-                  dspace_id,gspace_id,plist_id)
+      dspace_id,gspace_id,plist_id)
   CALL h5dclose_f(dset_id,error)
   CALL h5sclose_f(dspace_id,error)
   CALL h5sclose_f(gspace_id,error)

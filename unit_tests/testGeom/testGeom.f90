@@ -51,7 +51,7 @@ SUBROUTINE testGeoms
   u3_3d=(/0._SRK,0._SRK,2._SRK/)
   CALL newGeom(params,box)
   bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
-               .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
+      .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
   ASSERT(bool, 'CALL newGeom(params,box) (empty params)')
   CALL params%add('BoxGeom -> CornerPoint',1)
   CALL params%add('BoxGeom -> Vector1',5)
@@ -59,7 +59,7 @@ SUBROUTINE testGeoms
   CALL params%add('BoxGeom -> ExtentVector',0)
   CALL newGeom(params,box)
   bool = .NOT.(ANY(box%u /= 0.0_SRK) .OR. ANY(box%e /= 0.0_SRK) &
-               .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
+      .OR. box%p0%dim /= 0 .OR. ALLOCATED(box%p0%coord))
   ASSERT(bool, 'CALL newGeom(params,box) (bad params)')
   CALL params%clear()
   CALL params%add('BoxGeom -> CornerPoint',point%coord)
@@ -69,9 +69,9 @@ SUBROUTINE testGeoms
   CALL params%add('BoxGeom -> ExtentVector',e_3d)
   CALL newGeom(params,box)
   bool = .NOT.(box%p0 /= point .OR. ANY(box%e /= e_3d) &
-              .OR. ANY(.NOT.(box%u(:,1) .APPROXEQ. u1_3d/SQRT(2._SRK))) &
-              .OR. ANY(.NOT.(box%u(:,2) .APPROXEQ. u2_3d/SQRT(2._SRK))) &
-              .OR. ANY(.NOT.(box%u(:,3) .APPROXEQ. u3_3d*0.5_SRK)) )
+      .OR. ANY(.NOT.(box%u(:,1) .APPROXEQ. u1_3d/SQRT(2._SRK))) &
+      .OR. ANY(.NOT.(box%u(:,2) .APPROXEQ. u2_3d/SQRT(2._SRK))) &
+      .OR. ANY(.NOT.(box%u(:,3) .APPROXEQ. u3_3d*0.5_SRK)) )
   ASSERT(bool, 'CALL newGeom(params,box)')
   CALL params%clear()
 
@@ -80,7 +80,7 @@ SUBROUTINE testGeoms
   CALL point%init(DIM=2,X=0.1_SRK,Y=0.2_SRK)
   CALL newGeom(params,circle1)
   bool=.NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
-             ALLOCATED(circle1%c%coord))
+      ALLOCATED(circle1%c%coord))
   ASSERT(bool, 'CALL newGeom(params,circle1) (empty params)')
   CALL params%add('CircleGeom -> Radius',1)
   CALL params%add('CircleGeom -> Centroid',2)
@@ -88,14 +88,14 @@ SUBROUTINE testGeoms
   CALL params%add('CircleGeom -> StoppingAngle',(/0.0,0.0/))
   CALL newGeom(params,circle1)
   bool=.NOT.(circle1%r /= 0.0_SRK .OR. circle1%c%dim /= 0 .OR. &
-             ALLOCATED(circle1%c%coord))
+      ALLOCATED(circle1%c%coord))
   ASSERT(bool, 'CALL newGeom(params,circle1) (bad params)')
   CALL params%clear()
   CALL params%add('CircleGeom -> Radius',0.5_SRK)
   CALL params%add('CircleGeom -> Centroid',point%coord)
   CALL newGeom(params,circle1)
   bool=.NOT.(circle1%r /= 0.5_SRK .OR. circle1%c%dim /= 2 .OR. &
-             circle1%c%coord(1) /= 0.1_SRK .OR. circle1%c%coord(2) /= 0.2_SRK)
+      circle1%c%coord(1) /= 0.1_SRK .OR. circle1%c%coord(2) /= 0.2_SRK)
   ASSERT(bool, 'CALL newGeom(params,circle1)')
   CALL params%clear()
   CALL point3%clear()
@@ -104,8 +104,8 @@ SUBROUTINE testGeoms
   CALL point3%init(DIM=3,X=0.1_SRK,Y=0.2_SRK,Z=1.3_SRK)
   CALL newGeom(params,cylinder1)
   bool=.NOT.(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
-             ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
-             ALLOCATED(cylinder1%axis%p2%coord))
+      ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+      ALLOCATED(cylinder1%axis%p2%coord))
   ASSERT(bool,'CALL newGeom(params,cylinder1) (empty params)')
   CALL params%add('CylinderGeom -> Radius',1)
   CALL params%add('CylinderGeom -> BottomCentroid',2)
@@ -114,8 +114,8 @@ SUBROUTINE testGeoms
   CALL params%add('CylinderGeom -> StoppingAngle',(/0.0,0.0/))
   CALL newGeom(params,cylinder1)
   bool=.NOT.(cylinder1%r /= 0.0_SRK .OR. cylinder1%axis%p1%dim /= 0 .OR. &
-             ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
-             ALLOCATED(cylinder1%axis%p2%coord))
+      ALLOCATED(cylinder1%axis%p1%coord) .OR. cylinder1%axis%p2%dim /= 0 .OR. &
+      ALLOCATED(cylinder1%axis%p2%coord))
   ASSERT(bool,'CALL newGeom(params,cylinder1) (bad params)')
   CALL params%clear()
   CALL params%add('CylinderGeom -> Radius',1.0_SRK)
@@ -123,9 +123,9 @@ SUBROUTINE testGeoms
   CALL params%add('CylinderGeom -> TopCentroid',point3%coord)
   CALL newGeom(params,cylinder1)
   bool=.NOT.(cylinder1%r /= 1.0_SRK .OR. cylinder1%axis%p1%dim /= 3 .OR. &
-             ANY(cylinder1%axis%p1%coord /= (/0.1_SRK,0.2_SRK,0.3_SRK/)) .OR. &
-             cylinder1%axis%p2%dim /= 3 .OR. &
-             ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/)))
+      ANY(cylinder1%axis%p1%coord /= (/0.1_SRK,0.2_SRK,0.3_SRK/)) .OR. &
+      cylinder1%axis%p2%dim /= 3 .OR. &
+      ANY(cylinder1%axis%p2%coord /= (/0.1_SRK,0.2_SRK,1.3_SRK/)))
   ASSERT(bool,'CALL newGeom(params,cylinder1)')
   CALL params%clear()
   CALL cylinder1%clear()
@@ -137,22 +137,22 @@ SUBROUTINE testGeoms
   CALL point3%init(DIM=3,X=0.4_SRK,Y=0.5_SRK,Z=0.6_SRK)
   CALL newGeom(params,line1)
   bool=.NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
-             ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
+      ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
   ASSERT(bool, 'CALL newGeom(params,line1) (empty params)')
   CALL params%add('LineGeom->StartPoint',1)
   CALL params%add('LineGeom->EndPoint',3)
   CALL newGeom(params,line1)
   bool=.NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
-             ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
+      ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
   ASSERT(bool, 'CALL newGeom(params,line1) (badparams)')
   CALL params%clear()
   CALL params%add('LineGeom->StartPoint',point2%coord)
   CALL params%add('LineGeom->EndPoint',point3%coord)
   CALL newGeom(params,line1)
   bool=.NOT.(line1%p1%dim /= 3 .OR. line1%p2%dim /= 3 .OR. &
-             line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
-             line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
-             line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
+      line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
+      line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
+      line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
   ASSERT(bool, 'CALL newGeom(params,line1)')
   CALL params%clear()
   CALL line1%clear()
@@ -163,20 +163,20 @@ SUBROUTINE testGeoms
   CALL point%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
   CALL newGeom(params,plane1)
   bool = .NOT.(ANY(plane1%n /= 0.0_SRK) .OR. plane1%v0%dim /= 0 .OR. &
-               ALLOCATED(plane1%v0%coord))
+      ALLOCATED(plane1%v0%coord))
   ASSERT(bool, 'CALL newGeom(params,plane1) (empty params)')
   CALL params%add('PlaneGeom->Point',1)
   CALL params%add('PlaneGeom->NormalVector',3)
   CALL newGeom(params,plane1)
   bool = .NOT.(ANY(plane1%n /= 0.0_SRK) .OR. plane1%v0%dim /= 0 .OR. &
-               ALLOCATED(plane1%v0%coord))
+      ALLOCATED(plane1%v0%coord))
   ASSERT(bool, 'CALL newGeom(params,plane1) (bad params)')
   CALL params%clear()
   CALL params%add('PlaneGeom->Point',point%coord)
   CALL params%add('PlaneGeom->NormalVector',n)
   CALL newGeom(params,plane1)
   bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
-               (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
+      (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
   ASSERT(bool, 'CALL newGeom(params,plane1)')
 
   !Test newGeom for Polygon
@@ -191,13 +191,13 @@ SUBROUTINE testGeoms
   CALL newGeom(params,poly)
   ASSERTFAIL(poly%isinit,'%isinit')
   bool=(poly%nVert == 7) .AND. &
-    ALL(poly%vert(1)%coord .APPROXEQA. (/-3.0_SRK,3.0_SRK/)) .AND. &
-    ALL(poly%vert(2)%coord .APPROXEQA. (/3.0_SRK,3.0_SRK/)) .AND. &
-    ALL(poly%vert(3)%coord .APPROXEQA. (/3.0_SRK,0.0_SRK/)) .AND. &
-    ALL(poly%vert(4)%coord .APPROXEQA. (/2.0_SRK,2.0_SRK/)) .AND. &
-    ALL(poly%vert(5)%coord .APPROXEQA. (/2.0_SRK,-2.0_SRK/)) .AND. &
-    ALL(poly%vert(6)%coord .APPROXEQA. (/-2.0_SRK,-2.0_SRK/)) .AND. &
-    ALL(poly%vert(7)%coord .APPROXEQA. (/-2.0_SRK,2.0_SRK/))
+      ALL(poly%vert(1)%coord .APPROXEQA. (/-3.0_SRK,3.0_SRK/)) .AND. &
+      ALL(poly%vert(2)%coord .APPROXEQA. (/3.0_SRK,3.0_SRK/)) .AND. &
+      ALL(poly%vert(3)%coord .APPROXEQA. (/3.0_SRK,0.0_SRK/)) .AND. &
+      ALL(poly%vert(4)%coord .APPROXEQA. (/2.0_SRK,2.0_SRK/)) .AND. &
+      ALL(poly%vert(5)%coord .APPROXEQA. (/2.0_SRK,-2.0_SRK/)) .AND. &
+      ALL(poly%vert(6)%coord .APPROXEQA. (/-2.0_SRK,-2.0_SRK/)) .AND. &
+      ALL(poly%vert(7)%coord .APPROXEQA. (/-2.0_SRK,2.0_SRK/))
   ASSERT(bool,'CALL newGeom(params,poly) (simple)')
 ENDSUBROUTINE
 ENDPROGRAM testGeom

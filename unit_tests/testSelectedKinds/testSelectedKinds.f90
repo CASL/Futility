@@ -400,9 +400,9 @@ SUBROUTINE testAPPROXGE()
   ASSERT(bool, '.APPROXGE. (DOUBLE PRECISION)')
   COMPONENT_TEST('.APPROXGE. (SINGLE PRECISION)')
   bool=.NOT.(.NOT.(1._SSK .APPROXGE. 1.000009_SSK) .OR. &
-               .NOT.(3._SSK .APPROXGE.       1._SSK) .OR. &
-                    (1._SSK .APPROXGE. 1.000011_SSK) .OR. &
-                    (1._SSK .APPROXGE.        3._SSK))
+             .NOT.(3._SSK .APPROXGE.       1._SSK) .OR. &
+                  (1._SSK .APPROXGE. 1.000011_SSK) .OR. &
+                  (1._SSK .APPROXGE.        3._SSK))
   ASSERT(bool, '.APPROXGE. (SINGLE PRECISION)')
 ENDSUBROUTINE testAPPROXGE
 !

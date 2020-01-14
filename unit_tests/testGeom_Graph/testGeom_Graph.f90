@@ -227,34 +227,34 @@ SUBROUTINE testInsertVertex()
   ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 2')
   ASSERT(SIZE(testGraph%vertices,DIM=2) == 2,'SIZE(%vertices,DIM=2) 2')
   bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
-       ALL(testGraph%vertices(:,2) == testCoord(:,3))
+      ALL(testGraph%vertices(:,2) == testCoord(:,3))
   ASSERT(bool,'%vertices (values) 2')
   CALL testGraph%insertVertex(testCoord(:,4))
   ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 3')
   ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 3')
   ASSERT(SIZE(testGraph%vertices,DIM=2) == 3,'SIZE(%vertices,DIM=2) 3')
   bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
-       ALL(testGraph%vertices(:,2) == testCoord(:,3)) .AND. &
-       ALL(testGraph%vertices(:,3) == testCoord(:,4))
+      ALL(testGraph%vertices(:,2) == testCoord(:,3)) .AND. &
+      ALL(testGraph%vertices(:,3) == testCoord(:,4))
   ASSERT(bool,'%vertices (values) 3')
   CALL testGraph%insertVertex(testCoord(:,6))
   ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 4')
   ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 4')
   ASSERT(SIZE(testGraph%vertices,DIM=2) == 4,'SIZE(%vertices,DIM=2) 4')
   bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
-       ALL(testGraph%vertices(:,2) == testCoord(:,3)) .AND. &
-       ALL(testGraph%vertices(:,3) == testCoord(:,4)) .AND. &
-       ALL(testGraph%vertices(:,4) == testCoord(:,6))
+      ALL(testGraph%vertices(:,2) == testCoord(:,3)) .AND. &
+      ALL(testGraph%vertices(:,3) == testCoord(:,4)) .AND. &
+      ALL(testGraph%vertices(:,4) == testCoord(:,6))
   ASSERT(bool,'%vertices (values) 4')
   CALL testGraph%insertVertex(testCoord(:,2))
   ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 5')
   ASSERT(SIZE(testGraph%vertices,DIM=1) == 2,'SIZE(%vertices,DIM=1) 5')
   ASSERT(SIZE(testGraph%vertices,DIM=2) == 5,'SIZE(%vertices,DIM=2) 5')
   bool=ALL(testGraph%vertices(:,1) == testCoord(:,1)) .AND. &
-       ALL(testGraph%vertices(:,2) == testCoord(:,2)) .AND. &
-       ALL(testGraph%vertices(:,3) == testCoord(:,3)) .AND. &
-       ALL(testGraph%vertices(:,4) == testCoord(:,4)) .AND. &
-       ALL(testGraph%vertices(:,5) == testCoord(:,6))
+      ALL(testGraph%vertices(:,2) == testCoord(:,2)) .AND. &
+      ALL(testGraph%vertices(:,3) == testCoord(:,3)) .AND. &
+      ALL(testGraph%vertices(:,4) == testCoord(:,4)) .AND. &
+      ALL(testGraph%vertices(:,5) == testCoord(:,6))
   ASSERT(bool,'%vertices (values) 5')
   CALL testGraph%insertVertex(testCoord(:,5))
   ASSERTFAIL(ALLOCATED(testGraph%vertices),'ALLOCATED(%vertices) 6')

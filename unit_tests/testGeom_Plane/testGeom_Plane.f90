@@ -45,14 +45,14 @@ SUBROUTINE TestPlane
   plane1%v0=point2
   CALL plane1%clear()
   bool = .NOT.(ANY(plane1%n /= 0.0_SRK) .OR. plane1%v0%dim /= 0 .OR. &
-               ALLOCATED(plane1%v0%coord))
+      ALLOCATED(plane1%v0%coord))
   ASSERT(bool, 'plane1%clear()')
 
   COMPONENT_TEST('%set()')
   n=(/1.0_SRK,1.0_SRK,1.0_SRK/)
   CALL plane1%set(n,point)
   bool = .NOT.(ANY(plane1%v0%coord /= 0.5_SRK) .OR. ANY(.NOT.(plane1%n .APPROXEQ. &
-               (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
+      (/1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK),1._SRK/SQRT(3.0_SRK)/))))
   ASSERT(bool, 'plane1%set(...)')
   !CALL plane1%clear()
 
@@ -121,14 +121,14 @@ SUBROUTINE TestPlane
   CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
   points=planes%intersectLine(line1)
   bool = .NOT.(points(1)%dim /= 3 .OR. ANY(.NOT.(points(1)%coord .APPROXEQ. 0.5_SRK)) .OR. &
-               points(2)%dim /= 3 .OR. ANY(.NOT.(points(2)%coord .APPROXEQ. 0.5_SRK)))
+      points(2)%dim /= 3 .OR. ANY(.NOT.(points(2)%coord .APPROXEQ. 0.5_SRK)))
   ASSERT(bool, 'planes%intersect(...)')
 
   COMPONENT_TEST('Elemental %clear()')
   CALL planes%clear()
   bool = .NOT.(ANY(planes(1)%n /= 0.0_SRK) .OR. planes(1)%v0%dim /= 0 .OR. &
-               ALLOCATED(planes(1)%v0%coord) .OR. ANY(planes(2)%n /= 0.0_SRK) .OR. &
-               planes(2)%v0%dim /= 0 .OR. ALLOCATED(planes(2)%v0%coord))
+      ALLOCATED(planes(1)%v0%coord) .OR. ANY(planes(2)%n /= 0.0_SRK) .OR. &
+      planes(2)%v0%dim /= 0 .OR. ALLOCATED(planes(2)%v0%coord))
   ASSERT(bool, 'planes%clear()')
 ENDSUBROUTINE TestPlane
 

@@ -47,7 +47,7 @@ SUBROUTINE TestLine
 !Test clear
   CALL line1%clear()
   bool=.NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
-               ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
+      ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
   ASSERT(bool, 'line1%clear()')
 
   !Redundant call to clear
@@ -59,16 +59,16 @@ SUBROUTINE TestLine
   CALL point3%init(DIM=3,X=0.4_SRK,Y=0.5_SRK,Z=0.6_SRK)
   CALL line1%set(point2,point3)
   bool=.NOT.(line1%p1%dim /= 3 .OR. line1%p2%dim /= 3 .OR. &
-             line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
-             line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
-             line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
+      line1%p1%coord(1) /= 0.1_SRK .OR. line1%p1%coord(2) /= 0.2_SRK .OR. &
+      line1%p1%coord(3) /= 0.3_SRK .OR. line1%p2%coord(1) /= 0.4_SRK .OR. &
+      line1%p2%coord(2) /= 0.5_SRK .OR. line1%p2%coord(3) /= 0.6_SRK)
   ASSERT(bool, 'line1%set(...)')
   CALL line1%clear()
 
   !Redundant call to test input error
   CALL line1%set(point,point2)
   bool = .NOT.(line1%p1%dim /= 0 .OR. line1%p2%dim /= 0 .OR. &
-               ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
+      ALLOCATED(line1%p1%coord) .OR. ALLOCATED(line1%p2%coord))
   ASSERT(bool, 'line1%set(...)')
   CALL line1%clear()
 !
@@ -91,8 +91,8 @@ SUBROUTINE TestLine
   COMPONENT_TEST('%midpoint()')
   point=line1%midpoint()
   bool = .NOT.(point%dim /= 3 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.25_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.35_SRK) .OR. &
-               .NOT.(point%coord(3) .APPROXEQ. 0.45_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.35_SRK) .OR. &
+      .NOT.(point%coord(3) .APPROXEQ. 0.45_SRK))
   ASSERT(bool, 'line1%midpoint()')
 !
 !Test intersect
@@ -118,7 +118,7 @@ SUBROUTINE TestLine
   CALL line2%p2%init(COORD=(/1.0_SRK,0.5_SRK/))
   point=line1%intersectLine(line2)
   bool = .NOT.(point%dim /= 2 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.0_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK))
   ASSERT(bool, 'line1%intersectLine(...)')
 
   !Test for within rounding error of intersect
@@ -154,8 +154,8 @@ SUBROUTINE TestLine
   CALL line2%p2%init(COORD=(/0.0_SRK,1.0_SRK,1.0_SRK/))
   point=line1%intersectLine(line2)
   bool = .NOT.(point%dim /= 3 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.5_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK) .OR. &
-               .NOT.(point%coord(3) .APPROXEQ. 0.5_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK) .OR. &
+      .NOT.(point%coord(3) .APPROXEQ. 0.5_SRK))
   ASSERT(bool, 'line1%intersectLine(...)')
 
   !Redundant calls to test error checking.
@@ -230,7 +230,7 @@ SUBROUTINE TestLine
   CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
   CALL line2%distance2Line(line1,dis,mu1,mu2)
   bool = .NOT.(dis%getDim() /= 3 .OR. mu1 /= 0._SRK .OR. mu2 /= -1._SRK &
-               .OR. dis%p1 /= line2%p1 .OR. dis%length() > EPSREAL)
+      .OR. dis%p1 /= line2%p1 .OR. dis%length() > EPSREAL)
   ASSERT(bool, 'line2%distance2Line(...)')
   !Normal without interscetion
   CALL line1%clear()
@@ -242,7 +242,7 @@ SUBROUTINE TestLine
   CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,-1.0_SRK/))
   CALL line2%distance2Line(line1,dis,mu1,mu2)
   bool = .NOT.(dis%getDim() /= 3 .OR. mu1 /= 0._SRK .OR. mu2 /= 0._SRK &
-               .OR. dis%p1 /= line2%p1 .OR. dis%p2 /= line1%p1)
+      .OR. dis%p1 /= line2%p1 .OR. dis%p2 /= line1%p1)
   ASSERT(bool, 'line2%distance2Line(...)')
 
 !Test for %distance2Point(...)
@@ -357,11 +357,11 @@ SUBROUTINE TestLine
 !      CALL lines(1)%set(points2(1),points3(1))
 !      CALL lines(2)%set(points2(2),points3(2))
   bool = .NOT.(lines(1)%p1%dim /= 3 .OR. lines(1)%p2%dim /= 3 .OR. &
-              ANY(.NOT.(lines(1)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK,0.7_SRK/))) .OR. &
-              ANY(.NOT.(lines(1)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK,0.8_SRK/))) .OR. &
-              lines(2)%p1%dim /= 2 .OR. lines(2)%p2%dim /= 2 .OR. &
-              ANY(.NOT.(lines(2)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK/))) .OR. &
-              ANY(.NOT.(lines(2)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK/))))
+      ANY(.NOT.(lines(1)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK,0.7_SRK/))) .OR. &
+      ANY(.NOT.(lines(1)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK,0.8_SRK/))) .OR. &
+      lines(2)%p1%dim /= 2 .OR. lines(2)%p2%dim /= 2 .OR. &
+      ANY(.NOT.(lines(2)%p1%coord .APPROXEQ. (/0.5_SRK,0.6_SRK/))) .OR. &
+      ANY(.NOT.(lines(2)%p2%coord .APPROXEQ. (/0.6_SRK,0.7_SRK/))))
   ASSERT(bool, 'lines%set(...)')
 
   COMPONENT_TEST('Elemental %getDim()')
@@ -372,13 +372,13 @@ SUBROUTINE TestLine
   COMPONENT_TEST('Elemental %length()')
   s=lines%length()
   bool = .NOT.(.NOT.(s(1) .APPROXEQ. 0.173205080756888_SRK) .OR. &
-               .NOT.(s(2) .APPROXEQ. 0.141421356237309_SRK))
+      .NOT.(s(2) .APPROXEQ. 0.141421356237309_SRK))
   ASSERT(bool, 'lines%length()')
 
   COMPONENT_TEST('Elemental %midPoint()')
   points=lines%midPoint()
   bool = .NOT.(ANY(.NOT.(points(1)%coord .APPROXEQ. (/0.55_SRK,0.65_SRK,0.75_SRK/))) .OR. &
-               ANY(.NOT.(points(2)%coord .APPROXEQ. (/0.55_SRK,0.65_SRK/))))
+      ANY(.NOT.(points(2)%coord .APPROXEQ. (/0.55_SRK,0.65_SRK/))))
   ASSERT(bool, 'lines%midPoint()')
 
   COMPONENT_TEST('Elemental %intersectLine()')
@@ -403,9 +403,9 @@ SUBROUTINE TestLine
   COMPONENT_TEST('Elemental %clear()')
   CALL lines%clear()
   bool = .NOT.((lines(1)%p1%dim /= 0) .OR. (lines(1)%p2%dim /= 0) .OR. &
-               (lines(2)%p1%dim /= 0) .OR. (lines(2)%p2%dim /= 0) .OR. &
-               ALLOCATED(lines(1)%p1%coord) .OR. ALLOCATED(lines(1)%p2%coord) .OR. &
-               ALLOCATED(lines(2)%p1%coord) .OR. ALLOCATED(lines(2)%p2%coord))
+      (lines(2)%p1%dim /= 0) .OR. (lines(2)%p2%dim /= 0) .OR. &
+      ALLOCATED(lines(1)%p1%coord) .OR. ALLOCATED(lines(1)%p2%coord) .OR. &
+      ALLOCATED(lines(2)%p1%coord) .OR. ALLOCATED(lines(2)%p2%coord))
   ASSERT(bool, 'lines%clear(...)')
 ENDSUBROUTINE TestLine
 

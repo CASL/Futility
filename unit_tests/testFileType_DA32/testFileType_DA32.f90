@@ -49,7 +49,7 @@ SUBROUTINE setupTest()
   doublereal=EPSILON(doublereal)
 
   OPEN(UNIT=7,FILE='testReadfile.bin',ACCESS='DIRECT',FORM='UNFORMATTED', &
-    RECL=RECL32,ACTION='READWRITE')
+      RECL=RECL32,ACTION='READWRITE')
 
   tmpData(1)=TRANSFER(.TRUE.,tmpData(1))
   WRITE(7,REC=1) tmpData(1)
@@ -123,7 +123,7 @@ SUBROUTINE testRead()
 
   CALL testDA32File%e%addSurrogate(e)
   CALL testDA32File%initialize(FILE='testReadfile.bin',STATUS='OLD', &
-    ACTION='READ')
+      ACTION='READ')
   CALL testDA32File%fopen()
 
   COMPONENT_TEST('read_sbk')
@@ -360,7 +360,7 @@ SUBROUTINE testWrite()
 
   CALL testDA32File%e%addSurrogate(e)
   CALL testDA32File%initialize(FILE='testReadfile.bin',STATUS='REPLACE', &
-    ACTION='WRITE')
+      ACTION='WRITE')
   CALL testDA32File%fopen()
 
   COMPONENT_TEST('write_sbk')
@@ -504,7 +504,7 @@ SUBROUTINE testWMTBlock()
   CALL testDA32File%writeEmptyBlock(REC=1_SLK,IOSTAT=ioerr)
   ASSERT(ioerr == IOSTAT_END,'Error check uninit')
   CALL testDA32File%initialize(FILE='testReadfile.bin',STATUS='REPLACE', &
-    ACTION='READWRITE')
+      ACTION='READWRITE')
   ioerr=0
   CALL testDA32File%writeEmptyBlock(REC=1_SLK,IOSTAT=ioerr)
   ASSERT(ioerr == IOSTAT_END,'Error check not open')

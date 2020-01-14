@@ -385,11 +385,11 @@ SUBROUTINE testBLAS1()
   ASSERT(bool, 'BLAS_scal(-5,0.5_SDK,da)')
   CALL BLAS_scal(100,0.5_SDK,da,2)
   bool = ALL((da(1:200:2) .APPROXEQ. 0.5_SDK)) .AND. &
-    ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
+      ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, 'BLAS_scal(100,0.5_SDK,da,2)')
   CALL BLAS_scal(50,0.5_SDK,da,1)
   bool = ALL((da(1:50:2) .APPROXEQ. 0.25_SDK)) .AND. &
-    ALL((da(2:50:2) .APPROXEQ. 0.5_SDK))
+      ALL((da(2:50:2) .APPROXEQ. 0.5_SDK))
   ASSERT(bool, 'BLAS_scal(50,0.5_SDK,da,1)')
   !Test vector extensions
   da=2.0_SDK
@@ -398,27 +398,27 @@ SUBROUTINE testBLAS1()
   da(200)=1.0_SDK
   CALL BLAS_scal(db(1:199),da(1:199))
   bool = ALL((da(1:200:2) .APPROXEQ. -1.0_SDK)) .AND. &
-    ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
+      ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, 'BLAS_scal(db,da)')
   CALL BLAS_scal(db,da,-2)
   bool = ALL((da(1:200:2) .APPROXEQ. -1.0_SDK)) .AND. &
-    ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
+      ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, 'BLAS_scal(db,da,-2)')
   CALL BLAS_scal(0,db,da)
   bool = ALL((da(1:200:2) .APPROXEQ. -1.0_SDK)) .AND. &
-    ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
+      ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, 'BLAS_scal(0,db,da)')
   CALL BLAS_scal(db(1:10),da)
   bool = ALL((da(1:200:2) .APPROXEQ. -1.0_SDK)) .AND. &
-    ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
+      ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, 'BLAS_scal(0,db,da)')
   CALL BLAS_scal(100,db,da,2)
   bool = ALL((da(1:200:2) .APPROXEQ. 0.5_SDK)) .AND. &
-    ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
+      ALL((da(2:200:2) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, 'BLAS_scal(100,db,da,2)')
   CALL BLAS_scal(50,db,da,1)
   bool = ALL((da(1:50:2) .APPROXEQ. -0.25_SDK)) .AND. &
-    ALL((da(2:50:2) .APPROXEQ. 0.5_SDK))
+      ALL((da(2:50:2) .APPROXEQ. 0.5_SDK))
   ASSERT(bool, 'BLAS_scal(50,db,da,1)')
   sa=2.0_SSK
   sa(200)=1.0_SSK
@@ -433,11 +433,11 @@ SUBROUTINE testBLAS1()
   ASSERT(bool, 'BLAS_scal(-5,0.5_SSK,sa)')
   CALL BLAS_scal(100,0.5_SSK,sa,2)
   bool = ALL((sa(1:200:2) .APPROXEQ. 0.5_SSK)) .AND. &
-    ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
+      ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_scal(100,0.5_SSK,sa,2)')
   CALL BLAS_scal(50,0.5_SSK,sa,1)
   bool = ALL((sa(1:50:2) .APPROXEQ. 0.25_SSK)) .AND. &
-    ALL((sa(2:50:2) .APPROXEQ. 0.5_SSK))
+      ALL((sa(2:50:2) .APPROXEQ. 0.5_SSK))
   ASSERT(bool, 'BLAS_scal(50,0.5_SSK,sa,1)')
   !Test vector extensions
   sa=2.0_SSK
@@ -446,27 +446,27 @@ SUBROUTINE testBLAS1()
   sa(200)=1.0_SSK
   CALL BLAS_scal(sb(1:199),sa(1:199))
   bool = ALL((sa(1:200:2) .APPROXEQ. -1.0_SSK)) .AND. &
-    ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
+      ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_scal(sb,sa)')
   CALL BLAS_scal(sb,sa,-2)
   bool = ALL((sa(1:200:2) .APPROXEQ. -1.0_SSK)) .AND. &
-    ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
+      ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_scal(sb,sa,-2)')
   CALL BLAS_scal(0,sb,sa)
   bool = ALL((sa(1:200:2) .APPROXEQ. -1.0_SSK)) .AND. &
-    ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
+      ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_scal(0,sb,sa)')
   CALL BLAS_scal(sb(1:10),sa)
   bool = ALL((sa(1:200:2) .APPROXEQ. -1.0_SSK)) .AND. &
-    ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
+      ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_scal(0,sb,sa)')
   CALL BLAS_scal(100,sb,sa,2)
   bool = ALL((sa(1:200:2) .APPROXEQ. 0.5_SSK)) .AND. &
-    ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
+      ALL((sa(2:200:2) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_scal(100,sb,sa,2)')
   CALL BLAS_scal(50,sb,sa,1)
   bool = ALL((sa(1:50:2) .APPROXEQ. -0.25_SSK)) .AND. &
-    ALL((sa(2:50:2) .APPROXEQ. 0.5_SSK))
+      ALL((sa(2:50:2) .APPROXEQ. 0.5_SSK))
   ASSERT(bool, 'BLAS_scal(50,sb,sa,1)')
   WRITE(*,*) '  Passed: CALL BLAS_scal(...)'
 !
@@ -485,11 +485,11 @@ SUBROUTINE testBLAS1()
   ASSERT(bool, 'BLAS_axpy(-10,5.0_SDK,da,db)')
   CALL BLAS_axpy(5,5.0_SDK,da(1:10),db(1:10),2)
   bool = ALL((db(1:10:2) .APPROXEQ. 4.5_SDK)) .AND. &
-    ALL((db(2:10:2) .APPROXEQ. 2.0_SDK))
+      ALL((db(2:10:2) .APPROXEQ. 2.0_SDK))
   ASSERT(bool, 'BLAS_axpy(5,5.0_SDK,da,db,2)')
   CALL BLAS_axpy(10,2.0_SDK,da(1:10),1,db(1:10),1)
   bool = ALL((db(1:10:2) .APPROXEQ. 5.5_SDK)) .AND. &
-    ALL((db(2:10:2) .APPROXEQ. 3.0_SDK))
+      ALL((db(2:10:2) .APPROXEQ. 3.0_SDK))
   ASSERT(bool, 'BLAS_axpy(5,2.0_SDK,da(1:10),2,db(1:10),1)')
   da=0.5_SDK
   db=1.0_SDK
@@ -502,11 +502,11 @@ SUBROUTINE testBLAS1()
   ASSERT(bool, 'BLAS_axpy(-2,da,db)')
   CALL BLAS_axpy(5,da(1:10),db(1:10),2)
   bool = ALL((db(1:10:2) .APPROXEQ. 2.0_SDK)) .AND. &
-    ALL((db(2:10:2) .APPROXEQ. 1.5_SDK))
+      ALL((db(2:10:2) .APPROXEQ. 1.5_SDK))
   ASSERT(bool, 'BLAS_axpy(5,da(1:10),db(1:10),2)')
   CALL BLAS_axpy(10,da(1:10),1,db(1:10),1)
   bool = ALL((db(1:10:2) .APPROXEQ. 2.5_SDK)) .AND. &
-    ALL((db(2:10:2) .APPROXEQ. 2.0_SDK))
+      ALL((db(2:10:2) .APPROXEQ. 2.0_SDK))
   ASSERT(bool, 'BLAS_axpy(10,da(1:10),1,db(1:10),1)')
   da=0.5_SDK
   db=1.0_SDK
@@ -549,11 +549,11 @@ SUBROUTINE testBLAS1()
   ASSERT(bool, 'BLAS_axpy(-10,5.0_SSK,sa,sb)')
   CALL BLAS_axpy(5,5.0_SSK,sa(1:10),sb(1:10),2)
   bool = ALL((sb(1:10:2) .APPROXEQ. 4.5_SSK)) .AND. &
-    ALL((sb(2:10:2) .APPROXEQ. 2.0_SSK))
+      ALL((sb(2:10:2) .APPROXEQ. 2.0_SSK))
   ASSERT(bool, 'BLAS_axpy(5,5.0_SSK,sa,sb,2)')
   CALL BLAS_axpy(10,2.0_SSK,sa(1:10),1,sb(1:10),1)
   bool = ALL((sb(1:10:2) .APPROXEQ. 5.5_SSK)) .AND. &
-    ALL((sb(2:10:2) .APPROXEQ. 3.0_SSK))
+      ALL((sb(2:10:2) .APPROXEQ. 3.0_SSK))
   ASSERT(bool, 'BLAS_axpy(5,2.0_SSK,sa(1:10),2,sb(1:10),1)')
   sa=0.5_SSK
   sb=1.0_SSK
@@ -566,11 +566,11 @@ SUBROUTINE testBLAS1()
   ASSERT(bool, 'BLAS_axpy(-2,sa,sb)')
   CALL BLAS_axpy(5,sa(1:10),sb(1:10),2)
   bool = ALL((sb(1:10:2) .APPROXEQ. 2.0_SSK)) .AND. &
-    ALL((sb(2:10:2) .APPROXEQ. 1.5_SSK))
+      ALL((sb(2:10:2) .APPROXEQ. 1.5_SSK))
   ASSERT(bool, 'BLAS_axpy(5,sa(1:10),sb(1:10),2)')
   CALL BLAS_axpy(10,sa(1:10),1,sb(1:10),1)
   bool = ALL((sb(1:10:2) .APPROXEQ. 2.5_SSK)) .AND. &
-    ALL((sb(2:10:2) .APPROXEQ. 2.0_SSK))
+      ALL((sb(2:10:2) .APPROXEQ. 2.0_SSK))
   ASSERT(bool, 'BLAS_axpy(10,sa(1:10),1,sb(1:10),1)')
   sa=0.5_SSK
   sb=1.0_SSK
@@ -594,12 +594,12 @@ SUBROUTINE testBLAS1()
   salpha(1:10:2)=5.0_SSK
   CALL BLAS_axpy(5,salpha(1:10),sa(1:10),sb(1:10),2)
   bool = ALL((sb(1:10:2) .APPROXEQ. 4.5_SSK)) .AND. &
-    ALL((sb(2:10:2) .APPROXEQ. 2.0_SSK))
+      ALL((sb(2:10:2) .APPROXEQ. 2.0_SSK))
   ASSERT(bool, 'BLAS_axpy(5,salpha(1:10),sa(1:10),sb(1:10),2)')
   salpha(1:10)=2.0_SSK
   CALL BLAS_axpy(10,salpha(1:10),sa(1:10),1,sb(1:10),1)
   bool = ALL((sb(1:10:2) .APPROXEQ. 5.5_SSK)) .AND. &
-    ALL((sb(2:10:2) .APPROXEQ. 3.0_SSK))
+      ALL((sb(2:10:2) .APPROXEQ. 3.0_SSK))
   ASSERT(bool, 'BLAS_axpy(10,salpha(1:10),sa(1:10),1,sb(1:10),1)')
   WRITE(*,*) '  Passed: CALL BLAS_axpy(...)'
 ENDSUBROUTINE testBLAS1
@@ -623,15 +623,15 @@ SUBROUTINE testBLAS2()
   !sgemv_all(trans,m,n,alpha,a,lda,x,incx,beta,y,incy)
   CALL BLAS_matvec('N',4,2,salpha,sa,8,sx,2,sbeta,sy,4)
   bool = (sy(1) .APPROXEQ. 1.0_SSK) .AND. ALL((sy(2:4) .APPROXEQ. 0.25_SSK)) .AND. &
-         ALL((sy(5:13:4) .APPROXEQ. 4.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 0.25_SSK)) .AND. &
-         ALL((sy(10:12) .APPROXEQ. 0.25_SSK)) .AND. ALL((sy(14:128) .APPROXEQ. 0.25_SSK))
+      ALL((sy(5:13:4) .APPROXEQ. 4.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 0.25_SSK)) .AND. &
+      ALL((sy(10:12) .APPROXEQ. 0.25_SSK)) .AND. ALL((sy(14:128) .APPROXEQ. 0.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',4,2,salpha,sa,8,sx,1,sbeta,sy,4,')'
   sy=0.25_SSK
   CALL BLAS_matvec('t',4,2,salpha,sa,8,sx,2,sbeta,sy,5)
   bool = ALL(((/sy(1),sy(6)/) .APPROXEQ. 10.0_SSK)) .AND. &
-         ALL((sy(7:) .APPROXEQ. 0.25_SSK)) .AND. &
-         ALL((sy(2:5) .APPROXEQ. 0.25_SSK))
+      ALL((sy(7:) .APPROXEQ. 0.25_SSK)) .AND. &
+      ALL((sy(2:5) .APPROXEQ. 0.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(t',4,2,salpha,sa,8,sx,2,sbeta,sy,5,')'
 
@@ -646,7 +646,7 @@ SUBROUTINE testBLAS2()
   sy=0.25_SSK
   CALL BLAS_matvec('N',10,128,salpha,sa,sx,1.0_SSK,sy)
   bool = ALL((sy(1:10) .APPROXEQ. 384.25_SSK)) .OR. &
-    ALL((sy(11:) .APPROXEQ. 384.25_SSK))
+      ALL((sy(11:) .APPROXEQ. 384.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',10,128,salpha,sa,sx,1.0_SSK,sy,')'
 
@@ -659,7 +659,7 @@ SUBROUTINE testBLAS2()
   !sgemv_tnaaxby(trans,n,alpha,a,x,beta,y)
   CALL BLAS_matvec('n',32,0.0_SSK,sa,sx,0.0_SSK,sy)
   bool = ALL((sy(1:32) .APPROXEQ. 0.0_SSK)) .AND. &
-    ALL((sy(33:128) .APPROXEQ. 1.0_SSK))
+      ALL((sy(33:128) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(n',32,0.0_SSK,sa,sx,0.0_SSK,sy,')'
 
@@ -667,7 +667,7 @@ SUBROUTINE testBLAS2()
   sy=0.5_SSK
   CALL BLAS_matvec(32,0.0_SSK,sa,sx,2.0_SSK,sy)
   bool = ALL((sy(1:32) .APPROXEQ. 1.0_SSK)) .AND. &
-    ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
+      ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
   ASSERT(bool, 'BLAS_matvec(32,0.0_SSK,sa,sx,2.0_SSK,sy)')
 
   !sgemv_aaxby(alpha,a,x,beta,y)
@@ -687,15 +687,15 @@ SUBROUTINE testBLAS2()
   !sgemv_noalpha(trans,m,n,a,lda,x,incx,beta,y,incy)
   CALL BLAS_matvec('N',4,2,sa,8,sx,2,sbeta,sy,4)
   bool = (sy(1) .APPROXEQ. 1.0_SSK) .AND. ALL((sy(2:4) .APPROXEQ. 0.25_SSK)) .AND. &
-    ALL((sy(5:13:4) .APPROXEQ. 2.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 0.25_SSK)) .AND. &
+      ALL((sy(5:13:4) .APPROXEQ. 2.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 0.25_SSK)) .AND. &
       ALL((sy(10:12) .APPROXEQ. 0.25_SSK)) .AND. ALL((sy(14:128) .APPROXEQ. 0.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',4,2,sa,8,sx,2,sbeta,sy,4,')'
   sy=0.25_SSK
   CALL BLAS_matvec('t',4,2,sa,8,sx,2,sbeta,sy,5)
   bool = ALL(((/sy(1),sy(6)/) .APPROXEQ. 4.0_SSK)) .AND. &
-         ALL((sy(7:) .APPROXEQ. 0.25_SSK)) .AND. &
-         ALL((sy(2:5) .APPROXEQ. 0.25_SSK))
+      ALL((sy(7:) .APPROXEQ. 0.25_SSK)) .AND. &
+      ALL((sy(2:5) .APPROXEQ. 0.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(t',4,2,sa,8,sx,2,sbeta,sy,5,')'
 
@@ -710,7 +710,7 @@ SUBROUTINE testBLAS2()
   sy=0.25_SSK
   CALL BLAS_matvec('N',10,128,sa,sx,1.0_SSK,sy)
   bool = ALL((sy(1:10) .APPROXEQ. 128.25_SSK)) .OR. &
-    ALL((sy(11:) .APPROXEQ. 128.25_SSK))
+      ALL((sy(11:) .APPROXEQ. 128.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',10,128,sa,sx,1.0_SSK,sy,')'
 
@@ -724,7 +724,7 @@ SUBROUTINE testBLAS2()
   !sgemv_tnaxby(trans,n,a,x,beta,y)
   CALL BLAS_matvec('n',32,sa,sx,0.0_SSK,sy)
   bool = ALL((sy(1:32) .APPROXEQ. 0.0_SSK)) .AND. &
-    ALL((sy(33:128) .APPROXEQ. 1.0_SSK))
+      ALL((sy(33:128) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(n',32,sa,sx,0.0_SSK,sy,')'
 
@@ -732,7 +732,7 @@ SUBROUTINE testBLAS2()
   sy=0.5_SSK
   CALL BLAS_matvec(32,sa,sx,2.0_SSK,sy)
   bool = ALL((sy(1:32) .APPROXEQ. 1.0_SSK)) .AND. &
-    ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
+      ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
   ASSERT(bool, 'BLAS_matvec(32,sa,sx,2.0_SSK,sy)')
 
   !sgemv_axby(a,x,beta,y)
@@ -751,15 +751,15 @@ SUBROUTINE testBLAS2()
   !sgemv_nobeta(trans,m,n,alpha,a,lda,x,incx,y,incy)
   CALL BLAS_matvec('N',4,2,salpha,sa,8,sx,2,sy,4)
   bool = (sy(1) .APPROXEQ. 1.0_SSK) .AND. ALL((sy(2:4) .APPROXEQ. 1.0_SSK)) .AND. &
-         ALL((sy(5:13:4) .APPROXEQ. 4.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 1.0_SSK)) .AND. &
-         ALL((sy(10:12) .APPROXEQ. 1.0_SSK)) .AND. ALL((sy(14:128) .APPROXEQ. 1.0_SSK))
+      ALL((sy(5:13:4) .APPROXEQ. 4.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 1.0_SSK)) .AND. &
+      ALL((sy(10:12) .APPROXEQ. 1.0_SSK)) .AND. ALL((sy(14:128) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',4,2,salpha,sa,8,sx,2,sy,4,')'
   sy=1.0_SSK
   CALL BLAS_matvec('t',4,2,salpha,sa,8,sx,2,sy,5)
   bool = ALL(((/sy(1),sy(6)/) .APPROXEQ. 10.0_SSK)) .AND. &
-         ALL((sy(7:) .APPROXEQ. 1.0_SSK)) .AND. &
-         ALL((sy(2:5) .APPROXEQ. 1.0_SSK))
+      ALL((sy(7:) .APPROXEQ. 1.0_SSK)) .AND. &
+      ALL((sy(2:5) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(t',4,2,salpha,sa,8,sx,2,sy,5,')'
 
@@ -774,7 +774,7 @@ SUBROUTINE testBLAS2()
   sy=0.25_SSK
   CALL BLAS_matvec('N',10,128,salpha,sa,sx,sy)
   bool = ALL((sy(1:10) .APPROXEQ. 384.25_SSK)) .OR. &
-    ALL((sy(11:) .APPROXEQ. 384.25_SSK))
+      ALL((sy(11:) .APPROXEQ. 384.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',10,128,salpha,sa,sx,sy,')'
 
@@ -794,7 +794,7 @@ SUBROUTINE testBLAS2()
   sy=0.5_SSK
   CALL BLAS_matvec(32,1.0_SSK,sa,sx,sy)
   bool = ALL((sy(1:32) .APPROXEQ. 32.5_SSK)) .AND. &
-    ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
+      ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
   ASSERT(bool, 'BLAS_matvec(32,0.0_SSK,sa,sx,sy)')
 
   !sgemv_aaxy(alpha,a,x,y)
@@ -812,15 +812,15 @@ SUBROUTINE testBLAS2()
   !sgemv_noalphabeta(trans,m,n,a,lda,x,incx,y,incy)
   CALL BLAS_matvec('N',4,2,sa,8,sx,2,sy,4)
   bool = (sy(1) .APPROXEQ. 1.0_SSK) .AND. ALL((sy(2:4) .APPROXEQ. 1.0_SSK)) .AND. &
-         ALL((sy(5:13:4) .APPROXEQ. 2.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 1.0_SSK)) .AND. &
-         ALL((sy(10:12) .APPROXEQ. 1.0_SSK)) .AND. ALL((sy(14:128) .APPROXEQ. 1.0_SSK))
+      ALL((sy(5:13:4) .APPROXEQ. 2.0_SSK)) .AND. ALL((sy(6:8) .APPROXEQ. 1.0_SSK)) .AND. &
+      ALL((sy(10:12) .APPROXEQ. 1.0_SSK)) .AND. ALL((sy(14:128) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',4,2,sa,8,sx,2,sy,4,')'
   sy=1.0_SSK
   CALL BLAS_matvec('t',4,2,sa,8,sx,2,sy,5)
   bool = ALL(((/sy(1),sy(6)/) .APPROXEQ. 4.0_SSK)) .AND. &
-         ALL((sy(7:) .APPROXEQ. 1.0_SSK)) .AND. &
-         ALL((sy(2:5) .APPROXEQ. 1.0_SSK))
+      ALL((sy(7:) .APPROXEQ. 1.0_SSK)) .AND. &
+      ALL((sy(2:5) .APPROXEQ. 1.0_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(t',4,2,sa,8,sx,2,sy,5,')'
 
@@ -835,7 +835,7 @@ SUBROUTINE testBLAS2()
   sy=0.25_SSK
   CALL BLAS_matvec('N',10,128,sa,sx,sy)
   bool = ALL((sy(1:10) .APPROXEQ. 128.25_SSK)) .OR. &
-    ALL((sy(11:) .APPROXEQ. 0.25_SSK))
+      ALL((sy(11:) .APPROXEQ. 0.25_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(N',10,128,sa,sx,sy,')'
 
@@ -849,7 +849,7 @@ SUBROUTINE testBLAS2()
   !sgemv_tnaxy(trans,n,alpha,a,x,y)
   CALL BLAS_matvec('n',32,sa,sx,sy)
   bool = ALL((sy(1:32) .APPROXEQ. 32.5_SSK)) .AND. &
-    ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
+      ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
   ASSERT(bool, 'BLAS_matvec')
   FINFO() '(n',32,sa,sx,sy,')'
 
@@ -857,7 +857,7 @@ SUBROUTINE testBLAS2()
   sy=0.5_SSK
   CALL BLAS_matvec(32,sa,sx,sy)
   bool = ALL((sy(1:32) .APPROXEQ. 32.5_SSK)) .AND. &
-    ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
+      ALL((sy(33:128) .APPROXEQ. 0.5_SSK))
   ASSERT(bool, 'BLAS_matvec(32,sa,sx,sy)')
 
   !sgemv_axy(alpha,a,x,y)
@@ -898,14 +898,14 @@ SUBROUTINE testBLAS2()
   !dgemv_all(trans,m,n,alpha,a,lda,x,incx,beta,y,incy)
   CALL BLAS_matvec('N',4,2,dalpha,da,8,dx,2,dbeta,dy,4)
   bool = (dy(1) .APPROXEQ. 1.0_SDK) .AND. ALL((dy(2:4) .APPROXEQ. 0.25_SDK)) .AND. &
-         ALL((dy(5:13:4) .APPROXEQ. 4.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 0.25_SDK)) .AND. &
-         ALL((dy(10:12) .APPROXEQ. 0.25_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 0.25_SDK))
+      ALL((dy(5:13:4) .APPROXEQ. 4.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 0.25_SDK)) .AND. &
+      ALL((dy(10:12) .APPROXEQ. 0.25_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 0.25_SDK))
   ASSERT(bool, "BLAS_matvec('N',4,2,dalpha,da,8,dx,1,dbeta,dy,4)")
   dy=0.25_SDK
   CALL BLAS_matvec('t',4,2,dalpha,da,8,dx,2,dbeta,dy,5)
   bool = ALL(((/dy(1),dy(6)/) .APPROXEQ. 10.0_SDK)) .AND. &
-         ALL((dy(7:) .APPROXEQ. 0.25_SDK)) .AND. &
-         ALL((dy(2:5) .APPROXEQ. 0.25_SDK))
+      ALL((dy(7:) .APPROXEQ. 0.25_SDK)) .AND. &
+      ALL((dy(2:5) .APPROXEQ. 0.25_SDK))
   ASSERT(bool, "BLAS_matvec('t',4,2,dalpha,da,8,dx,2,dbeta,dy,5)")
 
   dx(1)=0.5_SDK
@@ -918,7 +918,7 @@ SUBROUTINE testBLAS2()
   dy=0.25_SDK
   CALL BLAS_matvec('N',10,128,dalpha,da,dx,1.0_SDK,dy)
   bool = ALL((dy(1:10) .APPROXEQ. 384.25_SDK)) .OR. &
-         ALL((dy(11:) .APPROXEQ. 384.25_SDK))
+      ALL((dy(11:) .APPROXEQ. 384.25_SDK))
   ASSERT(bool, "BLAS_matvec('N',10,128,dalpha,da,dx,1.0_SDK,dy)")
 
   dy=0.25_SDK
@@ -930,14 +930,14 @@ SUBROUTINE testBLAS2()
   !dgemv_tnaaxby(trans,n,alpha,a,x,beta,y)
   CALL BLAS_matvec('n',32,0.0_SDK,da,dx,0.0_SDK,dy)
   bool = ALL((dy(1:32) .APPROXEQ. 0.0_SDK)) .AND. &
-         ALL((dy(33:128) .APPROXEQ. 1.0_SDK))
+      ALL((dy(33:128) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, "BLAS_matvec('n',32,0.0_SDK,da,dx,0.0_SDK,dy)")
 
   !dgemv_naaxby(n,alpha,a,x,beta,y)
   dy=0.5_SDK
   CALL BLAS_matvec(32,0.0_SDK,da,dx,2.0_SDK,dy)
   bool = ALL((dy(1:32) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
+      ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
   ASSERT(bool, 'BLAS_matvec(32,0.0_SDK,da,dx,2.0_SDK,dy)')
 
   !dgemv_aaxby(alpha,a,x,beta,y)
@@ -957,14 +957,14 @@ SUBROUTINE testBLAS2()
   !dgemv_noalpha(trans,m,n,a,lda,x,incx,beta,y,incy)
   CALL BLAS_matvec('N',4,2,da,8,dx,2,dbeta,dy,4)
   bool = (dy(1) .APPROXEQ. 1.0_SDK) .AND. ALL((dy(2:4) .APPROXEQ. 0.25_SDK)) .AND. &
-         ALL((dy(5:13:4) .APPROXEQ. 2.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 0.25_SDK)) .AND. &
-         ALL((dy(10:12) .APPROXEQ. 0.25_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 0.25_SDK))
+      ALL((dy(5:13:4) .APPROXEQ. 2.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 0.25_SDK)) .AND. &
+      ALL((dy(10:12) .APPROXEQ. 0.25_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 0.25_SDK))
   ASSERT(bool, "BLAS_matvec('N',4,2,da,8,dx,2,dbeta,dy,4)")
   dy=0.25_SDK
   CALL BLAS_matvec('t',4,2,da,8,dx,2,dbeta,dy,5)
   bool = ALL(((/dy(1),dy(6)/) .APPROXEQ. 4.0_SDK)) .AND. &
-         ALL((dy(7:) .APPROXEQ. 0.25_SDK)) .AND. &
-         ALL((dy(2:5) .APPROXEQ. 0.25_SDK))
+      ALL((dy(7:) .APPROXEQ. 0.25_SDK)) .AND. &
+      ALL((dy(2:5) .APPROXEQ. 0.25_SDK))
   ASSERT(bool, "BLAS_matvec('t',4,2,da,8,dx,2,dbeta,dy,5)")
 
   dx(1)=0.5_SDK
@@ -977,7 +977,7 @@ SUBROUTINE testBLAS2()
   dy=0.25_SDK
   CALL BLAS_matvec('N',10,128,da,dx,1.0_SDK,dy)
   bool = ALL((dy(1:10) .APPROXEQ. 128.25_SDK)) .OR. &
-         ALL((dy(11:) .APPROXEQ. 128.25_SDK))
+      ALL((dy(11:) .APPROXEQ. 128.25_SDK))
   ASSERT(bool, "BLAS_matvec('N',10,128,da,dx,1.0_SDK,dy)")
 
   dy=0.25_SDK
@@ -990,14 +990,14 @@ SUBROUTINE testBLAS2()
   !dgemv_tnaxby(trans,n,a,x,beta,y)
   CALL BLAS_matvec('n',32,da,dx,0.0_SDK,dy)
   bool = ALL((dy(1:32) .APPROXEQ. 0.0_SDK)) .AND. &
-    ALL((dy(33:128) .APPROXEQ. 1.0_SDK))
+      ALL((dy(33:128) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, "BLAS_matvec('n',32,da,dx,0.0_SDK,dy)")
 
   !dgemv_naxby(n,a,x,beta,y)
   dy=0.5_SDK
   CALL BLAS_matvec(32,da,dx,2.0_SDK,dy)
   bool = ALL((dy(1:32) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
+      ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
   ASSERT(bool, 'BLAS_matvec(32,da,dx,2.0_SDK,dy)')
 
   !dgemv_axby(a,x,beta,y)
@@ -1016,14 +1016,14 @@ SUBROUTINE testBLAS2()
   !dgemv_nobeta(trans,m,n,alpha,a,lda,x,incx,y,incy)
   CALL BLAS_matvec('N',4,2,dalpha,da,8,dx,2,dy,4)
   bool = (dy(1) .APPROXEQ. 1.0_SDK) .AND. ALL((dy(2:4) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(5:13:4) .APPROXEQ. 4.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(10:12) .APPROXEQ. 1.0_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 1.0_SDK))
+      ALL((dy(5:13:4) .APPROXEQ. 4.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 1.0_SDK)) .AND. &
+      ALL((dy(10:12) .APPROXEQ. 1.0_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, "BLAS_matvec('N',4,2,dalpha,da,8,dx,2,dy,4)")
   dy=1.0_SDK
   CALL BLAS_matvec('t',4,2,dalpha,da,8,dx,2,dy,5)
   bool = ALL(((/dy(1),dy(6)/) .APPROXEQ. 10.0_SDK)) .AND. &
-         ALL((dy(7:) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(2:5) .APPROXEQ. 1.0_SDK))
+      ALL((dy(7:) .APPROXEQ. 1.0_SDK)) .AND. &
+      ALL((dy(2:5) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, "BLAS_matvec('t',4,2,dalpha,da,8,dx,2,dy,5)")
 
   dx(1)=0.5_SDK
@@ -1036,7 +1036,7 @@ SUBROUTINE testBLAS2()
   dy=0.25_SDK
   CALL BLAS_matvec('N',10,128,dalpha,da,dx,dy)
   bool = ALL((dy(1:10) .APPROXEQ. 384.25_SDK)) .OR. &
-         ALL((dy(11:) .APPROXEQ. 384.25_SDK))
+      ALL((dy(11:) .APPROXEQ. 384.25_SDK))
   ASSERT(bool, "BLAS_matvec('N',10,128,dalpha,da,dx,dy)")
 
   dy=1.0_SDK
@@ -1054,7 +1054,7 @@ SUBROUTINE testBLAS2()
   dy=0.5_SDK
   CALL BLAS_matvec(32,1.0_SDK,da,dx,dy)
   bool = ALL((dy(1:32) .APPROXEQ. 32.5_SDK)) .AND. &
-         ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
+      ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
 
   !dgemv_aaxy(alpha,a,x,y)
   dy=3.0_SDK
@@ -1071,14 +1071,14 @@ SUBROUTINE testBLAS2()
   !dgemv_noalphabeta(trans,m,n,a,lda,x,incx,y,incy)
   CALL BLAS_matvec('N',4,2,da,8,dx,2,dy,4)
   bool = (dy(1) .APPROXEQ. 1.0_SDK) .AND. ALL((dy(2:4) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(5:13:4) .APPROXEQ. 2.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(10:12) .APPROXEQ. 1.0_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 1.0_SDK))
+      ALL((dy(5:13:4) .APPROXEQ. 2.0_SDK)) .AND. ALL((dy(6:8) .APPROXEQ. 1.0_SDK)) .AND. &
+      ALL((dy(10:12) .APPROXEQ. 1.0_SDK)) .AND. ALL((dy(14:128) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, "BLAS_matvec('N',4,2,da,8,dx,2,dy,4)")
   dy=1.0_SDK
   CALL BLAS_matvec('t',4,2,da,8,dx,2,dy,5)
   bool = ALL(((/dy(1),dy(6)/) .APPROXEQ. 4.0_SDK)) .AND. &
-         ALL((dy(7:) .APPROXEQ. 1.0_SDK)) .AND. &
-         ALL((dy(2:5) .APPROXEQ. 1.0_SDK))
+      ALL((dy(7:) .APPROXEQ. 1.0_SDK)) .AND. &
+      ALL((dy(2:5) .APPROXEQ. 1.0_SDK))
   ASSERT(bool, "BLAS_matvec('t',4,2,da,8,dx,2,dy,5)")
 
   dx(1)=0.5_SDK
@@ -1091,7 +1091,7 @@ SUBROUTINE testBLAS2()
   dy=0.25_SDK
   CALL BLAS_matvec('N',10,128,da,dx,dy)
   bool = ALL((dy(1:10) .APPROXEQ. 128.25_SDK)) .OR. &
-         ALL((dy(11:) .APPROXEQ. 0.25_SDK))
+      ALL((dy(11:) .APPROXEQ. 0.25_SDK))
   ASSERT(bool, "BLAS_matvec('N',10,128,da,dx,dy)")
 
   dy=1.0_SDK
@@ -1104,14 +1104,14 @@ SUBROUTINE testBLAS2()
   !dgemv_tnaxy(trans,n,alpha,a,x,y)
   CALL BLAS_matvec('n',32,da,dx,dy)
   bool = ALL((dy(1:32) .APPROXEQ. 32.5_SDK)) .AND. &
-         ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
+      ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
   ASSERT(bool, "BLAS_matvec('n',32,da,dx,dy)")
 
   !dgemv_naxy(n,alpha,a,x,y)
   dy=0.5_SDK
   CALL BLAS_matvec(32,da,dx,dy)
   bool = ALL((dy(1:32) .APPROXEQ. 32.5_SDK)) .AND. &
-         ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
+      ALL((dy(33:128) .APPROXEQ. 0.5_SDK))
 
   !dgemv_axy(alpha,a,x,y)
   dy=3.0_SDK
@@ -1159,7 +1159,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,saa,0.0_SSK,sx,1.0_SSK,sy)')
   CALL BLAS_matvec(4,7,ia,ja,saa,salpha,sx,sbeta,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 0.5_SSK)
+      ALL(sy(5:128) == 0.5_SSK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,saa,salpha,sx,sbeta,sy)')
 
   !scsrmv_noNNZ
@@ -1169,7 +1169,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),saa,salpha,sx,sbeta,sy)')
   CALL BLAS_matvec(4,ia,ja,saa,salpha,sx,sbeta,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 0.5_SSK)
+      ALL(sy(5:128) == 0.5_SSK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,saa,salpha,sx,sbeta,sy)')
 
   !scsrmv_noNNNZ
@@ -1185,7 +1185,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,salpha,sx,sbeta,sy)')
   CALL BLAS_matvec(ia,ja,saa,salpha,sx(1:4),1.0_SSK,sy(1:4))
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,salpha,sx(1:4),sbeta,sy(1:4))')
 
   !scsrmv_noAlpha
@@ -1199,7 +1199,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,2,ia,ja,saa,sx,sbeta,sy)')
   CALL BLAS_matvec(4,7,ia,ja,saa,sx,sbeta,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 0.5_SSK)
+      ALL(sy(5:128) == 0.5_SSK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,saa,sx,sbeta,sy)')
 
   !scsrmv_noAlphaNNZ
@@ -1209,7 +1209,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),saa,sx,sbeta,sy)')
   CALL BLAS_matvec(4,ia,ja,saa,sx,sbeta,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 0.5_SSK)
+      ALL(sy(5:128) == 0.5_SSK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,saa,sx,sbeta,sy)')
 
   !scsrmv_noAlphaNNNZ
@@ -1225,7 +1225,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,sx,sbeta,sy)')
   CALL BLAS_matvec(ia,ja,saa,sx(1:4),1.0_SSK,sy(1:4))
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,sx(1:4),1.0_SSK,sy(1:4))')
 
   !scsrmv_noBeta
@@ -1244,7 +1244,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,saa,0.0_SSK,sx,sy)')
   CALL BLAS_matvec(4,7,ia,ja,saa,salpha,sx,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,saa,salpha,sx,sy)')
 
   !scsrmv_noBetaNNZ
@@ -1254,7 +1254,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),saa,salpha,sx,sy)')
   CALL BLAS_matvec(4,ia,ja,saa,salpha,sx,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,saa,salpha,sx,sy)')
 
   !scsrmv_noBetaNNNZ
@@ -1270,7 +1270,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,salpha,sx,sy)')
   CALL BLAS_matvec(ia,ja,saa,salpha,sx(1:4),sy(1:4))
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,salpha,sx(1:4),sy(1:4))')
 
   !scsrmv_noAlphaBeta
@@ -1286,7 +1286,7 @@ SUBROUTINE testBLAS2()
   sy=1.0_SSK
   CALL BLAS_matvec(4,7,ia,ja,saa,sx,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,saa,sx,sy)')
 
   !scsrmv_noAlphaBetaNNZ
@@ -1296,7 +1296,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),saa,sx,sy)')
   CALL BLAS_matvec(4,ia,ja,saa,sx,sy)
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,saa,sx,sy)')
 
   !scsrmv_noAlphaBetaNNNZ
@@ -1312,7 +1312,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,sx,sy)')
   CALL BLAS_matvec(ia,ja,saa,sx(1:4),sy(1:4))
   bool = ALL((sy(1:4) .APPROXEQ. (/8._SSK,3._SSK,9._SSK,12._SSK/))) .AND. &
-         ALL(sy(5:128) == 1.0_SSK)
+      ALL(sy(5:128) == 1.0_SSK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,saa,sx(1:4),sy(1:4))')
 
   ia=(/1,3,4,6,8/)
@@ -1337,7 +1337,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,daa,0.0_SDK,dx,1.0_SDK,dy)')
   CALL BLAS_matvec(4,7,ia,ja,daa,dalpha,dx,dbeta,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 0.5_SDK)
+      ALL(dy(5:128) == 0.5_SDK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,daa,dalpha,dx,dbeta,dy)')
 
   !dcsrmv_noNNZ
@@ -1347,7 +1347,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),daa,dalpha,dx,dbeta,dy)')
   CALL BLAS_matvec(4,ia,ja,daa,dalpha,dx,dbeta,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 0.5_SDK)
+      ALL(dy(5:128) == 0.5_SDK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,daa,dalpha,dx,dbeta,dy)')
 
   !dcsrmv_noNNNZ
@@ -1363,7 +1363,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dalpha,dx,dbeta,dy)')
   CALL BLAS_matvec(ia,ja,daa,dalpha,dx(1:4),1.0_SDK,dy(1:4))
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dalpha,dx(1:4),dbeta,dy(1:4))')
 
   !dcsrmv_noAlpha
@@ -1377,7 +1377,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,2,ia,ja,daa,dx,dbeta,dy)')
   CALL BLAS_matvec(4,7,ia,ja,daa,dx,dbeta,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 0.5_SDK)
+      ALL(dy(5:128) == 0.5_SDK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,daa,dx,dbeta,dy)')
 
   !dcsrmv_noAlphaNNZ
@@ -1387,7 +1387,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),daa,dx,dbeta,dy)')
   CALL BLAS_matvec(4,ia,ja,daa,dx,dbeta,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-    ALL(dy(5:128) == 0.5_SDK)
+      ALL(dy(5:128) == 0.5_SDK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,daa,dx,dbeta,dy)')
 
   !dcsrmv_noAlphaNNNZ
@@ -1403,7 +1403,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dx,dbeta,dy)')
   CALL BLAS_matvec(ia,ja,daa,dx(1:4),1.0_SDK,dy(1:4))
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dx(1:4),1.0_SDK,dy(1:4))')
 
   !dcsrmv_noBeta
@@ -1422,7 +1422,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,daa,0.0_SDK,dx,dy)')
   CALL BLAS_matvec(4,7,ia,ja,daa,dalpha,dx,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,daa,dalpha,dx,dy)')
 
   !dcsrmv_noBetaNNZ
@@ -1432,7 +1432,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),daa,dalpha,dx,dy)')
   CALL BLAS_matvec(4,ia,ja,daa,dalpha,dx,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,daa,dalpha,dx,dy)')
 
   !dcsrmv_noBetaNNNZ
@@ -1448,7 +1448,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dalpha,dx,dy)')
   CALL BLAS_matvec(ia,ja,daa,dalpha,dx(1:4),dy(1:4))
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dalpha,dx(1:4),dy(1:4))')
 
   !dcsrmv_noAlphaBeta
@@ -1464,7 +1464,7 @@ SUBROUTINE testBLAS2()
   dy=1.0_SDK
   CALL BLAS_matvec(4,7,ia,ja,daa,dx,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(4,7,ia,ja,daa,dx,dy)')
 
   !dcsrmv_noAlphaBetaNNZ
@@ -1474,7 +1474,7 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(4,ia,ja(1:2),daa,dx,dy)')
   CALL BLAS_matvec(4,ia,ja,daa,dx,dy)
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(4,ia,ja,daa,dx,dy)')
 
   !dcsrmv_noAlphaBetaNNNZ
@@ -1490,13 +1490,13 @@ SUBROUTINE testBLAS2()
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dx,dy)')
   CALL BLAS_matvec(ia,ja,daa,dx(1:4),dy(1:4))
   bool = ALL((dy(1:4) .APPROXEQ. (/8._SDK,3._SDK,9._SDK,12._SDK/))) .AND. &
-         ALL(dy(5:128) == 1.0_SDK)
+      ALL(dy(5:128) == 1.0_SDK)
   ASSERT(bool, 'BLAS_matvec(ia,ja,daa,dx(1:4),dy(1:4))')
 
   !strsv_all
   !Normal, lower triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
   sx(1:4)=1.0_SSK
   sx(5:8)=(/1.0000000000_SSK,-0.500000000_SSK,-0.16666666666667_SSK,-0.08333333333333_SSK/)
   CALL BLAS_matvec('L','N','N',sa(1:4,1:4),sx(1:4))
@@ -1504,7 +1504,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
   !Increment > 1, lower triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
   sx(9:16)=1.0_SSK
   sx(5:8)=(/1.0000000000_SSK,-0.500000000_SSK,-0.16666666666667_SSK,-0.08333333333333_SSK/)
   CALL BLAS_matvec('L','N','N',sa(1:4,1:4),sx(9:16),2_SIK)
@@ -1512,7 +1512,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
   !Increment < 0, lower triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
   sx(9:16)=1.0_SSK
   sx(5:8)=(/1.0000000000_SSK,-0.500000000_SSK,-0.16666666666667_SSK,-0.08333333333333_SSK/)
   CALL BLAS_matvec('L','N','N',sa(1:4,1:4),sx(9:16),-2_SIK)
@@ -1520,28 +1520,28 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(15:9:-2)
   !Transposed, upper triangular non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
   sx(1:4)=1.0_SSK
   CALL BLAS_matvec('U','T','N',sa(1:4,1:4),sx(1:4))
   ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',sa(1:4,1:4),sx(1:4)')
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
   !Transposed, Incrememnt > 1, upper triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
   sx(9:16)=1.0_SSK
   CALL BLAS_matvec('U','T','N',sa(1:4,1:4),sx(9:16),2_SIK)
   ASSERT(ALL(sx(9:16:2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',sa(1:4,1:4),sx(1:4),2')
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
   !Transposed, Increment < 0, upper triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
   sx(9:16)=1.0_SSK
   CALL BLAS_matvec('U','T','N',sa(1:4,1:4),sx(9:16),-2_SIK)
   ASSERT(ALL(sx(15:9:-2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',sa(1:4,1:4),sx(1:4),-2')
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(15:9:-2)
   !Normal, Upper triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
   sx(1:4)=1.0_SSK
   sx(5:8)=(/0.0000000_SSK,0.0000000_SSK,0.0000000_SSK,0.2500000_SSK/)
   CALL BLAS_matvec('U','N','N',sa(1:4,1:4),sx(1:4))
@@ -1549,7 +1549,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
   !Increment > 1, Upper triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
   sx(9:16)=1.0_SSK
   sx(5:8)=(/0.0000000_SSK,0.0000000_SSK,0.0000000_SSK,0.2500000_SSK/)
   CALL BLAS_matvec('U','N','N',sa(1:4,1:4),sx(9:16),2_SIK)
@@ -1557,7 +1557,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
   !Increment < 0, Upper triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/),ORDER=(/2,1/))
   sx(9:16)=1.0_SSK
   sx(5:8)=(/0.0000000_SSK,0.0000000_SSK,0.0000000_SSK,0.2500000_SSK/)
   CALL BLAS_matvec('U','N','N',sa(1:4,1:4),sx(9:16),-2_SIK)
@@ -1565,21 +1565,21 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(15:9:-2)
   !Transposed, lower triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
   sx(1:4)=1.0_SSK
   CALL BLAS_matvec('L','T','N',sa(1:4,1:4),sx(1:4))
   ASSERT(ALL(sx(1:4) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',sa(1:4,1:4),sx(1:4)')
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(1:4)
   !Transposed, increment > 1, lower triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
   sx(9:16)=1.0_SSK
   CALL BLAS_matvec('L','T','N',sa(1:4,1:4),sx(9:16),2_SIK)
   ASSERT(ALL(sx(9:16:2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',sa(1:4,1:4),sx(1:4),2')
   FINFO() 'Solution: ',sx(5:8),'  Result: ',sx(9:16:2)
   !Transposed, increment < 0, lower triangular, non-unity diagonal
   sa(1:4,1:4)=RESHAPE((/1.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,2.0_SSK,3.0_SSK,4.0_SSK, &
-    0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
+      0.0_SSK,0.0_SSK,3.0_SSK,4.0_SSK,0.0_SSK,0.0_SSK,0.0_SSK,4.0_SSK/),(/4,4/))
   sx(9:16)=1.0_SSK
   CALL BLAS_matvec('L','T','N',sa(1:4,1:4),sx(9:16),-2_SIK)
   ASSERT(ALL(sx(15:9:-2) .APPROXEQA. sx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',sa(1:4,1:4),sx(1:4),-2')
@@ -1588,7 +1588,7 @@ SUBROUTINE testBLAS2()
   !dtrsv_all
   !Normal, lower triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
   dx(1:4)=1.0_SDK
   dx(5:8)=(/1.0000000000_SDK,-0.500000000_SDK,-0.16666666666667_SDK,-0.08333333333333_SDK/)
   CALL BLAS_matvec('L','N','N',da(1:4,1:4),dx(1:4))
@@ -1596,7 +1596,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
   !Increment > 1, lower triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
   dx(9:16)=1.0_SDK
   dx(5:8)=(/1.0000000000_SDK,-0.500000000_SDK,-0.16666666666667_SDK,-0.08333333333333_SDK/)
   CALL BLAS_matvec('L','N','N',da(1:4,1:4),dx(9:16),2_SIK)
@@ -1604,7 +1604,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
   !Increment < 0, lower triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
   dx(9:16)=1.0_SDK
   dx(5:8)=(/1.0000000000_SDK,-0.500000000_SDK,-0.16666666666667_SDK,-0.08333333333333_SDK/)
   CALL BLAS_matvec('L','N','N',da(1:4,1:4),dx(9:16),-2_SIK)
@@ -1612,28 +1612,28 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(15:9:-2)
   !Transposed, upper triangular non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
   dx(1:4)=1.0_SDK
   CALL BLAS_matvec('U','T','N',da(1:4,1:4),dx(1:4))
   ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',da(1:4,1:4),dx(1:4)')
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
   !Transposed, Incrememnt > 1, upper triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
   dx(9:16)=1.0_SDK
   CALL BLAS_matvec('U','T','N',da(1:4,1:4),dx(9:16),2_SIK)
   ASSERT(ALL(dx(9:16:2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',da(1:4,1:4),dx(1:4),2')
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
   !Transposed, Increment < 0, upper triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
   dx(9:16)=1.0_SDK
   CALL BLAS_matvec('U','T','N',da(1:4,1:4),dx(9:16),-2_SIK)
   ASSERT(ALL(dx(15:9:-2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''U'',''T'',''N'',da(1:4,1:4),dx(1:4),-2')
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(15:9:-2)
   !Normal, Upper triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
   dx(1:4)=1.0_SDK
   dx(5:8)=(/0.0000000_SDK,0.0000000_SDK,0.0000000_SDK,0.2500000_SDK/)
   CALL BLAS_matvec('U','N','N',da(1:4,1:4),dx(1:4))
@@ -1641,7 +1641,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
   !Increment > 1, Upper triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
   dx(9:16)=1.0_SDK
   dx(5:8)=(/0.0000000_SDK,0.0000000_SDK,0.0000000_SDK,0.2500000_SDK/)
   CALL BLAS_matvec('U','N','N',da(1:4,1:4),dx(9:16),2_SIK)
@@ -1649,7 +1649,7 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
   !Increment < 0, Upper triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/),ORDER=(/2,1/))
   dx(9:16)=1.0_SDK
   dx(5:8)=(/0.0000000_SDK,0.0000000_SDK,0.0000000_SDK,0.2500000_SDK/)
   CALL BLAS_matvec('U','N','N',da(1:4,1:4),dx(9:16),-2_SIK)
@@ -1657,21 +1657,21 @@ SUBROUTINE testBLAS2()
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(15:9:-2)
   !Transposed, lower triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
   dx(1:4)=1.0_SDK
   CALL BLAS_matvec('L','T','N',da(1:4,1:4),dx(1:4))
   ASSERT(ALL(dx(1:4) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',da(1:4,1:4),dx(1:4)')
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(1:4)
   !Transposed, increment > 1, lower triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
   dx(9:16)=1.0_SDK
   CALL BLAS_matvec('L','T','N',da(1:4,1:4),dx(9:16),2_SIK)
   ASSERT(ALL(dx(9:16:2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',da(1:4,1:4),dx(1:4),2')
   FINFO() 'Solution: ',dx(5:8),'  Result: ',dx(9:16:2)
   !Transposed, increment < 0, lower triangular, non-unity diagonal
   da(1:4,1:4)=RESHAPE((/1.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,2.0_SDK,3.0_SDK,4.0_SDK, &
-    0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
+      0.0_SDK,0.0_SDK,3.0_SDK,4.0_SDK,0.0_SDK,0.0_SDK,0.0_SDK,4.0_SDK/),(/4,4/))
   dx(9:16)=1.0_SDK
   CALL BLAS_matvec('L','T','N',da(1:4,1:4),dx(9:16),-2_SIK)
   ASSERT(ALL(dx(15:9:-2) .APPROXEQA. dx(5:8)),'CALL BLAS_matvec(''L'',''T'',''N'',da(1:4,1:4),dx(1:4),-2')
@@ -1705,31 +1705,31 @@ SUBROUTINE testBLAS3()
   !Check beta=0 and alpha=0 returns all zeros for the bounds specified
   CALL BLAS_matmat('N','n',4,4,4,salpha,sa,4,sb,4,sbeta,sc,4)
   bool = ALL((sc(1:16,1) .APPROXEQ. 0.0_SSK)) .OR. &
-         ALL((sc(17:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(17:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','N',4,4,4,salpha,sa,4,sb,4,sbeta,sc,4)")
   !Check beta=0 and alpha=0 returns all zeros for the bounds specified, n*m>10000
   CALL BLAS_matmat('n','N',101,101,101,salpha,sa,101,sb,101,sbeta,sc,101)
   bool = ALL((sc(1:128,1:79) .APPROXEQ. 0.0_SSK)) .OR. &
-         ALL((sc(1:89,80) .APPROXEQ. 0.0_SSK)) .OR. &
-         ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK))
+      ALL((sc(1:89,80) .APPROXEQ. 0.0_SSK)) .OR. &
+      ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','N',101,101,101,salpha,sa,101,sb,101,sbeta,sc,101))")
   !Check beta=4 and alpha=0 returns 16.0 for the bounds specified
   sc=4.0_SSK
   sbeta=4.0_SSK
   CALL BLAS_matmat('N','N',4,2,4,salpha,sa,4,sb,4,sbeta,sc,4)
   bool = ALL((sc(1:8,1) .APPROXEQ. 16.0_SSK)) .OR. &
-         ALL((sc(17:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(17:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','N',4,4,4,salpha,sa,4,sb,4,sbeta,sc,4)")
   !Check beta=4 and alpha=0 returns 16.0 for the bounds specified, n*m>10000
   sc=4.0_SSK
   CALL BLAS_matmat('N','N',101,101,101,salpha,sa,101,sb,101,sbeta,sc,101)
   bool = ALL((sc(1:128,1:79) .APPROXEQ. 16.0_SSK)) .OR. &
-         ALL((sc(1:89,80) .APPROXEQ. 16.0_SSK)) .OR. &
-         ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK))
+      ALL((sc(1:89,80) .APPROXEQ. 16.0_SSK)) .OR. &
+      ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(90:128,80) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','N',101,101,101,salpha,sa,101,sb,101,sbeta,sc,101)")
   !Check beta=0 and alpha=2 returns 36.0 for the bounds specified
   salpha=2.0_SSK
@@ -1737,16 +1737,16 @@ SUBROUTINE testBLAS3()
   sbeta=0.0_SSK
   CALL BLAS_matmat('N','N',3,5,3,salpha,sa,3,sb,5,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 36.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','N',3,5,3,salpha,sa,101,sb,5,sbeta,sc,3)")
   !Check beta=2.5 and alpha=2 returns 46.0 for the bounds specified
   sc=4.0_SSK
   sbeta=2.5_SSK
   CALL BLAS_matmat('N','N',3,5,3,salpha,sa,3,sb,3,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 46.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','N',3,5,3,salpha,sa,3,sb,3,sbeta,sc,3)")
 
   !Check Single Transpose
@@ -1754,24 +1754,24 @@ SUBROUTINE testBLAS3()
   sbeta=2.5_SSK
   CALL BLAS_matmat('t','N',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 46.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('T','N',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)")
   !Check Second Single Transpose
   sc=4.0_SSK
   sbeta=2.5_SSK
   CALL BLAS_matmat('N','T',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 46.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','T',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)")
   !Check Both Transpose
   sc=4.0_SSK
   sbeta=2.5_SSK
   CALL BLAS_matmat('T','t',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 46.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('T','T',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)")
 
   !With Beta = 0
@@ -1780,22 +1780,22 @@ SUBROUTINE testBLAS3()
   sbeta=0.0_SSK
   CALL BLAS_matmat('T','N',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 46.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('T','N',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)")
   !Check Second Single Transpose
   sc=4.0_SSK
   CALL BLAS_matmat('N','T',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 46.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('N','T',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)")
   !Check Both Transpose
   sc=4.0_SSK
   CALL BLAS_matmat('T','T',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)
   bool = ALL((sc(1:15,1) .APPROXEQ. 46.0_SSK)) .OR. &
-         ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
-         ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
+      ALL((sc(16:128,1) .APPROXEQ. 4.0_SSK)) .OR. &
+      ALL((sc(:,2:128) .APPROXEQ. 4.0_SSK))
   ASSERT(bool, "BLAS_matmat('T','T',3,3,3,salpha,sa,3,sb,3,sbeta,sc,3)")
 
   sc=4.0_SSK
@@ -1851,7 +1851,7 @@ SUBROUTINE testBLAS3()
   sc2=4.0_SSK; salpha2=2.0_SSK; sbeta2=2.5_SSK
 
   CALL BLAS_matmat('N','N',SIZE(sc,DIM=1),SIZE(sc,DIM=2),SIZE(sb,DIM=1),salpha, &
-    sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,SIZE(sc,DIM=1))
+      sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,SIZE(sc,DIM=1))
 
   CALL BLAS_matmat('N','N',salpha2,sa2,sb2,sbeta2,sc2)
   bool = ALL((sc(:,:) .APPROXEQ. sc2(:,:)))
@@ -1862,7 +1862,7 @@ SUBROUTINE testBLAS3()
   sc2=4.0_SSK; salpha2=2.0_SSK; sbeta2=2.5_SSK
 
   CALL BLAS_matmat('N','N',SIZE(sc,DIM=1),SIZE(sc,DIM=2),SIZE(sb,DIM=1),salpha, &
-    sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
+      sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
 
   CALL BLAS_matmat(salpha2,sa2,sb2,sbeta2,sc2)
   bool = ALL((sc(:,:) .APPROXEQ. sc2(:,:)))
@@ -1873,7 +1873,7 @@ SUBROUTINE testBLAS3()
   sc2=4.0_SSK; salpha2=1.0_SSK; sbeta2=2.5_SSK
 
   CALL BLAS_matmat('N','N',SIZE(sc,DIM=1),SIZE(sc,DIM=2),SIZE(sb,DIM=1),salpha, &
-    sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
+      sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
 
   CALL BLAS_matmat(sa2,sb2,sbeta2,sc2)
   bool = ALL((sc(:,:) .APPROXEQ. sc2(:,:)))
@@ -1884,7 +1884,7 @@ SUBROUTINE testBLAS3()
   sc2=4.0_SSK; salpha2=2.0_SSK; sbeta2=1.0_SSK
 
   CALL BLAS_matmat('N','N',SIZE(sc,DIM=1),SIZE(sc,DIM=2),SIZE(sb,DIM=1),salpha, &
-    sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
+      sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
 
   CALL BLAS_matmat(salpha2,sa2,sb2,sc2)
   bool = ALL((sc(:,:) .APPROXEQ. sc2(:,:)))
@@ -1895,7 +1895,7 @@ SUBROUTINE testBLAS3()
   sc2=4.0_SSK; salpha2=1.0_SSK; sbeta2=1.0_SSK
 
   CALL BLAS_matmat('N','N',SIZE(sc,DIM=1),SIZE(sc,DIM=2),SIZE(sb,DIM=1),salpha, &
-    sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
+      sa,SIZE(sc,DIM=1),sb,SIZE(sb,DIM=1),sbeta,sc,1)
 
   CALL BLAS_matmat(sa2,sb2,sc2)
   bool = ALL((sc(:,:) .APPROXEQ. sc2(:,:)))
@@ -1922,31 +1922,31 @@ SUBROUTINE testBLAS3()
   !Check beta=0 and alpha=0 returns all zeros for the bounds specified
   CALL BLAS_matmat('N','n',4,4,4,dalpha,da,4,db,4,dbeta,dc,4)
   bool = ALL((dc(1:16,1) .APPROXEQ. 0.0_SDK)) .OR. &
-         ALL((dc(17:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(17:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','N',4,4,4,dalpha,da,4,db,4,dbeta,dc,4)")
   !Check beta=0 and alpha=0 returns all zeros for the bounds specified, n*m>10000
   CALL BLAS_matmat('n','N',101,101,101,dalpha,da,101,db,101,dbeta,dc,101)
   bool = ALL((dc(1:128,1:79) .APPROXEQ. 0.0_SDK)) .OR. &
-         ALL((dc(1:89,80) .APPROXEQ. 0.0_SDK)) .OR. &
-         ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK))
+      ALL((dc(1:89,80) .APPROXEQ. 0.0_SDK)) .OR. &
+      ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','N',101,101,101,dalpha,da,101,db,101,dbeta,dc,101))")
   !Check beta=4 and alpha=0 returns 16.0 for the bounds specified
   dc=4.0_SDK
   dbeta=4.0_SDK
   CALL BLAS_matmat('N','N',4,2,4,dalpha,da,4,db,4,dbeta,dc,4)
   bool = ALL((dc(1:8,1) .APPROXEQ. 16.0_SDK)) .OR. &
-         ALL((dc(17:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(17:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','N',4,4,4,dalpha,da,4,db,4,dbeta,dc,4)")
   !Check beta=4 and alpha=0 returns 16.0 for the bounds specified, n*m>10000
   dc=4.0_SDK
   CALL BLAS_matmat('N','N',101,101,101,dalpha,da,101,db,101,dbeta,dc,101)
   bool = ALL((dc(1:128,1:79) .APPROXEQ. 16.0_SDK)) .OR. &
-         ALL((dc(1:89,80) .APPROXEQ. 16.0_SDK)) .OR. &
-         ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK))
+      ALL((dc(1:89,80) .APPROXEQ. 16.0_SDK)) .OR. &
+      ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(90:128,80) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','N',101,101,101,dalpha,da,101,db,101,dbeta,dc,101)")
   !Check beta=0 and alpha=2 returns 36.0 for the bounds specified
   dalpha=2.0_SDK
@@ -1954,16 +1954,16 @@ SUBROUTINE testBLAS3()
   dbeta=0.0_SDK
   CALL BLAS_matmat('N','N',3,5,3,dalpha,da,3,db,5,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 36.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','N',101,101,101,dalpha,da,101,db,101,dbeta,dc,101)")
   !Check beta=2.5 and alpha=2 returns 46.0 for the bounds specified
   dc=4.0_SDK
   dbeta=2.5_SDK
   CALL BLAS_matmat('N','N',3,5,3,dalpha,da,3,db,3,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 46.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','N',101,101,101,dalpha,da,101,db,101,dbeta,dc,101)")
 
   !Check Single Transpose
@@ -1971,24 +1971,24 @@ SUBROUTINE testBLAS3()
   dbeta=2.5_SDK
   CALL BLAS_matmat('T','N',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 46.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('T','N',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)")
   !Check Second Single Transpose
   dc=4.0_SDK
   dbeta=2.5_SDK
   CALL BLAS_matmat('N','t',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 46.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','T',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)")
   !Check Both Transpose
   dc=4.0_SDK
   dbeta=2.5_SDK
   CALL BLAS_matmat('t','T',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 46.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('T','T',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)")
   !With Beta = 0
   !Check Single Transpose
@@ -1996,22 +1996,22 @@ SUBROUTINE testBLAS3()
   dbeta=0.0_SDK
   CALL BLAS_matmat('T','N',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 46.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('T','N',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)")
   !Check Second Single Transpose
   dc=4.0_SDK
   CALL BLAS_matmat('N','T',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 46.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('N','T',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)")
   !Check Both Transpose
   dc=4.0_SDK
   CALL BLAS_matmat('T','T',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)
   bool = ALL((dc(1:15,1) .APPROXEQ. 46.0_SDK)) .OR. &
-         ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
-         ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
+      ALL((dc(16:128,1) .APPROXEQ. 4.0_SDK)) .OR. &
+      ALL((dc(:,2:128) .APPROXEQ. 4.0_SDK))
   ASSERT(bool, "BLAS_matmat('T','T',3,3,3,dalpha,da,3,db,3,dbeta,dc,3)")
 
 
@@ -2068,7 +2068,7 @@ SUBROUTINE testBLAS3()
   dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=2.5_SDK
 
   CALL BLAS_matmat('N','N',SIZE(dc,DIM=1),SIZE(dc,DIM=2),SIZE(db,DIM=1),dalpha, &
-    da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
+      da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
 
   CALL BLAS_matmat('N','N',dalpha2,da2,db2,dbeta2,dc2)
   bool = ALL((dc(:,:) .APPROXEQ. dc2(:,:)))
@@ -2079,7 +2079,7 @@ SUBROUTINE testBLAS3()
   dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=2.5_SDK
 
   CALL BLAS_matmat('N','N',SIZE(dc,DIM=1),SIZE(dc,DIM=2),SIZE(db,DIM=1),dalpha, &
-    da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
+      da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
 
   CALL BLAS_matmat(dalpha2,da2,db2,dbeta2,dc2)
   bool = ALL((dc(:,:) .APPROXEQ. dc2(:,:)))
@@ -2090,7 +2090,7 @@ SUBROUTINE testBLAS3()
   dc2=4.0_SDK; dalpha2=1.0_SDK; dbeta2=2.5_SDK
 
   CALL BLAS_matmat('N','N',SIZE(da,DIM=1),SIZE(db,DIM=2),SIZE(da,DIM=2),dalpha, &
-    da,SIZE(da,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
+      da,SIZE(da,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,SIZE(dc,DIM=1))
 
   CALL BLAS_matmat(da2,db2,dbeta2,dc2)
   bool = ALL((dc(:,:) .APPROXEQ. dc2(:,:)))
@@ -2101,7 +2101,7 @@ SUBROUTINE testBLAS3()
   dc2=4.0_SDK; dalpha2=2.0_SDK; dbeta2=1.0_SDK
 
   CALL BLAS_matmat('N','N',SIZE(dc,DIM=1),SIZE(dc,DIM=2),SIZE(db,DIM=1),dalpha, &
-    da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,1)
+      da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,1)
 
   CALL BLAS_matmat(dalpha2,da2,db2,dc2)
   bool = ALL((dc(:,:) .APPROXEQ. dc2(:,:)))
@@ -2112,7 +2112,7 @@ SUBROUTINE testBLAS3()
   dc2=4.0_SDK; dalpha2=1.0_SDK; dbeta2=1.0_SDK
 
   CALL BLAS_matmat('N','N',SIZE(dc,DIM=1),SIZE(dc,DIM=2),SIZE(db,DIM=1),dalpha, &
-    da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,1)
+      da,SIZE(dc,DIM=1),db,SIZE(db,DIM=1),dbeta,dc,1)
 
   CALL BLAS_matmat(da2,db2,dc2)
   bool = ALL((dc(:,:) .APPROXEQ. dc2(:,:)))

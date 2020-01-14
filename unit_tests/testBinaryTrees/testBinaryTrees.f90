@@ -60,7 +60,7 @@ bool = .NOT.(.NOT.t2%match(2) .AND. t2%match(10) .AND. .NOT.t2%match(4))
 ASSERT(bool, 't2%match(...)')
 WRITE(*,*) '  Passed: t2%match(...)'
 bool = .NOT.(t2%findIndex(4) /= 3 .AND. t2%findIndex(2) /= 6 .AND. &
-             t2%findIndex(10) /= -1)
+      t2%findIndex(10) /= -1)
 ASSERT(bool, 't2%findIndex(...)')
 WRITE(*,*) '  Passed: t2%findIndex(...)'
 
@@ -70,11 +70,11 @@ WRITE(*,*) '  Passed: CALL BurnBinaryTree(t2)'
 
 CALL SortedBinaryTree(t2,1,(/1,2,3,4,5,6/))
 bool = .NOT.((t2%val /= 4 .AND. t2%index /= 4) .AND. &
-             (t2%left%val /= 2 .AND. t2%left%index /= 2) .AND. &
-             (t2%right%val /= 6 .AND. t2%right%index /= 6) .AND. &
-             (t2%left%left%val /= 1 .AND. t2%left%left%index /= 1) .AND. &
-             (t2%left%right%val /= 3 .AND. t2%left%right%index /= 3) .AND. &
-             (t2%right%left%val /= 5 .AND. t2%right%left%index /= 5))
+      (t2%left%val /= 2 .AND. t2%left%index /= 2) .AND. &
+      (t2%right%val /= 6 .AND. t2%right%index /= 6) .AND. &
+      (t2%left%left%val /= 1 .AND. t2%left%left%index /= 1) .AND. &
+      (t2%left%right%val /= 3 .AND. t2%left%right%index /= 3) .AND. &
+      (t2%right%left%val /= 5 .AND. t2%right%left%index /= 5))
 ASSERT(bool, 'SortedBinaryTree(...)')
 WRITE(*,*) '  Passed: CALL SortedBinaryTree(...)'
 CALL BurnBinaryTree(t2)

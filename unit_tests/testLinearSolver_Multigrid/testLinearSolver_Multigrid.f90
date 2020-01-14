@@ -197,8 +197,8 @@ SUBROUTINE testInit()
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   bool = (thisLS%isInit .AND. thisLS%solverMethod == MULTIGRID &
-     .AND. thisLS%MPIparallelEnv%isInit() &
-     .AND. thisLS%OMPparallelEnv%isInit() )
+      .AND. thisLS%MPIparallelEnv%isInit() &
+      .AND. thisLS%OMPparallelEnv%isInit() )
   ASSERT(bool, 'Iterative%init(...)')
 
   ref_level_info = RESHAPE((/1,9, &
@@ -416,8 +416,8 @@ SUBROUTINE testIterativeSolve_Multigrid()
     level_info=RESHAPE((/2,18,2,34,2,66,2,130/),(/2,4/))
     level_info_local=RESHAPE((/2,9,2,17,2,33,2,65/),(/2,4/))
     CALL init_MultigridLS(thisLS,num_eqns_in=2,nx_in=130, &
-                            nprocs_in=2,level_info=level_info, &
-                            level_info_local=level_info_local,nlevels=4)
+      nprocs_in=2,level_info=level_info, &
+      level_info_local=level_info_local,nlevels=4)
 
     ! Create solution:
     ALLOCATE(soln(n_2G))
@@ -705,7 +705,7 @@ ENDSUBROUTINE testSetInterp
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE init_MultigridLS(thisLS,num_eqns_in,nx_in,ny_in,nz_in,nprocs_in, &
-                            level_info,level_info_local,nlevels)
+      level_info,level_info_local,nlevels)
   TYPE(LinearSolverType_Multigrid),INTENT(INOUT) :: thisLS
   INTEGER(SIK),INTENT(IN),OPTIONAL :: nx_in,ny_in,nz_in,num_eqns_in,nprocs_in
   INTEGER(SIK),INTENT(IN),OPTIONAL :: level_info(:,:),level_info_local(:,:)
@@ -770,15 +770,15 @@ SUBROUTINE init_MultigridLS(thisLS,num_eqns_in,nx_in,ny_in,nz_in,nprocs_in, &
   CALL pList%add('LinearSolverType->Multigrid->nz_local',nz)
   CALL pList%add('LinearSolverType->Multigrid->num_eqns',num_eqns)
   IF(PRESENT(nlevels)) &
-    CALL pList%add('LinearSolverType->Multigrid->nlevels',nlevels)
+      CALL pList%add('LinearSolverType->Multigrid->nlevels',nlevels)
   IF(PRESENT(level_info)) &
-    CALL pList%add('LinearSolverType->Multigrid->level_info',level_info)
+      CALL pList%add('LinearSolverType->Multigrid->level_info',level_info)
   IF(PRESENT(level_info_local)) &
-    CALL pList%add('LinearSolverType->Multigrid->level_info_local', &
-                                                       level_info_local)
+      CALL pList%add('LinearSolverType->Multigrid->level_info_local', &
+      level_info_local)
   IF(.NOT.(PRESENT(nlevels) .AND. PRESENT(level_info) .AND. &
       PRESENT(level_info_local))) &
-    CALL pList%add('LinearSolverType->Multigrid->manuallySetLevelInfo',.FALSE.)
+      CALL pList%add('LinearSolverType->Multigrid->manuallySetLevelInfo',.FALSE.)
 
   CALL thisLS%init(pList)
 
@@ -910,10 +910,10 @@ SUBROUTINE setupInterpMatrices_1D2G_2proc(thisLS)
           inx_c=inx/2
           col=(inx_c-1)*2+ieqn
           CALL thisLS%interpMats_PETSc(iLevel)% &
-                        set(row+offset(1),col+offset(2),0.5_SRK)
+              set(row+offset(1),col+offset(2),0.5_SRK)
           col=inx_c*2+ieqn
           CALL thisLS%interpMats_PETSc(iLevel)% &
-                        set(row+offset(1),col+offset(2),0.5_SRK)
+              set(row+offset(1),col+offset(2),0.5_SRK)
         ENDIF
       ENDDO
     ENDDO
@@ -939,18 +939,18 @@ SUBROUTINE setupLinearProblem_1D1G(thisLS,soln)
   ALLOCATE(A_temp(n,n))
   A_temp=0.0_SRK
   SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
-  DO i=1,n
-    IF(i > 1) THEN
-      CALL A%set(i,i-1,-1.0_SRK)
-      A_temp(i,i-1)=-1.0_SRK
-    ENDIF
-    CALL A%set(i,i,2.5_SRK)
-    A_temp(i,i)=2.5_SRK
-    IF(i < n) THEN
-      CALL A%set(i,i+1,-1.0_SRK)
-      A_temp(i,i+1)=-1.0_SRK
-    ENDIF
-  ENDDO
+    DO i=1,n
+      IF(i > 1) THEN
+        CALL A%set(i,i-1,-1.0_SRK)
+        A_temp(i,i-1)=-1.0_SRK
+      ENDIF
+      CALL A%set(i,i,2.5_SRK)
+      A_temp(i,i)=2.5_SRK
+      IF(i < n) THEN
+        CALL A%set(i,i+1,-1.0_SRK)
+        A_temp(i,i+1)=-1.0_SRK
+      ENDIF
+    ENDDO
   ENDSELECT
 
   ALLOCATE(b(n))
@@ -1026,7 +1026,7 @@ SUBROUTINE setupLinearProblem_1D2G_2proc(thisLS,soln)
 
   SELECTTYPE(LS_b => thisLS%b); TYPE IS(PETScVectorType)
     CALL LS_b%setRange_array((nstart-1)*2+1,(nend-1)*2+2, &
-                              b((nstart-1)*2+1:(nend-1)*2+2))
+        b((nstart-1)*2+1:(nend-1)*2+2))
   ENDSELECT
   DEALLOCATE(b)
 #endif

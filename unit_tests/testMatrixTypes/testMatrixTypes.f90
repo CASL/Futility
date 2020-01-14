@@ -131,36 +131,36 @@ SUBROUTINE testMatrix()
   CALL yTrilinosVector%init(vecPlist)
 #endif
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
+  TYPE IS(SparseMatrixType)
 !Test for sparse matrices
-      !test clear
-      !make matrix w/out using untested init
-      thisMatrix%isInit=.TRUE.
-      thisMatrix%n=100
-      thisMatrix%nnz=100
-      thisMatrix%jCount=100
-      thisMatrix%iPrev=100
-      thisMatrix%jPrev=100
-      ALLOCATE(thisMatrix%ia(101))
-      ALLOCATE(thisMatrix%a(100))
-      ALLOCATE(thisMatrix%ja(100))
-      thisMatrix%ia(101)=101
+    !test clear
+    !make matrix w/out using untested init
+    thisMatrix%isInit=.TRUE.
+    thisMatrix%n=100
+    thisMatrix%nnz=100
+    thisMatrix%jCount=100
+    thisMatrix%iPrev=100
+    thisMatrix%jPrev=100
+    ALLOCATE(thisMatrix%ia(101))
+    ALLOCATE(thisMatrix%a(100))
+    ALLOCATE(thisMatrix%ja(100))
+    thisMatrix%ia(101)=101
   ENDSELECT
 
   !clear it
   CALL thisMatrix%clear()
 
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      !check for success
-      bool = ((thisMatrix%jPrev == 0).AND.(thisMatrix%iPrev == 0)) &
+  TYPE IS(SparseMatrixType)
+    !check for success
+    bool = ((thisMatrix%jPrev == 0).AND.(thisMatrix%iPrev == 0)) &
         .AND.(((.NOT.thisMatrix%isInit).AND.(thisMatrix%jCount == 0)) &
         .AND.((thisMatrix%nnz == 0).AND.(thisMatrix%n == 0)))
-      ASSERT(bool, 'sparse%clear()')
-      bool = (.NOT.ALLOCATED(thisMatrix%a) .AND. .NOT.ALLOCATED(thisMatrix%ja)) &
-              .AND. .NOT.ALLOCATED(thisMatrix%ia)
-      ASSERT(bool, 'sparse%clear()')
-      WRITE(*,*) '  Passed: CALL sparse%clear()'
+    ASSERT(bool, 'sparse%clear()')
+    bool = (.NOT.ALLOCATED(thisMatrix%a) .AND. .NOT.ALLOCATED(thisMatrix%ja)) &
+        .AND. .NOT.ALLOCATED(thisMatrix%ia)
+    ASSERT(bool, 'sparse%clear()')
+    WRITE(*,*) '  Passed: CALL sparse%clear()'
   ENDSELECT
 
   !check init
@@ -171,15 +171,15 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      !check for success
-      bool = (((thisMatrix%isInit) .OR. (thisMatrix%jCount == 0)) &
+  TYPE IS(SparseMatrixType)
+    !check for success
+    bool = (((thisMatrix%isInit) .OR. (thisMatrix%jCount == 0)) &
         .OR. ((thisMatrix%nnz == 10) .OR. (thisMatrix%n == 10))) &
         .OR. ((thisMatrix%jPrev ==0) .OR. (thisMatrix%iPrev ==0))
-      ASSERT(bool, 'sparse%init(...)')
-      bool = ((SIZE(thisMatrix%a) == 10).OR.(SIZE(thisMatrix%ja) == 10)) &
+    ASSERT(bool, 'sparse%init(...)')
+    bool = ((SIZE(thisMatrix%a) == 10).OR.(SIZE(thisMatrix%ja) == 10)) &
         .OR.((SIZE(thisMatrix%ia) == 11).OR.(thisMatrix%ia(11) == 11))
-      ASSERT(bool, 'sparse%init(...)')
+    ASSERT(bool, 'sparse%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -195,12 +195,12 @@ SUBROUTINE testMatrix()
   !init it twice so on 2nd init, isInit==.TRUE.
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType); thisMatrix%nnz=1
+  TYPE IS(SparseMatrixType); thisMatrix%nnz=1
   ENDSELECT
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      ASSERT(thisMatrix%nnz==1, 'sparse%init(...)')
+  TYPE IS(SparseMatrixType)
+    ASSERT(thisMatrix%nnz==1, 'sparse%init(...)')
   ENDSELECT
   !init with n<1
   CALL thisMatrix%clear()
@@ -254,77 +254,77 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%init(pList)
 
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      CALL thisMatrix%setShape(1,1,1._SRK)
-      CALL thisMatrix%setShape(1,3,2._SRK)
-      CALL thisMatrix%setShape(2,3,3._SRK)
-      CALL thisMatrix%setShape(3,1,4._SRK)
-      CALL thisMatrix%setShape(3,2,5._SRK)
-      CALL thisMatrix%setShape(3,3,6._SRK)
-      !expect:
-      !a:  [1 2 3 4 5 6]
-      !ja: [1 3 3 1 2 3]
-      !ia: [1 3 4 7]
-      DO i=1,6
-        bool = (thisMatrix%a(i) == a_vals(i)) &
-          .AND. (thisMatrix%ja(i) == ja_vals(i))
-        ASSERT(bool, 'sparse%setShape(...)')
-        IF(i < 5) THEN
-          bool = thisMatrix%ia(i) == ia_vals(i)
-          ASSERT(bool, 'sparse%setShape(...)')
-        ENDIF
-      ENDDO
-      bool = (thisMatrix%jPrev == 3).AND.(thisMatrix%iPrev == 3)
+  TYPE IS(SparseMatrixType)
+    CALL thisMatrix%setShape(1,1,1._SRK)
+    CALL thisMatrix%setShape(1,3,2._SRK)
+    CALL thisMatrix%setShape(2,3,3._SRK)
+    CALL thisMatrix%setShape(3,1,4._SRK)
+    CALL thisMatrix%setShape(3,2,5._SRK)
+    CALL thisMatrix%setShape(3,3,6._SRK)
+    !expect:
+    !a:  [1 2 3 4 5 6]
+    !ja: [1 3 3 1 2 3]
+    !ia: [1 3 4 7]
+    DO i=1,6
+      bool = (thisMatrix%a(i) == a_vals(i)) &
+        .AND. (thisMatrix%ja(i) == ja_vals(i))
       ASSERT(bool, 'sparse%setShape(...)')
-      !repeat same as before, but dont provide set_val
-      CALL thisMatrix%clear()
-      CALL thisMatrix%init(pList)
-      CALL thisMatrix%setShape(1,1)
-      CALL thisMatrix%setShape(1,3)
-      CALL thisMatrix%setShape(2,3)
-      CALL thisMatrix%setShape(3,1)
-      CALL thisMatrix%setShape(3,2)
-      CALL thisMatrix%setShape(3,3)
-      !check to make sure a is all zeros
-      DO i=1,6
-        ASSERT(thisMatrix%a(i) == 0, 'sparse%setShape(...)')
-      ENDDO
-      CALL thisMatrix%clear()
+      IF(i < 5) THEN
+        bool = thisMatrix%ia(i) == ia_vals(i)
+        ASSERT(bool, 'sparse%setShape(...)')
+      ENDIF
+    ENDDO
+    bool = (thisMatrix%jPrev == 3).AND.(thisMatrix%iPrev == 3)
+    ASSERT(bool, 'sparse%setShape(...)')
+    !repeat same as before, but dont provide set_val
+    CALL thisMatrix%clear()
+    CALL thisMatrix%init(pList)
+    CALL thisMatrix%setShape(1,1)
+    CALL thisMatrix%setShape(1,3)
+    CALL thisMatrix%setShape(2,3)
+    CALL thisMatrix%setShape(3,1)
+    CALL thisMatrix%setShape(3,2)
+    CALL thisMatrix%setShape(3,3)
+    !check to make sure a is all zeros
+    DO i=1,6
+      ASSERT(thisMatrix%a(i) == 0, 'sparse%setShape(...)')
+    ENDDO
+    CALL thisMatrix%clear()
 
-      ! Perform a series of exception tests:
-      ! These tests rely on DBC being hit, so if it's not available, don't do them
+    ! Perform a series of exception tests:
+    ! These tests rely on DBC being hit, so if it's not available, don't do them
 #ifdef FUTILITY_DBC
-      DBC_STOP_ON_FAIL=.false.
-      ASSERT(DBC_COUNTER==0, "")
-      CALL thisMatrix%init(pList)
+    DBC_STOP_ON_FAIL=.false.
+    ASSERT(DBC_COUNTER==0, "")
+    CALL thisMatrix%init(pList)
 
-      ! 1. Try to set data before setShape is called
-      ! Trips jcount>0 require
-      CALL thisMatrix%set(1,1,1._SRK)
-      ASSERT(DBC_COUNTER==1, "")
+    ! 1. Try to set data before setShape is called
+    ! Trips jcount>0 require
+    CALL thisMatrix%set(1,1,1._SRK)
+    ASSERT(DBC_COUNTER==1, "")
 
-      ! 2. Pass in j's out of order in setShape
-      ! Hits only ordering require
-      CALL thisMatrix%setShape(1,1)
-      CALL thisMatrix%setShape(1,4)
-      CALL thisMatrix%setShape(1,3)
-      ASSERT(DBC_COUNTER==2, "")
+    ! 2. Pass in j's out of order in setShape
+    ! Hits only ordering require
+    CALL thisMatrix%setShape(1,1)
+    CALL thisMatrix%setShape(1,4)
+    CALL thisMatrix%setShape(1,3)
+    ASSERT(DBC_COUNTER==2, "")
 
-      CALL thisMatrix%clear()
-      DBC_STOP_ON_FAIL=.true.
-      DBC_COUNTER=0
+    CALL thisMatrix%clear()
+    DBC_STOP_ON_FAIL=.true.
+    DBC_COUNTER=0
 #endif
-      ! Exception tests done
+    ! Exception tests done
 
-      !test set (first initialize the values w/ setShape)
-      CALL thisMatrix%clear()
-      CALL thisMatrix%init(pList)
-      CALL thisMatrix%setShape(1,1)
-      CALL thisMatrix%setShape(1,3)
-      CALL thisMatrix%setShape(2,3)
-      CALL thisMatrix%setShape(3,1)
-      CALL thisMatrix%setShape(3,2)
-      CALL thisMatrix%setShape(3,3)
+    !test set (first initialize the values w/ setShape)
+    CALL thisMatrix%clear()
+    CALL thisMatrix%init(pList)
+    CALL thisMatrix%setShape(1,1)
+    CALL thisMatrix%setShape(1,3)
+    CALL thisMatrix%setShape(2,3)
+    CALL thisMatrix%setShape(3,1)
+    CALL thisMatrix%setShape(3,2)
+    CALL thisMatrix%setShape(3,3)
   ENDSELECT
 
   !use set to update the values
@@ -335,17 +335,17 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(3,2,5._SRK)
   CALL thisMatrix%set(3,3,6._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      !now compare actual values with expected
-      DO i=1,6
-        bool = (thisMatrix%a(i) == a_vals(i)) &
-          .AND. (thisMatrix%ja(i) == ja_vals(i))
+  TYPE IS(SparseMatrixType)
+    !now compare actual values with expected
+    DO i=1,6
+      bool = (thisMatrix%a(i) == a_vals(i)) &
+        .AND. (thisMatrix%ja(i) == ja_vals(i))
+      ASSERT(bool, 'sparse%set(...)')
+      IF(i < 5) THEN
+        bool = thisMatrix%ia(i) == ia_vals(i)
         ASSERT(bool, 'sparse%set(...)')
-        IF(i < 5) THEN
-          bool = thisMatrix%ia(i) == ia_vals(i)
-          ASSERT(bool, 'sparse%set(...)')
-        ENDIF
-      ENDDO
+      ENDIF
+    ENDDO
   ENDSELECT
 
 
@@ -581,7 +581,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->nnz',6)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType); CALL thisMatrix%setShape(1,1)
+  TYPE IS(SparseMatrixType); CALL thisMatrix%setShape(1,1)
   ENDSELECT
 
   CALL pList%clear()
@@ -591,18 +591,18 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%init(pList)
 
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      CALL thisMatrix%setShape(1,1)
-      CALL thisMatrix%setShape(2,2)
+  TYPE IS(SparseMatrixType)
+    CALL thisMatrix%setShape(1,1)
+    CALL thisMatrix%setShape(2,2)
   ENDSELECT
   CALL thisMatrix%set(1,2,1._SRK)
 
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      DO i=1,SIZE(thisMatrix%a)
-        ASSERT(thisMatrix%a(i) /= 1._SRK, 'sparse%set(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL sparse%set(...)'
+  TYPE IS(SparseMatrixType)
+    DO i=1,SIZE(thisMatrix%a)
+      ASSERT(thisMatrix%a(i) /= 1._SRK, 'sparse%set(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL sparse%set(...)'
   ENDSELECT
 
   !Perform test of functionality of get function
@@ -612,36 +612,36 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%clear()
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      CALL thisMatrix%setShape(1,1,1._SRK)
-      CALL thisMatrix%setShape(1,3,2._SRK)
-      CALL thisMatrix%setShape(2,3,3._SRK)
-      CALL thisMatrix%setShape(3,1,4._SRK)
-      CALL thisMatrix%setShape(3,2,5._SRK)
-      CALL thisMatrix%setShape(3,3,6._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(9))
-      CALL thisMatrix%get(1,1,dummyvec(1))
-      CALL thisMatrix%get(2,1,dummyvec(2))
-      CALL thisMatrix%get(3,1,dummyvec(3))
-      CALL thisMatrix%get(1,2,dummyvec(4))
-      CALL thisMatrix%get(2,2,dummyvec(5))
-      CALL thisMatrix%get(3,2,dummyvec(6))
-      CALL thisMatrix%get(1,3,dummyvec(7))
-      CALL thisMatrix%get(2,3,dummyvec(8))
-      CALL thisMatrix%get(3,3,dummyvec(9))
-      bool = (dummyvec(1) == 1._SRK) .AND. &
-             (dummyvec(2) == 0._SRK) .AND. &
-             (dummyvec(3) == 4._SRK)
-      ASSERT(bool, 'sparse%get(...)') !column one check
-      bool = (dummyvec(4) == 0._SRK) .AND. &
-             (dummyvec(5) == 0._SRK) .AND. &
-             (dummyvec(6) == 5._SRK)
-      ASSERT(bool, 'sparse%get(...)') !column two check
-      bool = (dummyvec(7) == 2._SRK) .AND. &
-             (dummyvec(8) == 3._SRK) .AND. &
-             (dummyvec(9) == 6._SRK)
-      ASSERT(bool, 'sparse%get(...)') !column three check
+  TYPE IS(SparseMatrixType)
+    CALL thisMatrix%setShape(1,1,1._SRK)
+    CALL thisMatrix%setShape(1,3,2._SRK)
+    CALL thisMatrix%setShape(2,3,3._SRK)
+    CALL thisMatrix%setShape(3,1,4._SRK)
+    CALL thisMatrix%setShape(3,2,5._SRK)
+    CALL thisMatrix%setShape(3,3,6._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(9))
+    CALL thisMatrix%get(1,1,dummyvec(1))
+    CALL thisMatrix%get(2,1,dummyvec(2))
+    CALL thisMatrix%get(3,1,dummyvec(3))
+    CALL thisMatrix%get(1,2,dummyvec(4))
+    CALL thisMatrix%get(2,2,dummyvec(5))
+    CALL thisMatrix%get(3,2,dummyvec(6))
+    CALL thisMatrix%get(1,3,dummyvec(7))
+    CALL thisMatrix%get(2,3,dummyvec(8))
+    CALL thisMatrix%get(3,3,dummyvec(9))
+    bool = (dummyvec(1) == 1._SRK) .AND. &
+           (dummyvec(2) == 0._SRK) .AND. &
+           (dummyvec(3) == 4._SRK)
+    ASSERT(bool, 'sparse%get(...)') !column one check
+    bool = (dummyvec(4) == 0._SRK) .AND. &
+           (dummyvec(5) == 0._SRK) .AND. &
+           (dummyvec(6) == 5._SRK)
+    ASSERT(bool, 'sparse%get(...)') !column two check
+    bool = (dummyvec(7) == 2._SRK) .AND. &
+           (dummyvec(8) == 3._SRK) .AND. &
+           (dummyvec(9) == 6._SRK)
+    ASSERT(bool, 'sparse%get(...)') !column three check
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL sparse%get(...)'
@@ -650,22 +650,22 @@ SUBROUTINE testMatrix()
 !Test for dense square matrices
   ALLOCATE(DenseSquareMatrixType :: thisMatrix)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      !test clear
-      !make matrix w/out using untested init
-      thisMatrix%isInit=.TRUE.
-      thisMatrix%n=10
-      thisMatrix%isSymmetric=.TRUE.
-      ALLOCATE(thisMatrix%a(10,10))
+  TYPE IS(DenseSquareMatrixType)
+    !test clear
+    !make matrix w/out using untested init
+    thisMatrix%isInit=.TRUE.
+    thisMatrix%n=10
+    thisMatrix%isSymmetric=.TRUE.
+    ALLOCATE(thisMatrix%a(10,10))
   ENDSELECT
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      bool = (.NOT.(thisMatrix%isInit) .AND. (thisMatrix%n == 0)) &
-          .AND. (.NOT.(thisMatrix%isSymmetric) &
-          .AND. (.NOT.ALLOCATED(thisMatrix%a)))
-      ASSERT(bool, 'densesquare%clear()')
-      WRITE(*,*) '  Passed: CALL densesquare%clear()'
+  TYPE IS(DenseSquareMatrixType)
+    bool = (.NOT.(thisMatrix%isInit) .AND. (thisMatrix%n == 0)) &
+        .AND. (.NOT.(thisMatrix%isSymmetric) &
+        .AND. (.NOT.ALLOCATED(thisMatrix%a)))
+    ASSERT(bool, 'densesquare%clear()')
+    WRITE(*,*) '  Passed: CALL densesquare%clear()'
   ENDSELECT
 
   !check init
@@ -675,13 +675,13 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      bool = ((thisMatrix%isInit) .AND. (thisMatrix%n == 10)) &
-          .AND. (.NOT.thisMatrix%isSymmetric)
-      ASSERT(bool, 'densesquare%init(...)')
-      bool = (SIZE(thisMatrix%a,1) == 10) .AND. &
-             (SIZE(thisMatrix%a,2) == 10)
-      ASSERT(bool, 'densesquare%init(...)')
+  TYPE IS(DenseSquareMatrixType)
+    bool = ((thisMatrix%isInit) .AND. (thisMatrix%n == 10)) &
+        .AND. (.NOT.thisMatrix%isSymmetric)
+    ASSERT(bool, 'densesquare%init(...)')
+    bool = (SIZE(thisMatrix%a,1) == 10) .AND. &
+        (SIZE(thisMatrix%a,2) == 10)
+    ASSERT(bool, 'densesquare%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -690,10 +690,10 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      bool = ((thisMatrix%isInit) .AND. (thisMatrix%n == 10)) &
-              .AND. (thisMatrix%isSymmetric)
-      ASSERT(bool, 'densesquare%init(...)')
+  TYPE IS(DenseSquareMatrixType)
+    bool = ((thisMatrix%isInit) .AND. (thisMatrix%n == 10)) &
+        .AND. (thisMatrix%isSymmetric)
+    ASSERT(bool, 'densesquare%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with double init (isInit==true on 2nd try)
@@ -703,13 +703,13 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType); thisMatrix%isSymmetric=.FALSE.
+  TYPE IS(DenseSquareMatrixType); thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      bool = .NOT. thisMatrix%isSymmetric
-      ASSERT(bool, 'densesquare%init(...)')
+  TYPE IS(DenseSquareMatrixType)
+    bool = .NOT. thisMatrix%isSymmetric
+    ASSERT(bool, 'densesquare%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with n<1
@@ -743,12 +743,12 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      bool = ((thisMatrix%a(1,1)==1._SRK) &
-          .AND.(thisMatrix%a(1,2)==2._SRK)) &
-          .AND.((thisMatrix%a(2,1)==2._SRK) &
-          .AND.(thisMatrix%a(2,2)==3._SRK))
-      ASSERT(bool, 'densesquare%set(...)')
+  TYPE IS(DenseSquareMatrixType)
+    bool = ((thisMatrix%a(1,1)==1._SRK) &
+        .AND.(thisMatrix%a(1,2)==2._SRK)) &
+        .AND.((thisMatrix%a(2,1)==2._SRK) &
+        .AND.(thisMatrix%a(2,2)==3._SRK))
+    ASSERT(bool, 'densesquare%set(...)')
   ENDSELECT
 
   !Test BLAS_matvec
@@ -952,12 +952,12 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      bool = ((thisMatrix%a(1,1)==1._SRK) &
-          .AND.(thisMatrix%a(1,2)==2._SRK)) &
-          .AND.((thisMatrix%a(2,1)==2._SRK) &
-          .AND.(thisMatrix%a(2,2)==3._SRK))
-      ASSERT(bool, 'densesquare%set(...)')
+  TYPE IS(DenseSquareMatrixType)
+    bool = ((thisMatrix%a(1,1)==1._SRK) &
+        .AND.(thisMatrix%a(1,2)==2._SRK)) &
+        .AND.((thisMatrix%a(2,1)==2._SRK) &
+        .AND.(thisMatrix%a(2,2)==3._SRK))
+    ASSERT(bool, 'densesquare%set(...)')
   ENDSELECT
   !check matrix that hasnt been init, i,j out of bounds
   CALL thisMatrix%clear()
@@ -982,58 +982,58 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.FALSE.)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,3,2._SRK)
-      CALL thisMatrix%set(2,3,3._SRK)
-      CALL thisMatrix%set(3,1,4._SRK)
-      CALL thisMatrix%set(3,2,5._SRK)
-      CALL thisMatrix%set(3,3,6._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(9))
-      CALL thisMatrix%get(1,1,dummyvec(1))
-      CALL thisMatrix%get(2,1,dummyvec(2))
-      CALL thisMatrix%get(3,1,dummyvec(3))
-      CALL thisMatrix%get(1,2,dummyvec(4))
-      CALL thisMatrix%get(2,2,dummyvec(5))
-      CALL thisMatrix%get(3,2,dummyvec(6))
-      CALL thisMatrix%get(1,3,dummyvec(7))
-      CALL thisMatrix%get(2,3,dummyvec(8))
-      CALL thisMatrix%get(3,3,dummyvec(9))
-      bool = (dummyvec(1) == 1._SRK) .AND. &
-             (dummyvec(2) == 0._SRK) .AND. &
-             (dummyvec(3) == 4._SRK)
-      ASSERT(bool, 'densesquare%get(...)')
-      FINFO() dummyvec
-      bool = (dummyvec(4) == 0._SRK) .AND. &
-             (dummyvec(5) == 0._SRK) .AND. &
-             (dummyvec(6) == 5._SRK)
-      ASSERT(bool, 'densesquare%get(...)')
-      bool = (dummyvec(7) == 2._SRK) .AND. &
-             (dummyvec(8) == 3._SRK) .AND. &
-             (dummyvec(9) == 6._SRK)
-      ASSERT(bool, 'densesquare%get(...)')
+  TYPE IS(DenseSquareMatrixType)
+    CALL thisMatrix%set(1,1,1._SRK)
+    CALL thisMatrix%set(1,3,2._SRK)
+    CALL thisMatrix%set(2,3,3._SRK)
+    CALL thisMatrix%set(3,1,4._SRK)
+    CALL thisMatrix%set(3,2,5._SRK)
+    CALL thisMatrix%set(3,3,6._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(9))
+    CALL thisMatrix%get(1,1,dummyvec(1))
+    CALL thisMatrix%get(2,1,dummyvec(2))
+    CALL thisMatrix%get(3,1,dummyvec(3))
+    CALL thisMatrix%get(1,2,dummyvec(4))
+    CALL thisMatrix%get(2,2,dummyvec(5))
+    CALL thisMatrix%get(3,2,dummyvec(6))
+    CALL thisMatrix%get(1,3,dummyvec(7))
+    CALL thisMatrix%get(2,3,dummyvec(8))
+    CALL thisMatrix%get(3,3,dummyvec(9))
+    bool = (dummyvec(1) == 1._SRK) .AND. &
+           (dummyvec(2) == 0._SRK) .AND. &
+           (dummyvec(3) == 4._SRK)
+    ASSERT(bool, 'densesquare%get(...)')
+    FINFO() dummyvec
+    bool = (dummyvec(4) == 0._SRK) .AND. &
+           (dummyvec(5) == 0._SRK) .AND. &
+           (dummyvec(6) == 5._SRK)
+    ASSERT(bool, 'densesquare%get(...)')
+    bool = (dummyvec(7) == 2._SRK) .AND. &
+           (dummyvec(8) == 3._SRK) .AND. &
+           (dummyvec(9) == 6._SRK)
+    ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      CALL thisMatrix%get(4,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'densesquare%get(...)')
-      CALL thisMatrix%get(-1,2,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'densesquare%get(...)')
-      CALL thisMatrix%get(2,-1,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'densesquare%get(...)')
+  TYPE IS(DenseSquareMatrixType)
+    CALL thisMatrix%get(4,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'densesquare%get(...)')
+    CALL thisMatrix%get(-1,2,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'densesquare%get(...)')
+    CALL thisMatrix%get(2,-1,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseSquareMatrixType)
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy == 0.0_SRK
-      ASSERT(bool, 'densesquare%get(...)')
+  TYPE IS(DenseSquareMatrixType)
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy == 0.0_SRK
+    ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL densesquare%get(...)'
@@ -1042,13 +1042,13 @@ SUBROUTINE testMatrix()
 !Test for tri-diagonal matrices
   ALLOCATE(TriDiagMatrixType :: thisMatrix)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      !test clear
-      !make matrix w/out using untested init
-      thisMatrix%isInit=.TRUE.
-      thisMatrix%n=10
-      thisMatrix%isSymmetric=.TRUE.
-      ALLOCATE(thisMatrix%a(10,10))
+  TYPE IS(TriDiagMatrixType)
+    !test clear
+    !make matrix w/out using untested init
+    thisMatrix%isInit=.TRUE.
+    thisMatrix%n=10
+    thisMatrix%isSymmetric=.TRUE.
+    ALLOCATE(thisMatrix%a(10,10))
   ENDSELECT
 !  These are unsuported matvecs.  I added an error message in order to catch unsported types so these don't run anymore without throwing an error
   ncnt=e%getCounter(EXCEPTION_ERROR)
@@ -1065,12 +1065,12 @@ SUBROUTINE testMatrix()
 
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      bool = (.NOT.(thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
-          .AND.((.NOT.thisMatrix%isSymmetric) &
-          .AND.(.NOT.ALLOCATED(thisMatrix%a)))
-      ASSERT(bool, 'tridiag%clear()')
-      WRITE(*,*) '  Passed: CALL tridiag%clear()'
+  TYPE IS(TriDiagMatrixType)
+    bool = (.NOT.(thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+        .AND.((.NOT.thisMatrix%isSymmetric) &
+        .AND.(.NOT.ALLOCATED(thisMatrix%a)))
+    ASSERT(bool, 'tridiag%clear()')
+    WRITE(*,*) '  Passed: CALL tridiag%clear()'
   ENDSELECT
   !check init
   CALL pList%clear()
@@ -1079,12 +1079,12 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.(.NOT.thisMatrix%isSymmetric)
-      ASSERT(bool, 'tridiag%init(...)')
-      bool = (SIZE(thisMatrix%a,1) == 3) .AND. (SIZE(thisMatrix%a,2) == 10)
-      ASSERT(bool, 'tridiag%init(...)')
+  TYPE IS(TriDiagMatrixType)
+    bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.(.NOT.thisMatrix%isSymmetric)
+    ASSERT(bool, 'tridiag%init(...)')
+    bool = (SIZE(thisMatrix%a,1) == 3) .AND. (SIZE(thisMatrix%a,2) == 10)
+    ASSERT(bool, 'tridiag%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -1093,10 +1093,10 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.(thisMatrix%isSymmetric)
-      ASSERT(bool, 'tridiag%init(...)')
+  TYPE IS(TriDiagMatrixType)
+    bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.(thisMatrix%isSymmetric)
+    ASSERT(bool, 'tridiag%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with double init (isInit==true on 2nd try)
@@ -1106,13 +1106,13 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType); thisMatrix%isSymmetric=.FALSE.
+  TYPE IS(TriDiagMatrixType); thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      bool = .NOT.thisMatrix%isSymmetric
-      ASSERT(bool, 'tridiag%init(...)')
+  TYPE IS(TriDiagMatrixType)
+    bool = .NOT.thisMatrix%isSymmetric
+    ASSERT(bool, 'tridiag%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with n<1
@@ -1150,23 +1150,23 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,3,5._SRK)
   CALL thisMatrix%set(3,3,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      DO i=1,3
-        bool = thisMatrix%a(2,i) == i
-        ASSERT(bool, 'tridiag%set(...)')
-      ENDDO
-      bool = thisMatrix%a(1,1) == 0
+  TYPE IS(TriDiagMatrixType)
+    DO i=1,3
+      bool = thisMatrix%a(2,i) == i
       ASSERT(bool, 'tridiag%set(...)')
-      DO i=2,3
-        bool = thisMatrix%a(1,i) == i+2
-        ASSERT(bool, 'tridiag%set(...)')
-      ENDDO
-      bool = thisMatrix%a(3,3) == 0
+    ENDDO
+    bool = thisMatrix%a(1,1) == 0
+    ASSERT(bool, 'tridiag%set(...)')
+    DO i=2,3
+      bool = thisMatrix%a(1,i) == i+2
       ASSERT(bool, 'tridiag%set(...)')
-      DO i=1,2
-        bool = thisMatrix%a(3,i) == i+3
-        ASSERT(bool, 'tridiag%set(...)')
-      ENDDO
+    ENDDO
+    bool = thisMatrix%a(3,3) == 0
+    ASSERT(bool, 'tridiag%set(...)')
+    DO i=1,2
+      bool = thisMatrix%a(3,i) == i+3
+      ASSERT(bool, 'tridiag%set(...)')
+    ENDDO
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -1181,23 +1181,23 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(3,2,5._SRK)
   CALL thisMatrix%set(3,3,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      DO i=1,3
-        bool = thisMatrix%a(2,i) == i
-        ASSERT(bool, 'tridiag%set(...)')
-      ENDDO
-      bool = thisMatrix%a(1,1) == 0
+  TYPE IS(TriDiagMatrixType)
+    DO i=1,3
+      bool = thisMatrix%a(2,i) == i
       ASSERT(bool, 'tridiag%set(...)')
-      DO i=2,3
-        bool = thisMatrix%a(1,i) == i+2
-        ASSERT(bool, 'tridiag%set(...)')
-      ENDDO
-      bool = thisMatrix%a(3,3) == 0
+    ENDDO
+    bool = thisMatrix%a(1,1) == 0
+    ASSERT(bool, 'tridiag%set(...)')
+    DO i=2,3
+      bool = thisMatrix%a(1,i) == i+2
       ASSERT(bool, 'tridiag%set(...)')
-      DO i=1,2
-        bool = thisMatrix%a(3,i) == i+3
-        ASSERT(bool, 'tridiag%set(...)')
-      ENDDO
+    ENDDO
+    bool = thisMatrix%a(3,3) == 0
+    ASSERT(bool, 'tridiag%set(...)')
+    DO i=1,2
+      bool = thisMatrix%a(3,i) == i+3
+      ASSERT(bool, 'tridiag%set(...)')
+    ENDDO
   ENDSELECT
 
   !check matrix that hasnt been init, i,j out of bounds
@@ -1226,56 +1226,56 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.FALSE.)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,2,2._SRK)
-      CALL thisMatrix%set(2,1,4._SRK)
-      CALL thisMatrix%set(2,3,3._SRK)
-      CALL thisMatrix%set(3,2,5._SRK)
-      CALL thisMatrix%set(3,3,6._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(9))
-      dummyvec=0
-      CALL thisMatrix%get(1,1,dummyvec(1))
-      CALL thisMatrix%get(2,1,dummyvec(2))
-      CALL thisMatrix%get(1,2,dummyvec(4))
-      CALL thisMatrix%get(3,2,dummyvec(6))
-      CALL thisMatrix%get(2,3,dummyvec(8))
-      CALL thisMatrix%get(3,3,dummyvec(9))
-      bool = (dummyvec(1) == 1._SRK) .AND. &
-             (dummyvec(2) == 4._SRK) .AND. &
-             (dummyvec(3) == 0._SRK)
-      ASSERT(bool, 'tridiag%get(...)') !column one check
-      bool = (dummyvec(4) == 2._SRK) .AND. &
-             (dummyvec(5) == 0._SRK) .AND. &
-             (dummyvec(6) == 5._SRK)
-      ASSERT(bool, 'tridiag%get(...)') !column two check
-      bool = (dummyvec(7) == 0._SRK) .AND. &
-             (dummyvec(8) == 3._SRK) .AND. &
-             (dummyvec(9) == 6._SRK)
-      ASSERT(bool, 'tridiag%get(...)') !column three check
+  TYPE IS(TriDiagMatrixType)
+    CALL thisMatrix%set(1,1,1._SRK)
+    CALL thisMatrix%set(1,2,2._SRK)
+    CALL thisMatrix%set(2,1,4._SRK)
+    CALL thisMatrix%set(2,3,3._SRK)
+    CALL thisMatrix%set(3,2,5._SRK)
+    CALL thisMatrix%set(3,3,6._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(9))
+    dummyvec=0
+    CALL thisMatrix%get(1,1,dummyvec(1))
+    CALL thisMatrix%get(2,1,dummyvec(2))
+    CALL thisMatrix%get(1,2,dummyvec(4))
+    CALL thisMatrix%get(3,2,dummyvec(6))
+    CALL thisMatrix%get(2,3,dummyvec(8))
+    CALL thisMatrix%get(3,3,dummyvec(9))
+    bool = (dummyvec(1) == 1._SRK) .AND. &
+           (dummyvec(2) == 4._SRK) .AND. &
+           (dummyvec(3) == 0._SRK)
+    ASSERT(bool, 'tridiag%get(...)') !column one check
+    bool = (dummyvec(4) == 2._SRK) .AND. &
+           (dummyvec(5) == 0._SRK) .AND. &
+           (dummyvec(6) == 5._SRK)
+    ASSERT(bool, 'tridiag%get(...)') !column two check
+    bool = (dummyvec(7) == 0._SRK) .AND. &
+           (dummyvec(8) == 3._SRK) .AND. &
+           (dummyvec(9) == 6._SRK)
+    ASSERT(bool, 'tridiag%get(...)') !column three check
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      CALL thisMatrix%get(4,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'tridiag%get(...)')
-      CALL thisMatrix%get(-1,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'tridiag%get(...)')
-      CALL thisMatrix%get(2,-1,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'tridiag%get(...)')
+  TYPE IS(TriDiagMatrixType)
+    CALL thisMatrix%get(4,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'tridiag%get(...)')
+    CALL thisMatrix%get(-1,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'tridiag%get(...)')
+    CALL thisMatrix%get(2,-1,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'tridiag%get(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(TriDiagMatrixType)
-      dummy=0.0_SRK
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy == 0.0_SRK
-      ASSERT(bool, 'tridiag%get(...)')
+  TYPE IS(TriDiagMatrixType)
+    dummy=0.0_SRK
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy == 0.0_SRK
+    ASSERT(bool, 'tridiag%get(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL tridiag%get(...)'
@@ -1284,22 +1284,22 @@ SUBROUTINE testMatrix()
 !Test for dense rectangular matrices
   ALLOCATE(DenseRectMatrixType :: thisMatrix)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      !test clear
-      !make matrix w/out using untested init
-      thisMatrix%isInit=.TRUE.
-      thisMatrix%n=10
-      thisMatrix%m=15
-      ALLOCATE(thisMatrix%a(10,15))
+  TYPE IS(DenseRectMatrixType)
+    !test clear
+    !make matrix w/out using untested init
+    thisMatrix%isInit=.TRUE.
+    thisMatrix%n=10
+    thisMatrix%m=15
+    ALLOCATE(thisMatrix%a(10,15))
   ENDSELECT
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
-          .AND.((thisMatrix%m == 0) &
-          .AND.(.NOT.ALLOCATED(thisMatrix%a)))
-      ASSERT(bool, 'denserect%clear()')
-      WRITE(*,*) '  Passed: CALL denserect%clear()'
+  TYPE IS(DenseRectMatrixType)
+    bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+        .AND.((thisMatrix%m == 0) &
+        .AND.(.NOT.ALLOCATED(thisMatrix%a)))
+    ASSERT(bool, 'denserect%clear()')
+    WRITE(*,*) '  Passed: CALL denserect%clear()'
   ENDSELECT
   !check init
   CALL pList%clear()
@@ -1308,25 +1308,25 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.((thisMatrix%m == 15))
-      ASSERT(bool, 'denserect%init(...)')
-      bool = (SIZE(thisMatrix%a,1) == 10) &
+  TYPE IS(DenseRectMatrixType)
+    bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.((thisMatrix%m == 15))
+    ASSERT(bool, 'denserect%init(...)')
+    bool = (SIZE(thisMatrix%a,1) == 10) &
         .AND.(SIZE(thisMatrix%a,2) == 15)
-      ASSERT(bool, 'denserect%init(...)')
+    ASSERT(bool, 'denserect%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with double init (isInit==true on 2nd try)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType); thisMatrix%m=1
+  TYPE IS(DenseRectMatrixType); thisMatrix%m=1
   ENDSELECT
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      bool = thisMatrix%m == 1
-      ASSERT(bool, 'denserect%init(...)')
+  TYPE IS(DenseRectMatrixType)
+    bool = thisMatrix%m == 1
+    ASSERT(bool, 'denserect%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with n<1
@@ -1367,11 +1367,11 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,2,5._SRK)
   CALL thisMatrix%set(2,3,6._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,3
-        bool = (thisMatrix%a(1,i)== i).AND.(thisMatrix%a(2,i)== 3+i)
-        ASSERT(bool, 'denserect%set(...)')
-      ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,3
+      bool = (thisMatrix%a(1,i)== i).AND.(thisMatrix%a(2,i)== 3+i)
+      ASSERT(bool, 'denserect%set(...)')
+    ENDDO
   ENDSELECT
 
   !Test BLAS_matvec
@@ -1453,51 +1453,51 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->m',3_SNK)
   CALL thisMatrix%init(pList)
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,3,2._SRK)
-      CALL thisMatrix%set(2,1,4._SRK)
-      CALL thisMatrix%set(2,2,5._SRK)
-      CALL thisMatrix%set(2,3,3._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(6))
-      CALL thisMatrix%get(1,1,dummyvec(1))
-      CALL thisMatrix%get(2,1,dummyvec(2))
-      CALL thisMatrix%get(1,2,dummyvec(3))
-      CALL thisMatrix%get(2,2,dummyvec(4))
-      CALL thisMatrix%get(1,3,dummyvec(5))
-      CALL thisMatrix%get(2,3,dummyvec(6))
-      bool = (dummyvec(1) == 1._SRK)  .AND. &
-          (dummyvec(2) == 4._SRK)
-      ASSERT(bool, 'densesquare%get(...)') !column one check
-      bool = (dummyvec(3) == 0._SRK).AND. &
-              (dummyvec(4) == 5._SRK)
-      ASSERT(bool, 'densesquare%get(...)')
-      bool = (dummyvec(5) == 2._SRK).AND. &
-              (dummyvec(6) == 3._SRK)
-      ASSERT(bool, 'densesquare%get(...)')
+  TYPE IS(DenseRectMatrixType)
+    CALL thisMatrix%set(1,1,1._SRK)
+    CALL thisMatrix%set(1,3,2._SRK)
+    CALL thisMatrix%set(2,1,4._SRK)
+    CALL thisMatrix%set(2,2,5._SRK)
+    CALL thisMatrix%set(2,3,3._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(6))
+    CALL thisMatrix%get(1,1,dummyvec(1))
+    CALL thisMatrix%get(2,1,dummyvec(2))
+    CALL thisMatrix%get(1,2,dummyvec(3))
+    CALL thisMatrix%get(2,2,dummyvec(4))
+    CALL thisMatrix%get(1,3,dummyvec(5))
+    CALL thisMatrix%get(2,3,dummyvec(6))
+    bool = (dummyvec(1) == 1._SRK)  .AND. &
+        (dummyvec(2) == 4._SRK)
+    ASSERT(bool, 'densesquare%get(...)') !column one check
+    bool = (dummyvec(3) == 0._SRK).AND. &
+           (dummyvec(4) == 5._SRK)
+    ASSERT(bool, 'densesquare%get(...)')
+    bool = (dummyvec(5) == 2._SRK).AND. &
+           (dummyvec(6) == 3._SRK)
+    ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      CALL thisMatrix%get(4,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'densesquare%get(...)')
-      CALL thisMatrix%get(-1,2,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'densesquare%get(...)')
-      CALL thisMatrix%get(2,-1,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'densesquare%get(...)')
+  TYPE IS(DenseRectMatrixType)
+    CALL thisMatrix%get(4,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'densesquare%get(...)')
+    CALL thisMatrix%get(-1,2,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'densesquare%get(...)')
+    CALL thisMatrix%get(2,-1,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(DenseRectMatrixType)
-      dummy=0.0_SRK
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy == 0.0_SRK
-      ASSERT(bool, 'densesquare%get(...)')
+  TYPE IS(DenseRectMatrixType)
+    dummy=0.0_SRK
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy == 0.0_SRK
+    ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL densesquare%get(...)'
@@ -1509,25 +1509,25 @@ SUBROUTINE testMatrix()
 !Test for PETSc sparsematrices
   ALLOCATE(PETScMatrixType :: thisMatrix)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      !test clear
-      !make matrix w/out using untested init
-      thisMatrix%isInit=.TRUE.
-      thisMatrix%n=10
-      thisMatrix%isSymmetric=.TRUE.
-      CALL MatCreate(MPI_COMM_WORLD,thisMatrix%a,ierr)
-      CALL MatSetSizes(thisMatrix%a,PETSC_DECIDE,PETSC_DECIDE, &
-                                    thisMatrix%n,thisMatrix%n,ierr)
-      CALL MatSetType(thisMatrix%a,MATMPIAIJ,ierr)
-      CALL MatSetUp(thisMatrix%a,ierr)
+  TYPE IS(PETScMatrixType)
+    !test clear
+    !make matrix w/out using untested init
+    thisMatrix%isInit=.TRUE.
+    thisMatrix%n=10
+    thisMatrix%isSymmetric=.TRUE.
+    CALL MatCreate(MPI_COMM_WORLD,thisMatrix%a,ierr)
+    CALL MatSetSizes(thisMatrix%a,PETSC_DECIDE,PETSC_DECIDE, &
+        thisMatrix%n,thisMatrix%n,ierr)
+    CALL MatSetType(thisMatrix%a,MATMPIAIJ,ierr)
+    CALL MatSetUp(thisMatrix%a,ierr)
   ENDSELECT
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
-          .AND.((.NOT.thisMatrix%isSymmetric))
-      ASSERT(bool, 'petscsparse%clear()')
-      !check if pointer fo a is null (not supported till 3.3)
+  TYPE IS(PETScMatrixType)
+    bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+        .AND.((.NOT.thisMatrix%isSymmetric))
+    ASSERT(bool, 'petscsparse%clear()')
+    !check if pointer fo a is null (not supported till 3.3)
   ENDSELECT
   !check init
   CALL pList%clear()
@@ -1537,13 +1537,13 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.(.NOT.thisMatrix%isSymmetric)
-      ASSERT(bool, 'petscsparse%init(...)')
-      CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
-      bool = (matsize1 == 10) .AND. (matsize2 == 10)
-      ASSERT(bool, 'petscsparse%init(...)')
+  TYPE IS(PETScMatrixType)
+    bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.(.NOT.thisMatrix%isSymmetric)
+    ASSERT(bool, 'petscsparse%init(...)')
+    CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
+    bool = (matsize1 == 10) .AND. (matsize2 == 10)
+    ASSERT(bool, 'petscsparse%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -1553,10 +1553,10 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.(thisMatrix%isSymmetric)
-      ASSERT(bool, 'petscsparse%init(...)')
+  TYPE IS(PETScMatrixType)
+    bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.(thisMatrix%isSymmetric)
+    ASSERT(bool, 'petscsparse%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with double init (isInit==true on 2nd try)
@@ -1567,13 +1567,13 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType); thisMatrix%isSymmetric=.FALSE.
+  TYPE IS(PETScMatrixType); thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = .NOT.thisMatrix%isSymmetric
-      ASSERT(bool, 'petscsparse%init(...)')
+  TYPE IS(PETScMatrixType)
+    bool = .NOT.thisMatrix%isSymmetric
+    ASSERT(bool, 'petscsparse%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with n<1
@@ -1603,21 +1603,21 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      ! manually assemble
-      CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      thisMatrix%isAssembled=.TRUE.
+  TYPE IS(PETScMatrixType)
+    ! manually assemble
+    CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    thisMatrix%isAssembled=.TRUE.
 
-      CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-      bool = dummy==1._SRK
-      ASSERT(bool, 'petscsparse%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'petscsparse%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-      bool = dummy==3._SRK
-      ASSERT(bool, 'petscsparse%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+    bool = dummy==1._SRK
+    ASSERT(bool, 'petscsparse%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'petscsparse%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+    bool = dummy==3._SRK
+    ASSERT(bool, 'petscsparse%set(...)')
   ENDSELECT
 
   SELECT TYPE (thisMatrix)
@@ -1647,24 +1647,24 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      ! manually assemble
-      CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      thisMatrix%isAssembled=.TRUE.
+  TYPE IS(PETScMatrixType)
+    ! manually assemble
+    CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    thisMatrix%isAssembled=.TRUE.
 
-      CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-      bool = dummy==1._SRK
-      ASSERT(bool, 'petscsparse%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'petscsparse%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'petscsparse%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-      bool = dummy==3._SRK
-      ASSERT(bool, 'petscsparse%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+    bool = dummy==1._SRK
+    ASSERT(bool, 'petscsparse%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'petscsparse%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'petscsparse%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+    bool = dummy==3._SRK
+    ASSERT(bool, 'petscsparse%set(...)')
   ENDSELECT
   !check matrix that hasnt been init, i,j out of bounds
   CALL thisMatrix%clear()
@@ -1798,59 +1798,59 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,3,2._SRK)
-      CALL thisMatrix%set(2,3,3._SRK)
-      CALL thisMatrix%set(3,1,4._SRK)
-      CALL thisMatrix%set(3,2,5._SRK)
-      CALL thisMatrix%set(3,3,6._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(9))
-      CALL thisMatrix%get(1,1,dummyvec(1))
-      CALL thisMatrix%get(2,1,dummyvec(2))
-      CALL thisMatrix%get(3,1,dummyvec(3))
-      CALL thisMatrix%get(1,2,dummyvec(4))
-      CALL thisMatrix%get(2,2,dummyvec(5))
-      CALL thisMatrix%get(3,2,dummyvec(6))
-      CALL thisMatrix%get(1,3,dummyvec(7))
-      CALL thisMatrix%get(2,3,dummyvec(8))
-      CALL thisMatrix%get(3,3,dummyvec(9))
-      bool = (dummyvec(1) == 1._SRK) .AND. &
-             (dummyvec(2) == 0._SRK) .AND. &
-             (dummyvec(3) == 4._SRK)
-      ASSERT(bool, 'petscsparse%get(...)')
-      bool = (dummyvec(4) == 0._SRK) .AND. &
-             (dummyvec(5) == 0._SRK) .AND. &
-             (dummyvec(6) == 5._SRK)
-      ASSERT(bool, 'petscsparse%get(...)')
-      FINFO() dummyvec(4:6)
-      bool = (dummyvec(7) == 2._SRK) .AND. &
-             (dummyvec(8) == 3._SRK) .AND. &
-             (dummyvec(9) == 6._SRK)
-      ASSERT(bool, 'petscsparse%get(...)')
-      FINFO() dummyvec(7:9)
+  TYPE IS(PETScMatrixType)
+    CALL thisMatrix%set(1,1,1._SRK)
+    CALL thisMatrix%set(1,3,2._SRK)
+    CALL thisMatrix%set(2,3,3._SRK)
+    CALL thisMatrix%set(3,1,4._SRK)
+    CALL thisMatrix%set(3,2,5._SRK)
+    CALL thisMatrix%set(3,3,6._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(9))
+    CALL thisMatrix%get(1,1,dummyvec(1))
+    CALL thisMatrix%get(2,1,dummyvec(2))
+    CALL thisMatrix%get(3,1,dummyvec(3))
+    CALL thisMatrix%get(1,2,dummyvec(4))
+    CALL thisMatrix%get(2,2,dummyvec(5))
+    CALL thisMatrix%get(3,2,dummyvec(6))
+    CALL thisMatrix%get(1,3,dummyvec(7))
+    CALL thisMatrix%get(2,3,dummyvec(8))
+    CALL thisMatrix%get(3,3,dummyvec(9))
+    bool = (dummyvec(1) == 1._SRK) .AND. &
+           (dummyvec(2) == 0._SRK) .AND. &
+           (dummyvec(3) == 4._SRK)
+    ASSERT(bool, 'petscsparse%get(...)')
+    bool = (dummyvec(4) == 0._SRK) .AND. &
+           (dummyvec(5) == 0._SRK) .AND. &
+           (dummyvec(6) == 5._SRK)
+    ASSERT(bool, 'petscsparse%get(...)')
+    FINFO() dummyvec(4:6)
+    bool = (dummyvec(7) == 2._SRK) .AND. &
+           (dummyvec(8) == 3._SRK) .AND. &
+           (dummyvec(9) == 6._SRK)
+    ASSERT(bool, 'petscsparse%get(...)')
+    FINFO() dummyvec(7:9)
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      CALL thisMatrix%get(4,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'petscsparse%get(...)')
-      CALL thisMatrix%get(-1,2,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'petscsparse%get(...)')
-      CALL thisMatrix%get(2,-1,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'petscsparse%get(...)')
+  TYPE IS(PETScMatrixType)
+    CALL thisMatrix%get(4,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'petscsparse%get(...)')
+    CALL thisMatrix%get(-1,2,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'petscsparse%get(...)')
+    CALL thisMatrix%get(2,-1,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'petscsparse%get(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy == 0.0_SRK
-      ASSERT(bool, 'petscsparse%get(...)')
+  TYPE IS(PETScMatrixType)
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy == 0.0_SRK
+    ASSERT(bool, 'petscsparse%get(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL petscsparse%get(...)'
@@ -1859,26 +1859,26 @@ SUBROUTINE testMatrix()
 !Test for PETSc dense square matrices
   ALLOCATE(PETScMatrixType :: thisMatrix)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      !test clear
-      !make matrix w/out using untested init
-      thisMatrix%isInit=.TRUE.
-      thisMatrix%n=10
-      thisMatrix%isSymmetric=.TRUE.
-      CALL MatCreate(MPI_COMM_WORLD,thisMatrix%a,ierr)
-      CALL MatSetSizes(thisMatrix%a,PETSC_DECIDE,PETSC_DECIDE, &
-                                    thisMatrix%n,thisMatrix%n,ierr)
-      CALL MatSetType(thisMatrix%a,MATMPIDENSE,ierr)
-      CALL MatSetUp(thisMatrix%a,ierr)
+  TYPE IS(PETScMatrixType)
+    !test clear
+    !make matrix w/out using untested init
+    thisMatrix%isInit=.TRUE.
+    thisMatrix%n=10
+    thisMatrix%isSymmetric=.TRUE.
+    CALL MatCreate(MPI_COMM_WORLD,thisMatrix%a,ierr)
+    CALL MatSetSizes(thisMatrix%a,PETSC_DECIDE,PETSC_DECIDE, &
+        thisMatrix%n,thisMatrix%n,ierr)
+    CALL MatSetType(thisMatrix%a,MATMPIDENSE,ierr)
+    CALL MatSetUp(thisMatrix%a,ierr)
   ENDSELECT
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
-          .AND.((.NOT.thisMatrix%isSymmetric))
-      ASSERT(bool, 'petscdense%clear()')
-       !check if pointer fo a is null (not supported till 3.3)
-      WRITE(*,*) '  Passed: CALL petscdense%clear()'
+  TYPE IS(PETScMatrixType)
+    bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
+        .AND.((.NOT.thisMatrix%isSymmetric))
+    ASSERT(bool, 'petscdense%clear()')
+     !check if pointer fo a is null (not supported till 3.3)
+    WRITE(*,*) '  Passed: CALL petscdense%clear()'
   ENDSELECT
   !check init
   CALL pList%clear()
@@ -1888,13 +1888,13 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.(.NOT.thisMatrix%isSymmetric)
-      ASSERT(bool, 'petscdense%init(...)')
-      CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
-      bool = (matsize1 == 10) .AND. (matsize2 == 10)
-      ASSERT(bool, 'petscdense%init(...)')
+  TYPE IS(PETScMatrixType)
+    bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.(.NOT.thisMatrix%isSymmetric)
+    ASSERT(bool, 'petscdense%init(...)')
+    CALL MatGetSize(thisMatrix%a,matsize1,matsize2,ierr)
+    bool = (matsize1 == 10) .AND. (matsize2 == 10)
+    ASSERT(bool, 'petscdense%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -1904,10 +1904,10 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.(thisMatrix%isSymmetric)
-      ASSERT(bool, 'petscdense%init(...)')
+  TYPE IS(PETScMatrixType)
+    bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.(thisMatrix%isSymmetric)
+    ASSERT(bool, 'petscdense%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with double init (isInit==true on 2nd try)
@@ -1918,13 +1918,13 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType); thisMatrix%isSymmetric=.FALSE.
+  TYPE IS(PETScMatrixType); thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      bool = .NOT.thisMatrix%isSymmetric
-      ASSERT(bool, 'petscdense%init(...)')
+  TYPE IS(PETScMatrixType)
+    bool = .NOT.thisMatrix%isSymmetric
+    ASSERT(bool, 'petscdense%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL petscdense%init(...)'
@@ -1944,21 +1944,21 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      ! manually assemble
-      CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      thisMatrix%isAssembled=.TRUE.
+  TYPE IS(PETScMatrixType)
+    ! manually assemble
+    CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    thisMatrix%isAssembled=.TRUE.
 
-      CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-      bool = dummy==1._SRK
-      ASSERT(bool, 'petscdense%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'petscdense%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-      bool = dummy==3._SRK
-      ASSERT(bool, 'petscdense%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+    bool = dummy==1._SRK
+    ASSERT(bool, 'petscdense%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'petscdense%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+    bool = dummy==3._SRK
+    ASSERT(bool, 'petscdense%set(...)')
   ENDSELECT
   CALL thisMatrix%clear()
 
@@ -1973,24 +1973,24 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      ! manually assemble
-      CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
-      thisMatrix%isAssembled=.TRUE.
+  TYPE IS(PETScMatrixType)
+    ! manually assemble
+    CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
+    thisMatrix%isAssembled=.TRUE.
 
-      CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-      bool = dummy==1._SRK
-      ASSERT(bool, 'petscdense%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'petscdense%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'petscdense%set(...)')
-      CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-      bool = dummy==3._SRK
-      ASSERT(bool, 'petscdense%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
+    bool = dummy==1._SRK
+    ASSERT(bool, 'petscdense%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'petscdense%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'petscdense%set(...)')
+    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
+    bool = dummy==3._SRK
+    ASSERT(bool, 'petscdense%set(...)')
   ENDSELECT
   !check matrix that hasnt been init, i,j out of bounds
   CALL thisMatrix%clear()
@@ -2130,57 +2130,57 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) ! non-symmetric (0), dense (1)
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,3,2._SRK)
-      CALL thisMatrix%set(2,3,3._SRK)
-      CALL thisMatrix%set(3,1,4._SRK)
-      CALL thisMatrix%set(3,2,5._SRK)
-      CALL thisMatrix%set(3,3,6._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(9))
-      CALL thisMatrix%get(1,1,dummyvec(1))
-      CALL thisMatrix%get(2,1,dummyvec(2))
-      CALL thisMatrix%get(3,1,dummyvec(3))
-      CALL thisMatrix%get(1,2,dummyvec(4))
-      CALL thisMatrix%get(2,2,dummyvec(5))
-      CALL thisMatrix%get(3,2,dummyvec(6))
-      CALL thisMatrix%get(1,3,dummyvec(7))
-      CALL thisMatrix%get(2,3,dummyvec(8))
-      CALL thisMatrix%get(3,3,dummyvec(9))
-      bool = (dummyvec(1) == 1._SRK) .AND. &
-             (dummyvec(2) == 0._SRK) .AND. &
-             (dummyvec(3) == 4._SRK)
-      ASSERT(bool, 'petscdense%get(...)') !column one check
-      bool = (dummyvec(4) == 0._SRK) .AND. &
-             (dummyvec(5) == 0._SRK) .AND. &
-             (dummyvec(6) == 5._SRK)
-      ASSERT(bool, 'petscdense%get(...)')
-      bool = (dummyvec(7) == 2._SRK) .AND. &
-             (dummyvec(8) == 3._SRK) .AND. &
-             (dummyvec(9) == 6._SRK)
-      ASSERT(bool, 'petscdense%get(...)')
+  TYPE IS(PETScMatrixType)
+    CALL thisMatrix%set(1,1,1._SRK)
+    CALL thisMatrix%set(1,3,2._SRK)
+    CALL thisMatrix%set(2,3,3._SRK)
+    CALL thisMatrix%set(3,1,4._SRK)
+    CALL thisMatrix%set(3,2,5._SRK)
+    CALL thisMatrix%set(3,3,6._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(9))
+    CALL thisMatrix%get(1,1,dummyvec(1))
+    CALL thisMatrix%get(2,1,dummyvec(2))
+    CALL thisMatrix%get(3,1,dummyvec(3))
+    CALL thisMatrix%get(1,2,dummyvec(4))
+    CALL thisMatrix%get(2,2,dummyvec(5))
+    CALL thisMatrix%get(3,2,dummyvec(6))
+    CALL thisMatrix%get(1,3,dummyvec(7))
+    CALL thisMatrix%get(2,3,dummyvec(8))
+    CALL thisMatrix%get(3,3,dummyvec(9))
+    bool = (dummyvec(1) == 1._SRK) .AND. &
+           (dummyvec(2) == 0._SRK) .AND. &
+           (dummyvec(3) == 4._SRK)
+    ASSERT(bool, 'petscdense%get(...)') !column one check
+    bool = (dummyvec(4) == 0._SRK) .AND. &
+           (dummyvec(5) == 0._SRK) .AND. &
+           (dummyvec(6) == 5._SRK)
+    ASSERT(bool, 'petscdense%get(...)')
+    bool = (dummyvec(7) == 2._SRK) .AND. &
+           (dummyvec(8) == 3._SRK) .AND. &
+           (dummyvec(9) == 6._SRK)
+    ASSERT(bool, 'petscdense%get(...)')
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      CALL thisMatrix%get(4,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'petscdensesquare%get(...)')
-      CALL thisMatrix%get(-1,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'petscdensesquare%get(...)')
-      CALL thisMatrix%get(2,-1,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'petscdensesquare%get(...)')
+  TYPE IS(PETScMatrixType)
+    CALL thisMatrix%get(4,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'petscdensesquare%get(...)')
+    CALL thisMatrix%get(-1,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'petscdensesquare%get(...)')
+    CALL thisMatrix%get(2,-1,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'petscdensesquare%get(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(PETScMatrixType)
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy == 0.0_SRK
-      ASSERT(bool, 'petscdensesquare%get(...)')
+  TYPE IS(PETScMatrixType)
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy == 0.0_SRK
+    ASSERT(bool, 'petscdensesquare%get(...)')
   ENDSELECT
   CALL thisMatrix%clear()
 
@@ -2210,10 +2210,10 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TrilinosMatrixType)
-      bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
-          .AND.(.NOT.thisMatrix%isSymmetric)
-      ASSERT(bool, 'Trilinos%init(...)')
+  TYPE IS(TrilinosMatrixType)
+    bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
+        .AND.(.NOT.thisMatrix%isSymmetric)
+    ASSERT(bool, 'Trilinos%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -2229,9 +2229,9 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TrilinosMatrixType)
-      bool = .NOT. thisMatrix%isInit
-      ASSERT(bool, 'Trilinossparse%init(...)')
+  TYPE IS(TrilinosMatrixType)
+    bool = .NOT. thisMatrix%isInit
+    ASSERT(bool, 'Trilinossparse%init(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   !test with n<1
@@ -2266,17 +2266,17 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TrilinosMatrixType)
-      CALL thisMatrix%assemble()
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy==1._SRK
-      ASSERT(bool, 'Trilinossparse%set(...)')
-      CALL thisMatrix%get(1,2,dummy)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'Trilinossparse%set(...)')
-      CALL thisMatrix%get(2,2,dummy)
-      bool = dummy==3._SRK
-      ASSERT(bool, 'Trilinossparse%set(...)')
+  TYPE IS(TrilinosMatrixType)
+    CALL thisMatrix%assemble()
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy==1._SRK
+    ASSERT(bool, 'Trilinossparse%set(...)')
+    CALL thisMatrix%get(1,2,dummy)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'Trilinossparse%set(...)')
+    CALL thisMatrix%get(2,2,dummy)
+    bool = dummy==3._SRK
+    ASSERT(bool, 'Trilinossparse%set(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   CALL pList%clear()
@@ -2295,22 +2295,22 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TrilinosMatrixType)
-      ! manually assemble
-      CALL thisMatrix%assemble()
+  TYPE IS(TrilinosMatrixType)
+    ! manually assemble
+    CALL thisMatrix%assemble()
 
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy==1._SRK
-      ASSERT(bool, 'Trilinossparse%set(...)')
-      CALL thisMatrix%get(1,2,dummy)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'Trilinossparse%set(...)')
-      CALL thisMatrix%get(2,1,dummy)
-      bool = dummy==2._SRK
-      ASSERT(bool, 'Trilinossparse%set(...)')
-      CALL thisMatrix%get(2,2,dummy)
-      bool = dummy==3._SRK
-      ASSERT(bool, 'Trilinossparse%set(...)')
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy==1._SRK
+    ASSERT(bool, 'Trilinossparse%set(...)')
+    CALL thisMatrix%get(1,2,dummy)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'Trilinossparse%set(...)')
+    CALL thisMatrix%get(2,1,dummy)
+    bool = dummy==2._SRK
+    ASSERT(bool, 'Trilinossparse%set(...)')
+    CALL thisMatrix%get(2,2,dummy)
+    bool = dummy==3._SRK
+    ASSERT(bool, 'Trilinossparse%set(...)')
   ENDSELECT
 
   CALL thisMatrix%clear()
@@ -2494,60 +2494,60 @@ SUBROUTINE testMatrix()
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0)
   SELECTTYPE(thisMatrix)
-    TYPE IS(TrilinosMatrixType)
-      CALL thisMatrix%set(1,1,1._SRK)
-      CALL thisMatrix%set(1,3,2._SRK)
-      CALL thisMatrix%set(2,3,3._SRK)
-      CALL thisMatrix%set(3,1,4._SRK)
-      CALL thisMatrix%set(3,2,5._SRK)
-      CALL thisMatrix%set(3,3,6._SRK)
-      CALL thisMatrix%assemble()
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(9))
-      CALL thisMatrix%get(1,1,dummyvec(1))
-      CALL thisMatrix%get(2,1,dummyvec(2))
-      CALL thisMatrix%get(3,1,dummyvec(3))
-      CALL thisMatrix%get(1,2,dummyvec(4))
-      CALL thisMatrix%get(2,2,dummyvec(5))
-      CALL thisMatrix%get(3,2,dummyvec(6))
-      CALL thisMatrix%get(1,3,dummyvec(7))
-      CALL thisMatrix%get(2,3,dummyvec(8))
-      CALL thisMatrix%get(3,3,dummyvec(9))
-      bool = (dummyvec(1) == 1._SRK) .AND. &
-             (dummyvec(2) == 0._SRK) .AND. &
-             (dummyvec(3) == 4._SRK)
-      ASSERT(bool, 'Trilinossparse%get(...)')
-      bool = (dummyvec(4) == 0._SRK) .AND. &
-             (dummyvec(5) == 0._SRK) .AND. &
-             (dummyvec(6) == 5._SRK)
-      ASSERT(bool, 'Trilinossparse%get(...)')
-      FINFO() dummyvec(4:6)
-      bool = (dummyvec(7) == 2._SRK) .AND. &
-             (dummyvec(8) == 3._SRK) .AND. &
-             (dummyvec(9) == 6._SRK)
-      ASSERT(bool, 'Trilinossparse%get(...)')
-      FINFO() dummyvec(7:9)
+  TYPE IS(TrilinosMatrixType)
+    CALL thisMatrix%set(1,1,1._SRK)
+    CALL thisMatrix%set(1,3,2._SRK)
+    CALL thisMatrix%set(2,3,3._SRK)
+    CALL thisMatrix%set(3,1,4._SRK)
+    CALL thisMatrix%set(3,2,5._SRK)
+    CALL thisMatrix%set(3,3,6._SRK)
+    CALL thisMatrix%assemble()
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(9))
+    CALL thisMatrix%get(1,1,dummyvec(1))
+    CALL thisMatrix%get(2,1,dummyvec(2))
+    CALL thisMatrix%get(3,1,dummyvec(3))
+    CALL thisMatrix%get(1,2,dummyvec(4))
+    CALL thisMatrix%get(2,2,dummyvec(5))
+    CALL thisMatrix%get(3,2,dummyvec(6))
+    CALL thisMatrix%get(1,3,dummyvec(7))
+    CALL thisMatrix%get(2,3,dummyvec(8))
+    CALL thisMatrix%get(3,3,dummyvec(9))
+    bool = (dummyvec(1) == 1._SRK) .AND. &
+           (dummyvec(2) == 0._SRK) .AND. &
+           (dummyvec(3) == 4._SRK)
+    ASSERT(bool, 'Trilinossparse%get(...)')
+    bool = (dummyvec(4) == 0._SRK) .AND. &
+           (dummyvec(5) == 0._SRK) .AND. &
+           (dummyvec(6) == 5._SRK)
+    ASSERT(bool, 'Trilinossparse%get(...)')
+    FINFO() dummyvec(4:6)
+    bool = (dummyvec(7) == 2._SRK) .AND. &
+           (dummyvec(8) == 3._SRK) .AND. &
+           (dummyvec(9) == 6._SRK)
+    ASSERT(bool, 'Trilinossparse%get(...)')
+    FINFO() dummyvec(7:9)
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
   SELECTTYPE(thisMatrix)
-    TYPE IS(TrilinosMatrixType)
-      CALL thisMatrix%get(4,2,dummy)
-      bool = dummy == -1051._SRK
-      ASSERT(bool, 'Trilinossparse%get(...)')
-      CALL thisMatrix%get(-1,2,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'Trilinossparse%get(...)')
-      CALL thisMatrix%get(2,-1,dummy)
-      bool = dummy==-1051._SRK
-      ASSERT(bool, 'Trilinossparse%get(...)')
+  TYPE IS(TrilinosMatrixType)
+    CALL thisMatrix%get(4,2,dummy)
+    bool = dummy == -1051._SRK
+    ASSERT(bool, 'Trilinossparse%get(...)')
+    CALL thisMatrix%get(-1,2,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'Trilinossparse%get(...)')
+    CALL thisMatrix%get(2,-1,dummy)
+    bool = dummy==-1051._SRK
+    ASSERT(bool, 'Trilinossparse%get(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
   SELECTTYPE(thisMatrix)
-    TYPE IS(TrilinosMatrixType)
-      CALL thisMatrix%get(1,1,dummy)
-      bool = dummy == 0.0_SRK
-      ASSERT(bool, 'Trilinossparse%get(...)')
+  TYPE IS(TrilinosMatrixType)
+    CALL thisMatrix%get(1,1,dummy)
+    bool = dummy == 0.0_SRK
+    ASSERT(bool, 'Trilinossparse%get(...)')
   ENDSELECT
   CALL thisMatrix%clear()
   WRITE(*,*) '  Passed: CALL Trilinossparse%get(...)'
@@ -2611,66 +2611,66 @@ SUBROUTINE testMatrixMultSparse()
   ! A: Square  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transA='n')
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   CALL thisMtrx%clear()
   CALL bmat%clear()
@@ -2730,62 +2730,62 @@ SUBROUTINE testMatrixMultSquare()
   ! A: Square  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transA='n')
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DS B=DS C=DS'
   !
@@ -2811,62 +2811,62 @@ SUBROUTINE testMatrixMultSquare()
   ! A: Square  B: Square  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DS B=DS C=DR'
 
@@ -2906,62 +2906,62 @@ SUBROUTINE testMatrixMultSquare()
   ! A: Square  B: Rect  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Rect  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Rect  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Rect  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DS B=DR C=DS'
   !
@@ -2987,62 +2987,62 @@ SUBROUTINE testMatrixMultSquare()
   ! A: Square  B: Rect  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DS DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Rect  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DS DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Rect  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DS DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Rect  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DS DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DS B=DR C=DR'
   CALL thisMtrx%clear()
@@ -3091,66 +3091,66 @@ SUBROUTINE testMatrixMultSquare()
   ! A: Square  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transA='n')
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(PETScMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          CALL cmat%get(i,j,dummy)
-          bool = (dummy .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -All PETSc')
-        ENDDO
+  TYPE IS(PETScMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        CALL cmat%get(i,j,dummy)
+        bool = (dummy .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -All PETSc')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   CALL thisMtrx%clear()
   CALL bmat%clear()
@@ -3218,62 +3218,62 @@ SUBROUTINE testMatrixMultRect()
   ! A: Rect  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transB='n')
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DS DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DS DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DR B=DS C=DS'
   !
@@ -3299,62 +3299,62 @@ SUBROUTINE testMatrixMultRect()
   ! A: Rect  B: Square  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Square  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Square  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Square  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DS DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DS DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DR B=DS C=DR'
 
@@ -3394,61 +3394,61 @@ SUBROUTINE testMatrixMultRect()
   ! A: Rect  B: Rect  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Rect  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Rect  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Rect  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DR DS')
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DR DS')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DR B=DR C=DS'
   !
@@ -3474,62 +3474,62 @@ SUBROUTINE testMatrixMultRect()
   ! A: Rect  B: Rect  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 4._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) -DR DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Rect  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 5._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) -DR DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Rect  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 6._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) -DR DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   ! A: Rect  B: Rect  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
   SELECTTYPE(cmat)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,cmat%n
-        DO j=1,cmat%n
-          bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
-          ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DR DR')
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,cmat%n
+      DO j=1,cmat%n
+        bool = (cmat%a(i,j) .APPROXEQ. 7._SRK)
+        ASSERT(bool, 'BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) -DR DR DR')
       ENDDO
-    CLASS DEFAULT
-      WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
-      WRITE(*,*) "    cmat returned as incorrect matrix type"
-      STOP 666
+    ENDDO
+  CLASS DEFAULT
+    WRITE(*,*) "CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat) FAILED!"
+    WRITE(*,*) "    cmat returned as incorrect matrix type"
+    STOP 666
   ENDSELECT
   WRITE(*,*) '  Passed: CALL BLAS_matmult(...) A=DR B=DR C=DR'
   CALL cmat%clear()
@@ -3639,13 +3639,13 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
   SELECTTYPE(mat_p)
-    TYPE IS(DenseSquareMatrixType)
-      DO i=1,mat_p%n
-        DO j=1,mat_p%n
-          bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
-          ASSERT(bool,"wrong zeroentries")
-        ENDDO
+  TYPE IS(DenseSquareMatrixType)
+    DO i=1,mat_p%n
+      DO j=1,mat_p%n
+        bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+        ASSERT(bool,"wrong zeroentries")
       ENDDO
+    ENDDO
   ENDSELECT
   CALL mat_p%clear()
   DEALLOCATE(mat_p)
@@ -3661,13 +3661,13 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
   SELECTTYPE(mat_p)
-    TYPE IS(DenseRectMatrixType)
-      DO i=1,mat_p%n
-        DO j=1,mat_p%n
-          bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
-          ASSERT(bool,"wrong zeroentries")
-        ENDDO
+  TYPE IS(DenseRectMatrixType)
+    DO i=1,mat_p%n
+      DO j=1,mat_p%n
+        bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+        ASSERT(bool,"wrong zeroentries")
       ENDDO
+    ENDDO
   ENDSELECT
   CALL mat_p%clear()
   DEALLOCATE(mat_p)
@@ -3683,13 +3683,13 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
   SELECTTYPE(mat_p)
-    TYPE IS(TridiagMatrixType)
-      DO i=1,SIZE(mat_p%a,DIM=1)
-        DO j=1,mat_p%n
-          bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
-          ASSERT(bool,"wrong zeroentries")
-        ENDDO
+  TYPE IS(TridiagMatrixType)
+    DO i=1,SIZE(mat_p%a,DIM=1)
+      DO j=1,mat_p%n
+        bool=(mat_p%a(i,j) .APPROXEQ. 0.0_SRK)
+        ASSERT(bool,"wrong zeroentries")
       ENDDO
+    ENDDO
   ENDSELECT
   CALL mat_p%clear()
   DEALLOCATE(mat_p)
@@ -3713,8 +3713,8 @@ SUBROUTINE testzeroEntriesMatrix()
 
   CALL testA%zeroentries()
   SELECTTYPE(mat_p)
-    TYPE IS(SparseMatrixType)
-      bool=ALL(testA%a(:) .APPROXEQ. (/0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK/))
+  TYPE IS(SparseMatrixType)
+    bool=ALL(testA%a(:) .APPROXEQ. (/0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK/))
   ENDSELECT
   ASSERT(bool,"wrong a")
   CALL tmpPlist%clear()

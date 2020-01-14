@@ -627,11 +627,11 @@ SUBROUTINE testRTEnv()
   varname='USER'
 #endif
   CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpStr,LENGTH=n, &
-    STATUS=stat)
+      STATUS=stat)
   CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,LENGTH=n,STATUS=stat)
 
   CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpChar(1:1),LENGTH=n, &
-    STATUS=stat)
+      STATUS=stat)
   IF(0 < n .AND. n <= LEN(tmpChar)) THEN
     !The environment variable exists, execute the test
     CALL GET_ENVIRONMENT_VARIABLE(NAME=varname,VALUE=tmpStr)

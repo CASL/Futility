@@ -85,12 +85,12 @@ SUBROUTINE testVector()
   ALLOCATE(PETScVectorType :: thisVector)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      !check for success
-      bool = thisVector%isInit.AND.thisVector%n == 20
-      ASSERT(bool, 'petscvec%init(...)')
-      CALL VecGetSize(thisVector%b,i,ierr)
-      ASSERT(i == 20, 'petscvec%init(...)')
+  TYPE IS(PETScVectorType)
+    !check for success
+    bool = thisVector%isInit.AND.thisVector%n == 20
+    ASSERT(bool, 'petscvec%init(...)')
+    CALL VecGetSize(thisVector%b,i,ierr)
+    ASSERT(i == 20, 'petscvec%init(...)')
   ENDSELECT
 
   ! Test setting/getting single elements at a time

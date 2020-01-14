@@ -67,32 +67,32 @@ SUBROUTINE TestPoints
 
   CALL point%init(DIM=2,X=0.2_SRK,Y=0.3_SRK) !test 2-D
   bool = .NOT.(point%dim /= 2 .OR. point%coord(1) /= 0.2_SRK .OR. &
-          point%coord(2) /= 0.3_SRK)
+      point%coord(2) /= 0.3_SRK)
   ASSERT(bool, 'point%init(DIM=2,X=0.2_SRK,Y=0.3_SRK)')
   CALL point%clear()
 
   CALL point%init(DIM=3,X=0.7_SRK,Y=0.8_SRK,Z=0.9_SRK) !test 3-D
   bool = .NOT.(point%dim /= 3 .OR. point%coord(1) /= 0.7_SRK .OR. &
-               point%coord(2) /= 0.8_SRK .OR. point%coord(3) /= 0.9_SRK)
+      point%coord(2) /= 0.8_SRK .OR. point%coord(3) /= 0.9_SRK)
   ASSERT(bool, 'point%init(DIM=3,X=0.7_SRK,Y=0.8_SRK,Z=0.9_SRK)')
   CALL point%clear()
 
   CALL point%init(COORD=(/1.7_SRK,1.8_SRK,1.9_SRK,1.0_SRK/)) !test N-D
   bool = .NOT.(point%dim /= 4 .OR. point%coord(1) /= 1.7_SRK .OR. &
-               point%coord(2) /= 1.8_SRK .OR. point%coord(3) /= 1.9_SRK .OR. &
-               point%coord(4) /= 1.0_SRK)
+      point%coord(2) /= 1.8_SRK .OR. point%coord(3) /= 1.9_SRK .OR. &
+      point%coord(4) /= 1.0_SRK)
   ASSERT(bool, 'point%init(COORD=(/.../))')
 !
 !Test getCoordString
   COMPONENT_TEST('%getCoordString()')
   bool = .NOT.(TRIM(point%getCoordString()) /= '( 1.70000000000000E+00, '// &
-                    '1.80000000000000E+00, 1.90000000000000E+00, '// &
-                    '1.00000000000000E+00)' .OR. TRIM(point%getCoordString( &
-                    'f6.3')) /= '( 1.700, 1.800, 1.900, 1.000)')
+      '1.80000000000000E+00, 1.90000000000000E+00, '// &
+      '1.00000000000000E+00)' .OR. TRIM(point%getCoordString( &
+      'f6.3')) /= '( 1.700, 1.800, 1.900, 1.000)')
   ASSERT(bool, 'point%getCoordString(...))')
 #ifdef DEBUG
   bool = .NOT.(LEN_TRIM(point%getCoordString('i6')) /= 0 .OR. &
-               LEN_TRIM(point2%getCoordString()) /= 0)
+      LEN_TRIM(point2%getCoordString()) /= 0)
 #else
   bool = .NOT.(LEN_TRIM(point2%getCoordString()) /= 0)
 #endif
@@ -150,7 +150,7 @@ SUBROUTINE TestPoints
   CALL point3%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
   point=midPoint(point2,point3)
   bool = .NOT.(.NOT.(point%coord(1) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK))
   ASSERT(bool, '2-D midPoint(...)')
   CALL point2%clear()
   CALL point3%clear()
@@ -160,8 +160,8 @@ SUBROUTINE TestPoints
   CALL point3%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
   point=midPoint(point2,point3)
   bool = .NOT.(.NOT.(point%coord(1) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(3) .APPROXEQ. 0.4_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
+      .NOT.(point%coord(3) .APPROXEQ. 0.4_SRK))
   ASSERT(bool, '3-D midPoint(...)')
   CALL point2%clear()
   CALL point3%clear()
@@ -173,9 +173,9 @@ SUBROUTINE TestPoints
   CALL point3%init(DIM=4,COORD=(/0.3_SRK,0.2_SRK,0.1_SRK,0.0_SRK/))
   point=midPoint(point2,point3)
   bool = .NOT.(.NOT.(point%coord(1) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(3) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(4) .APPROXEQ. 0.4_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
+      .NOT.(point%coord(3) .APPROXEQ. 0.4_SRK) .OR. &
+      .NOT.(point%coord(4) .APPROXEQ. 0.4_SRK))
   ASSERT(bool, 'N-D midPoint(...)')
   CALL point2%clear()
   CALL point3%clear()
@@ -199,10 +199,10 @@ SUBROUTINE TestPoints
   CALL point2%clear()
   CALL point3%clear()
   CALL point%init(DIM=2,X=1.5_SRK+2.0_SRK*COS(QTRPI*0.25_SRK), &
-    Y=0.5_SRK+2.0_SRK*SIN(QTRPI*0.25_SRK))
+      Y=0.5_SRK+2.0_SRK*SIN(QTRPI*0.25_SRK))
   CALL point2%init(DIM=2,X=1.5_SRK,Y=0.5_SRK)
   CALL point3%init(DIM=2,X=1.5_SRK+4.0_SRK*COS(QTRPI*0.25_SRK), &
-    Y=0.5_SRK+4.0_SRK*SIN(-QTRPI*0.25_SRK))
+      Y=0.5_SRK+4.0_SRK*SIN(-QTRPI*0.25_SRK))
   ASSERT(innerAngle(point,point2,point3) .APPROXEQA. QTRPI*0.5_SRK,'45 acute angle')
   CALL point%clear()
   CALL point2%clear()
@@ -239,10 +239,10 @@ SUBROUTINE TestPoints
   CALL point2%clear()
   CALL point3%clear()
   CALL point%init(DIM=2,X=1.5_SRK+2.0_SRK*COS(QTRPI*0.25_SRK), &
-    Y=0.5_SRK+2.0_SRK*SIN(QTRPI*0.25_SRK))
+      Y=0.5_SRK+2.0_SRK*SIN(QTRPI*0.25_SRK))
   CALL point2%init(DIM=2,X=1.5_SRK,Y=0.5_SRK)
   CALL point3%init(DIM=2,X=1.5_SRK+4.0_SRK*COS(QTRPI*0.25_SRK), &
-    Y=0.5_SRK+4.0_SRK*SIN(-QTRPI*0.25_SRK))
+      Y=0.5_SRK+4.0_SRK*SIN(-QTRPI*0.25_SRK))
   ASSERT(outerAngle(point,point2,point3) .APPROXEQA. TWOPI-QTRPI*0.5_SRK,'315 acute angle')
   CALL point%clear()
   CALL point2%clear()
@@ -321,7 +321,7 @@ SUBROUTINE TestPoints
   CALL point3%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
   point=point2-point3
   bool = .NOT.(point%dim /= 2 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK))
   ASSERT(bool, '2-D PointType OPERATOR(-)')
   CALL point2%clear()
   CALL point3%clear()
@@ -330,8 +330,8 @@ SUBROUTINE TestPoints
   CALL point3%init(DIM=3,X=0.3_SRK,Y=0.2_SRK,Z=0.1_SRK)
   point=point2-point3
   bool = .NOT.(point%dim /= 3 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(3) .APPROXEQ. 0.6_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
+      .NOT.(point%coord(3) .APPROXEQ. 0.6_SRK))
   ASSERT(bool, '3-D PointType OPERATOR(-)')
   CALL point2%clear()
   CALL point3%clear()
@@ -340,9 +340,9 @@ SUBROUTINE TestPoints
   CALL point3%init(DIM=4,COORD=(/0.3_SRK,0.2_SRK,0.1_SRK,0.0_SRK/))
   point=point2-point3
   bool = .NOT.(point%dim /= 4 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
-               .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(point%coord(3) .APPROXEQ. 0.6_SRK) .OR. &
-               .NOT.(point%coord(4) .APPROXEQ. 0.8_SRK))
+      .NOT.(point%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
+      .NOT.(point%coord(3) .APPROXEQ. 0.6_SRK) .OR. &
+      .NOT.(point%coord(4) .APPROXEQ. 0.8_SRK))
   ASSERT(bool, 'N-D PointType OPERATOR(-)')
   CALL point2%clear()
   CALL point3%clear()
@@ -381,7 +381,7 @@ SUBROUTINE TestPoints
   COMPONENT_TEST('Elemental %clear()')
   CALL points%clear()
   bool = .NOT.(ANY(points%dim /= 0) .OR. ALLOCATED(points(1)%coord) .OR. &
-               ALLOCATED(points(2)%coord))
+      ALLOCATED(points(2)%coord))
   ASSERT(bool, 'point%clear()')
 !
 !Test distance routine
@@ -392,7 +392,7 @@ SUBROUTINE TestPoints
   CALL points2(2)%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
   s=Distance(points,points2)
   bool = .NOT.(.NOT.(s(1) .APPROXEQ. 0.748331477354788_SRK) .OR. &
-               .NOT.(s(2) .APPROXEQ. 0.447213595499958_SRK))
+      .NOT.(s(2) .APPROXEQ. 0.447213595499958_SRK))
   ASSERT(bool, 'Distance(...)')
 !
 !Test midPoint routine
@@ -403,7 +403,7 @@ SUBROUTINE TestPoints
   CALL points2(2)%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
   points3=midPoint(points,points2)
   bool = .NOT.(ANY(.NOT.(points3(1)%coord .APPROXEQ. 0.4_SRK)) .OR. &
-               ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.4_SRK)))
+      ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.4_SRK)))
   ASSERT(bool, 'midPoint(...)')
 !
 !Test Operators
@@ -415,17 +415,17 @@ SUBROUTINE TestPoints
   CALL points2(2)%init(DIM=2,X=0.3_SRK,Y=0.2_SRK)
   points3=points+points2
   bool = .NOT.(ANY(.NOT.(points3(1)%coord .APPROXEQ. 0.8_SRK)) .OR. &
-               ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.8_SRK)))
+      ANY(.NOT.(points3(2)%coord .APPROXEQ. 0.8_SRK)))
   ASSERT(bool, 'PointType Array OPERATOR(+)')
 
   !Subtraction
   COMPONENT_TEST('Elemental OPERATOR(-)')
   points3=points-points2
   bool = .NOT.(.NOT.(points3(1)%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
-               .NOT.(points3(1)%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
-               .NOT.(points3(1)%coord(3) .APPROXEQ. 0.6_SRK) .OR. &
-               .NOT.(points3(2)%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
-               .NOT.(points3(2)%coord(2) .APPROXEQ. 0.4_SRK))
+      .NOT.(points3(1)%coord(2) .APPROXEQ. 0.4_SRK) .OR. &
+      .NOT.(points3(1)%coord(3) .APPROXEQ. 0.6_SRK) .OR. &
+      .NOT.(points3(2)%coord(1) .APPROXEQ. 0.2_SRK) .OR. &
+      .NOT.(points3(2)%coord(2) .APPROXEQ. 0.4_SRK))
   ASSERT(bool, 'PointType Array OPERATOR(-)')
 
   !Equal to
@@ -470,7 +470,7 @@ SUBROUTINE TestPoints
   thisPoint%sortval=1._SRK
   CALL firstPoint%insert(thisPoint)
   CALL thisPoint%p%init(DIM=3,X=firstPoint%p%coord(1)+EPSREAL, &
-    Y=firstPoint%p%coord(2)+EPSREAL,Z=firstPoint%p%coord(3)-EPSREAL)
+      Y=firstPoint%p%coord(2)+EPSREAL,Z=firstPoint%p%coord(3)-EPSREAL)
   thisPoint%sortval=1._SRK+Distance(firstPoint%p,thisPoint%p)
   CALL firstPoint%insert(thisPoint)
   bool = ASSOCIATED(thisPoint)

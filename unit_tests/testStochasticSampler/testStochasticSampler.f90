@@ -207,7 +207,7 @@ SUBROUTINE TestRNG
   FINFO() stdev,truestd,ABS(stdev-truestd)
 
   WRITE(*,'(A,ES14.7,A)') '     RNG generated ',REAL(n,SRK)/testTimer%elapsedtime, &
-                          ' random numbers per second'
+      ' random numbers per second'
 
 ENDSUBROUTINE TestRNG
 !
@@ -380,7 +380,7 @@ SUBROUTINE TestWatt
   b=0.5_SDK
   truemean=a**2.5*SQRT(b)*(6.0_SDK+a*b)/(4.0_SDK*SQRT(a**3*b))
   truestd=SQRT((a**2*(-36.0*SQRT(a**3*b)+a*SQRT(b)*(12.0+a*b)* &
-        (4.0*SQRT(a)+a**1.5*b-SQRT(b)*SQRT(a**3*b))))/SQRT(a**3*b))/(2.0*SQRT(2.0))
+      (4.0*SQRT(a)+a**1.5*b-SQRT(b)*SQRT(a**3*b))))/SQRT(a**3*b))/(2.0*SQRT(2.0))
   tol=5.0_SDK/SQRT(REAL(n,SDK))
 
   mean=0.0

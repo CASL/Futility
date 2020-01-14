@@ -60,14 +60,14 @@ SUBROUTINE testFortranFileType()
   CALL testFile%frewind()
   CALL testFile%fbackspace()
   CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='./testFile.txt',STATUS='OOPS',&
-    ACCESS='OOPS',FORM='OOPS',POSITION='OOPS',ACTION='OOPS',PAD='OOPS',RECL=-1)
+      ACCESS='OOPS',FORM='OOPS',POSITION='OOPS',ACTION='OOPS',PAD='OOPS',RECL=-1)
   CALL testFile%initialize(UNIT=ERROR_UNIT,FILE='./testFile.txt',STATUS='OLD',&
-    ACCESS='SEQUENTIAL',FORM='FORMATTED',POSITION='ASIS',ACTION='WRITE',PAD='NO')
+      ACCESS='SEQUENTIAL',FORM='FORMATTED',POSITION='ASIS',ACTION='WRITE',PAD='NO')
   CALL testFile%initialize(UNIT=INPUT_UNIT,FILE='./testFile.txt',STATUS='NEW',&
-    ACCESS='DIRECT',FORM='UNFORMATTED',POSITION='APPEND',ACTION='READ', &
+      ACCESS='DIRECT',FORM='UNFORMATTED',POSITION='APPEND',ACTION='READ', &
       PAD='YES')
   CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='REPLACE', &
-    ACCESS='DIRECT',POSITION='REWIND',ACTION='READWRITE',RECL=100)
+      ACCESS='DIRECT',POSITION='REWIND',ACTION='READWRITE',RECL=100)
   CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='SCRATCH')
   CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='oops.txt',STATUS='UNKNOWN')
 
@@ -120,27 +120,27 @@ SUBROUTINE testFortranFileType()
   CALL testFile%frewind()
   CALL testFile%initialize(UNIT=12,FILE='./testFile.txt')
   CALL testFile2%initialize(UNIT=13,FILE='./testFile2',ACCESS='DIRECT', &
-    STATUS='NEW',FORM='UNFORMATTED',RECL=100*NUMERIC_STORAGE_SIZE, &
+      STATUS='NEW',FORM='UNFORMATTED',RECL=100*NUMERIC_STORAGE_SIZE, &
       ACTION='WRITE')
   CALL testFile2%fopen()
   CALL testFile2%fdelete()
   CALL testFile%clear()
   CALL testFile%e%addSurrogate(e)
   CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='OLD', &
-    ACCESS='DIRECT',ACTION='READ',RECL=100,FORM='FORMATTED')
+      ACCESS='DIRECT',ACTION='READ',RECL=100,FORM='FORMATTED')
   CALL testFile%fopen()
   CALL testFile%fdelete()
   CALL testFile%clear()
   CALL testFile%e%addSurrogate(e)
   CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='OLD', &
-    ACTION='READ',FORM='UNFORMATTED')
+      ACTION='READ',FORM='UNFORMATTED')
   CALL testFile%fopen()
   CALL testFile%fdelete()
   CALL testFile%clear()
 
   COMPONENT_TEST('%fwrite()')
   CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='NEW', &
-    POSITION='REWIND')
+      POSITION='REWIND')
   CALL testFile%fopen()
   ALLOCATE(lines(5))
   lines(1)='+-------+-----+'

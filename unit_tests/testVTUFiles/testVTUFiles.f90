@@ -211,7 +211,7 @@ SUBROUTINE SetupTest1_Mesh()
   testVTKMesh%dims=(/33,33,5/)
   testVTKMesh%meshType=VTK_STRUCTURED_POINTS
   testVTKMesh%numCells=(testVTKMesh%dims(1)-1)*(testVTKMesh%dims(2)-1)* &
-    (testVTKMesh%dims(3)-1)
+      (testVTKMesh%dims(3)-1)
   ALLOCATE(testVTKMesh%x(2))
   ALLOCATE(testVTKMesh%y(2))
   ALLOCATE(testVTKMesh%z(2))
@@ -243,7 +243,7 @@ SUBROUTINE SetupTest2_Mesh()
   ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
   ALLOCATE(testVTKMesh%nodeList(800))
   OPEN(unit=555,file='mesh2Points.txt',FORM='FORMATTED', &
-    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+      ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
   DO i=1,800
     READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
   ENDDO
@@ -268,7 +268,7 @@ SUBROUTINE SetupTest1_Data()
   testVTKData%isCellData=.TRUE.
   testVTKData%isInit=.TRUE.
   IF(.NOT.ALLOCATED(testVTKData%dataList)) &
-    ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
+      ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
   DO i=1,testVTKMesh%numCells
     testVTKData%dataList(i)=REAL(i,SRK)
   ENDDO
@@ -287,7 +287,7 @@ SUBROUTINE SetupTest2_Data()
   IF(ALLOCATED(testVTKData%dataList)) DEALLOCATE(testVTKData%dataList)
   ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
   OPEN(unit=555,file='mesh2Data.txt',FORM='FORMATTED', &
-    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+      ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
   DO i=1,testVTKMesh%numCells
     READ(555,*) testVTKData%dataList(i)
   ENDDO

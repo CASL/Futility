@@ -581,7 +581,7 @@ SUBROUTINE testPETSC_MAT
 
   !test MatTranspose
   CALL PetscCommBuildTwoSidedSetType(MPI_COMM_WORLD, &
-    PETSC_BUILDTWOSIDED_ALLREDUCE,ierr)
+      PETSC_BUILDTWOSIDED_ALLREDUCE,ierr)
   CALL MatTranspose(A,MAT_REUSE_MATRIX,A,ierr)
   CALL MatGetValues(A,1,0,1,0,getval,ierr)
   IF(getval /= 1.0_SRK .OR. ierr /= 0) THEN

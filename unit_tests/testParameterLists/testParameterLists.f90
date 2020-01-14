@@ -125,7 +125,7 @@ SUBROUTINE testSBK()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSBK',valsbk,'The value is TRUE')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -138,7 +138,7 @@ SUBROUTINE testSBK()
   CALL testParam%init('testError',valsbk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -172,12 +172,12 @@ SUBROUTINE testSBK()
   CALL testParam%get('testError',valsbk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsbk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK'// &
-    ' - parameter name mismatch "testError" in "testSBK"!'
+      ' - parameter name mismatch "testError" in "testSBK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSBK'
@@ -185,8 +185,8 @@ SUBROUTINE testSBK()
   CALL testParam2%get('testSBK',valsbk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK'// &
-    ' - parameter data type mismatch! Parameter testSBK type is test_type and'// &
-    ' must be LOGICAL(SBK)!'
+      ' - parameter data type mismatch! Parameter testSBK type is test_type and'// &
+      ' must be LOGICAL(SBK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -206,13 +206,13 @@ SUBROUTINE testSBK()
   CALL someParam%set('testError',.FALSE.) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSBK"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSBK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSBK',.TRUE.) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK -'// &
-    ' unable to locate parameter "testSBK" in ""!'
+      ' unable to locate parameter "testSBK" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSBK'
@@ -220,8 +220,8 @@ SUBROUTINE testSBK()
   CALL testParam2%set('testSBK',.TRUE.) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK -'// &
-    ' parameter data type mismatch! Parameter testSBK type is test_type'// &
-    ' and must be LOGICAL(SBK)!'
+      ' parameter data type mismatch! Parameter testSBK type is test_type'// &
+      ' and must be LOGICAL(SBK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -254,7 +254,7 @@ SUBROUTINE testSNK()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSNK',valsnk,'The number 5')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -267,7 +267,7 @@ SUBROUTINE testSNK()
   CALL testParam%init('testError',valsnk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -299,12 +299,12 @@ SUBROUTINE testSNK()
   CALL testParam%get('testError',valsnk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsnk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK'// &
-    ' - parameter name mismatch "testError" in "testSNK"!'
+      ' - parameter name mismatch "testError" in "testSNK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNK'
@@ -312,8 +312,8 @@ SUBROUTINE testSNK()
   CALL testParam2%get('testSNK',valsnk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK'// &
-    ' - parameter data type mismatch! Parameter testSNK type is test_type and'// &
-    ' must be INTEGER(SNK)!'
+      ' - parameter data type mismatch! Parameter testSNK type is test_type and'// &
+      ' must be INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -335,13 +335,13 @@ SUBROUTINE testSNK()
   CALL someParam%set('testError',valsnk) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSNK"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSNK',valsnk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
-    ' unable to locate parameter "testSNK" in ""!'
+      ' unable to locate parameter "testSNK" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNK'
@@ -349,8 +349,8 @@ SUBROUTINE testSNK()
   CALL testParam2%set('testSNK',valsnk) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
-    ' parameter data type mismatch! Parameter testSNK type is test_type'// &
-    ' and must be INTEGER(SNK)!'
+      ' parameter data type mismatch! Parameter testSNK type is test_type'// &
+      ' and must be INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -384,7 +384,7 @@ SUBROUTINE testSLK()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSLK',valslk,'The number 5')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -397,7 +397,7 @@ SUBROUTINE testSLK()
   CALL testParam%init('testError',valslk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -429,12 +429,12 @@ SUBROUTINE testSLK()
   CALL testParam%get('testError',valslk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valslk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK'// &
-    ' - parameter name mismatch "testError" in "testSLK"!'
+      ' - parameter name mismatch "testError" in "testSLK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLK'
@@ -442,8 +442,8 @@ SUBROUTINE testSLK()
   CALL testParam2%get('testSLK',valslk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK'// &
-    ' - parameter data type mismatch! Parameter testSLK type is test_type and'// &
-    ' must be INTEGER(SLK)!'
+      ' - parameter data type mismatch! Parameter testSLK type is test_type and'// &
+      ' must be INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -465,13 +465,13 @@ SUBROUTINE testSLK()
   CALL someParam%set('testError',valslk) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSLK"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSLK',valslk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
-    ' unable to locate parameter "testSLK" in ""!'
+      ' unable to locate parameter "testSLK" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLK'
@@ -479,8 +479,8 @@ SUBROUTINE testSLK()
   CALL testParam2%set('testSLK',valslk) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
-    ' parameter data type mismatch! Parameter testSLK type is test_type'// &
-    ' and must be INTEGER(SLK)!'
+      ' parameter data type mismatch! Parameter testSLK type is test_type'// &
+      ' and must be INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -514,7 +514,7 @@ SUBROUTINE testSSK()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSSK',valssk,'The number 5.0')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -527,7 +527,7 @@ SUBROUTINE testSSK()
   CALL testParam%init('testError',valssk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -559,12 +559,12 @@ SUBROUTINE testSSK()
   CALL testParam%get('testError',valssk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valssk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK'// &
-    ' - parameter name mismatch "testError" in "testSSK"!'
+      ' - parameter name mismatch "testError" in "testSSK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSK'
@@ -572,8 +572,8 @@ SUBROUTINE testSSK()
   CALL testParam2%get('testSSK',valssk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK'// &
-    ' - parameter data type mismatch! Parameter testSSK type is test_type and'// &
-    ' must be REAL(SSK)!'
+      ' - parameter data type mismatch! Parameter testSSK type is test_type and'// &
+      ' must be REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -595,13 +595,13 @@ SUBROUTINE testSSK()
   CALL someParam%set('testError',valssk) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSSK"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSSK',valssk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
-    ' unable to locate parameter "testSSK" in ""!'
+      ' unable to locate parameter "testSSK" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSK'
@@ -609,8 +609,8 @@ SUBROUTINE testSSK()
   CALL testParam2%set('testSSK',valssk) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
-    ' parameter data type mismatch! Parameter testSSK type is test_type'// &
-    ' and must be REAL(SSK)!'
+      ' parameter data type mismatch! Parameter testSSK type is test_type'// &
+      ' and must be REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -644,7 +644,7 @@ SUBROUTINE testSDK()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSDK',valsdk,'The number 5.0')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -657,7 +657,7 @@ SUBROUTINE testSDK()
   CALL testParam%init('testError',valsdk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -689,12 +689,12 @@ SUBROUTINE testSDK()
   CALL testParam%get('testError',valsdk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsdk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK'// &
-    ' - parameter name mismatch "testError" in "testSDK"!'
+      ' - parameter name mismatch "testError" in "testSDK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDK'
@@ -702,8 +702,8 @@ SUBROUTINE testSDK()
   CALL testParam2%get('testSDK',valsdk)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK'// &
-    ' - parameter data type mismatch! Parameter testSDK type is test_type and'// &
-    ' must be REAL(SDK)!'
+      ' - parameter data type mismatch! Parameter testSDK type is test_type and'// &
+      ' must be REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -725,13 +725,13 @@ SUBROUTINE testSDK()
   CALL someParam%set('testError',valsdk) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSDK"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSDK',valsdk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
-    ' unable to locate parameter "testSDK" in ""!'
+      ' unable to locate parameter "testSDK" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDK'
@@ -739,8 +739,8 @@ SUBROUTINE testSDK()
   CALL testParam2%set('testSDK',valsdk) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
-    ' parameter data type mismatch! Parameter testSDK type is test_type'// &
-    ' and must be REAL(SDK)!'
+      ' parameter data type mismatch! Parameter testSDK type is test_type'// &
+      ' and must be REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -774,7 +774,7 @@ SUBROUTINE testCHAR()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testCHAR',valchar,'The value is test')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -787,7 +787,7 @@ SUBROUTINE testCHAR()
   CALL testParam%init('testError',TRIM(valchar))
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -819,12 +819,12 @@ SUBROUTINE testCHAR()
   CALL testParam%get('testError',valchar1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valchar1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-    ' - parameter name mismatch "testError" in "testCHAR"!'
+      ' - parameter name mismatch "testError" in "testCHAR"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testCHAR'
@@ -832,8 +832,8 @@ SUBROUTINE testCHAR()
   CALL testParam2%get('testCHAR',valchar1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-    ' - parameter data type mismatch! Parameter testCHAR type is test_type and'// &
-    ' must be TYPE(StringType)!'
+      ' - parameter data type mismatch! Parameter testCHAR type is test_type and'// &
+      ' must be TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -855,13 +855,13 @@ SUBROUTINE testCHAR()
   CALL someParam%set('testError',valchar) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testCHAR"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testCHAR"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testCHAR',TRIM(valchar)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-    ' unable to locate parameter "testCHAR" in ""!'
+      ' unable to locate parameter "testCHAR" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testCHAR'
@@ -869,8 +869,8 @@ SUBROUTINE testCHAR()
   CALL testParam2%set('testCHAR',TRIM(valchar)) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-    ' parameter data type mismatch! Parameter testCHAR type is test_type'// &
-    ' and must be TYPE(StringType)!'
+      ' parameter data type mismatch! Parameter testCHAR type is test_type'// &
+      ' and must be TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -904,7 +904,7 @@ SUBROUTINE testSTR()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSTR',valstr,'The value is test')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -917,7 +917,7 @@ SUBROUTINE testSTR()
   CALL testParam%init('testError',TRIM(valstr))
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -949,12 +949,12 @@ SUBROUTINE testSTR()
   CALL testParam%get('testError',valstr)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valstr)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-    ' - parameter name mismatch "testError" in "testSTR"!'
+      ' - parameter name mismatch "testError" in "testSTR"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSTR'
@@ -962,8 +962,8 @@ SUBROUTINE testSTR()
   CALL testParam2%get('testSTR',valstr)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR'// &
-    ' - parameter data type mismatch! Parameter testSTR type is test_type and'// &
-    ' must be TYPE(StringType)!'
+      ' - parameter data type mismatch! Parameter testSTR type is test_type and'// &
+      ' must be TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -985,13 +985,13 @@ SUBROUTINE testSTR()
   CALL someParam%set('testError',valstr) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSTR"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSTR"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSTR',TRIM(valstr)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-    ' unable to locate parameter "testSTR" in ""!'
+      ' unable to locate parameter "testSTR" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSTR'
@@ -999,8 +999,8 @@ SUBROUTINE testSTR()
   CALL testParam2%set('testSTR',TRIM(valstr)) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
-    ' parameter data type mismatch! Parameter testSTR type is test_type'// &
-    ' and must be TYPE(StringType)!'
+      ' parameter data type mismatch! Parameter testSTR type is test_type'// &
+      ' and must be TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -1036,7 +1036,7 @@ SUBROUTINE testSBKa1()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK_a1'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSBKa1',valsbka1,'The values .TRUE. & .FALSE.')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -1049,7 +1049,7 @@ SUBROUTINE testSBKa1()
   CALL testParam%init('testError',valsbka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SBK_a1'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -1097,12 +1097,12 @@ SUBROUTINE testSBKa1()
   CALL testParam%get('testError',valsbka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK_a1'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsbka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK_a1'// &
-    ' - parameter name mismatch "testError" in "testSBKa1"!'
+      ' - parameter name mismatch "testError" in "testSBKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSBKa1'
@@ -1110,8 +1110,8 @@ SUBROUTINE testSBKa1()
   CALL testParam2%get('testSBKa1',valsbka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SBK_a1'// &
-    ' - parameter data type mismatch! Parameter testSBKa1 type is test_type and'// &
-    ' must be 1-D ARRAY LOGICAL(SBK)!'
+      ' - parameter data type mismatch! Parameter testSBKa1 type is test_type and'// &
+      ' must be 1-D ARRAY LOGICAL(SBK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -1149,13 +1149,13 @@ SUBROUTINE testSBKa1()
   CALL someParam%set('testError',(/.FALSE./)) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSBKa1"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSBKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSBKa1',(/.TRUE./)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
-    ' unable to locate parameter "testSBKa1" in ""!'
+      ' unable to locate parameter "testSBKa1" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSBKa1'
@@ -1163,8 +1163,8 @@ SUBROUTINE testSBKa1()
   CALL testParam2%set('testSBKa1',(/.TRUE./)) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
-    ' parameter data type mismatch! Parameter testSBKa1 type is test_type'// &
-    ' and must be 1-D ARRAY LOGICAL(SBK)!'
+      ' parameter data type mismatch! Parameter testSBKa1 type is test_type'// &
+      ' and must be 1-D ARRAY LOGICAL(SBK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -1199,7 +1199,7 @@ SUBROUTINE testSNKa1()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a1'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSNKa1',valsnka1,'The numbers 5 & 7')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -1212,7 +1212,7 @@ SUBROUTINE testSNKa1()
   CALL testParam%init('testError',valsnka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a1'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -1260,12 +1260,12 @@ SUBROUTINE testSNKa1()
   CALL testParam%get('testError',valsnka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a1'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsnka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a1'// &
-    ' - parameter name mismatch "testError" in "testSNKa1"!'
+      ' - parameter name mismatch "testError" in "testSNKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNKa1'
@@ -1273,8 +1273,8 @@ SUBROUTINE testSNKa1()
   CALL testParam2%get('testSNKa1',valsnka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a1'// &
-    ' - parameter data type mismatch! Parameter testSNKa1 type is test_type and'// &
-    ' must be 1-D ARRAY INTEGER(SNK)!'
+      ' - parameter data type mismatch! Parameter testSNKa1 type is test_type and'// &
+      ' must be 1-D ARRAY INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -1312,13 +1312,13 @@ SUBROUTINE testSNKa1()
   CALL someParam%set('testError',(/-1/)) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSNKa1"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSNKa1',(/-1/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
-    ' unable to locate parameter "testSNKa1" in ""!'
+      ' unable to locate parameter "testSNKa1" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNKa1'
@@ -1326,8 +1326,8 @@ SUBROUTINE testSNKa1()
   CALL testParam2%set('testSNKa1',(/-1/)) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
-    ' parameter data type mismatch! Parameter testSNKa1 type is test_type'// &
-    ' and must be 1-D ARRAY INTEGER(SNK)!'
+      ' parameter data type mismatch! Parameter testSNKa1 type is test_type'// &
+      ' and must be 1-D ARRAY INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -1362,7 +1362,7 @@ SUBROUTINE testSLKa1()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a1'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSLKa1',valslka1,'The numbers 5 & 7')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -1375,7 +1375,7 @@ SUBROUTINE testSLKa1()
   CALL testParam%init('testError',valslka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a1'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -1423,12 +1423,12 @@ SUBROUTINE testSLKa1()
   CALL testParam%get('testError',valslka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a1'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valslka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a1'// &
-    ' - parameter name mismatch "testError" in "testSLKa1"!'
+      ' - parameter name mismatch "testError" in "testSLKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLKa1'
@@ -1436,8 +1436,8 @@ SUBROUTINE testSLKa1()
   CALL testParam2%get('testSLKa1',valslka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a1'// &
-    ' - parameter data type mismatch! Parameter testSLKa1 type is test_type and'// &
-    ' must be 1-D ARRAY INTEGER(SLK)!'
+      ' - parameter data type mismatch! Parameter testSLKa1 type is test_type and'// &
+      ' must be 1-D ARRAY INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -1475,13 +1475,13 @@ SUBROUTINE testSLKa1()
   CALL someParam%set('testError',(/-1_SLK/)) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSLKa1"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSLKa1',(/-1_SLK/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
-    ' unable to locate parameter "testSLKa1" in ""!'
+      ' unable to locate parameter "testSLKa1" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLKa1'
@@ -1489,8 +1489,8 @@ SUBROUTINE testSLKa1()
   CALL testParam2%set('testSLKa1',(/-1_SLK/)) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
-    ' parameter data type mismatch! Parameter testSLKa1 type is test_type'// &
-    ' and must be 1-D ARRAY INTEGER(SLK)!'
+      ' parameter data type mismatch! Parameter testSLKa1 type is test_type'// &
+      ' and must be 1-D ARRAY INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -1526,7 +1526,7 @@ SUBROUTINE testSSKa1()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a1'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSSKa1',valsska1,'The numbers 5.0 & 7.0')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -1539,7 +1539,7 @@ SUBROUTINE testSSKa1()
   CALL testParam%init('testError',valsska1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a1'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -1592,12 +1592,12 @@ SUBROUTINE testSSKa1()
   CALL testParam%get('testError',valsska1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a1'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsska1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a1'// &
-    ' - parameter name mismatch "testError" in "testSSKa1"!'
+      ' - parameter name mismatch "testError" in "testSSKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSKa1'
@@ -1605,8 +1605,8 @@ SUBROUTINE testSSKa1()
   CALL testParam2%get('testSSKa1',valsska1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a1'// &
-    ' - parameter data type mismatch! Parameter testSSKa1 type is test_type and'// &
-    ' must be 1-D ARRAY REAL(SSK)!'
+      ' - parameter data type mismatch! Parameter testSSKa1 type is test_type and'// &
+      ' must be 1-D ARRAY REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -1646,13 +1646,13 @@ SUBROUTINE testSSKa1()
   CALL someParam%set('testError',(/-1.0_SSK/)) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSSKa1"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSSKa1',(/-1.0_SSK/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
-    ' unable to locate parameter "testSSKa1" in ""!'
+      ' unable to locate parameter "testSSKa1" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSKa1'
@@ -1660,8 +1660,8 @@ SUBROUTINE testSSKa1()
   CALL testParam2%set('testSSKa1',(/-1.0_SSK/)) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
-    ' parameter data type mismatch! Parameter testSSKa1 type is test_type'// &
-    ' and must be 1-D ARRAY REAL(SSK)!'
+      ' parameter data type mismatch! Parameter testSSKa1 type is test_type'// &
+      ' and must be 1-D ARRAY REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -1697,7 +1697,7 @@ SUBROUTINE testSDKa1()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a1'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSDKa1',valsdka1,'The numbers 5.0 & 7.0')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -1710,7 +1710,7 @@ SUBROUTINE testSDKa1()
   CALL testParam%init('testError',valsdka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a1'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -1763,12 +1763,12 @@ SUBROUTINE testSDKa1()
   CALL testParam%get('testError',valsdka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a1'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsdka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a1'// &
-    ' - parameter name mismatch "testError" in "testSDKa1"!'
+      ' - parameter name mismatch "testError" in "testSDKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDKa1'
@@ -1776,8 +1776,8 @@ SUBROUTINE testSDKa1()
   CALL testParam2%get('testSDKa1',valsdka1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a1'// &
-    ' - parameter data type mismatch! Parameter testSDKa1 type is test_type and'// &
-    ' must be 1-D ARRAY REAL(SDK)!'
+      ' - parameter data type mismatch! Parameter testSDKa1 type is test_type and'// &
+      ' must be 1-D ARRAY REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -1817,13 +1817,13 @@ SUBROUTINE testSDKa1()
   CALL someParam%set('testError',(/-1.0_SDK/)) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSDKa1"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSDKa1',(/-1.0_SDK/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
-    ' unable to locate parameter "testSDKa1" in ""!'
+      ' unable to locate parameter "testSDKa1" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDKa1'
@@ -1831,8 +1831,8 @@ SUBROUTINE testSDKa1()
   CALL testParam2%set('testSDKa1',(/-1.0_SDK/)) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
-    ' parameter data type mismatch! Parameter testSDKa1 type is test_type'// &
-    ' and must be 1-D ARRAY REAL(SDK)!'
+      ' parameter data type mismatch! Parameter testSDKa1 type is test_type'// &
+      ' and must be 1-D ARRAY REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -1868,7 +1868,7 @@ SUBROUTINE testSTRa1()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a1'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSTRa1',valstra1,'The values are testing and more testing')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -1881,7 +1881,7 @@ SUBROUTINE testSTRa1()
   CALL testParam%init('testError',valstra1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a1'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -1934,12 +1934,12 @@ SUBROUTINE testSTRa1()
   CALL testParam%get('testError',valstra1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a1'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valstra1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a1'// &
-    ' - parameter name mismatch "testError" in "testSTRa1"!'
+      ' - parameter name mismatch "testError" in "testSTRa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSTRa1'
@@ -1947,8 +1947,8 @@ SUBROUTINE testSTRa1()
   CALL testParam2%get('testSTRa1',valstra1)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a1'// &
-    ' - parameter data type mismatch! Parameter testSTRa1 type is test_type and'// &
-    ' must be 1-D ARRAY TYPE(StringType)!'
+      ' - parameter data type mismatch! Parameter testSTRa1 type is test_type and'// &
+      ' must be 1-D ARRAY TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -2013,13 +2013,13 @@ SUBROUTINE testSTRa1()
   CALL someParam%set('testError',valstra1) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSTRa1"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSTRa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSTRa1',valstra1) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
-    ' unable to locate parameter "testSTRa1" in ""!'
+      ' unable to locate parameter "testSTRa1" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSTRa1'
@@ -2027,8 +2027,8 @@ SUBROUTINE testSTRa1()
   CALL testParam2%set('testSTRa1',valstra1) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
-    ' parameter data type mismatch! Parameter testSTRa1 type is test_type'// &
-    ' and must be 1-D ARRAY TYPE(StringType)!'
+      ' parameter data type mismatch! Parameter testSTRa1 type is test_type'// &
+      ' and must be 1-D ARRAY TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -2067,7 +2067,7 @@ SUBROUTINE testSNKa2()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a2'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSNKa2',valsnka2,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -2080,7 +2080,7 @@ SUBROUTINE testSNKa2()
   CALL testParam%init('testError',valsnka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a2'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -2138,12 +2138,12 @@ SUBROUTINE testSNKa2()
   CALL testParam%get('testError',valsnka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a2'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsnka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a2'// &
-    ' - parameter name mismatch "testError" in "testSNKa2"!'
+      ' - parameter name mismatch "testError" in "testSNKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNKa2'
@@ -2151,8 +2151,8 @@ SUBROUTINE testSNKa2()
   CALL testParam2%get('testSNKa2',valsnka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a2'// &
-    ' - parameter data type mismatch! Parameter testSNKa2 type is test_type and'// &
-    ' must be 2-D ARRAY INTEGER(SNK)!'
+      ' - parameter data type mismatch! Parameter testSNKa2 type is test_type and'// &
+      ' must be 2-D ARRAY INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -2198,13 +2198,13 @@ SUBROUTINE testSNKa2()
   CALL someParam%set('testError',RESHAPE((/-1/),(/1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSNKa2"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSNKa2',RESHAPE((/-1/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
-    ' unable to locate parameter "testSNKa2" in ""!'
+      ' unable to locate parameter "testSNKa2" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNKa2'
@@ -2212,8 +2212,8 @@ SUBROUTINE testSNKa2()
   CALL testParam2%set('testSNKa2',RESHAPE((/-1/),(/1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
-    ' parameter data type mismatch! Parameter testSNKa2 type is test_type'// &
-    ' and must be 2-D ARRAY INTEGER(SNK)!'
+      ' parameter data type mismatch! Parameter testSNKa2 type is test_type'// &
+      ' and must be 2-D ARRAY INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -2251,7 +2251,7 @@ SUBROUTINE testSLKa2()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a2'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSLKa2',valslka2,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -2264,7 +2264,7 @@ SUBROUTINE testSLKa2()
   CALL testParam%init('testError',valslka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a2'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -2292,7 +2292,7 @@ SUBROUTINE testSLKa2()
   bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
   ASSERT(bool,'someParam valslka2 size 1')
   bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
-    valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
   ASSERT(bool,'someParam valslka2 1')
   DEALLOCATE(valslka2)
   ALLOCATE(valslka2(1,1))
@@ -2300,14 +2300,14 @@ SUBROUTINE testSLKa2()
   bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
   ASSERT(bool,'someParam valslka2 different size')
   bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
-    valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
   ASSERT(bool,'someParam valslka2 2')
   DEALLOCATE(valslka2)
   CALL someParam%get('testSLKa2',valslka2)
   bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
   ASSERT(bool,'someParam valslka2 unallocated')
   bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
-    valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
   ASSERT(bool,'someParam valslka2 3')
   DEALLOCATE(valslka2)
   ALLOCATE(valslka2(2,1))
@@ -2315,24 +2315,24 @@ SUBROUTINE testSLKa2()
   bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
   ASSERT(bool,'testParam valslka2 size 1')
   bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
-    valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
   ASSERT(bool,'testParam valslka2 1')
   DEALLOCATE(valslka2)
   CALL testParam%get('testSLKa2',valslka2)
   bool=SIZE(valslka2,DIM=1) == 2 .AND. SIZE(valslka2,DIM=2) == 2
   ASSERT(bool,'testParam valslka2 unallocated')
   bool=valslka2(1,1) == 5_SLK .AND. valslka2(2,1) == 7_SLK .AND. &
-    valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
+      valslka2(1,2) == 6_SLK .AND. valslka2(2,2) == 8_SLK
   ASSERT(bool,'testParam valslka2 2')
   CALL testParam%get('testError',valslka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a2'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valslka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a2'// &
-    ' - parameter name mismatch "testError" in "testSLKa2"!'
+      ' - parameter name mismatch "testError" in "testSLKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLKa2'
@@ -2340,8 +2340,8 @@ SUBROUTINE testSLKa2()
   CALL testParam2%get('testSLKa2',valslka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a2'// &
-    ' - parameter data type mismatch! Parameter testSLKa2 type is test_type and'// &
-    ' must be 2-D ARRAY INTEGER(SLK)!'
+      ' - parameter data type mismatch! Parameter testSLKa2 type is test_type and'// &
+      ' must be 2-D ARRAY INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -2387,13 +2387,13 @@ SUBROUTINE testSLKa2()
   CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSLKa2"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
-    ' unable to locate parameter "testSLKa2" in ""!'
+      ' unable to locate parameter "testSLKa2" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLKa2'
@@ -2401,8 +2401,8 @@ SUBROUTINE testSLKa2()
   CALL testParam2%set('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
-    ' parameter data type mismatch! Parameter testSLKa2 type is test_type'// &
-    ' and must be 2-D ARRAY INTEGER(SLK)!'
+      ' parameter data type mismatch! Parameter testSLKa2 type is test_type'// &
+      ' and must be 2-D ARRAY INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -2440,7 +2440,7 @@ SUBROUTINE testSSKa2()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a2'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSSKa2',valsska2,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -2453,7 +2453,7 @@ SUBROUTINE testSSKa2()
   CALL testParam%init('testError',valsska2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a2'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -2481,7 +2481,7 @@ SUBROUTINE testSSKa2()
   bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
   ASSERT(bool,'someParam valsska2 size 1')
   bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
-    valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
   ASSERT(bool,'someParam valsska2 1')
   DEALLOCATE(valsska2)
   ALLOCATE(valsska2(1,1))
@@ -2489,14 +2489,14 @@ SUBROUTINE testSSKa2()
   bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
   ASSERT(bool,'someParam valsska2 different size')
   bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
-    valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
   ASSERT(bool,'someParam valsska2 2')
   DEALLOCATE(valsska2)
   CALL someParam%get('testSSKa2',valsska2)
   bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
   ASSERT(bool,'someParam valsska2 unallocated')
   bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
-    valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
   ASSERT(bool,'someParam valsska2 3')
   DEALLOCATE(valsska2)
   ALLOCATE(valsska2(2,1))
@@ -2504,24 +2504,24 @@ SUBROUTINE testSSKa2()
   bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
   ASSERT(bool,'testParam valsska2 size 1')
   bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
-    valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
   ASSERT(bool,'testParam valsska2 1')
   DEALLOCATE(valsska2)
   CALL testParam%get('testSSKa2',valsska2)
   bool=SIZE(valsska2,DIM=1) == 2 .AND. SIZE(valsska2,DIM=2) == 2
   ASSERT(bool,'testParam valsska2 unallocated')
   bool=valsska2(1,1) == 5.0_SSK .AND. valsska2(2,1) == 7.0_SSK .AND. &
-    valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
+      valsska2(1,2) == 6.0_SSK .AND. valsska2(2,2) == 8.0_SSK
   ASSERT(bool,'testParam valsska2 2')
   CALL testParam%get('testError',valsska2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a2'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsska2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a2'// &
-    ' - parameter name mismatch "testError" in "testSSKa2"!'
+      ' - parameter name mismatch "testError" in "testSSKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSKa2'
@@ -2529,8 +2529,8 @@ SUBROUTINE testSSKa2()
   CALL testParam2%get('testSSKa2',valsska2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a2'// &
-    ' - parameter data type mismatch! Parameter testSSKa2 type is test_type and'// &
-    ' must be 2-D ARRAY REAL(SSK)!'
+      ' - parameter data type mismatch! Parameter testSSKa2 type is test_type and'// &
+      ' must be 2-D ARRAY REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -2576,13 +2576,13 @@ SUBROUTINE testSSKa2()
   CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSSKa2"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
-    ' unable to locate parameter "testSSKa2" in ""!'
+      ' unable to locate parameter "testSSKa2" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSKa2'
@@ -2590,8 +2590,8 @@ SUBROUTINE testSSKa2()
   CALL testParam2%set('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
-    ' parameter data type mismatch! Parameter testSSKa2 type is test_type'// &
-    ' and must be 2-D ARRAY REAL(SSK)!'
+      ' parameter data type mismatch! Parameter testSSKa2 type is test_type'// &
+      ' and must be 2-D ARRAY REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -2629,7 +2629,7 @@ SUBROUTINE testSDKa2()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a2'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSDKa2',valsdka2,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -2642,7 +2642,7 @@ SUBROUTINE testSDKa2()
   CALL testParam%init('testError',valsdka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a2'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -2670,7 +2670,7 @@ SUBROUTINE testSDKa2()
   bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
   ASSERT(bool,'someParam valsdka2 size 1')
   bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
-    valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
   ASSERT(bool,'someParam valsdka2 1')
   DEALLOCATE(valsdka2)
   ALLOCATE(valsdka2(1,1))
@@ -2678,14 +2678,14 @@ SUBROUTINE testSDKa2()
   bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
   ASSERT(bool,'someParam valsdka2 different size')
   bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
-    valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
   ASSERT(bool,'someParam valsdka2 2')
   DEALLOCATE(valsdka2)
   CALL someParam%get('testSDKa2',valsdka2)
   bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
   ASSERT(bool,'someParam valsdka2 unallocated')
   bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
-    valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
   ASSERT(bool,'someParam valsdka2 3')
   DEALLOCATE(valsdka2)
   ALLOCATE(valsdka2(2,1))
@@ -2693,24 +2693,24 @@ SUBROUTINE testSDKa2()
   bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
   ASSERT(bool,'testParam valsdka2 size 1')
   bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
-    valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
   ASSERT(bool,'testParam valsdka2 1')
   DEALLOCATE(valsdka2)
   CALL testParam%get('testSDKa2',valsdka2)
   bool=SIZE(valsdka2,DIM=1) == 2 .AND. SIZE(valsdka2,DIM=2) == 2
   ASSERT(bool,'testParam valsdka2 unallocated')
   bool=valsdka2(1,1) == 5.0_SDK .AND. valsdka2(2,1) == 7.0_SDK .AND. &
-    valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
+      valsdka2(1,2) == 6.0_SDK .AND. valsdka2(2,2) == 8.0_SDK
   ASSERT(bool,'testParam valsdka2 2')
   CALL testParam%get('testError',valsdka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a2'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsdka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a2'// &
-    ' - parameter name mismatch "testError" in "testSDKa2"!'
+      ' - parameter name mismatch "testError" in "testSDKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDKa2'
@@ -2718,8 +2718,8 @@ SUBROUTINE testSDKa2()
   CALL testParam2%get('testSDKa2',valsdka2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a2'// &
-    ' - parameter data type mismatch! Parameter testSDKa2 type is test_type and'// &
-    ' must be 2-D ARRAY REAL(SDK)!'
+      ' - parameter data type mismatch! Parameter testSDKa2 type is test_type and'// &
+      ' must be 2-D ARRAY REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -2765,13 +2765,13 @@ SUBROUTINE testSDKa2()
   CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSDKa2"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
-    ' unable to locate parameter "testSDKa2" in ""!'
+      ' unable to locate parameter "testSDKa2" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDKa2'
@@ -2779,8 +2779,8 @@ SUBROUTINE testSDKa2()
   CALL testParam2%set('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
-    ' parameter data type mismatch! Parameter testSDKa2 type is test_type'// &
-    ' and must be 2-D ARRAY REAL(SDK)!'
+      ' parameter data type mismatch! Parameter testSDKa2 type is test_type'// &
+      ' and must be 2-D ARRAY REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -2818,7 +2818,7 @@ SUBROUTINE testSTRa2()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a2'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSTRa2',valstra2,'The values testing 1, 2, 3, & 4')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -2831,7 +2831,7 @@ SUBROUTINE testSTRa2()
   CALL testParam%init('testError',valstra2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a2'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -2859,7 +2859,7 @@ SUBROUTINE testSTRa2()
   bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
   ASSERT(bool,'someParam valstra2 size 1')
   bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
-    valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
   ASSERT(bool,'someParam valstra2 1')
   DEALLOCATE(valstra2)
   ALLOCATE(valstra2(1,1))
@@ -2867,14 +2867,14 @@ SUBROUTINE testSTRa2()
   bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
   ASSERT(bool,'someParam valstra2 different size')
   bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
-    valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
   ASSERT(bool,'someParam valstra2 2')
   DEALLOCATE(valstra2)
   CALL someParam%get('testSTRa2',valstra2)
   bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
   ASSERT(bool,'someParam valstra2 unallocated')
   bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
-    valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
   ASSERT(bool,'someParam valstra2 3')
   DEALLOCATE(valstra2)
   ALLOCATE(valstra2(2,1))
@@ -2882,24 +2882,24 @@ SUBROUTINE testSTRa2()
   bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
   ASSERT(bool,'testParam valstra2 size 1')
   bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
-    valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
   ASSERT(bool,'testParam valstra2 1')
   DEALLOCATE(valstra2)
   CALL testParam%get('testSTRa2',valstra2)
   bool=SIZE(valstra2,DIM=1) == 2 .AND. SIZE(valstra2,DIM=2) == 2
   ASSERT(bool,'testParam valstra2 unallocated')
   bool=valstra2(1,1) == 'testing 1' .AND. valstra2(2,1) == 'testing 2' .AND. &
-    valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
+      valstra2(1,2) == 'testing 3' .AND. valstra2(2,2) == 'testing 4'
   ASSERT(bool,'testParam valstra2 2')
   CALL testParam%get('testError',valstra2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a2'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valstra2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a2'// &
-    ' - parameter name mismatch "testError" in "testSTRa2"!'
+      ' - parameter name mismatch "testError" in "testSTRa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSTRa2'
@@ -2907,8 +2907,8 @@ SUBROUTINE testSTRa2()
   CALL testParam2%get('testSTRa2',valstra2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a2'// &
-    ' - parameter data type mismatch! Parameter testSTRa2 type is test_type and'// &
-    ' must be 2-D ARRAY TYPE(StringType)!'
+      ' - parameter data type mismatch! Parameter testSTRa2 type is test_type and'// &
+      ' must be 2-D ARRAY TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -2970,13 +2970,13 @@ SUBROUTINE testSTRa2()
   CALL someParam%set('testError',valstra2) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSTRa2"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSTRa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSTRa2',valstra2) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
-    ' unable to locate parameter "testSTRa2" in ""!'
+      ' unable to locate parameter "testSTRa2" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSTRa2'
@@ -2984,8 +2984,8 @@ SUBROUTINE testSTRa2()
   CALL testParam2%set('testSTRa2',valstra2) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
-    ' parameter data type mismatch! Parameter testSTRa2 type is test_type'// &
-    ' and must be 2-D ARRAY TYPE(StringType)!'
+      ' parameter data type mismatch! Parameter testSTRa2 type is test_type'// &
+      ' and must be 2-D ARRAY TYPE(StringType)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -3027,7 +3027,7 @@ SUBROUTINE testSNKa3()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a3'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSNKa3',valsnka3,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -3040,7 +3040,7 @@ SUBROUTINE testSNKa3()
   CALL testParam%init('testError',valsnka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a3'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -3068,7 +3068,7 @@ SUBROUTINE testSNKa3()
   bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
   ASSERT(bool,'someParam valsnka3 size 1')
   bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
-    .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
   ASSERT(bool,'someParam valsnka3 1')
   DEALLOCATE(valsnka3)
   ALLOCATE(valsnka3(1,1,1))
@@ -3076,14 +3076,14 @@ SUBROUTINE testSNKa3()
   bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
   ASSERT(bool,'someParam valsnka3 different size')
   bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
-    .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
   ASSERT(bool,'someParam valsnka3 2')
   DEALLOCATE(valsnka3)
   CALL someParam%get('testSNKa3',valsnka3)
   bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
   ASSERT(bool,'someParam valsnka3 unallocated')
   bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
-    .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
   ASSERT(bool,'someParam valsnka3 3')
   DEALLOCATE(valsnka3)
   ALLOCATE(valsnka3(2,2,1))
@@ -3091,24 +3091,24 @@ SUBROUTINE testSNKa3()
   bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
   ASSERT(bool,'testParam valsnka3 size 1')
   bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
-    .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
   ASSERT(bool,'testParam valsnka3 1')
   DEALLOCATE(valsnka3)
   CALL testParam%get('testSNKa3',valsnka3)
   bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 2
   ASSERT(bool,'testParam valsnka3 unallocated')
   bool=ALL(valsnka3(1,1,:) == 5) .AND. ALL(valsnka3(2,1,:) == 7) &
-    .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
+      .AND. ALL(valsnka3(1,2,:) == 6) .AND. ALL(valsnka3(2,2,:) == 8)
   ASSERT(bool,'testParam valsnka3 2')
   CALL testParam%get('testError',valsnka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a3'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsnka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a3'// &
-    ' - parameter name mismatch "testError" in "testSNKa3"!'
+      ' - parameter name mismatch "testError" in "testSNKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNKa3'
@@ -3116,8 +3116,8 @@ SUBROUTINE testSNKa3()
   CALL testParam2%get('testSNKa3',valsnka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a3'// &
-    ' - parameter data type mismatch! Parameter testSNKa3 type is test_type and'// &
-    ' must be 3-D ARRAY INTEGER(SNK)!'
+      ' - parameter data type mismatch! Parameter testSNKa3 type is test_type and'// &
+      ' must be 3-D ARRAY INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -3137,7 +3137,7 @@ SUBROUTINE testSNKa3()
   bool=SIZE(valsnka3,DIM=1) == 2 .AND. SIZE(valsnka3,DIM=2) == 2 .AND. SIZE(valsnka3,DIM=3) == 1
   ASSERT(bool,'testParam valsnka3 size 2')
   bool=valsnka3(1,1,1) == 3 .AND. valsnka3(2,1,1) == -5 .AND. &
-    valsnka3(1,2,1) == 3 .AND. valsnka3(2,2,1) == -5
+      valsnka3(1,2,1) == 3 .AND. valsnka3(2,2,1) == -5
   ASSERT(bool,'testParam valsnka3 2')
   ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
   !
@@ -3164,13 +3164,13 @@ SUBROUTINE testSNKa3()
   CALL someParam%set('testError',RESHAPE((/-1/),(/1,1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSNKa3"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSNKa3',RESHAPE((/-1/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
-    ' unable to locate parameter "testSNKa3" in ""!'
+      ' unable to locate parameter "testSNKa3" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSNKa3'
@@ -3178,8 +3178,8 @@ SUBROUTINE testSNKa3()
   CALL testParam2%set('testSNKa3',RESHAPE((/-1/),(/1,1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
-    ' parameter data type mismatch! Parameter testSNKa3 type is test_type'// &
-    ' and must be 3-D ARRAY INTEGER(SNK)!'
+      ' parameter data type mismatch! Parameter testSNKa3 type is test_type'// &
+      ' and must be 3-D ARRAY INTEGER(SNK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -3217,7 +3217,7 @@ SUBROUTINE testSLKa3()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a3'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSLKa3',valslka3,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -3230,7 +3230,7 @@ SUBROUTINE testSLKa3()
   CALL testParam%init('testError',valslka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a3'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -3258,7 +3258,7 @@ SUBROUTINE testSLKa3()
   bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
   ASSERT(bool,'someParam valslka3 size 1')
   bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
-    .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
   ASSERT(bool,'someParam valslka3 1')
   DEALLOCATE(valslka3)
   ALLOCATE(valslka3(1,1,1))
@@ -3266,14 +3266,14 @@ SUBROUTINE testSLKa3()
   bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
   ASSERT(bool,'someParam valslka3 different size')
   bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
-    .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
   ASSERT(bool,'someParam valslka3 2')
   DEALLOCATE(valslka3)
   CALL someParam%get('testSLKa3',valslka3)
   bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
   ASSERT(bool,'someParam valslka3 unallocated')
   bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
-    .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
   ASSERT(bool,'someParam valslka3 3')
   DEALLOCATE(valslka3)
   ALLOCATE(valslka3(2,2,1))
@@ -3281,24 +3281,24 @@ SUBROUTINE testSLKa3()
   bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
   ASSERT(bool,'testParam valslka3 size 1')
   bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
-    .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
   ASSERT(bool,'testParam valslka3 1')
   DEALLOCATE(valslka3)
   CALL testParam%get('testSLKa3',valslka3)
   bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 2
   ASSERT(bool,'testParam valslka3 unallocated')
   bool=ALL(valslka3(1,1,:) == 5_SLK) .AND. ALL(valslka3(2,1,:) == 7_SLK) &
-    .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
+      .AND. ALL(valslka3(1,2,:) == 6_SLK) .AND. ALL(valslka3(2,2,:) == 8_SLK)
   ASSERT(bool,'testParam valslka3 2')
   CALL testParam%get('testError',valslka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a3'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valslka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a3'// &
-    ' - parameter name mismatch "testError" in "testSLKa3"!'
+      ' - parameter name mismatch "testError" in "testSLKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLKa3'
@@ -3306,8 +3306,8 @@ SUBROUTINE testSLKa3()
   CALL testParam2%get('testSLKa3',valslka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a3'// &
-    ' - parameter data type mismatch! Parameter testSLKa3 type is test_type and'// &
-    ' must be 3-D ARRAY INTEGER(SLK)!'
+      ' - parameter data type mismatch! Parameter testSLKa3 type is test_type and'// &
+      ' must be 3-D ARRAY INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -3327,7 +3327,7 @@ SUBROUTINE testSLKa3()
   bool=SIZE(valslka3,DIM=1) == 2 .AND. SIZE(valslka3,DIM=2) == 2 .AND. SIZE(valslka3,DIM=3) == 1
   ASSERT(bool,'testParam valslka3 size 2')
   bool=valslka3(1,1,1) == 3_SLK .AND. valslka3(2,1,1) == -5_SLK .AND. &
-    valslka3(1,2,1) == 3_SLK .AND. valslka3(2,2,1) == -5_SLK
+      valslka3(1,2,1) == 3_SLK .AND. valslka3(2,2,1) == -5_SLK
   ASSERT(bool,'testParam valslka3 2')
   ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
   !
@@ -3354,13 +3354,13 @@ SUBROUTINE testSLKa3()
   CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSLKa3"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
-    ' unable to locate parameter "testSLKa3" in ""!'
+      ' unable to locate parameter "testSLKa3" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSLKa3'
@@ -3368,8 +3368,8 @@ SUBROUTINE testSLKa3()
   CALL testParam2%set('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
-    ' parameter data type mismatch! Parameter testSLKa3 type is test_type'// &
-    ' and must be 3-D ARRAY INTEGER(SLK)!'
+      ' parameter data type mismatch! Parameter testSLKa3 type is test_type'// &
+      ' and must be 3-D ARRAY INTEGER(SLK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -3407,7 +3407,7 @@ SUBROUTINE testSSKa3()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a3'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSSKa3',valsska3,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -3420,7 +3420,7 @@ SUBROUTINE testSSKa3()
   CALL testParam%init('testError',valsska3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a3'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -3448,7 +3448,7 @@ SUBROUTINE testSSKa3()
   bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
   ASSERT(bool,'someParam valsska3 size 1')
   bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
-    .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
   ASSERT(bool,'someParam valsska3 1')
   DEALLOCATE(valsska3)
   ALLOCATE(valsska3(1,1,1))
@@ -3456,14 +3456,14 @@ SUBROUTINE testSSKa3()
   bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
   ASSERT(bool,'someParam valsska3 different size')
   bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
-    .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
   ASSERT(bool,'someParam valsska3 2')
   DEALLOCATE(valsska3)
   CALL someParam%get('testSSKa3',valsska3)
   bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
   ASSERT(bool,'someParam valsska3 unallocated')
   bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
-    .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
   ASSERT(bool,'someParam valsska3 3')
   DEALLOCATE(valsska3)
   ALLOCATE(valsska3(2,2,1))
@@ -3471,24 +3471,24 @@ SUBROUTINE testSSKa3()
   bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
   ASSERT(bool,'testParam valsska3 size 1')
   bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
-    .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
   ASSERT(bool,'testParam valsska3 1')
   DEALLOCATE(valsska3)
   CALL testParam%get('testSSKa3',valsska3)
   bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 2
   ASSERT(bool,'testParam valsska3 unallocated')
   bool=ALL(valsska3(1,1,:) == 5.0_SSK) .AND. ALL(valsska3(2,1,:) == 7.0_SSK) &
-    .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
+      .AND. ALL(valsska3(1,2,:) == 6.0_SSK) .AND. ALL(valsska3(2,2,:) == 8.0_SSK)
   ASSERT(bool,'testParam valsska3 2')
   CALL testParam%get('testError',valsska3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a3'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsska3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a3'// &
-    ' - parameter name mismatch "testError" in "testSSKa3"!'
+      ' - parameter name mismatch "testError" in "testSSKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSKa3'
@@ -3496,8 +3496,8 @@ SUBROUTINE testSSKa3()
   CALL testParam2%get('testSSKa3',valsska3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a3'// &
-    ' - parameter data type mismatch! Parameter testSSKa3 type is test_type and'// &
-    ' must be 3-D ARRAY REAL(SSK)!'
+      ' - parameter data type mismatch! Parameter testSSKa3 type is test_type and'// &
+      ' must be 3-D ARRAY REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -3517,7 +3517,7 @@ SUBROUTINE testSSKa3()
   bool=SIZE(valsska3,DIM=1) == 2 .AND. SIZE(valsska3,DIM=2) == 2 .AND. SIZE(valsska3,DIM=3) == 1
   ASSERT(bool,'testParam valsska3 size 2')
   bool=valsska3(1,1,1) == 3.0_SSK .AND. valsska3(2,1,1) == -5.0_SSK .AND. &
-    valsska3(1,2,1) == 3.0_SSK .AND. valsska3(2,2,1) == -5.0_SSK
+      valsska3(1,2,1) == 3.0_SSK .AND. valsska3(2,2,1) == -5.0_SSK
   ASSERT(bool,'testParam valsska3 2')
   ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
   !
@@ -3544,13 +3544,13 @@ SUBROUTINE testSSKa3()
   CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSSKa3"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
-    ' unable to locate parameter "testSSKa3" in ""!'
+      ' unable to locate parameter "testSSKa3" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSSKa3'
@@ -3558,8 +3558,8 @@ SUBROUTINE testSSKa3()
   CALL testParam2%set('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
-    ' parameter data type mismatch! Parameter testSSKa3 type is test_type'// &
-    ' and must be 3-D ARRAY REAL(SSK)!'
+      ' parameter data type mismatch! Parameter testSSKa3 type is test_type'// &
+      ' and must be 3-D ARRAY REAL(SSK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -3597,7 +3597,7 @@ SUBROUTINE testSDKa3()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a3'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSDKa3',valsdka3,'The numbers 5, 7, 6, & 8')
   ASSERT(LEN(testParam%name) == 0,'%name 3')
@@ -3610,7 +3610,7 @@ SUBROUTINE testSDKa3()
   CALL testParam%init('testError',valsdka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a3'// &
-    ' - parameter is already initialized! Use set method!'
+      ' - parameter is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -3638,7 +3638,7 @@ SUBROUTINE testSDKa3()
   bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
   ASSERT(bool,'someParam valsdka3 size 1')
   bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
-    .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
   ASSERT(bool,'someParam valsdka3 1')
   DEALLOCATE(valsdka3)
   ALLOCATE(valsdka3(1,1,1))
@@ -3646,14 +3646,14 @@ SUBROUTINE testSDKa3()
   bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
   ASSERT(bool,'someParam valsdka3 different size')
   bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
-    .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
   ASSERT(bool,'someParam valsdka3 2')
   DEALLOCATE(valsdka3)
   CALL someParam%get('testSDKa3',valsdka3)
   bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
   ASSERT(bool,'someParam valsdka3 unallocated')
   bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
-    .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
   ASSERT(bool,'someParam valsdka3 3')
   DEALLOCATE(valsdka3)
   ALLOCATE(valsdka3(2,2,1))
@@ -3661,24 +3661,24 @@ SUBROUTINE testSDKa3()
   bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
   ASSERT(bool,'testParam valsdka3 size 1')
   bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
-    .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
   ASSERT(bool,'testParam valsdka3 1')
   DEALLOCATE(valsdka3)
   CALL testParam%get('testSDKa3',valsdka3)
   bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 2
   ASSERT(bool,'testParam valsdka3 unallocated')
   bool=ALL(valsdka3(1,1,:) == 5.0_SDK) .AND. ALL(valsdka3(2,1,:) == 7.0_SDK) &
-    .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
+      .AND. ALL(valsdka3(1,2,:) == 6.0_SDK) .AND. ALL(valsdka3(2,2,:) == 8.0_SDK)
   ASSERT(bool,'testParam valsdka3 2')
   CALL testParam%get('testError',valsdka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a3'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',valsdka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a3'// &
-    ' - parameter name mismatch "testError" in "testSDKa3"!'
+      ' - parameter name mismatch "testError" in "testSDKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDKa3'
@@ -3686,8 +3686,8 @@ SUBROUTINE testSDKa3()
   CALL testParam2%get('testSDKa3',valsdka3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a3'// &
-    ' - parameter data type mismatch! Parameter testSDKa3 type is test_type and'// &
-    ' must be 3-D ARRAY REAL(SDK)!'
+      ' - parameter data type mismatch! Parameter testSDKa3 type is test_type and'// &
+      ' must be 3-D ARRAY REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -3707,7 +3707,7 @@ SUBROUTINE testSDKa3()
   bool=SIZE(valsdka3,DIM=1) == 2 .AND. SIZE(valsdka3,DIM=2) == 2 .AND. SIZE(valsdka3,DIM=3) == 1
   ASSERT(bool,'testParam valsdka3 size 2')
   bool=valsdka3(1,1,1) == 3.0_SDK .AND. valsdka3(2,1,1) == -5.0_SDK .AND. &
-    valsdka3(1,2,1) == 3.0_SDK .AND. valsdka3(2,2,1) == -5.0_SDK
+      valsdka3(1,2,1) == 3.0_SDK .AND. valsdka3(2,2,1) == -5.0_SDK
   ASSERT(bool,'testParam valsdka3 2')
   ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
   !
@@ -3734,13 +3734,13 @@ SUBROUTINE testSDKa3()
   CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testSDKa3"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
-    ' unable to locate parameter "testSDKa3" in ""!'
+      ' unable to locate parameter "testSDKa3" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testSDKa3'
@@ -3748,8 +3748,8 @@ SUBROUTINE testSDKa3()
   CALL testParam2%set('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
-    ' parameter data type mismatch! Parameter testSDKa3 type is test_type'// &
-    ' and must be 3-D ARRAY REAL(SDK)!'
+      ' parameter data type mismatch! Parameter testSDKa3 type is test_type'// &
+      ' and must be 3-D ARRAY REAL(SDK)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -3782,7 +3782,7 @@ SUBROUTINE testParamListType()
   ASSERT(LEN(testParam%description) == 0,'%description 2')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_List'// &
-    ' - "->" symbol is not allowed in name!'
+      ' - "->" symbol is not allowed in name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
   CALL testParam%init('testSSK',valssk,'The number 5.0')
   testList(1)=testParam
@@ -3800,7 +3800,7 @@ SUBROUTINE testParamListType()
   CALL testParam%init('testError',testList)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_List'// &
-    ' - parameter  is already initialized! Use set method!'
+      ' - parameter  is already initialized! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
 
   !Test clear
@@ -3830,7 +3830,7 @@ SUBROUTINE testParamListType()
   CALL testParam%get('',someParam)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType'// &
-    ' - cannot search for a blank name!'
+      ' - cannot search for a blank name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL testParam%init('testPL',testList,'The param lists')
   CALL testParam%get('testPL',someParam)
@@ -3846,12 +3846,12 @@ SUBROUTINE testParamListType()
   CALL testParam%get('testError',testList2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_List'// &
-    ' - unable to locate parameter "testError" in ""!'
+      ' - unable to locate parameter "testError" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
   CALL someParam%get('testError',testList2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_List'// &
-    ' - parameter name mismatch "testError" in "testPL"!'
+      ' - parameter name mismatch "testError" in "testPL"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testPL'
@@ -3859,8 +3859,8 @@ SUBROUTINE testParamListType()
   CALL testParam2%get('testPL',testList2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_List'// &
-    ' - parameter data type mismatch! Parameter testPL type is test_type and'// &
-    ' must be TYPE(ParamType_List)!'
+      ' - parameter data type mismatch! Parameter testPL type is test_type and'// &
+      ' must be TYPE(ParamType_List)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
   CALL testParam2%clear()
 
@@ -3892,13 +3892,13 @@ SUBROUTINE testParamListType()
   CALL someParam%set('testError',testList2) !Name mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
-    ' parameter name mismatch! Tried to set "testError" but name is'// &
-    ' "testPL"!'
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testPL"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
   CALL testParam2%set('testPL',testList2) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
-    ' unable to locate parameter "testPL" in ""!'
+      ' unable to locate parameter "testPL" in ""!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
   ALLOCATE(testParam2%pdat)
   testParam2%pdat%name='testPL'
@@ -3906,8 +3906,8 @@ SUBROUTINE testParamListType()
   CALL testParam2%set('testPL',testList2) !Type mismatch
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
-    ' parameter data type mismatch! Parameter testPL type is test_type'// &
-    ' and must be TYPE(ParamType_List)!'
+      ' parameter data type mismatch! Parameter testPL type is test_type'// &
+      ' and must be TYPE(ParamType_List)!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
   CALL testParam2%clear()
 
@@ -3944,7 +3944,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSBK2',.FALSE.,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SBK -'// &
-    ' parameter name "testPL->testSBK2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSBK2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSBK',sbk0)
@@ -3958,7 +3958,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSSK2',8.0_SSK,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK -'// &
-    ' parameter name "testPL->testSSK2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSSK2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSSK',ssk0)
@@ -3972,7 +3972,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSDK2',8.0_SDK,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK -'// &
-    ' parameter name "testPL->testSDK2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSDK2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSDK',sdk0)
@@ -3986,7 +3986,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSNK2',8_SNK,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK -'// &
-    ' parameter name "testPL->testSNK2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSNK2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSNK',snk0)
@@ -4000,7 +4000,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSLK2',8_SLK,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK -'// &
-    ' parameter name "testPL->testSLK2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSLK2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSLK',slk0)
@@ -4016,7 +4016,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSTR2',str0,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR -'// &
-    ' parameter name "testPL->testSTR2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSTR2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSTR',str0)
@@ -4030,7 +4030,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testCHAR2','char2','comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR -'// &
-    ' parameter name "testPL->testCHAR2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testCHAR2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testCHAR',str0)
@@ -4044,7 +4044,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSSKa1_2',(/1.7_SSK,1.8_SSK/),'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK_a1 -'// &
-    ' parameter name "testPL->testSSKa1_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSSKa1_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSSKa1',ssk1)
@@ -4058,7 +4058,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSDKa1_2',(/2.7_SDK,2.8_SDK/),'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK_a1 -'// &
-    ' parameter name "testPL->testSDKa1_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSDKa1_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSDKa1',sdk1)
@@ -4072,7 +4072,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSNKa1_2',(/2_SNK,3_SNK/),'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK_a1 -'// &
-    ' parameter name "testPL->testSNKa1_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSNKa1_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSNKa1',snk1)
@@ -4086,7 +4086,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSLKa1_2',(/4_SLK,5_SLK/),'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK_a1 -'// &
-    ' parameter name "testPL->testSLKa1_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSLKa1_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSLKa1',slk1)
@@ -4100,7 +4100,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSBKa1_2',(/.FALSE.,.FALSE./),'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SBK_a1 -'// &
-    ' parameter name "testPL->testSBKa1_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSBKa1_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSBKa1',sbk1)
@@ -4119,7 +4119,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSTRa1_2',str1,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR_a1 -'// &
-    ' parameter name "testPL->testSTRa1_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSTRa1_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSTRa1',str1)
@@ -4144,7 +4144,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSSKa2_2',ssk2,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK_a2 -'// &
-    ' parameter name "testPL->testSSKa2_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSSKa2_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSSKa2',ssk2)
@@ -4169,7 +4169,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSDKa2_2',sdk2,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK_a2 -'// &
-    ' parameter name "testPL->testSDKa2_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSDKa2_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSDKa2',sdk2)
@@ -4194,7 +4194,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSNKa2_2',snk2,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK_a2 -'// &
-    ' parameter name "testPL->testSNKa2_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSNKa2_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSNKa2',snk2)
@@ -4219,7 +4219,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSLKa2_2',slk2,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK_a2 -'// &
-    ' parameter name "testPL->testSLKa2_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSLKa2_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSLKa2',slk2)
@@ -4244,16 +4244,16 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSTRa2_2',str2,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_STR_a2 -'// &
-    ' parameter name "testPL->testSTRa2_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSTRa2_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSTRa2',str2)
   bool=str2(1,1) == 'stringarray1' .AND. str2(2,1) == 'stringarray2' .AND. &
-    str2(1,2) == 'stringarray3' .AND. str2(2,2) == 'stringarray4'
+      str2(1,2) == 'stringarray3' .AND. str2(2,2) == 'stringarray4'
   ASSERT(bool,'%add str2')
   CALL testParam%get('testPL->testSTRa2_2',str2)
   bool=str2(1,1) == 'stringarray5' .AND. str2(2,1) == 'stringarray6' .AND. &
-    str2(1,2) == 'stringarray7' .AND. str2(2,2) == 'stringarray8'
+      str2(1,2) == 'stringarray7' .AND. str2(2,2) == 'stringarray8'
   ASSERT(bool,'%add str2')
 
   !Testing addition of 3-D array SSK routine to parameter list
@@ -4279,16 +4279,16 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSSKa3_2',ssk3,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SSK_a3 -'// &
-    ' parameter name "testPL->testSSKa3_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSSKa3_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSSKa3',ssk3)
   bool=ALL(ssk3 .APPROXEQA. RESHAPE((/1.11_SSK,2.11_SSK,1.21_SSK,2.21_SSK, &
-    1.12_SSK,2.12_SSK,1.22_SSK,2.22_SSK/),(/2,2,2/)))
+      1.12_SSK,2.12_SSK,1.22_SSK,2.22_SSK/),(/2,2,2/)))
   ASSERT(bool,'%add ssk3')
   CALL testParam%get('testPL->testSSKa3_2',ssk3)
   bool=ALL(ssk3 .APPROXEQA. RESHAPE((/3.11_SSK,4.11_SSK,3.21_SSK,4.21_SSK, &
-    3.12_SSK,4.12_SSK,3.22_SSK,4.22_SSK/),(/2,2,2/)))
+      3.12_SSK,4.12_SSK,3.22_SSK,4.22_SSK/),(/2,2,2/)))
   ASSERT(bool,'%add ssk3')
 
   !Testing addition of 3-D array SDK routine to parameter list
@@ -4314,16 +4314,16 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSDKa3_2',sdk3,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SDK_a3 -'// &
-    ' parameter name "testPL->testSDKa3_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSDKa3_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSDKa3',sdk3)
   bool=ALL(sdk3 .APPROXEQA. RESHAPE((/11.1_SDK,21.1_SDK,12.1_SDK,22.1_SDK, &
-    11.2_SDK,21.2_SDK,12.2_SDK,22.2_SDK/),(/2,2,2/)))
+      11.2_SDK,21.2_SDK,12.2_SDK,22.2_SDK/),(/2,2,2/)))
   ASSERT(bool,'%add sdk3')
   CALL testParam%get('testPL->testSDKa3_2',sdk3)
   bool=ALL(sdk3 .APPROXEQA. RESHAPE((/31.1_SDK,41.1_SDK,32.1_SDK,42.1_SDK, &
-    31.2_SDK,41.2_SDK,32.2_SDK,42.2_SDK/),(/2,2,2/)))
+      31.2_SDK,41.2_SDK,32.2_SDK,42.2_SDK/),(/2,2,2/)))
   ASSERT(bool,'%add sdk3')
 
   !Testing addition of 3-D array SNK routine to parameter list
@@ -4349,16 +4349,16 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSNKa3_2',snk3,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SNK_a3 -'// &
-    ' parameter name "testPL->testSNKa3_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSNKa3_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSNKa3',snk3)
   bool=ALL(snk3 == RESHAPE((/111_SNK,211_SNK,121_SNK,221_SNK, &
-    112_SNK,212_SNK,122_SNK,222_SNK/),(/2,2,2/)))
+      112_SNK,212_SNK,122_SNK,222_SNK/),(/2,2,2/)))
   ASSERT(bool,'%add snk3')
   CALL testParam%get('testPL->testSNKa3_2',snk3)
   bool=ALL(snk3 == RESHAPE((/311_SNK,411_SNK,321_SNK,421_SNK, &
-    312_SNK,412_SNK,322_SNK,422_SNK/),(/2,2,2/)))
+      312_SNK,412_SNK,322_SNK,422_SNK/),(/2,2,2/)))
   ASSERT(bool,'%add snk3')
 
   !Testing addition of 3-D array SLK routine to parameter list
@@ -4384,16 +4384,16 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testSLKa3_2',slk3,'comment')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_SLK_a3 -'// &
-    ' parameter name "testPL->testSLKa3_2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testSLKa3_2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add')
   CALL testParam%get('testPL->testSLKa3',slk3)
   bool=ALL(slk3 == RESHAPE((/111_SLK,211_SLK,121_SLK,221_SLK, &
-    112_SLK,212_SLK,122_SLK,222_SLK/),(/2,2,2/)))
+      112_SLK,212_SLK,122_SLK,222_SLK/),(/2,2,2/)))
   ASSERT(bool,'%add slk3')
   CALL testParam%get('testPL->testSLKa3_2',slk3)
   bool=ALL(slk3 == RESHAPE((/311_SLK,411_SLK,321_SLK,421_SLK, &
-    312_SLK,412_SLK,322_SLK,422_SLK/),(/2,2,2/)))
+      312_SLK,412_SLK,322_SLK,422_SLK/),(/2,2,2/)))
   ASSERT(bool,'%add slk3')
 
   !CALL testList(1)%add('item 1',0)
@@ -4403,7 +4403,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('testPL->testList2',testList)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType_List -'// &
-    ' parameter name "testPL->testList2" already exists! Use set method or full'// &
+      ' parameter name "testPL->testList2" already exists! Use set method or full'// &
       ' parameter list path!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add (list)')
   CALL testParam%get('testPL->testList',someParam)
@@ -4459,7 +4459,7 @@ SUBROUTINE testAdd()
   CALL testParam%add('A -> Sub D -> bad location 2',someParam)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::add_ParamType -'// &
-    ' parameter name "SOMEPARAM" already exists! Use set method!'
+      ' parameter name "SOMEPARAM" already exists! Use set method!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'redundant add (param)')
   CALL testParam%clear()
   CALL testParam2%clear()
@@ -4879,7 +4879,7 @@ SUBROUTINE testHas()
   ASSERT(.NOT.testParam%has('testPL->error->'),'testPL->error->')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::has_ParamType'// &
-    ' - cannot search for a blank name!'
+      ' - cannot search for a blank name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'')
 
   CALL testParam%add('testPL->testSDK',0.2_SDK)
@@ -5238,7 +5238,7 @@ SUBROUTINE testRemove()
   CALL testParam%remove('')
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::remove_ParamType -'// &
-    ' cannot search for a blank name!'
+      ' cannot search for a blank name!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'blank remove')
 
   !Set up actual values for removal
@@ -5291,7 +5291,7 @@ SUBROUTINE testValidate()
   CALL testParam%validate(testParam2)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
-    ' Failed to locate required parameter "TestReq->p2"!'
+      ' Failed to locate required parameter "TestReq->p2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'testReq->p2 validate')
 
   !Clear the test param, and test against an existing req param list
@@ -5328,8 +5328,8 @@ SUBROUTINE testValidate()
   CALL testParam%validate(testParam2,testParam3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_WARNING #### - PARAMETERLISTS::validateOpt_ParamType -'// &
-    ' Optional parameter "TestReq->sublist1->sublist2->sublist3->opt3" has type'// &
-    ' "REAL(SDK)" and should be type "REAL(SSK)"!  It is being overriden with default value.'
+      ' Optional parameter "TestReq->sublist1->sublist2->sublist3->opt3" has type'// &
+      ' "REAL(SDK)" and should be type "REAL(SSK)"!  It is being overriden with default value.'
   ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->sublist1->sublist2->sublist3->opt3 SSK validate optional input')
 
   !Finds a meaningful REQ parameter, returns an associated parameter of a different type (lines 1337-1340)
@@ -5338,7 +5338,7 @@ SUBROUTINE testValidate()
   CALL testParam%validate(testParam2,testParam3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
-    ' Required parameter "TestReq->p6" has type "REAL(SSK)" and must be type "INTEGER(SNK)"!'
+      ' Required parameter "TestReq->p6" has type "REAL(SSK)" and must be type "INTEGER(SNK)"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p6 SNK validate required input')
   CALL clear_test_vars()
 
@@ -5357,7 +5357,7 @@ SUBROUTINE testValidate()
   CALL testParam%validate(testParam2,testParam3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
-    ' Failed to locate required parameter "TestReq->p2->2far"!'
+      ' Failed to locate required parameter "TestReq->p2->2far"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate failed to locate')
 
   !Since an empty req param list exists, add a SLK parameter to test param
@@ -5366,7 +5366,7 @@ SUBROUTINE testValidate()
   CALL testParam%validate(testParam2,testParam3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::validateReq_ParamType -'// &
-    ' Required parameter "TestReq->p2->2far" has type "INTEGER(SLK)" and must be type "TYPE(ParamType_List)"!'
+      ' Required parameter "TestReq->p2->2far" has type "INTEGER(SLK)" and must be type "TYPE(ParamType_List)"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate different type, PList')
 
   !Remove the extra required parameters and add TestRq->p1 so the validate req params is true
@@ -5381,8 +5381,8 @@ SUBROUTINE testValidate()
   CALL testParam%validate(testParam2,testParam3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_WARNING #### - PARAMETERLISTS::validateOpt_ParamType -'// &
-    ' Optional parameter "TestOpt->p2->2far->veryfar" has type "REAL(SSK)" and'// &
-    ' should be type "TYPE(ParamType_List)"!  Since has no default value, it will remain unset!'
+      ' Optional parameter "TestOpt->p2->2far->veryfar" has type "REAL(SSK)" and'// &
+      ' should be type "TYPE(ParamType_List)"!  Since has no default value, it will remain unset!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'TestReq->p2->2far validate different type, PList')
 
   CALL testParam%remove('TestOpt->p2->2far->veryfar')
@@ -5390,8 +5390,8 @@ SUBROUTINE testValidate()
   CALL testParam%validate(testParam2,testParam3)
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_DEBUG_MESG #### - PARAMETERLISTS::validateOpt_ParamType -'// &
-    ' Failed to locate optional parameter "TestOpt->p2->2far->veryfar"! It is being'// &
-    ' added with no default value!'
+      ' Failed to locate optional parameter "TestOpt->p2->2far->veryfar"! It is being'// &
+      ' added with no default value!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'TestOpt->p2->2far->veryfar validate different type, PList')
 
   CALL clear_test_vars()
@@ -5996,8 +5996,8 @@ SUBROUTINE testConvertTeuchos()
   ASSERT(int==5,"some_int")
 
   int = ForTeuchos_PL_get_int(&
-    ForTeuchos_PL_sublist_existing(teuchos_plist, "some_level", ierr),&
-    "data_int", ierr)
+      ForTeuchos_PL_sublist_existing(teuchos_plist, "some_level", ierr),&
+      "data_int", ierr)
   ASSERT(int==4,"some_level->data_int")
   FINFO()int,ierr
 

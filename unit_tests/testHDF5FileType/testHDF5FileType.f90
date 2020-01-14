@@ -76,7 +76,7 @@ ENDIF
 CALL h5file%init('readtest.h5','READ')
 CALL h5file%clear(.TRUE.)
 DEALLOCATE(refD1,refD2,refD3,refD4,refD5,refD6,refD7,refS1,refS2,refS3,refS4, &
-  refS5,refS6,refS7,refB1,refB2,refB3,refL1,refL2,refL3,refL4,refL5,refL6, &
+    refS5,refS6,refS7,refB1,refB2,refB3,refL1,refL2,refL3,refL4,refL5,refL6, &
     refL7,refN1,refN2,refN3,refN4,refN5,refN6,refN7,refST1,refST2,refST3,refsets, &
     refCNCHAR1,refCNCHAR2,refCNCHAR3,refSTC1,refST0CA)
 
@@ -208,7 +208,7 @@ SUBROUTINE testHDF5FileTypeSetup()
     DO j=1,SIZE(refST3,2)
       DO k=1,SIZE(refST3,3)
         WRITE(helper_string,FMT="(a7,i0,a1,i0,a1,i0)") 'String ',i,&
-                &",",j,",",k
+      &",",j,",",k
         refST3(i,j,k)=helper_string
       ENDDO
     ENDDO
@@ -262,7 +262,7 @@ SUBROUTINE testHDF5FileTypeSetup()
   CALL h5%fwrite('groupC->anotherGroup->memC1',refC1)
   CALL h5%fwrite('groupC->memC1',refC1)
   CALL h5%createHardLink('groupC->anotherGroup->memC1', &
-    'groupC->anotherGroup->moreGroups->almostLastGroup->memC2')
+      'groupC->anotherGroup->moreGroups->almostLastGroup->memC2')
   CALL h5%mkdir('groupI')
   CALL h5%fwrite('groupI->memL0',refL0)
   CALL h5%fwrite('groupI->memL1',refL1)
@@ -1073,7 +1073,7 @@ SUBROUTINE testHDF5FileTypeWrite()
   COMPONENT_TEST('%createHardLink')
   CALL h5%fwrite('groupC->anotherGroup->memC1',refC1)
   CALL h5%createHardLink('groupC->anotherGroup->memC1', &
-    'groupC->anotherGroup->moreGroups->almostLastGroup->memC2')
+      'groupC->anotherGroup->moreGroups->almostLastGroup->memC2')
   CALL h5%fread('groupC->anotherGroup->memC1',testC1)
   CALL h5%fread('groupC->anotherGroup->moreGroups->almostLastGroup->memC2',testC2)
   ASSERT_EQ(testC1,testC2,'Valid Hardlink')
@@ -1082,12 +1082,12 @@ SUBROUTINE testHDF5FileTypeWrite()
   CALL h5%createHardLink('groupThatDoesNotExist->memC1','groupC->anotherGroup->moreGroups')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::createHardLink_HDF5FileType '// &
-    '- Target of new link must exist in file!'
+      '- Target of new link must exist in file!'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Non-existant Target Link')
   CALL h5%createHardLink('groupC->memC1','groupC->anotherGroup->moreGroups')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::createHardLink_HDF5FileType '// &
-    '- Location of new link already exists!'
+      '- Location of new link already exists!'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Pre-existing New Link')
 
   CALL h5%e%setQuietMode(.FALSE.)
@@ -1685,350 +1685,350 @@ SUBROUTINE testHDF5FileTypeOverwrite()
   CALL h5%mkdir('groupR')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
-    '- Failed to create HDF5 group.'
+      '- Failed to create HDF5 group.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD0',refD0)
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD1',refD1,SHAPE(refD1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD2',refD2,SHAPE(refD2))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD3',refD3,SHAPE(refD3))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD4',refD4,SHAPE(refD4))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD5',refD5,SHAPE(refD5))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD6',refD6,SHAPE(refD6))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memD7',refD7,SHAPE(refD7))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS0',refS0)
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS1',refS1,SHAPE(refS1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS2',refS2,SHAPE(refS2))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS3',refS3,SHAPE(refS3))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS4',refS4,SHAPE(refS4))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS5',refS5,SHAPE(refS5))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS6',refS6,SHAPE(refS6))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupR->memS7',refS7,SHAPE(refS7))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%mkdir('groupI')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
-    '- Failed to create HDF5 group.'
+      '- Failed to create HDF5 group.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL0',refL0)
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL1',refL1,SHAPE(refL1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL2',refL2,SHAPE(refL2))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL3',refL3,SHAPE(refL3))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL4',refL4,SHAPE(refL4))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL5',refL5,SHAPE(refL5))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL6',refL6,SHAPE(refL6))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memL7',refL7,SHAPE(refL7))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN0',refN0)
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN1',refN1,SHAPE(refN1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN2',refN2,SHAPE(refN2))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN3',refN3,SHAPE(refN3))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN4',refN4,SHAPE(refN4))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN5',refN5,SHAPE(refN5))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN6',refN6,SHAPE(refN6))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupI->memN7',refN7,SHAPE(refN7))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%mkdir('groupB')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
-    '- Failed to create HDF5 group.'
+      '- Failed to create HDF5 group.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupB->memB0',refB0)
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupB->memB1',refB1,SHAPE(refB1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupB->memB2',refB2,SHAPE(refB2))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupB->memB3',refB3,SHAPE(refB3))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%mkdir('groupCNCHAR')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
-    '- Failed to create HDF5 group.'
+      '- Failed to create HDF5 group.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupCNCHAR->CNCHAR0',refCNCHAR0)
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupCNCHAR->CNCHAR1',refCNCHAR1,SHAPE(refCNCHAR1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupCNCHAR->CNCHAR2',refCNCHAR2,SHAPE(refCNCHAR2))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupCNCHAR->CNCHAR3',refCNCHAR3,SHAPE(refCNCHAR3))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%mkdir('groupST')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
-    '- Failed to create HDF5 group.'
+      '- Failed to create HDF5 group.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupST->memST0',refST0)
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupST->memST1',refST1,SHAPE(refST1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupST->memST2',refST2,SHAPE(refST2))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%fwrite('groupST->memST3',refST3,SHAPE(refST3))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
   CALL h5%mkdir('groupC')
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_DEBUG_MESG #### - FileType_HDF5::mkdir_HDF5FileType '// &
-    '- Failed to create HDF5 group.'
+      '- Failed to create HDF5 group.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
@@ -2038,7 +2038,7 @@ SUBROUTINE testHDF5FileTypeOverwrite()
   CALL h5%fwrite('groupC->memC1',refC1,LEN(refC1))
   msg=h5%e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - FileType_HDF5::postWrite '// &
-    '- Could not close the dataset.'
+      '- Could not close the dataset.'
   ASSERT_EQ(TRIM(msg),TRIM(refmsg),'Failure to prevent overwrite.')
   CALL h5%e%initCounter()
 
@@ -2529,7 +2529,7 @@ SUBROUTINE testHDF5FileTypeRead()
   ASSERT(.NOT.testB0,'B0 read PL Failure')
   CALL tmpPL%get('groupB->memB1',testB1)
   testB0=.NOT.testB1(1) .AND. testB1(2) .AND. .NOT. testB1(3) .AND. &
-    testB1(4) .AND. .NOT.testB1(5) .AND. testB1(6)
+      testB1(4) .AND. .NOT.testB1(5) .AND. testB1(6)
   ASSERT(testB0,'B1 read PL Failure')
   !Integers
   CALL tmpPL%clear()
@@ -2582,7 +2582,7 @@ SUBROUTINE testHDF5FileTypeRead()
   ENDDO
   CALL tmpPL%get('groupST->memST2',testST2)
   testB0=(SIZE(testST2,DIM=1) == SIZE(refST2,DIM=1)) .AND. &
-    (SIZE(testST2,DIM=2) == SIZE(refST2,DIM=2))
+      (SIZE(testST2,DIM=2) == SIZE(refST2,DIM=2))
   ASSERTFAIL(testB0,'ST2 Sizes')
   DO j=1,SIZE(testST2,DIM=2)
     DO i=1,SIZE(testST2,DIM=1)
@@ -2598,9 +2598,9 @@ SUBROUTINE testHDF5FileTypeRead()
   CALL tmpPL%clear()
 
   DEALLOCATE(testD1,testD2,testD3,testD4,testD5,testD6,testD7,testS1,testS2,&
-    testS3,testS4,testS5,testS6,testS7,testL1,testL2,testL3,testL4,testL5, &
-    testL6,testL7,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
-    testN3,testN4,testN5,testN6,testN7,testDP4)
+      testS3,testS4,testS5,testS6,testS7,testL1,testL2,testL3,testL4,testL5, &
+      testL6,testL7,testB1,testB2,testB3,testST1,testST2,testST3,testN1,testN2, &
+      testN3,testN4,testN5,testN6,testN7,testDP4)
 
   CALL h5%clear()
   ASSERT(.NOT.h5%isinit, 'HDF5 object not properly cleared!')

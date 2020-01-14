@@ -100,7 +100,7 @@ SUBROUTINE testInit()
 
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - invalid number of partitioning groups!'
+      'init_PartitionGraph - invalid number of partitioning groups!'
   ASSERT(msg == refmsg, '%init(...) invalid nGroups')
   FINFO() 'Reference: ',refmsg
   FINFO() 'Test:      ',msg
@@ -111,7 +111,7 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - invalid number of vertices!'
+      'init_PartitionGraph - invalid number of vertices!'
   ASSERT(msg == refmsg, '%init(...) invalid nvert')
   FINFO() 'Reference: ',refmsg
   FINFO() 'Test:      ',msg
@@ -122,7 +122,7 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - coordinate matrix is incorrect size!'
+      'init_PartitionGraph - coordinate matrix is incorrect size!'
   ASSERT(msg == refmsg, '%init(...) wrong coord size')
   FINFO() refmsg
   FINFO() msg
@@ -134,20 +134,20 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - neighbor matrix is incorrect size!'
+      'init_PartitionGraph - neighbor matrix is incorrect size!'
   ASSERT(msg == refmsg, '%init(...) wrong neigh size')
   FINFO() refmsg
   FINFO() msg
 
   !Test invalid neighbor matrix
   CALL tparams%set('PartitionGraph -> neigh', &
-    RESHAPE((/-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1/), &
+      RESHAPE((/-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1/), &
       (/4,6/)))
   CALL tparams%set('PartitionGraph -> neighwts',refnwts)
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - invalid neighbor matrix!'
+      'init_PartitionGraph - invalid neighbor matrix!'
   ASSERT(msg == refmsg, '%init(...) invalid neigh')
   FINFO() refmsg
   FINFO() msg
@@ -155,27 +155,27 @@ SUBROUTINE testInit()
 
   !Test incorrectly sized edge weight matrix
   CALL tparams%set('PartitionGraph -> neighwts', &
-    RESHAPE((/3.0_SRK,1.0_SRK/),(/2,1/)))
+      RESHAPE((/3.0_SRK,1.0_SRK/),(/2,1/)))
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - input edge weights matrix is incorrect size!'
+      'init_PartitionGraph - input edge weights matrix is incorrect size!'
   ASSERT(msg == refmsg, '%init(...) wrong neighwts size')
   FINFO() refmsg
   FINFO() msg
 
   !Test invalid edge weight matrix
   CALL tparams%set('PartitionGraph -> neighwts', &
-    RESHAPE((/-1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
-              -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
-              -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
-              -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
-              -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
-              -1.0_SRK ,1.0_SRK, 1.0_SRK, 1.0_SRK/),(/4,6/)))
+      RESHAPE((/-1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                -1.0_SRK, 1.0_SRK, 1.0_SRK, 1.0_SRK, &
+                -1.0_SRK ,1.0_SRK, 1.0_SRK, 1.0_SRK/),(/4,6/)))
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - edge weights must be > 0!'
+      'init_PartitionGraph - edge weights must be > 0!'
   ASSERT(msg == refmsg, '%init(...) invalid neighwts')
   FINFO() refmsg
   FINFO() msg
@@ -186,18 +186,18 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - input vertex weights array is incorrect size!'
+      'init_PartitionGraph - input vertex weights array is incorrect size!'
   ASSERT(msg == refmsg, '%init(...) wrong wts size')
   FINFO() refmsg
   FINFO() msg
 
   !Test invalid wts array
   CALL tparams%set('PartitionGraph -> wts',(/-1.0_SRK,1.0_SRK,1.0_SRK, &
-    1.0_SRK,1.0_SRK,1.0_SRK/))
+      1.0_SRK,1.0_SRK,1.0_SRK/))
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - vertex weights must be > 0!'
+      'init_PartitionGraph - vertex weights must be > 0!'
   ASSERT(msg == refmsg, '%init(...) invalid wts')
   FINFO() refmsg
   FINFO() msg
@@ -208,8 +208,8 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - Conditions must be specified if more than 1'// &
-    ' algorithm is to be used!'
+      'init_PartitionGraph - Conditions must be specified if more than 1'// &
+      ' algorithm is to be used!'
   ASSERT(msg == refmsg, '%init(...) missing cond')
   FINFO() refmsg
   FINFO() msg
@@ -219,7 +219,7 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - Wrong number of conditions specified!'
+      'init_PartitionGraph - Wrong number of conditions specified!'
   ASSERT(msg == refmsg, '%init(...) wrong # cond')
   FINFO() refmsg
   FINFO() msg
@@ -229,8 +229,8 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - partitioning algorithm size conditions are '// &
-    'invalid (< 0)!'
+      'init_PartitionGraph - partitioning algorithm size conditions are '// &
+      'invalid (< 0)!'
   ASSERT(msg == refmsg, '%init(...) invalid cond')
   FINFO() refmsg
   FINFO() msg
@@ -243,8 +243,8 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - partitioning algorithm size conditions are '// &
-    'invalid!'
+      'init_PartitionGraph - partitioning algorithm size conditions are '// &
+      'invalid!'
   ASSERT(msg == refmsg, '%init(...) invalid cond')
   FINFO() refmsg
   FINFO() msg
@@ -260,7 +260,7 @@ SUBROUTINE testInit()
   CALL testPG%initialize(tparams)
   msg=e%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PartitionGraph::'// &
-    'init_PartitionGraph - Partitioning algorithm "BADFUNCNAME" not recognized!'
+      'init_PartitionGraph - Partitioning algorithm "BADFUNCNAME" not recognized!'
   ASSERT(msg == refmsg, '%init(...) invalid cond')
   FINFO() refmsg
   FINFO() msg
@@ -289,17 +289,17 @@ SUBROUTINE testInit()
   bool=ALL(testPG%wts == 1.0_SRK)
   ASSERT(bool,'%init(...)%wts')
   bool=((SIZE(testPG%neigh,DIM=1) == 4) .AND. &
-        (SIZE(testPG%neigh,DIM=2) == 6))
+      (SIZE(testPG%neigh,DIM=2) == 6))
   ASSERT(bool,'%init(...)%SIZE(neigh)')
   bool=ALL(testPG%neigh == refneigh)
   ASSERT(bool,'%init(...)%neigh')
   bool=((SIZE(testPG%neighwts,DIM=1) == 4) .AND. &
-        (SIZE(testPG%neighwts,DIM=2) == 6))
+      (SIZE(testPG%neighwts,DIM=2) == 6))
   ASSERT(bool,'%init(...)%SIZE(neighwts)')
   bool=ALL(testPG%neighwts == refunwt)
   ASSERT(bool,'%init(...)%neighwts')
   bool=((SIZE(testPG%coord,DIM=1) == 2) .AND. &
-        (SIZE(testPG%coord,DIM=2) == 6))
+      (SIZE(testPG%coord,DIM=2) == 6))
   ASSERT(bool,'%init(...)%SIZE(coord)')
   bool=ALL(testPG%coord == refCoord)
   ASSERT(bool,'%init(...)%coord')
@@ -324,17 +324,17 @@ SUBROUTINE testInit()
   bool=ALL(testPG%wts == refwts)
   ASSERT(bool,'%init(...)%wts')
   bool=((SIZE(testPG%neigh,DIM=1) == 4) .AND. &
-        (SIZE(testPG%neigh,DIM=2) == 6))
+      (SIZE(testPG%neigh,DIM=2) == 6))
   ASSERT(bool,'%init(...)%SIZE(neigh)')
   bool=ALL(testPG%neigh == refneigh)
   ASSERT(bool,'%init(...)%neigh')
   bool=((SIZE(testPG%neighwts,DIM=1) == 4) .AND. &
-        (SIZE(testPG%neighwts,DIM=2) == 6))
+      (SIZE(testPG%neighwts,DIM=2) == 6))
   ASSERT(bool,'%init(...)%SIZE(neighwts)')
   bool=ALL(testPG%neighwts == refnwts)
   ASSERT(bool,'%init(...)%neighwts')
   bool=((SIZE(testPG%coord,DIM=1) == 2) .AND. &
-        (SIZE(testPG%coord,DIM=2) == 6))
+      (SIZE(testPG%coord,DIM=2) == 6))
   ASSERT(bool,'%init(...)%SIZE(coord)')
   bool=ALL(testPG%coord == refCoord)
   ASSERT(bool,'%init(...)%coord')
@@ -768,21 +768,21 @@ SUBROUTINE testKL()
       53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,83,84,85,86,87,88, &
       99,100,101,102,114/)
   L2=(/35,47,48,49,50,61,62,63,64,65,66,75,76,77,78,79,80,81,82,89,90,91, &
-       92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111,112,113, &
-       115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130, &
-       131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146, &
-       147,148/)
+      92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111,112,113, &
+      115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130, &
+      131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146, &
+      147,148/)
   ALLOCATE(refL1(74))
   ALLOCATE(refL2(74))
   refL1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24, &
-         25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46, &
-         51,52,53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,83,84,85, &
-         86,87,88,99,100,101,102,35/)
+      25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46, &
+      51,52,53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,83,84,85, &
+      86,87,88,99,100,101,102,35/)
   refL2=(/114,47,48,49,50,61,62,63,64,65,66,75,76,77,78,79,80,81,82,89,90, &
-           91,92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111, &
-          112,113,115,116,117,118,119,120,121,122,123,124,125,126,127,128, &
-          129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144, &
-          145,146,147,148/)
+      91,92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111, &
+      112,113,115,116,117,118,119,120,121,122,123,124,125,126,127,128, &
+      129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144, &
+      145,146,147,148/)
   CALL refinementTest(tparams,str,L1,L2,refL1,refL2)
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -798,21 +798,21 @@ SUBROUTINE testKL()
       53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,83,84,85,86,87,88, &
       99,100,101,102,114/)
   L2=(/35,47,48,49,50,61,62,63,64,65,66,75,76,77,78,79,80,81,82,89,90,91, &
-       92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111,112,113, &
-       115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130, &
-       131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146, &
-       147,148/)
+      92,93,94,95,96,97,98,103,104,105,106,107,108,109,110,111,112,113, &
+      115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130, &
+      131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146, &
+      147,148/)
   ALLOCATE(refL1(74))
   ALLOCATE(refL2(74))
   refL1=(/1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24, &
-         25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46, &
-         51,52,53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,66,65,64, &
-         63,62,61,50,49,48,47,35/)
+      25,26,27,28,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46, &
+      51,52,53,54,55,56,57,58,59,60,67,68,69,70,71,72,73,74,66,65,64, &
+      63,62,61,50,49,48,47,35/)
   refL2=(/114,102,101,100,99,88,87,86,85,84,83,75,76,77,78,79,80,81,82, &
-          89,90,91,92,93,94,95,96,97,98,103,104,105,106,107,108,109,110, &
-          111,112,113,115,116,117,118,119,120,121,122,123,124,125,126,127, &
-          128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143, &
-          144,145,146,147,148/)
+      89,90,91,92,93,94,95,96,97,98,103,104,105,106,107,108,109,110, &
+      111,112,113,115,116,117,118,119,120,121,122,123,124,125,126,127, &
+      128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143, &
+      144,145,146,147,148/)
   CALL refinementTest(tparams,str,L1,L2,refL1,refL2)
 ENDSUBROUTINE testKL
 !
@@ -893,9 +893,9 @@ SUBROUTINE testMakeContiguousDomains()
   ! 2 2 2              1 1 1
   nv1=15
   Order=(/ 7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26, &
-           1, 2, 3,  4,  5,  6, 10, 15, 16, 21, 22, 27, 28/)
+      1, 2, 3,  4,  5,  6, 10, 15, 16, 21, 22, 27, 28/)
   refOrder=(/ 7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26, &
-             10, 1, 2, 3,  4,  5,  6, 15, 16, 21, 22, 27, 28/)
+      10, 1, 2, 3,  4,  5,  6, 15, 16, 21, 22, 27, 28/)
   CALL makeContiguousDomains(testPG, Order, nv1)
 
   bool=(nv1 == 22)
@@ -925,9 +925,9 @@ SUBROUTINE testMakeContiguousDomains()
   ! 1 1 1              2 2 2
   nv1=13
   Order=(/ 1, 2, 3,  4,  5,  6, 10, 15, 16, 21, 22, 27, 28, &
-           7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26/)
+      7, 8, 9, 11, 12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26/)
   refOrder=(/ 15, 16, 21, 22, 27, 28, 1, 2, 3, 4, 5, 6, 10, 7, 8, 9, 11,  &
-              12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26/)
+      12, 13, 14, 17, 18, 19, 20, 23, 24, 25, 26/)
   CALL makeContiguousDomains(testPG, Order, nv1)
 
   bool=(nv1 == 6)
@@ -955,33 +955,33 @@ SUBROUTINE setupTest()
   CALL refInitParams%add('PartitionGraph -> nvert', 6)
   CALL refInitParams%add('PartitionGraph -> nGroups', 3)
   CALL refInitParams%add('PartitionGraph -> neigh', &
-    RESHAPE((/2, 0, 0, 0, &
-              1, 3, 4, 0, &
-              2, 5, 0, 0, &
-              2, 5, 0, 0, &
-              3, 4, 6, 0, &
-              5, 0, 0, 0/),(/4,6/)))
+      RESHAPE((/2, 0, 0, 0, &
+                1, 3, 4, 0, &
+                2, 5, 0, 0, &
+                2, 5, 0, 0, &
+                3, 4, 6, 0, &
+                5, 0, 0, 0/),(/4,6/)))
   CALL refInitParams%add('PartitionGraph -> wts', &
-    (/1.0_SRK, 2.0_SRK, 3.0_SRK, 2.0_SRK, 1.0_SRK, 1.0_SRK/))
+      (/1.0_SRK, 2.0_SRK, 3.0_SRK, 2.0_SRK, 1.0_SRK, 1.0_SRK/))
   CALL refInitParams%add('PartitionGraph->wtfactor',1.0_SRK)
   CALL refInitParams%add('PartitionGraph -> neighwts', &
-    RESHAPE((/1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
-              1.0_SRK, 2.0_SRK, 3.0_SRK, 0.0_SRK, &
-              2.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
-              3.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
-              1.0_SRK, 1.0_SRK, 1.0_SRK, 0.0_SRK, &
-              1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK/), (/4,6/)))
+      RESHAPE((/1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK, &
+                1.0_SRK, 2.0_SRK, 3.0_SRK, 0.0_SRK, &
+                2.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                3.0_SRK, 1.0_SRK, 0.0_SRK, 0.0_SRK, &
+                1.0_SRK, 1.0_SRK, 1.0_SRK, 0.0_SRK, &
+                1.0_SRK, 0.0_SRK, 0.0_SRK, 0.0_SRK/), (/4,6/)))
   refAlgNames(1)='Recursive Expansion Bisection'
   refAlgNames(2)='Recursive Spectral Bisection'
   CALL refInitParams%add('PartitionGraph -> Algorithms', refAlgNames)
   CALL refInitParams%add('PartitionGraph -> Conditions', (/3/))
   CALL refInitParams%add('PartitionGraph -> coord', &
-    RESHAPE((/-1.0_SRK, -1.0_SRK, &
-              -1.0_SRK,  0.0_SRK, &
-               0.0_SRK,  0.0_SRK, &
-              -1.0_SRK,  1.0_SRK, &
-               0.0_SRK,  1.0_SRK, &
-               1.0_SRK,  1.0_SRK/),(/2,6/)))
+      RESHAPE((/-1.0_SRK, -1.0_SRK, &
+                -1.0_SRK,  0.0_SRK, &
+                 0.0_SRK,  0.0_SRK, &
+                -1.0_SRK,  1.0_SRK, &
+                 0.0_SRK,  1.0_SRK, &
+                 1.0_SRK,  1.0_SRK/),(/2,6/)))
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !Generate parameter list for testGraph 1 with shape

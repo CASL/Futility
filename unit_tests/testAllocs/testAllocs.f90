@@ -101,13 +101,13 @@ SUBROUTINE testBOOLP()
   ASSERT(.NOT.ASSOCIATED(bool1),'dmallocP(bool1,-10)')
   CALL dmallocP(bool1,10)
   test=(ASSOCIATED(bool1)) .AND. .NOT.ANY(bool1) .AND. &
-        (UBOUND(bool1,1) == 10) .AND. (LBOUND(bool1,1)==1)
+      (UBOUND(bool1,1) == 10) .AND. (LBOUND(bool1,1)==1)
   ASSERT(test,'dmallocP(bool1,10)')
 
   nbytes0=Alloc_nbytes
   CALL dmallocP(bool1,100)
   test=ASSOCIATED(bool1) .AND. .NOT.ANY(bool1) .AND. Alloc_nbytes == nbytes0 &
-        .AND. UBOUND(bool1,1) == 10 .AND. LBOUND(bool1,1) == 1
+      .AND. UBOUND(bool1,1) == 10 .AND. LBOUND(bool1,1) == 1
   ASSERT(test,'dmallocP(bool1,100)')
 
   CALL demallocP(bool1)

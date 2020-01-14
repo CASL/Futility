@@ -90,7 +90,7 @@ ASSERT(LEN_TRIM(testTimer%getTimerName()) == 0,'%getTimerName()')
 CALL testTimer%setTimerName('myName')
 ASSERT(TRIM(testTimer%getTimerName()) == 'myName','%setTimerName()')
 INFO(0) '  Passed: testTimer%getTimerResolution()=', &
-  testTimer%getTimerResolution()
+      testTimer%getTimerResolution()
 testTimer%elapsedtime=0.0001_SRK
 ASSERT(testTimer%getTimeReal() == 0.0001_SRK,'%getTimeReal()')
 ASSERT(testTimer%getTimeChar() == '  100.000 microsec','%getTimeChar() (us)')
@@ -152,7 +152,7 @@ ASSERT(.NOT.(idum2 < 0 .OR. idum2 > 59),'minute')
 ASSERT(.NOT.(idum3 < 0 .OR. idum3 > 59),'second')
 ASSERT(adum1 == adum2 .AND. adum1 == ':',':')
 INFO(0) '  Passed: testTimer%getTimerResolution()=', &
-  testTimer%getTimerResolution()
+      testTimer%getTimerResolution()
 testTimer%elapsedtime=0.0001_SRK
 
 CALL testTimer%tic()
@@ -161,7 +161,7 @@ CALL testTimer%toc()
 ASSERT(ABS(testTimer%elapsedtime-1._SRK) < 0.05_SRK,'tic/toc')
 FINFO() 'testTimer%toc()= ',testTimer%elapsedtime
 INFO(0) '  Passed: testTimer%getRemainingTime()', &
-  testTimer%getRemainingTime()
+      testTimer%getRemainingTime()
 
 FINALIZE_TEST()
 !

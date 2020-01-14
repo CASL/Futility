@@ -55,15 +55,15 @@ SUBROUTINE test1DReals()
   tmprealarray(10)=35.0_SRK !100.0
   CALL getAbsolute(tmprealarray,tmpr)
   bool=ALL(tmpr .APPROXEQA. (/0.0_SRK,0.0_SRK,2.0_SRK,6.0_SRK,10.0_SRK, &
-    15.0_SRK,20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
+      15.0_SRK,20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
   ASSERT(bool,'getAbsolute, no XI')
   CALL getAbsolute(tmprealarray(2:10),tmpr,XI=0.0_SRK)
   bool=ALL(tmpr .APPROXEQA. (/0.0_SRK,2.0_SRK,6.0_SRK,10.0_SRK,15.0_SRK, &
-    20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
+      20.0_SRK,40.0_SRK,60.0_SRK,65.0_SRK,100.0_SRK/))
   ASSERT(bool,'getAbsolute, with XI')
   CALL getAbsolute(tmprealarray(2:10),tmpr,XI=-10.0_SRK)
   bool=ALL(tmpr .APPROXEQA. (/-10.0_SRK,-8.0_SRK,-4.0_SRK,0.0_SRK,5.0_SRK, &
-    10.0_SRK,30.0_SRK,50.0_SRK,55.0_SRK,90.0_SRK/))
+      10.0_SRK,30.0_SRK,50.0_SRK,55.0_SRK,90.0_SRK/))
   ASSERT(bool,'getAbsolute, with negative XI')
   !
   COMPONENT_TEST('getDelta 1-D Array')
@@ -91,26 +91,26 @@ SUBROUTINE test1DReals()
   COMPONENT_TEST('getUnion 1-D Array')
 
   CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK/), &
-                (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK/),tmpr)
+      (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK/),tmpr)
   ASSERT(ALL(tmpr .APPROXEQA. tmprealarray),'getUnion no deltaout')
   CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,2.0_SRK/), &
-                (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr, &
-                DELTA1=.FALSE.,DELTA2=.FALSE.,DELTAOUT=.FALSE.)
+      (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr, &
+      DELTA1=.FALSE.,DELTA2=.FALSE.,DELTAOUT=.FALSE.)
   ASSERT(ALL(tmpr .APPROXEQA. tmprealarray),'getUnion deltaout=.FALSE.')
   CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,2.0_SRK/), &
-                (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.)
+      (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.)
   bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
   ASSERT(bool,'getUnion deltaout=.TRUE.')
   CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,2.0_SRK/), &
-                (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-15_SRK)
+      (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-15_SRK)
   bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
   ASSERT(bool,'getUnion deltaout=.TRUE.')
   CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,2.0_SRK/), &
-                (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-08_SRK)
+      (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-08_SRK)
   bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
   ASSERT(bool,'getUnion deltaout=.TRUE.')
   CALL getUnion((/65.0_SRK,2.0_SRK,10.0_SRK,0.0_SRK,0.0000000000000001_SRK,0.0000000001_SRK,2.0_SRK/), &
-                (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-08_SRK)
+      (/6.0_SRK,40.0_SRK,15.0_SRK,60.0_SRK,20.0_SRK,100.0_SRK,6.0_SRK/),tmpr,DELTAOUT=.TRUE.,TOL=1.0E-08_SRK)
   bool=ALL(tmpr .APPROXEQA. (/2.0_SRK,4.0_SRK,4.0_SRK,5.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK,5.0_SRK,35.0_SRK/))
   ASSERT(bool,'getUnion deltaout=.TRUE.')
   !
@@ -509,8 +509,8 @@ SUBROUTINE test1DStrings()
   IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
   CALL getUnique(tmpstr1a,tmps1)
   bool=tmps1(1) == 'one' .AND. tmps1(2) == 'two' .AND. tmps1(3) == 'three' .AND. &
-    tmps1(4) == 'four' .AND. tmps1(5) == 'five' .AND. tmps1(6) == 'six' .AND. &
-    tmps1(7) == 'seven' .AND. tmps1(8) == 'eight' .AND. tmps1(9) == 'nine' .AND. tmps1(10) == 'ten'
+      tmps1(4) == 'four' .AND. tmps1(5) == 'five' .AND. tmps1(6) == 'six' .AND. &
+      tmps1(7) == 'seven' .AND. tmps1(8) == 'eight' .AND. tmps1(9) == 'nine' .AND. tmps1(10) == 'ten'
   ASSERT(bool,'all unique array')
   tmpstr1a(1)='two'
   tmpstr1a(5)='four'
@@ -518,8 +518,8 @@ SUBROUTINE test1DStrings()
   IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
   CALL getUnique(tmpstr1a,tmps1)
   bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
-    tmps1(3) == 'four' .AND.  tmps1(4) == 'six' .AND. &
-    tmps1(5) == 'seven' .AND. tmps1(6) == 'eight' .AND. tmps1(7) == 'nine'
+      tmps1(3) == 'four' .AND.  tmps1(4) == 'six' .AND. &
+      tmps1(5) == 'seven' .AND. tmps1(6) == 'eight' .AND. tmps1(7) == 'nine'
   ASSERT(bool,'3 duplicates unique array')
 
 ENDSUBROUTINE test1DStrings
@@ -560,14 +560,14 @@ SUBROUTINE test2DStrings()
   IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
   CALL getUnique(tmpstr2a,tmps1)
   bool=tmps1(1) == 'one' .AND. tmps1(2) == 'two' .AND. tmps1(3) == 'three' .AND. &
-    tmps1(4) == 'four'
+      tmps1(4) == 'four'
   ASSERT(bool,'all unique array')
   FINFO() tmps1(1)//' '//tmps1(2)//' '//tmps1(3)//' '//tmps1(4)
   tmpstr2a(1,1)='two'
   IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
   CALL getUnique(tmpstr2a,tmps1)
   bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
-    tmps1(3) == 'four'
+      tmps1(3) == 'four'
   ASSERT(bool,'3 duplicates unique array')
   DEALLOCATE(tmps1)
 ENDSUBROUTINE test2DStrings

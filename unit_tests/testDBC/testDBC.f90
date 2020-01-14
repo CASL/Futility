@@ -29,18 +29,18 @@ IF(iopt/=5) CALL MPI_Init(mpierr)
 #endif
 
 SELECTCASE(iopt)
-  CASE(1)
-    CALL require_pass()
-  CASE(2)
-    CALL ensure_pass()
-  CASE(3)
-    CALL require_fail()
-  CASE(4)
-    CALL ensure_fail()
-  CASE(5)
-    CALL no_stop_on_fail()
-  CASE DEFAULT
-    STOP 1
+CASE(1)
+  CALL require_pass()
+CASE(2)
+  CALL ensure_pass()
+CASE(3)
+  CALL require_fail()
+CASE(4)
+  CALL ensure_fail()
+CASE(5)
+  CALL no_stop_on_fail()
+CASE DEFAULT
+  STOP 1
 ENDSELECT
 
 WRITE(*,*) "TEST PASSED"

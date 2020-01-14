@@ -50,7 +50,7 @@ SUBROUTINE testParameters()
   WRITE(*,*) '  Passed:     EXCEPTION_FATAL_ERROR = ',EXCEPTION_FATAL_ERROR
   WRITE(*,*) '  Passed:            EXCEPTION_SIZE = ',EXCEPTION_SIZE
   WRITE(*,*) '  Passed: EXCEPTION_MAX_MESG_LENGTH = ', &
-    EXCEPTION_MAX_MESG_LENGTH
+      EXCEPTION_MAX_MESG_LENGTH
 ENDSUBROUTINE testParameters
 !
 !-------------------------------------------------------------------------------
@@ -224,7 +224,7 @@ SUBROUTINE testLogFile()
   CALL testE%setLogFileUnit(-1)
   ASSERT(testE%getCounter(EXCEPTION_WARNING) == 4,'%counter(WARN)')
   mesg='#### EXCEPTION_WARNING #### - '// &
-    'Illegal unit number for log file. Log file unit not set.'
+      'Illegal unit number for log file. Log file unit not set.'
   ASSERT(TRIM(testE%getLastMessage()) == TRIM(mesg),'%getLastMessage')
   CALL testE%setLogFileUnit(23)
   ASSERT(testE%getLogFileUnit() == 23,'setLogFileUnit(23)')
@@ -235,7 +235,7 @@ SUBROUTINE testLogFile()
   CALL testE%setLogActive(.TRUE.)
   ASSERT(.NOT.testE%isLogActive(),'%setLogActive')
   OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
-       ACCESS='SEQUENTIAL',FORM='FORMATTED')
+      ACCESS='SEQUENTIAL',FORM='FORMATTED')
   CALL testE%setLogActive(.TRUE.)
   ASSERT(testE%isLogActive(),'%setLogActive')
   CALL testE%setLogActive(.FALSE.)
@@ -250,7 +250,7 @@ SUBROUTINE testLogFile()
 !Verify the log file contents
   CLOSE(testE%getLogFileUnit())
   OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
-       ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ')
+      ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ')
   READ(testE%getLogFileUnit(),'(a)') mesg2
   mesg=''
   ASSERT(TRIM(mesg) == TRIM(mesg2),'blank line')
@@ -282,7 +282,7 @@ ENDSUBROUTINE testLogFile
 SUBROUTINE testVerbosity()
   INTEGER(SIK) :: ioerr
   OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
-       ACCESS='SEQUENTIAL',FORM='FORMATTED',STATUS='REPLACE')
+      ACCESS='SEQUENTIAL',FORM='FORMATTED',STATUS='REPLACE')
   CALL testE%setQuietMode(.FALSE.)
   CALL testE%setVerboseMode(EXCEPTION_INFORMATION,.FALSE.)
   CALL testE%setVerboseMode(EXCEPTION_WARNING,.FALSE.)
@@ -294,7 +294,7 @@ SUBROUTINE testVerbosity()
   CALL testE%raiseError('Test error no log')
   CLOSE(testE%getLogFileUnit())
   OPEN(UNIT=testE%getLogFileUnit(),FILE='Exception.log', &
-       ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ')
+      ACCESS='SEQUENTIAL',FORM='FORMATTED',ACTION='READ')
   READ(testE%getLogFileUnit(),'(a)',IOSTAT=ioerr) mesg2
   ASSERT(ioerr == IOSTAT_END,'EOF Log file')
 ENDSUBROUTINE testVerbosity

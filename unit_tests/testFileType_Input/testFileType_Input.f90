@@ -46,12 +46,12 @@ SUBROUTINE testInputFileType()
   CALL testInpFile%setEchoUnit(25)
   ASSERT(testInpFile%getEchoUnit() == 25,'%setEchoUnit(...)')
   CALL testFile%initialize(UNIT=66,FILE='./test.inp',STATUS='REPLACE', &
-    ACTION='WRITE')
+      ACTION='WRITE')
   CALL testFile%fopen()
   WRITE(testFile%getUnitNo(),'(a,i2)') 'sample oneline',1
   CALL testFile%clear()
   CALL testFile%initialize(UNIT=25,FILE='./test.out',STATUS='REPLACE', &
-    ACCESS='DIRECT',RECL=100,ACTION='WRITE')
+      ACCESS='DIRECT',RECL=100,ACTION='WRITE')
   CALL testFile%fopen()
   CALL testInpFile%initialize(UNIT=46,FILE='./test.inp')
   CALL testInpFile%fopen()

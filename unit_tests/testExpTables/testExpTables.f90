@@ -89,18 +89,18 @@ ENDDO
 
 !For exact exponent function
 bool = (testET2(1)%isinit .OR. testET2(1)%tableType == 1 &
-       .OR.testET2(1)%nintervals == -1 .OR. (testET2(1)%dx .APPROXEQ. 0._SRK) &
-       .OR.(testET2(1)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(1)%rdx .APPROXEQ. 0._SRK) &
-       .OR.(testET2(1)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(1)%minVal == 0) &
-       .OR.(testET2(1)%maxVal == 0) .OR. (testET2(1)%tableErr .APPROXEQ. 0._SRK))
+      .OR.testET2(1)%nintervals == -1 .OR. (testET2(1)%dx .APPROXEQ. 0._SRK) &
+      .OR.(testET2(1)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(1)%rdx .APPROXEQ. 0._SRK) &
+      .OR.(testET2(1)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(1)%minVal == 0) &
+      .OR.(testET2(1)%maxVal == 0) .OR. (testET2(1)%tableErr .APPROXEQ. 0._SRK))
 ASSERT(bool, 'testET2(1)%initialize(...)')
 WRITE(*,*) '  Passed: CALL testET2(1)%initialize(...) EXACT'
 !For SINGLE_LEVEL_EXP_TABLE exponent function
 bool = (testET2(2)%isinit .OR. testET2(2)%tableType == 2 &
-       .OR. testET2(2)%nintervals == 1000 .OR. (testET2(2)%dx .APPROXEQ. 1.e-3_SRK) &
-       .OR. (testET2(2)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(2)%rdx .APPROXEQ. 1000._SRK) &
-       .OR. (testET2(2)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(2)%minVal == -10) &
-       .OR. (testET2(2)%maxVal == 0) .OR. (testET2(2)%tableErr .APPROXEQ. 0.5e-3_SRK))
+      .OR. testET2(2)%nintervals == 1000 .OR. (testET2(2)%dx .APPROXEQ. 1.e-3_SRK) &
+      .OR. (testET2(2)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(2)%rdx .APPROXEQ. 1000._SRK) &
+      .OR. (testET2(2)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(2)%minVal == -10) &
+      .OR. (testET2(2)%maxVal == 0) .OR. (testET2(2)%tableErr .APPROXEQ. 0.5e-3_SRK))
 ASSERT(bool, 'testET2(2)%initialize(...)')
 xtest=-10._SRK
 DO i=-10000,0
@@ -115,10 +115,10 @@ ENDDO
 WRITE(*,*) '  Passed: CALL testET2(2)%initialize(...) SINGLE_LEVEL'
 !For TWO_LEVEL_EXP_TABLE exponent function
 bool = (testET2(3)%isinit .OR. testET2(3)%tableType == 3 &
-       .OR. testET2(3)%nintervals == 1000 .OR. (testET2(3)%dx .APPROXEQ. 1.e-3_SRK) &
-       .OR. (testET2(3)%dx2rd .APPROXEQ. 1.e-6_SRK) .OR. (testET2(3)%rdx .APPROXEQ. 1000._SRK) &
-       .OR. (testET2(3)%rdx2rd .APPROXEQ. 1.e6_SRK) .OR. (testET2(3)%minVal == -10) &
-       .OR. (testET2(3)%maxVal == 0) .OR. (testET2(3)%tableErr .APPROXEQ. 0.5e-6_SRK))
+      .OR. testET2(3)%nintervals == 1000 .OR. (testET2(3)%dx .APPROXEQ. 1.e-3_SRK) &
+      .OR. (testET2(3)%dx2rd .APPROXEQ. 1.e-6_SRK) .OR. (testET2(3)%rdx .APPROXEQ. 1000._SRK) &
+      .OR. (testET2(3)%rdx2rd .APPROXEQ. 1.e6_SRK) .OR. (testET2(3)%minVal == -10) &
+      .OR. (testET2(3)%maxVal == 0) .OR. (testET2(3)%tableErr .APPROXEQ. 0.5e-6_SRK))
 ASSERT(bool, 'testET2(3)%initialize(...)')
 xtest=-10._SRK
 DO i=-10000,0
@@ -142,10 +142,10 @@ ASSERT(bool, 'testET2(3)%initialize(...)')
 WRITE(*,*) '  Passed: CALL testET2(3)%initialize(...) TWO_LEVEL'
 !For LINEAR_EXP_TABLE exponent function
 bool = (testET2(4)%isinit .OR. testET2(4)%tableType == 4 &
-       .OR. testET2(4)%nintervals == 1000 .OR. (testET2(4)%dx .APPROXEQ. 1.e-3_SRK) &
-       .OR. (testET2(4)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(4)%rdx .APPROXEQ. 1000._SRK) &
-       .OR. (testET2(4)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(4)%minVal == -10) &
-       .OR. (testET2(4)%maxVal == 0) .OR. (testET2(4)%tableErr .APPROXEQ. 1.25e-7_SRK))
+      .OR. testET2(4)%nintervals == 1000 .OR. (testET2(4)%dx .APPROXEQ. 1.e-3_SRK) &
+      .OR. (testET2(4)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(4)%rdx .APPROXEQ. 1000._SRK) &
+      .OR. (testET2(4)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(4)%minVal == -10) &
+      .OR. (testET2(4)%maxVal == 0) .OR. (testET2(4)%tableErr .APPROXEQ. 1.25e-7_SRK))
 ASSERT(bool, 'testET2(4)%initialize(...)')
 x1=-10._SRK
 y1=1._SRK-EXP(x1)
@@ -171,11 +171,11 @@ WRITE(*,*) '  Passed: CALL testET2(4)%initialize(...) LINEAR'
 
 !For ORDER2_EXP_TABLE exponent function
 bool = (testET2(5)%isinit .OR. testET2(5)%tableType == 5 &
-       .OR. testET2(5)%nintervals == 1000 .OR. (testET2(5)%dx .APPROXEQ. 1.e-3_SRK) &
-       .OR. (testET2(5)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(5)%rdx .APPROXEQ. 1000._SRK) &
-       .OR. (testET2(5)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(5)%minVal == -10) &
-       .OR. (testET2(5)%tableErr .APPROXEQ. 9.630017699314371e-012_SRK) &
-       .OR. (testET2(5)%maxVal == 0))
+      .OR. testET2(5)%nintervals == 1000 .OR. (testET2(5)%dx .APPROXEQ. 1.e-3_SRK) &
+      .OR. (testET2(5)%dx2rd .APPROXEQ. 0._SRK) .OR. (testET2(5)%rdx .APPROXEQ. 1000._SRK) &
+      .OR. (testET2(5)%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET2(5)%minVal == -10) &
+      .OR. (testET2(5)%tableErr .APPROXEQ. 9.630017699314371e-012_SRK) &
+      .OR. (testET2(5)%maxVal == 0))
 ASSERT(bool, 'testET2(5)%initialize(...)')
 x1=-10._SRK
 y1=1._SRK-EXP(x1)
@@ -229,10 +229,10 @@ WRITE(*,*) '  Passed: tableET%EXPT(x)'
 
 CALL testET1%clear()
 bool = (.NOT.testET1%isinit .OR. testET1%tableType == -1 &
-       .OR. testET1%nintervals == -1 .OR. (testET1%dx .APPROXEQ. 0._SRK) &
-       .OR. (testET1%dx2rd .APPROXEQ. 0._SRK) .OR. (testET1%rdx .APPROXEQ. 0._SRK) &
-       .OR. (testET1%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET1%minVal == 0) &
-       .OR. (testET1%maxVal == 0) .OR. (testET1%tableErr .APPROXEQ. 0._SRK))
+      .OR. testET1%nintervals == -1 .OR. (testET1%dx .APPROXEQ. 0._SRK) &
+      .OR. (testET1%dx2rd .APPROXEQ. 0._SRK) .OR. (testET1%rdx .APPROXEQ. 0._SRK) &
+      .OR. (testET1%rdx2rd .APPROXEQ. 0._SRK) .OR. (testET1%minVal == 0) &
+      .OR. (testET1%maxVal == 0) .OR. (testET1%tableErr .APPROXEQ. 0._SRK))
 ASSERT(bool, 'testET1%clear()')
 FINALIZE_TEST()
 
@@ -305,7 +305,7 @@ SUBROUTINE ErrCheck()
         ENDIF
       ENDDO
       WRITE(*,'(a,i12,a,i12,a,es15.6,a)') &
-        ' |',itype,'|',testET%nintervals,'|',maxerr,'|'
+      ' |',itype,'|',testET%nintervals,'|',maxerr,'|'
 !          WRITE(*,*) itype,testET%nintervals,'Err:',maxi,x(maxi),maxerr
       CALL testET%clear()
     ENDDO

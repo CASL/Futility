@@ -129,7 +129,7 @@ SUBROUTINE testBubbleSort()
   CALL bubble_sort(tmprealarray)
 
   bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array')
 
   COMPONENT_TEST('Sort 1-D Real + 1-D Real array')
@@ -158,11 +158,11 @@ SUBROUTINE testBubbleSort()
   CALL bubble_sort(tmprealarray,tmpreal1a)
 
   bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array')
 
   bool=ALL(tmpreal1a .APPROXEQ. (/3.0_SRK,0.0_SRK,1.0_SRK,45.0_SRK,-5.0_SRK, &
-    100.0_SRK,75.0_SRK,-12.0_SRK,15.0_SRK,10.0_SRK/))
+      100.0_SRK,75.0_SRK,-12.0_SRK,15.0_SRK,10.0_SRK/))
   ASSERT(bool,'1-D real array')
 
   !Reverse the argument order for a new result
@@ -190,11 +190,11 @@ SUBROUTINE testBubbleSort()
   CALL bubble_sort(tmpreal1a,tmprealarray)
 
   bool=ALL(tmpreal1a .APPROXEQ. (/-12.0_SRK,-5.0_SRK,0.0_SRK,1.0_SRK,3.0_SRK, &
-    10.0_SRK,15.0_SRK,45.0_SRK,75.0_SRK,100.0_SRK/))
+      10.0_SRK,15.0_SRK,45.0_SRK,75.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array')
 
   bool=ALL(tmprealarray .APPROXEQ. (/45.0_SRK,10.0_SRK,-10.0_SRK,-5.0_SRK,-30.0_SRK, &
-    100.0_SRK,60.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK/))
+      100.0_SRK,60.0_SRK,5.0_SRK,20.0_SRK,20.0_SRK/))
   ASSERT(bool,'1-D real array')
 
   COMPONENT_TEST('Sort 1-D Real + 1-D Int array')
@@ -223,7 +223,7 @@ SUBROUTINE testBubbleSort()
   CALL bubble_sort(tmprealarray,tmpint1a,.TRUE.)
 
   bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array')
 
   bool=ALL(tmpint1a == (/3,0,1,45,-5,100,75,-12,15,10/))
@@ -315,7 +315,7 @@ SUBROUTINE testBubbleSort()
   ASSERT(bool,'1-D integer array')
 
   bool=ALL(tmprealarray .APPROXEQA. (/-30.0_SRK,-10.0_SRK,100.0_SRK,5.0_SRK, &
-     10.0_SRK,20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,-5.0_SRK/))
+      10.0_SRK,20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,-5.0_SRK/))
   ASSERT(bool,'1-D real array')
 
   COMPONENT_TEST('Sort 1-D Int + 1-D Int array')
@@ -455,7 +455,7 @@ SUBROUTINE testInsertSort()
   CALL insert_sort(tmprealarray)
 
   bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array')
 ENDSUBROUTINE testInsertSort
 !
@@ -536,7 +536,7 @@ SUBROUTINE testRealSort()
   CALL sort(tmprealarray)
 
   bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+      20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array qsort')
 ENDSUBROUTINE testRealSort
 !

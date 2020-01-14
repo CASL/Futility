@@ -101,22 +101,22 @@ SUBROUTINE testVector()
   !make vector without using untested init
   ALLOCATE(RealVectorType :: thisVector)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      thisVector%isInit=.TRUE.
-      thisVector%n=100
-      ALLOCATE(thisVector%b(100))
+  TYPE IS(RealVectorType)
+    thisVector%isInit=.TRUE.
+    thisVector%n=100
+    ALLOCATE(thisVector%b(100))
   ENDSELECT
 
   !clear it
   CALL thisVector%clear()
 
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      !check for success
-      bool = .NOT.((thisVector%isInit).OR.(thisVector%n /= 0))
-      ASSERT(bool, 'realvec%clear()')
-      ASSERT(.NOT.ALLOCATED(thisVector%b), 'realvec%clear()')
-      WRITE(*,*) '  Passed: CALL realvec%clear()'
+  TYPE IS(RealVectorType)
+    !check for success
+    bool = .NOT.((thisVector%isInit).OR.(thisVector%n /= 0))
+    ASSERT(bool, 'realvec%clear()')
+    ASSERT(.NOT.ALLOCATED(thisVector%b), 'realvec%clear()')
+    WRITE(*,*) '  Passed: CALL realvec%clear()'
   ENDSELECT
 
   !Perform test of init function
@@ -124,11 +124,11 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->n',10)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      !check for success
-      bool = .NOT.((.NOT.thisVector%isInit).AND.(thisVector%n /= 10))
-      ASSERT(bool, 'realvec%init(...)')
-      ASSERT(SIZE(thisVector%b) == 10, 'realvec%init(...)')
+  TYPE IS(RealVectorType)
+    !check for success
+    bool = .NOT.((.NOT.thisVector%isInit).AND.(thisVector%n /= 10))
+    ASSERT(bool, 'realvec%init(...)')
+    ASSERT(SIZE(thisVector%b) == 10, 'realvec%init(...)')
   ENDSELECT
   CALL thisVector%clear()
   CALL pList%clear()
@@ -144,12 +144,12 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->n',10)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType); thisVector%n=1
+  TYPE IS(RealVectorType); thisVector%n=1
   ENDSELECT
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(thisVector%n == 1, 'realvec%init(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(thisVector%n == 1, 'realvec%init(...)')
   ENDSELECT
  !init with n<1
   CALL thisVector%clear()
@@ -184,20 +184,20 @@ SUBROUTINE testVector()
   CALL thisVector%set(5,5._SRK)
   CALL thisVector%set(6,6._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      !now compare actual values with expected
-      DO i=1,6
-        bool = .NOT.((thisVector%b(i) /= i) .AND. iverr /= 0)
-        ASSERT(bool, 'realvec%setOne(...)')
-      ENDDO
+  TYPE IS(RealVectorType)
+    !now compare actual values with expected
+    DO i=1,6
+      bool = .NOT.((thisVector%b(i) /= i) .AND. iverr /= 0)
+      ASSERT(bool, 'realvec%setOne(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(1,1._SRK,iverr) !since isInit=.FALSE. expect no change
-      ASSERT(iverr == -1, 'realvec%setOne(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(1,1._SRK,iverr) !since isInit=.FALSE. expect no change
+    ASSERT(iverr == -1, 'realvec%setOne(...)')
   ENDSELECT
 
   !pass out-of bounds i and j
@@ -207,13 +207,13 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(-1,1._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -2, 'realvec%setOne(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -2, 'realvec%setOne(...)')
   ENDSELECT
   CALL thisVector%set(7,1._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -2, 'realvec%setOne(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -2, 'realvec%setOne(...)')
   ENDSELECT
 
   CALL thisVector%clear()
@@ -222,11 +222,11 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      DO i=1,SIZE(thisVector%b)
-        ASSERT(thisVector%b(i) /= 1._SRK, 'realvec%setOne(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL realvec%setOne(...)'
+  TYPE IS(RealVectorType)
+    DO i=1,SIZE(thisVector%b)
+      ASSERT(thisVector%b(i) /= 1._SRK, 'realvec%setOne(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL realvec%setOne(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -234,20 +234,20 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(10._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      !now compare actual values with expected
-      DO i=1,6
-        bool = .NOT.((thisVector%b(i) /= 10._SRK .AND. iverr /= 0))
-        ASSERT(bool, 'realvec%setAll_scalar(...)')
-      ENDDO
+  TYPE IS(RealVectorType)
+    !now compare actual values with expected
+    DO i=1,6
+      bool = .NOT.((thisVector%b(i) /= 10._SRK .AND. iverr /= 0))
+      ASSERT(bool, 'realvec%setAll_scalar(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit
   CALL thisVector%clear()
   CALL thisVector%set(1._SRK,iverr) !since isInit=.FALSE. expect no change
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -1, 'realvec%setAll_scalar(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -1, 'realvec%setAll_scalar(...)')
   ENDSELECT
 
   CALL pList%clear()
@@ -255,11 +255,11 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      DO i=1,SIZE(thisVector%b)
-        ASSERT(thisVector%b(i) /= 1._SRK, 'realvec%setAll_scalar(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL realvec%setAll_scalar(...)'
+  TYPE IS(RealVectorType)
+    DO i=1,SIZE(thisVector%b)
+      ASSERT(thisVector%b(i) /= 1._SRK, 'realvec%setAll_scalar(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL realvec%setAll_scalar(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -277,12 +277,12 @@ SUBROUTINE testVector()
   testvec(6)=12._SRK
   CALL thisVector%set(testvec,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      !now compare actual values with expected
-      DO i=1,6
-        bool = .NOT.((thisVector%b(i) /= testvec(i)) .AND. iverr /= 0)
-        ASSERT(bool, 'realvec%setAll_array(...)')
-      ENDDO
+  TYPE IS(RealVectorType)
+    !now compare actual values with expected
+    DO i=1,6
+      bool = .NOT.((thisVector%b(i) /= testvec(i)) .AND. iverr /= 0)
+      ASSERT(bool, 'realvec%setAll_array(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit
@@ -295,8 +295,8 @@ SUBROUTINE testVector()
   testvec2(6)=11._SRK
   CALL thisVector%set(testvec2,iverr) !since isInit=.FALSE. expect no change
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -1, 'realvec%setAll_array(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -1, 'realvec%setAll_array(...)')
   ENDSELECT
 
   !set unequal size
@@ -306,8 +306,8 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(testvec2,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -3, 'realvec%setAll_array(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -3, 'realvec%setAll_array(...)')
   ENDSELECT
 
 
@@ -317,12 +317,12 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      DO i=1,SIZE(thisVector%b)
-        bool = thisVector%b(i) /= testvec2(i)
-        ASSERT(bool, 'realvec%setAll_array(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL realvec%setAll_array(...)'
+  TYPE IS(RealVectorType)
+    DO i=1,SIZE(thisVector%b)
+      bool = thisVector%b(i) /= testvec2(i)
+      ASSERT(bool, 'realvec%setAll_array(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL realvec%setAll_array(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -330,24 +330,24 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(4,6,10._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      !now compare actual values with expected
-      DO i=1,3
-        bool = .NOT.((thisVector%b(i) /= 0._SRK) .AND. iverr /= 0)
-        ASSERT(bool, 'realvec%setRange_scalar(...)')
-      ENDDO
-      DO i=4,6
-        bool = .NOT.((thisVector%b(i) /= 10._SRK) .AND. iverr /= 0)
-        ASSERT(bool, 'realvec%setRange_scalar(...) FAILED!')
-      ENDDO
+  TYPE IS(RealVectorType)
+    !now compare actual values with expected
+    DO i=1,3
+      bool = .NOT.((thisVector%b(i) /= 0._SRK) .AND. iverr /= 0)
+      ASSERT(bool, 'realvec%setRange_scalar(...)')
+    ENDDO
+    DO i=4,6
+      bool = .NOT.((thisVector%b(i) /= 10._SRK) .AND. iverr /= 0)
+      ASSERT(bool, 'realvec%setRange_scalar(...) FAILED!')
+    ENDDO
   ENDSELECT
 
   !set uninit
   CALL thisVector%clear()
   CALL thisVector%set(4,6,1._SRK,iverr) !since isInit=.FALSE. expect no change
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -1, 'realvec%setRange_scalar(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -1, 'realvec%setRange_scalar(...)')
   ENDSELECT
 
   !set out of bounds
@@ -357,8 +357,8 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(5,7,1._SRK,iverr) !since isInit=.FALSE. expect no change
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -2, 'realvec%setRange_scalar(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -2, 'realvec%setRange_scalar(...)')
   ENDSELECT
   CALL thisVector%clear()
   CALL pList%clear()
@@ -366,18 +366,18 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(0,3,1._SRK,iverr) !since isInit=.FALSE. expect no change
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      ASSERT(iverr == -2, 'realvec%setRange_scalar(...)')
+  TYPE IS(RealVectorType)
+    ASSERT(iverr == -2, 'realvec%setRange_scalar(...)')
   ENDSELECT
 
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      DO i=1,SIZE(thisVector%b)
-        ASSERT(thisVector%b(i) /= 1._SRK, 'realvec%setRange_scalar(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL realvec%setRange_scalar(...)'
+  TYPE IS(RealVectorType)
+    DO i=1,SIZE(thisVector%b)
+      ASSERT(thisVector%b(i) /= 1._SRK, 'realvec%setRange_scalar(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL realvec%setRange_scalar(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -393,16 +393,16 @@ SUBROUTINE testVector()
   testvec(3)=6._SRK
   CALL thisVector%set(4,6,testvec,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      !now compare actual values with expected
-      DO i=1,3
-        bool = .NOT.((thisVector%b(i) /= 0._SRK) .AND. iverr /= 0)
-        ASSERT(bool, 'realvec%setRange_array(...)')
-      ENDDO
-      DO i=4,6
-        bool = .NOT.((thisVector%b(i) /= testvec(i-3)) .AND. iverr /= 0)
-        ASSERT(bool, 'realvec%setRange_array(...)')
-      ENDDO
+  TYPE IS(RealVectorType)
+    !now compare actual values with expected
+    DO i=1,3
+      bool = .NOT.((thisVector%b(i) /= 0._SRK) .AND. iverr /= 0)
+      ASSERT(bool, 'realvec%setRange_array(...)')
+    ENDDO
+    DO i=4,6
+      bool = .NOT.((thisVector%b(i) /= testvec(i-3)) .AND. iverr /= 0)
+      ASSERT(bool, 'realvec%setRange_array(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit
@@ -411,9 +411,9 @@ SUBROUTINE testVector()
   testvec2(2)=3._SRK
   testvec2(3)=5._SRK
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(4,6,testvec2,iverr) !since isInit=.FALSE. expect no change
-      ASSERT(iverr == -1, 'realvec%setRange_array(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(4,6,testvec2,iverr) !since isInit=.FALSE. expect no change
+    ASSERT(iverr == -1, 'realvec%setRange_array(...)')
   ENDSELECT
 
   CALL thisVector%clear()
@@ -421,9 +421,9 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->n',6)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(5,7,testvec2,iverr)
-      ASSERT(iverr == -2, 'realvec%setRange_array(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(5,7,testvec2,iverr)
+    ASSERT(iverr == -2, 'realvec%setRange_array(...)')
   ENDSELECT
 
   CALL thisVector%clear()
@@ -431,9 +431,9 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->n',6)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(0,2,testvec2,iverr)
-      ASSERT(iverr == -2, 'realvec%setRange_array(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(0,2,testvec2,iverr)
+    ASSERT(iverr == -2, 'realvec%setRange_array(...)')
   ENDSELECT
 
   CALL thisVector%clear()
@@ -441,23 +441,23 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->n',6)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(2,6,testvec2,iverr)
-      ASSERT(iverr == -3, 'realvec%setRange_array(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(2,6,testvec2,iverr)
+    ASSERT(iverr == -3, 'realvec%setRange_array(...)')
   ENDSELECT
 
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      DO i=1,3
-        ASSERT(thisVector%b(i) == 0._SRK, 'realvec%setRange_array(...)')
-      ENDDO
-      DO i=4,6
-        bool = thisVector%b(i) /= testvec2(i-3)
-        ASSERT(bool, 'realvec%setRange_array(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL realvec%setRange_array(...)'
+  TYPE IS(RealVectorType)
+    DO i=1,3
+      ASSERT(thisVector%b(i) == 0._SRK, 'realvec%setRange_array(...)')
+    ENDDO
+    DO i=4,6
+      bool = thisVector%b(i) /= testvec2(i-3)
+      ASSERT(bool, 'realvec%setRange_array(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL realvec%setRange_array(...)'
   ENDSELECT
 
   !Perform test of getOne function
@@ -467,41 +467,41 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->n',7)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(thisVector%n))
-      CALL thisVector%get(dummyvec,iverr)
-      bool = .NOT.((dummyvec(1) /= 1._SRK) .OR. &
-                   (dummyvec(2) /= 5._SRK) .OR. &
-                   (dummyvec(3) /= 8._SRK) .OR. &
-                   (dummyvec(4) /= 9._SRK) .OR. &
-                   (dummyvec(5) /= 3._SRK) .OR. &
-                   (dummyvec(6) /= 7._SRK) .OR. &
-                   (dummyvec(7) /= 2._SRK) .OR. &
-                   iverr /= 0)
-      ASSERT(bool, 'realvec%getOne(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(thisVector%n))
+    CALL thisVector%get(dummyvec,iverr)
+    bool = .NOT.((dummyvec(1) /= 1._SRK) .OR. &
+                 (dummyvec(2) /= 5._SRK) .OR. &
+                 (dummyvec(3) /= 8._SRK) .OR. &
+                 (dummyvec(4) /= 9._SRK) .OR. &
+                 (dummyvec(5) /= 3._SRK) .OR. &
+                 (dummyvec(6) /= 7._SRK) .OR. &
+                 (dummyvec(7) /= 2._SRK) .OR. &
+                 iverr /= 0)
+    ASSERT(bool, 'realvec%getOne(...)')
   ENDSELECT
   !test with out of bounds, make sure no crash.
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%get(8,dummy,iverr)
-      ASSERT(iverr == -2, 'realvec%getOne(...)')
-      CALL thisVector%get(-1,dummy,iverr)
-      ASSERT(iverr == -2, 'realvec%getOne(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%get(8,dummy,iverr)
+    ASSERT(iverr == -2, 'realvec%getOne(...)')
+    CALL thisVector%get(-1,dummy,iverr)
+    ASSERT(iverr == -2, 'realvec%getOne(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%get(1,dummy,iverr)
-      ASSERT(iverr == -1, 'realvec%getOne(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%get(1,dummy,iverr)
+    ASSERT(iverr == -1, 'realvec%getOne(...)')
   ENDSELECT
   WRITE(*,*) '  Passed: CALL realvec%getOne(...)'
 
@@ -513,34 +513,34 @@ SUBROUTINE testVector()
   ALLOCATE(testvec(7))
   testvec=0._SRK
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      CALL thisVector%get(testvec,iverr)
-      bool = .NOT.((testvec(1) /= 1._SRK) .OR. &
-                   (testvec(2) /= 5._SRK) .OR. &
-                   (testvec(3) /= 8._SRK) .OR. &
-                   (testvec(4) /= 9._SRK) .OR. &
-                   (testvec(5) /= 3._SRK) .OR. &
-                   (testvec(6) /= 7._SRK) .OR. &
-                   (testvec(7) /= 2._SRK) .OR. &
-                   iverr /= 0)
-      ASSERT(bool, 'realvec%getAll(...)')
-      DEALLOCATE(testvec)
-      ALLOCATE(testvec(4))
-      CALL thisVector%get([1,3,5,7],testvec)
-      bool = testvec(1) == 1._SRK .AND. &
-             testvec(2) == 8._SRK .AND. &
-             testvec(3) == 3._SRK .AND. &
-             testvec(4) == 2._SRK
-      ASSERT(bool, 'realvec%getSelected(...)')
-      DEALLOCATE(testvec)
-      ALLOCATE(testvec(7))
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    CALL thisVector%get(testvec,iverr)
+    bool = .NOT.((testvec(1) /= 1._SRK) .OR. &
+                 (testvec(2) /= 5._SRK) .OR. &
+                 (testvec(3) /= 8._SRK) .OR. &
+                 (testvec(4) /= 9._SRK) .OR. &
+                 (testvec(5) /= 3._SRK) .OR. &
+                 (testvec(6) /= 7._SRK) .OR. &
+                 (testvec(7) /= 2._SRK) .OR. &
+                 iverr /= 0)
+    ASSERT(bool, 'realvec%getAll(...)')
+    DEALLOCATE(testvec)
+    ALLOCATE(testvec(4))
+    CALL thisVector%get([1,3,5,7],testvec)
+    bool = testvec(1) == 1._SRK .AND. &
+           testvec(2) == 8._SRK .AND. &
+           testvec(3) == 3._SRK .AND. &
+           testvec(4) == 2._SRK
+    ASSERT(bool, 'realvec%getSelected(...)')
+    DEALLOCATE(testvec)
+    ALLOCATE(testvec(7))
   ENDSELECT
 
   ! Set and get a few selected elements
@@ -561,9 +561,9 @@ SUBROUTINE testVector()
   CALL thisVector%clear()
   testvec=0._SRK
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%get(testvec,iverr)
-      ASSERT(iverr == -1, 'realvec%getAll(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%get(testvec,iverr)
+    ASSERT(iverr == -1, 'realvec%getAll(...)')
   ENDSELECT
   WRITE(*,*) '  Passed: CALL realvec%getAll(...)'
 
@@ -576,30 +576,30 @@ SUBROUTINE testVector()
   ALLOCATE(testvec(3))
   testvec=0._SRK
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      CALL thisVector%get(5,7,testvec,iverr)
-      bool = .NOT.((testvec(1) /= 3._SRK) .OR. &
-                   (testvec(2) /= 7._SRK) .OR. &
-                   (testvec(3) /= 2._SRK) .OR. &
-                   iverr /= 0)
-      ASSERT(bool, 'realvec%getRange(...)')
+  TYPE IS(RealVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    CALL thisVector%get(5,7,testvec,iverr)
+    bool = .NOT.((testvec(1) /= 3._SRK) .OR. &
+                 (testvec(2) /= 7._SRK) .OR. &
+                 (testvec(3) /= 2._SRK) .OR. &
+                 iverr /= 0)
+    ASSERT(bool, 'realvec%getRange(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   testvec=0._SRK
   SELECTTYPE(thisVector)
-    TYPE IS(RealVectorType)
-      CALL thisVector%get(5,7,testvec,iverr)
-      DO i=1,3
-        ASSERT(iverr == -1, 'realvec%getRange(...)')
-      ENDDO
+  TYPE IS(RealVectorType)
+    CALL thisVector%get(5,7,testvec,iverr)
+    DO i=1,3
+      ASSERT(iverr == -1, 'realvec%getRange(...)')
+    ENDDO
   ENDSELECT
   WRITE(*,*) '  Passed: CALL realvec%getRange(...)'
   DEALLOCATE(thisVector)
@@ -611,23 +611,23 @@ SUBROUTINE testVector()
   !make vector without using untested init
   ALLOCATE(PETScVectorType :: thisVector)
   SELECTTYPE(thisVector)
-    TYPE IS(PetscVectorType)
-      thisVector%isInit=.TRUE.
-      thisVector%n=100
-      CALL VecCreate(MPI_COMM_WORLD,thisVector%b,ierr)
-      CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,ierr)
-      CALL VecSetType(thisVector%b,VECMPI,ierr)
-      CALL VecSetFromOptions(thisVector%b,ierr)
+  TYPE IS(PetscVectorType)
+    thisVector%isInit=.TRUE.
+    thisVector%n=100
+    CALL VecCreate(MPI_COMM_WORLD,thisVector%b,ierr)
+    CALL VecSetSizes(thisVector%b,PETSC_DECIDE,thisVector%n,ierr)
+    CALL VecSetType(thisVector%b,VECMPI,ierr)
+    CALL VecSetFromOptions(thisVector%b,ierr)
   ENDSELECT
 
   !clear it
   CALL thisVector%clear()
 
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      !check for success
-      bool = .NOT.((thisVector%isInit).OR.(thisVector%n /= 0))
-      ASSERT(bool, 'petscvec%clear()')
+  TYPE IS(PETScVectorType)
+    !check for success
+    bool = .NOT.((thisVector%isInit).OR.(thisVector%n /= 0))
+    ASSERT(bool, 'petscvec%clear()')
 
 !          !check if pointer for b is null (not supported till 3.3)
 !          !if not, clear did not destroy it
@@ -635,7 +635,7 @@ SUBROUTINE testVector()
 !            WRITE(*,*) 'CALL petscvec%clear() FAILED!'
 !            STOP 666
 !          ENDIF
-      WRITE(*,*) '  Passed: CALL petscvec%clear()'
+    WRITE(*,*) '  Passed: CALL petscvec%clear()'
   ENDSELECT
 
   !Perform test of init function
@@ -645,12 +645,12 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      !check for success
-      bool = .NOT.((.NOT.thisVector%isInit).AND.(thisVector%n /= 10))
-      ASSERT(bool, 'petscvec%init(...)')
-      CALL VecGetSize(thisVector%b,i,ierr)
-      ASSERT(i == 10, 'petscvec%init(...)')
+  TYPE IS(PETScVectorType)
+    !check for success
+    bool = .NOT.((.NOT.thisVector%isInit).AND.(thisVector%n /= 10))
+    ASSERT(bool, 'petscvec%init(...)')
+    CALL VecGetSize(thisVector%b,i,ierr)
+    ASSERT(i == 10, 'petscvec%init(...)')
   ENDSELECT
   CALL thisVector%clear()
 
@@ -668,12 +668,12 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType); thisVector%n=1
+  TYPE IS(PETScVectorType); thisVector%n=1
   ENDSELECT
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      ASSERT(thisVector%n == 1, 'petscvec%init(...)') !n==1 implies it was changed, and thus fail
+  TYPE IS(PETScVectorType)
+    ASSERT(thisVector%n == 1, 'petscvec%init(...)') !n==1 implies it was changed, and thus fail
   ENDSELECT
  !init with n<1
   CALL thisVector%clear()
@@ -713,18 +713,18 @@ SUBROUTINE testVector()
   CALL thisVector%set(5,5._SRK)
   CALL thisVector%set(6,6._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      ! manually assemble vector
-      CALL VecAssemblyBegin(thisVector%b,ierr)
-      CALL VecAssemblyEnd(thisVector%b,ierr)
-      thisVector%isAssembled=.TRUE.
+  TYPE IS(PETScVectorType)
+    ! manually assemble vector
+    CALL VecAssemblyBegin(thisVector%b,ierr)
+    CALL VecAssemblyEnd(thisVector%b,ierr)
+    thisVector%isAssembled=.TRUE.
 
-      !now compare actual values with expected
-      DO i=1,6
-        CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
-        bool = .NOT.(dummy /= i .AND. iverr /= 0)
-        ASSERT(bool, 'petscvec%setOne(...)')
-      ENDDO
+    !now compare actual values with expected
+    DO i=1,6
+      CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+      bool = .NOT.(dummy /= i .AND. iverr /= 0)
+      ASSERT(bool, 'petscvec%setOne(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -750,18 +750,18 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      ! manually assemble vector
-      CALL VecAssemblyBegin(thisVector%b,ierr)
-      CALL VecAssemblyEnd(thisVector%b,ierr)
-      thisVector%isAssembled=.TRUE.
+  TYPE IS(PETScVectorType)
+    ! manually assemble vector
+    CALL VecAssemblyBegin(thisVector%b,ierr)
+    CALL VecAssemblyEnd(thisVector%b,ierr)
+    thisVector%isAssembled=.TRUE.
 
-      CALL VecGetSize(thisVector%b,vecsize,ierr)
-      DO i=1,vecsize
-        CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
-        ASSERT(dummy /= 1._SRK, 'petscvec%setOne(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL petscvec%setOne(...)'
+    CALL VecGetSize(thisVector%b,vecsize,ierr)
+    DO i=1,vecsize
+      CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+      ASSERT(dummy /= 1._SRK, 'petscvec%setOne(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL petscvec%setOne(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -769,13 +769,13 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(10._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      !now compare actual values with expected
-      DO i=1,6
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.((dummy /= 10._SRK) .AND. iverr /= 0)
-        ASSERT(bool, 'petscvec%setAll_scalar(...)')
-      ENDDO
+  TYPE IS(PETScVectorType)
+    !now compare actual values with expected
+    DO i=1,6
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.((dummy /= 10._SRK) .AND. iverr /= 0)
+      ASSERT(bool, 'petscvec%setAll_scalar(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -790,17 +790,17 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      ! manually assemble vector
-      CALL VecAssemblyBegin(thisVector%b,ierr)
-      CALL VecAssemblyEnd(thisVector%b,ierr)
-      thisVector%isAssembled=.TRUE.
+  TYPE IS(PETScVectorType)
+    ! manually assemble vector
+    CALL VecAssemblyBegin(thisVector%b,ierr)
+    CALL VecAssemblyEnd(thisVector%b,ierr)
+    thisVector%isAssembled=.TRUE.
 
-      DO i=1,thisVector%n
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= 1._SRK, 'petscvec%setAll_scalar(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL petscvec%setAll_scalar(...)'
+    DO i=1,thisVector%n
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= 1._SRK, 'petscvec%setAll_scalar(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL petscvec%setAll_scalar(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -821,13 +821,13 @@ SUBROUTINE testVector()
   testvec(6)=12._SRK
   CALL thisVector%set(testvec,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      !now compare actual values with expected
-      DO i=1,6
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.((dummy /= testvec(i)) .AND. iverr /= 0)
-        ASSERT(bool, 'petscvec%setAll_array(...)')
-      ENDDO
+  TYPE IS(PETScVectorType)
+    !now compare actual values with expected
+    DO i=1,6
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.((dummy /= testvec(i)) .AND. iverr /= 0)
+      ASSERT(bool, 'petscvec%setAll_array(...)')
+    ENDDO
   ENDSELECT
 
   ! Will overrwrite elements 1, 3, and 5
@@ -879,17 +879,17 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      ! manually assemble vector
-      CALL VecAssemblyBegin(thisVector%b,ierr)
-      CALL VecAssemblyEnd(thisVector%b,ierr)
-      thisVector%isAssembled=.TRUE.
+  TYPE IS(PETScVectorType)
+    ! manually assemble vector
+    CALL VecAssemblyBegin(thisVector%b,ierr)
+    CALL VecAssemblyEnd(thisVector%b,ierr)
+    thisVector%isAssembled=.TRUE.
 
-      DO i=1,thisVector%n
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= testvec2(i), 'petscvec%setAll_array(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL petscvec%setAll_array(...)'
+    DO i=1,thisVector%n
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= testvec2(i), 'petscvec%setAll_array(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL petscvec%setAll_array(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -900,16 +900,16 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(4,6,10._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      !now compare actual values with expected
-      DO i=1,3
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy == 0._SRK, 'petscvec%setRange_scalar(...)')
-      ENDDO
-      DO i=4,6
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy == 10._SRK, 'petscvec%setRange_scalar(...)')
-      ENDDO
+  TYPE IS(PETScVectorType)
+    !now compare actual values with expected
+    DO i=1,3
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy == 0._SRK, 'petscvec%setRange_scalar(...)')
+    ENDDO
+    DO i=4,6
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy == 10._SRK, 'petscvec%setRange_scalar(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -942,17 +942,17 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      ! manually assemble vector
-      CALL VecAssemblyBegin(thisVector%b,ierr)
-      CALL VecAssemblyEnd(thisVector%b,ierr)
-      thisVector%isAssembled=.TRUE.
+  TYPE IS(PETScVectorType)
+    ! manually assemble vector
+    CALL VecAssemblyBegin(thisVector%b,ierr)
+    CALL VecAssemblyEnd(thisVector%b,ierr)
+    thisVector%isAssembled=.TRUE.
 
-      DO i=1,thisVector%n
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= 1._SRK, 'petscvec%setRange_scalar(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL petscvec%setRange_scalar(...)'
+    DO i=1,thisVector%n
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= 1._SRK, 'petscvec%setRange_scalar(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL petscvec%setRange_scalar(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -969,18 +969,18 @@ SUBROUTINE testVector()
   testvec(3)=5._SRK
   CALL thisVector%set(4,6,testvec,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      !now compare actual values with expected
-      DO i=1,3
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.((dummy /= 0._SRK) .AND. iverr /= 0)
-        ASSERT(bool, 'petscvec%setRange_array(...)')
-      ENDDO
-      DO i=4,6
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.((dummy /= testvec(i-3)) .AND. iverr /= 0)
-        ASSERT(bool, 'petscvec%setRange_array(...)')
-      ENDDO
+  TYPE IS(PETScVectorType)
+    !now compare actual values with expected
+    DO i=1,3
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.((dummy /= 0._SRK) .AND. iverr /= 0)
+      ASSERT(bool, 'petscvec%setRange_array(...)')
+    ENDDO
+    DO i=4,6
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.((dummy /= testvec(i-3)) .AND. iverr /= 0)
+      ASSERT(bool, 'petscvec%setRange_array(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -1013,17 +1013,17 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      ! manually assemble vector
-      CALL VecAssemblyBegin(thisVector%b,ierr)
-      CALL VecAssemblyEnd(thisVector%b,ierr)
-      thisVector%isAssembled=.TRUE.
+  TYPE IS(PETScVectorType)
+    ! manually assemble vector
+    CALL VecAssemblyBegin(thisVector%b,ierr)
+    CALL VecAssemblyEnd(thisVector%b,ierr)
+    thisVector%isAssembled=.TRUE.
 
-      DO i=4,6
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= testvec2(i-3), 'petscvec%setRange_array(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL petscvec%setRange_array(...)'
+    DO i=4,6
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= testvec2(i-3), 'petscvec%setRange_array(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL petscvec%setRange_array(...)'
   ENDSELECT
 
   !Perform test of get function
@@ -1034,40 +1034,40 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(thisVector%n))
-      CALL thisVector%get(dummyvec)
-      bool = .NOT.((dummyvec(1) /= 1._SRK) .OR. &
-             (dummyvec(2) /= 5._SRK) .OR. &
-             (dummyvec(3) /= 8._SRK) .OR. &
-             (dummyvec(4) /= 9._SRK) .OR. &
-             (dummyvec(5) /= 3._SRK) .OR. &
-             (dummyvec(6) /= 7._SRK) .OR. &
-             (dummyvec(7) /= 2._SRK))
-      ASSERT(bool, 'petscvec%getOne(...)')
+  TYPE IS(PETScVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(thisVector%n))
+    CALL thisVector%get(dummyvec)
+    bool = .NOT.((dummyvec(1) /= 1._SRK) .OR. &
+           (dummyvec(2) /= 5._SRK) .OR. &
+           (dummyvec(3) /= 8._SRK) .OR. &
+           (dummyvec(4) /= 9._SRK) .OR. &
+           (dummyvec(5) /= 3._SRK) .OR. &
+           (dummyvec(6) /= 7._SRK) .OR. &
+           (dummyvec(7) /= 2._SRK))
+    ASSERT(bool, 'petscvec%getOne(...)')
   ENDSELECT
   !test with out of bounds, make sure no crash.
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%get(8,dummy,iverr)
-      ASSERT(iverr == -2, 'petscvec%getOne(...)')
-      CALL thisVector%get(-1,dummy)
-      ASSERT(iverr == -2, 'petscvec%getOne(...)')
+  TYPE IS(PETScVectorType)
+    CALL thisVector%get(8,dummy,iverr)
+    ASSERT(iverr == -2, 'petscvec%getOne(...)')
+    CALL thisVector%get(-1,dummy)
+    ASSERT(iverr == -2, 'petscvec%getOne(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%get(1,dummy,iverr)
-      ASSERT(iverr == -1, 'petscvec%getOne(...)')
+  TYPE IS(PETScVectorType)
+    CALL thisVector%get(1,dummy,iverr)
+    ASSERT(iverr == -1, 'petscvec%getOne(...)')
   ENDSELECT
   CALL thisVector%clear()
   WRITE(*,*) '  Passed: CALL petscvec%getOne(...)'
@@ -1082,40 +1082,40 @@ SUBROUTINE testVector()
   DEALLOCATE(testvec)
   ALLOCATE(testvec(7))
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      CALL thisVector%get(testvec)
-      bool = .NOT.((testvec(1) /= 1._SRK) .OR. &
-                   (testvec(2) /= 5._SRK) .OR. &
-                   (testvec(3) /= 8._SRK) .OR. &
-                   (testvec(4) /= 9._SRK) .OR. &
-                   (testvec(5) /= 3._SRK) .OR. &
-                   (testvec(6) /= 7._SRK) .OR. &
-                   (testvec(7) /= 2._SRK))
-      ASSERT(bool, 'petscvec%getAll(...)')
-      DEALLOCATE(testvec)
-      ALLOCATE(testvec(4))
-      CALL thisVector%get([1,3,5,7],testvec)
-      bool = testvec(1) == 1._SRK .AND. &
-             testvec(2) == 8._SRK .AND. &
-             testvec(3) == 3._SRK .AND. &
-             testvec(4) == 2._SRK
-      ASSERT(bool, 'petscvec%getSelected(...)')
-      DEALLOCATE(testvec)
-      ALLOCATE(testvec(7))
+  TYPE IS(PETScVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    CALL thisVector%get(testvec)
+    bool = .NOT.((testvec(1) /= 1._SRK) .OR. &
+                 (testvec(2) /= 5._SRK) .OR. &
+                 (testvec(3) /= 8._SRK) .OR. &
+                 (testvec(4) /= 9._SRK) .OR. &
+                 (testvec(5) /= 3._SRK) .OR. &
+                 (testvec(6) /= 7._SRK) .OR. &
+                 (testvec(7) /= 2._SRK))
+    ASSERT(bool, 'petscvec%getAll(...)')
+    DEALLOCATE(testvec)
+    ALLOCATE(testvec(4))
+    CALL thisVector%get([1,3,5,7],testvec)
+    bool = testvec(1) == 1._SRK .AND. &
+           testvec(2) == 8._SRK .AND. &
+           testvec(3) == 3._SRK .AND. &
+           testvec(4) == 2._SRK
+    ASSERT(bool, 'petscvec%getSelected(...)')
+    DEALLOCATE(testvec)
+    ALLOCATE(testvec(7))
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%get(testvec,iverr)
-      ASSERT(iverr == -1, 'petscvec%getAll(...)')
+  TYPE IS(PETScVectorType)
+    CALL thisVector%get(testvec,iverr)
+    ASSERT(iverr == -1, 'petscvec%getAll(...)')
   ENDSELECT
   CALL thisVector%clear()
   WRITE(*,*) '  Passed: CALL petscvec%getAll(...)'
@@ -1130,34 +1130,34 @@ SUBROUTINE testVector()
   DEALLOCATE(testvec)
   ALLOCATE(testvec(3))
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      CALL thisVector%get(5,7,testvec)
-      bool = .NOT.((testvec(1) /= 3._SRK) .OR. &
-                   (testvec(2) /= 7._SRK) .OR. &
-                   (testvec(3) /= 2._SRK))
-      ASSERT(bool, 'petscvec%getRange(...)')
+  TYPE IS(PETScVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    CALL thisVector%get(5,7,testvec)
+    bool = .NOT.((testvec(1) /= 3._SRK) .OR. &
+                 (testvec(2) /= 7._SRK) .OR. &
+                 (testvec(3) /= 2._SRK))
+    ASSERT(bool, 'petscvec%getRange(...)')
   ENDSELECT
   !test with out of bounds, make sure no crash.
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%get(2,8,testvec,iverr)
-      ASSERT(iverr == -2, 'petscvec%getRange(...)')
-      CALL thisVector%get(-1,2,testvec,iverr)
-      ASSERT(iverr == -2, 'petscvec%getRange(...)')
+  TYPE IS(PETScVectorType)
+    CALL thisVector%get(2,8,testvec,iverr)
+    ASSERT(iverr == -2, 'petscvec%getRange(...)')
+    CALL thisVector%get(-1,2,testvec,iverr)
+    ASSERT(iverr == -2, 'petscvec%getRange(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(PETScVectorType)
-      CALL thisVector%get(1,3,testvec,iverr)
-      ASSERT(iverr == -1, 'petscvec%getRange(...)')
+  TYPE IS(PETScVectorType)
+    CALL thisVector%get(1,3,testvec,iverr)
+    ASSERT(iverr == -1, 'petscvec%getRange(...)')
   ENDSELECT
   CALL thisVector%clear()
   WRITE(*,*) '  Passed: CALL petscvec%getRange(...)'
@@ -1199,10 +1199,10 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      !check for success
-      bool = .NOT.((.NOT.thisVector%isInit).AND.(thisVector%n /= 10))
-      ASSERT(bool, 'Trilinosvec%init(...)')
+  TYPE IS(TrilinosVectorType)
+    !check for success
+    bool = .NOT.((.NOT.thisVector%isInit).AND.(thisVector%n /= 10))
+    ASSERT(bool, 'Trilinosvec%init(...)')
   ENDSELECT
   CALL thisVector%clear()
 
@@ -1220,12 +1220,12 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType); thisVector%n=1
+  TYPE IS(TrilinosVectorType); thisVector%n=1
   ENDSELECT
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      ASSERT(thisVector%n == 1, 'Trilinosvec%init(...)') !n==1 implies it was changed, and thus fail
+  TYPE IS(TrilinosVectorType)
+    ASSERT(thisVector%n == 1, 'Trilinosvec%init(...)') !n==1 implies it was changed, and thus fail
   ENDSELECT
  !init with n<1
   CALL thisVector%clear()
@@ -1265,13 +1265,13 @@ SUBROUTINE testVector()
   CALL thisVector%set(5,5._SRK)
   CALL thisVector%set(6,6._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      !now compare actual values with expected
-      DO i=1,6
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.(dummy /= i .AND. iverr /= 0)
-        ASSERT(bool, 'Trilinosvec%setOne(...)')
-      ENDDO
+  TYPE IS(TrilinosVectorType)
+    !now compare actual values with expected
+    DO i=1,6
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.(dummy /= i .AND. iverr /= 0)
+      ASSERT(bool, 'Trilinosvec%setOne(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -1297,12 +1297,12 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      DO i=1,6
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= 1._SRK, 'Trilinosvec%setOne(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL Trilinosvec%setOne(...)'
+  TYPE IS(TrilinosVectorType)
+    DO i=1,6
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= 1._SRK, 'Trilinosvec%setOne(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL Trilinosvec%setOne(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -1310,13 +1310,13 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(10._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      !now compare actual values with expected
-      DO i=1,6
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.((dummy /= 10._SRK) .AND. iverr /= 0)
-        ASSERT(bool, 'Trilinosvec%setAll_scalar(...)')
-      ENDDO
+  TYPE IS(TrilinosVectorType)
+    !now compare actual values with expected
+    DO i=1,6
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.((dummy /= 10._SRK) .AND. iverr /= 0)
+      ASSERT(bool, 'Trilinosvec%setAll_scalar(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -1331,13 +1331,13 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
+  TYPE IS(TrilinosVectorType)
 
-      DO i=1,thisVector%n
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= 1._SRK, 'Trilinosvec%setAll_scalar(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL Trilinosvec%setAll_scalar(...)'
+    DO i=1,thisVector%n
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= 1._SRK, 'Trilinosvec%setAll_scalar(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL Trilinosvec%setAll_scalar(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -1418,16 +1418,16 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
   CALL thisVector%set(4,6,10._SRK,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      !now compare actual values with expected
-      DO i=1,3
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy == 0._SRK, 'Trilinosvec%setRange_scalar(...)')
-      ENDDO
-      DO i=4,6
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy == 10._SRK, 'Trilinosvec%setRange_scalar(...)')
-      ENDDO
+  TYPE IS(TrilinosVectorType)
+    !now compare actual values with expected
+    DO i=1,3
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy == 0._SRK, 'Trilinosvec%setRange_scalar(...)')
+    ENDDO
+    DO i=4,6
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy == 10._SRK, 'Trilinosvec%setRange_scalar(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -1460,12 +1460,12 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      DO i=1,thisVector%n
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= 1._SRK, 'Trilinosvec%setRange_scalar(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL Trilinosvec%setRange_scalar(...)'
+  TYPE IS(TrilinosVectorType)
+    DO i=1,thisVector%n
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= 1._SRK, 'Trilinosvec%setRange_scalar(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL Trilinosvec%setRange_scalar(...)'
   ENDSELECT
 
   !Perform test of set function
@@ -1482,18 +1482,18 @@ SUBROUTINE testVector()
   testvec(3)=5._SRK
   CALL thisVector%set(4,6,testvec,iverr)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      !now compare actual values with expected
-      DO i=1,3
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.((dummy /= 0._SRK) .AND. iverr /= 0)
-        ASSERT(bool, 'Trilinosvec%setRange_array(...)')
-      ENDDO
-      DO i=4,6
-        CALL thisVector%get(i,dummy)
-        bool = .NOT.((dummy /= testvec(i-3)) .AND. iverr /= 0)
-        ASSERT(bool, 'Trilinosvec%setRange_array(...)')
-      ENDDO
+  TYPE IS(TrilinosVectorType)
+    !now compare actual values with expected
+    DO i=1,3
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.((dummy /= 0._SRK) .AND. iverr /= 0)
+      ASSERT(bool, 'Trilinosvec%setRange_array(...)')
+    ENDDO
+    DO i=4,6
+      CALL thisVector%get(i,dummy)
+      bool = .NOT.((dummy /= testvec(i-3)) .AND. iverr /= 0)
+      ASSERT(bool, 'Trilinosvec%setRange_array(...)')
+    ENDDO
   ENDSELECT
 
   !set uninit matrix.
@@ -1526,12 +1526,12 @@ SUBROUTINE testVector()
   CALL thisVector%init(pList)
 
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      DO i=4,6
-        CALL thisVector%get(i,dummy)
-        ASSERT(dummy /= testvec2(i-3), 'Trilinosvec%setRange_array(...)')
-      ENDDO
-      WRITE(*,*) '  Passed: CALL Trilinosvec%setRange_array(...)'
+  TYPE IS(TrilinosVectorType)
+    DO i=4,6
+      CALL thisVector%get(i,dummy)
+      ASSERT(dummy /= testvec2(i-3), 'Trilinosvec%setRange_array(...)')
+    ENDDO
+    WRITE(*,*) '  Passed: CALL Trilinosvec%setRange_array(...)'
   ENDSELECT
 
   !Perform test of get function
@@ -1542,42 +1542,42 @@ SUBROUTINE testVector()
   CALL pList%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL thisVector%init(pList)
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(thisVector%n))
-      DO i=1,7
-        CALL thisVector%get(i,dummyvec(i))
-      ENDDO
-      bool = .NOT.((dummyvec(1) /= 1._SRK) .OR. &
-             (dummyvec(2) /= 5._SRK) .OR. &
-             (dummyvec(3) /= 8._SRK) .OR. &
-             (dummyvec(4) /= 9._SRK) .OR. &
-             (dummyvec(5) /= 3._SRK) .OR. &
-             (dummyvec(6) /= 7._SRK) .OR. &
-             (dummyvec(7) /= 2._SRK))
-      ASSERT(bool, 'Trilinosvec%getOne(...)')
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+    ALLOCATE(dummyvec(thisVector%n))
+    DO i=1,7
+      CALL thisVector%get(i,dummyvec(i))
+    ENDDO
+    bool = .NOT.((dummyvec(1) /= 1._SRK) .OR. &
+           (dummyvec(2) /= 5._SRK) .OR. &
+           (dummyvec(3) /= 8._SRK) .OR. &
+           (dummyvec(4) /= 9._SRK) .OR. &
+           (dummyvec(5) /= 3._SRK) .OR. &
+           (dummyvec(6) /= 7._SRK) .OR. &
+           (dummyvec(7) /= 2._SRK))
+    ASSERT(bool, 'Trilinosvec%getOne(...)')
   ENDSELECT
   !test with out of bounds, make sure no crash.
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%get(8,dummy,iverr)
-      ASSERT(iverr == -2, 'Trilinosvec%getOne(...)')
-      CALL thisVector%get(-1,dummy)
-      ASSERT(iverr == -2, 'Trilinosvec%getOne(...)')
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%get(8,dummy,iverr)
+    ASSERT(iverr == -2, 'Trilinosvec%getOne(...)')
+    CALL thisVector%get(-1,dummy)
+    ASSERT(iverr == -2, 'Trilinosvec%getOne(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%get(1,dummy,iverr)
-      ASSERT(iverr == -1, 'Trilinosvec%getOne(...)')
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%get(1,dummy,iverr)
+    ASSERT(iverr == -1, 'Trilinosvec%getOne(...)')
   ENDSELECT
   CALL thisVector%clear()
   WRITE(*,*) '  Passed: CALL Trilinosvec%getOne(...)'
@@ -1592,14 +1592,14 @@ SUBROUTINE testVector()
   DEALLOCATE(testvec)
   ALLOCATE(testvec(7))
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
 ! TODO: this interface has yet to be written
 !          CALL thisVector%get(testvec)
 !          bool = .NOT.((testvec(1) /= 1._SRK) .OR. &
@@ -1614,9 +1614,9 @@ SUBROUTINE testVector()
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%get(testvec,iverr)
-      ASSERT(iverr == -1, 'Trilinosvec%getAll(...)')
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%get(testvec,iverr)
+    ASSERT(iverr == -1, 'Trilinosvec%getAll(...)')
   ENDSELECT
   CALL thisVector%clear()
   WRITE(*,*) '  Passed: CALL Trilinosvec%getAll(...)'
@@ -1631,34 +1631,34 @@ SUBROUTINE testVector()
   DEALLOCATE(testvec)
   ALLOCATE(testvec(3))
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%set(1,1._SRK)
-      CALL thisVector%set(2,5._SRK)
-      CALL thisVector%set(3,8._SRK)
-      CALL thisVector%set(4,9._SRK)
-      CALL thisVector%set(5,3._SRK)
-      CALL thisVector%set(6,7._SRK)
-      CALL thisVector%set(7,2._SRK)
-      CALL thisVector%get(5,7,testvec)
-      bool = .NOT.((testvec(1) /= 3._SRK) .OR. &
-                   (testvec(2) /= 7._SRK) .OR. &
-                   (testvec(3) /= 2._SRK))
-      ASSERT(bool, 'Trilinosvec%getRange(...)')
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%set(1,1._SRK)
+    CALL thisVector%set(2,5._SRK)
+    CALL thisVector%set(3,8._SRK)
+    CALL thisVector%set(4,9._SRK)
+    CALL thisVector%set(5,3._SRK)
+    CALL thisVector%set(6,7._SRK)
+    CALL thisVector%set(7,2._SRK)
+    CALL thisVector%get(5,7,testvec)
+    bool = .NOT.((testvec(1) /= 3._SRK) .OR. &
+                 (testvec(2) /= 7._SRK) .OR. &
+                 (testvec(3) /= 2._SRK))
+    ASSERT(bool, 'Trilinosvec%getRange(...)')
   ENDSELECT
   !test with out of bounds, make sure no crash.
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%get(2,8,testvec,iverr)
-      ASSERT(iverr == -2, 'Trilinosvec%getRange(...)')
-      CALL thisVector%get(-1,2,testvec,iverr)
-      ASSERT(iverr == -2, 'Trilinosvec%getRange(...)')
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%get(2,8,testvec,iverr)
+    ASSERT(iverr == -2, 'Trilinosvec%getRange(...)')
+    CALL thisVector%get(-1,2,testvec,iverr)
+    ASSERT(iverr == -2, 'Trilinosvec%getRange(...)')
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisVector%clear()
   SELECTTYPE(thisVector)
-    TYPE IS(TrilinosVectorType)
-      CALL thisVector%get(1,3,testvec,iverr)
-      ASSERT(iverr == -1, 'Trilinosvec%getRange(...)')
+  TYPE IS(TrilinosVectorType)
+    CALL thisVector%get(1,3,testvec,iverr)
+    ASSERT(iverr == -1, 'Trilinosvec%getRange(...)')
   ENDSELECT
   CALL thisVector%clear()
   WRITE(*,*) '  Passed: CALL Trilinosvec%getRange(...)'
@@ -1877,8 +1877,8 @@ CALL yVector%set(0.0_SRK)
 CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n)
 CALL yVector%get(dummyvec)
 bool = ((dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
-          (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
-          (dummyvec(3) .APPROXEQ. 7.0_SRK))
+        (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
+        (dummyvec(3) .APPROXEQ. 7.0_SRK))
 ASSERT(bool, 'BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n) [REAL]')
 CALL yVector%set(0.0_SRK)
 CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector)
@@ -2302,8 +2302,8 @@ CALL yVector%set(3,1.0_SRK)
 CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1)
 CALL yVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ. 28._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 36._SRK)
+       (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 36._SRK)
 ASSERT(bool, 'BLAS_axpy')
 FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1) -scalar_a [PETSC]'
 CALL yVector%set(1,3.0_SRK)
@@ -2374,8 +2374,8 @@ CALL yVector%set(3,1.0_SRK)
 CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCY=1)
 CALL yVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ. 33._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_axpy')
 FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector,N=xVector%n,INCY=1) -vector_a [PETSC]'
 CALL yVector%set(1,3.0_SRK)
@@ -2394,8 +2394,8 @@ CALL yVector%set(3,1.0_SRK)
 CALL BLAS_axpy(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector)
 CALL yVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ. 33._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ. -3._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_axpy')
 FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,AVECTOR=aVector) -vector_a [PETSC]'
 WRITE(*,*) '  Passed: CALL BLAS_axpy(...) -vector_a [PETSC]'
@@ -2410,23 +2410,23 @@ IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
 ALLOCATE(dummyvec(yVector%n))
 CALL yVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 7.0_SRK)
+       (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 7.0_SRK)
 ASSERT(bool, 'BLAS_copy')
 FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1) [PETSC]'
 CALL yVector%set(0.0_SRK)
 CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1,INCY=1)
 CALL yVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 7.0_SRK)
+       (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 7.0_SRK)
 ASSERT(bool, 'BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1,INCY=1) [PETSC]')
 CALL yVector%set(0.0_SRK)
 CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1)
 CALL yVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 7.0_SRK)
+       (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 7.0_SRK)
 ASSERT(bool, 'BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1) [PETSC]')
 CALL yVector%set(0.0_SRK)
 CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCY=1)
@@ -2608,8 +2608,8 @@ IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
 ALLOCATE(dummyvec(xVector%n))
 CALL xVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n,INCX=1) -scalar_a [PETSC]')
 CALL xVector%set(1,1.0_SRK)
 CALL xVector%set(2,3.0_SRK)
@@ -2617,8 +2617,8 @@ CALL xVector%set(3,5.0_SRK)
 CALL BLAS_scal(THISVECTOR=xVector,A=a,INCX=1)
 CALL xVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a,INCX=1) -scalar_a [PETSC]')
 CALL xVector%set(1,1.0_SRK)
 CALL xVector%set(2,3.0_SRK)
@@ -2626,8 +2626,8 @@ CALL xVector%set(3,5.0_SRK)
 CALL BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n)
 CALL xVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n) -scalar_a [PETSC]')
 CALL xVector%set(1,1.0_SRK)
 CALL xVector%set(2,3.0_SRK)
@@ -2635,8 +2635,8 @@ CALL xVector%set(3,5.0_SRK)
 CALL BLAS_scal(THISVECTOR=xVector,A=a)
 CALL xVector%get(dummyvec)
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a) -scalar_a [PETSC]')
 WRITE(*,*) '  Passed: CALL BLAS_scal(...) -scalar_a [PETSC]'
 
@@ -2884,8 +2884,8 @@ DO i=1,3
   CALL yVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ. 28._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 36._SRK)
+       (dummyvec(2) .APPROXEQ. -5._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 36._SRK)
 ASSERT(bool, 'BLAS_axpy')
 FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,A=a,N=xVector%n,INCX=1) -scalar_a [Trilinos]'
 CALL yVector%set(1,3.0_SRK)
@@ -3011,8 +3011,8 @@ DO i=1,yVector%n
   CALL yVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 7.0_SRK)
+       (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 7.0_SRK)
 ASSERT(bool, 'BLAS_copy')
 FINFO() '(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1,INCY=1) [Trilinos]'
 FINFO() dummyvec
@@ -3022,8 +3022,8 @@ DO i=1,yVector%n
   CALL yVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 7.0_SRK)
+       (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 7.0_SRK)
 ASSERT(bool, 'BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,INCX=1,INCY=1) [Trilinos]')
 FINFO()dummyvec
 CALL yVector%set(0.0_SRK)
@@ -3032,8 +3032,8 @@ DO i=1,yVector%n
   CALL yVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ. 1.0_SRK) .AND. &
-        (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 7.0_SRK)
+       (dummyvec(2) .APPROXEQ. 3.0_SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 7.0_SRK)
 ASSERT(bool, 'BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCX=1) [Trilinos]')
 CALL yVector%set(0.0_SRK)
 CALL BLAS_copy(THISVECTOR=xVector,NEWVECTOR=yVector,N=xVector%n,INCY=1)
@@ -3230,8 +3230,8 @@ DO i=1,xVector%n
   CALL xVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n,INCX=1) -scalar_a [Trilinos]')
 CALL xVector%set(1,1.0_SRK)
 CALL xVector%set(2,3.0_SRK)
@@ -3241,8 +3241,8 @@ DO i=1,xVector%n
   CALL xVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a,INCX=1) -scalar_a [Trilinos]')
 CALL xVector%set(1,1.0_SRK)
 CALL xVector%set(2,3.0_SRK)
@@ -3252,8 +3252,8 @@ DO i=1,xVector%n
   CALL xVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a,N=xVector%n) -scalar_a [Trilinos]')
 CALL xVector%set(1,1.0_SRK)
 CALL xVector%set(2,3.0_SRK)
@@ -3263,8 +3263,8 @@ DO i=1,xVector%n
   CALL xVector%get(i,dummyvec(i))
 ENDDO
 bool = (dummyvec(1) .APPROXEQ.  3._SRK) .AND. &
-        (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
-        (dummyvec(3) .APPROXEQ. 15._SRK)
+       (dummyvec(2) .APPROXEQ.  9._SRK) .AND. &
+       (dummyvec(3) .APPROXEQ. 15._SRK)
 ASSERT(bool, 'BLAS_scal(THISVECTOR=xVector,A=a) -scalar_a [Trilinos]')
 WRITE(*,*) '  Passed: CALL BLAS_scal(...) -scalar_a [Trilinos]'
 
@@ -3478,7 +3478,8 @@ SUBROUTINE testVectorFactory()
   CALL VectorFactory(vec_p,params)
   ASSERT(ASSOCIATED(vec_p),"Vector not ALLOCATED")
   ASSERT(vec_p%isInit, "Vector not initialized")
-  SELECTTYPE(vec_p); TYPE IS(RealVectorType)
+  SELECTTYPE(vec_p)
+  TYPE IS(RealVectorType)
     ASSERT(.TRUE.,"Vector TYPE")
   CLASS DEFAULT
     ASSERT(.FALSE.,"Vector TYPE")
@@ -3488,7 +3489,8 @@ SUBROUTINE testVectorFactory()
   ASSERT(ASSOCIATED(other_vec_p),"Cloned vector not ALLOCATED")
   ASSERT(other_vec_p%isInit,"Other vector not initialized")
   ASSERT(other_vec_p%n==vec_p%n,"Cloned vector %n")
-  SELECTTYPE(other_vec_p); TYPE IS(RealVectorType)
+  SELECTTYPE(other_vec_p)
+  TYPE IS(RealVectorType)
     ASSERT(.TRUE.,"Resemble vector type")
   CLASS DEFAULT
     ASSERT(.FALSE.,"Resemble vector type")
@@ -3518,7 +3520,8 @@ SUBROUTINE testVectorFactory()
   CALL VectorFactory(vec_p,params)
   ASSERT(ASSOCIATED(vec_p),"PETSc vector associated")
   ASSERT(vec_p%isInit,"PETSc vector initialized")
-  SELECTTYPE(vec_p); TYPE IS(PETScVectorType)
+  SELECTTYPE(vec_p)
+  TYPE IS(PETScVectorType)
     ASSERT(.TRUE.,"PETSc type")
     dvec_p => vec_p
   CLASS DEFAULT
@@ -3530,7 +3533,8 @@ SUBROUTINE testVectorFactory()
   CALL VectorResemble(other_vec_p,vec_p,params)
   ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
-  SELECTTYPE(other_vec_p); TYPE IS(PETScVectorType)
+  SELECTTYPE(other_vec_p)
+  TYPE IS(PETScVectorType)
     ASSERT(other_vec_p%n == dvec_p%n,"Resemble vector %n")
     ASSERT(other_vec_p%nlocal == dvec_p%nlocal,"Resemble vector %nlocal")
   CLASS DEFAULT
@@ -3546,7 +3550,8 @@ SUBROUTINE testVectorFactory()
   CALL VectorResemble(other_vec_p,vec_p,params)
   ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
-  SELECTTYPE(other_vec_p); TYPE IS(PETScVectorType)
+  SELECTTYPE(other_vec_p)
+  TYPE IS(PETScVectorType)
     ASSERT(other_vec_p%n == 5_SIK,"Resemble vector %n")
     ASSERT(other_vec_p%nlocal == 5_SIK,"Resemble vector %nlocal")
   CLASS DEFAULT
@@ -3572,7 +3577,8 @@ SUBROUTINE testVectorFactory()
   CALL VectorFactory(vec_p,params)
   ASSERT(ASSOCIATED(vec_p),"Trilinos vector associated")
   ASSERT(vec_p%isInit,"Trilinos vector initialized")
-  SELECTTYPE(vec_p); TYPE IS(TrilinosVectorType)
+  SELECTTYPE(vec_p)
+  TYPE IS(TrilinosVectorType)
     ASSERT(.TRUE.,"Trilinos type")
     dvec_p => vec_p
   CLASS DEFAULT
@@ -3584,7 +3590,8 @@ SUBROUTINE testVectorFactory()
   CALL VectorResemble(other_vec_p,vec_p,params)
   ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
-  SELECTTYPE(other_vec_p); TYPE IS(TrilinosVectorType)
+  SELECTTYPE(other_vec_p)
+  TYPE IS(TrilinosVectorType)
     ASSERT(other_vec_p%n == dvec_p%n,"Resemble vector %n")
     ASSERT(other_vec_p%nlocal == dvec_p%nlocal,"Resemble vector %nlocal")
   CLASS DEFAULT
@@ -3600,7 +3607,8 @@ SUBROUTINE testVectorFactory()
   CALL VectorResemble(other_vec_p,vec_p,params)
   ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
-  SELECTTYPE(other_vec_p); TYPE IS(TrilinosVectorType)
+  SELECTTYPE(other_vec_p)
+  TYPE IS(TrilinosVectorType)
     ASSERT(other_vec_p%n == 5_SIK,"Resemble vector %n")
     ASSERT(other_vec_p%nlocal == 5_SIK,"Resemble vector %nlocal")
   CLASS DEFAULT
