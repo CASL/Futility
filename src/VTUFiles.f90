@@ -190,89 +190,89 @@ SUBROUTINE writeMesh_VTUXMLFileType(myVTKFile,vtkMesh)
       IF(vtkMesh%isInit) THEN
         funit=myVTKFile%getUnitNo()
         SELECTCASE(vtkMesh%meshType)
-          CASE(VTK_UNSTRUCTURED_GRID)
-            myVTKFile%mesh=vtkMesh
-            myVTKFile%hasMesh=.TRUE.
-            !Write a mesh that is an unstructured grid
-            !Clean-up redundant points
-            CALL myVTKFile%mesh%cleanupPoints()
-            sint=myVTKFile%mesh%numPoints
-            aline=myVTKFile%mesh%numCells
-            WRITE(funit,'(a)') '  <UnstructuredGrid>'
-            WRITE(funit,'(a)') '    <Piece NumberOfPoints="'//TRIM(sint)// &
-                '" NumberOfCells="'//TRIM(aline)//'">'
-            WRITE(funit,'(a)') '      <Points>'
-            WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
-                ' NumberOfComponents="3" format="ascii">'
-            DO i=1,myVTKFile%mesh%numPoints
-              WRITE(funit,'(a,3es17.8)') '        ',myVTKFile%mesh%x(i), &
-                  myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
-            ENDDO
-            WRITE(funit,'(a)') '        </DataArray>'
-            WRITE(funit,'(a)') '      </Points>'
+        CASE(VTK_UNSTRUCTURED_GRID)
+          myVTKFile%mesh=vtkMesh
+          myVTKFile%hasMesh=.TRUE.
+          !Write a mesh that is an unstructured grid
+          !Clean-up redundant points
+          CALL myVTKFile%mesh%cleanupPoints()
+          sint=myVTKFile%mesh%numPoints
+          aline=myVTKFile%mesh%numCells
+          WRITE(funit,'(a)') '  <UnstructuredGrid>'
+          WRITE(funit,'(a)') '    <Piece NumberOfPoints="'//TRIM(sint)// &
+              '" NumberOfCells="'//TRIM(aline)//'">'
+          WRITE(funit,'(a)') '      <Points>'
+          WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
+              ' NumberOfComponents="3" format="ascii">'
+          DO i=1,myVTKFile%mesh%numPoints
+            WRITE(funit,'(a,3es17.8)') '        ',myVTKFile%mesh%x(i), &
+                myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
+          ENDDO
+          WRITE(funit,'(a)') '        </DataArray>'
+          WRITE(funit,'(a)') '      </Points>'
 
-            !Write the list of cell vertices
-            WRITE(funit,'(a)') '      <Cells>'
-            WRITE(funit,'(a)') '        <DataArray type="Int32" Name="'// &
-                'connectivity" format="ascii">'
-            j=1
-            ALLOCATE(offsets(myVTKFile%mesh%numCells))
-            DO i=1,myVTKFile%mesh%numCells
-              !Determine the next n nodes that make up this cell
-              SELECTCASE(myVTKFile%mesh%cellList(i))
-                CASE(VTK_VERTEX); n=1
-                CASE(VTK_LINE); n=2
-                CASE(VTK_TRIANGLE); n=3
-                CASE(VTK_QUAD); n=4
-                CASE(VTK_TETRA); n=4
-                CASE(VTK_HEXAHEDRON); n=8
-                CASE(VTK_VOXEL); n=8
-                CASE(VTK_WEDGE); n=6
-                CASE(VTK_PYRAMID); n=5
-                CASE(VTK_QUADRATIC_EDGE); n=3
-                CASE(VTK_QUADRATIC_TRIANGLE); n=6
-                CASE(VTK_QUADRATIC_QUAD); n=8
-                CASE(VTK_QUADRATIC_TETRA); n=10
-                CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
-                CASE DEFAULT
-                  CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                      ' - VTK cell type is not supported!')
-                  n=0
-              ENDSELECT
-              IF(n > 0) THEN
-                aline='  '
-                DO k=0,n-1
-                  sint=myVTKFile%mesh%nodeList(j+k)
-                  aline=aline//' '//sint
-                ENDDO
-                WRITE(funit,'(a)') '         '//TRIM(aline)
-                j=j+n
-                offsets(i)=j-1
-              ENDIF
-            ENDDO
-            WRITE(funit,'(a)') '        </DataArray>'
-            !
-            ! Write the offsets
-            WRITE(funit,'(a)') '        <DataArray type="Int32" Name="'// &
-                'offsets" format="ascii">'
-            WRITE(funit,*) offsets
-            WRITE(funit,'(a)') '        </DataArray>'
-            DEALLOCATE(offsets)
-            !
-            !Write the list of cell types
-            WRITE(funit,'(a)') '        <DataArray type="UInt8" Name="'// &
-                'types" format="ascii">'
-            WRITE(funit,*) myVTKFile%mesh%cellList
-            WRITE(funit,'(a)') '        </DataArray>'
-            WRITE(funit,'(a)') '      </Cells>'
-            WRITE(funit,'(a)') '      <CellData>'
-            !
-          CASE(VTK_POLYDATA)
-            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                ' - VTK DATASET "POLYDATA" not supported!')
-          CASE DEFAULT
-            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                ' - VTK DATASET type is not recognized!')
+          !Write the list of cell vertices
+          WRITE(funit,'(a)') '      <Cells>'
+          WRITE(funit,'(a)') '        <DataArray type="Int32" Name="'// &
+              'connectivity" format="ascii">'
+          j=1
+          ALLOCATE(offsets(myVTKFile%mesh%numCells))
+          DO i=1,myVTKFile%mesh%numCells
+            !Determine the next n nodes that make up this cell
+            SELECTCASE(myVTKFile%mesh%cellList(i))
+            CASE(VTK_VERTEX); n=1
+            CASE(VTK_LINE); n=2
+            CASE(VTK_TRIANGLE); n=3
+            CASE(VTK_QUAD); n=4
+            CASE(VTK_TETRA); n=4
+            CASE(VTK_HEXAHEDRON); n=8
+            CASE(VTK_VOXEL); n=8
+            CASE(VTK_WEDGE); n=6
+            CASE(VTK_PYRAMID); n=5
+            CASE(VTK_QUADRATIC_EDGE); n=3
+            CASE(VTK_QUADRATIC_TRIANGLE); n=6
+            CASE(VTK_QUADRATIC_QUAD); n=8
+            CASE(VTK_QUADRATIC_TETRA); n=10
+            CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
+            CASE DEFAULT
+              CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                  ' - VTK cell type is not supported!')
+              n=0
+            ENDSELECT
+            IF(n > 0) THEN
+              aline='  '
+              DO k=0,n-1
+                sint=myVTKFile%mesh%nodeList(j+k)
+                aline=aline//' '//sint
+              ENDDO
+              WRITE(funit,'(a)') '         '//TRIM(aline)
+              j=j+n
+              offsets(i)=j-1
+            ENDIF
+          ENDDO
+          WRITE(funit,'(a)') '        </DataArray>'
+          !
+          ! Write the offsets
+          WRITE(funit,'(a)') '        <DataArray type="Int32" Name="'// &
+              'offsets" format="ascii">'
+          WRITE(funit,*) offsets
+          WRITE(funit,'(a)') '        </DataArray>'
+          DEALLOCATE(offsets)
+          !
+          !Write the list of cell types
+          WRITE(funit,'(a)') '        <DataArray type="UInt8" Name="'// &
+              'types" format="ascii">'
+          WRITE(funit,*) myVTKFile%mesh%cellList
+          WRITE(funit,'(a)') '        </DataArray>'
+          WRITE(funit,'(a)') '      </Cells>'
+          WRITE(funit,'(a)') '      <CellData>'
+          !
+        CASE(VTK_POLYDATA)
+          CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+              ' - VTK DATASET "POLYDATA" not supported!')
+        CASE DEFAULT
+          CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+              ' - VTK DATASET type is not recognized!')
         ENDSELECT
         FLUSH(funit)
       ELSE
@@ -323,37 +323,37 @@ SUBROUTINE writeScalarData_VTUXMLFileType(myVTKFile,vtkData)
           IF(vtkData%dataSetType==VTK_DATA_SCALARS) THEN
             funit=myVTKFile%getUnitNo()
             SELECTCASE(TRIM(vtkData%vtkDataFormat))
-              CASE('float')
-                WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
-                    ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
-                DO i=1,SIZE(vtkData%datalist),5
-                  istp=i+4
-                  IF(istp > SIZE(vtkData%datalist)) istp= &
-                      SIZE(vtkData%datalist)
-                  WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
-                ENDDO
-              CASE('double')
-                WRITE(funit,'(a)') '        <DataArray type="Float64"'// &
-                    ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
-                DO i=1,SIZE(vtkData%datalist),3
-                  istp=i+2
-                  IF(istp > SIZE(vtkData%datalist)) istp= &
-                      SIZE(vtkData%datalist)
-                  WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
-                ENDDO
-              CASE('int','short','long')
-                WRITE(funit,'(a)') '        <DataArray type="Int32"'// &
-                    ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
-                DO i=1,SIZE(vtkData%datalist),6
-                  istp=i+5
-                  IF(istp > SIZE(vtkData%datalist)) istp= &
-                      SIZE(vtkData%datalist)
-                  WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
-                ENDDO
-              CASE DEFAULT
-                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                    ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
-                    '" data not yet supported!')
+            CASE('float')
+              WRITE(funit,'(a)') '        <DataArray type="Float32"'// &
+                  ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+              DO i=1,SIZE(vtkData%datalist),5
+                istp=i+4
+                IF(istp > SIZE(vtkData%datalist)) istp= &
+                    SIZE(vtkData%datalist)
+                WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
+              ENDDO
+            CASE('double')
+              WRITE(funit,'(a)') '        <DataArray type="Float64"'// &
+                  ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+              DO i=1,SIZE(vtkData%datalist),3
+                istp=i+2
+                IF(istp > SIZE(vtkData%datalist)) istp= &
+                    SIZE(vtkData%datalist)
+                WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
+              ENDDO
+            CASE('int','short','long')
+              WRITE(funit,'(a)') '        <DataArray type="Int32"'// &
+                  ' Name="'//TRIM(vtkData%varname)//'" format="ascii">'
+              DO i=1,SIZE(vtkData%datalist),6
+                istp=i+5
+                IF(istp > SIZE(vtkData%datalist)) istp= &
+                    SIZE(vtkData%datalist)
+                WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
+              ENDDO
+            CASE DEFAULT
+              CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                  ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
+                  '" data not yet supported!')
             ENDSELECT
             WRITE(funit,'(a)') '        </DataArray>'
             FLUSH(funit)
@@ -488,19 +488,19 @@ SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,case,filen,procs,rank)
     WRITE(funit,'(a)') '    <PCellData Scalars="Data">'
     DO i=1,fileobj%numDataSet
       SELECTCASE(TRIM(CHAR(fileobj%dataFormatList(i))))
-        CASE('float')
-          WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
-              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
-        CASE('double')
-          WRITE(funit,'(a)') '      <PDataArray type="Float64"'// &
-              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
-        CASE('int','short','long')
-          WRITE(funit,'(a)') '      <PDataArray type="Int32"'// &
-              ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
-        CASE DEFAULT
-          CALL fileobj%e%raiseError(modName//'::'//myName// &
-              ' - Writing of "'//TRIM(fileobj%dataFormatList(i))// &
-              '" data not yet supported!')
+      CASE('float')
+        WRITE(funit,'(a)') '      <PDataArray type="Float32"'// &
+            ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+      CASE('double')
+        WRITE(funit,'(a)') '      <PDataArray type="Float64"'// &
+            ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+      CASE('int','short','long')
+        WRITE(funit,'(a)') '      <PDataArray type="Int32"'// &
+            ' Name="'//TRIM(fileobj%varNameList(i))//'"/>'
+      CASE DEFAULT
+        CALL fileobj%e%raiseError(modName//'::'//myName// &
+            ' - Writing of "'//TRIM(fileobj%dataFormatList(i))// &
+            '" data not yet supported!')
       ENDSELECT
     ENDDO
     WRITE(funit,'(a)') '    </PCellData>'

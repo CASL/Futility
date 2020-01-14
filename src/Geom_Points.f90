@@ -221,27 +221,27 @@ PURE SUBROUTINE init_PointType(p,DIM,X,Y,Z,coord)
       p%coord=coord
     ELSEIF(PRESENT(DIM)) THEN
       SELECTCASE(DIM)
-         CASE(1)
-           IF(PRESENT(X)) THEN
-             p%dim=1
-             ALLOCATE(p%coord(1))
-             p%coord(1)=X
-           ENDIF
-         CASE(2)
-           IF(PRESENT(X) .AND. PRESENT(Y)) THEN
-             p%dim=2
-             ALLOCATE(p%coord(2))
-             p%coord(1)=X
-             p%coord(2)=Y
-           ENDIF
-         CASE(3)
-           IF(PRESENT(X) .AND. PRESENT(Y) .AND. PRESENT(Z)) THEN
-             p%dim=3
-             ALLOCATE(p%coord(3))
-             p%coord(1)=X
-             p%coord(2)=Y
-             p%coord(3)=Z
-           ENDIF
+      CASE(1)
+        IF(PRESENT(X)) THEN
+          p%dim=1
+          ALLOCATE(p%coord(1))
+          p%coord(1)=X
+        ENDIF
+      CASE(2)
+        IF(PRESENT(X) .AND. PRESENT(Y)) THEN
+          p%dim=2
+          ALLOCATE(p%coord(2))
+          p%coord(1)=X
+          p%coord(2)=Y
+        ENDIF
+      CASE(3)
+        IF(PRESENT(X) .AND. PRESENT(Y) .AND. PRESENT(Z)) THEN
+          p%dim=3
+          ALLOCATE(p%coord(3))
+          p%coord(1)=X
+          p%coord(2)=Y
+          p%coord(3)=Z
+        ENDIF
       ENDSELECT
     ENDIF
   ENDIF
@@ -271,17 +271,17 @@ ELEMENTAL FUNCTION add_PointType(p0,p1) RESULT(p)
     p%dim=p0%dim
     ALLOCATE(p%coord(p%dim))
     SELECTCASE(p%dim) !Explicit unrolling, this may improve performance
-      CASE(1)
-        p%coord(1)=p0%coord(1)+p1%coord(1)
-      CASE(2)
-        p%coord(1)=p0%coord(1)+p1%coord(1)
-        p%coord(2)=p0%coord(2)+p1%coord(2)
-      CASE(3)
-        p%coord(1)=p0%coord(1)+p1%coord(1)
-        p%coord(2)=p0%coord(2)+p1%coord(2)
-        p%coord(3)=p0%coord(3)+p1%coord(3)
-      CASE DEFAULT
-        p%coord=p0%coord+p1%coord
+    CASE(1)
+      p%coord(1)=p0%coord(1)+p1%coord(1)
+    CASE(2)
+      p%coord(1)=p0%coord(1)+p1%coord(1)
+      p%coord(2)=p0%coord(2)+p1%coord(2)
+    CASE(3)
+      p%coord(1)=p0%coord(1)+p1%coord(1)
+      p%coord(2)=p0%coord(2)+p1%coord(2)
+      p%coord(3)=p0%coord(3)+p1%coord(3)
+    CASE DEFAULT
+      p%coord=p0%coord+p1%coord
     ENDSELECT
   ENDIF
 ENDFUNCTION add_PointType
@@ -301,17 +301,17 @@ ELEMENTAL FUNCTION subtract_PointType(p0,p1) RESULT(p)
     p%dim=p0%dim
     ALLOCATE(p%coord(p%dim))
     SELECTCASE(p%dim) !Explicit unrolling, this may improve performance
-      CASE(1)
-        p%coord(1)=p0%coord(1)-p1%coord(1)
-      CASE(2)
-        p%coord(1)=p0%coord(1)-p1%coord(1)
-        p%coord(2)=p0%coord(2)-p1%coord(2)
-      CASE(3)
-        p%coord(1)=p0%coord(1)-p1%coord(1)
-        p%coord(2)=p0%coord(2)-p1%coord(2)
-        p%coord(3)=p0%coord(3)-p1%coord(3)
-      CASE DEFAULT
-        p%coord=p0%coord-p1%coord
+    CASE(1)
+      p%coord(1)=p0%coord(1)-p1%coord(1)
+    CASE(2)
+      p%coord(1)=p0%coord(1)-p1%coord(1)
+      p%coord(2)=p0%coord(2)-p1%coord(2)
+    CASE(3)
+      p%coord(1)=p0%coord(1)-p1%coord(1)
+      p%coord(2)=p0%coord(2)-p1%coord(2)
+      p%coord(3)=p0%coord(3)-p1%coord(3)
+    CASE DEFAULT
+      p%coord=p0%coord-p1%coord
     ENDSELECT
   ENDIF
 ENDFUNCTION subtract_PointType
@@ -426,20 +426,20 @@ ELEMENTAL FUNCTION distance_2points(p0,p1) RESULT(d)
   IF(p0%dim == p1%dim) THEN
     !Explicit unrolling for lower order expected dimensions
     SELECTCASE(p0%dim)
-      CASE(1)
-        d=ABS((p1%coord(1)-p0%coord(1)))
-      CASE(2)
-        d=SQRT((p1%coord(1)-p0%coord(1))*(p1%coord(1)-p0%coord(1))+ &
-            (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2)))
-      CASE(3)
-        d=SQRT((p1%coord(1)-p0%coord(1))*(p1%coord(1)-p0%coord(1))+ &
-            (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2))+ &
-            (p1%coord(3)-p0%coord(3))*(p1%coord(3)-p0%coord(3)))
-      CASE DEFAULT
-        DO i=1,p0%dim
-          d=d+(p1%coord(i)-p0%coord(i))*(p1%coord(i)-p0%coord(i))
-        ENDDO
-        d=SQRT(d)
+    CASE(1)
+      d=ABS((p1%coord(1)-p0%coord(1)))
+    CASE(2)
+      d=SQRT((p1%coord(1)-p0%coord(1))*(p1%coord(1)-p0%coord(1))+ &
+          (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2)))
+    CASE(3)
+      d=SQRT((p1%coord(1)-p0%coord(1))*(p1%coord(1)-p0%coord(1))+ &
+          (p1%coord(2)-p0%coord(2))*(p1%coord(2)-p0%coord(2))+ &
+          (p1%coord(3)-p0%coord(3))*(p1%coord(3)-p0%coord(3)))
+    CASE DEFAULT
+      DO i=1,p0%dim
+        d=d+(p1%coord(i)-p0%coord(i))*(p1%coord(i)-p0%coord(i))
+      ENDDO
+      d=SQRT(d)
     ENDSELECT
   ENDIF
 ENDFUNCTION distance_2points
@@ -460,17 +460,17 @@ ELEMENTAL FUNCTION midPoint_2points(p0,p1) RESULT(p)
     ALLOCATE(p%coord(p%dim))
     !Explicit unrolling for lower order expected dimensions
     SELECTCASE(p0%dim)
-      CASE(1)
-        p%coord(1)=(p1%coord(1)+p0%coord(1))*0.5_SRK
-      CASE(2)
-        p%coord(1)=(p1%coord(1)+p0%coord(1))*0.5_SRK
-        p%coord(2)=(p1%coord(2)+p0%coord(2))*0.5_SRK
-      CASE(3)
-        p%coord(1)=(p1%coord(1)+p0%coord(1))*0.5_SRK
-        p%coord(2)=(p1%coord(2)+p0%coord(2))*0.5_SRK
-        p%coord(3)=(p1%coord(3)+p0%coord(3))*0.5_SRK
-      CASE DEFAULT
-        p%coord=(p1%coord+p0%coord)*0.5_SRK
+    CASE(1)
+      p%coord(1)=(p1%coord(1)+p0%coord(1))*0.5_SRK
+    CASE(2)
+      p%coord(1)=(p1%coord(1)+p0%coord(1))*0.5_SRK
+      p%coord(2)=(p1%coord(2)+p0%coord(2))*0.5_SRK
+    CASE(3)
+      p%coord(1)=(p1%coord(1)+p0%coord(1))*0.5_SRK
+      p%coord(2)=(p1%coord(2)+p0%coord(2))*0.5_SRK
+      p%coord(3)=(p1%coord(3)+p0%coord(3))*0.5_SRK
+    CASE DEFAULT
+      p%coord=(p1%coord+p0%coord)*0.5_SRK
     ENDSELECT
   ENDIF
 ENDFUNCTION midPoint_2points
@@ -501,21 +501,21 @@ ELEMENTAL FUNCTION innerAngle_3points(p0,p1,p2) RESULT(angle)
     d1=distance(p0,p1)
     d2=distance(p2,p1)
     SELECTCASE(p0%dim)
-      CASE(2)
-        vec1(1)=p0%coord(1)-p1%coord(1)
-        vec1(2)=p0%coord(2)-p1%coord(2)
-        vec2(1)=p2%coord(1)-p1%coord(1)
-        vec2(2)=p2%coord(2)-p1%coord(2)
-        angle=ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2))/(d1*d2))
-      CASE(3)
-        vec1(1)=p0%coord(1)-p1%coord(1)
-        vec1(2)=p0%coord(2)-p1%coord(2)
-        vec1(3)=p0%coord(3)-p1%coord(3)
-        vec2(1)=p2%coord(1)-p1%coord(1)
-        vec2(2)=p2%coord(2)-p1%coord(2)
-        vec2(3)=p2%coord(3)-p1%coord(3)
-        angle=ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
-            (d1*d2))
+    CASE(2)
+      vec1(1)=p0%coord(1)-p1%coord(1)
+      vec1(2)=p0%coord(2)-p1%coord(2)
+      vec2(1)=p2%coord(1)-p1%coord(1)
+      vec2(2)=p2%coord(2)-p1%coord(2)
+      angle=ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2))/(d1*d2))
+    CASE(3)
+      vec1(1)=p0%coord(1)-p1%coord(1)
+      vec1(2)=p0%coord(2)-p1%coord(2)
+      vec1(3)=p0%coord(3)-p1%coord(3)
+      vec2(1)=p2%coord(1)-p1%coord(1)
+      vec2(2)=p2%coord(2)-p1%coord(2)
+      vec2(3)=p2%coord(3)-p1%coord(3)
+      angle=ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
+          (d1*d2))
     ENDSELECT
   ENDIF
 ENDFUNCTION innerAngle_3points
@@ -543,21 +543,21 @@ ELEMENTAL FUNCTION outerAngle_3points(p0,p1,p2) RESULT(angle)
     d1=distance(p0,p1)
     d2=distance(p2,p1)
     SELECTCASE(p0%dim)
-      CASE(2)
-        vec1(1)=p0%coord(1)-p1%coord(1)
-        vec1(2)=p0%coord(2)-p1%coord(2)
-        vec2(1)=p2%coord(1)-p1%coord(1)
-        vec2(2)=p2%coord(2)-p1%coord(2)
-        angle=TWOPI-ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2))/(d1*d2))
-      CASE(3)
-        vec1(1)=p0%coord(1)-p1%coord(1)
-        vec1(2)=p0%coord(2)-p1%coord(2)
-        vec1(3)=p0%coord(3)-p1%coord(3)
-        vec2(1)=p2%coord(1)-p1%coord(1)
-        vec2(2)=p2%coord(2)-p1%coord(2)
-        vec2(3)=p2%coord(3)-p1%coord(3)
-        angle=TWOPI-ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
-            (d1*d2))
+    CASE(2)
+      vec1(1)=p0%coord(1)-p1%coord(1)
+      vec1(2)=p0%coord(2)-p1%coord(2)
+      vec2(1)=p2%coord(1)-p1%coord(1)
+      vec2(2)=p2%coord(2)-p1%coord(2)
+      angle=TWOPI-ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2))/(d1*d2))
+    CASE(3)
+      vec1(1)=p0%coord(1)-p1%coord(1)
+      vec1(2)=p0%coord(2)-p1%coord(2)
+      vec1(3)=p0%coord(3)-p1%coord(3)
+      vec2(1)=p2%coord(1)-p1%coord(1)
+      vec2(2)=p2%coord(2)-p1%coord(2)
+      vec2(3)=p2%coord(3)-p1%coord(3)
+      angle=TWOPI-ACOS((vec1(1)*vec2(1)+vec1(2)*vec2(2)+vec1(3)*vec2(3))/ &
+          (d1*d2))
     ENDSELECT
   ENDIF
 ENDFUNCTION outerAngle_3points

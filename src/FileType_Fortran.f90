@@ -267,19 +267,19 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     !STATUS clause for OPEN statement
     IF(PRESENT(status)) THEN
       SELECT CASE(status)
-        CASE('OLD') !File already exists
-          statusval='OLD'
-        CASE('NEW') !File does not exist and will be created
-          statusval='NEW'
-        CASE('SCRATCH') !File is deleted after execution (treated as replace)
-          statusval='REPLACE'
-        CASE('REPLACE') !File may or may not exist, if it does it is replaced
-          statusval='REPLACE'
-        CASE('UNKNOWN') !Processor/Compiler dependent behavior
-          statusval='REPLACE'
-        CASE DEFAULT
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value ('//status//') for optional input argument STATUS!')
+      CASE('OLD') !File already exists
+        statusval='OLD'
+      CASE('NEW') !File does not exist and will be created
+        statusval='NEW'
+      CASE('SCRATCH') !File is deleted after execution (treated as replace)
+        statusval='REPLACE'
+      CASE('REPLACE') !File may or may not exist, if it does it is replaced
+        statusval='REPLACE'
+      CASE('UNKNOWN') !Processor/Compiler dependent behavior
+        statusval='REPLACE'
+      CASE DEFAULT
+        CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+            'value ('//status//') for optional input argument STATUS!')
       ENDSELECT
     ELSE
       !Default value for status
@@ -289,15 +289,15 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     !ACCESS clause for OPEN statement
     IF(PRESENT(access)) THEN
       SELECT CASE(access)
-        CASE('SEQUENTIAL') !File is accessed sequentially
-          accessval=access
-        CASE('DIRECT') !File has direct access
-          accessval=access
-        CASE('STREAM') !File has streaming access !F2003, might have problems.
-          accessval=access
-        CASE DEFAULT
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value ('//access//') for optional input argument ACCESS!')
+      CASE('SEQUENTIAL') !File is accessed sequentially
+        accessval=access
+      CASE('DIRECT') !File has direct access
+        accessval=access
+      CASE('STREAM') !File has streaming access !F2003, might have problems.
+        accessval=access
+      CASE DEFAULT
+        CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+            'value ('//access//') for optional input argument ACCESS!')
       ENDSELECT
     ELSE
       !Default value
@@ -307,13 +307,13 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     !FORM clause for OPEN statement
     IF(PRESENT(form)) THEN
       SELECT CASE(form)
-        CASE('FORMATTED') !File is a text file
-          formval=form
-        CASE('UNFORMATTED') !File a binary file
-          formval=form
-        CASE DEFAULT
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value ('//form//') for optional input argument FORM!')
+      CASE('FORMATTED') !File is a text file
+        formval=form
+      CASE('UNFORMATTED') !File a binary file
+        formval=form
+      CASE DEFAULT
+        CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+            'value ('//form//') for optional input argument FORM!')
       ENDSELECT
     ELSE
       !Default value
@@ -323,30 +323,30 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     !POSITION clause for OPEN statement
     IF(PRESENT(position)) THEN
       SELECT CASE(position)
-        CASE('REWIND') !File opens at beginning of file
-          fileobj%posopt=position
-        CASE('APPEND') !File opens at end of file
-          fileobj%posopt=position
-        CASE('ASIS') !File opens with file pointer as is
-          fileobj%posopt=position
-        CASE DEFAULT
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value ('//position//') for optional input argument POSITION!')
+      CASE('REWIND') !File opens at beginning of file
+        fileobj%posopt=position
+      CASE('APPEND') !File opens at end of file
+        fileobj%posopt=position
+      CASE('ASIS') !File opens with file pointer as is
+        fileobj%posopt=position
+      CASE DEFAULT
+        CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+            'value ('//position//') for optional input argument POSITION!')
       ENDSELECT
     ENDIF
 
     !ACTION clause for OPEN statement
     IF(PRESENT(action)) THEN
       SELECT CASE(action)
-        CASE('READ') !File opens with read access only
-          actionval=action
-        CASE('WRITE') !File opens with write access only
-          actionval=action
-        CASE('READWRITE') !File opens with read write access
-          actionval=action
-        CASE DEFAULT
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value ('//action//') for optional input argument ACTION!')
+      CASE('READ') !File opens with read access only
+        actionval=action
+      CASE('WRITE') !File opens with write access only
+        actionval=action
+      CASE('READWRITE') !File opens with read write access
+        actionval=action
+      CASE DEFAULT
+        CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+            'value ('//action//') for optional input argument ACTION!')
       ENDSELECT
     ELSE
       !Default value
@@ -355,13 +355,13 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
 
     IF(PRESENT(pad)) THEN
       SELECT CASE(pad)
-        CASE('YES') !File is padded
-          padval=pad
-        CASE('NO') !File is not padded
-          padval=pad
-        CASE DEFAULT
-          CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value ('//pad//') for optional input argument PAD!')
+      CASE('YES') !File is padded
+        padval=pad
+      CASE('NO') !File is not padded
+        padval=pad
+      CASE DEFAULT
+        CALL fileobj%e%raiseError(modName//'::'//myName//' - Illegal '// &
+            'value ('//pad//') for optional input argument PAD!')
       ENDSELECT
     ELSE
       !Fortran default value
@@ -828,18 +828,18 @@ SUBROUTINE setStatus_fortran_file(file,status)
       new_status=status
       CALL toUPPER(new_status)
       SELECT CASE(new_status)
-        CASE('OLD') !File already exists
-          file%newstat=.FALSE.
-          file%overwrite=.FALSE.
-        CASE('NEW') !File does not exist and will be created
-          file%newstat=.TRUE.
-          file%overwrite=.FALSE.
-        CASE('SCRATCH','REPLACE','UNKNOWN')
-          file%newstat=.TRUE.
-          file%overwrite=.TRUE.
-        CASE DEFAULT
-          CALL file%e%raiseError(modName//'::'//myName//' - Illegal '// &
-              'value ('//status//') for input argument STATUS!')
+      CASE('OLD') !File already exists
+        file%newstat=.FALSE.
+        file%overwrite=.FALSE.
+      CASE('NEW') !File does not exist and will be created
+        file%newstat=.TRUE.
+        file%overwrite=.FALSE.
+      CASE('SCRATCH','REPLACE','UNKNOWN')
+        file%newstat=.TRUE.
+        file%overwrite=.TRUE.
+      CASE DEFAULT
+        CALL file%e%raiseError(modName//'::'//myName//' - Illegal '// &
+            'value ('//status//') for input argument STATUS!')
       ENDSELECT
     ELSE
       CALL file%e%raiseError(modName//'::'//myName//' - File status '// &

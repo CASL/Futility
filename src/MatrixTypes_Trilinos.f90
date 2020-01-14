@@ -413,8 +413,10 @@ SUBROUTINE matvec_TrilinosVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_
   IF(PRESENT(alpha)) a=alpha
   IF(PRESENT(beta))  b=beta
 
-  SELECTTYPE(x); TYPE IS(TrilinosVectorType)
-    SELECTTYPE(y); TYPE IS(TrilinosVectorType)
+  SELECTTYPE(x)
+  TYPE IS(TrilinosVectorType)
+    SELECTTYPE(y)
+    TYPE IS(TrilinosVectorType)
       CALL vecPList%add('VectorType -> n',y%n)
       CALL vecPList%add('VectorType -> MPI_Comm_ID',y%comm)
       CALL vecPList%add('VectorType -> nlocal',x%nlocal)

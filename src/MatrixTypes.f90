@@ -205,31 +205,31 @@ SUBROUTINE MatrixFactory(matrix, params)
   ENDIF
 
   SELECTCASE(engine)
-    CASE(VM_NATIVE)
-      SELECTCASE(matType)
-        CASE(DENSESQUARE)
-          ALLOCATE(DenseSquareMatrixType :: matrix)
-        CASE(DENSERECT)
-          ALLOCATE(DenseRectMatrixType :: matrix)
-        CASE(SPARSE)
-          ALLOCATE(SparseMatrixType :: matrix)
-        CASE(TRIDIAG)
-          ALLOCATE(TriDiagMatrixType :: matrix)
-        CASE DEFAULT
-          CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-              "Unrecognized matrix structure requested")
-      ENDSELECT
-    CASE(VM_TRILINOS)
-      CALL DistributedMatrixFactory(dist_p, params)
-      matrix => dist_p
-      RETURN
-    CASE(VM_PETSC)
-      CALL DistributedMatrixFactory(dist_p, params)
-      matrix => dist_p
-      RETURN
+  CASE(VM_NATIVE)
+    SELECTCASE(matType)
+    CASE(DENSESQUARE)
+      ALLOCATE(DenseSquareMatrixType :: matrix)
+    CASE(DENSERECT)
+      ALLOCATE(DenseRectMatrixType :: matrix)
+    CASE(SPARSE)
+      ALLOCATE(SparseMatrixType :: matrix)
+    CASE(TRIDIAG)
+      ALLOCATE(TriDiagMatrixType :: matrix)
     CASE DEFAULT
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "Unsupported matrix engine requested.")
+          "Unrecognized matrix structure requested")
+    ENDSELECT
+  CASE(VM_TRILINOS)
+    CALL DistributedMatrixFactory(dist_p, params)
+    matrix => dist_p
+    RETURN
+  CASE(VM_PETSC)
+    CALL DistributedMatrixFactory(dist_p, params)
+    matrix => dist_p
+    RETURN
+  CASE DEFAULT
+    CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+        "Unsupported matrix engine requested.")
   ENDSELECT
 
   CALL matrix%init(params)
@@ -271,35 +271,35 @@ SUBROUTINE DistributedMatrixFactory(matrix, params)
   ENDIF
 
   SELECTCASE(engine)
-    CASE(VM_TRILINOS)
+  CASE(VM_TRILINOS)
 #ifdef FUTILITY_HAVE_Trilinos
-      IF(matType == SPARSE) THEN
-        ALLOCATE(TrilinosMatrixType :: matrix)
-      ELSE
-        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-            "Trilinos matrix should be sparse")
-      ENDIF
-#else
+    IF(matType == SPARSE) THEN
+      ALLOCATE(TrilinosMatrixType :: matrix)
+    ELSE
       CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "Futility was not compiled with Trilinos support. Recompile "// &
-        "with Trilinos to create PETSc matrices.")
+          "Trilinos matrix should be sparse")
+    ENDIF
+#else
+    CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+        "Futility was not compiled with Trilinos support. Recompile "// &
+      "with Trilinos to create PETSc matrices.")
 #endif
-    CASE(VM_PETSC)
+  CASE(VM_PETSC)
 #ifdef FUTILITY_HAVE_PETSC
-      IF(matType == SPARSE .OR. matType == DENSESQUARE) THEN
-        ALLOCATE(PETScMatrixType :: matrix)
-      ELSE
-        CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-            "PETSc matrix should be sparse")
-      ENDIF
+    IF(matType == SPARSE .OR. matType == DENSESQUARE) THEN
+      ALLOCATE(PETScMatrixType :: matrix)
+    ELSE
+      CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+          "PETSc matrix should be sparse")
+    ENDIF
 #else
-      CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "Futility was not compiled with PETSc support. Recompile with "// &
-        "PETSc to create PETSc matrices.")
+    CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+        "Futility was not compiled with PETSc support. Recompile with "// &
+      "PETSc to create PETSc matrices.")
 #endif
-    CASE DEFAULT
-      CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "Unsupported distributed matrix engine requested.")
+  CASE DEFAULT
+    CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+        "Unsupported distributed matrix engine requested.")
   ENDSELECT
 
   CALL matrix%init(params)
@@ -337,25 +337,25 @@ SUBROUTINE MatrixResemble(dest, source, params)
   ENDIF
 
   SELECTTYPE(source)
-    TYPE IS(DenseSquareMatrixType)
-      ALLOCATE(DenseSquareMatrixType :: dest)
-    TYPE IS(DenseRectMatrixType)
-      ALLOCATE(DenseRectMatrixType :: dest)
-    TYPE IS(TriDiagMatrixType)
-      ALLOCATE(TriDiagMatrixType :: dest)
-    TYPE IS(SparseMatrixType)
-      ALLOCATE(SparseMatrixType :: dest)
+  TYPE IS(DenseSquareMatrixType)
+    ALLOCATE(DenseSquareMatrixType :: dest)
+  TYPE IS(DenseRectMatrixType)
+    ALLOCATE(DenseRectMatrixType :: dest)
+  TYPE IS(TriDiagMatrixType)
+    ALLOCATE(TriDiagMatrixType :: dest)
+  TYPE IS(SparseMatrixType)
+    ALLOCATE(SparseMatrixType :: dest)
 #ifdef FUTILITY_HAVE_PETSC
-    TYPE IS(PETScMatrixType)
-      ALLOCATE(PETScMatrixType :: dest)
+  TYPE IS(PETScMatrixType)
+    ALLOCATE(PETScMatrixType :: dest)
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
-    TYPE IS(TrilinosMatrixType)
-      ALLOCATE(TrilinosMatrixType :: dest)
+  TYPE IS(TrilinosMatrixType)
+    ALLOCATE(TrilinosMatrixType :: dest)
 #endif
-    CLASS DEFAULT
-      CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
-          "Unsupported source matrix type")
+  CLASS DEFAULT
+    CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
+        "Unsupported source matrix type")
   ENDSELECT
   CALL dest%init(params)
 ENDSUBROUTINE MatrixResemble
@@ -391,9 +391,9 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
 
   SELECTTYPE(mat => thisMatrix)
 #ifdef FUTILITY_HAVE_PETSC
-    TYPE IS(PETScMatrixType)
-      CALL matvec_PETSc(mat,trans,alpha,x,beta,y,uplo,diag,incx_in)
-      RETURN
+  TYPE IS(PETScMatrixType)
+    CALL matvec_PETSc(mat,trans,alpha,x,beta,y,uplo,diag,incx_in)
+    RETURN
 #endif
   ENDSELECT
 
@@ -408,57 +408,57 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
     IF(PRESENT(incx_in)) incx=incx_in
 
     SELECTTYPE(thisMatrix)
-      TYPE IS(DenseSquareMatrixType)
-        IF(ul /= 'n') THEN
-          y=x
-          CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y,incx)
-        ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-              alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
-        ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-              alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
-        ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-              thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
-        ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-              thisMatrix%a,thisMatrix%n,x,1,y,1)
-        ENDIF
-      TYPE IS(DenseRectMatrixType)
-        IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-              alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
-        ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-              alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
-        ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-              thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
-        ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-          CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-              thisMatrix%a,thisMatrix%n,x,1,y,1)
-        ENDIF
-      TYPE IS(SparseMatrixType)
-        IF(ul /= 'n') THEN
-          y=x
-          CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y,incx)
-        ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-          CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-              thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
-        ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-          CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-              thisMatrix%ja,thisMatrix%a,alpha,x,y)
-        ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-          CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-              thisMatrix%ja,thisMatrix%a,x,beta,y)
-        ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-          CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-              thisMatrix%ja,thisMatrix%a,x,y)
-        ENDIF
-      CLASS DEFAULT
-        CALL eMatrixType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - This interface is not available.')
+    TYPE IS(DenseSquareMatrixType)
+      IF(ul /= 'n') THEN
+        y=x
+        CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y,incx)
+      ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+            alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+      ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+            alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+            thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+            thisMatrix%a,thisMatrix%n,x,1,y,1)
+      ENDIF
+    TYPE IS(DenseRectMatrixType)
+      IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+            alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+      ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+            alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+            thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+            thisMatrix%a,thisMatrix%n,x,1,y,1)
+      ENDIF
+    TYPE IS(SparseMatrixType)
+      IF(ul /= 'n') THEN
+        y=x
+        CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y,incx)
+      ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+            thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
+      ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+            thisMatrix%ja,thisMatrix%a,alpha,x,y)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+        CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+            thisMatrix%ja,thisMatrix%a,x,beta,y)
+      ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+        CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+            thisMatrix%ja,thisMatrix%a,x,y)
+      ENDIF
+    CLASS DEFAULT
+      CALL eMatrixType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - This interface is not available.')
     ENDSELECT
   ENDIF
 ENDSUBROUTINE matvec_MatrixType
@@ -523,60 +523,62 @@ SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag
     IF(PRESENT(alpha)) a=alpha
     IF(PRESENT(beta))  b=beta
 
-    SELECTTYPE(x); TYPE IS(RealVectorType)
-      SELECTTYPE(y); TYPE IS(RealVectorType)
+    SELECTTYPE(x)
+    TYPE IS(RealVectorType)
+      SELECTTYPE(y)
+      TYPE IS(RealVectorType)
         SELECTTYPE(thisMatrix)
-          TYPE IS(DenseSquareMatrixType)
-            IF(ul /= 'n') THEN
-              y%b=x%b
-              CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
-            ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-            ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-            ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                  thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-            ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                  thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-            ENDIF
-          TYPE IS(DenseRectMatrixType)
-            IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-            ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                  alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-            ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                  thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-            ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-              CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                  thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-            ENDIF
-          TYPE IS(SparseMatrixType)
-            IF(ul /= 'n') THEN
-              y%b=x%b
-              CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
-            ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-              CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                  thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
-            ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-              CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                  thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
-            ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-              CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                  thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
-            ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-              CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                  thisMatrix%ja,thisMatrix%a,x%b,y%b)
-            ENDIF
-          CLASS DEFAULT
-            CALL eMatrixType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - This interface is not available.')
+        TYPE IS(DenseSquareMatrixType)
+          IF(ul /= 'n') THEN
+            y%b=x%b
+            CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
+          ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ENDIF
+        TYPE IS(DenseRectMatrixType)
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ENDIF
+        TYPE IS(SparseMatrixType)
+          IF(ul /= 'n') THEN
+            y%b=x%b
+            CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
+          ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,x%b,y%b)
+          ENDIF
+        CLASS DEFAULT
+          CALL eMatrixType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
       ENDSELECT
     CLASS DEFAULT
@@ -796,9 +798,12 @@ SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
   CHARACTER(LEN=1) :: tB
 #ifdef FUTILITY_HAVE_PETSC
   CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
-  SELECTTYPE(A); TYPE IS(PETScMatrixType)
-    SELECTTYPE(B); TYPE IS(PETScMatrixType)
-      SELECTTYPE(C); TYPE IS(PETScMatrixType)
+  SELECTTYPE(A)
+  TYPE IS(PETScMatrixType)
+    SELECTTYPE(B)
+    TYPE IS(PETScMatrixType)
+      SELECTTYPE(C)
+      TYPE IS(PETScMatrixType)
         CALL matmult_PETSc(A,B,C,alpha,beta,transA,transB)
       CLASS DEFAULT
         CALL eMatrixType%raiseError(modName//"::"//myName//" - "// &
@@ -823,126 +828,126 @@ SUBROUTINE matmult_MatrixType(A,B,C,alpha,beta,transA,transB)
 
   IF(A%isInit .AND. B%isInit .AND. C%isInit) THEN
     SELECTTYPE(A)
+    TYPE IS(DenseSquareMatrixType)
+      SELECTTYPE(B)
       TYPE IS(DenseSquareMatrixType)
-        SELECTTYPE(B)
-          TYPE IS(DenseSquareMatrixType)
-            SELECTTYPE(C)
-              TYPE IS(DenseSquareMatrixType)
-                ! A: Square   B: Square  C: Square
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(DenseRectMatrixType)
-                ! A: Square   B: Square  C: Rect
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(SparseMatrixType)
-                ! NOT SUPPORTED
-            ENDSELECT
-          TYPE IS(DenseRectMatrixType)
-            SELECTTYPE(C)
-              TYPE IS(DenseSquareMatrixType)
-                ! A: Square   B: Rect  C: Square
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(DenseRectMatrixType)
-                ! A: Square   B: Rect  C: Rect
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(SparseMatrixType)
-                ! NOT SUPPORTED
-            ENDSELECT
-          TYPE IS(SparseMatrixType)
-            ! NOT SUPPORTED
+        SELECTTYPE(C)
+        TYPE IS(DenseSquareMatrixType)
+          ! A: Square   B: Square  C: Square
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(DenseRectMatrixType)
+          ! A: Square   B: Square  C: Rect
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(SparseMatrixType)
+          ! NOT SUPPORTED
         ENDSELECT
       TYPE IS(DenseRectMatrixType)
-        SELECTTYPE(B)
-          TYPE IS(DenseSquareMatrixType)
-            SELECTTYPE(C)
-              TYPE IS(DenseSquareMatrixType)
-                ! A: Rect   B: Square  C: Square
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(DenseRectMatrixType)
-                ! A: Rect   B: Square  C: Rect
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(SparseMatrixType)
-                ! NOT SUPPORTED
-            ENDSELECT
-          TYPE IS(DenseRectMatrixType)
-            SELECTTYPE(C)
-              TYPE IS(DenseSquareMatrixType)
-                ! A: Rect   B: Rect  C: Square
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(DenseRectMatrixType)
-                ! A: Rect   B: Rect  C: Rect
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
-                ENDIF
-              TYPE IS(SparseMatrixType)
-                ! NOT SUPPORTED
-            ENDSELECT
-          TYPE IS(SparseMatrixType)
-            ! NOT SUPPORTED
+        SELECTTYPE(C)
+        TYPE IS(DenseSquareMatrixType)
+          ! A: Square   B: Rect  C: Square
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(DenseRectMatrixType)
+          ! A: Square   B: Rect  C: Rect
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(SparseMatrixType)
+          ! NOT SUPPORTED
         ENDSELECT
       TYPE IS(SparseMatrixType)
         ! NOT SUPPORTED
+      ENDSELECT
+    TYPE IS(DenseRectMatrixType)
+      SELECTTYPE(B)
+      TYPE IS(DenseSquareMatrixType)
+        SELECTTYPE(C)
+        TYPE IS(DenseSquareMatrixType)
+          ! A: Rect   B: Square  C: Square
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(DenseRectMatrixType)
+          ! A: Rect   B: Square  C: Rect
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(SparseMatrixType)
+          ! NOT SUPPORTED
+        ENDSELECT
+      TYPE IS(DenseRectMatrixType)
+        SELECTTYPE(C)
+        TYPE IS(DenseSquareMatrixType)
+          ! A: Rect   B: Rect  C: Square
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%n,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(DenseRectMatrixType)
+          ! A: Rect   B: Rect  C: Rect
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,beta,C%a)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,alpha,A%a,B%a,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,beta,C%a)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS3_matmult(tA,tB,C%n,C%m,B%n,A%a,B%a,C%a)
+          ENDIF
+        TYPE IS(SparseMatrixType)
+          ! NOT SUPPORTED
+        ENDSELECT
+      TYPE IS(SparseMatrixType)
+        ! NOT SUPPORTED
+      ENDSELECT
+    TYPE IS(SparseMatrixType)
+      ! NOT SUPPORTED
     ENDSELECT
   ENDIF
 ENDSUBROUTINE matmult_MatrixType

@@ -387,35 +387,35 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
 
     ! get right string for requested tpl type
     SELECTCASE(ReqTPLType)
-      CASE(PETSC)
-        ReqTPLTypeStr='PETSC'
-      CASE(TRILINOS)
-        ReqTPLTypeStr='TRILINOS'
-      CASE(PARDISO_MKL)
-        ReqTPLTypeStr='PARDISO_MKL'
-      CASE(MKL)
-        ReqTPLTypeStr='MKL'
-      CASE(NATIVE)
-        ReqTPLTypeStr='NATIVE'
+    CASE(PETSC)
+      ReqTPLTypeStr='PETSC'
+    CASE(TRILINOS)
+      ReqTPLTypeStr='TRILINOS'
+    CASE(PARDISO_MKL)
+      ReqTPLTypeStr='PARDISO_MKL'
+    CASE(MKL)
+      ReqTPLTypeStr='MKL'
+    CASE(NATIVE)
+      ReqTPLTypeStr='NATIVE'
     ENDSELECT
 
     ! get right string for actual tpl type
     SELECTCASE(TPLType)
-      CASE(PETSC)
-        TPLTypeStr='PETSC'
-        matEngine=VM_PETSC
-      CASE(TRILINOS)
-        TPLTypeStr='TRILINOS'
-        matEngine=VM_TRILINOS
-      CASE(PARDISO_MKL)
-        TPLTypeStr='PARDISO_MKL'
-        matEngine=VM_NATIVE
-      CASE(MKL)
-        TPLTypeStr='MKL'
-        matEngine=VM_NATIVE
-      CASE(NATIVE)
-        TPLTypeStr='NATIVE'
-        matEngine=VM_NATIVE
+    CASE(PETSC)
+      TPLTypeStr='PETSC'
+      matEngine=VM_PETSC
+    CASE(TRILINOS)
+      TPLTypeStr='TRILINOS'
+      matEngine=VM_TRILINOS
+    CASE(PARDISO_MKL)
+      TPLTypeStr='PARDISO_MKL'
+      matEngine=VM_NATIVE
+    CASE(MKL)
+      TPLTypeStr='MKL'
+      matEngine=VM_NATIVE
+    CASE(NATIVE)
+      TPLTypeStr='NATIVE'
+      matEngine=VM_NATIVE
     ENDSELECT
 
     !print status of TPL post-heirarchy
@@ -448,197 +448,197 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
 
     ! define other linear solver variables
     SELECTTYPE(solver)
-      CLASS IS(LinearSolverType_Direct) ! direct solver
-        IF((solverMethod > 0) .AND. &
-            (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN
-          !assign values to solver
-          CALL solver%SolveTime%setTimerName(timerName)
-          solver%solverMethod=solverMethod
-          solver%TPLType=TPLType
-          solver%isInit=.TRUE.
-        ELSE
-          CALL eLinearSolverType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - invalid value of solverMethod')
-        ENDIF
+    CLASS IS(LinearSolverType_Direct) ! direct solver
+      IF((solverMethod > 0) .AND. &
+          (solverMethod <= MAX_DIRECT_SOLVER_METHODS)) THEN
+        !assign values to solver
+        CALL solver%SolveTime%setTimerName(timerName)
+        solver%solverMethod=solverMethod
+        solver%TPLType=TPLType
+        solver%isInit=.TRUE.
+      ELSE
+        CALL eLinearSolverType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - invalid value of solverMethod')
+      ENDIF
 #ifdef HAVE_PARDISO
-        IF(solver%TPLtype == PARDISO_MKL) THEN
-          ALLOCATE(solver%iparm(64))
-          ALLOCATE(solver%pt(64))
-          DO i=1,64
-            solver%iparm(i) = 0
-            solver%pt(i)%dummy=0
-          ENDDO
-          solver%iparm(3)=numberOMP !number of threads
+      IF(solver%TPLtype == PARDISO_MKL) THEN
+        ALLOCATE(solver%iparm(64))
+        ALLOCATE(solver%pt(64))
+        DO i=1,64
+          solver%iparm(i) = 0
+          solver%pt(i)%dummy=0
+        ENDDO
+        solver%iparm(3)=numberOMP !number of threads
 
-          ! allocate and initiailize solver%perm
-          ALLOCATE(solver%perm(solver%A%n))
-          solver%perm=1
+        ! allocate and initiailize solver%perm
+        ALLOCATE(solver%perm(solver%A%n))
+        solver%perm=1
 
-          ! initialize phase
-          solver%phase=13
+        ! initialize phase
+        solver%phase=13
 
-          CALL PARDISOINIT(solver%pt,solver%mtype,solver%iparm)
-        ENDIF
+        CALL PARDISOINIT(solver%pt,solver%mtype,solver%iparm)
+      ENDIF
 #endif
-        IF(TPLType==PETSC) THEN
+      IF(TPLType==PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
-            !create and initialize KSP
-            CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
-            CALL KSPSetType(solver%ksp,KSPPREONLY,iperr)
-            CALL KSPSetFromOptions(solver%ksp,iperr)
-            CALL solver%updatedA()
+          !create and initialize KSP
+          CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
+          CALL KSPSetType(solver%ksp,KSPPREONLY,iperr)
+          CALL KSPSetFromOptions(solver%ksp,iperr)
+          CALL solver%updatedA()
 
-            !PC calls
-            CALL KSPGetPC(solver%ksp,pc,ierr)
-            CALL PCSetType(pc,PCLU,iperr)
-            CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,iperr)
-            CALL PCFactorSetUpMatSolverPackage(pc,iperr)
+          !PC calls
+          CALL KSPGetPC(solver%ksp,pc,ierr)
+          CALL PCSetType(pc,PCLU,iperr)
+          CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,iperr)
+          CALL PCFactorSetUpMatSolverPackage(pc,iperr)
 
 #else
-            CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - invalid value of solverMethod')
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - invalid value of solverMethod')
 #endif
+      ENDIF
+
+    CLASS IS(LinearSolverType_Iterative) ! iterative solver
+      IF((solverMethod > 0) .AND. &
+          (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN
+
+        !only GMRES can handle when sparse LS of size 1
+        IF(n==1 .AND. matType == SPARSE .AND. solverMethod/= GMRES) THEN
+          solverMethod=GMRES
+          CALL eLinearSolverType%raiseDebug(modName//'::'// &
+              myName//' - Only GMRES can handle sparse systems of size 1.  '// &
+              'Switching solver method to GMRES.')
         ENDIF
 
-      CLASS IS(LinearSolverType_Iterative) ! iterative solver
-        IF((solverMethod > 0) .AND. &
-            (solverMethod <= MAX_IT_SOLVER_METHODS)) THEN
-
-          !only GMRES can handle when sparse LS of size 1
-          IF(n==1 .AND. matType == SPARSE .AND. solverMethod/= GMRES) THEN
-            solverMethod=GMRES
-            CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                myName//' - Only GMRES can handle sparse systems of size 1.  '// &
-                'Switching solver method to GMRES.')
-          ENDIF
-
-          solver%solverMethod=solverMethod
-          solver%TPLType=TPLType
-          IF(TRIM(PreCondType) /= 'NOPC') THEN
-            ! If pciters < 0 then preconditioning will always be used
-            ! Otherwise, pciters will be decremented, and preconditioning will stop
-            ! when pciters == 0
-            IF(pciters == 0) THEN
-              solver%pciters=-1_SIK
-            ELSE
-              solver%pciters=pciters
-            ENDIF
-            ! If pcsetup < 0, the preconditioner will be set up every time.
-            ! If pcsetup == 0, it will only get set up once.
-            ! Otherwise, set it up every pcsetup iterations
-            solver%pcsetup=pcsetup
-            IF(PreCondType == 'ILU') THEN
-              ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
-              solver%PCTypeName='ILU'
-            ELSEIF(PreCondType=='DEFAULT') THEN
-              solver%PCTypeName='NOPC'
-              solver%pciters=0
-              solver%pcsetup=0
-            ELSE
-              solver%PCTypeName=PreCondType
-              solver%pciters=0
-              solver%pcsetup=0
-            ENDIF
+        solver%solverMethod=solverMethod
+        solver%TPLType=TPLType
+        IF(TRIM(PreCondType) /= 'NOPC') THEN
+          ! If pciters < 0 then preconditioning will always be used
+          ! Otherwise, pciters will be decremented, and preconditioning will stop
+          ! when pciters == 0
+          IF(pciters == 0) THEN
+            solver%pciters=-1_SIK
           ELSE
+            solver%pciters=pciters
+          ENDIF
+          ! If pcsetup < 0, the preconditioner will be set up every time.
+          ! If pcsetup == 0, it will only get set up once.
+          ! Otherwise, set it up every pcsetup iterations
+          solver%pcsetup=pcsetup
+          IF(PreCondType == 'ILU') THEN
+            ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
+            solver%PCTypeName='ILU'
+          ELSEIF(PreCondType=='DEFAULT') THEN
             solver%PCTypeName='NOPC'
             solver%pciters=0
             solver%pcsetup=0
+          ELSE
+            solver%PCTypeName=PreCondType
+            solver%pciters=0
+            solver%pcsetup=0
           ENDIF
+        ELSE
+          solver%PCTypeName='NOPC'
+          solver%pciters=0
+          solver%pcsetup=0
+        ENDIF
 
-          IF(TPLType==PETSC) THEN
+        IF(TPLType==PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
-            !create and initialize KSP
-            CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
+          !create and initialize KSP
+          CALL KSPCreate(solver%MPIparallelEnv%comm,solver%ksp,iperr)
 
-            !set iterative solver type
-            SELECTCASE(solverMethod)
-              CASE(BICGSTAB)
-                CALL KSPSetType(solver%ksp,KSPBCGS,iperr)
-              CASE(CGNR)
-                CALL KSPSetType(solver%ksp,KSPCGNE,iperr)
-              CASE(GMRES)
-                CALL KSPSetType(solver%ksp,KSPGMRES,iperr)
-            ENDSELECT
+          !set iterative solver type
+          SELECTCASE(solverMethod)
+          CASE(BICGSTAB)
+            CALL KSPSetType(solver%ksp,KSPBCGS,iperr)
+          CASE(CGNR)
+            CALL KSPSetType(solver%ksp,KSPCGNE,iperr)
+          CASE(GMRES)
+            CALL KSPSetType(solver%ksp,KSPGMRES,iperr)
+          ENDSELECT
 
-            CALL solver%updatedA()
+          CALL solver%updatedA()
 
-            !Always use a nonzero initial guess:
-            CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
+          !Always use a nonzero initial guess:
+          CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
 
-            !set preconditioner
-            IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
-              CALL KSPGetPC(solver%ksp,solver%pc,iperr)
-              IF(TRIM(PreCondType)=='SOR') THEN
-                CALL PCSetType(solver%pc,PCSOR,iperr)
-              ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
-                CALL PCSetType(solver%pc,PCJACOBI,iperr)
-              ELSEIF(TRIM(PreCondType)=='BJACOBI_ILU') THEN
-                CALL PCSetType(solver%pc,PCBJACOBI,iperr)
-                CALL PetscOptionsSetValue("-sub_ksp_type","preonly",iperr)
-                CALL PetscOptionsSetValue("-sub_pc_type","ilu",iperr)
-                CALL PCSetFromOptions(solver%pc,iperr)
-              ELSEIF(TRIM(PreCondType)=='EISENSTAT') THEN
-                CALL PCSetType(solver%pc,PCEISENSTAT,iperr)
-              ELSEIF(TRIM(PreCondType)=='MG') THEN
-                !This is not actually a MG preconditioner since we are not
-                ! providing it any geometric/interpolation/restriction
-                ! information.  However, it does perform one Cholesky
-                ! smoother step, which seems to be fairly effective for many
-                ! problems.
-                CALL PCSetType(solver%pc,PCMG,iperr)
-              ELSEIF(TRIM(PreCondType)=='SHELL') THEN
-                CALL PCSetType(solver%pc,PCSHELL,iperr)
-                CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,iperr)
-                CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,iperr)
+          !set preconditioner
+          IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
+            CALL KSPGetPC(solver%ksp,solver%pc,iperr)
+            IF(TRIM(PreCondType)=='SOR') THEN
+              CALL PCSetType(solver%pc,PCSOR,iperr)
+            ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
+              CALL PCSetType(solver%pc,PCJACOBI,iperr)
+            ELSEIF(TRIM(PreCondType)=='BJACOBI_ILU') THEN
+              CALL PCSetType(solver%pc,PCBJACOBI,iperr)
+              CALL PetscOptionsSetValue("-sub_ksp_type","preonly",iperr)
+              CALL PetscOptionsSetValue("-sub_pc_type","ilu",iperr)
+              CALL PCSetFromOptions(solver%pc,iperr)
+            ELSEIF(TRIM(PreCondType)=='EISENSTAT') THEN
+              CALL PCSetType(solver%pc,PCEISENSTAT,iperr)
+            ELSEIF(TRIM(PreCondType)=='MG') THEN
+              !This is not actually a MG preconditioner since we are not
+              ! providing it any geometric/interpolation/restriction
+              ! information.  However, it does perform one Cholesky
+              ! smoother step, which seems to be fairly effective for many
+              ! problems.
+              CALL PCSetType(solver%pc,PCMG,iperr)
+            ELSEIF(TRIM(PreCondType)=='SHELL') THEN
+              CALL PCSetType(solver%pc,PCSHELL,iperr)
+              CALL PCShellSetSetup(solver%pc,PETSC_PCSHELL_setup_extern,iperr)
+              CALL PCShellSetApply(solver%pc,PETSC_PCSHELL_apply_extern,iperr)
 ! Disabling nopc option for PETSC because it breaks a lot of things
 !                  ELSEIF(TRIM(PreCondType)=='NOPC') THEN
 !                    CALL PCSetType(solver%pc,PCNONE,iperr)
-              ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
-                CALL PCSetType(solver%pc,PCBJACOBI,iperr)
-              ENDIF
+            ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
+              CALL PCSetType(solver%pc,PCBJACOBI,iperr)
             ENDIF
-            CALL KSPSetFromOptions(solver%ksp,iperr)
-
-#else
-            CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - invalid value of solverMethod')
-#endif
-          ELSEIF(TPLType==TRILINOS) THEN
-#ifdef FUTILITY_HAVE_Trilinos
-            IF(solverMethod/=GMRES) &
-                CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - Only GMRES solver is supported with Trilinos')
-
-            ! PC option is hard-coded for now
-            CALL belosParams%add('belos_options->pc_option', 2_SIK)
-            plID = Teuchos_ParameterList_Create(ierr)
-            CALL belosParams%toTeuchosPlist(plID)
-            CALL Belos_Init(solver%Belos_solver)
-            CALL Preconditioner_InitParams(solver%Belos_pc,plID)
-            CALL Teuchos_ParameterList_Release(plID,ierr)
-
-            SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
-              CALL Belos_SetMat(solver%Belos_solver,A%A)
-            ENDSELECT
-            SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
-              CALL Belos_SetX(solver%Belos_solver,x%b)
-            ENDSELECT
-            SELECTTYPE(b=>solver%b); TYPE IS(TrilinosVectorType)
-              CALL Belos_Setb(solver%Belos_solver,b%b)
-            ENDSELECT
-#else
-            CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - invalid value of solverMethod')
-#endif
           ENDIF
+          CALL KSPSetFromOptions(solver%ksp,iperr)
 
-          !assign values to solver
-          CALL solver%SolveTime%setTimerName(timerName)
-          solver%isInit=.TRUE.
-        ELSE
+#else
           CALL eLinearSolverType%raiseError('Incorrect call to '// &
               modName//'::'//myName//' - invalid value of solverMethod')
+#endif
+        ELSEIF(TPLType==TRILINOS) THEN
+#ifdef FUTILITY_HAVE_Trilinos
+          IF(solverMethod/=GMRES) &
+              CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - Only GMRES solver is supported with Trilinos')
+
+          ! PC option is hard-coded for now
+          CALL belosParams%add('belos_options->pc_option', 2_SIK)
+          plID = Teuchos_ParameterList_Create(ierr)
+          CALL belosParams%toTeuchosPlist(plID)
+          CALL Belos_Init(solver%Belos_solver)
+          CALL Preconditioner_InitParams(solver%Belos_pc,plID)
+          CALL Teuchos_ParameterList_Release(plID,ierr)
+
+          SELECTTYPE(A=>solver%A); TYPE IS(TrilinosMatrixType)
+            CALL Belos_SetMat(solver%Belos_solver,A%A)
+          ENDSELECT
+          SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
+            CALL Belos_SetX(solver%Belos_solver,x%b)
+          ENDSELECT
+          SELECTTYPE(b=>solver%b); TYPE IS(TrilinosVectorType)
+            CALL Belos_Setb(solver%Belos_solver,b%b)
+          ENDSELECT
+#else
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - invalid value of solverMethod')
+#endif
         ENDIF
+
+        !assign values to solver
+        CALL solver%SolveTime%setTimerName(timerName)
+        solver%isInit=.TRUE.
+      ELSE
+        CALL eLinearSolverType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - invalid value of solverMethod')
+      ENDIF
     ENDSELECT
   ELSE
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -830,113 +830,113 @@ SUBROUTINE solve_LinearSolverType_Direct(solver)
     solver%info=-1
     CALL solver%SolveTime%tic()
     SELECTCASE(solver%solverMethod)
-      CASE(GE)
-        SELECTTYPE(A => solver%A)
-          TYPE IS(DenseSquareMatrixType)
-            CALL solveGE_DenseSquare(solver)
+    CASE(GE)
+      SELECTTYPE(A => solver%A)
+      TYPE IS(DenseSquareMatrixType)
+        CALL solveGE_DenseSquare(solver)
 
-          TYPE IS(TriDiagMatrixType)
-            IF(.NOT.solver%isDecomposed) &
-                CALL DecomposePLU_TriDiag(solver)
-            CALL solvePLU_TriDiag(solver)
+      TYPE IS(TriDiagMatrixType)
+        IF(.NOT.solver%isDecomposed) &
+            CALL DecomposePLU_TriDiag(solver)
+        CALL solvePLU_TriDiag(solver)
 
-          CLASS DEFAULT
-            IF(solver%TPLtype==PARDISO_MKL) THEN
+      CLASS DEFAULT
+        IF(solver%TPLtype==PARDISO_MKL) THEN
 #ifdef HAVE_PARDISO
-              SELECTTYPE(A => solver%A); TYPE IS(SparseMatrixType)
-                SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
-                  SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
-                    CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
-                        solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
-                        solver%iparm,msglvl,b%b,x%b,error)
-                     solver%phase=23
-                  ENDSELECT
-                ENDSELECT
+          SELECTTYPE(A => solver%A); TYPE IS(SparseMatrixType)
+            SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
+              SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+                CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
+                    solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
+                    solver%iparm,msglvl,b%b,x%b,error)
+                 solver%phase=23
               ENDSELECT
+            ENDSELECT
+          ENDSELECT
 #else
-              CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                  modName//'::'//myName//' - PARDISO not enabled.')
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PARDISO not enabled.')
 #endif
-            ELSE
-              !Should not use direct method, go to CGNR
-              CALL solveCGNR(solver)
-              IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                  myName//'- GE method for dense rectangular system '// &
-                  'and sparse system is not implemented, CGNR method '// &
-                  'is used instead.')
-            ENDIF
-        ENDSELECT
-      CASE(LU)
-        SELECTTYPE(A => solver%A)
-          TYPE IS(DenseSquareMatrixType)
-            IF(.NOT. solver%isDecomposed) CALL DecomposePLU_DenseSquare(solver)
-            CALL solvePLU_DenseSquare(solver)
+        ELSE
+          !Should not use direct method, go to CGNR
+          CALL solveCGNR(solver)
+          IF(solver%info == 0) &
+              CALL eLinearSolverType%raiseDebug(modName//'::'// &
+              myName//'- GE method for dense rectangular system '// &
+              'and sparse system is not implemented, CGNR method '// &
+              'is used instead.')
+        ENDIF
+      ENDSELECT
+    CASE(LU)
+      SELECTTYPE(A => solver%A)
+      TYPE IS(DenseSquareMatrixType)
+        IF(.NOT. solver%isDecomposed) CALL DecomposePLU_DenseSquare(solver)
+        CALL solvePLU_DenseSquare(solver)
 
-          TYPE IS(TriDiagMatrixType)
-            IF(.NOT.solver%isDecomposed) CALL DecomposePLU_TriDiag(solver)
-            CALL solvePLU_TriDiag(solver)
+      TYPE IS(TriDiagMatrixType)
+        IF(.NOT.solver%isDecomposed) CALL DecomposePLU_TriDiag(solver)
+        CALL solvePLU_TriDiag(solver)
 #ifdef FUTILITY_HAVE_PETSC
-          TYPE IS(PETScMatrixType)
-            IF(solver%TPLtype==PETSC) THEN
-              ! assemble matrix if necessary
-              IF(.NOT.(A%isAssembled)) CALL A%assemble()
+      TYPE IS(PETScMatrixType)
+        IF(solver%TPLtype==PETSC) THEN
+          ! assemble matrix if necessary
+          IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
-              ! assemble source vector if necessary
-              SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-                IF(.NOT.(b%isAssembled)) CALL b%assemble()
-              ENDSELECT
+          ! assemble source vector if necessary
+          SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+            IF(.NOT.(b%isAssembled)) CALL b%assemble()
+          ENDSELECT
 
-              ! assemble solution vector if necessary
-              SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                IF(.NOT.(X%isAssembled)) CALL X%assemble()
-              ENDSELECT
+          ! assemble solution vector if necessary
+          SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+            IF(.NOT.(X%isAssembled)) CALL X%assemble()
+          ENDSELECT
 
-              SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
-                SELECTTYPE(x => solver%x); TYPE IS(PETScVectorType)
-                  SELECTTYPE(b => solver%b); TYPE IS(PETScVectorType)
-                    CALL KSPSolve(solver%ksp,b%b,x%b,iperr)
-                  ENDSELECT
-                ENDSELECT
+          SELECTTYPE(A => solver%A); TYPE IS(PETScMatrixType)
+            SELECTTYPE(x => solver%x); TYPE IS(PETScVectorType)
+              SELECTTYPE(b => solver%b); TYPE IS(PETScVectorType)
+                CALL KSPSolve(solver%ksp,b%b,x%b,iperr)
               ENDSELECT
-            ENDIF
+            ENDSELECT
+          ENDSELECT
+        ENDIF
 #endif
-          CLASS DEFAULT
-            IF(solver%TPLtype==PARDISO_MKL) THEN
+      CLASS DEFAULT
+        IF(solver%TPLtype==PARDISO_MKL) THEN
 #ifdef HAVE_PARDISO
-              SELECTTYPE(A => solver%A); TYPE IS(SparseMatrixType)
-                SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
-                  SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
-                    CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
-                        solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
-                        solver%iparm,msglvl,b%b,x%b,error)
-                     solver%phase=23
-                  ENDSELECT
-                ENDSELECT
+          SELECTTYPE(A => solver%A); TYPE IS(SparseMatrixType)
+            SELECTTYPE(x => solver%x); TYPE IS(RealVectorType)
+              SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
+                CALL PARDISO(solver%pt,maxfct,mnum,solver%mtype, &
+                    solver%phase,A%n,A%a,A%ia,A%ja,solver%perm,nrhs, &
+                    solver%iparm,msglvl,b%b,x%b,error)
+                 solver%phase=23
               ENDSELECT
+            ENDSELECT
+          ENDSELECT
 #else
-              CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                  modName//'::'//myName//' - PARDISO not enabled.')
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - PARDISO not enabled.')
 #endif
-            ELSE
-              !Should not use direct method, go to CGNR
-              CALL solveCGNR(solver)
-              IF(solver%info == 0) &
-                  CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                  myName//'- LU method for dense rectangular system '// &
-                  'and sparse system is not implemented, CGNR method '// &
-                  'is used instead.')
-            ENDIF
-        ENDSELECT
-      CASE(QR)
-        SELECTTYPE(A => solver%A)
-          TYPE IS(DenseRectMatrixType)
-            CALL solveQR_Dense(solver)
+        ELSE
+          !Should not use direct method, go to CGNR
+          CALL solveCGNR(solver)
+          IF(solver%info == 0) &
+              CALL eLinearSolverType%raiseDebug(modName//'::'// &
+              myName//'- LU method for dense rectangular system '// &
+              'and sparse system is not implemented, CGNR method '// &
+              'is used instead.')
+        ENDIF
+      ENDSELECT
+    CASE(QR)
+      SELECTTYPE(A => solver%A)
+      TYPE IS(DenseRectMatrixType)
+        CALL solveQR_Dense(solver)
 
-          CLASS DEFAULT
-            CALL eLinearSolverType%raiseError('Incorrect call to '// &
-                modName//'::'//myName//' - QR only supported for DensRet Matrix.')
-        ENDSELECT
+      CLASS DEFAULT
+        CALL eLinearSolverType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - QR only supported for DensRet Matrix.')
+      ENDSELECT
     ENDSELECT
     CALL solver%SolveTime%toc()
   ENDIF
@@ -967,203 +967,203 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
     CALL solver%SolveTime%tic()
     solver%info=-1
     SELECTCASE(solver%solverMethod)
-      CASE(BICGSTAB)
-        !need two type structures to deal with DenseRectMatrixType
-        SELECTTYPE(A=>solver%A)
-          TYPE IS(DenseSquareMatrixType)
-            IF(.NOT. solver%isDecomposed) &
-                CALL DecomposeBiCGSTAB_DenseSquare(solver)
-            CALL solveBiCGSTAB(solver)
+    CASE(BICGSTAB)
+      !need two type structures to deal with DenseRectMatrixType
+      SELECTTYPE(A=>solver%A)
+      TYPE IS(DenseSquareMatrixType)
+        IF(.NOT. solver%isDecomposed) &
+            CALL DecomposeBiCGSTAB_DenseSquare(solver)
+        CALL solveBiCGSTAB(solver)
 
-          TYPE IS(SparseMatrixType)
-            !CALL DecomposeILU_Sparse(solver)
-            CALL solveBiCGSTAB(solver)
+      TYPE IS(SparseMatrixType)
+        !CALL DecomposeILU_Sparse(solver)
+        CALL solveBiCGSTAB(solver)
 
-          TYPE IS(TriDiagMatrixType)
-            !If the coefficient matrix is a tridiagonal matrix, PLU method
-            !will be used instead.
-            IF(.NOT. solver%isDecomposed) CALL DecomposePLU_TriDiag(solver)
-            CALL solvePLU_TriDiag(solver)
+      TYPE IS(TriDiagMatrixType)
+        !If the coefficient matrix is a tridiagonal matrix, PLU method
+        !will be used instead.
+        IF(.NOT. solver%isDecomposed) CALL DecomposePLU_TriDiag(solver)
+        CALL solvePLU_TriDiag(solver)
 
-            IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                myName//'- BiCGSTAB method for tridiagonal system '// &
-                'is not implemented, GE method is used instead.')
+        IF(solver%info == 0) &
+            CALL eLinearSolverType%raiseDebug(modName//'::'// &
+            myName//'- BiCGSTAB method for tridiagonal system '// &
+            'is not implemented, GE method is used instead.')
 
-          TYPE IS(DenseRectMatrixType)
-            !If the coefficient matrix is a rectangular matrix, CGNR method
-            !will be used instead.
-            CALL solveCGNR(solver)
+      TYPE IS(DenseRectMatrixType)
+        !If the coefficient matrix is a rectangular matrix, CGNR method
+        !will be used instead.
+        CALL solveCGNR(solver)
 
-            IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                myName//'- BiCGSTAB method for dense rectangular system '// &
-                'is not implemented, CGNR method is used instead.')
-
-#ifdef FUTILITY_HAVE_PETSC
-          TYPE IS(PETScMatrixType)
-            ! assemble matrix if necessary
-            IF(.NOT.(A%isAssembled)) CALL A%assemble()
-
-            ! assemble source vector if necessary
-            SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-              IF(.NOT.(b%isAssembled)) CALL b%assemble()
-            ENDSELECT
-
-            ! assemble solution vector if necessary
-            SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-              IF(.NOT.(X%isAssembled)) CALL X%assemble()
-            ENDSELECT
-
-            ! solve
-            SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-              SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
-                IF(ierr==0) solver%info=0
-              ENDSELECT
-            ENDSELECT
-#endif
-        ENDSELECT
-      CASE(CGNR)
-        SELECTTYPE(A=>solver%A)
-          TYPE IS(TriDiagMatrixType)
-            !If the coefficient matrix is tridiagonal PLU method will be
-            !used instead.
-            IF(.NOT.solver%isDecomposed) &
-                CALL DecomposePLU_TriDiag(solver)
-            CALL solvePLU_TriDiag(solver)
-
-            IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                myName//'- CGNR method for tridiagonal system '// &
-                'is not implemented, PLU method is used instead.')
-          TYPE IS(SparseMatrixType)
-            CALL solveBiCGSTAB(solver)
-            IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                myName//'- CGNR method for sparse system '// &
-                'is not implemented, BiCGSTAB method is used instead.')
+        IF(solver%info == 0) &
+            CALL eLinearSolverType%raiseDebug(modName//'::'// &
+            myName//'- BiCGSTAB method for dense rectangular system '// &
+            'is not implemented, CGNR method is used instead.')
 
 #ifdef FUTILITY_HAVE_PETSC
-          TYPE IS(PETScMatrixType)
-            ! assemble matrix if necessary
-            IF(.NOT.(A%isAssembled)) CALL A%assemble()
+      TYPE IS(PETScMatrixType)
+        ! assemble matrix if necessary
+        IF(.NOT.(A%isAssembled)) CALL A%assemble()
 
-            ! assemble source vector if necessary
-            SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-              IF(.NOT.(b%isAssembled)) CALL b%assemble()
-            ENDSELECT
-
-            ! assemble solution vector if necessary
-            SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-              IF(.NOT.(X%isAssembled)) CALL X%assemble()
-            ENDSELECT
-
-            ! solve
-            SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-              SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
-                IF(ierr==0) solver%info=0
-              ENDSELECT
-            ENDSELECT
-#endif
-          CLASS DEFAULT
-            CALL solveCGNR(solver)
-
+        ! assemble source vector if necessary
+        SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+          IF(.NOT.(b%isAssembled)) CALL b%assemble()
         ENDSELECT
 
-      CASE(GMRES)
-        SELECTTYPE(A=>solver%A)
-          TYPE IS(TriDiagMatrixType)
-            !If the coefficient matrix is tridiagonal PLU method will be
-            !used instead.
-            IF(.NOT.solver%isDecomposed) &
-                CALL DecomposePLU_TriDiag(solver)
-            CALL solvePLU_TriDiag(solver)
-
-            IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                myName//'- GMRES method for tridiagonal system '// &
-                'is not implemented, PLU method is used instead.')
-          TYPE IS(DenseRectMatrixType)
-            !If the coefficient matrix is a rectangular matrix, CGNR method
-            !will be used instead.
-            CALL solveCGNR(solver)
-
-            IF(solver%info == 0) &
-                CALL eLinearSolverType%raiseDebug(modName//'::'// &
-                myName//'- GMRES method for dense rectangular system '// &
-                'is not implemented, CGNR method is used instead.')
-
-#ifdef FUTILITY_HAVE_PETSC
-          TYPE IS(PETScMatrixType)
-            ! assemble matrix if necessary
-            IF(.NOT.(A%isAssembled)) CALL A%assemble()
-
-            ! assemble source vector if necessary
-            SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-              IF(.NOT.(b%isAssembled)) CALL b%assemble()
-            ENDSELECT
-
-            ! assemble solution vector if necessary
-            SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-              IF(.NOT.(X%isAssembled)) CALL X%assemble()
-            ENDSELECT
-
-            ! solve
-            SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-              SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-                CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
-
-                IF(ierr==0) solver%info=0
-              ENDSELECT
-            ENDSELECT
-#endif
-#ifdef FUTILITY_HAVE_Trilinos
-          TYPE IS(TrilinosMatrixType)
-            ! assemble matrix if necessary
-            IF(.NOT.(A%isAssembled)) CALL A%assemble()
-
-            IF(solver%belos_pc_set) CALL Preconditioner_Setup(solver%Belos_pc,A%A)
-            solver%belos_pc_set=.FALSE.
-
-            ! assemble source vector if necessary
-            SELECTTYPE(b=>solver%b); TYPE IS(TrilinosVectorType)
-              IF(.NOT.(b%isAssembled)) CALL b%assemble()
-            ENDSELECT
-
-            ! assemble solution vector if necessary
-            SELECTTYPE(X=>solver%X); TYPE IS(TrilinosVectorType)
-              IF(.NOT.(X%isAssembled)) CALL X%assemble()
-            ENDSELECT
-
-            ! solve
-            CALL Belos_solve(solver%Belos_solver)
-#endif
-          CLASS DEFAULT
-            IF(solver%pciters /= 0) THEN
-              CALL solveGMRES(solver,solver%PreCondType)
-            ELSE
-              CALL solveGMRES(solver)
-            ENDIF
+        ! assemble solution vector if necessary
+        SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+          IF(.NOT.(X%isAssembled)) CALL X%assemble()
         ENDSELECT
-      CASE(MULTIGRID)
-#ifdef FUTILITY_HAVE_PETSC
-        SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
-          ! assemble matrix if necessary
-          IF(.NOT.(A%isAssembled)) CALL A%assemble()
-          SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
-            ! assemble source vector if necessary
-            IF(.NOT.(b%isAssembled)) CALL b%assemble()
-            SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
-              ! assemble solution vector if necessary
-              IF(.NOT.(X%isAssembled)) CALL X%assemble()
-              ! solve
-              CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
-              IF(ierr==0) solver%info=0
-            ENDSELECT
+
+        ! solve
+        SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+          SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+            CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+            IF(ierr==0) solver%info=0
           ENDSELECT
         ENDSELECT
+#endif
+      ENDSELECT
+    CASE(CGNR)
+      SELECTTYPE(A=>solver%A)
+      TYPE IS(TriDiagMatrixType)
+        !If the coefficient matrix is tridiagonal PLU method will be
+        !used instead.
+        IF(.NOT.solver%isDecomposed) &
+            CALL DecomposePLU_TriDiag(solver)
+        CALL solvePLU_TriDiag(solver)
+
+        IF(solver%info == 0) &
+            CALL eLinearSolverType%raiseDebug(modName//'::'// &
+            myName//'- CGNR method for tridiagonal system '// &
+            'is not implemented, PLU method is used instead.')
+      TYPE IS(SparseMatrixType)
+        CALL solveBiCGSTAB(solver)
+        IF(solver%info == 0) &
+            CALL eLinearSolverType%raiseDebug(modName//'::'// &
+            myName//'- CGNR method for sparse system '// &
+            'is not implemented, BiCGSTAB method is used instead.')
+
+#ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScMatrixType)
+        ! assemble matrix if necessary
+        IF(.NOT.(A%isAssembled)) CALL A%assemble()
+
+        ! assemble source vector if necessary
+        SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+          IF(.NOT.(b%isAssembled)) CALL b%assemble()
+        ENDSELECT
+
+        ! assemble solution vector if necessary
+        SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+          IF(.NOT.(X%isAssembled)) CALL X%assemble()
+        ENDSELECT
+
+        ! solve
+        SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+          SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+            CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+            IF(ierr==0) solver%info=0
+          ENDSELECT
+        ENDSELECT
+#endif
+      CLASS DEFAULT
+        CALL solveCGNR(solver)
+
+      ENDSELECT
+
+    CASE(GMRES)
+      SELECTTYPE(A=>solver%A)
+      TYPE IS(TriDiagMatrixType)
+        !If the coefficient matrix is tridiagonal PLU method will be
+        !used instead.
+        IF(.NOT.solver%isDecomposed) &
+            CALL DecomposePLU_TriDiag(solver)
+        CALL solvePLU_TriDiag(solver)
+
+        IF(solver%info == 0) &
+            CALL eLinearSolverType%raiseDebug(modName//'::'// &
+            myName//'- GMRES method for tridiagonal system '// &
+            'is not implemented, PLU method is used instead.')
+      TYPE IS(DenseRectMatrixType)
+        !If the coefficient matrix is a rectangular matrix, CGNR method
+        !will be used instead.
+        CALL solveCGNR(solver)
+
+        IF(solver%info == 0) &
+            CALL eLinearSolverType%raiseDebug(modName//'::'// &
+            myName//'- GMRES method for dense rectangular system '// &
+            'is not implemented, CGNR method is used instead.')
+
+#ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScMatrixType)
+        ! assemble matrix if necessary
+        IF(.NOT.(A%isAssembled)) CALL A%assemble()
+
+        ! assemble source vector if necessary
+        SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+          IF(.NOT.(b%isAssembled)) CALL b%assemble()
+        ENDSELECT
+
+        ! assemble solution vector if necessary
+        SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+          IF(.NOT.(X%isAssembled)) CALL X%assemble()
+        ENDSELECT
+
+        ! solve
+        SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+          SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+            CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+
+            IF(ierr==0) solver%info=0
+          ENDSELECT
+        ENDSELECT
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+      TYPE IS(TrilinosMatrixType)
+        ! assemble matrix if necessary
+        IF(.NOT.(A%isAssembled)) CALL A%assemble()
+
+        IF(solver%belos_pc_set) CALL Preconditioner_Setup(solver%Belos_pc,A%A)
+        solver%belos_pc_set=.FALSE.
+
+        ! assemble source vector if necessary
+        SELECTTYPE(b=>solver%b); TYPE IS(TrilinosVectorType)
+          IF(.NOT.(b%isAssembled)) CALL b%assemble()
+        ENDSELECT
+
+        ! assemble solution vector if necessary
+        SELECTTYPE(X=>solver%X); TYPE IS(TrilinosVectorType)
+          IF(.NOT.(X%isAssembled)) CALL X%assemble()
+        ENDSELECT
+
+        ! solve
+        CALL Belos_solve(solver%Belos_solver)
+#endif
+      CLASS DEFAULT
+        IF(solver%pciters /= 0) THEN
+          CALL solveGMRES(solver,solver%PreCondType)
+        ELSE
+          CALL solveGMRES(solver)
+        ENDIF
+      ENDSELECT
+    CASE(MULTIGRID)
+#ifdef FUTILITY_HAVE_PETSC
+      SELECTTYPE(A=>solver%A); TYPE IS(PETScMatrixType)
+        ! assemble matrix if necessary
+        IF(.NOT.(A%isAssembled)) CALL A%assemble()
+        SELECTTYPE(b=>solver%b); TYPE IS(PETScVectorType)
+          ! assemble source vector if necessary
+          IF(.NOT.(b%isAssembled)) CALL b%assemble()
+          SELECTTYPE(X=>solver%X); TYPE IS(PETScVectorType)
+            ! assemble solution vector if necessary
+            IF(.NOT.(X%isAssembled)) CALL X%assemble()
+            ! solve
+            CALL KSPSolve(solver%ksp,b%b,x%b,ierr)
+            IF(ierr==0) solver%info=0
+          ENDSELECT
+        ENDSELECT
+      ENDSELECT
 #endif
     ENDSELECT
     CALL solver%SolveTime%toc()
@@ -1205,22 +1205,22 @@ SUBROUTINE solve_checkInput(solver)
   ENDIF
 
   SELECTTYPE(A=>solver%A)
-    TYPE IS(DenseRectMatrixType)
-      IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
-          .OR. A%n < 1 .OR. A%m < 1) THEN
-          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-          '  - The size of the matrix and vector do not conform!')
-      ELSE
-        solver%info=0
-      ENDIF
-    CLASS DEFAULT
-      IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
-          .OR. A%n < 1) THEN
-          CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
-          '  - The size of the matrix and vector do not conform!')
-      ELSE
-        solver%info=0
-      ENDIF
+  TYPE IS(DenseRectMatrixType)
+    IF(A%n /= solver%b%n .OR. A%m /= solver%X%n &
+        .OR. A%n < 1 .OR. A%m < 1) THEN
+        CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+        '  - The size of the matrix and vector do not conform!')
+    ELSE
+      solver%info=0
+    ENDIF
+  CLASS DEFAULT
+    IF(A%n /= solver%b%n .OR. A%n /= solver%X%n &
+        .OR. A%n < 1) THEN
+        CALL eLinearSolverType%raiseError(ModName//'::'//myName// &
+        '  - The size of the matrix and vector do not conform!')
+    ELSE
+      solver%info=0
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE solve_checkInput
 !
@@ -1239,7 +1239,8 @@ SUBROUTINE setX0_LinearSolverType_Iterative(solver,X0)
   INTEGER(SIK) :: i
 
   IF(solver%isInit) THEN
-    SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
+    SELECTTYPE(X => solver%X)
+    TYPE IS(RealVectorType)
       X%b=X0
     CLASS IS(DistributedVectorType)
       DO i=1,solver%X%n
@@ -1502,8 +1503,8 @@ SUBROUTINE solveBiCGSTAB(solver)
     CALL vy%set(zero)
     IF(ALLOCATED(solver%M)) THEN
       SELECTTYPE(M => solver%M)
-        TYPE IS(DenseSquareMatrixType); CALL MinvMult_dense(M,vp%b,vy%b)
-        !TYPE IS(SparseMatrixType); CALL MinvMult_Sparse(M,vp%b,vy%b)
+      TYPE IS(DenseSquareMatrixType); CALL MinvMult_dense(M,vp%b,vy%b)
+      !TYPE IS(SparseMatrixType); CALL MinvMult_Sparse(M,vp%b,vy%b)
       ENDSELECT
 
     ELSE
@@ -2111,35 +2112,35 @@ SUBROUTINE DecomposePLU_DenseSquare(solver)
   solver%info=-1
   solver%isDecomposed=.FALSE.
   SELECTTYPE(M => solver%M)
-    TYPE IS(DenseSquareMatrixType)
-      N=solver%A%n
-      !For each variable find pivot row and perform forward substitution
-      DO i=1,N-1
-        !Find the pivot row
-        t=0._SRK
-        DO irow=i,N
-          IF(ABS(M%A(irow,i)) > t) THEN
-            t=ABS(M%A(irow,i))
-            solver%IPIV(i)=irow
-          ENDIF
-        ENDDO
-
-        IF(t .APPROXEQA. 0._SRK) RETURN
-        !if it differs from the current row, interchange the two rows.
-        IF(solver%IPIV(i) /= i) THEN
-          CALL BLAS_swap(N,M%A(solver%IPIV(i):N,1),N,M%A(i:N,1),N)
+  TYPE IS(DenseSquareMatrixType)
+    N=solver%A%n
+    !For each variable find pivot row and perform forward substitution
+    DO i=1,N-1
+      !Find the pivot row
+      t=0._SRK
+      DO irow=i,N
+        IF(ABS(M%A(irow,i)) > t) THEN
+          t=ABS(M%A(irow,i))
+          solver%IPIV(i)=irow
         ENDIF
-
-        !Perform forward substitution
-        DO irow=i+1,N
-          t=1.0_SRK/M%A(i,i)
-          M%A(irow,i)=M%A(irow,i)*t
-          CALL BLAS_axpy(N-i,-M%A(irow,i),M%A(i:N,i+1),N,M%A(irow:N,i+1),N)
-        ENDDO
       ENDDO
-      IF(M%A(N,N) .APPROXEQA. 0._SRK) RETURN
-      solver%info=0
-      solver%isDecomposed=.TRUE.
+
+      IF(t .APPROXEQA. 0._SRK) RETURN
+      !if it differs from the current row, interchange the two rows.
+      IF(solver%IPIV(i) /= i) THEN
+        CALL BLAS_swap(N,M%A(solver%IPIV(i):N,1),N,M%A(i:N,1),N)
+      ENDIF
+
+      !Perform forward substitution
+      DO irow=i+1,N
+        t=1.0_SRK/M%A(i,i)
+        M%A(irow,i)=M%A(irow,i)*t
+        CALL BLAS_axpy(N-i,-M%A(irow,i),M%A(i:N,i+1),N,M%A(irow:N,i+1),N)
+      ENDDO
+    ENDDO
+    IF(M%A(N,N) .APPROXEQA. 0._SRK) RETURN
+    solver%info=0
+    solver%isDecomposed=.TRUE.
   ENDSELECT
 ENDSUBROUTINE DecomposePLU_DenseSquare
 !-------------------------------------------------------------------------------
@@ -2169,25 +2170,25 @@ SUBROUTINE SolvePLU_DenseSquare(solver)
       ENDIF
     ENDDO
     SELECTTYPE(M => solver%M)
-      TYPE IS(DenseSquareMatrixType)
-      !Forward subsitution
-      thisx(1)=thisb(1)
-      DO irow=2,N
-        t=0._SRK
-        DO icol=1,irow-1
-          t=t+thisx(icol)*M%A(irow,icol)
-        ENDDO
-        thisx(irow)=thisb(irow)-t
+    TYPE IS(DenseSquareMatrixType)
+    !Forward subsitution
+    thisx(1)=thisb(1)
+    DO irow=2,N
+      t=0._SRK
+      DO icol=1,irow-1
+        t=t+thisx(icol)*M%A(irow,icol)
       ENDDO
-      !Backward subsitution
-      thisb(N)=thisx(N)/M%A(N,N)
-      DO irow=N-1,1,-1
-        t=0._SRK
-        DO icol=irow+1,N
-          t=t+thisb(icol)*M%A(irow,icol)
-        ENDDO
-        thisb(irow)=(thisx(irow)-t)/M%A(irow,irow)
+      thisx(irow)=thisb(irow)-t
+    ENDDO
+    !Backward subsitution
+    thisb(N)=thisx(N)/M%A(N,N)
+    DO irow=N-1,1,-1
+      t=0._SRK
+      DO icol=irow+1,N
+        t=t+thisb(icol)*M%A(irow,icol)
       ENDDO
+      thisb(irow)=(thisx(irow)-t)/M%A(irow,irow)
+    ENDDO
     ENDSELECT
     SELECTTYPE(X => solver%X); TYPE IS(RealVectorType)
       X%b=thisb
@@ -2428,25 +2429,25 @@ PURE SUBROUTINE LNorm(x,L,norm)
   REAL(SRK),INTENT(OUT) :: norm
   INTEGER(SIK) :: i
   SELECT CASE(L)
-    CASE(-1)
-      !signifier for infinite norm
-      i=BLAS_iamax(x)
-      norm=ABS(x(i))
-    CASE(1)
-      norm=BLAS_asum(x)
-    CASE(2)
-      !2-norm
-      norm=BLAS_nrm2(x)
-    CASE(: -2)
-      !not possible.
-      norm=0.0_SRK
-    CASE DEFAULT
-      !L-norm
-      norm=0.0_SRK
-      DO i=1,SIZE(x)
-        norm=norm+ABS(x(i))**L
-      ENDDO
-      norm=norm**(1._SRK/L)
+  CASE(-1)
+    !signifier for infinite norm
+    i=BLAS_iamax(x)
+    norm=ABS(x(i))
+  CASE(1)
+    norm=BLAS_asum(x)
+  CASE(2)
+    !2-norm
+    norm=BLAS_nrm2(x)
+  CASE(: -2)
+    !not possible.
+    norm=0.0_SRK
+  CASE DEFAULT
+    !L-norm
+    norm=0.0_SRK
+    DO i=1,SIZE(x)
+      norm=norm+ABS(x(i))**L
+    ENDDO
+    norm=norm**(1._SRK/L)
   ENDSELECT
 ENDSUBROUTINE LNorm
 !

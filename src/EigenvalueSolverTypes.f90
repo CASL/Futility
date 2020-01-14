@@ -269,16 +269,16 @@ SUBROUTINE EigenvalueSolverFactory(solver,MPIEnv,M,params)
 
   SELECTTYPE(M)
 #ifdef FUTILITY_HAVE_PETSC
-    TYPE IS(PETScMatrixType)
-      ALLOCATE(EigenvalueSolverType_SLEPc :: solver)
+  TYPE IS(PETScMatrixType)
+    ALLOCATE(EigenvalueSolverType_SLEPc :: solver)
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
-    TYPE IS(TrilinosMatrixType)
-      ALLOCATE(EigenvalueSolverType_Anasazi :: solver)
+  TYPE IS(TrilinosMatrixType)
+    ALLOCATE(EigenvalueSolverType_Anasazi :: solver)
 #endif
-    CLASS DEFAULT
-      CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
-          "Unsupported matrix type")
+  CLASS DEFAULT
+    CALL eEigenvalueSolverType%raiseError(modName//"::"//myName//" - "// &
+        "Unsupported matrix type")
   ENDSELECT
   IF(ASSOCIATED(solver)) THEN
     CALL solver%init(MPIEnv,params)
@@ -370,20 +370,20 @@ SUBROUTINE init_EigenvalueSolverType_SLEPc(solver,MPIEnv,Params)
         CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
         ' - SLEPc failed to initialize.')
     SELECTCASE(solvertype)
-      CASE(POWER_IT)
-        CALL EPSSetType(solver%eps,EPSPOWER,ierr)
-      CASE(JD)
-        CALL EPSSetType(solver%eps,EPSJD,ierr)
-        CALL EPSSetWhichEigenpairs(solver%eps,EPS_LARGEST_REAL,ierr)
-      CASE(GD)
-        CALL EPSSetType(solver%eps,EPSGD,ierr)
-        CALL EPSSetWhichEigenpairs(solver%eps,EPS_LARGEST_REAL,ierr)
-      CASE(ARNOLDI)
-        CALL EPSSetType(solver%eps,EPSARNOLDI,ierr)
-        CALL EPSSetWhichEigenpairs(solver%eps,EPS_LARGEST_REAL,ierr)
-      CASE DEFAULT
-        CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
-            modName//'::'//myName//' - Unknow solver type.')
+    CASE(POWER_IT)
+      CALL EPSSetType(solver%eps,EPSPOWER,ierr)
+    CASE(JD)
+      CALL EPSSetType(solver%eps,EPSJD,ierr)
+      CALL EPSSetWhichEigenpairs(solver%eps,EPS_LARGEST_REAL,ierr)
+    CASE(GD)
+      CALL EPSSetType(solver%eps,EPSGD,ierr)
+      CALL EPSSetWhichEigenpairs(solver%eps,EPS_LARGEST_REAL,ierr)
+    CASE(ARNOLDI)
+      CALL EPSSetType(solver%eps,EPSARNOLDI,ierr)
+      CALL EPSSetWhichEigenpairs(solver%eps,EPS_LARGEST_REAL,ierr)
+    CASE DEFAULT
+      CALL eEigenvalueSolverType%raiseError('Incorrect input to '// &
+          modName//'::'//myName//' - Unknow solver type.')
     ENDSELECT
     IF(ierr/=0) &
         CALL eEigenvalueSolverType%raiseError(modName//'::'//myName// &
@@ -690,7 +690,8 @@ SUBROUTINE getResidual_EigenvalueSolverType_Base(solver,resid,its)
   REAL(SRK),INTENT(OUT) :: resid
   INTEGER(SIK),INTENT(OUT) :: its
 
-  SELECTTYPE(solver); TYPE IS(EigenvalueSolverType_SLEPc)
+  SELECTTYPE(solver)
+  TYPE IS(EigenvalueSolverType_SLEPc)
 #ifdef FUTILITY_HAVE_SLEPC
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
     CALL EPSComputeError(solver%eps,0,EPS_ERROR_RELATIVE,resid,ierr)
@@ -724,13 +725,13 @@ SUBROUTINE setX0_EigenvalueSolverType_Base(solver,x0)
   CLASS(VectorType),INTENT(INOUT) :: x0
 
   SELECTTYPE(solver)
-    TYPE IS(EigenvalueSolverType_SLEPc)
+  TYPE IS(EigenvalueSolverType_SLEPc)
 #ifdef FUTILITY_HAVE_SLEPC
-      SELECTTYPE(x0); TYPE IS(PETScVectorType)
-        CALL EPSSetInitialSpace(solver%eps,1,x0%b,ierr)
-      ENDSELECT
+    SELECTTYPE(x0); TYPE IS(PETScVectorType)
+      CALL EPSSetInitialSpace(solver%eps,1,x0%b,ierr)
+    ENDSELECT
 #endif
-    !Anasazi doesn't need this, blas copy will handle it
+  !Anasazi doesn't need this, blas copy will handle it
   ENDSELECT
   CALL BLAS_copy(THISVECTOR=x0,NEWVECTOR=solver%X)
 ENDSUBROUTINE setX0_EigenvalueSolverType_Base

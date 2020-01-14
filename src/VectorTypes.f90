@@ -231,19 +231,19 @@ SUBROUTINE VectorFactory(vector, params)
   ENDIF
 
   SELECTCASE(engine)
-    CASE(VM_NATIVE)
-      ALLOCATE(RealVectorType :: vector)
-    CASE(VM_PETSC)
+  CASE(VM_NATIVE)
+    ALLOCATE(RealVectorType :: vector)
+  CASE(VM_PETSC)
 #ifdef FUTILITY_HAVE_PETSC
-      ALLOCATE(PETScVectorType :: vector)
+    ALLOCATE(PETScVectorType :: vector)
 #endif
-    CASE(VM_TRILINOS)
+  CASE(VM_TRILINOS)
 #ifdef FUTILITY_HAVE_Trilinos
-      ALLOCATE(TrilinosVectorType :: vector)
+    ALLOCATE(TrilinosVectorType :: vector)
 #endif
-    CASE DEFAULT
-      CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-          "Unrecognized vector engine requested")
+  CASE DEFAULT
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Unrecognized vector engine requested")
   ENDSELECT
 
   CALL vector%init(params)
@@ -303,15 +303,15 @@ SUBROUTINE VectorResemble(dest, source, params)
   ENDSELECT
 
   SELECTTYPE(source)
-    TYPE IS(RealVectorType)
-      ALLOCATE(RealVectorType :: dest)
+  TYPE IS(RealVectorType)
+    ALLOCATE(RealVectorType :: dest)
 #ifdef FUTILITY_HAVE_PETSC
-    TYPE IS(PETScVectorType)
-      ALLOCATE(PETScVectorType :: dest)
+  TYPE IS(PETScVectorType)
+    ALLOCATE(PETScVectorType :: dest)
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
-    TYPE IS(TrilinosVectorType)
-      ALLOCATE(TrilinosVectorType :: dest)
+  TYPE IS(TrilinosVectorType)
+    ALLOCATE(TrilinosVectorType :: dest)
 #endif
   ENDSELECT
 
@@ -335,7 +335,8 @@ FUNCTION asum_VectorType(thisVector,n,incx) RESULT(r)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   REAL(SRK) :: r
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
     IF(PRESENT(n) .AND. PRESENT(incx)) THEN
       r=BLAS1_asum(n,thisVector%b,incx)
     ELSEIF(PRESENT(n) .AND. .NOT.PRESENT(incx)) THEN
@@ -383,8 +384,10 @@ SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
   alpha=1._SRK
   IF(PRESENT(a)) alpha=a
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(newVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_axpy(n,alpha,thisVector%b,incx,newVector%b,incy)
       ELSEIF(PRESENT(n) .AND. PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
@@ -399,14 +402,16 @@ SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(iperr == 0) CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
     ENDSELECT
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
   TYPE IS(TrilinosVectorType)
-    SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(TrilinosVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
       CALL ForPETRA_VecAXPY(newVector%b,thisVector%b,alpha,1.0_SRK)
     ENDSELECT
@@ -441,9 +446,12 @@ SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
   REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:),tmpa(:)
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(newVector); TYPE IS(RealVectorType)
-      SELECTTYPE(aVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(RealVectorType)
+      SELECTTYPE(aVector)
+      TYPE IS(RealVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         ALLOCATE(tmpnew(newVector%n))
         ALLOCATE(tmpa(aVector%n))
@@ -454,8 +462,10 @@ SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(newVector); TYPE IS(PETScVectorType)
-      SELECTTYPE(aVector); TYPE IS(PETScVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(PETScVectorType)
+      SELECTTYPE(aVector)
+      TYPE IS(PETScVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         ALLOCATE(tmpnew(newVector%n))
         ALLOCATE(tmpa(aVector%n))
@@ -506,8 +516,10 @@ SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(newVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_copy(n,thisVector%b,incx,newVector%b,incy)
       ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -528,14 +540,16 @@ SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(newVector); TYPE IS(PETScVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(iperr == 0) CALL VecCopy(thisVector%b,newVector%b,iperr)
     ENDSELECT
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
   TYPE IS(TrilinosVectorType)
-    SELECTTYPE(newVector); TYPE IS(TrilinosVectorType)
+    SELECTTYPE(newVector)
+    TYPE IS(TrilinosVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
       CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
     ENDSELECT
@@ -565,8 +579,10 @@ FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
   REAL(SRK) :: r
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(thatVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
+    SELECTTYPE(thatVector)
+    TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         r=BLAS1_dot(n,thisVector%b,incx,thatVector%b,incy)
       ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -587,7 +603,8 @@ FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+    SELECTTYPE(thatVector)
+    TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(iperr == 0) CALL VecTDot(thisVector%b,thatVector%b,r,iperr)
     ENDSELECT
@@ -614,7 +631,8 @@ FUNCTION iamax_VectorType(thisVector,n,incx)  RESULT(imax)
   REAL(SRK),ALLOCATABLE :: tmpthis(:)
   INTEGER(SIK) :: imax
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
     ALLOCATE(tmpthis(thisVector%n))
     CALL thisVector%get(tmpthis)
 #ifdef FUTILITY_HAVE_PETSC
@@ -656,7 +674,8 @@ FUNCTION iamin_VectorType(thisVector,n,incx)  RESULT(imin)
   REAL(SRK),ALLOCATABLE :: tmpthis(:)
   INTEGER(SIK) :: imin
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
     ALLOCATE(tmpthis(thisVector%n))
     CALL thisVector%get(tmpthis)
 #ifdef FUTILITY_HAVE_PETSC
@@ -696,7 +715,8 @@ FUNCTION nrm2_VectorType(thisVector,n,incx)  RESULT(norm2)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   REAL(SRK) :: norm2
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
     IF(PRESENT(n) .AND. PRESENT(incx)) THEN
       norm2=BLAS1_nrm2(n,thisVector%b,incx)
     ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -737,7 +757,8 @@ SUBROUTINE scal_scalar_VectorType(thisVector,a,n,incx)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: n
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
     IF(PRESENT(n) .AND. PRESENT(incx)) THEN
       CALL BLAS1_scal(n,a,thisVector%b,incx)
     ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -778,8 +799,10 @@ SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpa(:)
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(aVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
+    SELECTTYPE(aVector)
+    TYPE IS(RealVectorType)
       ALLOCATE(tmpthis(thisVector%n))
       ALLOCATE(tmpa(aVector%n))
       CALL thisVector%get(tmpthis)
@@ -787,7 +810,8 @@ SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(aVector); TYPE IS(PETScVectorType)
+    SELECTTYPE(aVector)
+    TYPE IS(PETScVectorType)
       ALLOCATE(tmpthis(thisVector%n))
       ALLOCATE(tmpa(aVector%n))
       CALL thisVector%get(tmpthis)
@@ -831,8 +855,10 @@ SUBROUTINE swap_VectorType(thisVector,thatVector,n,incx,incy)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(thatVector); TYPE IS(RealVectorType)
+  SELECTTYPE(thisVector)
+  TYPE IS(RealVectorType)
+    SELECTTYPE(thatVector)
+    TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_swap(n,thisVector%b,incx,thatVector%b,incy)
       ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -853,7 +879,8 @@ SUBROUTINE swap_VectorType(thisVector,thatVector,n,incx,incy)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(thatVector); TYPE IS(PETScVectorType)
+    SELECTTYPE(thatVector)
+    TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(.NOT.thatVector%isAssembled) CALL thatVector%assemble(iperr)
       IF(iperr == 0) CALL VecSwap(thisVector%b,thatVector%b,iperr)
@@ -863,6 +890,6 @@ SUBROUTINE swap_VectorType(thisVector,thatVector,n,incx,incy)
     CALL eVectorType%raiseFatalError('Incorrect call to '// &
         modName//'::'//myName//' - This interface is not available.')
   ENDSELECT
-  ENDSUBROUTINE swap_VectorType
+ENDSUBROUTINE swap_VectorType
 !
 ENDMODULE VectorTypes

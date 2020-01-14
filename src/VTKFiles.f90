@@ -477,166 +477,166 @@ CONTAINS
           myVTKFile%mesh=vtkMesh
           myVTKFile%hasMesh=.TRUE.
           SELECTCASE(vtkMesh%meshType)
-            CASE(VTK_STRUCTURED_POINTS)
-              !Write a mesh that is structured points
-              WRITE(funit,'(a)') 'DATASET STRUCTURED_POINTS'
-              aline='DIMENSIONS'
-              DO i=1,3
-                sint=myVTKFile%mesh%dims(i)
-                aline=aline//' '//sint
-              ENDDO
-              WRITE(funit,'(a)') TRIM(aline)
-              WRITE(funit,'(a,3es17.8)') 'ORIGIN ', &
-                  myVTKFile%mesh%x(1),myVTKFile%mesh%y(1),myVTKFile%mesh%z(1)
-              WRITE(funit,'(a,3es17.8)') 'SPACING ', &
-                  myVTKFile%mesh%x(2),myVTKFile%mesh%y(2),myVTKFile%mesh%z(2)
-              WRITE(funit,'(a)') ''
-            CASE(VTK_STRUCTURED_GRID)
-              !Write a mesh that is a structured grid
-              WRITE(funit,'(a)') 'DATASET STRUCTURED_GRID'
-              aline='DIMENSIONS'
-              DO i=1,3
-                sint=myVTKFile%mesh%dims(i)
-                aline=aline//' '//sint
-              ENDDO
-              WRITE(funit,'(a)') TRIM(aline)
-              sint=myVTKFile%mesh%numPoints
-              WRITE(funit,'(a)') 'POINTS '//sint//' float'
-              DO k=1,myVTKFile%mesh%dims(3)
-                DO j=1,myVTKFile%mesh%dims(2)
-                  DO i=1,myVTKFile%mesh%dims(1)
-                    WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                        myVTKFile%mesh%y(j),myVTKFile%mesh%z(k)
-                  ENDDO
+          CASE(VTK_STRUCTURED_POINTS)
+            !Write a mesh that is structured points
+            WRITE(funit,'(a)') 'DATASET STRUCTURED_POINTS'
+            aline='DIMENSIONS'
+            DO i=1,3
+              sint=myVTKFile%mesh%dims(i)
+              aline=aline//' '//sint
+            ENDDO
+            WRITE(funit,'(a)') TRIM(aline)
+            WRITE(funit,'(a,3es17.8)') 'ORIGIN ', &
+                myVTKFile%mesh%x(1),myVTKFile%mesh%y(1),myVTKFile%mesh%z(1)
+            WRITE(funit,'(a,3es17.8)') 'SPACING ', &
+                myVTKFile%mesh%x(2),myVTKFile%mesh%y(2),myVTKFile%mesh%z(2)
+            WRITE(funit,'(a)') ''
+          CASE(VTK_STRUCTURED_GRID)
+            !Write a mesh that is a structured grid
+            WRITE(funit,'(a)') 'DATASET STRUCTURED_GRID'
+            aline='DIMENSIONS'
+            DO i=1,3
+              sint=myVTKFile%mesh%dims(i)
+              aline=aline//' '//sint
+            ENDDO
+            WRITE(funit,'(a)') TRIM(aline)
+            sint=myVTKFile%mesh%numPoints
+            WRITE(funit,'(a)') 'POINTS '//sint//' float'
+            DO k=1,myVTKFile%mesh%dims(3)
+              DO j=1,myVTKFile%mesh%dims(2)
+                DO i=1,myVTKFile%mesh%dims(1)
+                  WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
+                      myVTKFile%mesh%y(j),myVTKFile%mesh%z(k)
                 ENDDO
               ENDDO
-              WRITE(funit,'(a)') ''
-            CASE(VTK_RECTILINEAR_GRID)
-              !Write a mesh that is a rectilinear grid
-              WRITE(funit,'(a)') 'DATASET RECTILINEAR_GRID'
-              aline='DIMENSIONS'
-              DO i=1,3
-                sint=myVTKFile%mesh%dims(i)
-                aline=aline//' '//sint
-              ENDDO
-              WRITE(funit,'(a)') TRIM(aline)
-
-              !Write the x coordinates
-              sint=myVTKFile%mesh%dims(1)
-              WRITE(funit,'(a)') 'X_COORDINATES '//sint//' float'
-              DO i=1,myVTKFile%mesh%dims(1)-MOD(myVTKFile%mesh%dims(1),3),3
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                    myVTKFile%mesh%x(i+1),myVTKFile%mesh%x(i+2)
-              ENDDO
-              IF(MOD(myVTKFile%mesh%dims(1),3) == 1) THEN
-                i=myVTKFile%mesh%dims(1)
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i)
-              ELSEIF(MOD(myVTKFile%mesh%dims(1),3) == 2) THEN
-                i=myVTKFile%mesh%dims(1)-1
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                    myVTKFile%mesh%x(i+1)
-              ENDIF
-
-              !Write the y coordinates
-              sint=myVTKFile%mesh%dims(2)
-              WRITE(funit,'(a)') 'Y_COORDINATES '//sint//' float'
-              DO i=1,myVTKFile%mesh%dims(2)-MOD(myVTKFile%mesh%dims(2),3),3
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
-                    myVTKFile%mesh%y(i+1),myVTKFile%mesh%y(i+2)
-              ENDDO
-              IF(MOD(myVTKFile%mesh%dims(2),3) == 1) THEN
-                i=myVTKFile%mesh%dims(2)
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i)
-              ELSEIF(MOD(myVTKFile%mesh%dims(2),3) == 2) THEN
-                i=myVTKFile%mesh%dims(2)-1
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
-                    myVTKFile%mesh%y(i+1)
-              ENDIF
-
-              !Write the z coordinates
-              sint=myVTKFile%mesh%dims(3)
-              WRITE(funit,'(a)') 'Z_COORDINATES '//sint//' float'
-              DO i=1,myVTKFile%mesh%dims(3)-MOD(myVTKFile%mesh%dims(3),3),3
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i),myVTKFile%mesh%z(i+1),myVTKFile%mesh%z(i+2)
-              ENDDO
-              IF(MOD(myVTKFile%mesh%dims(3),3) == 1) THEN
-                i=myVTKFile%mesh%dims(3)
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i)
-              ELSEIF(MOD(myVTKFile%mesh%dims(3),3) == 2) THEN
-                i=myVTKFile%mesh%dims(3)-1
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i), &
-                    myVTKFile%mesh%z(i+1)
-              ENDIF
-              WRITE(funit,'(a)') ''
-            CASE(VTK_UNSTRUCTURED_GRID)
-              !Write a mesh that is an unstructured grid
-              !Clean-up redundant points
-              CALL myVTKFile%mesh%cleanupPoints()
-              WRITE(funit,'(a)') 'DATASET UNSTRUCTURED_GRID'
-              sint=myVTKFile%mesh%numPoints
-              WRITE(funit,'(a)') 'POINTS '//TRIM(sint)//' float'
-              DO i=1,myVTKFile%mesh%numPoints
-                WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
-                    myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
-              ENDDO
-              WRITE(funit,'(a)') ''
-
-              !Write the list of cell vertices
-              aline='CELLS'
-              sint=myVTKFile%mesh%numCells
+            ENDDO
+            WRITE(funit,'(a)') ''
+          CASE(VTK_RECTILINEAR_GRID)
+            !Write a mesh that is a rectilinear grid
+            WRITE(funit,'(a)') 'DATASET RECTILINEAR_GRID'
+            aline='DIMENSIONS'
+            DO i=1,3
+              sint=myVTKFile%mesh%dims(i)
               aline=aline//' '//sint
-              sint=SIZE(myVTKFile%mesh%nodeList)+myVTKFile%mesh%numCells
-              aline=aline//' '//sint
-              WRITE(funit,'(a)') CHAR(aline)
-              j=1
-              DO i=1,myVTKFile%mesh%numCells
-                !Determine the next n nodes that make up this cell
-                SELECTCASE(myVTKFile%mesh%cellList(i))
-                  CASE(VTK_VERTEX); n=1
-                  CASE(VTK_LINE); n=2
-                  CASE(VTK_TRIANGLE); n=3
-                  CASE(VTK_QUAD); n=4
-                  CASE(VTK_TETRA); n=4
-                  CASE(VTK_HEXAHEDRON); n=8
-                  CASE(VTK_VOXEL); n=8
-                  CASE(VTK_WEDGE); n=6
-                  CASE(VTK_PYRAMID); n=5
-                  CASE(VTK_QUADRATIC_EDGE); n=3
-                  CASE(VTK_QUADRATIC_TRIANGLE); n=6
-                  CASE(VTK_QUADRATIC_QUAD); n=8
-                  CASE(VTK_QUADRATIC_TETRA); n=10
-                  CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
-                  CASE DEFAULT
-                    CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                        ' - VTK cell type is not supported!')
-                    n=0
-                ENDSELECT
-                IF(n > 0) THEN
-                  aline=n
-                  DO k=0,n-1
-                    sint=myVTKFile%mesh%nodeList(j+k)
-                    aline=aline//' '//sint
-                  ENDDO
-                  WRITE(funit,'(a)') TRIM(aline)
-                  j=j+n
-                ENDIF
-              ENDDO
-              WRITE(funit,'(a)') ''
+            ENDDO
+            WRITE(funit,'(a)') TRIM(aline)
 
-              !Write the list of cell types
-              aline='CELL_TYPES'
-              sint=myVTKFile%mesh%numCells
-              aline=aline//' '//sint
-              WRITE(funit,'(a)') CHAR(aline)
-              WRITE(funit,*) myVTKFile%mesh%cellList
-              WRITE(funit,'(a)') ''
+            !Write the x coordinates
+            sint=myVTKFile%mesh%dims(1)
+            WRITE(funit,'(a)') 'X_COORDINATES '//sint//' float'
+            DO i=1,myVTKFile%mesh%dims(1)-MOD(myVTKFile%mesh%dims(1),3),3
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
+                  myVTKFile%mesh%x(i+1),myVTKFile%mesh%x(i+2)
+            ENDDO
+            IF(MOD(myVTKFile%mesh%dims(1),3) == 1) THEN
+              i=myVTKFile%mesh%dims(1)
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i)
+            ELSEIF(MOD(myVTKFile%mesh%dims(1),3) == 2) THEN
+              i=myVTKFile%mesh%dims(1)-1
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
+                  myVTKFile%mesh%x(i+1)
+            ENDIF
 
-            CASE(VTK_POLYDATA)
-              CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                  ' - VTK DATASET "POLYDATA" not supported!')
-            CASE DEFAULT
-              CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                  ' - VTK DATASET type is not recognized!')
+            !Write the y coordinates
+            sint=myVTKFile%mesh%dims(2)
+            WRITE(funit,'(a)') 'Y_COORDINATES '//sint//' float'
+            DO i=1,myVTKFile%mesh%dims(2)-MOD(myVTKFile%mesh%dims(2),3),3
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
+                  myVTKFile%mesh%y(i+1),myVTKFile%mesh%y(i+2)
+            ENDDO
+            IF(MOD(myVTKFile%mesh%dims(2),3) == 1) THEN
+              i=myVTKFile%mesh%dims(2)
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i)
+            ELSEIF(MOD(myVTKFile%mesh%dims(2),3) == 2) THEN
+              i=myVTKFile%mesh%dims(2)-1
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%y(i), &
+                  myVTKFile%mesh%y(i+1)
+            ENDIF
+
+            !Write the z coordinates
+            sint=myVTKFile%mesh%dims(3)
+            WRITE(funit,'(a)') 'Z_COORDINATES '//sint//' float'
+            DO i=1,myVTKFile%mesh%dims(3)-MOD(myVTKFile%mesh%dims(3),3),3
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i),myVTKFile%mesh%z(i+1),myVTKFile%mesh%z(i+2)
+            ENDDO
+            IF(MOD(myVTKFile%mesh%dims(3),3) == 1) THEN
+              i=myVTKFile%mesh%dims(3)
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i)
+            ELSEIF(MOD(myVTKFile%mesh%dims(3),3) == 2) THEN
+              i=myVTKFile%mesh%dims(3)-1
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%z(i), &
+                  myVTKFile%mesh%z(i+1)
+            ENDIF
+            WRITE(funit,'(a)') ''
+          CASE(VTK_UNSTRUCTURED_GRID)
+            !Write a mesh that is an unstructured grid
+            !Clean-up redundant points
+            CALL myVTKFile%mesh%cleanupPoints()
+            WRITE(funit,'(a)') 'DATASET UNSTRUCTURED_GRID'
+            sint=myVTKFile%mesh%numPoints
+            WRITE(funit,'(a)') 'POINTS '//TRIM(sint)//' float'
+            DO i=1,myVTKFile%mesh%numPoints
+              WRITE(funit,'(3es17.8)') myVTKFile%mesh%x(i), &
+                  myVTKFile%mesh%y(i),myVTKFile%mesh%z(i)
+            ENDDO
+            WRITE(funit,'(a)') ''
+
+            !Write the list of cell vertices
+            aline='CELLS'
+            sint=myVTKFile%mesh%numCells
+            aline=aline//' '//sint
+            sint=SIZE(myVTKFile%mesh%nodeList)+myVTKFile%mesh%numCells
+            aline=aline//' '//sint
+            WRITE(funit,'(a)') CHAR(aline)
+            j=1
+            DO i=1,myVTKFile%mesh%numCells
+              !Determine the next n nodes that make up this cell
+              SELECTCASE(myVTKFile%mesh%cellList(i))
+              CASE(VTK_VERTEX); n=1
+              CASE(VTK_LINE); n=2
+              CASE(VTK_TRIANGLE); n=3
+              CASE(VTK_QUAD); n=4
+              CASE(VTK_TETRA); n=4
+              CASE(VTK_HEXAHEDRON); n=8
+              CASE(VTK_VOXEL); n=8
+              CASE(VTK_WEDGE); n=6
+              CASE(VTK_PYRAMID); n=5
+              CASE(VTK_QUADRATIC_EDGE); n=3
+              CASE(VTK_QUADRATIC_TRIANGLE); n=6
+              CASE(VTK_QUADRATIC_QUAD); n=8
+              CASE(VTK_QUADRATIC_TETRA); n=10
+              CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
+              CASE DEFAULT
+                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                    ' - VTK cell type is not supported!')
+                n=0
+              ENDSELECT
+              IF(n > 0) THEN
+                aline=n
+                DO k=0,n-1
+                  sint=myVTKFile%mesh%nodeList(j+k)
+                  aline=aline//' '//sint
+                ENDDO
+                WRITE(funit,'(a)') TRIM(aline)
+                j=j+n
+              ENDIF
+            ENDDO
+            WRITE(funit,'(a)') ''
+
+            !Write the list of cell types
+            aline='CELL_TYPES'
+            sint=myVTKFile%mesh%numCells
+            aline=aline//' '//sint
+            WRITE(funit,'(a)') CHAR(aline)
+            WRITE(funit,*) myVTKFile%mesh%cellList
+            WRITE(funit,'(a)') ''
+
+          CASE(VTK_POLYDATA)
+            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                ' - VTK DATASET "POLYDATA" not supported!')
+          CASE DEFAULT
+            CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                ' - VTK DATASET type is not recognized!')
           ENDSELECT
           FLUSH(funit)
         ELSE
@@ -685,49 +685,49 @@ CONTAINS
               sint=myVTKFile%mesh%numCells
               aline=aline//' '//sint
               SELECTCASE(TRIM(vtkData%vtkDataFormat))
-                CASE('float')
-                  WRITE(funit,'(a)') TRIM(aline)
-                  WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
-                      TRIM(vtkData%vtkDataFormat)
-                  WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
-                  DO i=1,SIZE(vtkData%datalist),5
-                    istp=i+4
-                    IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
-                    WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
-                  ENDDO
-                  WRITE(funit,'(a)') ''
-                  WRITE(funit,'(a)') 'POINT_DATA 1'
-                  WRITE(funit,'(a)') ''
-                CASE('double')
-                  WRITE(funit,'(a)') TRIM(aline)
-                  WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
-                      TRIM(vtkData%vtkDataFormat)
-                  WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
-                  DO i=1,SIZE(vtkData%datalist),3
-                    istp=i+2
-                    IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
-                    WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
-                  ENDDO
-                  WRITE(funit,'(a)') ''
-                  WRITE(funit,'(a)') 'POINT_DATA 1'
-                  WRITE(funit,'(a)') ''
-                CASE('int','short','long')
-                  WRITE(funit,'(a)') TRIM(aline)
-                  WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
-                      TRIM(vtkData%vtkDataFormat)
-                  WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
-                  DO i=1,SIZE(vtkData%datalist),6
-                    istp=i+5
-                    IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
-                    WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
-                  ENDDO
-                  WRITE(funit,'(a)') ''
-                  WRITE(funit,'(a)') 'POINT_DATA 1'
-                  WRITE(funit,'(a)') ''
-                CASE DEFAULT
-                  CALL myVTKFile%e%raiseError(modName//'::'//myName// &
-                      ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
-                      '" data not yet supported!')
+              CASE('float')
+                WRITE(funit,'(a)') TRIM(aline)
+                WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
+                    TRIM(vtkData%vtkDataFormat)
+                WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
+                DO i=1,SIZE(vtkData%datalist),5
+                  istp=i+4
+                  IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                  WRITE(funit,'(5f15.6)') REAL(vtkData%datalist(i:istp),SSK)
+                ENDDO
+                WRITE(funit,'(a)') ''
+                WRITE(funit,'(a)') 'POINT_DATA 1'
+                WRITE(funit,'(a)') ''
+              CASE('double')
+                WRITE(funit,'(a)') TRIM(aline)
+                WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
+                    TRIM(vtkData%vtkDataFormat)
+                WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
+                DO i=1,SIZE(vtkData%datalist),3
+                  istp=i+2
+                  IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                  WRITE(funit,'(3es22.14)') vtkData%datalist(i:istp)
+                ENDDO
+                WRITE(funit,'(a)') ''
+                WRITE(funit,'(a)') 'POINT_DATA 1'
+                WRITE(funit,'(a)') ''
+              CASE('int','short','long')
+                WRITE(funit,'(a)') TRIM(aline)
+                WRITE(funit,'(a)') 'SCALARS '//TRIM(vtkData%varname)//' '// &
+                    TRIM(vtkData%vtkDataFormat)
+                WRITE(funit,'(a)') 'LOOKUP_TABLE '//TRIM(vtkData%varname)//'_table'
+                DO i=1,SIZE(vtkData%datalist),6
+                  istp=i+5
+                  IF(istp > SIZE(vtkData%datalist)) istp=SIZE(vtkData%datalist)
+                  WRITE(funit,'(6i12)') NINT(vtkData%datalist(i:istp),SIK)
+                ENDDO
+                WRITE(funit,'(a)') ''
+                WRITE(funit,'(a)') 'POINT_DATA 1'
+                WRITE(funit,'(a)') ''
+              CASE DEFAULT
+                CALL myVTKFile%e%raiseError(modName//'::'//myName// &
+                    ' - Writing of "'//TRIM(vtkData%vtkDataFormat)// &
+                    '" data not yet supported!')
               ENDSELECT
               FLUSH(funit)
             ELSE
@@ -1035,146 +1035,146 @@ SUBROUTINE convert_VTKMeshType(thisVTKMesh,newVTKMeshType)
 
   IF(thisVTKMesh%isinit) THEN
     SELECTCASE(newVTKMeshType)
+    CASE(VTK_STRUCTURED_POINTS)
+      !Will be implemented later, print warning
+      CALL eVTK%raiseError(modName//'::'//myName// &
+          ' - Conversion to type VTK_STRUCTURED_POINTS is not supported!')
+    CASE(VTK_STRUCTURED_GRID)
+      !Will be implemented later, print warning
+      CALL eVTK%raiseError(modName//'::'//myName// &
+          ' - Conversion to type VTK_STRUCTURED_GRID is not supported!')
+    CASE(VTK_UNSTRUCTURED_GRID)
+      SELECTCASE(thisVTKMesh%meshType)
       CASE(VTK_STRUCTURED_POINTS)
-        !Will be implemented later, print warning
-        CALL eVTK%raiseError(modName//'::'//myName// &
-            ' - Conversion to type VTK_STRUCTURED_POINTS is not supported!')
-      CASE(VTK_STRUCTURED_GRID)
-        !Will be implemented later, print warning
-        CALL eVTK%raiseError(modName//'::'//myName// &
-            ' - Conversion to type VTK_STRUCTURED_GRID is not supported!')
-      CASE(VTK_UNSTRUCTURED_GRID)
-        SELECTCASE(thisVTKMesh%meshType)
-          CASE(VTK_STRUCTURED_POINTS)
-            thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
-            thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
-                thisVTKMesh%dims(3)
-            CALL dmallocA(Xlist,thisVTKMesh%numPoints)
-            CALL dmallocA(Ylist,thisVTKMesh%numPoints)
-            CALL dmallocA(Zlist,thisVTKMesh%numPoints)
-            CALL dmallocA(pointMap,thisVTKMesh%dims(1),thisVTKMesh%dims(2), &
-                thisVTKMesh%dims(3))
-            n=0
-            DO k=1,thisVTKMesh%dims(3)
-              DO j=1,thisVTKMesh%dims(2)
-                DO i=1,thisVTKMesh%dims(1)
-                  pointMap(i,j,k)=n
-                  Xlist(n+1)=(i-1)*thisVTKMesh%x(2)+thisVTKMesh%x(1)
-                  Ylist(n+1)=(j-1)*thisVTKMesh%y(2)+thisVTKMesh%y(1)
-                  Zlist(n+1)=(k-1)*thisVTKMesh%z(2)+thisVTKMesh%z(1)
-                  n=n+1
-                ENDDO
-              ENDDO
+        thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
+        thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
+            thisVTKMesh%dims(3)
+        CALL dmallocA(Xlist,thisVTKMesh%numPoints)
+        CALL dmallocA(Ylist,thisVTKMesh%numPoints)
+        CALL dmallocA(Zlist,thisVTKMesh%numPoints)
+        CALL dmallocA(pointMap,thisVTKMesh%dims(1),thisVTKMesh%dims(2), &
+            thisVTKMesh%dims(3))
+        n=0
+        DO k=1,thisVTKMesh%dims(3)
+          DO j=1,thisVTKMesh%dims(2)
+            DO i=1,thisVTKMesh%dims(1)
+              pointMap(i,j,k)=n
+              Xlist(n+1)=(i-1)*thisVTKMesh%x(2)+thisVTKMesh%x(1)
+              Ylist(n+1)=(j-1)*thisVTKMesh%y(2)+thisVTKMesh%y(1)
+              Zlist(n+1)=(k-1)*thisVTKMesh%z(2)+thisVTKMesh%z(1)
+              n=n+1
             ENDDO
-            CALL demallocA(thisVTKMesh%x)
-            CALL demallocA(thisVTKMesh%y)
-            CALL demallocA(thisVTKMesh%z)
-            CALL dmallocA(thisVTKMesh%x,thisVTKMesh%numPoints)
-            CALL dmallocA(thisVTKMesh%y,thisVTKMesh%numPoints)
-            CALL dmallocA(thisVTKMesh%z,thisVTKMesh%numPoints)
-            ThisVTKMesh%x=Xlist
-            ThisVTKMesh%y=Ylist
-            ThisVTKMesh%z=Zlist
-            IF(thisVTKMesh%numCells == 0) THEN
-              thisVTKMesh%numCells=(thisVTKMesh%dims(1)-1)* &
-                  (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
-            ENDIF
-            CALL dmallocA(thisVTKMesh%cellList,thisVTKMesh%numCells)
-            CALL dmallocA(thisVTKMesh%nodeList,thisVTKMesh%numCells*8)
-            thisVTKMesh%cellList=VTK_HEXAHEDRON
-            n=1
-            DO k=1,thisVTKMesh%dims(3)-1
-              DO j=1,thisVTKMesh%dims(2)-1
-                DO i=1,thisVTKMesh%dims(1)-1
-                  thisVTKMesh%nodeList(n)=pointMap(i,j,k)
-                  thisVTKMesh%nodeList(n+1)=pointMap(i+1,j,k)
-                  thisVTKMesh%nodeList(n+2)=pointMap(i+1,j+1,k)
-                  thisVTKMesh%nodeList(n+3)=pointMap(i,j+1,k)
-                  thisVTKMesh%nodeList(n+4)=pointMap(i,j,k+1)
-                  thisVTKMesh%nodeList(n+5)=pointMap(i+1,j,k+1)
-                  thisVTKMesh%nodeList(n+6)=pointMap(i+1,j+1,k+1)
-                  thisVTKMesh%nodeList(n+7)=pointMap(i,j+1,k+1)
-                  n=n+8
-                ENDDO
-              ENDDO
+          ENDDO
+        ENDDO
+        CALL demallocA(thisVTKMesh%x)
+        CALL demallocA(thisVTKMesh%y)
+        CALL demallocA(thisVTKMesh%z)
+        CALL dmallocA(thisVTKMesh%x,thisVTKMesh%numPoints)
+        CALL dmallocA(thisVTKMesh%y,thisVTKMesh%numPoints)
+        CALL dmallocA(thisVTKMesh%z,thisVTKMesh%numPoints)
+        ThisVTKMesh%x=Xlist
+        ThisVTKMesh%y=Ylist
+        ThisVTKMesh%z=Zlist
+        IF(thisVTKMesh%numCells == 0) THEN
+          thisVTKMesh%numCells=(thisVTKMesh%dims(1)-1)* &
+              (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
+        ENDIF
+        CALL dmallocA(thisVTKMesh%cellList,thisVTKMesh%numCells)
+        CALL dmallocA(thisVTKMesh%nodeList,thisVTKMesh%numCells*8)
+        thisVTKMesh%cellList=VTK_HEXAHEDRON
+        n=1
+        DO k=1,thisVTKMesh%dims(3)-1
+          DO j=1,thisVTKMesh%dims(2)-1
+            DO i=1,thisVTKMesh%dims(1)-1
+              thisVTKMesh%nodeList(n)=pointMap(i,j,k)
+              thisVTKMesh%nodeList(n+1)=pointMap(i+1,j,k)
+              thisVTKMesh%nodeList(n+2)=pointMap(i+1,j+1,k)
+              thisVTKMesh%nodeList(n+3)=pointMap(i,j+1,k)
+              thisVTKMesh%nodeList(n+4)=pointMap(i,j,k+1)
+              thisVTKMesh%nodeList(n+5)=pointMap(i+1,j,k+1)
+              thisVTKMesh%nodeList(n+6)=pointMap(i+1,j+1,k+1)
+              thisVTKMesh%nodeList(n+7)=pointMap(i,j+1,k+1)
+              n=n+8
             ENDDO
-            CALL demallocA(Xlist)
-            CALL demallocA(Ylist)
-            CALL demallocA(Zlist)
-            CALL demallocA(pointMap)
+          ENDDO
+        ENDDO
+        CALL demallocA(Xlist)
+        CALL demallocA(Ylist)
+        CALL demallocA(Zlist)
+        CALL demallocA(pointMap)
 
-          CASE(VTK_RECTILINEAR_GRID)
-            thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
-            thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
-                thisVTKMesh%dims(3)
-            CALL dmallocA(Xlist,thisVTKMesh%numPoints)
-            CALL dmallocA(Ylist,thisVTKMesh%numPoints)
-            CALL dmallocA(Zlist,thisVTKMesh%numPoints)
-            CALL dmallocA(pointMap,thisVTKMesh%dims(1),thisVTKMesh%dims(2), &
-                thisVTKMesh%dims(3))
-            n=0
-            DO k=1,thisVTKMesh%dims(3)
-              DO j=1,thisVTKMesh%dims(2)
-                DO i=1,thisVTKMesh%dims(1)
-                  pointMap(i,j,k)=n
-                  Xlist(n+1)=thisVTKMesh%x(i)
-                  Ylist(n+1)=thisVTKMesh%y(j)
-                  Zlist(n+1)=thisVTKMesh%z(k)
-                  n=n+1
-                ENDDO
-              ENDDO
-            ENDDO
-            CALL demallocA(thisVTKMesh%x)
-            CALL demallocA(thisVTKMesh%y)
-            CALL demallocA(thisVTKMesh%z)
-            CALL dmallocA(thisVTKMesh%x,thisVTKMesh%numPoints)
-            CALL dmallocA(thisVTKMesh%y,thisVTKMesh%numPoints)
-            CALL dmallocA(thisVTKMesh%z,thisVTKMesh%numPoints)
-            ThisVTKMesh%x=Xlist
-            ThisVTKMesh%y=Ylist
-            ThisVTKMesh%z=Zlist
-            IF(thisVTKMesh%numCells == 0) THEN
-              thisVTKMesh%numCells=(thisVTKMesh%dims(1)-1)* &
-                  (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
-            ENDIF
-            CALL dmallocA(thisVTKMesh%cellList,thisVTKMesh%numCells)
-            CALL dmallocA(thisVTKMesh%nodeList,thisVTKMesh%numCells*8)
-            thisVTKMesh%cellList=VTK_HEXAHEDRON
-            n=1
-            DO k=1,thisVTKMesh%dims(3)-1
-              DO j=1,thisVTKMesh%dims(2)-1
-                DO i=1,thisVTKMesh%dims(1)-1
-                  thisVTKMesh%nodeList(n)=pointMap(i,j,k)
-                  thisVTKMesh%nodeList(n+1)=pointMap(i+1,j,k)
-                  thisVTKMesh%nodeList(n+2)=pointMap(i+1,j+1,k)
-                  thisVTKMesh%nodeList(n+3)=pointMap(i,j+1,k)
-                  thisVTKMesh%nodeList(n+4)=pointMap(i,j,k+1)
-                  thisVTKMesh%nodeList(n+5)=pointMap(i+1,j,k+1)
-                  thisVTKMesh%nodeList(n+6)=pointMap(i+1,j+1,k+1)
-                  thisVTKMesh%nodeList(n+7)=pointMap(i,j+1,k+1)
-                  n=n+8
-                ENDDO
-              ENDDO
-            ENDDO
-            CALL demallocA(Xlist)
-            CALL demallocA(Ylist)
-            CALL demallocA(Zlist)
-            CALL demallocA(pointMap)
-          CASE(VTK_UNSTRUCTURED_GRID)
-            RETURN !already an unstructured grid
-          CASE DEFAULT
-            !Print warning for VTKMesh object types not yet implemented
-            CALL eVTK%raiseError(modName//'::'//myName// &
-                ' - VTKMesh type not supported for conversion!')
-        ENDSELECT
-      CASE(VTK_POLYDATA)
-        !Will be implemented later, print warning
-        CALL eVTK%raiseError(modName//'::'//myName// &
-            ' - Conversion to type VTK_POLYDATA is not supported!')
       CASE(VTK_RECTILINEAR_GRID)
-        !Will be implemented later, print warning
+        thisVTKMesh%meshType=VTK_UNSTRUCTURED_GRID
+        thisVTKMesh%numPoints=thisVTKMesh%dims(1)*thisVTKMesh%dims(2)* &
+            thisVTKMesh%dims(3)
+        CALL dmallocA(Xlist,thisVTKMesh%numPoints)
+        CALL dmallocA(Ylist,thisVTKMesh%numPoints)
+        CALL dmallocA(Zlist,thisVTKMesh%numPoints)
+        CALL dmallocA(pointMap,thisVTKMesh%dims(1),thisVTKMesh%dims(2), &
+            thisVTKMesh%dims(3))
+        n=0
+        DO k=1,thisVTKMesh%dims(3)
+          DO j=1,thisVTKMesh%dims(2)
+            DO i=1,thisVTKMesh%dims(1)
+              pointMap(i,j,k)=n
+              Xlist(n+1)=thisVTKMesh%x(i)
+              Ylist(n+1)=thisVTKMesh%y(j)
+              Zlist(n+1)=thisVTKMesh%z(k)
+              n=n+1
+            ENDDO
+          ENDDO
+        ENDDO
+        CALL demallocA(thisVTKMesh%x)
+        CALL demallocA(thisVTKMesh%y)
+        CALL demallocA(thisVTKMesh%z)
+        CALL dmallocA(thisVTKMesh%x,thisVTKMesh%numPoints)
+        CALL dmallocA(thisVTKMesh%y,thisVTKMesh%numPoints)
+        CALL dmallocA(thisVTKMesh%z,thisVTKMesh%numPoints)
+        ThisVTKMesh%x=Xlist
+        ThisVTKMesh%y=Ylist
+        ThisVTKMesh%z=Zlist
+        IF(thisVTKMesh%numCells == 0) THEN
+          thisVTKMesh%numCells=(thisVTKMesh%dims(1)-1)* &
+              (thisVTKMesh%dims(2)-1)*(thisVTKMesh%dims(3)-1)
+        ENDIF
+        CALL dmallocA(thisVTKMesh%cellList,thisVTKMesh%numCells)
+        CALL dmallocA(thisVTKMesh%nodeList,thisVTKMesh%numCells*8)
+        thisVTKMesh%cellList=VTK_HEXAHEDRON
+        n=1
+        DO k=1,thisVTKMesh%dims(3)-1
+          DO j=1,thisVTKMesh%dims(2)-1
+            DO i=1,thisVTKMesh%dims(1)-1
+              thisVTKMesh%nodeList(n)=pointMap(i,j,k)
+              thisVTKMesh%nodeList(n+1)=pointMap(i+1,j,k)
+              thisVTKMesh%nodeList(n+2)=pointMap(i+1,j+1,k)
+              thisVTKMesh%nodeList(n+3)=pointMap(i,j+1,k)
+              thisVTKMesh%nodeList(n+4)=pointMap(i,j,k+1)
+              thisVTKMesh%nodeList(n+5)=pointMap(i+1,j,k+1)
+              thisVTKMesh%nodeList(n+6)=pointMap(i+1,j+1,k+1)
+              thisVTKMesh%nodeList(n+7)=pointMap(i,j+1,k+1)
+              n=n+8
+            ENDDO
+          ENDDO
+        ENDDO
+        CALL demallocA(Xlist)
+        CALL demallocA(Ylist)
+        CALL demallocA(Zlist)
+        CALL demallocA(pointMap)
+      CASE(VTK_UNSTRUCTURED_GRID)
+        RETURN !already an unstructured grid
+      CASE DEFAULT
+        !Print warning for VTKMesh object types not yet implemented
         CALL eVTK%raiseError(modName//'::'//myName// &
-            ' - Conversion to type VTK_RECTILINEAR_GRID is not supported!')
+            ' - VTKMesh type not supported for conversion!')
+      ENDSELECT
+    CASE(VTK_POLYDATA)
+      !Will be implemented later, print warning
+      CALL eVTK%raiseError(modName//'::'//myName// &
+          ' - Conversion to type VTK_POLYDATA is not supported!')
+    CASE(VTK_RECTILINEAR_GRID)
+      !Will be implemented later, print warning
+      CALL eVTK%raiseError(modName//'::'//myName// &
+          ' - Conversion to type VTK_RECTILINEAR_GRID is not supported!')
     ENDSELECT
   ENDIF
 ENDSUBROUTINE convert_VTKMeshType
@@ -1237,24 +1237,24 @@ SUBROUTINE removeCells_VTKMeshType(thisVTKMesh,cellNotPresent)
     IF(.NOT. cellNotPresent(i)) THEN
       n=n+1
     SELECTCASE(thisVTKMesh%cellList(i))
-      CASE(VTK_VERTEX); q=q+1
-      CASE(VTK_LINE); q=q+2
-      CASE(VTK_TRIANGLE); q=q+3
-      CASE(VTK_QUAD); q=q+4
-      CASE(VTK_TETRA); q=q+4
-      CASE(VTK_HEXAHEDRON); q=q+8
-      CASE(VTK_VOXEL); q=q+8
-      CASE(VTK_WEDGE); q=q+6
-      CASE(VTK_PYRAMID); q=q+5
-      CASE(VTK_QUADRATIC_EDGE); q=q+3
-      CASE(VTK_QUADRATIC_TRIANGLE); q=q+6
-      CASE(VTK_QUADRATIC_QUAD); q=q+8
-      CASE(VTK_QUADRATIC_TETRA); q=q+10
-      CASE(VTK_QUADRATIC_HEXAHEDRON); q=q+20
-      CASE DEFAULT
-          CALL eVTK%raiseError(modName//'::'//myName// &
-              ' - VTK cell type is not supported!')
-          n=0
+    CASE(VTK_VERTEX); q=q+1
+    CASE(VTK_LINE); q=q+2
+    CASE(VTK_TRIANGLE); q=q+3
+    CASE(VTK_QUAD); q=q+4
+    CASE(VTK_TETRA); q=q+4
+    CASE(VTK_HEXAHEDRON); q=q+8
+    CASE(VTK_VOXEL); q=q+8
+    CASE(VTK_WEDGE); q=q+6
+    CASE(VTK_PYRAMID); q=q+5
+    CASE(VTK_QUADRATIC_EDGE); q=q+3
+    CASE(VTK_QUADRATIC_TRIANGLE); q=q+6
+    CASE(VTK_QUADRATIC_QUAD); q=q+8
+    CASE(VTK_QUADRATIC_TETRA); q=q+10
+    CASE(VTK_QUADRATIC_HEXAHEDRON); q=q+20
+    CASE DEFAULT
+        CALL eVTK%raiseError(modName//'::'//myName// &
+            ' - VTK cell type is not supported!')
+        n=0
     ENDSELECT
     ENDIF
   ENDDO
@@ -1267,24 +1267,24 @@ SUBROUTINE removeCells_VTKMeshType(thisVTKMesh,cellNotPresent)
   k=1
   DO i=1,thisVTKMesh%numCells
     SELECTCASE(thisVTKMesh%cellList(i))
-      CASE(VTK_VERTEX); n=1
-      CASE(VTK_LINE); n=2
-      CASE(VTK_TRIANGLE); n=3
-      CASE(VTK_QUAD); n=4
-      CASE(VTK_TETRA); n=4
-      CASE(VTK_HEXAHEDRON); n=8
-      CASE(VTK_VOXEL); n=8
-      CASE(VTK_WEDGE); n=6
-      CASE(VTK_PYRAMID); n=5
-      CASE(VTK_QUADRATIC_EDGE); n=3
-      CASE(VTK_QUADRATIC_TRIANGLE); n=6
-      CASE(VTK_QUADRATIC_QUAD); n=8
-      CASE(VTK_QUADRATIC_TETRA); n=10
-      CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
-      CASE DEFAULT
-          CALL eVTK%raiseError(modName//'::'//myName// &
-              ' - VTK cell type is not supported!')
-          n=0
+    CASE(VTK_VERTEX); n=1
+    CASE(VTK_LINE); n=2
+    CASE(VTK_TRIANGLE); n=3
+    CASE(VTK_QUAD); n=4
+    CASE(VTK_TETRA); n=4
+    CASE(VTK_HEXAHEDRON); n=8
+    CASE(VTK_VOXEL); n=8
+    CASE(VTK_WEDGE); n=6
+    CASE(VTK_PYRAMID); n=5
+    CASE(VTK_QUADRATIC_EDGE); n=3
+    CASE(VTK_QUADRATIC_TRIANGLE); n=6
+    CASE(VTK_QUADRATIC_QUAD); n=8
+    CASE(VTK_QUADRATIC_TETRA); n=10
+    CASE(VTK_QUADRATIC_HEXAHEDRON); n=20
+    CASE DEFAULT
+        CALL eVTK%raiseError(modName//'::'//myName// &
+            ' - VTK cell type is not supported!')
+        n=0
     ENDSELECT
     IF(.NOT. cellNotPresent(i)) THEN
       scratchCellList(p)=thisVTKMesh%cellList(i)

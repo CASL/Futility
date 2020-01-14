@@ -418,25 +418,25 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
       thisGraph%partitionAlgArry(ipart)%p => NULL()
       algName=partAlgs(ipart)%upper()
       SELECTCASE(TRIM(algName))
-        CASE('NONE')
-        CASE('RECURSIVE EXPANSION BISECTION')
-          thisGraph%partitionAlgArry(ipart)%p => RecursiveExpansionBisection
+      CASE('NONE')
+      CASE('RECURSIVE EXPANSION BISECTION')
+        thisGraph%partitionAlgArry(ipart)%p => RecursiveExpansionBisection
 #ifdef FUTILITY_HAVE_SLEPC
-        CASE('RECURSIVE SPECTRAL BISECTION')
-          thisGraph%partitionAlgArry(ipart)%p => RecursiveSpectralBisection
-        CASE('RECURSIVE INERTIAL BISECTION')
-          thisGraph%partitionAlgArry(ipart)%p => RecursiveInertialBisection
+      CASE('RECURSIVE SPECTRAL BISECTION')
+        thisGraph%partitionAlgArry(ipart)%p => RecursiveSpectralBisection
+      CASE('RECURSIVE INERTIAL BISECTION')
+        thisGraph%partitionAlgArry(ipart)%p => RecursiveInertialBisection
 #else
-        CASE('RECURSIVE SPECTRAL BISECTION')
-          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-              ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
-        CASE('RECURSIVE INERTIAL BISECTION')
-          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-              ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
+      CASE('RECURSIVE SPECTRAL BISECTION')
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
+      CASE('RECURSIVE INERTIAL BISECTION')
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - must recompile with SLEPc to use '//TRIM(ADJUSTL(algName)))
 #endif
-        CASE DEFAULT
-          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-              ' - Partitioning algorithm "'//TRIM(algName)//'" not recognized!')
+      CASE DEFAULT
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - Partitioning algorithm "'//TRIM(algName)//'" not recognized!')
       ENDSELECT
     ENDDO !ipart
 
@@ -453,15 +453,15 @@ SUBROUTINE init_PartitionGraph(thisGraph,params)
         ENDIF
       ENDIF
       SELECTCASE(TRIM(algName))
-        CASE('')     !Do nothing if nothing specified
-        CASE('None') !Do nothing if nothing specified
-        CASE('KERNIGHAN-LIN')
-          thisGraph%refineAlgArry(ipart)%r => KernighanLin_PartitionGraph
-        CASE('SPATIAL KERNIGHAN-LIN')
-          thisGraph%refineAlgArry(ipart)%r => SpatialKernighanLin_PartitionGraph
-        CASE DEFAULT
-          CALL ePartitionGraph%raiseError(modName//'::'//myName// &
-              ' - Refinement algorithm "'//TRIM(algName)//'" not recognized!')
+      CASE('')     !Do nothing if nothing specified
+      CASE('None') !Do nothing if nothing specified
+      CASE('KERNIGHAN-LIN')
+        thisGraph%refineAlgArry(ipart)%r => KernighanLin_PartitionGraph
+      CASE('SPATIAL KERNIGHAN-LIN')
+        thisGraph%refineAlgArry(ipart)%r => SpatialKernighanLin_PartitionGraph
+      CASE DEFAULT
+        CALL ePartitionGraph%raiseError(modName//'::'//myName// &
+            ' - Refinement algorithm "'//TRIM(algName)//'" not recognized!')
       ENDSELECT
       ipart=ipart+1
     ENDDO !ipart
@@ -1875,7 +1875,7 @@ SUBROUTINE getEigenVecs(A,lsmall,numvecs,V)
   CALL EPSGetConverged(eps,numvecs,ierr)
   numvecs=MIN(nev,numvecs)
   DO iv=1,numvecs
-  SELECTTYPE(v1 => V(iv)); TYPE IS(PETScVectorType)
+    SELECTTYPE(v1 => V(iv)); TYPE IS(PETScVectorType)
       SELECTTYPE(v2 => Vi(iv)); TYPE IS(PETScVectorType)
         CALL v1%init(vecParams)
         CALL v2%init(vecParams)

@@ -192,24 +192,24 @@ SUBROUTINE init_CheckPointFileType(thisCPF,myBaseFile)
     myDa32File => NULL()
     myHDF5File => NULL()
     SELECTTYPE(myBaseFile)
-      TYPE IS(DA32Filetype)
-        IF(myBaseFile%isInit()) THEN
-          myDA32File => myBaseFile
-        ELSE
-           CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-               'The passed DA32FileType must be initialized!')
-        ENDIF
-      TYPE IS(HDF5FileType)
-        IF(myBaseFile%isInit) THEN
-          myHDF5File => myBaseFile
-        ELSE
-          CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-              'The passed HDF5FileType must be initialized!')
-        ENDIF
-      CLASS DEFAULT
+    TYPE IS(DA32Filetype)
+      IF(myBaseFile%isInit()) THEN
+        myDA32File => myBaseFile
+      ELSE
+         CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
+             'The passed DA32FileType must be initialized!')
+      ENDIF
+    TYPE IS(HDF5FileType)
+      IF(myBaseFile%isInit) THEN
+        myHDF5File => myBaseFile
+      ELSE
         CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
-            'The passed base file type must be either a DA32FileType '// &
-            'or HDF5FileType!')
+            'The passed HDF5FileType must be initialized!')
+      ENDIF
+    CLASS DEFAULT
+      CALL thisCPF%e%raiseError(modName//'::'//myName//' - '// &
+          'The passed base file type must be either a DA32FileType '// &
+          'or HDF5FileType!')
     ENDSELECT
 
     IF(nerror == thisCPF%e%getCounter(EXCEPTION_ERROR)) THEN

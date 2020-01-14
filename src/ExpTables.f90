@@ -173,24 +173,24 @@ ELEMENTAL FUNCTION EXPT(myET,x,ipol) RESULT(ans)
 
   IF(myET%minVal <= x .AND. x <= myET%maxVal) THEN
     SELECTCASE(myET%tableType)
-      CASE (SINGLE_LEVEL_EXP_TABLE)
-        ans=EXPT_Single(myET,x)
-      CASE (TWO_LEVEL_EXP_TABLE)
-        ans=EXPT_TwoLevel(myET,x)
-      CASE (LINEAR_EXP_TABLE)
-        ans=EXPT_Linear(myET,x)
-      CASE (ORDER2_EXP_TABLE)
-        ans=EXPT_TwoOrder(myET,x)
-      CASE (POLAR_EXP_TABLE)
-        IF(PRESENT(ipol)) THEN
-          ans=EXPT_Polar(myET,x,ipol)
-        ELSE
+    CASE (SINGLE_LEVEL_EXP_TABLE)
+      ans=EXPT_Single(myET,x)
+    CASE (TWO_LEVEL_EXP_TABLE)
+      ans=EXPT_TwoLevel(myET,x)
+    CASE (LINEAR_EXP_TABLE)
+      ans=EXPT_Linear(myET,x)
+    CASE (ORDER2_EXP_TABLE)
+      ans=EXPT_TwoOrder(myET,x)
+    CASE (POLAR_EXP_TABLE)
+      IF(PRESENT(ipol)) THEN
+        ans=EXPT_Polar(myET,x,ipol)
+      ELSE
 !               CALL eExpTable%raiseError(modName//'::'//myName// &
 !                 ' - Polar angle index is not passed in to look'// &
 !                   ' up the polar angle dependent exponent table!')
-        ENDIF
-      CASE DEFAULT
-        ans=1._SRK-EXP(x)
+      ENDIF
+    CASE DEFAULT
+      ans=1._SRK-EXP(x)
     ENDSELECT
   ELSE
     IF(x<-700._SRK) THEN
@@ -330,35 +330,35 @@ SUBROUTINE init_ExpTable(myET,Params)
           ' - Number of intervals is overwritten by the value that'// &
           ' is determined from desired error!')
       SELECTCASE(tableType)
-        CASE (EXACT_EXP_TABLE)
-          !Do nothing!
-        CASE (SINGLE_LEVEL_EXP_TABLE)
-          nintervals=NINT(ABS(0.5_SRK/tableErr))
-        CASE (TWO_LEVEL_EXP_TABLE)
-          nintervals=NINT(SQRT(ABS(0.5_SRK/tableErr)))
-        CASE (LINEAR_EXP_TABLE,POLAR_EXP_TABLE)
-          nintervals=NINT(SQRT(ABS(0.125_SRK/tableErr)))
-        CASE (ORDER2_EXP_TABLE)
-          nintervals=NINT(ABS(9.630017699314371e-3_SRK/tableErr)**0.3333333333333333_SRK)
-        CASE DEFAULT
-          CALL eExpTable%raiseError(modName//'::'//myName// &
-              ' - Exponent table type is incorrect!')
+      CASE (EXACT_EXP_TABLE)
+        !Do nothing!
+      CASE (SINGLE_LEVEL_EXP_TABLE)
+        nintervals=NINT(ABS(0.5_SRK/tableErr))
+      CASE (TWO_LEVEL_EXP_TABLE)
+        nintervals=NINT(SQRT(ABS(0.5_SRK/tableErr)))
+      CASE (LINEAR_EXP_TABLE,POLAR_EXP_TABLE)
+        nintervals=NINT(SQRT(ABS(0.125_SRK/tableErr)))
+      CASE (ORDER2_EXP_TABLE)
+        nintervals=NINT(ABS(9.630017699314371e-3_SRK/tableErr)**0.3333333333333333_SRK)
+      CASE DEFAULT
+        CALL eExpTable%raiseError(modName//'::'//myName// &
+            ' - Exponent table type is incorrect!')
       ENDSELECT
     !Ignore the user error and keep the input nintervals
     ELSE
       SELECTCASE(tableType)
-        CASE (EXACT_EXP_TABLE)
-          tableErr=0._SRK
-        CASE (SINGLE_LEVEL_EXP_TABLE)
-          tableErr=0.5_SRK/nintervals
-        CASE (TWO_LEVEL_EXP_TABLE)
-          tableErr=0.5_SRK/(nintervals*nintervals)
-        CASE (LINEAR_EXP_TABLE,POLAR_EXP_TABLE)
-          tableErr=0.125_SRK/(nintervals*nintervals)
-        CASE (ORDER2_EXP_TABLE)
-          tableErr=9.630017699314371e-3_SRK/(nintervals*nintervals*nintervals)
-        CASE DEFAULT
-          tableErr=0._SRK
+      CASE (EXACT_EXP_TABLE)
+        tableErr=0._SRK
+      CASE (SINGLE_LEVEL_EXP_TABLE)
+        tableErr=0.5_SRK/nintervals
+      CASE (TWO_LEVEL_EXP_TABLE)
+        tableErr=0.5_SRK/(nintervals*nintervals)
+      CASE (LINEAR_EXP_TABLE,POLAR_EXP_TABLE)
+        tableErr=0.125_SRK/(nintervals*nintervals)
+      CASE (ORDER2_EXP_TABLE)
+        tableErr=9.630017699314371e-3_SRK/(nintervals*nintervals*nintervals)
+      CASE DEFAULT
+        tableErr=0._SRK
       ENDSELECT
     ENDIF
     IF(nerror == eExpTable%getcounter(EXCEPTION_ERROR)) THEN
@@ -366,133 +366,133 @@ SUBROUTINE init_ExpTable(myET,Params)
       maxTable=INT(maxVal*nintervals)
       myET%minTable=minTable
       SELECTCASE(tableType)
-        CASE (EXACT_EXP_TABLE)
-          myET%tableType=EXACT_EXP_TABLE
-        CASE(SINGLE_LEVEL_EXP_TABLE)
-          CALL dmalloc0A(myET%table,minTable,maxTable)
-          myET%nintervals=nintervals
-          myET%tableType=tableType
-          myET%maxVal=maxVal
-          myET%minVal=minVal
-          myET%rdx=REAL(nintervals,SRK)
-          myET%dx=1._SRK/myET%rdx
-          myET%tableErr=tableErr
-          x=minVal
-          DO i=minTable,maxTable
-            myET%table(i)=1._SRK-EXP(x)
-            x=x+myET%dx
-          ENDDO
-        CASE(TWO_LEVEL_EXP_TABLE)
-          CALL dmalloc0A(myET%table,minTable,maxTable)
-          CALL dmallocA(myET%table2rd,nintervals)
-          myET%nintervals=nintervals
-          myET%tableType=tableType
-          myET%maxVal=maxVal
-          myET%minVal=minVal
-          myET%rdx=REAL(nintervals,SRK)
-          myET%dx=1._SRK/myET%rdx
-          myET%dx2rd=myET%dx*myET%dx
-          myET%rdx2rd=myET%rdx*myET%rdx
-          myET%tableErr=tableErr
-          x=minVal
-          !The two-level table still tabulates EXP(x), not 1-EXP(x)
-          !because it makes use of the identity EXP(x+y)=EXP(x)*EXP(y)
-          DO i=minTable,maxTable
-            myET%table(i)=EXP(x)
-            x=x+myET%dx
-          ENDDO
-          x2rd=0._SRK
-          DO i=1,nintervals
-            x2rd=x2rd+myET%dx2rd
-            myET%table2rd(i)=EXP(x2rd)
-          ENDDO
-        CASE(LINEAR_EXP_TABLE)
-          CALL dmalloc0A(myET%table2D,1,2,minTable,maxTable)
-          myET%nintervals=nintervals
-          myET%tableType=tableType
-          myET%maxVal=maxVal
-          myET%minVal=minVal
-          myET%rdx=REAL(nintervals,SRK)
-          myET%dx=1._SRK/myET%rdx
-          myET%tableErr=tableErr
-          x1=minVal
-          y1=1._SRK-EXP(x1)
-          DO i=minTable,maxTable
-            x2=x1+myET%dx
-            y2=1._SRK-EXP(x2)
-            myET%table2D(1,i)=(y2-y1)*myET%rdx
-            myET%table2D(2,i)=y1-myET%table2D(1,i)*x1
-            x1=x2
-            y1=y2
-          ENDDO
-        CASE(ORDER2_EXP_TABLE)
-          CALL dmalloc0A(myET%table,minTable,maxTable)
-          CALL dmalloc0A(myET%table2rd,minTable,maxTable)
-          CALL dmalloc0A(myET%table3rd,minTable,maxTable)
-          !The interpolation formula
-          !f(x)=f(x1)*(x-x2)*(x-x3)/((x1-x2)*(x1-x3))
-          !    +f(x2)*(x-x1)*(x-x3)/((x2-x1)*(x2-x3))
-          !    +f(x3)*(x-x1)*(x-x2)/((x3-x1)*(x3-x2))
-          !==>
-          !f(x)=a+b*x+c*x*x
-          !and a=x2*x3*f(x1)/((x1-x2)*(x1-x3))+x1*x3*f(x2)/((x2-x1)*(x2-x3)) &
-          !     +x1*x2*f(x3)/((x3-x1)*(x3-x2))
-          !    b=-(x2+x3)*f(x1)/((x1-x2)*(x1-x3))-(x1+x3)*f(x2)/((x2-x1)*(x2-x3)) &
-          !     -(x1+x2)*f(x3)/((x3-x1)*(x3-x2))
-          !    c=*f(x1)/((x1-x2)*(x1-x3))+*f(x2)/((x2-x1)*(x2-x3)) &
-          !     +*f(x3)/((x3-x1)*(x3-x2))
-          myET%nintervals=nintervals
-          myET%tableType=tableType
-          myET%maxVal=maxVal
-          myET%minVal=minVal
-          myET%rdx=REAL(nintervals,SRK)
-          myET%dx=1._SRK/myET%rdx
-          myET%tableErr=tableErr
-          x1=minVal
-          y1=1._SRK-EXP(x1)
+      CASE (EXACT_EXP_TABLE)
+        myET%tableType=EXACT_EXP_TABLE
+      CASE(SINGLE_LEVEL_EXP_TABLE)
+        CALL dmalloc0A(myET%table,minTable,maxTable)
+        myET%nintervals=nintervals
+        myET%tableType=tableType
+        myET%maxVal=maxVal
+        myET%minVal=minVal
+        myET%rdx=REAL(nintervals,SRK)
+        myET%dx=1._SRK/myET%rdx
+        myET%tableErr=tableErr
+        x=minVal
+        DO i=minTable,maxTable
+          myET%table(i)=1._SRK-EXP(x)
+          x=x+myET%dx
+        ENDDO
+      CASE(TWO_LEVEL_EXP_TABLE)
+        CALL dmalloc0A(myET%table,minTable,maxTable)
+        CALL dmallocA(myET%table2rd,nintervals)
+        myET%nintervals=nintervals
+        myET%tableType=tableType
+        myET%maxVal=maxVal
+        myET%minVal=minVal
+        myET%rdx=REAL(nintervals,SRK)
+        myET%dx=1._SRK/myET%rdx
+        myET%dx2rd=myET%dx*myET%dx
+        myET%rdx2rd=myET%rdx*myET%rdx
+        myET%tableErr=tableErr
+        x=minVal
+        !The two-level table still tabulates EXP(x), not 1-EXP(x)
+        !because it makes use of the identity EXP(x+y)=EXP(x)*EXP(y)
+        DO i=minTable,maxTable
+          myET%table(i)=EXP(x)
+          x=x+myET%dx
+        ENDDO
+        x2rd=0._SRK
+        DO i=1,nintervals
+          x2rd=x2rd+myET%dx2rd
+          myET%table2rd(i)=EXP(x2rd)
+        ENDDO
+      CASE(LINEAR_EXP_TABLE)
+        CALL dmalloc0A(myET%table2D,1,2,minTable,maxTable)
+        myET%nintervals=nintervals
+        myET%tableType=tableType
+        myET%maxVal=maxVal
+        myET%minVal=minVal
+        myET%rdx=REAL(nintervals,SRK)
+        myET%dx=1._SRK/myET%rdx
+        myET%tableErr=tableErr
+        x1=minVal
+        y1=1._SRK-EXP(x1)
+        DO i=minTable,maxTable
           x2=x1+myET%dx
           y2=1._SRK-EXP(x2)
-          rdx2=myET%rdx*myET%rdx
-          DO i=minTable,maxTable
-            x3=x2+myET%dx
-            y3=1._SRK-EXP(x3)
-            myET%table(i)=((y1+y3)*0.5_SRK-y2)*rdx2
-            myET%table2rd(i)=(-((x2+x3)*y1+(x1+x2)*y3)*0.5_SRK+(x1+x3)*y2)*rdx2
-            myET%table3rd(i)=((x3*y1+x1*y3)*x2*0.5_SRK-x1*x3*y2)*rdx2
-            x1=x2
-            x2=x3
-            y1=y2
-            y2=y3
-          ENDDO
-        CASE(POLAR_EXP_TABLE)
-          CALL tmpList%get('ExpTables -> RSIN_polars',rsinpol)
-          npol=SIZE(rsinpol)
-          ALLOCATE(y1p(npol),y2p(npol))
-          CALL dmalloc0A(myET%table3D,1,2,minTable,maxTable,1,npol)
-          myET%nintervals=nintervals
-          myET%tableType=tableType
-          myET%maxVal=maxVal
-          myET%minVal=minVal
-          myET%minTable=minTable
-          myET%rdx=REAL(nintervals,SRK)
-          myET%dx=1._SRK/myET%rdx
-          myET%tableErr=tableErr
+          myET%table2D(1,i)=(y2-y1)*myET%rdx
+          myET%table2D(2,i)=y1-myET%table2D(1,i)*x1
+          x1=x2
+          y1=y2
+        ENDDO
+      CASE(ORDER2_EXP_TABLE)
+        CALL dmalloc0A(myET%table,minTable,maxTable)
+        CALL dmalloc0A(myET%table2rd,minTable,maxTable)
+        CALL dmalloc0A(myET%table3rd,minTable,maxTable)
+        !The interpolation formula
+        !f(x)=f(x1)*(x-x2)*(x-x3)/((x1-x2)*(x1-x3))
+        !    +f(x2)*(x-x1)*(x-x3)/((x2-x1)*(x2-x3))
+        !    +f(x3)*(x-x1)*(x-x2)/((x3-x1)*(x3-x2))
+        !==>
+        !f(x)=a+b*x+c*x*x
+        !and a=x2*x3*f(x1)/((x1-x2)*(x1-x3))+x1*x3*f(x2)/((x2-x1)*(x2-x3)) &
+        !     +x1*x2*f(x3)/((x3-x1)*(x3-x2))
+        !    b=-(x2+x3)*f(x1)/((x1-x2)*(x1-x3))-(x1+x3)*f(x2)/((x2-x1)*(x2-x3)) &
+        !     -(x1+x2)*f(x3)/((x3-x1)*(x3-x2))
+        !    c=*f(x1)/((x1-x2)*(x1-x3))+*f(x2)/((x2-x1)*(x2-x3)) &
+        !     +*f(x3)/((x3-x1)*(x3-x2))
+        myET%nintervals=nintervals
+        myET%tableType=tableType
+        myET%maxVal=maxVal
+        myET%minVal=minVal
+        myET%rdx=REAL(nintervals,SRK)
+        myET%dx=1._SRK/myET%rdx
+        myET%tableErr=tableErr
+        x1=minVal
+        y1=1._SRK-EXP(x1)
+        x2=x1+myET%dx
+        y2=1._SRK-EXP(x2)
+        rdx2=myET%rdx*myET%rdx
+        DO i=minTable,maxTable
+          x3=x2+myET%dx
+          y3=1._SRK-EXP(x3)
+          myET%table(i)=((y1+y3)*0.5_SRK-y2)*rdx2
+          myET%table2rd(i)=(-((x2+x3)*y1+(x1+x2)*y3)*0.5_SRK+(x1+x3)*y2)*rdx2
+          myET%table3rd(i)=((x3*y1+x1*y3)*x2*0.5_SRK-x1*x3*y2)*rdx2
+          x1=x2
+          x2=x3
+          y1=y2
+          y2=y3
+        ENDDO
+      CASE(POLAR_EXP_TABLE)
+        CALL tmpList%get('ExpTables -> RSIN_polars',rsinpol)
+        npol=SIZE(rsinpol)
+        ALLOCATE(y1p(npol),y2p(npol))
+        CALL dmalloc0A(myET%table3D,1,2,minTable,maxTable,1,npol)
+        myET%nintervals=nintervals
+        myET%tableType=tableType
+        myET%maxVal=maxVal
+        myET%minVal=minVal
+        myET%minTable=minTable
+        myET%rdx=REAL(nintervals,SRK)
+        myET%dx=1._SRK/myET%rdx
+        myET%tableErr=tableErr
+        x1=minVal
+
+        DO ipol=1,npol
           x1=minVal
-
-          DO ipol=1,npol
-            x1=minVal
-            y1=1._SRK-EXP(x1*rsinpol(ipol))
-            DO i=minTable,maxTable
-              x2=x1+myET%dx
-              y2=1._SRK-EXP(x2*rsinpol(ipol))
-              myET%table3D(1,i,ipol)=(y2-y1)*myET%rdx
-              myET%table3D(2,i,ipol)=y1-myET%table3D(1,i,ipol)*x1
-              x1=x2
-              y1=y2
-            ENDDO
+          y1=1._SRK-EXP(x1*rsinpol(ipol))
+          DO i=minTable,maxTable
+            x2=x1+myET%dx
+            y2=1._SRK-EXP(x2*rsinpol(ipol))
+            myET%table3D(1,i,ipol)=(y2-y1)*myET%rdx
+            myET%table3D(2,i,ipol)=y1-myET%table3D(1,i,ipol)*x1
+            x1=x2
+            y1=y2
           ENDDO
+        ENDDO
 
-          !The following loop structure may not be necessary.
+        !The following loop structure may not be necessary.
 !             DO ipol=1,npol
 !               DO i=minTable,maxTable
 !                 myET%table3D(1,i,ipol)=myET%table3D(1,i,ipol)*myET%dx

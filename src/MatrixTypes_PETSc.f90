@@ -372,8 +372,10 @@ SUBROUTINE matvec_PETScVector(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
   IF(PRESENT(alpha)) a=alpha
   IF(PRESENT(beta))  b=beta
 
-  SELECTTYPE(x); TYPE IS(RealVectorType)
-    SELECTTYPE(y); TYPE IS(RealVectorType)
+  SELECTTYPE(x)
+  TYPE IS(RealVectorType)
+    SELECTTYPE(y)
+    TYPE IS(RealVectorType)
       ALLOCATE(tmpmat(thisMatrix%n,thisMatrix%n))
       ALLOCATE(tmpvec(x%n))
       ALLOCATE(tmpy(x%n))

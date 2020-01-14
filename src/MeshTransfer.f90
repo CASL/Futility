@@ -238,15 +238,15 @@ SUBROUTINE init_1Dbase(this,pList)
 
   CALL pList%get('map_in',tmpstr)
   SELECTCASE(CHAR(tmpstr))
-    CASE('CONTINUOUS')
-      this%MapType_in=MapType_CONTINUOUS
-    CASE('POINT')
-      this%MapType_in=MapType_POINT
-    CASE('VOLUME')
-      this%MapType_in=MapType_VOLUME
-    CASE DEFAULT
-      CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
-          "invalid incoming map type")
+  CASE('CONTINUOUS')
+    this%MapType_in=MapType_CONTINUOUS
+  CASE('POINT')
+    this%MapType_in=MapType_POINT
+  CASE('VOLUME')
+    this%MapType_in=MapType_VOLUME
+  CASE DEFAULT
+    CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
+        "invalid incoming map type")
   ENDSELECT
   IF(this%MapType_in == MapType_CONTINUOUS) THEN
     CALL pList%get('moments_in',this%nmesh_in)
@@ -260,15 +260,15 @@ SUBROUTINE init_1Dbase(this,pList)
 
   CALL pList%get('map_out',tmpstr)
   SELECTCASE(CHAR(tmpstr))
-    CASE('CONTINUOUS')
-      this%MapType_out=MapType_CONTINUOUS
-    CASE('POINT')
-      this%MapType_out=MapType_POINT
-    CASE('VOLUME')
-      this%MapType_out=MapType_VOLUME
-    CASE DEFAULT
-      CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
-          "invalid outgoing map type")
+  CASE('CONTINUOUS')
+    this%MapType_out=MapType_CONTINUOUS
+  CASE('POINT')
+    this%MapType_out=MapType_POINT
+  CASE('VOLUME')
+    this%MapType_out=MapType_VOLUME
+  CASE DEFAULT
+    CALL eMeshTransfer%raiseError(modName//"::"//myName//" - "// &
+        "invalid outgoing map type")
   ENDSELECT
   IF(this%MapType_out == MapType_CONTINUOUS) THEN
     CALL pList%get('moments_out',this%nmesh_out)

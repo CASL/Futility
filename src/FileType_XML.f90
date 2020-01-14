@@ -232,7 +232,7 @@ RECURSIVE SUBROUTINE init_XMLElementType(thisXMLE,cachedFile,itag,lines,tagBegin
               CALL thisXMLE%children(ichild)%init(cachedFile,iTag,lines, &
                   childTags(1,iChild),childTags(2,iChild))
               SELECTTYPE(xmle => thisXMLE)
-                TYPE IS(XMLElementType); thisXMLE%children(ichild)%parent => xmle
+              TYPE IS(XMLElementType); thisXMLE%children(ichild)%parent => xmle
               ENDSELECT
             ENDDO
           ELSE

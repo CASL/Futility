@@ -583,44 +583,44 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
   mode_in=mode
   mode_in = mode_in%upper()
   SELECTCASE(TRIM(mode_in))
-    CASE('READ')
-      INQUIRE(FILE=filename,EXIST=exists)
-      IF(exists) THEN
-        CALL thisHDF5File%setWriteStat(.FALSE.)
-        CALL thisHDF5File%setReadStat(.TRUE.)
-      ELSE
-        CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - HDF5 file '//filename//' is being opened with '// &
-            'mode READ but does not exist.')
-      ENDIF
-    CASE('WRITE')
-      INQUIRE(FILE=filename,EXIST=exists)
-      IF(exists) THEN
-        CALL thisHDF5File%setWriteStat(.TRUE.)
-        CALL thisHDF5File%setReadStat(.TRUE.)
-      ELSE
-        CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - HDF5 file '//filename//' is being opened with '// &
-            'mode WRITE but does not exist.')
-      ENDIF
-    CASE('OVERWRITE')
-      INQUIRE(FILE=filename,EXIST=exists)
-      IF(exists) THEN
-        CALL thisHDF5File%setWriteStat(.TRUE.)
-        CALL thisHDF5File%setOverwriteStat(.TRUE.)
-        CALL thisHDF5File%setReadStat(.TRUE.)
-      ELSE
-        CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - HDF5 file '//filename//' is being opened with '// &
-            'mode OVERWRITE but does not exist.')
-      ENDIF
-    CASE('NEW')
-      CALL thisHDF5File%setWriteStat(.TRUE.)
-      CALL thisHDF5File%setNewStat(.TRUE.)
+  CASE('READ')
+    INQUIRE(FILE=filename,EXIST=exists)
+    IF(exists) THEN
+      CALL thisHDF5File%setWriteStat(.FALSE.)
       CALL thisHDF5File%setReadStat(.TRUE.)
-    CASE DEFAULT
+    ELSE
       CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unrecognized access mode.')
+          ' - HDF5 file '//filename//' is being opened with '// &
+          'mode READ but does not exist.')
+    ENDIF
+  CASE('WRITE')
+    INQUIRE(FILE=filename,EXIST=exists)
+    IF(exists) THEN
+      CALL thisHDF5File%setWriteStat(.TRUE.)
+      CALL thisHDF5File%setReadStat(.TRUE.)
+    ELSE
+      CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - HDF5 file '//filename//' is being opened with '// &
+          'mode WRITE but does not exist.')
+    ENDIF
+  CASE('OVERWRITE')
+    INQUIRE(FILE=filename,EXIST=exists)
+    IF(exists) THEN
+      CALL thisHDF5File%setWriteStat(.TRUE.)
+      CALL thisHDF5File%setOverwriteStat(.TRUE.)
+      CALL thisHDF5File%setReadStat(.TRUE.)
+    ELSE
+      CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - HDF5 file '//filename//' is being opened with '// &
+          'mode OVERWRITE but does not exist.')
+    ENDIF
+  CASE('NEW')
+    CALL thisHDF5File%setWriteStat(.TRUE.)
+    CALL thisHDF5File%setNewStat(.TRUE.)
+    CALL thisHDF5File%setReadStat(.TRUE.)
+  CASE DEFAULT
+    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Unrecognized access mode.')
   ENDSELECT
 
   thisHDF5File%fullname=filename
@@ -3787,78 +3787,78 @@ SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in,first_dir)
     path=TRIM(root)//'/'//CHAR(address2)
     IF(.NOT. TRIM(address2)=='') THEN
      SELECTCASE(CHAR(nextParam%dataType))
-        CASE('TYPE(ParamType_List)')
-          CALL thisHDF5File%mkdir(CHAR(path))
-        CASE('REAL(SSK)')
-          CALL vals%get(CHAR(address),rs0)
-          CALL thisHDF5File%write_s0(CHAR(path),rs0)
-        CASE('REAL(SDK)')
-          CALL vals%get(CHAR(address),rd0)
-          CALL thisHDF5File%write_d0(CHAR(path),rd0)
-        CASE('INTEGER(SNK)')
-          CALL vals%get(CHAR(address),is0)
-          CALL thisHDF5File%write_n0(CHAR(path),is0)
-        CASE('INTEGER(SLK)')
-          CALL vals%get(CHAR(address),id0)
-          CALL thisHDF5File%write_l0(CHAR(path),id0)
-        CASE('LOGICAL(SBK)')
-          CALL vals%get(CHAR(address),l0)
-          CALL thisHDF5File%write_b0(CHAR(path),l0)
-        CASE('TYPE(StringType)')
-          CALL vals%get(CHAR(address),st0)
-          IF(LEN_TRIM(st0) == 0) st0=C_NULL_CHAR
-          CALL thisHDF5File%write_st0(CHAR(path),st0)
-        CASE('1-D ARRAY REAL(SSK)')
-          CALL vals%get(CHAR(address),rs1)
-          CALL thisHDF5File%write_s1(CHAR(path),rs1)
-        CASE('1-D ARRAY REAL(SDK)')
-          CALL vals%get(CHAR(address),rd1)
-          CALL thisHDF5File%write_d1(CHAR(path),rd1)
-        CASE('1-D ARRAY INTEGER(SNK)')
-          CALL vals%get(CHAR(address),is1)
-          CALL thisHDF5File%write_n1(CHAR(path),is1)
-        CASE('1-D ARRAY INTEGER(SLK)')
-          CALL vals%get(CHAR(address),id1)
-          CALL thisHDF5File%write_l1(CHAR(path),id1)
-        CASE('1-D ARRAY LOGICAL(SBK)')
-          CALL vals%get(CHAR(address),l1)
-          CALL thisHDF5File%write_b1(CHAR(path),l1)
-        CASE('1-D ARRAY TYPE(StringType)')
-          CALL vals%get(CHAR(address),st1)
-          DO i=1,SIZE(st1)
-            IF(LEN_TRIM(st1(i)) == 0) st1(i)=C_NULL_CHAR
-          ENDDO
-          CALL thisHDF5File%write_st1_helper(CHAR(path),st1)
-        CASE('2-D ARRAY REAL(SSK)')
-          CALL vals%get(CHAR(address),rs2)
-          CALL thisHDF5File%write_s2(CHAR(path),rs2)
-        CASE('2-D ARRAY REAL(SDK)')
-          CALL vals%get(CHAR(address),rd2)
-          CALL thisHDF5File%write_d2(CHAR(path),rd2)
-        CASE('2-D ARRAY INTEGER(SNK)')
-          CALL vals%get(CHAR(address),is2)
-          CALL thisHDF5File%write_n2(CHAR(path),is2)
-        CASE('2-D ARRAY INTEGER(SLK)')
-          CALL vals%get(CHAR(address),id2)
-          CALL thisHDF5File%write_l2(CHAR(path),id2)
-        CASE('2-D ARRAY TYPE(StringType)')
-          CALL vals%get(CHAR(address),st2)
-          CALL thisHDF5File%write_st2_helper(CHAR(path),st2)
-        CASE('3-D ARRAY REAL(SSK)')
-          CALL vals%get(CHAR(address),rs3)
-          CALL thisHDF5File%write_s3(CHAR(path),rs3)
-        CASE('3-D ARRAY REAL(SDK)')
-          CALL vals%get(CHAR(address),rd3)
-          CALL thisHDF5File%write_d3(CHAR(path),rd3)
-        CASE('3-D ARRAY INTEGER(SNK)')
-          CALL vals%get(CHAR(address),is3)
-          CALL thisHDF5File%write_n3(CHAR(path),is3)
-        CASE('3-D ARRAY INTEGER(SLK)')
-          CALL vals%get(CHAR(address),id3)
-          CALL thisHDF5File%write_l3(CHAR(path),id3)
-        CASE DEFAULT
-          CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-              ' - Unrecognized Parameter Type '//CHAR(nextParam%dataType)//'.')
+      CASE('TYPE(ParamType_List)')
+        CALL thisHDF5File%mkdir(CHAR(path))
+      CASE('REAL(SSK)')
+        CALL vals%get(CHAR(address),rs0)
+        CALL thisHDF5File%write_s0(CHAR(path),rs0)
+      CASE('REAL(SDK)')
+        CALL vals%get(CHAR(address),rd0)
+        CALL thisHDF5File%write_d0(CHAR(path),rd0)
+      CASE('INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is0)
+        CALL thisHDF5File%write_n0(CHAR(path),is0)
+      CASE('INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id0)
+        CALL thisHDF5File%write_l0(CHAR(path),id0)
+      CASE('LOGICAL(SBK)')
+        CALL vals%get(CHAR(address),l0)
+        CALL thisHDF5File%write_b0(CHAR(path),l0)
+      CASE('TYPE(StringType)')
+        CALL vals%get(CHAR(address),st0)
+        IF(LEN_TRIM(st0) == 0) st0=C_NULL_CHAR
+        CALL thisHDF5File%write_st0(CHAR(path),st0)
+      CASE('1-D ARRAY REAL(SSK)')
+        CALL vals%get(CHAR(address),rs1)
+        CALL thisHDF5File%write_s1(CHAR(path),rs1)
+      CASE('1-D ARRAY REAL(SDK)')
+        CALL vals%get(CHAR(address),rd1)
+        CALL thisHDF5File%write_d1(CHAR(path),rd1)
+      CASE('1-D ARRAY INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is1)
+        CALL thisHDF5File%write_n1(CHAR(path),is1)
+      CASE('1-D ARRAY INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id1)
+        CALL thisHDF5File%write_l1(CHAR(path),id1)
+      CASE('1-D ARRAY LOGICAL(SBK)')
+        CALL vals%get(CHAR(address),l1)
+        CALL thisHDF5File%write_b1(CHAR(path),l1)
+      CASE('1-D ARRAY TYPE(StringType)')
+        CALL vals%get(CHAR(address),st1)
+        DO i=1,SIZE(st1)
+          IF(LEN_TRIM(st1(i)) == 0) st1(i)=C_NULL_CHAR
+        ENDDO
+        CALL thisHDF5File%write_st1_helper(CHAR(path),st1)
+      CASE('2-D ARRAY REAL(SSK)')
+        CALL vals%get(CHAR(address),rs2)
+        CALL thisHDF5File%write_s2(CHAR(path),rs2)
+      CASE('2-D ARRAY REAL(SDK)')
+        CALL vals%get(CHAR(address),rd2)
+        CALL thisHDF5File%write_d2(CHAR(path),rd2)
+      CASE('2-D ARRAY INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is2)
+        CALL thisHDF5File%write_n2(CHAR(path),is2)
+      CASE('2-D ARRAY INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id2)
+        CALL thisHDF5File%write_l2(CHAR(path),id2)
+      CASE('2-D ARRAY TYPE(StringType)')
+        CALL vals%get(CHAR(address),st2)
+        CALL thisHDF5File%write_st2_helper(CHAR(path),st2)
+      CASE('3-D ARRAY REAL(SSK)')
+        CALL vals%get(CHAR(address),rs3)
+        CALL thisHDF5File%write_s3(CHAR(path),rs3)
+      CASE('3-D ARRAY REAL(SDK)')
+        CALL vals%get(CHAR(address),rd3)
+        CALL thisHDF5File%write_d3(CHAR(path),rd3)
+      CASE('3-D ARRAY INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is3)
+        CALL thisHDF5File%write_n3(CHAR(path),is3)
+      CASE('3-D ARRAY INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id3)
+        CALL thisHDF5File%write_l3(CHAR(path),id3)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+            ' - Unrecognized Parameter Type '//CHAR(nextParam%dataType)//'.')
       ENDSELECT
     ENDIF
     CALL vals%getNextParam(address,nextParam)
@@ -6212,35 +6212,35 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
     IF(INT(dtype_prec,SIK) == 64) THEN
       !Get the dimensionality.  0 is scalar.
       SELECTCASE(ndims)
-        CASE(0)
-          CALL read_l0(thisHDF5File,CHAR(plpath),id0)
-          CALL vals%add(CHAR(plpath),id0)
-        CASE(1)
-          CALL read_l1(thisHDF5File,CHAR(plpath),id1)
-                  CALL vals%add(CHAR(plpath),id1)
-        CASE(2)
-          CALL read_l2(thisHDF5File,CHAR(plpath),id2)
-          CALL vals%add(CHAR(plpath),id2)
-        CASE(3)
-          CALL read_l3(thisHDF5File,CHAR(plpath),id3)
-          CALL vals%add(CHAR(plpath),id3)
+      CASE(0)
+        CALL read_l0(thisHDF5File,CHAR(plpath),id0)
+        CALL vals%add(CHAR(plpath),id0)
+      CASE(1)
+        CALL read_l1(thisHDF5File,CHAR(plpath),id1)
+                CALL vals%add(CHAR(plpath),id1)
+      CASE(2)
+        CALL read_l2(thisHDF5File,CHAR(plpath),id2)
+        CALL vals%add(CHAR(plpath),id2)
+      CASE(3)
+        CALL read_l3(thisHDF5File,CHAR(plpath),id3)
+        CALL vals%add(CHAR(plpath),id3)
       ENDSELECT
     !Ints
     ELSEIF(INT(dtype_prec,SIK) == 32) THEN
       !Get the dimensionality.  0 is scalar.
       SELECTCASE(ndims)
-        CASE(0)
-          CALL read_n0(thisHDF5File,CHAR(plpath),is0)
-          CALL vals%add(CHAR(plpath),is0)
-        CASE(1)
-          CALL read_n1(thisHDF5File,CHAR(plpath),is1)
-          CALL vals%add(CHAR(plpath),is1)
-        CASE(2)
-          CALL read_n2(thisHDF5File,CHAR(plpath),is2)
-          CALL vals%add(CHAR(plpath),is2)
-        CASE(3)
-          CALL read_n3(thisHDF5File,CHAR(plpath),is3)
-          CALL vals%add(CHAR(plpath),is3)
+      CASE(0)
+        CALL read_n0(thisHDF5File,CHAR(plpath),is0)
+        CALL vals%add(CHAR(plpath),is0)
+      CASE(1)
+        CALL read_n1(thisHDF5File,CHAR(plpath),is1)
+        CALL vals%add(CHAR(plpath),is1)
+      CASE(2)
+        CALL read_n2(thisHDF5File,CHAR(plpath),is2)
+        CALL vals%add(CHAR(plpath),is2)
+      CASE(3)
+        CALL read_n3(thisHDF5File,CHAR(plpath),is3)
+        CALL vals%add(CHAR(plpath),is3)
       ENDSELECT
     ENDIF
   !Real types
@@ -6249,133 +6249,133 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
     IF(INT(dtype_prec,SIK) == 64) THEN
       !Get the dimensionality.  0 is scalar.
       SELECTCASE(ndims)
-        CASE(0)
-          CALL read_d0(thisHDF5File,CHAR(plpath),rd0)
-          CALL vals%add(CHAR(plpath),rd0)
-        CASE(1)
-          CALL read_d1(thisHDF5File,CHAR(plpath),rd1)
-          CALL vals%add(CHAR(plpath),rd1)
-        CASE(2)
-          CALL read_d2(thisHDF5File,CHAR(plpath),rd2)
-          CALL vals%add(CHAR(plpath),rd2)
-        CASE(3)
-          CALL read_d3(thisHDF5File,CHAR(plpath),rd3)
-          CALL vals%add(CHAR(plpath),rd3)
+      CASE(0)
+        CALL read_d0(thisHDF5File,CHAR(plpath),rd0)
+        CALL vals%add(CHAR(plpath),rd0)
+      CASE(1)
+        CALL read_d1(thisHDF5File,CHAR(plpath),rd1)
+        CALL vals%add(CHAR(plpath),rd1)
+      CASE(2)
+        CALL read_d2(thisHDF5File,CHAR(plpath),rd2)
+        CALL vals%add(CHAR(plpath),rd2)
+      CASE(3)
+        CALL read_d3(thisHDF5File,CHAR(plpath),rd3)
+        CALL vals%add(CHAR(plpath),rd3)
       ENDSELECT
     !Single
     ELSEIF(INT(dtype_prec,SIK) == 32) THEN
       !Get the dimensionality.  0 is scalar.
       SELECTCASE(ndims)
-        CASE(0)
-          CALL read_s0(thisHDF5File,CHAR(plpath),rs0)
-          CALL vals%add(CHAR(plpath),rs0)
-        CASE(1)
-          CALL read_s1(thisHDF5File,CHAR(plpath),rs1)
-          CALL vals%add(CHAR(plpath),rs1)
-        CASE(2)
-          CALL read_s2(thisHDF5File,CHAR(plpath),rs2)
-          CALL vals%add(CHAR(plpath),rs2)
-        CASE(3)
-          CALL read_s3(thisHDF5File,CHAR(plpath),rs3)
-          CALL vals%add(CHAR(plpath),rs3)
+      CASE(0)
+        CALL read_s0(thisHDF5File,CHAR(plpath),rs0)
+        CALL vals%add(CHAR(plpath),rs0)
+      CASE(1)
+        CALL read_s1(thisHDF5File,CHAR(plpath),rs1)
+        CALL vals%add(CHAR(plpath),rs1)
+      CASE(2)
+        CALL read_s2(thisHDF5File,CHAR(plpath),rs2)
+        CALL vals%add(CHAR(plpath),rs2)
+      CASE(3)
+        CALL read_s3(thisHDF5File,CHAR(plpath),rs3)
+        CALL vals%add(CHAR(plpath),rs3)
       ENDSELECT
     ENDIF
   !String and boolean types
   ELSEIF(class_type == H5T_STRING_F) THEN
     !Get the dimensionality.  0 is scalar.
     SELECTCASE(ndims)
-      CASE(0)
-        !Get the string, then check if it's a boolean.
-        CALL read_st0_helper(thisHDF5File,CHAR(plpath),st0)
-        !Find replace C_NULL_CHARs from HDF5
-        st0 = st0%replace(C_NULL_CHAR,'')
-        isbool=(st0 == 'T') .OR. (st0 == 'F')
-        IF(isbool) THEN
-          CALL read_b0(thisHDF5File,CHAR(plpath),l0)
-          CALL vals%add(CHAR(plpath),l0)
-        ELSE
-          CALL vals%add(CHAR(plpath),st0)
-        ENDIF
-      CASE(1)
-        !Get the string, then check if it's a boolean.
-        CALL read_st1_helper(thisHDF5File,CHAR(plpath),st1)
-        !Find replace C_NULL_CHARs from HDF5
-        DO i=1,SIZE(st1)
-          st1(i) = st1(i)%replace(C_NULL_CHAR,'')
+    CASE(0)
+      !Get the string, then check if it's a boolean.
+      CALL read_st0_helper(thisHDF5File,CHAR(plpath),st0)
+      !Find replace C_NULL_CHARs from HDF5
+      st0 = st0%replace(C_NULL_CHAR,'')
+      isbool=(st0 == 'T') .OR. (st0 == 'F')
+      IF(isbool) THEN
+        CALL read_b0(thisHDF5File,CHAR(plpath),l0)
+        CALL vals%add(CHAR(plpath),l0)
+      ELSE
+        CALL vals%add(CHAR(plpath),st0)
+      ENDIF
+    CASE(1)
+      !Get the string, then check if it's a boolean.
+      CALL read_st1_helper(thisHDF5File,CHAR(plpath),st1)
+      !Find replace C_NULL_CHARs from HDF5
+      DO i=1,SIZE(st1)
+        st1(i) = st1(i)%replace(C_NULL_CHAR,'')
+      ENDDO
+      isbool=.TRUE.
+      DO i=1,SIZE(st1)
+        isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
+        IF(.NOT.isbool) EXIT
+      ENDDO
+      IF(isbool) THEN
+        CALL read_b1(thisHDF5File,CHAR(plpath),l1)
+        CALL vals%add(CHAR(plpath),l1)
+      ELSE
+        CALL vals%add(CHAR(plpath),st1)
+      ENDIF
+    CASE(2)
+      !Get the string, then check if it's a boolean.
+      CALL read_st2_helper(thisHDF5File,CHAR(plpath),st2)
+      !Find replace C_NULL_CHARs from HDF5
+      DO j=1,SIZE(st2,DIM=2)
+        DO i=1,SIZE(st2,DIM=1)
+          st2(i,j) = st2(i,j)%replace(C_NULL_CHAR,'')
         ENDDO
-        isbool=.TRUE.
-        DO i=1,SIZE(st1)
-          isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
+      ENDDO
+      isbool=.TRUE.
+      DO j=1,SIZE(st2,DIM=2)
+        DO i=1,SIZE(st2,DIM=1)
+          isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
           IF(.NOT.isbool) EXIT
         ENDDO
-        IF(isbool) THEN
-          CALL read_b1(thisHDF5File,CHAR(plpath),l1)
-          CALL vals%add(CHAR(plpath),l1)
-        ELSE
-          CALL vals%add(CHAR(plpath),st1)
-        ENDIF
-      CASE(2)
-        !Get the string, then check if it's a boolean.
-        CALL read_st2_helper(thisHDF5File,CHAR(plpath),st2)
-        !Find replace C_NULL_CHARs from HDF5
-        DO j=1,SIZE(st2,DIM=2)
-          DO i=1,SIZE(st2,DIM=1)
-            st2(i,j) = st2(i,j)%replace(C_NULL_CHAR,'')
-          ENDDO
-        ENDDO
-        isbool=.TRUE.
-        DO j=1,SIZE(st2,DIM=2)
-          DO i=1,SIZE(st2,DIM=1)
-            isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
-            IF(.NOT.isbool) EXIT
-          ENDDO
-          IF(.NOT.isbool) EXIT
-        ENDDO
-        IF(isbool) THEN
-          !Disabled until PL support is added.
-          CALL read_b2(thisHDF5File,CHAR(plpath),l2)
-          CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-              ' - Unsupported Parameter Type 2-D Logical Array will not be '// &
-              'added to Parameter List.')
-          !CALL vals%add(CHAR(plpath),l2)
-        ELSE
-          CALL vals%add(CHAR(plpath),st2)
-        ENDIF
-      CASE(3)
-        !Get the string, then check if it's a boolean.
-        CALL read_st3_helper(thisHDF5File,CHAR(plpath),st3)
-        !Find replace C_NULL_CHARs from HDF5
-        DO k=1,SIZE(st3,DIM=3)
-          DO j=1,SIZE(st3,DIM=2)
-            DO i=1,SIZE(st3,DIM=1)
-              st3(i,j,k) = st3(i,j,k)%replace(C_NULL_CHAR,'')
-            ENDDO
-          ENDDO
-        ENDDO
-        isbool=.TRUE.
-        DO k=1,SIZE(st3,DIM=3)
-          DO j=1,SIZE(st3,DIM=2)
-            DO i=1,SIZE(st3,DIM=1)
-              isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
-              IF(.NOT.isbool) EXIT
-            ENDDO
-            IF(.NOT.isbool) EXIT
-          ENDDO
-          IF(.NOT.isbool) EXIT
-        ENDDO
+        IF(.NOT.isbool) EXIT
+      ENDDO
+      IF(isbool) THEN
         !Disabled until PL support is added.
-        IF(isbool) THEN
-          CALL read_b3(thisHDF5File,CHAR(plpath),l3)
-          CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-              ' - Unsupported Parameter Type 3-D Logical Array will not be '// &
-              'added to Parameter List.')
-          !CALL vals%add(CHAR(plpath),l3)
-        ELSE
-          CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-              ' - Unsupported Parameter Type 3-D String Array will not be '// &
-              'added to Parameter List.')
-          !CALL vals%add(CHAR(plpath),st3)
-        ENDIF
+        CALL read_b2(thisHDF5File,CHAR(plpath),l2)
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported Parameter Type 2-D Logical Array will not be '// &
+            'added to Parameter List.')
+        !CALL vals%add(CHAR(plpath),l2)
+      ELSE
+        CALL vals%add(CHAR(plpath),st2)
+      ENDIF
+    CASE(3)
+      !Get the string, then check if it's a boolean.
+      CALL read_st3_helper(thisHDF5File,CHAR(plpath),st3)
+      !Find replace C_NULL_CHARs from HDF5
+      DO k=1,SIZE(st3,DIM=3)
+        DO j=1,SIZE(st3,DIM=2)
+          DO i=1,SIZE(st3,DIM=1)
+            st3(i,j,k) = st3(i,j,k)%replace(C_NULL_CHAR,'')
+          ENDDO
+        ENDDO
+      ENDDO
+      isbool=.TRUE.
+      DO k=1,SIZE(st3,DIM=3)
+        DO j=1,SIZE(st3,DIM=2)
+          DO i=1,SIZE(st3,DIM=1)
+            isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+            IF(.NOT.isbool) EXIT
+          ENDDO
+          IF(.NOT.isbool) EXIT
+        ENDDO
+        IF(.NOT.isbool) EXIT
+      ENDDO
+      !Disabled until PL support is added.
+      IF(isbool) THEN
+        CALL read_b3(thisHDF5File,CHAR(plpath),l3)
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported Parameter Type 3-D Logical Array will not be '// &
+            'added to Parameter List.')
+        !CALL vals%add(CHAR(plpath),l3)
+      ELSE
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported Parameter Type 3-D String Array will not be '// &
+            'added to Parameter List.')
+        !CALL vals%add(CHAR(plpath),st3)
+      ENDIF
     ENDSELECT
   ENDIF
 #endif

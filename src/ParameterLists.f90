@@ -890,27 +890,27 @@ RECURSIVE SUBROUTINE toTeuchosPlist(this, that, n)
 
   DO WHILE(ASSOCIATED(itr))
     SELECT TYPE(itr)
-      TYPE IS(ParamType_List)
-        ! This node is its own parameter list
-        new = ForTeuchos_PL_sublist(that, CHAR(itr%name), 0, &
-            "Imported from MPACT PList", ierr)
-        nextParam = itr
-        CALL toTeuchosPlist(nextParam, new, level+1)
-      TYPE IS(ParamType_SBK)
-        CALL ForTeuchos_PL_set_bool(that, CHAR(itr%name), itr%val,&
-            CHAR(itr%description), ierr)
-      TYPE IS(ParamType_SDK)
-        CALL ForTeuchos_PL_set_double(that, CHAR(itr%name), itr%val,&
-            CHAR(itr%description), ierr)
-      TYPE IS(ParamType_SNK)
-        CALL ForTeuchos_PL_set_int(that, CHAR(itr%name), itr%val,&
-            CHAR(itr%description), ierr)
-      TYPE IS(ParamType_STR)
-        CALL ForTeuchos_PL_set_string(that, CHAR(itr%name), CHAR(itr%val),&
-            CHAR(itr%description), ierr)
-      CLASS DEFAULT
-        CALL eParams%raiseError(&
-            "Unsupported PARAMETER TYPE for Teuchos conversion.")
+    TYPE IS(ParamType_List)
+      ! This node is its own parameter list
+      new = ForTeuchos_PL_sublist(that, CHAR(itr%name), 0, &
+          "Imported from MPACT PList", ierr)
+      nextParam = itr
+      CALL toTeuchosPlist(nextParam, new, level+1)
+    TYPE IS(ParamType_SBK)
+      CALL ForTeuchos_PL_set_bool(that, CHAR(itr%name), itr%val,&
+          CHAR(itr%description), ierr)
+    TYPE IS(ParamType_SDK)
+      CALL ForTeuchos_PL_set_double(that, CHAR(itr%name), itr%val,&
+          CHAR(itr%description), ierr)
+    TYPE IS(ParamType_SNK)
+      CALL ForTeuchos_PL_set_int(that, CHAR(itr%name), itr%val,&
+          CHAR(itr%description), ierr)
+    TYPE IS(ParamType_STR)
+      CALL ForTeuchos_PL_set_string(that, CHAR(itr%name), CHAR(itr%val),&
+          CHAR(itr%description), ierr)
+    CLASS DEFAULT
+      CALL eParams%raiseError(&
+          "Unsupported PARAMETER TYPE for Teuchos conversion.")
     ENDSELECT
     CALL this%getSubParams(path, itr)
   ENDDO
@@ -934,90 +934,90 @@ RECURSIVE SUBROUTINE assign_ParamType(thisParam,param)
   CLASS(ParamType),INTENT(IN) :: param
 
   SELECTTYPE(thisParam)
+  TYPE IS(ParamType)
+    IF(ASSOCIATED(thisParam%pdat)) CALL thisParam%clear()
+    SELECTTYPE(p=>param)
     TYPE IS(ParamType)
-      IF(ASSOCIATED(thisParam%pdat)) CALL thisParam%clear()
-      SELECTTYPE(p=>param)
-        TYPE IS(ParamType)
-          !Assign the parameter value using a recursive call
-          IF(ASSOCIATED(p%pdat)) CALL assign_ParamType(thisParam,p%pdat)
-        TYPE IS(ParamType_SSK)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SDK)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SNK)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SLK)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SBK)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_STR)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SSK_a1)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SDK_a1)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SNK_a1)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SLK_a1)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SBK_a1)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_STR_a1)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SSK_a2)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SDK_a2)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SNK_a2)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SLK_a2)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_STR_a2)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SSK_a3)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SDK_a3)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SNK_a3)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_SLK_a3)
-          CALL thisParam%init(CHAR(p%name),p%val, &
-              CHAR(p%description))
-        TYPE IS(ParamType_List)
-          IF(ALLOCATED(p%pList)) THEN
-            CALL thisParam%init(CHAR(p%name),p%pList, &
-                CHAR(p%description))
-          ELSE
-            !Allocate an empty list
-            ALLOCATE(ParamType_List :: thisParam%pdat)
-            thisParam%pdat%dataType='TYPE(ParamType_List)'
-            thisParam%pdat%name=p%name
-            thisParam%pdat%description=p%description
-          ENDIF
-      ENDSELECT
-    CLASS DEFAULT
-      CALL eParams%raiseError(modName//'::'//myName// &
-          ' - cannot assign parameter data to a type extension of ParamType!')
+      !Assign the parameter value using a recursive call
+      IF(ASSOCIATED(p%pdat)) CALL assign_ParamType(thisParam,p%pdat)
+    TYPE IS(ParamType_SSK)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SDK)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SNK)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SLK)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SBK)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_STR)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SSK_a1)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SDK_a1)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SNK_a1)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SLK_a1)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SBK_a1)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_STR_a1)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SSK_a2)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SDK_a2)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SNK_a2)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SLK_a2)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_STR_a2)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SSK_a3)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SDK_a3)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SNK_a3)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SLK_a3)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_List)
+      IF(ALLOCATED(p%pList)) THEN
+        CALL thisParam%init(CHAR(p%name),p%pList, &
+            CHAR(p%description))
+      ELSE
+        !Allocate an empty list
+        ALLOCATE(ParamType_List :: thisParam%pdat)
+        thisParam%pdat%dataType='TYPE(ParamType_List)'
+        thisParam%pdat%name=p%name
+        thisParam%pdat%description=p%description
+      ENDIF
+    ENDSELECT
+  CLASS DEFAULT
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - cannot assign parameter data to a type extension of ParamType!')
   ENDSELECT
 ENDSUBROUTINE assign_ParamType
 !
@@ -1038,184 +1038,184 @@ RECURSIVE PURE FUNCTION isEqual_ParamType(p1,p2) RESULT(bool)
       dims1=0
       dims2=0
       SELECTTYPE(p1)
-        TYPE IS(ParamType)
-          IF(ASSOCIATED(p1%pdat) .AND. ASSOCIATED(p2%pdat)) THEN
-            bool=isEqual_ParamType(p1%pdat,p2%pdat)
-          ELSE
-            bool=(ASSOCIATED(p1%pdat) .EQV. ASSOCIATED(p2%pdat))
+      TYPE IS(ParamType)
+        IF(ASSOCIATED(p1%pdat) .AND. ASSOCIATED(p2%pdat)) THEN
+          bool=isEqual_ParamType(p1%pdat,p2%pdat)
+        ELSE
+          bool=(ASSOCIATED(p1%pdat) .EQV. ASSOCIATED(p2%pdat))
+        ENDIF
+      TYPE IS(ParamType_List)
+        SELECTTYPE(p2); TYPE IS(ParamType_List)
+          bool=(ALLOCATED(p1%pList) .EQV. ALLOCATED(p2%pList))
+          IF(ALLOCATED(p1%pList) .AND. ALLOCATED(p2%pList)) THEN
+            IF(SIZE(p1%pList) == SIZE(p2%pList)) THEN
+              DO i=1,SIZE(p1%pList)
+                bool=(isEqual_ParamType(p1%pList(i),p2%pList(i)).AND.bool)
+                IF(.NOT.bool) EXIT
+              ENDDO
+            ENDIF
           ENDIF
-        TYPE IS(ParamType_List)
-          SELECTTYPE(p2); TYPE IS(ParamType_List)
-            bool=(ALLOCATED(p1%pList) .EQV. ALLOCATED(p2%pList))
-            IF(ALLOCATED(p1%pList) .AND. ALLOCATED(p2%pList)) THEN
-              IF(SIZE(p1%pList) == SIZE(p2%pList)) THEN
-                DO i=1,SIZE(p1%pList)
-                  bool=(isEqual_ParamType(p1%pList(i),p2%pList(i)).AND.bool)
+        ENDSELECT
+      TYPE IS(ParamType_SSK)
+        SELECTTYPE(p2); TYPE IS(ParamType_SSK)
+          bool=(p1%val == p2%val)
+        ENDSELECT
+      TYPE IS(ParamType_SDK)
+        SELECTTYPE(p2); TYPE IS(ParamType_SDK)
+          bool=(p1%val == p2%val)
+        ENDSELECT
+      TYPE IS(ParamType_SNK)
+        SELECTTYPE(p2); TYPE IS(ParamType_SNK)
+          bool=(p1%val == p2%val)
+        ENDSELECT
+      TYPE IS(ParamType_SLK)
+        SELECTTYPE(p2); TYPE IS(ParamType_SLK)
+          bool=(p1%val == p2%val)
+        ENDSELECT
+      TYPE IS(ParamType_SBK)
+        SELECTTYPE(p2); TYPE IS(ParamType_SBK)
+          bool=(p1%val == p2%val)
+        ENDSELECT
+      TYPE IS(ParamType_STR)
+        SELECTTYPE(p2); TYPE IS(ParamType_STR)
+          bool=(p1%val == p2%val)
+        ENDSELECT
+      TYPE IS(ParamType_SSK_a1)
+        SELECTTYPE(p2); TYPE IS(ParamType_SSK_a1)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SDK_a1)
+        SELECTTYPE(p2); TYPE IS(ParamType_SDK_a1)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SNK_a1)
+        SELECTTYPE(p2); TYPE IS(ParamType_SNK_a1)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SLK_a1)
+        SELECTTYPE(p2); TYPE IS(ParamType_SLK_a1)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SBK_a1)
+        SELECTTYPE(p2); TYPE IS(ParamType_SBK_a1)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val .EQV. p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_STR_a1)
+        SELECTTYPE(p2); TYPE IS(ParamType_STR_a1)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            IF(SIZE(p1%val) == SIZE(p2%val)) THEN
+              DO i=1,SIZE(p1%val)
+                bool=(bool .AND. p1%val(i) == p2%val(i))
+                IF(.NOT.bool) EXIT
+              ENDDO
+            ENDIF
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SSK_a2)
+        SELECTTYPE(p2); TYPE IS(ParamType_SSK_a2)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:2)=SHAPE(p1%val)
+            dims2(1:2)=SHAPE(p2%val)
+            IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SDK_a2)
+        SELECTTYPE(p2); TYPE IS(ParamType_SDK_a2)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:2)=SHAPE(p1%val)
+            dims2(1:2)=SHAPE(p2%val)
+            IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SNK_a2)
+        SELECTTYPE(p2); TYPE IS(ParamType_SNK_a2)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:2)=SHAPE(p1%val)
+            dims2(1:2)=SHAPE(p2%val)
+            IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SLK_a2)
+        SELECTTYPE(p2); TYPE IS(ParamType_SLK_a2)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:2)=SHAPE(p1%val)
+            dims2(1:2)=SHAPE(p2%val)
+            IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_STR_a2)
+        SELECTTYPE(p2); TYPE IS(ParamType_STR_a2)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:2)=SHAPE(p1%val)
+            dims2(1:2)=SHAPE(p2%val)
+            IF(ALL(dims1(1:2) == dims2(1:2))) THEN
+              DO j=1,SIZE(p1%val,DIM=2)
+                DO i=1,SIZE(p1%val,DIM=1)
+                  bool=(bool .AND. p1%val(i,j) == p2%val(i,j))
                   IF(.NOT.bool) EXIT
                 ENDDO
-              ENDIF
+                IF(.NOT.bool) EXIT
+              ENDDO
             ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SSK)
-          SELECTTYPE(p2); TYPE IS(ParamType_SSK)
-            bool=(p1%val == p2%val)
-          ENDSELECT
-        TYPE IS(ParamType_SDK)
-          SELECTTYPE(p2); TYPE IS(ParamType_SDK)
-            bool=(p1%val == p2%val)
-          ENDSELECT
-        TYPE IS(ParamType_SNK)
-          SELECTTYPE(p2); TYPE IS(ParamType_SNK)
-            bool=(p1%val == p2%val)
-          ENDSELECT
-        TYPE IS(ParamType_SLK)
-          SELECTTYPE(p2); TYPE IS(ParamType_SLK)
-            bool=(p1%val == p2%val)
-          ENDSELECT
-        TYPE IS(ParamType_SBK)
-          SELECTTYPE(p2); TYPE IS(ParamType_SBK)
-            bool=(p1%val == p2%val)
-          ENDSELECT
-        TYPE IS(ParamType_STR)
-          SELECTTYPE(p2); TYPE IS(ParamType_STR)
-            bool=(p1%val == p2%val)
-          ENDSELECT
-        TYPE IS(ParamType_SSK_a1)
-          SELECTTYPE(p2); TYPE IS(ParamType_SSK_a1)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SDK_a1)
-          SELECTTYPE(p2); TYPE IS(ParamType_SDK_a1)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SNK_a1)
-          SELECTTYPE(p2); TYPE IS(ParamType_SNK_a1)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SLK_a1)
-          SELECTTYPE(p2); TYPE IS(ParamType_SLK_a1)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SBK_a1)
-          SELECTTYPE(p2); TYPE IS(ParamType_SBK_a1)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              IF(SIZE(p1%val) == SIZE(p2%val)) bool=ALL(p1%val .EQV. p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_STR_a1)
-          SELECTTYPE(p2); TYPE IS(ParamType_STR_a1)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              IF(SIZE(p1%val) == SIZE(p2%val)) THEN
-                DO i=1,SIZE(p1%val)
-                  bool=(bool .AND. p1%val(i) == p2%val(i))
-                  IF(.NOT.bool) EXIT
-                ENDDO
-              ENDIF
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SSK_a2)
-          SELECTTYPE(p2); TYPE IS(ParamType_SSK_a2)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:2)=SHAPE(p1%val)
-              dims2(1:2)=SHAPE(p2%val)
-              IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SDK_a2)
-          SELECTTYPE(p2); TYPE IS(ParamType_SDK_a2)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:2)=SHAPE(p1%val)
-              dims2(1:2)=SHAPE(p2%val)
-              IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SNK_a2)
-          SELECTTYPE(p2); TYPE IS(ParamType_SNK_a2)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:2)=SHAPE(p1%val)
-              dims2(1:2)=SHAPE(p2%val)
-              IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SLK_a2)
-          SELECTTYPE(p2); TYPE IS(ParamType_SLK_a2)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:2)=SHAPE(p1%val)
-              dims2(1:2)=SHAPE(p2%val)
-              IF(ALL(dims1(1:2) == dims2(1:2))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_STR_a2)
-          SELECTTYPE(p2); TYPE IS(ParamType_STR_a2)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:2)=SHAPE(p1%val)
-              dims2(1:2)=SHAPE(p2%val)
-              IF(ALL(dims1(1:2) == dims2(1:2))) THEN
-                DO j=1,SIZE(p1%val,DIM=2)
-                  DO i=1,SIZE(p1%val,DIM=1)
-                    bool=(bool .AND. p1%val(i,j) == p2%val(i,j))
-                    IF(.NOT.bool) EXIT
-                  ENDDO
-                  IF(.NOT.bool) EXIT
-                ENDDO
-              ENDIF
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SSK_a3)
-          SELECTTYPE(p2); TYPE IS(ParamType_SSK_a3)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:3)=SHAPE(p1%val)
-              dims2(1:3)=SHAPE(p2%val)
-              IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SDK_a3)
-          SELECTTYPE(p2); TYPE IS(ParamType_SDK_a3)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:3)=SHAPE(p1%val)
-              dims2(1:3)=SHAPE(p2%val)
-              IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SNK_a3)
-          SELECTTYPE(p2); TYPE IS(ParamType_SNK_a3)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:3)=SHAPE(p1%val)
-              dims2(1:3)=SHAPE(p2%val)
-              IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
-        TYPE IS(ParamType_SLK_a3)
-          SELECTTYPE(p2); TYPE IS(ParamType_SLK_a3)
-            bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
-            IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
-              dims1(1:3)=SHAPE(p1%val)
-              dims2(1:3)=SHAPE(p2%val)
-              IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
-            ENDIF
-          ENDSELECT
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SSK_a3)
+        SELECTTYPE(p2); TYPE IS(ParamType_SSK_a3)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:3)=SHAPE(p1%val)
+            dims2(1:3)=SHAPE(p2%val)
+            IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SDK_a3)
+        SELECTTYPE(p2); TYPE IS(ParamType_SDK_a3)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:3)=SHAPE(p1%val)
+            dims2(1:3)=SHAPE(p2%val)
+            IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SNK_a3)
+        SELECTTYPE(p2); TYPE IS(ParamType_SNK_a3)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:3)=SHAPE(p1%val)
+            dims2(1:3)=SHAPE(p2%val)
+            IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SLK_a3)
+        SELECTTYPE(p2); TYPE IS(ParamType_SLK_a3)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:3)=SHAPE(p1%val)
+            dims2(1:3)=SHAPE(p2%val)
+            IF(ALL(dims1(1:3) == dims2(1:3))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
       ENDSELECT
     ENDIF
   ENDIF
@@ -1266,97 +1266,97 @@ SUBROUTINE getNextParam_ParamType(thisParam,addr,param)
       !be within thisParam
 
       SELECTTYPE(tp => tmpParam)
-        TYPE IS(ParamType_List)
-          !Return the first entry in the list
-          IF(ALLOCATED(tp%pList)) THEN
-            nextParam => tp%pList(1)%pdat
-            tmpAddr=TRIM(addrIn)//'->'//nextParam%name
-          ELSE
-            !This could be a null list within a list that still has
-            !entries so get the parent and
-            !Get the parent list
-            newAddr=''
-            istp=INDEX(addrIn,'->',.TRUE.)-1
-            parentParam => NULL()
-            IF(istp > 0) THEN
-              newAddr=addrIn(1:istp)
-              CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
-            ENDIF
-            !Search for the next parameter or parameter list
-            parentSearch1: DO WHILE(ASSOCIATED(parentParam))
-
-              !Search the parent list
-              SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
-                DO ip=1,SIZE(pp%pList)-1
-                  IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
-                    !Get the next parameter in the list
-                    nextParam => pp%pList(ip+1)%pdat
-                    tmpAddr=TRIM(newAddr)//'->'//nextParam%name
-                    EXIT parentSearch1
-                  ENDIF
-                ENDDO
-
-                !Special case for when the current parameter is the
-                !last parameter in the list
-                IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
-                  !Go up another level and update the search
-                  tmpParam => parentParam
-                  istp=INDEX(newAddr,'->',.TRUE.)-1
-                  parentParam => NULL()
-                  IF(istp > 0) THEN
-                    newAddr=addrIn(1:istp)
-                    CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
-                  ENDIF
-                ENDIF
-              ENDSELECT
-            ENDDO parentSearch1
+      TYPE IS(ParamType_List)
+        !Return the first entry in the list
+        IF(ALLOCATED(tp%pList)) THEN
+          nextParam => tp%pList(1)%pdat
+          tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+        ELSE
+          !This could be a null list within a list that still has
+          !entries so get the parent and
+          !Get the parent list
+          newAddr=''
+          istp=INDEX(addrIn,'->',.TRUE.)-1
+          parentParam => NULL()
+          IF(istp > 0) THEN
+            newAddr=addrIn(1:istp)
+            CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
           ENDIF
-        CLASS DEFAULT
-          !All other types
-          IF(ASSOCIATED(tp%pdat)) THEN
-            !Append the address and return the next parameter
-            nextParam => tp%pdat
-            tmpAddr=TRIM(addrIn)//'->'//nextParam%name
-          ELSE
-            !This was a leaf parameter, so move up one level in the list
+          !Search for the next parameter or parameter list
+          parentSearch1: DO WHILE(ASSOCIATED(parentParam))
 
-            !Get the parent list
-            istp=INDEX(addrIn,'->',.TRUE.)-1
-            parentParam => NULL()
-            IF(istp > 0) THEN
-              newAddr=addrIn(1:istp)
-              CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
-            ENDIF
-
-            !Search for the next parameter or parameter list
-            parentSearch2: DO WHILE(ASSOCIATED(parentParam))
-
-              !Search the parent list
-              SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
-                DO ip=1,SIZE(pp%pList)-1
-                  IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
-                    !Get the next parameter in the list
-                    nextParam => pp%pList(ip+1)%pdat
-                    tmpAddr=TRIM(newAddr)//'->'//nextParam%name
-                    EXIT parentSearch2
-                  ENDIF
-                ENDDO
-
-                !Special case for when the current parameter is the
-                !last parameter in the list
+            !Search the parent list
+            SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
+              DO ip=1,SIZE(pp%pList)-1
                 IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
-                  !Go up another level and update the search
-                  tmpParam => parentParam
-                  istp=INDEX(newAddr,'->',.TRUE.)-1
-                  parentParam => NULL()
-                  IF(istp > 0) THEN
-                    newAddr=addrIn(1:istp)
-                    CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
-                  ENDIF
+                  !Get the next parameter in the list
+                  nextParam => pp%pList(ip+1)%pdat
+                  tmpAddr=TRIM(newAddr)//'->'//nextParam%name
+                  EXIT parentSearch1
                 ENDIF
-              ENDSELECT
-            ENDDO parentSearch2
+              ENDDO
+
+              !Special case for when the current parameter is the
+              !last parameter in the list
+              IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
+                !Go up another level and update the search
+                tmpParam => parentParam
+                istp=INDEX(newAddr,'->',.TRUE.)-1
+                parentParam => NULL()
+                IF(istp > 0) THEN
+                  newAddr=addrIn(1:istp)
+                  CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
+                ENDIF
+              ENDIF
+            ENDSELECT
+          ENDDO parentSearch1
+        ENDIF
+      CLASS DEFAULT
+        !All other types
+        IF(ASSOCIATED(tp%pdat)) THEN
+          !Append the address and return the next parameter
+          nextParam => tp%pdat
+          tmpAddr=TRIM(addrIn)//'->'//nextParam%name
+        ELSE
+          !This was a leaf parameter, so move up one level in the list
+
+          !Get the parent list
+          istp=INDEX(addrIn,'->',.TRUE.)-1
+          parentParam => NULL()
+          IF(istp > 0) THEN
+            newAddr=addrIn(1:istp)
+            CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
           ENDIF
+
+          !Search for the next parameter or parameter list
+          parentSearch2: DO WHILE(ASSOCIATED(parentParam))
+
+            !Search the parent list
+            SELECTTYPE(pp => parentParam); TYPE IS(ParamType_List)
+              DO ip=1,SIZE(pp%pList)-1
+                IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
+                  !Get the next parameter in the list
+                  nextParam => pp%pList(ip+1)%pdat
+                  tmpAddr=TRIM(newAddr)//'->'//nextParam%name
+                  EXIT parentSearch2
+                ENDIF
+              ENDDO
+
+              !Special case for when the current parameter is the
+              !last parameter in the list
+              IF(ASSOCIATED(pp%pList(ip)%pdat,tmpParam)) THEN
+                !Go up another level and update the search
+                tmpParam => parentParam
+                istp=INDEX(newAddr,'->',.TRUE.)-1
+                parentParam => NULL()
+                IF(istp > 0) THEN
+                  newAddr=addrIn(1:istp)
+                  CALL get_ParamType(thisParam,TRIM(newAddr),parentParam)
+                ENDIF
+              ENDIF
+            ENDSELECT
+          ENDDO parentSearch2
+        ENDIF
       ENDSELECT
     ENDIF
   ELSE
@@ -1437,16 +1437,16 @@ SUBROUTINE getSubParam_List(thisParam,addr,param)
     ENDIF
   ELSE
     SELECTTYPE(p => thisParam)
-      TYPE IS(ParamType_List)
-         tmpPtr => thisParam
-        IF(.NOT.ASSOCIATED(tmpPtr,param)) nextParam => thisParam
-      CLASS DEFAULT
-        tmpPtr => thisParam%pdat
-        IF(.NOT.ASSOCIATED(tmpPtr,param)) THEN
-          SELECTTYPE(pdat => thisParam%pdat); TYPE IS(ParamType_List)
-            nextParam => thisParam%pdat
-          ENDSELECT
-        ENDIF
+    TYPE IS(ParamType_List)
+       tmpPtr => thisParam
+      IF(.NOT.ASSOCIATED(tmpPtr,param)) nextParam => thisParam
+    CLASS DEFAULT
+      tmpPtr => thisParam%pdat
+      IF(.NOT.ASSOCIATED(tmpPtr,param)) THEN
+        SELECTTYPE(pdat => thisParam%pdat); TYPE IS(ParamType_List)
+          nextParam => thisParam%pdat
+        ENDSELECT
+      ENDIF
     ENDSELECT
   ENDIF
   param => nextParam
@@ -1576,73 +1576,71 @@ RECURSIVE SUBROUTINE get_ParamType(thisParam,name,param)
   param => NULL()
   IF(LEN_TRIM(thisname) > 0) THEN
     SELECTTYPE(thisParam)
-      TYPE IS(ParamType_List)
-        CALL toUPPER(thisname)
-        IF(LEN_TRIM(nextname) > 0) THEN
-          !Set names to upper case for matching
-          pname=CHAR(thisParam%name%upper())
-
-          !Search the list for nextname (thisname must match parameter name)
-          IF(TRIM(pname) == TRIM(thisname) .AND. &
-              ALLOCATED(thisParam%pList)) THEN
+    TYPE IS(ParamType_List)
+      CALL toUPPER(thisname)
+      IF(LEN_TRIM(nextname) > 0) THEN
+        !Set names to upper case for matching
+        pname=CHAR(thisParam%name%upper())
+        !Search the list for nextname (thisname must match parameter name)
+        IF(TRIM(pname) == TRIM(thisname) .AND. &
+            ALLOCATED(thisParam%pList)) THEN
+          DO i=1,SIZE(thisParam%pList)
+            !CALL thisParam%pList(i)%getParam(TRIM(nextname),param)
+            IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+                CALL get_ParamType(thisParam%pList(i)%pdat, &
+                TRIM(nextname),param)
+            IF(ASSOCIATED(param)) EXIT !Found it, stop searching
+          ENDDO
+        ENDIF
+      ELSE
+        !End of search list, check search name against list name
+        pname=CHAR(thisParam%name%upper())
+        IF(TRIM(pname) == TRIM(thisname)) THEN
+          !Search name is thisParam's name
+          param => thisParam
+        ELSE
+          !Search for thisname within the list
+          IF(ALLOCATED(thisParam%pList) .AND. partial_match) THEN
             DO i=1,SIZE(thisParam%pList)
-              !CALL thisParam%pList(i)%getParam(TRIM(nextname),param)
               IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
                   CALL get_ParamType(thisParam%pList(i)%pdat, &
-                  TRIM(nextname),param)
+                  TRIM(thisname),param)
               IF(ASSOCIATED(param)) EXIT !Found it, stop searching
             ENDDO
           ENDIF
+        ENDIF
+      ENDIF
+    CLASS DEFAULT
+      CALL toUPPER(thisname)
+      IF(ASSOCIATED(thisParam%pdat)) THEN
+        !Set names to upper case for matching
+        pname=CHAR(thisParam%pdat%name%upper())
+        IF(TRIM(pname) == TRIM(thisname)) THEN
+          !Found the match
+          tmpParam => thisParam%pdat
+          IF(LEN_TRIM(nextname) > 0) THEN
+            !Set partial matching to off
+            partial_match=.FALSE.
+            CALL get_ParamType(tmpParam,name,param)
+            partial_match=.TRUE.
+          ELSE
+            param => tmpParam
+            NULLIFY(tmpParam)
+          ENDIF
         ELSE
-          !End of search list, check search name against list name
-          pname=CHAR(thisParam%name%upper())
-          IF(TRIM(pname) == TRIM(thisname)) THEN
-            !Search name is thisParam's name
+          !Search 1-level down
+          CALL thisParam%pdat%getParam(thisname,param)
+          IF(ASSOCIATED(param) .AND. LEN_TRIM(nextname) > 0) THEN
+            tmpParam => param
+            param => NULL()
+            CALL get_ParamType(tmpParam,name,param)
+          ENDIF
+        ENDIF
+      ELSE
+        pname=CHAR(thisParam%name%upper())
+        IF(TRIM(pname) == TRIM(thisname) .AND. LEN_TRIM(nextName) == 0) &
             param => thisParam
-          ELSE
-            !Search for thisname within the list
-            IF(ALLOCATED(thisParam%pList) .AND. partial_match) THEN
-              DO i=1,SIZE(thisParam%pList)
-                IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                    CALL get_ParamType(thisParam%pList(i)%pdat, &
-                    TRIM(thisname),param)
-                IF(ASSOCIATED(param)) EXIT !Found it, stop searching
-              ENDDO
-            ENDIF
-          ENDIF
-        ENDIF
-      CLASS DEFAULT
-        CALL toUPPER(thisname)
-        IF(ASSOCIATED(thisParam%pdat)) THEN
-          !Set names to upper case for matching
-          pname=CHAR(thisParam%pdat%name%upper())
-
-          IF(TRIM(pname) == TRIM(thisname)) THEN
-            !Found the match
-            tmpParam => thisParam%pdat
-            IF(LEN_TRIM(nextname) > 0) THEN
-              !Set partial matching to off
-              partial_match=.FALSE.
-              CALL get_ParamType(tmpParam,name,param)
-              partial_match=.TRUE.
-            ELSE
-              param => tmpParam
-              NULLIFY(tmpParam)
-            ENDIF
-          ELSE
-            !Search 1-level down
-            CALL thisParam%pdat%getParam(thisname,param)
-            IF(ASSOCIATED(param) .AND. LEN_TRIM(nextname) > 0) THEN
-              tmpParam => param
-              param => NULL()
-              CALL get_ParamType(tmpParam,name,param)
-            ENDIF
-          ENDIF
-        ELSE
-          pname=CHAR(thisParam%name%upper())
-          IF(TRIM(pname) == TRIM(thisname) .AND. LEN_TRIM(nextName) == 0) &
-              param => thisParam
-        ENDIF
+      ENDIF
     ENDSELECT
   ELSE
     CALL eParams%raiseError(modName//'::'//myName// &
@@ -1680,116 +1678,62 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType)
-      IF(ASSOCIATED(thisParam%pdat)) THEN
-        CALL add_ParamType(thisParam%pdat,name,newParam)
-      ELSE
-        !thisParam is not initialized
-        IF(LEN_TRIM(name) > 0) THEN
-          !Create a new list on thisParam
-          ALLOCATE(ParamType_List :: thisParam%pdat)
-          thisParam%pdat%datatype='TYPE(ParamType_List)'
-
-          !Determine the name for the list and the next name
-          ipos=INDEX(name,'->')
-          IF(ipos > 0) THEN
-            thisParam%pdat%name=TRIM(ADJUSTL(name(1:ipos-1)))
-            nextname=ADJUSTL(name(ipos+2:LEN(name)))
-          ELSE
-            thisParam%pdat%name=TRIM(ADJUSTL(name))
-            nextname=''
-          ENDIF
-          CALL add_ParamType(thisParam%pdat,TRIM(nextname),newParam)
-        ELSE
-          !assign newParam to thisParam
-          CALL assign_ParamType(thisParam,newParam)
-        ENDIF
-      ENDIF
-    TYPE IS(ParamType_List)
-      np=0
-      IF(ALLOCATED(thisParam%pList)) np=SIZE(thisParam%pList)
+  TYPE IS(ParamType)
+    IF(ASSOCIATED(thisParam%pdat)) THEN
+      CALL add_ParamType(thisParam%pdat,name,newParam)
+    ELSE
+      !thisParam is not initialized
       IF(LEN_TRIM(name) > 0) THEN
-        !Check if the name matches this list
+        !Create a new list on thisParam
+        ALLOCATE(ParamType_List :: thisParam%pdat)
+        thisParam%pdat%datatype='TYPE(ParamType_List)'
+
+        !Determine the name for the list and the next name
         ipos=INDEX(name,'->')
         IF(ipos > 0) THEN
-          thisname=TRIM(ADJUSTL(name(1:ipos-1)))
+          thisParam%pdat%name=TRIM(ADJUSTL(name(1:ipos-1)))
           nextname=ADJUSTL(name(ipos+2:LEN(name)))
         ELSE
-          thisname=TRIM(ADJUSTL(name))
+          thisParam%pdat%name=TRIM(ADJUSTL(name))
           nextname=''
         ENDIF
-
-        pname=thisParam%name%upper()
-        thisname = thisname%upper()
-        IF(TRIM(pname) == TRIM(thisname)) THEN
-          !only search if it's not the last name in the
-          !full address. last name is guaranteed not to exist
-          !and this prevents accidental partial matching in sublists.
-          lsubListSearch=.FALSE.
-          CALL add_ParamType(thisParam,TRIM(nextname),newParam)
-          lsubListSearch=.TRUE.
-        ELSE
-          !Search for thisname within...
-          NULLIFY(tmpParam)
-          IF(lsubListSearch) THEN
-            !...all sub-entries.
-            CALL get_ParamType(thisParam,TRIM(thisname),tmpParam)
-          ELSE
-            !...just this list
-            DO i=1,np
-              listName=''
-              IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                  listName=TRIM(thisParam%pList(i)%pdat%name%upper())
-              IF(TRIM(listName) == TRIM(thisName)) THEN
-                tmpParam => thisParam%pList(i)%pdat
-                EXIT
-              ENDIF
-            ENDDO
-          ENDIF
-
-          IF(ASSOCIATED(tmpParam)) THEN
-            !Found parameter with matching name
-            CALL add_ParamType(tmpParam,TRIM(nextname),newParam)
-          ELSE
-            !Create a new entry in the list for the new parameter
-            IF(np > 0) THEN
-              !Copy the parameter list to a temporary
-              ALLOCATE(tmpList(np))
-              DO i=1,np
-                CALL assign_ParamType(tmpList(i),thisParam%pList(i))
-                CALL clear_ParamType(thisParam%pList(i))
-              ENDDO
-
-              !Reallocate the parameter list and copy everything back
-              DEALLOCATE(thisParam%pList)
-              ALLOCATE(thisParam%pList(np+1))
-              DO i=1,np
-                CALL assign_ParamType(thisParam%pList(i),tmpList(i))
-                CALL clear_ParamType(tmpList(i))
-              ENDDO
-              DEALLOCATE(tmpList)
-              i=np+1
-            ELSE
-              !Allocate the list to 1 element
-              ALLOCATE(thisParam%pList(1))
-              i=1
-            ENDIF
-
-            !Make recursive call to add the parameter in the new empty parameter
-            CALL add_ParamType(thisParam%pList(i),name,newParam)
-          ENDIF
-        ENDIF
+        CALL add_ParamType(thisParam%pdat,TRIM(nextname),newParam)
       ELSE
-        !Create a new entry in the list for the new parameter
-        IF(np > 0) THEN
+        !assign newParam to thisParam
+        CALL assign_ParamType(thisParam,newParam)
+      ENDIF
+    ENDIF
+  TYPE IS(ParamType_List)
+    np=0
+    IF(ALLOCATED(thisParam%pList)) np=SIZE(thisParam%pList)
+    IF(LEN_TRIM(name) > 0) THEN
+      !Check if the name matches this list
+      ipos=INDEX(name,'->')
+      IF(ipos > 0) THEN
+        thisname=TRIM(ADJUSTL(name(1:ipos-1)))
+        nextname=ADJUSTL(name(ipos+2:LEN(name)))
+      ELSE
+        thisname=TRIM(ADJUSTL(name))
+        nextname=''
+      ENDIF
 
-          !Search within the list to avoid duplicates.
-          IF(LEN_TRIM(newParam%name) == 0 .AND. ASSOCIATED(newParam%pdat)) THEN
-            thisname=newParam%pdat%name%upper()
-          ELSE
-            thisname=newParam%name%upper()
-          ENDIF
-          NULLIFY(tmpParam)
+      pname=thisParam%name%upper()
+      thisname = thisname%upper()
+      IF(TRIM(pname) == TRIM(thisname)) THEN
+        !only search if it's not the last name in the
+        !full address. last name is guaranteed not to exist
+        !and this prevents accidental partial matching in sublists.
+        lsubListSearch=.FALSE.
+        CALL add_ParamType(thisParam,TRIM(nextname),newParam)
+        lsubListSearch=.TRUE.
+      ELSE
+        !Search for thisname within...
+        NULLIFY(tmpParam)
+        IF(lsubListSearch) THEN
+          !...all sub-entries.
+          CALL get_ParamType(thisParam,TRIM(thisname),tmpParam)
+        ELSE
+          !...just this list
           DO i=1,np
             listName=''
             IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
@@ -1799,13 +1743,19 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
               EXIT
             ENDIF
           ENDDO
+        ENDIF
 
-          IF(.NOT.ASSOCIATED(tmpParam)) THEN
+        IF(ASSOCIATED(tmpParam)) THEN
+          !Found parameter with matching name
+          CALL add_ParamType(tmpParam,TRIM(nextname),newParam)
+        ELSE
+          !Create a new entry in the list for the new parameter
+          IF(np > 0) THEN
             !Copy the parameter list to a temporary
             ALLOCATE(tmpList(np))
             DO i=1,np
               CALL assign_ParamType(tmpList(i),thisParam%pList(i))
-              CALL thisParam%pList(i)%clear()
+              CALL clear_ParamType(thisParam%pList(i))
             ENDDO
 
             !Reallocate the parameter list and copy everything back
@@ -1813,25 +1763,73 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
             ALLOCATE(thisParam%pList(np+1))
             DO i=1,np
               CALL assign_ParamType(thisParam%pList(i),tmpList(i))
-              CALL tmpList(i)%clear()
+              CALL clear_ParamType(tmpList(i))
             ENDDO
             DEALLOCATE(tmpList)
             i=np+1
-            CALL add_ParamType(thisParam%pList(i),name,newParam)
           ELSE
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter name "'//TRIM(thisname)// &
-              '" already exists! Use set method!')
+            !Allocate the list to 1 element
+            ALLOCATE(thisParam%pList(1))
+            i=1
           ENDIF
-        ELSE
-          !Allocate the list to 1 element
-          ALLOCATE(thisParam%pList(1))
-          CALL add_ParamType(thisParam%pList(1),name,newParam)
+
+          !Make recursive call to add the parameter in the new empty parameter
+          CALL add_ParamType(thisParam%pList(i),name,newParam)
         ENDIF
       ENDIF
-    CLASS DEFAULT
-      CALL eParams%raiseError(modName//'::'//myName// &
-          ' - cannot add parameter to type "'//thisParam%datatype//'"!')
+    ELSE
+      !Create a new entry in the list for the new parameter
+      IF(np > 0) THEN
+
+        !Search within the list to avoid duplicates.
+        IF(LEN_TRIM(newParam%name) == 0 .AND. ASSOCIATED(newParam%pdat)) THEN
+          thisname=newParam%pdat%name%upper()
+        ELSE
+          thisname=newParam%name%upper()
+        ENDIF
+        NULLIFY(tmpParam)
+        DO i=1,np
+          listName=''
+          IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
+              listName=TRIM(thisParam%pList(i)%pdat%name%upper())
+          IF(TRIM(listName) == TRIM(thisName)) THEN
+            tmpParam => thisParam%pList(i)%pdat
+            EXIT
+          ENDIF
+        ENDDO
+
+        IF(.NOT.ASSOCIATED(tmpParam)) THEN
+          !Copy the parameter list to a temporary
+          ALLOCATE(tmpList(np))
+          DO i=1,np
+            CALL assign_ParamType(tmpList(i),thisParam%pList(i))
+            CALL thisParam%pList(i)%clear()
+          ENDDO
+
+          !Reallocate the parameter list and copy everything back
+          DEALLOCATE(thisParam%pList)
+          ALLOCATE(thisParam%pList(np+1))
+          DO i=1,np
+            CALL assign_ParamType(thisParam%pList(i),tmpList(i))
+            CALL tmpList(i)%clear()
+          ENDDO
+          DEALLOCATE(tmpList)
+          i=np+1
+          CALL add_ParamType(thisParam%pList(i),name,newParam)
+        ELSE
+          CALL eParams%raiseError(modName//'::'//myName// &
+              ' - parameter name "'//TRIM(thisname)// &
+            '" already exists! Use set method!')
+        ENDIF
+      ELSE
+        !Allocate the list to 1 element
+        ALLOCATE(thisParam%pList(1))
+        CALL add_ParamType(thisParam%pList(1),name,newParam)
+      ENDIF
+    ENDIF
+  CLASS DEFAULT
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - cannot add parameter to type "'//thisParam%datatype//'"!')
   ENDSELECT
 ENDSUBROUTINE add_ParamType
 !
@@ -1865,97 +1863,97 @@ RECURSIVE SUBROUTINE remove_ParamType(thisParam,name)
 
   IF(LEN_TRIM(thisname) > 0) THEN
     SELECTTYPE(thisParam)
-      TYPE IS(ParamType_List)
-        IF(LEN_TRIM(nextname) > 0) THEN
-          !Set names to upper case for matching
-          pname=CHAR(thisParam%name%upper())
-          CALL toUPPER(thisname)
+    TYPE IS(ParamType_List)
+      IF(LEN_TRIM(nextname) > 0) THEN
+        !Set names to upper case for matching
+        pname=CHAR(thisParam%name%upper())
+        CALL toUPPER(thisname)
 
-          !Search the list for nextname (thisname must match parameter name)
-          IF(TRIM(pname) == TRIM(thisname)) THEN
-            IF(ALLOCATED(thisParam%pList)) THEN
-              DO i=1,SIZE(thisParam%pList)
-                !Try to remove the next name
-                IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
-                  CALL remove_ParamType(thisParam%pList(i),TRIM(nextname))
-                  IF(.NOT.ASSOCIATED(thisParam%pList(i)%pdat)) EXIT !success
-                ENDIF
-              ENDDO
-            ENDIF
-          ELSE
-            !Try another level down, this is not so efficient because
-            !there is no way to tell in which element the name might've
-            !been matched.
-            IF(ALLOCATED(thisParam%pList)) THEN
-              DO i=1,SIZE(thisParam%pList)
-                IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
-                  SELECTTYPE(p=>thisParam%pList(i)%pdat)
-                     TYPE IS(ParamType_List); CALL remove_ParamType(p,name)
-                  ENDSELECT
-                ENDIF
-              ENDDO
-            ENDIF
-          ENDIF
-        ELSE
-          !Search for thisname within the list
+        !Search the list for nextname (thisname must match parameter name)
+        IF(TRIM(pname) == TRIM(thisname)) THEN
           IF(ALLOCATED(thisParam%pList)) THEN
             DO i=1,SIZE(thisParam%pList)
               !Try to remove the next name
               IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
-                CALL remove_ParamType(thisParam%pList(i),TRIM(thisname))
+                CALL remove_ParamType(thisParam%pList(i),TRIM(nextname))
                 IF(.NOT.ASSOCIATED(thisParam%pList(i)%pdat)) EXIT !success
               ENDIF
             ENDDO
           ENDIF
-        ENDIF
-
-        !Garbage collection, shrink the current list to remove
-        !empty values
-        IF(ALLOCATED(thisParam%pList)) THEN
-
-          !Create temporary
-          np=SIZE(thisParam%pList)
-          ALLOCATE(tmpList(np))
-
-          !Copy to temporary
-          npnew=0
-          DO i=1,np
-            IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
-              npnew=npnew+1
-              CALL assign_ParamType(tmpList(npnew),thisParam%pList(i))
-              CALL thisParam%pList(i)%clear()
-            ENDIF
-          ENDDO
-
-          !Reallocate list
-          DEALLOCATE(thisParam%pList)
-          IF(npnew > 0) THEN
-            ALLOCATE(thisParam%pList(npnew))
-
-            !Copy non-empty values back to list
-            DO i=1,npnew
-              CALL assign_ParamType(thisParam%pList(i),tmpList(i))
-              CALL tmpList(i)%clear()
+        ELSE
+          !Try another level down, this is not so efficient because
+          !there is no way to tell in which element the name might've
+          !been matched.
+          IF(ALLOCATED(thisParam%pList)) THEN
+            DO i=1,SIZE(thisParam%pList)
+              IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+                SELECTTYPE(p=>thisParam%pList(i)%pdat)
+                TYPE IS(ParamType_List); CALL remove_ParamType(p,name)
+                ENDSELECT
+              ENDIF
             ENDDO
           ENDIF
-          DEALLOCATE(tmpList)
         ENDIF
-      CLASS DEFAULT
-        IF(ASSOCIATED(thisParam%pdat)) THEN
-          !Set names to upper case for matching
-          pname=CHAR(thisParam%pdat%name%upper())
-          CALL toUPPER(thisname)
-          IF(TRIM(pname) == TRIM(thisname)) THEN
-            IF(LEN_TRIM(nextname) > 0) THEN
-              CALL remove_ParamType(thisParam%pdat,name)
-            ELSE
-              CALL thisParam%clear()
+      ELSE
+        !Search for thisname within the list
+        IF(ALLOCATED(thisParam%pList)) THEN
+          DO i=1,SIZE(thisParam%pList)
+            !Try to remove the next name
+            IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+              CALL remove_ParamType(thisParam%pList(i),TRIM(thisname))
+              IF(.NOT.ASSOCIATED(thisParam%pList(i)%pdat)) EXIT !success
             ENDIF
-          ELSE
-            !Search 1-level down
-            CALL remove_ParamType(thisParam%pdat,name)
-          ENDIF
+          ENDDO
         ENDIF
+      ENDIF
+
+      !Garbage collection, shrink the current list to remove
+      !empty values
+      IF(ALLOCATED(thisParam%pList)) THEN
+
+        !Create temporary
+        np=SIZE(thisParam%pList)
+        ALLOCATE(tmpList(np))
+
+        !Copy to temporary
+        npnew=0
+        DO i=1,np
+          IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+            npnew=npnew+1
+            CALL assign_ParamType(tmpList(npnew),thisParam%pList(i))
+            CALL thisParam%pList(i)%clear()
+          ENDIF
+        ENDDO
+
+        !Reallocate list
+        DEALLOCATE(thisParam%pList)
+        IF(npnew > 0) THEN
+          ALLOCATE(thisParam%pList(npnew))
+
+          !Copy non-empty values back to list
+          DO i=1,npnew
+            CALL assign_ParamType(thisParam%pList(i),tmpList(i))
+            CALL tmpList(i)%clear()
+          ENDDO
+        ENDIF
+        DEALLOCATE(tmpList)
+      ENDIF
+    CLASS DEFAULT
+      IF(ASSOCIATED(thisParam%pdat)) THEN
+        !Set names to upper case for matching
+        pname=CHAR(thisParam%pdat%name%upper())
+        CALL toUPPER(thisname)
+        IF(TRIM(pname) == TRIM(thisname)) THEN
+          IF(LEN_TRIM(nextname) > 0) THEN
+            CALL remove_ParamType(thisParam%pdat,name)
+          ELSE
+            CALL thisParam%clear()
+          ENDIF
+        ELSE
+          !Search 1-level down
+          CALL remove_ParamType(thisParam%pdat,name)
+        ENDIF
+      ENDIF
     ENDSELECT
   ELSE
     CALL eParams%raiseError(modName//'::'//myName// &
@@ -2416,11 +2414,11 @@ FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
 
   !Search for the parameter name
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_List)
-      listContainer%pdat => thisParam
-      CALL get_ParamType(listContainer,name,tmpParam)
-    CLASS DEFAULT
-      CALL get_ParamType(thisParam,name,tmpParam)
+  TYPE IS(ParamType_List)
+    listContainer%pdat => thisParam
+    CALL get_ParamType(listContainer,name,tmpParam)
+  CLASS DEFAULT
+    CALL get_ParamType(thisParam,name,tmpParam)
   ENDSELECT
   hasname=ASSOCIATED(tmpParam)
 
@@ -2627,90 +2625,58 @@ RECURSIVE SUBROUTINE validateReq_ParamType(thisParam,reqParams,prefix,validType,
 !Loop over all required params in reqParams and search thisParam for
 !each parameter and check type
   SELECTTYPE(p=>reqParams)
-    TYPE IS(ParamType)
-      !Call validate on the required parameter's value
-      IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
-          (validType == VALIDTYPE_VERIFYLIST)) THEN
-        IF(ASSOCIATED(p%pdat)) &
-            CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,isMatch,e)
-      ELSE
-        IF(ASSOCIATED(p%pdat)) &
-            CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,tmpbool,e)
-      ENDIF
-    TYPE IS(ParamType_List)
-      !Loop over all parameters in the list and check each
-      IF(ALLOCATED(p%pList)) THEN
-        ntrue=0
-        DO i=1,SIZE(p%pList)
-          IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
-              (validType == VALIDTYPE_VERIFYLIST)) THEN
-            CALL validateReq_ParamType(thisParam,p%pList(i), &
-                prefix//p%name//'->',validType,isValid,isMatch,e)
-            IF(isValid) ntrue=ntrue+1
-          ELSE
-            CALL validateReq_ParamType(thisParam,p%pList(i), &
-                prefix//p%name//'->',validType,isValid,tmpbool,e)
-            IF(isValid) ntrue=ntrue+1
-          ENDIF
-        ENDDO
-        isValid=(ntrue == SIZE(p%pList))
-      ELSE
-        !The required list is not allocated, which means we do not
-        !check any of it's possible subparameters, but we must at least
-        !check that the list exists
-        CALL thisParam%getParam(prefix//p%name,tmpParam)
-        IF(.NOT.ASSOCIATED(tmpParam)) THEN
-          SELECTCASE(validType)
-            CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
-              isMatch=.FALSE.
-              CALL e%raiseError(modName//'::'//myName// &
-                  ' - When verifying that parameters are equal, the parameter "'// &
-                  prefix//p%name//'" was not found on both lists!')
-            CASE DEFAULT
-              CALL e%raiseError(modName//'::'//myName// &
-                  ' - Failed to locate required parameter "'//prefix// &
-                  p%name//'"!')
-          ENDSELECT
+  TYPE IS(ParamType)
+    !Call validate on the required parameter's value
+    IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+        (validType == VALIDTYPE_VERIFYLIST)) THEN
+      IF(ASSOCIATED(p%pdat)) &
+          CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,isMatch,e)
+    ELSE
+      IF(ASSOCIATED(p%pdat)) &
+          CALL validateReq_ParamType(thisParam,p%pdat,prefix,validType,isValid,tmpbool,e)
+    ENDIF
+  TYPE IS(ParamType_List)
+    !Loop over all parameters in the list and check each
+    IF(ALLOCATED(p%pList)) THEN
+      ntrue=0
+      DO i=1,SIZE(p%pList)
+        IF((validType == VALIDTYPE_VERIFYTEST) .OR. &
+            (validType == VALIDTYPE_VERIFYLIST)) THEN
+          CALL validateReq_ParamType(thisParam,p%pList(i), &
+              prefix//p%name//'->',validType,isValid,isMatch,e)
+          IF(isValid) ntrue=ntrue+1
         ELSE
-          IF(SAME_TYPE_AS(tmpParam,p)) THEN
-            isValid=.TRUE.
-            SELECTCASE(validType)
-              CASE(VALIDTYPE_VERIFYTEST)
-                isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
-              CASE(VALIDTYPE_VERIFYLIST)
-                isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
-            ENDSELECT
-          ELSE
-            CALL e%raiseError(modName//'::'//myName// &
-                ' - Required parameter "'//prefix//p%name//'" has type "'// &
-                tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
-          ENDIF
+          CALL validateReq_ParamType(thisParam,p%pList(i), &
+              prefix//p%name//'->',validType,isValid,tmpbool,e)
+          IF(isValid) ntrue=ntrue+1
         ENDIF
-      ENDIF
-    CLASS DEFAULT
-      !This is a meaningful parameter so search thisParam for the
-      !required parameter's name and check its type
+      ENDDO
+      isValid=(ntrue == SIZE(p%pList))
+    ELSE
+      !The required list is not allocated, which means we do not
+      !check any of it's possible subparameters, but we must at least
+      !check that the list exists
       CALL thisParam%getParam(prefix//p%name,tmpParam)
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
         SELECTCASE(validType)
-          CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
-            isMatch=.FALSE.
-            CALL e%raiseError(modName//'::'//myName// &
-                ' - When verifying that parameters are equal, the parameter "'// &
-                prefix//p%name//'" was not found on both lists!')
-          CASE DEFAULT
-            CALL e%raiseError(modName//'::'//myName// &
-                ' - Failed to locate required parameter "'//prefix// &
-                p%name//'"!')
+        CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+          isMatch=.FALSE.
+          CALL e%raiseError(modName//'::'//myName// &
+              ' - When verifying that parameters are equal, the parameter "'// &
+              prefix//p%name//'" was not found on both lists!')
+        CASE DEFAULT
+          CALL e%raiseError(modName//'::'//myName// &
+              ' - Failed to locate required parameter "'//prefix// &
+              p%name//'"!')
         ENDSELECT
       ELSE
         IF(SAME_TYPE_AS(tmpParam,p)) THEN
           isValid=.TRUE.
           SELECTCASE(validType)
-            CASE(VALIDTYPE_VERIFYTEST)
-              isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
-            CASE(VALIDTYPE_VERIFYLIST)
-              isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
+          CASE(VALIDTYPE_VERIFYTEST)
+            isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+          CASE(VALIDTYPE_VERIFYLIST)
+            isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
           ENDSELECT
         ELSE
           CALL e%raiseError(modName//'::'//myName// &
@@ -2718,6 +2684,38 @@ RECURSIVE SUBROUTINE validateReq_ParamType(thisParam,reqParams,prefix,validType,
               tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
         ENDIF
       ENDIF
+    ENDIF
+  CLASS DEFAULT
+    !This is a meaningful parameter so search thisParam for the
+    !required parameter's name and check its type
+    CALL thisParam%getParam(prefix//p%name,tmpParam)
+    IF(.NOT.ASSOCIATED(tmpParam)) THEN
+      SELECTCASE(validType)
+      CASE(VALIDTYPE_VERIFYLIST,VALIDTYPE_VERIFYTEST)
+        isMatch=.FALSE.
+        CALL e%raiseError(modName//'::'//myName// &
+            ' - When verifying that parameters are equal, the parameter "'// &
+            prefix//p%name//'" was not found on both lists!')
+      CASE DEFAULT
+        CALL e%raiseError(modName//'::'//myName// &
+            ' - Failed to locate required parameter "'//prefix// &
+            p%name//'"!')
+      ENDSELECT
+    ELSE
+      IF(SAME_TYPE_AS(tmpParam,p)) THEN
+        isValid=.TRUE.
+        SELECTCASE(validType)
+        CASE(VALIDTYPE_VERIFYTEST)
+          isMatch=isMatch .AND. matchTest_ParamType(tmpParam,p,prefix)
+        CASE(VALIDTYPE_VERIFYLIST)
+          isMatch=isMatch .AND. matchList_ParamType(tmpParam,p,prefix,e)
+        ENDSELECT
+      ELSE
+        CALL e%raiseError(modName//'::'//myName// &
+            ' - Required parameter "'//prefix//p%name//'" has type "'// &
+            tmpParam%dataType//'" and must be type "'//p%dataType//'"!')
+      ENDIF
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE validateReq_ParamType
 !
@@ -2748,57 +2746,57 @@ RECURSIVE SUBROUTINE validateOpt_ParamType(thisParam,optParams,prefix)
 !Loop over all optional params in optParams and search thisParam for
 !each parameter and check type
   SELECTTYPE(p=>optParams)
-    TYPE IS(ParamType)
-      !Call validate on the required parameter's value
-      IF(ASSOCIATED(p%pdat)) &
-          CALL validateOpt_Paramtype(thisParam,p%pdat,prefix)
-    TYPE IS(ParamType_List)
-      !Loop over all parameters in the list and check each
-      IF(ALLOCATED(p%pList)) THEN
-        DO i=1,SIZE(p%pList)
-          CALL validateOpt_Paramtype(thisParam,p%pList(i), &
-              prefix//p%name//'->')
-        ENDDO
-      ELSE
-        !The optional list is not allocated, which means we do not
-        !have any default values for it's possible subparameters, but we
-        !must at least check that the list exists
-        CALL thisParam%getParam(prefix//p%name,tmpParam)
-        IF(.NOT.ASSOCIATED(tmpParam)) THEN
-          CALL eParams%raiseDebug(modName//'::'//myName// &
-              ' - Failed to locate optional parameter "'//prefix// &
-              p%name//'"! It is being added with no default value!')
-          CALL add_ParamType(thisParam,prefix(1:nprefix),p)
-        ELSE
-          IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
-            CALL eParams%raiseWarning(modName//'::'//myName// &
-                ' - Optional parameter "'//prefix//p%name//'" has type "'// &
-                tmpParam%dataType//'" and should be type "'//p%dataType// &
-                '"!  Since has no default value, it will remain unset!')
-            CALL remove_ParamType(thisParam,prefix//p%name)
-            CALL add_ParamType(thisParam,prefix(1:nprefix),p)
-          ENDIF
-        ENDIF
-      ENDIF
-    CLASS DEFAULT
-      !This is a meaningful parameter so search thisParam for the
-      !optional parameter's name and check its type
+  TYPE IS(ParamType)
+    !Call validate on the required parameter's value
+    IF(ASSOCIATED(p%pdat)) &
+        CALL validateOpt_Paramtype(thisParam,p%pdat,prefix)
+  TYPE IS(ParamType_List)
+    !Loop over all parameters in the list and check each
+    IF(ALLOCATED(p%pList)) THEN
+      DO i=1,SIZE(p%pList)
+        CALL validateOpt_Paramtype(thisParam,p%pList(i), &
+            prefix//p%name//'->')
+      ENDDO
+    ELSE
+      !The optional list is not allocated, which means we do not
+      !have any default values for it's possible subparameters, but we
+      !must at least check that the list exists
       CALL thisParam%getParam(prefix//p%name,tmpParam)
       IF(.NOT.ASSOCIATED(tmpParam)) THEN
-        CALL eParams%raiseInformation(modName//'::'//myName// &
-            ' - Failed to locate optional parameter "'//prefix//p%name//'"!'// &
-            'It is being added with default value.')
+        CALL eParams%raiseDebug(modName//'::'//myName// &
+            ' - Failed to locate optional parameter "'//prefix// &
+            p%name//'"! It is being added with no default value!')
         CALL add_ParamType(thisParam,prefix(1:nprefix),p)
       ELSE
         IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
           CALL eParams%raiseWarning(modName//'::'//myName// &
               ' - Optional parameter "'//prefix//p%name//'" has type "'// &
               tmpParam%dataType//'" and should be type "'//p%dataType// &
-              '"!  It is being overriden with default value.')
+              '"!  Since has no default value, it will remain unset!')
           CALL remove_ParamType(thisParam,prefix//p%name)
           CALL add_ParamType(thisParam,prefix(1:nprefix),p)
         ENDIF
       ENDIF
+    ENDIF
+  CLASS DEFAULT
+    !This is a meaningful parameter so search thisParam for the
+    !optional parameter's name and check its type
+    CALL thisParam%getParam(prefix//p%name,tmpParam)
+    IF(.NOT.ASSOCIATED(tmpParam)) THEN
+      CALL eParams%raiseInformation(modName//'::'//myName// &
+          ' - Failed to locate optional parameter "'//prefix//p%name//'"!'// &
+          'It is being added with default value.')
+      CALL add_ParamType(thisParam,prefix(1:nprefix),p)
+    ELSE
+      IF(.NOT.SAME_TYPE_AS(tmpParam,p)) THEN
+        CALL eParams%raiseWarning(modName//'::'//myName// &
+            ' - Optional parameter "'//prefix//p%name//'" has type "'// &
+            tmpParam%dataType//'" and should be type "'//p%dataType// &
+            '"!  It is being overriden with default value.')
+        CALL remove_ParamType(thisParam,prefix//p%name)
+        CALL add_ParamType(thisParam,prefix(1:nprefix),p)
+      ENDIF
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE validateOpt_ParamType
 !
@@ -2824,17 +2822,33 @@ RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
 
   i=0
   SELECTTYPE(p=>thisParam)
-    TYPE IS(ParamType)
-      !Call check on the thisParam's value
-      IF(ASSOCIATED(p%pdat)) &
-          CALL checkExtras_Paramtype(p%pdat,reqParams,optParams,prefix)
-    TYPE IS(ParamType_List)
-      !Check that the list exists in reqParams
-      CALL reqParams%getParam(prefix//p%name,tmpParam)
+  TYPE IS(ParamType)
+    !Call check on the thisParam's value
+    IF(ASSOCIATED(p%pdat)) &
+        CALL checkExtras_Paramtype(p%pdat,reqParams,optParams,prefix)
+  TYPE IS(ParamType_List)
+    !Check that the list exists in reqParams
+    CALL reqParams%getParam(prefix//p%name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      SELECTTYPE(tmpParam); TYPE IS(ParamType_List)
+        IF(ALLOCATED(tmpParam%pList)) THEN
+          !The list in reqParams is allocated so check if the
+          !subparameters in this list are extraneous
+          IF(ALLOCATED(p%pList)) THEN
+            DO i=1,SIZE(p%pList)
+              CALL checkExtras_Paramtype(p%pList(i),reqParams, &
+                  optParams,prefix//p%name//'->')
+            ENDDO
+          ENDIF
+        ENDIF
+      ENDSELECT
+    ELSE
+      !Check the optional list
+      CALL optParams%get(prefix//p%name,tmpParam)
       IF(ASSOCIATED(tmpParam)) THEN
         SELECTTYPE(tmpParam); TYPE IS(ParamType_List)
           IF(ALLOCATED(tmpParam%pList)) THEN
-            !The list in reqParams is allocated so check if the
+            !The list in optParams is allocated so check if the
             !subparameters in this list are extraneous
             IF(ALLOCATED(p%pList)) THEN
               DO i=1,SIZE(p%pList)
@@ -2845,38 +2859,22 @@ RECURSIVE SUBROUTINE checkExtras_Paramtype(thisParam,reqParams,optParams,prefix)
           ENDIF
         ENDSELECT
       ELSE
-        !Check the optional list
-        CALL optParams%get(prefix//p%name,tmpParam)
-        IF(ASSOCIATED(tmpParam)) THEN
-          SELECTTYPE(tmpParam); TYPE IS(ParamType_List)
-            IF(ALLOCATED(tmpParam%pList)) THEN
-              !The list in optParams is allocated so check if the
-              !subparameters in this list are extraneous
-              IF(ALLOCATED(p%pList)) THEN
-                DO i=1,SIZE(p%pList)
-                  CALL checkExtras_Paramtype(p%pList(i),reqParams, &
-                      optParams,prefix//p%name//'->')
-                ENDDO
-              ENDIF
-            ENDIF
-          ENDSELECT
-        ELSE
-          CALL eParams%raiseInformation(modName//'::'//myName// &
-              ' - Possible extraneous parameter "'//prefix//p%name// &
-              '" is not present in the reference list!')
-        ENDIF
-      ENDIF
-    CLASS DEFAULT
-      !This is a meaningful parameter so search reqParams and optParams for
-      !the parameter's name and warn if it is not present
-      CALL reqParams%getParam(prefix//p%name,tmpParam)
-      IF(.NOT.ASSOCIATED(tmpParam)) &
-          CALL optParams%get(prefix//p%name,tmpParam)
-      IF(.NOT.ASSOCIATED(tmpParam)) THEN
         CALL eParams%raiseInformation(modName//'::'//myName// &
             ' - Possible extraneous parameter "'//prefix//p%name// &
             '" is not present in the reference list!')
       ENDIF
+    ENDIF
+  CLASS DEFAULT
+    !This is a meaningful parameter so search reqParams and optParams for
+    !the parameter's name and warn if it is not present
+    CALL reqParams%getParam(prefix//p%name,tmpParam)
+    IF(.NOT.ASSOCIATED(tmpParam)) &
+        CALL optParams%get(prefix//p%name,tmpParam)
+    IF(.NOT.ASSOCIATED(tmpParam)) THEN
+      CALL eParams%raiseInformation(modName//'::'//myName// &
+          ' - Possible extraneous parameter "'//prefix//p%name// &
+          '" is not present in the reference list!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE checkExtras_Paramtype
 !
@@ -3019,327 +3017,327 @@ FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
   !Find the extended parameter type, then use the appropriate variable
   !and "get" the data to check.
   SELECTTYPE(paramPtr => thatParam)
-    TYPE IS(ParamType_SSK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
-      bool=(tmpssk1 .APPROXEQ. tmpssk2)
+  TYPE IS(ParamType_SSK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
+    bool=(tmpssk1 .APPROXEQ. tmpssk2)
+    ASSERT(bool, prefix//CHAR(thisParam%name))
+    FINFO() 'test value=',tmpssk1
+    FINFO() 'ref. value=',tmpssk2
+  TYPE IS(ParamType_SDK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
+    bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
+    IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+    ASSERT(bool, prefix//CHAR(thisParam%name))
+    FINFO() 'test value=',tmpsdk1
+    FINFO() 'ref. value=',tmpsdk2
+  TYPE IS(ParamType_SNK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
+    bool=(tmpsnk1 == tmpsnk2)
+    ASSERT(bool, prefix//CHAR(thisParam%name))
+    FINFO() 'test value=',tmpsnk1
+    FINFO() 'ref. value=',tmpsnk2
+  TYPE IS(ParamType_SLK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
+    bool=(tmpslk1 == tmpslk2)
+    ASSERT(bool, prefix//CHAR(thisParam%name))
+    FINFO() 'test value=',tmpslk1
+    FINFO() 'ref. value=',tmpslk2
+  TYPE IS(ParamType_SBK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
+    bool=(tmpsbk1 .EQV. tmpsbk2)
+    ASSERT(bool, prefix//CHAR(thisParam%name))
+    FINFO() 'test value=',tmpsbk1
+    FINFO() 'ref. value=',tmpsbk2
+  TYPE IS(ParamType_STR)
+    CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
+    bool=(tmpstr1 == tmpstr2)
+    ASSERT(bool, prefix//CHAR(thisParam%name))
+    FINFO() 'test value=',CHAR(tmpstr1)
+    FINFO() 'ref. value=',CHAR(tmpstr2)
+  TYPE IS(ParamType_SSK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
+    bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
+    ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsska11,DIM=1), SIZE(tmpsska12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
       ASSERT(bool, prefix//CHAR(thisParam%name))
-      FINFO() 'test value=',tmpssk1
-      FINFO() 'ref. value=',tmpssk2
-    TYPE IS(ParamType_SDK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
-      bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
-      IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+      FINFO() 'test values=',tmpsska11
+      FINFO() 'ref. values=',tmpsska12
+    ENDIF
+    DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
+  TYPE IS(ParamType_SDK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
+    bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
+    ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsdka11,DIM=1), SIZE(tmpsdka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
+      IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
       ASSERT(bool, prefix//CHAR(thisParam%name))
-      FINFO() 'test value=',tmpsdk1
-      FINFO() 'ref. value=',tmpsdk2
-    TYPE IS(ParamType_SNK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
-      bool=(tmpsnk1 == tmpsnk2)
+      FINFO() 'test values=',tmpsdka11
+      FINFO() 'ref. values=',tmpsdka12
+    ENDIF
+    DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
+  TYPE IS(ParamType_SNK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
+    bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
+    ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsnka11,DIM=1), SIZE(tmpsnka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsnka11 == tmpsnka12)
       ASSERT(bool, prefix//CHAR(thisParam%name))
-      FINFO() 'test value=',tmpsnk1
-      FINFO() 'ref. value=',tmpsnk2
-    TYPE IS(ParamType_SLK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
-      bool=(tmpslk1 == tmpslk2)
+      FINFO() 'test values=',tmpsnka11
+      FINFO() 'ref. values=',tmpsnka12
+    ENDIF
+    DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
+  TYPE IS(ParamType_SLK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
+    bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
+    ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpslka11,DIM=1), SIZE(tmpslka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpslka11 == tmpslka12)
       ASSERT(bool, prefix//CHAR(thisParam%name))
-      FINFO() 'test value=',tmpslk1
-      FINFO() 'ref. value=',tmpslk2
-    TYPE IS(ParamType_SBK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
-      bool=(tmpsbk1 .EQV. tmpsbk2)
+      FINFO() 'test values=',tmpslka11
+      FINFO() 'ref. values=',tmpslka12
+    ENDIF
+    DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
+  TYPE IS(ParamType_SBK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
+    bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
+    ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsbka11,DIM=1), SIZE(tmpsbka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsbka11 .EQV. tmpsbka12)
       ASSERT(bool, prefix//CHAR(thisParam%name))
-      FINFO() 'test value=',tmpsbk1
-      FINFO() 'ref. value=',tmpsbk2
-    TYPE IS(ParamType_STR)
-      CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
-      bool=(tmpstr1 == tmpstr2)
-      ASSERT(bool, prefix//CHAR(thisParam%name))
-      FINFO() 'test value=',CHAR(tmpstr1)
-      FINFO() 'ref. value=',CHAR(tmpstr2)
-    TYPE IS(ParamType_SSK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
-      bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
-      ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsska11,DIM=1), SIZE(tmpsska12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
+      FINFO() 'test values=',tmpsbka11
+      FINFO() 'ref. values=',tmpsbka12
+    ENDIF
+    DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
+  TYPE IS(ParamType_STR_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
+    bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
+    ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpstra11,DIM=1), SIZE(tmpstra12,DIM=1)
+    IF(bool) THEN
+      DO i=1,SIZE(tmpstra11)
+        bool=tmpstra11(i) == tmpstra12(i)
         ASSERT(bool, prefix//CHAR(thisParam%name))
-        FINFO() 'test values=',tmpsska11
-        FINFO() 'ref. values=',tmpsska12
-      ENDIF
-      DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
-    TYPE IS(ParamType_SDK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
-      bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
-      ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsdka11,DIM=1), SIZE(tmpsdka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
-        IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
-        ASSERT(bool, prefix//CHAR(thisParam%name))
-        FINFO() 'test values=',tmpsdka11
-        FINFO() 'ref. values=',tmpsdka12
-      ENDIF
-      DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
-    TYPE IS(ParamType_SNK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
-      bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
-      ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsnka11,DIM=1), SIZE(tmpsnka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsnka11 == tmpsnka12)
-        ASSERT(bool, prefix//CHAR(thisParam%name))
-        FINFO() 'test values=',tmpsnka11
-        FINFO() 'ref. values=',tmpsnka12
-      ENDIF
-      DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
-    TYPE IS(ParamType_SLK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
-      bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
-      ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpslka11,DIM=1), SIZE(tmpslka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpslka11 == tmpslka12)
-        ASSERT(bool, prefix//CHAR(thisParam%name))
-        FINFO() 'test values=',tmpslka11
-        FINFO() 'ref. values=',tmpslka12
-      ENDIF
-      DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
-    TYPE IS(ParamType_SBK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
-      bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
-      ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsbka11,DIM=1), SIZE(tmpsbka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsbka11 .EQV. tmpsbka12)
-        ASSERT(bool, prefix//CHAR(thisParam%name))
-        FINFO() 'test values=',tmpsbka11
-        FINFO() 'ref. values=',tmpsbka12
-      ENDIF
-      DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
-    TYPE IS(ParamType_STR_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
-      bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
-      ASSERT(bool, 'SIZE of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpstra11,DIM=1), SIZE(tmpstra12,DIM=1)
-      IF(bool) THEN
-        DO i=1,SIZE(tmpstra11)
-          bool=tmpstra11(i) == tmpstra12(i)
-          ASSERT(bool, prefix//CHAR(thisParam%name))
-          FINFO() 'test values=',CHAR(tmpstra11(i))
-          FINFO() 'ref. values=',CHAR(tmpstra12(i))
-          FINFO() i
-          IF(.NOT. bool) EXIT
-        ENDDO
-        !clear?
-       ENDIF
-       DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
-    TYPE IS(ParamType_SSK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
-      bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsska21,DIM=1), SIZE(tmpsska22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpsska21,DIM=2), SIZE(tmpsska22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
-          ASSERT(bool, prefix//CHAR(thisParam%name))
-          FINFO() 'test values=',tmpsska21
-          FINFO() 'ref. values=',tmpsska22
-        ENDIF
-      ENDIF
-      DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
-    TYPE IS(ParamType_SDK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
-      bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsdka21,DIM=1), SIZE(tmpsdka22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpsdka21,DIM=2), SIZE(tmpsdka22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
-          ASSERT(bool, prefix//CHAR(thisParam%name))
-          FINFO() 'test values=',tmpsdka21
-          FINFO() 'ref. values=',tmpsdka22
-        ENDIF
-      ENDIF
-      DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
-    TYPE IS(ParamType_SNK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
-      bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsnka21,DIM=1), SIZE(tmpsnka22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpsnka21,DIM=2), SIZE(tmpsnka22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpsnka21 == tmpsnka22)
-          ASSERT(bool, prefix//CHAR(thisParam%name))
-          FINFO() 'test values=',tmpsnka21
-          FINFO() 'ref. values=',tmpsnka22
-        ENDIF
-      ENDIF
-      DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
-    TYPE IS(ParamType_SLK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
-      bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpslka21,DIM=1), SIZE(tmpslka22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpslka21,DIM=2), SIZE(tmpslka22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpslka21 == tmpslka22)
-          ASSERT(bool, prefix//CHAR(thisParam%name))
-          FINFO() 'test values=',tmpslka21
-          FINFO() 'ref. values=',tmpslka22
-        ENDIF
-      ENDIF
-      DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
-    TYPE IS(ParamType_STR_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
-      bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpstra21,DIM=1), SIZE(tmpstra22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpstra21,DIM=2), SIZE(tmpstra22,DIM=2)
-        IF(bool) THEN
-          outer : DO j=1,SIZE(tmpstra21,DIM=2)
-            DO i=1,SIZE(tmpstra21,DIM=1)
-              bool=tmpstra21(i,j) == tmpstra22(i,j)
-              ASSERT(bool, prefix//CHAR(thisParam%name))
-              FINFO() 'test values=',CHAR(tmpstra21(i,j))
-              FINFO() 'ref. values=',CHAR(tmpstra22(i,j))
-              IF(.NOT.bool) EXIT outer
-            ENDDO
-          ENDDO outer
-        ENDIF
-      ENDIF
+        FINFO() 'test values=',CHAR(tmpstra11(i))
+        FINFO() 'ref. values=',CHAR(tmpstra12(i))
+        FINFO() i
+        IF(.NOT. bool) EXIT
+      ENDDO
       !clear?
-      DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
-    TYPE IS(ParamType_SSK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
-      bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsska31,DIM=1), SIZE(tmpsska32,DIM=1)
+     ENDIF
+     DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
+  TYPE IS(ParamType_SSK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
+    bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsska21,DIM=1), SIZE(tmpsska22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsska21,DIM=2), SIZE(tmpsska22,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpsska31,DIM=2), SIZE(tmpsska32,DIM=2)
-        IF(bool) THEN
-          bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
-          ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
-          FINFO() SIZE(tmpsska31,DIM=3), SIZE(tmpsska32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
+        bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
+        ASSERT(bool, prefix//CHAR(thisParam%name))
+        FINFO() 'test values=',tmpsska21
+        FINFO() 'ref. values=',tmpsska22
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
+  TYPE IS(ParamType_SDK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
+    bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsdka21,DIM=1), SIZE(tmpsdka22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsdka21,DIM=2), SIZE(tmpsdka22,DIM=2)
+      IF(bool) THEN
+        bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
+        ASSERT(bool, prefix//CHAR(thisParam%name))
+        FINFO() 'test values=',tmpsdka21
+        FINFO() 'ref. values=',tmpsdka22
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
+  TYPE IS(ParamType_SNK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
+    bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsnka21,DIM=1), SIZE(tmpsnka22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsnka21,DIM=2), SIZE(tmpsnka22,DIM=2)
+      IF(bool) THEN
+        bool=ALL(tmpsnka21 == tmpsnka22)
+        ASSERT(bool, prefix//CHAR(thisParam%name))
+        FINFO() 'test values=',tmpsnka21
+        FINFO() 'ref. values=',tmpsnka22
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
+  TYPE IS(ParamType_SLK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
+    bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpslka21,DIM=1), SIZE(tmpslka22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpslka21,DIM=2), SIZE(tmpslka22,DIM=2)
+      IF(bool) THEN
+        bool=ALL(tmpslka21 == tmpslka22)
+        ASSERT(bool, prefix//CHAR(thisParam%name))
+        FINFO() 'test values=',tmpslka21
+        FINFO() 'ref. values=',tmpslka22
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
+  TYPE IS(ParamType_STR_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
+    bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpstra21,DIM=1), SIZE(tmpstra22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpstra21,DIM=2), SIZE(tmpstra22,DIM=2)
+      IF(bool) THEN
+        outer : DO j=1,SIZE(tmpstra21,DIM=2)
+          DO i=1,SIZE(tmpstra21,DIM=1)
+            bool=tmpstra21(i,j) == tmpstra22(i,j)
             ASSERT(bool, prefix//CHAR(thisParam%name))
-            FINFO() 'test values=',tmpsska31
-            FINFO() 'ref. values=',tmpsska32
-          ENDIF
+            FINFO() 'test values=',CHAR(tmpstra21(i,j))
+            FINFO() 'ref. values=',CHAR(tmpstra22(i,j))
+            IF(.NOT.bool) EXIT outer
+          ENDDO
+        ENDDO outer
+      ENDIF
+    ENDIF
+    !clear?
+    DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
+  TYPE IS(ParamType_SSK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
+    bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsska31,DIM=1), SIZE(tmpsska32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsska31,DIM=2), SIZE(tmpsska32,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsska31,DIM=3), SIZE(tmpsska32,DIM=3)
+        IF(bool) THEN
+          bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test values=',tmpsska31
+          FINFO() 'ref. values=',tmpsska32
         ENDIF
       ENDIF
-      DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
-    TYPE IS(ParamType_SDK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
-      bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsdka31,DIM=1), SIZE(tmpsdka32,DIM=1)
+    ENDIF
+    DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
+  TYPE IS(ParamType_SDK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
+    bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsdka31,DIM=1), SIZE(tmpsdka32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsdka31,DIM=2), SIZE(tmpsdka32,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpsdka31,DIM=2), SIZE(tmpsdka32,DIM=2)
+        bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsdka31,DIM=3), SIZE(tmpsdka32,DIM=3)
         IF(bool) THEN
-          bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
-          ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
-          FINFO() SIZE(tmpsdka31,DIM=3), SIZE(tmpsdka32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
-            ASSERT(bool, prefix//CHAR(thisParam%name))
-            FINFO() 'test values=',tmpsdka31
-            FINFO() 'ref. values=',tmpsdka32
-          ENDIF
+          bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test values=',tmpsdka31
+          FINFO() 'ref. values=',tmpsdka32
         ENDIF
       ENDIF
-      DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
-    TYPE IS(ParamType_SNK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
-      bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpsnka31,DIM=1), SIZE(tmpsnka32,DIM=1)
+    ENDIF
+    DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
+  TYPE IS(ParamType_SNK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
+    bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsnka31,DIM=1), SIZE(tmpsnka32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsnka31,DIM=2), SIZE(tmpsnka32,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpsnka31,DIM=2), SIZE(tmpsnka32,DIM=2)
+        bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsnka31,DIM=3), SIZE(tmpsnka32,DIM=3)
         IF(bool) THEN
-          bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
-          ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
-          FINFO() SIZE(tmpsnka31,DIM=3), SIZE(tmpsnka32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpsnka31 == tmpsnka32)
-            ASSERT(bool, prefix//CHAR(thisParam%name))
-            FINFO() 'test values=',tmpsnka31
-            FINFO() 'ref. values=',tmpsnka32
-          ENDIF
+          bool=ALL(tmpsnka31 == tmpsnka32)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test values=',tmpsnka31
+          FINFO() 'ref. values=',tmpsnka32
         ENDIF
       ENDIF
-      DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
-    TYPE IS(ParamType_SLK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
-      bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
-      ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
-      FINFO() SIZE(tmpslka31,DIM=1), SIZE(tmpslka32,DIM=1)
+    ENDIF
+    DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
+  TYPE IS(ParamType_SLK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
+    bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpslka31,DIM=1), SIZE(tmpslka32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpslka31,DIM=2), SIZE(tmpslka32,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
-        ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
-        FINFO() SIZE(tmpslka31,DIM=2), SIZE(tmpslka32,DIM=2)
+        bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpslka31,DIM=3), SIZE(tmpslka32,DIM=3)
         IF(bool) THEN
-          bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
-          ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
-          FINFO() SIZE(tmpslka31,DIM=3), SIZE(tmpslka32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpslka31 == tmpslka32)
-            ASSERT(bool, prefix//CHAR(thisParam%name))
-            FINFO() 'test values=',tmpslka31
-            FINFO() 'ref. values=',tmpslka32
-          ENDIF
+          bool=ALL(tmpslka31 == tmpslka32)
+          ASSERT(bool, prefix//CHAR(thisParam%name))
+          FINFO() 'test values=',tmpslka31
+          FINFO() 'ref. values=',tmpslka32
         ENDIF
       ENDIF
-      DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
-    TYPE IS(ParamType_List)
-      bool=SAME_TYPE_AS(thisParam,paramPtr)
-      ASSERT(bool,'ParamType_List for'//prefix//CHAR(thisParam%name))
-      FINFO() 'test value is ParamType_List, while ref value is not.'
-    CLASS DEFAULT
-      CONTINUE
+    ENDIF
+    DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
+  TYPE IS(ParamType_List)
+    bool=SAME_TYPE_AS(thisParam,paramPtr)
+    ASSERT(bool,'ParamType_List for'//prefix//CHAR(thisParam%name))
+    FINFO() 'test value is ParamType_List, while ref value is not.'
+  CLASS DEFAULT
+    CONTINUE
   ENDSELECT
 ENDFUNCTION matchTest_ParamType
 !
@@ -3395,263 +3393,263 @@ FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
   errmess=' of the two parameter lists with parameter path "'//prefix//thisParam%name//'"'
   errmesstp=' are not equal!'
   SELECTTYPE(paramPtr => thatParam)
-    TYPE IS(ParamType_SSK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
-      bool=(tmpssk1 .APPROXEQ. tmpssk2)
-    TYPE IS(ParamType_SDK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
-      bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
-      IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
-    TYPE IS(ParamType_SNK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
-      bool=(tmpsnk1 == tmpsnk2)
-    TYPE IS(ParamType_SLK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
-      bool=(tmpslk1 == tmpslk2)
-    TYPE IS(ParamType_SBK)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
-      bool=(tmpsbk1 .EQV. tmpsbk2)
-    TYPE IS(ParamType_STR)
-      CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
-      bool=(tmpstr1 == tmpstr2)
-    TYPE IS(ParamType_SSK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
-      bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
-    TYPE IS(ParamType_SDK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
-      bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
-        IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
-    TYPE IS(ParamType_SNK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
-      bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsnka11 == tmpsnka12)
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
-    TYPE IS(ParamType_SLK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
-      bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpslka11 == tmpslka12)
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
-    TYPE IS(ParamType_SBK_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
-      bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
-      IF(bool) THEN
-        bool=ALL(tmpsbka11 .EQV. tmpsbka12)
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
-    TYPE IS(ParamType_STR_a1)
-      CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
-      bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
-      IF(bool) THEN
-        DO i=1,SIZE(tmpstra11)
-          bool=tmpstra11(i) == tmpstra12(i)
-          IF(.NOT. bool) EXIT
-        ENDDO
-        !clear?
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
-    TYPE IS(ParamType_SSK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
-      bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
-        ELSE
-          errmesstt=' - Dimension 2'
-        ENDIF
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
-    TYPE IS(ParamType_SDK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
-      bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
-        ELSE
-          errmesstt=' - Dimension 2'
-        ENDIF
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
-    TYPE IS(ParamType_SNK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
-      bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpsnka21 == tmpsnka22)
-        ELSE
-          errmesstt=' - Dimension 2'
-        ENDIF
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
-    TYPE IS(ParamType_SLK_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
-      bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
-        IF(bool) THEN
-          bool=ALL(tmpslka21 == tmpslka22)
-        ELSE
-          errmesstt=' - Dimension 2'
-        ENDIF
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
-      DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
-    TYPE IS(ParamType_STR_a2)
-      CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
-      bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
-      IF(bool) THEN
-        bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
-        IF(bool) THEN
-          outer : DO j=1,SIZE(tmpstra21,DIM=2)
-            DO i=1,SIZE(tmpstra21,DIM=1)
-              bool=tmpstra21(i,j) == tmpstra22(i,j)
-              IF(.NOT.bool) EXIT outer
-            ENDDO
-          ENDDO outer
-        ELSE
-          errmesstt=' - Dimension 2'
-        ENDIF
-      ELSE
-        errmesstt=' - Dimension 1'
-      ENDIF
+  TYPE IS(ParamType_SSK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpssk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpssk2)
+    bool=(tmpssk1 .APPROXEQ. tmpssk2)
+  TYPE IS(ParamType_SDK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
+    bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
+    IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+  TYPE IS(ParamType_SNK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
+    bool=(tmpsnk1 == tmpsnk2)
+  TYPE IS(ParamType_SLK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslk2)
+    bool=(tmpslk1 == tmpslk2)
+  TYPE IS(ParamType_SBK)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsbk1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsbk2)
+    bool=(tmpsbk1 .EQV. tmpsbk2)
+  TYPE IS(ParamType_STR)
+    CALL thisParam%get(CHAR(thisParam%name),tmpstr1)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpstr2)
+    bool=(tmpstr1 == tmpstr2)
+  TYPE IS(ParamType_SSK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska12)
+    bool=SIZE(tmpsska11,DIM=1) == SIZE(tmpsska12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsska11 .APPROXEQ. tmpsska12)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsska11); DEALLOCATE(tmpsska12)
+  TYPE IS(ParamType_SDK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka12)
+    bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
+      IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsdka11); DEALLOCATE(tmpsdka12)
+  TYPE IS(ParamType_SNK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka12)
+    bool=SIZE(tmpsnka11,DIM=1) == SIZE(tmpsnka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsnka11 == tmpsnka12)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsnka11); DEALLOCATE(tmpsnka12)
+  TYPE IS(ParamType_SLK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka12)
+    bool=SIZE(tmpslka11,DIM=1) == SIZE(tmpslka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpslka11 == tmpslka12)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpslka11); DEALLOCATE(tmpslka12)
+  TYPE IS(ParamType_SBK_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsbka11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsbka12)
+    bool=SIZE(tmpsbka11,DIM=1) == SIZE(tmpsbka12,DIM=1)
+    IF(bool) THEN
+      bool=ALL(tmpsbka11 .EQV. tmpsbka12)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsbka11); DEALLOCATE(tmpsbka12)
+  TYPE IS(ParamType_STR_a1)
+    CALL thisParam%get(CHAR(thisParam%name),tmpstra11)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpstra12)
+    bool=SIZE(tmpstra11,DIM=1) == SIZE(tmpstra12,DIM=1)
+    IF(bool) THEN
+      DO i=1,SIZE(tmpstra11)
+        bool=tmpstra11(i) == tmpstra12(i)
+        IF(.NOT. bool) EXIT
+      ENDDO
       !clear?
-      DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
-    TYPE IS(ParamType_SSK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
-      bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpstra11); DEALLOCATE(tmpstra12)
+  TYPE IS(ParamType_SSK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska22)
+    bool=SIZE(tmpsska21,DIM=1) == SIZE(tmpsska22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska21,DIM=2) == SIZE(tmpsska22,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
+        bool=ALL(tmpsska21 .APPROXEQ. tmpsska22)
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsska21); DEALLOCATE(tmpsska22)
+  TYPE IS(ParamType_SDK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka22)
+    bool=SIZE(tmpsdka21,DIM=1) == SIZE(tmpsdka22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka21,DIM=2) == SIZE(tmpsdka22,DIM=2)
+      IF(bool) THEN
+        bool=ALL(tmpsdka21 .APPROXEQ. tmpsdka22)
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsdka21); DEALLOCATE(tmpsdka22)
+  TYPE IS(ParamType_SNK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka22)
+    bool=SIZE(tmpsnka21,DIM=1) == SIZE(tmpsnka22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka21,DIM=2) == SIZE(tmpsnka22,DIM=2)
+      IF(bool) THEN
+        bool=ALL(tmpsnka21 == tmpsnka22)
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsnka21); DEALLOCATE(tmpsnka22)
+  TYPE IS(ParamType_SLK_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka22)
+    bool=SIZE(tmpslka21,DIM=1) == SIZE(tmpslka22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka21,DIM=2) == SIZE(tmpslka22,DIM=2)
+      IF(bool) THEN
+        bool=ALL(tmpslka21 == tmpslka22)
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpslka21); DEALLOCATE(tmpslka22)
+  TYPE IS(ParamType_STR_a2)
+    CALL thisParam%get(CHAR(thisParam%name),tmpstra21)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpstra22)
+    bool=SIZE(tmpstra21,DIM=1) == SIZE(tmpstra22,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpstra21,DIM=2) == SIZE(tmpstra22,DIM=2)
+      IF(bool) THEN
+        outer : DO j=1,SIZE(tmpstra21,DIM=2)
+          DO i=1,SIZE(tmpstra21,DIM=1)
+            bool=tmpstra21(i,j) == tmpstra22(i,j)
+            IF(.NOT.bool) EXIT outer
+          ENDDO
+        ENDDO outer
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    !clear?
+    DEALLOCATE(tmpstra21); DEALLOCATE(tmpstra22)
+  TYPE IS(ParamType_SSK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska32)
+    bool=SIZE(tmpsska31,DIM=1) == SIZE(tmpsska32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska31,DIM=2) == SIZE(tmpsska32,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
         IF(bool) THEN
-          bool=SIZE(tmpsska31,DIM=3) == SIZE(tmpsska32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
-          ELSE
-            errmesstt=' - Dimension 3'
-          ENDIF
+          bool=ALL(tmpsska31 .APPROXEQ. tmpsska32)
         ELSE
-          errmesstt=' - Dimension 2'
+          errmesstt=' - Dimension 3'
         ENDIF
       ELSE
-        errmesstt=' - Dimension 1'
+        errmesstt=' - Dimension 2'
       ENDIF
-      DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
-    TYPE IS(ParamType_SDK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
-      bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsska31); DEALLOCATE(tmpsska32)
+  TYPE IS(ParamType_SDK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka32)
+    bool=SIZE(tmpsdka31,DIM=1) == SIZE(tmpsdka32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpsdka31,DIM=2) == SIZE(tmpsdka32,DIM=2)
+        bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
         IF(bool) THEN
-          bool=SIZE(tmpsdka31,DIM=3) == SIZE(tmpsdka32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
-          ELSE
-            errmesstt=' - Dimension 3'
-          ENDIF
+          bool=ALL(tmpsdka31 .APPROXEQ. tmpsdka32)
         ELSE
-          errmesstt=' - Dimension 2'
+          errmesstt=' - Dimension 3'
         ENDIF
       ELSE
-        errmesstt=' - Dimension 1'
+        errmesstt=' - Dimension 2'
       ENDIF
-      DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
-    TYPE IS(ParamType_SNK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
-      bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsdka31); DEALLOCATE(tmpsdka32)
+  TYPE IS(ParamType_SNK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka32)
+    bool=SIZE(tmpsnka31,DIM=1) == SIZE(tmpsnka32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpsnka31,DIM=2) == SIZE(tmpsnka32,DIM=2)
+        bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
         IF(bool) THEN
-          bool=SIZE(tmpsnka31,DIM=3) == SIZE(tmpsnka32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpsnka31 == tmpsnka32)
-          ELSE
-            errmesstt=' - Dimension 3'
-          ENDIF
+          bool=ALL(tmpsnka31 == tmpsnka32)
         ELSE
-          errmesstt=' - Dimension 2'
+          errmesstt=' - Dimension 3'
         ENDIF
       ELSE
-        errmesstt=' - Dimension 1'
+        errmesstt=' - Dimension 2'
       ENDIF
-      DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
-    TYPE IS(ParamType_SLK_a3)
-      CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
-      CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
-      bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsnka31); DEALLOCATE(tmpsnka32)
+  TYPE IS(ParamType_SLK_a3)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka31)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka32)
+    bool=SIZE(tmpslka31,DIM=1) == SIZE(tmpslka32,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
       IF(bool) THEN
-        bool=SIZE(tmpslka31,DIM=2) == SIZE(tmpslka32,DIM=2)
+        bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
         IF(bool) THEN
-          bool=SIZE(tmpslka31,DIM=3) == SIZE(tmpslka32,DIM=3)
-          IF(bool) THEN
-            bool=ALL(tmpslka31 == tmpslka32)
-          ELSE
-            errmesstt=' - Dimension 3'
-          ENDIF
+          bool=ALL(tmpslka31 == tmpslka32)
         ELSE
-          errmesstt=' - Dimension 2'
+          errmesstt=' - Dimension 3'
         ENDIF
       ELSE
-        errmesstt=' - Dimension 1'
+        errmesstt=' - Dimension 2'
       ENDIF
-      DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
-    TYPE IS(ParamType_List)
-      bool=SAME_TYPE_AS(thisParam,paramPtr)
-      errmesstt=' - The parameters'
-      errmesstp=' are not the same type!'
-    CLASS DEFAULT
-      CONTINUE
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpslka31); DEALLOCATE(tmpslka32)
+  TYPE IS(ParamType_List)
+    bool=SAME_TYPE_AS(thisParam,paramPtr)
+    errmesstt=' - The parameters'
+    errmesstp=' are not the same type!'
+  CLASS DEFAULT
+    CONTINUE
   ENDSELECT
   !Error message.
   IF(.NOT. bool) CALL e%raiseError(modName//'::'//myName// &
@@ -3796,61 +3794,61 @@ SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_List)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
+  TYPE IS(ParamType_List)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
 
-        IF(ALLOCATED(thisParam%pList)) THEN
+      IF(ALLOCATED(thisParam%pList)) THEN
+        !Clear the existing list
+        DO i=1,SIZE(thisParam%pList)
+          CALL thisParam%pList(i)%clear()
+        ENDDO
+        DEALLOCATE(thisParam%pList)
+      ENDIF
+
+      !Assign the new list
+      np=SIZE(paramlist)
+      ALLOCATE(thisParam%pList(np))
+      DO i=1,np
+        CALL assign_ParamType(thisParam%pList(i),paramlist(i))
+      ENDDO
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_List)
+        IF(PRESENT(description)) p%description=TRIM(description)
+        IF(ALLOCATED(p%pList)) THEN
           !Clear the existing list
-          DO i=1,SIZE(thisParam%pList)
-            CALL thisParam%pList(i)%clear()
+          DO i=1,SIZE(p%pList)
+            CALL p%pList(i)%clear()
           ENDDO
-          DEALLOCATE(thisParam%pList)
+          DEALLOCATE(p%pList)
         ENDIF
 
         !Assign the new list
         np=SIZE(paramlist)
-        ALLOCATE(thisParam%pList(np))
+        ALLOCATE(p%pList(np))
         DO i=1,np
-          CALL assign_ParamType(thisParam%pList(i),paramlist(i))
+          CALL assign_ParamType(p%pList(i),paramlist(i))
         ENDDO
-      ELSE
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_List)
-            IF(PRESENT(description)) p%description=TRIM(description)
-            IF(ALLOCATED(p%pList)) THEN
-              !Clear the existing list
-              DO i=1,SIZE(p%pList)
-                CALL p%pList(i)%clear()
-              ENDDO
-              DEALLOCATE(p%pList)
-            ENDIF
-
-            !Assign the new list
-            np=SIZE(paramlist)
-            ALLOCATE(p%pList(np))
-            DO i=1,np
-              CALL assign_ParamType(p%pList(i),paramlist(i))
-            ENDDO
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be TYPE(ParamType_List)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be TYPE(ParamType_List)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_List
 !
@@ -3876,9 +3874,32 @@ SUBROUTINE get_ParamType_List(thisParam,name,paramlist)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_List)
-      IF(thisParam%name == TRIM(name)) THEN
-        np=SIZE(thisParam%pList)
+  TYPE IS(ParamType_List)
+    IF(thisParam%name == TRIM(name)) THEN
+      np=SIZE(thisParam%pList)
+      IF(SIZE(paramlist) < np) THEN
+        !List lengths are unequal so choose the lesser
+        CALL eParams%raiseWarning(modName//'::'//myName// &
+            ' - parameter list lengths are unequal! '// &
+            'All parameters may not be returned!')
+        np=SIZE(paramlist)
+      ENDIF
+      DO i=1,np
+        CALL assign_ParamType(paramlist(i),thisParam%pList(i))
+      ENDDO
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_List)
+        np=SIZE(p%pList)
         IF(SIZE(paramlist) < np) THEN
           !List lengths are unequal so choose the lesser
           CALL eParams%raiseWarning(modName//'::'//myName// &
@@ -3887,41 +3908,18 @@ SUBROUTINE get_ParamType_List(thisParam,name,paramlist)
           np=SIZE(paramlist)
         ENDIF
         DO i=1,np
-          CALL assign_ParamType(paramlist(i),thisParam%pList(i))
+          CALL assign_ParamType(paramlist(i),p%pList(i))
         ENDDO
-      ELSE
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_List)
-            np=SIZE(p%pList)
-            IF(SIZE(paramlist) < np) THEN
-              !List lengths are unequal so choose the lesser
-              CALL eParams%raiseWarning(modName//'::'//myName// &
-                  ' - parameter list lengths are unequal! '// &
-                  'All parameters may not be returned!')
-              np=SIZE(paramlist)
-            ENDIF
-            DO i=1,np
-              CALL assign_ParamType(paramlist(i),p%pList(i))
-            ENDDO
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be TYPE(ParamType_List)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be TYPE(ParamType_List)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_List
 !
@@ -4009,7 +4007,7 @@ SUBROUTINE init_ParamType_SSK(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SSK); p%val=param
+      TYPE IS(ParamType_SSK); p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -4101,34 +4099,34 @@ SUBROUTINE set_ParamType_SSK(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK)
-      IF(thisParam%name == TRIM(name)) THEN
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+  TYPE IS(ParamType_SSK)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK)
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be REAL(SSK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SSK
 !
@@ -4151,32 +4149,32 @@ SUBROUTINE get_ParamType_SSK(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK)
-      IF(thisParam%name == TRIM(name)) THEN
-        val=thisParam%val
-      ELSE
+  TYPE IS(ParamType_SSK)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK)
+        val=p%val
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK)
-            val=p%val
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be REAL(SSK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SSK
 !
@@ -4265,7 +4263,7 @@ SUBROUTINE init_ParamType_SDK(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SDK); p%val=param
+      TYPE IS(ParamType_SDK); p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -4357,34 +4355,34 @@ SUBROUTINE set_ParamType_SDK(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK)
-      IF(thisParam%name == TRIM(name)) THEN
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+  TYPE IS(ParamType_SDK)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK)
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be REAL(SDK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SDK
 !
@@ -4407,32 +4405,32 @@ SUBROUTINE get_ParamType_SDK(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK)
-      IF(thisParam%name == TRIM(name)) THEN
-        val=thisParam%val
-      ELSE
+  TYPE IS(ParamType_SDK)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK)
+        val=p%val
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK)
-            val=p%val
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be REAL(SDK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SDK
 !
@@ -4521,7 +4519,7 @@ SUBROUTINE init_ParamType_SNK(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SNK); p%val=param
+      TYPE IS(ParamType_SNK); p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -4613,34 +4611,34 @@ SUBROUTINE set_ParamType_SNK(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK)
-      IF(thisParam%name == TRIM(name)) THEN
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+  TYPE IS(ParamType_SNK)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK)
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SNK
 !
@@ -4663,32 +4661,32 @@ SUBROUTINE get_ParamType_SNK(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK)
-      IF(thisParam%name == TRIM(name)) THEN
-        val=thisParam%val
-      ELSE
+  TYPE IS(ParamType_SNK)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK)
+        val=p%val
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK)
-            val=p%val
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SNK
 !
@@ -4773,7 +4771,7 @@ SUBROUTINE init_ParamType_SLK(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SLK); p%val=param
+      TYPE IS(ParamType_SLK); p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -4865,34 +4863,34 @@ SUBROUTINE set_ParamType_SLK(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK)
-      IF(thisParam%name == TRIM(name)) THEN
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+  TYPE IS(ParamType_SLK)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK)
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SLK
 !
@@ -4915,32 +4913,32 @@ SUBROUTINE get_ParamType_SLK(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK)
-      IF(thisParam%name == TRIM(name)) THEN
-        val=thisParam%val
-      ELSE
+  TYPE IS(ParamType_SLK)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK)
+        val=p%val
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK)
-            val=p%val
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SLK
 !
@@ -5025,7 +5023,7 @@ SUBROUTINE init_ParamType_SBK(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='LOGICAL(SBK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SBK); p%val=param
+      TYPE IS(ParamType_SBK); p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -5117,34 +5115,34 @@ SUBROUTINE set_ParamType_SBK(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SBK)
-      IF(thisParam%name == TRIM(name)) THEN
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+  TYPE IS(ParamType_SBK)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SBK)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SBK)
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be LOGICAL(SBK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be LOGICAL(SBK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SBK
 !
@@ -5167,32 +5165,32 @@ SUBROUTINE get_ParamType_SBK(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SBK)
-      IF(thisParam%name == TRIM(name)) THEN
-        val=thisParam%val
-      ELSE
+  TYPE IS(ParamType_SBK)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SBK)
+        val=p%val
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SBK)
-            val=p%val
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be LOGICAL(SBK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be LOGICAL(SBK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SBK
 !
@@ -5277,7 +5275,7 @@ SUBROUTINE init_ParamType_STR(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='TYPE(StringType)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_STR); p%val=param
+      TYPE IS(ParamType_STR); p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -5362,34 +5360,34 @@ SUBROUTINE set_ParamType_STR(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_STR)
-      IF(thisParam%name == TRIM(name)) THEN
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+  TYPE IS(ParamType_STR)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_STR)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_STR)
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be TYPE(StringType)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be TYPE(StringType)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_STR
 !
@@ -5412,32 +5410,32 @@ SUBROUTINE get_ParamType_STR(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_STR)
-      IF(thisParam%name == TRIM(name)) THEN
-        val=thisParam%val
-      ELSE
+  TYPE IS(ParamType_STR)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_STR)
+        val=p%val
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_STR)
-            val=p%val
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be TYPE(StringType)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be TYPE(StringType)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_STR
 !
@@ -5614,9 +5612,9 @@ SUBROUTINE init_ParamType_SSK_a1(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='1-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SSK_a1)
-          ALLOCATE(p%val(SIZE(param)))
-          p%val=param
+      TYPE IS(ParamType_SSK_a1)
+        ALLOCATE(p%val(SIZE(param)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -5728,42 +5726,42 @@ SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val) /= SIZE(param)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param)))
+  TYPE IS(ParamType_SSK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a1)
+        IF(SIZE(p%val) /= SIZE(param)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK_a1)
-            IF(SIZE(p%val) /= SIZE(param)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SSK_a1
 !
@@ -5786,50 +5784,50 @@ SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SSK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK_a1)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val) /= SIZE(val)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a1)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val) /= SIZE(val)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SSK_a1
 !
@@ -5914,9 +5912,9 @@ SUBROUTINE init_ParamType_SDK_a1(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='1-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SDK_a1)
-          ALLOCATE(p%val(SIZE(param)))
-          p%val=param
+      TYPE IS(ParamType_SDK_a1)
+        ALLOCATE(p%val(SIZE(param)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6028,42 +6026,42 @@ SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val) /= SIZE(param)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param)))
+  TYPE IS(ParamType_SDK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a1)
+        IF(SIZE(p%val) /= SIZE(param)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK_a1)
-            IF(SIZE(p%val) /= SIZE(param)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SDK_a1
 !
@@ -6086,50 +6084,50 @@ SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SDK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK_a1)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val) /= SIZE(val)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a1)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val) /= SIZE(val)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SDK_a1
 !
@@ -6214,9 +6212,9 @@ SUBROUTINE init_ParamType_SNK_a1(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='1-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SNK_a1)
-          ALLOCATE(p%val(SIZE(param)))
-          p%val=param
+      TYPE IS(ParamType_SNK_a1)
+        ALLOCATE(p%val(SIZE(param)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6326,42 +6324,42 @@ SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val) /= SIZE(param)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param)))
+  TYPE IS(ParamType_SNK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a1)
+        IF(SIZE(p%val) /= SIZE(param)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK_a1)
-            IF(SIZE(p%val) /= SIZE(param)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SNK_a1
 !
@@ -6384,50 +6382,50 @@ SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SNK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK_a1)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val) /= SIZE(val)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a1)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val) /= SIZE(val)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SNK_a1
 !
@@ -6512,9 +6510,9 @@ SUBROUTINE init_ParamType_SLK_a1(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='1-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SLK_a1)
-          ALLOCATE(p%val(SIZE(param)))
-          p%val=param
+      TYPE IS(ParamType_SLK_a1)
+        ALLOCATE(p%val(SIZE(param)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6625,42 +6623,42 @@ SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val) /= SIZE(param)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param)))
+  TYPE IS(ParamType_SLK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a1)
+        IF(SIZE(p%val) /= SIZE(param)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK_a1)
-            IF(SIZE(p%val) /= SIZE(param)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SLK_a1
 !
@@ -6683,50 +6681,50 @@ SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SLK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK_a1)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val) /= SIZE(val)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a1)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val) /= SIZE(val)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SLK_a1
 !
@@ -6811,9 +6809,9 @@ SUBROUTINE init_ParamType_SBK_a1(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='1-D ARRAY LOGICAL(SBK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SBK_a1)
-          ALLOCATE(p%val(SIZE(param)))
-          p%val=param
+      TYPE IS(ParamType_SBK_a1)
+        ALLOCATE(p%val(SIZE(param)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6921,42 +6919,42 @@ SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SBK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val) /= SIZE(param)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param)))
+  TYPE IS(ParamType_SBK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SBK_a1)
+        IF(SIZE(p%val) /= SIZE(param)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SBK_a1)
-            IF(SIZE(p%val) /= SIZE(param)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SBK_a1
 !
@@ -6979,50 +6977,50 @@ SUBROUTINE get_ParamType_SBK_a1(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SBK_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SBK_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SBK_a1)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val) /= SIZE(val)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SBK_a1)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val) /= SIZE(val)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SBK_a1
 !
@@ -7107,8 +7105,8 @@ SUBROUTINE init_ParamType_STR_a1(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='1-D ARRAY TYPE(StringType)'
       SELECTTYPE(p => thisParam%pdat); TYPE IS(ParamType_STR_a1)
-          ALLOCATE(p%val(SIZE(param)))
-          p%val=param
+        ALLOCATE(p%val(SIZE(param)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7222,42 +7220,42 @@ SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_STR_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val) /= SIZE(param)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param)))
+  TYPE IS(ParamType_STR_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val) /= SIZE(param)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_STR_a1)
+        IF(SIZE(p%val) /= SIZE(param)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_STR_a1)
-            IF(SIZE(p%val) /= SIZE(param)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_STR_a1
 !
@@ -7280,50 +7278,50 @@ SUBROUTINE get_ParamType_STR_a1(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_STR_a1)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val) /= SIZE(val)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_STR_a1)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val) /= SIZE(val)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_STR_a1)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val) /= SIZE(val)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_STR_a1)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val) /= SIZE(val)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_STR_a1
 !
@@ -7412,9 +7410,9 @@ SUBROUTINE init_ParamType_SSK_a2(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='2-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SSK_a2)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-          p%val=param
+      TYPE IS(ParamType_SSK_a2)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7515,44 +7513,44 @@ SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+  TYPE IS(ParamType_SSK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a2)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK_a2)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SSK_a2
 !
@@ -7575,52 +7573,52 @@ SUBROUTINE get_ParamType_SSK_a2(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SSK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK_a2)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a2)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SSK_a2
 !
@@ -7705,9 +7703,9 @@ SUBROUTINE init_ParamType_SDK_a2(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='2-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SDK_a2)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-          p%val=param
+      TYPE IS(ParamType_SDK_a2)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7807,44 +7805,44 @@ SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+  TYPE IS(ParamType_SDK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a2)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK_a2)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SDK_a2
 !
@@ -7867,52 +7865,52 @@ SUBROUTINE get_ParamType_SDK_a2(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SDK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK_a2)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a2)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SDK_a2
 !
@@ -7997,9 +7995,9 @@ SUBROUTINE init_ParamType_SNK_a2(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='2-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SNK_a2)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-          p%val=param
+      TYPE IS(ParamType_SNK_a2)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8099,44 +8097,44 @@ SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+  TYPE IS(ParamType_SNK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a2)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK_a2)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SNK_a2
 !
@@ -8159,52 +8157,52 @@ SUBROUTINE get_ParamType_SNK_a2(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SNK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK_a2)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a2)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SNK_a2
 !
@@ -8289,9 +8287,9 @@ SUBROUTINE init_ParamType_SLK_a2(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='2-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SLK_a2)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-          p%val=param
+      TYPE IS(ParamType_SLK_a2)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8391,44 +8389,44 @@ SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+  TYPE IS(ParamType_SLK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a2)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK_a2)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SLK_a2
 !
@@ -8451,52 +8449,52 @@ SUBROUTINE get_ParamType_SLK_a2(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SLK_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK_a2)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a2)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SLK_a2
 !
@@ -8581,8 +8579,8 @@ SUBROUTINE init_ParamType_STR_a2(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='2-D ARRAY TYPE(StringType)'
       SELECTTYPE(p => thisParam%pdat); TYPE IS(ParamType_STR_a2)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-          p%val=param
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8686,44 +8684,44 @@ SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_STR_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+  TYPE IS(ParamType_STR_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_STR_a2)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_STR_a2)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_STR_a2
 !
@@ -8746,52 +8744,52 @@ SUBROUTINE get_ParamType_STR_a2(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_STR_a2)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_STR_a2)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1),SIZE(thisParam%val,2)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_STR_a2)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_STR_a2)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_STR_a2
 !
@@ -8880,9 +8878,9 @@ SUBROUTINE init_ParamType_SSK_a3(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='3-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SSK_a3)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-          p%val=param
+      TYPE IS(ParamType_SSK_a3)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8984,46 +8982,46 @@ SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
-              SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+  TYPE IS(ParamType_SSK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
+            SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a3)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+              SIZE(p%val,2) /= SIZE(param,2) .OR. &
+              SIZE(p%val,3) /= SIZE(param,3)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK_a3)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(param,2) .OR. &
-                  SIZE(p%val,3) /= SIZE(param,3)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SSK_a3
 !
@@ -9046,56 +9044,56 @@ SUBROUTINE get_ParamType_SSK_a3(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SSK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-                SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-                SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1), &
-                SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SSK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+              SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+              SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1), &
               SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1), &
+            SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SSK_a3)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                  SIZE(p%val,3) /= SIZE(val,3)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a3)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2) .OR. &
+              SIZE(p%val,3) /= SIZE(val,3)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SSK_a3
 !
@@ -9180,9 +9178,9 @@ SUBROUTINE init_ParamType_SDK_a3(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='3-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SDK_a3)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-          p%val=param
+      TYPE IS(ParamType_SDK_a3)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9283,46 +9281,46 @@ SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
-            SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+  TYPE IS(ParamType_SDK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
+          SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a3)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2) .OR. &
+            SIZE(p%val,3) /= SIZE(param,3)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK_a3)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2) .OR. &
-                SIZE(p%val,3) /= SIZE(param,3)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SDK_a3
 !
@@ -9345,56 +9343,56 @@ SUBROUTINE get_ParamType_SDK_a3(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SDK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-              SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1), &
-                SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SDK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+            SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1), &
               SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1), &
+            SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SDK_a3)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                  SIZE(p%val,3) /= SIZE(val,3)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a3)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2) .OR. &
+              SIZE(p%val,3) /= SIZE(val,3)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SDK_a3
 !
@@ -9479,9 +9477,9 @@ SUBROUTINE init_ParamType_SNK_a3(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='3-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SNK_a3)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-          p%val=param
+      TYPE IS(ParamType_SNK_a3)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9582,46 +9580,46 @@ SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
-            SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+  TYPE IS(ParamType_SNK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
+          SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a3)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2) .OR. &
+            SIZE(p%val,3) /= SIZE(param,3)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK_a3)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2) .OR. &
-                SIZE(p%val,3) /= SIZE(param,3)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SNK_a3
 !
@@ -9644,56 +9642,56 @@ SUBROUTINE get_ParamType_SNK_a3(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SNK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-              SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1), &
-                SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SNK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+            SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1), &
               SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1), &
+            SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SNK_a3)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                  SIZE(p%val,3) /= SIZE(val,3)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a3)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2) .OR. &
+              SIZE(p%val,3) /= SIZE(val,3)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SNK_a3
 !
@@ -9778,9 +9776,9 @@ SUBROUTINE init_ParamType_SLK_a3(thisParam,name,param,description)
       IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       thisParam%pdat%dataType='3-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
-        TYPE IS(ParamType_SLK_a3)
-          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-          p%val=param
+      TYPE IS(ParamType_SLK_a3)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+        p%val=param
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9881,46 +9879,46 @@ SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
-            SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
-            SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
-          DEALLOCATE(thisParam%val)
-          ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+  TYPE IS(ParamType_SLK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(SIZE(thisParam%val,1) /= SIZE(param,1) .OR. &
+          SIZE(thisParam%val,2) /= SIZE(param,2) .OR. &
+          SIZE(thisParam%val,3) /= SIZE(param,3)) THEN
+        DEALLOCATE(thisParam%val)
+        ALLOCATE(thisParam%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
+      ENDIF
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a3)
+        IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
+            SIZE(p%val,2) /= SIZE(param,2) .OR. &
+            SIZE(p%val,3) /= SIZE(param,3)) THEN
+          DEALLOCATE(p%val)
+          ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
         ENDIF
-        thisParam%val=param
-        IF(PRESENT(description)) thisParam%description=TRIM(description)
-      ELSE
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
-            '" but name is "'//thisParam%name//'"!')
-      ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK_a3)
-            IF(SIZE(p%val,1) /= SIZE(param,1) .OR. &
-                SIZE(p%val,2) /= SIZE(param,2) .OR. &
-                SIZE(p%val,3) /= SIZE(param,3)) THEN
-              DEALLOCATE(p%val)
-              ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
-            ENDIF
-            p%val=param
-            IF(PRESENT(description)) p%description=TRIM(description)
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE set_ParamType_SLK_a3
 !
@@ -9943,56 +9941,56 @@ SUBROUTINE get_ParamType_SLK_a3(thisParam,name,val)
   CLASS(ParamType),POINTER :: tmpParam
 
   SELECTTYPE(thisParam)
-    TYPE IS(ParamType_SLK_a3)
-      IF(thisParam%name == TRIM(name)) THEN
-        IF(ALLOCATED(val)) THEN
-          IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
-              SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
-              SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
-            DEALLOCATE(val)
-            ALLOCATE(val(SIZE(thisParam%val,1), &
-                SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          ENDIF
-          val=thisParam%val
-        ELSE
+  TYPE IS(ParamType_SLK_a3)
+    IF(thisParam%name == TRIM(name)) THEN
+      IF(ALLOCATED(val)) THEN
+        IF(SIZE(thisParam%val,1) /= SIZE(val,1) .OR. &
+            SIZE(thisParam%val,2) /= SIZE(val,2) .OR. &
+            SIZE(thisParam%val,3) /= SIZE(val,3)) THEN
+          DEALLOCATE(val)
           ALLOCATE(val(SIZE(thisParam%val,1), &
               SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
-          val=thisParam%val
         ENDIF
+        val=thisParam%val
       ELSE
-        CALL eParams%raiseError(modName//'::'//myName// &
-            ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
+        ALLOCATE(val(SIZE(thisParam%val,1), &
+            SIZE(thisParam%val,2),SIZE(thisParam%val,3)))
+        val=thisParam%val
       ENDIF
-    CLASS DEFAULT
-      !Search for the parameter name
-      CALL thisParam%getParam(name,tmpParam)
-      IF(ASSOCIATED(tmpParam)) THEN
-        !Parameter was found
-        SELECTTYPE(p=>tmpParam)
-          TYPE IS(ParamType_SLK_a3)
-            IF(ALLOCATED(val)) THEN
-              IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
-                  SIZE(p%val,2) /= SIZE(val,2) .OR. &
-                  SIZE(p%val,3) /= SIZE(val,3)) THEN
-                DEALLOCATE(val)
-                ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              ENDIF
-              val=p%val
-            ELSE
-              ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
-              val=p%val
-            ENDIF
-          CLASS DEFAULT
-            CALL eParams%raiseError(modName//'::'//myName// &
-                ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-                tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
-        ENDSELECT
-      ELSE
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a3)
+        IF(ALLOCATED(val)) THEN
+          IF(SIZE(p%val,1) /= SIZE(val,1) .OR. &
+              SIZE(p%val,2) /= SIZE(val,2) .OR. &
+              SIZE(p%val,3) /= SIZE(val,3)) THEN
+            DEALLOCATE(val)
+            ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          ENDIF
+          val=p%val
+        ELSE
+          ALLOCATE(val(SIZE(p%val,1),SIZE(p%val,2),SIZE(p%val,3)))
+          val=p%val
+        ENDIF
+      CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
-            ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
-            thisParam%name//'"!')
-      ENDIF
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_SLK_a3
 !
@@ -10091,32 +10089,32 @@ RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
       CALL iXMLE%getAttributeValue(tmpStr,nameVal)
       tmpPath=tmpPath//nameVal
       SELECTCASE(CHAR(typval))
-        CASE('BOOL')
-          boolVal=CHAR(attrVal)
-          CALL thisParam%add(CHAR(tmpPath),boolVal)
-        CASE('INT')
-          intVal=CHAR(attrVal)
-          CALL thisParam%add(CHAR(tmpPath),intVal)
-        CASE('FLOAT')
-          singleVal=CHAR(attrVal)
-          CALL thisParam%add(CHAR(tmpPath),singleVal,'XML_IN_VAL='//attrval)
-        CASE('DOUBLE')
-          doubleVal=CHAR(attrVal)
-          CALL thisParam%add(CHAR(tmpPath),doubleVal,'XML_IN_VAL='//attrval)
-        CASE('STRING')
-          CALL thisParam%add(CHAR(tmpPath),attrVal)
-        CASE('ARRAY(INT)')
-          CALL char_to_int_array(intArry,CHAR(attrVal))
-          CALL thisParam%add(CHAR(tmpPath),intArry)
-        CASE('ARRAY(DOUBLE)')
-          CALL char_to_double_array(doubleArry,CHAR(attrVal))
-          CALL thisParam%add(CHAR(tmpPath),doubleArry,'XML_IN_VAL='//attrval)
-        CASE('ARRAY(STRING)')
-          CALL char_to_string_array(strArry,CHAR(attrVal))
-          CALL thisParam%add(CHAR(tmpPath),strArry)
-          strArry=''
-        CASE DEFAULT
-          !Bad element type
+      CASE('BOOL')
+        boolVal=CHAR(attrVal)
+        CALL thisParam%add(CHAR(tmpPath),boolVal)
+      CASE('INT')
+        intVal=CHAR(attrVal)
+        CALL thisParam%add(CHAR(tmpPath),intVal)
+      CASE('FLOAT')
+        singleVal=CHAR(attrVal)
+        CALL thisParam%add(CHAR(tmpPath),singleVal,'XML_IN_VAL='//attrval)
+      CASE('DOUBLE')
+        doubleVal=CHAR(attrVal)
+        CALL thisParam%add(CHAR(tmpPath),doubleVal,'XML_IN_VAL='//attrval)
+      CASE('STRING')
+        CALL thisParam%add(CHAR(tmpPath),attrVal)
+      CASE('ARRAY(INT)')
+        CALL char_to_int_array(intArry,CHAR(attrVal))
+        CALL thisParam%add(CHAR(tmpPath),intArry)
+      CASE('ARRAY(DOUBLE)')
+        CALL char_to_double_array(doubleArry,CHAR(attrVal))
+        CALL thisParam%add(CHAR(tmpPath),doubleArry,'XML_IN_VAL='//attrval)
+      CASE('ARRAY(STRING)')
+        CALL char_to_string_array(strArry,CHAR(attrVal))
+        CALL thisParam%add(CHAR(tmpPath),strArry)
+        strArry=''
+      CASE DEFAULT
+        !Bad element type
       ENDSELECT
     ELSE IF(elname == 'PARAMETERLIST') THEN
       !Add to list (without arrow)
@@ -10211,87 +10209,87 @@ RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
   ELSE
     !Get name and value from parameter list
     SELECTCASE(TRIM(param%dataType))
-      CASE('LOGICAL(SBK)')
-        typename='bool'
-        CALL param%get(TRIM(param%name),bool0)
-        IF(bool0) THEN
-          val='true'
-        ELSE
-          val='false'
-        ENDIF
-      CASE('INTEGER(SNK)')
-        typename='int'
-        CALL param%getString(TRIM(param%name),val)
-      CASE('REAL(SSK)')
-        typename='float'
-        idx=INDEX(param%description,'XML_IN_VAL=')
-        IF(idx > 0) THEN
-          idx=idx+11
-          oVal = param%description%substr(idx,LEN_TRIM(param%description))
-          oSingleVal=CHAR(oVal)
-          CALL param%get(TRIM(param%name),singleVal)
+    CASE('LOGICAL(SBK)')
+      typename='bool'
+      CALL param%get(TRIM(param%name),bool0)
+      IF(bool0) THEN
+        val='true'
+      ELSE
+        val='false'
+      ENDIF
+    CASE('INTEGER(SNK)')
+      typename='int'
+      CALL param%getString(TRIM(param%name),val)
+    CASE('REAL(SSK)')
+      typename='float'
+      idx=INDEX(param%description,'XML_IN_VAL=')
+      IF(idx > 0) THEN
+        idx=idx+11
+        oVal = param%description%substr(idx,LEN_TRIM(param%description))
+        oSingleVal=CHAR(oVal)
+        CALL param%get(TRIM(param%name),singleVal)
 
-          IF(singleVal == oSingleVal) THEN
-            val=oVal !use original input string
-          ELSE
-            !output variable with same number of sig figs
-            CALL param%getString(TRIM(param%name),val)
-          ENDIF
+        IF(singleVal == oSingleVal) THEN
+          val=oVal !use original input string
         ELSE
+          !output variable with same number of sig figs
           CALL param%getString(TRIM(param%name),val)
         ENDIF
-      CASE('REAL(SDK)')
-        typename='double'
-        idx=INDEX(param%description,'XML_IN_VAL=')
-        IF(idx > 0) THEN
-          idx=idx+11
-          oVal = param%description%substr(idx,LEN_TRIM(param%description))
-          oDoubleVal=CHAR(oVal)
-          CALL param%get(TRIM(param%name),doubleVal)
+      ELSE
+        CALL param%getString(TRIM(param%name),val)
+      ENDIF
+    CASE('REAL(SDK)')
+      typename='double'
+      idx=INDEX(param%description,'XML_IN_VAL=')
+      IF(idx > 0) THEN
+        idx=idx+11
+        oVal = param%description%substr(idx,LEN_TRIM(param%description))
+        oDoubleVal=CHAR(oVal)
+        CALL param%get(TRIM(param%name),doubleVal)
 
-          IF(doubleVal == oDoubleVal) THEN
-            val=oVal !use original input string
-          ELSE
-            !output variable with same number of sig figs
-            CALL param%getString(TRIM(param%name),val)
-          ENDIF
+        IF(doubleVal == oDoubleVal) THEN
+          val=oVal !use original input string
         ELSE
+          !output variable with same number of sig figs
           CALL param%getString(TRIM(param%name),val)
         ENDIF
-      CASE('TYPE(StringType)')
-        typename='string'
+      ELSE
         CALL param%getString(TRIM(param%name),val)
-      CASE('1-D ARRAY INTEGER(SNK)')
-        typename='Array(int)'
-        CALL param%getString(TRIM(param%name),str1)
-        CALL string_array_to_string(str1,val)
-      CASE('1-D ARRAY REAL(SDK)')
-        typename='Array(double)'
-        idx=INDEX(param%description,'XML_IN_VAL=')
-        IF(idx > 0) THEN
-          idx=idx+11
-          oVal = param%description%substr(idx,LEN_TRIM(param%description))
-          CALL char_to_double_array(oDoubleArry,CHAR(oVal))
-          CALL param%get(TRIM(param%name),doubleArry)
+      ENDIF
+    CASE('TYPE(StringType)')
+      typename='string'
+      CALL param%getString(TRIM(param%name),val)
+    CASE('1-D ARRAY INTEGER(SNK)')
+      typename='Array(int)'
+      CALL param%getString(TRIM(param%name),str1)
+      CALL string_array_to_string(str1,val)
+    CASE('1-D ARRAY REAL(SDK)')
+      typename='Array(double)'
+      idx=INDEX(param%description,'XML_IN_VAL=')
+      IF(idx > 0) THEN
+        idx=idx+11
+        oVal = param%description%substr(idx,LEN_TRIM(param%description))
+        CALL char_to_double_array(oDoubleArry,CHAR(oVal))
+        CALL param%get(TRIM(param%name),doubleArry)
 
-          IF(ALL(doubleArry == oDoubleArry)) THEN
-            val=oVal !use original input string
-          ELSE
-            !output variable with same number of sig figs
-            CALL param%getString(TRIM(param%name),str1)
-            CALL string_array_to_string(str1,val)
-          ENDIF
+        IF(ALL(doubleArry == oDoubleArry)) THEN
+          val=oVal !use original input string
         ELSE
+          !output variable with same number of sig figs
           CALL param%getString(TRIM(param%name),str1)
           CALL string_array_to_string(str1,val)
         ENDIF
-      CASE('1-D ARRAY TYPE(StringType)')
-        typename='Array(string)'
+      ELSE
         CALL param%getString(TRIM(param%name),str1)
         CALL string_array_to_string(str1,val)
-      CASE DEFAULT
-        CALL eParams%raiseError('Invalid paramType in '//modName//'::'//myName// &
-            ' - dataType '//TRIM(param%dataType)//' is not valid for XML output!')
+      ENDIF
+    CASE('1-D ARRAY TYPE(StringType)')
+      typename='Array(string)'
+      CALL param%getString(TRIM(param%name),str1)
+      CALL string_array_to_string(str1,val)
+    CASE DEFAULT
+      CALL eParams%raiseError('Invalid paramType in '//modName//'::'//myName// &
+          ' - dataType '//TRIM(param%dataType)//' is not valid for XML output!')
     ENDSELECT
     name=TRIM('Parameter')
     CALL currElem%setName(name)

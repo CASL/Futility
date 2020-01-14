@@ -157,12 +157,12 @@ ELEMENTAL FUNCTION intersect_LineType_and_LineType(l1,l2) RESULT(p)
   IF(l1%p1%dim == l1%p2%dim .AND. l2%p1%dim == l2%p2%dim .AND. &
       l1%p1%dim == l2%p1%dim .AND. l1%p1%dim > 0) THEN
     SELECTCASE(l1%p1%dim)
-      CASE(1)
-        p%dim=-2 !Always collinear/overlap
-      CASE(2)
-        p=intersect_lines2D(l1%p1,l1%p2,l2%p1,l2%p2)
-      CASE(3)
-        p=intersect_lines3D(l1%p1,l1%p2,l2%p1,l2%p2)
+    CASE(1)
+      p%dim=-2 !Always collinear/overlap
+    CASE(2)
+      p=intersect_lines2D(l1%p1,l1%p2,l2%p1,l2%p2)
+    CASE(3)
+      p=intersect_lines3D(l1%p1,l1%p2,l2%p1,l2%p2)
     ENDSELECT
   ENDIF
 ENDFUNCTION intersect_LineType_and_LineType
@@ -362,12 +362,12 @@ ELEMENTAL FUNCTION distance_LineType_to_PointType(line,p) RESULT(d2)
   d2=-1._SRK
   IF(line%p1%dim == line%p2%dim .AND. line%p1%dim == p%dim) THEN
     SELECTCASE(p%dim)
-      CASE(1)
-        d2=distance1D_to_point(line%p1,line%p2,p)
-      CASE(2)
-        d2=distance2D_to_point(line%p1,line%p2,p)
-      CASE(3)
-        d2=distance3D_to_point(line%p1,line%p2,p)
+    CASE(1)
+      d2=distance1D_to_point(line%p1,line%p2,p)
+    CASE(2)
+      d2=distance2D_to_point(line%p1,line%p2,p)
+    CASE(3)
+      d2=distance3D_to_point(line%p1,line%p2,p)
     ENDSELECT
   ENDIF
 ENDFUNCTION distance_LineType_to_PointType
