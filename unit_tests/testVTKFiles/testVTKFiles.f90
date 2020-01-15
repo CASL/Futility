@@ -188,7 +188,7 @@ SUBROUTINE testRemoveRedundantPoints()
   ALLOCATE(yref(180))
   ALLOCATE(zref(180))
   OPEN(unit=555,file='mesh5ref.txt',FORM='FORMATTED', &
-        ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+      ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
   DO k=1,180
     READ(555,*) xref(k),yref(k),zref(k)
   ENDDO
@@ -198,8 +198,8 @@ SUBROUTINE testRemoveRedundantPoints()
   CALL testVTKFile%writeMesh(testVTKMesh)
   npartfail=0
   IF(ANY(.NOT.(testVTKMesh%x .APPROXEQ. xref)) .OR. &
-     ANY(.NOT.(testVTKMesh%y .APPROXEQ. yref)) .OR. &
-     ANY(.NOT.(testVTKMesh%z .APPROXEQ. zref))) THEN
+      ANY(.NOT.(testVTKMesh%y .APPROXEQ. yref)) .OR. &
+      ANY(.NOT.(testVTKMesh%z .APPROXEQ. zref))) THEN
 
     bool = ALL((testVTKMesh%x .APPROXEQA. xref)) .AND. &
            ALL((testVTKMesh%y .APPROXEQA. yref)) .AND. &
@@ -209,7 +209,7 @@ SUBROUTINE testRemoveRedundantPoints()
   ENDIF
   IF(npartfail > 0) THEN
     WRITE(*,*) 'WARNING: Partial failures n=',npartfail, &
-      ' for "CALL testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID"'
+        ' for "CALL testVTKMesh%cleanupPoints(...) UNSTRUCTURED_GRID"'
   ENDIF
 
   CALL testVTKFile%clear()
@@ -375,14 +375,14 @@ SUBROUTINE testMeshAddition()
   ALLOCATE(cellRef(5))
   ALLOCATE(nodeRef(30))
   xref=(/0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,0.0_SRK,0.5_SRK,0.0_SRK,0.0_SRK, &
-    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK, &
-    0.5_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK/)
+      0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK, &
+      0.5_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK/)
   yref=(/0.0_SRK,0.0_SRK,0.5_SRK,0.0_SRK,0.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
-    0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
-    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK/)
+      0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,1.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
+      0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK/)
   zref=(/0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
-    1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
-    1.0_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK/)
+      1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
+      1.0_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK/)
   cellRef=(/13,13,13,13,13/)
   nodeRef=(/0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29/)
   ASSERT(testVTKMesh%isInit,'%isInit')
@@ -421,14 +421,14 @@ SUBROUTINE testMeshAddition()
   ALLOCATE(cellRef(5))
   ALLOCATE(nodeRef(30))
   xref=(/0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
-    1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
-    1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK/)
+      1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK, &
+      1.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,1.0_SRK,1.0_SRK,1.0_SRK/)
   yref=(/0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
-    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
-    0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK/)
+      0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK, &
+      0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK,0.0_SRK,1.0_SRK,0.5_SRK/)
   zref=(/1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK, &
-    1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK, &
-    1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK/)
+      1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK, &
+      1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK,1.0_SRK,1.0_SRK,1.5_SRK/)
   nodeRef=(/0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29/)
   cellRef=(/13,13,13,13,13/)
   ASSERT(testVTKMesh%isInit,'%isInit')
@@ -476,7 +476,7 @@ SUBROUTINE SetupTest1_Mesh()
   testVTKMesh%dims=(/33,33,5/)
   testVTKMesh%meshType=VTK_STRUCTURED_POINTS
   testVTKMesh%numCells=(testVTKMesh%dims(1)-1)*(testVTKMesh%dims(2)-1)* &
-    (testVTKMesh%dims(3)-1)
+      (testVTKMesh%dims(3)-1)
   ALLOCATE(testVTKMesh%x(2))
   ALLOCATE(testVTKMesh%y(2))
   ALLOCATE(testVTKMesh%z(2))
@@ -497,9 +497,9 @@ SUBROUTINE SetupTest2_Mesh()
   testVTKMesh%dims=(/33,33,5/)
   testVTKMesh%meshType=VTK_STRUCTURED_GRID
   testVTKMesh%numCells=(testVTKMesh%dims(1)-1)*(testVTKMesh%dims(2)-1)* &
-    (testVTKMesh%dims(3)-1)
+      (testVTKMesh%dims(3)-1)
   testVTKMesh%numPoints=testVTKMesh%dims(1)*testVTKMesh%dims(2)* &
-    testVTKMesh%dims(3)
+      testVTKMesh%dims(3)
   DEALLOCATE(testVTKMesh%x)
   DEALLOCATE(testVTKMesh%y)
   DEALLOCATE(testVTKMesh%z)
@@ -541,7 +541,7 @@ SUBROUTINE SetupTest4_Mesh()
   ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
   ALLOCATE(testVTKMesh%nodeList(800))
   OPEN(unit=555,file='mesh3Points.txt',FORM='FORMATTED', &
-    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+      ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
   DO i=1,800
     READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
   ENDDO
@@ -574,7 +574,7 @@ SUBROUTINE SetupTest5_Mesh()
   ALLOCATE(testVTKMesh%cellList(testVTKMesh%numCells))
   ALLOCATE(testVTKMesh%nodeList(800))
   OPEN(unit=555,file='mesh3Points.txt',FORM='FORMATTED', &
-    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+      ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
   DO i=1,800
     READ(555,*) testVTKMesh%x(i),testVTKMesh%y(i),testVTKMesh%z(i)
   ENDDO
@@ -612,7 +612,7 @@ SUBROUTINE SetupTest6_Mesh()
   testVTKMesh%z=(/ 0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0, &
                    0.0,0.0,0.0,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0,1.0 /)
   testVTKMesh%nodeList=(/ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15, &
-                          16,17,18,19,20,21,22,23 /)
+      16,17,18,19,20,21,22,23 /)
   testVTKMesh%cellList=VTK_WEDGE
   testVTKMesh%isInit=.TRUE.
 ENDSUBROUTINE SetupTest6_Mesh
@@ -648,7 +648,7 @@ SUBROUTINE SetupTest1_Data()
   testVTKData%isCellData=.TRUE.
   testVTKData%isInit=.TRUE.
   IF(.NOT.ALLOCATED(testVTKData%dataList)) &
-    ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
+      ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
   DO i=1,testVTKMesh%numCells
     testVTKData%dataList(i)=REAL(i,SRK)
   ENDDO
@@ -667,7 +667,7 @@ SUBROUTINE SetupTest4_Data()
   IF(ALLOCATED(testVTKData%dataList)) DEALLOCATE(testVTKData%dataList)
   ALLOCATE(testVTKData%dataList(testVTKMesh%numCells))
   OPEN(unit=555,file='mesh3Data.txt',FORM='FORMATTED', &
-    ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
+      ACCESS='SEQUENTIAL',STATUS='OLD',ACTION='READ')
   DO i=1,testVTKMesh%numCells
     READ(555,*) testVTKData%dataList(i)
   ENDDO

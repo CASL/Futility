@@ -368,7 +368,7 @@ ENDSUBROUTINE init_SchElm
 !-------------------------------------------------------------------------------
 !> @brief States whether or not the element has the provided name
 !> @param this  the element whose name is to be checked
-!> @param name  the name 
+!> @param name  the name
 !>
 FUNCTION hasName_SchElm(this,name) RESULT(hasName)
   CLASS(SchemaElement),INTENT(IN) :: this
@@ -382,10 +382,10 @@ ENDFUNCTION hasName_SchElm
 !> @brief Determines the number of times an element occurs in a given file
 !> @param this       the element whose number of occurrences is to be determined
 !> @param inputfile  the input file to be read
-!> @param firstLine  the first line within the file to start considering 
-!> @param lastLine   the last line within the file to start considering 
-!> @param firstField the first field within the first line to start considering 
-!> @param lastField  the last field within the last line to start considering 
+!> @param firstLine  the first line within the file to start considering
+!> @param lastLine   the last line within the file to start considering
+!> @param firstField the first field within the first line to start considering
+!> @param lastField  the last field within the last line to start considering
 !>
 SUBROUTINE countOccurrences_SchElm(this,inputFile,firstLine,lastLine,firstField,lastField)
   CLASS(SchemaElement),INTENT(INOUT) :: this
@@ -438,7 +438,7 @@ ENDSUBROUTINE countOccurrences_SchElm
 !>                      element level as this element
 !> @param firstLine     the first line within the file to start considering
 !> @param lastLine      the last line within the file to start considering
-!> @param firstField    the first field within the first line to start 
+!> @param firstField    the first field within the first line to start
 !>                      considering
 !> @param lastField     the last field within the last line to start considering
 !>
@@ -504,7 +504,7 @@ SUBROUTINE determineExtentsWithinTextFile_SchElm(this,inputFile,validElements,fi
 ENDSUBROUTINE determineExtentsWithinTextFile_SchElm
 !
 !-------------------------------------------------------------------------------
-!> @brief Checks to see if a provided integer (i.e. the element occurrence 
+!> @brief Checks to see if a provided integer (i.e. the element occurrence
 !>        count) represents a valid occurrence count for this element and throws
 !>        an error if not
 !> @param this    the element whose count occurrence to check
@@ -518,17 +518,17 @@ FUNCTION nOccurrencesIsValid_SchElm(this) RESULT(isValid)
 
   isValid=.TRUE.
   IF(this%nOccurrences == 0 .AND. this%isRequired) THEN
-    CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Not Defined!') 
+    CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Not Defined!')
     isValid=.FALSE.
   ELSEIF(this%nOccurrences > 1 .AND. this%occurrenceType == SCHEMA_SINGLE_OCCURRENCE) THEN
-    CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Defined more than once!') 
+    CALL eSchemaParser%raiseError(modName//'::'//myName//' - "'// TRIM(this%name)//' Defined more than once!')
     isValid=.FALSE.
   ENDIF
 ENDFUNCTION nOccurrencesIsValid_SchElm
 !
 !-------------------------------------------------------------------------------
 !> @brief Appends the given pListPath with the element path
-!> @param this      the element whose pListPath will be appended to the input 
+!> @param this      the element whose pListPath will be appended to the input
 !>                  pListPath
 !> @param pListPath the pListPath to append the element pListPath to
 !> @param ioccur    the occurrence number to be included in the pListPath
@@ -676,8 +676,8 @@ SUBROUTINE parse_SchPar(this,inputFile,paramList)
 
   TYPE(StringType) line
   INTEGER(SIK) :: iblock,ioccur
-  
-  
+
+
   REQUIRE(this%isInit)
   REQUIRE(inputFile%isOpen())
 
@@ -688,7 +688,7 @@ SUBROUTINE parse_SchPar(this,inputFile,paramList)
     IF(atContentLine(inputFile)) THEN
       IF(LEN(line)>MAX_LINE_LEN) THEN
         CALL eSchemaParser%raiseError(modName//'::'//myName// &
-          ' - "A content line exceeds the max line limit of '//str(MAX_LINE_LEN)//' characters')
+            ' - "A content line exceeds the max line limit of '//str(MAX_LINE_LEN)//' characters')
         RETURN
       ENDIF
     ENDIF
@@ -798,7 +798,7 @@ SUBROUTINE parse_SchBlk(this,inputFile,paramList,ioccurBlk)
   INTEGER(SIK) :: nerr
   INTEGER(SIK) :: icard,ioccur,firstLine,lastLine,firstField,lastField
   TYPE(StringType) :: pListPath
-  
+
   nerr=eSchemaParser%getCounter(EXCEPTION_ERROR)
 
   firstLine=this%firstLine(ioccurBlk); lastLine=this%lastLine(ioccurBlk);
@@ -831,7 +831,7 @@ SUBROUTINE addEntry_SchCrd(this,pListPath,type)
   CLASS(SchemaCard),INTENT(INOUT) :: this
   TYPE(StringType),INTENT(IN) :: pListPath
   CLASS(SchemaEntry),INTENT(IN) :: type
-  
+
   TYPE(SchemaEntryPtrArry) :: entry
 
   TYPE(SchemaEntryPtrArry),ALLOCATABLE :: preventries(:)
@@ -902,7 +902,7 @@ SUBROUTINE parse_SchCrd(this,inputFile,paramList,ioccurCrd,pListPathBlk)
         stpField=nFields(line); IF(iline == lstLine) stpField=MIN(lstField,stpField)
         DO ifield=sttField,stpField
           CALL getField(ifield,line,fieldStr)
-          IF(fieldStr == "/") THEN 
+          IF(fieldStr == "/") THEN
             ientry=ientry+1
           ELSE
             entryStr(ientry)=entryStr(ientry)//fieldStr//' '
@@ -911,7 +911,7 @@ SUBROUTINE parse_SchCrd(this,inputFile,paramList,ioccurCrd,pListPathBlk)
       ENDIF
     ENDIF
   ENDDO
-  CALL inputfile%frewind()      
+  CALL inputfile%frewind()
 
   !Parse each Entry
   DO ientry=1,nEntries
@@ -982,17 +982,17 @@ SUBROUTINE parseSIK_SchEnt(this,entryStr,paramList,pListPathCrd)
   !Parse string into SIK
   IF(isEmptyEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Entry string contains no entries!')
+        ' - Entry string contains no entries!')
     RETURN
   ENDIF
-  IF(.NOT.isScalarEntry(entryStr)) THEN 
+  IF(.NOT.isScalarEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
     RETURN
   ENDIF
   IF(.NOT.isSIKEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Expected Integer_SIK entry but provided other data type at "'//TRIM(entryStr)//'"!')
+        ' - Expected Integer_SIK entry but provided other data type at "'//TRIM(entryStr)//'"!')
     RETURN
   ENDIF
   CALL getField(1,entryStr,entry,ierr)
@@ -1027,17 +1027,17 @@ SUBROUTINE parseSRK_SchEnt(this,entryStr,paramList,pListPathCrd)
   !Parse string into SRK
   IF(isEmptyEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Entry string contains no entries!')
+        ' - Entry string contains no entries!')
     RETURN
   ENDIF
   IF(.NOT.isScalarEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
     RETURN
   ENDIF
   IF(.NOT.isSRKEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Expected Real_SRK entry but provided other data type at "'//TRIM(entryStr)//'"!')
+        ' - Expected Real_SRK entry but provided other data type at "'//TRIM(entryStr)//'"!')
     RETURN
   ENDIF
   CALL getField(1,entryStr,entry,ierr)
@@ -1073,17 +1073,17 @@ SUBROUTINE parseSBK_SchEnt(this,entryStr,paramList,pListPathCrd)
   !Parse string into SBK
   IF(isEmptyEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Entry string contains no entries!')
+        ' - Entry string contains no entries!')
     RETURN
   ENDIF
   IF(.NOT.isScalarEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
     RETURN
   ENDIF
   IF(.NOT.isSBKEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(entryStr)//'"!')
+        ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(entryStr)//'"!')
     RETURN
   ENDIF
   CALL getField(1,entryStr,entry,ierr)
@@ -1124,12 +1124,12 @@ SUBROUTINE parseSTR_SchEnt(this,entryStr,paramList,pListPathCrd)
   !Parse string into STR
   IF(isEmptyEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Entry string contains no entries!')
+        ' - Entry string contains no entries!')
     RETURN
   ENDIF
   IF(.NOT.isScalarEntry(entryStr)) THEN
     CALL eSchemaParser%raiseError(modName//'::'//myName// &
-      ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
+        ' - Expected Scalar entry but provided multiple entries at "'//TRIM(entryStr)//'"!')
     RETURN
   ENDIF
   CALL getField(1,entryStr,entry,ierr)
@@ -1167,7 +1167,7 @@ SUBROUTINE parseSIKa1_SchEnt(this,entryStr,paramList,pListPathCrd)
     CALL getField(ientry,entryStr,tmpstr,ierr)
     IF(.NOT.isSIKEntry(tmpstr)) THEN
       CALL eSchemaParser%raiseError(modName//'::'//myName// &
-        ' - Expected Integer_SIK entry but provided other data type at "'//TRIM(tmpstr)//'"!')
+          ' - Expected Integer_SIK entry but provided other data type at "'//TRIM(tmpstr)//'"!')
       RETURN
     ENDIF
     CALL getField(1,tmpstr,entry(ientry),ierr)
@@ -1206,7 +1206,7 @@ SUBROUTINE parseSRKa1_SchEnt(this,entryStr,paramList,pListPathCrd)
     CALL getField(ientry,entryStr,tmpstr,ierr)
     IF(.NOT.isSRKEntry(tmpstr)) THEN
       CALL eSchemaParser%raiseError(modName//'::'//myName// &
-        ' - Expected Real_SRK entry but provided other data type at "'//TRIM(tmpstr)//'"!')
+          ' - Expected Real_SRK entry but provided other data type at "'//TRIM(tmpstr)//'"!')
       RETURN
     ENDIF
     CALL getField(1,tmpstr,entry(ientry),ierr)
@@ -1246,7 +1246,7 @@ SUBROUTINE parseSBKa1_SchEnt(this,entryStr,paramList,pListPathCrd)
     CALL getField(ientry,entryStr,entry,ierr)
     IF(.NOT.isSBKEntry(entry)) THEN
       CALL eSchemaParser%raiseError(modName//'::'//myName// &
-        ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(entry)//'"!')
+          ' - Expected Logical_SBK entry but provided other data type at "'//TRIM(entry)//'"!')
       RETURN
     ENDIF
     entry = entry%upper()
@@ -1357,7 +1357,7 @@ ENDFUNCTION isEmptyEntry
 !
 !-------------------------------------------------------------------------------
 !> @brief Checks to ensure a string has a single field (i.e. is scalar value)
-!> @param string   the string to be checked   
+!> @param string   the string to be checked
 !> @param isScalar logical corresponding to if the string is a scalar
 !>
 FUNCTION isScalarEntry(string) RESULT(isScalar)
@@ -1369,7 +1369,7 @@ ENDFUNCTION isScalarEntry
 !
 !-------------------------------------------------------------------------------
 !> @brief Checks to ensure an entry is a valid SIK entry
-!> @param string   the string to be checked   
+!> @param string   the string to be checked
 !> @param isSIK    logical corresponding to if the string is an SIK
 !>
 FUNCTION isSIKEntry(string) RESULT(isSIK)
