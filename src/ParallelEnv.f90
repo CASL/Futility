@@ -16,6 +16,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParallelEnv
 #include "Futility_DBC.h"
+#define DYOMP
 USE Futility_DBC
 USE IntrType
 USE ExceptionHandler
@@ -75,6 +76,13 @@ TYPE,ABSTRACT :: ParEnvType
   INTEGER(SIK) :: nproc=-1
   !> The rank of the processor within the communicator
   INTEGER(SIK) :: rank=-1
+#ifdef DYOMP
+  INTEGER(SIK) :: nHost=0
+  INTEGER(SIK) :: Host=-1
+  INTEGER(SIK),allocatable :: rank2Host(:) 
+  INTEGER(SIK),allocatable :: Host2nrank(:) 
+  INTEGER(SIK),allocatable :: Host2rank(:,:)
+#endif
 !
 !List of type bound procedures (methods) for the object
   CONTAINS
@@ -610,6 +618,17 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
   LOGICAL(SBK),ALLOCATABLE :: allpetsc2(:)
 #endif
 
+#ifdef DYOMP
+#ifdef HAVE_MPI
+  CHARACTER(LEN=100),allocatable :: rank2HostName(:)
+  CHARACTER(LEN=100),allocatable :: HostNameList(:)
+  CHARACTER(LEN=100) :: MyHostName 
+  integer(SIK) :: istat,ir,ii,ih
+  integer(SIK) :: hostnm 
+  LOGICAL(SBK) :: lexist
+#endif
+#endif
+
   REQUIRE(.NOT.myPE%initstat)
   icomm=PE_COMM_NULL
   IF(PRESENT(PEparam)) icomm=PEparam
@@ -681,6 +700,76 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
 #endif
 #endif
   myPE%initstat=.TRUE.
+
+#ifdef DYOMP
+#ifdef HAVE_MPI 
+  istat=hostnm(myHostName)
+  if(myPE%master) then
+    allocate(rank2HostName(0:myPE%nproc-1))
+    rank2HostName(:)=''
+  endif
+
+  do ir=0,myPE%nproc-1
+    if(myPE%rank==ir .and. .not.myPE%master) then
+      call myPE%send(MyHostName,0,ir) 
+    elseif(myPE%rank/=ir .and. myPE%master) then
+      call myPE%recv(rank2HostName(ir),ir,ir) 
+    endif
+  enddo
+
+  if(allocated(myPE%rank2Host)) deallocate(myPE%rank2Host)
+  allocate(myPE%rank2Host(0:myPE%nproc-1))
+  myPE%rank2Host=0
+
+  myPE%nHost=0
+  if(myPE%master) then
+    allocate(HostNameList(myPE%nproc))
+    HostNameList=''
+    rank2HostName(0)=MyHostName
+    do ir=0,myPE%nproc-1
+      lexist=.FALSE.
+      do ii=1,myPE%nHost
+        if(trim(HostNameList(ii))==trim(rank2HostName(ir))) then
+          myPE%rank2Host(ir)=ii
+          lexist=.TRUE.
+          exit
+        endif
+      enddo 
+      if(.not.lexist) then
+        myPE%nHost=myPE%nHost+1
+        ii=myPE%nHost
+        HostNameList(ii)=rank2HostName(ir)
+        myPE%rank2Host(ir)=ii
+      endif
+    enddo 
+  endif
+
+  call myPE%allReduceI(myPE%nproc,myPE%rank2Host)
+  call myPE%allReduceI_scalar(myPE%nHost)
+
+  if(allocated(myPE%Host2nrank)) deallocate(myPE%Host2nrank)
+  allocate(myPE%Host2nrank(myPE%nHost))
+  myPE%Host2nrank=0
+  do ir=0,myPE%nproc-1
+    ii=myPE%rank2Host(ir)
+    myPE%Host2nrank(ii)=myPE%Host2nrank(ii)+1
+  enddo ! ir
+
+  if(allocated(myPE%Host2rank )) deallocate(myPE%Host2rank )
+  allocate(myPE%Host2rank (maxval(myPE%Host2nrank),myPE%nHost))
+  myPE%Host2rank =0
+
+  myPE%Host2nrank=0
+  do ir=0,myPE%nproc-1
+    ih=myPE%rank2Host(ir)
+    myPE%Host2nrank(ih)=myPE%Host2nrank(ih)+1
+    ii=myPE%Host2nrank(ih)
+    myPE%Host2rank(ii,ih)=ir
+  enddo ! ir
+
+#endif
+#endif
+
 ENDSUBROUTINE init_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
@@ -707,6 +796,13 @@ SUBROUTINE clear_MPI_Env_type(myPE)
     myPE%rank=-1
     myPE%master=.FALSE.
     myPE%initstat=.FALSE.
+#ifdef DYOMP
+    myPE%nHost=0
+    myPE%Host=-1
+    if(allocated(myPE%rank2Host )) deallocate(myPE%rank2Host )
+    if(allocated(myPE%Host2nrank)) deallocate(myPE%Host2nrank)
+    if(allocated(myPE%Host2rank )) deallocate(myPE%Host2rank )
+#endif
   ENDIF
 ENDSUBROUTINE clear_MPI_Env_type
 !
