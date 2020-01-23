@@ -97,7 +97,7 @@ PUBLIC :: RectMatrixType
 PUBLIC :: DistributedMatrixType
 ! Matrix structure enumerations
 PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG, &
-     BANDED,DISTRIBUTED_BANDED,DISTR_BLOCKBANDED
+          BANDED,DISTRIBUTED_BANDED,DISTR_BLOCKBANDED
 ! Matrix-Vector engine enumerations
 PUBLIC :: VM_PETSC,VM_TRILINOS,VM_NATIVE
 ! Parameter list setup/teardown
@@ -111,6 +111,7 @@ PUBLIC :: BandedMatrixType
 PUBLIC :: DistributedBandedMatrixType
 PUBLIC :: DistributedBlockBandedMatrixType
 PUBLIC :: SparseMatrixType
+INTEGER(SIK),PARAMETER,PUBLIC :: MATVEC_SLOTS=2
 ! PETSc implementations
 #ifdef FUTILITY_HAVE_PETSC
 PUBLIC :: PETScMatrixType
@@ -678,6 +679,18 @@ ENDSUBROUTINE matvec_MatrixTypeVectorType
 
 !
 !-------------------------------------------------------------------------------
+!> @brief Parallel algorithm to perform a matvec operation with banded matrices.
+!> @param thisMatrix derived matrix type.
+!> @param x the vector to multiply with @c A
+!> @param y the vector to add to the product of @c A and @c x
+!> @param t single character input indicating whether or not to use the
+!>        transpose of @c A
+!> @param ul character indicating if @c thisMatrix is upper or lower triangular
+!> @param d character indicating if diagonal of @c thisMatrix should be treated
+!> @param incx integer containing distance between elements in @c x
+!> @param a the scalar used to scale @c x
+!> @param b the scalar used to scale @c y
+!>
 SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   CHARACTER(LEN=*),PARAMETER :: myName='matvec_DistrBandedMatrixTypeNativeVectorType'
   CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
@@ -692,23 +705,23 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   INTEGER(SIK) :: rank,k
   INTEGER(SIK),ALLOCATABLE :: recvIdx(:,:), sendIdx(:,:)
   REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
-  INTEGER(SIK) :: sendRequests(2),sendIdxRequests(2),recvRequests(2)
-  INTEGER(SIK) :: recvIdxRequests(2)
+  INTEGER(SIK) :: sendRequests(MATVEC_SLOTS),sendIdxRequests(MATVEC_SLOTS)
+  INTEGER(SIK) :: recvRequests(MATVEC_SLOTS),recvIdxRequests(MATVEC_SLOTS)
   INTEGER(SIK) :: lowIdx,highIdx,sendCounter,recvCounter
-
 #ifdef HAVE_MPI
   ! Get rank
-  INTEGER(SIK) :: i,l,idxTmp,count,ctDefault,ctRecv(2),mpierr
+  INTEGER(SIK) :: ctRecv(MATVEC_SLOTS)
+  INTEGER(SIK) :: i,l,idxTmp,cnt,ctDefault,mpierr
   CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
 #else
   rank = 0
 #endif
   ! NOTE: incx,ul,d,t are NOT USED
 
-  ! We will store our send/recv arrays in an array of length 2
-  ! This allows one to be used for computation and one for
+  ! We will store our send/recv arrays in an array of length MATVEC_SLOTS
+  ! This allows one to be used for computation and the rest for
   ! communication.
-  ! Which one to write to will be determined by *Counter MOD 2
+  ! Which one to write to will be determined by *Counter MOD MATVEC_SLOTS
   sendCounter = 0
   recvCounter = 0
   sendRequests = 0
@@ -717,12 +730,12 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   recvIdxRequests = 0
   ! The recv/sendResult array will sometimes hold it's full length,
   ! and sometimes less.
-  ! The variable "count" will be used to determine this at
+  ! The variable "cnt" will be used to determine this at
   ! each iteration
-  ALLOCATE(recvIdx(thisMatrix%iOffsets(2),2))
-  ALLOCATE(recvResult(thisMatrix%iOffsets(2),2))
-  ALLOCATE(sendIdx(thisMatrix%iOffsets(2),2))
-  ALLOCATE(sendResult(thisMatrix%iOffsets(2),2))
+  ALLOCATE(recvIdx(thisMatrix%iOffsets(2),MATVEC_SLOTS))
+  ALLOCATE(recvResult(thisMatrix%iOffsets(2),MATVEC_SLOTS))
+  ALLOCATE(sendIdx(thisMatrix%iOffsets(2),MATVEC_SLOTS))
+  ALLOCATE(sendResult(thisMatrix%iOffsets(2),MATVEC_SLOTS))
   ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2) - &
            thisMatrix%iOffsets(rank+1)))
 
@@ -771,12 +784,12 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
           IF (thisMatrix%bandSizes(k)%p(1) < 0) THEN
             ! We are receiving a whole vector at once
             recvCounter = recvCounter + 1
-            idxTmp = MOD(recvCounter,2)+1
+            idxTmp = MOD(recvCounter,MATVEC_SLOTS)+1
             ! If we've filled up the available storage, we need
             ! to wait for communication to finish up
             CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, idxTmp, &
                           recvRequests, recvIdxRequests)
-            ctRecv(MOD(recvCounter,2)+1) = ctDefault
+            ctRecv(MOD(recvCounter,MATVEC_SLOTS)+1) = ctDefault
             CALL MPI_IRecv(recvResult(1:ctDefault,idxTmp), ctDefault,     &
                            MPI_DOUBLE_PRECISION, k-1, 0, thisMatrix%comm, &
                            recvRequests(idxTmp), mpierr)
@@ -784,7 +797,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
             ! We are receiving multiple sparse chunks
             DO l=1,SIZE(thisMatrix%bandSizes(k)%p)
               recvCounter = recvCounter + 1
-              idxTmp = MOD(recvCounter,2)+1
+              idxTmp = MOD(recvCounter,MATVEC_SLOTS)+1
               ! If we've filled up the available storage, we need
               ! to wait for communication to finish up
               CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, &
@@ -804,22 +817,22 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
       ENDDO
       ! We've finished calling irecv. Wait for remaining
       ! requests to finish:
-      CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, 1, &
-                    recvRequests, recvIdxRequests)
-      CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, 2, &
-                    recvRequests, recvIdxRequests)
+      DO idxTmp=1,MATVEC_SLOTS
+        CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, idxTmp, &
+                      recvRequests, recvIdxRequests)
+      ENDDO
     ELSE
       ! We will be sending data to some other process
       IF (thismatrix%chunks(i)%isInit) THEN
         ! Decide whether to send whole vector or multiple sparse
         IF (2*thisMatrix%chunks(i)%nnz/3 >= thisMatrix%chunks(i)%n) THEN
           sendCounter = sendCounter + 1
-          idxTmp = MOD(sendCounter,2)+1
+          idxTmp = MOD(sendCounter,MATVEC_SLOTS)+1
           ! Check if we can safely write to sendRequests
           CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, &
                         sendIdxRequests)
           CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i), X=x, &
-                           y=sendResult(1:ctDefault,MOD(sendCounter,2)+1), &
+                           y=sendResult(1:ctDefault,idxTmp), &
                            ALPHA=1.0_SRK,BETA=0.0_SRK)
           CALL MPI_ISend(sendResult(1:ctDefault,idxTmp), ctDefault,    &
                          MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, &
@@ -828,21 +841,21 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
           ! Send several sparse vectors
           DO l=1,SIZE(thisMatrix%chunks(i)%bandIdx)
             sendCounter = sendCounter + 1
-            idxTmp = MOD(sendCounter,2)+1
+            idxTmp = MOD(sendCounter,MATVEC_SLOTS)+1
             CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, &
                           sendIdxRequests)
 
             ! compute destination indices
             ! perform special-case multiplication from single band here
-            count = SIZE(thisMatrix%chunks(i)%bands(l)%jIdx)
-            sendIdx(1:count,idxTmp) = thisMatrix%chunks(i)%bands(l)%jIdx &
+            cnt = SIZE(thisMatrix%chunks(i)%bands(l)%jIdx)
+            sendIdx(1:cnt,idxTmp) = thisMatrix%chunks(i)%bands(l)%jIdx &
                                       - thisMatrix%chunks(i)%bandIdx(l)
-            CALL MPI_ISend(sendIdx(1:count,idxTmp), count, MPI_INTEGER,   &
+            CALL MPI_ISend(sendIdx(1:cnt,idxTmp), cnt, MPI_INTEGER,   &
                            i-1, 0, thisMatrix%comm,                       &
                            sendIdxRequests(idxTmp), mpierr)
-            sendResult(1:count,idxTmp)=thisMatrix%chunks(i)%bands(l)%elem &
+            sendResult(1:cnt,idxTmp)=thisMatrix%chunks(i)%bands(l)%elem &
                                       *x(thisMatrix%chunks(i)%bands(l)%jIdx)
-            CALL MPI_ISend(sendResult(1:count,idxTmp), count, &
+            CALL MPI_ISend(sendResult(1:cnt,idxTmp), cnt, &
                            MPI_DOUBLE_PRECISION, i-1, 0, thisMatrix%comm, &
                            sendRequests(idxTmp), mpierr)
           ENDDO
@@ -850,8 +863,9 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
       ENDIF
     ENDIF
   ENDDO
-  CALL pop_send(sendResult, sendIdx, 1, sendRequests, sendIdxRequests)
-  CALL pop_send(sendResult, sendIdx, 2, sendRequests, sendIdxRequests)
+  DO idxTmp=1,MATVEC_SLOTS
+    CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, sendIdxRequests)
+  ENDDO
 #endif
 
   ! do y = alpha * reduce + beta*y
@@ -897,6 +911,74 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
     ENDIF
   ENDIF
 ENDSUBROUTINE matvec_DistrBandedMatrixType
+
+#ifdef HAVE_MPI
+!
+!-------------------------------------------------------------------------------
+!> @brief Helper routine that handles the movement of data out of the
+!>        recieving buffer. This buffer has multiple "slots" that are either
+!>        being worked on directly or receiving data from MPI in background.
+!> @param acc The accumulating vector
+!> @param valBuf The recv buffer for values
+!> @param ctBuf Count of elements in each buffer slot
+!> @param idxBuf The recv buffer for indices
+!> @param idx The buffer slot to pop
+!> @param req The array of active requests for data
+!> @param idxReq The array of requests for indices
+!>
+SUBROUTINE pop_recv(acc, valBuf, idxBuf, ctBuf, idx, req, idxReq)
+  REAL(SRK), INTENT(INOUT) :: acc(:)
+  REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
+  INTEGER(SIK), INTENT(INOUT) :: ctBuf(MATVEC_SLOTS)
+  INTEGER(SIK), INTENT(INOUT) :: idxBuf(:,:)
+  INTEGER(SIK), INTENT(IN) :: idx
+  INTEGER(SIK), INTENT(INOUT) :: req(MATVEC_SLOTS)
+  INTEGER(SIK), INTENT(INOUT) :: idxReq(MATVEC_SLOTS)
+  INTEGER(SIK) :: mpierr
+
+  IF (req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
+
+  CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
+  IF (ctBuf(idx) > 0) THEN
+    acc(1:ctBuf(idx)) = acc(1:ctBuf(idx)) + valBuf(1:ctBuf(idx),idx)
+  ELSE
+    CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
+    idxReq(idx) = 0
+    acc(idxBuf(1:-ctBuf(idx),idx)) = acc(idxBuf(1:-ctBuf(idx),idx)) &
+        + valBuf(1:-ctBuf(idx),idx)
+      ENDIF
+    ENDIF
+  ENDDO
+  CALL pop_send(sendResult, sendIdx, 1, sendRequests, sendIdxRequests)
+  CALL pop_send(sendResult, sendIdx, 2, sendRequests, sendIdxRequests)
+#endif
+
+ENDSUBROUTINE pop_recv
+!
+!-------------------------------------------------------------------------------
+!> @brief Helper routine that keeps of data in the send buffer while
+!>        MPI is still working. This buffer has multiple "slots" that are
+!>        either being worked on directly or contain data being sent by
+!>        MPI in background.
+!> @param valBuf The send buffer for values
+!> @param idxBuf The send buffer for indices
+!> @param idx The buffer slot to pop
+!> @param req The array of requests for data
+!> @param idxReq The array of requests for indices
+!>
+SUBROUTINE pop_send(valBuf, idxBuf, idx, req, idxReq)
+  REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
+  !> The send buffer for indices
+  INTEGER(SIK), INTENT(INOUT) :: idxBuf(:,:)
+  !> The buffer slot to pop
+  INTEGER(SIK), INTENT(IN) :: idx
+  !> The array of requests for data
+  INTEGER(SIK), INTENT(INOUT) :: req(MATVEC_SLOTS)
+  !> The array of requests for indices
+  INTEGER(SIK), INTENT(INOUT) :: idxReq(MATVEC_SLOTS)
+  INTEGER(SIK) :: mpierr
+
+  IF (req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
 
 #ifdef HAVE_MPI
     TYPE IS(NativeDistributedVectorType)
