@@ -363,6 +363,9 @@ ENDTYPE MPI_EnvType
 
 !> Type describes basic information about OpenMP environment
 TYPE,EXTENDS(ParEnvType) :: OMP_EnvType
+#ifdef DYOMP
+  LOGICAL(SBK) :: DynamicThreads=.FALSE.
+#endif
 !
 !List of type bound procedures (methods) for the object
   CONTAINS
@@ -746,6 +749,7 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
 
   call myPE%allReduceI(myPE%nproc,myPE%rank2Host)
   call myPE%allReduceI_scalar(myPE%nHost)
+  myPE%Host=myPE%rank2Host(myPE%rank)
 
   if(allocated(myPE%Host2nrank)) deallocate(myPE%Host2nrank)
   allocate(myPE%Host2nrank(myPE%nHost))
@@ -2405,6 +2409,29 @@ SUBROUTINE init_OMP_Env_type(myPE,PEparam)
   myPE%nproc=1
   myPE%rank=0
   myPE%master=.TRUE.
+
+
+#ifdef DYOMP
+  IF(PRESENT(PEparam)) THEN
+    IF(PEparam<0) THEN
+      myPE%DynamicThreads=.TRUE.
+    ENDIF
+  ENDIF
+!$    IF(PRESENT(PEparam)) THEN
+!$      IF(abs(PEparam) > omp_get_num_procs()) THEN
+!$        CALL eParEnv%raiseWarning("More threads requested than actual cores")
+!$        myPE%nproc=abs(PEparam)
+!$      ELSEIF(abs(PEparam) == 0) THEN
+!$        myPE%nproc=omp_get_max_threads()
+!$      ELSE
+!$        myPE%nproc=MAX(1,abs(PEparam))
+!$      ENDIF
+!$    ENDIF
+!$    IF(myPE%nproc > max_threads_requested) THEN
+!$      max_threads_requested = myPE%nproc
+!$      CALL omp_set_num_threads(myPE%nproc)
+!$    ENDIF
+#else
 !$    IF(PRESENT(PEparam)) THEN
 !$      IF(PEparam > omp_get_num_procs()) THEN
 !$        CALL eParEnv%raiseWarning("More threads requested than actual cores")
@@ -2419,6 +2446,7 @@ SUBROUTINE init_OMP_Env_type(myPE,PEparam)
 !$      max_threads_requested = myPE%nproc
 !$      CALL omp_set_num_threads(myPE%nproc)
 !$    ENDIF
+#endif
   myPE%initStat=.TRUE.
 ENDSUBROUTINE init_OMP_Env_type
 !
@@ -2461,8 +2489,13 @@ SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
       ' - input nangle is less than 1!')
   IF(nenergy < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
       ' - input nenergy is less than 1!')
+#ifdef DYOMP
+  IF(nthreads == 0) CALL eParEnv%raiseError(modName//'::'//myName// &
+      ' - input nthreads is equal to 0!')
+#else
   IF(nthreads < 1) CALL eParEnv%raiseError(modName//'::'//myName// &
       ' - input nthreads is less than 1!')
+#endif
   WRITE(nproc,'(i12)') myPE%world%nproc
   WRITE(selproc,'(i12)') nenergy*nspace*nangle
   IF(myPE%world%nproc < nenergy*nspace*nangle) &
