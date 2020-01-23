@@ -67,16 +67,14 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testPetscVectorType()
-#if defined(FUTILITY_HAVE_PETSC) && defined(HAVE_MPI)
+#ifdef FUTILITY_HAVE_PETSC
   CLASS(VectorType),ALLOCATABLE :: thisVector
   TYPE(ParamType) :: pList
   LOGICAL(SBK) :: bool
-  INTEGER(SIK) :: rank, nproc, mpierr, i
+  INTEGER(SIK) :: i,rank
   REAL(SRK) :: val
   REAL(SRK),ALLOCATABLE :: getval(:)
-  CALL MPI_Comm_rank(MPI_COMM_WORLD,rank,mpierr)
-  CALL MPI_Comm_size(MPI_COMM_WORLD,nproc,mpierr)
-  ASSERT(nproc==2, 'nproc valid')
+
   !Perform test of init function
   !first check intended init path (m provided)
   CALL pList%clear()
@@ -85,14 +83,18 @@ SUBROUTINE testPetscVectorType()
   CALL pList%add('VectorType->nlocal',10)
   ALLOCATE(PETScVectorType :: thisVector)
   CALL thisVector%init(pList)
+  rank = 0
   SELECTTYPE(thisVector)
-  TYPE IS(PETScVectorType)
-    !check for success
-    bool = thisVector%isInit.AND.thisVector%n == 20
-    ASSERT(bool, 'petscvec%init(...)')
-    CALL VecGetSize(thisVector%b,i,ierr)
-    ASSERT(i == 20, 'petscvec%init(...)')
+    TYPE IS(PETScVectorType)
+      !check for success
+      bool = thisVector%isInit.AND.thisVector%n == 20
+      ASSERT(bool, 'petscvec%init(...)')
+      CALL VecGetSize(thisVector%b,i,ierr)
+      ASSERT(i == 20, 'petscvec%init(...)')
+      CALL VecGetOwnershipRange(thisVector%b,rank,PETSC_NULL_INTEGER,ierr)
+      rank = rank/10
   ENDSELECT
+
 
   ! Test setting/getting single elements at a time
   CALL thisVector%set(1,1._SRK)
@@ -172,7 +174,7 @@ SUBROUTINE testPetscVectorType()
 ENDSUBROUTINE testPetscVectorType
 
 SUBROUTINE testNativeVectorType()
-#if defined(HAVE_MPI)
+#ifdef HAVE_MPI
   CLASS(VectorType),ALLOCATABLE :: thisVector
   TYPE(ParamType) :: pList
   LOGICAL(SBK) :: bool
@@ -185,6 +187,7 @@ SUBROUTINE testNativeVectorType()
   ASSERT(nproc==2, 'nproc valid')
 
   !Perform test of init function
+  COMPONENT_TEST("nativeDist%init")
   !first check intended init path (m provided)
   CALL pList%clear()
   CALL pList%add('VectorType->n',20)
@@ -200,6 +203,7 @@ SUBROUTINE testNativeVectorType()
       ASSERT(SIZE(thisVector%b) == 10, 'NativeDistributedVectorType%init(...)')
   ENDSELECT
 
+  COMPONENT_TEST("nativeDist%set/get")
   ! Test setting/getting single elements at a time
   IF(rank==0) THEN
     CALL thisVector%set(1,1._SRK)

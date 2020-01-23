@@ -3733,7 +3733,7 @@ PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x,incx_in)
   ENDIF
   IF(n > 0 .AND. incx /= 0 .AND. lda >= MAX(1,N) .AND. &
       (trans == 't' .OR. trans == 'T' .OR. trans == 'c' .OR. trans == 'C' .OR. &
-      trans == 'n' .OR. trans == 'N') .AND. &
+        trans == 'n' .OR. trans == 'N') .AND. &
       (uplo == 'u' .OR. uplo == 'U' .OR. uplo == 'l' .OR. uplo == 'L') .AND. &
       (diag == 'u' .OR. diag == 'U' .OR. diag == 'n' .OR. diag == 'N')) THEN
 
@@ -3747,7 +3747,7 @@ PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x,incx_in)
         kx = 1 - (n-1)*incx
     ELSEIF (incx/=1) THEN
         kx = 1
-    END IF
+    ENDIF
 
     IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
       IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular
@@ -3758,6 +3758,22 @@ PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x,incx_in)
               temp=x(j)
               DO i=j-1,1,-1
                 x(i)=x(i)-temp*a(i,j)
+              ENDDO
+            ENDIF
+          ENDDO
+        ELSE
+          jx=kx+(n-1)*incx
+          DO J=n,1,-1
+            IF (x(jx)/=ZERO) THEN
+              IF (nounit) x(jx)=x(jx)/a(j,j)
+              temp=x(jx)
+              ix=jx
+              DO i=j-1,1,-1
+                ix=ix-incx
+                x(ix)=x(ix)-temp*a(i,j)
+              ENDDO
+            ENDIF
+            jx=jx-incx
               ENDDO
             ENDIF
           ENDDO

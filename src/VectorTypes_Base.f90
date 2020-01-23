@@ -261,11 +261,15 @@ LOGICAL(SBK),SAVE :: VectorType_Paramsflag=.FALSE.
 
 !> The parameter lists to use when validating a parameter list for
 !> initialization for the Real Vector Type.
-TYPE(ParamType),PROTECTED,SAVE :: RealVectorType_reqParams,RealVectorType_optParams,NativeDistributedVectorType_reqParams,NativeDistributedVectorType_optParams
+TYPE(ParamType),PROTECTED,SAVE :: RealVectorType_reqParams, &
+                                  RealVectorType_optParams, &
+                                  NativeDistributedVectorType_reqParams, &
+                                  NativeDistributedVectorType_optParams
 
 !> The parameter lists to use when validating a parameter list for
 !> initialization for the Distributed Vector Type.
-TYPE(ParamType),PROTECTED,SAVE :: DistributedVectorType_reqParams,DistributedVectorType_optParams
+TYPE(ParamType),PROTECTED,SAVE :: DistributedVectorType_reqParams, &
+                                  DistributedVectorType_optParams
 
 !> Exception Handler for use in VectorTypes
 TYPE(ExceptionHandlerType),SAVE :: eVectorType

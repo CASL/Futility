@@ -606,15 +606,15 @@ PURE RECURSIVE SUBROUTINE qsort_1DLong_1DInt(keys, values)
     IF (keys(c) < keys(1)) THEN
       CALL swap_long(keys,c,1)
       CALL swap_int(values,c,1)
-    END IF
+    ENDIF
     IF (keys(n) < keys(1)) THEN
       CALL swap_long(keys,1,n)
       CALL swap_int(values,1,n)
-    END IF
+    ENDIF
     IF (keys(n) < keys(c)) THEN
       CALL swap_long(keys,c,n)
       CALL swap_int(values,c,n)
-    END IF
+    ENDIF
     p=c
     CALL partition_array_qsort_1DLong_1DInt(keys,values,p,l)
     CALL qsort_1DLong_1DInt(keys(1:l-1),values(1:l-1))

@@ -585,12 +585,11 @@ ENDSUBROUTINE testRealSort
         iVal = (i-1)/4+1
         jVal = MOD(i-1,4)+1
         diagRank(i) = INT(jVal - 1 + ((3-iVal+jVal)*(4-iVal+jVal))/2,8)
-      END DO
+      ENDDO
 
       CALL sort(diagRank, idxOrig)
 
-      bool=ALL(idxOrig .EQ. (/13_SIK,9_SIK,14_SIK,5_SIK,10_SIK,15_SIK,1_SIK,6_SIK,11_SIK,16_SIK,2_SIK,7_SIK,12_SIK,3_SIK,8_SIK,4_SIK/))
-      WRITE(*,*) idxOrig
+      bool=ALL(idxOrig .EQ. (/13,9,14,5,10,15,1,6,11,16,2,7,12,3,8,4/))
       ASSERT(bool,'Diagonal Matrix Sort')
 
     END SUBROUTINE testKeySort

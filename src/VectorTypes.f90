@@ -253,7 +253,7 @@ SUBROUTINE VectorFactory(vector, params)
 #endif
         CASE DEFAULT
           CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-            "Unrecognized vector type requested")
+               "Unrecognized vector type requested")
         ENDSELECT
     CASE(VM_PETSC)
 #ifdef FUTILITY_HAVE_PETSC
@@ -643,8 +643,9 @@ FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
   REAL(SRK) :: r
+#ifdef HAVE_MPI
   INTEGER(SIK) :: mpierr
-
+#endif
   SELECTTYPE(thisVector); TYPE IS(RealVectorType)
     SELECTTYPE(thatVector); TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -794,7 +795,9 @@ FUNCTION nrm2_VectorType(thisVector,n,incx)  RESULT(norm2)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: n
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   REAL(SRK) :: norm2
+#ifdef HAVE_MPI
   INTEGER(SIK) :: mpierr
+#endif
 
   SELECTTYPE(thisVector); TYPE IS(RealVectorType)
     IF(PRESENT(n) .AND. PRESENT(incx)) THEN

@@ -200,6 +200,7 @@ ENDSUBROUTINE clear_RealVectorType
 !> @param thisVector the vector type to act on
 !> @param i the location in the vector to set
 !> @param setval the value to be set
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE setOne_RealVectorType(thisVector,i,setval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -218,9 +219,10 @@ SUBROUTINE setOne_RealVectorType(thisVector,i,setval,ierr)
 ENDSUBROUTINE setOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets all values in the real vector with a scalar value
-!> @param declares the vector type to act on
+!> @brief Sets all values in the real vector to a scalar value
+!> @param thisVector the vector type to act on
 !> @param setval the scalar value to be set
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE setAll_scalar_RealVectorType(thisVector,setval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -235,9 +237,10 @@ SUBROUTINE setAll_scalar_RealVectorType(thisVector,setval,ierr)
 ENDSUBROUTINE setAll_scalar_RealVectorType
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets all the values in the real vector
-!> @param declare the vector type to act on
+!> @brief Sets all the values in the real vector to an array of values
+!> @param thisVector the vector type to act on
 !> @param setval the array of values to be set
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE setAll_array_RealVectorType(thisVector,setval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -256,9 +259,10 @@ ENDSUBROUTINE setAll_array_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets selected values in the real vector
-!> @param declare the vector type to act on
+!> @param thisVector the vector type to act on
 !> @param indices a list of indices in the vector to set
 !> @param setval the array of values to be set (must be same size as indices)
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE setSelected_RealVectorType(thisVector,indices,setval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -274,11 +278,12 @@ ENDSUBROUTINE setSelected_RealVectorType
 
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets a range of values in the real vector with a scalar value
-!> @param declare the vector type to act on
-!> @param setval the scalar value to be set
+!> @brief Sets a range of values in the real vector to a scalar value
+!> @param thisVector the vector type to act on
 !> @param istt the starting point of the range
 !> @param istp the stopping point in the range
+!> @param setval the scalar value to be set
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE setRange_scalar_RealVectorType(thisVector,istt,istp,setval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -299,10 +304,11 @@ ENDSUBROUTINE setRange_scalar_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets a range of values in the real vector with an array of values
-!> @param declare the vector type to act on
-!> @param setval the scalar value to be set
+!> @param thisVector the vector type to act on
 !> @param istt the starting point of the range
 !> @param istp the stopping point in the range
+!> @param setval the array of values to set to
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE setRange_array_RealVectorType(thisVector,istt,istp,setval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -326,8 +332,10 @@ ENDSUBROUTINE setRange_array_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets one value in the real vector
-!> @param declares the vector type to act on
-!> @param i the ith location in the vector
+!> @param thisVector the vector type to act on
+!> @param i the vector location to access
+!> @param getval the variable to store the vector element
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE getOne_RealVectorType(thisVector,i,getval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -347,10 +355,10 @@ ENDSUBROUTINE getOne_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets all values in the real vector
-!> Works on serial vectors only, meaning the indices used to extract data from the vector
-!> are 1->N, where N is the size of the vector.
-!> @param declares the vector type to act on
-!> @param getval Correctly sized array that will be filled with contents of this vector
+!> @param thisVector the vector type to act on
+!> @param getval Correctly sized array that will be filled with vector contents
+!> @param ierr optional error code return (not used for native types)
+!>
 SUBROUTINE getAll_RealVectorType(thisVector,getval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
   REAL(SRK),INTENT(OUT) :: getval(:)
@@ -368,9 +376,11 @@ ENDSUBROUTINE getAll_RealVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets a list of selected values from the vector
-!> @param declares the vector type to act on
-!> @param indices A list of the indices in the vector
-!> @param getval Correctly sized array that will be filled with contents of this vector
+!> @param thisVector the vector type to act on
+!> @param indices A list of the indices to access
+!> @param getval Correctly sized array that will be filled with vector contents
+!> @param ierr optional error code return (not used for native types)
+!>
 SUBROUTINE getSelected_RealVectorType(thisVector,indices,getval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
   INTEGER(SIK),INTENT(IN) :: indices(:)
@@ -390,6 +400,8 @@ ENDSUBROUTINE getSelected_RealVectorType
 !> @param declares the vector type to act on
 !> @param istt the starting point of the range
 !> @param istp the stopping point in the range
+!> @param getval Correctly sized array to be filled with contents in range
+!> @param ierr optional error code return (not used for native types)
 !>
 SUBROUTINE getRange_RealVectorType(thisVector,istt,istp,getval,ierr)
   CLASS(RealVectorType),INTENT(INOUT) :: thisVector
@@ -543,7 +555,6 @@ ENDSUBROUTINE setAll_scalar_NativeDistributedVectorType
 SUBROUTINE setAll_array_NativeDistributedVectorType(thisVector,setval,ierr)
   CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
   REAL(SRK),INTENT(IN) :: setval(:)
-  INTEGER(SIK) :: i
   INTEGER(SIK),INTENT(OUT),OPTIONAL ::ierr
 
   REQUIRE(thisVector%isInit)
@@ -594,7 +605,6 @@ SUBROUTINE setRange_scalar_NativeDistributedVectorType(thisVector,istt,istp,setv
   INTEGER(SIK),INTENT(IN) :: istt
   INTEGER(SIK),INTENT(IN) :: istp
   INTEGER(SIK),INTENT(OUT),OPTIONAL ::ierr
-  INTEGER(SIK) :: low,high
 
   REQUIRE(thisVector%isInit)
   REQUIRE(istt <= istp)
@@ -720,7 +730,7 @@ SUBROUTINE getRange_NativeDistributedVectorType(thisVector,istt,istp,getval,ierr
   INTEGER(SIK),INTENT(IN) :: istp
   REAL(SRK),INTENT(OUT) :: getval(:)
   INTEGER(SIK),INTENT(OUT),OPTIONAL ::ierr
-  INTEGER(SIK) :: i, lowDest, highDest, lowSrc, highSrc
+  INTEGER(SIK) :: lowDest, highDest, lowSrc, highSrc
 
   REQUIRE(thisVector%isInit)
   REQUIRE(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n)
