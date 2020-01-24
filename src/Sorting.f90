@@ -507,14 +507,13 @@ ENDSUBROUTINE insert_sort_real
       INTEGER(SIK) :: i,j,n,val
 
       n=SIZE(vals)
-
       DO i=2,n
-        key = keys(i)
-        val = vals(i)
+        key=keys(i)
+        val=vals(i)
         j=i-1
         DO WHILE(keys(j) > key)
-          keys(j+1) = keys(j)
-          vals(j+1) = vals(j)
+          keys(j+1)=keys(j)
+          vals(j+1)=vals(j)
           j=j-1
           IF (j < 1) EXIT
         ENDDO

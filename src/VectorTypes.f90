@@ -225,7 +225,7 @@ SUBROUTINE VectorFactory(vector, params)
 
   IF(ASSOCIATED(vector)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Vector pointer is already allocated")
+        "Vector pointer is already allocated")
     RETURN
   ENDIF
 
@@ -239,23 +239,23 @@ SUBROUTINE VectorFactory(vector, params)
   ENDIF
 
   IF(params%has("VectorType->vecType")) THEN
-    CALL params%get("VectorType->vecType", vecType)
+    CALL params%get("VectorType->vecType",vecType)
   ENDIF
 
   SELECTCASE(engine)
-    CASE(VM_NATIVE)
-      SELECTCASE(vecType)
-        CASE(REAL_NATIVE)
-          ALLOCATE(RealVectorType :: vector)
+  CASE(VM_NATIVE)
+    SELECTCASE(vecType)
+    CASE(REAL_NATIVE)
+      ALLOCATE(RealVectorType :: vector)
 #ifdef HAVE_MPI
-        CASE(DISTRIBUTED_NATIVE)
-          ALLOCATE(NativeDistributedVectorType :: vector)
+    CASE(DISTRIBUTED_NATIVE)
+      ALLOCATE(NativeDistributedVectorType :: vector)
 #endif
-        CASE DEFAULT
-          CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-               "Unrecognized vector type requested")
-        ENDSELECT
-    CASE(VM_PETSC)
+    CASE DEFAULT
+      CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+          "Unrecognized vector type requested")
+    ENDSELECT
+  CASE(VM_PETSC)
 #ifdef FUTILITY_HAVE_PETSC
     ALLOCATE(PETScVectorType :: vector)
 #endif
@@ -297,49 +297,49 @@ SUBROUTINE VectorResemble(dest, source, params)
 
   IF(.NOT. ASSOCIATED(source)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Source vector is not associated")
+        "Source vector is not associated")
     RETURN
   ENDIF
 
   IF(.NOT. source%isInit) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Source vector is not initialized")
+        "Source vector is not initialized")
   ENDIF
 
   IF(ASSOCIATED(dest)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-      "Destination vector is already associated")
+        "Destination vector is already associated")
     RETURN
   ENDIF
 
   IF(.NOT. params%has("VectorType->n")) THEN
     CALL params%add("VectorType->n",source%n)
   ENDIF
-  SELECTTYPE(source)
-    CLASS IS(DistributedVectorType)
-      IF(.NOT. params%has("VectorType->nlocal")) THEN
-        CALL params%add("VectorType->nlocal",source%nlocal)
-      ENDIF
-      IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
-        CALL params%add("VectorType->MPI_Comm_Id",source%comm)
-      ENDIF
+  SELECT TYPE(source)
+  CLASS IS(DistributedVectorType)
+    IF(.NOT. params%has("VectorType->nlocal")) THEN
+      CALL params%add("VectorType->nlocal",source%nlocal)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
 #ifdef HAVE_MPI
-    TYPE IS(NativeDistributedVectorType)
-      IF(.NOT. params%has("VectorType->chunkSize")) THEN
-        CALL params%add("VectorType->chunkSize",source%chunkSize)
-      ENDIF
-      IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
-        CALL params%add("VectorType->MPI_Comm_Id",source%comm)
-      ENDIF
+  TYPE IS(NativeDistributedVectorType)
+    IF(.NOT. params%has("VectorType->chunkSize")) THEN
+      CALL params%add("VectorType->chunkSize",source%chunkSize)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
 #endif
   ENDSELECT
 
-  SELECTTYPE(source)
-    TYPE IS(RealVectorType)
-      ALLOCATE(RealVectorType :: dest)
+  SELECT TYPE(source)
+  TYPE IS(RealVectorType)
+    ALLOCATE(RealVectorType :: dest)
 #ifdef HAVE_MPI
-    TYPE IS(NativeDistributedVectorType)
-      ALLOCATE(NativeDistributedVectorType :: dest)
+  TYPE IS(NativeDistributedVectorType)
+    ALLOCATE(NativeDistributedVectorType :: dest)
 #endif
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
@@ -370,7 +370,7 @@ FUNCTION asum_VectorType(thisVector,n,incx) RESULT(r)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   REAL(SRK) :: r
 
-  SELECTTYPE(thisVector)
+  SELECT TYPE(thisVector)
   TYPE IS(RealVectorType)
     IF(PRESENT(n) .AND. PRESENT(incx)) THEN
       r=BLAS1_asum(n,thisVector%b,incx)
@@ -419,8 +419,8 @@ SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
   alpha=1._SRK
   IF(PRESENT(a)) alpha=a
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(newVector); TYPE IS(RealVectorType)
+  SELECT TYPE(thisVector); TYPE IS(RealVectorType)
+    SELECT TYPE(newVector); TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_axpy(n,alpha,thisVector%b,incx,newVector%b,incy)
       ELSEIF(.NOT. PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -441,7 +441,7 @@ SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
     ENDSELECT
 #ifdef HAVE_MPI
   TYPE IS(NativeDistributedVectorType)
-    SELECTTYPE(newVector); TYPE IS(NativeDistributedVectorType)
+    SELECT TYPE(newVector); TYPE IS(NativeDistributedVectorType)
       IF(PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_axpy(SIZE(thisVector%b),alpha,thisVector%b,incx,newVector%b,incy)
       ELSEIF(PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
@@ -455,7 +455,7 @@ SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
 #endif
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(newVector)
+    SELECT TYPE(newVector)
     TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(iperr == 0) CALL VecAXPY(newVector%b,alpha,thisVector%b,iperr)
@@ -463,7 +463,7 @@ SUBROUTINE axpy_scalar_VectorType(thisVector,newVector,a,n,incx,incy)
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
   TYPE IS(TrilinosVectorType)
-    SELECTTYPE(newVector)
+    SELECT TYPE(newVector)
     TYPE IS(TrilinosVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
       CALL ForPETRA_VecAXPY(newVector%b,thisVector%b,alpha,1.0_SRK)
@@ -499,11 +499,11 @@ SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
   REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpnew(:),tmpa(:)
 
-  SELECTTYPE(thisVector)
+  SELECT TYPE(thisVector)
   TYPE IS(RealVectorType)
-    SELECTTYPE(newVector)
+    SELECT TYPE(newVector)
     TYPE IS(RealVectorType)
-      SELECTTYPE(aVector)
+      SELECT TYPE(aVector)
       TYPE IS(RealVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         ALLOCATE(tmpnew(newVector%n))
@@ -515,9 +515,9 @@ SUBROUTINE axpy_vector_VectorType(thisVector,newVector,aVector,n,incx,incy)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(newVector)
+    SELECT TYPE(newVector)
     TYPE IS(PETScVectorType)
-      SELECTTYPE(aVector)
+      SELECT TYPE(aVector)
       TYPE IS(PETScVectorType)
         ALLOCATE(tmpthis(thisVector%n))
         ALLOCATE(tmpnew(newVector%n))
@@ -569,8 +569,8 @@ SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(newVector); TYPE IS(RealVectorType)
+  SELECT TYPE(thisVector); TYPE IS(RealVectorType)
+    SELECT TYPE(newVector); TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_copy(n,thisVector%b,incx,newVector%b,incy)
       ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -591,7 +591,7 @@ SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
     ENDSELECT
 #ifdef HAVE_MPI
   TYPE IS(NativeDistributedVectorType)
-    SELECTTYPE(newVector); TYPE IS(NativeDistributedVectorType)
+    SELECT TYPE(newVector); TYPE IS(NativeDistributedVectorType)
       IF(PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_copy(thisVector%b,incx,newVector%b,incy)
       ELSEIF(PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
@@ -605,7 +605,7 @@ SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
 #endif
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(newVector)
+    SELECT TYPE(newVector)
     TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(iperr == 0) CALL VecCopy(thisVector%b,newVector%b,iperr)
@@ -613,7 +613,7 @@ SUBROUTINE copy_VectorType(thisVector,newVector,n,incx,incy)
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
   TYPE IS(TrilinosVectorType)
-    SELECTTYPE(newVector)
+    SELECT TYPE(newVector)
     TYPE IS(TrilinosVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble()
       CALL ForPETRA_VecCopy(newVector%b,thisVector%b)
@@ -646,8 +646,8 @@ FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
 #ifdef HAVE_MPI
   INTEGER(SIK) :: mpierr
 #endif
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
-    SELECTTYPE(thatVector); TYPE IS(RealVectorType)
+  SELECT TYPE(thisVector); TYPE IS(RealVectorType)
+    SELECT TYPE(thatVector); TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         r=BLAS1_dot(n,thisVector%b,incx,thatVector%b,incy)
       ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
@@ -668,7 +668,7 @@ FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
     ENDSELECT
 #ifdef HAVE_MPI
   TYPE IS(NativeDistributedVectorType)
-    SELECTTYPE(thatVector); TYPE IS(NativeDistributedVectorType)
+    SELECT TYPE(thatVector); TYPE IS(NativeDistributedVectorType)
       IF(PRESENT(incx) .AND. PRESENT(incy)) THEN
         r=BLAS1_dot(thisVector%b,incx,thatVector%b,incy)
       ELSEIF(PRESENT(incx) .AND. .NOT.PRESENT(incy)) THEN
@@ -683,7 +683,7 @@ FUNCTION dot_VectorType(thisVector,thatVector,n,incx,incy)  RESULT(r)
 #endif
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(thatVector)
+    SELECT TYPE(thatVector)
     TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(iperr == 0) CALL VecTDot(thisVector%b,thatVector%b,r,iperr)
@@ -712,7 +712,7 @@ FUNCTION iamax_VectorType(thisVector,n,incx)  RESULT(imax)
   REAL(SRK),ALLOCATABLE :: tmpthis(:)
   INTEGER(SIK) :: imax
 
-  SELECTTYPE(thisVector)
+  SELECT TYPE(thisVector)
   TYPE IS(RealVectorType)
     ALLOCATE(tmpthis(thisVector%n))
     CALL thisVector%get(tmpthis)
@@ -755,7 +755,7 @@ FUNCTION iamin_VectorType(thisVector,n,incx)  RESULT(imin)
   REAL(SRK),ALLOCATABLE :: tmpthis(:)
   INTEGER(SIK) :: imin
 
-  SELECTTYPE(thisVector)
+  SELECT TYPE(thisVector)
   TYPE IS(RealVectorType)
     ALLOCATE(tmpthis(thisVector%n))
     CALL thisVector%get(tmpthis)
@@ -799,7 +799,7 @@ FUNCTION nrm2_VectorType(thisVector,n,incx)  RESULT(norm2)
   INTEGER(SIK) :: mpierr
 #endif
 
-  SELECTTYPE(thisVector); TYPE IS(RealVectorType)
+  SELECT TYPE(thisVector); TYPE IS(RealVectorType)
     IF(PRESENT(n) .AND. PRESENT(incx)) THEN
       norm2=BLAS1_nrm2(n,thisVector%b,incx)
     ELSEIF(.NOT.PRESENT(n) .AND. PRESENT(incx)) THEN
@@ -851,7 +851,7 @@ SUBROUTINE scal_scalar_VectorType(thisVector,a,n,incx)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: n
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
 
-  SELECTTYPE(thisVector)
+  SELECT TYPE(thisVector)
   TYPE IS(RealVectorType)
     IF(PRESENT(n) .AND. PRESENT(incx)) THEN
       CALL BLAS1_scal(n,a,thisVector%b,incx)
@@ -893,9 +893,9 @@ SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   REAL(SRK),ALLOCATABLE :: tmpthis(:),tmpa(:)
 
-  SELECTTYPE(thisVector)
+  SELECT TYPE(thisVector)
   TYPE IS(RealVectorType)
-    SELECTTYPE(aVector)
+    SELECT TYPE(aVector)
     TYPE IS(RealVectorType)
       ALLOCATE(tmpthis(thisVector%n))
       ALLOCATE(tmpa(aVector%n))
@@ -904,7 +904,7 @@ SUBROUTINE scal_vector_VectorType(thisVector,aVector,n,incx)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(aVector)
+    SELECT TYPE(aVector)
     TYPE IS(PETScVectorType)
       ALLOCATE(tmpthis(thisVector%n))
       ALLOCATE(tmpa(aVector%n))
@@ -949,9 +949,9 @@ SUBROUTINE swap_VectorType(thisVector,thatVector,n,incx,incy)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incx
   INTEGER(SIK),INTENT(IN),OPTIONAL :: incy
 
-  SELECTTYPE(thisVector)
+  SELECT TYPE(thisVector)
   TYPE IS(RealVectorType)
-    SELECTTYPE(thatVector)
+    SELECT TYPE(thatVector)
     TYPE IS(RealVectorType)
       IF(PRESENT(n) .AND. PRESENT(incx) .AND. PRESENT(incy)) THEN
         CALL BLAS1_swap(n,thisVector%b,incx,thatVector%b,incy)
@@ -973,7 +973,7 @@ SUBROUTINE swap_VectorType(thisVector,thatVector,n,incx,incy)
     ENDSELECT
 #ifdef FUTILITY_HAVE_PETSC
   TYPE IS(PETScVectorType)
-    SELECTTYPE(thatVector)
+    SELECT TYPE(thatVector)
     TYPE IS(PETScVectorType)
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
       IF(.NOT.thatVector%isAssembled) CALL thatVector%assemble(iperr)

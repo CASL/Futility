@@ -443,14 +443,15 @@ SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
 
   !Validate against the reqParams and OptParams
   validParams=Params
-  CALL validParams%validate(NativeDistributedVectorType_reqParams,NativeDistributedVectorType_optParams)
+  CALL validParams%validate(NativeDistributedVectorType_reqParams, &
+      NativeDistributedVectorType_optParams)
 
   !Pull Data from Parameter List
   CALL validParams%get('VectorType->n',n)
   CALL validParams%get('VectorType->MPI_Comm_ID',comm)
   CALL validParams%get('VectorType->nlocal',nlocal)
 
-  chunksize = 1
+  chunksize=1
   IF (validParams%has('VectorType->chunkSize')) THEN
     CALL validParams%get('VectorType->chunkSize',chunkSize)
   ENDIF
@@ -458,12 +459,12 @@ SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
   REQUIRE(.NOT. thisVector%isInit)
   REQUIRE(n > 1)
   REQUIRE(chunkSize > 0)
-  REQUIRE(MOD(n,chunkSize)==0)
+  REQUIRE(MOD(n,chunkSize) == 0)
 
   thisVector%isInit=.TRUE.
   thisVector%n=n
-  thisVector%chunkSize = chunkSize
-  thisVector%comm = comm
+  thisVector%chunkSize=chunkSize
+  thisVector%comm=comm
 
   CALL MPI_Comm_rank(comm,rank,mpierr)
   CALL MPI_Comm_size(comm,nproc,mpierr)
@@ -471,20 +472,20 @@ SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
   ! Default to greedy partitioning, respecting chunk size
   IF (nlocal < 0) THEN
     n = n/chunkSize
-    IF(rank < MOD(n,nproc)) THEN
-      offset = (rank)*(n/nproc + 1)
-      nlocal = n/nproc + 1
+    IF (rank < MOD(n,nproc)) THEN
+      offset=(rank)*(n/nproc+1)
+      nlocal=n/nproc+1
     ELSE
-      offset = (rank)*(n/nproc) + MOD(n,nproc)
-      nlocal = n/nproc
+      offset=(rank)*(n/nproc)+MOD(n,nproc)
+      nlocal=n/nproc
     ENDIF
-    offset = offset*chunkSize
-    nlocal = nlocal*chunkSize
+    offset=offset*chunkSize
+    nlocal=nlocal*chunkSize
   ELSE
-    REQUIRE(MOD(nlocal,chunksize)==0)
+    REQUIRE(MOD(nlocal,chunksize) == 0)
     ALLOCATE(offsets(nproc))
     CALL MPI_AllGather(nlocal,1,MPI_INTEGER,offsets(1),1,MPI_INTEGER,comm,mpierr)
-    offset = SUM(offsets(1:rank))
+    offset=SUM(offsets(1:rank))
   ENDIF
 
   ALLOCATE(thisVector%b((offset+1):(offset+nlocal)))
@@ -504,7 +505,7 @@ SUBROUTINE clear_NativeDistributedVectorType(thisVector)
   thisVector%n=0
   thisVector%comm=-1
   thisVector%chunksize=1
-  IF(ALLOCATED(thisVector%b)) CALL demallocA(thisVector%b)
+  IF (ALLOCATED(thisVector%b)) CALL demallocA(thisVector%b)
 
 ENDSUBROUTINE clear_NativeDistributedVectorType
 !
@@ -524,7 +525,7 @@ SUBROUTINE setOne_NativeDistributedVectorType(thisVector,i,setval,ierr)
 
   REQUIRE(thisVector%isInit)
   REQUIRE(i >= LBOUND(thisVector%b,1) .AND. i <= UBOUND(thisVector%b,1))
-  thisVector%b(i) = setval
+  thisVector%b(i)=setval
 
 ENDSUBROUTINE setOne_NativeDistributedVectorType
 !
@@ -541,7 +542,7 @@ SUBROUTINE setAll_scalar_NativeDistributedVectorType(thisVector,setval,ierr)
   INTEGER(SIK),INTENT(OUT),OPTIONAL ::ierr
 
   REQUIRE(thisVector%isInit)
-  thisVector%b = setval
+  thisVector%b=setval
 
 ENDSUBROUTINE setAll_scalar_NativeDistributedVectorType
 !
@@ -561,9 +562,9 @@ SUBROUTINE setAll_array_NativeDistributedVectorType(thisVector,setval,ierr)
   REQUIRE(SIZE(setval) == SIZE(thisVector%b) .OR. SIZE(setval)==thisVector%n)
 
   IF (SIZE(setval) == thisVector%n) THEN
-    thisVector%b(:) = setval(LBOUND(thisVector%b,1):UBOUND(thisVector%b,1))
+    thisVector%b(:)=setval(LBOUND(thisVector%b,1):UBOUND(thisVector%b,1))
   ELSE
-    thisVector%b = setval
+    thisVector%b=setval
   ENDIF
 
 ENDSUBROUTINE setAll_array_NativeDistributedVectorType
@@ -583,10 +584,10 @@ SUBROUTINE setSelected_NativeDistributedVectorType(thisVector,indices,setval,ier
 
   REQUIRE(thisVector%isInit)
   REQUIRE(SIZE(setval) == SIZE(indices))
-  REQUIRE(ALL(indices>0) .AND. ALL(indices<=thisVector%n))
+  REQUIRE(ALL(indices>0) .AND. ALL(indices <= thisVector%n))
 
   WHERE (indices <= UBOUND(thisVector%b,1) .AND. indices >= LBOUND(thisVector%b,1)) &
-   thisVector%b(indices) = setval
+   thisVector%b(indices)=setval
 
 ENDSUBROUTINE setSelected_NativeDistributedVectorType
 
@@ -610,12 +611,11 @@ SUBROUTINE setRange_scalar_NativeDistributedVectorType(thisVector,istt,istp,setv
   REQUIRE(istt <= istp)
   REQUIRE(istt > 0 .AND. istp <=thisVector%n)
 
-  IF(istt <= UBOUND(thisVector%b,1)  .OR. istp >= LBOUND(thisVector%b,1)) THEN
-    thisVector%b(MAX(istt,UBOUND(thisVector%b,1)): &
-                 MIN(istp,LBOUND(thisVector%b,1))) = setval
-  ENDIF
+  IF(istt <= UBOUND(thisVector%b,1) .OR. istp >= LBOUND(thisVector%b,1)) &
+      thisVector%b(MAX(istt,UBOUND(thisVector%b,1)):MIN(istp,LBOUND(thisVector%b,1))) &
+      = setval
 
-END SUBROUTINE setRange_scalar_NativeDistributedVectorType
+ENDSUBROUTINE setRange_scalar_NativeDistributedVectorType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets a range of values in the native distributed vector to
@@ -639,13 +639,12 @@ SUBROUTINE setRange_array_NativeDistributedVectorType(thisVector,istt,istp,setva
   REQUIRE(istt <= istp)
   REQUIRE(SIZE(setval)==istp-istt+1)
 
-  IF(istt <= UBOUND(thisVector%b,1) .OR. &
-     istp >= LBOUND(thisVector%b,1)) THEN
-    lowSrc = MAX(1,LBOUND(thisVector%b,1)-istt)
-    highSrc = SIZE(setval) - MAX(0,istp-UBOUND(thisVector%b,1))
-    lowDest = MAX(istt,LBOUND(thisVector%b,1))
-    highDest = MIN(istp,UBOUND(thisVector%b,1))
-    thisVector%b(lowDest:highDest) = setval(lowSrc:highSrc)
+  IF(istt <= UBOUND(thisVector%b,1) .OR. istp >= LBOUND(thisVector%b,1)) THEN
+    lowSrc=MAX(1,LBOUND(thisVector%b,1)-istt)
+    highSrc=SIZE(setval)-MAX(0,istp-UBOUND(thisVector%b,1))
+    lowDest=MAX(istt,LBOUND(thisVector%b,1))
+    highDest=MIN(istp,UBOUND(thisVector%b,1))
+    thisVector%b(lowDest:highDest)=setval(lowSrc:highSrc)
   ENDIF
 
 ENDSUBROUTINE setRange_array_NativeDistributedVectorType
@@ -664,9 +663,9 @@ SUBROUTINE getOne_NativeDistributedVectorType(thisVector,i,getval,ierr)
   INTEGER(SIK),INTENT(OUT),OPTIONAL ::ierr
 
   REQUIRE(thisVector%isInit)
-  REQUIRE(i>=LBOUND(thisVector%b,1) .AND. i<=UBOUND(thisVector%b,1))
+  REQUIRE(i >= LBOUND(thisVector%b,1) .AND. i <= UBOUND(thisVector%b,1))
 
-  getval = thisVector%b(i)
+  getval=thisVector%b(i)
 
 ENDSUBROUTINE getOne_NativeDistributedVectorType
 !
@@ -686,7 +685,7 @@ SUBROUTINE getAll_NativeDistributedVectorType(thisVector,getval,ierr)
   REQUIRE(thisVector%isInit)
   REQUIRE(SIZE(getVal) == SIZE(thisVector%b))
 
-  getval = thisVector%b(:)
+  getval=thisVector%b(:)
 
 ENDSUBROUTINE getAll_NativeDistributedVectorType
 !
@@ -710,7 +709,7 @@ SUBROUTINE getSelected_NativeDistributedVectorType(thisVector,indices,getval,ier
 
   DO i=1,SIZE(indices)
     IF (indices(i) >= LBOUND(thisVector%b,1) .AND. indices(i) <= UBOUND(thisVector%b,1)) &
-      getval(i) = thisVector%b(indices(i))
+        getval(i) = thisVector%b(indices(i))
   ENDDO
 
 ENDSUBROUTINE getSelected_NativeDistributedVectorType
@@ -734,14 +733,14 @@ SUBROUTINE getRange_NativeDistributedVectorType(thisVector,istt,istp,getval,ierr
 
   REQUIRE(thisVector%isInit)
   REQUIRE(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n)
-  REQUIRE(istp - istt+1 == SIZE(getVal))
+  REQUIRE(istp-istt+1 == SIZE(getVal))
 
-  IF(istt <= UBOUND(thisVector%b,1)  .OR. istp >= LBOUND(thisVector%b,1)) THEN
-    lowDest = MAX(1,LBOUND(thisVector%b,1)-istt)
-    highDest = SIZE(getval) - MAX(0,istp-UBOUND(thisVector%b,1))
-    lowSrc = MAX(istt,LBOUND(thisVector%b,1))
-    highSrc = MIN(istp,UBOUND(thisVector%b,1))
-    getval(lowDest:highDest) = thisVector%b(lowSrc:highSrc)
+  IF(istt <= UBOUND(thisVector%b,1) .OR. istp >= LBOUND(thisVector%b,1)) THEN
+    lowDest=MAX(1,LBOUND(thisVector%b,1)-istt)
+    highDest=SIZE(getval)-MAX(0,istp-UBOUND(thisVector%b,1))
+    lowSrc=MAX(istt,LBOUND(thisVector%b,1))
+    highSrc=MIN(istp,UBOUND(thisVector%b,1))
+    getval(lowDest:highDest)=thisVector%b(lowSrc:highSrc)
   ENDIF
 
 ENDSUBROUTINE getRange_NativeDistributedVectorType
@@ -749,7 +748,8 @@ ENDSUBROUTINE getRange_NativeDistributedVectorType
 SUBROUTINE assemble_NativeDistributedVectorType(thisVector,ierr)
   CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
+  ! This routine does not need to do anything
 ENDSUBROUTINE
 #endif
 
-END MODULE VectorTypes_Native
+ENDMODULE VectorTypes_Native

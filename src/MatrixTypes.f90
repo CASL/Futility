@@ -97,7 +97,7 @@ PUBLIC :: RectMatrixType
 PUBLIC :: DistributedMatrixType
 ! Matrix structure enumerations
 PUBLIC :: SPARSE,DENSESQUARE,DENSERECT,TRIDIAG, &
-          BANDED,DISTRIBUTED_BANDED,DISTR_BLOCKBANDED
+    BANDED,DISTRIBUTED_BANDED,DISTR_BLOCKBANDED
 ! Matrix-Vector engine enumerations
 PUBLIC :: VM_PETSC,VM_TRILINOS,VM_NATIVE
 ! Parameter list setup/teardown
@@ -430,37 +430,37 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
     IF(PRESENT(diag)) d=diag
     IF(PRESENT(incx_in)) incx=incx_in
 
-    SELECTTYPE(thisMatrix)
+    SELECT TYPE(thisMatrix)
     TYPE IS(DenseSquareMatrixType)
       IF(ul /= 'n') THEN
         y=x
         CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y,incx)
       ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+            alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
       ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
+            alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
       ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+            thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
       ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-          thisMatrix%a,thisMatrix%n,x,1,y,1)
+            thisMatrix%a,thisMatrix%n,x,1,y,1)
       ENDIF
     TYPE IS(DenseRectMatrixType)
       IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-          alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+            alpha,thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
       ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-          alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
+            alpha,thisMatrix%a,thisMatrix%n,x,1,y,1)
       ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-          thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
+            thisMatrix%a,thisMatrix%n,x,1,beta,y,1)
       ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-          thisMatrix%a,thisMatrix%n,x,1,y,1)
+            thisMatrix%a,thisMatrix%n,x,1,y,1)
       ENDIF
     TYPE IS(SparseMatrixType)
       IF(ul /= 'n') THEN
@@ -468,58 +468,58 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
         CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y,incx)
       ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-          thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
+            thisMatrix%ja,thisMatrix%a,alpha,x,beta,y)
       ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-          thisMatrix%ja,thisMatrix%a,alpha,x,y)
+            thisMatrix%ja,thisMatrix%a,alpha,x,y)
       ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
         CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-          thisMatrix%ja,thisMatrix%a,x,beta,y)
+            thisMatrix%ja,thisMatrix%a,x,beta,y)
       ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
         CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-          thisMatrix%ja,thisMatrix%a,x,y)
+            thisMatrix%ja,thisMatrix%a,x,y)
       ENDIF
     TYPE IS(BandedMatrixType)
       IF(ul /= 'n' .OR. d /= 'n' .OR. t /= 'n' .OR. incx /= 1) THEN
         CALL eMatrixType%raiseError('Incorrect call to '// &
-             modName//'::'//myName//' - This interface is not implemented.')
+            modName//'::'//myName//' - This interface is not implemented.')
       ENDIF
 
-      a = 1.0_SRK
-      b = 1.0_SRK
-      IF (PRESENT(alpha)) a = alpha
-      IF (PRESENT(beta)) b = beta
+      a=1.0_SRK
+      b=1.0_SRK
+      IF (PRESENT(alpha)) a=alpha
+      IF (PRESENT(beta)) b=beta
 
-      IF(b == 0.0_SRK) THEN
-        y = 0.0_SRK
-      ELSE IF (b /= 1.0_SRK) THEN
-        y = y*b
+      IF (b == 0.0_SRK) THEN
+        y=0.0_SRK
+      ELSEIF (b /= 1.0_SRK) THEN
+        y=y*b
       ENDIF
 
       ! This can probably be optimized for the a /= 1 case
-      IF (a==1.0_SRK) THEN
+      IF (a == 1.0_SRK) THEN
         DO bIdx=1,SIZE(thisMatrix%bandIdx)
-          idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
-          y(idxMult) = y(idxMult) + thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+          idxMult=thisMatrix%bands(bIdx)%jIdx-thisMatrix%bandIdx(bIdx)
+          y(idxMult)=y(idxMult)+thisMatrix%bands(bIdx)%elem*x(thisMatrix%bands(bIdx)%jIdx)
         ENDDO
-      ELSEIF (a==-1.0_SRK) THEN
+      ELSEIF (a == -1.0_SRK) THEN
         DO bIdx=1,SIZE(thisMatrix%bandIdx)
-          idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
-          y(idxMult) = y(idxMult) - thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+          idxMult=thisMatrix%bands(bIdx)%jIdx-thisMatrix%bandIdx(bIdx)
+          y(idxMult)=y(idxMult)-thisMatrix%bands(bIdx)%elem*x(thisMatrix%bands(bIdx)%jIdx)
         ENDDO
-      ELSEIF (a/=0.0_SRK) THEN
+      ELSEIF (a /= 0.0_SRK) THEN
         DO bIdx=1,SIZE(thisMatrix%bandIdx)
-          idxMult = thisMatrix%bands(bIdx)%jIdx - thisMatrix%bandIdx(bIdx)
-          y(idxMult) = y(idxMult) + a * thisMatrix%bands(bIdx)%elem * x(thisMatrix%bands(bIdx)%jIdx)
+          idxMult=thisMatrix%bands(bIdx)%jIdx-thisMatrix%bandIdx(bIdx)
+          y(idxMult)=y(idxMult)+a*thisMatrix%bands(bIdx)%elem*x(thisMatrix%bands(bIdx)%jIdx)
         ENDDO
       ENDIF
 
     CLASS IS(DistributedBandedMatrixType)
       CALL eMatrixType%raiseError('Incorrect call to '// &
-         modName//'::'//myName//' - This interface is not available.')
+          modName//'::'//myName//' - This interface is not available.')
     CLASS DEFAULT
       CALL eMatrixType%raiseError('Incorrect call to '// &
-           modName//'::'//myName//' - This interface is not available.')
+          modName//'::'//myName//' - This interface is not available.')
     ENDSELECT
   ENDIF
 ENDSUBROUTINE matvec_MatrixType
@@ -585,97 +585,94 @@ SUBROUTINE matvec_MatrixTypeVectorType(thisMatrix,trans,alpha,x,beta,y,uplo,diag
     IF(PRESENT(beta))  b=beta
 
     SELECT TYPE(x)
+    TYPE IS(RealVectorType)
+      SELECT TYPE(y)
       TYPE IS(RealVectorType)
-        SELECT TYPE(y)
-          TYPE IS(RealVectorType)
-            SELECT TYPE(thisMatrix)
-              TYPE IS(DenseSquareMatrixType)
-                IF(ul /= 'n') THEN
-                  y%b=x%b
-                  CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
-                ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ENDIF
-              TYPE IS(DenseRectMatrixType)
-                IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
-                    thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
-                ENDIF
-              TYPE IS(SparseMatrixType)
-                IF(ul /= 'n') THEN
-                  y%b=x%b
-                  CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
-                ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
-                ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
-                ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
-                  CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
-                    thisMatrix%ja,thisMatrix%a,x%b,y%b)
-                ENDIF
-              TYPE IS(BandedMatrixType)
-                CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
-                                       Y=y%b,uplo=ul,diag=d,incx_in=incx)
-              CLASS IS(DistributedBandedMatrixType)
-                CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
-                                       Y=y%b,uplo=ul,diag=d,incx_in=incx)
-              CLASS DEFAULT
-                CALL eMatrixType%raiseError('Incorrect call to '// &
-                     modName//'::'//myName//' - This interface is not available.')
-            ENDSELECT
-          CLASS DEFAULT
-            CALL eMatrixType%raiseError('Incorrect call to '// &
-                 modName//'::'//myName//' - This interface is not available.')
+        SELECT TYPE(thisMatrix)
+        TYPE IS(DenseSquareMatrixType)
+          IF(ul /= 'n') THEN
+            y%b=x%b
+            CALL BLAS2_matvec(ul,t,d,thisMatrix%a,y%b,incx)
+          ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%n, &
+                thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ENDIF
+        TYPE IS(DenseRectMatrixType)
+          IF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                alpha,thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                thisMatrix%a,thisMatrix%n,x%b,1,beta,y%b,1)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(t,thisMatrix%n,thisMatrix%m, &
+                thisMatrix%a,thisMatrix%n,x%b,1,y%b,1)
+          ENDIF
+        TYPE IS(SparseMatrixType)
+          IF(ul /= 'n') THEN
+            y%b=x%b
+            CALL trsv_sparse(ul,t,d,thisMatrix%a,thisMatrix%ia,thisMatrix%ja,y%b,incx)
+          ELSEIF(PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,alpha,x%b,beta,y%b)
+          ELSEIF(PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,alpha,x%b,y%b)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,x%b,beta,y%b)
+          ELSEIF(.NOT.PRESENT(alpha) .AND. .NOT.PRESENT(beta)) THEN
+            CALL BLAS2_matvec(thisMatrix%n,thisMatrix%nnz,thisMatrix%ia, &
+                thisMatrix%ja,thisMatrix%a,x%b,y%b)
+          ENDIF
+        TYPE IS(BandedMatrixType)
+          CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+              Y=y%b,uplo=ul,diag=d,incx_in=incx)
+        CLASS IS(DistributedBandedMatrixType)
+          CALL matvec_MatrixType(thisMatrix,trans=t,alpha=a,X=x%b,beta=b, &
+              Y=y%b,uplo=ul,diag=d,incx_in=incx)
+        CLASS DEFAULT
+          CALL eMatrixType%raiseError('Incorrect call to '// &
+              modName//'::'//myName//' - This interface is not available.')
         ENDSELECT
-#ifdef HAVE_MPI
-      TYPE IS(NativeDistributedVectorType)
-        SELECT TYPE(y)
-          TYPE IS(NativeDistributedVectorType)
-            SELECT TYPE(thisMatrix)
-              CLASS IS(DistributedBandedMatrixType)
-                CALL matvec_DistrBandedMatrixType(thisMatrix,x%b,y%b,t, &
-                                                  ul,d,incx,a,b)
-              CLASS DEFAULT
-                CALL eMatrixType%raiseError('Incorrect call to '// &
-                     modName//'::'//myName// &
-                     ' - This interface is not available.')
-            ENDSELECT
-          CLASS DEFAULT
-            CALL eMatrixType%raiseError('Incorrect call to '// &
-                 modName//'::'//myName//' - This interface is not available.')
-        ENDSELECT
-#endif
       CLASS DEFAULT
         CALL eMatrixType%raiseError('Incorrect call to '// &
-             modName//'::'//myName//' - This interface is not available.')
+            modName//'::'//myName//' - This interface is not available.')
+      ENDSELECT
+#ifdef HAVE_MPI
+    TYPE IS(NativeDistributedVectorType)
+      SELECT TYPE(y)
+      TYPE IS(NativeDistributedVectorType)
+        SELECT TYPE(thisMatrix)
+        CLASS IS(DistributedBandedMatrixType)
+          CALL matvec_DistrBandedMatrixType(thisMatrix,x%b,y%b,t,ul,d,incx,a,b)
+        CLASS DEFAULT
+          CALL eMatrixType%raiseError('Incorrect call to '//modName//'::'// &
+              myName//' - This interface is not available.')
+        ENDSELECT
+      CLASS DEFAULT
+        CALL eMatrixType%raiseError('Incorrect call to '// &
+            modName//'::'//myName//' - This interface is not available.')
+      ENDSELECT
+#endif
+    CLASS DEFAULT
+      CALL eMatrixType%raiseError('Incorrect call to '// &
+          modName//'::'//myName//' - This interface is not available.')
     ENDSELECT
   ENDIF
 ENDSUBROUTINE matvec_MatrixTypeVectorType
-
 
 !
 !-------------------------------------------------------------------------------
@@ -714,7 +711,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   INTEGER(SIK) :: i,l,idxTmp,cnt,ctDefault,mpierr
   CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
 #else
-  rank = 0
+  rank=0
 #endif
   ! NOTE: incx,ul,d,t are NOT USED
 
@@ -722,12 +719,12 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ! This allows one to be used for computation and the rest for
   ! communication.
   ! Which one to write to will be determined by *Counter MOD MATVEC_SLOTS
-  sendCounter = 0
-  recvCounter = 0
-  sendRequests = 0
-  sendIdxRequests = 0
-  recvRequests = 0
-  recvIdxRequests = 0
+  sendCounter=0
+  recvCounter=0
+  sendRequests=0
+  sendIdxRequests=0
+  recvRequests=0
+  recvIdxRequests=0
   ! The recv/sendResult array will sometimes hold it's full length,
   ! and sometimes less.
   ! The variable "cnt" will be used to determine this at
@@ -736,81 +733,67 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ALLOCATE(recvResult(thisMatrix%iOffsets(2),MATVEC_SLOTS))
   ALLOCATE(sendIdx(thisMatrix%iOffsets(2),MATVEC_SLOTS))
   ALLOCATE(sendResult(thisMatrix%iOffsets(2),MATVEC_SLOTS))
-  ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2) - &
-           thisMatrix%iOffsets(rank+1)))
+  ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)- &
+      thisMatrix%iOffsets(rank+1)))
 
   ! First, take care of locally held data.
-  SELECT TYPE(thisMatrix); TYPE IS(DistributedBlockBandedMatrixType)
+  SELECT TYPE(thisMatrix)
+  TYPE IS(DistributedBlockBandedMatrixType)
     IF (.NOT. thisMatrix%blockMask) THEN
       DO k=1,thisMatrix%nlocalBlocks
-        lowIdx = (k-1)*thisMatrix%blockSize+1
-        highIdx = lowIdx-1 + thisMatrix%blockSize
-        CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k), &
-                               X=x(lowIdx:highIdx), &
-                               Y=tmpProduct(lowIdx:highIdx), &
-                               ALPHA=1.0_SRK,BETA=0.0_SRK)
+        lowIdx=(k-1)*thisMatrix%blockSize+1
+        highIdx=lowIdx-1+thisMatrix%blockSize
+        CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx), &
+            Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
       ENDDO
-    ELSE
-      tmpProduct = 0.0_SRK
     ENDIF
-  END SELECT
+    IF (thisMatrix%chunks(rank+1)%isInit) THEN
+      CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+          y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+    ENDIF
+  TYPE IS(DistributedBandedMatrixType)
+    IF (thisMatrix%chunks(rank+1)%isInit) THEN
+      CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+          y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+    ENDIF
+  ENDSELECT
 
 #ifdef HAVE_MPI
   ! On each rank, loop over the chunks held (top to bottom)
   DO i=1,SIZE(thisMatrix%iOffsets)-1
-    ctDefault = thisMatrix%iOffsets(i+1) - thisMatrix%iOffsets(i)
+    ctDefault=thisMatrix%iOffsets(i+1)-thisMatrix%iOffsets(i)
     IF (rank+1 == i) THEN
       ! We will be receiving data from other processes
-      IF (thisMatrix%chunks(i)%isInit) THEN
-        SELECT TYPE(thisMatrix)
-        TYPE IS(DistributedBlockBandedMatrixType)
-          IF (.NOT. thisMatrix%blockMask) THEN
-            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x, &
-                             y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
-          ELSE
-            CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x, &
-                             y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
-          ENDIF
-        CLASS DEFAULT
-          CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x, &
-                           y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
-        ENDSELECT
-      ENDIF
-
       ! Find which other chunks in this row we need to
       ! communicate with
       DO k=1,SIZE(thisMatrix%bandSizes,1)
         IF (ASSOCIATED(thisMatrix%bandSizes(k)%p)) THEN
           IF (thisMatrix%bandSizes(k)%p(1) < 0) THEN
             ! We are receiving a whole vector at once
-            recvCounter = recvCounter + 1
-            idxTmp = MOD(recvCounter,MATVEC_SLOTS)+1
+            recvCounter=recvCounter+1
+            idxTmp=MOD(recvCounter,MATVEC_SLOTS)+1
             ! If we've filled up the available storage, we need
             ! to wait for communication to finish up
-            CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, idxTmp, &
-                          recvRequests, recvIdxRequests)
-            ctRecv(MOD(recvCounter,MATVEC_SLOTS)+1) = ctDefault
-            CALL MPI_IRecv(recvResult(1:ctDefault,idxTmp), ctDefault,     &
-                           MPI_DOUBLE_PRECISION, k-1, 0, thisMatrix%comm, &
-                           recvRequests(idxTmp), mpierr)
+            CALL pop_recv(tmpProduct,recvResult,recvIdx,ctRecv,idxTmp, &
+                recvRequests, recvIdxRequests)
+            ctRecv(MOD(recvCounter,MATVEC_SLOTS)+1)=ctDefault
+            CALL MPI_IRecv(recvResult(1:ctDefault,idxTmp), ctDefault, &
+                MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm, &
+                recvRequests(idxTmp),mpierr)
           ELSE
             ! We are receiving multiple sparse chunks
             DO l=1,SIZE(thisMatrix%bandSizes(k)%p)
-              recvCounter = recvCounter + 1
-              idxTmp = MOD(recvCounter,MATVEC_SLOTS)+1
+              recvCounter=recvCounter+1
+              idxTmp=MOD(recvCounter,MATVEC_SLOTS)+1
               ! If we've filled up the available storage, we need
               ! to wait for communication to finish up
-              CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, &
-                            idxTmp, recvRequests, recvIdxRequests)
-              ctRecv(idxTmp) = -thisMatrix%bandSizes(k)%p(l)
-              CALL MPI_IRecv(recvIdx(1:ctRecv(idxTmp),idxTmp),     &
-                             -ctRecv(idxTmp), MPI_INTEGER, k-1, 0, &
-                             thisMatrix%comm,                      &
-                             recvIdxRequests(idxTmp), mpierr)
-              CALL MPI_IRecv(recvResult(1:ctRecv(idxTmp),idxTmp),   &
-                             -ctRecv(idxTmp), MPI_DOUBLE_PRECISION, &
-                             k-1, 0, thisMatrix%comm,               &
-                             recvRequests(idxTmp), mpierr)
+              CALL pop_recv(tmpProduct,recvResult,recvIdx,ctRecv,idxTmp, &
+                  recvRequests, recvIdxRequests)
+              ctRecv(idxTmp)=-thisMatrix%bandSizes(k)%p(l)
+              CALL MPI_IRecv(recvIdx(1:ctRecv(idxTmp),idxTmp),-ctRecv(idxTmp), &
+                  MPI_INTEGER,k-1,0,thisMatrix%comm,recvIdxRequests(idxTmp), mpierr)
+              CALL MPI_IRecv(recvResult(1:ctRecv(idxTmp),idxTmp),-ctRecv(idxTmp), &
+                  MPI_DOUBLE_PRECISION,k-1,0,thisMatrix%comm,recvRequests(idxTmp), mpierr)
             ENDDO
           ENDIF
         ENDIF
@@ -819,95 +802,89 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
       ! requests to finish:
       DO idxTmp=1,MATVEC_SLOTS
         CALL pop_recv(tmpProduct, recvResult, recvIdx, ctRecv, idxTmp, &
-                      recvRequests, recvIdxRequests)
+            recvRequests, recvIdxRequests)
       ENDDO
     ELSE
       ! We will be sending data to some other process
       IF (thismatrix%chunks(i)%isInit) THEN
         ! Decide whether to send whole vector or multiple sparse
         IF (2*thisMatrix%chunks(i)%nnz/3 >= thisMatrix%chunks(i)%n) THEN
-          sendCounter = sendCounter + 1
-          idxTmp = MOD(sendCounter,MATVEC_SLOTS)+1
+          sendCounter=sendCounter+1
+          idxTmp=MOD(sendCounter,MATVEC_SLOTS)+1
           ! Check if we can safely write to sendRequests
-          CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, &
-                        sendIdxRequests)
-          CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i), X=x, &
-                           y=sendResult(1:ctDefault,idxTmp), &
-                           ALPHA=1.0_SRK,BETA=0.0_SRK)
-          CALL MPI_ISend(sendResult(1:ctDefault,idxTmp), ctDefault,    &
-                         MPI_DOUBLE_PRECISION, i-1, 0,thisMatrix%comm, &
-                         sendRequests(idxTmp),mpierr)
+          CALL pop_send(sendResult,sendIdx,idxTmp,sendRequests,sendIdxRequests)
+          CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(i),X=x,&
+              y=sendResult(1:ctDefault,idxTmp),ALPHA=1.0_SRK,BETA=0.0_SRK)
+          CALL MPI_ISend(sendResult(1:ctDefault,idxTmp),ctDefault, &
+              MPI_DOUBLE_PRECISION,i-1,0,thisMatrix%comm,sendRequests(idxTmp),mpierr)
         ELSE
           ! Send several sparse vectors
           DO l=1,SIZE(thisMatrix%chunks(i)%bandIdx)
-            sendCounter = sendCounter + 1
-            idxTmp = MOD(sendCounter,MATVEC_SLOTS)+1
-            CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, &
-                          sendIdxRequests)
+            sendCounter=sendCounter+1
+            idxTmp=MOD(sendCounter,MATVEC_SLOTS)+1
+            CALL pop_send(sendResult,sendIdx,idxTmp,sendRequests,sendIdxRequests)
 
             ! compute destination indices
             ! perform special-case multiplication from single band here
-            cnt = SIZE(thisMatrix%chunks(i)%bands(l)%jIdx)
-            sendIdx(1:cnt,idxTmp) = thisMatrix%chunks(i)%bands(l)%jIdx &
-                                      - thisMatrix%chunks(i)%bandIdx(l)
-            CALL MPI_ISend(sendIdx(1:cnt,idxTmp), cnt, MPI_INTEGER,   &
-                           i-1, 0, thisMatrix%comm,                       &
-                           sendIdxRequests(idxTmp), mpierr)
+            cnt=SIZE(thisMatrix%chunks(i)%bands(l)%jIdx)
+            sendIdx(1:cnt,idxTmp)=thisMatrix%chunks(i)%bands(l)%jIdx &
+                -thisMatrix%chunks(i)%bandIdx(l)
+            CALL MPI_ISend(sendIdx(1:cnt,idxTmp),cnt,MPI_INTEGER,i-1,0, &
+                thisMatrix%comm,sendIdxRequests(idxTmp), mpierr)
             sendResult(1:cnt,idxTmp)=thisMatrix%chunks(i)%bands(l)%elem &
-                                      *x(thisMatrix%chunks(i)%bands(l)%jIdx)
-            CALL MPI_ISend(sendResult(1:cnt,idxTmp), cnt, &
-                           MPI_DOUBLE_PRECISION, i-1, 0, thisMatrix%comm, &
-                           sendRequests(idxTmp), mpierr)
+                *x(thisMatrix%chunks(i)%bands(l)%jIdx)
+            CALL MPI_ISend(sendResult(1:cnt,idxTmp),cnt,MPI_DOUBLE_PRECISION, &
+                i-1,0,thisMatrix%comm,sendRequests(idxTmp), mpierr)
           ENDDO
         ENDIF
       ENDIF
     ENDIF
   ENDDO
   DO idxTmp=1,MATVEC_SLOTS
-    CALL pop_send(sendResult, sendIdx, idxTmp, sendRequests, sendIdxRequests)
+    CALL pop_send(sendResult,sendIdx,idxTmp,sendRequests,sendIdxRequests)
   ENDDO
 #endif
 
-  ! do y = alpha * reduce + beta*y
+  ! do y=alpha*reduce+beta*y
   ! We take many special cases in order to effectively use FMA instructions
   ! or reduce the required flops.
   IF (a == 1.0_SRK) THEN
     IF (b == 1.0_SRK) THEN
-      y = tmpProduct + y
+      y=tmpProduct+y
     ELSEIF (b == 0.0_SRK) THEN
-      y = tmpProduct
+      y=tmpProduct
     ELSEIF (b == -1.0_SRK) THEN
-      y = tmpProduct - y
+      y=tmpProduct-y
     ELSE
-      y = tmpProduct + b*y
+      y=tmpProduct+b*y
     ENDIF
   ELSEIF (a == 0.0_SRK) THEN
     IF (b == 0.0_SRK) THEN
-      y = 0.0_SRK
+      y=0.0_SRK
     ELSEIF (b == -1.0_SRK) THEN
-      y = -y
+      y=-y
     ELSEIF (b /= 1.0_SRK) THEN
-      y = b*y
+      y=b*y
     ENDIF
   ELSEIF (a == -1.0_SRK) THEN
     IF (b == 1.0_SRK) THEN
-      y = y - tmpProduct
+      y=y-tmpProduct
     ELSEIF (b == 0.0_SRK) THEN
-      y = -tmpProduct
+      y=-tmpProduct
     ELSEIF (b == -1.0_SRK) THEN
-      y = -tmpProduct - y
+      y=-tmpProduct-y
     ELSE
-      y = b*y - tmpProduct
+      y=b*y-tmpProduct
     ENDIF
   ELSE
     IF (b == 1.0_SRK) THEN
-      y = a*tmpProduct + y
+      y=a*tmpProduct+y
     ELSEIF (b == 0.0_SRK) THEN
-      y = a*tmpProduct
+      y=a*tmpProduct
     ELSEIF (b == -1.0_SRK) THEN
-      y = a*tmpProduct - y
+      y=a*tmpProduct-y
     ELSE
-      y = a*tmpProduct + b*y
+      y=a*tmpProduct+b*y
     ENDIF
   ENDIF
 ENDSUBROUTINE matvec_DistrBandedMatrixType
@@ -926,7 +903,7 @@ ENDSUBROUTINE matvec_DistrBandedMatrixType
 !> @param req The array of active requests for data
 !> @param idxReq The array of requests for indices
 !>
-SUBROUTINE pop_recv(acc, valBuf, idxBuf, ctBuf, idx, req, idxReq)
+SUBROUTINE pop_recv(acc,valBuf,idxBuf,ctBuf,idx,req,idxReq)
   REAL(SRK), INTENT(INOUT) :: acc(:)
   REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
   INTEGER(SIK), INTENT(INOUT) :: ctBuf(MATVEC_SLOTS)
@@ -940,12 +917,12 @@ SUBROUTINE pop_recv(acc, valBuf, idxBuf, ctBuf, idx, req, idxReq)
 
   CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
   IF (ctBuf(idx) > 0) THEN
-    acc(1:ctBuf(idx)) = acc(1:ctBuf(idx)) + valBuf(1:ctBuf(idx),idx)
+    acc(1:ctBuf(idx))=acc(1:ctBuf(idx))+valBuf(1:ctBuf(idx),idx)
   ELSE
     CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
-    idxReq(idx) = 0
-    acc(idxBuf(1:-ctBuf(idx),idx)) = acc(idxBuf(1:-ctBuf(idx),idx)) &
-        + valBuf(1:-ctBuf(idx),idx)
+    idxReq(idx)=0
+    acc(idxBuf(1:-ctBuf(idx),idx))=acc(idxBuf(1:-ctBuf(idx),idx)) &
+        +valBuf(1:-ctBuf(idx),idx)
   ENDIF
 ENDSUBROUTINE pop_recv
 !
@@ -977,7 +954,7 @@ SUBROUTINE pop_send(valBuf, idxBuf, idx, req, idxReq)
   CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
   IF (idxReq(idx) /= 0) THEN
     CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
-    idxReq(idx) = 0
+    idxReq(idx)=0
   ENDIF
 ENDSUBROUTINE pop_send
 #endif
@@ -1099,7 +1076,7 @@ PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
       ! Multiply by upper trianbular part of matrix
       IF (uplo == 'u' .OR. uplo == 'U') THEN
         IF(incx == 1) THEN
-          DO j = 1,SIZE(ia)-1
+          DO j=1,SIZE(ia)-1
             IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
               IF (nounit) x(j)=x(j)/a(ia(j))
               DO i=ia(j)+1,ia(j+1)-1
@@ -1111,7 +1088,7 @@ PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
         ! Elements are stored in reverse order and/or by increments other than 1
         ELSE
           ix=kx
-          DO j = 1,SIZE(ia)-1
+          DO j=1,SIZE(ia)-1
             IF(.NOT.(x(ix) .APPROXEQA. ZERO)) THEN
               IF(nounit) x(ix)=x(ix)/a(ia(j))
               jx=ix

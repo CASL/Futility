@@ -131,7 +131,7 @@ SUBROUTINE testMatrix()
   CALL yTrilinosVector%init(vecPlist)
 #endif
   COMPONENT_TEST("sparse%clear")
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     !Test for sparse matrices
     !test clear
@@ -151,7 +151,7 @@ SUBROUTINE testMatrix()
   !clear it
   CALL thisMatrix%clear()
 
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     !check for success
     bool = ((thisMatrix%jPrev == 0).AND.(thisMatrix%iPrev == 0)) &
@@ -159,7 +159,7 @@ SUBROUTINE testMatrix()
       .AND.((thisMatrix%nnz == 0).AND.(thisMatrix%n == 0)))
     ASSERT(bool, 'sparse%clear()')
     bool = (.NOT.ALLOCATED(thisMatrix%a) .AND. .NOT.ALLOCATED(thisMatrix%ja)) &
-            .AND. .NOT.ALLOCATED(thisMatrix%ia)
+        .AND. .NOT.ALLOCATED(thisMatrix%ia)
     ASSERT(bool, 'sparse%clear()')
   ENDSELECT
 
@@ -170,12 +170,12 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->nnz',10_SNK)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     !check for success
     bool = (((thisMatrix%isInit) .OR. (thisMatrix%jCount == 0)) &
       .OR. ((thisMatrix%nnz == 10) .OR. (thisMatrix%n == 10))) &
-      .OR. ((thisMatrix%jPrev ==0) .OR. (thisMatrix%iPrev ==0))
+      .OR. ((thisMatrix%jPrev == 0) .OR. (thisMatrix%iPrev == 0))
     ASSERT(bool, 'sparse%init(...)')
     bool = ((SIZE(thisMatrix%a) == 10).OR.(SIZE(thisMatrix%ja) == 10)) &
       .OR.((SIZE(thisMatrix%ia) == 11).OR.(thisMatrix%ia(11) == 11))
@@ -194,13 +194,12 @@ SUBROUTINE testMatrix()
 
   !init it twice so on 2nd init, isInit==.TRUE.
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType); thisMatrix%nnz=1
+  SELECT TYPE(thisMatrix); TYPE IS(SparseMatrixType)
+    thisMatrix%nnz=1
   ENDSELECT
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
-    TYPE IS(SparseMatrixType)
-      ASSERT(thisMatrix%nnz==1, 'sparse%init(...)')
+  SELECT TYPE(thisMatrix); TYPE IS(SparseMatrixType)
+    ASSERT(thisMatrix%nnz==1, 'sparse%init(...)')
   ENDSELECT
   !init with n<1
   CALL thisMatrix%clear()
@@ -254,7 +253,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%clear()
   CALL thisMatrix%init(pList)
 
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     CALL thisMatrix%setShape(1,1,1._SRK)
     CALL thisMatrix%setShape(1,3,2._SRK)
@@ -335,7 +334,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(3,1,4._SRK)
   CALL thisMatrix%set(3,2,5._SRK)
   CALL thisMatrix%set(3,3,6._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     !now compare actual values with expected
     DO i=1,6
@@ -430,10 +429,10 @@ SUBROUTINE testMatrix()
   CALL xRealVector%init(vecPList)
   CALL yRealVector%init(vecPList)
   CALL thisMatrix%init(PList)
-  SELECTTYPE(x => xRealVector); TYPE IS(RealVectorType)
+  SELECT TYPE(x => xRealVector); TYPE IS(RealVectorType)
     CALL x%set(1.0_SRK)
   ENDSELECT
-  SELECTTYPE(mat => thisMatrix); TYPE IS(SparseMatrixType)
+  SELECT TYPE(mat => thisMatrix); TYPE IS(SparseMatrixType)
     CALL mat%setShape(1,1,1.0_SRK)
     CALL mat%setShape(1,2,2.0_SRK)
     CALL mat%setShape(1,3,3.0_SRK)
@@ -496,7 +495,7 @@ SUBROUTINE testMatrix()
   CALL vecPList%add('VectorType->n',8_SIK)
   CALL xRealVector%init(vecPList)
   CALL yRealVector%init(vecPList)
-  SELECTTYPE(x => xrealVector); TYPE IS(RealVectorType)
+  SELECT TYPE(x => xrealVector); TYPE IS(RealVectorType)
     CALL x%set(1.0_SRK)
   ENDSELECT
   dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
@@ -583,7 +582,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->n',3)
   CALL pList%add('MatrixType->nnz',6)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix); TYPE IS(SparseMatrixType)
+  SELECT TYPE(thisMatrix); TYPE IS(SparseMatrixType)
     CALL thisMatrix%setShape(1,1)
   ENDSELECT
 
@@ -593,14 +592,14 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%clear()
   CALL thisMatrix%init(pList)
 
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     CALL thisMatrix%setShape(1,1)
     CALL thisMatrix%setShape(2,2)
   ENDSELECT
   CALL thisMatrix%set(1,2,1._SRK)
 
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     DO i=1,SIZE(thisMatrix%a)
       ASSERT(thisMatrix%a(i) /= 1._SRK, 'sparse%set(...)')
@@ -614,7 +613,7 @@ SUBROUTINE testMatrix()
   COMPONENT_TEST("sparse%get")
   CALL thisMatrix%clear()
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(SparseMatrixType)
     CALL thisMatrix%setShape(1,1,1._SRK)
     CALL thisMatrix%setShape(1,3,2._SRK)
@@ -652,7 +651,7 @@ SUBROUTINE testMatrix()
 !Test for dense square matrices
   ALLOCATE(DenseSquareMatrixType :: thisMatrix)
   COMPONENT_TEST("dense%clear")
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     !test clear
     !make matrix w/out using untested init
@@ -662,7 +661,7 @@ SUBROUTINE testMatrix()
     ALLOCATE(thisMatrix%a(10,10))
   ENDSELECT
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     bool = (.NOT.(thisMatrix%isInit) .AND. (thisMatrix%n == 0)) &
         .AND. (.NOT.(thisMatrix%isSymmetric) &
@@ -677,7 +676,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.FALSE.)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     bool = ((thisMatrix%isInit) .AND. (thisMatrix%n == 10)) &
         .AND. (.NOT.thisMatrix%isSymmetric)
@@ -692,7 +691,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.TRUE.)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     bool = ((thisMatrix%isInit) .AND. (thisMatrix%n == 10)) &
             .AND. (thisMatrix%isSymmetric)
@@ -705,11 +704,11 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.TRUE.)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
-  SELECTTYPE(thisMatrix); TYPE IS(DenseSquareMatrixType)
+  SELECT TYPE(thisMatrix); TYPE IS(DenseSquareMatrixType)
     thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     bool = .NOT. thisMatrix%isSymmetric
     ASSERT(bool, 'densesquare%init(...)')
@@ -746,7 +745,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,1,1._SRK)
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     bool = ((thisMatrix%a(1,1)==1._SRK) &
         .AND.(thisMatrix%a(1,2)==2._SRK)) &
@@ -843,10 +842,10 @@ SUBROUTINE testMatrix()
   CALL xRealVector%init(vecPList)
   CALL yRealVector%init(vecPList)
   CALL thisMatrix%init(PList)
-  SELECTTYPE(x => xRealVector); TYPE IS(RealVectorType)
+  SELECT TYPE(x => xRealVector); TYPE IS(RealVectorType)
     CALL x%set(1.0_SRK)
   ENDSELECT
-  SELECTTYPE(mat => thisMatrix); TYPE IS(DenseSquareMatrixType)
+  SELECT TYPE(mat => thisMatrix); TYPE IS(DenseSquareMatrixType)
     CALL mat%set(1,1,1.0_SRK)
     CALL mat%set(1,2,2.0_SRK)
     CALL mat%set(1,3,3.0_SRK)
@@ -909,7 +908,7 @@ SUBROUTINE testMatrix()
   CALL vecPList%add('VectorType->n',8_SIK)
   CALL xRealVector%init(vecPList)
   CALL yRealVector%init(vecPList)
-  SELECTTYPE(x => xrealVector); TYPE IS(RealVectorType)
+  SELECT TYPE(x => xrealVector); TYPE IS(RealVectorType)
     CALL x%set(1.0_SRK)
   ENDSELECT
   dummyvec=(/1.0000000_SRK,-0.5000000_SRK,-0.1666666666666666_SRK,-0.083333333333333333_SRK/)
@@ -959,7 +958,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     bool = ((thisMatrix%a(1,1)==1._SRK) &
         .AND.(thisMatrix%a(1,2)==2._SRK)) &
@@ -989,7 +988,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->n',3_SNK)
   CALL pList%add('MatrixType->isSym',.FALSE.)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     CALL thisMatrix%set(1,1,1._SRK)
     CALL thisMatrix%set(1,3,2._SRK)
@@ -1023,7 +1022,7 @@ SUBROUTINE testMatrix()
     ASSERT(bool, 'densesquare%get(...)')
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     CALL thisMatrix%get(4,2,dummy)
     bool = dummy == -1051._SRK
@@ -1037,7 +1036,7 @@ SUBROUTINE testMatrix()
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseSquareMatrixType)
     CALL thisMatrix%get(1,1,dummy)
     bool = dummy == 0.0_SRK
@@ -1049,7 +1048,7 @@ SUBROUTINE testMatrix()
 !Test for tri-diagonal matrices
   ALLOCATE(TriDiagMatrixType :: thisMatrix)
   COMPONENT_TEST("tridiag%clear")
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     !test clear
     !make matrix w/out using untested init
@@ -1071,7 +1070,7 @@ SUBROUTINE testMatrix()
   ASSERT(ncnt2-ncnt==2, 'BLAS_matvec(...) -tridiag expected failures')
 
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     bool = (.NOT.(thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
         .AND.((.NOT.thisMatrix%isSymmetric) &
@@ -1086,7 +1085,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.FALSE.)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.(.NOT.thisMatrix%isSymmetric)
@@ -1100,7 +1099,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.TRUE.)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.(thisMatrix%isSymmetric)
@@ -1113,11 +1112,11 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->isSym',.TRUE.)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
     TYPE IS(TriDiagMatrixType); thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     bool = .NOT.thisMatrix%isSymmetric
     ASSERT(bool, 'tridiag%init(...)')
@@ -1158,7 +1157,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,2,2._SRK)
   CALL thisMatrix%set(2,3,5._SRK)
   CALL thisMatrix%set(3,3,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     DO i=1,3
       bool = thisMatrix%a(2,i) == i
@@ -1189,7 +1188,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,3,5._SRK)
   CALL thisMatrix%set(3,2,5._SRK)
   CALL thisMatrix%set(3,3,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     DO i=1,3
       bool = thisMatrix%a(2,i) == i
@@ -1234,7 +1233,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->n',3_SNK)
   CALL pList%add('MatrixType->isSym',.FALSE.)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     CALL thisMatrix%set(1,1,1._SRK)
     CALL thisMatrix%set(1,2,2._SRK)
@@ -1265,7 +1264,7 @@ SUBROUTINE testMatrix()
     ASSERT(bool, 'tridiag%get(...)') !column three check
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     CALL thisMatrix%get(4,2,dummy)
     bool = dummy == -1051._SRK
@@ -1279,7 +1278,7 @@ SUBROUTINE testMatrix()
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
     dummy=0.0_SRK
     CALL thisMatrix%get(1,1,dummy)
@@ -1303,7 +1302,7 @@ SUBROUTINE testMatrix()
     ALLOCATE(thisMatrix%bands(4))
     ALLOCATE(thisMatrix%bandIdx(4))
     ALLOCATE(thisMatrix%bands(2)%elem(5))
-  END SELECT
+  ENDSELECT
   CALL thisMatrix%clear()
   SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
@@ -1312,7 +1311,7 @@ SUBROUTINE testMatrix()
         .AND.(thisMatrix%nnz == 0) &
         .AND.(.NOT.ALLOCATED(thisMatrix%bands)))
     ASSERT(bool, 'banded%clear()')
-  END SELECT
+  ENDSELECT
 
   !check init
   COMPONENT_TEST("banded%init")
@@ -1322,7 +1321,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->nnz',12_SNK)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.((thisMatrix%m == 15).AND.(thisMatrix%nnz == 12))
@@ -1332,11 +1331,11 @@ SUBROUTINE testMatrix()
   !test with double init (isInit==true on 2nd try)
 
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix); TYPE IS(BandedMatrixType)
+  SELECT TYPE(thisMatrix); TYPE IS(BandedMatrixType)
     thisMatrix%m=1
   ENDSELECT
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     bool = thisMatrix%m == 1
     ASSERT(bool, 'banded%init(...)')
@@ -1396,7 +1395,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(3,4,6._SRK)
   CALL thisMatrix%set(4,4,7._SRK)
   CALL thisMatrix%set(4,2,9._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     CALL thisMatrix%assemble()
     bool = .TRUE.
@@ -1434,7 +1433,7 @@ SUBROUTINE testMatrix()
   SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     CALL thisMatrix%assemble()
-  END SELECT
+  ENDSELECT
 
   IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
   ALLOCATE(dummyvec(10))
@@ -1492,7 +1491,7 @@ SUBROUTINE testMatrix()
   ! Check zero vector
   dummyvec=0
   dummyvec2=1
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     CALL thisMatrix%assemble()
     WRITE(*,*) "calling matvec"
@@ -1505,7 +1504,7 @@ SUBROUTINE testMatrix()
   ENDSELECT
   ! Check for non-trivial vector
   dummyvec=(/1._SRK,2._SRK,3._SRK,4._SRK/)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
     bool = dummyvec2(1) == 5._SRK
@@ -1523,7 +1522,7 @@ SUBROUTINE testMatrix()
 !Test for dense rectangular matrices
   ALLOCATE(DenseRectMatrixType :: thisMatrix)
   COMPONENT_TEST("denseRect%clear")
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     !test clear
     !make matrix w/out using untested init
@@ -1533,7 +1532,7 @@ SUBROUTINE testMatrix()
     ALLOCATE(thisMatrix%a(10,15))
   ENDSELECT
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
         .AND.((thisMatrix%m == 0) &
@@ -1548,7 +1547,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->m',15_SNK)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     bool = (( thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.((thisMatrix%m == 15))
@@ -1560,11 +1559,11 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%clear()
   !test with double init (isInit==true on 2nd try)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix); TYPE IS(DenseRectMatrixType)
+  SELECT TYPE(thisMatrix); TYPE IS(DenseRectMatrixType)
     thisMatrix%m=1
   ENDSELECT
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     bool = thisMatrix%m == 1
     ASSERT(bool, 'denserect%init(...)')
@@ -1606,7 +1605,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(2,1,4._SRK)
   CALL thisMatrix%set(2,2,5._SRK)
   CALL thisMatrix%set(2,3,6._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     DO i=1,3
       bool = (thisMatrix%a(1,i)== i).AND.(thisMatrix%a(2,i)== 3+i)
@@ -1694,7 +1693,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->n',2_SNK)
   CALL pList%add('MatrixType->m',3_SNK)
   CALL thisMatrix%init(pList)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     CALL thisMatrix%set(1,1,1._SRK)
     CALL thisMatrix%set(1,3,2._SRK)
@@ -1720,7 +1719,7 @@ SUBROUTINE testMatrix()
     ASSERT(bool, 'denserect%get(...)')
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     CALL thisMatrix%get(4,2,dummy)
     bool = dummy == -1051._SRK
@@ -1734,7 +1733,7 @@ SUBROUTINE testMatrix()
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(DenseRectMatrixType)
     dummy=0.0_SRK
     CALL thisMatrix%get(1,1,dummy)
@@ -1750,7 +1749,7 @@ SUBROUTINE testMatrix()
 !Test for PETSc sparsematrices
   ALLOCATE(PETScMatrixType :: thisMatrix)
   COMPONENT_TEST("petscsparse%clear")
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     !test clear
     !make matrix w/out using untested init
@@ -1764,7 +1763,7 @@ SUBROUTINE testMatrix()
     CALL MatSetUp(thisMatrix%a,ierr)
   ENDSELECT
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
         .AND.((.NOT.thisMatrix%isSymmetric))
@@ -1780,7 +1779,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->matType',SPARSE)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.(.NOT.thisMatrix%isSymmetric)
@@ -1796,7 +1795,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->matType',SPARSE)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.(thisMatrix%isSymmetric)
@@ -1810,11 +1809,11 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->matType',SPARSE)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
-  SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
+  SELECT TYPE(thisMatrix); TYPE IS(PETScMatrixType)
     thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = .NOT.thisMatrix%isSymmetric
     ASSERT(bool, 'petscsparse%init(...)')
@@ -1846,7 +1845,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,1,1._SRK)
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     ! manually assemble
     CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
@@ -1890,7 +1889,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     ! manually assemble
     CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
@@ -2041,7 +2040,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->mattype',SPARSE)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     CALL thisMatrix%set(1,1,1._SRK)
     CALL thisMatrix%set(1,3,2._SRK)
@@ -2076,7 +2075,7 @@ SUBROUTINE testMatrix()
     FINFO() dummyvec(7:9)
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     CALL thisMatrix%get(4,2,dummy)
     bool = dummy == -1051._SRK
@@ -2090,7 +2089,7 @@ SUBROUTINE testMatrix()
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     CALL thisMatrix%get(1,1,dummy)
     bool = dummy == 0.0_SRK
@@ -2102,7 +2101,7 @@ SUBROUTINE testMatrix()
 !Test for PETSc dense square matrices
   ALLOCATE(PETScMatrixType :: thisMatrix)
   COMPONENT_TEST("petscdense%clear")
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     !test clear
     !make matrix w/out using untested init
@@ -2116,7 +2115,7 @@ SUBROUTINE testMatrix()
     CALL MatSetUp(thisMatrix%a,ierr)
   ENDSELECT
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = ((.NOT.thisMatrix%isInit).AND.(thisMatrix%n == 0)) &
         .AND.((.NOT.thisMatrix%isSymmetric))
@@ -2132,7 +2131,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->mattype',DENSESQUARE) ! dense
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.(.NOT.thisMatrix%isSymmetric)
@@ -2148,7 +2147,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->mattype',DENSESQUARE)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.(thisMatrix%isSymmetric)
@@ -2162,11 +2161,11 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->mattype',DENSESQUARE)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
-  SELECTTYPE(thisMatrix); TYPE IS(PETScMatrixType)
+  SELECT TYPE(thisMatrix); TYPE IS(PETScMatrixType)
     thisMatrix%isSymmetric=.FALSE.
   ENDSELECT
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     bool = .NOT.thisMatrix%isSymmetric
     ASSERT(bool, 'petscdense%init(...)')
@@ -2188,7 +2187,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,1,1._SRK)
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     ! manually assemble
     CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
@@ -2217,7 +2216,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     ! manually assemble
     CALL MatAssemblyBegin(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
@@ -2374,7 +2373,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->mattype',DENSESQUARE)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) ! non-symmetric (0), dense (1)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     CALL thisMatrix%set(1,1,1._SRK)
     CALL thisMatrix%set(1,3,2._SRK)
@@ -2407,7 +2406,7 @@ SUBROUTINE testMatrix()
     ASSERT(bool, 'petscdense%get(...)')
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     CALL thisMatrix%get(4,2,dummy)
     bool = dummy == -1051._SRK
@@ -2421,7 +2420,7 @@ SUBROUTINE testMatrix()
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(PETScMatrixType)
     CALL thisMatrix%get(1,1,dummy)
     bool = dummy == 0.0_SRK
@@ -2453,7 +2452,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->onnz',dnnz)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, not symmetric (0), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TrilinosMatrixType)
     bool = ((thisMatrix%isInit).AND.(thisMatrix%n == 10)) &
         .AND.(.NOT.thisMatrix%isSymmetric)
@@ -2471,7 +2470,7 @@ SUBROUTINE testMatrix()
   CALL pList%add('MatrixType->onnz',dnnz)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) !n=10, symmetric (1), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TrilinosMatrixType)
     bool = .NOT. thisMatrix%isInit
     ASSERT(bool, 'Trilinossparse%init(...)')
@@ -2508,7 +2507,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,1,1._SRK)
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TrilinosMatrixType)
     CALL thisMatrix%assemble()
     CALL thisMatrix%get(1,1,dummy)
@@ -2537,7 +2536,7 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(1,2,2._SRK)
   CALL thisMatrix%set(2,1,2._SRK)
   CALL thisMatrix%set(2,2,3._SRK)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TrilinosMatrixType)
     ! manually assemble
     CALL thisMatrix%assemble()
@@ -2736,7 +2735,7 @@ SUBROUTINE testMatrix()
 
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList) ! non-symmetric (0), sparse (0)
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TrilinosMatrixType)
     CALL thisMatrix%set(1,1,1._SRK)
     CALL thisMatrix%set(1,3,2._SRK)
@@ -2772,7 +2771,7 @@ SUBROUTINE testMatrix()
     FINFO() dummyvec(7:9)
   ENDSELECT
   !test with out of bounds i,j, make sure no crash.
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TrilinosMatrixType)
     CALL thisMatrix%get(4,2,dummy)
     bool = dummy == -1051._SRK
@@ -2786,7 +2785,7 @@ SUBROUTINE testMatrix()
   ENDSELECT
   !test get with uninit, make sure no crash.
   CALL thisMatrix%clear()
-  SELECTTYPE(thisMatrix)
+  SELECT TYPE(thisMatrix)
   TYPE IS(TrilinosMatrixType)
     CALL thisMatrix%get(1,1,dummy)
     bool = dummy == 0.0_SRK
@@ -2852,7 +2851,7 @@ SUBROUTINE testMatrixMultSparse()
   ALPHA=1.0_SRK
   ! A: Square  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transA='n')
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -2868,7 +2867,7 @@ SUBROUTINE testMatrixMultSparse()
   ENDSELECT
   ! A: Square  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -2884,7 +2883,7 @@ SUBROUTINE testMatrixMultSparse()
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -2900,7 +2899,7 @@ SUBROUTINE testMatrixMultSparse()
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -2971,7 +2970,7 @@ SUBROUTINE testMatrixMultSquare()
   ALPHA=1.0_SRK
   ! A: Square  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transA='n')
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -2986,7 +2985,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3001,7 +3000,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3016,7 +3015,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3052,7 +3051,7 @@ SUBROUTINE testMatrixMultSquare()
 
   ! A: Square  B: Square  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3067,7 +3066,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3082,7 +3081,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3097,7 +3096,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3147,7 +3146,7 @@ SUBROUTINE testMatrixMultSquare()
 
   ! A: Square  B: Rect  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3162,7 +3161,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Rect  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3177,7 +3176,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Rect  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3192,7 +3191,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Rect  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3228,7 +3227,7 @@ SUBROUTINE testMatrixMultSquare()
 
   ! A: Square  B: Rect  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3243,7 +3242,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Rect  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3258,7 +3257,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Rect  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3273,7 +3272,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Rect  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3332,7 +3331,7 @@ SUBROUTINE testMatrixMultSquare()
   ALPHA=1.0_SRK
   ! A: Square  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transA='n')
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3348,7 +3347,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3364,7 +3363,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3380,7 +3379,7 @@ SUBROUTINE testMatrixMultSquare()
   ENDSELECT
   ! A: Square  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(PETScMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3459,7 +3458,7 @@ SUBROUTINE testMatrixMultRect()
   ALPHA=1.0_SRK
   ! A: Rect  B: Square  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA,transB='n')
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3474,7 +3473,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Square  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3489,7 +3488,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Square  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3504,7 +3503,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Square  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3540,7 +3539,7 @@ SUBROUTINE testMatrixMultRect()
 
   ! A: Rect  B: Square  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3555,7 +3554,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Square  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3570,7 +3569,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Square  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3585,7 +3584,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Square  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3635,7 +3634,7 @@ SUBROUTINE testMatrixMultRect()
 
   ! A: Rect  B: Rect  C: Square  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3650,7 +3649,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Rect  C: Square  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3665,7 +3664,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Rect  C: Square no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3680,7 +3679,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Rect  C: Square no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3715,7 +3714,7 @@ SUBROUTINE testMatrixMultRect()
 
   ! A: Rect  B: Rect  C: Rect  alpha & beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3730,7 +3729,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Rect  C: Rect  alpha, no beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,alpha=ALPHA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3745,7 +3744,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Rect  C: Rect no alpha, beta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat,beta=BETA)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3760,7 +3759,7 @@ SUBROUTINE testMatrixMultRect()
   ENDSELECT
   ! A: Rect  B: Rect  C: Rect no alpha, nobeta
   CALL BLAS_matmult(A=thisMtrx,B=bmat,C=cmat)
-  SELECTTYPE(cmat)
+  SELECT TYPE(cmat)
   TYPE IS(DenseRectMatrixType)
     DO i=1,cmat%n
       DO j=1,cmat%n
@@ -3848,7 +3847,7 @@ SUBROUTINE testTransposeMatrix()
   CALL mat_p%set(3,1,8._SRK)
   CALL mat_p%set(4,2,9._SRK)
 
-  SELECTTYPE(mat_p)
+  SELECT TYPE(mat_p)
   TYPE IS(BandedMatrixType)
     CALL mat_p%assemble()
     CALL mat_p%transpose()
@@ -3945,7 +3944,7 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL params%add("MatrixType->engine",VM_NATIVE)
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
-  SELECTTYPE(mat_p)
+  SELECT TYPE(mat_p)
   TYPE IS(DenseSquareMatrixType)
     DO i=1,mat_p%n
       DO j=1,mat_p%n
@@ -3967,7 +3966,7 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL params%add("MatrixType->engine",VM_NATIVE)
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
-  SELECTTYPE(mat_p)
+  SELECT TYPE(mat_p)
   TYPE IS(DenseRectMatrixType)
     DO i=1,mat_p%n
       DO j=1,mat_p%n
@@ -3989,7 +3988,7 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL params%add("MatrixType->engine",VM_NATIVE)
   CALL mat_p%init(params)
   CALL mat_p%zeroentries()
-  SELECTTYPE(mat_p)
+  SELECT TYPE(mat_p)
   TYPE IS(TridiagMatrixType)
     DO i=1,SIZE(mat_p%a,DIM=1)
       DO j=1,mat_p%n
@@ -4018,7 +4017,7 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL mat_p%set(4,4,7._SRK)
   CALL mat_p%set(3,1,8._SRK)
   CALL mat_p%set(4,2,9._SRK)
-  SELECTTYPE(mat_p)
+  SELECT TYPE(mat_p)
   TYPE IS(BandedMatrixType)
     CALL mat_p%assemble()
     CALL mat_p%zeroentries()
@@ -4051,7 +4050,7 @@ SUBROUTINE testzeroEntriesMatrix()
   CALL testA%setShape(4,4,6.0_SRK)
 
   CALL testA%zeroentries()
-  SELECTTYPE(mat_p)
+  SELECT TYPE(mat_p)
   TYPE IS(SparseMatrixType)
     bool=ALL(testA%a(:) .APPROXEQ. (/0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK,0.0_SRK/))
   ENDSELECT
@@ -4124,13 +4123,13 @@ SUBROUTINE testFactories()
   CALL MatrixFactory(mat_p,params)
   ASSERT(ASSOCIATED(mat_p), "dense square matrix not allocated")
   ASSERT(mat_p%isInit, "dense square matrix not initialized")
-  SELECTTYPE(mat_p); TYPE IS(DenseSquareMatrixType)
+  SELECT TYPE(mat_p); TYPE IS(DenseSquareMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for dense square matrix")
   ENDSELECT
   CALL MatrixResemble(other_mat_p,mat_p,params)
-  SELECTTYPE(other_mat_p); TYPE IS(DenseSquareMatrixType)
+  SELECT TYPE(other_mat_p); TYPE IS(DenseSquareMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
@@ -4152,13 +4151,13 @@ SUBROUTINE testFactories()
   CALL MatrixFactory(mat_p,params)
   ASSERT(ASSOCIATED(mat_p), "dense rect matrix not allocated")
   ASSERT(mat_p%isInit, "dense rect matrix not initialized")
-  SELECTTYPE(mat_p); TYPE IS(DenseRectMatrixType)
+  SELECT TYPE(mat_p); TYPE IS(DenseRectMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for dense rect matrix")
   ENDSELECT
   CALL MatrixResemble(other_mat_p,mat_p,params)
-  SELECTTYPE(other_mat_p); TYPE IS(DenseRectMatrixType)
+  SELECT TYPE(other_mat_p); TYPE IS(DenseRectMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
@@ -4179,13 +4178,13 @@ SUBROUTINE testFactories()
   CALL MatrixFactory(mat_p,params)
   ASSERT(ASSOCIATED(mat_p), "sparse matrix not allocated")
   ASSERT(mat_p%isInit, "sparse matrix not initialized")
-  SELECTTYPE(mat_p); TYPE IS(SparseMatrixType)
+  SELECT TYPE(mat_p); TYPE IS(SparseMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for sparse matrix")
   ENDSELECT
   CALL MatrixResemble(other_mat_p,mat_p,params)
-  SELECTTYPE(other_mat_p); TYPE IS(SparseMatrixType)
+  SELECT TYPE(other_mat_p); TYPE IS(SparseMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
@@ -4206,13 +4205,13 @@ SUBROUTINE testFactories()
   CALL MatrixFactory(mat_p,params)
   ASSERT(ASSOCIATED(mat_p), "tridiag matrix not allocated")
   ASSERT(mat_p%isInit, "tridiag matrix not initialized")
-  SELECTTYPE(mat_p); TYPE IS(TridiagMatrixType)
+  SELECT TYPE(mat_p); TYPE IS(TridiagMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for tridiag matrix")
   ENDSELECT
   CALL MatrixResemble(other_mat_p,mat_p,params)
-  SELECTTYPE(other_mat_p); TYPE IS(TridiagMatrixType)
+  SELECT TYPE(other_mat_p); TYPE IS(TridiagMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
@@ -4236,13 +4235,13 @@ SUBROUTINE testFactories()
   CALL MatrixFactory(mat_p,params)
   ASSERT(ASSOCIATED(mat_p), "PETSc matrix not allocated")
   ASSERT(mat_p%isInit, "PETSc matrix not initialized")
-  SELECTTYPE(mat_p); TYPE IS(PETScMatrixType)
+  SELECT TYPE(mat_p); TYPE IS(PETScMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for PETSc matrix")
   ENDSELECT
   CALL MatrixResemble(other_mat_p,mat_p,params)
-  SELECTTYPE(other_mat_p); TYPE IS(PETScMatrixType)
+  SELECT TYPE(other_mat_p); TYPE IS(PETScMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
@@ -4272,13 +4271,13 @@ SUBROUTINE testFactories()
   CALL MatrixFactory(mat_p,params)
   ASSERT(ASSOCIATED(mat_p), "Trilinos matrix not allocated")
   ASSERT(mat_p%isInit, "Trilinos matrix not initialized")
-  SELECTTYPE(mat_p); TYPE IS(TrilinosMatrixType)
+  SELECT TYPE(mat_p); TYPE IS(TrilinosMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for Trilinos matrix")
   ENDSELECT
   CALL MatrixResemble(other_mat_p,mat_p,params)
-  SELECTTYPE(other_mat_p); TYPE IS(TrilinosMatrixType)
+  SELECT TYPE(other_mat_p); TYPE IS(TrilinosMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for cloned matrix")
@@ -4303,7 +4302,7 @@ SUBROUTINE testFactories()
   CALL DistributedMatrixFactory(dmat_p,params)
   ASSERT(ASSOCIATED(dmat_p), "PETSc matrix not allocated")
   ASSERT(dmat_p%isInit, "PETSc matrix not initialized")
-  SELECTTYPE(dmat_p); TYPE IS(PETScMatrixType)
+  SELECT TYPE(dmat_p); TYPE IS(PETScMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for PETSc matrix")
@@ -4331,7 +4330,7 @@ SUBROUTINE testFactories()
   CALL DistributedMatrixFactory(dmat_p,params)
   ASSERT(ASSOCIATED(dmat_p), "Trilinos matrix not allocated")
   ASSERT(dmat_p%isInit, "Trilinos matrix not initialized")
-  SELECTTYPE(dmat_p); TYPE IS(TrilinosMatrixType)
+  SELECT TYPE(dmat_p); TYPE IS(TrilinosMatrixType)
     ASSERT(.TRUE., "yay")
   CLASS DEFAULT
     ASSERT(.FALSE., "Wrong TYPE ALLOCATED for Trilinos matrix")

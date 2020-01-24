@@ -429,8 +429,6 @@ SUBROUTINE testPetscMatrix()
   INTEGER(SIK) :: rank,nproc,mpierr
   CLASS(DistributedMatrixType),ALLOCATABLE :: thisMatrix
   REAL(SRK) :: val
-  REAL(SRK),ALLOCATABLE :: dummyvec(:)
-  LOGICAL(SBK) :: bool
 
   CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
   CALL MPI_Comm_size(PE_COMM_WORLD,nproc,mpierr)
