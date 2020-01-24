@@ -745,54 +745,11 @@ SUBROUTINE getRange_NativeDistributedVectorType(thisVector,istt,istp,getval,ierr
   ENDIF
 
 ENDSUBROUTINE getRange_NativeDistributedVectorType
-#endif
-
-  REQUIRE(thisVector%isInit)
-  REQUIRE(0 < istt .AND. istt <= istp .AND. istp <= thisVector%n)
-  REQUIRE(istp - istt+1 == SIZE(getVal))
-
-  srcLow = MAX(istt,thisVector%offset+1) - thisVector%offset
-  srcHigh = MIN(istp,thisVector%offset+thisVector%nlocal) - thisVector%offset
-  IF(istt > thisVector%offset) THEN
-    destLow = 1
-  ELSE
-    destLow = thisVector%offset - istt + 2
-  ENDIF
-  IF(istp <= thisVector%offset + thisVector%nlocal) THEN
-    destHigh = istp - istt + 1
-  ELSE
-    destHigh = istp - istt + 1 - (istp - thisVector%offset - thisVector%nlocal)
-  ENDIF
-
-  getval(destLow:destHigh) = thisVector%b(srcLow:srcHigh)
-
-  ierrc = 0
-
-  IF(PRESENT(ierr)) ierr=ierrc
-ENDSUBROUTINE getRange_NativeDistributedVectorType
-
-SUBROUTINE inLocalMem_single_NativeDistributedVectorType(thisVector,i,ret,ierr)
-  CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
-  INTEGER(SIK),INTENT(IN) :: i
-  LOGICAL(SBK),INTENT(OUT) :: ret
-  INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
-  INTEGER(SIK) :: ierrc
-
-  ierrc=-1
-  IF(thisVector%isInit) THEN
-    ierrc = 0
-    IF(i > thisVector%offset .AND. i <= thisVector%offset + thisVector%nlocal) THEN
-      ret = .TRUE.
-    ELSE
-      ret = .FALSE.
-    END IF
-  END IF
-  IF(PRESENT(ierr)) ierr = ierrc
-ENDSUBROUTINE inLocalMem_single_NativeDistributedVectorType
 
 SUBROUTINE assemble_NativeDistributedVectorType(thisVector,ierr)
   CLASS(NativeDistributedVectorType),INTENT(INOUT) :: thisVector
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 ENDSUBROUTINE
 #endif
+
 END MODULE VectorTypes_Native

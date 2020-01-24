@@ -946,13 +946,7 @@ SUBROUTINE pop_recv(acc, valBuf, idxBuf, ctBuf, idx, req, idxReq)
     idxReq(idx) = 0
     acc(idxBuf(1:-ctBuf(idx),idx)) = acc(idxBuf(1:-ctBuf(idx),idx)) &
         + valBuf(1:-ctBuf(idx),idx)
-      ENDIF
-    ENDIF
-  ENDDO
-  CALL pop_send(sendResult, sendIdx, 1, sendRequests, sendIdxRequests)
-  CALL pop_send(sendResult, sendIdx, 2, sendRequests, sendIdxRequests)
-#endif
-
+  ENDIF
 ENDSUBROUTINE pop_recv
 !
 !-------------------------------------------------------------------------------
@@ -980,28 +974,13 @@ SUBROUTINE pop_send(valBuf, idxBuf, idx, req, idxReq)
 
   IF (req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
 
-#ifdef HAVE_MPI
-    TYPE IS(NativeDistributedVectorType)
-      SELECT TYPE(y)
-      TYPE IS(NativeDistributedVectorType)
-        SELECT TYPE(thisMatrix)
-        CLASS IS(DistributedBandedMatrixType)
-          CALL matvec_DistrBandedMatrixType(thisMatrix,x%b,y%b,t,ul,d,incx,a,b)
-        CLASS DEFAULT
-          CALL eMatrixType%raiseError('Incorrect call to '// &
-              modName//'::'//myName//' - This interface is not available.')
-        ENDSELECT
-      CLASS DEFAULT
-        CALL eMatrixType%raiseError('Incorrect call to '// &
-            modName//'::'//myName//' - This interface is not available.')
-      ENDSELECT
-#endif
-    CLASS DEFAULT
-      CALL eMatrixType%raiseError('Incorrect call to '// &
-          modName//'::'//myName//' - This interface is not available.')
-    ENDSELECT
+  CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
+  IF (idxReq(idx) /= 0) THEN
+    CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
+    idxReq(idx) = 0
   ENDIF
-ENDSUBROUTINE matvec_MatrixTypeVectorType
+ENDSUBROUTINE pop_send
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine solves a sparse triangular matrix linear system.

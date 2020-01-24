@@ -577,9 +577,6 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
         matrix%jOffsets(:) = matrix%iOffsets(:)
       ENDIF
 
-      REQUIRE(MOD(n,blockSize)==0)
-      REQUIRE(MOD(m,blockSize)==0)
-
       matrix%isInit=.TRUE.
       matrix%isAssembled=.FALSE.
       matrix%n=n*blockSize
@@ -587,6 +584,7 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
       matrix%nnz=nnz
       matrix%blockSize = blockSize
       matrix%comm=commID
+      ALLOCATE(matrix%bandSizes(nProc))
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
@@ -1964,17 +1962,17 @@ SUBROUTINE binarySearch_BandedMatrixType(matrix, i, j, bandLoc, elemIdx)
     bIdx = -bIdx
     matrix%bandIdx = -matrix%bandIdx
   ENDIF
+
   lo = 1
-  hi = SIZE(matrix%bands(bandLoc)%elem)
-  found = .FALSE.
-  IF (j < matrix%bands(bandLoc)%jIdx(lo) .OR. j > matrix%bands(bandLoc)%jIdx(hi)) THEN
-    elemIdx = -1
+  hi = SIZE(matrix%bandIdx)
+  IF (bIdx < matrix%bandIdx(1) .OR. bIdx > matrix%bandIdx(hi)) THEN
+    bandloc = -1
   ELSE
     DO WHILE (lo <= hi .AND. .NOT. found)
       mid = (hi+lo)/2
-      IF (j < matrix%bands(bandLoc)%jIdx(mid)) THEN
+      IF (bIdx < matrix%bandIdx(mid)) THEN
         hi = mid-1
-      ELSE IF (j > matrix%bands(bandLoc)%jIdx(mid)) THEN
+      ELSE IF (bIdx > matrix%bandIdx(mid)) THEN
         lo = mid+1
       ELSE
         found = .TRUE.
