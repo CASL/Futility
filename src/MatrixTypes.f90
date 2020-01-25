@@ -689,7 +689,6 @@ ENDSUBROUTINE matvec_MatrixTypeVectorType
 !> @param b the scalar used to scale @c y
 !>
 SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
-  CHARACTER(LEN=*),PARAMETER :: myName='matvec_DistrBandedMatrixTypeNativeVectorType'
   CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMatrix
   REAL(SRK),INTENT(INOUT) :: x(:)
   CHARACTER(LEN=1),INTENT(IN) :: t

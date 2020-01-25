@@ -193,7 +193,6 @@ ENDSUBROUTINE init_PETScMatrixParam
 !> @param matrix the matrix type to act on
 !>
 SUBROUTINE clear_PETScMatrixType(matrix)
-  CHARACTER(LEN=*),PARAMETER :: myName='clear_PETScMatrixType'
   CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
   PetscErrorCode  :: ierr
 
@@ -213,7 +212,6 @@ ENDSUBROUTINE clear_PETScMatrixType
 !> @param setval the value to be set
 !>
 SUBROUTINE set_PETScMatrixType(matrix,i,j,setval)
-  CHARACTER(LEN=*),PARAMETER :: myName='set_PETScMatrixType'
   CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK),INTENT(IN) :: j
@@ -242,7 +240,6 @@ ENDSUBROUTINE set_PETScMatrixType
 !> @param setval a list of values corresponding to the j locations (must be same size as j)
 !>
 SUBROUTINE setRow_PETScMatrixType(matrix,i,j,setval)
-  CHARACTER(LEN=*),PARAMETER :: myName='set_PETScMatrixType'
   CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK),INTENT(IN) :: j(:)
@@ -266,7 +263,6 @@ ENDSUBROUTINE setRow_PETScMatrixType
 !> out of bounds, then -1051.0 (an arbitrarily chosen key) is returned.
 !>
 SUBROUTINE get_PETScMatrixType(matrix,i,j,getval)
-  CHARACTER(LEN=*),PARAMETER :: myName='get_PETScMatrixType'
   CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK),INTENT(IN) :: j
@@ -309,7 +305,6 @@ ENDSUBROUTINE assemble_PETScMatrixType
 !>
 !>
 SUBROUTINE transpose_PETScMatrixType(matrix)
-  CHARACTER(LEN=*),PARAMETER :: myName='transpose_PETScMatrixType'
   CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
   PetscErrorCode  :: iperr
   IF(.NOT.matrix%isAssembled) CALL matrix%assemble()
@@ -445,7 +440,6 @@ ENDSUBROUTINE matvec_PETScVector
 !> @param incx_in integer containing distance between elements in @c x
 !>
 SUBROUTINE matvec_PETSc(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
-  CHARACTER(LEN=*),PARAMETER :: myName='matvec_MatrixType'
   TYPE(PETScMatrixType),INTENT(INOUT) :: thisMatrix
   CHARACTER(LEN=1),OPTIONAL,INTENT(IN) :: trans
   REAL(SRK),INTENT(IN),OPTIONAL :: alpha
@@ -516,7 +510,6 @@ ENDSUBROUTINE matvec_PETSc
 !> matrices, or at the very least implement them using functionality of tha
 !> backing TPLs
 SUBROUTINE matmult_PETSc(A,B,C,alpha,beta,transA,transB)
-  CHARACTER(LEN=*),PARAMETER :: myName='matmult_MatrixType'
   TYPE(PETScMatrixType),INTENT(INOUT) :: A
   TYPE(PETScMatrixType),INTENT(INOUT) :: B
   TYPE(PETScMatrixType),INTENT(INOUT) :: C
@@ -593,7 +586,6 @@ ENDSUBROUTINE matmult_PETSc
 !>
 !>
 SUBROUTINE zeroentries_PETScMatrixType(matrix)
-  CHARACTER(LEN=*),PARAMETER :: myName='zeroentries_PETScMatrixType'
   CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
   PetscErrorCode  :: ierr
   REQUIRE(matrix%isInit)

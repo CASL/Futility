@@ -438,60 +438,66 @@ SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
   INTEGER(SIK) :: n, chunksize, comm, nProc,rank,mpierr,offset,nlocal
   INTEGER(SIK),ALLOCATABLE :: offsets(:)
 
-  !Check to set up required and optional param lists.
-  IF(.NOT.VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
+  IF (.NOT. thisVector%isInit) THEN
+    !Check to set up required and optional param lists.
+    IF(.NOT. VectorType_Paramsflag) CALL VectorType_Declare_ValidParams()
 
-  !Validate against the reqParams and OptParams
-  validParams=Params
-  CALL validParams%validate(NativeDistributedVectorType_reqParams, &
-      NativeDistributedVectorType_optParams)
+    !Validate against the reqParams and OptParams
+    validParams=Params
+    CALL validParams%validate(NativeDistributedVectorType_reqParams, &
+        NativeDistributedVectorType_optParams)
 
-  !Pull Data from Parameter List
-  CALL validParams%get('VectorType->n',n)
-  CALL validParams%get('VectorType->MPI_Comm_ID',comm)
-  CALL validParams%get('VectorType->nlocal',nlocal)
+    !Pull Data from Parameter List
+    CALL validParams%get('VectorType->n',n)
+    CALL validParams%get('VectorType->MPI_Comm_ID',comm)
+    CALL validParams%get('VectorType->nlocal',nlocal)
 
-  chunksize=1
-  IF (validParams%has('VectorType->chunkSize')) THEN
-    CALL validParams%get('VectorType->chunkSize',chunkSize)
-  ENDIF
-
-  REQUIRE(.NOT. thisVector%isInit)
-  REQUIRE(n > 1)
-  REQUIRE(chunkSize > 0)
-  REQUIRE(MOD(n,chunkSize) == 0)
-
-  thisVector%isInit=.TRUE.
-  thisVector%n=n
-  thisVector%chunkSize=chunkSize
-  thisVector%comm=comm
-
-  CALL MPI_Comm_rank(comm,rank,mpierr)
-  CALL MPI_Comm_size(comm,nproc,mpierr)
-
-  ! Default to greedy partitioning, respecting chunk size
-  IF (nlocal < 0) THEN
-    n = n/chunkSize
-    IF (rank < MOD(n,nproc)) THEN
-      offset=(rank)*(n/nproc+1)
-      nlocal=n/nproc+1
-    ELSE
-      offset=(rank)*(n/nproc)+MOD(n,nproc)
-      nlocal=n/nproc
+    chunksize=1
+    IF (validParams%has('VectorType->chunkSize')) THEN
+      CALL validParams%get('VectorType->chunkSize',chunkSize)
     ENDIF
-    offset=offset*chunkSize
-    nlocal=nlocal*chunkSize
+
+    REQUIRE(.NOT. thisVector%isInit)
+    REQUIRE(n > 1)
+    REQUIRE(chunkSize > 0)
+    REQUIRE(MOD(n,chunkSize) == 0)
+
+    thisVector%isInit=.TRUE.
+    thisVector%n=n
+    thisVector%chunkSize=chunkSize
+    thisVector%comm=comm
+
+    CALL MPI_Comm_rank(comm,rank,mpierr)
+    CALL MPI_Comm_size(comm,nproc,mpierr)
+
+    ! Default to greedy partitioning, respecting chunk size
+    IF (nlocal < 0) THEN
+      n = n/chunkSize
+      IF (rank < MOD(n,nproc)) THEN
+        offset=(rank)*(n/nproc+1)
+        nlocal=n/nproc+1
+      ELSE
+        offset=(rank)*(n/nproc)+MOD(n,nproc)
+        nlocal=n/nproc
+      ENDIF
+      offset=offset*chunkSize
+      nlocal=nlocal*chunkSize
+    ELSE
+      REQUIRE(MOD(nlocal,chunksize) == 0)
+      ALLOCATE(offsets(nproc))
+      CALL MPI_AllGather(nlocal,1,MPI_INTEGER,offsets(1),1,MPI_INTEGER,comm,mpierr)
+      offset=SUM(offsets(1:rank))
+    ENDIF
+
+    ALLOCATE(thisVector%b((offset+1):(offset+nlocal)))
+    thisVector%b=0.0_SRK
+
+    CALL validParams%clear()
   ELSE
-    REQUIRE(MOD(nlocal,chunksize) == 0)
-    ALLOCATE(offsets(nproc))
-    CALL MPI_AllGather(nlocal,1,MPI_INTEGER,offsets(1),1,MPI_INTEGER,comm,mpierr)
-    offset=SUM(offsets(1:rank))
+    CALL eVectorType%raiseError('Incorrect call to '// &
+        modName//'::'//myName//' - VectorType already initialized')
   ENDIF
-
-  ALLOCATE(thisVector%b((offset+1):(offset+nlocal)))
-  thisVector%b=0.0_SRK
-
-  CALL validParams%clear()
+    
 ENDSUBROUTINE init_NativeDistributedVectorType
 !
 !-------------------------------------------------------------------------------
