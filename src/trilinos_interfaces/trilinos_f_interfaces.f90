@@ -30,6 +30,17 @@ MODULE trilinos_interfaces
 
   INTERFACE
 !-------------------------------------------------------------------------------
+! Kokkos
+!-------------------------------------------------------------------------------
+    SUBROUTINE InitializeKokkos(num_threads) bind(C,NAME="InitializeKokkos")
+      IMPORT :: C_INT
+      INTEGER(C_INT),INTENT(IN) :: num_threads
+    ENDSUBROUTINE
+    
+    SUBROUTINE FinalizeKokkos() bind(C,NAME="FinalizeKokkos")
+    ENDSUBROUTINE
+
+!-------------------------------------------------------------------------------
 ! Vector Interfaces
 !-------------------------------------------------------------------------------
     SUBROUTINE ForPETRA_VecInit(id,n,nlocal,comm) bind(C,NAME="ForPETRA_VecInit")

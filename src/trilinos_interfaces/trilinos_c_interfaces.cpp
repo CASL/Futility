@@ -17,6 +17,8 @@
 #include "CTeuchos_ParameterList_Cpp.hpp"
 #include "trilinos_pc.hpp"
 #include "trilinos_solvers.hpp"
+#include <Kokkos_Core.hpp>
+#include <iostream>
 // #include "trilinos_ts.hpp"
 
 bool futility_trilinos_isinit = false;
@@ -27,6 +29,21 @@ Teuchos::RCP<AnasaziStore> aeig(new AnasaziStore);
 Teuchos::RCP<BelosStore> bels(new BelosStore);
 //Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
 //Teuchos::RCP<TSStore> tsst(new TSStore);
+//------------------------------------------------------------------------------
+// Kokkos
+//------------------------------------------------------------------------------
+extern "C" void InitializeKokkos(const int num_threads)
+{
+    Kokkos::InitArguments args;
+    args.num_threads = num_threads;
+    Kokkos::initialize(args);
+    std::cout << "Kokkos init done" << std::endl;
+}
+
+extern "C" void FinalizeKokkos()
+{
+    Kokkos::finalize();
+}
 
 //------------------------------------------------------------------------------
 // Vector
