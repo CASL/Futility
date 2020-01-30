@@ -12,7 +12,7 @@ PROGRAM test_kokkos_init
   IMPLICIT NONE
 
   !Initializing Kokkos.
-  CALL InitializeKokkos()
+  CALL InitializeKokkos(4,-1)
   !Finalizing Kokkos.
   CALL FinalizeKokkos()
 

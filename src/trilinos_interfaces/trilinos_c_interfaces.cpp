@@ -36,10 +36,14 @@ Teuchos::RCP<BelosStore> bels(new BelosStore);
 // Kokkos
 //------------------------------------------------------------------------------
 #ifdef FUTILITY_HAVE_Kokkos
-extern "C" void InitializeKokkos()
+extern "C" void InitializeKokkos(int num_threads, int device_id)
 {
     Kokkos::InitArguments args;
-    args.num_threads = 1;
+    // Necessary to recase these as const.
+    const int threads = num_threads;
+    const int device = device_id;
+    args.num_threads = threads;
+    args.device_id = device;
     Kokkos::initialize(args);
     std::cout << "Kokkos init done" << std::endl;
 }
