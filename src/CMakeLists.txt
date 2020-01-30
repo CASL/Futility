@@ -111,3 +111,9 @@ TRIBITS_ADD_EXECUTABLE(test_interfaces
      NOEXEPREFIX
      LINKER_LANGUAGE Fortran
 )
+
+TRIBITS_ADD_EXECUTABLE(test_kokkos_init
+     SOURCES trilinos_interfaces/test_kokkos_init.f90
+     NOEXEPREFIX
+     LINKER_LANGUAGE Fortran
+)

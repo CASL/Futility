@@ -28,17 +28,22 @@ MODULE trilinos_interfaces
   USE ForTeuchos_ParameterList
 #endif
 
+  PUBLIC :: init_kokkos
+  PUBLIC :: finalize_kokkos
+
   INTERFACE
 !-------------------------------------------------------------------------------
 ! Kokkos
 !-------------------------------------------------------------------------------
-    SUBROUTINE InitializeKokkos(num_threads) bind(C,NAME="InitializeKokkos")
-      IMPORT :: C_INT
-      INTEGER(C_INT),INTENT(IN) :: num_threads
+#ifdef FUTILITY_HAVE_Kokkos
+    SUBROUTINE InitializeKokkos() bind(C,NAME="InitializeKokkos")
+      USE ISO_C_BINDING
     ENDSUBROUTINE
     
     SUBROUTINE FinalizeKokkos() bind(C,NAME="FinalizeKokkos")
+      USE ISO_C_BINDING
     ENDSUBROUTINE
+#endif
 
 !-------------------------------------------------------------------------------
 ! Vector Interfaces
