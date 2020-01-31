@@ -10,10 +10,11 @@ PROGRAM test_kokkos_init
   USE ISO_C_BINDING
   USE trilinos_interfaces
   IMPLICIT NONE
-
+#ifdef FUTILITY_HAVE_Kokkos
   !Initializing Kokkos.
   CALL InitializeKokkos(4,-1)
   !Finalizing Kokkos.
   CALL FinalizeKokkos()
+#endif
 
 ENDPROGRAM test_kokkos_init
