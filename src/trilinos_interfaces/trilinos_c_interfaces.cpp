@@ -18,7 +18,9 @@
 #include "trilinos_pc.hpp"
 #include "trilinos_solvers.hpp"
 #endif
+#ifdef FUTILITY_HAVE_Kokkos
 #include <Kokkos_Core.hpp>
+#endif 
 #include <iostream>
 // #include "trilinos_ts.hpp"
 
