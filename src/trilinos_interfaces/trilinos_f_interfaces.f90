@@ -28,9 +28,6 @@ MODULE trilinos_interfaces
   USE ForTeuchos_ParameterList
 #endif
 
-  PUBLIC :: init_kokkos
-  PUBLIC :: finalize_kokkos
-
   INTERFACE
 !-------------------------------------------------------------------------------
 ! Kokkos
