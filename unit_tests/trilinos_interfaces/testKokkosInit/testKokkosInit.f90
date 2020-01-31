@@ -13,8 +13,10 @@ PROGRAM test_kokkos_init
 #ifdef FUTILITY_HAVE_Kokkos
   !Initializing Kokkos.
   CALL InitializeKokkos(4,-1)
+  WRITE(*,*) "Kokkos initialization successful."
   !Finalizing Kokkos.
   CALL FinalizeKokkos()
+  WRITE(*,*) "Kokkos finalization successful."
 #endif
 
 ENDPROGRAM test_kokkos_init
