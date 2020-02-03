@@ -43,7 +43,9 @@ PUBLIC :: VectorType
 PUBLIC :: DistributedVectorType
 PUBLIC :: RealVectorType_reqParams,RealVectorType_optParams
 PUBLIC :: DistributedVectorType_reqParams,DistributedVectorType_optParams
+PUBLIC :: NativeDistributedVectorType_reqParams,NativeDistributedVectorType_optParams
 PUBLIC :: VectorType_Paramsflag
+INTEGER(SIK),PARAMETER,PUBLIC :: REAL_NATIVE=0,DISTRIBUTED_NATIVE=1
 PUBLIC :: VectorType_Declare_ValidParams
 PUBLIC :: VectorType_Clear_ValidParams
 
@@ -259,11 +261,14 @@ LOGICAL(SBK),SAVE :: VectorType_Paramsflag=.FALSE.
 
 !> The parameter lists to use when validating a parameter list for
 !> initialization for the Real Vector Type.
-TYPE(ParamType),PROTECTED,SAVE :: RealVectorType_reqParams,RealVectorType_optParams
+TYPE(ParamType),PROTECTED,SAVE :: RealVectorType_reqParams, &
+    RealVectorType_optParams,NativeDistributedVectorType_reqParams, &
+    NativeDistributedVectorType_optParams
 
 !> The parameter lists to use when validating a parameter list for
 !> initialization for the Distributed Vector Type.
-TYPE(ParamType),PROTECTED,SAVE :: DistributedVectorType_reqParams,DistributedVectorType_optParams
+TYPE(ParamType),PROTECTED,SAVE :: DistributedVectorType_reqParams, &
+    DistributedVectorType_optParams
 
 !> Exception Handler for use in VectorTypes
 TYPE(ExceptionHandlerType),SAVE :: eVectorType
@@ -283,10 +288,11 @@ CONTAINS
 !> The optional parameters for the Distributed Vector Type do not exist.
 !>
 SUBROUTINE VectorType_Declare_ValidParams()
-  INTEGER(SIK) :: n,MPI_Comm,nlocal
+  INTEGER(SIK) :: n,MPI_Comm,nlocal,chunkSize
 
   !Setup the required and optional parameter lists
   n=1
+  chunkSize =1
   MPI_Comm=1
   nlocal=-1
   !Real Vector Type - Required
@@ -298,6 +304,13 @@ SUBROUTINE VectorType_Declare_ValidParams()
 
   !There are no optional parameters at this time.
   CALL DistributedVectorType_optParams%add('VectorType->nlocal',nlocal)
+
+  !Native Distributed vector - Required
+  CALL NativeDistributedVectorType_reqParams%add('VectorType->n',n)
+  CALL NativeDistributedVectorType_reqParams%add('VectorType->MPI_Comm_ID',MPI_Comm)
+
+  CALL NativeDistributedVectorType_optParams%add('VectorType->chunkSize',chunkSize)
+  CALL NativeDistributedVectorType_optParams%add('VectorType->nlocal',nlocal)
 
   !Set flag to true since the defaults have been set for this type.
   VectorType_Paramsflag=.TRUE.
@@ -320,7 +333,8 @@ SUBROUTINE VectorType_Clear_ValidParams()
   !There are no optional parameters at this time.
   CALL DistributedVectorType_optParams%clear()
 
+  CALL NativeDistributedVectorType_reqParams%clear()
+  CALL NativeDistributedVectorType_optParams%clear()
+
 ENDSUBROUTINE VectorType_Clear_ValidParams
-
-
 ENDMODULE
