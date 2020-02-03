@@ -77,6 +77,10 @@ IMPLICIT NONE
 #include <finclude/petsc.h>
 #endif
 #undef IS
+#else
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
 #endif
 
 PRIVATE
