@@ -27,6 +27,8 @@ REGISTER_SUBTEST('insertion sort',testInsertSort)
 
 REGISTER_SUBTEST('Speed Test - sort int',testSpeedInt)
 REGISTER_SUBTEST('Speed Test - sort real',testSpeedReal)
+
+REGISTER_SUBTEST('Sort Long-Key Int-Val', testKeySort)
 FINALIZE_TEST()
 !
 !
@@ -536,8 +538,31 @@ SUBROUTINE testRealSort()
   CALL sort(tmprealarray)
 
   bool=ALL(tmprealarray .APPROXEQ. (/-30.0_SRK,-10.0_SRK,-5.0_SRK,5.0_SRK,10.0_SRK, &
-      20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
+    20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array qsort')
 ENDSUBROUTINE testRealSort
+
+SUBROUTINE testKeySort()
+  LOGICAL(SBK) :: bool
+  INTEGER(SIK) :: idxOrig(16), i,iVal,jVal
+  INTEGER(SLK) :: diagRank(16)
+
+  ! 1  2  3  4
+  ! 5  6  7  8
+  ! 9  10 11 12
+  ! 13 14 15 16
+  DO i=1,16
+    idxOrig(i) = i
+    iVal = (i-1)/4+1
+    jVal = MOD(i-1,4)+1
+    diagRank(i) = INT(jVal - 1 + ((3-iVal+jVal)*(4-iVal+jVal))/2,8)
+  ENDDO
+
+  CALL sort(diagRank, idxOrig)
+
+  bool=ALL(idxOrig .EQ. (/13,9,14,5,10,15,1,6,11,16,2,7,12,3,8,4/))
+  ASSERT(bool,'Diagonal Matrix Sort')
+
+END SUBROUTINE testKeySort
 !
 ENDPROGRAM testSorting

@@ -3747,7 +3747,7 @@ PURE SUBROUTINE dtrsv_all(uplo,trans,diag,a,x,incx_in)
         kx = 1 - (n-1)*incx
     ELSEIF (incx/=1) THEN
         kx = 1
-    END IF
+    ENDIF
 
     IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
       IF (uplo == 'u' .OR. uplo == 'U') THEN  ! Upper triangular

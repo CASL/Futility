@@ -27,6 +27,9 @@ INTERFACE sort
   !> @copybrief Sorting::qsort_1DInt
   !> @copydetails Sorting::qsort_1DInt
   MODULE PROCEDURE qsort_1DInt
+  !> @copybrief Sorting::qsort_1DLong_1DInt
+  !> @copydetails Sorting::qsort_1DLong_1DInt
+  MODULE PROCEDURE qsort_1DLong_1DInt
   !> @copybrief Sorting::bubble_sort_2DInt
   !> @copydetails Sorting::bubble_sort_2DInt
   MODULE PROCEDURE bubble_sort_2DInt
@@ -54,6 +57,9 @@ INTERFACE insert_sort
   !> @copybrief Sorting::insert_sort_real
   !> @copydetails Sorting::insert_sort_real
   MODULE PROCEDURE insert_sort_real
+  !> @copybrief Sorting::insert_sort_1DLong_1DInt
+  !> @copydetails Sorting::insert_sort_1DLong_1DInt
+  MODULE PROCEDURE insert_sort_1DLong_1DInt
 ENDINTERFACE insert_sort
 
 
@@ -489,6 +495,34 @@ PURE SUBROUTINE insert_sort_real(list)
 ENDSUBROUTINE insert_sort_real
 !
 !-------------------------------------------------------------------------------
+!> @brief Sorts a list of long keys and integer values using the insert sort
+!>        algorithm
+!> @param keys the key values to sort over
+!> @param vals the data values to move with key
+    PURE SUBROUTINE insert_sort_1DLong_1DInt(keys,vals)
+      INTEGER(SLK),INTENT(INOUT) :: keys(:)
+      INTEGER(SIK),INTENT(INOUT) :: vals(:)
+      !
+      INTEGER(SLK) :: key
+      INTEGER(SIK) :: i,j,n,val
+
+      n=SIZE(vals)
+      DO i=2,n
+        key=keys(i)
+        val=vals(i)
+        j=i-1
+        DO WHILE(keys(j) > key)
+          keys(j+1)=keys(j)
+          vals(j+1)=vals(j)
+          j=j-1
+          IF (j < 1) EXIT
+        ENDDO
+        keys(j+1)=key
+        vals(j+1)=val
+      ENDDO
+    ENDSUBROUTINE insert_sort_1DLong_1DInt
+!
+!-------------------------------------------------------------------------------
 !  QuickSort
 !-------------------------------------------------------------------------------
 !> @brief QuickSort 1D integer array
@@ -550,6 +584,85 @@ PURE SUBROUTINE partition_array_1DInt(A,p,i)
   i=i-1
   CALL swap_int(A,1,i)
 ENDSUBROUTINE partition_array_1DInt
+
+!
+!-------------------------------------------------------------------------------
+!> @brief Quicksort 1D array of Ints and apply same sorting operations to
+!> 1D array of Reals
+!> @param keys Integers to sort over
+!> @param values ints to sort based on keys
+PURE RECURSIVE SUBROUTINE qsort_1DLong_1DInt(keys, values)
+  INTEGER(SLK),INTENT(INOUT) :: keys(:)
+  INTEGER(SIK),INTENT(INOUT) :: values(:)
+
+  INTEGER(SIK) :: n,l,p,c
+
+  n=SIZE(values)
+
+  IF (n>50) THEN
+    !median of 3 pivot
+    c=n/2+1
+    IF (keys(c) < keys(1)) THEN
+      CALL swap_long(keys,c,1)
+      CALL swap_int(values,c,1)
+    ENDIF
+    IF (keys(n) < keys(1)) THEN
+      CALL swap_long(keys,1,n)
+      CALL swap_int(values,1,n)
+    ENDIF
+    IF (keys(n) < keys(c)) THEN
+      CALL swap_long(keys,c,n)
+      CALL swap_int(values,c,n)
+    ENDIF
+    p=c
+    CALL partition_array_qsort_1DLong_1DInt(keys,values,p,l)
+    CALL qsort_1DLong_1DInt(keys(1:l-1),values(1:l-1))
+    CALL qsort_1DLong_1DInt(keys(l+1:n),values(l+1:n))
+  ELSE
+    CALL insert_sort_1DLong_1DInt(keys,values)
+  ENDIF
+ENDSUBROUTINE qsort_1DLong_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief Partition method 1D integer key array and associated 1D int
+!>         array. For a given partion, sorts values greater than and less than
+!>         the partition
+!> @param keys 1D integer array, modified in place and returned partioned
+!> @param values 1D int array, modified in place and returned partioned
+!> @param p Index of array element to partition with
+!> @param i Index of the partition element once A is partitioned
+!>
+PURE SUBROUTINE partition_array_qsort_1DLong_1DInt(keys,values,p,i)
+  INTEGER(SLK),INTENT(INOUT) :: keys(:)
+  INTEGER(SIK),INTENT(INOUT) :: values(:)
+  INTEGER(SIK),INTENT(IN) :: p
+  INTEGER(SIK),INTENT(OUT) :: i
+
+  INTEGER(SIK) :: j,n
+  INTEGER(SLK) :: pval
+
+  pval=keys(p)
+  n=SIZE(values)
+  IF (p>1) THEN
+    ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
+    CALL swap_long(keys,1,2)
+    CALL swap_int(values,1,2)
+    CALL swap_long(keys,1,p)
+    CALL swap_int(values,1,p)
+  ENDIF
+
+  i=2
+  DO j=2,n
+    IF (keys(j)<pval) THEN
+      CALL swap_long(keys,i,j)
+      CALL swap_int(values,i,j)
+      i=i+1
+    ENDIF
+  ENDDO
+  i=i-1
+  CALL swap_long(keys,1,i)
+  CALL swap_int(values,1,i)
+ENDSUBROUTINE partition_array_qsort_1DLong_1DInt
 !
 !-------------------------------------------------------------------------------
 !> @brief Swap location of 2 locations in 1D integer array.
@@ -567,6 +680,23 @@ PURE SUBROUTINE swap_int(A,i,j)
   A(i)=A(j)
   A(j)=tmp
 ENDSUBROUTINE swap_int
+!
+!-------------------------------------------------------------------------------
+!> @brief Swap location of 2 locations in 1D long integer array.
+!> @param A 1D integer array, modified in place and returned partioned
+!> @param i Index of location 1
+!> @param j Index of location 2
+!>
+
+PURE SUBROUTINE swap_long(A,i,j)
+  INTEGER(SLK),INTENT(INOUT) :: A(:)
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  INTEGER(SLK) :: tmp
+  tmp=A(i)
+  A(i)=A(j)
+  A(j)=tmp
+ENDSUBROUTINE swap_long
 !
 !-------------------------------------------------------------------------------
 !> @brief QuickSort 1D real array
