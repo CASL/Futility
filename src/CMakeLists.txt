@@ -105,9 +105,3 @@ TRIBITS_ADD_LIBRARY(Utils
       TrilinosUtils
 )
 
-
-TRIBITS_ADD_EXECUTABLE(test_interfaces
-     SOURCES trilinos_interfaces/test_interfaces.f90
-     NOEXEPREFIX
-     LINKER_LANGUAGE Fortran
-)
