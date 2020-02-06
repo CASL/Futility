@@ -32,7 +32,6 @@ CLASS(MatrixType),ALLOCATABLE :: testSparseMatrix,testDenseMatrix,testMatrix
 CLASS(MatrixType),ALLOCATABLE :: testBandedMatrix
 CLASS(VectorType),ALLOCATABLE :: testVector,testDummy,refVector
 CLASS(VectorType),ALLOCATABLE :: testVec_1g,testVec_mg
-INTEGER(SIK) :: nerrors1,nerrors2
 
 #ifdef HAVE_MPI
 INTEGER :: mpierr
@@ -61,18 +60,18 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE setupRSORTest()
-  INTEGER(SIK)::ioerr,i,j,numnonzero
-  REAL(SRK)::tmpreal1(9*9),tmpreal2(9),tempreal
+  INTEGER(SIK) :: i,j,numnonzero
+  REAL(SRK) :: tmpreal1(9*9),tmpreal2(9)
 
-  CALL PListRSOR%add('PCType->numblocks',3_SIK)
+  CALL PListRSOR%add('PCType->numblocks',3)
   CALL PListRSOR%add('PCType->omega',1.0_SRK)
-  CALL PListVec%add('VectorType->n',9_SIK)
+  CALL PListVec%add('VectorType->n',9)
   ALLOCATE(RealVectorType :: testVector)
   ALLOCATE(RealVectorType :: refVector)
   CALL testVector%init(PListVec)
   CALL refVector%init(PListVec)
-  CALL PListMat%add('MatrixType->n',9_SIK)
-  CALL PListMat%add('MatrixType->m',9_SIK)
+  CALL PListMat%add('MatrixType->n',9)
+  CALL PListMat%add('MatrixType->m',9)
   CALL PListMat%add('MatrixType->isSym',.FALSE.)
   ALLOCATE(DenseSquareMatrixType :: testDenseMatrix)
   CALL testDenseMatrix%init(PListMat)
@@ -92,7 +91,7 @@ SUBROUTINE setupRSORTest()
   DO i=1,9
     DO j=1,9
       CALL testDenseMatrix%set(i,j,tmpreal1((i-1)*9+j))
-      IF(tmpreal1((i-1)*9+j) .NE. 0_SRK) numnonzero=numnonzero+1
+      IF(tmpreal1((i-1)*9+j) /= 0_SRK) numnonzero=numnonzero+1
     ENDDO
   ENDDO
 
@@ -103,7 +102,7 @@ SUBROUTINE setupRSORTest()
   SELECT TYPE(testSparseMatrix); TYPE IS(SparseMatrixType)
     DO i=1,9
       DO j=1,9
-        IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
+        IF(tmpreal1((i-1)*9+j) /= 0_SRK)THEN
           CALL testSparseMatrix%setShape(i,j,tmpreal1((i-1)*9+j))
         ENDIF
       ENDDO
@@ -116,7 +115,7 @@ SUBROUTINE setupRSORTest()
   SELECT TYPE(testBandedMatrix); TYPE IS(BandedMatrixType)
     DO i=1,9
       DO j=1,9
-        IF(tmpreal1((i-1)*9+j) .NE. 0_SRK) THEN
+        IF(tmpreal1((i-1)*9+j) /= 0_SRK) THEN
           CALL testBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
         ENDIF
       ENDDO
@@ -133,10 +132,9 @@ SUBROUTINE setupRSORTest()
              -16.0000000000000_SRK,      &
               -1.95943487863576E-15_SRK, &
               16.0000000000000_SRK/)
-
-  DO i=1,9
-    CALL testVector%set(i,tmpreal2(i))
-  ENDDO
+  SELECT TYPE(testVector); TYPE IS(RealVectorType)
+    testVector%b(:)=tmpreal2(:)
+  ENDSELECT
 
   tmpreal2=(/0.15182522957531913_SRK,     &
              7.4014868308343768E-018_SRK, &
@@ -147,20 +145,19 @@ SUBROUTINE setupRSORTest()
              0.15182522957531913_SRK,     &
              7.4014868308343768E-018_SRK, &
             -0.15182522957531916_SRK/)
-
-  DO i=1,9
-    CALL refVector%set(i,tmpreal2(i))
-  ENDDO
+  SELECT TYPE(refVector); TYPE IS(RealVectorType)
+    refVector%b(:) = tmpreal2(:)
+  ENDSELECT
 
 ENDSUBROUTINE setupRSORTest
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testRSOR_PreCondType()
   CLASS(SOR_PreCondType),ALLOCATABLE :: testSOR
-  INTEGER(SIK)::i,j,k
-  REAL(SRK)::tmpreal,trv1(9*9),trv2(3*3*3)
-  REAL(SRK)::refLpU(9,9),refLU(3,3,3)
-  REAL(SRK)::vecsave(9)
+  INTEGER(SIK) :: i,j,k
+  REAL(SRK) :: trv1(9*9),trv2(3*3*3)
+  REAL(SRK) :: refLpU(9,9),refLU(3,3,3)
+  REAL(SRK) :: vecsave(9)
 
   ALLOCATE(RSOR_PreCondType :: testSOR)
   !data for checking that the setup is correct
@@ -199,7 +196,7 @@ SUBROUTINE testRSOR_PreCondType()
   ENDDO
 
   SELECT TYPE(tv => testVector); TYPE IS(RealVectorType)
-      vecsave=tv%b
+    vecsave=tv%b
   ENDSELECT
 
   !check if it works for dense matrices
@@ -247,10 +244,8 @@ SUBROUTINE testRSOR_PreCondType()
     ! Check %clear
     CALL testSOR%clear()
     ASSERT(.NOT.(testSOR%isInit),'DenseSquareMatrixType .NOT.(RSOR%SOR%isInit)')
-    ASSERT(.NOT.(ASSOCIATED(testSOR%A)), &
-        'DenseSquareMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
-    ASSERT(.NOT.(ALLOCATED(testSOR%LpU)), &
-        'DenseSquareMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+    ASSERT(.NOT.(ASSOCIATED(testSOR%A)),'DenseSquareMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+    ASSERT(.NOT.(ALLOCATED(testSOR%LpU)),'DenseSquareMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
   ELSE
     ASSERT(testDenseMatrix%isInit,'TestDenseMatrix Initialization')
     ASSERT(testVector%isInit,'TestVector Initialization')
@@ -305,10 +300,8 @@ SUBROUTINE testRSOR_PreCondType()
     ! Check %clear
     CALL testSOR%clear()
     ASSERT(.NOT.(testSOR%isInit),'SparseMatrixType .NOT.(RSOR%SOR%isInit)')
-    ASSERT(.NOT.(ASSOCIATED(testSOR%A)), &
-        'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
-    ASSERT(.NOT.(ALLOCATED(testSOR%LpU)), &
-        'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+    ASSERT(.NOT.(ASSOCIATED(testSOR%A)),'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+    ASSERT(.NOT.(ALLOCATED(testSOR%LpU)),'SparseMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
   ELSE
     ASSERT(testDenseMatrix%isInit,'TestSparseMatrix Initialization')
     ASSERT(testVector%isInit,'TestVector Initialization')
@@ -352,10 +345,8 @@ SUBROUTINE testRSOR_PreCondType()
     ! Check %clear
     CALL testSOR%clear()
     ASSERT(.NOT.(testSOR%isInit),'BandedMatrixType .NOT.(RSOR%SOR%isInit)')
-    ASSERT(.NOT.(ASSOCIATED(testSOR%A)), &
-        'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
-    ASSERT(.NOT.(ALLOCATED(testSOR%LpU)), &
-        'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+    ASSERT(.NOT.(ASSOCIATED(testSOR%A)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+    ASSERT(.NOT.(ALLOCATED(testSOR%LpU)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
   ELSE
     ASSERT(testDenseMatrix%isInit,'TestBandedMatrix Initialization')
     ASSERT(testVector%isInit,'TestVector Initialization')

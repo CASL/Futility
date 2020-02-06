@@ -31,7 +31,6 @@ TYPE(ParamType) :: PListMat,PListVec,PListRSOR
 CLASS(MatrixType),ALLOCATABLE :: testBandedMatrix,testBlockBandedMatrix
 TYPE(NativeDistributedVectorType) :: testVector,workVector,refVector
 CLASS(VectorType),ALLOCATABLE :: testVec_1g,testVec_mg
-INTEGER(SIK) :: nerrors1,nerrors2
 
 INTEGER :: mpierr
 CALL MPI_Init(mpierr)
@@ -56,19 +55,20 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE setupRSORTest()
-  INTEGER(SIK)::ioerr,i,j,numnonzero,rank,nproc
-  REAL(SRK)::tmpreal1(9*9),tmpreal2(9),tempreal
+  INTEGER(SIK)::i,j,numnonzero,rank,nproc
+  REAL(SRK)::tmpreal1(9*9),tmpreal2(9)
 
   CALL PListRSOR%add('PreCondType->omega',1.0_SRK)
   CALL PListRSOR%add('PreCondType->comm',PE_COMM_WORLD)
-  CALL PListVec%add('VectorType->n',9_SIK)
-  CALL PListVec%add('VectorType->chunkSize',3_SIK)
+  CALL PListVec%add('VectorType->n',9)
+  CALL PListVec%add('VectorType->chunkSize',3)
   CALL PListVec%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
   CALL PListVec%add('VectorType->nlocal',-1)
   CALL testVector%init(PListVec)
+  CALL workVector%init(PListVec)
   CALL refVector%init(PListVec)
-  CALL PListMat%add('MatrixType->n',9_SIK)
-  CALL PListMat%add('MatrixType->m',9_SIK)
+  CALL PListMat%add('MatrixType->n',9)
+  CALL PListMat%add('MatrixType->m',9)
   CALL PListMat%add('MatrixType->blockSize',3)
   CALL PListMat%add('MatrixType->MPI_Comm_ID',PE_COMM_WORLD)
   CALL PListVec%add('MatrixType->nlocal',-1)
@@ -92,7 +92,7 @@ SUBROUTINE setupRSORTest()
   numnonzero=0
   DO i=1,9
     DO j=1,9
-      IF(tmpreal1((i-1)*9+j) .NE. 0_SRK) numnonzero=numnonzero+1
+      IF(tmpreal1((i-1)*9+j) /= 0_SRK) numnonzero=numnonzero+1
     ENDDO
   ENDDO
 
@@ -109,14 +109,14 @@ SUBROUTINE setupRSORTest()
       DO i=1,9
         IF (rank==0) THEN
           DO j=1,6
-            IF(tmpreal1((i-1)*9+j) .NE. 0_SRK) THEN
+            IF(tmpreal1((i-1)*9+j) /= 0_SRK) THEN
               CALL testBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
               CALL testBlockBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
             ENDIF
           ENDDO
          ELSE
           DO j=7,9
-            IF(tmpreal1((i-1)*9+j) .NE. 0_SRK)THEN
+            IF(tmpreal1((i-1)*9+j) /= 0_SRK)THEN
               CALL testBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
               CALL testBlockBandedMatrix%set(i,j,tmpreal1((i-1)*9+j))
             ENDIF
@@ -160,9 +160,8 @@ ENDSUBROUTINE setupRSORTest
 SUBROUTINE testRSOR_PreCondType()
   CLASS(DistributedSOR_PreCondType),ALLOCATABLE :: testSORP
   INTEGER(SIK)::i,j,k
-  REAL(SRK)::tmpreal,trv1(9*9),trv2(3*3*3)
+  REAL(SRK)::trv1(9*9),trv2(3*3*3)
   REAL(SRK)::refLpU(9,9),refLU(3,3,3)
-  REAL(SRK)::vecsave(9)
 
   ALLOCATE(DistributedRSOR_PreCondType :: testSORP)
   !data for checking that the setup is correct
@@ -224,19 +223,16 @@ SUBROUTINE testRSOR_PreCondType()
     ENDDO
 
     ! Check %apply
-    workVector = testVector
+    workVector%b = testVector%b
     CALL testSORP%apply(workVector)
-    ASSERT(ALL(workVector%b .APPROXEQR. refVector%b), &
-        'BandedMatrixType RSOR%apply(vector)')
+    ASSERT(ALL(workVector%b .APPROXEQR. refVector%b),'BandedMatrixType RSOR%apply(vector)')
     FINFO() 'Result:',workVector%b,'Solution:',refVector%b
 
     ! Check %clear
     CALL testSORP%clear()
     ASSERT(.NOT.(testSORP%isInit),'BandedMatrixType .NOT.(RSOR%SOR%isInit)')
-    ASSERT(.NOT.(ASSOCIATED(testSORP%A)), &
-        'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
-    ASSERT(.NOT.(ASSOCIATED(testSORP%LpU)), &
-        'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+    ASSERT(.NOT.(ASSOCIATED(testSORP%A)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+    ASSERT(.NOT.(ASSOCIATED(testSORP%LpU)),'BandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
   ELSE
     ASSERT(testBandedMatrix%isInit,'TestBandedMatrix Initialization')
     ASSERT(testVector%isInit,'TestVector Initialization')
@@ -267,17 +263,14 @@ SUBROUTINE testRSOR_PreCondType()
     ! Check %apply
     workVector%b = testVector%b
     CALL testSORP%apply(workVector)
-    ASSERT(ALL(workVector%b .APPROXEQR. refVector%b), &
-        'BlockBandedMatrixType RSOR%apply(vector)')
+    ASSERT(ALL(workVector%b .APPROXEQR. refVector%b),'BlockBandedMatrixType RSOR%apply(vector)')
     FINFO() 'Result:',workVector%b,'Solution:',refVector%b
 
     ! Check %clear
     CALL testSORP%clear()
     ASSERT(.NOT.(testSORP%isInit),'BlockBandedMatrixType .NOT.(RSOR%SOR%isInit)')
-    ASSERT(.NOT.(ASSOCIATED(testSORP%A)), &
-        'BlockBandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
-    ASSERT(.NOT.(ASSOCIATED(testSORP%LpU)), &
-        'BlockBandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
+    ASSERT(.NOT.(ASSOCIATED(testSORP%A)),'BlockBandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%A))')
+    ASSERT(.NOT.(ASSOCIATED(testSORP%LpU)),'BlockBandedMatrixType .NOT.(ASSOCIATED(RSOR%SOR%LpU))')
   ELSE
     ASSERT(testBandedMatrix%isInit,'TestBlockBandedMatrix Initialization')
     ASSERT(testVector%isInit,'TestVector Initialization')

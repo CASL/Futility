@@ -215,6 +215,8 @@ TYPE,EXTENDS(LinearSolverType_Base) :: LinearSolverType_Iterative
   INTEGER(SIK) :: pciters=0_SIK
   !> Frequency with which to re-setup preconditioner
   INTEGER(SIK) :: pcsetup=0_SIK
+  !> Setup status of precondintioner
+  LOGICAL(SBK) :: isPcSetup=.FALSE.
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -356,10 +358,10 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     CALL validParams%get('LinearSolverType->PC->PreCondType->pcType',PreCondType)
 
     SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)
-      solver%pcIters = -1_SIK
+      solver%pcIters = -1
       IF (validParams%has('LinearSolverType->PC->PreCondType->pcIters')) &
         CALL validParams%get('LinearSolverType->PC->PreCondType->pcIters',solver%pcIters)
-      solver%pcSetup = 0_SIK
+      solver%pcSetup = 0
       IF (validParams%has('LinearSolverType->PC->PreCondType->pcSetup')) &
         CALL validParams%get('LinearSolverType->PC->PreCondType->pcSetup',solver%pcSetup)
     ENDSELECT
@@ -368,8 +370,8 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     CALL pcPList%add('PreCondType->pcType','DEFAULT')
     SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)
       PreCondType = 'DEFAULT'
-      solver%pcIters = -1_SIK
-      solver%pcSetup = 0_SIK
+      solver%pcIters = -1
+      solver%pcSetup = 0
     ENDSELECT
   ENDIF
 
@@ -666,7 +668,7 @@ SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver,params)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
   CHARACTER(LEN=*),PARAMETER :: myName='setup_PreCond_LinearSolverType_Iterative'
-  CHARACTER(LEN=256) :: pcTypeName
+  CHARACTER(LEN=:),ALLOCATABLE :: pcTypeName
 
   IF(solver%isinit) THEN
     IF(ASSOCIATED(solver%A)) THEN
@@ -683,20 +685,15 @@ SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver,params)
           ! If pcsetup == 0, it will only get set up once.
           ! Otherwise, set it up every pcsetup iterations
 
+          ! Mark pc as setup. Must be done here so NOPC is still marked as setup
+          solver%isPcSetup = .TRUE.
           SELECT CASE(pcTypeName)
           CASE('NOPC')
             solver%PCTypeName='NOPC'
             RETURN
           CASE('DEFAULT')
-#ifdef HAVE_MPI
-            ALLOCATE(DistributedRSOR_PreCondType :: solver%PreCondType)
-            solver%PCTypeName='DISTR_RSOR'
-            CALL solver%pcParams%clear()
-            CALL solver%pcParams%add('PreCondType->omega',1.0_SRK)
-#else
-            ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
-            solver%PCTypeName='ILU'
-#endif
+            solver%PCTypeName='NOPC'
+            RETURN
           CASE('ILU')
             ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
             solver%PCTypeName='ILU'
@@ -720,7 +717,7 @@ SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver,params)
         ENDIF
         ! If pcsetup was 0, we've successfully set up the PC
         ! Make it huge so it is never set up again.
-        IF (solver%pcsetup == 0) solver%pcsetup = HUGE(0_SIK)
+        IF (solver%pcsetup == 0) solver%pcsetup = HUGE(0)
       ELSE
         CALL eLinearSolverType%raiseError('Incorrect input to'//modName//'::'//myName// &
             ' - LinearSolverType matrix is not initialized. Preconditioner cannot be set up.')
@@ -861,6 +858,7 @@ SUBROUTINE clear_LinearSolverType_Iterative(solver)
   solver%relConvTol=0._SRK
   solver%absConvTol=0._SRK
   solver%residual=0._SRK
+  solver%isPcSetup=.FALSE.
   IF(LinearSolverType_Paramsflag) CALL LinearSolverType_Clear_ValidParams()
 ENDSUBROUTINE clear_LinearSolverType_Iterative
 !
@@ -1195,6 +1193,8 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
         CALL Belos_solve(solver%Belos_solver)
 #endif
       CLASS DEFAULT
+        ! Ensure setupPrecond has been called
+        IF (.NOT. solver%isPcSetup) CALL solver%setupPC()
         IF(solver%PCTypeName /= 'NOPC' .AND. solver%pciters/=0) THEN
           ! Decrementing handled by calling function
           CALL solveGMRES(solver,solver%PreCondType)

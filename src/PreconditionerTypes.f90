@@ -162,10 +162,10 @@ TYPE,ABSTRACT,EXTENDS(PreConditionerType) :: SOR_PreCondType
     PROCEDURE(precond_applySOR_absintfc),DEFERRED,PASS :: apply
 ENDTYPE SOR_PreCondType
 
-  !> @brief The extended type for the RSOR preconditioner
-  TYPE,EXTENDS(SOR_PreCondType) :: RSOR_PreCondType
-  !
-  !List of Type Bound Procedures
+!> @brief The extended type for the RSOR preconditioner
+TYPE,EXTENDS(SOR_PreCondType) :: RSOR_PreCondType
+!
+!List of Type Bound Procedures
   CONTAINS
     !> @copybrief MatrixTypes::setup_RSOR_PreCondType
     !> @copydetails MatrixTypes::setup_RSOR_PreCondType
@@ -173,7 +173,7 @@ ENDTYPE SOR_PreCondType
     !> @copybrief MatrixTypes::apply_RSOR_PreCondType
     !> @copydetails MatrixTypes::apply_RSOR_PreCondType
     PROCEDURE,PASS :: apply => apply_RSOR_PreCondType
-  ENDTYPE RSOR_PreCondType
+ENDTYPE RSOR_PreCondType
 
 #ifdef HAVE_MPI
 !> @brief The extended type for distributed SOR based preconditioners
@@ -219,10 +219,11 @@ TYPE,EXTENDS(DistributedSOR_PreCondType) :: DistributedRSOR_PreCondType
 ENDTYPE DistributedRSOR_PreCondType
 #endif
 
+!> @brief The extended type for the Jacobi preconditioner. Intended
+!>        for serial matrices
 TYPE,EXTENDS(PreConditionerType) :: Jacobi_PreCondType
   !> Inverse diagonal elements
   REAL(SRK),ALLOCATABLE :: invDiag(:)
-
   CONTAINS
     !> @copybrief PreconditionerTypes::init_Jacobi_PreCondType
     !> @copydetails PreconditionerTypes::init_Jacobi_PreCondType
@@ -236,10 +237,11 @@ TYPE,EXTENDS(PreConditionerType) :: Jacobi_PreCondType
     !> @copybrief PreconditionerTypes::apply_Jacobi_PreCondType
     !> @copydetails PreconditionerTypes::apply_Jacobi_PreCondType
     PROCEDURE,PASS :: apply => apply_Jacobi_PreCondType
-
 ENDTYPE Jacobi_PreCondType
 
 #ifdef HAVE_MPI
+!> @brief The extended type for the Jacobi preconditioner. Intended
+!>        for serial matrices
 TYPE,EXTENDS(DistributedPreCond) :: DistributedJacobi_PreCondType
   TYPE(NativeDistributedVectorType) :: invDiag
   CONTAINS
@@ -260,8 +262,7 @@ ENDTYPE DistributedJacobi_PrecondType
 #endif
 !
 !List of Abstract Interfaces
-!> Explicitly defines the interface for the init routine of all preconditioner types
-!> with parameter list
+!> @brief The interface to preconditioner initialization routines
 ABSTRACT INTERFACE
   SUBROUTINE precond_init_absintfc(thisPC,A,params)
     !notice you need to import all necessary types for abstract interfaces
@@ -274,7 +275,7 @@ ABSTRACT INTERFACE
   ENDSUBROUTINE precond_init_absintfc
 ENDINTERFACE
 
-!> Explicitly defines the interface for the apply routine of all preconditioner types
+!> @brief The interface to preconditioner application routines
 ABSTRACT INTERFACE
   SUBROUTINE precond_apply_absintfc(thisPC,v)
     IMPORT :: PreconditionerType,VectorType
@@ -303,6 +304,7 @@ ABSTRACT INTERFACE
 #endif
 ENDINTERFACE
 
+!> @brief The interface to preconditioner setup/clear routines
 ABSTRACT INTERFACE
   SUBROUTINE precond_absintfc(thisPC)
     IMPORT :: PreconditionerType
@@ -402,28 +404,6 @@ SUBROUTINE init_LU_PreCondtype(thisPC,A,params)
             ' = In LU Preconditioner initialization, LU was not properly initialized!')
       ENDIF
     ENDSELECT
-    ! This doesnt appear to work. It initializes L and U, which never get
-    ! used
-  ! CLASS IS(PETScMatrixType)
-  !   !allocate L and U
-  !   ALLOCATE(PETScMatrixType :: thisPC%L)
-  !   ALLOCATE(PETScMatrixType :: thisPC%U)
-  !
-  !   !initialize L and U
-  !   SELECT TYPE(U => thisPC%U); TYPE IS(PETScMatrixType)
-  !     SELECT TYPE(L => thisPC%L); TYPE IS(PETScMatrixType)
-  !       ! Initialize L and U (add preallocation eventually)
-  !       CALL PL%add('MatrixType->matType',SPARSE)
-  !       CALL PL%add('MatrixType->n',mat%n)
-  !       CALL PL%add('MatrixType->isSym',mat%isSymmetric)
-  !       CALL PL%add('MatrixType->MPI_Comm_ID',mat%comm)
-  !       CALL U%init(PL)
-  !       CALL L%init(PL)
-  !       CALL PL%clear()
-  !     ENDSELECT
-  !   ENDSELECT
-  !
-  !   thisPC%isInit=.TRUE.
   CLASS DEFAULT
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
         ' - LU Preconditioners are not supported for input matrix type!')
@@ -562,8 +542,8 @@ SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
   CLASS(SOR_PrecondType),INTENT(INOUT) :: thisPC
   CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
-  TYPE(ParamType)::PListMat_LU
-  INTEGER(SIK)::k
+  TYPE(ParamType) :: PListMat_LU
+  INTEGER(SIK) :: k
 
   !required statuses
   REQUIRE(.NOT. thisPC%isinit)
@@ -578,14 +558,14 @@ SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
   CALL params%get('PCType->omega',thisPC%omega)
 
   !makes sure that the number of blocks is valid
-  REQUIRE(thisPC%numBlocks .GT. 0)
+  REQUIRE(thisPC%numBlocks > 0)
 
   !makes sure that the number of blocks is valid
-  REQUIRE(MOD(thisPC%A%n,thisPC%numBlocks) .EQ. 0)
+  REQUIRE(MOD(thisPC%A%n,thisPC%numBlocks) == 0)
 
   !makes sure that the value of omega is valid
-  REQUIRE(thisPC%omega .LE. 2)
-  REQUIRE(thisPC%omega .GE. 0)
+  REQUIRE(thisPC%omega <= 2)
+  REQUIRE(thisPC%omega >= 0)
 
   !calculate block size
   thisPC%blockSize=thisPC%A%n/thisPC%numBlocks
@@ -607,7 +587,6 @@ SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
     SELECT TYPE(LpU => thisPC%LpU); TYPE IS(DenseSquareMatrixType)
       LpU=mat
     ENDSELECT
-    REQUIRE(thisPC%LpU%isInit)
     thisPC%isInit=.TRUE.
 
   TYPE IS(SparseMatrixType)
@@ -616,7 +595,6 @@ SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
     SELECT TYPE(LpU => thisPC%LpU); TYPE IS(SparseMatrixType)
       LpU=mat
     ENDSELECT
-    REQUIRE(thisPC%LpU%isInit)
     thisPC%isInit=.TRUE.
 
   TYPE IS(BandedMatrixType)
@@ -625,7 +603,6 @@ SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
     SELECT TYPE(LpU => thisPC%LpU); TYPE IS(BandedMatrixType)
       LpU=mat
     ENDSELECT
-    REQUIRE(thisPC%LpU%isInit)
     thisPC%isInit=.TRUE.
 
   CLASS DEFAULT
@@ -640,7 +617,7 @@ ENDSUBROUTINE init_SOR_PreCondtype
 !>
 SUBROUTINE clear_SOR_PreCondtype(thisPC)
   CLASS(SOR_PrecondType),INTENT(INOUT) :: thisPC
-  INTEGER(SIK)::i
+  INTEGER(SIK) :: i
 
   IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
   IF(ALLOCATED(thisPC%LpU)) THEN
@@ -663,14 +640,11 @@ ENDSUBROUTINE clear_SOR_PreCondtype
 !>
 SUBROUTINE setup_RSOR_PreCondtype(thisPC)
   CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
-  CHARACTER(LEN=*),PARAMETER :: myName='setup_RSOR_PreCondType'
-  INTEGER(SIK)::k,i,j
-  REAL(SRK)::tempreal
+  INTEGER(SIK) :: k,i,j
+  REAL(SRK) :: tempreal
 
   !make sure everything is initialized and allocated
   REQUIRE(thisPC%isinit)
-  REQUIRE(ALLOCATED(thisPC%LpU))
-  REQUIRE(thisPC%LpU%isInit)
 
   ! make sure each LU block is initialized
   DO k=1,thisPC%numBlocks
@@ -683,7 +657,7 @@ SUBROUTINE setup_RSOR_PreCondtype(thisPC)
       DO j=1,thisPC%blockSize
         CALL thisPC%A%get((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,tempreal)
         CALL thisPC%LU(k)%set(i,j,tempreal)
-        IF(tempreal .NE. 0.0_SRK)THEN
+        IF(tempreal /= 0.0_SRK)THEN
           CALL thisPC%LpU%set((k-1)*thisPC%blockSize+i,(k-1)*thisPC%blockSize+j,0.0_SRK)
         ENDIF
       ENDDO
@@ -707,17 +681,15 @@ SUBROUTINE apply_RSOR_PreCondType(thisPC,v)
   CLASS(RSOR_PrecondType),INTENT(INOUT) :: thisPC
   CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
   CHARACTER(LEN=*),PARAMETER :: myName='apply_RSOR_PreCondType'
-  TYPE(RealVectorType)::w
-  TYPE(ParamType)::PListVec_RSOR
-  INTEGER(SIK)::k,i,lowIdx,highIdx
-  REAL(SRK)::tmpreal
+  TYPE(RealVectorType) :: w
+  TYPE(ParamType) :: PListVec_RSOR
+  INTEGER(SIK) :: k,lowIdx,highIdx
 
   REQUIRE(thisPC%isInit)
   REQUIRE(ALLOCATED(v))
   REQUIRE(v%isInit)
 
   CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
-  CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
   CALL w%init(PListVec_RSOR)
 
   SELECT TYPE(v)
@@ -737,6 +709,7 @@ SUBROUTINE apply_RSOR_PreCondType(thisPC,v)
 
     CALL BLAS_matvec(THISMATRIX=thisPC%LpU,X=w,Y=v,BETA=1.0_SRK,&
         ALPHA=-thisPC%omega)
+
     !solves the L and U problems for each block
     DO k=1,thisPC%numBlocks
       SELECT TYPE(mat => thisPC%LU(k))
@@ -768,8 +741,8 @@ SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
   CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
   CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
-  TYPE(ParamType)::PListMat_LU
-  INTEGER(SIK)::k,mpierr,rank,nproc,extrablocks,stdblocks,i
+  TYPE(ParamType) :: PListMat_LU
+  INTEGER(SIK) :: k,mpierr,rank
 
   REQUIRE(.NOT. thisPC%isinit)
   REQUIRE(PRESENT(A))
@@ -797,8 +770,8 @@ SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
   ENDSELECT
 
   !makes sure that the value of omega is valid
-  REQUIRE(thisPC%omega .LE. 2)
-  REQUIRE(thisPC%omega .GE. 0)
+  REQUIRE(thisPC%omega <= 2)
+  REQUIRE(thisPC%omega >= 0)
 
   !makes a lu matrix for each diagonal block in an array
   ALLOCATE(DenseSquareMatrixType :: thisPC%LU(thisPC%nLocalBlocks))
@@ -816,7 +789,6 @@ SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
     SELECT TYPE(LpU => thisPC%LpU); TYPE IS(DistributedBandedMatrixType)
       LpU = mat
     ENDSELECT
-    REQUIRE(thisPC%LpU%isInit)
     thisPC%isInit=.TRUE.
 
   TYPE IS(DistributedBlockBandedMatrixType)
@@ -831,7 +803,7 @@ ENDSUBROUTINE init_DistributedSOR_PreCondtype
 !>
 SUBROUTINE clear_DistributedSOR_PreCondtype(thisPC)
   CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
-  INTEGER(SIK)::i
+  INTEGER(SIK) :: i
 
   IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
   IF(ASSOCIATED(thisPC%LpU)) THEN
@@ -860,14 +832,12 @@ ENDSUBROUTINE clear_DistributedSOR_PreCondtype
 !>
 SUBROUTINE setup_DistributedRSOR_PreCondtype(thisPC)
   CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
-  CHARACTER(LEN=*),PARAMETER :: myName='setup_RSOR_PreCondType'
-  INTEGER(SIK)::k,i,j
-  REAL(SRK)::tempreal
+  INTEGER(SIK) :: k,i,j
+  REAL(SRK) :: tempreal
 
   !make sure everything is initialized and allocated
   REQUIRE(thisPC%isinit)
   REQUIRE(ASSOCIATED(thisPC%LpU))
-  REQUIRE(thisPC%LpU%isInit)
 
   ! make sure each LU block is initialized
   DO k=1,thisPC%nLocalBlocks
@@ -895,7 +865,7 @@ SUBROUTINE setup_DistributedRSOR_PreCondtype(thisPC)
           CALL A%get((k+thisPC%blockOffset-1)*thisPC%blockSize+i, &
               (k+thisPC%blockOffset-1)*thisPC%blockSize+j,tempreal)
           CALL thisPC%LU(k)%set(i,j,tempreal)
-          IF(tempreal .NE. 0.0_SRK)THEN
+          IF(tempreal /= 0.0_SRK)THEN
             CALL thispC%LpU%set((k+thisPC%blockOffset-1)*thisPC%blockSize+i, &
                 (k+thisPC%blockOffset-1)*thisPC%blockSize+j,0.0_SRK)
           ENDIF
@@ -921,11 +891,9 @@ SUBROUTINE apply_DistributedRSOR_PreCondType(thisPC,v)
   CLASS(DistributedRSOR_PrecondType),INTENT(INOUT) :: thisPC
   CLASS(Vectortype),ALLOCATABLE,INTENT(INOUT) :: v
   CHARACTER(LEN=*),PARAMETER :: myName='apply_DistributedRSOR_PreCondType'
-  TYPE(NativeDistributedVectorType)::w
-  TYPE(ParamType)::PListVec_RSOR
-  INTEGER(SIK)::k,i,rank,mpierr,lowIdx,highIdx
-  REAL(SRK)::tmpreal
-  REAL(SRK)::tmpreal1,tmpreal2
+  TYPE(NativeDistributedVectorType) :: w
+  TYPE(ParamType) :: PListVec_RSOR
+  INTEGER(SIK) :: k,lowIdx,highIdx
 
   REQUIRE(thisPC%isInit)
   REQUIRE(ALLOCATED(v))
@@ -936,14 +904,14 @@ SUBROUTINE apply_DistributedRSOR_PreCondType(thisPC,v)
     CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
     CALL PListVec_RSOR%add('VectorType->chunkSize',thisPC%blockSize)
     CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',thisPC%comm)
-    CALL PListVec_RSOR%add('VectorType->nlocal',v%nlocal)
+    CALL PListVec_RSOR%add('VectorType->nlocal',SIZE(v%b))
     CALL w%init(PListVec_RSOR)
     w%b=v%b
 
     DO k=1,thisPC%nLocalBlocks
       SELECT TYPE(mat => thisPC%LU(k))
       CLASS IS(DenseSquareMatrixType)
-        lowIdx = (k - 1)*thisPC%blockSize + 1
+        lowIdx = (k - 1)*thisPC%blockSize + LBOUND(w%b,1)
         highIdx = lowIdx + thisPC%blockSize-1
         ! This is not a matvec call, but a call to the triangular solver
         ! dtrsv_all
@@ -966,7 +934,7 @@ SUBROUTINE apply_DistributedRSOR_PreCondType(thisPC,v)
     DO k=1,thisPC%nLocalBlocks
       SELECT TYPE(mat => thisPC%LU(k))
       CLASS IS(DenseSquareMatrixType)
-        lowIdx = (k - 1)*thisPC%blockSize + 1
+        lowIdx = (k - 1)*thisPC%blockSize + LBOUND(w%b,1)
         highIdx = lowIdx + thisPC%blockSize-1
         CALL BLAS_matvec('L','N','U',mat%A,v%b(lowIdx:highIdx))
         CALL BLAS_matvec('U','N','N',mat%A,v%b(lowIdx:highIdx))
@@ -993,8 +961,7 @@ ENDSUBROUTINE apply_DistributedRSOR_PreCondType
 SUBROUTINE doolittle_LU_RSOR(thisLU,dest)
   CLASS(DenseSquareMatrixType),INTENT(INOUT) :: thisLU
   CLASS(DenseSquareMatrixType),OPTIONAL,INTENT(INOUT) :: dest
-  CHARACTER(LEN=*),PARAMETER :: myName='doolittle_LU_RSOR'
-  INTEGER(SIK)::k,i,j,l
+  INTEGER(SIK) :: k,i,j
   REAL(SRK) :: Ltemp(thisLU%n,thisLU%n),Utemp(thisLU%n,thisLU%n)
 
   !these need to be 0 at start since they accumulate
@@ -1128,7 +1095,6 @@ ENDSUBROUTINE init_DistributedJacobi_PreCondType
 !> @brief Setup serial jacobi preconditioner
 !> @param thisPC The preconditioner to act on
 SUBROUTINE setup_Jacobi_PreCondType(thisPC)
-  CHARACTER(LEN=*),PARAMETER :: myName='setup_Jacobi_PreCondType'
   CLASS(Jacobi_PrecondType),INTENT(INOUT) :: thisPC
   INTEGER(SIK) :: i
 
@@ -1145,14 +1111,12 @@ ENDSUBROUTINE setup_Jacobi_PreCondType
 !> @brief Setup distr jacobi preconditioner
 !> @param thisPC The preconditioner to act on
 SUBROUTINE setup_DistributedJacobi_PreCondType(thisPC)
-  CHARACTER(LEN=*),PARAMETER :: myName='setup_Jacobi_PreCondType'
   CLASS(DistributedJacobi_PrecondType),INTENT(INOUT) :: thisPC
   INTEGER(SIK) :: i
 
   REQUIRE(thisPC%isInit)
-  DO i=1,SIZE(thisPC%invDiag%b)
-    CALL thisPC%A%get(i+thisPC%invDiag%offset,i+thisPC%invDiag%offset, &
-        thisPC%invDiag%b(i))
+  DO i=LBOUND(thisPC%invDiag%b,1),UBOUND(thisPC%invDiag%b,1)
+    CALL thisPC%A%get(i,i,thisPC%invDiag%b(i))
     thisPC%invDiag%b(i)=1.0_SRK/thisPC%invDiag%b(i)
   ENDDO
 ENDSUBROUTINE setup_DistributedJacobi_PreCondType
@@ -1225,7 +1189,6 @@ ENDSUBROUTINE apply_DistributedJacobi_PreCondType
 !> @brief Clear serial jacobi preconditioner
 !> @param thisPC The preconditioner to act on
 SUBROUTINE clear_Jacobi_PreCondType(thisPC)
-  CHARACTER(LEN=*),PARAMETER :: myName='clear_Jacobi_PreCondType'
   CLASS(Jacobi_PrecondType),INTENT(INOUT) :: thisPC
 
   IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
@@ -1239,7 +1202,6 @@ ENDSUBROUTINE clear_Jacobi_PreCondType
 !> @brief Clear distr jacobi preconditioner
 !> @param thisPC The preconditioner to act on
 SUBROUTINE clear_DistributedJacobi_PreCondType(thisPC)
-  CHARACTER(LEN=*),PARAMETER :: myName='clear_Jacobi_PreCondType'
   CLASS(DistributedJacobi_PrecondType),INTENT(INOUT) :: thisPC
 
   IF(ASSOCIATED(thisPC%A)) NULLIFY(thisPC%A)
