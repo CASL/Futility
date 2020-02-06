@@ -1143,6 +1143,9 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
       ENDSELECT
 
     CASE(GMRES)
+      ! Ensure setupPrecond has been called
+      IF (.NOT. ALLOCATED(solver%preCondType) &
+          .AND. solver%pcTypeName /= "NOPC") CALL solver%setupPC()
       SELECTTYPE(A=>solver%A)
       TYPE IS(TriDiagMatrixType)
         !If the coefficient matrix is tridiagonal PLU method will be
