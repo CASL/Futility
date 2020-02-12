@@ -50,7 +50,7 @@ ENDIF()
 ## used to be after call to project
 
 # Pull in the TriBITS system and execute
-IF(NOT DEFINED(${${PROJECT_NAME}_TRIBITS_DIR}))
+IF("${${PROJECT_NAME}_TRIBITS_DIR}" STREQUAL "")
   IF(${PROJECT_NAME} STREQUAL "Futility")
     SET(${PROJECT_NAME}_TRIBITS_DIR
        "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/cmake/tribits" CACHE INTERNAL "")
