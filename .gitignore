@@ -10,10 +10,11 @@ fort.*
 /cmake/dependencies
 
 # extra repos
-Trilinos
-TeuchosWrappersExt
+/TriBITS
+/Trilinos
+/TeuchosWrappersExt
 
-# Repostiory list file for egdist
-.egdist
-.gitdist
+# Repostiory list file for gitdist
+/.egdist
+/.gitdist
 *.sublime-*
