@@ -8,7 +8,7 @@ before_install:
  - docker pull mbairdphys/vera_tpls
 
 script:
- - docker run -v $PWD:/mnt/Futility mbairdphys/vera_tpls /bin/bash -c "mkdir /build && cd /build && cmake -DFutility_ENABLE_DBC:BOOL=ON /mnt/Futility && make -j2 |& tee /mnt/Futility/make.out && ctest -j2"
+ - docker run -v $PWD:/mnt/Futility mbairdphys/vera_tpls /bin/bash -c "/mnt/Futility/build_scripts/update_cmake.sh; cmake --version; mkdir /build && cd /build && cmake -DFutility_ENABLE_DBC:BOOL=ON /mnt/Futility && make -j2 |& tee /mnt/Futility/make.out && ctest -j2"
  - ls
  - grep -v '^\(mpif\.h\)' make.out | grep -i -B 4 'unused \(parameter\|\(PRIVATE module \)*variable\)' | grep -A 4 '\.f90' |& tee warnings.out
  - (exit `grep -c '\.f90' warnings.out`)
