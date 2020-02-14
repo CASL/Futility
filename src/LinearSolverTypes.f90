@@ -97,7 +97,7 @@ PUBLIC :: LinearSolverType_Declare_ValidParams
 PUBLIC :: LinearSolverType_Clear_ValidParams
 
 !> set enumeration scheme for TPLs
-INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
+INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,LS_NATIVE=4
 !> Number of iterative solver solution methodologies - for error checking
 INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=9
 !> set enumeration scheme for iterative solver methods
@@ -259,16 +259,6 @@ LOGICAL(SBK),SAVE :: LinearSolverType_Paramsflag=.FALSE.
 !> initialization for a Linear Solver Type.
 TYPE(ParamType),PROTECTED,SAVE :: LinearSolverType_reqParams,LinearSolverType_optParams
 
-!> Interface for preconditioned and unpreconditioned GMRES solvers
-INTERFACE solveGMRES
-  !> @copybrief LinearSolverTypes::solveGMRES_nopc
-  !> @copydetails LienarSolverTypes::solveGMRES_nopc
-  MODULE PROCEDURE solveGMRES_nopc
-  !> @copybrief LinearSolverTypes::solveGMRES_pc
-  !> @copydetails LinearSolverTypes::solveGMRES_pc
-  MODULE PROCEDURE solveGMRES_lpc
-ENDINTERFACE
-
 !> Exception Handler for use in MatrixTypes
 TYPE(ExceptionHandlerType),SAVE :: eLinearSolverType
 
@@ -419,7 +409,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     ENDIF
     IF(TPLType == MKL) THEN ! MKL
 #ifndef HAVE_MKL
-      TPLType=NATIVE
+      TPLType=LS_NATIVE
 #endif
     ENDIF
 
@@ -433,7 +423,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
       ReqTPLTypeStr='PARDISO_MKL'
     CASE(MKL)
       ReqTPLTypeStr='MKL'
-    CASE(NATIVE)
+    CASE(LS_NATIVE)
       ReqTPLTypeStr='NATIVE'
     ENDSELECT
 
@@ -451,7 +441,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     CASE(MKL)
       TPLTypeStr='MKL'
       matEngine=VM_NATIVE
-    CASE(NATIVE)
+    CASE(LS_NATIVE)
       TPLTypeStr='NATIVE'
       matEngine=VM_NATIVE
     ENDSELECT
@@ -1443,7 +1433,7 @@ ENDSUBROUTINE setConv_LinearSolverType_Iterative
 !>
 SUBROUTINE getResidual_LinearSolverType_Iterative(solver,resid)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-  TYPE(RealVectorType),INTENT(INOUT) :: resid
+  CLASS(VectorType),INTENT(INOUT) :: resid
   !input check
   IF(solver%isInit .AND. ASSOCIATED(solver%b) .AND. ASSOCIATED(solver%A) &
       .AND. ASSOCIATED(solver%X) .AND. resid%n > 0) THEN
@@ -1452,17 +1442,53 @@ SUBROUTINE getResidual_LinearSolverType_Iterative(solver,resid)
     IF(resid%n == solver%b%n) THEN
 #ifdef HAVE_MKL
       !not yet implemented
-      SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
-        resid%b=-b%b
+      SELECTTYPE(b => solver%b)
+      TYPE IS(RealVectorType)
+        SELECTTYPE(resid)
+        TYPE IS(RealVectorType)
+          resid%b=-b%b
+          CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid,ALPHA=1.0_SRK,BETA=1.0_SRK)
+        CLASS DEFAULT
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
+        ENDSELECT
+#ifdef HAVE_MPI
+      TYPE IS(NativeDistributedVectorType)
+        SELECTTYPE(resid)
+        TYPE IS(NativeDistributedVectorType)
+          resid%b=-b%b
+          CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid,ALPHA=1.0_SRK,BETA=1.0_SRK)
+        CLASS DEFAULT
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
+        ENDSELECT
+#endif
       ENDSELECT
-      CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #else
       !perform calculations using the BLAS system (intrinsic to Futility or
       !TPL, defined by #HAVE_BLAS)
-      SELECTTYPE(b => solver%b); TYPE IS(RealVectorType)
-        resid%b=-b%b
+      SELECTTYPE(b => solver%b)
+      TYPE IS(RealVectorType)
+        SELECTTYPE(resid)
+        TYPE IS(RealVectorType)
+          resid%b=-b%b
+          CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid,ALPHA=1.0_SRK,BETA=1.0_SRK)
+        CLASS DEFAULT
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
+        ENDSELECT
+#ifdef HAVE_MPI
+      TYPE IS(NativeDistributedVectorType)
+        SELECTTYPE(resid)
+        TYPE IS(NativeDistributedVectorType)
+          resid%b=-b%b
+          CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid,ALPHA=1.0_SRK,BETA=1.0_SRK)
+        CLASS DEFAULT
+          CALL eLinearSolverType%raiseError('Incorrect call to '// &
+              modName//'::getResidual'//' - Type mismatch between getResidual argument and solver datatypes')
+        ENDSELECT
+#endif
       ENDSELECT
-      CALL BLAS_matvec(THISMATRIX=solver%A,X=solver%X,Y=resid)
 #endif
     ENDIF
   ENDIF
@@ -1618,228 +1644,238 @@ SUBROUTINE solveBiCGSTAB(solver)
   solver%iters=iterations
   solver%info=0
 ENDSUBROUTINE solveBiCGSTAB
+
 !
 !-------------------------------------------------------------------------------
-!> @brief Solves the Iterative Linear System using the GMRES method with no
-!>        preconditioning
+!> @brief Control program for restarted GMRES solver. Handles restarts,
+!> parallelism, and a few other things. Solver body is located in
+!> solveGMRES_partial
 !> @param solver The linear solver to act on
+!> @param PreCondType The preconditioner object to use on the system
 !>
-!> This subroutine solves the Iterative Linear System using the GMRES method
+!> This subroutine solves the Iterative Linear System using the restarted GMRES method
 !>
-SUBROUTINE solveGMRES_nopc(solver)
-  CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
+SUBROUTINE solveGMRES(thisLS,thisPC)
+  CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
+  CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
+  INTEGER(SIK) :: nIters,outerIt
+  LOGICAL(SBK) :: converged
 
-  REAL(SRK)  :: beta,h,t,phibar,temp,tol
-  REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
-  TYPE(RealVectorType) :: u
-  INTEGER(SIK) :: k,m,n,it
-  TYPE(ParamType) :: pList
+  IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
+  thisLS%iters = 0
+  DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
+    IF(PRESENT(thisPC)) THEN
+      CALL solveGMRES_partial(thisLS,nIters,converged,thisPC)
+    ELSE
+      CALL solveGMRES_partial(thisLS,nIters,converged)
+    END IF
+    thisLS%iters = thisLS%iters + nIters
 
-  n=0
-  !Set parameter list for vector
-  CALL pList%add('VectorType -> n',solver%A%n)
-  n=solver%A%n
-  m=MIN(solver%nRestart,n)
-  CALL u%init(pList)
-  CALL pList%clear()
-  CALL solver%getResidual(u)
-  CALL LNorm(u%b,2,beta)
-  solver%iters=0
+    IF (converged) EXIT
+  END DO
 
-  IF(beta > EPSILON(0.0_SRK)) THEN
-    ALLOCATE(v(n,m+1))
-    ALLOCATE(R(m+1,m+1))
-    ALLOCATE(w(n))
-    ALLOCATE(c(m+1))
-    ALLOCATE(s(m+1))
-    ALLOCATE(g(m+1))
-    ALLOCATE(y(m+1))
-    v(:,:)=0._SRK
-    R(:,:)=0._SRK
-    w(:)=0._SRK
-    c(:)=0._SRK
-    s(:)=0._SRK
-    g(:)=0._SRK
-    y(:)=0._SRK
-    tol=solver%absConvTol*beta
+ENDSUBROUTINE solveGMRES
 
-    v(:,1)=-u%b/beta
-    h=beta
-    phibar=beta
-#ifdef FUTILITY_DEBUG_MSG
-      WRITE(668,*) '         GMRES-NOPC',0,ABS(phibar)
-#endif
-    !Iterate on solution
-    DO it=1,m
-      CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-      h=BLAS_dot(n,w,1,v(:,1),1)
-      w=w-h*v(:,1)
-      t=h
-      DO k=2,it
-        h=BLAS_dot(n,w,1,v(:,k),1)
-        w=w-h*v(:,k)
-        R(k-1,it)=c(k-1)*t+s(k-1)*h
-        t=c(k-1)*h-s(k-1)*t
-      ENDDO
-      CALL LNorm(w,2,h)
-      !WRITE(*,*) "h = ", h
-      IF(h > 0.0_SRK) THEN
-        v(:,it+1)=w/h
-      ELSE
-        v(:,it+1)=0.0_SRK*w
-      ENDIF
-      !Set up next Given's rotation
-      IF(t >= 0.0_SRK) THEN
-        temp=SQRT(t*t+h*h)
-      ELSE
-        temp=-SQRT(t*t+h*h)
-      ENDIF
-      c(it)=t/temp
-      s(it)=h/temp
-      R(it,it)=temp
-      g(it)=c(it)*phibar
-      phibar=-s(it)*phibar
-#ifdef FUTILITY_DEBUG_MSG
-      WRITE(668,*) '         GMRES-NOPC',it,ABS(phibar)
-#endif
-      IF(ABS(phibar) <= tol) EXIT
-    ENDDO
-
-    y(1:it)=g(1:it)
-    CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
-
-    CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
-    CALL BLAS_axpy(u,solver%x)
-    CALL solver%getResidual(u)
-    CALL LNorm(u%b,2,beta)
-    IF(it == m+1) it=m
-    solver%iters=it
-
-    DEALLOCATE(v)
-    DEALLOCATE(R)
-    DEALLOCATE(w)
-    DEALLOCATE(c)
-    DEALLOCATE(s)
-    DEALLOCATE(g)
-    DEALLOCATE(y)
-  ENDIF
-  solver%info=0
-  CALL u%clear()
-ENDSUBROUTINE solveGMRES_nopc
 !
 !-------------------------------------------------------------------------------
-!> @brief Solves the Iterative Linear System using the GMRES method with
-!>        left-preconditioning
+!> @brief GMRES core solver routines.
 !> @param solver The linear solver to act on
 !> @param PreCondType The preconditioner object to use on the system
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-SUBROUTINE solveGMRES_lpc(solver,PreCondType)
-  CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-  CLASS(PreconditionerType),INTENT(INOUT) :: PrecondType
+SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
+  CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
+  CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
+  INTEGER(SIK),INTENT(OUT) :: nIters
+  LOGICAL(SBK),INTENT(OUT) :: converged
 
-  REAL(SRK)  :: beta,h,t,phibar,temp,tol
-  REAL(SRK),ALLOCATABLE :: v(:,:),R(:,:),w(:),c(:),s(:),g(:),y(:)
-  TYPE(RealVectorType) :: u
-  INTEGER(SIK) :: k,m,n,it
-  TYPE(ParamType) :: pList
+  ! Array of orthogonal basis vectors
+  CLASS(NativeVectorType),ALLOCATABLE :: V(:)
+  CLASS(NativeVectorType),ALLOCATABLE :: u,Vy ! Generic vector container
+  REAL(SRK),ALLOCATABLE :: R(:,:) ! Array of basis vector coeffs for sol.
+  REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:),h(:)
+  TYPE(ParamType) :: vecPlist
+  REAL(SRK) :: norm_b,norm_r0,currResid
+  REAL(SRK) :: divTmp,t,temp,tol
+  INTEGER(SIK) :: krylovIdx,orthogIdx,nLocal,i,j,oi1,mpierr
+  INTEGER(SIK),ALLOCATABLE :: orthogReq(:)
 
-  n=0
-  !Set parameter list for vector
-  CALL pList%add('VectorType -> n',solver%A%n)
-  n=solver%A%n
-  m=MIN(solver%nRestart,n)
-  CALL u%init(pList)
-  CALL pList%clear()
-  CALL solver%getResidual(u)
-  CALL PreCondType%apply(u)
-  CALL LNorm(u%b,2,beta)
-  solver%iters=0
-
-  IF(beta > EPSILON(0.0_SRK)) THEN
-    ALLOCATE(v(n,m+1))
-    ALLOCATE(R(m+1,m+1))
-    ALLOCATE(w(n))
-    ALLOCATE(c(m+1))
-    ALLOCATE(s(m+1))
-    ALLOCATE(g(m+1))
-    ALLOCATE(y(m+1))
-    v(:,:)=0._SRK
-    R(:,:)=0._SRK
-    w(:)=0._SRK
-    c(:)=0._SRK
-    s(:)=0._SRK
-    g(:)=0._SRK
-    y(:)=0._SRK
-    tol=solver%absConvTol*beta
-
-    v(:,1)=-u%b/beta
-    h=beta
-    phibar=beta
-#ifdef FUTILITY_DEBUG_MSG
-      WRITE(668,*) '         GMRES-LP',0,ABS(phibar)
+  CALL vecPlist%clear()
+  SELECT TYPE(x => thisLS%X)
+  TYPE IS(RealVectorType)
+    CALL vecPlist%add('VectorType -> n',thisLS%A%n)
+    ALLOCATE(RealVectorType :: u)
+    ALLOCATE(RealVectorType :: Vy)
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    CALL vecPlist%add('VectorType -> n',thisLS%A%n)
+    CALL vecPlist%add('VectorType -> MPI_Comm_ID',thisLS%MPIparallelEnv%comm)
+    CALL vecPlist%add('VectorType -> chunkSize',x%chunkSize)
+    CALL vecPlist%add('VectorType -> nlocal',SIZE(x%b))
+    ALLOCATE(NativeDistributedVectorType :: u)
+    ALLOCATE(NativeDistributedVectorType :: Vy)
 #endif
-    !Iterate on solution
-    DO it=1,m
-      CALL BLAS_matvec(THISMATRIX=solver%A,X=v(:,it),BETA=0.0_SRK,Y=w)
-      u%b=w
-      CALL solver%PreCondType%apply(u)
-      w=u%b
-      h=BLAS_dot(n,w,1,v(:,1),1)
-      w=w-h*v(:,1)
-      t=h
-      DO k=2,it
-        h=BLAS_dot(n,w,1,v(:,k),1)
-        w=w-h*v(:,k)
-        R(k-1,it)=c(k-1)*t+s(k-1)*h
-        t=c(k-1)*h-s(k-1)*t
-      ENDDO
-      CALL LNorm(w,2,h)
-      !WRITE(*,*) "h = ", h
-      IF(h > 0.0_SRK) THEN
-        v(:,it+1)=w/h
-      ELSE
-        v(:,it+1)=0.0_SRK*w
-      ENDIF
-      !Set up next Given's rotation
-      IF(t >= 0.0_SRK) THEN
-        temp=SQRT(t*t+h*h)
-      ELSE
-        temp=-SQRT(t*t+h*h)
-      ENDIF
-      c(it)=t/temp
-      s(it)=h/temp
-      R(it,it)=temp
-      g(it)=c(it)*phibar
-      phibar=-s(it)*phibar
-#ifdef FUTILITY_DEBUG_MSG
-      WRITE(668,*) '         GMRES-LP',it,ABS(phibar)
+  CLASS DEFAULT
+    CALL eLinearSolverType%raiseError('Incorrect call to '// &
+       modName//'::solveGMRES_partial'//' - Native solver does not support this vector type.')
+  END SELECT
+
+  CALL u%init(vecPlist)
+  CALL Vy%init(vecPlist)
+
+  ! Compute norm of b
+  norm_b = BLAS_nrm2(thisLS%b)
+
+  ! Check if solving null system
+  IF (norm_b <= EPSILON(0.0_SRK)) THEN
+    CALL thisLS%X%set(0.0_SRK)
+    thisLS%residual = 0.0
+    nIters = 0
+    converged = .TRUE.
+    RETURN
+  END IF
+
+  tol = thisLS%absConvtol*norm_b
+
+  ! Check if initial guess is already solution
+  CALL thisLS%getResidual(u)
+
+  ! Compute norm of u
+  norm_r0 = BLAS_dot(u%b,u%b)
+  CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
+  norm_r0 = SQRT(norm_r0)
+
+  IF (norm_r0 <= EPSILON(0.0_SRK)) THEN
+    thisLS%residual = norm_r0
+    nIters = 0
+    converged = .TRUE.
+    RETURN
+  END IF
+
+  ! Allocate Data storage arrays
+  SELECT TYPE(x => thisLS%X)
+  TYPE IS(RealVectorType)
+    ALLOCATE(RealVectorType :: V(thisLS%nRestart+1))
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    ALLOCATE(NativeDistributedVectorType :: V(thisLS%nRestart+1))
 #endif
-      IF(ABS(phibar) <= tol) EXIT
+  ENDSELECT
+
+  ALLOCATE(R(thisLS%nRestart,thisLS%nRestart))
+  ALLOCATE(givens_cos(thisLS%nRestart))
+  ALLOCATE(givens_sin(thisLS%nRestart))
+  ALLOCATE(f(thisLS%nRestart))
+  ALLOCATE(h(thisLS%nRestart))
+  ALLOCATE(orthogReq(thisLS%nRestart))
+
+  ! Initialize relevant quantities
+  currResid = norm_r0
+  divTmp = -1.0_SRK/norm_r0
+  R(:,:) = 0.0
+  CALL V(1)%init(vecPlist)
+  V(1)%b = u%b*divTmp
+
+  DO krylovIdx = 1,thisLS%nRestart
+    ! Use next space of V as temporary storage:
+    CALL V(krylovIdx+1)%init(vecPlist)
+
+    ! Apply PC in-place and multiply in to u for orthogonalization
+    IF (PRESENT(thisPC)) THEN
+      V(krylovIdx+1)%b = V(krylovIdx)%b
+      CALL thisPC%apply(V(krylovIdx+1))
+      CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx+1),Y=u,BETA=0.0_SRK)
+    ELSE
+      CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx),Y=u,BETA=0.0_SRK)
+    ENDIF
+
+    ! Create orthogonal basis
+    ! Perform distributed dot, masking communication
+    orthogReq = 0
+    DO orthogIdx=1,krylovIdx
+      h(orthogIdx) = BLAS_dot(V(orthogIdx)%b,u%b)
+#ifdef HAVE_MPI
+      CALL MPI_IAllReduce(MPI_IN_PLACE,h(orthogIdx),1,MPI_DOUBLE_PRECISION,MPI_SUM,thisLS%MPIParallelEnv%comm,orthogReq(orthogIdx),mpierr)
+#endif
     ENDDO
 
-    y(1:it)=g(1:it)
-    CALL BLAS_matvec('U','N','N',R(1:it,1:it),y(1:it))
+    ! Subtract vector components
+    ! TODO: Convert to WaitAny
+    DO orthogIdx=1,krylovIdx
+#ifdef HAVE_MPI
+      CALL MPI_Wait(orthogReq(orthogIdx),MPI_STATUS_IGNORE,mpierr)
+#endif
+      CALL BLAS_axpy(V(orthogIdx),u,-h(orthogIdx))
+      IF (orthogIdx == 1) THEN
+        t = h(1)
+      ELSE
+        oi1 = orthogIdx - 1
+        R(oi1,krylovIdx) = givens_cos(oi1)*t + givens_sin(oi1)*h(orthogIdx)
+        t = givens_cos(oi1)*h(orthogIdx) - givens_sin(oi1)*t
+      ENDIF
+    ENDDO
 
-    CALL BLAS_matvec(v(:,1:it),y(1:it),0.0_SRK,u%b)
-    CALL BLAS_axpy(u,solver%x)
-    CALL solver%getResidual(u)
-    CALL LNorm(u%b,2,beta)
-    IF(it == m+1) it=m
-    solver%iters=it
+    h(1) = BLAS_nrm2(u)
 
-    DEALLOCATE(v)
-    DEALLOCATE(R)
-    DEALLOCATE(w)
-    DEALLOCATE(c)
-    DEALLOCATE(s)
-    DEALLOCATE(g)
-    DEALLOCATE(y)
-  ENDIF
-  solver%info=0
-  CALL u%clear()
-ENDSUBROUTINE solveGMRES_lpc
+    IF (h(1) > 0.0_SRK) THEN
+      V(krylovIdx+1)%b = u%b/h(1)
+    ELSE
+      V(krylovIdx+1)%b = 0.0_SRK
+    ENDIF
+
+    IF (t >= 0) THEN
+      temp = SQRT(t*t+h(1)*h(1))
+    ELSE
+      temp = -SQRT(t*t+h(1)*h(1))
+    END IF
+    givens_cos(krylovIdx) = t/temp
+    givens_sin(krylovIdx) = h(1)/temp
+
+    R(krylovIdx,krylovIdx) = temp
+    f(krylovIdx) = givens_cos(krylovIdx)*currResid
+    currResid = -givens_sin(krylovIdx)*currResid
+
+    IF (ABS(currResid) <= tol .OR. krylovIdx == thisLS%nRestart) THEN
+      CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),f(1:krylovIdx))
+      Vy%b = 0.0
+      DO i=1,krylovIdx
+        Vy%b = Vy%b + V(i)%b*f(i)
+      END DO
+      IF (PRESENT(thisPC)) CALL thisPC%apply(Vy)
+      SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
+        x%b = x%b + Vy%b
+      END SELECT
+      EXIT
+    END IF
+
+  END DO
+
+  !CALL thisLS%getResidual(u)
+  !norm_r0 = BLAS_dot(u%b,u%b)
+  !CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
+  !norm_r0 = SQRT(norm_r0)
+  !thisLS%residual = norm_r0
+
+  nIters = krylovIdx
+  converged = ABS(currResid) <= tol
+  thisLS%residual = ABS(currResid)
+
+  DEALLOCATE(R)
+  DEALLOCATE(givens_cos)
+  DEALLOCATE(givens_sin)
+  DEALLOCATE(f)
+  DEALLOCATE(h)
+  DEALLOCATE(orthogReq)
+  DO i=1,SIZE(V)
+    IF (V(i)%isInit) CALL V(i)%clear()
+  ENDDO
+  DEALLOCATE(V)
+  DEALLOCATE(u)
+  DEALLOCATE(Vy)
+
+ENDSUBROUTINE solveGMRES_partial
+
 !
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
