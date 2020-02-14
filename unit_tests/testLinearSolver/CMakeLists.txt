@@ -8,3 +8,4 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 Futility_CreateUnitTest(testLinearSolver)
+Futility_CreateParUnitTest(testLinearSolverParallel 2)
