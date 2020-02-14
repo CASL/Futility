@@ -47,10 +47,14 @@ IF(DEFINED ${PROJECT_NAME}_ENABLE_Teuchos)
   ENDIF()
 ENDIF()
 
+# Reduce template instantiations
+SET(Tpetra_INST_INT_INT OFF CACHE BOOL
+  "Don't need int global ordinal in Tpetra." )
+
 ## used to be after call to project
 
 # Pull in the TriBITS system and execute
-IF(NOT DEFINED(${${PROJECT_NAME}_TRIBITS_DIR}))
+IF("${${PROJECT_NAME}_TRIBITS_DIR}" STREQUAL "")
   IF(${PROJECT_NAME} STREQUAL "Futility")
     SET(${PROJECT_NAME}_TRIBITS_DIR
        "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/cmake/tribits" CACHE INTERNAL "")
