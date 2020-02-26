@@ -191,7 +191,7 @@ IF(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR
 
     SET(Fortran_FLAGS_RELEASE
         ${CSYM}O3
-        ${CSYM}Os
+        ${CSYM}march=native
        )
 
     SET(Fortran_FLAGS_RELWITHDEBINFO
@@ -292,6 +292,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
 
     SET(Fortran_FLAGS_RELEASE
         ${CSYM}O3
+        ${CSYM}march=native
        )
 
     SET(Fortran_FLAGS_RELWITHDEBINFO
