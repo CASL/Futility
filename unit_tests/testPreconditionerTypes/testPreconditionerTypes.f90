@@ -11,6 +11,7 @@ USE IntrType
 USE VectorTypes
 USE MatrixTypes
 USE PreconditionerTypes
+USE ParameterLists
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
@@ -39,9 +40,10 @@ ENDTYPE smartPCType
 
 CONTAINS
 !
-SUBROUTINE init_dummyPC(thisPC,A)
+SUBROUTINE init_dummyPC(thisPC,A,params)
   CLASS(dummyPCType),INTENT(INOUT) :: thisPC
   CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
+  TYPE(ParamType),INTENT(IN),OPTIONAL :: params
 #ifdef FUTILITY_HAVE_PETSC
   PetscErrorCode  :: ierr
   CALL MatCreate(MPI_COMM_WORLD,thisPC%M,ierr)
@@ -60,13 +62,11 @@ ENDSUBROUTINE clear_dummyPC
 !
 SUBROUTINE setup_dummyPC(thisPC)
   CLASS(dummyPCType),INTENT(INOUT) :: thisPC
-  WRITE(*,*) "I am setting up something useless"
 ENDSUBROUTINE setup_dummyPC
 !
 SUBROUTINE apply_dummyPC(thisPC,v)
   CLASS(dummyPCType),INTENT(INOUT) :: thisPC
   CLASS(VectorType),INTENT(INOUT) :: v
-  WRITE(*,*) "I am not doing anything useful"
 ENDSUBROUTINE apply_dummyPC
 !
 SUBROUTINE setup_smartPC(thisPC)
@@ -88,7 +88,6 @@ SUBROUTINE setup_smartPC(thisPC)
   CALL MatAssemblyBegin(thisPC%M,MAT_FINAL_ASSEMBLY,ierr)
   CALL MatAssemblyEnd(thisPC%M,MAT_FINAL_ASSEMBLY,ierr)
 #endif
-  WRITE(*,*) "I am defining exact answer"
 ENDSUBROUTINE setup_smartPC
 !
 SUBROUTINE apply_smartPC(thisPC,v)
@@ -97,13 +96,12 @@ SUBROUTINE apply_smartPC(thisPC,v)
 #ifdef FUTILITY_HAVE_PETSC
   Vec :: tmp
   PetscErrorCode  :: ierr
-  SELECTTYPE(v); TYPE IS(PETScVectorType)
+  SELECT TYPE(v); TYPE IS(PETScVectorType)
     CALL VecDuplicate(v%b,tmp,ierr)
     CALL VecCopy(v%b,tmp,ierr)
     CALL MatMult(thisPC%M,tmp,v%b,ierr)
   ENDSELECT
 #endif
-  WRITE(*,*) "I am applying exact answer"
 ENDSUBROUTINE apply_smartPC
 ENDMODULE
 
@@ -194,7 +192,7 @@ SUBROUTINE setupILUTest()
   CALL testDenseMatrix%init(PListMat)
 
   ! Fill Matrix
-  SELECTTYPE(testSparseMatrix)
+  SELECT TYPE(testSparseMatrix)
   TYPE IS(SparseMatrixType)
     tmpreal=0.0_SRK
     DO i=1,10
@@ -269,7 +267,7 @@ SUBROUTINE testILU_PreCondType()
   FINFO() 'Result:',nerrors2,'Solution:',nerrors1+1
 
   CALL testLU%init(testDenseMatrix)
-  SELECTTYPE(LU => testLU%LU)
+  SELECT TYPE(LU => testLU%LU)
   TYPE IS(DenseSquareMatrixType)
     CALL LU%clear()
     nerrors1=e%getCounter(EXCEPTION_ERROR)
@@ -327,10 +325,10 @@ SUBROUTINE testILU_PreCondType()
     ASSERT(testLU%isInit,'DenseSquareMatrixType ILU%isInit')
     ASSERT(ASSOCIATED(testLU%A),'DenseSquareMatrixType ASSOCIATED(ILU%LU%A)')
     ASSERT(testLU%LU%isInit,'DenseSquareMatrixType ILU%LU%isInit')
-    SELECTTYPE(LU => testLU%LU)
+    SELECT TYPE(LU => testLU%LU)
     TYPE IS(DenseSquareMatrixType)
-      SELECTTYPE(A => testLU%A); TYPE IS(DenseSquareMatrixType)
-        ASSERT(ALL(LU%a .APPROXEQA. A%a),'DenseSquareMatrixType ILU%LU%a')
+      SELECT TYPE(A => testLU%A); TYPE IS(DenseSquareMatrixType)
+        ASSERT(ALL(LU%a .APPROXEQR. A%a),'DenseSquareMatrixType ILU%LU%a')
       ENDSELECT
     CLASS DEFAULT
       ASSERT(.FALSE.,'DenseSquareMatrixType ILU%LU TYPE IS(DenseSquareMatrixType)')
@@ -339,15 +337,15 @@ SUBROUTINE testILU_PreCondType()
 
     ! Check %setup
     CALL testLU%setup()
-    SELECTTYPE(LU => testLU%LU); TYPE IS(DenseSquareMatrixType)
+    SELECT TYPE(LU => testLU%LU); TYPE IS(DenseSquareMatrixType)
       k=0
       DO j=1,LU%n
         DO i=1,LU%n
-          IF(LU%a(j,i) .APPROXEQA. 0.0_SRK) THEN
+          IF(LU%a(j,i) .APPROXEQR. 0.0_SRK) THEN
             CYCLE
           ELSE
             k=k+1
-            ASSERT(LU%a(j,i) .APPROXEQA. tmpreal(k),'testLU%LU%a')
+            ASSERT(LU%a(j,i) .APPROXEQR. tmpreal(k),'testLU%LU%a')
             FINFO() 'row:',j,'column',i,'result:',LU%a(j,i),'solution:',tmpreal(k)
           ENDIF
         ENDDO
@@ -355,11 +353,11 @@ SUBROUTINE testILU_PreCondType()
     ENDSELECT
 
     ! Check %apply
-    SELECTTYPE(testVector); TYPE IS(RealVectorType)
+    SELECT TYPE(testVector); TYPE IS(RealVectorType)
       tempVector=testVector
     ENDSELECT
     CALL testLU%apply(tempVector)
-    ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
+    ASSERT(ALL(tempVector%b .APPROXEQR. tmpreal2),'DenseSquareMatrixType ILU%apply(vector)')
     FINFO() 'Result:',tempVector%b,'Solution:',tmpreal2
 
 
@@ -380,7 +378,7 @@ SUBROUTINE testILU_PreCondType()
     ASSERT(testLU%isInit,'SparseMatrixType ILU%isInit')
     ASSERT(ASSOCIATED(testLU%A),'SparseMatrixType ASSOCIATED(ILU%LU%A)')
     ASSERT(testLU%LU%isInit,'SparseMatrixType ILU%LU%isInit')
-    SELECTTYPE(LU => testLU%LU)
+    SELECT TYPE(LU => testLU%LU)
     TYPE IS(SparseMatrixType)
       bool=ALL(LU%ia == (/1,4,8,12,16,21,26,30,34,38,41/))
       ASSERT(bool,'SparseMatrixType ILU%LU%ia')
@@ -394,17 +392,17 @@ SUBROUTINE testILU_PreCondType()
 
 !        ! Check %setup
     CALL testLU%setup()
-    SELECTTYPE(LU => testLU%LU); TYPE IS(SparseMatrixType)
-      ASSERT(ALL(LU%a .APPROXEQA. tmpreal),'SparseMatrixtype ILU%L%a')
+    SELECT TYPE(LU => testLU%LU); TYPE IS(SparseMatrixType)
+      ASSERT(ALL(LU%a .APPROXEQR. tmpreal),'SparseMatrixtype ILU%L%a')
       FINFO() 'Result:',LU%a,'Solution:',tmpreal
     ENDSELECT
 
     ! Check %apply
-    SELECTTYPE(testVector); TYPE IS(RealVectorType)
+    SELECT TYPE(testVector); TYPE IS(RealVectorType)
       tempVector=testVector
     ENDSELECT
     CALL testLU%apply(tempVector)
-    ASSERT(ALL(tempVector%b .APPROXEQA. tmpreal2),'SparseMatrixType ILU%apply(vector)')
+    ASSERT(ALL(tempVector%b .APPROXEQR. tmpreal2),'SparseMatrixType ILU%apply(vector)')
     FINFO() 'Result:',tempVector%b,'Solution:',tmpreal2
 
     ! Check %clear
