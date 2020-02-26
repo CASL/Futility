@@ -172,7 +172,7 @@ SUBROUTINE testAssign_nums()
   testarray=testSDKarray
   ASSERT_EQ(CHAR(testarray(1)),'-2.000000000000000E+00','testSDK : array(1)')
   ASSERT_EQ(CHAR(testarray(2)),'5.000000000000000E+01','testSDK : array(2)')
- 
+
 ENDSUBROUTINE testAssign_nums
 !
 !-------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ SUBROUTINE testAssign_arrays()
   ASSERT_EQ(CHAR(s2a(2,2)),"one","rray")
   DEALLOCATE(s2a)
   DEALLOCATE(s2a2)
- 
+
 ENDSUBROUTINE testAssign_arrays
 !
 !-------------------------------------------------------------------------------
@@ -400,7 +400,7 @@ ENDSUBROUTINE testAssign_arrays
     test3a2(2,2,1)='bad test'; test3a2(1,1,2)='bad test'; test3a2(1,2,2)='bad test'
     test3a2(2,1,2)='bad test'
     ASSERT(.NOT.ALL(test3a==test3a2),'ALL 3-D & 3-D')
-   
+
   ENDSUBROUTINE testIntrinsic
 !
 !-------------------------------------------------------------------------------
@@ -530,7 +530,7 @@ ENDSUBROUTINE testAssign_arrays
     ASSERT(.NOT.str%isFloat(),'missing exponent')
     str = '-0.2468e'
     ASSERT(.NOT.str%isFloat(),'missing exponent')
-    
+
     COMPONENT_TEST('%isNumeric')
     str = ''
     ASSERT(.NOT.str%isNumeric(),'empty')
@@ -589,7 +589,75 @@ ENDSUBROUTINE testAssign_arrays
     str="AACCAA"
     str = str%replace("AAA","c")
     ASSERT_EQ(CHAR(str),"AACCAA","replace")
-   
+
+    COMPONENT_TEST('%partition')
+    str = ''
+    str_list = str%partition('')
+    ASSERT_EQ(SIZE(str_list),3,'null string / null delimiter')
+    ASSERT(ALL(str_list == ''),'null string / null delimiter')
+    str_list = str%rPartition('')
+    ASSERT_EQ(SIZE(str_list),3,'null string / null delimiter')
+    ASSERT(ALL(str_list == ''),'null string / null delimiter')
+
+    str = 'abc'
+    str_list = str%partition('')
+    ASSERT_EQ(SIZE(str_list),3,'non-null string / null delimiter')
+    ASSERT_EQ(CHAR(str_list(1)),'abc','non-null string / null delimiter')
+    ASSERT_EQ(CHAR(str_list(2)),'','non-null string / null delimiter')
+    ASSERT_EQ(CHAR(str_list(3)),'','non-null string / null delimiter')
+    str_list = str%rPartition('')
+    ASSERT_EQ(SIZE(str_list),3,'non-null string / null delimiter')
+    ASSERT_EQ(CHAR(str_list(1)),'','non-null string / null delimiter')
+    ASSERT_EQ(CHAR(str_list(2)),'','non-null string / null delimiter')
+    ASSERT_EQ(CHAR(str_list(3)),'abc','non-null string / null delimiter')
+
+    str = ''
+    str_list = str%partition('---')
+    ASSERT_EQ(SIZE(str_list),3,'null string / non-null delimiter')
+    ASSERT_EQ(CHAR(str_list(1)),'','null string / non-null delimiter')
+    ASSERT_EQ(CHAR(str_list(2)),'---','null string / non-null delimiter')
+    ASSERT_EQ(CHAR(str_list(3)),'','null string / non-null delimiter')
+    str_list = str%rPartition('---')
+    ASSERT_EQ(SIZE(str_list),3,'null string / non-null delimiter')
+    ASSERT_EQ(CHAR(str_list(1)),'','null string / non-null delimiter')
+    ASSERT_EQ(CHAR(str_list(2)),'---','null string / non-null delimiter')
+    ASSERT_EQ(CHAR(str_list(3)),'','null string / non-null delimiter')
+
+    str = 'abc'
+    str_list = str%partition('---')
+    ASSERT_EQ(SIZE(str_list),3,'string, delimiter not found')
+    ASSERT_EQ(CHAR(str_list(1)),'abc','string, delimiter not found')
+    ASSERT_EQ(CHAR(str_list(2)),'---','string, delimiter not found')
+    ASSERT_EQ(CHAR(str_list(3)),'','string, delimiter not found')
+    str_list = str%rPartition('---')
+    ASSERT_EQ(CHAR(str_list(1)),'','string, delimiter not found')
+    ASSERT_EQ(CHAR(str_list(2)),'---','string, delimiter not found')
+    ASSERT_EQ(CHAR(str_list(3)),'abc','string, delimiter not found')
+
+    str = 'abc---def'
+    str_list = str%partition('---')
+    ASSERT_EQ(SIZE(str_list),3,'string with single delimter found')
+    ASSERT_EQ(CHAR(str_list(1)),'abc','string with single delimter found')
+    ASSERT_EQ(CHAR(str_list(2)),'---','string with single delimter found')
+    ASSERT_EQ(CHAR(str_list(3)),'def','string with single delimter found')
+    str_list = str%rPartition('---')
+    ASSERT_EQ(SIZE(str_list),3,'string with single delimter found')
+    ASSERT_EQ(CHAR(str_list(1)),'abc','string with single delimter found')
+    ASSERT_EQ(CHAR(str_list(2)),'---','string with single delimter found')
+    ASSERT_EQ(CHAR(str_list(3)),'def','string with single delimter found')
+
+    str = 'abc---def---ghi'
+    str_list = str%partition('---')
+    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+    ASSERT_EQ(CHAR(str_list(1)),'abc','string with multiple delimter found')
+    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+    ASSERT_EQ(CHAR(str_list(3)),'def---ghi','string with multiple delimter found')
+    str_list = str%rPartition('---')
+    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+    ASSERT_EQ(CHAR(str_list(1)),'abc---def','string with multiple delimter found')
+    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+    ASSERT_EQ(CHAR(str_list(3)),'ghi','string with multiple delimter found')
+
   ENDSUBROUTINE testStrFunct
 !
 ENDPROGRAM testStrings
