@@ -98,6 +98,9 @@ PUBLIC :: LinearSolverType_Clear_ValidParams
 
 !> set enumeration scheme for TPLs
 INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,LS_NATIVE=4
+!> Old NATIVE Parameter below; kept for compatibility until corresponding branch
+!>   is merged into mpact
+INTEGER(SIK),PARAMETER,PUBLIC :: NATIVE=4
 !> Number of iterative solver solution methodologies - for error checking
 INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=9
 !> set enumeration scheme for iterative solver methods
@@ -1668,11 +1671,11 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
       CALL solveGMRES_partial(thisLS,nIters,converged,thisPC)
     ELSE
       CALL solveGMRES_partial(thisLS,nIters,converged)
-    END IF
+    ENDIF
     thisLS%iters = thisLS%iters + nIters
 
     IF (converged) EXIT
-  END DO
+  ENDDO
 
 ENDSUBROUTINE solveGMRES
 
@@ -1719,7 +1722,7 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
   CLASS DEFAULT
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
        modName//'::solveGMRES_partial'//' - Native solver does not support this vector type.')
-  END SELECT
+  ENDSELECT
 
   CALL u%init(vecPlist)
   CALL Vy%init(vecPlist)
@@ -1734,7 +1737,7 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
     nIters = 0
     converged = .TRUE.
     RETURN
-  END IF
+  ENDIF
 
   tol = thisLS%absConvtol*norm_b
 
@@ -1751,7 +1754,7 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
     nIters = 0
     converged = .TRUE.
     RETURN
-  END IF
+  ENDIF
 
   ! Allocate Data storage arrays
   SELECT TYPE(x => thisLS%X)
@@ -1828,7 +1831,7 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
       temp = SQRT(t*t+h(1)*h(1))
     ELSE
       temp = -SQRT(t*t+h(1)*h(1))
-    END IF
+    ENDIF
     givens_cos(krylovIdx) = t/temp
     givens_sin(krylovIdx) = h(1)/temp
 
@@ -1841,15 +1844,14 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
       Vy%b = 0.0
       DO i=1,krylovIdx
         Vy%b = Vy%b + V(i)%b*f(i)
-      END DO
+      ENDDO
       IF (PRESENT(thisPC)) CALL thisPC%apply(Vy)
       SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
         x%b = x%b + Vy%b
-      END SELECT
+      ENDSELECT
       EXIT
-    END IF
-
-  END DO
+    ENDIF
+  ENDDO
 
   !CALL thisLS%getResidual(u)
   !norm_r0 = BLAS_dot(u%b,u%b)
