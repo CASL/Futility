@@ -79,7 +79,7 @@ TYPE :: StringType
     GENERIC :: split => split_string, split_string_space
     !> copybrief Strings::partition
     !> copydetails Strings::partition
-    PROCEDURE,PASS :: partition => partition
+    PROCEDURE,PASS :: partition
     !> copybrief Strings::rPartition
     !> copydetails Strings::rPartition
     PROCEDURE,PASS :: rPartition
@@ -249,8 +249,9 @@ ENDSUBROUTINE clear_str
 !-------------------------------------------------------------------------------
 !> @brief breaks a string into partitions at the first instance of a delimiter
 !> @param this the string being partitioned
-!> @param sep the delimter used for partitioning
-!>
+!> @param sep the delimiter used for partitioning
+!> @returns tokens size 3 array containing the characters before the delimiter,
+!> the delimiter, and the characters after the delimiter in that order
 PURE FUNCTION partition(this,sep) RESULT(tokens)
   CLASS(StringType),INTENT(IN) :: this
   CHARACTER(LEN=*),INTENT(IN) :: sep
@@ -270,7 +271,9 @@ ENDFUNCTION partition
 !-------------------------------------------------------------------------------
 !> @brief breaks a string into partitions at the last instance of a delimiter
 !> @param this the string being partitioned
-!> @param sep the delimter used for partitioning
+!> @param sep the delimiter used for partitioning
+!> @returns tokens size 3 array containing the characters before the delimiter,
+!> the delimiter, and the characters after the delimiter in that order
 !>
 PURE FUNCTION rPartition(this,sep) RESULT(tokens)
   CLASS(StringType),INTENT(IN) :: this
