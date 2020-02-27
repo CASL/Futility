@@ -1375,7 +1375,6 @@ SUBROUTINE testDirectSolve()
   !A=[1 0 1 ]  b=[4]    x=[1]
   !  [2 5 -2]    [6]      [2]
   !  [3 6 9 ]    [42]     [3]
-  WRITE(*,*) 'set A'
   SELECTTYPE(A => thisLS%A); TYPE IS(PETScMatrixType)
     CALL A%set(1,1,1._SRK)
     CALL A%set(1,3,1._SRK)
@@ -2732,6 +2731,7 @@ SUBROUTINE testIterativeSolve_GMRES()
   CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
   CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
   CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
+
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2785,7 +2785,7 @@ SUBROUTINE testIterativeSolve_GMRES()
   thisX=1.0_SRK
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-      CALL thisLS%setX0(thisX)
+    CALL thisLS%setX0(thisX)
   ENDSELECT
 
   SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)

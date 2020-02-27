@@ -69,6 +69,7 @@ SET(UNIT_TEST_NAMES
     testFutilityComputingEnvironment
     testSchemaParser
     testSpeciesElements
+    testRSORprecon
 )
 
 IF("${PROJECT_NAME}" STREQUAL "Futility" OR "${PROJECT_NAME}" STREQUAL "MPACT")

@@ -745,16 +745,27 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
         CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx), &
             Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
       ENDDO
-    ENDIF
-    IF (thisMatrix%chunks(rank+1)%isInit) THEN
-      CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
-          y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+      IF (thisMatrix%chunks(rank+1)%isInit) THEN
+        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+            y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+      ENDIF
+    ELSE
+      IF (thisMatrix%chunks(rank+1)%isInit) THEN
+        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+            y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+      ELSE
+        tmpProduct=0.0_SRK
+      ENDIF
     ENDIF
   TYPE IS(DistributedBandedMatrixType)
     IF (thisMatrix%chunks(rank+1)%isInit) THEN
       CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
           y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+    ELSE
+      tmpProduct=0.0_SRK
     ENDIF
+  CLASS DEFAULT
+    tmpProduct = 0.0_SRK
   ENDSELECT
 
 #ifdef HAVE_MPI
