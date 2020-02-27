@@ -77,6 +77,12 @@ TYPE :: StringType
     !> copydetails Strings::split_string_space
     PROCEDURE,PASS,PRIVATE :: split_string_space
     GENERIC :: split => split_string, split_string_space
+    !> copybrief Strings::partition
+    !> copydetails Strings::partition
+    PROCEDURE,PASS :: partition
+    !> copybrief Strings::rPartition
+    !> copydetails Strings::rPartition
+    PROCEDURE,PASS :: rPartition
     !> copybrief Strings::assign_char_to_StringType
     !> copydetails Strings::assign_char_to_StringType
     PROCEDURE,PASS,PRIVATE :: assign_char_to_StringType
@@ -239,6 +245,51 @@ SUBROUTINE clear_str(this)
   CLASS(StringType),INTENT(INOUT) :: this
   IF(ALLOCATED(this%s)) DEALLOCATE(this%s)
 ENDSUBROUTINE clear_str
+!
+!-------------------------------------------------------------------------------
+!> @brief breaks a string into partitions at the first instance of a delimiter
+!> @param this the string being partitioned
+!> @param sep the delimiter used for partitioning
+!> @returns tokens size 3 array containing the characters before the delimiter,
+!> the delimiter, and the characters after the delimiter in that order
+PURE FUNCTION partition(this,sep) RESULT(tokens)
+  CLASS(StringType),INTENT(IN) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: sep
+  TYPE(StringType) :: tokens(3)
+  INTEGER(SIK) :: sepPos
+  sepPos = MERGE(0,INDEX(this%s,sep),sep == '')
+  IF(sepPos > 0) THEN
+    tokens(1) = this%s(1:sepPos-1)
+    tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
+  ELSE
+    tokens(1) = this%s
+    tokens(3) = ''
+  ENDIF
+  tokens(2) = sep
+ENDFUNCTION partition
+!
+!-------------------------------------------------------------------------------
+!> @brief breaks a string into partitions at the last instance of a delimiter
+!> @param this the string being partitioned
+!> @param sep the delimiter used for partitioning
+!> @returns tokens size 3 array containing the characters before the delimiter,
+!> the delimiter, and the characters after the delimiter in that order
+!>
+PURE FUNCTION rPartition(this,sep) RESULT(tokens)
+  CLASS(StringType),INTENT(IN) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: sep
+  TYPE(StringType) :: tokens(3)
+  INTEGER(SIK) :: sepPos
+  sepPos = MERGE(0,INDEX(this%s,sep,.TRUE.),sep == '')
+  IF(sepPos > 0) THEN
+    tokens(1) = this%s(1:sepPos-1)
+    tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
+  ELSE
+    tokens(1) = ''
+    tokens(3) = this%s
+  ENDIF
+  tokens(2) = sep
+ENDFUNCTION rPartition
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns an intrinsic character array to a string
