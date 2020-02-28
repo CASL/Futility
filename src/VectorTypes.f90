@@ -343,6 +343,9 @@ SUBROUTINE VectorResemble(dest, source, params)
     IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
       CALL params%add("VectorType->MPI_Comm_Id",source%comm)
     ENDIF
+    IF(.NOT. params%has("VectorType->nlocal")) THEN
+      CALL params%add("VectorType->nlocal",SIZE(source%b))
+    ENDIF
 #endif
   ENDSELECT
 
