@@ -1136,9 +1136,6 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
       ENDSELECT
 
     CASE(GMRES)
-      ! Ensure setupPrecond has been called
-      IF (.NOT. ALLOCATED(solver%preCondType) &
-          .AND. solver%pcTypeName /= "NOPC") CALL solver%setupPC()
       SELECTTYPE(A=>solver%A)
       TYPE IS(TriDiagMatrixType)
         !If the coefficient matrix is tridiagonal PLU method will be
@@ -1662,20 +1659,47 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
   CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
   INTEGER(SIK) :: nIters,outerIt
-  LOGICAL(SBK) :: converged
+  REAL(SRK) :: tol,norm_b,norm_r0
+  TYPE(ParamType) :: tmpPlist
+  CLASS(VectorType),POINTER :: u => NULL()
 
   IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
   thisLS%iters = 0
-  DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
-    IF(PRESENT(thisPC)) THEN
-      CALL solveGMRES_partial(thisLS,nIters,converged,thisPC)
-    ELSE
-      CALL solveGMRES_partial(thisLS,nIters,converged)
-    ENDIF
-    thisLS%iters = thisLS%iters + nIters
+  norm_b = BLAS_nrm2(thisLS%b)
+  IF (norm_b .APPROXEQ. 0.0_SRK) THEN
+    CALL thisLS%X%set(0.0_SRK)
+    thisLS%residual = 0.0_SRK
+    thisLS%iters = 1
+    RETURN
+  ENDIF
 
-    IF (converged) EXIT
-  ENDDO
+  CALL VectorResemble(u,thisLS%x,tmpPlist)
+  CALL thisLS%getResidual(u)
+  norm_r0 = BLAS_nrm2(u)
+  tol = MAX(thisLS%absConvtol,thisLS%relConvTol*norm_r0)
+  IF (norm_r0 .APPROXLE. tol) THEN
+    thisLS%residual = 0.0_SRK
+    thisLS%iters = 1
+    RETURN
+  ENDIF
+
+  SELECT TYPE(u); CLASS IS(NativeVectorType)
+    DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
+      IF(PRESENT(thisPC)) THEN
+        CALL solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
+      ELSE
+        CALL solveGMRES_partial(thisLS,u,norm_b,tol,nIters)
+      ENDIF
+      thisLS%iters = thisLS%iters + nIters
+      IF (thisLS%residual < tol) EXIT
+      CALL thisLS%getResidual(u)
+    ENDDO
+  CLASS DEFAULT
+    CALL eLinearSolverType%raiseError('Incorrect call to '// &
+       modName//'::solveGMRES'//' - Native solver does not support this vector type.')
+  ENDSELECT
+  CALL u%clear()
+  DEALLOCATE(u)
 
 ENDSUBROUTINE solveGMRES
 
@@ -1687,74 +1711,48 @@ ENDSUBROUTINE solveGMRES
 !>
 !> This subroutine solves the Iterative Linear System using the GMRES method
 !>
-SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
+SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
-  CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
+  CLASS(NativeVectorType),INTENT(INOUT),POINTER :: u
+  REAL(SRK),INTENT(IN) :: norm_b
+  REAL(SRK),INTENT(IN) :: tol
   INTEGER(SIK),INTENT(OUT) :: nIters
-  LOGICAL(SBK),INTENT(OUT) :: converged
+  CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
 
   ! Array of orthogonal basis vectors
   CLASS(NativeVectorType),ALLOCATABLE :: V(:)
-  CLASS(NativeVectorType),ALLOCATABLE :: u,Vy ! Generic vector container
+  CLASS(VectorType),POINTER :: Vy => NULL() ! Generic vector container
   REAL(SRK),ALLOCATABLE :: R(:,:) ! Array of basis vector coeffs for sol.
   REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:),h(:)
   TYPE(ParamType) :: vecPlist
-  REAL(SRK) :: norm_b,norm_r0,currResid
-  REAL(SRK) :: divTmp,t,temp,tol
-  INTEGER(SIK) :: krylovIdx,orthogIdx,nLocal,i,j,oi1,mpierr
+  REAL(SRK) :: norm_r,currResid
+  REAL(SRK) :: divTmp,t,temp
+  INTEGER(SIK) :: krylovIdx,orthogIdx,i,oi1
   INTEGER(SIK),ALLOCATABLE :: orthogReq(:)
-
+#ifdef HAVE_MPI
+  INTEGER(SIK) :: mpierr
+#endif
   CALL vecPlist%clear()
+  CALL VectorResemble(Vy,thislS%x,vecPlist)
+  CALL vecPlist%clear()
+
   SELECT TYPE(x => thisLS%X)
   TYPE IS(RealVectorType)
     CALL vecPlist%add('VectorType -> n',thisLS%A%n)
-    ALLOCATE(RealVectorType :: u)
-    ALLOCATE(RealVectorType :: Vy)
 #ifdef HAVE_MPI
   TYPE IS(NativeDistributedVectorType)
     CALL vecPlist%add('VectorType -> n',thisLS%A%n)
     CALL vecPlist%add('VectorType -> MPI_Comm_ID',thisLS%MPIparallelEnv%comm)
     CALL vecPlist%add('VectorType -> chunkSize',x%chunkSize)
     CALL vecPlist%add('VectorType -> nlocal',SIZE(x%b))
-    ALLOCATE(NativeDistributedVectorType :: u)
-    ALLOCATE(NativeDistributedVectorType :: Vy)
 #endif
   CLASS DEFAULT
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
        modName//'::solveGMRES_partial'//' - Native solver does not support this vector type.')
   ENDSELECT
 
-  CALL u%init(vecPlist)
-  CALL Vy%init(vecPlist)
-
-  ! Compute norm of b
-  norm_b = BLAS_nrm2(thisLS%b)
-
-  ! Check if solving null system
-  IF (norm_b <= EPSILON(0.0_SRK)) THEN
-    CALL thisLS%X%set(0.0_SRK)
-    thisLS%residual = 0.0
-    nIters = 0
-    converged = .TRUE.
-    RETURN
-  ENDIF
-
-  tol = thisLS%absConvtol*norm_b
-
-  ! Check if initial guess is already solution
-  CALL thisLS%getResidual(u)
-
   ! Compute norm of u
-  norm_r0 = BLAS_dot(u%b,u%b)
-  CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
-  norm_r0 = SQRT(norm_r0)
-
-  IF (norm_r0 <= EPSILON(0.0_SRK)) THEN
-    thisLS%residual = norm_r0
-    nIters = 0
-    converged = .TRUE.
-    RETURN
-  ENDIF
+  norm_r = BLAS_nrm2(u)
 
   ! Allocate Data storage arrays
   SELECT TYPE(x => thisLS%X)
@@ -1774,9 +1772,8 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
   ALLOCATE(orthogReq(thisLS%nRestart))
 
   ! Initialize relevant quantities
-  currResid = norm_r0
-  divTmp = -1.0_SRK/norm_r0
-  R(:,:) = 0.0
+  divTmp = -1.0_SRK/norm_r
+  R(:,:) = 0.0_SRK
   CALL V(1)%init(vecPlist)
   V(1)%b = u%b*divTmp
 
@@ -1804,7 +1801,6 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
     ENDDO
 
     ! Subtract vector components
-    ! TODO: Convert to WaitAny
     DO orthogIdx=1,krylovIdx
 #ifdef HAVE_MPI
       CALL MPI_Wait(orthogReq(orthogIdx),MPI_STATUS_IGNORE,mpierr)
@@ -1820,7 +1816,6 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
     ENDDO
 
     h(1) = BLAS_nrm2(u)
-
     IF (h(1) > 0.0_SRK) THEN
       V(krylovIdx+1)%b = u%b/h(1)
     ELSE
@@ -1836,32 +1831,23 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
     givens_sin(krylovIdx) = h(1)/temp
 
     R(krylovIdx,krylovIdx) = temp
-    f(krylovIdx) = givens_cos(krylovIdx)*currResid
-    currResid = -givens_sin(krylovIdx)*currResid
+    f(krylovIdx) = givens_cos(krylovIdx)*norm_r
+    norm_r = -givens_sin(krylovIdx)*norm_r
 
-    IF (ABS(currResid) <= tol .OR. krylovIdx == thisLS%nRestart) THEN
+    IF ((ABS(norm_r) .APPROXLE. tol*norm_b) .OR. (krylovIdx == thisLS%nRestart)) THEN
       CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),f(1:krylovIdx))
-      Vy%b = 0.0
+      CALL Vy%set(0.0_SRK)
       DO i=1,krylovIdx
-        Vy%b = Vy%b + V(i)%b*f(i)
+        CALL BLAS_axpy(V(i),Vy,f(i))
       ENDDO
       IF (PRESENT(thisPC)) CALL thisPC%apply(Vy)
-      SELECT TYPE(x => thisLS%X); CLASS IS(NativeVectorType)
-        x%b = x%b + Vy%b
-      ENDSELECT
+      CALL BLAS_axpy(Vy,thisLS%x)
       EXIT
     ENDIF
   ENDDO
 
-  !CALL thisLS%getResidual(u)
-  !norm_r0 = BLAS_dot(u%b,u%b)
-  !CALL thisLS%MPIparallelEnv%allReduce_scalar(norm_r0)
-  !norm_r0 = SQRT(norm_r0)
-  !thisLS%residual = norm_r0
-
+  thisLS%residual = ABS(norm_r/norm_b)
   nIters = krylovIdx
-  converged = ABS(currResid) <= tol
-  thisLS%residual = ABS(currResid)
 
   DEALLOCATE(R)
   DEALLOCATE(givens_cos)
@@ -1873,7 +1859,7 @@ SUBROUTINE solveGMRES_partial(thisLS,nIters,converged,thisPC)
     IF (V(i)%isInit) CALL V(i)%clear()
   ENDDO
   DEALLOCATE(V)
-  DEALLOCATE(u)
+  CALL Vy%clear()
   DEALLOCATE(Vy)
 
 ENDSUBROUTINE solveGMRES_partial

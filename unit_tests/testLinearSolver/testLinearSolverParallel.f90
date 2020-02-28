@@ -78,14 +78,14 @@ SUBROUTINE testIterativeSolve_GMRES()
   CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_WORLD)
-  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+  CALL pList%add('LinearSolverType->numberOMP',1)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DISTRIBUTED_BANDED)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',9_SNK)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9)
   CALL pList%validate(pList)
   CALL thisLS%init(pList)
 
@@ -147,12 +147,16 @@ SUBROUTINE testIterativeSolve_GMRES()
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     thisLS%hasX0 = .TRUE.
-    CALL thisLS%setConv(2_SIK,1.0E-6_SRK,1.0E-6_SRK,20_SIK,4_SIK)
+    CALL thisLS%setConv(2,1.0E-6_SRK,1.0E-6_SRK,20,4)
   ENDSELECT
 
 
   !solve it
   CALL thisLS%solve()
+
+  SELECTTYPE(x => thisLS%x); TYPE IS(NativeDistributedVectorType)
+    WRITE(*,*) x%b
+  ENDSELECT
 
   !Store expected solution (from MATLAB) in B
   IF (mpiTestEnv%rank == 0) THEN
