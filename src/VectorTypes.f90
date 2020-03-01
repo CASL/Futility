@@ -301,11 +301,18 @@ ENDSUBROUTINE VectorFactory
 !> This is only done for required parameters that are not provided in the passed
 !> parameter list. Providing the parameters on the parameter list will override
 !> the corresponding parameters from the source matrix.
-SUBROUTINE VectorResemble(dest, source, params)
+!> NOTE: When we can compile with the 2003/08 standard, it would be best to
+!>       write an interface and distinguish between pointer/allocatable
+!>       attributes
+SUBROUTINE VectorResemble(dest, source, p)
   CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
-  CLASS(VectorType),POINTER,INTENT(INOUT) :: dest
+  CLASS(VectorType),INTENT(INOUT),ALLOCATABLE :: dest
   CLASS(VectorType),POINTER,INTENT(IN) :: source
-  CLASS(ParamType),INTENT(INOUT) :: params
+  CLASS(ParamType),INTENT(INOUT),OPTIONAL :: p
+  TYPE(ParamType) :: params
+
+  CALL params%clear()
+  IF (PRESENT(p)) params = p
 
   IF(.NOT. ASSOCIATED(source)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
@@ -318,9 +325,9 @@ SUBROUTINE VectorResemble(dest, source, params)
         "Source vector is not initialized")
   ENDIF
 
-  IF(ASSOCIATED(dest)) THEN
+  IF(ALLOCATED(dest)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-        "Destination vector is already associated")
+        "Destination vector is already allocated")
     RETURN
   ENDIF
 
@@ -367,6 +374,7 @@ SUBROUTINE VectorResemble(dest, source, params)
   ENDSELECT
   CALL dest%init(params)
 
+  IF (PRESENT(p)) CALL p%clear()
   CALL params%clear()
 ENDSUBROUTINE VectorResemble
 !
