@@ -1082,18 +1082,19 @@ SUBROUTINE init_DistributedJacobi_PreCondType(thisPC,A,params)
   ENDIF
   thisPC%A => A
 
-  CALL params%get('PCType->MPI_Comm_ID',thisPC%comm)
+  CALL params%get('PreCondType->MPI_Comm_ID',thisPC%comm)
 
   CALL vecPL%clear()
-  CALL vecPL%add('VectorType->n',A%n)
+  CALL vecPL%add('VectorType->n',thisPC%A%n)
   CALL vecPL%add('VectorType->MPI_Comm_ID',thisPC%comm)
 
   CALL MPI_Comm_Rank(thisPC%comm,rank,mpierr)
   SELECT TYPE(A); CLASS IS(DistributedBandedMatrixType)
     CALL vecPL%add('VectorType->chunkSize',A%blockSize)
-    CALL thisPC%invDiag%init(vecPL)
-    CALL vecPL%clear()
+    CALL vecPL%add('VectorType->nlocal',A%iOffsets(rank+2)-A%iOffsets(rank+1))
   ENDSELECT
+  CALL thisPC%invDiag%init(vecPL)
+  CALL vecPL%clear()
   thisPC%isInit=.TRUE.
 
 ENDSUBROUTINE init_DistributedJacobi_PreCondType
