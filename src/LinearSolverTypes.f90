@@ -795,12 +795,14 @@ SUBROUTINE updatedA(solver)
 ENDSUBROUTINE updatedA
 
 SUBROUTINE getResidualVec_LinearSolverType_Direct(solver,resid,nIters)
+  CHARACTER(LEN=*),PARAMETER :: myName='getResidualVec_LinearSolverType_Direct'
   CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: resid
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
   TYPE(ParamType) :: p
 
   REQUIRE(solver%isInit)
+  REQUIRE(resid%isInit)
   REQUIRE(ASSOCIATED(solver%b))
   REQUIRE(solver%b%isInit)
   REQUIRE(ASSOCIATED(solver%A))
@@ -808,8 +810,13 @@ SUBROUTINE getResidualVec_LinearSolverType_Direct(solver,resid,nIters)
   REQUIRE(ASSOCIATED(solver%x))
   REQUIRE(solver%x%isInit)
 
-  CALL BLAS_copy(solver%b,resid)
-  CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=resid)
+  IF (resid%isInit .AND. solver%isInit) THEN
+    CALL BLAS_copy(solver%b,resid)
+    CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=resid)
+  ELSE
+    CALL eLinearSolverType%raiseError('Incorrect call to '// &
+       modName//'::'//myName//' - Residual or solver not initialized.')
+  ENDIF
 
   ! Direct method; nIters has no meaning
   IF (PRESENT(nIters)) nIters = 0
@@ -1281,7 +1288,6 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
       CLASS DEFAULT
         ! Ensure setupPrecond has been called
         IF (.NOT. solver%isPcSetup) CALL solver%setupPC()
-        !WRITE(*,*) "Calling with preconditioner",solver%PCTypeName /= 'NOPC' .AND. solver%pciters/=0
         IF(solver%PCTypeName /= 'NOPC' .AND. solver%pciters/=0) THEN
           ! Decrementing handled by calling function
           CALL solveGMRES(solver,solver%PreCondType)
@@ -1508,10 +1514,12 @@ ENDSUBROUTINE setConv_LinearSolverType_Iterative
 !> This subroutine gets the residual after completion of the iterative solver
 !>
 SUBROUTINE getResidualVec_LinearSolverType_Iterative(solver,resid,nIters)
+  CHARACTER(LEN=*),PARAMETER :: myName='getResidualVec_LinearSolverType_Iterative'
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: resid
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
   !input check
+  REQUIRE(resid%isInit)
   REQUIRE(solver%isInit)
   REQUIRE(ASSOCIATED(solver%b))
   REQUIRE(solver%b%isInit)
@@ -1526,9 +1534,14 @@ SUBROUTINE getResidualVec_LinearSolverType_Iterative(solver,resid,nIters)
   !perform calculations using the BLAS system (intrinsic to Futility or
   !TPL, defined by #HAVE_BLAS)
   ! MKL May need something special but is not implemented at the moment.
-  CALL BLAS_copy(solver%b,resid)
-  CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=resid)
-  IF (PRESENT(nIters)) nIters = solver%iters
+  IF (resid%isInit .AND. solver%isInit) THEN
+    CALL BLAS_copy(solver%b,resid)
+    CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=resid)
+    IF (PRESENT(nIters)) nIters = solver%iters
+  ELSE
+    CALL eLinearSolverType%raiseError('Incorrect call to '// &
+       modName//'::'//myName//' - Residual or solver not initialized.')
+  ENDIF
 
 ENDSUBROUTINE getResidualVec_LinearSolverType_Iterative
 
@@ -1758,7 +1771,6 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
   norm_r0 = BLAS_nrm2(u)
   thisLS%residual = norm_r0
   tol = MAX(thisLS%absConvtol,thisLS%relConvTol*norm_r0)
-  !WRITE(*,*) "GMRES called with norm,tol:",norm_r0,tol
   IF (norm_r0 .APPROXLE. tol) THEN
     thisLS%residual = norm_r0
     thisLS%iters = 1
@@ -1767,7 +1779,6 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
 
   SELECT TYPE(u); CLASS IS(NativeVectorType)
     DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
-      !WRITE(*,*) "Commencing outer",outerIt,"/",thisLS%maxIters/thisLS%nRestart+1
       IF(PRESENT(thisPC)) THEN
         CALL solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
       ELSE
@@ -1775,7 +1786,6 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
       ENDIF
       thisLS%iters = thisLS%iters + nIters
       IF (thisLS%residual .APPROXLE. tol) THEN
-        !WRITE(*,*) "Outer reports tolerance reached with: ",thisLS%residual,"/",tol
         EXIT
       ENDIF
       CALL thisLS%getResidual(u)
@@ -1902,10 +1912,7 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
     f(krylovIdx+1) = -givens_sin(krylovIdx)*f(krylovIdx)
     f(krylovIdx)   =  givens_cos(krylovIdx)*f(krylovIdx)
 
-    !WRITE(*,*) "Iteration ",krylovIdx," residual is: ",ABS(f(krylovIdx+1))/norm_b,"/",tol
-
     IF ((ABS(f(krylovIdx+1)) .APPROXLE. tol*norm_b) .OR. (krylovIdx == thisLS%nRestart)) THEN
-      !IF (ABS(f(krylovIdx+1)) .APPROXLE. tol*norm_b) WRITE(*,*) "Inner reached tolerance"
       CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),f(1:krylovIdx))
       CALL Vy%set(0.0_SRK)
       DO i=1,krylovIdx
