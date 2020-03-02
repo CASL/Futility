@@ -190,8 +190,7 @@ IF(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR
     ENDIF()
 
     SET(Fortran_FLAGS_RELEASE
-        ${CSYM}O3
-        ${CSYM}march=native
+        ${CSYM}Os
        )
 
     SET(Fortran_FLAGS_RELWITHDEBINFO

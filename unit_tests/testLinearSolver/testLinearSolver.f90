@@ -1495,7 +1495,7 @@ SUBROUTINE testIterativeOthers()
   CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
   REAL(SRK),POINTER :: thisX2(:)
   REAL(SRK),ALLOCATABLE :: resid_soln(:),dummyvec(:)
-  TYPE(RealVectorType) :: resid
+  CLASS(VectorType),ALLOCATABLE :: resid
   INTEGER(SIK) :: i
   LOGICAL(SBK) :: bool
 
@@ -1664,8 +1664,6 @@ SUBROUTINE testIterativeOthers()
 !Test getResidual
   !Bad input
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%getResidual(resid)
-
     CALL pList%clear()
     CALL pList%add('LinearSolverType->matType',SPARSE)
     CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
@@ -1681,10 +1679,7 @@ SUBROUTINE testIterativeOthers()
     CALL pList%validate(pList,optListLS)
     CALL thisLS%init(pList)
 
-    CALL thisLS%getResidual(resid)
-
-    CALL vecPList%set('VectorType->n',5)
-    CALL resid%init(vecPList)
+    CALL VectorResemble(resid,thisLS%x)
     CALL thisLS%getResidual(resid)
 
     CALL thisLS%clear()
@@ -1766,8 +1761,8 @@ SUBROUTINE testIterativeOthers()
   CALL vecPList%set('VectorType->n',9)
   CALL resid%init(vecPList)
   ALLOCATE(resid_soln(9))
-  resid_soln=(/-8._SRK,-9._SRK,-8._SRK,-9._SRK,-10._SRK, &
-      -9._SRK,-8._SRK,-9._SRK,-8._SRK/)
+  resid_soln=(/8._SRK,9._SRK,8._SRK,9._SRK,10._SRK, &
+      9._SRK,8._SRK,9._SRK,8._SRK/)
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%getResidual(resid)
@@ -2792,9 +2787,9 @@ SUBROUTINE testIterativeSolve_GMRES()
   ! This forces GMRES to take longer and thus require a restart,
   ! which tests this portion of the solver
   ALLOCATE(thisX(9))
-  thisX=0.0_SRK
+  thisX=1.0_SRK
   thisX(1)=1.0_SRK
-  thisX(9)=-1.0_SRK
+  !thisX(9)=-1.0_SRK
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
@@ -2837,9 +2832,6 @@ SUBROUTINE testIterativeSolve_GMRES()
       ENDIF
     ENDSELECT
   ENDDO
-  SELECTTYPE(x=>thisLS%x); CLASS IS(NativeVectorType)
-    WRITE(*,*) x%b
-  ENDSELECT
   ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
 
   DEALLOCATE(thisB)
