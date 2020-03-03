@@ -171,7 +171,7 @@ CONTAINS
 SUBROUTINE set_PolygonType(thisPoly,thatGraph)
   CLASS(PolygonType),INTENT(INOUT) :: thisPoly
   TYPE(GraphType),INTENT(IN) :: thatGraph
-  INTEGER(SIK) :: i,iccw,icurr,inextold,inext,iedge,iquad
+  INTEGER(SIK) :: i,iccw,icurr,inextold,inext,iquad
 
   !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
   CALL clear_PolygonType(thisPoly)
@@ -250,8 +250,7 @@ SUBROUTINE calcArea(this)
   CLASS(PolygonType),INTENT(INOUT) :: this
   !
   INTEGER(SIK) :: i,iedge
-  REAL(SRK),PARAMETER :: FOURTHIRD=4.0_SRK/3.0_SRK
-  REAL(SRK) :: R1,coeff,subarea,theta,halftheta,sinhalftheta,tsint,rcent,xcent,ycent
+  REAL(SRK) :: R1,coeff,subarea,theta,tsint
   TYPE(PointType) :: point
   TYPE(LineType) :: line
   TYPE(CircleType) :: circle
