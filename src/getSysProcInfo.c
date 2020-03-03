@@ -6,7 +6,6 @@
 / of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 / can be found in LICENSE.txt in the head directory of this repository.        !
 /+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-#pragma
 #if defined WIN32
 //This is for Windows systems
 #include <Windows.h>

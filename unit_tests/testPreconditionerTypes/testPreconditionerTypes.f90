@@ -42,7 +42,7 @@ CONTAINS
 !
 SUBROUTINE init_dummyPC(thisPC,A,params)
   CLASS(dummyPCType),INTENT(INOUT) :: thisPC
-  CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
+  CLASS(MatrixType),TARGET,INTENT(IN) :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
 #ifdef FUTILITY_HAVE_PETSC
   PetscErrorCode  :: ierr
@@ -431,10 +431,11 @@ SUBROUTINE testPCShell()
 
   INTEGER(SIK) :: i,niters
   REAL(SRK) :: val,resid
+  TYPE(PETScMatrixType) :: matrix
   CLASS(PreconditionerType),POINTER :: shellPC
 
   ALLOCATE(dummyPCType :: shellPC)
-  CALL shellPC%init()
+  CALL shellPC%init(matrix)
 
   PETSC_PCSHELL_PC=>shellPC
 
@@ -512,7 +513,7 @@ SUBROUTINE testPCShell()
 
 
   ALLOCATE(smartPCType :: shellPC)
-  CALL shellPC%init()
+  CALL shellPC%init(matrix)
   !modify pc to be exact inverse
   PETSC_PCSHELL_PC=>shellPC
 
