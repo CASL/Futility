@@ -268,7 +268,7 @@ ABSTRACT INTERFACE
     !notice you need to import all necessary types for abstract interfaces
     IMPORT :: PreconditionerType,Matrixtype,ParamType
     CLASS(PreconditionerType),INTENT(INOUT) :: thisPC
-    CLASS(MatrixType),TARGET,INTENT(IN),OPTIONAL :: A
+    CLASS(MatrixType),TARGET,INTENT(IN) :: A
     ! paramtype is a custom type that can take any intrinsic variable type
     !including multiple variables
     TYPE(ParamType),INTENT(IN),OPTIONAL :: params
@@ -351,7 +351,7 @@ CONTAINS
 SUBROUTINE init_LU_PreCondtype(thisPC,A,params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_LU_PreCondType'
   CLASS(LU_PrecondType),INTENT(INOUT) :: thisPC
-  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
+  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
 
   IF(thisPC%isinit) THEN
@@ -360,7 +360,7 @@ SUBROUTINE init_LU_PreCondtype(thisPC,A,params)
     RETURN
   ENDIF
 
-  IF(.NOT. PRESENT(A) .OR. .NOT.(ALLOCATED(A))) THEN
+  IF(.NOT.(ALLOCATED(A))) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
         ' - Matrix being used for LU Preconditioner is not allocated!')
     RETURN
@@ -540,14 +540,13 @@ ENDSUBROUTINE setup_ILU_PreCondtype
 SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_RSOR_PreCondType'
   CLASS(SOR_PrecondType),INTENT(INOUT) :: thisPC
-  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
+  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
   TYPE(ParamType) :: PListMat_LU
   INTEGER(SIK) :: k
 
   !required statuses
   REQUIRE(.NOT. thisPC%isinit)
-  REQUIRE(PRESENT(A))
   REQUIRE(ALLOCATED(A))
   REQUIRE(A%isInit)
 
@@ -739,13 +738,12 @@ ENDSUBROUTINE apply_RSOR_PreCondType
 SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_RSOR_PreCondType'
   CLASS(DistributedSOR_PrecondType),INTENT(INOUT) :: thisPC
-  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
+  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
   TYPE(ParamType) :: PListMat_LU
   INTEGER(SIK) :: k,mpierr,rank
 
   REQUIRE(.NOT. thisPC%isinit)
-  REQUIRE(PRESENT(A))
   REQUIRE(ALLOCATED(A))
   REQUIRE(A%isInit)
 
@@ -1015,7 +1013,7 @@ ENDSUBROUTINE doolittle_LU_RSOR
 SUBROUTINE init_Jacobi_PreCondType(thisPC,A,params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_Jacobi_PreCondType'
   CLASS(Jacobi_PrecondType),INTENT(INOUT) :: thisPC
-  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
+  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
 
   IF(thisPC%isinit) THEN
@@ -1024,7 +1022,7 @@ SUBROUTINE init_Jacobi_PreCondType(thisPC,A,params)
     RETURN
   ENDIF
 
-  IF(.NOT. PRESENT(A) .OR. .NOT.(ALLOCATED(A))) THEN
+  IF(.NOT.(ALLOCATED(A))) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
         ' - Matrix being used for LU Preconditioner is not allocated!')
     RETURN
@@ -1051,7 +1049,7 @@ ENDSUBROUTINE init_Jacobi_PreCondType
 SUBROUTINE init_DistributedJacobi_PreCondType(thisPC,A,params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedJacobi_PreCondType'
   CLASS(DistributedJacobi_PrecondType),INTENT(INOUT) :: thisPC
-  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN),OPTIONAL :: A
+  CLASS(MatrixType),ALLOCATABLE,TARGET,INTENT(IN) :: A
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
   INTEGER(SIK) :: rank,mpierr
   TYPE(ParamType) :: vecPL
@@ -1062,7 +1060,7 @@ SUBROUTINE init_DistributedJacobi_PreCondType(thisPC,A,params)
     RETURN
   ENDIF
 
-  IF(.NOT. PRESENT(A) .OR. .NOT.(ALLOCATED(A))) THEN
+  IF(.NOT.(ALLOCATED(A))) THEN
     CALL ePreCondType%raiseError('Incorrect input to '//modName//'::'//myName// &
         ' - Matrix being used for LU Preconditioner is not allocated!')
     RETURN
