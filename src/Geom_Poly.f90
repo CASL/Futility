@@ -18,6 +18,8 @@
 !> these types and routines for intersecting lines with their bodies.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Poly
+#include "Futility_DBC.h"
+USE Futility_DBC
 USE IntrType
 USE Allocs
 USE Constants_Conversion
@@ -67,6 +69,12 @@ TYPE :: PolygonType
     !> @copybrief Geom_Poly::set_PolygonType
     !> @copydetails Geom_Poly::set_PolygonType
     PROCEDURE,PASS :: set => set_PolygonType
+    !> @copybrief Geom_Poly::calcArea
+    !> @copydetails Geom_Poly::calcArea
+    PROCEDURE,PASS :: calcArea
+    !> @copybrief Geom_Poly::calcCentroid
+    !> @copydetails Geom_Poly::calcCentroid
+    PROCEDURE,PASS :: calcCentroid
     !> @copybrief Geom_Poly::clear_PolygonType
     !> @copydetails Geom_Poly::clear_PolygonType
     PROCEDURE,PASS :: clear => clear_PolygonType
@@ -163,12 +171,7 @@ CONTAINS
 SUBROUTINE set_PolygonType(thisPoly,thatGraph)
   CLASS(PolygonType),INTENT(INOUT) :: thisPoly
   TYPE(GraphType),INTENT(IN) :: thatGraph
-  REAL(SRK),PARAMETER :: FOURTHIRD=4.0_SRK/3.0_SRK
-  INTEGER(SIK) :: i,icw,iccw,icurr,inextold,inext,iedge,iquad
-  REAL(SRK) :: R1,coeff,subarea,xcent,ycent,theta,halftheta,sinhalftheta,tsint,rcent
-  TYPE(PointType) :: point
-  TYPE(LineType) :: line
-  TYPE(CircleType) :: circle
+  INTEGER(SIK) :: i,iccw,icurr,inextold,inext,iquad
 
   !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
   CALL clear_PolygonType(thisPoly)
@@ -185,22 +188,12 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
     !Loop over all vertices in the graphtype in CW ordering.
     !Logic here is for when we have our next point directly above the starting point.
     iccw=thatGraph%getCCWMostVert(0,1)
-    icw=thatGraph%getCWMostVert(0,1)
     inext=iccw
     inextold=1
     icurr=1
-    xcent=0.0_SRK; ycent=0.0_SRK
     DO i=2,thisPoly%nVert
       CALL thisPoly%vert(i)%init(DIM=2,X=thatGraph%vertices(1,inext), &
           Y=thatGraph%vertices(2,inext))
-      !Using the CW-th point, the area calc will be negative.  Hence the ABS()
-      subarea=thisPoly%vert(i-1)%coord(1)* &
-          thisPoly%vert(i)%coord(2)-thisPoly%vert(i-1)%coord(2)* &
-          thisPoly%vert(i)%coord(1)
-      thisPoly%area=thisPoly%area+subarea
-      !When calculating the weighted means, we subtract because we're going CW instead of CCW
-      xcent=xcent-subarea*(thisPoly%vert(i-1)%coord(1)+thisPoly%vert(i)%coord(1))
-      ycent=ycent-subarea*(thisPoly%vert(i-1)%coord(2)+thisPoly%vert(i)%coord(2))
       !Set the edge
       thisPoly%edge(2,i-1)=i
       thisPoly%edge(1,i)=i
@@ -213,20 +206,10 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
     ENDDO
     !Set last edge
     thisPoly%edge(2,thisPoly%nVert)=1
-    subarea=thisPoly%vert(thisPoly%nVert)%coord(1)* &
-        thisPoly%vert(1)%coord(2)-thisPoly%vert(thisPoly%nVert)%coord(2)* &
-        thisPoly%vert(1)%coord(1)
-    thisPoly%area=thisPoly%area+subarea
-    !When calculating the weighted means, we subtract because we're going CW instead of CCW
-    xcent=xcent-subarea*(thisPoly%vert(thisPoly%nVert)%coord(1)+thisPoly%vert(1)%coord(1))
-    ycent=ycent-subarea*(thisPoly%vert(thisPoly%nVert)%coord(2)+thisPoly%vert(1)%coord(2))
 
     !Check if it's a quadratic edge to count
     IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) thisPoly%nQuadEdge=thisPoly%nQuadEdge+1
-    !Last component of the area calc.
-    thisPoly%area=ABS(thisPoly%area*0.5_SRK)
-    xcent=xcent/6.0_SRK
-    ycent=ycent/6.0_SRK
+
     !Setup the quadratic edges if necessary
     IF(thisPoly%nQuadEdge > 0) THEN
       CALL dmallocA(thisPoly%quadEdge,3,thisPoly%nQuadEdge)
@@ -236,7 +219,6 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
       !Loop over all vertices in the graphtype in CW ordering.
       !Logic here is for when we have our next point directly above the starting point.
       iccw=thatGraph%getCCWMostVert(0,1)
-      icw=thatGraph%getCWMostVert(0,1)
       inext=iccw
       inextold=1
       icurr=1
@@ -256,52 +238,160 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
         thisPoly%quadEdge(:,iquad)=thatGraph%quadEdges(:,1,icurr)
         thisPoly%quad2edge(iquad)=thisPoly%nvert
       ENDIF
-
-      !Now do the chord area checks, because they're all positive values.
-      DO i=1,thisPoly%nQuadEdge
-        IF(thisPoly%quadEdge(3,i) > 0.0_SRK) THEN
-          CALL createArcFromQuad(thisPoly,i,circle)
-          CALL point%init(DIM=2,X=thisPoly%quadEdge(1,i), &
-              Y=thisPoly%quadEdge(2,i))
-          !Setup line to test whether to add or subtract
-          iedge=thisPoly%quad2edge(i)
-          CALL line%set(thisPoly%vert(thisPoly%edge(1,iedge)), &
-              thisPoly%vert(thisPoly%edge(2,iedge)))
-
-          R1=thisPoly%quadEdge(3,i)
-
-          !Calculate Chord Sector area (Arc area - triangle area)
-          coeff=1.0_SRK
-          IF(line%pointIsLeft(point)) coeff=-1.0_SRK
-          theta=circle%thetastp-circle%thetastt !Guaranteed to be on (0,PI]
-          tsint=theta-SIN(theta)
-          halftheta=0.5_SRK*theta
-          sinhalftheta=SIN(0.5_SRK*theta)
-
-          !Compute area of circular segment
-          subarea=coeff*R1*R1*0.5_SRK*tsint
-          !Compute radial position of centroid in circular segment
-          rcent=FOURTHIRD*R1*sinhalftheta*sinhalftheta*sinhalftheta/tsint
-
-          !Add to sum of area
-          thisPoly%area=thisPoly%area+subarea
-
-          !Add to centroid numerator (area waited centroids)
-          !convert radial centroid to x,y coordinates
-          xcent=xcent+subarea*(rcent*COS(halftheta+circle%thetastt)+circle%c%coord(1))
-          ycent=ycent+subarea*(rcent*SIN(halftheta+circle%thetastt)+circle%c%coord(2))
-
-          !Clear things
-          CALL circle%clear()
-          CALL line%clear()
-          CALL point%clear()
-        ENDIF
-      ENDDO
     ENDIF
-    CALL thisPoly%centroid%init(DIM=2,X=xcent/thisPoly%area,Y=ycent/thisPoly%area)
+    CALL thisPoly%calcArea()
+    CALL thisPoly%calcCentroid()
     thisPoly%isInit=.TRUE.
   ENDIF
 ENDSUBROUTINE set_PolygonType
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE calcArea(this)
+  CLASS(PolygonType),INTENT(INOUT) :: this
+  !
+  INTEGER(SIK) :: i,iedge
+  REAL(SRK) :: R1,coeff,subarea,theta,tsint
+  TYPE(PointType) :: point
+  TYPE(LineType) :: line
+  TYPE(CircleType) :: circle
+
+  REQUIRE(ALLOCATED(this%vert))
+  REQUIRE(ALLOCATED(this%edge))
+
+  DO i=2,this%nVert
+    !Using the CW-th point, the area calc will be negative.  Hence the ABS()
+    subarea=this%vert(i-1)%coord(1)* &
+        this%vert(i)%coord(2)-this%vert(i-1)%coord(2)* &
+        this%vert(i)%coord(1)
+    this%area=this%area+subarea
+  ENDDO
+
+  subarea=this%vert(this%nVert)%coord(1)* &
+      this%vert(1)%coord(2)-this%vert(this%nVert)%coord(2)* &
+      this%vert(1)%coord(1)
+  this%area=this%area+subarea
+  !Last component of the area calc.
+  this%area=ABS(this%area*0.5_SRK)
+
+  !Setup the quadratic edges if necessary
+  IF(this%nQuadEdge > 0) THEN
+    !Now do the chord area checks, because they're all positive values.
+    DO i=1,this%nQuadEdge
+      IF(this%quadEdge(3,i) > 0.0_SRK) THEN
+        CALL createArcFromQuad(this,i,circle)
+        CALL point%init(DIM=2,X=this%quadEdge(1,i), &
+            Y=this%quadEdge(2,i))
+        !Setup line to test whether to add or subtract
+        iedge=this%quad2edge(i)
+        CALL line%set(this%vert(this%edge(1,iedge)), &
+            this%vert(this%edge(2,iedge)))
+
+        R1=this%quadEdge(3,i)
+
+        !Calculate Chord Sector area (Arc area - triangle area)
+        coeff=1.0_SRK
+        IF(line%pointIsLeft(point)) coeff=-1.0_SRK
+        theta=circle%thetastp-circle%thetastt !Guaranteed to be on (0,PI]
+        tsint=theta-SIN(theta)
+
+        !Compute area of circular segment
+        subarea=coeff*R1*R1*0.5_SRK*tsint
+
+        !Add to sum of area
+        this%area=this%area+subarea
+
+        !Clear things
+        CALL circle%clear()
+        CALL line%clear()
+        CALL point%clear()
+      ENDIF
+    ENDDO
+  ENDIF
+
+ENDSUBROUTINE calcArea
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE calcCentroid(this)
+  CLASS(PolygonType),INTENT(INOUT) :: this
+  !
+  INTEGER(SIK) :: i,iedge
+  REAL(SRK),PARAMETER :: FOURTHIRD=4.0_SRK/3.0_SRK
+  REAL(SRK) :: R1,coeff,subarea,theta,halftheta,sinhalftheta,tsint,rcent,xcent,ycent
+  TYPE(PointType) :: point
+  TYPE(LineType) :: line
+  TYPE(CircleType) :: circle
+
+  REQUIRE(ALLOCATED(this%vert))
+  REQUIRE(ALLOCATED(this%edge))
+
+  !Loop over all vertices in the graphtype in CW ordering.
+  !Logic here is for when we have our next point directly above the starting point.
+  xcent=0.0_SRK; ycent=0.0_SRK
+  DO i=2,this%nVert
+    !Using the CW-th point, the area calc will be negative.  Hence the ABS()
+    subarea=this%vert(i-1)%coord(1)* &
+        this%vert(i)%coord(2)-this%vert(i-1)%coord(2)* &
+        this%vert(i)%coord(1)
+    !When calculating the weighted means, we subtract because we're going CW instead of CCW
+    xcent=xcent-subarea*(this%vert(i-1)%coord(1)+this%vert(i)%coord(1))
+    ycent=ycent-subarea*(this%vert(i-1)%coord(2)+this%vert(i)%coord(2))
+  ENDDO
+
+  subarea=this%vert(this%nVert)%coord(1)* &
+      this%vert(1)%coord(2)-this%vert(this%nVert)%coord(2)* &
+      this%vert(1)%coord(1)
+  !When calculating the weighted means, we subtract because we're going CW instead of CCW
+  xcent=xcent-subarea*(this%vert(this%nVert)%coord(1)+this%vert(1)%coord(1))
+  ycent=ycent-subarea*(this%vert(this%nVert)%coord(2)+this%vert(1)%coord(2))
+
+  !Last component of the area calc.
+  xcent=xcent/6.0_SRK
+  ycent=ycent/6.0_SRK
+  !Setup the quadratic edges if necessary
+  IF(this%nQuadEdge > 0) THEN
+
+    !Now do the chord area checks, because they're all positive values.
+    DO i=1,this%nQuadEdge
+      IF(this%quadEdge(3,i) > 0.0_SRK) THEN
+        CALL createArcFromQuad(this,i,circle)
+        CALL point%init(DIM=2,X=this%quadEdge(1,i), &
+            Y=this%quadEdge(2,i))
+        !Setup line to test whether to add or subtract
+        iedge=this%quad2edge(i)
+        CALL line%set(this%vert(this%edge(1,iedge)), &
+            this%vert(this%edge(2,iedge)))
+
+        R1=this%quadEdge(3,i)
+
+        !Calculate Chord Sector area (Arc area - triangle area)
+        coeff=1.0_SRK
+        IF(line%pointIsLeft(point)) coeff=-1.0_SRK
+        theta=circle%thetastp-circle%thetastt !Guaranteed to be on (0,PI]
+        tsint=theta-SIN(theta)
+        halftheta=0.5_SRK*theta
+        sinhalftheta=SIN(0.5_SRK*theta)
+
+        !Compute area of circular segment
+        subarea=coeff*R1*R1*0.5_SRK*tsint
+        !Compute radial position of centroid in circular segment
+        rcent=FOURTHIRD*R1*sinhalftheta*sinhalftheta*sinhalftheta/tsint
+
+        !Add to centroid numerator (area waited centroids)
+        !convert radial centroid to x,y coordinates
+        xcent=xcent+subarea*(rcent*COS(halftheta+circle%thetastt)+circle%c%coord(1))
+        ycent=ycent+subarea*(rcent*SIN(halftheta+circle%thetastt)+circle%c%coord(2))
+
+        !Clear things
+        CALL circle%clear()
+        CALL line%clear()
+        CALL point%clear()
+      ENDIF
+    ENDDO
+  ENDIF
+  CALL this%centroid%clear()
+  CALL this%centroid%init(DIM=2,X=xcent/this%area,Y=ycent/this%area)
+
+ENDSUBROUTINE calcCentroid
 !
 !-------------------------------------------------------------------------------
 !> @brief The routine clears all of the attributes and deallocates the arrays
