@@ -261,7 +261,16 @@ FUNCTION Data_Verify_3D(labels1,labels2,labels3,table) RESULT(good)
   good=Check_label_and_table(labels3,table(1,1,:),3,myName)
 
 END FUNCTION Data_Verify_3D
-
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that does checks on labels and tables for a given dimension.
+!> @param labels axis labels at which data points in table are defined.
+!> @param table contains data to be interpolated between defined at points
+!>        given in labels.
+!> @param dim current dimension being checked
+!> @param myName name of the Data_Verify function called to check input data
+!> @returns good boolean indicating whether the data is good or not.
+!>
 FUNCTION Check_label_and_table(labels,table,dim,myName) RESULT(good)
   REAL(SRK),INTENT(IN) :: labels(:)
   REAL(SRK),INTENT(IN) :: table(:)
