@@ -20,6 +20,7 @@ SET(UNIT_TEST_NAMES
     testSelectedKinds
     testWaterSatProperties
     testArrayUtils
+    testInterpolators
     testElementsIsotopes
     testExtendedMath
     testBLAS
