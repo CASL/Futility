@@ -122,9 +122,10 @@ TYPE :: StringType
     !> copybrief Strings::isNumeric_str
     !> copydetails Strings::isNumeric_str
     PROCEDURE,PASS :: isNumeric => isNumeric_str
-    !> copybrief Strings::clean_str
-    !> copydetails Strings::clean_str
+    !> copybrief Strings::clear_str
+    !> copydetails Strings::clear_str
     PROCEDURE,PASS :: clear => clear_str
+    FINAL :: clean_str
 ENDTYPE StringType
 
 !> @brief Overloads the Fortran intrinsic procedure CHAR() so
@@ -241,6 +242,15 @@ CONTAINS
 !> @brief cleans up string objects
 !> @param this the StringType being garbaged collected
 !>
+ELEMENTAL SUBROUTINE clean_str(this)
+  TYPE(StringType),INTENT(INOUT) :: this
+  IF(ALLOCATED(this%s)) DEALLOCATE(this%s)
+ENDSUBROUTINE clean_str
+!
+!-------------------------------------------------------------------------------
+!> @brief cleans up string objects
+!> @param this the StringType being garbaged collected
+!>
 SUBROUTINE clear_str(this)
   CLASS(StringType),INTENT(INOUT) :: this
   IF(ALLOCATED(this%s)) DEALLOCATE(this%s)
@@ -252,6 +262,7 @@ ENDSUBROUTINE clear_str
 !> @param sep the delimiter used for partitioning
 !> @returns tokens size 3 array containing the characters before the delimiter,
 !> the delimiter, and the characters after the delimiter in that order
+!>
 PURE FUNCTION partition(this,sep) RESULT(tokens)
   CLASS(StringType),INTENT(IN) :: this
   CHARACTER(LEN=*),INTENT(IN) :: sep
@@ -540,7 +551,7 @@ PURE FUNCTION at_string(this,pos) RESULT(letter)
   INTEGER(SIK),INTENT(IN) :: pos
   CHARACTER(LEN=:),ALLOCATABLE :: letter
 
-  IF((pos > 0) .AND. (pos <= LEN(this))) THEN
+  IF(ALLOCATED(this%s) .AND. (pos > 0) .AND. (pos <= LEN(this))) THEN
     letter = this%s(pos:pos)
   ELSE
     ALLOCATE(CHARACTER(0) :: letter)
@@ -567,7 +578,7 @@ PURE FUNCTION substr_str(this,stt,stp) RESULT(slice)
   ELSE
     sub_stp = LEN(this)
   ENDIF
-  IF((stt <= sub_stp) .AND. (stt > 0) .AND. (sub_stp <= LEN(this))) THEN
+  IF(ALLOCATED(this%s) .AND. (stt > 0) .AND. (sub_stp <= LEN(this))) THEN
     slice = this%s(stt:sub_stp)
   ELSE
     ALLOCATE(CHARACTER(0) :: slice)
@@ -619,7 +630,11 @@ ENDFUNCTION toupper_string
 ELEMENTAL FUNCTION LEN_StringType(this) RESULT(n)
   CLASS(StringType),INTENT(IN) :: this
   INTEGER(SIK) :: n
-  n=LEN(this%s)
+  IF(ALLOCATED(this%s)) THEN
+    n=LEN(this%s)
+  ELSE
+    n = 0
+  ENDIF
 ENDFUNCTION LEN_StringType
 !
 !-------------------------------------------------------------------------------
@@ -673,25 +688,33 @@ ENDFUNCTION TRIM_StringType
 !-------------------------------------------------------------------------------
 !> @brief Returns the contents of the string as an intrinsic character type
 !> variable with all preceding whitespace moved to the end.
-!> @param thisStr the string object
+!> @param this the string object
 !> @returns s left aligned version of this
 !>
-PURE FUNCTION ADJUSTL_StringType(thisStr) RESULT(s)
-  CLASS(StringType),INTENT(IN) :: thisStr
+PURE FUNCTION ADJUSTL_StringType(this) RESULT(s)
+  CLASS(StringType),INTENT(IN) :: this
   CHARACTER(LEN=:),ALLOCATABLE :: s
-  s = ADJUSTL(thisStr%s)
+  IF(ALLOCATED(this%s)) THEN
+    s = ADJUSTL(this%s)
+  ELSE
+    s = ''
+  ENDIF
 ENDFUNCTION ADJUSTL_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the contents of the string as an intrinsic character type
 !> variable with all trailing whitespace moved to the beginning.
-!> @param thisStr the string object
+!> @param this the string object
 !> @returns s right aligned version of this
 !>
-PURE FUNCTION ADJUSTR_StringType(thisStr) RESULT(s)
-  CLASS(StringType),INTENT(IN) :: thisStr
+PURE FUNCTION ADJUSTR_StringType(this) RESULT(s)
+  CLASS(StringType),INTENT(IN) :: this
   CHARACTER(LEN=:),ALLOCATABLE :: s
-  s = ADJUSTR(thisStr%s)
+  IF(ALLOCATED(this%s)) THEN
+    s = ADJUSTR(this%s)
+  ELSE
+    s = ''
+  ENDIF
 ENDFUNCTION ADJUSTR_StringType
 !
 !-------------------------------------------------------------------------------
@@ -708,7 +731,11 @@ ELEMENTAL FUNCTION INDEX_StringType_char(string,substring,back) RESULT(ipos)
   CHARACTER(LEN=*),INTENT(IN) :: substring
   LOGICAL,INTENT(IN),OPTIONAL :: back
   INTEGER :: ipos
-  ipos=INDEX(string%s,substring,back)
+  IF(ALLOCATED(string%s) .AND. LEN(substring) > 0) THEN
+    ipos=INDEX(string%s,substring,back)
+  ELSE
+    ipos = 0
+  ENDIF
 ENDFUNCTION INDEX_StringType_char
 !
 !-------------------------------------------------------------------------------
@@ -725,7 +752,11 @@ ELEMENTAL FUNCTION INDEX_char_StringType(string,substring,back) RESULT(ipos)
   CLASS(StringType),INTENT(IN) :: substring
   LOGICAL,INTENT(IN),OPTIONAL :: back
   INTEGER :: ipos
-  ipos=INDEX(string,substring%s,back)
+  IF(ALLOCATED(substring%s) .AND. LEN(string) > 0) THEN
+    ipos=INDEX(string,substring%s,back)
+  ELSE
+    ipos = 0
+  ENDIF
 ENDFUNCTION INDEX_char_StringType
 !
 !-------------------------------------------------------------------------------
@@ -742,7 +773,11 @@ ELEMENTAL FUNCTION INDEX_StringType_StringType(string,substring,back) RESULT(ipo
   CLASS(StringType),INTENT(IN) :: substring
   LOGICAL,INTENT(IN),OPTIONAL :: back
   INTEGER :: ipos
-  ipos=INDEX(string%s,substring%s,back)
+  IF(ALLOCATED(string%s) .AND. ALLOCATED(substring%s)) THEN
+    ipos=INDEX(string%s,substring%s,back)
+  ELSE
+    ipos = 0
+  ENDIF
 ENDFUNCTION INDEX_StringType_StringType
 !
 !-------------------------------------------------------------------------------
