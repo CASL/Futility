@@ -125,7 +125,9 @@ TYPE :: StringType
     !> copybrief Strings::clear_str
     !> copydetails Strings::clear_str
     PROCEDURE,PASS :: clear => clear_str
-    FINAL :: clean_str
+    !> copybrief Strings::clean_str
+    !> copydetails Strings::clean_str
+    !FINAL :: clean_str
 ENDTYPE StringType
 
 !> @brief Overloads the Fortran intrinsic procedure CHAR() so
@@ -237,15 +239,15 @@ ENDINTERFACE
 !
 !===============================================================================
 CONTAINS
-!
-!-------------------------------------------------------------------------------
-!> @brief cleans up string objects
-!> @param this the StringType being garbaged collected
-!>
-ELEMENTAL SUBROUTINE clean_str(this)
-  TYPE(StringType),INTENT(INOUT) :: this
-  IF(ALLOCATED(this%s)) DEALLOCATE(this%s)
-ENDSUBROUTINE clean_str
+!!
+!!-------------------------------------------------------------------------------
+!!> @brief cleans up string objects
+!!> @param this the StringType being garbaged collected
+!!>
+!ELEMENTAL SUBROUTINE clean_str(this)
+!  TYPE(StringType),INTENT(INOUT) :: this
+!  IF(ALLOCATED(this%s)) DEALLOCATE(this%s)
+!ENDSUBROUTINE clean_str
 !
 !-------------------------------------------------------------------------------
 !> @brief cleans up string objects
@@ -313,8 +315,6 @@ ELEMENTAL SUBROUTINE assign_char_to_StringType(lhs,rhs)
   IF(ALLOCATED(lhs%s)) DEALLOCATE(lhs%s)
   IF(LEN(rhs)>0) THEN
     lhs%s = rhs
-  ELSE
-    ALLOCATE(CHARACTER(0) :: lhs%s)
   ENDIF
 ENDSUBROUTINE assign_char_to_StringType
 !
