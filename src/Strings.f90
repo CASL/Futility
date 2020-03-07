@@ -270,15 +270,21 @@ PURE FUNCTION partition(this,sep) RESULT(tokens)
   CHARACTER(LEN=*),INTENT(IN) :: sep
   TYPE(StringType) :: tokens(3)
   INTEGER(SIK) :: sepPos
-  sepPos = MERGE(0,INDEX(this%s,sep),sep == '')
-  IF(sepPos > 0) THEN
-    tokens(1) = this%s(1:sepPos-1)
-    tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
+  IF(ALLOCATED(this%s)) THEN
+    sepPos = MERGE(0,INDEX(this%s,sep),sep == '')
+    IF(sepPos > 0) THEN
+      tokens(1) = this%s(1:sepPos-1)
+      tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
+    ELSE
+      tokens(1) = this%s
+      tokens(3) = ''
+    ENDIF
+    tokens(2) = sep
   ELSE
-    tokens(1) = this%s
-    tokens(3) = ''
+    tokens(1)=''
+    tokens(2)=sep
+    tokens(3)=''
   ENDIF
-  tokens(2) = sep
 ENDFUNCTION partition
 !
 !-------------------------------------------------------------------------------
@@ -293,15 +299,21 @@ PURE FUNCTION rPartition(this,sep) RESULT(tokens)
   CHARACTER(LEN=*),INTENT(IN) :: sep
   TYPE(StringType) :: tokens(3)
   INTEGER(SIK) :: sepPos
-  sepPos = MERGE(0,INDEX(this%s,sep,.TRUE.),sep == '')
-  IF(sepPos > 0) THEN
-    tokens(1) = this%s(1:sepPos-1)
-    tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
+  IF(ALLOCATED(this%s)) THEN
+    sepPos = MERGE(0,INDEX(this%s,sep,.TRUE.),sep == '')
+    IF(sepPos > 0) THEN
+      tokens(1) = this%s(1:sepPos-1)
+      tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
+    ELSE
+      tokens(1) = ''
+      tokens(3) = this%s
+    ENDIF
+    tokens(2) = sep
   ELSE
-    tokens(1) = ''
-    tokens(3) = this%s
+    tokens(1)=''
+    tokens(2)=sep
+    tokens(3)=''
   ENDIF
-  tokens(2) = sep
 ENDFUNCTION rPartition
 !
 !-------------------------------------------------------------------------------
@@ -350,50 +362,55 @@ FUNCTION split_string_space(this) RESULT(sub_str)
   !
   INTEGER(SIK) :: iSplit,nSplits,stt,stp,sepLoc
 
-  stp = LEN(this%s)
-  sepLoc = MERGE(INDEX(this%s,' '),0,stp > 1)
-  IF(sepLoc == 0) THEN
-    !This indicates that either the string or the separator were empty, or
-    !the separator was not found in the string.
+  IF(ALLOCATED(this%s)) THEN
+    stp = LEN(this%s)
+    sepLoc = MERGE(INDEX(this%s,' '),0,stp > 1)
+    IF(sepLoc == 0) THEN
+      !This indicates that either the string or the separator were empty, or
+      !the separator was not found in the string.
+      ALLOCATE(sub_str(1))
+      sub_str(1) = this%s
+      RETURN !For these conditions the original string is returned
+    ENDIF
+
+    ! Search until the delimiter isn't found
+    nSplits = 0
+    stt = 1
+    DO WHILE(sepLoc > 0)
+    ! If the index is greater than 1 then the first character must be a string
+      IF(sepLoc > 1) THEN
+        ! Count the string
+        nSplits = nSplits + 1
+      ENDIF
+      ! Increment to the next delimiter
+      stt = stt + sepLoc
+      sepLoc = INDEX(this%s(stt:stp),' ')
+    ENDDO
+    !Account for strings that don't end in a delimiter
+    IF(stt <= stp) nSplits = nSplits + 1
+    ALLOCATE(sub_str(nSplits))
+
+    ! Split along delimiters and store in the provided array
+    stt = 1
+    iSplit = 0
+    sepLoc = INDEX(this%s(stt:stp),' ')
+    DO WHILE(sepLoc > 0)
+      IF(sepLoc > 1) THEN
+        iSplit = iSplit + 1
+        ! Strip out the string...subtract 2 (1 for exclusive, 1 for delimiter)
+        sub_str(iSplit) = this%s(stt:stt+sepLoc-2)
+      ENDIF
+      stt = stt + sepLoc
+      sepLoc = INDEX(this%s(stt:stp),' ')
+    ENDDO
+    ! If the string ends with a word, then it wasn't snatched out before
+    IF(.NOT.(this%s(stp:stp) == ' ')) THEN
+      sub_str(nSplits) = &
+          this%s(INDEX(this%s(1:stp),' ',.TRUE.)+1:stp)
+    ENDIF
+  ELSE
     ALLOCATE(sub_str(1))
-    sub_str(1) = this%s
-    RETURN !For these conditions the original string is returned
-  ENDIF
-
-  ! Search until the delimiter isn't found
-  nSplits = 0
-  stt = 1
-  DO WHILE(sepLoc > 0)
-  ! If the index is greater than 1 then the first character must be a string
-    IF(sepLoc > 1) THEN
-      ! Count the string
-      nSplits = nSplits + 1
-    ENDIF
-    ! Increment to the next delimiter
-    stt = stt + sepLoc
-    sepLoc = INDEX(this%s(stt:stp),' ')
-  ENDDO
-  !Account for strings that don't end in a delimiter
-  IF(stt <= stp) nSplits = nSplits + 1
-  ALLOCATE(sub_str(nSplits))
-
-  ! Split along delimiters and store in the provided array
-  stt = 1
-  iSplit = 0
-  sepLoc = INDEX(this%s(stt:stp),' ')
-  DO WHILE(sepLoc > 0)
-    IF(sepLoc > 1) THEN
-      iSplit = iSplit + 1
-      ! Strip out the string...subtract 2 (1 for exclusive, 1 for delimiter)
-      sub_str(iSplit) = this%s(stt:stt+sepLoc-2)
-    ENDIF
-    stt = stt + sepLoc
-    sepLoc = INDEX(this%s(stt:stp),' ')
-  ENDDO
-  ! If the string ends with a word, then it wasn't snatched out before
-  IF(.NOT.(this%s(stp:stp) == ' ')) THEN
-    sub_str(nSplits) = &
-        this%s(INDEX(this%s(1:stp),' ',.TRUE.)+1:stp)
+    sub_str=''
   ENDIF
 ENDFUNCTION split_string_space
 !
@@ -411,41 +428,46 @@ FUNCTION split_string(this,separator) RESULT(sub_str)
   !
   INTEGER(SIK) :: iSplit,nSplits,stt,stp,sepLoc
 
-  stp = LEN(this%s)
-  sepLoc = MERGE(INDEX(this%s,separator),0,stp > 1 .OR. LEN(separator) > 0)
-  IF(sepLoc == 0) THEN
-    !This indicates that either the string or the separator were empty, or
-    !the separator was not found in the string.
+  IF(ALLOCATED(this%s)) THEN
+    stp = LEN(this%s)
+    sepLoc = MERGE(INDEX(this%s,separator),0,stp > 1 .OR. LEN(separator) > 0)
+    IF(sepLoc == 0) THEN
+      !This indicates that either the string or the separator were empty, or
+      !the separator was not found in the string.
+      ALLOCATE(sub_str(1))
+      sub_str(1) = this%s
+      RETURN !For these conditions the original string is returned
+    ENDIF
+
+    ! Count the number of splits
+    nSplits = 0
+    stt = 1
+    DO WHILE(sepLoc > 0)
+      nSplits = nSplits + 1
+      stt = stt + sepLoc + LEN(separator) - 1
+      sepLoc = INDEX(this%s(stt:stp),separator)
+    ENDDO
+    !Account for strings that don't end in a delimiter
+    IF(stt <= stp) nSplits = nSplits + 1
+    ALLOCATE(sub_str(nSplits))
+
+    stt = 1
+    iSplit = 0
+    sepLoc = INDEX(this%s(stt:stp),separator)
+    DO WHILE(sepLoc > 0)
+      iSplit = iSplit + 1
+      sub_str(iSplit) = this%s(stt:stt+sepLoc-2)
+      stt = stt + sepLoc + LEN(separator) - 1
+      sepLoc = INDEX(this%s(stt:stp),separator)
+    ENDDO
+    ! If the string ends with a word, then it wasn't snatched out before
+    IF(iSplit < nSplits) THEN
+      sub_str(nSplits) = &
+          this%s(INDEX(this%s(1:stp),separator,.TRUE.)+LEN(separator):stp)
+    ENDIF
+  ELSE
     ALLOCATE(sub_str(1))
-    sub_str(1) = this%s
-    RETURN !For these conditions the original string is returned
-  ENDIF
-
-  ! Count the number of splits
-  nSplits = 0
-  stt = 1
-  DO WHILE(sepLoc > 0)
-    nSplits = nSplits + 1
-    stt = stt + sepLoc + LEN(separator) - 1
-    sepLoc = INDEX(this%s(stt:stp),separator)
-  ENDDO
-  !Account for strings that don't end in a delimiter
-  IF(stt <= stp) nSplits = nSplits + 1
-  ALLOCATE(sub_str(nSplits))
-
-  stt = 1
-  iSplit = 0
-  sepLoc = INDEX(this%s(stt:stp),separator)
-  DO WHILE(sepLoc > 0)
-    iSplit = iSplit + 1
-    sub_str(iSplit) = this%s(stt:stt+sepLoc-2)
-    stt = stt + sepLoc + LEN(separator) - 1
-    sepLoc = INDEX(this%s(stt:stp),separator)
-  ENDDO
-  ! If the string ends with a word, then it wasn't snatched out before
-  IF(iSplit < nSplits) THEN
-    sub_str(nSplits) = &
-        this%s(INDEX(this%s(1:stp),separator,.TRUE.)+LEN(separator):stp)
+    sub_str=''
   ENDIF
 ENDFUNCTION split_string
 !
@@ -1039,8 +1061,11 @@ FUNCTION isInteger(this) RESULT(bool)
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: stt
 
-  stt = MAX(INDEX(this%s,'+'),INDEX(this%s,'-'))
-  bool = isNumeric(this%s(stt+1:LEN(this%s)))
+  bool=.FALSE.
+  IF(ALLOCATED(this%s)) THEN
+    stt = MAX(INDEX(this%s,'+'),INDEX(this%s,'-'))
+    bool = isNumeric(this%s(stt+1:LEN(this%s)))
+  ENDIF
 ENDFUNCTION isInteger
 !
 !-------------------------------------------------------------------------------
@@ -1054,28 +1079,30 @@ FUNCTION isFloat(this) RESULT(bool)
   INTEGER(SIK) :: stt,dec_pos,exp_pos,pos_neg_exp
 
   bool = .FALSE.
-  ! Enforce that a decimal is required in order to be a float
-  dec_pos = INDEX(this%s,'.')
-  IF(dec_pos > 0) THEN
-    ! Look for leading '+' and '-'
-    stt = MAX(INDEX(this%s(1:dec_pos),'+'),INDEX(this%s(1:dec_pos),'-'))
-    ! Check that the leading characters are numeric
-    IF(isNumeric(this%s(stt+1:dec_pos-1))) THEN
-      ! Look for Currently acceptable exponents
-      exp_pos = MAX(INDEX(this%s,'e'),INDEX(this%s,'E'),INDEX(this%s,'d'))
-      IF(exp_pos > 0) THEN
-        ! Account for sign on exponent
-        pos_neg_exp = exp_pos + MAX(INDEX(this%s(exp_pos+1:LEN(this%s)),'-'),INDEX(this%s(exp_pos+1:LEN(this%s)),'+'))
-        IF(pos_neg_exp > 0) THEN
-          bool = isNumeric(this%s(dec_pos+1:exp_pos-1)) .AND. &
-              isNumeric(this%s(pos_neg_exp+1:LEN(this%s)))
+  IF(ALLOCATED(this%s)) THEN
+    ! Enforce that a decimal is required in order to be a float
+    dec_pos = INDEX(this%s,'.')
+    IF(dec_pos > 0) THEN
+      ! Look for leading '+' and '-'
+      stt = MAX(INDEX(this%s(1:dec_pos),'+'),INDEX(this%s(1:dec_pos),'-'))
+      ! Check that the leading characters are numeric
+      IF(isNumeric(this%s(stt+1:dec_pos-1))) THEN
+        ! Look for Currently acceptable exponents
+        exp_pos = MAX(INDEX(this%s,'e'),INDEX(this%s,'E'),INDEX(this%s,'d'))
+        IF(exp_pos > 0) THEN
+          ! Account for sign on exponent
+          pos_neg_exp = exp_pos + MAX(INDEX(this%s(exp_pos+1:LEN(this%s)),'-'),INDEX(this%s(exp_pos+1:LEN(this%s)),'+'))
+          IF(pos_neg_exp > 0) THEN
+            bool = isNumeric(this%s(dec_pos+1:exp_pos-1)) .AND. &
+                isNumeric(this%s(pos_neg_exp+1:LEN(this%s)))
+          ELSE
+            bool = isNumeric(this%s(dec_pos+1:exp_pos-1)) .AND. &
+                isNumeric(this%s(exp_pos+1:LEN(this%s)))
+          ENDIF
         ELSE
-          bool = isNumeric(this%s(dec_pos+1:exp_pos-1)) .AND. &
-              isNumeric(this%s(exp_pos+1:LEN(this%s)))
+          ! No exponent check decimal to end
+          bool = isNumeric(this%s(dec_pos+1:LEN(this%s)))
         ENDIF
-      ELSE
-        ! No exponent check decimal to end
-        bool = isNumeric(this%s(dec_pos+1:LEN(this%s)))
       ENDIF
     ENDIF
   ENDIF
