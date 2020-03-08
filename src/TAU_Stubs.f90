@@ -150,7 +150,7 @@ ENDTYPE ProfilerType
 !> Essentially a database.
 !>
 TYPE :: ProfilerDBType
-  TYPE(ProfilerType),POINTER :: profiler => NULL()
+  CLASS(ProfilerType),POINTER :: profiler => NULL()
 ENDTYPE ProfilerDBType
 
 !> @brief Type for storing all the profiling data amongst processes
