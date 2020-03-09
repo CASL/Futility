@@ -2069,7 +2069,7 @@ ENDSUBROUTINE createArcFromQuad
 !> @brief Rotates a polygon type in 90-degree rotations in the x-y plane
 !> @param this the polygon to rotate
 !> @param nrotations the number of clockwise 90-degree rotations to apply
-!> @returns new the rotation polygon type
+!> @returns new the rotated polygon type
 !>
 !> The z-dimension of the vertices, edges, and centroids will not change during
 !> the rotation.  Any integer can be specified for the number of rotations, but
