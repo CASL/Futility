@@ -19,7 +19,7 @@ IMPLICIT NONE
 LOGICAL(SBK) :: bool
 REAL(SRK) :: tmprealarray(10)
 REAL(SRK),ALLOCATABLE :: tmpr(:)
-INTEGER(SIK) :: tmpintarray(10)
+INTEGER(SIK) :: tmpintarray(10),i
 INTEGER(SIK),ALLOCATABLE :: tmpi(:)
 TYPE(StringType) :: tmpstr1a(10),tmpstr2a(2,2),str2a(2,3)
 TYPE(StringType),ALLOCATABLE :: tmps1(:),tmps2(:,:)
@@ -375,6 +375,24 @@ SUBROUTINE test1DReals()
   ASSERT(findIndex(tmprealarray,0.0_SRK,.TRUE.,INCL=1) == 1,'index == 1')
   ASSERT(findIndex(tmprealarray,0.0_SRK,.TRUE.,INCL=2) == 2,'index == 2')
   ASSERT(findIndex(tmprealarray,65.0_SRK,.TRUE.,INCL=2) == -2,'index == -2')
+
+  !Check monotonicity functions
+  DO i=1,10
+    tmprealarray(i)=REAL(i,SRK)
+  END DO
+  ASSERT(Is_Mono_Increasing(tmprealarray),'Failure to identify monotonically increasing data')
+  ASSERT(Is_Mono(tmprealarray),'Failure to identify monotonically increasing data')
+  tmprealarray(4)=20.0_SRK
+  ASSERT(.NOT.Is_Mono_Increasing(tmprealarray),'Failure to identify nonmonotonically increasing data')
+  ASSERT(.NOT.Is_Mono(tmprealarray),'Failure to identify nonmonotonically increasing data')
+  DO i=1,10
+    tmprealarray(i)=11.0_SRK-REAL(i,SRK)
+  END DO
+  ASSERT(Is_Mono_Decreasing(tmprealarray),'Failure to identify monotonically decreasing data')
+  ASSERT(Is_Mono(tmprealarray),'Failure to identify monotonically decreasing data')
+  tmprealarray(4)=20.0_SRK
+  ASSERT(.NOT.Is_Mono_Increasing(tmprealarray),'Failure to identify nonmonotonically decreasing data')
+  ASSERT(.NOT.Is_Mono(tmprealarray),'Failure to identify nonmonotonically decreasing data')
 
 ENDSUBROUTINE test1DReals
 !

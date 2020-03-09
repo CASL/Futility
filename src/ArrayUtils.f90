@@ -12,11 +12,12 @@
 !>        real array, along with several others.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ArrayUtils
-
 USE IntrType
 USE Sorting
 USE Strings
+
 IMPLICIT NONE
+PRIVATE
 
 PUBLIC :: getAbsolute
 PUBLIC :: getDelta
@@ -24,6 +25,9 @@ PUBLIC :: getUnique
 PUBLIC :: findNUnique
 PUBLIC :: getUnion
 PUBLIC :: findIndex
+PUBLIC :: Is_Mono
+PUBLIC :: Is_Mono_Increasing
+PUBLIC :: Is_Mono_Decreasing
 !PUBLIC :: findIntersection
 !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
 !to see if the 1-D array exists in the 2-D array...
@@ -202,7 +206,7 @@ ENDSUBROUTINE getDelta_1DReal
 !> @param r The input array of reals
 !> @param delta The optional input for whether the array is incremental or not
 !> @param tol The tolerance for comparing two real values
-!> @param sout The number of unique entries in the array r.
+!> @returns sout The number of unique entries in the array r.
 !>
 FUNCTION findNUnique_1DReal(r,delta,tol) RESULT(sout)
   REAL(SRK),INTENT(IN) :: r(:)
@@ -249,7 +253,7 @@ ENDFUNCTION findNUnique_1DReal
 !>        composed of incremental values (deltas) or absolute values.
 !> @param r The input array of integers
 !> @param delta The optional input for whether the array is incremental or not
-!> @param sout The number of unique entries in the array r.
+!> @returns sout The number of unique entries in the array r.
 !>
 FUNCTION findNUnique_1DInt(r,delta) RESULT(sout)
   INTEGER(SIK),INTENT(IN) :: r(:)
@@ -293,7 +297,7 @@ ENDFUNCTION findNUnique_1DInt
 !> @param r The input array of reals
 !> @param delta The optional input for whether the array is incremental or not
 !> @param tol The tolerance for comparing two real values
-!> @param sout The number of unique entries in the array r.
+!> @returns sout The number of unique entries in the array r.
 !>
 FUNCTION findNUnique_1DString(r,delta,tol) RESULT(sout)
   TYPE(StringType),INTENT(IN) :: r(:)
@@ -333,7 +337,7 @@ ENDFUNCTION findNUnique_1DString
 !> @param r The input array of reals
 !> @param delta The optional input for whether the array is incremental or not
 !> @param tol The tolerance for comparing two real values
-!> @param sout The number of unique entries in the array r.
+!> @returns sout The number of unique entries in the array r.
 !>
 FUNCTION findNUnique_2DString(r,delta,tol) RESULT(sout)
   TYPE(StringType),INTENT(IN) :: r(:,:)
@@ -734,7 +738,7 @@ ENDSUBROUTINE getUnion_1DReal
 !> @param pos The position for which to find an index
 !> @param xi The optional input for the bottom starting position
 !> @param delta The optional input for whether the array is incremental or not
-!> @param ind The array index where pos is located in r.
+!> @returns ind The array index where pos is located in r.
 !>
 PURE FUNCTION findIndex_1DReal(r,pos,delta,incl,tol) RESULT(ind)
   REAL(SRK),INTENT(IN) :: r(:)
@@ -880,7 +884,7 @@ ENDFUNCTION findIndex_1DInt
 !> @param pos The position for which to find the nearest lesser value
 !> @param xi The optional input for the bottom starting position
 !> @param delta The optional input for whether the array is incremental or not
-!> @param val The nearest lesser value
+!> @returns val The nearest lesser value
 !>
 PURE FUNCTION findLowBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
   REAL(SRK),INTENT(IN) :: r(:)
@@ -940,7 +944,7 @@ ENDFUNCTION findLowBound_1DReal
 !> @param pos The position for which to find the nearest greater value
 !> @param xi The optional input for the bottom starting position
 !> @param delta The optional input for whether the array is incremental or not
-!> @param val The nearest greater value
+!> @returns val The nearest greater value
 !>
 PURE FUNCTION findUpBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
   REAL(SRK),INTENT(IN) :: r(:)
@@ -991,4 +995,69 @@ PURE FUNCTION findUpBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
   ENDIF
 ENDFUNCTION findUpBound_1DReal
 !
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r either monotonically increase or decrease.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+FUNCTION Is_Mono(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  LOGICAL(SBK) :: good
+
+  IF(SIZE(r) > 1) THEN
+    IF(r(1) < r(2)) THEN
+      good=Is_Mono_Increasing(r)
+    ELSE
+      good=Is_Mono_Decreasing(r)
+    ENDIF
+  ELSE
+    good=.FALSE.
+  ENDIF
+ENDFUNCTION Is_Mono
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r either monotonically increase or decrease.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+FUNCTION Is_Mono_Increasing(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(r(i) < r(i-1)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION Is_Mono_Increasing
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r either monotonically increase or decrease.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+FUNCTION Is_Mono_Decreasing(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(r(i) > r(i-1)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION Is_Mono_Decreasing
+
 ENDMODULE ArrayUtils

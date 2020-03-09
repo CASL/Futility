@@ -18,15 +18,12 @@ USE FutilityComputingEnvironmentModule
 USE IntrType
 USE ExceptionHandler
 USE IO_Strings
+USE ArrayUtils
 
 IMPLICIT NONE
 PRIVATE
 
 PUBLIC :: Interp
-
-CHARACTER(LEN=*),PARAMETER :: modName='InterpolatorsModule'
-
-TYPE(ExceptionHandlerType),SAVE :: eInterp
 
 !> @brief Generic interface to interpolate whatever is handed in.
 !>
@@ -41,18 +38,6 @@ INTERFACE Interp
   !> @copydetails InterpolatorsModule::Interp_3D
   MODULE PROCEDURE Interp_3D
 ENDINTERFACE Interp
-
-INTERFACE Data_Verify
-  !> @copybrief InterpolatorsModule::Data_Verify_1D
-  !> @copydetails InterpolatorsModule::Data_Verify_1D
-  MODULE PROCEDURE Data_Verify_1D
-  !> @copybrief InterpolatorsModule::Data_Verify_2D
-  !> @copydetails InterpolatorsModule::Data_Verify_2D
-  MODULE PROCEDURE Data_Verify_2D
-  !> @copybrief InterpolatorsModule::Data_Verify_3D
-  !> @copydetails InterpolatorsModule::Data_Verify_3D
-  MODULE PROCEDURE Data_Verify_3D
-ENDINTERFACE Data_Verify
 !
 !===============================================================================
 CONTAINS
@@ -72,7 +57,10 @@ FUNCTION Interp_1D(labels,table,point) RESULT(Interpolant)
   REAL(SRK) :: Interpolant,f(2)
   INTEGER(SIK) :: i,N_i,i_p
 
-  REQUIRE(Data_Verify(labels,table))
+  REQUIRE(SIZE(labels) > 1)
+  REQUIRE(SIZE(labels) == SIZE(table))
+  REQUIRE(Check_Duplicate_Labels(labels))
+  REQUIRE(Is_Mono(labels))
 
   CALL Get_points_and_weights(labels,point,f,i_p,N_i)
 
@@ -101,7 +89,14 @@ FUNCTION Interp_2D(labels1,labels2,table,point) RESULT(Interpolant)
   REAL(SRK) :: Interpolant,f1(2),f2(2)
   INTEGER(SIK) :: i,j,N_i,N_j,i_p,j_p
 
-  REQUIRE(Data_Verify(labels1,labels2,table))
+  REQUIRE(SIZE(labels1) > 1)
+  REQUIRE(SIZE(labels2) > 1)
+  REQUIRE(SIZE(labels1) == SIZE(table(:,1)))
+  REQUIRE(SIZE(labels2) == SIZE(table(1,:)))
+  REQUIRE(Check_Duplicate_Labels(labels1))
+  REQUIRE(Check_Duplicate_Labels(labels2))
+  REQUIRE(Is_Mono(labels1))
+  REQUIRE(Is_Mono(labels2))
 
   CALL Get_points_and_weights(labels1,point(1),f1,i_p,N_i)
   CALL Get_points_and_weights(labels2,point(2),f2,j_p,N_j)
@@ -136,7 +131,18 @@ FUNCTION Interp_3D(labels1,labels2,labels3,table,point) RESULT(Interpolant)
   REAL(SRK) :: Interpolant,f1(2),f2(2),f3(2)
   INTEGER(SIK) :: i,j,k,N_i,N_j,N_k,i_p,j_p,k_p
 
-  REQUIRE(Data_Verify(labels1,labels2,labels3,table))
+  REQUIRE(SIZE(labels1) > 1)
+  REQUIRE(SIZE(labels2) > 1)
+  REQUIRE(SIZE(labels3) > 1)
+  REQUIRE(SIZE(labels1) == SIZE(table(:,1,1)))
+  REQUIRE(SIZE(labels2) == SIZE(table(1,:,1)))
+  REQUIRE(SIZE(labels3) == SIZE(table(1,1,:)))
+  REQUIRE(Check_Duplicate_Labels(labels1))
+  REQUIRE(Check_Duplicate_Labels(labels2))
+  REQUIRE(Check_Duplicate_Labels(labels3))
+  REQUIRE(Is_Mono(labels1))
+  REQUIRE(Is_Mono(labels2))
+  REQUIRE(Is_Mono(labels3))
 
   CALL Get_points_and_weights(labels1,point(1),f1,i_p,N_i)
   CALL Get_points_and_weights(labels2,point(2),f2,j_p,N_j)
@@ -197,114 +203,18 @@ SUBROUTINE Get_points_and_weights(labels,point,f,i_p,N_i)
 ENDSUBROUTINE Get_points_and_weights
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes the input for the 1D interpolator routine
-!>        and checks it to ensure it is correct (Monotonically increasing
-!>        or decreasing axis labels, and correct dimensions for table/labels).
-!> @param labels axis labels at which data points in table are defined
-!> @param table contains data to be interpolated between defined at points
-!>        given in labels.
-!> @returns good boolean indicating whether the data is good or not.
+!> @brief Routine that checks that there are no consecutive duplicates.
+!> @param labels axis labels at which data points in a data table are defined.
+!> @returns good boolean indicating whether the check has passed or not.
 !>
-FUNCTION Data_Verify_1D(labels,table) RESULT(good)
+FUNCTION Check_Duplicate_Labels(labels) RESULT(good)
   REAL(SRK),INTENT(IN) :: labels(:)
-  REAL(SRK),INTENT(IN) :: table(:)
-  CHARACTER(LEN=*),PARAMETER :: myName='Data_Verify_1D'
-  LOGICAL(SBK) :: good
-
-  good=Check_label_and_table(labels,table,1,myName)
-
-END FUNCTION Data_Verify_1D
-!
-!-------------------------------------------------------------------------------
-!> @brief This routine takes the input for the 2D interpolator routine
-!>        and checks it to ensure it is correct (Monotonically increasing
-!>        or decreasing axis labels, and correct dimensions for table/labels).
-!> @param labels1 axis labels at which data points in table are defined for 1st dimension
-!> @param labels2 axis labels at which data points in table are defined for 2nd dimension
-!> @param table contains data to be interpolated between defined at points
-!>        given in labels1 and labels2.
-!> @returns good boolean indicating whether the data is good or not.
-!>
-FUNCTION Data_Verify_2D(labels1,labels2,table) RESULT(good)
-  REAL(SRK),INTENT(IN) :: labels1(:)
-  REAL(SRK),INTENT(IN) :: labels2(:)
-  REAL(SRK),INTENT(IN) :: table(:,:)
-  CHARACTER(LEN=*),PARAMETER :: myName='Data_Verify_2D'
-  LOGICAL(SBK) :: good
-
-  good=Check_label_and_table(labels1,table(:,1),1,myName)
-  good=Check_label_and_table(labels2,table(1,:),2,myName)
-
-END FUNCTION Data_Verify_2D
-!
-!-------------------------------------------------------------------------------
-!> @brief This routine takes the input for the 3D interpolator routine
-!>        and checks it to ensure it is correct (Monotonically increasing
-!>        or decreasing axis labels, and correct dimensions for table/labels).
-!> @param labels1 axis labels at which data points in table are defined for 1st dimension
-!> @param labels2 axis labels at which data points in table are defined for 2nd dimension
-!> @param labels3 axis labels at which data points in table are defined for 3rd dimension
-!> @param table contains data to be interpolated between defined at points
-!>        given in labels1, labels2, and labels 3.
-!> @returns good boolean indicating whether the data is good or not.
-!>
-FUNCTION Data_Verify_3D(labels1,labels2,labels3,table) RESULT(good)
-  REAL(SRK),INTENT(IN) :: labels1(:)
-  REAL(SRK),INTENT(IN) :: labels2(:)
-  REAL(SRK),INTENT(IN) :: labels3(:)
-  REAL(SRK),INTENT(IN) :: table(:,:,:)
-  CHARACTER(LEN=*),PARAMETER :: myName='Data_Verify_3D'
-  LOGICAL(SBK) :: good
-
-  good=Check_label_and_table(labels1,table(:,1,1),1,myName)
-  good=Check_label_and_table(labels2,table(1,:,1),2,myName)
-  good=Check_label_and_table(labels3,table(1,1,:),3,myName)
-
-END FUNCTION Data_Verify_3D
-!
-!-------------------------------------------------------------------------------
-!> @brief Routine that does checks on labels and tables for a given dimension.
-!> @param labels axis labels at which data points in table are defined.
-!> @param table contains data to be interpolated between defined at points
-!>        given in labels.
-!> @param dim current dimension being checked
-!> @param myName name of the Data_Verify function called to check input data
-!> @returns good boolean indicating whether the data is good or not.
-!>
-FUNCTION Check_label_and_table(labels,table,dim,myName) RESULT(good)
-  REAL(SRK),INTENT(IN) :: labels(:)
-  REAL(SRK),INTENT(IN) :: table(:)
-  INTEGER(SIK),INTENT(IN) :: dim
-  CHARACTER(LEN=*),INTENT(IN) :: myName
   INTEGER(SIK) :: i
   LOGICAL(SBK) :: good
-
-  IF(SIZE(labels) == 1) THEN
-    CALL eInterp%raiseError(modName// &
-        '::'//myName//' - Size of table insufficient for interpolation!')
-  ELSEIF(SIZE(labels) /= SIZE(table)) THEN
-    CALL eInterp%raiseError(modName// &
-        '::'//myName//' - Table dimension do not match label dimensions dimension '//str(dim)//'!')
-  ELSE
-    DO i=2,SIZE(labels)
-      IF(labels(i) .APPROXEQR. labels(i-1)) CALL eInterp%raiseError(modName// &
-          '::'//myName//' - Identical data labels found dimension '//str(dim)//'!')
-    ENDDO
-    IF(labels(1) < labels(2)) THEN
-      DO i=2,SIZE(labels)
-        IF(labels(i) < labels(i-1)) CALL eInterp%raiseError(modName// &
-            '::'//myName//' - Nonmonotonicity detected in data labels dimension '//str(dim)//'!')
-      ENDDO
-    ELSE
-      DO i=2,SIZE(labels)
-        IF(labels(i) > labels(i-1)) CALL eInterp%raiseError(modName// &
-            '::'//myName//' - Nonmonotonicity detected in data labels dimension '//str(dim)//'!')
-      ENDDO
-    ENDIF
-  ENDIF
-
   good=.TRUE.
-
-ENDFUNCTION Check_label_and_table
-
+  DO i=2,SIZE(labels)
+    IF(labels(i) .APPROXEQR. labels(i-1)) good=.FALSE.
+  ENDDO
+END FUNCTION Check_Duplicate_Labels
+!
 ENDMODULE InterpolatorsModule
