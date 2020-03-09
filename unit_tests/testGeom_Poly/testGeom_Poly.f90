@@ -2963,20 +2963,30 @@ ENDSUBROUTINE testEquivalence
 !-------------------------------------------------------------------------------
 SUBROUTINE testRotateClockwise()
   INTEGER(SIK) :: i
-  REAL(SRK) :: testCoord(2,3)
+  REAL(SRK) :: testCoord(2,4)
   TYPE(PolygonType) :: old,new
 
   CALL old%clear()
   CALL testGraph%clear()
-  testCoord(:,1)=(/-1.0_SRK,-2.0_SRK/)
-  testCoord(:,2)=(/1.0_SRK,-2.0_SRK/)
-  testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
-  DO i=1,3
+  testCoord(:,1)=(/-2.0_SRK,-2.0_SRK/)
+  testCoord(:,2)=(/-2.0_SRK,2.0_SRK/)
+  testCoord(:,3)=(/2.0_SRK,2.0_SRK/)
+  testCoord(:,4)=(/2.0_SRK,-2.0_SRK/)
+  DO i=1,4
     CALL testGraph%insertVertex(testCoord(:,i))
   ENDDO
   CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
   CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
-  CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+  CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
+  CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,1))
+  CALL testGraph%defineQuadraticEdge(testCoord(:,1), &
+      testCoord(:,2),(/0.0_SRK,0.0_SRK/),SQRT(8.0_SRK))
+  CALL testGraph%defineQuadraticEdge(testCoord(:,2), &
+      testCoord(:,3),(/0.0_SRK,0.0_SRK/),SQRT(8.0_SRK))
+  CALL testGraph%defineQuadraticEdge(testCoord(:,3), &
+      testCoord(:,4),(/0.0_SRK,0.0_SRK/),SQRT(8.0_SRK))
+  CALL testGraph%defineQuadraticEdge(testCoord(:,4), &
+      testCoord(:,1),(/0.0_SRK,0.0_SRK/),SQRT(8.0_SRK))
   CALL old%set(testGraph)
 
   COMPONENT_TEST('0 Rotation')

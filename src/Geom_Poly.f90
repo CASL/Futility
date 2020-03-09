@@ -2082,7 +2082,7 @@ FUNCTION rotateClockwise(this,nrotations) RESULT(new)
   TYPE(PolygonType) :: new
   !
   INTEGER(SIK) :: i,irot,nrot
-  REAL(SRK) :: oldx,oldy,newx,newy
+  REAL(SRK) :: x,y,tmpx,tmpy
 
   REQUIRE(this%isInit)
   SELECTTYPE(this)
@@ -2107,39 +2107,39 @@ FUNCTION rotateClockwise(this,nrotations) RESULT(new)
 
   DO i=1,this%nVert
     !Get the old vertex position
-    oldx=this%vert(i)%coord(1)
-    oldy=this%vert(i)%coord(2)
+    x=this%vert(i)%coord(1)
+    y=this%vert(i)%coord(2)
 
     !Now rotate
     DO irot=1,nrot
-      newx=oldy
-      newy=-oldx
+      tmpx=y
+      tmpy=-x
       !Store the current values for the next rotation
-      oldx=newx
-      oldy=newy
+      x=tmpx
+      y=tmpy
     ENDDO !irot
 
-    new%vert(i)%coord(1)=newx
-    new%vert(i)%coord(2)=newy
+    new%vert(i)%coord(1)=x
+    new%vert(i)%coord(2)=y
   ENDDO !i
 
   DO i=1,this%nQuadEdge
     new%quad2edge(i)=this%quad2edge(i)
     !Get the old vertex position
-    oldx=this%quadEdge(1,i)
-    oldy=this%quadEdge(2,i)
+    x=this%quadEdge(1,i)
+    y=this%quadEdge(2,i)
 
     !Now rotate
     DO irot=1,nrot
-      newx=oldy
-      newy=-oldx
+      tmpx=y
+      tmpy=-x
       !Store the current values for the next rotation
-      oldx=newx
-      oldy=newy
+      x=tmpx
+      y=tmpy
     ENDDO !irot
 
-    new%quadEdge(1,i)=newx
-    new%quadEdge(2,i)=newx
+    new%quadEdge(1,i)=x
+    new%quadEdge(2,i)=y
     new%quadEdge(3,i)=this%quadEdge(3,i)
   ENDDO !i
 
