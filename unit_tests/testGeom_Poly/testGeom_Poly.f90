@@ -48,6 +48,7 @@ REGISTER_SUBTEST('%boundsPoly',testPolyInside)
 REGISTER_SUBTEST('%doesPolyIntersect',testDoesPolyIntersect)
 REGISTER_SUBTEST('%subtractSubVolume',testSubtractSubVol)
 REGISTER_SUBTEST('Operator(==)',testEquivalence)
+REGISTER_SUBTEST('RotateClockwise',testRotateClockwise)
 
 FINALIZE_TEST()
 !
@@ -184,6 +185,8 @@ SUBROUTINE testSet()
   refRect%edge(:,3)=(/3,4/)
   refRect%edge(:,4)=(/4,1/)
   refRect%nQuadEdge=0
+  ALLOCATE(refRect%quadEdge(3,0))
+  ALLOCATE(refRect%quad2edge(0))
   CALL refRect%centroid%init(COORD=(/-0.5_SRK,1.0_SRK/))
   bool=(testPolyType == refRect)
   ASSERT(bool,'== rectangle')
@@ -2822,6 +2825,8 @@ SUBROUTINE testEquivalence()
   testPoly2%edge(:,2)=(/2,3/)
   testPoly2%edge(:,3)=(/3,1/)
   testPoly2%area=3.0_SRK
+  ALLOCATE(testpoly2%quadEdge(3,0))
+  ALLOCATE(testpoly2%quad2edge(0))
   CALL testPoly2%centroid%init(COORD=(/0.0_SRK,-1.0_SRK/))
 
   ASSERT(testPolyType == testPoly2,'triangle poly')
@@ -2954,5 +2959,117 @@ SUBROUTINE testEquivalence()
   CALL testPolyType%clear()
 
 ENDSUBROUTINE testEquivalence
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testRotateClockwise()
+  INTEGER(SIK) :: i
+  REAL(SRK) :: testCoord(2,3)
+  TYPE(PolygonType) :: old,new
+
+  CALL old%clear()
+  CALL testGraph%clear()
+  testCoord(:,1)=(/-1.0_SRK,-2.0_SRK/)
+  testCoord(:,2)=(/1.0_SRK,-2.0_SRK/)
+  testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
+  DO i=1,3
+    CALL testGraph%insertVertex(testCoord(:,i))
+  ENDDO
+  CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+  CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+  CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+  CALL old%set(testGraph)
+
+  COMPONENT_TEST('0 Rotation')
+  new=old%RotateClockwise(0)
+  ASSERT_EQ(SIZE(new%vert),SIZE(old%vert),'SIZE %vert')
+  DO i=1,SIZE(old%vert)
+    ASSERT_APPROXEQ(new%vert(i)%coord(1),old%vert(i)%coord(1),'%vert, x')
+    ASSERT_APPROXEQ(new%vert(i)%coord(2),old%vert(i)%coord(2),'%vert, y')
+  ENDDO !i
+  ASSERT_EQ(SIZE(new%quadEdge),SIZE(old%quadEdge),'SIZE %quadEdge')
+  DO i=1,SIZE(new%quadEdge,DIM=2)
+    ASSERT_APPROXEQ(new%quadEdge(1,i),old%quadEdge(1,i),'%quadEdge, x')
+    ASSERT_APPROXEQ(new%quadEdge(2,i),old%quadEdge(2,i),'%quadEdge, y')
+    ASSERT_APPROXEQ(new%quadEdge(3,i),old%quadEdge(3,i),'%quadEdge, z')
+  ENDDO !i
+
+  COMPONENT_TEST('1 Rotation')
+  new=old%RotateClockwise(1)
+  ASSERT_EQ(SIZE(new%vert),SIZE(old%vert),'SIZE %vert')
+  DO i=1,SIZE(old%vert)
+    ASSERT_APPROXEQ(new%vert(i)%coord(1),old%vert(i)%coord(2),'%vert, x')
+    ASSERT_APPROXEQ(new%vert(i)%coord(2),-old%vert(i)%coord(1),'%vert, y')
+  ENDDO !i
+  ASSERT_EQ(SIZE(new%quadEdge),SIZE(old%quadEdge),'SIZE %quadEdge')
+  DO i=1,SIZE(new%quadEdge,DIM=2)
+    ASSERT_APPROXEQ(new%quadEdge(1,i),old%quadEdge(2,i),'%quadEdge, x')
+    ASSERT_APPROXEQ(new%quadEdge(2,i),-old%quadEdge(1,i),'%quadEdge, y')
+    ASSERT_APPROXEQ(new%quadEdge(3,i),old%quadEdge(3,i),'%quadEdge, z')
+  ENDDO !i
+
+  COMPONENT_TEST('2 Rotation')
+  new=old%RotateClockwise(2)
+  ASSERT_EQ(SIZE(new%vert),SIZE(old%vert),'SIZE %vert')
+  DO i=1,SIZE(old%vert)
+    ASSERT_APPROXEQ(new%vert(i)%coord(1),-old%vert(i)%coord(1),'%vert, x')
+    ASSERT_APPROXEQ(new%vert(i)%coord(2),-old%vert(i)%coord(2),'%vert, y')
+  ENDDO !i
+  ASSERT_EQ(SIZE(new%quadEdge),SIZE(old%quadEdge),'SIZE %quadEdge')
+  DO i=1,SIZE(new%quadEdge,DIM=2)
+    ASSERT_APPROXEQ(new%quadEdge(1,i),-old%quadEdge(1,i),'%quadEdge, x')
+    ASSERT_APPROXEQ(new%quadEdge(2,i),-old%quadEdge(2,i),'%quadEdge, y')
+    ASSERT_APPROXEQ(new%quadEdge(3,i),old%quadEdge(3,i),'%quadEdge, z')
+  ENDDO !i
+
+  COMPONENT_TEST('3 Rotation')
+  new=old%RotateClockwise(3)
+  ASSERT_EQ(SIZE(new%vert),SIZE(old%vert),'SIZE %vert')
+  DO i=1,SIZE(old%vert)
+    ASSERT_APPROXEQ(new%vert(i)%coord(1),-old%vert(i)%coord(2),'%vert, x')
+    ASSERT_APPROXEQ(new%vert(i)%coord(2),old%vert(i)%coord(1),'%vert, y')
+  ENDDO !i
+  ASSERT_EQ(SIZE(new%quadEdge),SIZE(old%quadEdge),'SIZE %quadEdge')
+  DO i=1,SIZE(new%quadEdge,DIM=2)
+    ASSERT_APPROXEQ(new%quadEdge(1,i),-old%quadEdge(2,i),'%quadEdge, x')
+    ASSERT_APPROXEQ(new%quadEdge(2,i),old%quadEdge(1,i),'%quadEdge, y')
+    ASSERT_APPROXEQ(new%quadEdge(3,i),old%quadEdge(3,i),'%quadEdge, z')
+  ENDDO !i
+
+  COMPONENT_TEST('13 Rotation')
+  new=old%RotateClockwise(13)
+  !NOTE: Same solution as 1 Rotation
+  ASSERT_EQ(SIZE(new%vert),SIZE(old%vert),'SIZE %vert')
+  DO i=1,SIZE(old%vert)
+    ASSERT_APPROXEQ(new%vert(i)%coord(1),old%vert(i)%coord(2),'%vert, x')
+    ASSERT_APPROXEQ(new%vert(i)%coord(2),-old%vert(i)%coord(1),'%vert, y')
+  ENDDO !i
+  ASSERT_EQ(SIZE(new%quadEdge),SIZE(old%quadEdge),'SIZE %quadEdge')
+  DO i=1,SIZE(new%quadEdge,DIM=2)
+    ASSERT_APPROXEQ(new%quadEdge(1,i),old%quadEdge(2,i),'%quadEdge, x')
+    ASSERT_APPROXEQ(new%quadEdge(2,i),-old%quadEdge(1,i),'%quadEdge, y')
+    ASSERT_APPROXEQ(new%quadEdge(3,i),old%quadEdge(3,i),'%quadEdge, z')
+  ENDDO !i
+
+  COMPONENT_TEST('-11 Rotation')
+  new=old%RotateClockwise(-11)
+  !NOTE: Same solution as 1 Rotation
+  ASSERT_EQ(SIZE(new%vert),SIZE(old%vert),'SIZE %vert')
+  DO i=1,SIZE(old%vert)
+    ASSERT_APPROXEQ(new%vert(i)%coord(1),old%vert(i)%coord(2),'%vert, x')
+    ASSERT_APPROXEQ(new%vert(i)%coord(2),-old%vert(i)%coord(1),'%vert, y')
+  ENDDO !i
+  ASSERT_EQ(SIZE(new%quadEdge),SIZE(old%quadEdge),'SIZE %quadEdge')
+  DO i=1,SIZE(new%quadEdge,DIM=2)
+    ASSERT_APPROXEQ(new%quadEdge(1,i),old%quadEdge(2,i),'%quadEdge, x')
+    ASSERT_APPROXEQ(new%quadEdge(2,i),-old%quadEdge(1,i),'%quadEdge, y')
+    ASSERT_APPROXEQ(new%quadEdge(3,i),old%quadEdge(3,i),'%quadEdge, z')
+  ENDDO !i
+
+  !Cleanup
+  CALL testGraph%clear()
+  CALL old%clear()
+  CALL new%clear()
+
+ENDSUBROUTINE testRotateClockwise
 !
 ENDPROGRAM testGeom_Poly

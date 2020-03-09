@@ -126,6 +126,9 @@ TYPE :: PolygonType
     !> @copybrief Geom_Poly::generateGraph_PolygonType
     !> @copydetails Geom_Poly::generateGraph_PolygonType
     PROCEDURE,PASS :: generateGraph => generateGraph_PolygonType
+    !> @copybrief Geom_Poly::rotateClockwise
+    !> @copydetails Geom_Poly::rotateClockwise
+    PROCEDURE,PASS :: rotateClockwise
 ENDTYPE PolygonType
 
 INTERFACE Polygonize
@@ -179,7 +182,7 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
     !Get the number of vertices and edges (equal, since it's a minimum cycle)
     thisPoly%nVert=thatGraph%nVert()
     ALLOCATE(thisPoly%vert(thisPoly%nVert))
-    CALL dmallocA(thisPoly%edge,2,thisPoly%nVert)
+    ALLOCATE(thisPoly%edge(2,thisPoly%nVert))
     !Setup initial points and edge point
     !Need to use the edgeMatrix to find the neighboring points, can't assume ordered.
     CALL thisPoly%vert(1)%init(DIM=2,X=thatGraph%vertices(1,1), &
@@ -211,9 +214,9 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
     IF(thatGraph%quadEdges(3,1,icurr) > 0.0_SRK) thisPoly%nQuadEdge=thisPoly%nQuadEdge+1
 
     !Setup the quadratic edges if necessary
+    ALLOCATE(thisPoly%quadEdge(3,thisPoly%nQuadEdge))
+    ALLOCATE(thisPoly%quad2edge(thisPoly%nQuadEdge))
     IF(thisPoly%nQuadEdge > 0) THEN
-      CALL dmallocA(thisPoly%quadEdge,3,thisPoly%nQuadEdge)
-      CALL dmallocA(thisPoly%quad2edge,thisPoly%nQuadEdge)
       thisPoly%quad2edge=0
       thisPoly%quadEdge=0.0_SRK
       !Loop over all vertices in the graphtype in CW ordering.
@@ -407,9 +410,9 @@ SUBROUTINE clear_PolygonType(thisPolygon)
     CALL thisPolygon%vert(i)%clear()
   ENDDO
   IF(ALLOCATED(thisPolygon%vert)) DEALLOCATE(thisPolygon%vert)
-  IF(ALLOCATED(thisPolygon%edge)) CALL demallocA(thisPolygon%edge)
-  IF(ALLOCATED(thisPolygon%quad2edge)) CALL demallocA(thisPolygon%quad2edge)
-  CALL demallocA(thisPolygon%quadEdge)
+  IF(ALLOCATED(thisPolygon%edge)) DEALLOCATE(thisPolygon%edge)
+  IF(ALLOCATED(thisPolygon%quad2edge)) DEALLOCATE(thisPolygon%quad2edge)
+  IF(ALLOCATED(thisPolygon%quadEdge)) DEALLOCATE(thisPolygon%quadEdge)
   thisPolygon%nVert=0
   thisPolygon%nQuadEdge=0
   thisPolygon%area=0.0_SRK
@@ -539,7 +542,7 @@ ELEMENTAL FUNCTION getRadius_PolygonType(thisPoly) RESULT(r)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   REAL(SRK) :: r
   r=0.0_SRK
-  IF(thisPoly%isInit) THEN
+  IF(thisPoly%isInit .AND. SIZE(thisPoly%quadEdge,2) > 0) THEN
     r=MERGE(thisPoly%quadEdge(3,1),0.0_SRK,thisPoly%isSection())
   ENDIF
 ENDFUNCTION getRadius_PolygonType
@@ -2061,5 +2064,87 @@ PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
     CALL edge%clear()
   ENDIF
 ENDSUBROUTINE createArcFromQuad
+!
+!-------------------------------------------------------------------------------
+!> @brief Rotates a polygon type in 90-degree rotations in the x-y plane
+!> @param this the polygon to rotate
+!> @param nrotations the number of clockwise 90-degree rotations to apply
+!> @returns new the rotation polygon type
+!>
+!> The z-dimension of the vertices, edges, and centroids will not change during
+!> the rotation.  Any integer can be specified for the number of rotations, but
+!> a value between 0 and 3 inclusive is what will actually be executed since any
+!> set of 4 rotations simply results in the original polygon.
+!>
+FUNCTION rotateClockwise(this,nrotations) RESULT(new)
+  CLASS(PolygonType),INTENT(IN) :: this
+  INTEGER(SIK),INTENT(IN) :: nrotations
+  TYPE(PolygonType) :: new
+  !
+  INTEGER(SIK) :: i,irot,nrot
+  REAL(SRK) :: oldx,oldy,newx,newy
+
+  REQUIRE(this%isInit)
+  SELECTTYPE(this)
+  TYPE IS(PolygonType)
+    new = this
+  CLASS DEFAULT
+    REQUIRE(.FALSE.)
+  ENDSELECT
+
+  !If the user asked for a negative number of rotations or more than 3, shift
+  !it to a reasonable number
+  nrot=nrotations
+  DO WHILE(nrot < 0)
+    nrot=nrot+4
+  ENDDO
+  DO WHILE(nrot > 3)
+    nrot=nrot-4
+  ENDDO
+
+  !0 rotations means we don't actually need to do anything
+  IF(nrot == 0) RETURN
+
+  DO i=1,this%nVert
+    !Get the old vertex position
+    oldx=this%vert(i)%coord(1)
+    oldy=this%vert(i)%coord(2)
+
+    !Now rotate
+    DO irot=1,nrot
+      newx=oldy
+      newy=-oldx
+      !Store the current values for the next rotation
+      oldx=newx
+      oldy=newy
+    ENDDO !irot
+
+    new%vert(i)%coord(1)=newx
+    new%vert(i)%coord(2)=newy
+  ENDDO !i
+
+  DO i=1,this%nQuadEdge
+    new%quad2edge(i)=this%quad2edge(i)
+    !Get the old vertex position
+    oldx=this%quadEdge(1,i)
+    oldy=this%quadEdge(2,i)
+
+    !Now rotate
+    DO irot=1,nrot
+      newx=oldy
+      newy=-oldx
+      !Store the current values for the next rotation
+      oldx=newx
+      oldy=newy
+    ENDDO !irot
+
+    new%quadEdge(1,i)=newx
+    new%quadEdge(2,i)=newx
+    new%quadEdge(3,i)=this%quadEdge(3,i)
+  ENDDO !i
+
+  CALL new%calcCentroid()
+
+ENDFUNCTION rotateClockwise
 !
 ENDMODULE Geom_Poly
