@@ -25,9 +25,9 @@ PUBLIC :: getUnique
 PUBLIC :: findNUnique
 PUBLIC :: getUnion
 PUBLIC :: findIndex
-PUBLIC :: Is_Mono
-PUBLIC :: Is_Mono_Increasing
-PUBLIC :: Is_Mono_Decreasing
+PUBLIC :: isMonotonic
+PUBLIC :: isIncreasing
+PUBLIC :: isDecreasing
 !PUBLIC :: findIntersection
 !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
 !to see if the 1-D array exists in the 2-D array...
@@ -1001,20 +1001,20 @@ ENDFUNCTION findUpBound_1DReal
 !> @param r input array to check for monotonicity of values
 !> @returns good boolean indicating whether the check has passed or not
 !>
-FUNCTION Is_Mono(r) RESULT(good)
+FUNCTION isMonotonic(r) RESULT(good)
   REAL(SRK),INTENT(IN) :: r(:)
   LOGICAL(SBK) :: good
+  good=.FALSE.
 
   IF(SIZE(r) > 1) THEN
     IF(r(1) < r(2)) THEN
-      good=Is_Mono_Increasing(r)
+      good=isIncreasing(r)
     ELSE
-      good=Is_Mono_Decreasing(r)
+      good=isDecreasing(r)
     ENDIF
-  ELSE
-    good=.FALSE.
   ENDIF
-ENDFUNCTION Is_Mono
+
+ENDFUNCTION isMonotonic
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine that checks that the entries of r either monotonically increase or decrease.
@@ -1022,7 +1022,7 @@ ENDFUNCTION Is_Mono
 !> @param r input array to check for monotonicity of values
 !> @returns good boolean indicating whether the check has passed or not
 !>
-FUNCTION Is_Mono_Increasing(r) RESULT(good)
+FUNCTION isIncreasing(r) RESULT(good)
   REAL(SRK),INTENT(IN) :: r(:)
   INTEGER(SIK) :: i
   LOGICAL(SBK) :: good
@@ -1036,7 +1036,7 @@ FUNCTION Is_Mono_Increasing(r) RESULT(good)
     good=.FALSE.
   ENDIF
 
-ENDFUNCTION Is_Mono_Increasing
+ENDFUNCTION isIncreasing
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine that checks that the entries of r either monotonically increase or decrease.
@@ -1044,7 +1044,7 @@ ENDFUNCTION Is_Mono_Increasing
 !> @param r input array to check for monotonicity of values
 !> @returns good boolean indicating whether the check has passed or not
 !>
-FUNCTION Is_Mono_Decreasing(r) RESULT(good)
+FUNCTION isDecreasing(r) RESULT(good)
   REAL(SRK),INTENT(IN) :: r(:)
   INTEGER(SIK) :: i
   LOGICAL(SBK) :: good
@@ -1058,6 +1058,6 @@ FUNCTION Is_Mono_Decreasing(r) RESULT(good)
     good=.FALSE.
   ENDIF
 
-ENDFUNCTION Is_Mono_Decreasing
+ENDFUNCTION isDecreasing
 
 ENDMODULE ArrayUtils

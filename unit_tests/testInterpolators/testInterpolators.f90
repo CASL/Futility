@@ -30,7 +30,8 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE test1DInterp()
-  COMPONENT_TEST('1D Ascending In Range')
+
+  COMPONENT_TEST('1D Asc. In Range')
   label1(1)=1.0_SRK
   label1(2)=2.0_SRK
   label1(3)=3.0_SRK
@@ -38,18 +39,19 @@ SUBROUTINE test1DInterp()
   table_1D(2)=50.0_SRK
   table_1D(3)=75.0_SRK
   Interpolant=Interp(label1,table_1D,1.6_SRK)
-  ASSERT(Interpolant .APPROXEQR. 46.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",46.0_SRK
+  ASSERT_SOFTEQ(Interpolant,46.0_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('1D Ascending Out Of Range')
+  COMPONENT_TEST('1D Asc. Out Of Range')
   Interpolant=Interp(label1,table_1D,0.4_SRK)
-  ASSERT(Interpolant .APPROXEQR. 40.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",40.0_SRK
+  ASSERT_SOFTEQ(Interpolant,40.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,table_1D,3.6_SRK)
-  ASSERT(Interpolant .APPROXEQR. 75.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",75.0_SRK
+  ASSERT_SOFTEQ(Interpolant,75.0_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('1D Descending In Range')
+  COMPONENT_TEST('Asc. Bullseye')
+  Interpolant=Interp(label1,table_1D,2.0_SRK)
+  ASSERT_SOFTEQ(Interpolant,50.0_SRK,1e-14_SRK,'Incorrect Interpolant')
+
+  COMPONENT_TEST('1D Des. In Range')
   label1(1)=3.0_SRK
   label1(2)=2.0_SRK
   label1(3)=1.0_SRK
@@ -57,20 +59,23 @@ SUBROUTINE test1DInterp()
   table_1D(2)=50.0_SRK
   table_1D(3)=40.0_SRK
   Interpolant=Interp(label1,table_1D,1.6_SRK)
-  ASSERT(Interpolant .APPROXEQR. 46.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",46.0_SRK
+  ASSERT_SOFTEQ(Interpolant,46.0_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('1D Descending Out Of Range')
+  COMPONENT_TEST('1D Des. Out Of Range')
   Interpolant=Interp(label1,table_1D,0.4_SRK)
-  ASSERT(Interpolant .APPROXEQR. 40.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",40.0_SRK
+  ASSERT_SOFTEQ(Interpolant,40.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,table_1D,3.6_SRK)
-  ASSERT(Interpolant .APPROXEQR. 75.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",75.0_SRK
+  ASSERT_SOFTEQ(Interpolant,75.0_SRK,1e-14_SRK,'Incorrect Interpolant')
+
+  COMPONENT_TEST('Des. Bullseye')
+  Interpolant=Interp(label1,table_1D,2.0_SRK)
+  ASSERT_SOFTEQ(Interpolant,50.0_SRK,1e-14_SRK,'Incorrect Interpolant')
+
 ENDSUBROUTINE test1DInterp
 
 SUBROUTINE test2DInterp()
-  COMPONENT_TEST('2D Ascending In Range')
+
+  COMPONENT_TEST('2D Asc. In Range')
   label1(1)=1.0_SRK
   label1(2)=2.0_SRK
   label1(3)=3.0_SRK
@@ -87,24 +92,19 @@ SUBROUTINE test2DInterp()
   table_2D(2,3)=110.0_SRK
   table_2D(3,3)=120.0_SRK
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,2.4_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('2D Ascending Out Of Range')
+  COMPONENT_TEST('2D Asc. Out Of Range')
   Interpolant=Interp(label1,label2,table_2D,[0.5_SRK,2.4_SRK])
-  ASSERT(Interpolant .APPROXEQR. 76.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",76.0_SRK
+  ASSERT_SOFTEQ(Interpolant,76.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,table_2D,[3.5_SRK,2.4_SRK])
-  ASSERT(Interpolant .APPROXEQR. 102.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",102.0_SRK
+  ASSERT_SOFTEQ(Interpolant,102.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,0.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 46.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",46.0_SRK
+  ASSERT_SOFTEQ(Interpolant,46.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,3.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 106.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",106.0_SRK
+  ASSERT_SOFTEQ(Interpolant,106.0_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('2D Descending In Range')
+  COMPONENT_TEST('2D Des. In Range')
   label1(1)=3.0_SRK
   label1(2)=2.0_SRK
   label1(3)=1.0_SRK
@@ -120,29 +120,24 @@ SUBROUTINE test2DInterp()
   table_2D(1,3)=75.0_SRK
   table_2D(2,3)=50.0_SRK
   table_2D(3,3)=40.0_SRK
-
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,2.4_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('2D Descending Out Of Range')
+  COMPONENT_TEST('2D Des. Out Of Range')
   Interpolant=Interp(label1,label2,table_2D,[0.5_SRK,2.4_SRK])
-  ASSERT(Interpolant .APPROXEQR. 76.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",76.0_SRK
+  ASSERT_SOFTEQ(Interpolant,76.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,table_2D,[3.5_SRK,2.4_SRK])
-  ASSERT(Interpolant .APPROXEQR. 102.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",102.0_SRK
+  ASSERT_SOFTEQ(Interpolant,102.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,0.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 46.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",46.0_SRK
+  ASSERT_SOFTEQ(Interpolant,46.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,3.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 106.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",106.0_SRK
+  ASSERT_SOFTEQ(Interpolant,106.0_SRK,1e-14_SRK,'Incorrect Interpolant')
 
 ENDSUBROUTINE test2DInterp
 
 SUBROUTINE test3DInterp()
-  COMPONENT_TEST('3D Ascending In Range')
+
+  COMPONENT_TEST('3D Asc. In Range')
   label1(1)=1.0_SRK
   label1(2)=2.0_SRK
   label1(3)=3.0_SRK
@@ -180,30 +175,23 @@ SUBROUTINE test3DInterp()
   table_3D(2,3,3)=110.0_SRK
   table_3D(3,3,3)=120.0_SRK
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('3D Ascending Out Of Range')
+  COMPONENT_TEST('3D Asc. Out Of Range')
   Interpolant=Interp(label1,label2,label3,table_3D,[0.5_SRK,2.4_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 76.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",76.0_SRK
+  ASSERT_SOFTEQ(Interpolant,76.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[3.5_SRK,2.4_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 102.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",102.0_SRK
+  ASSERT_SOFTEQ(Interpolant,102.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,0.5_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 46.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",46.0_SRK
+  ASSERT_SOFTEQ(Interpolant,46.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,3.5_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 106.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",106.0_SRK
+  ASSERT_SOFTEQ(Interpolant,106.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,0.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,3.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
   !
-  COMPONENT_TEST('3D Descending In Range')
+  COMPONENT_TEST('3D Des. In Range')
   label1(1)=3.0_SRK
   label1(2)=2.0_SRK
   label1(3)=1.0_SRK
@@ -241,28 +229,21 @@ SUBROUTINE test3DInterp()
   table_3D(2,3,3)=50.0_SRK
   table_3D(3,3,3)=40.0_SRK
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
 
-  COMPONENT_TEST('3D Descending Out Of Range')
+  COMPONENT_TEST('3D Des. Out Of Range')
   Interpolant=Interp(label1,label2,label3,table_3D,[0.5_SRK,2.4_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 76.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",76.0_SRK
+  ASSERT_SOFTEQ(Interpolant,76.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[3.5_SRK,2.4_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 102.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",102.0_SRK
+  ASSERT_SOFTEQ(Interpolant,102.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,0.5_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 46.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",46.0_SRK
+  ASSERT_SOFTEQ(Interpolant,46.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,3.5_SRK,1.0_SRK])
-  ASSERT(Interpolant .APPROXEQR. 106.0_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",106.0_SRK
+  ASSERT_SOFTEQ(Interpolant,106.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,0.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,3.5_SRK])
-  ASSERT(Interpolant .APPROXEQR. 85.6_SRK,'Incorrect Interpolant')
-  FINFO()"Interpolant=", Interpolant, "True value=",85.6_SRK
+  ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
 
 ENDSUBROUTINE test3DInterp
 

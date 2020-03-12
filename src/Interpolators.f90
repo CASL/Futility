@@ -19,13 +19,14 @@ USE IntrType
 USE ExceptionHandler
 USE IO_Strings
 USE ArrayUtils
+USE Search
 
 IMPLICIT NONE
 PRIVATE
 
 PUBLIC :: Interp
 
-!> @brief Generic interface to interpolate whatever is handed in.
+!> @brief Interface to interpolate whatever is handed in.
 !>
 INTERFACE Interp
   !> @copybrief InterpolatorsModule::Interp_1D
@@ -60,7 +61,7 @@ FUNCTION Interp_1D(labels,table,point) RESULT(Interpolant)
   REQUIRE(SIZE(labels) > 1)
   REQUIRE(SIZE(labels) == SIZE(table))
   REQUIRE(Check_Duplicate_Labels(labels))
-  REQUIRE(Is_Mono(labels))
+  REQUIRE(isMonotonic(labels))
 
   CALL Get_points_and_weights(labels,point,f,i_p,N_i)
 
@@ -95,8 +96,8 @@ FUNCTION Interp_2D(labels1,labels2,table,point) RESULT(Interpolant)
   REQUIRE(SIZE(labels2) == SIZE(table(1,:)))
   REQUIRE(Check_Duplicate_Labels(labels1))
   REQUIRE(Check_Duplicate_Labels(labels2))
-  REQUIRE(Is_Mono(labels1))
-  REQUIRE(Is_Mono(labels2))
+  REQUIRE(isMonotonic(labels1))
+  REQUIRE(isMonotonic(labels2))
 
   CALL Get_points_and_weights(labels1,point(1),f1,i_p,N_i)
   CALL Get_points_and_weights(labels2,point(2),f2,j_p,N_j)
@@ -112,7 +113,7 @@ FUNCTION Interp_2D(labels1,labels2,table,point) RESULT(Interpolant)
 ENDFUNCTION Interp_2D
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes a 2D data table and linearly interpolates to find
+!> @brief This routine takes a 3D data table and linearly interpolates to find
 !>        a desired point.
 !> @param labels1 axis labels at which data points in table are defined for 1st dimension
 !> @param labels2 axis labels at which data points in table are defined for 2nd dimension
@@ -140,9 +141,9 @@ FUNCTION Interp_3D(labels1,labels2,labels3,table,point) RESULT(Interpolant)
   REQUIRE(Check_Duplicate_Labels(labels1))
   REQUIRE(Check_Duplicate_Labels(labels2))
   REQUIRE(Check_Duplicate_Labels(labels3))
-  REQUIRE(Is_Mono(labels1))
-  REQUIRE(Is_Mono(labels2))
-  REQUIRE(Is_Mono(labels3))
+  REQUIRE(isMonotonic(labels1))
+  REQUIRE(isMonotonic(labels2))
+  REQUIRE(isMonotonic(labels3))
 
   CALL Get_points_and_weights(labels1,point(1),f1,i_p,N_i)
   CALL Get_points_and_weights(labels2,point(2),f2,j_p,N_j)
@@ -183,18 +184,14 @@ SUBROUTINE Get_points_and_weights(labels,point,f,i_p,N_i)
   f(:)=1.0_SRK
   IF(labels(1) < labels(2)) THEN
     !Ascending order
-    DO i_p=1,N_i
-      IF(point < labels(i_p)) EXIT
-    ENDDO
+    i_p=upperBound(labels,point)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
       f(1)=(labels(i_p)-point)/(labels(i_p)-labels(i_p-1))
       f(2)=1.0_SRK-f(1)
     ENDIF
   ELSE
     !Descending order
-    DO i_p=1,N_i
-      IF(point > labels(i_p)) EXIT
-    ENDDO
+    i_p=lowerBound(labels,point)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
       f(1)=(point-labels(i_p))/(labels(i_p-1)-labels(i_p))
       f(2)=1.0_SRK-f(1)
