@@ -184,14 +184,14 @@ SUBROUTINE Get_points_and_weights(labels,point,f,i_p,N_i)
   f(:)=1.0_SRK
   IF(labels(1) < labels(2)) THEN
     !Ascending order
-    i_p=upperBound(labels,point)
+    i_p=getFirstGreater(labels,point)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
       f(1)=(labels(i_p)-point)/(labels(i_p)-labels(i_p-1))
       f(2)=1.0_SRK-f(1)
     ENDIF
   ELSE
     !Descending order
-    i_p=lowerBound(labels,point)
+    i_p=getFirstGreaterEqual(labels,point)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
       f(1)=(point-labels(i_p))/(labels(i_p-1)-labels(i_p))
       f(2)=1.0_SRK-f(1)
