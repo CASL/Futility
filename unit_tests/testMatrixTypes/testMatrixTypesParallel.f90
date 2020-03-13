@@ -454,6 +454,7 @@ SUBROUTINE testPetscMatrix()
   CALL pList%add('MatrixType->isSym',.FALSE.)
   CALL pList%add('MatrixType->MPI_COMM_ID',PE_COMM_WORLD)
   CALL thisMatrix%init(pList)
+  CALL pList%clear()
   !Perform test of init function
   ASSERT(thisMatrix%isInit, "init")
   ASSERT(thisMatrix%n==4, "global size")
@@ -600,6 +601,7 @@ SUBROUTINE testDistrBlockBandMatrix()
   CALL distVecPList%add('VectorType->MPI_Comm_ID',PE_COMM_WORLD)
   CALL distrVec1%init(distVecPList)
   CALL distrVec2%init(distVecPList)
+  CALL distVecPList%clear()
 
   ! Check zero vector
   distrVec1%b = 0.0_SRK
