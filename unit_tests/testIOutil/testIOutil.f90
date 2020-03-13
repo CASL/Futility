@@ -206,6 +206,7 @@ SUBROUTINE testIO_Strings()
   CALL getField(35,string,string2,stat)
   ASSERT_EQ(TRIM(string2),'2','multi-arg filepath 35 (field)')
   ASSERT_EQ(stat,0,'multi-arg filepath 35 (stat)')
+  DEALLOCATE(string2)
 
   COMPONENT_TEST('getField (string,char)')
   tmpStr='     cardname 200*3.1 15*0.2'
@@ -508,6 +509,7 @@ SUBROUTINE testIO_Strings()
   CALL getRealFormat(string,string1)
   ASSERT_EQ(string1,'','hello')
   FINFO() '"'//string1//'"'
+  DEALLOCATE(string1)
 
   COMPONENT_TEST('str')
   !SNK

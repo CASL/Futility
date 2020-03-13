@@ -487,27 +487,27 @@ SUBROUTINE matvec_MatrixType(thisMatrix,trans,alpha,x,beta,y,uplo,diag,incx_in)
 
       a=1.0_SRK
       b=1.0_SRK
-      IF (PRESENT(alpha)) a=alpha
-      IF (PRESENT(beta)) b=beta
+      IF(PRESENT(alpha)) a=alpha
+      IF(PRESENT(beta)) b=beta
 
-      IF (b == 0.0_SRK) THEN
+      IF(b == 0.0_SRK) THEN
         y=0.0_SRK
-      ELSEIF (b /= 1.0_SRK) THEN
+      ELSEIF(b /= 1.0_SRK) THEN
         y=y*b
       ENDIF
 
       ! This can probably be optimized for the a /= 1 case
-      IF (a == 1.0_SRK) THEN
+      IF(a == 1.0_SRK) THEN
         DO bIdx=1,SIZE(thisMatrix%bandIdx)
           idxMult=thisMatrix%bands(bIdx)%jIdx-thisMatrix%bandIdx(bIdx)
           y(idxMult)=y(idxMult)+thisMatrix%bands(bIdx)%elem*x(thisMatrix%bands(bIdx)%jIdx)
         ENDDO
-      ELSEIF (a == -1.0_SRK) THEN
+      ELSEIF(a == -1.0_SRK) THEN
         DO bIdx=1,SIZE(thisMatrix%bandIdx)
           idxMult=thisMatrix%bands(bIdx)%jIdx-thisMatrix%bandIdx(bIdx)
           y(idxMult)=y(idxMult)-thisMatrix%bands(bIdx)%elem*x(thisMatrix%bands(bIdx)%jIdx)
         ENDDO
-      ELSEIF (a /= 0.0_SRK) THEN
+      ELSEIF(a /= 0.0_SRK) THEN
         DO bIdx=1,SIZE(thisMatrix%bandIdx)
           idxMult=thisMatrix%bands(bIdx)%jIdx-thisMatrix%bandIdx(bIdx)
           y(idxMult)=y(idxMult)+a*thisMatrix%bands(bIdx)%elem*x(thisMatrix%bands(bIdx)%jIdx)
@@ -738,19 +738,19 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ! First, take care of locally held data.
   SELECT TYPE(thisMatrix)
   TYPE IS(DistributedBlockBandedMatrixType)
-    IF (.NOT. thisMatrix%blockMask) THEN
+    IF(.NOT. thisMatrix%blockMask) THEN
       DO k=1,thisMatrix%nlocalBlocks
         lowIdx=(k-1)*thisMatrix%blockSize+1
         highIdx=lowIdx-1+thisMatrix%blockSize
         CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx), &
             Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
       ENDDO
-      IF (thisMatrix%chunks(rank+1)%isInit) THEN
+      IF(thisMatrix%chunks(rank+1)%isInit) THEN
         CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
             y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
       ENDIF
     ELSE
-      IF (thisMatrix%chunks(rank+1)%isInit) THEN
+      IF(thisMatrix%chunks(rank+1)%isInit) THEN
         CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
             y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
       ELSE
@@ -758,7 +758,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
       ENDIF
     ENDIF
   TYPE IS(DistributedBandedMatrixType)
-    IF (thisMatrix%chunks(rank+1)%isInit) THEN
+    IF(thisMatrix%chunks(rank+1)%isInit) THEN
       CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
           y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
     ELSE
@@ -772,13 +772,13 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ! On each rank, loop over the chunks held (top to bottom)
   DO i=1,SIZE(thisMatrix%iOffsets)-1
     ctDefault=thisMatrix%iOffsets(i+1)-thisMatrix%iOffsets(i)
-    IF (rank+1 == i) THEN
+    IF(rank+1 == i) THEN
       ! We will be receiving data from other processes
       ! Find which other chunks in this row we need to
       ! communicate with
       DO k=1,SIZE(thisMatrix%bandSizes,1)
-        IF (ASSOCIATED(thisMatrix%bandSizes(k)%p)) THEN
-          IF (thisMatrix%bandSizes(k)%p(1) < 0) THEN
+        IF(ALLOCATED(thisMatrix%bandSizes(k)%p)) THEN
+          IF(thisMatrix%bandSizes(k)%p(1) < 0) THEN
             ! We are receiving a whole vector at once
             recvCounter=recvCounter+1
             idxTmp=MOD(recvCounter,MATVEC_SLOTS)+1
@@ -798,7 +798,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
               ! If we've filled up the available storage, we need
               ! to wait for communication to finish up
               CALL pop_recv(tmpProduct,recvResult,recvIdx,ctRecv,idxTmp, &
-                  recvRequests, recvIdxRequests)
+                  recvRequests,recvIdxRequests)
               ctRecv(idxTmp)=-thisMatrix%bandSizes(k)%p(l)
               CALL MPI_IRecv(recvIdx(1:ctRecv(idxTmp),idxTmp),-ctRecv(idxTmp), &
                   MPI_INTEGER,k-1,0,thisMatrix%comm,recvIdxRequests(idxTmp), mpierr)
@@ -816,9 +816,9 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
       ENDDO
     ELSE
       ! We will be sending data to some other process
-      IF (thismatrix%chunks(i)%isInit) THEN
+      IF(thismatrix%chunks(i)%isInit) THEN
         ! Decide whether to send whole vector or multiple sparse
-        IF (2*thisMatrix%chunks(i)%nnz/3 >= thisMatrix%chunks(i)%n) THEN
+        IF(2*thisMatrix%chunks(i)%nnz/3 >= thisMatrix%chunks(i)%n) THEN
           sendCounter=sendCounter+1
           idxTmp=MOD(sendCounter,MATVEC_SLOTS)+1
           ! Check if we can safely write to sendRequests
@@ -858,40 +858,40 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ! do y=alpha*reduce+beta*y
   ! We take many special cases in order to effectively use FMA instructions
   ! or reduce the required flops.
-  IF (a == 1.0_SRK) THEN
-    IF (b == 1.0_SRK) THEN
+  IF(a == 1.0_SRK) THEN
+    IF(b == 1.0_SRK) THEN
       y=tmpProduct+y
-    ELSEIF (b == 0.0_SRK) THEN
+    ELSEIF(b == 0.0_SRK) THEN
       y=tmpProduct
-    ELSEIF (b == -1.0_SRK) THEN
+    ELSEIF(b == -1.0_SRK) THEN
       y=tmpProduct-y
     ELSE
       y=tmpProduct+b*y
     ENDIF
-  ELSEIF (a == 0.0_SRK) THEN
-    IF (b == 0.0_SRK) THEN
+  ELSEIF(a == 0.0_SRK) THEN
+    IF(b == 0.0_SRK) THEN
       y=0.0_SRK
-    ELSEIF (b == -1.0_SRK) THEN
+    ELSEIF(b == -1.0_SRK) THEN
       y=-y
-    ELSEIF (b /= 1.0_SRK) THEN
+    ELSEIF(b /= 1.0_SRK) THEN
       y=b*y
     ENDIF
-  ELSEIF (a == -1.0_SRK) THEN
-    IF (b == 1.0_SRK) THEN
+  ELSEIF(a == -1.0_SRK) THEN
+    IF(b == 1.0_SRK) THEN
       y=y-tmpProduct
-    ELSEIF (b == 0.0_SRK) THEN
+    ELSEIF(b == 0.0_SRK) THEN
       y=-tmpProduct
-    ELSEIF (b == -1.0_SRK) THEN
+    ELSEIF(b == -1.0_SRK) THEN
       y=-tmpProduct-y
     ELSE
       y=b*y-tmpProduct
     ENDIF
   ELSE
-    IF (b == 1.0_SRK) THEN
+    IF(b == 1.0_SRK) THEN
       y=a*tmpProduct+y
-    ELSEIF (b == 0.0_SRK) THEN
+    ELSEIF(b == 0.0_SRK) THEN
       y=a*tmpProduct
-    ELSEIF (b == -1.0_SRK) THEN
+    ELSEIF(b == -1.0_SRK) THEN
       y=a*tmpProduct-y
     ELSE
       y=a*tmpProduct+b*y
@@ -923,10 +923,10 @@ SUBROUTINE pop_recv(acc,valBuf,idxBuf,ctBuf,idx,req,idxReq)
   INTEGER(SIK), INTENT(INOUT) :: idxReq(MATVEC_SLOTS)
   INTEGER(SIK) :: mpierr
 
-  IF (req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
+  IF(req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
 
   CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
-  IF (ctBuf(idx) > 0) THEN
+  IF(ctBuf(idx) > 0) THEN
     acc(1:ctBuf(idx))=acc(1:ctBuf(idx))+valBuf(1:ctBuf(idx),idx)
   ELSE
     CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
@@ -959,10 +959,10 @@ SUBROUTINE pop_send(valBuf, idxBuf, idx, req, idxReq)
   INTEGER(SIK), INTENT(INOUT) :: idxReq(MATVEC_SLOTS)
   INTEGER(SIK) :: mpierr
 
-  IF (req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
+  IF(req(idx) == 0 .AND. idxReq(idx) == 0) RETURN
 
   CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
-  IF (idxReq(idx) /= 0) THEN
+  IF(idxReq(idx) /= 0) THEN
     CALL MPI_Wait(idxReq(idx),MPI_STATUS_IGNORE,mpierr)
     idxReq(idx)=0
   ENDIF
@@ -1010,7 +1010,7 @@ PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
 
     ! Check whether diagonal is treated as unity or not.
     nounit=.FALSE.
-    IF (diag == 'n' .OR. diag == 'N') nounit=.TRUE.
+    IF(diag == 'n' .OR. diag == 'N') nounit=.TRUE.
     ! Determine how elements of x are stored, and find "first" element accordingly
     IF(incx <= 0_SIK) THEN
       kx=1-(n-1)*incx ! Elements stored in reverse order (highest index to lowest)
@@ -1019,9 +1019,9 @@ PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
     ENDIF
 
     ! Don't use transpose of matrix
-    IF (trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
+    IF(trans == 'n' .OR. trans == 'N') THEN  ! Form  x := inv( A )*x.
       ! Multiply by upper triangular part of matrix
-      IF (uplo == 'u' .OR. uplo == 'U') THEN
+      IF(uplo == 'u' .OR. uplo == 'U') THEN
         ! Elements of x are stored in increments of 1
         IF(incx == 1) THEN
           DO i=n,1,-1
@@ -1084,11 +1084,11 @@ PURE SUBROUTINE trsv_sparse(uplo,trans,diag,a,ia,ja,x,incx_in)
     ! Use transpose of matrix
     ELSE
       ! Multiply by upper trianbular part of matrix
-      IF (uplo == 'u' .OR. uplo == 'U') THEN
+      IF(uplo == 'u' .OR. uplo == 'U') THEN
         IF(incx == 1) THEN
           DO j=1,SIZE(ia)-1
             IF(.NOT.(x(j) .APPROXEQA. ZERO)) THEN
-              IF (nounit) x(j)=x(j)/a(ia(j))
+              IF(nounit) x(j)=x(j)/a(ia(j))
               DO i=ia(j)+1,ia(j+1)-1
                 IF(ja(i) <= j) CYCLE
                 x(ja(i))=x(ja(i))-x(j)*a(i)

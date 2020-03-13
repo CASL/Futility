@@ -883,6 +883,7 @@ SUBROUTINE testCHAR()
   ASSERT(testParam2%pdat%datatype == 'TYPE(StringType)','%datatype')
   ASSERT(testParam2 == testParam,'OPERATOR(==)')
   CALL clear_test_vars()
+  DEALLOCATE(valchar1)
 ENDSUBROUTINE testCHAR
 !
 !-------------------------------------------------------------------------------
@@ -4991,6 +4992,7 @@ SUBROUTINE testConvertTo2DStringArray()
       FINFO() i,j,CHAR(table(i,j))
     ENDDO
   ENDDO
+  DEALLOCATE(table)
 
 ENDSUBROUTINE testConvertTo2DStringArray
 !
