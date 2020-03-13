@@ -118,6 +118,7 @@ SUBROUTINE testProcessing()
   CALL testCLP%setCmdLine(str)
   ASSERT(testCLP%getNargs() == 3,'%setCmdLine(str)')
   CALL testCLP%clear()
+  DEALLOCATE(str1)
 ENDSUBROUTINE testProcessing
 !
 ENDPROGRAM testCmdLineProc

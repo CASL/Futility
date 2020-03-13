@@ -578,6 +578,7 @@ SUBROUTINE init_SOR_PreCondtype(thisPC,A,params)
   DO k=1,thisPC%numBlocks
     CALL thisPC%LU(k)%init(PListMat_LU)
   ENDDO
+  CALL PListMat_LU%clear()
 
   SELECT TYPE(mat => thisPC%A)
   TYPE IS(DenseSquareMatrixType)
@@ -690,6 +691,7 @@ SUBROUTINE apply_RSOR_PreCondType(thisPC,v)
 
   CALL PListVec_RSOR%add('VectorType->n',thisPC%A%n)
   CALL w%init(PListVec_RSOR)
+  CALL PListVec_RSOR%clear()
 
   SELECT TYPE(v)
   CLASS IS(RealVectorType)
@@ -779,6 +781,7 @@ SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
   DO k=1,thisPC%nLocalBlocks
     CALL thisPC%LU(k)%init(PListMat_LU)
   ENDDO
+  CALL PListMat_LU%clear()
 
   SELECT TYPE(mat => thisPC%A)
   TYPE IS(DistributedBandedMatrixType)
@@ -904,6 +907,7 @@ SUBROUTINE apply_DistributedRSOR_PreCondType(thisPC,v)
     CALL PListVec_RSOR%add('VectorType->MPI_Comm_ID',thisPC%comm)
     CALL PListVec_RSOR%add('VectorType->nlocal',SIZE(v%b))
     CALL w%init(PListVec_RSOR)
+    CALL PListVec_RSOR%clear()
     w%b=v%b
 
     DO k=1,thisPC%nLocalBlocks

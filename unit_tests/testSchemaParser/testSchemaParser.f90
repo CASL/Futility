@@ -43,11 +43,11 @@ SUBROUTINE parseDummy_SchEnt(this,entryStr,paramList,pListPathCrd)
   pListPath=pListPathCrd
   CALL this%addPLPath(pListPath)
 
-  !Parse string into Dummy Type      
+  !Parse string into Dummy Type
   REQUIRE(MOD(nFields(entryStr),2)==0)
   nEntries=nFields(entryStr)/2_SIK
   ALLOCATE(stra1(nEntries)); ALLOCATE(sika1(nEntries))
-  DO ientry=1,nEntries        
+  DO ientry=1,nEntries
     CALL getField((ientry-1)*2+1,entryStr,stra1(ientry),ierr)
     CALL getField((ientry-1)*2+2,entryStr,sika1(ientry),ierr)
   ENDDO
@@ -238,6 +238,10 @@ SUBROUTINE testSchema()
   ASSERT(testParam%has('USER_BLOCK->USER_CARD'),'User Defined Entry ParamList')
   CALL testParam%get('USER_BLOCK->USER_CARD->STRA1',valstra1)
   ASSERT(ALL(valstra1==(/'str1','str2','str3'/)), 'User Defined Entry STR Value')
+  DEALLOCATE(valsrka1)
+  DEALLOCATE(valsbka1)
+  DEALLOCATE(valsika1)
+  DEALLOCATE(valstra1)
 
   COMPONENT_TEST('%clear')
   CALL mySP%clear()
