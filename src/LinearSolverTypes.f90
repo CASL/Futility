@@ -551,7 +551,6 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
         solver%TPLType=TPLType
 
         solver%pcParams = pcPList
-        CALL pcPList%clear()
 
         IF(TPLType==PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
@@ -655,6 +654,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
   CALL vecbPList%clear()
   CALL vecxPList%clear()
   CALL matPList%clear()
+  CALL pcPList%clear()
 ENDSUBROUTINE init_LinearSolverType_Base
 !
 !-------------------------------------------------------------------------------
@@ -711,7 +711,6 @@ SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver,params)
             CALL solver%PreCondType%init(solver%A,solver%pcParams)
             CALL solver%PreCondType%setup()
           ENDIF
-          CALL solver%pcParams%clear()
         ELSE
           IF (solver%TPLType /= PETSC) CALL solver%PreCondType%setup()
         ENDIF
@@ -842,6 +841,7 @@ SUBROUTINE clear_LinearSolverType_Iterative(solver)
     CALL solver%M%clear()
     DEALLOCATE(solver%M)
   ENDIF
+  CALL solver%pcParams%clear()
 
   solver%isInit=.FALSE.
   solver%solverMethod=-1

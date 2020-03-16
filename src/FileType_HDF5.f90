@@ -477,7 +477,7 @@ ENDTYPE
 !> @brief Type that is a container so as to have an array of pointers to HDF5 files
 TYPE :: HDF5FilePtrArrayType
   !> @brief Pointer to a HDF5 file type
-  TYPE(HDF5FileType),POINTER :: h5 => NULL()
+  CLASS(HDF5FileType),POINTER :: h5 => NULL()
 ENDTYPE HDF5FilePtrArrayType
 
 #ifdef FUTILITY_HAVE_HDF5
