@@ -25,6 +25,9 @@ PUBLIC :: getUnique
 PUBLIC :: findNUnique
 PUBLIC :: getUnion
 PUBLIC :: findIndex
+PUBLIC :: isStrictlyIncDec
+PUBLIC :: isStrictlyIncreasing
+PUBLIC :: isStrictlyDecreasing
 PUBLIC :: isMonotonic
 PUBLIC :: isIncreasing
 PUBLIC :: isDecreasing
@@ -104,6 +107,71 @@ INTERFACE findIndex
   MODULE PROCEDURE findIndex_1DInt
 ENDINTERFACE findIndex
 
+!> @brief Generic interface to check if an array is strictly decreasing or increasing
+!>
+INTERFACE isStrictlyIncDec
+  !> @copybrief ArrayUtils::isStrictlyIncDec_1DInt
+  !> @copydetails ArrayUtils::isStrictlyIncDec_1DInt
+  MODULE PROCEDURE isStrictlyIncDec_1DInt
+  !> @copybrief ArrayUtils::isStrictlyIncDec_1DReal
+  !> @copydetails ArrayUtils::isStrictlyIncDec_1DReal
+  MODULE PROCEDURE isStrictlyIncDec_1DReal
+ENDINTERFACE
+
+!> @brief Generic interface to check if an array is monotonically decreasing or increasing
+!>
+INTERFACE isMonotonic
+  !> @copybrief ArrayUtils::isMonotonic_1DInt
+  !> @copydetails ArrayUtils::isMonotonic_1DInt
+  MODULE PROCEDURE isMonotonic_1DInt
+  !> @copybrief ArrayUtils::Monotonic_1DReal
+  !> @copydetails ArrayUtils::Monotonic_1DReal
+  MODULE PROCEDURE isMonotonic_1DReal
+ENDINTERFACE
+
+!> @brief Generic interface to check if an array is strictly decreasing
+!>
+INTERFACE isStrictlyDecreasing
+  !> @copybrief ArrayUtils::isStrictlyDecreasing_1DInt
+  !> @copydetails ArrayUtils::isStrictlyDecreasing_1DInt
+  MODULE PROCEDURE isStrictlyDecreasing_1DInt
+  !> @copybrief ArrayUtils::isStrictlyDecreasing_1DReal
+  !> @copydetails ArrayUtils::isStrictlyDecreasing_1DReal
+  MODULE PROCEDURE isStrictlyDecreasing_1DReal
+ENDINTERFACE
+
+!> @brief Generic interface to check if an array is monotonically decreasing
+!>
+INTERFACE isDecreasing
+  !> @copybrief ArrayUtils::isDecreasing_1DInt
+  !> @copydetails ArrayUtils::isDecreasing_1DInt
+  MODULE PROCEDURE isDecreasing_1DInt
+  !> @copybrief ArrayUtils::isDecreasing_1DReal
+  !> @copydetails ArrayUtils::isDecreasing_1DReal
+  MODULE PROCEDURE isDecreasing_1DReal
+ENDINTERFACE
+
+!> @brief Generic interface to check if an array is strictly increasing
+!>
+INTERFACE isStrictlyIncreasing
+  !> @copybrief ArrayUtils::isStrictlyIncreasing_1DInt
+  !> @copydetails ArrayUtils::isStrictlyIncreasing_1DInt
+  MODULE PROCEDURE isStrictlyIncreasing_1DInt
+  !> @copybrief ArrayUtils::isStrictlyIncreasing_1DReal
+  !> @copydetails ArrayUtils::isStrictlyIncreasing_1DReal
+  MODULE PROCEDURE isStrictlyIncreasing_1DReal
+ENDINTERFACE
+
+!> @brief Generic interface to check if an array is monotonically increasing
+!>
+INTERFACE isIncreasing
+  !> @copybrief ArrayUtils::isIncreasing_1DInt
+  !> @copydetails ArrayUtils::isIncreasing_1DInt
+  MODULE PROCEDURE isIncreasing_1DInt
+  !> @copybrief ArrayUtils::isIncreasing_1DReal
+  !> @copydetails ArrayUtils::isIncreasing_1DReal
+  MODULE PROCEDURE isIncreasing_1DReal
+ENDINTERFACE
 !
 !===============================================================================
 CONTAINS
@@ -996,34 +1064,94 @@ PURE FUNCTION findUpBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
 ENDFUNCTION findUpBound_1DReal
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine that checks that the entries of r either monotonically increase or decrease.
-!>        Note this is limited to 1 dimensional real arrays.
-!> @param r input array to check for monotonicity of values
+!> @brief Routine that checks that the entries of r either strictly increase or decrease.
+!> @param r input array to check
 !> @returns good boolean indicating whether the check has passed or not
 !>
-FUNCTION isMonotonic(r) RESULT(good)
-  REAL(SRK),INTENT(IN) :: r(:)
+PURE FUNCTION isStrictlyIncDec_1DInt(r) RESULT(good)
+  INTEGER(SIK),INTENT(IN) :: r(:)
   LOGICAL(SBK) :: good
   good=.FALSE.
 
   IF(SIZE(r) > 1) THEN
     IF(r(1) < r(2)) THEN
-      good=isIncreasing(r)
+      good=isStrictlyIncreasing_1DInt(r)
     ELSE
-      good=isDecreasing(r)
+      good=isStrictlyDecreasing_1DInt(r)
     ENDIF
   ENDIF
 
-ENDFUNCTION isMonotonic
+ENDFUNCTION isStrictlyIncDec_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r strictly increase.
+!> @param r input array to check
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isStrictlyIncreasing_1DInt(r) RESULT(good)
+  INTEGER(SIK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(r(i) <= r(i-1)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION isStrictlyIncreasing_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r strictly decrease.
+!> @param r input array to check
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isStrictlyDecreasing_1DInt(r) RESULT(good)
+  INTEGER(SIK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(r(i) >= r(i-1)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION isStrictlyDecreasing_1DInt
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine that checks that the entries of r either monotonically increase or decrease.
-!>        Note this is limited to 1 dimensional real arrays.
 !> @param r input array to check for monotonicity of values
 !> @returns good boolean indicating whether the check has passed or not
 !>
-FUNCTION isIncreasing(r) RESULT(good)
-  REAL(SRK),INTENT(IN) :: r(:)
+PURE FUNCTION isMonotonic_1DInt(r) RESULT(good)
+  INTEGER(SIK),INTENT(IN) :: r(:)
+  LOGICAL(SBK) :: good
+  good=.FALSE.
+
+  IF(SIZE(r) > 1) THEN
+    IF(r(1) < r(SIZE(r))) THEN
+      good=isIncreasing_1DInt(r)
+    ELSE
+      good=isDecreasing_1DInt(r)
+    ENDIF
+  ENDIF
+
+ENDFUNCTION isMonotonic_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r monotonically increase.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isIncreasing_1DInt(r) RESULT(good)
+  INTEGER(SIK),INTENT(IN) :: r(:)
   INTEGER(SIK) :: i
   LOGICAL(SBK) :: good
   good=.TRUE.
@@ -1036,16 +1164,15 @@ FUNCTION isIncreasing(r) RESULT(good)
     good=.FALSE.
   ENDIF
 
-ENDFUNCTION isIncreasing
+ENDFUNCTION isIncreasing_1DInt
 !
 !-------------------------------------------------------------------------------
-!> @brief Routine that checks that the entries of r either monotonically increase or decrease.
-!>        Note this is limited to 1 dimensional real arrays.
+!> @brief Routine that checks that the entries of r monotonically decrease.
 !> @param r input array to check for monotonicity of values
 !> @returns good boolean indicating whether the check has passed or not
 !>
-FUNCTION isDecreasing(r) RESULT(good)
-  REAL(SRK),INTENT(IN) :: r(:)
+PURE FUNCTION isDecreasing_1DInt(r) RESULT(good)
+  INTEGER(SIK),INTENT(IN) :: r(:)
   INTEGER(SIK) :: i
   LOGICAL(SBK) :: good
   good=.TRUE.
@@ -1058,6 +1185,135 @@ FUNCTION isDecreasing(r) RESULT(good)
     good=.FALSE.
   ENDIF
 
-ENDFUNCTION isDecreasing
+ENDFUNCTION isDecreasing_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r either strictly increase or decrease.
+!> @param r input array to check
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isStrictlyIncDec_1DReal(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  LOGICAL(SBK) :: good
+  good=.FALSE.
 
+  IF(SIZE(r) > 1) THEN
+    IF(SOFTLT(r(1),r(2),EPSREAL)) THEN
+      good=isStrictlyIncreasing(r)
+    ELSE
+      good=isStrictlyDecreasing(r)
+    ENDIF
+  ENDIF
+
+ENDFUNCTION isStrictlyIncDec_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r strictly increase.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isStrictlyIncreasing_1DReal(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(SOFTLE(r(i),r(i-1),EPSREAL)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION isStrictlyIncreasing_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r strictly decrease.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isStrictlyDecreasing_1DReal(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(SOFTGE(r(i),r(i-1),EPSREAL)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION isStrictlyDecreasing_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r either monotonically increase or decrease.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isMonotonic_1DReal(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  LOGICAL(SBK) :: good
+  good=.FALSE.
+
+  IF(SIZE(r) > 1) THEN
+    IF(SOFTLT(r(1),r(SIZE(r)),EPSREAL)) THEN
+      good=isIncreasing(r)
+    ELSE
+      good=isDecreasing(r)
+    ENDIF
+  ENDIF
+
+ENDFUNCTION isMonotonic_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r monotonically increase.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isIncreasing_1DReal(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(SOFTLT(r(i),r(i-1),EPSREAL)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION isIncreasing_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine that checks that the entries of r monotonically decrease.
+!>        Note this is limited to 1 dimensional real arrays.
+!> @param r input array to check for monotonicity of values
+!> @returns good boolean indicating whether the check has passed or not
+!>
+PURE FUNCTION isDecreasing_1DReal(r) RESULT(good)
+  REAL(SRK),INTENT(IN) :: r(:)
+  INTEGER(SIK) :: i
+  LOGICAL(SBK) :: good
+  good=.TRUE.
+
+  IF(SIZE(r) > 1) THEN
+    DO i=2,SIZE(r)
+      IF(SOFTGT(r(i),r(i-1),EPSREAL)) good=.FALSE.
+    ENDDO
+  ELSE
+    good=.FALSE.
+  ENDIF
+
+ENDFUNCTION isDecreasing_1DReal
+!
 ENDMODULE ArrayUtils

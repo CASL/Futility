@@ -9,8 +9,11 @@
 !> @brief A Fortran 2003 module implementing some basic search algorithms.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Search
+#include "Futility_DBC.h"
 USE IntrType
 USE Strings
+USE ArrayUtils
+USE Futility_DBC
 
 IMPLICIT NONE
 PRIVATE
@@ -79,12 +82,14 @@ CONTAINS
 !>       returns SIZE(list)+1, and if val is smaller than the smallest element of
 !>       list this returns 1.
 !>
-PURE FUNCTION getFirstGreater_i(list,val) RESULT (i)
+FUNCTION getFirstGreater_i(list,val) RESULT (i)
   INTEGER(SIK),INTENT(IN) :: list(:)
   INTEGER(SIK),INTENT(IN) :: val
   INTEGER(SIK) :: j
   !
   INTEGER(SIK) :: n,step,i
+
+  REQUIRE(isIncreasing(list))
 
   !Perform binary search
   j=1
@@ -116,7 +121,7 @@ ENDFUNCTION getFirstGreater_i
 !>       returns SIZE(list)+1. If val is smaller than the smallest element of list
 !>       this returns 1.
 !>
-PURE FUNCTION getFirstGreater_r(list,val,tol) RESULT (i)
+FUNCTION getFirstGreater_r(list,val,tol) RESULT (i)
   REAL(SRK),INTENT(IN) :: list(:)
   REAL(SRK),INTENT(IN) :: val
   REAL(SRK),INTENT(IN),OPTIONAL :: tol
@@ -124,6 +129,8 @@ PURE FUNCTION getFirstGreater_r(list,val,tol) RESULT (i)
   !
   INTEGER(SIK) :: n,step,i
   REAL(SRK) :: eps
+
+  REQUIRE(isIncreasing(list))
 
   !Set Soft comparison tolerance
   IF(PRESENT(tol)) THEN
@@ -160,7 +167,7 @@ ENDFUNCTION getFirstGreater_r
 !> NOTE: If val is greater than the largest element of list this returns SIZE(list)+1.
 !>       If val is smaller than the smallest element of list this returns 1.
 !>
-PURE FUNCTION getFirstGreaterEqual_i(list,val) RESULT(j)
+FUNCTION getFirstGreaterEqual_i(list,val) RESULT(j)
   INTEGER(SIK),INTENT(IN) :: list(:)
   INTEGER(SIK),INTENT(IN) :: val
   INTEGER(SIK) :: j
@@ -168,6 +175,8 @@ PURE FUNCTION getFirstGreaterEqual_i(list,val) RESULT(j)
   INTEGER(SIK) :: n,step,i
   n=SIZE(list)
   j=1
+
+  REQUIRE(isMonotonic(list))
 
   !Check length and return if insufficient
   IF(n < 2) THEN
@@ -216,7 +225,7 @@ ENDFUNCTION getFirstGreaterEqual_i
 !> NOTE: If val is greater than the largest element of list this returns SIZE(list)+1.
 !>       If val is smaller than the smallest element of list this returns 1.
 !>
-PURE FUNCTION getFirstGreaterEqual_r(list,val,tol) RESULT(j)
+FUNCTION getFirstGreaterEqual_r(list,val,tol) RESULT(j)
   REAL(SRK),INTENT(IN) :: list(:)
   REAL(SRK),INTENT(IN) :: val
   REAL(SRK),INTENT(IN),OPTIONAL :: tol
@@ -227,6 +236,8 @@ PURE FUNCTION getFirstGreaterEqual_r(list,val,tol) RESULT(j)
   REAL(SRK) :: eps
   n=SIZE(list)
   j=1
+
+  REQUIRE(isMonotonic(list))
 
   !Set Soft comparison tolerance
   IF(PRESENT(tol)) THEN
@@ -272,7 +283,7 @@ ENDFUNCTION getFirstGreaterEqual_r
 !>
 !> NOTE: If the value is not found this returns SIZE(list)+1
 !>
-PURE FUNCTION linearSearch_i(list, val) RESULT(i)
+FUNCTION linearSearch_i(list, val) RESULT(i)
   INTEGER(SIK),INTENT(IN) :: list(:)
   INTEGER(SIK),INTENT(IN) :: val
   INTEGER(SIK) :: i
@@ -296,7 +307,7 @@ ENDFUNCTION linearSearch_i
 !>
 !> NOTE: If the value is not found this returns SIZE(list)+1
 !>
-PURE FUNCTION linearSearch_r(list,val,tol) RESULT(i)
+FUNCTION linearSearch_r(list,val,tol) RESULT(i)
   REAL(SRK),INTENT(IN) :: list(:)
   REAL(SRK),INTENT(IN) :: val
   REAL(SRK),INTENT(IN),OPTIONAL :: tol
@@ -329,10 +340,12 @@ ENDFUNCTION linearSearch_r
 !>
 !> NOTE: If the value is not found this returns SIZE(list)+1
 !>
-PURE FUNCTION binarySearch_i(list,val) RESULT(i)
+FUNCTION binarySearch_i(list,val) RESULT(i)
   INTEGER(SIK),INTENT(IN) :: list(:)
   INTEGER(SIK),INTENT(IN) :: val
   INTEGER(SIK) :: i
+
+  REQUIRE(isIncreasing(list))
 
   !Find index of list entry at or just before val
   i=getFirstGreaterEqual(list,val)
@@ -357,13 +370,15 @@ ENDFUNCTION binarySearch_i
 !>
 !> NOTE: If the value is not found this returns SIZE(list)+1
 !>
-PURE FUNCTION binarySearch_r(list,val,tol) RESULT(i)
+FUNCTION binarySearch_r(list,val,tol) RESULT(i)
   REAL(SRK),INTENT(IN) :: list(:)
   REAL(SRK),INTENT(IN) :: val
   REAL(SRK),INTENT(IN),OPTIONAL :: tol
   INTEGER(SIK) :: i
   !
   REAL(SRK) :: eps
+
+  REQUIRE(isIncreasing(list))
 
   !Set Soft comparison tolerance
   IF(PRESENT(tol)) THEN
@@ -392,7 +407,7 @@ ENDFUNCTION binarySearch_r
 !> @param tol the comparison tolerance to use.
 !> @returns bool result of comparison
 !>
-PURE FUNCTION SOFTLTwrap(r1,r2,tol) RESULT(bool)
+FUNCTION SOFTLTwrap(r1,r2,tol) RESULT(bool)
   REAL(SRK),INTENT(IN) :: r1
   REAL(SRK),INTENT(IN) :: r2
   REAL(SRK),INTENT(IN) :: tol
@@ -400,9 +415,9 @@ PURE FUNCTION SOFTLTwrap(r1,r2,tol) RESULT(bool)
 
   bool=SOFTLT(r1,r2,tol)
 
-ENDFUNCTION
+ENDFUNCTION SOFTLTwrap
 !
-PURE FUNCTION SOFTGTwrap(r1,r2,tol) RESULT(bool)
+FUNCTION SOFTGTwrap(r1,r2,tol) RESULT(bool)
   REAL(SRK),INTENT(IN) :: r1
   REAL(SRK),INTENT(IN) :: r2
   REAL(SRK),INTENT(IN) :: tol
@@ -410,6 +425,6 @@ PURE FUNCTION SOFTGTwrap(r1,r2,tol) RESULT(bool)
 
   bool=SOFTGT(r1,r2,tol)
 
-ENDFUNCTION
+ENDFUNCTION SOFTGTwrap
 !
 ENDMODULE Search

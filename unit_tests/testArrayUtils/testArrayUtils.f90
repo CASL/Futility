@@ -33,7 +33,6 @@ REGISTER_SUBTEST('1-D Strings',test1DStrings)
 REGISTER_SUBTEST('2-D Strings',test2DStrings)
 !REGISTER_SUBTEST('2-D INTEGERS',test2DInts)
 
-
 FINALIZE_TEST()
 !
 !===============================================================================
@@ -380,22 +379,67 @@ SUBROUTINE test1DReals()
   COMPONENT_TEST('isIncreasing 1-D Array')
   DO i=1,10
     tmprealarray(i)=REAL(i,SRK)
+    tmpintarray(i)=i
   END DO
-  ASSERT(isIncreasing(tmprealarray),'Failure to identify monotonically increasing data')
-  ASSERT(isMonotonic(tmprealarray),'Failure to identify monotonically increasing data')
+
+  ASSERT(isStrictlyIncreasing(tmprealarray),'Failure to identify strictly increasing real data')
+  ASSERT(isStrictlyIncreasing(tmpintarray),'Failure to identify strictly increasing int data')
+  ASSERT(isStrictlyIncDec(tmprealarray),'Failure to identify strictly increasing real data')
+  ASSERT(isStrictlyIncDec(tmpintarray),'Failure to identify strictly increasing int data')
+  ASSERT(isIncreasing(tmprealarray),'Failure to identify monotonically increasing real data')
+  ASSERT(isIncreasing(tmpintarray),'Failure to identify monotonically increasing int data')
+  ASSERT(isMonotonic(tmprealarray),'Failure to identify monotonically increasing real data')
+  ASSERT(isMonotonic(tmpintarray),'Failure to identify monotonically increasing int data')
+  tmprealarray(4)=3.0_SRK
+  tmpintarray(4)=3
+  ASSERT(.NOT.isStrictlyIncreasing(tmprealarray),'Failure to identify nonstrictly increasing real data')
+  ASSERT(.NOT.isStrictlyIncreasing(tmpintarray),'Failure to identify nonstrictly increasing int data')
+  ASSERT(.NOT.isStrictlyIncDec(tmprealarray),'Failure to identify nonstrictly increasing real data')
+  ASSERT(.NOT.isStrictlyIncDec(tmpintarray),'Failure to identify nonstrictly increasing int data')
+  ASSERT(isIncreasing(tmprealarray),'Failure to identify monotonically increasing real data')
+  ASSERT(isIncreasing(tmpintarray),'Failure to identify monotonically increasing int data')
+  ASSERT(isMonotonic(tmprealarray),'Failure to identify monotonically increasing real data')
+  ASSERT(isMonotonic(tmpintarray),'Failure to identify monotonically increasing int data')
   tmprealarray(4)=20.0_SRK
-  ASSERT(.NOT.isIncreasing(tmprealarray),'Failure to identify nonmonotonically increasing data')
-  ASSERT(.NOT.isMonotonic(tmprealarray),'Failure to identify nonmonotonically increasing data')
+  tmpintarray(4)=20
+  ASSERT(.NOT.isIncreasing(tmprealarray),'Failure to identify monotonically increasing real data')
+  ASSERT(.NOT.isIncreasing(tmpintarray),'Failure to identify monotonically increasing int data')
+  ASSERT(.NOT.isMonotonic(tmprealarray),'Failure to identify monotonically increasing real data')
+  ASSERT(.NOT.isMonotonic(tmpintarray),'Failure to identify monotonically increasing int data')
 
   COMPONENT_TEST('isDecreasing 1-D Array')
   DO i=1,10
     tmprealarray(i)=11.0_SRK-REAL(i,SRK)
+    tmpintarray(i)=INT(tmprealarray(i))
   END DO
-  ASSERT(isDecreasing(tmprealarray),'Failure to identify monotonically decreasing data')
-  ASSERT(isMonotonic(tmprealarray),'Failure to identify monotonically decreasing data')
-  tmprealarray(4)=20.0_SRK
-  ASSERT(.NOT.isDecreasing(tmprealarray),'Failure to identify nonmonotonically decreasing data')
-  ASSERT(.NOT.isMonotonic(tmprealarray),'Failure to identify nonmonotonically decreasing data')
+
+  ASSERT(isStrictlyDecreasing(tmprealarray),'Failure to identify strictly Decreasing real data')
+  ASSERT(isStrictlyDecreasing(tmpintarray),'Failure to identify strictly Decreasing int data')
+  ASSERT(isStrictlyIncDec(tmprealarray),'Failure to identify strictly Decreasing real data')
+  ASSERT(isStrictlyIncDec(tmpintarray),'Failure to identify strictly Decreasing int data')
+  ASSERT(isDecreasing(tmprealarray),'Failure to identify monotonically Decreasing real data')
+  ASSERT(isDecreasing(tmpintarray),'Failure to identify monotonically Decreasing int data')
+  ASSERT(isMonotonic(tmprealarray),'Failure to identify monotonically Decreasing real data')
+  ASSERT(isMonotonic(tmpintarray),'Failure to identify monotonically Decreasing int data')
+  tmprealarray(7)=5.0_SRK
+  tmpintarray(7)=5
+  ASSERT(.NOT.isStrictlyDecreasing(tmprealarray),'Failure to identify nonstrictly Decreasing real data')
+  ASSERT(.NOT.isStrictlyDecreasing(tmpintarray),'Failure to identify nonstrictly Decreasing int data')
+  ASSERT(.NOT.isStrictlyIncDec(tmprealarray),'Failure to identify nonstrictly Decreasing real data')
+  ASSERT(.NOT.isStrictlyIncDec(tmpintarray),'Failure to identify nonstrictly Decreasing int data')
+  ASSERT(isDecreasing(tmprealarray),'Failure to identify monotonically Decreasing real data')
+  ASSERT(isDecreasing(tmpintarray),'Failure to identify monotonically Decreasing int data')
+  ASSERT(isMonotonic(tmprealarray),'Failure to identify monotonically Decreasing real data')
+  ASSERT(isMonotonic(tmpintarray),'Failure to identify monotonically Decreasing int data')
+  tmprealarray(4)=-20.0_SRK
+  tmpintarray(4)=-20
+  ASSERT(.NOT.isDecreasing(tmprealarray),'Failure to identify monotonically Decreasing real data')
+  ASSERT(.NOT.isDecreasing(tmpintarray),'Failure to identify monotonically Decreasing int data')
+  ASSERT(.NOT.isMonotonic(tmprealarray),'Failure to identify monotonically Decreasing real data')
+  ASSERT(.NOT.isMonotonic(tmpintarray),'Failure to identify monotonically Decreasing int data')
+
+
+
 
 ENDSUBROUTINE test1DReals
 !
