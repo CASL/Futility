@@ -18,12 +18,38 @@ USE Futility_DBC
 IMPLICIT NONE
 PRIVATE
 
+PUBLIC :: upperBound
+PUBLIC :: lowerBound
 PUBLIC :: getFirstGreater
 PUBLIC :: getFirstGreaterEqual
 PUBLIC :: find
 PUBLIC :: binarySearch
 
+!TODO: Change names of these functions on MPACT side to the new versions below
+!      and eliminate these old confusing names:
 !> @brief Interface for getting "upper bounds"
+!>
+INTERFACE upperBound
+  !> @copybrief Search::getFirstGreater_i
+  !> @copydetails Search::getFirstGreater_i
+  MODULE PROCEDURE getFirstGreater_i
+  !> @copybrief Search::getFirstGreater_r
+  !> @copydetails Search::getFirstGreater_r
+  MODULE PROCEDURE getFirstGreater_r
+ENDINTERFACE upperBound
+
+!> @brief Interface for getting "lower bounds"
+!>
+INTERFACE lowerBound
+  !> @copybrief Search::getFirstGreaterEqual_i
+  !> @copydetails Search::getFirstGreaterEqual_i
+  MODULE PROCEDURE getFirstGreaterEqual_i
+  !> @copybrief Search::getFirstGreaterEqual_r
+  !> @copydetails Search::getFirstGreaterEqual_r
+  MODULE PROCEDURE getFirstGreaterEqual_r
+ENDINTERFACE lowerBound
+
+!> @brief Interface for getting the first entry of an array greater than the input
 !>
 INTERFACE getFirstGreater
   !> @copybrief Search::getFirstGreater_i
@@ -34,7 +60,7 @@ INTERFACE getFirstGreater
   MODULE PROCEDURE getFirstGreater_r
 ENDINTERFACE getFirstGreater
 
-!> @brief Interface for getting "lower bounds"
+!> @brief Interface for getting the first entry of an array greater than or equal to the input
 !>
 INTERFACE getFirstGreaterEqual
   !> @copybrief Search::getFirstGreaterEqual_i
@@ -89,7 +115,7 @@ FUNCTION getFirstGreater_i(list,val) RESULT (i)
   !
   INTEGER(SIK) :: n,step,i
 
-  REQUIRE(isIncreasing(list))
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
 
   !Perform binary search
   j=1
@@ -130,7 +156,7 @@ FUNCTION getFirstGreater_r(list,val,tol) RESULT (i)
   INTEGER(SIK) :: n,step,i
   REAL(SRK) :: eps
 
-  REQUIRE(isIncreasing(list))
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
 
   !Set Soft comparison tolerance
   IF(PRESENT(tol)) THEN
@@ -176,7 +202,7 @@ FUNCTION getFirstGreaterEqual_i(list,val) RESULT(j)
   n=SIZE(list)
   j=1
 
-  REQUIRE(isMonotonic(list))
+  REQUIRE(isMonotonic(list) .OR. SIZE(list) == 1)
 
   !Check length and return if insufficient
   IF(n < 2) THEN
@@ -237,7 +263,7 @@ FUNCTION getFirstGreaterEqual_r(list,val,tol) RESULT(j)
   n=SIZE(list)
   j=1
 
-  REQUIRE(isMonotonic(list))
+  REQUIRE(isMonotonic(list) .OR. SIZE(list) == 1)
 
   !Set Soft comparison tolerance
   IF(PRESENT(tol)) THEN
@@ -345,7 +371,7 @@ FUNCTION binarySearch_i(list,val) RESULT(i)
   INTEGER(SIK),INTENT(IN) :: val
   INTEGER(SIK) :: i
 
-  REQUIRE(isIncreasing(list))
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
 
   !Find index of list entry at or just before val
   i=getFirstGreaterEqual(list,val)
@@ -378,7 +404,7 @@ FUNCTION binarySearch_r(list,val,tol) RESULT(i)
   !
   REAL(SRK) :: eps
 
-  REQUIRE(isIncreasing(list))
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
 
   !Set Soft comparison tolerance
   IF(PRESENT(tol)) THEN
