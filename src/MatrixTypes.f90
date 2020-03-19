@@ -703,11 +703,11 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
   INTEGER(SIK) :: sendRequests(MATVEC_SLOTS),sendIdxRequests(MATVEC_SLOTS)
   INTEGER(SIK) :: recvRequests(MATVEC_SLOTS),recvIdxRequests(MATVEC_SLOTS)
-  INTEGER(SIK) :: lowIdx,highIdx,sendCounter,recvCounter,destRank,srcRank
+  INTEGER(SIK) :: lowIdx,highIdx,sendCounter,recvCounter
 #ifdef HAVE_MPI
   ! Get rank
-  INTEGER(SIK) :: ctRecv(MATVEC_SLOTS)
-  INTEGER(SIK) :: i,l,idxTmp,cnt,ctDefault,mpierr,nproc
+  INTEGER(SIK) :: ctRecv(MATVEC_SLOTS),srcRank,destRank
+  INTEGER(SIK) :: i,idxTmp,cnt,ctDefault,mpierr,nproc
   CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
   CALL MPI_Comm_Size(thisMatrix%comm,nProc,mpierr)
 #else
@@ -812,7 +812,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
     ENDIF
     ! We might receive data from rank MOD(rank-i,nproc)
     srcRank = MODULO(rank-i,nProc)
-    IF (ASSOCIATED(thisMatrix%bandSizes(srcRank+1)%p)) THEN
+    IF (ALLOCATED(thisMatrix%bandSizes(srcRank+1)%p)) THEN
       IF (thisMatrix%bandSizes(srcRank+1)%p(1) < 0) THEN
         ! We are receiving a whole vector at once
         recvCounter=recvCounter+1

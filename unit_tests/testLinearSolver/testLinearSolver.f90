@@ -1788,7 +1788,7 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
   REAL(SRK),POINTER :: thisX(:)
   INTEGER(SIK) :: i
-  LOGICAL(SBK) :: match, bool
+  LOGICAL(SBK) :: bool
 
   ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -1876,36 +1876,18 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  !multiply by 10,000 so we can match first five places.
-  thisB=10000.0_SRK*thisB
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'Iterative%solve() -BICGSTAB')
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() -BICGSTAB')
 
   DEALLOCATE(thisB)
+  DEALLOCATE(thisX)
+  DEALLOCATE(dummyvec)
   CALL thisLS%A%clear()
   CALL thisLS%clear()
-  DEALLOCATE(thisX)
 
 !test with A being densesquare
 
@@ -1955,49 +1937,23 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
 
   !solve
   CALL thisLS%solve()
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  thisB=thisB*10000._SRK
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'Iterative%solve() - BiCGSTAB')
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() -BICGSTAB')
+
   !test to see how it performs with an already decomposed M
   !reset X to 1.0s
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      CALL X%set(1.0_SRK)
-      CALL thisLS%solve()
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'Iterative%solve() - BiCGSTAB')
+  CALL thisLS%X%set(1.0_SRK)
+  CALL thisLS%solve()
+
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() -BICGSTAB')
   CALL thisLS%clear()
   DEALLOCATE(thisB)
+  DEALLOCATE(dummyvec)
 
   ! TriDiagonal matrix, it will go to LU method
 
@@ -2177,34 +2133,17 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  !multiply by 10,000 so we can match first five places.
-  thisB=10000.0_SRK*thisB
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'PETScIterative%solve() -BICGSTAB')
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
 
   DEALLOCATE(thisB)
   DEALLOCATE(thisX)
+  DEALLOCATE(dummyvec)
+
   CALL thisLS%A%clear()
   CALL thisLS%clear()
 
@@ -2255,50 +2194,25 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   !solve
   CALL thisLS%solve()
 
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  thisB=thisB*10000._SRK
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'PETSCIterative%solve() -BiCGSTAB')
+  !Store expected solution (from MATLAB) in B
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
+
   !test to see how it performs with an already decomposed M
   !reset X to 1.0s
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      CALL X%set(1.0_SRK)
-      CALL thisLS%solve()
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'PETSCIterative%solve() -BiCGSTAB')
-  CALL thisLS%clear()
+  CALL thisLS%X%set(1.0_SRK)
+  CALL thisLS%solve()
+
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
   DEALLOCATE(thisB)
   DEALLOCATE(thisX)
+  DEALLOCATE(dummyvec)
+  CALL thisLS%clear()
 #endif
 
   DEALLOCATE(thisLS)
@@ -2714,7 +2628,7 @@ SUBROUTINE testIterativeSolve_GMRES()
   REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
   REAL(SRK),POINTER :: thisX(:)
   INTEGER(SIK) :: i
-  LOGICAL(SBK) :: match, bool
+  LOGICAL(SBK) :: bool
 
   ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -2808,35 +2722,17 @@ SUBROUTINE testIterativeSolve_GMRES()
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  !multiply by 10,000 so we can match first five places.
-  thisB=10000.0_SRK*thisB
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'CALL Iterative%solve() -GMRES FAILED!')
 
   DEALLOCATE(thisB)
-  CALL thisLS%clear()
   DEALLOCATE(thisX)
+  DEALLOCATE(dummyvec)
+  CALL thisLS%clear()
 
 !test with A being densesquare
   COMPONENT_TEST('DenseSquareMatrixType')
@@ -2892,30 +2788,17 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   !solve
   CALL thisLS%solve()
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  thisB=thisB*10000._SRK
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'Iterative%solve() - GMRES')
+
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() - GMRES')
+
+  DEALLOCATE(thisB)
+  DEALLOCATE(thisX)
+  DEALLOCATE(dummyvec)
   CALL thisLS%A%clear()
   CALL thisLS%clear()
 
@@ -2961,7 +2844,6 @@ SUBROUTINE testIterativeSolve_GMRES()
   ASSERT(bool, 'Iterative%solve() - GMRES')
   CALL thisLS%A%clear()
   CALL thisLS%clear()
-  DEALLOCATE(thisX)
 
   !DenseRect matrix
   COMPONENT_TEST('DenseRectMatrixType')
@@ -3015,8 +2897,6 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   bool = thisLS%info == 0
   ASSERT(bool, 'Iterative%solve() -GMRES method')
-
-  DEALLOCATE(thisB)
   DEALLOCATE(thisX)
   CALL thisLS%clear()
 
@@ -3078,36 +2958,19 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   !solve
   CALL thisLS%solve()
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  thisB=thisB*10000._SRK
-  match=.TRUE.
-  SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-  ENDSELECT
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'Iterative%solve() - GMRES')
+
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() - GMRES')
+
   CALL thisLS%A%clear()
   CALL thisLS%clear()
   DEALLOCATE(thisB)
   DEALLOCATE(thisX)
+  DEALLOCATE(dummyvec)
 
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -3198,34 +3061,16 @@ SUBROUTINE testIterativeSolve_GMRES()
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  !multiply by 10,000 so we can match first five places.
-  thisB=10000.0_SRK*thisB
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'PETScIterative%solve() -BICGSTAB')
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
 
   DEALLOCATE(thisX)
   DEALLOCATE(thisB)
+  DEALLOCATE(dummyvec)
   CALL thisLS%A%clear()
   CALL thisLS%clear()
 
@@ -3280,50 +3125,29 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   !solve
   CALL thisLS%solve()
-  ALLOCATE(thisB(9))
-  thisB(1)=0.6875_SRK
-  thisB(2)=0.875_SRK
-  thisB(3)=0.6875_SRK
-  thisB(4)=0.875_SRK
-  thisB(5)=1.125_SRK
-  thisB(6)=0.875_SRK
-  thisB(7)=0.6875_SRK
-  thisB(8)=0.875_SRK
-  thisB(9)=0.6875_SRK
-  thisB=thisB*10000._SRK
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'PETScIterative%solve() - GMRES')
+
+  !Store expected solution (from MATLAB) in B
+  ALLOCATE(dummyvec(thisLS%X%n))
+  ALLOCATE(thisB(thisLS%X%n))
+  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
+      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() - GMRES')
+  DEALLOCATE(dummyvec)
+
   !test to see how it performs with an already decomposed M
   !reset X to 1.0s
-  match=.TRUE.
-  DO i=1,SIZE(thisB)
-    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
-      CALL X%set(1.0_SRK)
-      CALL thisLS%solve()
-      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-      ALLOCATE(dummyvec(X%n))
-      CALL X%get(dummyvec)
-      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-        match=.FALSE.
-        EXIT
-      ENDIF
-    ENDSELECT
-  ENDDO
-  ASSERT(match, 'PETScIterative%solve() - GMRES')
+  CALL thisLS%X%set(1.0_SRK)
+  CALL thisLS%solve()
+
+  ALLOCATE(dummyvec(thisLS%X%n))
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() - GMRES')
+
   CALL thisLS%A%clear()
   DEALLOCATE(thisX)
-
+  DEALLOCATE(thisB)
+  DEALLOCATE(dummyvec)
 #endif
   CALL thisLS%clear()
 
