@@ -291,7 +291,6 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
 
     SET(Fortran_FLAGS_RELEASE
         ${CSYM}O3
-        ${CSYM}march=native
        )
 
     SET(Fortran_FLAGS_RELWITHDEBINFO
