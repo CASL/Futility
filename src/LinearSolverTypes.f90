@@ -799,7 +799,6 @@ SUBROUTINE getResidualVec_LinearSolverType_Direct(solver,resid,nIters)
   CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: resid
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
-  TYPE(ParamType) :: p
 
   REQUIRE(solver%isInit)
   REQUIRE(resid%isInit)
@@ -1561,7 +1560,7 @@ SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
   REQUIRE(solver%A%isInit)
   REQUIRE(ASSOCIATED(solver%x))
   REQUIRE(solver%x%isInit)
-#if 0
+
   IF(solver%TPLType == PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
     CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
@@ -1573,43 +1572,14 @@ SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
     CALL Belos_GetResid(solver%Belos_solver,resid)
 #endif
   ELSE
-#endif
     IF (PRESENT(nIters)) nIters=solver%iters
     CALL VectorResemble(u,solver%x)
     CALL getResidualVec_LinearSolverType_Iterative(solver,u)
     resid=BLAS_nrm2(u)
     DEALLOCATE(u)
-!  ENDIF
+  ENDIF
 ENDSUBROUTINE getResidualNorm_LinearSolverType_Iterative
 
-!
-!-------------------------------------------------------------------------------
-!>
-#if 0
-SUBROUTINE getIterResidual_LinearSolverType_Iterative(solver,niters,resid)
-  CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-  INTEGER(SIK),INTENT(INOUT) :: niters
-  REAL(SRK),INTENT(INOUT) :: resid
-#ifdef FUTILITY_HAVE_PETSC
-  INTEGER(SIK) :: ierr
-#endif
-
-  IF(solver%TPLType == PETSC) THEN
-#ifdef FUTILITY_HAVE_PETSC
-    CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
-    CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
-#endif
-  ELSEIF(solver%TPLType == TRILINOS) THEN
-#ifdef FUTILITY_HAVE_Trilinos
-    CALL Belos_GetIterationCount(solver%Belos_solver,niters)
-    CALL Belos_GetResid(solver%Belos_solver,resid)
-#endif
-  ELSE
-    niters=solver%iters
-    resid=resid !returns unchanged
-  ENDIF
-ENDSUBROUTINE getIterResidual_LinearSolverType_Iterative
-#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief Decompose Dense  Linear System using the BiCGSTAB method
@@ -1740,8 +1710,8 @@ ENDSUBROUTINE solveBiCGSTAB
 !> @brief Control program for restarted GMRES solver. Handles restarts,
 !> parallelism, and a few other things. Solver body is located in
 !> solveGMRES_partial
-!> @param solver The linear solver to act on
-!> @param PreCondType The preconditioner object to use on the system
+!> @param thisLS The linear solver to act on
+!> @param thisPC The preconditioner object to use on the system
 !>
 !> This subroutine solves the Iterative Linear System using the restarted GMRES method
 !>
@@ -1750,11 +1720,7 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
   CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
   INTEGER(SIK) :: nIters,outerIt
   REAL(SRK) :: tol,norm_b,norm_r0
-  TYPE(ParamType) :: tmpPlist
   CLASS(VectorType),ALLOCATABLE :: u
-
-  !thisLS%nRestart = 30
-  !thisLS%maxIters = 1000
 
   IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
   thisLS%iters = 0
@@ -1823,9 +1789,7 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
   REAL(SRK) :: divTmp,temp
   INTEGER(SIK) :: krylovIdx,i
   INTEGER(SIK),ALLOCATABLE :: orthogReq(:)
-#ifdef HAVE_MPI
-  INTEGER(SIK) :: mpierr
-#endif
+
   CALL vecPlist%clear()
   CALL VectorResemble(Vy,thisLS%x,vecPlist)
   CALL vecPlist%clear()
@@ -1947,13 +1911,17 @@ SUBROUTINE arnoldi(thisLS,V,k,h,orthogReq)
   INTEGER(SIK),INTENT(IN) :: k
   REAL(SRK),INTENT(INOUT) :: h(:)
   INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: orthogReq(:)
-  INTEGER(SIK) :: orthogIdx,mpierr
+  INTEGER(SIK) :: orthogIdx
+#ifdef HAVE_MPI
+  INTEGER(SIK) :: mpierr
+#endif
 
   ! Perform distributed dot, masking communication
   DO orthogIdx=1,k
     h(orthogIdx) = BLAS_dot(V(orthogIdx)%b,V(k+1)%b)
 #ifdef HAVE_MPI
-    CALL MPI_IAllReduce(MPI_IN_PLACE,h(orthogIdx),1,MPI_DOUBLE_PRECISION,MPI_SUM,thisLS%MPIParallelEnv%comm,orthogReq(orthogIdx),mpierr)
+    CALL MPI_IAllReduce(MPI_IN_PLACE,h(orthogIdx),1,MPI_DOUBLE_PRECISION, &
+        MPI_SUM,thisLS%MPIParallelEnv%comm,orthogReq(orthogIdx),mpierr)
 #endif
   ENDDO
   ! Subtract vector components

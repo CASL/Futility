@@ -20,8 +20,7 @@ USE LinearSolverTypes
 
 IMPLICIT NONE
 
-TYPE(ExceptionHandlerType),TARGET :: e
-TYPE(MPI_EnvType) :: mpiTestEnv
+!TYPE(ExceptionHandlerType),TARGET :: e
 #ifdef HAVE_MPI
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
@@ -32,16 +31,17 @@ TYPE(MPI_EnvType) :: mpiTestEnv
 #endif
 #undef IS
 PetscErrorCode  :: ierr
-
 CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#else
+CALL MPI_Init(ierr)
 #endif
 
 !Configure exception handler for test
-CALL e%setStopOnError(.FALSE.)
-CALL e%setQuietMode(.TRUE.)
-CALL eParams%addSurrogate(e)
-CALL eLinearSolverType%addSurrogate(e)
-CALL mpiTestEnv%init(PE_COMM_WORLD)
+!CALL e%setStopOnError(.FALSE.)
+!CALL e%setQuietMode(.TRUE.)
+!CALL eParams%addSurrogate(e)
+!CALL eLinearSolverType%addSurrogate(e)
+!CALL mpiTestEnv%init(PE_COMM_WORLD)
 
 CREATE_TEST('Test Linear Solvers')
 
@@ -63,11 +63,10 @@ SUBROUTINE testIterativeSolve_GMRES()
   CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
   TYPE(ParamType) :: pList
   REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
-  REAL(SRK),POINTER :: thisX(:)
-  INTEGER(SIK) :: i
-  LOGICAL(SBK) :: match, bool
+  INTEGER(SIK) :: rank,mpierr
 
   ALLOCATE(LinearSolverType_Iterative :: thisLS)
+  CALL MPI_Comm_rank(PE_COMM_WORLD,rank,mpierr)
 
   COMPONENT_TEST('DistributedBandedMatrixType')
   !With GMRES
@@ -154,55 +153,23 @@ SUBROUTINE testIterativeSolve_GMRES()
   !solve it
   CALL thisLS%solve()
 
-  SELECTTYPE(x => thisLS%x); TYPE IS(NativeDistributedVectorType)
-    WRITE(*,*) x%b
-  ENDSELECT
-
   !Store expected solution (from MATLAB) in B
-  IF (mpiTestEnv%rank == 0) THEN
+  IF (rank == 0) THEN
+    ALLOCATE(dummyvec(5))
     ALLOCATE(thisB(5))
-    thisB(1)=0.6875_SRK
-    thisB(2)=0.875_SRK
-    thisB(3)=0.6875_SRK
-    thisB(4)=0.875_SRK
-    thisB(5)=1.125_SRK
-    thisB=10000.0_SRK*thisB
-    match=.TRUE.
-    DO i=1,SIZE(thisB)
-      SELECTTYPE(X => thisLS%X); TYPE IS(NativeDistributedVectorType)
-        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-        ALLOCATE(dummyvec(SIZE(X%b)))
-        dummyvec = X%b
-        IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-          match=.FALSE.
-          EXIT
-        ENDIF
-      ENDSELECT
-    ENDDO
+    thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK/)
+    CALL thisLS%X%get(dummyvec)
+    ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'CALL Iterative%solve() -GMRES FAILED!')
   ELSE
+    ALLOCATE(dummyvec(4))
     ALLOCATE(thisB(4))
-    thisB(1)=0.875_SRK
-    thisB(2)=0.6875_SRK
-    thisB(3)=0.875_SRK
-    thisB(4)=0.6875_SRK
-    thisB=10000.0_SRK*thisB
-    match=.TRUE.
-    DO i=1,SIZE(thisB)
-      SELECTTYPE(X => thisLS%X); TYPE IS(NativeDistributedVectorType)
-        IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
-        ALLOCATE(dummyvec(SIZE(X%b)))
-        dummyvec = X%b
-        IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
-          match=.FALSE.
-          EXIT
-        ENDIF
-      ENDSELECT
-    ENDDO
+    thisB(:)=(/0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
+    CALL thisLS%X%get(dummyvec)
+    ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'CALL Iterative%solve() -GMRES FAILED!')
   ENDIF
 
-  ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
-
   DEALLOCATE(thisB)
+  DEALLOCATE(dummyvec)
   CALL thisLS%clear()
 
 ENDSUBROUTINE testIterativeSolve_GMRES
