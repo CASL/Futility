@@ -17,8 +17,6 @@
 !> in one subroutine call. (Unsure if this will work).
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Constants_Conversion
-#include "Futility_DBC.h"
-USE Futility_DBC
 USE IntrType
 IMPLICIT NONE
 PRIVATE
@@ -161,11 +159,9 @@ CONTAINS
 !> @param in_temp the temperature input as Kelvin
 !> @return out_temp the temperature converted to Celsius
 !>
-FUNCTION K_to_C(in_temp) RESULT(out_temp)
+ELEMENTAL FUNCTION K_to_C(in_temp) RESULT(out_temp)
   REAL(SRK),INTENT(IN) :: in_temp
   REAL(SRK) :: out_temp
-
-  REQUIRE(in_temp >= 0.0_SRK)
 
   out_temp=in_temp-273.15_SRK
 
@@ -176,13 +172,11 @@ ENDFUNCTION K_to_C
 !> @param in_temp the temperature input as Celsius
 !> @return out_temp the temperature converted to Kelvin
 !>
-FUNCTION C_to_K(in_temp) RESULT(out_temp)
+ELEMENTAL FUNCTION C_to_K(in_temp) RESULT(out_temp)
   REAL(SRK),INTENT(IN) :: in_temp
   REAL(SRK) :: out_temp
 
   out_temp=in_temp+273.15_SRK
-
-  ENSURE(out_temp >= 0.0_SRK)
 
 ENDFUNCTION C_to_K
 !
@@ -191,7 +185,7 @@ ENDFUNCTION C_to_K
 !> @param in_temp the temperature input as Fahrenheit
 !> @return out_temp the temperature converted to Celsius
 !>
-FUNCTION F_to_C(in_temp) RESULT(out_temp)
+ELEMENTAL FUNCTION F_to_C(in_temp) RESULT(out_temp)
   REAL(SRK),INTENT(IN) :: in_temp
   REAL(SRK) :: out_temp
 
@@ -204,7 +198,7 @@ ENDFUNCTION F_to_C
 !> @param in_temp the temperature input as Celsius
 !> @return out_temp the temperature converted to Fahrenheit
 !>
-FUNCTION C_to_F(in_temp) RESULT(out_temp)
+ELEMENTAL FUNCTION C_to_F(in_temp) RESULT(out_temp)
   REAL(SRK),INTENT(IN) :: in_temp
   REAL(SRK) :: out_temp
 
@@ -217,13 +211,11 @@ ENDFUNCTION C_to_F
 !> @param in_temp the temperature input as Fahrenheit
 !> @return out_temp the temperature converted to Kelvin
 !>
-FUNCTION F_to_K(in_temp) RESULT(out_temp)
+ELEMENTAL FUNCTION F_to_K(in_temp) RESULT(out_temp)
   REAL(SRK),INTENT(IN) :: in_temp
   REAL(SRK) :: out_temp
 
   out_temp=C_to_K(F_to_C(in_temp))
-
-  ENSURE(out_temp >= 0.0_SRK)
 
 ENDFUNCTION F_to_K
 !
@@ -232,11 +224,9 @@ ENDFUNCTION F_to_K
 !> @param in_temp the temperature input as Kelvin
 !> @return out_temp the temperature converted to Fahrenheit
 !>
-FUNCTION K_to_F(in_temp) RESULT(out_temp)
+ELEMENTAL FUNCTION K_to_F(in_temp) RESULT(out_temp)
   REAL(SRK),INTENT(IN) :: in_temp
   REAL(SRK) :: out_temp
-
-  REQUIRE(in_temp >= 0.0_SRK)
 
   out_temp=C_to_F(K_to_C(in_temp))
 
