@@ -17,10 +17,18 @@
 !> in one subroutine call. (Unsure if this will work).
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Constants_Conversion
-
+#include "Futility_DBC.h"
+USE Futility_DBC
 USE IntrType
 IMPLICIT NONE
 PRIVATE
+
+PUBLIC :: K_to_C
+PUBLIC :: C_to_K
+PUBLIC :: F_to_C
+PUBLIC :: C_to_F
+PUBLIC :: F_to_K
+PUBLIC :: K_to_F
 
 !> Parameters for commonly used constants
 REAL(SRK),PUBLIC,PARAMETER ::    ZERO=0.000000000000000_SRK !16 digits
@@ -144,4 +152,94 @@ REAL(SRK),PUBLIC,PARAMETER :: F2R=459.67_SRK
 !> May be used for comparing real numbers relating to geometry
 !> Tolerance is 0.0001 cm
 REAL(SRK),PUBLIC,PARAMETER :: TOL_GEOM_cm=0.0001_SRK
+!
+!===============================================================================
+CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature from Kelvin to Celsius
+!> @param in_temp the temperature input as Kelvin
+!> @return out_temp the temperature converted to Celsius
+!>
+FUNCTION K_to_C(in_temp) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  REAL(SRK) :: out_temp
+
+  REQUIRE(in_temp >= 0.0_SRK)
+
+  out_temp=in_temp-273.15_SRK
+
+ENDFUNCTION K_to_C
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature from Celsius to Kelvin
+!> @param in_temp the temperature input as Celsius
+!> @return out_temp the temperature converted to Kelvin
+!>
+FUNCTION C_to_K(in_temp) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  REAL(SRK) :: out_temp
+
+  out_temp=in_temp+273.15_SRK
+
+  ENSURE(out_temp >= 0.0_SRK)
+
+ENDFUNCTION C_to_K
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature from Fahrenheit to Celsius
+!> @param in_temp the temperature input as Fahrenheit
+!> @return out_temp the temperature converted to Celsius
+!>
+FUNCTION F_to_C(in_temp) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  REAL(SRK) :: out_temp
+
+  out_temp=(in_temp-32.0_SRK)*5.0_SRK/9.0_SRK
+
+ENDFUNCTION F_to_C
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature from Celsius to Fahrenheit
+!> @param in_temp the temperature input as Celsius
+!> @return out_temp the temperature converted to Fahrenheit
+!>
+FUNCTION C_to_F(in_temp) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  REAL(SRK) :: out_temp
+
+  out_temp=in_temp*9.0_SRK/5.0_SRK+32.0_SRK
+
+ENDFUNCTION C_to_F
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature from Fahrenheit to Kelvin
+!> @param in_temp the temperature input as Fahrenheit
+!> @return out_temp the temperature converted to Kelvin
+!>
+FUNCTION F_to_K(in_temp) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  REAL(SRK) :: out_temp
+
+  out_temp=C_to_K(F_to_C(in_temp))
+
+  ENSURE(out_temp >= 0.0_SRK)
+
+ENDFUNCTION F_to_K
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature from Kelvin to Fahrenheit
+!> @param in_temp the temperature input as Kelvin
+!> @return out_temp the temperature converted to Fahrenheit
+!>
+FUNCTION K_to_F(in_temp) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  REAL(SRK) :: out_temp
+
+  REQUIRE(in_temp >= 0.0_SRK)
+
+  out_temp=C_to_F(K_to_C(in_temp))
+
+ENDFUNCTION K_to_F
+!
 ENDMODULE Constants_Conversion
