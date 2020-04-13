@@ -597,7 +597,7 @@ ENDSUBROUTINE partition_greedy_ParEnvType
 !-------------------------------------------------------------------------------
 !> @brief Initializes an MPI environment type object.
 SUBROUTINE init_MPI_Env_type(myPE,PEparam)
-#ifdef HAVE_MPI || FUTILITY_HAVE_PETSC
+#if defined(HAVE_MPI) || defined(FUTILITY_HAVE_PETSC)
   CHARACTER(LEN=*),PARAMETER :: myName='init_MPI_Env_type'
 #endif
   CLASS(MPI_EnvType),INTENT(INOUT) :: myPE
