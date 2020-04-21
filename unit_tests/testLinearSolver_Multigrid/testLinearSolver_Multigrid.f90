@@ -19,7 +19,12 @@ USE LinearSolverTypes
 USE LinearSolverTypes_Multigrid
 USE MultigridMesh
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCKSP
+#endif
+#endif
 
 IMPLICIT NONE
 

@@ -18,13 +18,18 @@ USE ParameterLists
 USE ParallelEnv
 USE VectorTypes
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCVEC
+#endif
+#endif
 
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if ((PETSC_VERSION_MAJOR==3) && (PETSC_VERSION_MINOR==6))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>

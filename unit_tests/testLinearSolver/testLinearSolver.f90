@@ -18,7 +18,12 @@ USE MatrixTypes
 USE PreconditionerTypes
 USE LinearSolverTypes
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCKSP
+#endif
+#endif
 
 IMPLICIT NONE
 
@@ -28,7 +33,7 @@ TYPE(ParamType) :: pList, optListLS, optListMat, vecPList
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if ((PETSC_VERSION_MAJOR==3) && (PETSC_VERSION_MINOR==6))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>

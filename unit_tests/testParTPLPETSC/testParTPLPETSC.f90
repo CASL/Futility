@@ -8,16 +8,21 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testParTPLPETSC
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCSYS
 USE PETSCVEC
 USE PETSCMAT
 USE PETSCKSP
 USE PETSCPC
+#endif
+#endif
 
 IMPLICIT NONE
 
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if ((PETSC_VERSION_MAJOR==3) && (PETSC_VERSION_MINOR==6))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -302,8 +307,13 @@ SUBROUTINE testPETSC_KSP_SuperLU
 
   !PC calls
   CALL PCSetType(pc,PCLU,ierr)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
   CALL PCFactorSetMatSolverType(pc,MATSOLVERSUPERLU_DIST,ierr)
   CALL PCFactorSetUpMatSolverType(pc,ierr)
+#else
+  CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,ierr)
+  CALL PCFactorSetUpMatSolverPackage(pc,ierr)
+#endif
   CALL PCFactorGetMatrix(pc,F,ierr)
 
   !test KSPSolve

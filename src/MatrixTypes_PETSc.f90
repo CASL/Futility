@@ -19,13 +19,18 @@ USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
 USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
 USE VectorTypes
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCMAT
+#endif
+#endif
 
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if ((PETSC_VERSION_MAJOR==3) && (PETSC_VERSION_MINOR==6))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -315,7 +320,11 @@ SUBROUTINE transpose_PETScMatrixType(matrix)
   !This is to avoid a deadlock in IBarrier in MPICH
   CALL PetscCommBuildTwoSidedSetType(matrix%comm, &
       PETSC_BUILDTWOSIDED_ALLREDUCE,iperr)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
   CALL MatTranspose(matrix%a,MAT_INPLACE_MATRIX,matrix%a,iperr)
+#else
+  CALL MatTranspose(matrix%a,MAT_REUSE_MATRIX,matrix%a,iperr)
+#endif
 ENDSUBROUTINE transpose_PETScMatrixType
 !
 !-------------------------------------------------------------------------------

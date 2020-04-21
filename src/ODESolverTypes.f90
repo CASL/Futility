@@ -30,20 +30,10 @@ USE MatrixTypes
 USE LinearSolverTypes
 USE Strings
 USE trilinos_interfaces
+
 IMPLICIT NONE
-
-#ifdef FUTILITY_HAVE_PETSC
-#include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
-#include <petsc/finclude/petsc.h>
-#else
-#include <finclude/petsc.h>
-#endif
-!petscisdef.h defines the keyword IS, and it needs to be reset
-#undef IS
-#endif
-
 PRIVATE
+
 !
 ! List of public members
 PUBLIC :: eODESolverType

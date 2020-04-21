@@ -41,15 +41,20 @@ USE MatrixTypes
 USE LinearSolverTypes
 USE MultigridMesh
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCSYS
 USE PETSCKSP
+#endif
+#endif
 
 IMPLICIT NONE
 PRIVATE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if ((PETSC_VERSION_MAJOR==3) && (PETSC_VERSION_MINOR==6))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -736,8 +741,13 @@ SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smo
       CALL KSPSetType(ksp_temp,KSPPREONLY,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL PCSetType(pc_temp,PCLU,iperr)
-      IF(solver%MPIparallelEnv%nproc > 1) &
-          CALL PCFactorSetMatSolverType(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
+      IF(solver%MPIparallelEnv%nproc > 1) THEN
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+        CALL PCFactorSetMatSolverType(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
+#else
+        CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
+#endif
+      ENDIF
     ELSEIF(smoother == BJACOBI) THEN
       CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
