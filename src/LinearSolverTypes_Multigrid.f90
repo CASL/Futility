@@ -560,14 +560,20 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
 
   !For now, only Galerkin coarse grid operators are supported.
   !  Galerkin means A_c = R*A*I
-!  CALL PCMGSetGalerkin(solver%pc,PETSC_TRUE,iperr)
-  !TODO: figure out Galerkin type
-  CALL PCMGSetGalerkin(solver%pc,1,iperr)
+
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+  CALL PCMGSetGalerkin(solver%pc,PC_MG_GALERKIN_BOTH,iperr)
+#else
+  CALL PCMGSetGalerkin(solver%pc,PETSC_TRUE,iperr)
+#endif
   CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
 
   !Set # of levels:
-  !TODO: PETSC_NULL_OBJECT doesn't exist
-!  CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+  CALL PCMGSetLevels(solver%pc,solver%nLevels,solver%MPIparallelEnv%comm,iperr)
+#else
+  CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
+#endif
 
   !Need a smoother on all levels except the coarsest:
   IF(.NOT. ASSOCIATED(solver%interpMats_PETSc)) &
@@ -595,12 +601,20 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   !  on the way up.  This only occurs if num_smooth <= 0
   !If num_smooth > 0, it does num_smooth iterations up and down
   IF(num_smooth > 0) THEN
-!TODO:
-!    CALL PCMGSetNumberSmoothUp(solver%pc,num_smooth,iperr)
-!    CALL PCMGSetNumberSmoothDown(solver%pc,num_smooth,iperr)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>8))
+    CALL PCMGSetNumberSmooth(solver%pc,num_smooth,iperr)
+#else
+    CALL PCMGSetNumberSmoothUp(solver%pc,num_smooth,iperr)
+    CALL PCMGSetNumberSmoothDown(solver%pc,num_smooth,iperr)
+#endif
   ELSE
-!    CALL PCMGSetNumberSmoothUp(solver%pc,0,iperr)
-!    CALL PCMGSetNumberSmoothDown(solver%pc,1,iperr)
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>8))
+    CALL PCMGSetNumberSmooth(solver%pc,1,iperr)
+    CALL PCMGDistinctSmoothUp(solver%pc,0,iperr)
+#else
+    CALL PCMGSetNumberSmoothUp(solver%pc,0,iperr)
+    CALL PCMGSetNumberSmoothDown(solver%pc,1,iperr)
+#endif
   ENDIF
 
   iLevel=0

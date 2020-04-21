@@ -42,12 +42,12 @@ PRIVATE
 #include <finclude/petsc.h>
 #endif
 #undef IS
-#endif
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 INCLUDE 'mpif.h'
 #endif
 #else
 INCLUDE 'mpif.h'
+#endif
 #endif
 
 #ifdef FUTILITY_HAVE_PETSC
