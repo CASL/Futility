@@ -81,13 +81,15 @@ REGISTER_SUBTEST('testClear',testClear)
 REGISTER_SUBTEST('testInit',testInit)
 #ifdef FUTILITY_HAVE_PETSC
 REGISTER_SUBTEST('testPreAllocPETScInterpMat',testPreAllocPETScInterpMat)
+#if ((PETSC_VERSION_MAJOR<=3) && (PETSC_VERSION_MINOR<8))
 REGISTER_SUBTEST('testFillInterpMats',testFillInterpMats)
 REGISTER_SUBTEST('testSetupPETScMG',testSetupPETScMG)
-#endif
 REGISTER_SUBTEST('testIterativeSolve_Multigrid',testIterativeSolve_Multigrid)
 REGISTER_SUBTEST('testSetSmoother',testSetSmoother)
 REGISTER_SUBTEST('testSoftReset',testSoftReset)
 REGISTER_SUBTEST('testSetInterp',testSetInterp)
+#endif
+#endif
 
 FINALIZE_TEST()
 

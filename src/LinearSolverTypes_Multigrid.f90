@@ -46,6 +46,7 @@ USE MultigridMesh
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCSYS
 USE PETSCKSP
+USE PETSCPC
 #endif
 #endif
 
@@ -570,7 +571,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
 
   !Set # of levels:
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
-  CALL PCMGSetLevels(solver%pc,solver%nLevels,solver%MPIparallelEnv%comm,iperr)
+  CALL PCMGSetLevels(solver%pc,solver%nLevels,iperr)
 #else
   CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
 #endif
@@ -609,8 +610,8 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
 #endif
   ELSE
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>8))
+    CALL PCMGSetDistinctSmoothUp(solver%pc,iperr)
     CALL PCMGSetNumberSmooth(solver%pc,1,iperr)
-    CALL PCMGDistinctSmoothUp(solver%pc,0,iperr)
 #else
     CALL PCMGSetNumberSmoothUp(solver%pc,0,iperr)
     CALL PCMGSetNumberSmoothDown(solver%pc,1,iperr)
