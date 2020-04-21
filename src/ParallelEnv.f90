@@ -35,9 +35,7 @@ IMPLICIT NONE
 PRIVATE
 
 #ifdef HAVE_MPI
-
 #ifdef FUTILITY_HAVE_PETSC
-#include <petscversion.h>
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
 #include <petsc/finclude/petsc.h>
 #else
@@ -45,6 +43,10 @@ PRIVATE
 #endif
 #undef IS
 #endif
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+INCLUDE 'mpif.h'
+#endif
+#else
 INCLUDE 'mpif.h'
 #endif
 
