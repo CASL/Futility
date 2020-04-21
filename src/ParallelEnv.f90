@@ -28,7 +28,6 @@ USE Allocs
 #include <petscversion.h>
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
 USE PETSCSYS, ONLY: PETSC_NULL_CHARACTER
-INCLUDE 'mpif.h'
 #endif
 #endif
 
@@ -36,18 +35,18 @@ IMPLICIT NONE
 PRIVATE
 
 #ifdef HAVE_MPI
+
 #ifdef FUTILITY_HAVE_PETSC
-#if ((PETSC_VERSION_MAJOR==3) && (PETSC_VERSION_MINOR==6))
+#include <petscversion.h>
+#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
 #endif
 #undef IS
 #endif
-#else
 INCLUDE 'mpif.h'
 #endif
-
 
 #ifdef FUTILITY_HAVE_PETSC
 PetscErrorCode  :: ierr
