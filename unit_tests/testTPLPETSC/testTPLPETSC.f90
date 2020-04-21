@@ -8,6 +8,10 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testTPLPETSC
 
+USE PETSCVEC
+USE PETSCMAT
+USE PETSCKSP
+
 IMPLICIT NONE
 
 #include <petscversion.h>
@@ -68,7 +72,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
 SUBROUTINE testPETSC_VEC
   Vec :: b,x
-  REAL(SRK) :: getval
+  REAL(SRK) :: getval(1)
 
   !test VecCreate
   CALL VecCreate(MPI_COMM_WORLD,b,ierr)
@@ -159,19 +163,19 @@ SUBROUTINE testPETSC_VEC
   WRITE(*,*) '  Passed: CALL VecAssembly...(...)'
 
   !test VecGetValues
-  CALL VecGetValues(b,1,0,getval,ierr)
-  IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecSetValue] FAILED!'
+  CALL VecGetValues(b,1,(/0/),getval,ierr)
+  IF(getval(1) /= 5.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/0/),getval,ierr) [VecSetValue] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,1,getval,ierr)
-  IF(getval /= 7.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecSetValue] FAILED!'
+  CALL VecGetValues(b,1,(/1/),getval,ierr)
+  IF(getval(1) /= 7.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/1/),getval,ierr) [VecSetValue] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,2,getval,ierr)
-  IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecSetValue] FAILED!'
+  CALL VecGetValues(b,1,(/2/),getval,ierr)
+  IF(getval(1) /= 2.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/2/),getval,ierr) [VecSetValue] FAILED!'
     STOP 666
   ENDIF
 
@@ -183,19 +187,19 @@ SUBROUTINE testPETSC_VEC
   ENDIF
   CALL VecAssemblyBegin(b,ierr)
   CALL VecAssemblyEnd(b,ierr)
-  CALL VecGetValues(b,1,0,getval,ierr)
-  IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecSet] FAILED!'
+  CALL VecGetValues(b,1,(/0/),getval,ierr)
+  IF(getval(1) /= 6.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/0/),getval,ierr) [VecSet] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,1,getval,ierr)
-  IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecSet] FAILED!'
+  CALL VecGetValues(b,1,(/1/),getval,ierr)
+  IF(getval(1) /= 6.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/1/),getval,ierr) [VecSet] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,2,getval,ierr)
-  IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecSet] FAILED!'
+  CALL VecGetValues(b,1,(/2/),getval,ierr)
+  IF(getval(1) /= 6.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/2/),getval,ierr) [VecSet] FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL VecSet(...)'
@@ -219,61 +223,61 @@ SUBROUTINE testPETSC_VEC
   CALL VecAssemblyEnd(x,ierr)
 
   !test VecNorm
-  CALL VecNorm(b,NORM_1,getval,ierr)
-  IF(getval /= 15.0_SRK .OR. ierr /= 0) THEN
+  CALL VecNorm(b,NORM_1,getval(1),ierr)
+  IF(getval(1) /= 15.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL VecNorm(b,NORM_1,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL VecNorm(x,NORM_1,getval,ierr)
-  IF(getval /= 16.0_SRK .OR. ierr /= 0) THEN
+  CALL VecNorm(x,NORM_1,getval(1),ierr)
+  IF(getval(1) /= 16.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL VecNorm(x,NORM_1,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL VecNorm(b,NORM_2,getval,ierr)
-  IF(getval /= 9.4339811320566032_SRK .OR. ierr /= 0) THEN
+  CALL VecNorm(b,NORM_2,getval(1),ierr)
+  IF(getval(1) /= 9.4339811320566032_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL VecNorm(b,NORM_2,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL VecNorm(x,NORM_2,getval,ierr)
-  IF(getval /= 10.488088481701515_SRK .OR. ierr /= 0) THEN
+  CALL VecNorm(x,NORM_2,getval(1),ierr)
+  IF(getval(1) /= 10.488088481701515_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL VecNorm(x,NORM_2,getval,ierr) FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL VecNorm(...)'
 
   CALL VecAXPY(b,3.0_SRK,x,ierr)
-  CALL VecGetValues(b,1,0,getval,ierr)
-  IF(getval /= 10.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecAXPY] FAILED!'
+  CALL VecGetValues(b,1,(/0/),getval,ierr)
+  IF(getval(1) /= 10.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/0/),getval,ierr) [VecAXPY] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,1,getval,ierr)
-  IF(getval /= 35.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecAXPY] FAILED!'
+  CALL VecGetValues(b,1,(/1/),getval,ierr)
+  IF(getval(1) /= 35.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/1/),getval,ierr) [VecAXPY] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,2,getval,ierr)
-  IF(getval /= 18.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecAXPY] FAILED!'
+  CALL VecGetValues(b,1,(/2/),getval,ierr)
+  IF(getval(1) /= 18.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/2/),getval,ierr) [VecAXPY] FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL VecAXPY(...)'
 
   !test VecCopy by copying b into x
   CALL VecCopy(b,x,ierr)
-  CALL VecGetValues(x,1,0,getval,ierr)
-  IF(getval /= 10.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [VecCopy] FAILED!'
+  CALL VecGetValues(x,1,(/0/),getval,ierr)
+  IF(getval(1) /= 10.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/0/),getval,ierr) [VecCopy] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(x,1,1,getval,ierr)
-  IF(getval /= 35.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [VecCopy] FAILED!'
+  CALL VecGetValues(x,1,(/1/),getval,ierr)
+  IF(getval(1) /= 35.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/1/),getval,ierr) [VecCopy] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(x,1,2,getval,ierr)
-  IF(getval /= 18.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [VecCopy] FAILED!'
+  CALL VecGetValues(x,1,(/2/),getval,ierr)
+  IF(getval(1) /= 18.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/2/),getval,ierr) [VecCopy] FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL VecCopy(...)'
@@ -291,8 +295,8 @@ SUBROUTINE testPETSC_VEC
   CALL VecAssemblyEnd(x,ierr)
 
   !test VecTDot
-  CALL VecTDot(b,x,getval,ierr)
-  IF(getval /= 95.0_SRK .OR. ierr /= 0) THEN
+  CALL VecTDot(b,x,getval(1),ierr)
+  IF(getval(1) /= 95.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL VecTDot(b,x,getval,ierr) FAILED!'
     STOP 666
   ENDIF
@@ -300,53 +304,53 @@ SUBROUTINE testPETSC_VEC
 
   !test VecScale
   CALL VecScale(b,4.0_SRK,ierr)
-  CALL VecGetValues(b,1,0,getval,ierr)
-  IF(getval /= 16.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecScale] FAILED!'
+  CALL VecGetValues(b,1,(/0/),getval,ierr)
+  IF(getval(1) /= 16.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/0/),getval,ierr) [VecScale] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,1,getval,ierr)
-  IF(getval /= 32.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecScale] FAILED!'
+  CALL VecGetValues(b,1,(/1/),getval,ierr)
+  IF(getval(1) /= 32.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/1/),getval,ierr) [VecScale] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,2,getval,ierr)
-  IF(getval /= 12.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecScale] FAILED!'
+  CALL VecGetValues(b,1,(/2/),getval,ierr)
+  IF(getval(1) /= 12.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/2/),getval,ierr) [VecScale] FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL VecScale(...)'
 
   !test VecSwap
   CALL VecSwap(b,x,ierr)
-  CALL VecGetValues(b,1,0,getval,ierr)
-  IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [VecSwap] FAILED!'
+  CALL VecGetValues(b,1,(/0/),getval,ierr)
+  IF(getval(1) /= 2.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/0/),getval,ierr) [VecSwap] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,1,getval,ierr)
-  IF(getval /= 9.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [VecSwap] FAILED!'
+  CALL VecGetValues(b,1,(/1/),getval,ierr)
+  IF(getval(1) /= 9.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/1/),getval,ierr) [VecSwap] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,2,getval,ierr)
-  IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [VecSwap] FAILED!'
+  CALL VecGetValues(b,1,(/2/),getval,ierr)
+  IF(getval(1) /= 5.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/2/),getval,ierr) [VecSwap] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(x,1,0,getval,ierr)
-  IF(getval /= 16.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [VecSwap] FAILED!'
+  CALL VecGetValues(x,1,(/0/),getval,ierr)
+  IF(getval(1) /= 16.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/0/),getval,ierr) [VecSwap] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(x,1,1,getval,ierr)
-  IF(getval /= 32.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [VecSwap] FAILED!'
+  CALL VecGetValues(x,1,(/1/),getval,ierr)
+  IF(getval(1) /= 32.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/1/),getval,ierr) [VecSwap] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(x,1,2,getval,ierr)
-  IF(getval /= 12.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [VecSwap] FAILED!'
+  CALL VecGetValues(x,1,(/2/),getval,ierr)
+  IF(getval(1) /= 12.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/2/),getval,ierr) [VecSwap] FAILED!'
     STOP 666
   ENDIF
 
@@ -371,7 +375,7 @@ ENDSUBROUTINE testPETSC_VEC
 SUBROUTINE testPETSC_MAT
   Vec :: b,x
   Mat :: A
-  REAL(SRK) :: getval
+  REAL(SRK) :: getval(1)
 
   !test MatCreate
   CALL MatCreate(MPI_COMM_WORLD,A,ierr)
@@ -476,48 +480,48 @@ SUBROUTINE testPETSC_MAT
   WRITE(*,*) '  Passed: CALL MatAssembly...(...)'
 
   !test MatGetValues
-  CALL MatGetValues(A,1,0,1,0,getval,ierr)
-  IF(getval /= 1.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,1,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/0/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 1.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/1/),1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,0,1,1,getval,ierr)
-  IF(getval /= 3.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,1,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/0/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 3.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/1/),1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,0,1,2,getval,ierr)
-  IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/0/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 5.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,1,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,0,getval,ierr)
-  IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,2,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/1/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 6.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/2/),1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,1,getval,ierr)
-  IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,2,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/1/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 2.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/2/),1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,2,getval,ierr)
-  IF(getval /= 8.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/1/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 8.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,2,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,0,getval,ierr)
-  IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/2/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 5.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,1,getval,ierr)
-  IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/2/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 2.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,2,getval,ierr)
-  IF(getval /= 4.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/2/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 4.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,3,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
@@ -543,38 +547,38 @@ SUBROUTINE testPETSC_MAT
   !      6 2 8       2
   !      5 2 4]      4]
   CALL MatMult(A,x,b,ierr)
-  CALL VecGetValues(b,1,0,getval,ierr)
-  IF(getval /= 32.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [MatMult] FAILED!'
+  CALL VecGetValues(b,1,(/0/),getval,ierr)
+  IF(getval(1) /= 32.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/0/),getval,ierr) [MatMult] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,1,getval,ierr)
-  IF(getval /= 72.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [MatMult] FAILED!'
+  CALL VecGetValues(b,1,(/1/),getval,ierr)
+  IF(getval(1) /= 72.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/1/),getval,ierr) [MatMult] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,2,getval,ierr)
-  IF(getval /= 50.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [MatMult] FAILED!'
+  CALL VecGetValues(b,1,(/2/),getval,ierr)
+  IF(getval(1) /= 50.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/2/),getval,ierr) [MatMult] FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL MatMult(...)'
 
   !test MatMultTransport
   CALL MatMultTranspose(A,x,b,ierr)
-  CALL VecGetValues(b,1,0,getval,ierr)
-  IF(getval /= 38.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,0,getval,ierr) [MatMultTranspose] FAILED!'
+  CALL VecGetValues(b,1,(/0/),getval,ierr)
+  IF(getval(1) /= 38.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/0/),getval,ierr) [MatMultTranspose] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,1,getval,ierr)
-  IF(getval /= 30.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,1,getval,ierr) [MatMultTranspose] FAILED!'
+  CALL VecGetValues(b,1,(/1/),getval,ierr)
+  IF(getval(1) /= 30.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/1/),getval,ierr) [MatMultTranspose] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(b,1,2,getval,ierr)
-  IF(getval /= 62.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(b,1,2,getval,ierr) [MatMultTranspose] FAILED!'
+  CALL VecGetValues(b,1,(/2/),getval,ierr)
+  IF(getval(1) /= 62.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(b,1,(/2/),getval,ierr) [MatMultTranspose] FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL MatMultTranspose(...)'
@@ -582,97 +586,97 @@ SUBROUTINE testPETSC_MAT
   !test MatTranspose
   CALL PetscCommBuildTwoSidedSetType(MPI_COMM_WORLD, &
       PETSC_BUILDTWOSIDED_ALLREDUCE,ierr)
-  CALL MatTranspose(A,MAT_REUSE_MATRIX,A,ierr)
-  CALL MatGetValues(A,1,0,1,0,getval,ierr)
-  IF(getval /= 1.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,1,1,1,getval,ierr) FAILED!'
+  CALL MatTranspose(A,MAT_INPLACE_MATRIX,A,ierr)
+  CALL MatGetValues(A,1,(/0/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 1.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/1/),1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,0,1,1,getval,ierr)
-  IF(getval /= 6.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,1,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/0/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 6.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/1/),1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,0,1,2,getval,ierr)
-  IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/0/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 5.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,1,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,0,getval,ierr)
-  IF(getval /= 3.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,2,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/1/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 3.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/2/),1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,1,getval,ierr)
-  IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,2,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/1/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 2.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/2/),1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,2,getval,ierr)
-  IF(getval /= 2.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/1/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 2.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,2,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,0,getval,ierr)
-  IF(getval /= 5.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/2/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 5.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,1,getval,ierr)
-  IF(getval /= 8.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/2/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 8.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,2,getval,ierr)
-  IF(getval /= 4.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/2/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 4.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,3,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL MatTranspose(...)'
 
   CALL MatZeroEntries(A,ierr)
-  CALL MatGetValues(A,1,0,1,0,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,1,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/0/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/1/),1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,0,1,1,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,1,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/0/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/1/),1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,0,1,2,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/0/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,1,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,0,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,2,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/1/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/2/),1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,1,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,2,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/1/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,(/2/),1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,1,1,2,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/1/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,2,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,0,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,1,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/2/),1,(/0/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,(/1/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,1,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,2,getval,ierr) FAILED!'
+  CALL MatGetValues(A,1,(/2/),1,(/1/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL MatGetValues(A,1,3,1,(/2/),getval,ierr) FAILED!'
     STOP 666
   ENDIF
-  CALL MatGetValues(A,1,2,1,2,getval,ierr)
-  IF(getval /= 0.0_SRK .OR. ierr /= 0) THEN
+  CALL MatGetValues(A,1,(/2/),1,(/2/),getval,ierr)
+  IF(getval(1) /= 0.0_SRK .OR. ierr /= 0) THEN
     WRITE(*,*) 'CALL MatGetValues(A,1,3,1,3,getval,ierr) FAILED!'
     STOP 666
   ENDIF
@@ -693,7 +697,7 @@ SUBROUTINE testPETSC_KSP
   KSP :: ksp
   PetscReal :: rtol,abstol,dtol
   PetscInt  :: maxits,restart
-  REAL(SRK) :: getval
+  REAL(SRK) :: getval(1)
 
   !test KSPCreate
   CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
@@ -806,19 +810,19 @@ SUBROUTINE testPETSC_KSP
 
   !test KSPSolve
   CALL KSPSolve(ksp,b,x,ierr)
-  CALL VecGetValues(x,1,0,getval,ierr)
-  IF(ABS(getval-0.4_SRK)>1E-13 .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [KSPSolve] FAILED!'
+  CALL VecGetValues(x,1,(/0/),getval,ierr)
+  IF(ABS(getval(1)-0.4_SRK)>1E-13 .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/0/),getval,ierr) [KSPSolve] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(x,1,1,getval,ierr)
-  IF(ABS(getval+0.2_SRK)>1E-13 .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [KSPSolve] FAILED!'
+  CALL VecGetValues(x,1,(/1/),getval,ierr)
+  IF(ABS(getval(1)+0.2_SRK)>1E-13 .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/1/),getval,ierr) [KSPSolve] FAILED!'
     STOP 666
   ENDIF
-  CALL VecGetValues(x,1,2,getval,ierr)
-  IF(ABS(getval-0.6_SRK)>1E-13 .OR. ierr /= 0) THEN
-    WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
+  CALL VecGetValues(x,1,(/2/),getval,ierr)
+  IF(ABS(getval(1)-0.6_SRK)>1E-13 .OR. ierr /= 0) THEN
+    WRITE(*,*) 'CALL VecGetValues(x,1,(/2/),getval,ierr) [KSPSolve] FAILED!'
     STOP 666
   ENDIF
   WRITE(*,*) '  Passed: CALL KSPSolve(...)'

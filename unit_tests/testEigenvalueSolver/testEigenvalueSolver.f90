@@ -18,6 +18,8 @@ USE VectorTypes
 USE MatrixTypes
 USE EigenvalueSolverTypes
 
+USE PETSCSYS
+
 IMPLICIT NONE
 
 TYPE(ExceptionHandlerType),TARGET :: e

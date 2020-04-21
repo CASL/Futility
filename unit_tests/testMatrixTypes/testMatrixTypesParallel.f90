@@ -19,6 +19,7 @@ USE ParallelEnv
 USE VectorTypes
 USE MatrixTypes
 
+USE PETSCMAT
 
 IMPLICIT NONE
 

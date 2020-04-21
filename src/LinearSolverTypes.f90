@@ -63,6 +63,9 @@ USE MKL_PARDISO
 #ifdef FUTILITY_HAVE_Trilinos
 USE ForTeuchos_ParameterList
 #endif
+
+USE PETSCKSP
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -526,8 +529,8 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
           !PC calls
           CALL KSPGetPC(solver%ksp,pc,ierr)
           CALL PCSetType(pc,PCLU,iperr)
-          CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,iperr)
-          CALL PCFactorSetUpMatSolverPackage(pc,iperr)
+          CALL PCFactorSetMatSolverType(pc,MATSOLVERSUPERLU_DIST,iperr)
+          CALL PCFactorSetUpMatSolverType(pc,iperr)
 
 #else
           CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -581,8 +584,10 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
               CALL PCSetType(solver%pc,PCJACOBI,iperr)
             ELSEIF(TRIM(PreCondType)=='BJACOBI_ILU') THEN
               CALL PCSetType(solver%pc,PCBJACOBI,iperr)
-              CALL PetscOptionsSetValue("-sub_ksp_type","preonly",iperr)
-              CALL PetscOptionsSetValue("-sub_pc_type","ilu",iperr)
+!              CALL PetscOptionsSetValue("-sub_ksp_type","preonly",iperr)
+!              CALL PetscOptionsSetValue("-sub_pc_type","ilu",iperr)
+              CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS,"-sub_ksp_type","preonly",iperr)
+              CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS,"-sub_pc_type","ilu",iperr)
               CALL PCSetFromOptions(solver%pc,iperr)
             ELSEIF(TRIM(PreCondType)=='EISENSTAT') THEN
               CALL PCSetType(solver%pc,PCEISENSTAT,iperr)

@@ -19,6 +19,8 @@ USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
 USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
 USE VectorTypes
 
+USE PETSCMAT
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -267,6 +269,7 @@ SUBROUTINE get_PETScMatrixType(matrix,i,j,getval)
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK),INTENT(IN) :: j
   REAL(SRK),INTENT(INOUT) :: getval
+  REAL(SRK) :: tmpval(1)
   PetscErrorCode  :: ierr
 
   getval=0.0_SRK
@@ -275,7 +278,8 @@ SUBROUTINE get_PETScMatrixType(matrix,i,j,getval)
     IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
 
     IF((i <= matrix%n) .AND. (j <= matrix%n) .AND. ((j > 0) .AND. (i > 0))) THEN
-      CALL MatGetValues(matrix%a,1,i-1,1,j-1,getval,ierr)
+      CALL MatGetValues(matrix%a,1,(/i-1/),1,(/j-1/),tmpval,ierr)
+      getval=tmpval(1)
     ELSE
       getval=-1051._SRK
     ENDIF
@@ -311,7 +315,7 @@ SUBROUTINE transpose_PETScMatrixType(matrix)
   !This is to avoid a deadlock in IBarrier in MPICH
   CALL PetscCommBuildTwoSidedSetType(matrix%comm, &
       PETSC_BUILDTWOSIDED_ALLREDUCE,iperr)
-  CALL MatTranspose(matrix%a,MAT_REUSE_MATRIX,matrix%a,iperr)
+  CALL MatTranspose(matrix%a,MAT_INPLACE_MATRIX,matrix%a,iperr)
 ENDSUBROUTINE transpose_PETScMatrixType
 !
 !-------------------------------------------------------------------------------

@@ -18,6 +18,8 @@ USE ParameterLists
 USE ParallelEnv
 USE VectorTypes
 
+USE PETSCVEC
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC

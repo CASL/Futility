@@ -81,6 +81,8 @@ USE MatrixTypes
 USE ODESolverTypes
 USE testODEInterface
 
+USE PETSCSYS
+
 IMPLICIT NONE
 
 TYPE(ExceptionHandlerType),TARGET :: e

@@ -34,6 +34,8 @@ USE VectorTypes
 USE MatrixTypes
 USE Constants_Conversion
 
+USE PETSCPC
+
 IMPLICIT NONE
 PRIVATE
 

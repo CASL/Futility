@@ -37,6 +37,9 @@ USE Strings
 #ifdef FUTILITY_HAVE_Trilinos
 USE ForTeuchos_ParameterList
 #endif
+
+USE PETSCSNES
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC

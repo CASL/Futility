@@ -18,6 +18,8 @@ USE ParameterLists
 USE ParallelEnv
 USE VectorTypes
 
+USE PETSCVEC
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -721,7 +723,7 @@ SUBROUTINE testVector()
 
     !now compare actual values with expected
     DO i=1,6
-      CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+      CALL VecGetValues(thisVector%b,1,(/i-1/),(/dummy/),ierr)
       bool = .NOT.(dummy /= i .AND. iverr /= 0)
       ASSERT(bool, 'petscvec%setOne(...)')
     ENDDO
@@ -758,7 +760,7 @@ SUBROUTINE testVector()
 
     CALL VecGetSize(thisVector%b,vecsize,ierr)
     DO i=1,vecsize
-      CALL VecGetValues(thisVector%b,1,i-1,dummy,ierr)
+      CALL VecGetValues(thisVector%b,1,(/i-1/),(/dummy/),ierr)
       ASSERT(dummy /= 1._SRK, 'petscvec%setOne(...)')
     ENDDO
     WRITE(*,*) '  Passed: CALL petscvec%setOne(...)'

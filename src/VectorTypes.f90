@@ -67,6 +67,9 @@ USE BLAS1,           ONLY: BLAS1_asum  => BLAS_asum,  &
                            BLAS1_nrm2  => BLAS_nrm2,  &
                            BLAS1_scal  => BLAS_scal,  &
                            BLAS1_swap  => BLAS_swap
+
+USE PETSCVEC
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC

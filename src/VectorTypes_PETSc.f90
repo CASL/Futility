@@ -16,6 +16,8 @@ USE ExceptionHandler
 USE ParameterLists
 USE VectorTypes_Base
 
+USE PETSCVEC
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -331,12 +333,14 @@ SUBROUTINE getOne_PETScVectorType(thisVector,i,getval,ierr)
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
   !
   INTEGER(SIK) :: ierrc
+  REAL(SRK) :: tmpval(1)
   ierrc=-1
   IF(thisVector%isInit) THEN
     ierrc=-2
     IF((i <= thisVector%n) .AND. (i > 0)) THEN
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
-      CALL VecGetValues(thisVector%b,1,i-1,getval,iperr)
+      CALL VecGetValues(thisVector%b,1,(/i-1/),tmpval,iperr)
+      getval=tmpval(1)
       ierrc=iperr
     ENDIF
   ENDIF

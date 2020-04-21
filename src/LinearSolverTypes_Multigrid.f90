@@ -40,6 +40,10 @@ USE VectorTypes
 USE MatrixTypes
 USE LinearSolverTypes
 USE MultigridMesh
+
+USE PETSCSYS
+USE PETSCKSP
+
 IMPLICIT NONE
 PRIVATE
 
@@ -551,11 +555,14 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
 
   !For now, only Galerkin coarse grid operators are supported.
   !  Galerkin means A_c = R*A*I
-  CALL PCMGSetGalerkin(solver%pc,PETSC_TRUE,iperr)
+!  CALL PCMGSetGalerkin(solver%pc,PETSC_TRUE,iperr)
+  !TODO: figure out Galerkin type
+  CALL PCMGSetGalerkin(solver%pc,1,iperr)
   CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
 
   !Set # of levels:
-  CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
+  !TODO: PETSC_NULL_OBJECT doesn't exist
+!  CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
 
   !Need a smoother on all levels except the coarsest:
   IF(.NOT. ASSOCIATED(solver%interpMats_PETSc)) &
@@ -583,11 +590,12 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   !  on the way up.  This only occurs if num_smooth <= 0
   !If num_smooth > 0, it does num_smooth iterations up and down
   IF(num_smooth > 0) THEN
-    CALL PCMGSetNumberSmoothUp(solver%pc,num_smooth,iperr)
-    CALL PCMGSetNumberSmoothDown(solver%pc,num_smooth,iperr)
+!TODO:
+!    CALL PCMGSetNumberSmoothUp(solver%pc,num_smooth,iperr)
+!    CALL PCMGSetNumberSmoothDown(solver%pc,num_smooth,iperr)
   ELSE
-    CALL PCMGSetNumberSmoothUp(solver%pc,0,iperr)
-    CALL PCMGSetNumberSmoothDown(solver%pc,1,iperr)
+!    CALL PCMGSetNumberSmoothUp(solver%pc,0,iperr)
+!    CALL PCMGSetNumberSmoothDown(solver%pc,1,iperr)
   ENDIF
 
   iLevel=0
@@ -622,7 +630,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
     CALL Params%get('LinearSolverType->Multigrid->log_flag',log_flag)
     IF(log_flag) THEN
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=7))
-      CALL PetscOptionsSetValue(PETSC_NULL_CHARACTER,"-pc_mg_log", &
+      CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS,"-pc_mg_log", &
           PETSC_NULL_CHARACTER,iperr)
 #else
       CALL PetscOptionsSetValue("-pc_mg_log",PETSC_NULL_CHARACTER,iperr)
@@ -729,7 +737,7 @@ SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smo
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL PCSetType(pc_temp,PCLU,iperr)
       IF(solver%MPIparallelEnv%nproc > 1) &
-          CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
+          CALL PCFactorSetMatSolverType(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
     ELSEIF(smoother == BJACOBI) THEN
       CALL KSPSetType(ksp_temp,KSPRICHARDSON,iperr)
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)

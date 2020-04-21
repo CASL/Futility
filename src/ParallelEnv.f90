@@ -24,6 +24,8 @@ USE trilinos_interfaces
 USE Allocs
 !$ USE OMP_LIB
 
+USE PETSCSYS, ONLY: PETSC_NULL_CHARACTER
+
 IMPLICIT NONE
 PRIVATE
 
@@ -39,9 +41,8 @@ PRIVATE
 #undef IS
 PetscErrorCode  :: ierr
 PetscBool :: petsc_isinit
-#else
-INCLUDE 'mpif.h'
 #endif
+INCLUDE 'mpif.h'
 
 INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
 INTEGER,PARAMETER :: PE_COMM_WORLD=MPI_COMM_WORLD
