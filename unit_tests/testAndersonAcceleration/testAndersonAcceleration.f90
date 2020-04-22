@@ -127,9 +127,7 @@ SUBROUTINE testStep()
   DO i=1,10
     mySol=testAndAcc%step(Weight_Avg(mySol,exSol,R))
     AccErr(i)=NORM2(mySol(:)-exSol(:))*Norm
-    IF(i > 1) THEN
-      ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
-    ENDIF
+    IF(i > 1) ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
   ENDDO
 
   COMPONENT_TEST('Fast depth=2 beta=0.8')
@@ -145,9 +143,7 @@ SUBROUTINE testStep()
   DO i=1,10
     mySol=testAndAcc%step(Weight_Avg(mySol,exSol,R))
     AccErr(i)=NORM2(mySol(:)-exSol(:))*Norm
-    IF(i > 1) THEN
-      ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
-    ENDIF
+    IF(i > 1) ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
   ENDDO
 
   !Generate a slow element wise "convergence rate"
@@ -176,9 +172,7 @@ SUBROUTINE testStep()
   DO i=1,10
     mySol=testAndAcc%step(Weight_Avg(mySol,exSol,R))
     AccErr(i)=NORM2(mySol(:)-exSol(:))*Norm
-    IF(i > 1) THEN
-      ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
-    ENDIF
+    IF(i > 1) ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
   ENDDO
 
   COMPONENT_TEST('Slow depth=1 beta=0.2')
@@ -194,9 +188,7 @@ SUBROUTINE testStep()
   DO i=1,10
     mySol=testAndAcc%step(Weight_Avg(mySol,exSol,R))
     AccErr(i)=NORM2(mySol(:)-exSol(:))*Norm
-    IF(i > 1) THEN
-      ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
-    ENDIF
+    IF(i > 1) ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
   ENDDO
 
   COMPONENT_TEST('Slow depth=10 beta=1.0')
@@ -212,10 +204,11 @@ SUBROUTINE testStep()
   DO i=1,10
     mySol=testAndAcc%step(Weight_Avg(mySol,exSol,R))
     AccErr(i)=NORM2(mySol(:)-exSol(:))*Norm
-    IF(i > 1) THEN
-      ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
-    ENDIF
+    IF(i > 1) ASSERT(AccErr(i) < UnAccErr(i),'Anderson too Slow')
   ENDDO
+
+  !Esure rate of convergence is correct:
+  ASSERT(AccErr(10)/AccErr(9) .APPROXEQ. 0.90109868784461988_SRK,'Wrong Anderson Conv. Rate')
 
   COMPONENT_TEST('Slow depth=0 beta=0.5')
   !Clear and reinilialize Anderson
@@ -241,6 +234,7 @@ FUNCTION Weight_Avg(x1,x2,R) RESULT(x_avg)
   REAL(SRK),INTENT(IN) :: x1(:)
   REAL(SRK),INTENT(IN) :: x2(:)
   REAL(SRK),INTENT(IN) :: R(:)
+
   REAL(SRK) :: x_avg(SIZE(x1))
   INTEGER(SIK) :: i
 

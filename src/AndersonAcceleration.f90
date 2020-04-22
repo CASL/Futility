@@ -260,7 +260,7 @@ ENDSUBROUTINE set_AndersonAccelerationType
 !
 !-------------------------------------------------------------------------------
 !> @brief Function which solves the system Ax=b by Gaussian elimination with
-!>        full pivoting. NOTE that A is destroyed in the process.
+!>        full(complete) pivoting. NOTE that A is destroyed in the process.
 !> @param A coefficient matrix in Ax=b
 !> @param b right hand side of problem Ax=b
 !> @returns x the solution vector of the problem Ax=b
