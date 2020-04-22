@@ -103,11 +103,11 @@ SUBROUTINE testMatrix()
   INTEGER(SIK) :: ia_vals(4)
   INTEGER(SIK) :: ja_vals(6)
   REAL(SRK) :: a_vals(6),x(3),y(3),val
-  REAL(SRK) :: dummy,dummy1(1)
+  REAL(SRK) :: dummy
   REAL(SRK),ALLOCATABLE :: dummyvec(:), dummyvec2(:)
   LOGICAL(SBK) :: bool
 #ifdef FUTILITY_HAVE_PETSC
-  INTEGER(SIK) :: matsize1,matsize2
+  INTEGER(SIK) :: matsize1,matsize2,dummy1(1)
   CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
