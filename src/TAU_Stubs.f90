@@ -142,7 +142,7 @@ TYPE :: ProfilerType
   !> Temporary array for storing counter values
   INTEGER(C_LONG_LONG),ALLOCATABLE :: tmpCounts(:,:)
   REAL(SDK),ALLOCATABLE :: papiCounts(:)
-  TYPE(ProfilerType),POINTER :: nextProfiler => NULL()
+  CLASS(ProfilerType),POINTER :: nextProfiler => NULL()
 ENDTYPE ProfilerType
 
 !> @brief A type for containing an array of scalar pointers for profilers
@@ -616,7 +616,7 @@ ENDSUBROUTINE Write_Profile_metric
 !> Not public. Should only be called by TAUSTUB_FINISH
 !>
 RECURSIVE SUBROUTINE Clear_ProfilerType(thisProfiler)
-  TYPE(ProfilerType),POINTER,INTENT(INOUT) :: thisProfiler
+  CLASS(ProfilerType),POINTER,INTENT(INOUT) :: thisProfiler
   IF(ASSOCIATED(thisProfiler)) THEN
     CALL Clear_ProfilerType(thisProfiler%nextProfiler)
     thisProfiler%name=''

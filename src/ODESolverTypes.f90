@@ -668,7 +668,7 @@ SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta,tol,updateJ)
   REAL(SRK),INTENT(IN) :: dt
   CLASS(VectorType),INTENT(INOUT) :: yf
   CLASS(VectorType),INTENT(INOUT) :: ydot
-  CLASS(VectorType),INTENT(IN) :: rhs
+  CLASS(VectorType),INTENT(INOUT) :: rhs
   REAL(SRK),INTENT(IN) :: beta
   REAL(SRK),INTENT(IN) :: tol
   LOGICAL(SBK),INTENT(IN) :: updateJ

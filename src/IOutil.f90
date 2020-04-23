@@ -166,7 +166,7 @@ SUBROUTINE GET_ENVIRONMENT_VARIABLE_string(name,value,length,status, &
       CALL GET_ENVIRONMENT_VARIABLE_internal(value,name,len,trm_nm,stat)
     ENDIF
   ELSE
-    CALL GET_ENVIRONMENT_VARIABLE(NAME=name,LENGTH=len,STATUS=stat)
+    CALL GET_ENVIRONMENT_VARIABLE(NAME=name,VALUE=tmpVal,LENGTH=len,STATUS=stat)
   ENDIF
   IF(PRESENT(length)) length=len
   IF(PRESENT(status)) status=stat
