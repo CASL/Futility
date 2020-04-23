@@ -107,7 +107,8 @@ SUBROUTINE testMatrix()
   REAL(SRK),ALLOCATABLE :: dummyvec(:), dummyvec2(:)
   LOGICAL(SBK) :: bool
 #ifdef FUTILITY_HAVE_PETSC
-  INTEGER(SIK) :: matsize1,matsize2,dummy1(1)
+  INTEGER(SIK) :: matsize1,matsize2
+  REAL(SRK) :: dummy1(1)
   CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
