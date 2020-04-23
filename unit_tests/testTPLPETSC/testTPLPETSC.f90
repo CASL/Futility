@@ -10,7 +10,7 @@ PROGRAM testTPLPETSC
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
 USE PETSCVEC
 USE PETSCMAT
 USE PETSCKSP
@@ -20,7 +20,7 @@ USE PETSCKSP
 IMPLICIT NONE
 
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -591,7 +591,7 @@ SUBROUTINE testPETSC_MAT
   !test MatTranspose
   CALL PetscCommBuildTwoSidedSetType(MPI_COMM_WORLD, &
       PETSC_BUILDTWOSIDED_ALLREDUCE,ierr)
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
   CALL MatTranspose(A,MAT_INPLACE_MATRIX,A,ierr)
 #else
   CALL MatTranspose(A,MAT_REUSE_MATRIX,A,ierr)

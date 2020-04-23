@@ -26,7 +26,7 @@ USE Allocs
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
 USE PETSCSYS, ONLY: PETSC_NULL_CHARACTER
 #endif
 #endif
@@ -36,13 +36,13 @@ PRIVATE
 
 #ifdef HAVE_MPI
 #ifdef FUTILITY_HAVE_PETSC
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
 #endif
 #undef IS
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
 INCLUDE 'mpif.h'
 #endif
 #else

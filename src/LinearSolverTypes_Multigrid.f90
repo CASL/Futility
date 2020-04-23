@@ -43,7 +43,7 @@ USE MultigridMesh
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
 USE PETSCSYS
 USE PETSCKSP
 USE PETSCPC
@@ -55,7 +55,7 @@ PRIVATE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -562,7 +562,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   !For now, only Galerkin coarse grid operators are supported.
   !  Galerkin means A_c = R*A*I
 
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
   CALL PCMGSetGalerkin(solver%pc,PC_MG_GALERKIN_BOTH,iperr)
 #else
   CALL PCMGSetGalerkin(solver%pc,PETSC_TRUE,iperr)
@@ -570,7 +570,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
 
   !Set # of levels:
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
   CALL PCMGSetLevels(solver%pc,solver%nLevels,iperr)
 #else
   CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
@@ -757,7 +757,7 @@ SUBROUTINE setSmoother_LinearSolverType_Multigrid(solver,smoother,iLevel,num_smo
       CALL KSPGetPC(ksp_temp,pc_temp,iperr)
       CALL PCSetType(pc_temp,PCLU,iperr)
       IF(solver%MPIparallelEnv%nproc > 1) THEN
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
         CALL PCFactorSetMatSolverType(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
 #else
         CALL PCFactorSetMatSolverPackage(pc_temp,MATSOLVERSUPERLU_DIST,iperr)
