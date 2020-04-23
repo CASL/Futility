@@ -813,7 +813,7 @@ SUBROUTINE clear_DistributedSOR_PreCondtype(thisPC)
       NULLIFY(thisPC%LpU)
     CLASS DEFAULT
       CALL LpU%clear()
-      DEALLOCATE(LpU)
+      DEALLOCATE(thisPC%LpU)
     ENDSELECT
   ENDIF
   IF(ALLOCATED(thisPC%LU)) THEN
