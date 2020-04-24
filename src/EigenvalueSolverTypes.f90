@@ -37,11 +37,19 @@ USE Strings
 #ifdef FUTILITY_HAVE_Trilinos
 USE ForTeuchos_ParameterList
 #endif
+
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCSNES
+#endif
+#endif
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -49,7 +57,7 @@ IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_SLEPC
 !SLEPC version == PETSC version
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
 #else
@@ -693,7 +701,7 @@ SUBROUTINE getResidual_EigenvalueSolverType_Base(solver,resid,its)
   SELECTTYPE(solver)
   TYPE IS(EigenvalueSolverType_SLEPc)
 #ifdef FUTILITY_HAVE_SLEPC
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
     CALL EPSComputeError(solver%eps,0,EPS_ERROR_RELATIVE,resid,ierr)
 #else
     CALL EPSComputeRelativeError(solver%eps,0,resid,ierr)

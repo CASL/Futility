@@ -12,9 +12,17 @@ USE VectorTypes
 USE MatrixTypes
 USE PreconditionerTypes
 USE ParameterLists
+
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCPC
+#endif
+#endif
+
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -430,7 +438,7 @@ SUBROUTINE testPCShell()
   PetscErrorCode :: ierr
 
   INTEGER(SIK) :: i,niters
-  REAL(SRK) :: val,resid
+  REAL(SRK) :: val(1),resid
   TYPE(PETScMatrixType) :: matrix
   CLASS(PreconditionerType),POINTER :: shellPC
 
@@ -497,13 +505,13 @@ SUBROUTINE testPCShell()
   FINFO() niters,resid
   val=-1.0
   DO i=1,3
-    CALL VecGetValues(x,1,i-1,val,ierr)
+    CALL VecGetValues(x,1,(/i-1/),val,ierr)
     IF(i==2) THEN
-      ASSERT(val.APPROXEQ.2.0_SRK,'ksp sol')
+      ASSERT(val(1).APPROXEQ.2.0_SRK,'ksp sol')
     ELSE
-      ASSERT(val.APPROXEQ.1.5_SRK,'ksp sol')
+      ASSERT(val(1).APPROXEQ.1.5_SRK,'ksp sol')
     ENDIF
-    FINFO() i, val
+    FINFO() i, val(1)
   ENDDO
   CALL KSPDestroy(ksp,ierr)
 
@@ -548,13 +556,13 @@ SUBROUTINE testPCShell()
   FINFO() niters,resid
   val=-1.0
   DO i=1,3
-    CALL VecGetValues(x,1,i-1,val,ierr)
+    CALL VecGetValues(x,1,(/i-1/),val,ierr)
     IF(i==2) THEN
-      ASSERT(val.APPROXEQ.2.0_SRK,'ksp sol')
+      ASSERT(val(1).APPROXEQ.2.0_SRK,'ksp sol')
     ELSE
-      ASSERT(val.APPROXEQ.1.5_SRK,'ksp sol')
+      ASSERT(val(1).APPROXEQ.1.5_SRK,'ksp sol')
     ENDIF
-    FINFO() i, val
+    FINFO() i, val(1)
   ENDDO
 
   CALL MatDestroy(A,ierr)

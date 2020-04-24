@@ -24,25 +24,38 @@ USE trilinos_interfaces
 USE Allocs
 !$ USE OMP_LIB
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCSYS, ONLY: PETSC_NULL_CHARACTER
+#endif
+#endif
+
 IMPLICIT NONE
 PRIVATE
 
 #ifdef HAVE_MPI
-
 #ifdef FUTILITY_HAVE_PETSC
-#include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
 #endif
 #undef IS
-PetscErrorCode  :: ierr
-PetscBool :: petsc_isinit
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+INCLUDE 'mpif.h'
+#endif
 #else
 INCLUDE 'mpif.h'
 #endif
+#endif
 
+#ifdef FUTILITY_HAVE_PETSC
+PetscErrorCode  :: ierr
+PetscBool :: petsc_isinit
+#endif
+
+#ifdef HAVE_MPI
 INTEGER,PARAMETER :: PE_COMM_SELF=MPI_COMM_SELF
 INTEGER,PARAMETER :: PE_COMM_WORLD=MPI_COMM_WORLD
 INTEGER,PARAMETER :: PE_COMM_NULL=MPI_COMM_NULL
