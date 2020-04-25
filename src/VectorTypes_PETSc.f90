@@ -16,12 +16,20 @@ USE ExceptionHandler
 USE ParameterLists
 USE VectorTypes_Base
 
+
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCVEC
+#endif
+#endif
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
 
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -331,12 +339,14 @@ SUBROUTINE getOne_PETScVectorType(thisVector,i,getval,ierr)
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
   !
   INTEGER(SIK) :: ierrc
+  REAL(SRK) :: tmpval(1)
   ierrc=-1
   IF(thisVector%isInit) THEN
     ierrc=-2
     IF((i <= thisVector%n) .AND. (i > 0)) THEN
       IF(.NOT.thisVector%isAssembled) CALL thisVector%assemble(iperr)
-      CALL VecGetValues(thisVector%b,1,i-1,getval,iperr)
+      CALL VecGetValues(thisVector%b,1,(/i-1/),tmpval,iperr)
+      getval=tmpval(1)
       ierrc=iperr
     ENDIF
   ENDIF

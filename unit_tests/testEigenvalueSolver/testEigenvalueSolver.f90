@@ -18,6 +18,13 @@ USE VectorTypes
 USE MatrixTypes
 USE EigenvalueSolverTypes
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCSYS
+#endif
+#endif
+
 IMPLICIT NONE
 
 TYPE(ExceptionHandlerType),TARGET :: e
@@ -29,7 +36,7 @@ CLASS(DistributedMatrixType),POINTER :: B => NULL()
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>

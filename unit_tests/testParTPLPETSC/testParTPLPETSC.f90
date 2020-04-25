@@ -8,10 +8,21 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testParTPLPETSC
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCSYS
+USE PETSCVEC
+USE PETSCMAT
+USE PETSCKSP
+USE PETSCPC
+#endif
+#endif
+
 IMPLICIT NONE
 
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -73,7 +84,7 @@ SUBROUTINE testPETSC_KSP
   KSP :: ksp
   PetscReal :: rtol,abstol,dtol
   PetscInt  :: maxits,restart
-  REAL(SRK) :: getval
+  REAL(SRK) :: getval(1)
 
   !test KSPCreate
   CALL KSPCreate(MPI_COMM_WORLD,ksp,ierr)
@@ -187,29 +198,29 @@ SUBROUTINE testPETSC_KSP
   !test KSPSolve
   CALL KSPSolve(ksp,b,x,ierr)
   IF(rank == 0) THEN
-    CALL VecGetValues(x,1,0,getval,ierr)
-    IF(ABS(getval-2.12_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/0/),getval,ierr)
+    IF(ABS(getval(1)-2.12_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF
   ENDIF
   IF(rank == 1) THEN
-    CALL VecGetValues(x,1,1,getval,ierr)
-    IF(ABS(getval-3.24_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/1/),getval,ierr)
+    IF(ABS(getval(1)-3.24_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF
   ENDIF
   IF(rank == 2) THEN
-    CALL VecGetValues(x,1,2,getval,ierr)
-    IF(ABS(getval-3.16_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/2/),getval,ierr)
+    IF(ABS(getval(1)-3.16_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF
   ENDIF
   IF(rank == 3) THEN
-    CALL VecGetValues(x,1,3,getval,ierr)
-    IF(ABS(getval-1.98_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/3/),getval,ierr)
+    IF(ABS(getval(1)-1.98_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF
@@ -237,7 +248,7 @@ SUBROUTINE testPETSC_KSP_SuperLU
   PC  :: pc
   PetscReal :: rtol,abstol,dtol
   PetscInt  :: maxits,restart
-  REAL(SRK) :: getval
+  REAL(SRK) :: getval(1)
 
   IF(rank == 0) WRITE(*,*)
   IF(rank == 0) WRITE(*,*) 'Testing with SuperLU'
@@ -296,36 +307,41 @@ SUBROUTINE testPETSC_KSP_SuperLU
 
   !PC calls
   CALL PCSetType(pc,PCLU,ierr)
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+  CALL PCFactorSetMatSolverType(pc,MATSOLVERSUPERLU_DIST,ierr)
+  CALL PCFactorSetUpMatSolverType(pc,ierr)
+#else
   CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,ierr)
   CALL PCFactorSetUpMatSolverPackage(pc,ierr)
+#endif
   CALL PCFactorGetMatrix(pc,F,ierr)
 
   !test KSPSolve
   CALL KSPSolve(ksp,b,x,ierr)
   IF(rank == 0) THEN
-    CALL VecGetValues(x,1,0,getval,ierr)
-    IF(ABS(getval-2.12_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/0/),getval,ierr)
+    IF(ABS(getval(1)-2.12_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,0,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF
   ENDIF
   IF(rank == 1) THEN
-    CALL VecGetValues(x,1,1,getval,ierr)
-    IF(ABS(getval-3.24_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/1/),getval,ierr)
+    IF(ABS(getval(1)-3.24_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,1,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF
   ENDIF
   IF(rank == 2) THEN
-    CALL VecGetValues(x,1,2,getval,ierr)
-    IF(ABS(getval-3.16_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/2/),getval,ierr)
+    IF(ABS(getval(1)-3.16_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF
   ENDIF
   IF(rank == 3) THEN
-    CALL VecGetValues(x,1,3,getval,ierr)
-    IF(ABS(getval-1.98_SRK)>1E-13 .OR. ierr /= 0) THEN
+    CALL VecGetValues(x,1,(/3/),getval,ierr)
+    IF(ABS(getval(1)-1.98_SRK)>1E-13 .OR. ierr /= 0) THEN
       WRITE(*,*) 'CALL VecGetValues(x,1,2,getval,ierr) [KSPSolve] FAILED!'
       STOP 666
     ENDIF

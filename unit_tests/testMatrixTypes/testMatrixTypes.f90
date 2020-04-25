@@ -21,11 +21,18 @@ USE ParallelEnv
 USE VectorTypes
 USE MatrixTypes
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCMAT
+#endif
+#endif
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -101,6 +108,7 @@ SUBROUTINE testMatrix()
   LOGICAL(SBK) :: bool
 #ifdef FUTILITY_HAVE_PETSC
   INTEGER(SIK) :: matsize1,matsize2
+  REAL(SRK) :: dummy1(1)
   CLASS(VectorType),ALLOCATABLE :: xPETScVector,yPETScVector
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
@@ -1852,14 +1860,14 @@ SUBROUTINE testMatrix()
     CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
     thisMatrix%isAssembled=.TRUE.
 
-    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-    bool = dummy==1._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/0/),dummy1,ierr)
+    bool = dummy1(1)==1._SRK
     ASSERT(bool, 'petscsparse%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-    bool = dummy==2._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==2._SRK
     ASSERT(bool, 'petscsparse%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-    bool = dummy==3._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/1/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==3._SRK
     ASSERT(bool, 'petscsparse%set(...)')
   ENDSELECT
 
@@ -1896,17 +1904,17 @@ SUBROUTINE testMatrix()
     CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
     thisMatrix%isAssembled=.TRUE.
 
-    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-    bool = dummy==1._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/0/),dummy1,ierr)
+    bool = dummy1(1)==1._SRK
     ASSERT(bool, 'petscsparse%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-    bool = dummy==2._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==2._SRK
     ASSERT(bool, 'petscsparse%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
-    bool = dummy==2._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/1/),1,(/0/),dummy1,ierr)
+    bool = dummy1(1)==2._SRK
     ASSERT(bool, 'petscsparse%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-    bool = dummy==3._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/1/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==3._SRK
     ASSERT(bool, 'petscsparse%set(...)')
   ENDSELECT
   !check matrix that hasnt been init, i,j out of bounds
@@ -2194,14 +2202,14 @@ SUBROUTINE testMatrix()
     CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
     thisMatrix%isAssembled=.TRUE.
 
-    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-    bool = dummy==1._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/0/),dummy1,ierr)
+    bool = dummy1(1)==1._SRK
     ASSERT(bool, 'petscdense%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-    bool = dummy==2._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==2._SRK
     ASSERT(bool, 'petscdense%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-    bool = dummy==3._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/1/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==3._SRK
     ASSERT(bool, 'petscdense%set(...)')
   ENDSELECT
   CALL thisMatrix%clear()
@@ -2223,17 +2231,17 @@ SUBROUTINE testMatrix()
     CALL MatAssemblyEnd(thisMatrix%a,MAT_FINAL_ASSEMBLY,ierr)
     thisMatrix%isAssembled=.TRUE.
 
-    CALL MatGetValues(thisMatrix%a,1,0,1,0,dummy,ierr)
-    bool = dummy==1._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/0/),dummy1,ierr)
+    bool = dummy1(1)==1._SRK
     ASSERT(bool, 'petscdense%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,0,1,1,dummy,ierr)
-    bool = dummy==2._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/0/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==2._SRK
     ASSERT(bool, 'petscdense%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,1,1,0,dummy,ierr)
-    bool = dummy==2._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/1/),1,(/0/),dummy1,ierr)
+    bool = dummy1(1)==2._SRK
     ASSERT(bool, 'petscdense%set(...)')
-    CALL MatGetValues(thisMatrix%a,1,1,1,1,dummy,ierr)
-    bool = dummy==3._SRK
+    CALL MatGetValues(thisMatrix%a,1,(/1/),1,(/1/),dummy1,ierr)
+    bool = dummy1(1)==3._SRK
     ASSERT(bool, 'petscdense%set(...)')
   ENDSELECT
   !check matrix that hasnt been init, i,j out of bounds

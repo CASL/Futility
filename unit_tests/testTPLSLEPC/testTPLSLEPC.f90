@@ -11,7 +11,7 @@ PROGRAM testTPLSLEPC
 IMPLICIT NONE
 
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #include <slepc/finclude/slepc.h>
 #else
@@ -194,7 +194,7 @@ SUBROUTINE testEX1F()
       CALL EPSGetEigenpair(eps,i,kr,ki,PETSC_NULL_OBJECT,PETSC_NULL_OBJECT,ierr)
 
       ! Compute the relative error associated to each eigenpair
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
       CALL EPSComputeError(eps,i,EPS_ERROR_RELATIVE,error,ierr)
 #else
       CALL EPSComputeRelativeError(eps,i,error,ierr)

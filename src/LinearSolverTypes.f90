@@ -63,11 +63,19 @@ USE MKL_PARDISO
 #ifdef FUTILITY_HAVE_Trilinos
 USE ForTeuchos_ParameterList
 #endif
+
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCKSP
+#endif
+#endif
+
 IMPLICIT NONE
 
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
-#if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
 #else
 #include <finclude/petsc.h>
@@ -526,8 +534,13 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
           !PC calls
           CALL KSPGetPC(solver%ksp,pc,ierr)
           CALL PCSetType(pc,PCLU,iperr)
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+          CALL PCFactorSetMatSolverType(pc,MATSOLVERSUPERLU,iperr)
+          CALL PCFactorSetUpMatSolverType(pc,iperr)
+#else
           CALL PCFactorSetMatSolverPackage(pc,MATSOLVERSUPERLU_DIST,iperr)
           CALL PCFactorSetUpMatSolverPackage(pc,iperr)
+#endif
 
 #else
           CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -581,8 +594,13 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
               CALL PCSetType(solver%pc,PCJACOBI,iperr)
             ELSEIF(TRIM(PreCondType)=='BJACOBI_ILU') THEN
               CALL PCSetType(solver%pc,PCBJACOBI,iperr)
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+              CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS,"-sub_ksp_type","preonly",iperr)
+              CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS,"-sub_pc_type","ilu",iperr)
+#else
               CALL PetscOptionsSetValue("-sub_ksp_type","preonly",iperr)
               CALL PetscOptionsSetValue("-sub_pc_type","ilu",iperr)
+#endif
               CALL PCSetFromOptions(solver%pc,iperr)
             ELSEIF(TRIM(PreCondType)=='EISENSTAT') THEN
               CALL PCSetType(solver%pc,PCEISENSTAT,iperr)
