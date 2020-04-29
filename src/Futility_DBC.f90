@@ -95,11 +95,11 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
       mod_name//" on line",line,":  process",rank+1," of",nproc
 
 #ifdef __INTEL_COMPILER
-  CALL abort
+  IF(DBC_STOP_ON_FAIL) CALL abort
 #else
   CALL backtrace()
-#endif
   IF(DBC_STOP_ON_FAIL) STOP 2
+#endif
 ENDSUBROUTINE DBC_FAIL
 !
 ENDMODULE Futility_DBC
