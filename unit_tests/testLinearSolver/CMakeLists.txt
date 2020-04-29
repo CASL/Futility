@@ -8,4 +8,6 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 Futility_CreateUnitTest(testLinearSolver)
-Futility_CreateParUnitTest(testLinearSolverParallel 2)
+IF (${PACKAGE_NAME}_ENABLE_MPI)
+    Futility_CreateParUnitTest(testLinearSolverParallel 2)
+ENDIF()
