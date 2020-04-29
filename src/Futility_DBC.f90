@@ -52,6 +52,15 @@ LOGICAL :: DBC_STOP_ON_FAIL=.TRUE.
 !This integer counts the total number of DBC_FAIL statements called
 INTEGER :: DBC_COUNTER=0
 !
+! Add interface to C abort function to exit intel-compiled code abnormally and generate
+! traceback information.
+#ifdef __INTEL_COMPILER
+   interface
+      subroutine abort() bind(C, name="abort")
+      end subroutine
+   end interface
+#endif
+!
 !===============================================================================
 CONTAINS
 !
@@ -85,10 +94,12 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
   WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
       mod_name//" on line",line,":  process",rank+1," of",nproc
 
-#ifndef __INTEL_COMPILER
+#ifdef __INTEL_COMPILER
+  IF(DBC_STOP_ON_FAIL) CALL abort
+#else
   CALL backtrace()
-#endif
   IF(DBC_STOP_ON_FAIL) STOP 2
+#endif
 ENDSUBROUTINE DBC_FAIL
 !
 ENDMODULE Futility_DBC
