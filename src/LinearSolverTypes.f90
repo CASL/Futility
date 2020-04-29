@@ -793,7 +793,13 @@ SUBROUTINE updatedA(solver)
   solver%isDecomposed=.FALSE.
 
 ENDSUBROUTINE updatedA
-
+!
+!-------------------------------------------------------------------------------
+!> @brief Method to compute/access residual vector and iteration count of system
+!> @param solver The linear solver to act on
+!> @param resid  The residual vector to return
+!> @param nIters Number of iterations to return
+!>
 SUBROUTINE getResidualVec_LinearSolverType_Direct(solver,resid,nIters)
   CHARACTER(LEN=*),PARAMETER :: myName='getResidualVec_LinearSolverType_Direct'
   CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
@@ -820,7 +826,13 @@ SUBROUTINE getResidualVec_LinearSolverType_Direct(solver,resid,nIters)
   ! Direct method; nIters has no meaning
   IF (PRESENT(nIters)) nIters = 0
 ENDSUBROUTINE getResidualVec_LinearSolverType_Direct
-
+!
+!-------------------------------------------------------------------------------
+!> @brief Method to compute/access residual norm and iteration count of system
+!> @param solver The linear solver to act on
+!> @param resid  The residual norm (scalar) to return
+!> @param nIters Number of iterations to return
+!>
 SUBROUTINE getResidualNorm_LinearSolverType_Direct(solver,resid,nIters)
   CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
   REAL(SRK),INTENT(OUT) :: resid
@@ -1508,9 +1520,8 @@ ENDSUBROUTINE setConv_LinearSolverType_Iterative
 !-------------------------------------------------------------------------------
 !> @brief Gets the residual for the iterative solver
 !> @param solver The linear solver to act on
-!> @param resid A vector which will contain the residual
-!>
-!> This subroutine gets the residual after completion of the iterative solver
+!> @param resid  The residual vector
+!> @param nIters The iteration count to return
 !>
 SUBROUTINE getResidualVec_LinearSolverType_Iterative(solver,resid,nIters)
   CHARACTER(LEN=*),PARAMETER :: myName='getResidualVec_LinearSolverType_Iterative'
@@ -1766,11 +1777,14 @@ ENDSUBROUTINE solveGMRES
 
 !
 !-------------------------------------------------------------------------------
-!> @brief GMRES core solver routines.
-!> @param solver The linear solver to act on
-!> @param PreCondType The preconditioner object to use on the system
-!>
-!> This subroutine solves the Iterative Linear System using the GMRES method
+!> @brief GMRES core solver routine. No restart logic.
+!> @param thisLS The linear solver to act on
+!> @param u      The solution vector to work with
+!> @param norm_b Norm of RHS, passed as argument so it doesn't need to be
+!         recomputed
+!> @param tol    the most restrictive tolerance
+!> @param nIters the running iteration count
+!> @param thisPC The preconditioner object to use on the system
 !>
 SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
@@ -1905,6 +1919,16 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
 
 ENDSUBROUTINE solveGMRES_partial
 
+!
+!-------------------------------------------------------------------------------
+!> @brief Helper routine for GMRES. Performs Arnoldi iteration by by
+!         orthogonalizing the next krylov-space vector
+!> @param thisLS The linear solver to act on
+!> @param V      Orthogonal basis of the Krylov space
+!> @param k      The current basis index
+!> @param h      Entries of the upper triangular R-matrix
+!> @param orthogReq MPI requests for distributed dot product
+!>
 SUBROUTINE arnoldi(thisLS,V,k,h,orthogReq)
   CLASS(LinearSolverType_Iterative) thisLS
   CLASS(NativeVectorType),INTENT(INOUT) :: V(:)

@@ -302,7 +302,7 @@ ENDSUBROUTINE VectorFactory
 !> This should be NULL
 !> @param source Pointer to source vector type to use in determining the type and parameters
 !> of the dest vector
-!> @param params the parameters to use in overriding settings from the source
+!> @param p the parameters to use in overriding settings from the source
 !> vector
 !>
 !> For now, the source vector shall be initialized, though in the future it
