@@ -1516,7 +1516,7 @@ SUBROUTINE setConv_LinearSolverType_Iterative(solver,normType_in,  &
     ENDIF
   ENDIF
 ENDSUBROUTINE setConv_LinearSolverType_Iterative
-!
+
 !-------------------------------------------------------------------------------
 !> @brief Gets the residual for the iterative solver
 !> @param solver The linear solver to act on
@@ -1554,7 +1554,13 @@ SUBROUTINE getResidualVec_LinearSolverType_Iterative(solver,resid,nIters)
   ENDIF
 
 ENDSUBROUTINE getResidualVec_LinearSolverType_Iterative
-
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the residual norm for the iterative solver
+!> @param solver The linear solver to act on
+!> @param resid  The residual norm
+!> @param nIters The iteration count to return
+!>
 SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
   REAL(SRK),INTENT(OUT) :: resid
@@ -1590,7 +1596,6 @@ SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
     DEALLOCATE(u)
   ENDIF
 ENDSUBROUTINE getResidualNorm_LinearSolverType_Iterative
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Decompose Dense  Linear System using the BiCGSTAB method
