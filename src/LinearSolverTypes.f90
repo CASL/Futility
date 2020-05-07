@@ -1580,12 +1580,12 @@ SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
 
   IF(solver%TPLType == PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
-    CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
+    IF (PRESENT(nIters)) CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
     CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
 #endif
   ELSEIF(solver%TPLType == TRILINOS) THEN
 #ifdef FUTILITY_HAVE_Trilinos
-    CALL Belos_GetIterationCount(solver%Belos_solver,niters)
+    IF (PRESENT(nIters)) CALL Belos_GetIterationCount(solver%Belos_solver,niters)
     CALL Belos_GetResid(solver%Belos_solver,resid)
 #endif
   ELSE
@@ -1760,7 +1760,7 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
   ENDIF
 
   SELECT TYPE(u); CLASS IS(NativeVectorType)
-    DO outerIt=1,thisLS%maxIters/thisLS%nRestart+1
+    DO outerIt=1,CEILING(thisLS%maxIters*1.0/thisLS%nRestart)
       IF(PRESENT(thisPC)) THEN
         CALL solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
       ELSE
