@@ -254,9 +254,7 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
     !Get accelerated solution
     x_new(:)=0.0_SRK
     DO i=1,depth_s+1
-      DO j=1,solver%n
-        x_new(j)=x_new(j)+solver%alpha(i)*(solver%x(j,i)+solver%beta*solver%r(j,i))
-      ENDDO
+      x_new(:)=x_new(:)+solver%alpha(i)*(solver%x(:,i)+solver%beta*solver%r(:,i))
     ENDDO
 
     !Push back solution vectors and load in newest accelerated as next initial iterate
