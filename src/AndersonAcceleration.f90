@@ -9,33 +9,32 @@
 !> @brief A Fortran 2003 module that encompasses the native implementation of
 !>        Anderson Acceleration in Futility.
 MODULE AndersonAccelerationTypes
+#include "Futility_DBC.h"
+USE Futility_DBC
 USE IntrType
-USE BLAS
-USE Times
-USE ExceptionHandler
+USE FutilityComputingEnvironmentModule
 USE ParameterLists
 USE ParallelEnv
 USE VectorTypes
+USE MatrixTypes
+USE LinearSolverTypes
 
 IMPLICIT NONE
 
 PRIVATE
 
 !List of public members
-PUBLIC :: eAndersonAccelerationType
 PUBLIC :: AndersonAccelerationType
 
 !> @brief the native Anderson Accelerator Type
 TYPE :: AndersonAccelerationType
   !> Initialization status
   LOGICAL(SBK) :: isInit=.FALSE.
-  !> Pointer to the distributed memory parallel environment
-  TYPE(MPI_EnvType),POINTER :: MPIparallelEnv => NULL()
   !> Size of solution vector/matrix
-  INTEGER(SIK) :: N=-1
+  INTEGER(SIK) :: n=-1
   !> Current iteration count
   INTEGER(SIK) :: s=0
-  !> Iteration depth of anderson solver
+  !> Iteration depth of Anderson solver
   INTEGER(SIK) :: depth=-1
   !> Starting iteration for Anderson
   INTEGER(SIK) :: start=1
@@ -47,14 +46,10 @@ TYPE :: AndersonAccelerationType
   REAL(SRK),ALLOCATABLE :: Gx(:,:)
   !> Difference vectors r=Gx-x
   REAL(SRK),ALLOCATABLE :: r(:,:)
-  !> Anderson coefficient matrix
-  REAL(SRK),ALLOCATABLE :: A(:,:)
   !> Anderson coefficients
   REAL(SRK),ALLOCATABLE :: alpha(:)
-  !> Anderson right hand side
-  REAL(SRK),ALLOCATABLE :: b(:)
-  !> Timer to measure solution time
-  TYPE(TimerType) :: SolveTime
+  !> Linear solver
+  TYPE(LinearSolverType_Direct) :: LS
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -65,15 +60,12 @@ TYPE :: AndersonAccelerationType
     !> @copydetails AndersonAccelerationType::clear_AndersonAccelerationType
     PROCEDURE,PASS :: clear => clear_AndersonAccelerationType
     !> @copybrief AndersonAccelerationType::step_AndersonAccelerationType
-    !> @copydetails NativesAndersonAccelerationType::step_AndersonAccelerationType
+    !> @copydetails AndersonAccelerationType::step_AndersonAccelerationType
     PROCEDURE,PASS :: step => step_AndersonAccelerationType
-    !> @copybrief AndersonAccelerationType::set_AndersonAccelerationType
-    !> @copydetails AndersonAccelerationType::set_AndersonAccelerationType
-    PROCEDURE,PASS :: set => set_AndersonAccelerationType
+    !> @copybrief AndersonAccelerationType::reset_AndersonAccelerationType
+    !> @copydetails AndersonAccelerationType::reset_AndersonAccelerationType
+    PROCEDURE,PASS :: reset => reset_AndersonAccelerationType
 ENDTYPE AndersonAccelerationType
-
-!> Exception Handler for use in Anderson Acceleration
-TYPE(ExceptionHandlerType),SAVE :: eAndersonAccelerationType
 
 !> Name of module
 CHARACTER(LEN=*),PARAMETER :: modName='AndersonAccelerationTypes'
@@ -83,101 +75,128 @@ CHARACTER(LEN=*),PARAMETER :: modName='AndersonAccelerationTypes'
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the Anderson Acceleration Type with a parameter list
+!> @brief Initializes the Anderson Acceleration Type with an input parameter list
 !> @param pList the parameter list
-!> @param solver The anderson acceleration solver to act on
-!> @param MPIEnv The MPI environment description
-!> @param Params The anderson options parameter list
+!> @param solver The Anderson Acceleration solver to act on
+!> @param Params The Anderson options parameter list
+!> @param ce The computing environment to use for the calculation
 !>
-SUBROUTINE init_AndersonAccelerationType(solver,MPIEnv,Params)
+SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_AndersonAccelerationType'
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-  TYPE(MPI_EnvType),INTENT(IN),TARGET :: MPIEnv
   TYPE(ParamType),INTENT(IN) :: Params
+  TYPE(FutilityComputingEnvironment),INTENT(IN) :: ce
 
-  INTEGER(SIK) :: i,M
+  TYPE(ParamType) :: LSparams
+  INTEGER(SIK) :: i,j,m
 
-  !Check to ensure parallel environment is initialized
-  IF(.NOT. MPIEnv%isInit()) THEN
-    CALL eAndersonAccelerationType%raiseError('Incorrect input to '// &
-        modName//'::'//myName//' - MPI Environment is not initialized!')
-  ELSE
-    solver%MPIparallelEnv => MPIEnv
-  ENDIF
+  REQUIRE(Params%has('AndersonAccelerationType->n'))
+  REQUIRE(Params%has('AndersonAccelerationType->depth'))
+  REQUIRE(Params%has('AndersonAccelerationType->beta'))
+  REQUIRE(Params%has('AndersonAccelerationType->start'))
 
   !Pull Data from Parameter List
-  CALL Params%get('AndersonAccelerationType->N',solver%N)
+  CALL Params%get('AndersonAccelerationType->n',solver%n)
   CALL Params%get('AndersonAccelerationType->depth',solver%depth)
   CALL Params%get('AndersonAccelerationType->beta',solver%beta)
   CALL Params%get('AndersonAccelerationType->start',solver%start)
 
   IF(.NOT. solver%isInit) THEN
-    IF(solver%N < 1) THEN
-      CALL eAndersonAccelerationType%raiseError('Incorrect input to '//modName// &
-          '::'//myName//' - Number of unkowns (N) must be greater than 0!')
+    IF(solver%n < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+        '::'//myName//' - Number of unkowns (n) must be greater than 0!')
+
+    IF(solver%depth < 0) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+        '::'//myName//' - Anderson depth must be greater than or equal to 0!')
+
+    IF(solver%start < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+        '::'//myName//' - Anderson starting point must be greater than 1!')
+
+    IF(solver%beta <= 0.0_SRK .OR. solver%beta > 1.0_SRK) THEN
+      CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+          '::'//myName//' - Anderson mixing parameter must be between 0.0 and 1.0!')
+    ENDIF
+
+    !Setup linear solver
+    IF(solver%depth > 1) THEN
+      CALL LSparams%add('LinearSolverType->TPLType',NATIVE)
+      CALL LSparams%add('LinearSolverType->solverMethod',GE)
+      CALL LSparams%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+      CALL LSparams%add('LinearSolverType->timerName','AndersonTimer')
+      CALL LSparams%add('LinearSolverType->numberOMP',1_SNK)
+      CALL LSparams%add('LinearSolverType->matType',DENSESQUARE)
+      CALL LSparams%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
+      CALL LSparams%add('LinearSolverType->A->MatrixType->n',solver%depth)
+      CALL LSparams%add('LinearSolverType->x->VectorType->n',solver%depth)
+      CALL LSparams%add('LinearSolverType->b->VectorType->n',solver%depth)
+      CALL solver%LS%init(LSparams)
+      DO j=1,solver%depth
+        DO i=j,solver%depth
+          IF(i == j) THEN
+            CALL solver%LS%A%set(i,j,1.0_SRK)
+          ELSE
+            CALL solver%LS%A%set(i,j,0.0_SRK)
+          ENDIF
+        ENDDO
+        CALL solver%LS%b%set(j,0.0_SRK)
+      ENDDO
     ENDIF
 
     !Allocate member arrays
-    M=solver%depth+1
-    ALLOCATE(solver%x(solver%N,M),solver%Gx(solver%N,M),solver%r(solver%N,M), &
-        solver%A(solver%depth,solver%depth),solver%alpha(M),solver%b(solver%depth))
+    m=solver%depth+1
+    ALLOCATE(solver%x(solver%n,m),solver%Gx(solver%n,m),solver%r(solver%n,m),solver%alpha(m))
     solver%x(:,:)=0.0_SRK
     solver%Gx(:,:)=0.0_SRK
     solver%r(:,:)=0.0_SRK
-    solver%A(:,:)=0.0_SRK
-    DO i=1,solver%depth
-      solver%A(i,i)=1.0_SRK
-    ENDDO
     solver%alpha(:)=0.0_SRK
-    solver%b(:)=0.0_SRK
     solver%s=0
     solver%isInit=.TRUE.
   ELSE
-    CALL eAndersonAccelerationType%raiseError('Incorrect call to '//modName// &
-        '::'//myName//' - TrilinosAndersonAccelerationType already initialized')
+    CALL ce%exceptHandler%raiseError('Incorrect call to '//modName// &
+        '::'//myName//' - AndersonAccelerationType already initialized')
   ENDIF
 
 ENDSUBROUTINE init_AndersonAccelerationType
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Anderson Acceleration Type
-!> @param solver The solver to act on
+!> @param solver The Anderson solver to act on
 !>
 SUBROUTINE clear_AndersonAccelerationType(solver)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
 
   IF(solver%isInit) THEN
-    NULLIFY(solver%MPIparallelEnv)
     solver%s=0
-    solver%N=-1
+    solver%n=-1
     solver%depth=-1
-    solver%start=1
+    solver%start=0
     solver%depth=-1
     solver%beta=0.0_SRK
     DEALLOCATE(solver%x)
     DEALLOCATE(solver%Gx)
     DEALLOCATE(solver%r)
-    DEALLOCATE(solver%A)
     DEALLOCATE(solver%alpha)
-    DEALLOCATE(solver%b)
+    CALL solver%LS%clear()
     solver%isInit=.FALSE.
   ENDIF
 
 ENDSUBROUTINE clear_AndersonAccelerationType
 !
 !-------------------------------------------------------------------------------
-!> @brief Single step of Anderson acceleration acting on solution vectors
+!> @brief Performs a single step of Anderson Acceleration acting on the input solution vector.
+!>        If depth is set to zero, or if the iteration count is below the Anderson starting
+!>        point the behavior is to under-relax the solution using the mixing parameter (beta)
+!>        as the under-relaxation factor.
 !> @param solver Anderson solver to take step with
-!> @param New_Gx new solution iterate
+!> @param x_new New solution iterate and under-relaxed / accelerated return array
 !>
-!> This routine takes a single anderson acceleration step
-!>
-FUNCTION step_AndersonAccelerationType(solver,New_Gx) RESULT(x_tmp)
+SUBROUTINE step_AndersonAccelerationType(solver,x_new)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-  REAL(SRK),INTENT(IN) :: New_Gx(:)
+  REAL(SRK),INTENT(INOUT) :: x_new(:)
 
   INTEGER(SIK) :: i,j,k,depth_s
-  REAL(SRK) :: x_tmp(solver%N)
+  REAL(SRK) :: tmpA,tmpb,tmp
+
+  REQUIRE(SIZE(x_new) == solver%n)
 
   !Update iteration counter
   solver%s=solver%s+1
@@ -191,48 +210,52 @@ FUNCTION step_AndersonAccelerationType(solver,New_Gx) RESULT(x_tmp)
     ENDDO
 
     !Set new vectors based on input
-    solver%Gx(:,1)=New_Gx(:)
+    solver%Gx(:,1)=x_new(:)
     solver%r(:,1)=solver%Gx(:,1)-solver%x(:,1)
 
     !Get fit coefficients
     IF(depth_s == 1) THEN
-      solver%A(1,1)=0.0_SRK
-      solver%b(1)=0.0_SRK
-      DO j=1,solver%N
-        solver%A(1,1)=solver%A(1,1)+(solver%r(j,2)-solver%r(j,1))**2_SIK
-        solver%b(1)=solver%b(1)+solver%r(j,2)*(solver%r(j,2)-solver%r(j,1))
+      !Depth 1 is an especially simple case, where alpha can be calculated with a simple formula
+      tmpA=0.0_SRK
+      tmpb=0.0_SRK
+      DO j=1,solver%n
+        tmp=solver%r(j,2)-solver%r(j,1)
+        tmpA=tmpA+tmp*tmp
+        tmpb=tmpb+solver%r(j,2)*tmp
       ENDDO
-      solver%alpha(1)=solver%b(1)/solver%A(1,1)
+      solver%alpha(1)=tmpb/tmpA
     ELSEIF(depth_s > 1) THEN
       !Construct coefficient matrix, right hand side, and solve for fit coefficients
       DO i=1,depth_s
-        solver%b(i)=0.0_SRK
-        DO j=1,solver%N
-          solver%b(i)=solver%b(i)+solver%r(j,depth_s+1)*(solver%r(j,depth_s+1)-solver%r(j,i))
-        ENDDO
         DO k=1,i
-          solver%A(k,i)=0.0_SRK
-          DO j=1,solver%N
-            solver%A(k,i)=solver%A(k,i)+(solver%r(j,depth_s+1)-solver%r(j,k))* &
-                                        (solver%r(j,depth_s+1)-solver%r(j,i))
+          tmpA=0.0_SRK
+          DO j=1,solver%n
+            tmpA=tmpA+(solver%r(j,depth_s+1)-solver%r(j,k))*(solver%r(j,depth_s+1)-solver%r(j,i))
           ENDDO
-          IF(i /= k)solver%A(i,k)=solver%A(k,i)
+          CALL solver%LS%A%set(k,i,tmpA)
         ENDDO
+        tmpb=0.0_SRK
+        DO j=1,solver%n
+          tmpb=tmpb+solver%r(j,depth_s+1)*(solver%r(j,depth_s+1)-solver%r(j,i))
+        ENDDO
+        CALL solver%LS%b%set(i,tmpb)
       ENDDO
-      solver%alpha(1:depth_s)=GECP(solver%A(1:depth_s,1:depth_s),solver%b(1:depth_s))
+      CALL solver%LS%solve()
+      DO i=1,depth_s
+        CALL solver%LS%x%get(i,solver%alpha(i))
+      ENDDO
     ENDIF
     !Back out "0th" alpha
-    solver%alpha(depth_s+1)=0.0_SRK
+    solver%alpha(depth_s+1)=1.0_SRK
     DO i=1,depth_s
-      solver%alpha(depth_s+1)=solver%alpha(depth_s+1)+solver%alpha(i)
+      solver%alpha(depth_s+1)=solver%alpha(depth_s+1)-solver%alpha(i)
     ENDDO
-    solver%alpha(depth_s+1)=1.0_SRK-solver%alpha(depth_s+1)
 
     !Get accelerated solution
-    x_tmp(:)=0.0_SRK
+    x_new(:)=0.0_SRK
     DO i=1,depth_s+1
-      DO j=1,solver%N
-        x_tmp(j)=x_tmp(j)+solver%alpha(i)*(solver%x(j,i)+solver%beta*solver%r(j,i))
+      DO j=1,solver%n
+        x_new(j)=x_new(j)+solver%alpha(i)*(solver%x(j,i)+solver%beta*solver%r(j,i))
       ENDDO
     ENDDO
 
@@ -240,120 +263,45 @@ FUNCTION step_AndersonAccelerationType(solver,New_Gx) RESULT(x_tmp)
     DO i=MIN(depth_s+1,solver%depth),1,-1
       solver%x(:,i+1)=solver%x(:,i)
     ENDDO
-    solver%x(:,1)=x_tmp(:)
+    solver%x(:,1)=x_new(:)
+  ELSE
+    !Get under-relaxed solution using mixing parameter
+    DO j=1,solver%n
+      x_new(j)=(1.0_SRK-solver%beta)*solver%x(j,1)+solver%beta*x_new(j)
+      solver%x(j,1)=x_new(j)
+    ENDDO
   ENDIF
 
-ENDFUNCTION step_AndersonAccelerationType
+ENDSUBROUTINE step_AndersonAccelerationType
 !
 !-------------------------------------------------------------------------------
-!> @brief Set the initial iterate for the Anderson acceleration solver
-!> @param solver The anderson solver to act on
-!> @param x initial iterate
+!> @brief Set or reset the initial iterate and linear solver state for the Anderson solver
+!> @param solver The Anderson solver to act on
+!> @param x Initial iterate solve is starting from
 !>
-SUBROUTINE set_AndersonAccelerationType(solver,x)
+SUBROUTINE reset_AndersonAccelerationType(solver,x)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   REAL(SRK),INTENT(IN) :: x(:)
 
+  INTEGER(SIK) :: i,j
+
+  REQUIRE(SIZE(x) == solver%n)
+
+  solver%s=0_SIK
   solver%x(:,1)=x(:)
-
-ENDSUBROUTINE set_AndersonAccelerationType
-!
-!-------------------------------------------------------------------------------
-!> @brief Function which solves the system Ax=b by Gaussian elimination with
-!>        full(complete) pivoting. NOTE that A is destroyed in the process.
-!> @param A coefficient matrix in Ax=b
-!> @param b right hand side of problem Ax=b
-!> @returns x the solution vector of the problem Ax=b
-!
-FUNCTION GECP(A,b) RESULT(x)
-  REAL(SRK),INTENT(INOUT) :: A(:,:)
-  REAL(SRK),INTENT(INOUT) :: b(:)
-
-  REAL(SRK) :: x(SIZE(b)),z(SIZE(b)),absmax,temp
-  INTEGER(SIK)::i,j,k,l,N,k_max,l_max,P(SIZE(b))
-  N=SIZE(b)
-
-  !Begin LU factorization using A as a frame:
-  DO j=1,N
-    !Find possible swap element:
-    absmax=A(j,j)
-    k_max=j
-    l_max=j
-    DO l=j,N
-      DO k=j,N
-        temp=DABS(A(k,l))
-        IF(temp > absmax)THEN
-          absmax=temp
-          k_max=k
-          l_max=l
+  IF(solver%LS%isinit) THEN
+    DO j=1,solver%depth
+      DO i=j,solver%depth
+        IF(i == j) THEN
+          CALL solver%LS%A%set(i,j,1.0_SRK)
+        ELSE
+          CALL solver%LS%A%set(i,j,0.0_SRK)
         ENDIF
-      ENDDO!l
-    ENDDO!k
-
-    !Swap the row containing the maximum element to the current row if needed:
-    IF(k_max /= j)THEN
-      DO l=1,N
-        temp=A(j,l)
-        A(j,l)=A(k_max,l)
-        A(k_max,l)=temp
-      ENDDO!l
-      !Swap entries of the b vector if needed:
-      temp=b(j)
-      b(j)=b(k_max)
-      b(k_max)=temp
-    ENDIF
-
-    !Swap the column containing the maximum element to the current column if needed:
-    IF(l_max .NE. j)THEN
-      DO k=1,N
-        temp=A(k,j)
-        A(k,j)=A(k,l_max)
-        A(k,l_max)=temp
-      ENDDO!k
-      !Record permutations of the A matrix and b vector:
-      P(j)=l_max
-    ELSE
-      P(j)=j
-    ENDIF
-
-    !Record the multipliers in the stricktly unit lower triangle part of A, and perform the
-    !"elimination" of all forward matrix entries below the primary diagonal:
-    DO i=J+1,N
-      A(i,j)=A(i,j)/A(j,j)
+      ENDDO
+      CALL solver%LS%b%set(j,0.0_SRK)
     ENDDO
-    DO l=j+1,N
-      DO i=j+1,N
-        A(i,l)=A(i,l)-A(i,j)*A(j,l)
-      ENDDO!l
-    ENDDO!i
-  ENDDO!j
-  !Construction of L and U in the frame of A is complete.
+  ENDIF
 
-  !Begin solve:
-  !Forward Sweep: This solves the problem Lz=b going to z=L_inv*b:
-  DO i=1,N
-    z(i)=b(i)
-    DO j=1,i-1
-      z(i)=z(i)-A(i,j)*z(j)
-    ENDDO!j
-  ENDDO!i
-
-  !Backward Sweep: This solves the problem Ux=z going to x=U_inv*z:
-  DO i=N,1,-1
-    x(i)=z(i)
-    DO j=i+1,N
-      x(i)=x(i)-A(i,j)*x(j)
-    ENDDO!j
-    x(i)=x(i)/A(i,i)
-  ENDDO!i
-
-  !Unswap solution vector x:
-  DO i=N-1,1,-1
-    temp=x(i)
-    x(i)=x(P(i))
-    x(P(i))=temp
-  ENDDO!i
-
-END FUNCTION GECP
+ENDSUBROUTINE reset_AndersonAccelerationType
 !
 ENDMODULE AndersonAccelerationTypes
