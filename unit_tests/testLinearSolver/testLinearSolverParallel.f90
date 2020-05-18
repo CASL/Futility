@@ -74,7 +74,7 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_WORLD)
   CALL pList%add('LinearSolverType->numberOMP',1)
