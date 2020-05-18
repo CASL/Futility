@@ -99,10 +99,10 @@ PUBLIC :: LinearSolverType_Declare_ValidParams
 PUBLIC :: LinearSolverType_Clear_ValidParams
 
 !> set enumeration scheme for TPLs
-INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,LS_NATIVE=4
-!> Old NATIVE Parameter below; kept for compatibility until corresponding branch
-!>   is merged into mpact
-INTEGER(SIK),PARAMETER,PUBLIC :: NATIVE=4
+!> Temporary, old parameter names to be kept until MPACT is updated
+INTEGER(SIK),PARAMETER,PUBLIC :: PETSC=0,TRILINOS=1,PARDISO_MKL=2,MKL=3,NATIVE=4
+INTEGER(SIK),PARAMETER,PUBLIC :: LINSYS_PETSC=0,LINSYSTRILINOS=1, &
+    LINSYS_PARDISO_MKL=2,LINSYS_MKL=3,LINSYS_NATIVE=4
 !> Number of iterative solver solution methodologies - for error checking
 INTEGER(SIK),PARAMETER :: MAX_IT_SOLVER_METHODS=9
 !> set enumeration scheme for iterative solver methods
@@ -439,7 +439,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     ENDIF
     IF(TPLType == MKL) THEN ! MKL
 #ifndef HAVE_MKL
-      TPLType=LS_NATIVE
+      TPLType=LINSYS_NATIVE
 #endif
     ENDIF
 
@@ -453,7 +453,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
       ReqTPLTypeStr='PARDISO_MKL'
     CASE(MKL)
       ReqTPLTypeStr='MKL'
-    CASE(LS_NATIVE)
+    CASE(LINSYS_NATIVE)
       ReqTPLTypeStr='NATIVE'
     ENDSELECT
 
@@ -471,7 +471,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
     CASE(MKL)
       TPLTypeStr='MKL'
       matEngine=VM_NATIVE
-    CASE(LS_NATIVE)
+    CASE(LINSYS_NATIVE)
       TPLTypeStr='NATIVE'
       matEngine=VM_NATIVE
     ENDSELECT
@@ -1558,14 +1558,13 @@ ENDSUBROUTINE getResidualVec_LinearSolverType_Iterative
 !-------------------------------------------------------------------------------
 !> @brief Gets the residual norm for the iterative solver
 !> @param solver The linear solver to act on
-!> @param resid  The residual norm
+!> @param resid  The (preconditioned) residual norm
 !> @param nIters The iteration count to return
 !>
 SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
   REAL(SRK),INTENT(OUT) :: resid
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
-  CLASS(VectorType),ALLOCATABLE :: u
 #ifdef FUTILITY_HAVE_PETSC
   INTEGER(SIK) :: ierr
 #endif
@@ -1578,22 +1577,20 @@ SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
   REQUIRE(ASSOCIATED(solver%x))
   REQUIRE(solver%x%isInit)
 
-  IF(solver%TPLType == PETSC) THEN
+  !IF(solver%TPLType == PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
-    IF (PRESENT(nIters)) CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
-    CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
+    !IF (PRESENT(nIters)) CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
+    !CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
 #endif
-  ELSEIF(solver%TPLType == TRILINOS) THEN
+  IF(solver%TPLType == TRILINOS) THEN
+  !ELSEIF(solver%TPLType == TRILINOS) THEN
 #ifdef FUTILITY_HAVE_Trilinos
     IF (PRESENT(nIters)) CALL Belos_GetIterationCount(solver%Belos_solver,niters)
     CALL Belos_GetResid(solver%Belos_solver,resid)
 #endif
   ELSE
     IF (PRESENT(nIters)) nIters=solver%iters
-    CALL VectorResemble(u,solver%x)
-    CALL getResidualVec_LinearSolverType_Iterative(solver,u)
-    resid=BLAS_nrm2(u)
-    DEALLOCATE(u)
+    resid=solver%residual
   ENDIF
 ENDSUBROUTINE getResidualNorm_LinearSolverType_Iterative
 !
@@ -1827,9 +1824,6 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
        modName//'::solveGMRES_partial'//' - Native solver does not support this vector type.')
   ENDSELECT
-
-  ! Compute norm of u
-  thisLS%residual = BLAS_nrm2(u)
 
   ! Allocate Data storage arrays
   SELECT TYPE(x => thisLS%X)
