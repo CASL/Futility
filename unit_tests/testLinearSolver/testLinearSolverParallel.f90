@@ -85,6 +85,7 @@ SUBROUTINE testIterativeSolve_GMRES()
   CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
   CALL pList%add('LinearSolverType->x->VectorType->n',9)
   CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
   CALL pList%validate(pList)
   CALL thisLS%init(pList)
 
