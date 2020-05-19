@@ -730,8 +730,8 @@ SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver,params)
             solver%PCTypeName='NOPC'
             RETURN
           CASE('DEFAULT')
-            solver%PCTypeName='NOPC'
-            RETURN
+            ALLOCATE(DistributedJacobi_PreCondType :: solver%PreCondType)
+            solver%PCTypeName='DISTR_JACOBI'
           CASE('ILU')
             ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
             solver%PCTypeName='ILU'
@@ -1577,13 +1577,12 @@ SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
   REQUIRE(ASSOCIATED(solver%x))
   REQUIRE(solver%x%isInit)
 
-  !IF(solver%TPLType == PETSC) THEN
+  IF(solver%TPLType == PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
-    !IF (PRESENT(nIters)) CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
-    !CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
+    IF (PRESENT(nIters)) CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
+    CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
 #endif
-  IF(solver%TPLType == TRILINOS) THEN
-  !ELSEIF(solver%TPLType == TRILINOS) THEN
+  ELSEIF(solver%TPLType == TRILINOS) THEN
 #ifdef FUTILITY_HAVE_Trilinos
     IF (PRESENT(nIters)) CALL Belos_GetIterationCount(solver%Belos_solver,niters)
     CALL Belos_GetResid(solver%Belos_solver,resid)
@@ -1732,7 +1731,7 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
   CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
   INTEGER(SIK) :: nIters,outerIt
-  REAL(SRK) :: tol,norm_b,norm_r0
+  REAL(SRK) :: tol,norm_b
   CLASS(VectorType),ALLOCATABLE :: u
 
   IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
@@ -1747,11 +1746,9 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
 
   CALL VectorResemble(u,thisLS%x)
   CALL thisLS%getResidual(u)
-  norm_r0 = BLAS_nrm2(u)
-  thisLS%residual = norm_r0
-  tol = MAX(thisLS%absConvtol,thisLS%relConvTol*norm_r0)
-  IF (norm_r0 .APPROXLE. tol) THEN
-    thisLS%residual = norm_r0
+  thisLS%residual = BLAS_nrm2(u)
+  tol = MAX(thisLS%absConvtol,thisLS%relConvTol*thisLS%residual)
+  IF (thisLS%residual .APPROXLE. tol) THEN
     thisLS%iters = 1
     RETURN
   ENDIF
@@ -1768,6 +1765,8 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
         EXIT
       ENDIF
       CALL thisLS%getResidual(u)
+      IF(PRESENT(thisPC)) CALL thisPC%apply(u)
+      thisLS%residual = BLAS_nrm2(u)
     ENDDO
   CLASS DEFAULT
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -1841,7 +1840,7 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
   ALLOCATE(f(thisLS%nRestart+1))
   ALLOCATE(orthogReq(thisLS%nRestart))
 
-  ! Initialize relevant quantities (u assumed to contain current residual b-Ax)
+  ! Initialize relevant quantities (u assumed to contain vector of precond. resid
   divTmp = 1.0_SRK/thisLS%residual
   R(:,:) = 0.0_SRK
   givens_sin = 0.0_SRK
