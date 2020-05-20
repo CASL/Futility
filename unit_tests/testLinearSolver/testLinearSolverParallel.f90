@@ -159,15 +159,13 @@ SUBROUTINE testIterativeSolve_GMRES()
     ALLOCATE(dummyvec(5))
     ALLOCATE(thisB(5))
     thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK/)
-    CALL thisLS%X%get(dummyvec)
-    ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'CALL Iterative%solve() -GMRES FAILED!')
   ELSE
     ALLOCATE(dummyvec(4))
     ALLOCATE(thisB(4))
     thisB(:)=(/0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-    CALL thisLS%X%get(dummyvec)
-    ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'CALL Iterative%solve() -GMRES FAILED!')
   ENDIF
+  CALL thisLS%X%get(dummyvec)
+  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'CALL Iterative%solve() -GMRES FAILED!')
 
   DEALLOCATE(thisB)
   DEALLOCATE(dummyvec)

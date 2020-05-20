@@ -730,8 +730,16 @@ SUBROUTINE setup_PreCond_LinearSolverType_Iterative(solver,params)
             solver%PCTypeName='NOPC'
             RETURN
           CASE('DEFAULT')
+#ifdef HAVE_MPI
             ALLOCATE(DistributedJacobi_PreCondType :: solver%PreCondType)
             solver%PCTypeName='DISTR_JACOBI'
+#else
+            ALLOCATE(Jacobi_PreCondType :: solver%PreCondType)
+            solver%PCTypeName='JACOBI'
+#endif
+          CASE('JACOBI')
+            ALLOCATE(Jacobi_PreCondType :: solver%PreCondType)
+            solver%PCTypeName='JACOBI'
           CASE('ILU')
             ALLOCATE(ILU_PreCondtype :: solver%PreCondType)
             solver%PCTypeName='ILU'
