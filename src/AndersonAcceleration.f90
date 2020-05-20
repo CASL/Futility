@@ -41,15 +41,17 @@ TYPE :: AndersonAccelerationType
   !> Value of mixing parameter
   REAL(SRK) :: beta=0.0_SRK
   !> Initial iterates
-  REAL(SRK),ALLOCATABLE :: x(:,:)
+  CLASS(VectorType),ALLOCATABLE :: x(:)
   !> Gx vectors:
-  REAL(SRK),ALLOCATABLE :: Gx(:,:)
+  CLASS(VectorType),ALLOCATABLE :: Gx(:)
   !> Difference vectors r=Gx-x
-  REAL(SRK),ALLOCATABLE :: r(:,:)
+  CLASS(VectorType),ALLOCATABLE :: r(:)
   !> Anderson coefficients
   REAL(SRK),ALLOCATABLE :: alpha(:)
   !> Linear solver
   TYPE(LinearSolverType_Direct) :: LS
+  !> Futility computing environment
+  TYPE(FutilityComputingEnvironment),POINTER :: ce
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -70,6 +72,9 @@ ENDTYPE AndersonAccelerationType
 !> Name of module
 CHARACTER(LEN=*),PARAMETER :: modName='AndersonAccelerationTypes'
 
+!> Intermediate calculation vector
+CLASS(VectorType),ALLOCATABLE :: tmpvec
+
 !
 !===============================================================================
 CONTAINS
@@ -85,7 +90,7 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_AndersonAccelerationType'
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   TYPE(ParamType),INTENT(IN) :: Params
-  TYPE(FutilityComputingEnvironment),INTENT(IN) :: ce
+  TYPE(FutilityComputingEnvironment),TARGET :: ce
 
   TYPE(ParamType) :: LSparams
   INTEGER(SIK) :: i,j,m
@@ -141,14 +146,12 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
       ENDDO
     ENDIF
 
-    !Allocate member arrays
+    !Allocate/create member arrays and vectors that can be done now and associate pointers
     m=solver%depth+1
-    ALLOCATE(solver%x(solver%n,m),solver%Gx(solver%n,m),solver%r(solver%n,m),solver%alpha(m))
-    solver%x(:,:)=0.0_SRK
-    solver%Gx(:,:)=0.0_SRK
-    solver%r(:,:)=0.0_SRK
+    ALLOCATE(solver%alpha(m))
     solver%alpha(:)=0.0_SRK
     solver%s=0
+    solver%ce => ce
     solver%isInit=.TRUE.
   ELSE
     CALL ce%exceptHandler%raiseError('Incorrect call to '//modName// &
@@ -164,18 +167,29 @@ ENDSUBROUTINE init_AndersonAccelerationType
 SUBROUTINE clear_AndersonAccelerationType(solver)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
 
+  INTEGER(SIK) :: i
+
   IF(solver%isInit) THEN
+    IF(ALLOCATED(solver%x)) THEN
+      DO i=1,solver%depth+1
+        CALL solver%x(i)%clear()
+        CALL solver%Gx(i)%clear()
+        CALL solver%r(i)%clear()
+      ENDDO
+      CALL tmpvec%clear()
+      DEALLOCATE(solver%x)
+      DEALLOCATE(solver%Gx)
+      DEALLOCATE(solver%r)
+      DEALLOCATE(tmpvec)
+    ENDIF
+    DEALLOCATE(solver%alpha)
+    CALL solver%LS%clear()
     solver%s=0
     solver%n=-1
     solver%depth=-1
     solver%start=0
     solver%depth=-1
     solver%beta=0.0_SRK
-    DEALLOCATE(solver%x)
-    DEALLOCATE(solver%Gx)
-    DEALLOCATE(solver%r)
-    DEALLOCATE(solver%alpha)
-    CALL solver%LS%clear()
     solver%isInit=.FALSE.
   ENDIF
 
@@ -187,16 +201,16 @@ ENDSUBROUTINE clear_AndersonAccelerationType
 !>        point the behavior is to under-relax the solution using the mixing parameter (beta)
 !>        as the under-relaxation factor.
 !> @param solver Anderson solver to take step with
-!> @param x_new New solution iterate and under-relaxed / accelerated return array
+!> @param x_new New solution iterate and under-relaxed / accelerated return vector
 !>
 SUBROUTINE step_AndersonAccelerationType(solver,x_new)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-  REAL(SRK),INTENT(INOUT) :: x_new(:)
+  CLASS(VectorType),INTENT(INOUT) :: x_new
 
-  INTEGER(SIK) :: i,j,k,depth_s
-  REAL(SRK) :: tmpA,tmpb,tmp
+  INTEGER(SIK) :: i,k,depth_s
+  REAL(SRK) :: tmpA,tmpb
 
-  REQUIRE(SIZE(x_new) == solver%n)
+  REQUIRE(x_new%n == solver%n)
 
   !Update iteration counter
   solver%s=solver%s+1
@@ -205,40 +219,36 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
     depth_s=MIN(solver%depth,solver%s-solver%start)
     !Push back vectors to make room for new ones
     DO i=depth_s,1,-1
-      solver%Gx(:,i+1)=solver%Gx(:,i)
-      solver%r(:,i+1)=solver%r(:,i)
+      CALL BLAS_copy(solver%Gx(i),solver%Gx(i+1))
+      CALL BLAS_copy(solver%r(i),solver%r(i+1))
     ENDDO
 
     !Set new vectors based on input
-    solver%Gx(:,1)=x_new(:)
-    solver%r(:,1)=solver%Gx(:,1)-solver%x(:,1)
+    CALL BLAS_copy(x_new,solver%Gx(1))
+    CALL BLAS_copy(solver%Gx(1),solver%r(1))
+    CALL BLAS_axpy(solver%x(1),solver%r(1),-1.0_SRK)
 
     !Get fit coefficients
     IF(depth_s == 1) THEN
       !Depth 1 is an especially simple case, where alpha can be calculated with a simple formula
-      tmpA=0.0_SRK
-      tmpb=0.0_SRK
-      DO j=1,solver%n
-        tmp=solver%r(j,2)-solver%r(j,1)
-        tmpA=tmpA+tmp*tmp
-        tmpb=tmpb+solver%r(j,2)*tmp
-      ENDDO
+      CALL BLAS_copy(solver%r(2),tmpvec)
+      CALL BLAS_axpy(solver%r(1),tmpvec,-1.0_SRK)
+      tmpA=BLAS_dot(tmpvec,tmpvec)
+      tmpb=BLAS_dot(solver%r(2),tmpvec)
       solver%alpha(1)=tmpb/tmpA
     ELSEIF(depth_s > 1) THEN
       !Construct coefficient matrix, right hand side, and solve for fit coefficients
       DO i=1,depth_s
+        CALL BLAS_copy(solver%r(i),x_new)
+        CALL BLAS_axpy(solver%r(depth_s+1),x_new,-1.0_SRK)
+        tmpb=BLAS_dot(solver%r(depth_s+1),x_new)
+        CALL solver%LS%b%set(i,tmpb)
         DO k=1,i
-          tmpA=0.0_SRK
-          DO j=1,solver%n
-            tmpA=tmpA+(solver%r(j,depth_s+1)-solver%r(j,k))*(solver%r(j,depth_s+1)-solver%r(j,i))
-          ENDDO
+          CALL BLAS_copy(solver%r(depth_s+1),tmpvec)
+          CALL BLAS_axpy(solver%r(k),tmpvec,-1.0_SRK)
+          tmpA=BLAS_dot(tmpvec,x_new)
           CALL solver%LS%A%set(k,i,tmpA)
         ENDDO
-        tmpb=0.0_SRK
-        DO j=1,solver%n
-          tmpb=tmpb+solver%r(j,depth_s+1)*(solver%r(j,depth_s+1)-solver%r(j,i))
-        ENDDO
-        CALL solver%LS%b%set(i,tmpb)
       ENDDO
       CALL solver%LS%solve()
       DO i=1,depth_s
@@ -251,23 +261,33 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
       solver%alpha(depth_s+1)=solver%alpha(depth_s+1)-solver%alpha(i)
     ENDDO
 
-    !Get accelerated solution
-    x_new(:)=0.0_SRK
-    DO i=1,depth_s+1
-      x_new(:)=x_new(:)+solver%alpha(i)*(solver%x(:,i)+solver%beta*solver%r(:,i))
-    ENDDO
+    !Ensure Anderson coefficient solve did not fail due to bad input vector
+    IF(ISNAN(solver%alpha(depth_s+1))) THEN
+      !Bad Anderson coefficient solve, revert to under-relaxation and reset Anderson solver
+      CALL x_new%set(0.0_SRK)
+      CALL BLAS_axpy(solver%Gx(1),x_new,solver%beta)
+      CALL BLAS_axpy(solver%x(1),x_new,1.0_SRK-solver%beta)
+      CALL solver%reset(x_new)
+   ELSE
+      !Get accelerated solution
+      CALL x_new%set(0.0_SRK)
+      DO i=1,depth_s+1
+        CALL BLAS_copy(solver%x(i),tmpvec)
+        CALL BLAS_axpy(solver%r(i),tmpvec,solver%beta)
+        CALL BLAS_axpy(tmpvec,x_new,solver%alpha(i))
+      ENDDO
 
-    !Push back solution vectors and load in newest accelerated as next initial iterate
-    DO i=MIN(depth_s+1,solver%depth),1,-1
-      solver%x(:,i+1)=solver%x(:,i)
-    ENDDO
-    solver%x(:,1)=x_new(:)
+      !Push back solution vectors and load in newest accelerated as next initial iterate
+      DO i=MIN(depth_s+1,solver%depth),1,-1
+        CALL BLAS_copy(solver%x(i),solver%x(i+1))
+      ENDDO
+      CALL BLAS_copy(x_new,solver%x(1))
+    ENDIF
   ELSE
     !Get under-relaxed solution using mixing parameter
-    DO j=1,solver%n
-      x_new(j)=(1.0_SRK-solver%beta)*solver%x(j,1)+solver%beta*x_new(j)
-      solver%x(j,1)=x_new(j)
-    ENDDO
+    CALL BLAS_scal(x_new,solver%beta)
+    CALL BLAS_axpy(solver%x(1),x_new,1.0_SRK-solver%beta)
+    CALL BLAS_copy(x_new,solver%x(1))
   ENDIF
 
 ENDSUBROUTINE step_AndersonAccelerationType
@@ -278,15 +298,63 @@ ENDSUBROUTINE step_AndersonAccelerationType
 !> @param x Initial iterate solve is starting from
 !>
 SUBROUTINE reset_AndersonAccelerationType(solver,x)
+  CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-  REAL(SRK),INTENT(IN) :: x(:)
+  CLASS(VectorType),INTENT(IN) :: x
 
-  INTEGER(SIK) :: i,j
+  TYPE(ParamType) :: vecparams
+  INTEGER(SIK) :: i,j,m
 
-  REQUIRE(SIZE(x) == solver%n)
+  REQUIRE(x%n == solver%n)
 
+  !If this is the first call to set/reset must actually create vectors of needed type
+  IF(solver%s == 0) THEN
+    IF(.NOT.ALLOCATED(solver%x)) THEN
+      m=solver%depth+1
+      CALL vecparams%add("VectorType->n",solver%n)
+      SELECT TYPE(x);TYPE IS(RealVectorType)
+        ALLOCATE(RealVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+!!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
+!      TYPE IS(NativeDistributedVectorType)
+!        ALLOCATE(NativeDistributedVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+!        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+!        CALL vecparams%add('VectorType->chunkSize',x%chunkSize)
+#ifdef FUTILITY_HAVE_PETSC
+      TYPE IS(PETScVectorType)
+        ALLOCATE(PETScVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+        CALL vecparams%add('VectorType->nlocal',x%nlocal)
+#endif
+!!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
+!#ifdef FUTILITY_HAVE_Trilinos
+!      TYPE IS(TrilinosVectorType)
+!        ALLOCATE(TrilinosVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+!        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+!        CALL vecparams%add('VectorType->nlocal',x%nlocal)
+!#endif
+      CLASS DEFAULT
+        CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
+            '::'//myName//' - Input vector type not supported!')
+      ENDSELECT
+      DO i=1,m
+        CALL solver%x(i)%init(vecparams)
+        CALL solver%Gx(i)%init(vecparams)
+        CALL solver%r(i)%init(vecparams)
+      ENDDO
+      CALL tmpvec%init(vecparams)
+    ELSE
+      CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
+          '::'//myName//' - At least one step required before reseting!')
+    ENDIF
+  ENDIF
+
+  !Reset iteration counter
   solver%s=0_SIK
-  solver%x(:,1)=x(:)
+
+  !Grab initial iterate to initiate Anderson from
+  CALL BLAS_copy(x,solver%x(1))
+
+  !Reset Anderson coefficient matrix
   IF(solver%LS%isinit) THEN
     DO j=1,solver%depth
       DO i=j,solver%depth
