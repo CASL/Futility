@@ -1752,7 +1752,6 @@ SUBROUTINE removeDuplicates(list)
     IF(old_list(iList) /= old_list(iList-1)) THEN
       nUnique=nUnique+1
     ENDIF
-WRITE(*,*) iList,CHAR(old_list(iList-1)),CHAR(old_list(iList)),nUnique
   ENDDO !iList
 
   !Allocate the new list and fill with unique entries
