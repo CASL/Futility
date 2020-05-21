@@ -21,6 +21,7 @@ CREATE_TEST('SORTING')
 REGISTER_SUBTEST('sort Integer',testIntSort)
 REGISTER_SUBTEST('sort Integer 2D',testInt2DSort)
 REGISTER_SUBTEST('sort Real',testRealSort)
+REGISTER_SUBTEST('sort Strings',testStringSort)
 
 REGISTER_SUBTEST('bubble sort',testBubbleSort)
 REGISTER_SUBTEST('insertion sort',testInsertSort)
@@ -541,7 +542,100 @@ SUBROUTINE testRealSort()
     20.0_SRK,20.0_SRK,45.0_SRK,60.0_SRK,100.0_SRK/))
   ASSERT(bool,'1-D real array qsort')
 ENDSUBROUTINE testRealSort
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testStringSort()
+  TYPE(StringType),ALLOCATABLE :: testStr(:)
 
+  COMPONENT_TEST('Empty')
+  ALLOCATE(testStr(0))
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),0,'size')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('length 1')
+  ALLOCATE(testStr(1))
+  testStr(1)='test'
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),1,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test','string(1)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('already sorted')
+  ALLOCATE(testStr(3))
+  testStr(1)='test a'
+  testStr(2)='test b'
+  testStr(3)='tests'
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),3,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test a','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test b','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'tests','string(3)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('simple')
+  ALLOCATE(testStr(3))
+  testStr(1)='test b'
+  testStr(2)='test a'
+  testStr(3)='tests'
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),3,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test a','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test b','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'tests','string(3)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('backwards')
+  ALLOCATE(testStr(3))
+  testStr(1)='tests'
+  testStr(2)='test b'
+  testStr(3)='test a'
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),3,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test a','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test b','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'tests','string(3)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('all the same')
+  ALLOCATE(testStr(3))
+  testStr(1)='test'
+  testStr(2)='test'
+  testStr(3)='test'
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),3,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'test','string(3)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('some the same')
+  ALLOCATE(testStr(3))
+  testStr(1)='test a'
+  testStr(3)='tests'
+  testStr(2)='test a'
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),3,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test a','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test a','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'tests','string(3)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('has empty string')
+  ALLOCATE(testStr(3))
+  testStr(1)='test a'
+  testStr(2)='test b'
+  testStr(3)=''
+  CALL sort(testStr)
+  ASSERT_EQ(SIZE(testStr),3,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test a','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'test b','string(3)')
+  DEALLOCATE(testStr)
+
+ENDSUBROUTINE testStringSort
+!
+!-------------------------------------------------------------------------------
 SUBROUTINE testKeySort()
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: idxOrig(16), i,iVal,jVal

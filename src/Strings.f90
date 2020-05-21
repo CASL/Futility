@@ -45,6 +45,10 @@ PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(//)
 PUBLIC :: OPERATOR(==)
 PUBLIC :: OPERATOR(/=)
+PUBLIC :: OPERATOR(<)
+PUBLIC :: OPERATOR(>)
+PUBLIC :: OPERATOR(<=)
+PUBLIC :: OPERATOR(>=)
 
 !> Derived type for an arbitrary length string
 TYPE :: StringType
@@ -235,6 +239,74 @@ INTERFACE OPERATOR(/=)
   !> @copybrief Strings::notequalto_StringType_StringType
   !> @copydetails Strings::notequalto_StringType_StringType
   MODULE PROCEDURE notequalto_StringType_StringType
+ENDINTERFACE
+
+!> @brief Overloads the Fortran intrinsic operator for comparing
+!> two variables to see if one is less than the other
+!>
+!> NOTE: This assumes that the system is using ASCII ordering and
+!> that this is therefore equal to LLT (lexical less than).
+INTERFACE OPERATOR(<)
+  !> @copybrief Strings::lessthan_char_StringType
+  !> @copydetails Strings::lessthan_char_StringType
+  MODULE PROCEDURE lessthan_char_StringType
+  !> @copybrief Strings::lessthan_StringType_char
+  !> @copydetails Strings::lessthan_StringType_char
+  MODULE PROCEDURE lessthan_StringType_char
+  !> @copybrief Strings::lessthan_StringType_StringType
+  !> @copydetails Strings::lessthan_StringType_StringType
+  MODULE PROCEDURE lessthan_StringType_StringType
+ENDINTERFACE
+
+!> @brief Overloads the Fortran intrinsic operator for comparing
+!> two variables to see one is greater than the other
+!>
+!> NOTE: This assumes that the system is using ASCII ordering and
+!> that this is therefore equal to LGT (lexical greater than).
+INTERFACE OPERATOR(>)
+  !> @copybrief Strings::greaterthan_char_StringType
+  !> @copydetails Strings::greaterthan_char_StringType
+  MODULE PROCEDURE greaterthan_char_StringType
+  !> @copybrief Strings::greaterthan_StringType_char
+  !> @copydetails Strings::greaterthan_StringType_char
+  MODULE PROCEDURE greaterthan_StringType_char
+  !> @copybrief Strings::greaterthan_StringType_StringType
+  !> @copydetails Strings::greaterthan_StringType_StringType
+  MODULE PROCEDURE greaterthan_StringType_StringType
+ENDINTERFACE
+
+!> @brief Overloads the Fortran intrinsic operator for comparing
+!> two variables to see if one is less than or equal to the other
+!>
+!> NOTE: This assumes that the system is using ASCII ordering and
+!> that this is therefore equal to LLE (lexical less than/equal to).
+INTERFACE OPERATOR(<=)
+  !> @copybrief Strings::lessthanequal_char_StringType
+  !> @copydetails Strings::lessthanequal_char_StringType
+  MODULE PROCEDURE lessthanequal_char_StringType
+  !> @copybrief Strings::lessthanequal_StringType_char
+  !> @copydetails Strings::lessthanequal_StringType_char
+  MODULE PROCEDURE lessthanequal_StringType_char
+  !> @copybrief Strings::lessthanequal_StrinequalgType_StringType
+  !> @copydetails Strings::lessthanequal_StrinequalgType_StringType
+  MODULE PROCEDURE lessthanequal_StringType_StringType
+ENDINTERFACE
+
+!> @brief Overloads the Fortran intrinsic operator for comparing
+!> two variables to see one is greater than or equal to the other
+!>
+!> NOTE: This assumes that the system is using ASCII ordering and
+!> that this is therefore equal to LGE (lexical greater than/equal to).
+INTERFACE OPERATOR(>=)
+  !> @copybrief Strings::greaterthanequal_char_StringType
+  !> @copydetails Strings::greaterthanequal_char_StringType
+  MODULE PROCEDURE greaterthanequal_char_StringType
+  !> @copybrief Strings::greaterthanequal_StringType_char
+  !> @copydetails Strings::greaterthanequal_StringType_char
+  MODULE PROCEDURE greaterthanequal_StringType_char
+  !> @copybrief Strings::greaterthanequal_StringType_StringType
+  !> @copydetails Strings::greaterthanequal_StringType_StringType
+  MODULE PROCEDURE greaterthanequal_StringType_StringType
 ENDINTERFACE
 !
 !===============================================================================
@@ -994,6 +1066,174 @@ ELEMENTAL FUNCTION notequalto_StringType_StringType(lhs,rhs) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool = (CHAR(lhs) /= CHAR(rhs))
 ENDFUNCTION notequalto_StringType_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a less than operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param lhs a @c CHARACTER type
+!> @param rhs a @c StringType object
+!> @returns bool the result of the < operation
+!>
+ELEMENTAL FUNCTION lessthan_char_StringType(lhs,rhs) RESULT(bool)
+  CHARACTER(LEN=*),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) ::rhs
+  LOGICAL(SBK) :: bool
+  bool = (lhs < CHAR(rhs))
+ENDFUNCTION lessthan_char_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a less than operation of a @c StringType and a
+!> @c CHARACTER.
+!> @param lhs a @c StringType object
+!> @param rhs a @c CHARACTER type
+!> @returns bool the result of the < operation
+!>
+ELEMENTAL FUNCTION lessthan_StringType_char(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) ::lhs
+  CHARACTER(LEN=*),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+    bool = (CHAR(lhs) < rhs)
+ENDFUNCTION lessthan_StringType_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a less than operation of a @c StringType and a
+!> @c StringType.
+!> @param lhs a @c StringType object
+!> @param rhs another @c StringType object
+!> @returns bool the result of the < operation
+!>
+ELEMENTAL FUNCTION lessthan_StringType_StringType(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+  bool = (CHAR(lhs) < CHAR(rhs))
+ENDFUNCTION lessthan_StringType_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a greater than operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param lhs a @c CHARACTER type
+!> @param rhs a @c StringType object
+!> @returns bool the result of the < operation
+!>
+ELEMENTAL FUNCTION greaterthan_char_StringType(lhs,rhs) RESULT(bool)
+  CHARACTER(LEN=*),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) ::rhs
+  LOGICAL(SBK) :: bool
+  bool = (lhs > CHAR(rhs))
+ENDFUNCTION greaterthan_char_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a greater than operation of a @c StringType and a
+!> @c CHARACTER.
+!> @param lhs a @c StringType object
+!> @param rhs a @c CHARACTER type
+!> @returns bool the result of the < operation
+!>
+ELEMENTAL FUNCTION greaterthan_StringType_char(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) ::lhs
+  CHARACTER(LEN=*),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+    bool = (CHAR(lhs) > rhs)
+ENDFUNCTION greaterthan_StringType_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a greater than operation of a @c StringType and a
+!> @c StringType.
+!> @param lhs a @c StringType object
+!> @param rhs another @c StringType object
+!> @returns bool the result of the < operation
+!>
+ELEMENTAL FUNCTION greaterthan_StringType_StringType(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+  bool = (CHAR(lhs) > CHAR(rhs))
+ENDFUNCTION greaterthan_StringType_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a less than or equal to operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param lhs a @c CHARACTER type
+!> @param rhs a @c StringType object
+!> @returns bool the result of the <= operation
+!>
+ELEMENTAL FUNCTION lessthanequal_char_StringType(lhs,rhs) RESULT(bool)
+  CHARACTER(LEN=*),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) ::rhs
+  LOGICAL(SBK) :: bool
+  bool = (lhs <= CHAR(rhs))
+ENDFUNCTION lessthanequal_char_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a less than or equal to operation of a @c StringType and a
+!> @c CHARACTER.
+!> @param lhs a @c StringType object
+!> @param rhs a @c CHARACTER type
+!> @returns bool the result of the <= operation
+!>
+ELEMENTAL FUNCTION lessthanequal_StringType_char(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) ::lhs
+  CHARACTER(LEN=*),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+    bool = (CHAR(lhs) <= rhs)
+ENDFUNCTION lessthanequal_StringType_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a less than or equal to operation of a @c StringType and a
+!> @c StringType.
+!> @param lhs a @c StringType object
+!> @param rhs another @c StringType object
+!> @returns bool the result of the <= operation
+!>
+ELEMENTAL FUNCTION lessthanequal_StringType_StringType(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+  bool = (CHAR(lhs) <= CHAR(rhs))
+ENDFUNCTION lessthanequal_StringType_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a greater than or equal to operation of a @c CHARACTER and a
+!> @c StringType.
+!> @param lhs a @c CHARACTER type
+!> @param rhs a @c StringType object
+!> @returns bool the result of the <= operation
+!>
+ELEMENTAL FUNCTION greaterthanequal_char_StringType(lhs,rhs) RESULT(bool)
+  CHARACTER(LEN=*),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) ::rhs
+  LOGICAL(SBK) :: bool
+  bool = (lhs >= CHAR(rhs))
+ENDFUNCTION greaterthanequal_char_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a greater than or equal to operation of a @c StringType and a
+!> @c CHARACTER.
+!> @param lhs a @c StringType object
+!> @param rhs a @c CHARACTER type
+!> @returns bool the result of the <= operation
+!>
+ELEMENTAL FUNCTION greaterthanequal_StringType_char(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) ::lhs
+  CHARACTER(LEN=*),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+    bool = (CHAR(lhs) >= rhs)
+ENDFUNCTION greaterthanequal_StringType_char
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a greater than or equal to operation of a @c StringType and a
+!> @c StringType.
+!> @param lhs a @c StringType object
+!> @param rhs another @c StringType object
+!> @returns bool the result of the <= operation
+!>
+ELEMENTAL FUNCTION greaterthanequal_StringType_StringType(lhs,rhs) RESULT(bool)
+  CLASS(StringType),INTENT(IN) :: lhs
+  CLASS(StringType),INTENT(IN) :: rhs
+  LOGICAL(SBK) :: bool
+  bool = (CHAR(lhs) >= CHAR(rhs))
+ENDFUNCTION greaterthanequal_StringType_StringType
 !
 !-------------------------------------------------------------------------------
 !> @brief convert a string to an int
