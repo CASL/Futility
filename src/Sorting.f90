@@ -27,6 +27,9 @@ INTERFACE sort
   !> @copybrief Sorting::qsort_1DInt
   !> @copydetails Sorting::qsort_1DInt
   MODULE PROCEDURE qsort_1DInt
+  !> @copybrief Sorting::qsort_1DStr
+  !> @copydetails Sorting::qsort_1DStr
+  MODULE PROCEDURE qsort_1DStr
   !> @copybrief Sorting::qsort_1DLong_1DInt
   !> @copydetails Sorting::qsort_1DLong_1DInt
   MODULE PROCEDURE qsort_1DLong_1DInt
@@ -57,6 +60,9 @@ INTERFACE insert_sort
   !> @copybrief Sorting::insert_sort_real
   !> @copydetails Sorting::insert_sort_real
   MODULE PROCEDURE insert_sort_real
+  !> @copybrief Sorting::insert_sort_str
+  !> @copydetails Sorting::insert_sort_str
+  MODULE PROCEDURE insert_sort_str
   !> @copybrief Sorting::insert_sort_1DLong_1DInt
   !> @copydetails Sorting::insert_sort_1DLong_1DInt
   MODULE PROCEDURE insert_sort_1DLong_1DInt
@@ -495,6 +501,29 @@ PURE SUBROUTINE insert_sort_real(list)
 ENDSUBROUTINE insert_sort_real
 !
 !-------------------------------------------------------------------------------
+!> @brief Sorts a list of strings using the insert sort algorithm
+!> @param list the list to be sorted
+PURE SUBROUTINE insert_sort_str(list)
+  TYPE(StringType),INTENT(INOUT) :: list(:)
+  !
+  INTEGER(SIK) :: i,j,n
+  TYPE(StringType) :: key
+
+  n=SIZE(list)
+
+  DO i=2,n
+    key = list(i)
+    j=i-1
+    DO WHILE(list(j) > key)
+      list(j+1) = list(j)
+      j=j-1
+      IF (j < 1) EXIT
+    ENDDO
+    list(j+1)=key
+  ENDDO
+ENDSUBROUTINE insert_sort_str
+!
+!-------------------------------------------------------------------------------
 !> @brief Sorts a list of long keys and integer values using the insert sort
 !>        algorithm
 !> @param keys the key values to sort over
@@ -551,6 +580,33 @@ PURE RECURSIVE SUBROUTINE qsort_1DInt(A)
     CALL insert_sort_int(A)
   ENDIF
 ENDSUBROUTINE qsort_1DInt
+!-------------------------------------------------------------------------------
+!> @brief QuickSort 1D string array
+!> @param A 1D string array, modified in place and returned sorted
+!>
+PURE RECURSIVE SUBROUTINE qsort_1DStr(A)
+  TYPE(StringType),INTENT(INOUT) :: A(:)
+
+  INTEGER(SIK) :: n,l,p,c
+
+  n=SIZE(A)
+
+  IF (n>50) THEN
+    !median of 3 pivot
+    c=n/2
+    IF (A(c) < A(1)) CALL swap_str(A,c,1)
+    IF (A(n) < A(1)) CALL swap_str(A,1,n)
+    IF (A(n) < A(c)) CALL swap_str(A,c,n)
+    p=c
+   ! p=1  ! left most pivot
+   ! p=FLOOR(RAND()*REAL(n,SRK),SIK)+1  ! Randomized pivot
+    CALL partition_array_1DStr(A,p,l)
+    CALL qsort_1DStr(A(1:l-1))
+    CALL qsort_1DStr(A(l+1:n))
+  ELSE
+    CALL insert_sort_str(A)
+  ENDIF
+ENDSUBROUTINE qsort_1DStr
 !
 !-------------------------------------------------------------------------------
 !> @brief Partition method 1D integer array.  For a given partion, sorts values
@@ -584,6 +640,40 @@ PURE SUBROUTINE partition_array_1DInt(A,p,i)
   i=i-1
   CALL swap_int(A,1,i)
 ENDSUBROUTINE partition_array_1DInt
+!
+!-------------------------------------------------------------------------------
+!> @brief Partition method 1D string array.  For a given partion, sorts values
+!>         greater than and less than the partition
+!> @param A 1D string array, modified in place and returned partioned
+!> @param p Index of array element to partition with
+!> @param i Index of the partition element once A is partitioned
+!>
+PURE SUBROUTINE partition_array_1DStr(A,p,i)
+  TYPE(StringType),INTENT(INOUT) :: A(:)
+  INTEGER(SIK),INTENT(IN) :: p
+  INTEGER(SIK),INTENT(OUT) :: i
+
+  INTEGER(SIK) :: j,n
+  TYPE(StringType) :: pval
+
+  pval=A(p)
+  n=SIZE(A)
+  IF (p>1) THEN
+    ! if Mo3 sort, 1st element is smaller than pivot, don't throw away
+    CALL swap_str(A,1,2)
+    CALL swap_str(A,1,p)
+  ENDIF
+
+  i=2
+  DO j=2,n
+    IF (A(j)<pval) THEN
+      CALL swap_str(A,i,j)
+      i=i+1
+    ENDIF
+  ENDDO
+  i=i-1
+  CALL swap_str(A,1,i)
+ENDSUBROUTINE partition_array_1DStr
 
 !
 !-------------------------------------------------------------------------------
@@ -697,6 +787,23 @@ PURE SUBROUTINE swap_long(A,i,j)
   A(i)=A(j)
   A(j)=tmp
 ENDSUBROUTINE swap_long
+!
+!-------------------------------------------------------------------------------
+!> @brief Swap location of 2 locations in 1D string array.
+!> @param A 1D string array, modified in place and returned partioned
+!> @param i Index of location 1
+!> @param j Index of location 2
+!>
+
+PURE SUBROUTINE swap_str(A,i,j)
+  TYPE(StringType),INTENT(INOUT) :: A(:)
+  INTEGER(SIK),INTENT(IN) :: i
+  INTEGER(SIK),INTENT(IN) :: j
+  TYPE(StringType) :: tmp
+  tmp=A(i)
+  A(i)=A(j)
+  A(j)=tmp
+ENDSUBROUTINE swap_str
 !
 !-------------------------------------------------------------------------------
 !> @brief QuickSort 1D real array
