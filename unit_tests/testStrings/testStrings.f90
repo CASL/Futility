@@ -20,6 +20,7 @@ REGISTER_SUBTEST('Un-Iniitialized State',testUnInit)
 REGISTER_SUBTEST('Character Assignments',testAssign_chars)
 REGISTER_SUBTEST('Numberal Assignments',testAssign_nums)
 REGISTER_SUBTEST('Array Assignments',testAssign_arrays)
+REGISTER_SUBTEST('Operator Overloading',testOperators)
 REGISTER_SUBTEST('Intrinsics',testIntrinsic)
 REGISTER_SUBTEST('string_functs',testStrFunct)
 FINALIZE_TEST()
@@ -277,411 +278,588 @@ SUBROUTINE testAssign_arrays()
 ENDSUBROUTINE testAssign_arrays
 !
 !-------------------------------------------------------------------------------
-!>
-  SUBROUTINE testIntrinsic()
-    TYPE(StringType) :: testString,testString2
-    CHARACTER(LEN=:),ALLOCATABLE :: char10
-    CHARACTER(KIND=C_CHAR) :: cchar(5)
-    TYPE(StringType) :: tstString
-    TYPE(StringType) :: testStringArray(10)
-    TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
-    TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
+SUBROUTINE testOperators()
+  TYPE(StringType) :: str1,str2
 
-    !Test the CHAR interface for converting c_chars to StringType
-    COMPONENT_TEST('cCHAR')
-    cchar = (/"c","C","h","a","r"/)
-    tstString = CHAR(cchar)
-    ASSERT(CHAR(tstString) == "cChar","c character conversion to StringType")
+  COMPONENT_TEST('char < str')
+  str1='Test'
+  ASSERT('' < str1,'')
+  ASSERT(.NOT.('test' < str1),'')
+  ASSERT(.NOT.('Test' < str1),'')
+  ASSERT('Tdst' < str1,'')
+  ASSERT(.NOT.('Tfst' < str1),'')
+  ASSERT('Tes' < str1,'')
+  ASSERT(.NOT.('Tests' < str1),'')
 
-    !Test ADJUSTL and ADJUSTR
-    char10=' - '
-    COMPONENT_TEST('ADJUSTL')
-    testString=char10
-    ASSERT(ADJUSTL(testString) == ADJUSTL(char10),'ADJUSTL(testString)')
-    COMPONENT_TEST('ADJUSTR')
-    testString=char10
-    ASSERT(ADJUSTR(testString) == ADJUSTR(char10),'ADJUSTR(testString)')
+  COMPONENT_TEST('str < char')
+  str1='test'
+  ASSERT(.NOT.(str1 < 'Test'),'')
+  str1='Test'
+  ASSERT(.NOT.(str1 < 'Test'),'')
+  str1='Tdst'
+  ASSERT(str1 < 'Test','')
+  str1='Tfst'
+  ASSERT(.NOT.(str1 < 'Test'),'')
+  str1='Test'
+  ASSERT(.NOT.(str1 < 'Test'),'')
+  str1='Tests'
+  ASSERT(.NOT.(str1 < 'Test'),'')
 
-    !Test INDEX
-    char10='  - -'
-    COMPONENT_TEST('INDEX')
-    testString=char10
-    testString2='-'
-    ASSERT(INDEX(testString,'-') == 3,'INDEX(testString,''-'')')
-    ASSERT(INDEX(testString,'-',.TRUE.) == 5,'INDEX(testString,''-'',.TRUE.)')
-    ASSERT(INDEX(char10,testString2) == 3,'INDEX(char10,testString2)')
-    ASSERT(INDEX(char10,testString2,.TRUE.) == 5,'INDEX(char10,testString2,.TRUE.)')
-    ASSERT(INDEX(testString,testString2) == 3,'INDEX(testString,testString2)')
-    ASSERT(INDEX(testString,testString2,.TRUE.) == 5,'INDEX(testString,testString2,.TRUE.)')
+  COMPONENT_TEST('str < str')
+  str2='Test'
+  str1='test'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Test'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Tdst'
+  ASSERT(str1 < str2,'')
+  str1='Tfst'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Test'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Tests'
+  ASSERT(.NOT.(str1 < str2),'')
 
-    !Test // operator
-    COMPONENT_TEST('//')
-    char10='  -'
-    testString=char10
-    ASSERT('"'//testString == '"  -       ','''"''//testString')
-    ASSERT(testString//'"' == '  -"','testString//''"''')
-    ASSERT(testString//testString == '  -  -','testString//testString')
+  COMPONENT_TEST('char > str')
+  str1='test'
+  ASSERT(.NOT.('' > str1),'')
+  ASSERT(.NOT.('Test' > str1),'')
+  str1='Test'
+  ASSERT(.NOT.('Test' > str1),'')
+  str1='Tdst'
+  ASSERT('Test' > str1,'')
+  str1='Tfst'
+  ASSERT(.NOT.('Test' > str1),'')
+  str1='Test'
+  ASSERT(.NOT.('Tes' > str1),'')
+  str1='Tests'
+  ASSERT(.NOT.('Test' > str1),'')
 
-    !Test == operator
-    COMPONENT_TEST('==')
-    testString2=ADJUSTL(char10)
-    ASSERT(testString == char10,'testString == char10')
-    ASSERT(.NOT. char10 == testString2,'char10 == testString2')
-    ASSERT(.NOT. testString == testString2,'testString == testString2')
+  COMPONENT_TEST('str > char')
+  str1='Test'
+  ASSERT(.NOT.(str1 > 'test'),'')
+  ASSERT(.NOT.(str1 > 'Test'),'')
+  ASSERT(str1 > 'Tdst','')
+  ASSERT(.NOT.(str1 > 'Tfst'),'')
+  ASSERT(str1 > 'Tes','')
+  ASSERT(.NOT.(str1 > 'Tests'),'')
 
-    !Test /= operator
-    COMPONENT_TEST('/=')
-    ASSERT(.NOT.(testString /= char10),'testString == char10')
-    ASSERT(char10 /= testString2,'char10 /= testString2')
-    ASSERT(testString /= testString2,'testString /= testString2')
+  COMPONENT_TEST('str > str')
+  str1='Test'
+  str2='test'
+  ASSERT(.NOT.(str1 > str2),'')
+  str2='Test'
+  ASSERT(.NOT.(str1 > str2),'')
+  str2='Tdst'
+  ASSERT(str1 > str2,'')
+  str2='Tfst'
+  ASSERT(.NOT.(str1 > str2),'')
+  str2='Tes'
+  ASSERT(str1 > str2,'')
+  str2='Tests'
+  ASSERT(.NOT.(str1 > str2),'')
 
-    !Test ANY operator
-    COMPONENT_TEST('ANY')
-    testStringArray='test'
-    testString='bad test'
-    char10='bad test'
-    ASSERT(.NOT. ANY(testStringArray==testString),'ANY(testStringArray,testString), bad')
-    ASSERT(.NOT. ANY(testStringArray==char10),'ANY(testStringArray,char10), bad')
-    testString='good test'
-    testStringArray(10)='good test'
-    char10='good test'
-    ASSERT(ANY(testStringArray==testString),'ANY(testStringArray,testString)')
-    ASSERT(ANY(testStringArray==char10),'ANY(testStringArray,char10)')
+  COMPONENT_TEST('char <= str')
+  str1='Test'
+  ASSERT('' <= str1,'')
+  ASSERT(.NOT.('test' <= str1),'')
+  ASSERT('Test' <= str1,'')
+  ASSERT('Tdst' <= str1,'')
+  ASSERT(.NOT.('Tfst' <= str1),'')
+  ASSERT('Tes' <= str1,'')
+  ASSERT(.NOT.('Tests' <= str1),'')
 
-    !Test ALL operator
-    !Test ALL of 1-D array and scalar
-    COMPONENT_TEST('ALL 1-D & Scalar')
-    testStringArray='test'
-    testString='bad test'
-    char10='bad test'
-    ASSERT(.NOT. ALL(testStringArray==testString),'ALL 1-D & scalar, str')
-    ASSERT(.NOT. ALL(testStringArray==char10),'ALL 1-D & scalar, char')
-    testString='test'
-    char10='test'
-    ASSERT(ALL(testStringArray==testString),'ALL 1-D & scalar, str')
-    ASSERT(ALL(testStringArray==char10),'ALL 1-D & scalar, char')
+  COMPONENT_TEST('str <= char')
+  str1='test'
+  ASSERT(.NOT.(str1 <= 'Test'),'')
+  str1='Test'
+  ASSERT(str1 <= 'Test','')
+  str1='Tdst'
+  ASSERT(str1 <= 'Test','')
+  str1='Tfst'
+  ASSERT(.NOT.(str1 <= 'Test'),'')
+  str1='Test'
+  ASSERT(str1 <= 'Test','')
+  str1='Tests'
+  ASSERT(.NOT.(str1 <= 'Test'),'')
 
-    COMPONENT_TEST('ALL 1-D & 1-D')
-    !Test ALL of two 1-D arrays
-    test1a(1)='test'; test1a(2)='test'
-    test1a2(1)='test'; test1a2(2)='test'
-    ASSERT(ALL(test1a==test1a2),'ALL 1-D & 1-D')
-    test1a2(2)='bad test'
-    ASSERT(.NOT.ALL(test1a==test1a2),'ALL 1-D & 1-D')
-    test1a2(1)='bad test'
-    ASSERT(.NOT.ALL(test1a==test1a2),'ALL 1-D & 1-D')
+  COMPONENT_TEST('str <= str')
+  str2='Test'
+  str1='test'
+  ASSERT(.NOT.(str1 <= str2),'')
+  str1='Test'
+  ASSERT(str1 <= str2,'')
+  str1='Tdst'
+  ASSERT(str1 <= str2,'')
+  str1='Tfst'
+  ASSERT(.NOT.(str1 <= str2),'')
+  str1='Test'
+  ASSERT(str1 <= str2,'')
+  str1='Tests'
+  ASSERT(.NOT.(str1 <= str2),'')
 
-    COMPONENT_TEST('ALL 2-D & 2-D')
-    !Test ALL of two 2-D arrays
-    test2a(1,1)='test'; test2a(1,2)='test'
-    test2a(2,1)='test'; test2a(2,2)='test'
-    test2a2(1,1)='test'; test2a2(1,2)='test'
-    test2a2(2,1)='test'; test2a2(2,2)='test'
-    ASSERT(ALL(test2a==test2a2),'ALL 2-D & 2-D')
-    test2a2(2,2)='bad test'
-    ASSERT(.NOT.ALL(test2a==test2a2),'ALL 2-D & 2-D')
-    test2a2(1,1)='bad test'; test2a2(1,2)='bad test'; test2a2(2,1)='bad test'
-    ASSERT(.NOT.ALL(test2a==test2a2),'ALL 2-D & 2-D')
+  COMPONENT_TEST('str < str')
+  str2='Test'
+  str1='test'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Test'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Tdst'
+  ASSERT(str1 < str2,'')
+  str1='Tfst'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Test'
+  ASSERT(.NOT.(str1 < str2),'')
+  str1='Tests'
+  ASSERT(.NOT.(str1 < str2),'')
 
-    COMPONENT_TEST('ALL 3-D & 3-D')
-    !Test ALL of two 2-D arrays
-    test3a(1,1,1)='test'; test3a(1,2,1)='test'
-    test3a(2,1,1)='test'; test3a(2,2,1)='test'
-    test3a(1,1,2)='test'; test3a(1,2,2)='test'
-    test3a(2,1,2)='test'; test3a(2,2,2)='test'
-    test3a2(1,1,1)='test'; test3a2(1,2,1)='test'
-    test3a2(2,1,1)='test'; test3a2(2,2,1)='test'
-    test3a2(1,1,2)='test'; test3a2(1,2,2)='test'
-    test3a2(2,1,2)='test'; test3a2(2,2,2)='test'
-    ASSERT(ALL(test3a==test3a2),'ALL 3-D & 3-D')
-    test3a2(2,2,2)='bad test'
-    ASSERT(.NOT.ALL(test3a==test3a2),'ALL 3-D & 3-D')
-    test3a2(1,1,1)='bad test'; test3a2(1,2,1)='bad test'; test3a2(2,1,1)='bad test'
-    test3a2(2,2,1)='bad test'; test3a2(1,1,2)='bad test'; test3a2(1,2,2)='bad test'
-    test3a2(2,1,2)='bad test'
-    ASSERT(.NOT.ALL(test3a==test3a2),'ALL 3-D & 3-D')
+  COMPONENT_TEST('char >= str')
+  str1='test'
+  ASSERT(.NOT.('' >= str1),'')
+  ASSERT(.NOT.('Test' >= str1),'')
+  str1='Test'
+  ASSERT('Test' >= str1,'')
+  str1='Tdst'
+  ASSERT('Test' >= str1,'')
+  str1='Tfst'
+  ASSERT(.NOT.('Test' >= str1),'')
+  str1='Tes'
+  ASSERT('Test' >= str1,'')
+  str1='Tests'
+  ASSERT(.NOT.('Test' >= str1),'')
 
-  ENDSUBROUTINE testIntrinsic
+  COMPONENT_TEST('str >= char')
+  str1='Test'
+  ASSERT(.NOT.(str1 >= 'test'),'')
+  ASSERT(str1 >= 'Test','')
+  ASSERT(str1 >= 'Tdst','')
+  ASSERT(.NOT.(str1 >= 'Tfst'),'')
+  ASSERT(str1 >= 'Tes','')
+  ASSERT(.NOT.(str1 >= 'Tests'),'')
+
+  COMPONENT_TEST('str >= str')
+  str1='Test'
+  str2='test'
+  ASSERT(.NOT.(str1 >= str2),'')
+  str2='Test'
+  ASSERT(str1 >= str2,'')
+  str2='Tdst'
+  ASSERT(str1 >= str2,'')
+  str2='Tfst'
+  ASSERT(.NOT.(str1 >= str2),'')
+  str2='Tes'
+  ASSERT(str1 >= str2,'')
+  str2='Tests'
+  ASSERT(.NOT.(str1 >= str2),'')
+
+ENDSUBROUTINE testOperators
 !
 !-------------------------------------------------------------------------------
 !>
-  SUBROUTINE testStrFunct()
-    TYPE(StringType) :: str
-    TYPE(StringType), ALLOCATABLE :: str_list(:),ref_list(:)
-    INTEGER(SIK) :: iWord
-    COMPONENT_TEST('String Split')
-    str = ''
-    str_list = str%split()
-    ASSERT_EQ(SIZE(str_list),1,"splits count")
-    ASSERT_EQ(CHAR(str_list(1)),'',"splits")
-    !Deallocating here just to ensure the proper function of split
-    DEALLOCATE(str_list)
-    str = ''
-    str_list = str%split(' ')
-    ASSERT_EQ(SIZE(str_list),1,"splits count")
-    ASSERT_EQ(CHAR(str_list(1)),'',"splits")
-    str = "the"
-    str_list = str%split()
-    ASSERT_EQ(SIZE(str_list),1,"splits count")
-    ASSERT_EQ(CHAR(str_list(1)),'the',"splits")
+SUBROUTINE testIntrinsic()
+  TYPE(StringType) :: testString,testString2
+  CHARACTER(LEN=:),ALLOCATABLE :: char10
+  CHARACTER(KIND=C_CHAR) :: cchar(5)
+  TYPE(StringType) :: tstString
+  TYPE(StringType) :: testStringArray(10)
+  TYPE(StringType) :: test1a(2),test1a2(2),test2a(2,2),test2a2(2,2)
+  TYPE(StringType) :: test3a(2,2,2),test3a2(2,2,2)
 
-    str = "the"
-    str_list = str%split('the')
-    ASSERT_EQ(SIZE(str_list),1,"splits count")
-    ASSERT_EQ(CHAR(str_list(1)),'',"splits")
+  !Test the CHAR interface for converting c_chars to StringType
+  COMPONENT_TEST('cCHAR')
+  cchar = (/"c","C","h","a","r"/)
+  tstString = CHAR(cchar)
+  ASSERT(CHAR(tstString) == "cChar","c character conversion to StringType")
 
-    ALLOCATE(ref_list(9))
-    ref_list(1) = "The"
-    ref_list(2) = "quick"
-    ref_list(3) = "brown"
-    ref_list(4) = "fox"
-    ref_list(5) = "jumped"
-    ref_list(6) = "over"
-    ref_list(7) = "a"
-    ref_list(8) = "lazy"
-    ref_list(9) = "dog."
+  !Test ADJUSTL and ADJUSTR
+  char10=' - '
+  COMPONENT_TEST('ADJUSTL')
+  testString=char10
+  ASSERT(ADJUSTL(testString) == ADJUSTL(char10),'ADJUSTL(testString)')
+  COMPONENT_TEST('ADJUSTR')
+  testString=char10
+  ASSERT(ADJUSTR(testString) == ADJUSTR(char10),'ADJUSTR(testString)')
 
-    str = "The quick brown fox jumped over a lazy dog."
-    str_list = str%split(' ')
-    ASSERT_EQ(SIZE(str_list),9,"splits count")
-    DO iWord=1,SIZE(str_list)
-      ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits")
-    ENDDO
-    DEALLOCATE(str_list)
-    str_list = str%split()
-    ASSERT_EQ(SIZE(str_list),9,"splits count")
-    DO iWord=1,SIZE(str_list)
-      ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits")
-    ENDDO
-    DEALLOCATE(str_list)
+  !Test INDEX
+  char10='  - -'
+  COMPONENT_TEST('INDEX')
+  testString=char10
+  testString2='-'
+  ASSERT(INDEX(testString,'-') == 3,'INDEX(testString,''-'')')
+  ASSERT(INDEX(testString,'-',.TRUE.) == 5,'INDEX(testString,''-'',.TRUE.)')
+  ASSERT(INDEX(char10,testString2) == 3,'INDEX(char10,testString2)')
+  ASSERT(INDEX(char10,testString2,.TRUE.) == 5,'INDEX(char10,testString2,.TRUE.)')
+  ASSERT(INDEX(testString,testString2) == 3,'INDEX(testString,testString2)')
+  ASSERT(INDEX(testString,testString2,.TRUE.) == 5,'INDEX(testString,testString2,.TRUE.)')
 
-    str = "   The   quick   brown   fox   jumped   over   a   lazy   dog.   "
-    str_list = str%split()
-    ASSERT_EQ(SIZE(str_list),9,"splits count")
-    DO iWord=1,SIZE(str_list)
-      ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits2")
-    ENDDO
-    DEALLOCATE(ref_list)
-    ALLOCATE(ref_list(12))
-    ref_list(1) = ""
-    ref_list(2) = "The"
-    ref_list(3) = "quick"
-    ref_list(4) = "brown"
-    ref_list(5) = "fox"
-    ref_list(6) = "jumped"
-    ref_list(7) = "over"
-    ref_list(8) = "a"
-    ref_list(9) = "lazy"
-    ref_list(10) = ""
-    ref_list(11) = ""
-    ref_list(12) = "dog."
-    str = " The quick brown fox jumped over a lazy   dog. "
-    str_list = str%split(' ')
-    ASSERT_EQ(SIZE(str_list),12,"splits count")
-    DO iWord=1,SIZE(str_list)
-      ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits2")
-    ENDDO
-    DEALLOCATE(str_list)
+  !Test // operator
+  COMPONENT_TEST('//')
+  char10='  -'
+  testString=char10
+  ASSERT('"'//testString == '"  -       ','''"''//testString')
+  ASSERT(testString//'"' == '  -"','testString//''"''')
+  ASSERT(testString//testString == '  -  -','testString//testString')
 
-    COMPONENT_TEST('%isInteger')
-    str = ''
-    ASSERT(.NOT.str%isInteger(),'empty')
-    str = '13579'
-    ASSERT(str%isInteger(),'13579')
-    str = '03579'
-    ASSERT(str%isInteger(),'with 0')
-    str = '+13579'
-    ASSERT(str%isInteger(),'with +')
-    str = '-13579'
-    ASSERT(str%isInteger(),'with -')
-    str = 'e13579'
-    ASSERT(.NOT.str%isInteger(),'with e')
-    str = '$13579'
-    ASSERT(.NOT.str%isInteger(),'with $')
+  !Test == operator
+  COMPONENT_TEST('==')
+  testString2=ADJUSTL(char10)
+  ASSERT(testString == char10,'testString == char10')
+  ASSERT(.NOT. char10 == testString2,'char10 == testString2')
+  ASSERT(.NOT. testString == testString2,'testString == testString2')
 
-    COMPONENT_TEST('%isFloat')
-    str = ''
-    ASSERT(.NOT.str%isFloat(),'empty')
-    str = '0.2468'
-    ASSERT(str%isFloat(),'0.2468')
-    str = '+0.2468'
-    ASSERT(str%isFloat(),'with +')
-    str = '-0.2468'
-    ASSERT(str%isFloat(),'with -')
-    str = '-0.2468E000'
-    ASSERT(str%isFloat(),'with e000')
-    str = '-0.2468d000'
-    ASSERT(str%isFloat(),'with e000')
-    str = '-0.2468e000'
-    ASSERT(str%isFloat(),'with e000')
-    str = '-0.2468e+000'
-    ASSERT(str%isFloat(),'with e+000')
-    str = '-0.2468e-000'
-    ASSERT(str%isFloat(),'with e-000')
-    str = '-.2468e-000'
-    ASSERT(.NOT.str%isFloat(),'no leading digit')
-    str = '-0.2468-000'
-    ASSERT(.NOT.str%isFloat(),'mixing exponent symbol')
-    str = '-0.2a68000'
-    ASSERT(.NOT.str%isFloat(),'with a')
-    str = '-0.2a68e-000'
-    ASSERT(.NOT.str%isFloat(),'with a and exponent')
-    str = '-0.2468e-'
-    ASSERT(.NOT.str%isFloat(),'missing exponent')
-    str = '-0.2468e'
-    ASSERT(.NOT.str%isFloat(),'missing exponent')
+  !Test /= operator
+  COMPONENT_TEST('/=')
+  ASSERT(.NOT.(testString /= char10),'testString == char10')
+  ASSERT(char10 /= testString2,'char10 /= testString2')
+  ASSERT(testString /= testString2,'testString /= testString2')
 
-    COMPONENT_TEST('%isNumeric')
-    str = ''
-    ASSERT(.NOT.str%isNumeric(),'empty')
-    str = '13579'
-    ASSERT(str%isNumeric(),'13579')
-    str = '03579'
-    ASSERT(str%isNumeric(),'with 0')
-    str = '+13579'
-    ASSERT(str%isNumeric(),'with +')
-    str = '-13579'
-    ASSERT(str%isNumeric(),'with -')
-    str = 'e13579'
-    ASSERT(.NOT.str%isNumeric(),'with e')
-    str = '$13579'
-    ASSERT(.NOT.str%isNumeric(),'with $')
-    str = '0.2468'
-    ASSERT(str%isNumeric(),'0.2468')
-    str = '+0.2468'
-    ASSERT(str%isNumeric(),'with +')
-    str = '-0.2468'
-    ASSERT(str%isNumeric(),'with -')
-    str = '-0.2468E000'
-    ASSERT(str%isNumeric(),'with e000')
-    str = '-0.2468d000'
-    ASSERT(str%isNumeric(),'with e000')
-    str = '-0.2468e000'
-    ASSERT(str%isNumeric(),'with e000')
-    str = '-0.2468e+000'
-    ASSERT(str%isNumeric(),'with e+000')
-    str = '-0.2468e-000'
-    ASSERT(str%isNumeric(),'with e-000')
-    str = '-.2468e-000'
-    ASSERT(.NOT.str%isNumeric(),'no leading digit')
-    str = '-0.2468-000'
-    ASSERT(.NOT.str%isNumeric(),'mixing exponent symbol')
-    str = '-0.2a68000'
-    ASSERT(.NOT.str%isNumeric(),'with a')
-    str = '-0.2a68e-000'
-    ASSERT(.NOT.str%isNumeric(),'with a and exponent')
-    str = '-0.2468e-'
-    ASSERT(.NOT.str%isNumeric(),'missing exponent')
-    str = '-0.2468e'
-    ASSERT(.NOT.str%isNumeric(),'missing exponent')
+  !Test ANY operator
+  COMPONENT_TEST('ANY')
+  testStringArray='test'
+  testString='bad test'
+  char10='bad test'
+  ASSERT(.NOT. ANY(testStringArray==testString),'ANY(testStringArray,testString), bad')
+  ASSERT(.NOT. ANY(testStringArray==char10),'ANY(testStringArray,char10), bad')
+  testString='good test'
+  testStringArray(10)='good test'
+  char10='good test'
+  ASSERT(ANY(testStringArray==testString),'ANY(testStringArray,testString)')
+  ASSERT(ANY(testStringArray==char10),'ANY(testStringArray,char10)')
 
-    COMPONENT_TEST('%replace')
-    !Test replacing characters in a string
-    str="AABBAA"
-    str = str%replace("A","B")
-    ASSERT_EQ(CHAR(str),"BBBBBB","replace")
-    str="AACAACAA"
-    str = str%replace("A","Bb")
-    ASSERT_EQ(CHAR(str),"BbBbCBbBbCBbBb","replace")
-    str="AACAACAACC"
-    str = str%replace("AA","c")
-    ASSERT_EQ(CHAR(str),"cCcCcCC","replace")
-    str="AACCAA"
-    str = str%replace("AAA","c")
-    ASSERT_EQ(CHAR(str),"AACCAA","replace")
+  !Test ALL operator
+  !Test ALL of 1-D array and scalar
+  COMPONENT_TEST('ALL 1-D & Scalar')
+  testStringArray='test'
+  testString='bad test'
+  char10='bad test'
+  ASSERT(.NOT. ALL(testStringArray==testString),'ALL 1-D & scalar, str')
+  ASSERT(.NOT. ALL(testStringArray==char10),'ALL 1-D & scalar, char')
+  testString='test'
+  char10='test'
+  ASSERT(ALL(testStringArray==testString),'ALL 1-D & scalar, str')
+  ASSERT(ALL(testStringArray==char10),'ALL 1-D & scalar, char')
 
-    COMPONENT_TEST('%partition')
-    str = ''
-    str_list = str%partition('')
-    ASSERT_EQ(SIZE(str_list),3,'null string / null delimiter')
-    ASSERT(ALL(str_list == ''),'null string / null delimiter')
-    str_list = str%rPartition('')
-    ASSERT_EQ(SIZE(str_list),3,'null string / null delimiter')
-    ASSERT(ALL(str_list == ''),'null string / null delimiter')
+  COMPONENT_TEST('ALL 1-D & 1-D')
+  !Test ALL of two 1-D arrays
+  test1a(1)='test'; test1a(2)='test'
+  test1a2(1)='test'; test1a2(2)='test'
+  ASSERT(ALL(test1a==test1a2),'ALL 1-D & 1-D')
+  test1a2(2)='bad test'
+  ASSERT(.NOT.ALL(test1a==test1a2),'ALL 1-D & 1-D')
+  test1a2(1)='bad test'
+  ASSERT(.NOT.ALL(test1a==test1a2),'ALL 1-D & 1-D')
 
-    str = 'abc'
-    str_list = str%partition('')
-    ASSERT_EQ(SIZE(str_list),3,'non-null string / null delimiter')
-    ASSERT_EQ(CHAR(str_list(1)),'abc','non-null string / null delimiter')
-    ASSERT_EQ(CHAR(str_list(2)),'','non-null string / null delimiter')
-    ASSERT_EQ(CHAR(str_list(3)),'','non-null string / null delimiter')
-    str_list = str%rPartition('')
-    ASSERT_EQ(SIZE(str_list),3,'non-null string / null delimiter')
-    ASSERT_EQ(CHAR(str_list(1)),'','non-null string / null delimiter')
-    ASSERT_EQ(CHAR(str_list(2)),'','non-null string / null delimiter')
-    ASSERT_EQ(CHAR(str_list(3)),'abc','non-null string / null delimiter')
+  COMPONENT_TEST('ALL 2-D & 2-D')
+  !Test ALL of two 2-D arrays
+  test2a(1,1)='test'; test2a(1,2)='test'
+  test2a(2,1)='test'; test2a(2,2)='test'
+  test2a2(1,1)='test'; test2a2(1,2)='test'
+  test2a2(2,1)='test'; test2a2(2,2)='test'
+  ASSERT(ALL(test2a==test2a2),'ALL 2-D & 2-D')
+  test2a2(2,2)='bad test'
+  ASSERT(.NOT.ALL(test2a==test2a2),'ALL 2-D & 2-D')
+  test2a2(1,1)='bad test'; test2a2(1,2)='bad test'; test2a2(2,1)='bad test'
+  ASSERT(.NOT.ALL(test2a==test2a2),'ALL 2-D & 2-D')
 
-    str = ''
-    str_list = str%partition('---')
-    ASSERT_EQ(SIZE(str_list),3,'null string / non-null delimiter')
-    ASSERT_EQ(CHAR(str_list(1)),'','null string / non-null delimiter')
-    ASSERT_EQ(CHAR(str_list(2)),'---','null string / non-null delimiter')
-    ASSERT_EQ(CHAR(str_list(3)),'','null string / non-null delimiter')
-    str_list = str%rPartition('---')
-    ASSERT_EQ(SIZE(str_list),3,'null string / non-null delimiter')
-    ASSERT_EQ(CHAR(str_list(1)),'','null string / non-null delimiter')
-    ASSERT_EQ(CHAR(str_list(2)),'---','null string / non-null delimiter')
-    ASSERT_EQ(CHAR(str_list(3)),'','null string / non-null delimiter')
+  COMPONENT_TEST('ALL 3-D & 3-D')
+  !Test ALL of two 2-D arrays
+  test3a(1,1,1)='test'; test3a(1,2,1)='test'
+  test3a(2,1,1)='test'; test3a(2,2,1)='test'
+  test3a(1,1,2)='test'; test3a(1,2,2)='test'
+  test3a(2,1,2)='test'; test3a(2,2,2)='test'
+  test3a2(1,1,1)='test'; test3a2(1,2,1)='test'
+  test3a2(2,1,1)='test'; test3a2(2,2,1)='test'
+  test3a2(1,1,2)='test'; test3a2(1,2,2)='test'
+  test3a2(2,1,2)='test'; test3a2(2,2,2)='test'
+  ASSERT(ALL(test3a==test3a2),'ALL 3-D & 3-D')
+  test3a2(2,2,2)='bad test'
+  ASSERT(.NOT.ALL(test3a==test3a2),'ALL 3-D & 3-D')
+  test3a2(1,1,1)='bad test'; test3a2(1,2,1)='bad test'; test3a2(2,1,1)='bad test'
+  test3a2(2,2,1)='bad test'; test3a2(1,1,2)='bad test'; test3a2(1,2,2)='bad test'
+  test3a2(2,1,2)='bad test'
+  ASSERT(.NOT.ALL(test3a==test3a2),'ALL 3-D & 3-D')
 
-    str = 'abc'
-    str_list = str%partition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string, delimiter not found')
-    ASSERT_EQ(CHAR(str_list(1)),'abc','string, delimiter not found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string, delimiter not found')
-    ASSERT_EQ(CHAR(str_list(3)),'','string, delimiter not found')
-    str_list = str%rPartition('---')
-    ASSERT_EQ(CHAR(str_list(1)),'','string, delimiter not found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string, delimiter not found')
-    ASSERT_EQ(CHAR(str_list(3)),'abc','string, delimiter not found')
+ENDSUBROUTINE testIntrinsic
+!
+!-------------------------------------------------------------------------------
+!>
+SUBROUTINE testStrFunct()
+  TYPE(StringType) :: str
+  TYPE(StringType), ALLOCATABLE :: str_list(:),ref_list(:)
+  INTEGER(SIK) :: iWord
+  COMPONENT_TEST('String Split')
+  str = ''
+  str_list = str%split()
+  ASSERT_EQ(SIZE(str_list),1,"splits count")
+  ASSERT_EQ(CHAR(str_list(1)),'',"splits")
+  !Deallocating here just to ensure the proper function of split
+  DEALLOCATE(str_list)
+  str = ''
+  str_list = str%split(' ')
+  ASSERT_EQ(SIZE(str_list),1,"splits count")
+  ASSERT_EQ(CHAR(str_list(1)),'',"splits")
+  str = "the"
+  str_list = str%split()
+  ASSERT_EQ(SIZE(str_list),1,"splits count")
+  ASSERT_EQ(CHAR(str_list(1)),'the',"splits")
 
-    str = 'abc---def'
-    str_list = str%partition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with single delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'abc','string with single delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with single delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'def','string with single delimter found')
-    str_list = str%rPartition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with single delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'abc','string with single delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with single delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'def','string with single delimter found')
+  str = "the"
+  str_list = str%split('the')
+  ASSERT_EQ(SIZE(str_list),1,"splits count")
+  ASSERT_EQ(CHAR(str_list(1)),'',"splits")
 
-    str = 'abc---def---ghi'
-    str_list = str%partition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'abc','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'def---ghi','string with multiple delimter found')
-    str_list = str%rPartition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'abc---def','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'ghi','string with multiple delimter found')
+  ALLOCATE(ref_list(9))
+  ref_list(1) = "The"
+  ref_list(2) = "quick"
+  ref_list(3) = "brown"
+  ref_list(4) = "fox"
+  ref_list(5) = "jumped"
+  ref_list(6) = "over"
+  ref_list(7) = "a"
+  ref_list(8) = "lazy"
+  ref_list(9) = "dog."
 
-    str = '---def---ghi'
-    str_list = str%partition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'def---ghi','string with multiple delimter found')
-    str_list = str%rPartition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'---def','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'ghi','string with multiple delimter found')
+  str = "The quick brown fox jumped over a lazy dog."
+  str_list = str%split(' ')
+  ASSERT_EQ(SIZE(str_list),9,"splits count")
+  DO iWord=1,SIZE(str_list)
+    ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits")
+  ENDDO
+  DEALLOCATE(str_list)
+  str_list = str%split()
+  ASSERT_EQ(SIZE(str_list),9,"splits count")
+  DO iWord=1,SIZE(str_list)
+    ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits")
+  ENDDO
+  DEALLOCATE(str_list)
 
-    str = 'abc---def---'
-    str_list = str%partition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'abc','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'def---','string with multiple delimter found')
-    str_list = str%rPartition('---')
-    ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(1)),'abc---def','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
-    ASSERT_EQ(CHAR(str_list(3)),'','string with multiple delimter found')
+  str = "   The   quick   brown   fox   jumped   over   a   lazy   dog.   "
+  str_list = str%split()
+  ASSERT_EQ(SIZE(str_list),9,"splits count")
+  DO iWord=1,SIZE(str_list)
+    ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits2")
+  ENDDO
+  DEALLOCATE(ref_list)
+  ALLOCATE(ref_list(12))
+  ref_list(1) = ""
+  ref_list(2) = "The"
+  ref_list(3) = "quick"
+  ref_list(4) = "brown"
+  ref_list(5) = "fox"
+  ref_list(6) = "jumped"
+  ref_list(7) = "over"
+  ref_list(8) = "a"
+  ref_list(9) = "lazy"
+  ref_list(10) = ""
+  ref_list(11) = ""
+  ref_list(12) = "dog."
+  str = " The quick brown fox jumped over a lazy   dog. "
+  str_list = str%split(' ')
+  ASSERT_EQ(SIZE(str_list),12,"splits count")
+  DO iWord=1,SIZE(str_list)
+    ASSERT_EQ(CHAR(str_list(iWord)),CHAR(ref_list(iWord)),"splits2")
+  ENDDO
+  DEALLOCATE(str_list)
 
-  ENDSUBROUTINE testStrFunct
+  COMPONENT_TEST('%isInteger')
+  str = ''
+  ASSERT(.NOT.str%isInteger(),'empty')
+  str = '13579'
+  ASSERT(str%isInteger(),'13579')
+  str = '03579'
+  ASSERT(str%isInteger(),'with 0')
+  str = '+13579'
+  ASSERT(str%isInteger(),'with +')
+  str = '-13579'
+  ASSERT(str%isInteger(),'with -')
+  str = 'e13579'
+  ASSERT(.NOT.str%isInteger(),'with e')
+  str = '$13579'
+  ASSERT(.NOT.str%isInteger(),'with $')
+
+  COMPONENT_TEST('%isFloat')
+  str = ''
+  ASSERT(.NOT.str%isFloat(),'empty')
+  str = '0.2468'
+  ASSERT(str%isFloat(),'0.2468')
+  str = '+0.2468'
+  ASSERT(str%isFloat(),'with +')
+  str = '-0.2468'
+  ASSERT(str%isFloat(),'with -')
+  str = '-0.2468E000'
+  ASSERT(str%isFloat(),'with e000')
+  str = '-0.2468d000'
+  ASSERT(str%isFloat(),'with e000')
+  str = '-0.2468e000'
+  ASSERT(str%isFloat(),'with e000')
+  str = '-0.2468e+000'
+  ASSERT(str%isFloat(),'with e+000')
+  str = '-0.2468e-000'
+  ASSERT(str%isFloat(),'with e-000')
+  str = '-.2468e-000'
+  ASSERT(.NOT.str%isFloat(),'no leading digit')
+  str = '-0.2468-000'
+  ASSERT(.NOT.str%isFloat(),'mixing exponent symbol')
+  str = '-0.2a68000'
+  ASSERT(.NOT.str%isFloat(),'with a')
+  str = '-0.2a68e-000'
+  ASSERT(.NOT.str%isFloat(),'with a and exponent')
+  str = '-0.2468e-'
+  ASSERT(.NOT.str%isFloat(),'missing exponent')
+  str = '-0.2468e'
+  ASSERT(.NOT.str%isFloat(),'missing exponent')
+
+  COMPONENT_TEST('%isNumeric')
+  str = ''
+  ASSERT(.NOT.str%isNumeric(),'empty')
+  str = '13579'
+  ASSERT(str%isNumeric(),'13579')
+  str = '03579'
+  ASSERT(str%isNumeric(),'with 0')
+  str = '+13579'
+  ASSERT(str%isNumeric(),'with +')
+  str = '-13579'
+  ASSERT(str%isNumeric(),'with -')
+  str = 'e13579'
+  ASSERT(.NOT.str%isNumeric(),'with e')
+  str = '$13579'
+  ASSERT(.NOT.str%isNumeric(),'with $')
+  str = '0.2468'
+  ASSERT(str%isNumeric(),'0.2468')
+  str = '+0.2468'
+  ASSERT(str%isNumeric(),'with +')
+  str = '-0.2468'
+  ASSERT(str%isNumeric(),'with -')
+  str = '-0.2468E000'
+  ASSERT(str%isNumeric(),'with e000')
+  str = '-0.2468d000'
+  ASSERT(str%isNumeric(),'with e000')
+  str = '-0.2468e000'
+  ASSERT(str%isNumeric(),'with e000')
+  str = '-0.2468e+000'
+  ASSERT(str%isNumeric(),'with e+000')
+  str = '-0.2468e-000'
+  ASSERT(str%isNumeric(),'with e-000')
+  str = '-.2468e-000'
+  ASSERT(.NOT.str%isNumeric(),'no leading digit')
+  str = '-0.2468-000'
+  ASSERT(.NOT.str%isNumeric(),'mixing exponent symbol')
+  str = '-0.2a68000'
+  ASSERT(.NOT.str%isNumeric(),'with a')
+  str = '-0.2a68e-000'
+  ASSERT(.NOT.str%isNumeric(),'with a and exponent')
+  str = '-0.2468e-'
+  ASSERT(.NOT.str%isNumeric(),'missing exponent')
+  str = '-0.2468e'
+  ASSERT(.NOT.str%isNumeric(),'missing exponent')
+
+  COMPONENT_TEST('%replace')
+  !Test replacing characters in a string
+  str="AABBAA"
+  str = str%replace("A","B")
+  ASSERT_EQ(CHAR(str),"BBBBBB","replace")
+  str="AACAACAA"
+  str = str%replace("A","Bb")
+  ASSERT_EQ(CHAR(str),"BbBbCBbBbCBbBb","replace")
+  str="AACAACAACC"
+  str = str%replace("AA","c")
+  ASSERT_EQ(CHAR(str),"cCcCcCC","replace")
+  str="AACCAA"
+  str = str%replace("AAA","c")
+  ASSERT_EQ(CHAR(str),"AACCAA","replace")
+
+  COMPONENT_TEST('%partition')
+  str = ''
+  str_list = str%partition('')
+  ASSERT_EQ(SIZE(str_list),3,'null string / null delimiter')
+  ASSERT(ALL(str_list == ''),'null string / null delimiter')
+  str_list = str%rPartition('')
+  ASSERT_EQ(SIZE(str_list),3,'null string / null delimiter')
+  ASSERT(ALL(str_list == ''),'null string / null delimiter')
+
+  str = 'abc'
+  str_list = str%partition('')
+  ASSERT_EQ(SIZE(str_list),3,'non-null string / null delimiter')
+  ASSERT_EQ(CHAR(str_list(1)),'abc','non-null string / null delimiter')
+  ASSERT_EQ(CHAR(str_list(2)),'','non-null string / null delimiter')
+  ASSERT_EQ(CHAR(str_list(3)),'','non-null string / null delimiter')
+  str_list = str%rPartition('')
+  ASSERT_EQ(SIZE(str_list),3,'non-null string / null delimiter')
+  ASSERT_EQ(CHAR(str_list(1)),'','non-null string / null delimiter')
+  ASSERT_EQ(CHAR(str_list(2)),'','non-null string / null delimiter')
+  ASSERT_EQ(CHAR(str_list(3)),'abc','non-null string / null delimiter')
+
+  str = ''
+  str_list = str%partition('---')
+  ASSERT_EQ(SIZE(str_list),3,'null string / non-null delimiter')
+  ASSERT_EQ(CHAR(str_list(1)),'','null string / non-null delimiter')
+  ASSERT_EQ(CHAR(str_list(2)),'---','null string / non-null delimiter')
+  ASSERT_EQ(CHAR(str_list(3)),'','null string / non-null delimiter')
+  str_list = str%rPartition('---')
+  ASSERT_EQ(SIZE(str_list),3,'null string / non-null delimiter')
+  ASSERT_EQ(CHAR(str_list(1)),'','null string / non-null delimiter')
+  ASSERT_EQ(CHAR(str_list(2)),'---','null string / non-null delimiter')
+  ASSERT_EQ(CHAR(str_list(3)),'','null string / non-null delimiter')
+
+  str = 'abc'
+  str_list = str%partition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string, delimiter not found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc','string, delimiter not found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string, delimiter not found')
+  ASSERT_EQ(CHAR(str_list(3)),'','string, delimiter not found')
+  str_list = str%rPartition('---')
+  ASSERT_EQ(CHAR(str_list(1)),'','string, delimiter not found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string, delimiter not found')
+  ASSERT_EQ(CHAR(str_list(3)),'abc','string, delimiter not found')
+
+  str = 'abc---def'
+  str_list = str%partition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with single delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc','string with single delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with single delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'def','string with single delimter found')
+  str_list = str%rPartition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with single delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc','string with single delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with single delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'def','string with single delimter found')
+
+  str = 'abc---def---ghi'
+  str_list = str%partition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'def---ghi','string with multiple delimter found')
+  str_list = str%rPartition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc---def','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'ghi','string with multiple delimter found')
+
+  str = '---def---ghi'
+  str_list = str%partition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'def---ghi','string with multiple delimter found')
+  str_list = str%rPartition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'---def','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'ghi','string with multiple delimter found')
+
+  str = 'abc---def---'
+  str_list = str%partition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'def---','string with multiple delimter found')
+  str_list = str%rPartition('---')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc---def','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'','string with multiple delimter found')
+
+ENDSUBROUTINE testStrFunct
 !
 ENDPROGRAM testStrings
