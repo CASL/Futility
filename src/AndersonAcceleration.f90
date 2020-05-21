@@ -89,8 +89,8 @@ CONTAINS
 SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   CHARACTER(LEN=*),PARAMETER :: myName='init_AndersonAccelerationType'
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
+  TYPE(FutilityComputingEnvironment),TARGET,INTENT(IN) :: ce
   TYPE(ParamType),INTENT(IN) :: Params
-  TYPE(FutilityComputingEnvironment),TARGET :: ce
 
   TYPE(ParamType) :: LSparams
   INTEGER(SIK) :: i,j,m
@@ -262,7 +262,7 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
     ENDDO
 
     !Ensure Anderson coefficient solve did not fail due to bad input vector
-    IF(ISNAN(solver%alpha(depth_s+1))) THEN
+    IF(ISNAN(solver%alpha(depth_s+1)) .OR. (solver%alpha(1) .APPROXEQ. 0.0_SRK)) THEN
       !Bad Anderson coefficient solve, revert to under-relaxation and reset Anderson solver
       CALL x_new%set(0.0_SRK)
       CALL BLAS_axpy(solver%Gx(1),x_new,solver%beta)
@@ -315,10 +315,12 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
       SELECT TYPE(x);TYPE IS(RealVectorType)
         ALLOCATE(RealVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
 !!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
+! #ifdef HAVE_MPI
 !      TYPE IS(NativeDistributedVectorType)
 !        ALLOCATE(NativeDistributedVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
 !        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
 !        CALL vecparams%add('VectorType->chunkSize',x%chunkSize)
+! #endif
 #ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
         ALLOCATE(PETScVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
@@ -326,12 +328,12 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
         CALL vecparams%add('VectorType->nlocal',x%nlocal)
 #endif
 !!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
-!#ifdef FUTILITY_HAVE_Trilinos
+! #ifdef FUTILITY_HAVE_Trilinos
 !      TYPE IS(TrilinosVectorType)
 !        ALLOCATE(TrilinosVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
 !        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
 !        CALL vecparams%add('VectorType->nlocal',x%nlocal)
-!#endif
+! #endif
       CLASS DEFAULT
         CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
             '::'//myName//' - Input vector type not supported!')

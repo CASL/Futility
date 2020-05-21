@@ -366,6 +366,20 @@ SUBROUTINE testStep()
     IF(i > testAndAcc%start) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow'//CHAR(i))
   ENDDO
 
+  COMPONENT_TEST('Slow depth=1 beta=1.0 Failure Rescue')
+  !Reset Anderson, this time a duplicate iterate will be handed in
+  testAndAcc%start=1
+  CALL BLAS_copy(inSol,mySol)
+  CALL testAndAcc%reset(mySol)
+  DO i=1,10
+    IF(i /= 6) CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow'//CHAR(i))
+  ENDDO
+
   !Final clear
   CALL testAndAcc%clear()
 
