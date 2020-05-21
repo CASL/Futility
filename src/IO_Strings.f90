@@ -71,6 +71,7 @@ USE ISO_FORTRAN_ENV
 USE Futility_DBC
 USE IntrType
 USE Strings
+USE Sorting
 USE ExceptionHandler
 IMPLICIT NONE
 PRIVATE !Default private
@@ -107,6 +108,7 @@ PUBLIC :: stringTableToLines
 PUBLIC :: isChar
 PUBLIC :: isCharCap
 PUBLIC :: isCharLow
+PUBLIC :: removeDuplicates
 
 !> Character representing a space symbol
 CHARACTER(LEN=*),PARAMETER :: BLANK=" "
@@ -1721,5 +1723,50 @@ FUNCTION getRowStr(maxcolsize) RESULT(rowstr)
     rowstr=rowstr//REPEAT('-',dashlen)//'+'
   ENDDO
 ENDFUNCTION getRowStr
+!
+!------------------------------------------------------------------------------
+!> @brief Removes duplicate entries from a list of strings
+!> @param list the list from which to remove dupliates
+!>
+!> The list is sorted before removing duplicates, so the returned list will
+!> be sorted compared to the initial list.
+!>
+SUBROUTINE removeDuplicates(list)
+  TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: list(:)
+  !
+  INTEGER(SIK) :: nUnique,iList
+  TYPE(StringType),ALLOCATABLE :: old_list(:)
+
+  IF(.NOT.ALLOCATED(list)) THEN
+    ALLOCATE(list(0))
+  ENDIF
+  IF(SIZE(list) == 0) RETURN
+
+  !Sort the old list
+  CALL MOVE_ALLOC(list,old_list)
+  CALL sort(old_list)
+
+  !Count the unique entries
+  nUnique=1
+  DO iList=2,SIZE(old_list)
+    IF(old_list(iList) /= old_list(iList-1)) THEN
+      nUnique=nUnique+1
+    ENDIF
+WRITE(*,*) iList,CHAR(old_list(iList-1)),CHAR(old_list(iList)),nUnique
+  ENDDO !iList
+
+  !Allocate the new list and fill with unique entries
+  ALLOCATE(list(nUnique))
+  nUnique=1
+  list(nUnique)=old_list(1)
+  DO iList=2,SIZE(old_list)
+    IF(old_list(iList) /= old_list(iList-1)) THEN
+      nUnique=nUnique+1
+      list(nUnique)=old_list(iList)
+    ENDIF
+  ENDDO !iList
+  DEALLOCATE(old_list)
+
+ENDSUBROUTINE removeDuplicates
 !
 ENDMODULE IO_Strings
