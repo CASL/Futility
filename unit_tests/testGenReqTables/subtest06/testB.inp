@@ -1,0 +1,7 @@
+!> @beginreq
+!> - MPACT shall run on Mars.
+!> @endreq
+
+[CASEID]
+  title 'This is a test input for the requirement parser'
+r'

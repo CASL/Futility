@@ -1,0 +1,27 @@
+\begin{longtable}[!ht]{|p{1.4cm}|p{14cm}|}
+\caption{Requirements}\label{tab:req}\\
+
+\hline
+\multirow{4}{*}{\textbf{Req. ID}} & \cellcolor{caslheader}\textcolor{white}{\textit{Requirement Description}} \\\cline{2-2}
+                   & \cellcolor{caslcolor1} \textit{Test Name} \\\cline{2-2}
+                   & \cellcolor{caslcolor2} \textit{Test Input} \\\cline{2-2}
+                   & \cellcolor{caslcolor1} \textit{Additional Info} \\\hline
+\endfirsthead
+
+\hline
+\multirow{4}{*}{\textbf{Req. ID}} & \cellcolor{caslheader}\textcolor{white}{\textit{Requirement Description}} \\\cline{2-2}
+                   & \cellcolor{caslcolor1} \textit{Test Name} \\\cline{2-2}
+                   & \cellcolor{caslcolor2} \textit{Test Input} \\\cline{2-2}
+                   & \cellcolor{caslcolor1} \textit{Additional Info} \\\hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+
+\multirow{4}{*}{1} & \cellcolor{caslheader}\textcolor{white}{MPACT shall run on Mars.
+   MPACT shall run on Mercury.   'Is MPACT a vehicle?} \\\cline{2-2}
+                   & \cellcolor{caslcolor1} \\\cline{2-2}
+                   & \cellcolor{caslcolor2}testA.inp \\\cline{2-2}
+                   & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5555}{\# 5555} \\\hline
+\end{longtable}

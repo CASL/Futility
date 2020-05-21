@@ -23,6 +23,7 @@ SET(UNIT_TEST_NAMES
     testBLAS
     testStrings
     testTimes
+    testGenReqTables
     testGeom_Points
     testGeom_Line
     testGeom_Plane

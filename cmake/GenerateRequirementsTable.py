@@ -185,6 +185,7 @@ class File_RequirementParser:
             if self._re_begin.search(fline):
                 reqBlock = []
                 reqBlock.append(fline)
+                endmatch = False 
                 while fline:
                     fline = fobject.readline()
                     reqBlock.append(fline)
@@ -192,7 +193,11 @@ class File_RequirementParser:
                         newID = next(reqID)+1
                         self.allReqs.append(Requirement(
                             newID, cdash_test_name, testFile, reqBlock))
+                        endmatch = True
                         break
+                if not endmatch:
+                    raise RuntimeError(
+                        '@beginreq was found but @endreq was not found in file: '+ testFile)
             fline = fobject.readline()
 
         if not self.allReqs:

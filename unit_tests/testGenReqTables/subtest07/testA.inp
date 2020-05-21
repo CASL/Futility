@@ -1,0 +1,10 @@
+!> @beginreq
+!> - MPACT shall run on Mars.
+!>   MPACT shall run on Mercury.
+!>   'Is MPACT a vehicle?'
+!> - ticket 5555
+!> @endreq
+
+[CASEID]
+  title 'This is a test input for the requirement parser'
+r'
