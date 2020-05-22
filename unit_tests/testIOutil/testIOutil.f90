@@ -32,6 +32,7 @@ REGISTER_SUBTEST('IO_Strings',testIO_Strings)
 REGISTER_SUBTEST('Run-time Environment',testRTEnv)
 REGISTER_SUBTEST('MAKE_DIRECTORY',testMKDIR)
 REGISTER_SUBTEST('SlashRep',testSlashRep)
+REGISTER_SUBTEST('Remove Duplicates',testRemoveDuplicates)
 
 FINALIZE_TEST()
 !
@@ -716,5 +717,69 @@ SUBROUTINE testSlashRep()
   CALL SlashRep(str_dir)
   ASSERT_EQ(TRIM(str_dir),'d1'//SLASH//'d 2'//SLASH//'d3','string')
 ENDSUBROUTINE testSlashRep
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testRemoveDuplicates()
+  TYPE(StringType),ALLOCATABLE :: testStr(:)
+
+  COMPONENT_TEST('unallocated')
+  CALL removeDuplicates(testStr)
+  ASSERT(ALLOCATED(testStr),'allocated')
+  ASSERT_EQ(SIZE(testStr),0,'size')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('empty')
+  ALLOCATE(testStr(0))
+  CALL removeDuplicates(testStr)
+  ASSERT_EQ(SIZE(testStr),0,'size')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('size 1')
+  ALLOCATE(testStr(1))
+  testStr(1)='test'
+  CALL removeDuplicates(testStr)
+  ASSERT_EQ(SIZE(testStr),1,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test','string(1)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('all duplicates')
+  ALLOCATE(testStr(5))
+  testStr(1:5)='test'
+  CALL removeDuplicates(testStr)
+  ASSERT_EQ(SIZE(testStr),1,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test','string(1)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('all different')
+  ALLOCATE(testStr(5))
+  testStr(1)='test1'
+  testStr(2)='test2'
+  testStr(3)='test3'
+  testStr(4)='test4'
+  testStr(5)='test5'
+  CALL removeDuplicates(testStr)
+  ASSERT_EQ(SIZE(testStr),5,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test1','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test2','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'test3','string(3)')
+  ASSERT_EQ(CHAR(testStr(4)),'test4','string(4)')
+  ASSERT_EQ(CHAR(testStr(5)),'test5','string(5)')
+  DEALLOCATE(testStr)
+
+  COMPONENT_TEST('different duplicates')
+  ALLOCATE(testStr(5))
+  testStr(1)='test3'
+  testStr(2)='test2'
+  testStr(3)='test1'
+  testStr(4)='test2'
+  testStr(5)='test1'
+  CALL removeDuplicates(testStr)
+  ASSERT_EQ(SIZE(testStr),3,'size')
+  ASSERT_EQ(CHAR(testStr(1)),'test1','string(1)')
+  ASSERT_EQ(CHAR(testStr(2)),'test2','string(2)')
+  ASSERT_EQ(CHAR(testStr(3)),'test3','string(3)')
+  DEALLOCATE(testStr)
+
+ENDSUBROUTINE testRemoveDuplicates
 !
 ENDPROGRAM testIOutil
