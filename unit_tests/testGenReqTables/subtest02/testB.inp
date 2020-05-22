@@ -1,8 +1,7 @@
 !> @beginreq
-!> - MPACT shall run on Mercury.
-!> - ticket 5555
+!> - The GenerateRequirements.py script shall be able to parse requirement descriptions of multiple files with the same extension.
+!> - ticket 5690
 !> @endreq
 
 [CASEID]
   title 'This is another test input for the requirement parser'
-r'

@@ -19,13 +19,13 @@
 \hline
 \endlastfoot
 
-\multirow{4}{*}{1} & \cellcolor{caslheader}\textcolor{white}{MPACT shall run on - Mars.} \\\cline{2-2}
+\multirow{4}{*}{1} & \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse a description with too many - dashes.} \\\cline{2-2}
                    & \cellcolor{caslcolor1} \\\cline{2-2}
                    & \cellcolor{caslcolor2}testA.inp \\\cline{2-2}
-                   & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5555}{\# 5555} \\\hline
-\multirow{4}{*}{2} & \cellcolor{caslheader}\textcolor{white}{MPACT shall run. 
- - Mars} \\\cline{2-2}
+                   & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5690}{\# 5690} \\\hline
+\multirow{4}{*}{2} & \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse a description with too many
+ - dashes} \\\cline{2-2}
                    & \cellcolor{caslcolor1} \\\cline{2-2}
                    & \cellcolor{caslcolor2}testB.f90 \\\cline{2-2}
-                   & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5555}{\# 5555} \\\hline
+                   & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5690}{\# 5690} \\\hline
 \end{longtable}

@@ -1,8 +1,8 @@
 !> @beginreq
-!> - MPACT shall run on Mars.
+!> - The GenerateRequirements.py script shall be able to parse requirement without a ticket number.
 !> - ticket
 !> @endreq
 
 [CASEID]
   title 'This is a test input for the requirement parser'
-r'
+
