@@ -302,7 +302,7 @@ ENDSUBROUTINE VectorFactory
 !> This should be NULL
 !> @param source Pointer to source vector type to use in determining the type and parameters
 !> of the dest vector
-!> @param p the parameters to use in overriding settings from the source
+!> @param params the parameters to use in overriding settings from the source
 !> vector
 !>
 !> For now, the source vector shall be initialized, though in the future it
@@ -312,19 +312,11 @@ ENDSUBROUTINE VectorFactory
 !> parameter list. Providing the parameters on the parameter list will override
 !> the corresponding parameters from the source matrix. This behavior will be 
 !> consistent for all VectorResemble routines
-!>
-!> NOTE: When we can compile with the 2003/08 standard, it would be best to
-!>       write an interface and distinguish between pointer/allocatable
-!>       attributes
-SUBROUTINE VectorResemble(dest, source, p)
+SUBROUTINE VectorResemble(dest, source, params)
   CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
-  CLASS(VectorType),INTENT(INOUT),ALLOCATABLE :: dest
+  CLASS(VectorType),POINTER,INTENT(INOUT) :: dest
   CLASS(VectorType),POINTER,INTENT(IN) :: source
-  CLASS(ParamType),INTENT(INOUT),OPTIONAL :: p
-  TYPE(ParamType) :: params
-
-  CALL params%clear()
-  IF (PRESENT(p)) params = p
+  CLASS(ParamType),INTENT(INOUT) :: params
 
   IF(.NOT. ASSOCIATED(source)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
@@ -337,9 +329,9 @@ SUBROUTINE VectorResemble(dest, source, p)
         "Source vector is not initialized")
   ENDIF
 
-  IF(ALLOCATED(dest)) THEN
+  IF(ASSOCIATED(dest)) THEN
     CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
-        "Destination vector is already allocated")
+        "Destination vector is already associated")
     RETURN
   ENDIF
 
@@ -362,9 +354,6 @@ SUBROUTINE VectorResemble(dest, source, p)
     IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
       CALL params%add("VectorType->MPI_Comm_Id",source%comm)
     ENDIF
-    IF(.NOT. params%has("VectorType->nlocal")) THEN
-      CALL params%add("VectorType->nlocal",SIZE(source%b))
-    ENDIF
 #endif
   ENDSELECT
 
@@ -386,7 +375,6 @@ SUBROUTINE VectorResemble(dest, source, p)
   ENDSELECT
   CALL dest%init(params)
 
-  IF (PRESENT(p)) CALL p%clear()
   CALL params%clear()
 ENDSUBROUTINE VectorResemble
 !
