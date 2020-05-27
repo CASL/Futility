@@ -167,12 +167,8 @@ TYPE,ABSTRACT :: LinearSolverType_Base
     !> Routine for updating status of M and isDecomposed when A has changed
     !> and associates A with KSP if necessary
     PROCEDURE,PASS :: updatedA
-    !> Routine for determining residual vector
-    PROCEDURE(linearsolver_getRes_absintfc),DEFERRED,PASS :: getResidualVec
-    !> Routine for determining residual norm
-    PROCEDURE(linearsolver_getResNorm_absintfc),DEFERRED,PASS :: getResidualNorm
-    !> Generic for getResidual
-    GENERIC :: getResidual => getResidualVec,getResidualNorm
+    !> Routine for determining residual vector/norm/iteration count
+    PROCEDURE(linearsolver_getRes_absintfc),DEFERRED,PASS :: getResidual
 ENDTYPE LinearSolverType_Base
 
 !> Explicitly defines the interface for the clear and solve routines
@@ -181,18 +177,13 @@ ABSTRACT INTERFACE
     IMPORT :: LinearSolverType_Base
     CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
   ENDSUBROUTINE linearsolver_sub_absintfc
-  SUBROUTINE linearsolver_getRes_absintfc(solver,resid,nIters)
-    IMPORT :: LinearSolverType_Base,VectorType,SIK
+  SUBROUTINE linearsolver_getRes_absintfc(solver,nIters,residNorm,residVec)
+    IMPORT :: LinearSolverType_Base,VectorType,SIK,SRK
     CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
-    CLASS(VectorType),INTENT(INOUT) :: resid
     INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
+    REAL(SRK),INTENT(OUT),OPTIONAL :: residNorm
+    CLASS(VectorType),INTENT(INOUT),OPTIONAL :: residVec
   ENDSUBROUTINE linearsolver_getRes_absintfc
-  SUBROUTINE linearsolver_getResNorm_absintfc(solver,resid,nIters)
-    IMPORT :: LinearSolverType_Base,SRK,SIK
-    CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
-    REAL(SRK),INTENT(OUT) :: resid
-    INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
-  ENDSUBROUTINE linearsolver_getResNorm_absintfc
 ENDINTERFACE
 !> Explicitly defines the interface for the getresidual routine
 
@@ -218,8 +209,7 @@ TYPE,EXTENDS(LinearSolverType_Base) :: LinearSolverType_Direct
     PROCEDURE,PASS :: solve => solve_LinearSolverType_Direct
     !> @copybrief LinearSolverTypes::getResidual_LinearSolverType_Direct
     !> @copydetails LinearSolverTypes::getResidual_LinearSolverType_Direct
-    PROCEDURE,PASS :: getResidualVec => getResidualVec_LinearSolverType_Direct
-    PROCEDURE,PASS :: getResidualNorm => getResidualNorm_LinearSolverType_Direct
+    PROCEDURE,PASS :: getResidual => getResidual_LinearSolverType_Direct
 ENDTYPE LinearSolverType_Direct
 
 !> @brief The extended type for the Iterative Linear Solver
@@ -264,9 +254,7 @@ TYPE,EXTENDS(LinearSolverType_Base) :: LinearSolverType_Iterative
     PROCEDURE,PASS :: solve => solve_LinearSolverType_Iterative
     !> @copybrief LinearSolverTypes::getResidual_LinearSolverType_Iterative
     !> @copydetails LinearSolverTypes::getResidual_LinearSolverType_Iterative
-    PROCEDURE,PASS :: getResidualNorm => getResidualNorm_LinearSolverType_Iterative
-    PROCEDURE,PASS :: getResidualVec => getResidualVec_LinearSolverType_Iterative
-        !getResidualNorm_LinearSolverType_Iterative
+    PROCEDURE,PASS :: getResidual => getResidual_LinearSolverType_Iterative
     !> @copybrief LinearSolverTypes::getIterResidual_LinearSolverType_Iterative
     !> @copydetails LinearSolverTypes::getIterResidual_LinearSolverType_Iterative
     !PROCEDURE,PASS :: getIterResidual => getIterResidual_LinearSolverType_Iterative
@@ -805,46 +793,15 @@ ENDSUBROUTINE updatedA
 !-------------------------------------------------------------------------------
 !> @brief Method to compute/access residual vector and iteration count of system
 !> @param solver The linear solver to act on
-!> @param resid  The residual vector to return
 !> @param nIters Number of iterations to return
+!> @param residNorm  The norm of the residual vector
+!> @param residVec  The residual vector to return
 !>
-SUBROUTINE getResidualVec_LinearSolverType_Direct(solver,resid,nIters)
-  CHARACTER(LEN=*),PARAMETER :: myName='getResidualVec_LinearSolverType_Direct'
+SUBROUTINE getResidual_LinearSolverType_Direct(solver,nIters,residNorm,residVec)
   CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
-  CLASS(VectorType),INTENT(INOUT) :: resid
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
-
-  REQUIRE(solver%isInit)
-  REQUIRE(resid%isInit)
-  REQUIRE(ASSOCIATED(solver%b))
-  REQUIRE(solver%b%isInit)
-  REQUIRE(ASSOCIATED(solver%A))
-  REQUIRE(solver%A%isInit)
-  REQUIRE(ASSOCIATED(solver%x))
-  REQUIRE(solver%x%isInit)
-
-  IF (resid%isInit .AND. solver%isInit) THEN
-    CALL BLAS_copy(solver%b,resid)
-    CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=resid)
-  ELSE
-    CALL eLinearSolverType%raiseError('Incorrect call to '// &
-       modName//'::'//myName//' - Residual or solver not initialized.')
-  ENDIF
-
-  ! Direct method; nIters has no meaning
-  IF (PRESENT(nIters)) nIters = 0
-ENDSUBROUTINE getResidualVec_LinearSolverType_Direct
-!
-!-------------------------------------------------------------------------------
-!> @brief Method to compute/access residual norm and iteration count of system
-!> @param solver The linear solver to act on
-!> @param resid  The residual norm (scalar) to return
-!> @param nIters Number of iterations to return
-!>
-SUBROUTINE getResidualNorm_LinearSolverType_Direct(solver,resid,nIters)
-  CLASS(LinearSolverType_Direct),INTENT(INOUT) :: solver
-  REAL(SRK),INTENT(OUT) :: resid
-  INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
+  REAL(SRK),INTENT(OUT),OPTIONAL :: residNorm
+  CLASS(VectorType),INTENT(INOUT),OPTIONAL :: residVec
   CLASS(VectorType),ALLOCATABLE :: u
 
   REQUIRE(solver%isInit)
@@ -855,12 +812,23 @@ SUBROUTINE getResidualNorm_LinearSolverType_Direct(solver,resid,nIters)
   REQUIRE(ASSOCIATED(solver%x))
   REQUIRE(solver%x%isInit)
 
-  CALL getResidualVec_LinearSolverType_Direct(solver,u)
-  resid = BLAS_nrm2(u)
-
+  IF (PRESENT(residNorm) .OR. PRESENT(residVec)) THEN
+    CALL VectorResemble_Alloc(u,solver%b)
+    CALL BLAS_copy(solver%b,u)
+    CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=u)
+  ENDIF
+  IF (PRESENT(residVec)) THEN
+    REQUIRE(residVec%isInit)
+    CALL BLAS_copy(u,residVec)
+  ENDIF
   ! Direct method; nIters has no meaning
-  IF (PRESENT(nIters)) nIters = 0
-ENDSUBROUTINE getResidualNorm_LinearSolverType_Direct
+  IF (PRESENT(nIters)) nIters=0
+  IF (PRESENT(residNorm)) residNorm=BLAS_nrm2(u)
+
+  CALL u%clear()
+  IF(ALLOCATED(u)) DEALLOCATE(u)
+
+ENDSUBROUTINE getResidual_LinearSolverType_Direct
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the Direct Linear Solver Type
@@ -1528,55 +1496,20 @@ ENDSUBROUTINE setConv_LinearSolverType_Iterative
 !-------------------------------------------------------------------------------
 !> @brief Gets the residual for the iterative solver
 !> @param solver The linear solver to act on
-!> @param resid  The residual vector
 !> @param nIters The iteration count to return
+!> @param residNorm  The residual vector norm
+!> @param residVec  The residual vector
 !>
-SUBROUTINE getResidualVec_LinearSolverType_Iterative(solver,resid,nIters)
-  CHARACTER(LEN=*),PARAMETER :: myName='getResidualVec_LinearSolverType_Iterative'
+SUBROUTINE getResidual_LinearSolverType_Iterative(solver,nIters,residNorm,residVec)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-  CLASS(VectorType),INTENT(INOUT) :: resid
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
-  !input check
-  REQUIRE(resid%isInit)
-  REQUIRE(solver%isInit)
-  REQUIRE(ASSOCIATED(solver%b))
-  REQUIRE(solver%b%isInit)
-  REQUIRE(ASSOCIATED(solver%A))
-  REQUIRE(solver%A%isInit)
-  REQUIRE(ASSOCIATED(solver%x))
-  REQUIRE(solver%x%isInit)
-  REQUIRE(resid%isInit)
-  !Written assuming A is not decomposed.  Which is accurate, the correct
-  !solve function will contain the decomposed A.
-
-  !perform calculations using the BLAS system (intrinsic to Futility or
-  !TPL, defined by #HAVE_BLAS)
-  ! MKL May need something special but is not implemented at the moment.
-  IF (resid%isInit .AND. solver%isInit) THEN
-    CALL BLAS_copy(solver%b,resid)
-    CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=resid)
-    IF (PRESENT(nIters)) nIters = solver%iters
-  ELSE
-    CALL eLinearSolverType%raiseError('Incorrect call to '// &
-       modName//'::'//myName//' - Residual or solver not initialized.')
-  ENDIF
-
-ENDSUBROUTINE getResidualVec_LinearSolverType_Iterative
-!
-!-------------------------------------------------------------------------------
-!> @brief Gets the residual norm for the iterative solver
-!> @param solver The linear solver to act on
-!> @param resid  The (preconditioned) residual norm
-!> @param nIters The iteration count to return
-!>
-SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
-  CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: solver
-  REAL(SRK),INTENT(OUT) :: resid
-  INTEGER(SIK),INTENT(OUT),OPTIONAL :: nIters
+  REAL(SRK),INTENT(OUT),OPTIONAL :: residNorm
+  CLASS(VectorType),INTENT(INOUT),OPTIONAL :: residVec
 #ifdef FUTILITY_HAVE_PETSC
   INTEGER(SIK) :: ierr
 #endif
 
+  !input check
   REQUIRE(solver%isInit)
   REQUIRE(ASSOCIATED(solver%b))
   REQUIRE(solver%b%isInit)
@@ -1585,21 +1518,30 @@ SUBROUTINE getResidualNorm_LinearSolverType_Iterative(solver,resid,nIters)
   REQUIRE(ASSOCIATED(solver%x))
   REQUIRE(solver%x%isInit)
 
+  !perform calculations using the BLAS system (intrinsic to Futility or
+  !TPL, defined by #HAVE_BLAS)
+  ! MKL May need something special but is not implemented at the moment.
+  IF (PRESENT(residVec)) THEN
+    REQUIRE(residVec%isInit)
+    CALL BLAS_copy(solver%b,residVec)
+    CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=residVec)
+  ENDIF
   IF(solver%TPLType == PETSC) THEN
 #ifdef FUTILITY_HAVE_PETSC
     IF (PRESENT(nIters)) CALL KSPGetIterationNumber(solver%ksp,niters,ierr)
-    CALL KSPGetResidualNorm(solver%ksp,resid,ierr)
+    IF (PRESENT(residNorm)) CALL KSPGetResidualNorm(solver%ksp,residNorm,ierr)
 #endif
   ELSEIF(solver%TPLType == TRILINOS) THEN
 #ifdef FUTILITY_HAVE_Trilinos
     IF (PRESENT(nIters)) CALL Belos_GetIterationCount(solver%Belos_solver,niters)
-    CALL Belos_GetResid(solver%Belos_solver,resid)
+    IF (PRESENT(residNorm)) CALL Belos_GetResid(solver%Belos_solver,residNorm)
 #endif
   ELSE
     IF (PRESENT(nIters)) nIters=solver%iters
-    resid=solver%residual
+    IF (PRESENT(residNorm)) residNorm=solver%residual
   ENDIF
-ENDSUBROUTINE getResidualNorm_LinearSolverType_Iterative
+
+ENDSUBROUTINE getResidual_LinearSolverType_Iterative
 !
 !-------------------------------------------------------------------------------
 !> @brief Decompose Dense  Linear System using the BiCGSTAB method
@@ -1752,8 +1694,8 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
     RETURN
   ENDIF
 
-  CALL VectorResemble(u,thisLS%x)
-  CALL thisLS%getResidual(u)
+  CALL VectorResemble_Alloc(u,thisLS%x)
+  CALL thisLS%getResidual(residVec=u)
   thisLS%residual = BLAS_nrm2(u)
   tol = MAX(thisLS%absConvtol,thisLS%relConvTol*thisLS%residual)
   IF (thisLS%residual .APPROXLE. tol) THEN
@@ -1772,7 +1714,7 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
       IF (thisLS%residual .APPROXLE. tol) THEN
         EXIT
       ENDIF
-      CALL thisLS%getResidual(u)
+      CALL thisLS%getResidual(residVec=u)
       IF(PRESENT(thisPC)) CALL thisPC%apply(u)
       thisLS%residual = BLAS_nrm2(u)
     ENDDO
@@ -1814,7 +1756,7 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
   INTEGER(SIK),ALLOCATABLE :: orthogReq(:)
 
   CALL vecPlist%clear()
-  CALL VectorResemble(Vy,thisLS%x,vecPlist)
+  CALL VectorResemble_Alloc(Vy,thisLS%x,vecPlist)
   CALL vecPlist%clear()
 
   SELECT TYPE(x => thisLS%X)

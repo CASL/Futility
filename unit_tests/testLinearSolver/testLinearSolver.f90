@@ -1680,8 +1680,8 @@ SUBROUTINE testIterativeOthers()
     CALL pList%validate(pList,optListLS)
     CALL thisLS%init(pList)
 
-    CALL VectorResemble(resid,thisLS%x)
-    CALL thisLS%getResidual(resid)
+    CALL VectorResemble_Alloc(resid,thisLS%x)
+    CALL thisLS%getResidual(residVec=resid)
 
     CALL thisLS%clear()
     CALL resid%clear()
@@ -1766,7 +1766,7 @@ SUBROUTINE testIterativeOthers()
       9._SRK,8._SRK,9._SRK,8._SRK/)
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%getResidual(resid)
+    CALL thisLS%getResidual(residVec=resid)
   ENDSELECT
 
   DO i=1,resid%n

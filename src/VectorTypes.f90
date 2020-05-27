@@ -97,6 +97,7 @@ PRIVATE
 PUBLIC :: eVectorType
 PUBLIC :: VectorFactory
 PUBLIC :: VectorResemble
+PUBLIC :: VectorResemble_Alloc
 PUBLIC :: VectorType
 PUBLIC :: NativeVectorType
 PUBLIC :: DistributedVectorType
@@ -291,7 +292,7 @@ ENDSUBROUTINE VectorFactory
 !> This should be NULL
 !> @param source the vector type to use in determining the type and parameters
 !> of the dest vector
-!> @param p the parameters to use in overriding settings from the source
+!> @param params the parameters to use in overriding settings from the source
 !> vector
 !>
 !> For now, the source vector shall be initialized, though in the future it
@@ -301,10 +302,87 @@ ENDSUBROUTINE VectorFactory
 !> This is only done for required parameters that are not provided in the passed
 !> parameter list. Providing the parameters on the parameter list will override
 !> the corresponding parameters from the source matrix.
+SUBROUTINE VectorResemble(dest, source, params)
+  CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
+  CLASS(VectorType),POINTER,INTENT(INOUT) :: dest
+  CLASS(VectorType),POINTER,INTENT(IN) :: source
+  CLASS(ParamType),INTENT(INOUT) :: params
+
+  IF(.NOT. ASSOCIATED(source)) THEN
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Source vector is not associated")
+    RETURN
+  ENDIF
+
+  IF(.NOT. source%isInit) THEN
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Source vector is not initialized")
+  ENDIF
+
+  IF(ASSOCIATED(dest)) THEN
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Destination vector is already associated")
+    RETURN
+  ENDIF
+
+  IF(.NOT. params%has("VectorType->n")) THEN
+    CALL params%add("VectorType->n",source%n)
+  ENDIF
+  SELECT TYPE(source)
+  CLASS IS(DistributedVectorType)
+    IF(.NOT. params%has("VectorType->nlocal")) THEN
+      CALL params%add("VectorType->nlocal",source%nlocal)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    IF(.NOT. params%has("VectorType->chunkSize")) THEN
+      CALL params%add("VectorType->chunkSize",source%chunkSize)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
+#endif
+  ENDSELECT
+
+  SELECT TYPE(source)
+  TYPE IS(RealVectorType)
+    ALLOCATE(RealVectorType :: dest)
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    ALLOCATE(NativeDistributedVectorType :: dest)
+#endif
+#ifdef FUTILITY_HAVE_PETSC
+  TYPE IS(PETScVectorType)
+    ALLOCATE(PETScVectorType :: dest)
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+  TYPE IS(TrilinosVectorType)
+    ALLOCATE(TrilinosVectorType :: dest)
+#endif
+  ENDSELECT
+  CALL dest%init(params)
+
+  CALL params%clear()
+ENDSUBROUTINE VectorResemble
+!
+!-------------------------------------------------------------------------------
+!> @brief Create a new vector of compatible size and type to the input vector
+!>        via an Allocatable
+!>
+!> @param dest the destination VectorType object to allocate and construct.
+!> This should be deallocated
+!> @param source the vector type to use in determining the type and parameters
+!> of the dest vector
+!> @param p the parameters to use in overriding settings from the source
+!> vector
+!>
 !> NOTE: When we can compile with the 2003/08 standard, it would be best to
 !>       write an interface and distinguish between pointer/allocatable
 !>       attributes
-SUBROUTINE VectorResemble(dest, source, p)
+SUBROUTINE VectorResemble_Alloc(dest, source, p)
   CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
   CLASS(VectorType),INTENT(INOUT),ALLOCATABLE :: dest
   CLASS(VectorType),POINTER,INTENT(IN) :: source
@@ -376,7 +454,7 @@ SUBROUTINE VectorResemble(dest, source, p)
 
   IF (PRESENT(p)) CALL p%clear()
   CALL params%clear()
-ENDSUBROUTINE VectorResemble
+ENDSUBROUTINE VectorResemble_Alloc
 !
 !-------------------------------------------------------------------------------
 !> @brief Function provides an interface to vector absolute value summation
