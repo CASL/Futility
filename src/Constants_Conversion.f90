@@ -27,6 +27,10 @@ PUBLIC :: F_to_C
 PUBLIC :: C_to_F
 PUBLIC :: F_to_K
 PUBLIC :: K_to_F
+PUBLIC :: tempTo_K
+PUBLIC :: tempTo_C
+PUBLIC :: tempTo_F
+PUBLIC :: tempTo_R
 
 !> Parameters for commonly used constants
 REAL(SRK),PUBLIC,PARAMETER ::    ZERO=0.000000000000000_SRK !16 digits
@@ -140,11 +144,11 @@ REAL(SRK),PUBLIC,PARAMETER :: ft2cm=30.48_SRK
 REAL(SRK),PUBLIC,PARAMETER :: cm2ft=ONE/ft2cm
 
 !Temperature conversions
-!> Conversion factor from Celsius to Kelvin
+!> Additive Conversion factor from Celsius to Kelvin
 REAL(SRK),PUBLIC,PARAMETER :: C2K=273.15_SRK
-!> Conversion factor from Rankine to Kelvin
+!> Multiplicative Conversion factor from Rankine to Kelvin
 REAL(SRK),PUBLIC,PARAMETER :: R2K=5.0_SRK/9.0_SRK
-!> Conversion factor from Fahrenheit to Rankine
+!> Additive Conversion factor from Fahrenheit to Rankine
 REAL(SRK),PUBLIC,PARAMETER :: F2R=459.67_SRK
 
 !> May be used for comparing real numbers relating to geometry
@@ -231,5 +235,131 @@ ELEMENTAL FUNCTION K_to_F(in_temp) RESULT(out_temp)
   out_temp=C_to_F(K_to_C(in_temp))
 
 ENDFUNCTION K_to_F
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature to Kelvin from Celsius, Rankine, or Fahrenheit,
+!> if any other unit is presented in_temp is simply returned
+!> @param in_temp the temperature input as the specified units
+!> @param units character indicating the units of in_temp
+!> @return out_temp the temperature converted to Kelvin
+!>
+ELEMENTAL FUNCTION tempTo_K(in_temp,units) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  CHARACTER(LEN=1),INTENT(IN) :: units
+  REAL(SRK) :: out_temp
+
+  SELECTCASE(units)
+  CASE('C')
+    out_temp = C2K + in_temp
+  CASE('R')
+    out_temp = in_temp * R2K
+  CASE('F')
+    out_temp = (in_temp - 32.0_SRK)* R2K + 273.15_SRK
+  CASE DEFAULT
+    out_temp = in_temp
+  ENDSELECT
+
+ENDFUNCTION tempTo_K
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature to Kelvin from Kelvin, Rankine, or Fahrenheit,
+!> if any other unit is presented in_temp is simply returned
+!> @param in_temp the temperature input as the specified units
+!> @param units character indicating the units of in_temp
+!> @return out_temp the temperature converted to Celsius
+!>
+ELEMENTAL FUNCTION tempTo_C(in_temp,units) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  CHARACTER(LEN=1),INTENT(IN) :: units
+  REAL(SRK) :: out_temp
+
+  SELECTCASE(units)
+  CASE('K')
+    out_temp = in_temp - C2K
+  CASE('R')
+    out_temp = in_temp * R2K - C2K
+  CASE('F')
+    out_temp = (in_temp - 32.0_SRK) * R2K
+  CASE DEFAULT
+    out_temp = in_temp
+  ENDSELECT
+
+ENDFUNCTION tempTo_C
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature to Kelvin from Celsius, Rankine, or Kelvin,
+!> if any other unit is presented in_temp is simply returned
+!> @param in_temp the temperature input as the specified units
+!> @param units character indicating the units of in_temp
+!> @return out_temp the temperature converted to Fahrenheit
+!>
+ELEMENTAL FUNCTION tempTo_F(in_temp,units) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  CHARACTER(LEN=1),INTENT(IN) :: units
+  REAL(SRK) :: out_temp
+
+  SELECTCASE(units)
+  CASE('K')
+    out_temp = (in_temp - C2K) / R2K + 32.0_SRK
+  CASE('R')
+    out_temp = in_temp - F2R
+  CASE('C')
+    out_temp = (in_temp / R2K) + 32.0_SRK
+  CASE DEFAULT
+    out_temp = in_temp
+  ENDSELECT
+
+ENDFUNCTION tempTo_F
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature to Kelvin from Celsius, Rankine, or Fahrenheit,
+!> if any other unit is presented in_temp is simply returned
+!> @param in_temp the temperature input as the specified units
+!> @param units character indicating the units of in_temp
+!> @return out_temp the temperature converted to Fahrenheit
+!>
+ELEMENTAL FUNCTION tempTo_R(in_temp,units) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  CHARACTER(LEN=1),INTENT(IN) :: units
+  REAL(SRK) :: out_temp
+
+  SELECTCASE(units)
+  CASE('K')
+    out_temp = in_temp / R2K
+  CASE('F')
+    out_temp = in_temp + F2R
+  CASE('C')
+    out_temp = (in_temp + C2K) / R2K
+  CASE DEFAULT
+    out_temp = in_temp
+  ENDSELECT
+
+ENDFUNCTION tempTo_R
+!
+!-------------------------------------------------------------------------------
+!> @brief converts temperature to Kelvin from Celsius, Rankine, or Fahrenheit,
+!> if any other unit is presented in_temp is simply returned
+!> @param in_temp the temperature input as the specified units
+!> @param units character indicating the units of in_temp
+!> @return out_temp the temperature converted to Fahrenheit
+!>
+ELEMENTAL FUNCTION convertTemp(in_temp,in_units,out_units) RESULT(out_temp)
+  REAL(SRK),INTENT(IN) :: in_temp
+  CHARACTER(LEN=1),INTENT(IN) :: in_units
+  CHARACTER(LEN=1),INTENT(IN) :: out_units
+  REAL(SRK) :: out_temp
+
+  SELECTCASE(out_units)
+  CASE('K')
+    out_temp = tempTo_K(in_temp,in_units)
+  CASE('C')
+    out_temp = tempTo_C(in_temp,in_units)
+  CASE('F')
+    out_temp = tempTo_F(in_temp,in_units)
+  CASE('R')
+    out_temp = tempTo_R(in_temp,in_units)
+  ENDSELECT
+
+ENDFUNCTION convertTemp
 !
 ENDMODULE Constants_Conversion
