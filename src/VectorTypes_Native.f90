@@ -458,7 +458,7 @@ SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
     ENDIF
 
     REQUIRE(.NOT. thisVector%isInit)
-    REQUIRE(n > 1)
+    REQUIRE(n >= 1)
     REQUIRE(chunkSize > 0)
     REQUIRE(MOD(n,chunkSize) == 0)
 
