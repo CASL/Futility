@@ -31,6 +31,7 @@ PUBLIC :: tempTo_K
 PUBLIC :: tempTo_C
 PUBLIC :: tempTo_F
 PUBLIC :: tempTo_R
+PUBLIC :: convertTemp
 
 !> Parameters for commonly used constants
 REAL(SRK),PUBLIC,PARAMETER ::    ZERO=0.000000000000000_SRK !16 digits
@@ -250,11 +251,11 @@ ELEMENTAL FUNCTION tempTo_K(in_temp,units) RESULT(out_temp)
 
   SELECTCASE(units)
   CASE('C')
-    out_temp = C2K + in_temp
+    out_temp = C_to_K(in_temp)
   CASE('R')
     out_temp = in_temp * R2K
   CASE('F')
-    out_temp = (in_temp - 32.0_SRK)* R2K + 273.15_SRK
+    out_temp = C_to_K(F_to_C(in_temp))
   CASE DEFAULT
     out_temp = in_temp
   ENDSELECT
@@ -262,7 +263,7 @@ ELEMENTAL FUNCTION tempTo_K(in_temp,units) RESULT(out_temp)
 ENDFUNCTION tempTo_K
 !
 !-------------------------------------------------------------------------------
-!> @brief converts temperature to Kelvin from Kelvin, Rankine, or Fahrenheit,
+!> @brief converts temperature to Celsius from Kelvin, Rankine, or Fahrenheit,
 !> if any other unit is presented in_temp is simply returned
 !> @param in_temp the temperature input as the specified units
 !> @param units character indicating the units of in_temp
@@ -275,11 +276,11 @@ ELEMENTAL FUNCTION tempTo_C(in_temp,units) RESULT(out_temp)
 
   SELECTCASE(units)
   CASE('K')
-    out_temp = in_temp - C2K
+    out_temp = K_to_C(in_temp)
   CASE('R')
     out_temp = in_temp * R2K - C2K
   CASE('F')
-    out_temp = (in_temp - 32.0_SRK) * R2K
+    out_temp = F_to_C(in_temp)
   CASE DEFAULT
     out_temp = in_temp
   ENDSELECT
@@ -287,7 +288,7 @@ ELEMENTAL FUNCTION tempTo_C(in_temp,units) RESULT(out_temp)
 ENDFUNCTION tempTo_C
 !
 !-------------------------------------------------------------------------------
-!> @brief converts temperature to Kelvin from Celsius, Rankine, or Kelvin,
+!> @brief converts temperature to Fahrenheit from Celsius, Rankine, or Kelvin,
 !> if any other unit is presented in_temp is simply returned
 !> @param in_temp the temperature input as the specified units
 !> @param units character indicating the units of in_temp
@@ -300,11 +301,11 @@ ELEMENTAL FUNCTION tempTo_F(in_temp,units) RESULT(out_temp)
 
   SELECTCASE(units)
   CASE('K')
-    out_temp = (in_temp - C2K) / R2K + 32.0_SRK
+    out_temp=C_to_F(K_to_C(in_temp))
   CASE('R')
     out_temp = in_temp - F2R
   CASE('C')
-    out_temp = (in_temp / R2K) + 32.0_SRK
+    out_temp = C_to_F(in_temp)
   CASE DEFAULT
     out_temp = in_temp
   ENDSELECT
@@ -312,7 +313,7 @@ ELEMENTAL FUNCTION tempTo_F(in_temp,units) RESULT(out_temp)
 ENDFUNCTION tempTo_F
 !
 !-------------------------------------------------------------------------------
-!> @brief converts temperature to Kelvin from Celsius, Rankine, or Fahrenheit,
+!> @brief converts temperature to Rankine from Celsius, Kelvin, or Fahrenheit,
 !> if any other unit is presented in_temp is simply returned
 !> @param in_temp the temperature input as the specified units
 !> @param units character indicating the units of in_temp
@@ -329,7 +330,7 @@ ELEMENTAL FUNCTION tempTo_R(in_temp,units) RESULT(out_temp)
   CASE('F')
     out_temp = in_temp + F2R
   CASE('C')
-    out_temp = (in_temp + C2K) / R2K
+    out_temp = C_to_K(in_temp) / R2K
   CASE DEFAULT
     out_temp = in_temp
   ENDSELECT
@@ -337,10 +338,11 @@ ELEMENTAL FUNCTION tempTo_R(in_temp,units) RESULT(out_temp)
 ENDFUNCTION tempTo_R
 !
 !-------------------------------------------------------------------------------
-!> @brief converts temperature to Kelvin from Celsius, Rankine, or Fahrenheit,
-!> if any other unit is presented in_temp is simply returned
+!> @brief converts temperature to a given unit from the provided unit. Celsius(C),
+!> Fahrenheit(F), Kelvin(K), and Rankine(R) are the only valid units
 !> @param in_temp the temperature input as the specified units
-!> @param units character indicating the units of in_temp
+!> @param in_units character indicating the units of in_temp
+!> @param out_units character indicating the units of out_temp
 !> @return out_temp the temperature converted to Fahrenheit
 !>
 ELEMENTAL FUNCTION convertTemp(in_temp,in_units,out_units) RESULT(out_temp)

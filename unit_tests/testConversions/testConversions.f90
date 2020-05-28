@@ -123,7 +123,7 @@ SUBROUTINE testTemperatures()
   ASSERT_APPROXEQF(out_temp(3),30.35_SRK,'565 R_to_C (1D)')
   ASSERT_APPROXEQF(out_temp(4),546.3_SRK,'1200 R_to_C (1D)')
 
-  COMPONENT_TEST('C_to_K')
+  COMPONENT_TEST('tempTo_K')
   !To Kelvin from Celsius
   in_temp = (/-273.15_SRK,0.0_SRK,291.85_SRK,926.85_SRK/)
   out_temp = tempTo_K(in_temp,'C')
@@ -191,6 +191,72 @@ SUBROUTINE testTemperatures()
   ASSERT_APPROXEQF(out_temp(2),459.67_SRK,'491.67 F_to_R (1D)')
   ASSERT_APPROXEQF(out_temp(3),919.34_SRK,'565 F_to_R (1D)')
   ASSERT_APPROXEQF(out_temp(4),1379.01_SRK,'1200 F_to_R (1D)')
+
+  COMPONENT_TEST('convertTemp')
+  !To Kelvin from Celsius
+  in_temp = (/-273.15_SRK,0.0_SRK,291.85_SRK,926.85_SRK/)
+  out_temp = convertTemp(in_temp,'C','K')
+  ASSERT_APPROXEQ(out_temp(1),0.0_SRK,'-273.15 C_to_K (1D)')
+  ASSERT_APPROXEQ(out_temp(2),273.15_SRK,'0 C_to_K (1D)')
+  ASSERT_APPROXEQ(out_temp(3),565.0_SRK,'291.85 C_to_K (1D)')
+  ASSERT_APPROXEQ(out_temp(4),1200.0_SRK,'926.85 C_to_K (1D)')
+  !To Kelvin from Fahrenheit
+  in_temp = (/32.0_SRK,68.0_SRK,212.0_SRK,557.33_SRK/)
+  out_temp = convertTemp(in_temp,'F','K')
+  ASSERT_APPROXEQ(out_temp(1),273.15_SRK,'32 F_to_K (1D)')
+  ASSERT_APPROXEQ(out_temp(2),293.15_SRK,'68 F_to_K (1D)')
+  ASSERT_APPROXEQ(out_temp(3),373.15_SRK,'212 F_to_K (1D)')
+  ASSERT_APPROXEQ(out_temp(4),565.0_SRK,'557.33 F_to_K (1D)')
+  !To Kelvin from Rankine
+  in_temp = (/0.0_SRK,491.67_SRK,983.34_SRK,1475.01_SRK/)
+  out_temp = convertTemp(in_temp,'R','K')
+  ASSERT_APPROXEQF(out_temp(1),0.0_SRK,'0 R_to_K (1D)')
+  ASSERT_APPROXEQF(out_temp(2),273.15_SRK,'491.67 R_to_K (1D)')
+  ASSERT_APPROXEQF(out_temp(3),546.3_SRK,'565 R_to_K (1D)')
+  ASSERT_APPROXEQF(out_temp(4),819.45_SRK,'1200 R_to_K (1D)')
+  !To Fahrenheit from Celsius
+  in_temp = (/0.0_SRK,20.0_SRK,100.0_SRK,291.85_SRK/)
+  out_temp = convertTemp(in_temp,'C','F')
+  ASSERT_APPROXEQ(out_temp(1),32.0_SRK,'0 C_to_F (1D)')
+  ASSERT_APPROXEQ(out_temp(2),68.0_SRK,'20 C_to_F (1D)')
+  ASSERT_APPROXEQ(out_temp(3),212.0_SRK,'100 C_to_F (1D)')
+  ASSERT_APPROXEQ(out_temp(4),557.33_SRK,'291.85 C_to_F (1D)')
+  !To Fahrenheit from Kelvin
+  in_temp = (/273.15_SRK,293.15_SRK,373.15_SRK,565.0_SRK/)
+  out_temp = convertTemp(in_temp,'K','F')
+  ASSERT_APPROXEQ(out_temp(1),32.0_SRK,'273.15 K_to_F (1D)')
+  ASSERT_APPROXEQ(out_temp(2),68.0_SRK,'293.15 K_to_F (1D)')
+  ASSERT_APPROXEQ(out_temp(3),212.0_SRK,'373.15 K_to_F (1D)')
+  ASSERT_APPROXEQ(out_temp(4),557.33_SRK,'565 K_to_F (1D)')
+  !To Fahrenheit from Rankine
+  in_temp = (/0.0_SRK,459.67_SRK,919.34_SRK,1379.01_SRK/)
+  out_temp = convertTemp(in_temp,'R','F')
+  ASSERT_APPROXEQF(out_temp(1),-459.67_SRK,'0 R_to_K (1D)')
+  ASSERT_APPROXEQF(out_temp(2),0.0_SRK,'491.67 R_to_K (1D)')
+  ASSERT_APPROXEQF(out_temp(3),459.67_SRK,'565 R_to_K (1D)')
+  ASSERT_APPROXEQF(out_temp(4),919.34_SRK,'1200 R_to_K (1D)')
+  !To Celsius from Rankine
+  in_temp = (/-273.15_SRK,-121.4_SRK,30.35_SRK,546.3_SRK/)
+  out_temp = convertTemp(in_temp,'C','R')
+  ASSERT_APPROXEQF(out_temp(1),0.0_SRK,'0 C_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(2),273.15_SRK,'273.15 C_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(3),546.3_SRK,'565 C_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(4),1475.01_SRK,'1200 C_to_R (1D)')
+  !To Kelvin from Rankine
+  in_temp = (/0.0_SRK,273.15_SRK,546.3_SRK,819.45_SRK/)
+  out_temp = convertTemp(in_temp,'K','R')
+  ASSERT_APPROXEQF(out_temp(1),0.0_SRK,'0 K_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(2),491.67_SRK,'491.67 K_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(3),983.34_SRK,'565 K_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(4),1475.01_SRK,'1200 K_to_R (1D)')
+  !To Rankine from Fahrenheit
+  in_temp = (/-459.67_SRK,0.0_SRK,459.67_SRK,919.34_SRK/)
+  out_temp = convertTemp(in_temp,'F','R')
+  ASSERT_APPROXEQF(out_temp(1),0.0_SRK,'0 F_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(2),459.67_SRK,'491.67 F_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(3),919.34_SRK,'565 F_to_R (1D)')
+  ASSERT_APPROXEQF(out_temp(4),1379.01_SRK,'1200 F_to_R (1D)')
+
 ENDSUBROUTINE testTemperatures
 !
 ENDPROGRAM testConversions
