@@ -255,7 +255,7 @@ ELEMENTAL FUNCTION tempTo_K(in_temp,units) RESULT(out_temp)
   CASE('R')
     out_temp = in_temp * R2K
   CASE('F')
-    out_temp = C_to_K(F_to_C(in_temp))
+    out_temp = F_to_K(in_temp)
   CASE DEFAULT
     out_temp = in_temp
   ENDSELECT
@@ -301,7 +301,7 @@ ELEMENTAL FUNCTION tempTo_F(in_temp,units) RESULT(out_temp)
 
   SELECTCASE(units)
   CASE('K')
-    out_temp=C_to_F(K_to_C(in_temp))
+    out_temp=K_to_F(in_temp)
   CASE('R')
     out_temp = in_temp - F2R
   CASE('C')
