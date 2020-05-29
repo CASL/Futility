@@ -33,6 +33,8 @@ IMPLICIT NONE
 PetscErrorCode  :: ierr
 CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #else
+#include <mpif.h>
+INTEGER(SIK) :: ierr
 CALL MPI_Init(ierr)
 #endif
 
@@ -52,7 +54,9 @@ FINALIZE_TEST()
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
 #else
-  CALL mpiTestEnv%finalize()
+#ifdef HAVE_MPI
+  CALL MPI_Finalize(ierr)
+#endif
 #endif
 !
 !===============================================================================

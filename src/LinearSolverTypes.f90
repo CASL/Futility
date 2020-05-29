@@ -84,6 +84,10 @@ IMPLICIT NONE
 #endif
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
+#else
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
 #endif
 
 PRIVATE
