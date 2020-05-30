@@ -46,20 +46,19 @@ CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 
 !> set up default parameter list
 CALL optListLS%clear()
-CALL optListLS%add('LinearSolverType->TPLType',LINSYS_NATIVE)
-CALL optListLS%add('LinearSolverType->solverMethod',1) ! GE or BICGSTAB
+CALL optListLS%add('LinearSolverType->TPLType',NATIVE)
+CALL optListLS%add('LinearSolverType->solverMethod',1_SNK) ! GE or BICGSTAB
 CALL optListLS%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-CALL optListLS%add('LinearSolverType->numberOMP',1)
+CALL optListLS%add('LinearSolverType->numberOMP',1_SNK)
 CALL optListLS%add('LinearSolverType->timerName','LinearSolver Timer')
 CALL optListLS%add('LinearSolverType->matType',SPARSE)
-CALL optListLS%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
 ! set parameters for matrices
-CALL optListLS%add('LinearSolverType->A->MatrixType->n',-1)
-CALL optListLS%add('LinearSolverType->A->MatrixType->nnz',-1)
+CALL optListLS%add('LinearSolverType->A->MatrixType->n',-1_SNK)
+CALL optListLS%add('LinearSolverType->A->MatrixType->nnz',-1_SNK)
 CALL optListLS%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
 ! set parameters for vectors
-CALL optListLS%add('LinearSolverType->x->VectorType->n',-1)
-CALL optListLS%add('LinearSolverType->b->VectorType->n',-1)
+CALL optListLS%add('LinearSolverType->x->VectorType->n',-1_SNK)
+CALL optListLS%add('LinearSolverType->b->VectorType->n',-1_SNK)
 
 ! Set up vector parameter list
 CALL vecPList%add('VectorType -> n',2)
@@ -121,7 +120,7 @@ SUBROUTINE testClear()
     ! initialize matrix A
     ALLOCATE(DenseSquareMatrixType :: thisLS%A)
     CALL pList%clear()
-    CALL pList%add('MatrixType->n',2)
+    CALL pList%add('MatrixType->n',2_SNK)
     CALL pList%add('MatrixType->isSym',.TRUE.)
     CALL pList%validate(pList,optListMat)
     CALL thisLS%A%init(pList) !2x2, symmetric
@@ -141,7 +140,7 @@ SUBROUTINE testClear()
     ! initialize matrix M
     ALLOCATE(DenseSquareMatrixType :: thisLS%M)
     CALL pList%clear()
-    CALL pList%add('MatrixType->n',10)
+    CALL pList%add('MatrixType->n',10_SNK)
     CALL pList%add('MatrixType->isSym',.TRUE.)
     CALL thisLS%M%init(pList)
 
@@ -185,7 +184,7 @@ SUBROUTINE testClear()
     ! initialize matrix A
     ALLOCATE(DenseSquareMatrixType :: thisLS%A)
     CALL pList%clear()
-    CALL pList%add('MatrixType->n',2)
+    CALL pList%add('MatrixType->n',2_SNK)
     CALL pList%add('MatrixType->isSym',.TRUE.)
     CALL pList%validate(pList,optListMat)
     CALL thisLS%A%init(pList) !2x2, symmetric
@@ -206,7 +205,7 @@ SUBROUTINE testClear()
     ! initialize matrix M
     ALLOCATE(DenseSquareMatrixType :: thisLS%M)
     CALL pList%clear()
-    CALL pList%add('MatrixType->n',10)
+    CALL pList%add('MatrixType->n',10_SNK)
     CALL pList%add('MatrixType->isSym',.TRUE.)
     CALL thisLS%M%init(pList)
   ENDSELECT
@@ -242,39 +241,39 @@ SUBROUTINE testInit()
   !Bad input
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
-  CALL pList%add('LinearSolverType->solverMethod',-1)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
+  CALL pList%add('LinearSolverType->solverMethod',-1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   CALL thisLS%clear()
 
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   CALL thisLS%clear()
 
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   CALL thisLS%clear()
@@ -282,15 +281,15 @@ SUBROUTINE testInit()
   !first test a correct use case, with timer name
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Direct)
@@ -305,14 +304,14 @@ SUBROUTINE testInit()
   !first test a correct use case, with no timer name
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Direct)
@@ -331,43 +330,43 @@ SUBROUTINE testInit()
   !Bad input
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
-  CALL pList%add('LinearSolverType->solverMethod',-1)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
+  CALL pList%add('LinearSolverType->solverMethod',-1_SNK)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   CALL thisLS%clear()
 
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   CALL thisLS%clear()
 
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   CALL thisLS%clear()
@@ -375,15 +374,15 @@ SUBROUTINE testInit()
   !first test a correct use case, with timer name
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',2)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',2)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',2)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',2_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
   CALL pList%add('LinearSolverType->PCType','ILU')
   CALL pList%add('LinearSolverType->PCIters',-1)
   CALL pList%add('LinearSolverType->PCSetup',0)
@@ -425,14 +424,14 @@ SUBROUTINE testInit()
   !first test a correct use case, with no timer name
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',2)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',2)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',2)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',2_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
@@ -458,7 +457,7 @@ SUBROUTINE testUpdatedA()
   ! initialize matrix M
   ALLOCATE(DenseSquareMatrixType :: thisLS%M)
   CALL pList%clear()
-  CALL pList%add('MatrixType->n',10)
+  CALL pList%add('MatrixType->n',10_SNK)
   CALL pList%add('MatrixType->isSym',.TRUE.)
   CALL thisLS%M%init(pList)
   thisLS%isDecomposed=.TRUE.
@@ -466,15 +465,15 @@ SUBROUTINE testUpdatedA()
   ! initialize linear system
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -496,7 +495,7 @@ SUBROUTINE testUpdatedA()
   ! initialize matrix M
   ALLOCATE(DenseSquareMatrixType :: thisLS%M)
   CALL pList%clear()
-  CALL pList%add('MatrixType->n',10)
+  CALL pList%add('MatrixType->n',10_SNK)
   CALL pList%add('MatrixType->isSym',.TRUE.)
   CALL thisLS%M%init(pList)
   thisLS%isDecomposed=.TRUE.
@@ -504,15 +503,15 @@ SUBROUTINE testUpdatedA()
   ! initialize linear system
   CALL pList%clear()
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->A->MatrixType->n',1)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',1)
-  CALL pList%add('LinearSolverType->b->VectorType->n',1)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',1_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',1_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',1_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -539,16 +538,16 @@ SUBROUTINE testDirectSolve()
 !Test GE (Dense-Square)
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GE)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -580,16 +579,16 @@ SUBROUTINE testDirectSolve()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',4)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',4_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',4)
-  CALL pList%add('LinearSolverType->b->VectorType->n',4)
+  CALL pList%add('LinearSolverType->x->VectorType->n',4_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',4_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -648,17 +647,16 @@ SUBROUTINE testDirectSolve()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',TRIDIAG)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
-  CALL pList%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -732,16 +730,16 @@ SUBROUTINE testDirectSolve()
   ! get result, the details will be tested in CGNR
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GE)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -804,16 +802,16 @@ SUBROUTINE testDirectSolve()
   !The result will be checked later.
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GE)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSERECT)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',2)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',2_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -853,16 +851,16 @@ SUBROUTINE testDirectSolve()
   !Dense square
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -898,16 +896,16 @@ SUBROUTINE testDirectSolve()
   ! Normal Case (non-singular)
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -996,16 +994,16 @@ SUBROUTINE testDirectSolve()
   !Tridiagonal (singular case)
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',TRIDIAG)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1035,16 +1033,16 @@ SUBROUTINE testDirectSolve()
   ! Tridiagonal (non-singular case)
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',TRIDIAG)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1114,16 +1112,16 @@ SUBROUTINE testDirectSolve()
   !just make sure we get the output statement.
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',TRIDIAG)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1151,16 +1149,16 @@ SUBROUTINE testDirectSolve()
   ! get result, the details will be test in CGNR
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GE)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1219,16 +1217,16 @@ SUBROUTINE testDirectSolve()
   !The result will be checked later.
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSERECT)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',2)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',2_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1267,13 +1265,13 @@ SUBROUTINE testDirectSolve()
   CALL pList%add('LinearSolverType->TPLType',PARDISO_MKL)
   CALL pList%add('LinearSolverType->solverMethod',GE)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',8)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',8_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1318,13 +1316,13 @@ SUBROUTINE testDirectSolve()
   CALL pList%add('LinearSolverType->TPLType',PARDISO_MKL)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',8)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',8_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1371,13 +1369,13 @@ SUBROUTINE testDirectSolve()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',LU)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',8)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',8_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1432,16 +1430,16 @@ SUBROUTINE testQRSolve()
 !Test GE (Dense-Square)
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',QR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSERECT)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',5)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',3)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',5)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',5_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',3_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',5_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1496,7 +1494,7 @@ SUBROUTINE testIterativeOthers()
   CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
   REAL(SRK),POINTER :: thisX2(:)
   REAL(SRK),ALLOCATABLE :: resid_soln(:),dummyvec(:)
-  CLASS(VectorType),ALLOCATABLE :: resid
+  TYPE(RealVectorType) :: resid
   INTEGER(SIK) :: i
   LOGICAL(SBK) :: bool
 
@@ -1512,16 +1510,16 @@ SUBROUTINE testIterativeOthers()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',2)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',2)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1550,13 +1548,13 @@ SUBROUTINE testIterativeOthers()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',2)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',2)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1585,16 +1583,16 @@ SUBROUTINE testIterativeOthers()
   !Bad input
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',2)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',2)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1602,19 +1600,19 @@ SUBROUTINE testIterativeOthers()
     CALL thisLS%setConv(-2,-0.1_SRK,-0.1_SRK,-1,-1)
     CALL thisLS%setConv(-2,1.1_SRK,1.1_SRK,-1,-1)
     !Check if default value is used
-    bool = thisLS%maxIters == 1000 .AND. thisLS%normType == 2 &
+    bool = thisLS%maxIters == 1000_SIK .AND. thisLS%normType == 2_SIK &
        .AND. thisLS%relConvTol == 0.001_SRK .AND. thisLS%absConvTol == 0.001_SRK &
-       .AND. thisLS%nRestart == 30
+       .AND. thisLS%nRestart == 30_SIK
     ASSERT(bool, 'Iterative%setConv(...)')
     FINFO() thisLS%maxIters, thisLS%normType, thisLS%absConvTol, thisLS%nRestart
   ENDSELECT
 
   !Correct input
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-    CALL thisLS%setConv(1,0.01_SRK,0.001_SRK,100,10)
-    bool = thisLS%maxIters == 100 .AND. thisLS%normType == 1 &
+    CALL thisLS%setConv(1_SIK,0.01_SRK,0.001_SRK,100_SIK,10_SIK)
+    bool = thisLS%maxIters == 100_SIK .AND. thisLS%normType == 1_SIK &
        .AND. thisLS%relConvTol == 0.01_SRK .AND. thisLS%absConvTol == 0.001_SRK &
-       .AND. thisLS%nRestart == 10
+       .AND. thisLS%nRestart == 10_SIK
     ASSERT(bool, 'Iterative%setConv(...)')
   ENDSELECT
   CALL thisLS%clear()
@@ -1627,13 +1625,13 @@ SUBROUTINE testIterativeOthers()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',GMRES) ! GMRES to test nrestart
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',2)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',2)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1644,19 +1642,19 @@ SUBROUTINE testIterativeOthers()
     CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
     restart=30
-    bool = maxits == 1000 .AND. rtol == 0.001_SRK &
-        .AND. abstol == 0.001_SRK .AND. restart == 30
+    bool = maxits == 1000_SIK .AND. rtol == 0.001_SRK &
+        .AND. abstol == 0.001_SRK .AND. restart == 30_SIK
     ASSERT(bool, 'PETScIterative%setConv(...)')
   ENDSELECT
 
   !Correct input
   SELECTTYPE(thisLS); TYPE IS (LinearSolverType_Iterative)
-    CALL thisLS%setConv(1,0.01_SRK,0.01_SRK,100,10)
+    CALL thisLS%setConv(1_SIK,0.01_SRK,0.01_SRK,100_SIK,10_SIK)
     CALL KSPGetTolerances(thisLS%ksp,rtol,abstol,dtol,maxits,ierr)
 !        CALL KSPGMRESGetRestart(thisLS%ksp,restart,ierr)
     restart=10
-    bool = maxits == 100 .AND. rtol == 0.01_SRK &
-        .AND. abstol == 0.01_SRK .AND. restart == 10
+    bool = maxits == 100_SIK .AND. rtol == 0.01_SRK &
+        .AND. abstol == 0.01_SRK .AND. restart == 10_SIK
     ASSERT(bool, 'PETScIterative%setConv(...)')
   ENDSELECT
   CALL thisLS%clear()
@@ -1665,23 +1663,28 @@ SUBROUTINE testIterativeOthers()
 !Test getResidual
   !Bad input
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
+    CALL thisLS%getResidual(resid)
+
     CALL pList%clear()
     CALL pList%add('LinearSolverType->matType',SPARSE)
-    CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+    CALL pList%add('LinearSolverType->TPLType',NATIVE)
     CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
     CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-    CALL pList%add('LinearSolverType->numberOMP',1)
+    CALL pList%add('LinearSolverType->numberOMP',1_SNK)
     CALL pList%add('LinearSolverType->timerName','testTimer')
     CALL pList%add('LinearSolverType->matType',SPARSE)
-    CALL pList%add('LinearSolverType->A->MatrixType->n',5)
-    CALL pList%add('LinearSolverType->A->MatrixType->nnz',1)
-    CALL pList%add('LinearSolverType->x->VectorType->n',5)
-    CALL pList%add('LinearSolverType->b->VectorType->n',5)
+    CALL pList%add('LinearSolverType->A->MatrixType->n',5_SNK)
+    CALL pList%add('LinearSolverType->A->MatrixType->nnz',1_SNK)
+    CALL pList%add('LinearSolverType->x->VectorType->n',5_SNK)
+    CALL pList%add('LinearSolverType->b->VectorType->n',5_SNK)
     CALL pList%validate(pList,optListLS)
     CALL thisLS%init(pList)
 
-    CALL VectorResemble_Alloc(resid,thisLS%x)
-    CALL thisLS%getResidual(residVec=resid)
+    CALL thisLS%getResidual(resid)
+
+    CALL vecPList%set('VectorType->n',5_SNK)
+    CALL resid%init(vecPList)
+    CALL thisLS%getResidual(resid)
 
     CALL thisLS%clear()
     CALL resid%clear()
@@ -1691,16 +1694,16 @@ SUBROUTINE testIterativeOthers()
   !Correct input
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1759,14 +1762,14 @@ SUBROUTINE testIterativeOthers()
     CALL b%set(10._SRK)
   ENDSELECT
 
-  CALL vecPList%set('VectorType->n',9)
+  CALL vecPList%set('VectorType->n',9_SNK)
   CALL resid%init(vecPList)
   ALLOCATE(resid_soln(9))
-  resid_soln=(/8._SRK,9._SRK,8._SRK,9._SRK,10._SRK, &
-      9._SRK,8._SRK,9._SRK,8._SRK/)
+  resid_soln=(/-8._SRK,-9._SRK,-8._SRK,-9._SRK,-10._SRK, &
+      -9._SRK,-8._SRK,-9._SRK,-8._SRK/)
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%getResidual(residVec=resid)
+    CALL thisLS%getResidual(resid)
   ENDSELECT
 
   DO i=1,resid%n
@@ -1789,7 +1792,7 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
   REAL(SRK),POINTER :: thisX(:)
   INTEGER(SIK) :: i
-  LOGICAL(SBK) :: bool
+  LOGICAL(SBK) :: match, bool
 
   ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -1798,16 +1801,16 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1870,40 +1873,58 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve it
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() -BICGSTAB')
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  !multiply by 10,000 so we can match first five places.
+  thisB=10000.0_SRK*thisB
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'Iterative%solve() -BICGSTAB')
 
   DEALLOCATE(thisB)
-  DEALLOCATE(thisX)
-  DEALLOCATE(dummyvec)
   CALL thisLS%A%clear()
   CALL thisLS%clear()
+  DEALLOCATE(thisX)
 
 !test with A being densesquare
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -1933,43 +1954,69 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve
   CALL thisLS%solve()
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() -BICGSTAB')
-
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  thisB=thisB*10000._SRK
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'Iterative%solve() - BiCGSTAB')
   !test to see how it performs with an already decomposed M
   !reset X to 1.0s
-  CALL thisLS%X%set(1.0_SRK)
-  CALL thisLS%solve()
-
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() -BICGSTAB')
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      CALL X%set(1.0_SRK)
+      CALL thisLS%solve()
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'Iterative%solve() - BiCGSTAB')
   CALL thisLS%clear()
   DEALLOCATE(thisB)
-  DEALLOCATE(dummyvec)
 
   ! TriDiagonal matrix, it will go to LU method
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',TRIDIAG)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2001,16 +2048,16 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSERECT)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',2)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',2_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2039,7 +2086,7 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
-    CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !Solve it
@@ -2058,13 +2105,13 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.FALSE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2127,24 +2174,41 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve it
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  !multiply by 10,000 so we can match first five places.
+  thisB=10000.0_SRK*thisB
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'PETScIterative%solve() -BICGSTAB')
 
   DEALLOCATE(thisB)
   DEALLOCATE(thisX)
-  DEALLOCATE(dummyvec)
-
   CALL thisLS%A%clear()
   CALL thisLS%clear()
 
@@ -2154,13 +2218,13 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',BICGSTAB)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2189,31 +2253,56 @@ SUBROUTINE testIterativeSolve_BICGSTAB()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve
   CALL thisLS%solve()
 
-  !Store expected solution (from MATLAB) in B
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
-
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  thisB=thisB*10000._SRK
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'PETSCIterative%solve() -BiCGSTAB')
   !test to see how it performs with an already decomposed M
   !reset X to 1.0s
-  CALL thisLS%X%set(1.0_SRK)
-  CALL thisLS%solve()
-
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      CALL X%set(1.0_SRK)
+      CALL thisLS%solve()
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'PETSCIterative%solve() -BiCGSTAB')
+  CALL thisLS%clear()
   DEALLOCATE(thisB)
   DEALLOCATE(thisX)
-  DEALLOCATE(dummyvec)
-  CALL thisLS%clear()
 #endif
 
   DEALLOCATE(thisLS)
@@ -2232,16 +2321,16 @@ SUBROUTINE testIterativeSolve_CGNR()
   !test CGNR
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',CGNR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSERECT)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',2)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',3)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',2)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',2_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',3_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',2_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2270,7 +2359,7 @@ SUBROUTINE testIterativeSolve_CGNR()
     CALL thisLS%setX0(thisX)
   ENDSELECT
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-      CALL thisLS%setConv(2,1.0E-9_SRK,1.0E-9_SRK,1000,30)
+      CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   CALL thisLS%solve()
@@ -2285,16 +2374,16 @@ SUBROUTINE testIterativeSolve_CGNR()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',CGNR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSERECT)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',2)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',2_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2325,7 +2414,7 @@ SUBROUTINE testIterativeSolve_CGNR()
   ENDSELECT
   !set iterations and convergence information and
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-      CALL thisLS%setConv(2,1.0E-13_SRK,1.0E-13_SRK,1000,30)
+      CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   CALL thisLS%solve()
@@ -2346,16 +2435,16 @@ SUBROUTINE testIterativeSolve_CGNR()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',CGNR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2378,7 +2467,7 @@ SUBROUTINE testIterativeSolve_CGNR()
 
   !set iterations and convergence information and
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-      CALL thisLS%setConv(2,1.0E-13_SRK,1.0E-13_SRK,1000,30)
+      CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   CALL thisLS%solve()
@@ -2401,16 +2490,16 @@ SUBROUTINE testIterativeSolve_CGNR()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',CGNR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',7)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',7_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2440,7 +2529,7 @@ SUBROUTINE testIterativeSolve_CGNR()
   !set iterations and convergence information and
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
-    CALL thisLS%setConv(2,1.0E-13_SRK,1.0E-13_SRK,1000,30)
+    CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !Check X
@@ -2463,16 +2552,16 @@ SUBROUTINE testIterativeSolve_CGNR()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',CGNR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',TRIDIAG)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2508,13 +2597,13 @@ SUBROUTINE testIterativeSolve_CGNR()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',CGNR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2537,7 +2626,7 @@ SUBROUTINE testIterativeSolve_CGNR()
 
   !set iterations and convergence information and
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-      CALL thisLS%setConv(2,1.0E-13_SRK,1.0E-13_SRK,1000,30)
+      CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   CALL thisLS%solve()
@@ -2562,13 +2651,13 @@ SUBROUTINE testIterativeSolve_CGNR()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',CGNR)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2598,7 +2687,7 @@ SUBROUTINE testIterativeSolve_CGNR()
   !set iterations and convergence information and
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
-    CALL thisLS%setConv(2,1.0E-13_SRK,1.0E-13_SRK,1000,30)
+    CALL thisLS%setConv(2_SIK,1.0E-13_SRK,1.0E-13_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !Check X
@@ -2629,7 +2718,7 @@ SUBROUTINE testIterativeSolve_GMRES()
   REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
   REAL(SRK),POINTER :: thisX(:)
   INTEGER(SIK) :: i
-  LOGICAL(SBK) :: bool
+  LOGICAL(SBK) :: match, bool
 
   ALLOCATE(LinearSolverType_Iterative :: thisLS)
 
@@ -2639,17 +2728,16 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
-  CALL pList%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
 
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
@@ -2699,13 +2787,9 @@ SUBROUTINE testIterativeSolve_GMRES()
       CALL A%setShape(9,9, 4.0_SRK)
   ENDSELECT
 
-  ! build X0 and set it to a vector orthogonal to the solution
-  ! This forces GMRES to take longer and thus require a restart,
-  ! which tests this portion of the solver
+  ! build X0 and set it to 1.0s
   ALLOCATE(thisX(9))
   thisX=1.0_SRK
-  thisX(1)=1.0_SRK
-  !thisX(9)=-1.0_SRK
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
@@ -2717,40 +2801,57 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-6_SRK,1.0E-6_SRK,100,3)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve it
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'CALL Iterative%solve() -GMRES FAILED!')
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  !multiply by 10,000 so we can match first five places.
+  thisB=10000.0_SRK*thisB
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match,'CALL Iterative%solve() -GMRES FAILED!')
 
   DEALLOCATE(thisB)
-  DEALLOCATE(thisX)
-  DEALLOCATE(dummyvec)
   CALL thisLS%clear()
+  DEALLOCATE(thisX)
 
 !test with A being densesquare
-  COMPONENT_TEST('DenseSquareMatrixType')
+  COMPONENT_TEST('DenseRectMatrixType')
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
-  CALL pList%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2766,14 +2867,9 @@ SUBROUTINE testIterativeSolve_GMRES()
     ENDSELECT
   ENDDO
 
-  ! build X0 and set it to a vector orthogonal to the solution
-  ! This forces GMRES to take longer and thus require a restart,
-  ! which tests this portion of the solver
+  !build X0 and set it to 1.0s
   ALLOCATE(thisX(9))
-  thisX=0.0_SRK
-  thisX(1)=1.0_SRK
-  thisX(9)=-1.0_SRK
-
+  thisX=1.0_SRK
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
   ENDSELECT
@@ -2785,22 +2881,52 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-6_SRK,1.0E-6_SRK,100,3)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve
   CALL thisLS%solve()
-
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() - GMRES')
-
-  DEALLOCATE(thisB)
-  DEALLOCATE(thisX)
-  DEALLOCATE(dummyvec)
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  thisB=thisB*10000._SRK
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'Iterative%solve() - GMRES')
+  !test to see how it performs with an already decomposed M
+  !reset X to 1.0s
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(RealVectorType)
+      CALL X%set(1.0_SRK)
+      CALL thisLS%solve()
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'Iterative%solve() - GMRES')
   CALL thisLS%A%clear()
   CALL thisLS%clear()
 
@@ -2809,17 +2935,16 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',TRIDIAG)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',3)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
-  CALL pList%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
+  CALL pList%add('LinearSolverType->x->VectorType->n',3_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2846,23 +2971,22 @@ SUBROUTINE testIterativeSolve_GMRES()
   ASSERT(bool, 'Iterative%solve() - GMRES')
   CALL thisLS%A%clear()
   CALL thisLS%clear()
+  DEALLOCATE(thisX)
 
-  !DenseRect matrix
-  COMPONENT_TEST('DenseRectMatrixType')
+!DenseRect matrix
 
   ! initialize linear system
   CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL pList%add('LinearSolverType->TPLType',NATIVE)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSERECT)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',2)
-  CALL pList%add('LinearSolverType->x->VectorType->n',2)
-  CALL pList%add('LinearSolverType->b->VectorType->n',3)
-  CALL pList%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
+  CALL pList%add('LinearSolverType->A->MatrixType->n',3_SNK)
+  CALL pList%add('LinearSolverType->A->MatrixType->m',2_SNK)
+  CALL pList%add('LinearSolverType->x->VectorType->n',2_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',3_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -2891,7 +3015,7 @@ SUBROUTINE testIterativeSolve_GMRES()
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
-    CALL thisLS%setConv(2,1.0E-6_SRK,1.0E-6_SRK,100,3)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !Solve it
@@ -2899,81 +3023,10 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   bool = thisLS%info == 0
   ASSERT(bool, 'Iterative%solve() -GMRES method')
-  DEALLOCATE(thisX)
-  CALL thisLS%clear()
 
-  ! Banded matrix test
-  COMPONENT_TEST('BandedMatrixType')
-  ! initialize linear system
-  CALL pList%clear()
-  CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
-  CALL pList%add('LinearSolverType->solverMethod',GMRES)
-  CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
-  CALL pList%add('LinearSolverType->timerName','testTimer')
-  CALL pList%add('LinearSolverType->matType',BANDED)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
-  CALL pList%add('LinearSolverType->A->MatrixType->m',9)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',33)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
-  CALL pList%add('LinearSolverType->PC->PreCondType->pcType','NOPC')
-  CALL pList%validate(pList,optListLS)
-  CALL thisLS%init(pList)
-
-  SELECTTYPE(A => thisLS%A); TYPE IS(BandedMatrixType)
-    DO i=1,9
-      CALL A%set(i,i,4.0_SRK)
-      IF((i < 9).AND.((i /= 3).AND.(i /= 6))) THEN
-        CALL A%set(i,i+1,-1.0_SRK)
-        CALL A%set(i+1,i,-1.0_SRK)
-      ENDIF
-      IF(i < 7) THEN
-        CALL A%set(i,i+3,-1.0_SRK)
-        CALL A%set(i+3,i,-1.0_SRK)
-      ENDIF
-    ENDDO
-    CALL A%assemble()
-  ENDSELECT
-
-  ! build X0 and set it to a vector orthogonal to the solution
-  ! This forces GMRES to take longer and thus require a restart,
-  ! which tests this portion of the solver
-  ALLOCATE(thisX(9))
-  thisX=0.0_SRK
-  thisX(1)=1.0_SRK
-  thisX(9)=-1.0_SRK
-
-  SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setX0(thisX)
-  ENDSELECT
-
-  !set b
-  SELECTTYPE(b => thisLS%b); TYPE IS(RealVectorType)
-    CALL b%set(1.0_SRK)
-  ENDSELECT
-
-  !set iterations and convergence information and build/set M
-  SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-6_SRK,1.0E-6_SRK,100,3)
-  ENDSELECT
-
-  !solve
-  CALL thisLS%solve()
-
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'Iterative%solve() - GMRES')
-
-  CALL thisLS%A%clear()
-  CALL thisLS%clear()
   DEALLOCATE(thisB)
   DEALLOCATE(thisX)
-  DEALLOCATE(dummyvec)
-
+  CALL thisLS%clear()
 
 #ifdef FUTILITY_HAVE_PETSC
   !With GMRES
@@ -2983,13 +3036,13 @@ SUBROUTINE testIterativeSolve_GMRES()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -3038,13 +3091,9 @@ SUBROUTINE testIterativeSolve_GMRES()
       CALL A%set(9,9, 4.0_SRK)
   ENDSELECT
 
-  ! build X0 and set it to a vector orthogonal to the solution
-  ! This forces GMRES to take longer and thus require a restart,
-  ! which tests this portion of the solver
+  ! build X0 and set it to 1.0s
   ALLOCATE(thisX(9))
-  thisX=0.0_SRK
-  thisX(1)=1.0_SRK
-  thisX(9)=-1.0_SRK
+  thisX=1.0_SRK
 
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
       CALL thisLS%setX0(thisX)
@@ -3056,23 +3105,41 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-6_SRK,1.0E-6_SRK,1000,3)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve it
   CALL thisLS%solve()
 
   !Store expected solution (from MATLAB) in B
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() -BICGSTAB')
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  !multiply by 10,000 so we can match first five places.
+  thisB=10000.0_SRK*thisB
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'PETScIterative%solve() -BICGSTAB')
 
   DEALLOCATE(thisX)
   DEALLOCATE(thisB)
-  DEALLOCATE(dummyvec)
   CALL thisLS%A%clear()
   CALL thisLS%clear()
 
@@ -3083,13 +3150,13 @@ SUBROUTINE testIterativeSolve_GMRES()
   CALL pList%add('LinearSolverType->TPLType',PETSC)
   CALL pList%add('LinearSolverType->solverMethod',GMRES)
   CALL pList%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-  CALL pList%add('LinearSolverType->numberOMP',1)
+  CALL pList%add('LinearSolverType->numberOMP',1_SNK)
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',DENSESQUARE)
-  CALL pList%add('LinearSolverType->A->MatrixType->n',9)
+  CALL pList%add('LinearSolverType->A->MatrixType->n',9_SNK)
   CALL pList%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-  CALL pList%add('LinearSolverType->x->VectorType->n',9)
-  CALL pList%add('LinearSolverType->b->VectorType->n',9)
+  CALL pList%add('LinearSolverType->x->VectorType->n',9_SNK)
+  CALL pList%add('LinearSolverType->b->VectorType->n',9_SNK)
   CALL pList%validate(pList,optListLS)
   CALL thisLS%init(pList)
 
@@ -3105,13 +3172,9 @@ SUBROUTINE testIterativeSolve_GMRES()
     ENDSELECT
   ENDDO
 
-  ! build X0 and set it to a vector orthogonal to the solution
-  ! This forces GMRES to take longer and thus require a restart,
-  ! which tests this portion of the solver
+  !build X0 and set it to 1.0s
   ALLOCATE(thisX(9))
-  thisX=0.0_SRK
-  thisX(1)=1.0_SRK
-  thisX(9)=-1.0_SRK
+  thisX=1.0_SRK
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
     CALL thisLS%setX0(thisX)
   ENDSELECT
@@ -3122,34 +3185,55 @@ SUBROUTINE testIterativeSolve_GMRES()
 
   !set iterations and convergence information and build/set M
   SELECTTYPE(thisLS); TYPE IS(LinearSolverType_Iterative)
-    CALL thisLS%setConv(2,1.0E-6_SRK,1.0E-6_SRK,1000,3)
+    CALL thisLS%setConv(2_SIK,1.0E-9_SRK,1.0E-9_SRK,1000_SIK,30_SIK)
   ENDSELECT
 
   !solve
   CALL thisLS%solve()
-
-  !Store expected solution (from MATLAB) in B
-  ALLOCATE(dummyvec(thisLS%X%n))
-  ALLOCATE(thisB(thisLS%X%n))
-  thisB(:) = (/0.6875_SRK,0.875_SRK,0.6875_SRK,0.875_SRK,1.125_SRK, &
-      0.875_SRK,0.6875_SRK,0.875_SRK,0.6875_SRK/)
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() - GMRES')
-  DEALLOCATE(dummyvec)
-
+  ALLOCATE(thisB(9))
+  thisB(1)=0.6875_SRK
+  thisB(2)=0.875_SRK
+  thisB(3)=0.6875_SRK
+  thisB(4)=0.875_SRK
+  thisB(5)=1.125_SRK
+  thisB(6)=0.875_SRK
+  thisB(7)=0.6875_SRK
+  thisB(8)=0.875_SRK
+  thisB(9)=0.6875_SRK
+  thisB=thisB*10000._SRK
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'PETScIterative%solve() - GMRES')
   !test to see how it performs with an already decomposed M
   !reset X to 1.0s
-  CALL thisLS%X%set(1.0_SRK)
-  CALL thisLS%solve()
-
-  ALLOCATE(dummyvec(thisLS%X%n))
-  CALL thisLS%X%get(dummyvec)
-  ASSERT(ALL(SOFTEQ(thisB(:),dummyvec(:),1.0E-05_SRK)), 'PETScIterative%solve() - GMRES')
-
+  match=.TRUE.
+  DO i=1,SIZE(thisB)
+    SELECTTYPE(X => thisLS%X); TYPE IS(PETScVectorType)
+      CALL X%set(1.0_SRK)
+      CALL thisLS%solve()
+      IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
+      ALLOCATE(dummyvec(X%n))
+      CALL X%get(dummyvec)
+      IF(NINT(thisB(i)) /= NINT(10000.0_SRK*dummyvec(i))) THEN
+        match=.FALSE.
+        EXIT
+      ENDIF
+    ENDSELECT
+  ENDDO
+  ASSERT(match, 'PETScIterative%solve() - GMRES')
   CALL thisLS%A%clear()
   DEALLOCATE(thisX)
-  DEALLOCATE(thisB)
-  DEALLOCATE(dummyvec)
+
 #endif
   CALL thisLS%clear()
 
