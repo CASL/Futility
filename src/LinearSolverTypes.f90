@@ -84,6 +84,10 @@ IMPLICIT NONE
 #endif
 !petscisdef.h defines the keyword IS, and it needs to be reset
 #undef IS
+#else
+#ifdef HAVE_MPI
+#include <mpif.h>
+#endif
 #endif
 
 PRIVATE
@@ -813,7 +817,7 @@ SUBROUTINE getResidual_LinearSolverType_Direct(solver,nIters,residNorm,residVec)
   REQUIRE(solver%x%isInit)
 
   IF (PRESENT(residNorm) .OR. PRESENT(residVec)) THEN
-    CALL VectorResemble_Alloc(u,solver%b)
+    CALL VectorResembleAlloc(u,solver%b)
     CALL BLAS_copy(solver%b,u)
     CALL BLAS_matvec(thisMatrix=solver%A,alpha=-1.0_SRK,x=solver%x,beta=1.0_SRK,y=u)
   ENDIF
@@ -1083,17 +1087,9 @@ SUBROUTINE solve_LinearSolverType_Iterative(solver)
   CALL solve_checkInput(solver)
   IF(solver%info == 0) THEN
     IF(.NOT. solver%hasX0) THEN
-      SELECTTYPE(X => solver%X); CLASS IS(NativeVectorType)
-        SELECTTYPE(b => solver%b); CLASS IS(NativeVectorType)
-          x%b(:) = b%b(:)
-          CALL eLinearSolverType%raiseDebug(modName//'::'// &
-              myName//'- Initial X0 is set to b.')
-        CLASS DEFAULT
-          x%b(:) = 1.0_SRK
-          CALL eLinearSolverType%raiseDebug(modName//'::'// &
-              myName//'- Initial X0 is set to 1.')
-        ENDSELECT
-      ENDSELECT
+      CALL BLAS_copy(solver%b,solver%x)
+      CALL eLinearSolverType%raiseDebug(modName//'::'// &
+          myName//'- Initial X0 is set to b.')
       solver%hasX0=.TRUE.
     ENDIF
     CALL solver%SolveTime%tic()
@@ -1686,7 +1682,7 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
 
   IF (thisLS%nRestart > thisLS%A%n) thisLS%nRestart = thisLS%A%n
   thisLS%iters = 0
-  norm_b = BLAS_nrm2(thisLS%b)
+  norm_b=BLAS_nrm2(thisLS%b)
   IF (norm_b .APPROXEQ. 0.0_SRK) THEN
     CALL thisLS%X%set(0.0_SRK)
     thisLS%residual = 0.0_SRK
@@ -1694,10 +1690,11 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
     RETURN
   ENDIF
 
-  CALL VectorResemble_Alloc(u,thisLS%x)
+  CALL VectorResembleAlloc(u,thisLS%x)
   CALL thisLS%getResidual(residVec=u)
-  thisLS%residual = BLAS_nrm2(u)
-  tol = MAX(thisLS%absConvtol,thisLS%relConvTol*thisLS%residual)
+  thisLS%residual=BLAS_nrm2(u)
+  tol=MAX(thisLS%absConvtol,thisLS%relConvTol*thisLS%residual)
+  tol=tol*norm_b
   IF (thisLS%residual .APPROXLE. tol) THEN
     thisLS%iters = 1
     RETURN
@@ -1706,17 +1703,14 @@ SUBROUTINE solveGMRES(thisLS,thisPC)
   SELECT TYPE(u); CLASS IS(NativeVectorType)
     DO outerIt=1,CEILING(thisLS%maxIters*1.0/thisLS%nRestart)
       IF(PRESENT(thisPC)) THEN
-        CALL solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
+        CALL solveGMRES_partial(thisLS,u,tol,nIters,thisPC)
       ELSE
-        CALL solveGMRES_partial(thisLS,u,norm_b,tol,nIters)
+        CALL solveGMRES_partial(thisLS,u,tol,nIters)
       ENDIF
-      thisLS%iters = thisLS%iters + nIters
+      thisLS%iters=thisLS%iters+nIters
       IF (thisLS%residual .APPROXLE. tol) THEN
         EXIT
       ENDIF
-      CALL thisLS%getResidual(residVec=u)
-      IF(PRESENT(thisPC)) CALL thisPC%apply(u)
-      thisLS%residual = BLAS_nrm2(u)
     ENDDO
   CLASS DEFAULT
     CALL eLinearSolverType%raiseError('Incorrect call to '// &
@@ -1737,10 +1731,9 @@ ENDSUBROUTINE solveGMRES
 !> @param nIters the running iteration count
 !> @param thisPC The preconditioner object to use on the system
 !>
-SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
+SUBROUTINE solveGMRES_partial(thisLS,u,tol,nIters,thisPC)
   CLASS(LinearSolverType_Iterative),INTENT(INOUT) :: thisLS
   CLASS(NativeVectorType),INTENT(INOUT) :: u
-  REAL(SRK),INTENT(IN) :: norm_b
   REAL(SRK),INTENT(IN) :: tol
   INTEGER(SIK),INTENT(OUT) :: nIters
   CLASS(PreconditionerType),INTENT(INOUT),OPTIONAL :: thisPC
@@ -1749,14 +1742,16 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
   CLASS(NativeVectorType),ALLOCATABLE :: V(:)
   CLASS(VectorType),ALLOCATABLE :: Vy ! Generic vector container
   REAL(SRK),ALLOCATABLE :: R(:,:) ! Array of basis vector coeffs for sol.
-  REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),f(:)
+  REAL(SRK),ALLOCATABLE :: givens_sin(:),givens_cos(:),g(:),h(:)
   TYPE(ParamType) :: vecPlist
-  REAL(SRK) :: divTmp,temp
-  INTEGER(SIK) :: krylovIdx,i
-  INTEGER(SIK),ALLOCATABLE :: orthogReq(:)
+  REAL(SRK) :: divTmp,t,temp,errEst
+  INTEGER(SIK) :: krylovIdx,orthogIdx,i
+#ifdef HAVE_MPI
+  INTEGER(SIK) mpierr
+#endif
 
   CALL vecPlist%clear()
-  CALL VectorResemble_Alloc(Vy,thisLS%x,vecPlist)
+  CALL VectorResembleAlloc(Vy,thisLS%x,vecPlist)
   CALL vecPlist%clear()
 
   SELECT TYPE(x => thisLS%X)
@@ -1784,26 +1779,29 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
 #endif
   ENDSELECT
 
-  ALLOCATE(R(thisLS%nRestart+1,thisLS%nRestart))
-  ALLOCATE(givens_cos(thisLS%nRestart))
-  ALLOCATE(givens_sin(thisLS%nRestart))
-  ALLOCATE(f(thisLS%nRestart+1))
-  ALLOCATE(orthogReq(thisLS%nRestart))
+  ALLOCATE(h(thisLS%nRestart))
+  ALLOCATE(R(thisLS%nRestart+1,thisLS%nRestart+1))
+  ALLOCATE(givens_cos(thisLS%nRestart+1))
+  ALLOCATE(givens_sin(thisLS%nRestart+1))
+  ALLOCATE(g(thisLS%nRestart+1))
 
   ! Initialize relevant quantities (u assumed to contain vector of precond. resid
-  divTmp = 1.0_SRK/thisLS%residual
-  R(:,:) = 0.0_SRK
-  givens_sin = 0.0_SRK
-  givens_cos = 0.0_SRK
+  divTmp=1.0_SRK/thisLS%residual
+  R(:,:)=0.0_SRK
+  givens_sin=0.0_SRK
+  givens_cos=0.0_SRK
+  g=0.0_SRK
+  h=0.0_SRK
   CALL V(1)%init(vecPlist)
-  V(1)%b = u%b*divTmp
-  f(1) = thisLS%residual
+  V(1)%b=u%b*divTmp
+  errEst=thisLS%residual
 
-  DO krylovIdx = 1,thisLS%nRestart
+  DO krylovIdx=1,thisLS%nRestart
     ! Use next space of V as temporary storage:
     CALL V(krylovIdx+1)%init(vecPlist)
 
-    ! Apply PC in-place and multiply in to u for orthogonalization
+    ! If preconditioning copy to u and apply PC there.
+    ! Then multiply into V(krylovIdx+1)
     IF (PRESENT(thisPC)) THEN
       u%b(:) = V(krylovIdx)%b(:)
       CALL thisPC%apply(u)
@@ -1812,101 +1810,68 @@ SUBROUTINE solveGMRES_partial(thisLS,u,norm_b,tol,nIters,thisPC)
       CALL BLAS_matvec(THISMATRIX=thisLS%A,X=V(krylovIdx),Y=V(krylovIdx+1),BETA=0.0_SRK)
     ENDIF
 
-    ! Create orthogonal basis
-    CALL arnoldi(thisLS,V,krylovIdx,R(1:krylovIdx+1,krylovIdx),orthogReq)
-
-    ! Perform Givens rotation
-    DO i=1,krylovIdx-1
-      temp = givens_cos(i)*R(i,krylovIdx) + givens_sin(i)*R(i+1,krylovIdx)
-      R(i+1,krylovIdx) = givens_cos(i)*R(i+1,krylovIdx) - givens_sin(i)*R(i,krylovIdx)
-      R(i,krylovIdx) = temp
+    ! Compute dot products all at once for efficient communication
+    DO orthogIdx=1,krylovIdx
+      h(orthogIdx)=BLAS_dot(V(orthogIdx)%b,V(krylovIdx+1)%b)
+    ENDDO
+    ! Call allreduce if necessary.
+#ifdef HAVE_MPI
+    CALL MPI_AllReduce(MPI_IN_PLACE,h(1),krylovIdx,MPI_DOUBLE_PRECISION, &
+        MPI_SUM,thisLS%MPIParallelEnv%comm,mpierr)
+#endif
+    t=h(1)
+    DO orthogIdx=1,krylovIdx
+      CALL BLAS_axpy(V(orthogIdx),V(krylovIdx+1),-h(orthogIdx))
+      IF (orthogIdx > 1) THEN
+        R(orthogIdx-1,krylovIdx)=givens_cos(orthogIdx-1)*t+givens_sin(orthogIdx-1)*h(orthogIdx)
+        t=givens_cos(orthogIdx-1)*h(orthogIdx)-givens_sin(orthogIdx-1)*t
+      ENDIF
     ENDDO
 
-    IF (R(krylovIdx,krylovIdx) .APPROXLE. 0.0_SRK) THEN
-      givens_cos(krylovIdx) = 0.0_SRK
-      givens_sin(krylovIdx) = 1.0_SRK
+    h(1)=BLAS_nrm2(V(krylovIdx+1))
+    IF (.NOT. (h(1) .APPROXEQ. 0.0_SRK)) THEN
+      divTmp=1.0_SRK/h(1)
+      V(krylovIdx+1)%b=V(krylovIdx+1)%b*divTmp
     ELSE
-      givens_cos(krylovIdx) = ABS(R(krylovIdx,krylovIdx))/ &
-          SQRT(R(krylovIdx,krylovIdx)*R(krylovIdx,krylovIdx) &
-          + R(krylovIdx+1,krylovIdx)*R(krylovIdx+1,krylovIdx))
-      givens_sin(krylovIdx) = givens_cos(krylovIdx)*R(krylovIdx+1,krylovIdx)/ &
-          R(krylovIdx,krylovIdx)
+      V(krylovIdx+1)%b=0.0_SRK
     ENDIF
-    R(krylovIdx,krylovIdx) = givens_cos(krylovIdx)*R(krylovIdx,krylovIdx) &
-        + givens_sin(krylovIdx)*R(krylovIdx+1,krylovIdx)
+    temp=SIGN(SQRT(t*t+h(1)*h(1)),t)
+    givens_cos(krylovIdx)=t/temp
+    givens_sin(krylovIdx)=h(1)/temp
+    R(krylovIdx,krylovIdx)=temp
 
-    f(krylovIdx+1) = -givens_sin(krylovIdx)*f(krylovIdx)
-    f(krylovIdx)   =  givens_cos(krylovIdx)*f(krylovIdx)
+    g(krylovIdx)=givens_cos(krylovIdx)*errEst
+    errEst=-givens_sin(krylovIdx)*errEst
 
-    IF ((ABS(f(krylovIdx+1)) .APPROXLE. tol*norm_b) .OR. (krylovIdx == thisLS%nRestart)) THEN
-      CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),f(1:krylovIdx))
-      CALL Vy%set(0.0_SRK)
-      DO i=1,krylovIdx
-        CALL BLAS_axpy(V(i),Vy,f(i))
-      ENDDO
-      IF (PRESENT(thisPC)) CALL thisPC%apply(Vy)
-      CALL BLAS_axpy(Vy,thisLS%x)
-      EXIT
-    ENDIF
+    IF (ABS(errEst) < tol) EXIT
   ENDDO
 
-  thisLS%residual = ABS(f(krylovIdx+1)/norm_b)
-  nIters = krylovIdx
+  CALL BLAS_matvec('U','N','N',R(1:krylovIdx,1:krylovIdx),g(1:krylovIdx))
+  SELECTTYPE(Vy); CLASS IS(NativeVectorType)
+    Vy%b=0.0_SRK
+    DO i=1,krylovIdx
+      CALL BLAS_axpy(a=g(i),x=V(i)%b,y=Vy%b)
+    ENDDO
+  ENDSELECT
+  IF (PRESENT(thisPC)) CALL thisPC%apply(Vy)
+  CALL BLAS_axpy(Vy,thisLS%x)
+
+  CALL thisLS%getResidual(residVec=u)
+  thisLS%residual=BLAS_nrm2(u)
+  nIters=krylovIdx-1
 
   DEALLOCATE(R)
   DEALLOCATE(givens_cos)
   DEALLOCATE(givens_sin)
-  DEALLOCATE(f)
+  DEALLOCATE(g)
   DO i=1,SIZE(V)
     IF (V(i)%isInit) CALL V(i)%clear()
   ENDDO
   DEALLOCATE(V)
   CALL Vy%clear()
   DEALLOCATE(Vy)
-  DEALLOCATE(orthogReq)
 
 ENDSUBROUTINE solveGMRES_partial
-
-!
-!-------------------------------------------------------------------------------
-!> @brief Helper routine for GMRES. Performs Arnoldi iteration by by
-!         orthogonalizing the next krylov-space vector
-!> @param thisLS The linear solver to act on
-!> @param V      Orthogonal basis of the Krylov space
-!> @param k      The current basis index
-!> @param h      Entries of the upper triangular R-matrix
-!> @param orthogReq MPI requests for distributed dot product
-!>
-SUBROUTINE arnoldi(thisLS,V,k,h,orthogReq)
-  CLASS(LinearSolverType_Iterative) thisLS
-  CLASS(NativeVectorType),INTENT(INOUT) :: V(:)
-  INTEGER(SIK),INTENT(IN) :: k
-  REAL(SRK),INTENT(INOUT) :: h(:)
-  INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: orthogReq(:)
-  INTEGER(SIK) :: orthogIdx
-#ifdef HAVE_MPI
-  INTEGER(SIK) :: mpierr
-#endif
-
-  ! Perform distributed dot, masking communication
-  DO orthogIdx=1,k
-    h(orthogIdx) = BLAS_dot(V(orthogIdx)%b,V(k+1)%b)
-#ifdef HAVE_MPI
-    CALL MPI_IAllReduce(MPI_IN_PLACE,h(orthogIdx),1,MPI_DOUBLE_PRECISION, &
-        MPI_SUM,thisLS%MPIParallelEnv%comm,orthogReq(orthogIdx),mpierr)
-#endif
-  ENDDO
-  ! Subtract vector components
-  DO orthogIdx=1,k
-#ifdef HAVE_MPI
-    CALL MPI_Wait(orthogReq(orthogIdx),MPI_STATUS_IGNORE,mpierr)
-#endif
-    CALL BLAS_axpy(V(orthogIdx),V(k+1),-h(orthogIdx))
-  ENDDO
-  h(k+1)=BLAS_nrm2(V(k+1))
-  V(k+1)%b = V(k+1)%b/h(k+1)
-ENDSUBROUTINE arnoldi
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Factorizes a sparse solver%A with ILU method and stores this in
