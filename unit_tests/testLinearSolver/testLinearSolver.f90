@@ -1680,7 +1680,7 @@ SUBROUTINE testIterativeOthers()
     CALL pList%validate(pList,optListLS)
     CALL thisLS%init(pList)
 
-    CALL VectorResemble_Alloc(resid,thisLS%x)
+    CALL VectorResembleAlloc(resid,thisLS%x)
     CALL thisLS%getResidual(residVec=resid)
 
     CALL thisLS%clear()

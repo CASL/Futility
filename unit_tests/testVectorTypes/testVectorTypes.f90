@@ -3467,8 +3467,8 @@ ENDSUBROUTINE testBLAS1Interface
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testVectorFactory()
-  CLASS(VectorType),POINTER :: vec_p
-  CLASS(VectorType),ALLOCATABLE :: other_vec_p
+  CLASS(VectorType),POINTER :: vec_p,other_vec_p
+  CLASS(VectorType),ALLOCATABLE :: vec_p_alloc,other_vec_p_alloc,other_vec_p_alloc_array(:)
   CLASS(ParamType),ALLOCATABLE :: params
 #if defined(FUTILITY_HAVE_PETSC) || defined(FUTILITY_HAVE_Trilinos)
   CLASS(DistributedVectorType),POINTER :: dvec_p
@@ -3477,6 +3477,7 @@ SUBROUTINE testVectorFactory()
   ALLOCATE(ParamType :: params)
 
   vec_p => NULL()
+  other_vec_p => NULL()
 
   !Native
   CALL params%add("VectorType->n",10_SIK)
@@ -3493,7 +3494,7 @@ SUBROUTINE testVectorFactory()
 
   !Resemble pointers
   CALL VectorResemble(other_vec_p,vec_p,params)
-  ASSERT(ALLOCATED(other_vec_p),"Cloned vector not ALLOCATED")
+  ASSERT(ASSOCIATED(other_vec_p),"Cloned vector not ALLOCATED")
   ASSERT(other_vec_p%isInit,"Other vector not initialized")
   ASSERT(other_vec_p%n==vec_p%n,"Cloned vector %n")
   SELECTTYPE(other_vec_p)
@@ -3504,13 +3505,14 @@ SUBROUTINE testVectorFactory()
   ENDSELECT
   CALL other_vec_p%clear()
   DEALLOCATE(other_vec_p)
+  NULLIFY(other_vec_p)
 
   CALL params%add("VectorType->n",5_SIK)
-  CALL VectorResemble_Alloc(other_vec_p,vec_p,params)
+  CALL VectorResemble(other_vec_p,vec_p,params)
   ASSERT(other_vec_p%n==5_SIK,"Cloned overridden vector %n")
   CALL other_vec_p%clear()
   DEALLOCATE(other_vec_p)
-
+  NULLIFY(other_vec_p)
   CALL params%clear()
   CALL vec_p%clear()
   DEALLOCATE(vec_p)
@@ -3577,7 +3579,7 @@ SUBROUTINE testVectorFactory()
 
   !Resemble, no param override
   CALL VectorResemble(other_vec_p,vec_p,params)
-  ASSERT(ALLOCATED(other_vec_p),"Resemble vector allocated")
+  ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
   SELECTTYPE(other_vec_p)
   TYPE IS(PETScVectorType)
@@ -3588,12 +3590,13 @@ SUBROUTINE testVectorFactory()
   ENDSELECT
   CALL other_vec_p%clear()
   DEALLOCATE(other_vec_p)
+  NULLIFY(other_vec_p)
 
   !Resemble, override params
   CALL params%add("VectorType->n",5_SIK)
   CALL params%add("VectorType->nlocal",5_SIK)
-  CALL VectorResemble_Alloc(other_vec_p,vec_p,params)
-  ASSERT(ALLOCATED(other_vec_p),"Resemble vector allocated")
+  CALL VectorResemble(other_vec_p,vec_p,params)
+  ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
   SELECTTYPE(other_vec_p)
   TYPE IS(PETScVectorType)
@@ -3604,6 +3607,7 @@ SUBROUTINE testVectorFactory()
   ENDSELECT
   CALL other_vec_p%clear()
   DEALLOCATE(other_vec_p)
+  NULLIFY(other_vec_p)
 
   !Clean up
   NULLIFY(dvec_p)
@@ -3676,7 +3680,7 @@ SUBROUTINE testVectorFactory()
 
   !Resemble, no param override
   CALL VectorResemble(other_vec_p,vec_p,params)
-  ASSERT(ALLOCATED(other_vec_p),"Resemble vector allocated")
+  ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
   SELECTTYPE(other_vec_p)
   TYPE IS(TrilinosVectorType)
@@ -3687,12 +3691,13 @@ SUBROUTINE testVectorFactory()
   ENDSELECT
   CALL other_vec_p%clear()
   DEALLOCATE(other_vec_p)
+  NULLIFY(other_vec_p)
 
   !Resemble, override params
   CALL params%add("VectorType->n",5_SIK)
   CALL params%add("VectorType->nlocal",5_SIK)
-  CALL VectorResemble_Alloc(other_vec_p,vec_p,params)
-  ASSERT(ALLOCATED(other_vec_p),"Resemble vector allocated")
+  CALL VectorResemble(other_vec_p,vec_p,params)
+  ASSERT(ASSOCIATED(other_vec_p),"Resemble vector associated")
   ASSERT(other_vec_p%isInit,"Resemble vector %isInit")
   SELECTTYPE(other_vec_p)
   TYPE IS(TrilinosVectorType)
@@ -3703,6 +3708,7 @@ SUBROUTINE testVectorFactory()
   ENDSELECT
   CALL other_vec_p%clear()
   DEALLOCATE(other_vec_p)
+  NULLIFY(other_vec_p)
 
   !Clean up
   NULLIFY(dvec_p)
