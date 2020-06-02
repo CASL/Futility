@@ -266,7 +266,7 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
       CALL BLAS_axpy(solver%Gx(1),x_new,solver%beta)
       CALL BLAS_axpy(solver%x(1),x_new,1.0_SRK-solver%beta)
       CALL solver%reset(x_new)
-   ELSE
+    ELSE
       !Get accelerated solution
       CALL x_new%set(0.0_SRK)
       DO i=1,depth_s+1
@@ -298,7 +298,7 @@ ENDSUBROUTINE step_AndersonAccelerationType
 SUBROUTINE reset_AndersonAccelerationType(solver,x)
   CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
-  CLASS(VectorType),INTENT(IN) :: x
+  CLASS(VectorType),INTENT(INOUT) :: x
 
   TYPE(ParamType) :: vecparams
   INTEGER(SIK) :: i,j,m
