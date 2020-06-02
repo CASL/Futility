@@ -46,12 +46,14 @@ TYPE :: AndersonAccelerationType
   CLASS(VectorType),ALLOCATABLE :: Gx(:)
   !> Difference vectors r=Gx-x
   CLASS(VectorType),ALLOCATABLE :: r(:)
+  !> Intermediate calculation vector
+  CLASS(VectorType),ALLOCATABLE :: tmpvec
   !> Anderson coefficients
   REAL(SRK),ALLOCATABLE :: alpha(:)
   !> Linear solver
   TYPE(LinearSolverType_Direct) :: LS
   !> Futility computing environment
-  TYPE(FutilityComputingEnvironment),POINTER :: ce
+  TYPE(FutilityComputingEnvironment),POINTER :: ce => NULL()
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -71,10 +73,6 @@ ENDTYPE AndersonAccelerationType
 
 !> Name of module
 CHARACTER(LEN=*),PARAMETER :: modName='AndersonAccelerationTypes'
-
-!> Intermediate calculation vector
-CLASS(VectorType),ALLOCATABLE :: tmpvec
-
 !
 !===============================================================================
 CONTAINS
@@ -176,11 +174,11 @@ SUBROUTINE clear_AndersonAccelerationType(solver)
         CALL solver%Gx(i)%clear()
         CALL solver%r(i)%clear()
       ENDDO
-      CALL tmpvec%clear()
+      CALL solver%tmpvec%clear()
       DEALLOCATE(solver%x)
       DEALLOCATE(solver%Gx)
       DEALLOCATE(solver%r)
-      DEALLOCATE(tmpvec)
+      DEALLOCATE(solver%tmpvec)
     ENDIF
     DEALLOCATE(solver%alpha)
     CALL solver%LS%clear()
@@ -231,10 +229,10 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
     !Get fit coefficients
     IF(depth_s == 1) THEN
       !Depth 1 is an especially simple case, where alpha can be calculated with a simple formula
-      CALL BLAS_copy(solver%r(2),tmpvec)
-      CALL BLAS_axpy(solver%r(1),tmpvec,-1.0_SRK)
-      tmpA=BLAS_dot(tmpvec,tmpvec)
-      tmpb=BLAS_dot(solver%r(2),tmpvec)
+      CALL BLAS_copy(solver%r(2),solver%tmpvec)
+      CALL BLAS_axpy(solver%r(1),solver%tmpvec,-1.0_SRK)
+      tmpA=BLAS_dot(solver%tmpvec,solver%tmpvec)
+      tmpb=BLAS_dot(solver%r(2),solver%tmpvec)
       solver%alpha(1)=tmpb/tmpA
     ELSEIF(depth_s > 1) THEN
       !Construct coefficient matrix, right hand side, and solve for fit coefficients
@@ -244,9 +242,9 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
         tmpb=BLAS_dot(solver%r(depth_s+1),x_new)
         CALL solver%LS%b%set(i,tmpb)
         DO k=1,i
-          CALL BLAS_copy(solver%r(depth_s+1),tmpvec)
-          CALL BLAS_axpy(solver%r(k),tmpvec,-1.0_SRK)
-          tmpA=BLAS_dot(tmpvec,x_new)
+          CALL BLAS_copy(solver%r(depth_s+1),solver%tmpvec)
+          CALL BLAS_axpy(solver%r(k),solver%tmpvec,-1.0_SRK)
+          tmpA=BLAS_dot(solver%tmpvec,x_new)
           CALL solver%LS%A%set(k,i,tmpA)
         ENDDO
       ENDDO
@@ -272,9 +270,9 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
       !Get accelerated solution
       CALL x_new%set(0.0_SRK)
       DO i=1,depth_s+1
-        CALL BLAS_copy(solver%x(i),tmpvec)
-        CALL BLAS_axpy(solver%r(i),tmpvec,solver%beta)
-        CALL BLAS_axpy(tmpvec,x_new,solver%alpha(i))
+        CALL BLAS_copy(solver%x(i),solver%tmpvec)
+        CALL BLAS_axpy(solver%r(i),solver%tmpvec,solver%beta)
+        CALL BLAS_axpy(solver%tmpvec,x_new,solver%alpha(i))
       ENDDO
 
       !Push back solution vectors and load in newest accelerated as next initial iterate
@@ -313,24 +311,24 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
       m=solver%depth+1
       CALL vecparams%add("VectorType->n",solver%n)
       SELECT TYPE(x);TYPE IS(RealVectorType)
-        ALLOCATE(RealVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+        ALLOCATE(RealVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
 !!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
 ! #ifdef HAVE_MPI
 !      TYPE IS(NativeDistributedVectorType)
-!        ALLOCATE(NativeDistributedVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+!        ALLOCATE(NativeDistributedVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
 !        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
 !        CALL vecparams%add('VectorType->chunkSize',x%chunkSize)
 ! #endif
 #ifdef FUTILITY_HAVE_PETSC
       TYPE IS(PETScVectorType)
-        ALLOCATE(PETScVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+        ALLOCATE(PETScVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
         CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
         CALL vecparams%add('VectorType->nlocal',x%nlocal)
 #endif
 !!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
 ! #ifdef FUTILITY_HAVE_Trilinos
 !      TYPE IS(TrilinosVectorType)
-!        ALLOCATE(TrilinosVectorType :: solver%x(m),solver%Gx(m),solver%r(m),tmpvec)
+!        ALLOCATE(TrilinosVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
 !        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
 !        CALL vecparams%add('VectorType->nlocal',x%nlocal)
 ! #endif
@@ -343,7 +341,7 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
         CALL solver%Gx(i)%init(vecparams)
         CALL solver%r(i)%init(vecparams)
       ENDDO
-      CALL tmpvec%init(vecparams)
+      CALL solver%tmpvec%init(vecparams)
     ELSE
       CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
           '::'//myName//' - At least one step required before reseting!')
