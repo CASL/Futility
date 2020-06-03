@@ -52,6 +52,7 @@ REGISTER_SUBTEST('testClear(Real)',testClear)
 REGISTER_SUBTEST('testReset(Real)',testReset)
 REGISTER_SUBTEST('testStep(Real)',testStep)
 
+#ifdef FUTILITY_HAVE_PETSC
 !Reset everthing to test with different vector type
 !Setup Anderson parameter list
 CALL pList%clear()
@@ -64,7 +65,6 @@ DEALLOCATE(mySol,exSol,inSol,tmpvec)
 ALLOCATE(PETScVectorType :: mySol,exSol,inSol,tmpvec)
 CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
 CALL vecparams%add('VectorType->nlocal',10000_SIK)
-!CALL vecparams%add('VectorType->chunkSize',1_SIK)
 CALL mySol%init(vecparams)
 CALL exSol%init(vecparams)
 CALL inSol%init(vecparams)
@@ -74,6 +74,7 @@ REGISTER_SUBTEST('testInit(Distrib)',testInit)
 REGISTER_SUBTEST('testClear(Distrib)',testClear)
 REGISTER_SUBTEST('testReset(Distrib)',testReset)
 REGISTER_SUBTEST('testStep(Distrib)',testStep)
+#endif
 
 FINALIZE_TEST()
 

@@ -253,6 +253,7 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
         CALL solver%LS%x%get(i,solver%alpha(i))
       ENDDO
     ENDIF
+
     !Back out "0th" alpha
     solver%alpha(depth_s+1)=1.0_SRK
     DO i=1,depth_s
@@ -300,48 +301,28 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: x
 
-  TYPE(ParamType) :: vecparams
-  INTEGER(SIK) :: i,j,m
+  INTEGER(SIK) :: i,j
 
   REQUIRE(x%n == solver%n)
 
   !If this is the first call to set/reset must actually create vectors of needed type
   IF(solver%s == 0) THEN
     IF(.NOT.ALLOCATED(solver%x)) THEN
-      m=solver%depth+1
-      CALL vecparams%add("VectorType->n",solver%n)
-      SELECT TYPE(x);TYPE IS(RealVectorType)
-        ALLOCATE(RealVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
-!!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
-! #ifdef HAVE_MPI
-!      TYPE IS(NativeDistributedVectorType)
-!        ALLOCATE(NativeDistributedVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
-!        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
-!        CALL vecparams%add('VectorType->chunkSize',x%chunkSize)
-! #endif
-#ifdef FUTILITY_HAVE_PETSC
-      TYPE IS(PETScVectorType)
-        ALLOCATE(PETScVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
-        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
-        CALL vecparams%add('VectorType->nlocal',x%nlocal)
-#endif
-!!!TODO: Uncomment this once interfaces to needed BLAS routines have been created
-! #ifdef FUTILITY_HAVE_Trilinos
-!      TYPE IS(TrilinosVectorType)
-!        ALLOCATE(TrilinosVectorType :: solver%x(m),solver%Gx(m),solver%r(m),solver%tmpvec)
-!        CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
-!        CALL vecparams%add('VectorType->nlocal',x%nlocal)
-! #endif
-      CLASS DEFAULT
+
+      !!!TODO Once missing BLAS interfaces have been added for the following vector types
+      !do away with this error catch to allow use of these with Anderson Acceleration.
+      SELECT TYPE(x);TYPE IS(NativeDistributedVectorType)
+        CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
+            '::'//myName//' - Input vector type not supported!')
+      TYPE IS(TrilinosVectorType)
         CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
             '::'//myName//' - Input vector type not supported!')
       ENDSELECT
-      DO i=1,m
-        CALL solver%x(i)%init(vecparams)
-        CALL solver%Gx(i)%init(vecparams)
-        CALL solver%r(i)%init(vecparams)
-      ENDDO
-      CALL solver%tmpvec%init(vecparams)
+
+      CALL VectorResembleAlloc(solver%x,x,solver%depth+1)
+      CALL VectorResembleAlloc(solver%Gx,x,solver%depth+1)
+      CALL VectorResembleAlloc(solver%r,x,solver%depth+1)
+      CALL VectorResembleAlloc(solver%tmpvec,x)
     ELSE
       CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
           '::'//myName//' - At least one step required before reseting!')
