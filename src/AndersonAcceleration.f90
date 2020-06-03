@@ -37,11 +37,11 @@ TYPE :: AndersonAccelerationType
   !> Current iteration count
   INTEGER(SIK) :: s=0
   !> Iteration depth of Anderson solver
-  INTEGER(SIK) :: depth=-1
+  INTEGER(SIK) :: depth=1
   !> Starting iteration for Anderson
   INTEGER(SIK) :: start=1
   !> Value of mixing parameter
-  REAL(SRK) :: beta=0.0_SRK
+  REAL(SRK) :: beta=0.5_SRK
   !> Initial iterates
   CLASS(VectorType),ALLOCATABLE :: x(:)
   !> Gx vectors:
@@ -86,25 +86,25 @@ CONTAINS
 !> @param ce The computing environment to use for the calculation
 !>
 SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
-  CHARACTER(LEN=*),PARAMETER :: myName='init_AndersonAccelerationType'
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   TYPE(FutilityComputingEnvironment),TARGET,INTENT(IN) :: ce
   TYPE(ParamType),INTENT(IN) :: Params
 
+  CHARACTER(LEN=*),PARAMETER :: myName='init_AndersonAccelerationType'
   TYPE(ParamType) :: LSparams
   INTEGER(SIK) :: i,j,m
 
   REQUIRE(Params%has('AndersonAccelerationType->n'))
-  REQUIRE(Params%has('AndersonAccelerationType->depth'))
-  REQUIRE(Params%has('AndersonAccelerationType->beta'))
-  REQUIRE(Params%has('AndersonAccelerationType->start'))
   REQUIRE(.NOT.solver%isInit)
 
   !Pull Data from Parameter List
   CALL Params%get('AndersonAccelerationType->n',solver%n)
-  CALL Params%get('AndersonAccelerationType->depth',solver%depth)
-  CALL Params%get('AndersonAccelerationType->beta',solver%beta)
-  CALL Params%get('AndersonAccelerationType->start',solver%start)
+  IF(Params%has('AndersonAccelerationType->depth')) &
+      CALL Params%get('AndersonAccelerationType->depth',solver%depth)
+  IF(Params%has('AndersonAccelerationType->beta')) &
+      CALL Params%get('AndersonAccelerationType->beta',solver%beta)
+  IF(Params%has('AndersonAccelerationType->start')) &
+      CALL Params%get('AndersonAccelerationType->start',solver%start)
 
   IF(solver%n < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
       '::'//myName//' - Number of unkowns (n) must be greater than 0!')
@@ -178,13 +178,12 @@ SUBROUTINE clear_AndersonAccelerationType(solver)
       DEALLOCATE(solver%tmpvec)
     ENDIF
     DEALLOCATE(solver%alpha)
-    CALL solver%LS%clear()
+    IF(solver%LS%isinit) CALL solver%LS%clear()
     solver%s=0
     solver%n=-1
-    solver%depth=-1
-    solver%start=0
-    solver%depth=-1
-    solver%beta=0.0_SRK
+    solver%depth=1
+    solver%start=1
+    solver%beta=0.5_SRK
     solver%isInit=.FALSE.
   ENDIF
 
@@ -294,10 +293,10 @@ ENDSUBROUTINE step_AndersonAccelerationType
 !> @param x Initial iterate solve is starting from
 !>
 SUBROUTINE reset_AndersonAccelerationType(solver,x)
-  CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: x
 
+  CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
   INTEGER(SIK) :: i,j
 
   REQUIRE(x%n == solver%n)

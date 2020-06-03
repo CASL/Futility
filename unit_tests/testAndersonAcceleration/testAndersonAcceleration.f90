@@ -47,6 +47,7 @@ CALL ce%exceptHandler%setQuietMode(.FALSE.)
 
 CREATE_TEST('Test Anderson Acceleration Solver')
 
+REGISTER_SUBTEST('Defaults',testDefaults)
 REGISTER_SUBTEST('testInit(Real)',testInit)
 REGISTER_SUBTEST('testClear(Real)',testClear)
 REGISTER_SUBTEST('testReset(Real)',testReset)
@@ -75,6 +76,7 @@ REGISTER_SUBTEST('testClear(Distrib)',testClear)
 REGISTER_SUBTEST('testReset(Distrib)',testReset)
 REGISTER_SUBTEST('testStep(Distrib)',testStep)
 #endif
+!!!TODO: When support for TrilinosVectors and NativeDistributed are added, add testing for them
 
 FINALIZE_TEST()
 
@@ -85,6 +87,16 @@ CALL ce%clear()
 CONTAINS
 !
 !-------------------------------------------------------------------------------
+SUBROUTINE testDefaults()
+
+  ASSERT_EQ(testAndAcc%s,0,'%iter')
+  ASSERT_EQ(testAndAcc%depth,1,'%depth')
+  ASSERT_EQ(testAndAcc%start,1,'%start')
+  ASSERT_EQ(testAndAcc%beta,0.5_SRK,'%beta')
+
+ENDSUBROUTINE testDefaults
+!
+!-------------------------------------------------------------------------------
 SUBROUTINE testInit()
 
   CALL testAndAcc%init(ce,pList)
@@ -92,6 +104,7 @@ SUBROUTINE testInit()
   ASSERT_EQ(testAndAcc%s,0,'%iter')
   ASSERT_EQ(testAndAcc%N,10000,'%N')
   ASSERT_EQ(testAndAcc%depth,10,'%depth')
+  ASSERT_EQ(testAndAcc%start,1,'%start')
   ASSERT_EQ(testAndAcc%beta,0.5_SRK,'%beta')
   ASSERT(ALLOCATED(testAndAcc%alpha),'%alpha not allocated')
   ASSERT_EQ(SIZE(testAndAcc%alpha,1),testAndAcc%depth+1,'%alpha wrong size')
@@ -106,9 +119,9 @@ SUBROUTINE testClear()
   ASSERT(.NOT.testAndAcc%isInit,'%isInit')
   ASSERT_EQ(testAndAcc%s,0,'%s')
   ASSERT_EQ(testAndAcc%N,-1,'%N')
-  ASSERT_EQ(testAndAcc%depth,-1,'%depth')
-  ASSERT_EQ(testAndAcc%start,0,'%start')
-  ASSERT_EQ(testAndAcc%beta,0.0_SRK,'%beta')
+  ASSERT_EQ(testAndAcc%depth,1,'%depth')
+  ASSERT_EQ(testAndAcc%start,1,'%start')
+  ASSERT_EQ(testAndAcc%beta,0.5_SRK,'%beta')
   ASSERT(.NOT.ALLOCATED(testAndAcc%x),'%x)')
   ASSERT(.NOT.ALLOCATED(testAndAcc%Gx),'%Gx)')
   ASSERT(.NOT.ALLOCATED(testAndAcc%r),'%r)')
