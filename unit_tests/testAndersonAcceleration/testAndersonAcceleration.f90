@@ -12,587 +12,409 @@ USE UnitTest
 USE IntrType
 USE ExceptionHandler
 USE ParameterLists
+USE FutilityComputingEnvironmentModule
 USE ParallelEnv
+USE AndersonAccelerationModule
 USE VectorTypes
-USE AndersonAccelerationTypes
 
 IMPLICIT NONE
 
-TYPE(ExceptionHandlerType),TARGET :: e
-TYPE(MPI_EnvType) :: mpiTestEnv
-TYPE(ParamType) :: pList, optList
+TYPE(FutilityComputingEnvironment),TARGET :: ce
+TYPE(ExceptionHandlerType),TARGET :: exceptHandler
+TYPE(ParamType) :: pList
 TYPE(AndersonAccelerationType) :: testAndAcc
+CLASS(VectorType),ALLOCATABLE :: mySol,exSol,inSol,tmpvec
+TYPE(ParamType)vecparams
+REAL(SRK) :: tmp1,tmp2
 
+ALLOCATE(RealVectorType :: mySol,exSol,inSol,tmpvec)
+CALL vecparams%add("VectorType->n",10000_SIK)
+CALL mySol%init(vecparams)
+CALL exSol%init(vecparams)
+CALL inSol%init(vecparams)
+CALL tmpvec%init(vecparams)
 
-!> set up default parameter list
-CALL optList%clear()
-CALL optList%add('AndersonAccelerationType->n',5_SIK)
-CALL optList%add('AndersonAccelerationType->nlocal',5_SIK)
-CALL optList%add('AndersonAccelerationType->depth',2_SIK)
-CALL optList%add('AndersonAccelerationType->beta',0.5_SRK)
+!Setup Anderson parameter list
+CALL pList%add('AndersonAccelerationType->N',10000_SIK)
+CALL pList%add('AndersonAccelerationType->depth',10_SIK)
+CALL pList%add('AndersonAccelerationType->beta',0.5_SRK)
+CALL pList%add('AndersonAccelerationType->start',1)
 
 !Configure exception handler for test
-CALL e%setStopOnError(.FALSE.)
-CALL e%setQuietMode(.TRUE.)
-CALL eParams%addSurrogate(e)
-CALL eAndersonAccelerationType%addSurrogate(e)
-CALL mpiTestEnv%init(PE_COMM_SELF)
+ce%exceptHandler => exceptHandler
+CALL ce%exceptHandler%setStopOnError(.FALSE.)
+CALL ce%exceptHandler%setQuietMode(.FALSE.)
 
 CREATE_TEST('Test Anderson Acceleration Solver')
 
-REGISTER_SUBTEST('testInit',testInit)
-REGISTER_SUBTEST('testStep',testStep)
-!REGISTER_SUBTEST('testReset',testReset)
-REGISTER_SUBTEST('testClear',testClear)
-REGISTER_SUBTEST('testStep beta=1',testStep_beta_1)
-!It appears anderson(0) doesn't work in trilinos which is too bad
-REGISTER_SUBTEST('testStep depth=0',testStep_depth_0)
+REGISTER_SUBTEST('Defaults',testDefaults)
+REGISTER_SUBTEST('testInit(Real)',testInit)
+REGISTER_SUBTEST('testClear(Real)',testClear)
+REGISTER_SUBTEST('testReset(Real)',testReset)
+REGISTER_SUBTEST('testStep(Real)',testStep)
+
+#ifdef FUTILITY_HAVE_PETSC
+!Reset everthing to test with different vector type
+!Setup Anderson parameter list
+CALL pList%clear()
+CALL pList%add('AndersonAccelerationType->N',10000_SIK)
+CALL pList%add('AndersonAccelerationType->depth',10_SIK)
+CALL pList%add('AndersonAccelerationType->beta',0.5_SRK)
+CALL pList%add('AndersonAccelerationType->start',1)
+CALL RANDOM_SEED()
+DEALLOCATE(mySol,exSol,inSol,tmpvec)
+ALLOCATE(PETScVectorType :: mySol,exSol,inSol,tmpvec)
+CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
+CALL vecparams%add('VectorType->nlocal',10000_SIK)
+CALL mySol%init(vecparams)
+CALL exSol%init(vecparams)
+CALL inSol%init(vecparams)
+CALL tmpvec%init(vecparams)
+
+REGISTER_SUBTEST('testInit(Distrib)',testInit)
+REGISTER_SUBTEST('testClear(Distrib)',testClear)
+REGISTER_SUBTEST('testReset(Distrib)',testReset)
+REGISTER_SUBTEST('testStep(Distrib)',testStep)
+#endif
+!!!TODO: When support for TrilinosVectors and NativeDistributed are added, add testing for them
 
 FINALIZE_TEST()
 
 CALL pList%clear()
-CALL optList%clear()
-
-CALL mpiTestEnv%finalize()
+CALL ce%clear()
 !
 !===============================================================================
 CONTAINS
 !
 !-------------------------------------------------------------------------------
+SUBROUTINE testDefaults()
+
+  ASSERT_EQ(testAndAcc%s,0,'%iter')
+  ASSERT_EQ(testAndAcc%depth,1,'%depth')
+  ASSERT_EQ(testAndAcc%start,1,'%start')
+  ASSERT_EQ(testAndAcc%beta,0.5_SRK,'%beta')
+
+ENDSUBROUTINE testDefaults
+!
+!-------------------------------------------------------------------------------
 SUBROUTINE testInit()
-  CALL testAndAcc%init(mpiTestEnv,optList)
+
+  CALL testAndAcc%init(ce,pList)
   ASSERT(testAndAcc%isInit,'%isInit')
-  ASSERT(testAndAcc%iter==0,'%iter')
-  ASSERT(testAndAcc%n==5,'%n')
-  ASSERT(testAndAcc%depth==2,'%depth')
-  ASSERT(testAndAcc%beta==0.5_SRK,'%beta')
-  ASSERT(ASSOCIATED(testAndAcc%MPIparallelEnv),'%MPIenv')
-#ifdef FUTILITY_HAVE_Trilinos_NOX
-  !Can't test this without trilinos
-  ASSERT(testAndAcc%X%isInit ,'%x')
-#endif
+  ASSERT_EQ(testAndAcc%s,0,'%iter')
+  ASSERT_EQ(testAndAcc%N,10000,'%N')
+  ASSERT_EQ(testAndAcc%depth,10,'%depth')
+  ASSERT_EQ(testAndAcc%start,1,'%start')
+  ASSERT_EQ(testAndAcc%beta,0.5_SRK,'%beta')
+  ASSERT(ALLOCATED(testAndAcc%alpha),'%alpha not allocated')
+  ASSERT_EQ(SIZE(testAndAcc%alpha,1),testAndAcc%depth+1,'%alpha wrong size')
+  ASSERT(testAndAcc%LS%isInit,'%Linear solver not initialized')
+
 ENDSUBROUTINE testInit
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE testStep()
-
-#ifdef FUTILITY_HAVE_Trilinos_NOX
-  INTEGER(SIK) :: i
-  REAL(SRK) :: tmp
-  !First call to step resets the solution
-  CALL testAndAcc%X%set(1.0_SRK)
-  CALL testAndAcc%step()
-  ASSERT(testAndAcc%iter==1,'%iter')
-
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    ASSERT(tmp==1.0_SRK,'%step(0)')
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.975_SRK)
-  CALL testAndAcc%X%set(2,1.473_SRK)
-  CALL testAndAcc%X%set(3,1.758_SRK)
-  CALL testAndAcc%X%set(4,4.189_SRK)
-  CALL testAndAcc%X%set(5,5.249_SRK)
-
-  CALL testAndAcc%step()
-
-  ! This one is easy, its just the average of the inputs and 1
-  CALL testAndAcc%X%get(1,tmp)
-  ASSERT(tmp==0.9875_SRK,'%step(1)')
-  CALL testAndAcc%X%get(2,tmp)
-  ASSERT(tmp==1.2365_SRK,'%step(1)')
-  CALL testAndAcc%X%get(3,tmp)
-  ASSERT(tmp==1.3790_SRK,'%step(1)')
-  CALL testAndAcc%X%get(4,tmp)
-  ASSERT(tmp==2.5945_SRK,'%step(1)')
-  CALL testAndAcc%X%get(5,tmp)
-  ASSERT(tmp==3.1245_SRK,'%step(1)')
-
-  CALL testAndAcc%X%set(1,0.980_SRK)
-  CALL testAndAcc%X%set(2,1.580_SRK)
-  CALL testAndAcc%X%set(3,2.012_SRK)
-  CALL testAndAcc%X%set(4,4.141_SRK)
-  CALL testAndAcc%X%set(5,5.198_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(2)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.987_SRK)
-  CALL testAndAcc%X%set(2,1.735_SRK)
-  CALL testAndAcc%X%set(3,2.374_SRK)
-  CALL testAndAcc%X%set(4,4.095_SRK)
-  CALL testAndAcc%X%set(5,5.125_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(3)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.992_SRK)
-  CALL testAndAcc%X%set(2,1.840_SRK)
-  CALL testAndAcc%X%set(3,2.629_SRK)
-  CALL testAndAcc%X%set(4,4.057_SRK)
-  CALL testAndAcc%X%set(5,5.074_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(4)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.995_SRK)
-  CALL testAndAcc%X%set(2,1.897_SRK)
-  CALL testAndAcc%X%set(3,2.754_SRK)
-  CALL testAndAcc%X%set(4,4.039_SRK)
-  CALL testAndAcc%X%set(5,5.049_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(5)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.998_SRK)
-  CALL testAndAcc%X%set(2,1.948_SRK)
-  CALL testAndAcc%X%set(3,2.876_SRK)
-  CALL testAndAcc%X%set(4,4.020_SRK)
-  CALL testAndAcc%X%set(5,5.025_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(6)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.999_SRK)
-  CALL testAndAcc%X%set(2,1.967_SRK)
-  CALL testAndAcc%X%set(3,2.930_SRK)
-  CALL testAndAcc%X%set(4,4.012_SRK)
-  CALL testAndAcc%X%set(5,5.014_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(7)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.999_SRK)
-  CALL testAndAcc%X%set(2,1.990_SRK)
-  CALL testAndAcc%X%set(3,2.979_SRK)
-  CALL testAndAcc%X%set(4,4.004_SRK)
-  CALL testAndAcc%X%set(5,5.005_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(8)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,1.993_SRK)
-  CALL testAndAcc%X%set(3,2.990_SRK)
-  CALL testAndAcc%X%set(4,4.002_SRK)
-  CALL testAndAcc%X%set(5,5.001_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(9)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,1.996_SRK)
-  CALL testAndAcc%X%set(3,2.988_SRK)
-  CALL testAndAcc%X%set(4,4.002_SRK)
-  CALL testAndAcc%X%set(5,5.001_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(10)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,2.995_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.001_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(11)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,1.998_SRK)
-  CALL testAndAcc%X%set(3,3.003_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,4.999_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(12)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(13)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(14)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(15)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(16)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(17)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(18)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(19)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(20)"
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    ASSERT(SOFTEQ(tmp,REAL(i,SRK),1.0E-6_SRK),'%step(20)')
-    FINFO() i, tmp-REAL(i,SRK)
-  ENDDO
-#endif
-ENDSUBROUTINE testStep
-!
-!-------------------------------------------------------------------------------
-SUBROUTINE testStep_beta_1()
-#ifdef FUTILITY_HAVE_Trilinos_NOX
-  INTEGER(SIK) :: i
-  REAL(SRK) :: tmp
-#endif
-
-  CALL optList%set('AndersonAccelerationType->beta',1.0_SRK)
-  CALL testAndAcc%init(mpiTestEnv,optList)
-#ifdef FUTILITY_HAVE_Trilinos_NOX
-  CALL testAndAcc%X%set(1.0_SRK)
-  CALL testAndAcc%step()
-
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    WRITE(*,*) i, tmp
-  ENDDO
-
-  CALL testAndAcc%X%set(1,0.975_SRK)
-  CALL testAndAcc%X%set(2,1.473_SRK)
-  CALL testAndAcc%X%set(3,1.758_SRK)
-  CALL testAndAcc%X%set(4,4.189_SRK)
-  CALL testAndAcc%X%set(5,5.249_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(1)"
-
-  CALL testAndAcc%X%set(1,0.980_SRK)
-  CALL testAndAcc%X%set(2,1.580_SRK)
-  CALL testAndAcc%X%set(3,2.012_SRK)
-  CALL testAndAcc%X%set(4,4.141_SRK)
-  CALL testAndAcc%X%set(5,5.198_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(2)"
-
-  CALL testAndAcc%X%set(1,0.987_SRK)
-  CALL testAndAcc%X%set(2,1.735_SRK)
-  CALL testAndAcc%X%set(3,2.374_SRK)
-  CALL testAndAcc%X%set(4,4.095_SRK)
-  CALL testAndAcc%X%set(5,5.125_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(3)"
-
-  CALL testAndAcc%X%set(1,0.992_SRK)
-  CALL testAndAcc%X%set(2,1.840_SRK)
-  CALL testAndAcc%X%set(3,2.629_SRK)
-  CALL testAndAcc%X%set(4,4.057_SRK)
-  CALL testAndAcc%X%set(5,5.074_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(4)"
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(5)"
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(6)"
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(7)"
-
-  CALL testAndAcc%X%set(1,1.000_SRK)
-  CALL testAndAcc%X%set(2,2.000_SRK)
-  CALL testAndAcc%X%set(3,3.000_SRK)
-  CALL testAndAcc%X%set(4,4.000_SRK)
-  CALL testAndAcc%X%set(5,5.000_SRK)
-
-  CALL testAndAcc%step()
-
-  DO i=1,5
-    CALL testAndAcc%X%get(i,tmp)
-    ASSERT(SOFTEQ(tmp,REAL(i,SRK),1.0E-6_SRK),'%step(20)')
-    FINFO() i, tmp-REAL(i,SRK)
-  ENDDO
-#endif
-  CALL testAndAcc%clear()
-ENDSUBROUTINE testStep_beta_1
-!
-!-------------------------------------------------------------------------------
-SUBROUTINE testStep_depth_0()
-#ifdef FUTILITY_HAVE_Trilinos_NOX
-  REAL(SRK) :: tmp
-#endif
-
-  CALL optList%set('AndersonAccelerationType->beta',0.5_SRK)
-  CALL optList%set('AndersonAccelerationType->depth',0_SIK)
-  CALL testAndAcc%init(mpiTestEnv,optList)
-#ifdef FUTILITY_HAVE_Trilinos_NOX
-  CALL testAndAcc%X%set(1.0_SRK)
-  CALL testAndAcc%step()
-
-  CALL testAndAcc%X%set(1,0.975_SRK)
-  CALL testAndAcc%X%set(2,1.473_SRK)
-  CALL testAndAcc%X%set(3,1.758_SRK)
-  CALL testAndAcc%X%set(4,4.189_SRK)
-  CALL testAndAcc%X%set(5,5.249_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(1)"
-  CALL testAndAcc%X%get(1,tmp)
-  ASSERT(SOFTEQ(tmp,0.9875_SRK,1.0E-12_SRK),'%step(1)')
-  CALL testAndAcc%X%get(2,tmp)
-  ASSERT(SOFTEQ(tmp,1.2365_SRK,1.0E-12_SRK),'%step(1)')
-  CALL testAndAcc%X%get(3,tmp)
-  ASSERT(SOFTEQ(tmp,1.3790_SRK,1.0E-12_SRK),'%step(1)')
-  CALL testAndAcc%X%get(4,tmp)
-  ASSERT(SOFTEQ(tmp,2.5945_SRK,1.0E-12_SRK),'%step(1)')
-  CALL testAndAcc%X%get(5,tmp)
-  ASSERT(SOFTEQ(tmp,3.1245_SRK,1.0E-12_SRK),'%step(1)')
-
-  CALL testAndAcc%X%set(1,0.980_SRK)
-  CALL testAndAcc%X%set(2,1.580_SRK)
-  CALL testAndAcc%X%set(3,2.012_SRK)
-  CALL testAndAcc%X%set(4,4.141_SRK)
-  CALL testAndAcc%X%set(5,5.198_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(2)"
-  CALL testAndAcc%X%get(1,tmp)
-  ASSERT(SOFTEQ(tmp,0.98375000_SRK,1.0E-12_SRK),'%step(2)')
-  CALL testAndAcc%X%get(2,tmp)
-  ASSERT(SOFTEQ(tmp,1.40825000_SRK,1.0E-12_SRK),'%step(2)')
-  CALL testAndAcc%X%get(3,tmp)
-  ASSERT(SOFTEQ(tmp,1.69550000_SRK,1.0E-12_SRK),'%step(2)')
-  CALL testAndAcc%X%get(4,tmp)
-  ASSERT(SOFTEQ(tmp,3.36775000_SRK,1.0E-12_SRK),'%step(2)')
-  CALL testAndAcc%X%get(5,tmp)
-  ASSERT(SOFTEQ(tmp,4.16125000_SRK,1.0E-12_SRK),'%step(2)')
-
-  CALL testAndAcc%X%set(1,0.987_SRK)
-  CALL testAndAcc%X%set(2,1.735_SRK)
-  CALL testAndAcc%X%set(3,2.374_SRK)
-  CALL testAndAcc%X%set(4,4.095_SRK)
-  CALL testAndAcc%X%set(5,5.125_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(3)"
-  CALL testAndAcc%X%get(1,tmp)
-  ASSERT(SOFTEQ(tmp,0.98537500_SRK,1.0E-12_SRK),'%step(3)')
-  CALL testAndAcc%X%get(2,tmp)
-  ASSERT(SOFTEQ(tmp,1.57162500_SRK,1.0E-12_SRK),'%step(3)')
-  CALL testAndAcc%X%get(3,tmp)
-  ASSERT(SOFTEQ(tmp,2.03475000_SRK,1.0E-12_SRK),'%step(3)')
-  CALL testAndAcc%X%get(4,tmp)
-  ASSERT(SOFTEQ(tmp,3.73137500_SRK,1.0E-12_SRK),'%step(3)')
-  CALL testAndAcc%X%get(5,tmp)
-  ASSERT(SOFTEQ(tmp,4.64312500_SRK,1.0E-12_SRK),'%step(3)')
-
-  CALL testAndAcc%X%set(1,0.992_SRK)
-  CALL testAndAcc%X%set(2,1.840_SRK)
-  CALL testAndAcc%X%set(3,2.629_SRK)
-  CALL testAndAcc%X%set(4,4.057_SRK)
-  CALL testAndAcc%X%set(5,5.074_SRK)
-
-  CALL testAndAcc%step()
-
-  WRITE(*,*) "step(4)"
-  CALL testAndAcc%X%get(1,tmp)
-  ASSERT(SOFTEQ(tmp,0.98868750_SRK,1.0E-12_SRK),'%step(4)')
-  CALL testAndAcc%X%get(2,tmp)
-  ASSERT(SOFTEQ(tmp,1.70581250_SRK,1.0E-12_SRK),'%step(4)')
-  CALL testAndAcc%X%get(3,tmp)
-  ASSERT(SOFTEQ(tmp,2.33187500_SRK,1.0E-12_SRK),'%step(4)')
-  CALL testAndAcc%X%get(4,tmp)
-  ASSERT(SOFTEQ(tmp,3.89418750_SRK,1.0E-12_SRK),'%step(4)')
-  CALL testAndAcc%X%get(5,tmp)
-  ASSERT(SOFTEQ(tmp,4.85856250_SRK,1.0E-12_SRK),'%step(4)')
-#endif
-  CALL testAndAcc%clear()
-ENDSUBROUTINE testStep_depth_0
-!
-!-------------------------------------------------------------------------------
 SUBROUTINE testClear()
+
   CALL testAndAcc%clear()
-  ASSERT(.NOT. testAndAcc%isInit,'%isInit')
-  ASSERT(.NOT. ASSOCIATED(testAndAcc%MPIparallelEnv),'%MPIenv')
-  ASSERT(.NOT. testAndAcc%OMPparallelEnv%isInit(),'%OMPenv')
-  ASSERT(testAndAcc%n==-1,'%n')
-  ASSERT(testAndAcc%depth==-1,'%depth')
-  ASSERT(testAndAcc%beta==0.0_SRK,'%beta')
-  IF(ASSOCIATED(testAndAcc%X)) THEN
-    ASSERT(.NOT. (testAndAcc%X%isInit) ,'%x')
-  ENDIF
+  ASSERT(.NOT.testAndAcc%isInit,'%isInit')
+  ASSERT_EQ(testAndAcc%s,0,'%s')
+  ASSERT_EQ(testAndAcc%N,-1,'%N')
+  ASSERT_EQ(testAndAcc%depth,1,'%depth')
+  ASSERT_EQ(testAndAcc%start,1,'%start')
+  ASSERT_EQ(testAndAcc%beta,0.5_SRK,'%beta')
+  ASSERT(.NOT.ALLOCATED(testAndAcc%x),'%x)')
+  ASSERT(.NOT.ALLOCATED(testAndAcc%Gx),'%Gx)')
+  ASSERT(.NOT.ALLOCATED(testAndAcc%r),'%r)')
+  ASSERT(.NOT.ALLOCATED(testAndAcc%alpha),'%alpha')
+  ASSERT(.NOT.testAndAcc%LS%isInit,'%LS')
+
 ENDSUBROUTINE testClear
 !
 !-------------------------------------------------------------------------------
+SUBROUTINE testReset()
+  INTEGER(SIK) :: i,j
+  LOGICAL(SBK) :: bool
+
+  !Init Anderson
+  CALL testAndAcc%init(ce,pList)
+
+  !Test initial set
+  COMPONENT_TEST('Initial set')
+
+  CALL mySol%set(1.0_SRK)
+  CALL testAndAcc%reset(mySol)
+
+  ASSERT(ALLOCATED(testAndAcc%x),'%x not allocated')
+  ASSERT_EQ(SIZE(testAndAcc%x),testAndAcc%depth+1,'%x wrong number of vectors')
+  ASSERT_EQ(testAndAcc%x(1)%n,testAndAcc%N,'%x wrong vector size')
+  ASSERT(ALLOCATED(testAndAcc%Gx),'%Gx not allocated')
+  ASSERT_EQ(SIZE(testAndAcc%Gx),testAndAcc%depth+1,'%Gx wrong number of vectors')
+  ASSERT_EQ(testAndAcc%Gx(1)%n,testAndAcc%N,'%Gx wrong vector size')
+  ASSERT(ALLOCATED(testAndAcc%r),'%r not allocated')
+  ASSERT_EQ(SIZE(testAndAcc%r),testAndAcc%depth+1,'%r wrong number of vectors')
+  ASSERT_EQ(testAndAcc%r(1)%n,testAndAcc%N,'%r wrong vector size')
+  bool=.TRUE.
+  DO i=1,mySol%n
+    CALL mySol%get(i,tmp1)
+    CALL testAndAcc%x(1)%get(i,tmp2)
+    IF(tmp1 /= tmp2) bool=.FALSE.
+  ENDDO
+  ASSERT(bool,'Anderson reset failed to set vector')
+
+  !Test subsequent reset
+  COMPONENT_TEST('Subsequent Reset')
+
+  CALL mySol%set(0.0_SRK)
+  testAndAcc%s=2_SIK
+  DO j=1,testAndAcc%depth
+    DO i=1,testAndAcc%depth
+      CALL testAndAcc%LS%A%set(i,j,2.0_SRK)
+    ENDDO
+    CALL testAndAcc%LS%b%set(j,2.0_SRK)
+  ENDDO
+  CALL testAndAcc%reset(mySol)
+
+  bool=.TRUE.
+  DO i=1,mySol%n
+    CALL mySol%get(i,tmp1)
+    CALL testAndAcc%x(1)%get(i,tmp2)
+    IF(tmp1 /= tmp2) bool=.FALSE.
+  ENDDO
+  ASSERT(bool,'Anderson reset failed to reset vector')
+
+  bool=.TRUE.
+  DO j=1,testAndAcc%depth
+    DO i=1,testAndAcc%depth
+      CALL testAndAcc%LS%A%get(i,j,tmp1)
+      IF(i == j) THEN
+        IF(tmp1 /= 1.0_SRK) bool=.FALSE.
+      ELSE
+        IF(tmp1 /= 0.0_SRK) bool=.FALSE.
+      ENDIF
+    ENDDO
+    CALL testAndAcc%LS%b%get(j,tmp1)
+    IF(tmp1 /= 0.0_SRK) bool=.FALSE.
+  ENDDO
+  ASSERT(bool,'Anderson reset failed to reset linear solver')
+  ASSERT_EQ(testAndAcc%s,0_SIK,'%s incorrect iteration count')
+
+  CALL testAndAcc%clear()
+
+ENDSUBROUTINE testReset
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testStep()
+  INTEGER(SIK) :: i
+  REAL(SRK) :: UnAccErr(10),AccErr(10),R(10000),rando,Norm
+
+  !Init Anderson
+  CALL testAndAcc%init(ce,pList)
+
+  !Exact chosen solution. Operator G will simply be taking a weighted average between
+  !the current iterate and the exact following a randomly generated "convergence rate".
+  !The solution vector will be randomly distributed E (80,120), with the initial guess
+  !being somewhat similar.
+  DO i=1,exSol%n
+    CALL RANDOM_NUMBER(rando)
+    CALL exSol%set(i,40.0_SRK*rando+80.0_SRK)
+    CALL RANDOM_NUMBER(rando)
+    CALL inSol%set(i,40.0_SRK*rando+80.0_SRK)
+  ENDDO
+  CALL BLAS_copy(inSol,mySol)
+  Norm=1.0_SRK/BLAS_nrm2(exSol)
+
+  !Generate a fast element wise "convergence rate"
+  DO i=1,SIZE(R)
+    CALL RANDOM_NUMBER(R(i))
+    R(i)=0.4_SRK+0.2_SRK*(R(i)-0.5_SRK)
+  ENDDO
+
+  !Get relative norms of the error between iterates and exact for unaccelerated problem
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    UnAccErr(i)=BLAS_nrm2(tmpvec)*Norm
+  ENDDO
+
+  !Reset mySol to solve with Anderson now
+  CALL BLAS_copy(inSol,mySol)
+
+  !Set Anderson solver
+  CALL testAndAcc%reset(mySol)
+
+  !Get relative norms of the error between iterates and exact for accelerated problem
+  !and compare to ensure that anderson is beating nonaccelerated
+  COMPONENT_TEST('Fast depth=10 beta=0.5')
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow')
+  ENDDO
+
+  COMPONENT_TEST('Fast depth=2 beta=0.8')
+  !Reset Anderson and change options
+  testAndAcc%depth=2_SIK
+  testAndAcc%beta=0.8_SRK
+  CALL BLAS_copy(inSol,mySol)
+  CALL testAndAcc%reset(mySol)
+  !Get relative norms of the error between iterates and exact for accelerated problem
+  !and compare to ensure that anderson is beating nonaccelerated
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow')
+  ENDDO
+
+  !Generate a slow element wise "convergence rate"
+  DO i=1,SIZE(R)
+    CALL RANDOM_NUMBER(R(i))
+    R(i)=0.899999_SRK+0.2_SRK*(R(i)-0.5_SRK)
+  ENDDO
+
+  !Get relative norms of the error between iterates and exact for unaccelerated problem
+  CALL BLAS_copy(inSol,mySol)
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    UnAccErr(i)=BLAS_nrm2(tmpvec)*Norm
+  ENDDO
+
+  !Reset mySol to solve with Anderson now
+  CALL BLAS_copy(inSol,mySol)
+
+  COMPONENT_TEST('Slow depth=2 beta=0.8')
+  !Reset Anderson
+  CALL testAndAcc%reset(mySol)
+  !Get relative norms of the error between iterates and exact for accelerated problem
+  !and compare to ensure that anderson is beating nonaccelerated
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow')
+  ENDDO
+
+  COMPONENT_TEST('Slow depth=1 beta=0.2')
+  !Reset Anderson and change options
+  testAndAcc%depth=1_SIK
+  testAndAcc%beta=0.2_SRK
+  CALL BLAS_copy(inSol,mySol)
+  CALL testAndAcc%reset(mySol)
+  !Get relative norms of the error between iterates and exact for accelerated problem
+  !and compare to ensure that anderson is beating nonaccelerated
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow')
+  ENDDO
+
+  COMPONENT_TEST('Slow depth=10 beta=1.0')
+  !Reset Anderson and change options
+  testAndAcc%depth=10_SIK
+  testAndAcc%beta=1.0_SRK
+  CALL BLAS_copy(inSol,mySol)
+  CALL testAndAcc%reset(mySol)
+  !Get relative norms of the error between iterates and exact for accelerated problem
+  !and compare to ensure that anderson is beating nonaccelerated
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow')
+  ENDDO
+
+  !Esure rate of convergence is correct:
+  ASSERT_APPROXEQ(AccErr(10)/AccErr(9),0.90109849144468168_SRK,'Wrong Anderson Conv. Rate')
+
+  COMPONENT_TEST('Slow depth=0 beta=0.5')
+  !Clear and reinilialize Anderson (purposeful complete reinitialization for testing purposes)
+  CALL testAndAcc%clear()
+  CALL pList%set('AndersonAccelerationType->depth',0_SIK)
+  CALL pList%set('AndersonAccelerationType->beta',0.5_SRK)
+  CALL testAndAcc%init(ce,pList)
+  CALL BLAS_copy(inSol,mySol)
+  CALL testAndAcc%reset(mySol)
+  !Get relative norms of the error between iterates and exact for accelerated problem
+  !and compare to ensure that anderson is beating nonaccelerated
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    ASSERT_GT(AccErr(i),UnAccErr(i),'Anderson too Fast')
+    IF(i > 1) ASSERT_LT(AccErr(i),AccErr(i-1),'Anderson too Slow')
+  ENDDO
+
+  COMPONENT_TEST('Slow depth=1 beta=1.0 Start=4')
+  !Clear and reinilialize Anderson
+  CALL testAndAcc%clear()
+  CALL pList%set('AndersonAccelerationType->depth',1_SIK)
+  CALL pList%set('AndersonAccelerationType->beta',1.0_SRK)
+  CALL pList%set('AndersonAccelerationType->start',4_SIK)
+  CALL testAndAcc%init(ce,pList)
+  CALL BLAS_copy(inSol,mySol)
+  CALL testAndAcc%reset(mySol)
+  DO i=1,10
+    CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i <= testAndAcc%start) ASSERT_APPROXEQ(AccErr(i),UnAccErr(i),'Improper Delayed Start')
+    IF(i > testAndAcc%start) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow'//CHAR(i))
+  ENDDO
+
+  COMPONENT_TEST('Slow depth=1 beta=1.0 Failure Rescue')
+  !Reset Anderson, this time a duplicate iterate will be handed in
+  testAndAcc%start=1
+  CALL BLAS_copy(inSol,mySol)
+  CALL testAndAcc%reset(mySol)
+  DO i=1,10
+    IF(i /= 6) CALL Weight_Avg(mySol,exSol,R)
+    CALL testAndAcc%step(mySol)
+    CALL BLAS_copy(mySol,tmpvec)
+    CALL BLAS_axpy(exSol,tmpvec,-1.0_SRK)
+    AccErr(i)=BLAS_nrm2(tmpvec)*Norm
+    IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow'//CHAR(i))
+  ENDDO
+
+  !Final clear
+  CALL testAndAcc%clear()
+
+ENDSUBROUTINE testStep
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE Weight_Avg(x1,x2,R)
+  CLASS(VectorType),INTENT(INOUT) :: x1
+  CLASS(VectorType),INTENT(INOUT) :: x2
+  REAL(SRK),INTENT(IN) :: R(:)
+
+  INTEGER(SIK) :: i
+  REAL(SRK) :: tmp1,tmp2
+
+  DO i=1,x1%n
+    CALL x1%get(i,tmp1)
+    CALL x2%get(i,tmp2)
+    tmp1=R(i)*tmp1+(1_SRK-R(i))*tmp2
+    CALL x1%set(i,tmp1)
+  ENDDO
+
+ENDSUBROUTINE
 !
 ENDPROGRAM testAndersonAcceleration
