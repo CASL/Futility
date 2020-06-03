@@ -7,8 +7,10 @@
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module that encompasses the native implementation of
-!>        Anderson Acceleration in Futility.
-MODULE AndersonAccelerationTypes
+!>        Anderson Acceleration in Futility. This implementation involves the
+!>        direct solution for the Anderson coefficients as opposed to solving
+!>        through QR decomposition (or some other linear regression method).
+MODULE AndersonAccelerationModule
 #include "Futility_DBC.h"
 USE Futility_DBC
 USE IntrType
@@ -57,29 +59,28 @@ TYPE :: AndersonAccelerationType
 !
 !List of Type Bound Procedures
   CONTAINS
-    !> @copybrief AndersonAccelerationType::init_AndersonAccelerationType
-    !> @copydetails AndersonAccelerationType::init_AndersonAccelerationType
+    !> @copybrief AndersonAccelerationModule::init_AndersonAccelerationType
+    !> @copydetails AndersonAccelerationModule::init_AndersonAccelerationType
     PROCEDURE,PASS :: init => init_AndersonAccelerationType
-    !> @copybrief AndersonAccelerationType::clear_AndersonAccelerationType
-    !> @copydetails AndersonAccelerationType::clear_AndersonAccelerationType
+    !> @copybrief AndersonAccelerationModule::clear_AndersonAccelerationType
+    !> @copydetails AndersonAccelerationModule::clear_AndersonAccelerationType
     PROCEDURE,PASS :: clear => clear_AndersonAccelerationType
-    !> @copybrief AndersonAccelerationType::step_AndersonAccelerationType
-    !> @copydetails AndersonAccelerationType::step_AndersonAccelerationType
+    !> @copybrief AndersonAccelerationModule::step_AndersonAccelerationType
+    !> @copydetails AndersonAccelerationModule::step_AndersonAccelerationType
     PROCEDURE,PASS :: step => step_AndersonAccelerationType
-    !> @copybrief AndersonAccelerationType::reset_AndersonAccelerationType
-    !> @copydetails AndersonAccelerationType::reset_AndersonAccelerationType
+    !> @copybrief AndersonAccelerationModule::reset_AndersonAccelerationType
+    !> @copydetails AndersonAccelerationModule::reset_AndersonAccelerationType
     PROCEDURE,PASS :: reset => reset_AndersonAccelerationType
 ENDTYPE AndersonAccelerationType
 
 !> Name of module
-CHARACTER(LEN=*),PARAMETER :: modName='AndersonAccelerationTypes'
+CHARACTER(LEN=*),PARAMETER :: modName='AndersonAccelerationModules'
 !
 !===============================================================================
 CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Anderson Acceleration Type with an input parameter list
-!> @param pList the parameter list
 !> @param solver The Anderson Acceleration solver to act on
 !> @param Params The Anderson options parameter list
 !> @param ce The computing environment to use for the calculation
@@ -97,6 +98,7 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   REQUIRE(Params%has('AndersonAccelerationType->depth'))
   REQUIRE(Params%has('AndersonAccelerationType->beta'))
   REQUIRE(Params%has('AndersonAccelerationType->start'))
+  REQUIRE(.NOT.solver%isInit)
 
   !Pull Data from Parameter List
   CALL Params%get('AndersonAccelerationType->n',solver%n)
@@ -104,57 +106,52 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   CALL Params%get('AndersonAccelerationType->beta',solver%beta)
   CALL Params%get('AndersonAccelerationType->start',solver%start)
 
-  IF(.NOT. solver%isInit) THEN
-    IF(solver%n < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
-        '::'//myName//' - Number of unkowns (n) must be greater than 0!')
+  IF(solver%n < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+      '::'//myName//' - Number of unkowns (n) must be greater than 0!')
 
-    IF(solver%depth < 0) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
-        '::'//myName//' - Anderson depth must be greater than or equal to 0!')
+  IF(solver%depth < 0) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+      '::'//myName//' - Anderson depth must be greater than or equal to 0!')
 
-    IF(solver%start < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
-        '::'//myName//' - Anderson starting point must be greater than 1!')
+  IF(solver%start < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+      '::'//myName//' - Anderson starting point must be greater than 1!')
 
-    IF(solver%beta <= 0.0_SRK .OR. solver%beta > 1.0_SRK) THEN
-      CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
-          '::'//myName//' - Anderson mixing parameter must be between 0.0 and 1.0!')
-    ENDIF
-
-    !Setup linear solver
-    IF(solver%depth > 1) THEN
-      CALL LSparams%add('LinearSolverType->TPLType',NATIVE)
-      CALL LSparams%add('LinearSolverType->solverMethod',GE)
-      CALL LSparams%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
-      CALL LSparams%add('LinearSolverType->timerName','AndersonTimer')
-      CALL LSparams%add('LinearSolverType->numberOMP',1_SNK)
-      CALL LSparams%add('LinearSolverType->matType',DENSESQUARE)
-      CALL LSparams%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
-      CALL LSparams%add('LinearSolverType->A->MatrixType->n',solver%depth)
-      CALL LSparams%add('LinearSolverType->x->VectorType->n',solver%depth)
-      CALL LSparams%add('LinearSolverType->b->VectorType->n',solver%depth)
-      CALL solver%LS%init(LSparams)
-      DO j=1,solver%depth
-        DO i=j,solver%depth
-          IF(i == j) THEN
-            CALL solver%LS%A%set(i,j,1.0_SRK)
-          ELSE
-            CALL solver%LS%A%set(i,j,0.0_SRK)
-          ENDIF
-        ENDDO
-        CALL solver%LS%b%set(j,0.0_SRK)
-      ENDDO
-    ENDIF
-
-    !Allocate/create member arrays and vectors that can be done now and associate pointers
-    m=solver%depth+1
-    ALLOCATE(solver%alpha(m))
-    solver%alpha(:)=0.0_SRK
-    solver%s=0
-    solver%ce => ce
-    solver%isInit=.TRUE.
-  ELSE
-    CALL ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-        '::'//myName//' - AndersonAccelerationType already initialized')
+  IF(solver%beta <= 0.0_SRK .OR. solver%beta > 1.0_SRK) THEN
+    CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
+        '::'//myName//' - Anderson mixing parameter must be between 0.0 and 1.0!')
   ENDIF
+
+  !Setup linear solver
+  IF(solver%depth > 1) THEN
+    CALL LSparams%add('LinearSolverType->TPLType',NATIVE)
+    CALL LSparams%add('LinearSolverType->solverMethod',GE)
+    CALL LSparams%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
+    CALL LSparams%add('LinearSolverType->timerName','AndersonTimer')
+    CALL LSparams%add('LinearSolverType->numberOMP',1_SNK)
+    CALL LSparams%add('LinearSolverType->matType',DENSESQUARE)
+    CALL LSparams%add('LinearSolverType->A->MatrixType->isSym',.TRUE.)
+    CALL LSparams%add('LinearSolverType->A->MatrixType->n',solver%depth)
+    CALL LSparams%add('LinearSolverType->x->VectorType->n',solver%depth)
+    CALL LSparams%add('LinearSolverType->b->VectorType->n',solver%depth)
+    CALL solver%LS%init(LSparams)
+    DO j=1,solver%depth
+      DO i=j,solver%depth
+        IF(i == j) THEN
+          CALL solver%LS%A%set(i,j,1.0_SRK)
+        ELSE
+          CALL solver%LS%A%set(i,j,0.0_SRK)
+        ENDIF
+      ENDDO
+      CALL solver%LS%b%set(j,0.0_SRK)
+    ENDDO
+  ENDIF
+
+  !Allocate/create member arrays and vectors that can be done now and associate pointers
+  m=solver%depth+1
+  ALLOCATE(solver%alpha(m))
+  solver%alpha(:)=0.0_SRK
+  solver%s=0
+  solver%ce => ce
+  solver%isInit=.TRUE.
 
 ENDSUBROUTINE init_AndersonAccelerationType
 !
@@ -311,8 +308,10 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
 
       !!!TODO Once missing BLAS interfaces have been added for the following vector types
       !do away with this error catch to allow use of these with Anderson Acceleration.
+
+      SELECT TYPE(x)
 #ifdef HAVE_MPI
-      SELECT TYPE(x);TYPE IS(NativeDistributedVectorType)
+      TYPE IS(NativeDistributedVectorType)
         CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
             '::'//myName//' - Input vector type not supported!')
 #endif
@@ -320,8 +319,8 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
       TYPE IS(TrilinosVectorType)
         CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
             '::'//myName//' - Input vector type not supported!')
-      ENDSELECT
 #endif
+      ENDSELECT
 
       CALL VectorResembleAlloc(solver%x,x,solver%depth+1)
       CALL VectorResembleAlloc(solver%Gx,x,solver%depth+1)
@@ -355,4 +354,4 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
 
 ENDSUBROUTINE reset_AndersonAccelerationType
 !
-ENDMODULE AndersonAccelerationTypes
+ENDMODULE AndersonAccelerationModule

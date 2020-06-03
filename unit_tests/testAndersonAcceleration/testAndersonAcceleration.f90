@@ -14,7 +14,7 @@ USE ExceptionHandler
 USE ParameterLists
 USE FutilityComputingEnvironmentModule
 USE ParallelEnv
-USE AndersonAccelerationTypes
+USE AndersonAccelerationModule
 USE VectorTypes
 
 IMPLICIT NONE
