@@ -311,13 +311,17 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
 
       !!!TODO Once missing BLAS interfaces have been added for the following vector types
       !do away with this error catch to allow use of these with Anderson Acceleration.
+#ifdef HAVE_MPI
       SELECT TYPE(x);TYPE IS(NativeDistributedVectorType)
         CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
             '::'//myName//' - Input vector type not supported!')
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
       TYPE IS(TrilinosVectorType)
         CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
             '::'//myName//' - Input vector type not supported!')
       ENDSELECT
+#endif
 
       CALL VectorResembleAlloc(solver%x,x,solver%depth+1)
       CALL VectorResembleAlloc(solver%Gx,x,solver%depth+1)
