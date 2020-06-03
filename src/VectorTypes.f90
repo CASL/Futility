@@ -380,12 +380,11 @@ ENDSUBROUTINE VectorResemble
 !> vector
 !>
 SUBROUTINE VectorResembleAllocScal(dest, source, inparams)
-  CHARACTER(LEN=*),PARAMETER :: myName="VectorResembleAllocArray"
   CLASS(VectorType),ALLOCATABLE,INTENT(INOUT) :: dest
   CLASS(VectorType),INTENT(IN) :: source
   CLASS(ParamType),INTENT(INOUT),OPTIONAL :: inparams
 
-  INTEGER(SIK) :: i
+  CHARACTER(LEN=*),PARAMETER :: myName="VectorResembleAllocScal"
   TYPE(ParamType) :: params
 
   IF(.NOT. source%isInit) THEN
@@ -455,12 +454,12 @@ ENDSUBROUTINE VectorResembleAllocScal
 !> @param nvec length to allocate array of vectors to
 !>
 SUBROUTINE VectorResembleAllocArray(dest, source, nvec, inparams)
-  CHARACTER(LEN=*),PARAMETER :: myName="VectorResembleAllocArray"
   CLASS(VectorType),ALLOCATABLE,INTENT(INOUT) :: dest(:)
   CLASS(VectorType),INTENT(IN) :: source
   INTEGER(SIK),INTENT(IN) :: nvec
   CLASS(ParamType),INTENT(INOUT),OPTIONAL :: inparams
 
+  CHARACTER(LEN=*),PARAMETER :: myName="VectorResembleAllocArray"
   INTEGER(SIK) :: i
   TYPE(ParamType) :: params
 
