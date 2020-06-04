@@ -16,6 +16,7 @@ USE FutilityComputingEnvironmentModule
 USE ParallelEnv
 USE AndersonAccelerationModule
 USE VectorTypes
+USE StochasticSampling
 
 IMPLICIT NONE
 
@@ -26,6 +27,7 @@ TYPE(AndersonAccelerationType) :: testAndAcc
 CLASS(VectorType),ALLOCATABLE :: mySol,exSol,inSol,tmpvec
 TYPE(ParamType)vecparams
 REAL(SRK) :: tmp1,tmp2
+TYPE(StochasticSamplingType) :: NativeRNG
 
 ALLOCATE(RealVectorType :: mySol,exSol,inSol,tmpvec)
 CALL vecparams%add("VectorType->n",10000_SIK)
@@ -47,6 +49,7 @@ CALL ce%exceptHandler%setQuietMode(.FALSE.)
 
 CREATE_TEST('Test Anderson Acceleration Solver')
 
+CALL NativeRNG%init(RNG_MCNP_STD)
 REGISTER_SUBTEST('Defaults',testDefaults)
 REGISTER_SUBTEST('testInit(Real)',testInit)
 REGISTER_SUBTEST('testClear(Real)',testClear)
@@ -61,7 +64,8 @@ CALL pList%add('AndersonAccelerationType->N',10000_SIK)
 CALL pList%add('AndersonAccelerationType->depth',10_SIK)
 CALL pList%add('AndersonAccelerationType->beta',0.5_SRK)
 CALL pList%add('AndersonAccelerationType->start',1)
-CALL RANDOM_SEED()
+CALL NativeRNG%clear()
+CALL NativeRNG%init(RNG_MCNP_STD)
 DEALLOCATE(mySol,exSol,inSol,tmpvec)
 ALLOCATE(PETScVectorType :: mySol,exSol,inSol,tmpvec)
 CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
@@ -215,9 +219,9 @@ SUBROUTINE testStep()
   !The solution vector will be randomly distributed E (80,120), with the initial guess
   !being somewhat similar.
   DO i=1,exSol%n
-    CALL RANDOM_NUMBER(rando)
+    rando=NativeRNG%rng()
     CALL exSol%set(i,40.0_SRK*rando+80.0_SRK)
-    CALL RANDOM_NUMBER(rando)
+    rando=NativeRNG%rng()
     CALL inSol%set(i,40.0_SRK*rando+80.0_SRK)
   ENDDO
   CALL BLAS_copy(inSol,mySol)
@@ -225,7 +229,7 @@ SUBROUTINE testStep()
 
   !Generate a fast element wise "convergence rate"
   DO i=1,SIZE(R)
-    CALL RANDOM_NUMBER(R(i))
+    R(i)=NativeRNG%rng()
     R(i)=0.4_SRK+0.2_SRK*(R(i)-0.5_SRK)
   ENDDO
 
@@ -274,7 +278,7 @@ SUBROUTINE testStep()
 
   !Generate a slow element wise "convergence rate"
   DO i=1,SIZE(R)
-    CALL RANDOM_NUMBER(R(i))
+    R(i)=NativeRNG%rng()
     R(i)=0.899999_SRK+0.2_SRK*(R(i)-0.5_SRK)
   ENDDO
 
@@ -338,8 +342,10 @@ SUBROUTINE testStep()
     IF(i > 1) ASSERT_LT(AccErr(i),UnAccErr(i),'Anderson too Slow')
   ENDDO
 
-  !Esure rate of convergence is correct:
-  ASSERT_APPROXEQ(AccErr(10)/AccErr(9),0.90109849144468168_SRK,'Wrong Anderson Conv. Rate')
+  !Ensure rate of convergence is correct:
+  !The rate here will need to be updated if any change is made to the Futility Stochastic
+  !Sampling random number generator.       this number:
+  ASSERT_APPROXEQ(AccErr(10)/AccErr(9),0.88883407949028004_SRK,'Wrong Anderson Conv. Rate')
 
   COMPONENT_TEST('Slow depth=0 beta=0.5')
   !Clear and reinilialize Anderson (purposeful complete reinitialization for testing purposes)
