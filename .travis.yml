@@ -8,12 +8,14 @@ before_install:
  - docker pull mbairdphys/vera_tpls
 
 script:
- - docker run -v $PWD:/mnt/Futility mbairdphys/vera_tpls /bin/bash -c "cmake --version; mkdir /build && cd /build && cmake -DFutility_ENABLE_DBC:BOOL=ON /mnt/Futility && make -j2 |& tee /mnt/Futility/make.out && ctest -j2"
+ - docker run -a STDOUT -a STDERR mbairdphys/vera_tpls /bin/bash -c "curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python get-pip.py && pip install pandas"
+ - docker commit $(docker ps -q --last 1) vera_tpls_with_python_packages
+ - docker run -v $PWD:/mnt/Futility vera_tpls_with_python_packages /bin/bash -c "cmake --version; mkdir /build && cd /build && cmake -DFutility_ENABLE_DBC:BOOL=ON /mnt/Futility && make -j2 |& tee /mnt/Futility/make.out && ctest -j2"
  - ls
  - grep -v '^\(mpif\.h\)' make.out | grep -i -B 4 'unused \(parameter\|\(PRIVATE module \)*variable\)' | grep -A 4 '\.f90' |& tee warnings.out
  - (exit `grep -c '\.f90' warnings.out`)
  - git clone https://github.com/CASL/Trilinos.git
- - docker run -v $PWD:/mnt/Futility mbairdphys/vera_tpls /bin/bash -c "mkdir /build && cd /build && /bin/bash /mnt/Futility/build_scripts/build_on_docker.sh -DFutility_ENABLE_DBC:BOOL=ON -DCMAKE_C_FLAGS='-w' -DCMAKE_CXX_FLAGS='-w' -DTpetra_INST_INT_INT=OFF /mnt/Futility -DFutility_ENABLE_Stratimikos=OFF && make -j2 && ctest -j2"
+ - docker run -v $PWD:/mnt/Futility vera_tpls_with_python_packages /bin/bash -c "mkdir /build && cd /build && /bin/bash /mnt/Futility/build_scripts/build_on_docker.sh -DFutility_ENABLE_DBC:BOOL=ON -DCMAKE_C_FLAGS='-w' -DCMAKE_CXX_FLAGS='-w' -DTpetra_INST_INT_INT=OFF /mnt/Futility -DFutility_ENABLE_Stratimikos=OFF && make -j2 && ctest -j2"
 
 branches:
   only:
