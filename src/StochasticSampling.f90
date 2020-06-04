@@ -22,7 +22,7 @@
 !>   INTEGER(SIK) :: randint
 !>   REAL(SDK) :: randvar
 !>
-!>   CALL myRNG%init(5_SLK**19)
+!>   CALL myRNG%init(RNG_MCNP_STD,SEED0=5_SLK**19)
 !>   randvar=myRNG%rng()
 !>   randvar=myRNG%uniform(-1.0,1.0)
 !>   randvar=myRNG%exponential(0.75)
