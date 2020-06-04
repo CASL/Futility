@@ -3541,7 +3541,7 @@ SUBROUTINE testVectorFactory()
   ASSERT(other_vec_p_alloc_array(3)%isInit,"Cloned vector not initialized")
   ASSERT(other_vec_p_alloc_array(4)%isInit,"Cloned vector not initialized")
   ASSERT_EQ(other_vec_p_alloc_array(1)%n,vec_p_alloc%n,"Cloned vector set %n")
-  SELECTTYPE(other_vec_p_alloc_array(1))
+  SELECTTYPE(vec => other_vec_p_alloc_array(1))
   TYPE IS(RealVectorType)
     ASSERT(.TRUE.,"Resemble vector type")
   CLASS DEFAULT
