@@ -97,6 +97,7 @@ PRIVATE
 PUBLIC :: eVectorType
 PUBLIC :: VectorFactory
 PUBLIC :: VectorResemble
+PUBLIC :: VectorResembleAlloc
 PUBLIC :: VectorType
 PUBLIC :: NativeVectorType
 PUBLIC :: DistributedVectorType
@@ -125,6 +126,16 @@ PUBLIC :: BLAS_iamin
 PUBLIC :: BLAS_nrm2
 PUBLIC :: BLAS_scal
 PUBLIC :: BLAS_swap
+
+!> @brief Allows for copying of an input allocatable VectorType structure/size
+INTERFACE VectorResembleAlloc
+  !> @copybrief VectorTypes::VectorResembleAllocArray
+  !> @copydetails VectorTypes::VectorResembleAllocArray
+  MODULE PROCEDURE VectorResembleAllocArray
+  !> @copybrief VectorTypes::VectorResembleAllocScal
+  !> @copydetails VectorTypes::VectorResembleAllocScal
+  MODULE PROCEDURE VectorResembleAllocScal
+ENDINTERFACE VectorResembleAlloc
 
 !> @brief Adds to the @ref BLAS1::BLAS_asum "BLAS_asum" interface so that
 !> the vector types defined in this module are also supported.
@@ -285,22 +296,22 @@ SUBROUTINE VectorFactory(vector, params)
 ENDSUBROUTINE VectorFactory
 !
 !-------------------------------------------------------------------------------
-!> @brief Create a new vector of compatible size and type to the input vector
+!> @brief Create a new vector of compatible size and type to the input vector pointer and return a pointer
 !>
-!> @param dest the destination VectorType pointer to allocate and construct.
+!> @param dest Pointer to the destination VectorType to allocate and construct.
 !> This should be NULL
-!> @param source the vector type to use in determining the type and parameters
+!> @param source Pointer to source vector type to use in determining the type and parameters
 !> of the dest vector
 !> @param params the parameters to use in overriding settings from the source
 !> vector
 !>
 !> For now, the source vector shall be initialized, though in the future it
-!> might be nice to support uninitialized vectors.
-!> Unlike the corresponding routine for MatrixTypes, this routine will attempt
-!> to adopt parameters from the source vector to initialize the dest vector.
+!> might be nice to support uninitialized vectors. Unlike the corresponding routine for MatrixTypes,
+!> this routine will attempt to adopt parameters from the source vector to initialize the dest vector.
 !> This is only done for required parameters that are not provided in the passed
 !> parameter list. Providing the parameters on the parameter list will override
-!> the corresponding parameters from the source matrix.
+!> the corresponding parameters from the source matrix. This behavior will be consistent for all
+!> VectorResemble routines
 SUBROUTINE VectorResemble(dest, source, params)
   CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
   CLASS(VectorType),POINTER,INTENT(INOUT) :: dest
@@ -366,6 +377,156 @@ SUBROUTINE VectorResemble(dest, source, params)
 
   CALL params%clear()
 ENDSUBROUTINE VectorResemble
+!
+!-------------------------------------------------------------------------------
+!> @brief Create a new vector of compatible size and type to the input vector
+!>
+!> @param dest the destination VectorType array to allocate and initialize.
+!> @param source the vector type to use in determining the type and parameters
+!> of the dest vector
+!> @param inparams the parameters to use in overriding settings from the source
+!> vector
+!>
+SUBROUTINE VectorResembleAllocScal(dest, source, inparams)
+  CLASS(VectorType),ALLOCATABLE,INTENT(INOUT) :: dest
+  CLASS(VectorType),INTENT(IN) :: source
+  CLASS(ParamType),INTENT(INOUT),OPTIONAL :: inparams
+
+  CHARACTER(LEN=*),PARAMETER :: myName="VectorResembleAllocScal"
+  TYPE(ParamType) :: params
+
+  IF(.NOT. source%isInit) THEN
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Source vector is not initialized")
+  ENDIF
+
+  IF(ALLOCATED(dest)) THEN
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Destination vector is already allocated")
+    RETURN
+  ENDIF
+
+  IF(PRESENT(inparams)) params=inparams
+  IF(.NOT. params%has("VectorType->n")) THEN
+    CALL params%add("VectorType->n",source%n)
+  ENDIF
+  SELECT TYPE(source)
+  CLASS IS(DistributedVectorType)
+    IF(.NOT. params%has("VectorType->nlocal")) THEN
+      CALL params%add("VectorType->nlocal",source%nlocal)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    IF(.NOT. params%has("VectorType->chunkSize")) THEN
+      CALL params%add("VectorType->chunkSize",source%chunkSize)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
+#endif
+  ENDSELECT
+
+  SELECT TYPE(source)
+  TYPE IS(RealVectorType)
+    ALLOCATE(RealVectorType :: dest)
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    ALLOCATE(NativeDistributedVectorType :: dest)
+#endif
+#ifdef FUTILITY_HAVE_PETSC
+  TYPE IS(PETScVectorType)
+    ALLOCATE(PETScVectorType :: dest)
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+  TYPE IS(TrilinosVectorType)
+    ALLOCATE(TrilinosVectorType :: dest)
+#endif
+  ENDSELECT
+  CALL dest%init(params)
+
+  IF(PRESENT(inparams)) CALL inparams%clear()
+
+ENDSUBROUTINE VectorResembleAllocScal
+!
+!-------------------------------------------------------------------------------
+!> @brief Create a new vector of compatible size and type to the input vector
+!>
+!> @param dest the destination VectorType array to allocate and initialize.
+!> @param source the vector type to use in determining the type and parameters
+!> of the dest vector
+!> @param inparams the parameters to use in overriding settings from the source
+!> vector
+!> @param nvec length to allocate array of vectors to
+!>
+SUBROUTINE VectorResembleAllocArray(dest, source, nvec, inparams)
+  CLASS(VectorType),ALLOCATABLE,INTENT(INOUT) :: dest(:)
+  CLASS(VectorType),INTENT(IN) :: source
+  INTEGER(SIK),INTENT(IN) :: nvec
+  CLASS(ParamType),INTENT(INOUT),OPTIONAL :: inparams
+
+  CHARACTER(LEN=*),PARAMETER :: myName="VectorResembleAllocArray"
+  INTEGER(SIK) :: i
+  TYPE(ParamType) :: params
+
+  IF(.NOT. source%isInit) THEN
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Source vector is not initialized")
+  ENDIF
+
+  IF(ALLOCATED(dest)) THEN
+    CALL eVectorType%raiseError(modName//"::"//myName//" - "// &
+        "Destination vector is already allocated")
+    RETURN
+  ENDIF
+
+  IF(PRESENT(inparams)) params=inparams
+  IF(.NOT. params%has("VectorType->n")) THEN
+    CALL params%add("VectorType->n",source%n)
+  ENDIF
+  SELECT TYPE(source)
+  CLASS IS(DistributedVectorType)
+    IF(.NOT. params%has("VectorType->nlocal")) THEN
+      CALL params%add("VectorType->nlocal",source%nlocal)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    IF(.NOT. params%has("VectorType->chunkSize")) THEN
+      CALL params%add("VectorType->chunkSize",source%chunkSize)
+    ENDIF
+    IF(.NOT. params%has("VectorType->MPI_Comm_Id")) THEN
+      CALL params%add("VectorType->MPI_Comm_Id",source%comm)
+    ENDIF
+#endif
+  ENDSELECT
+
+  SELECT TYPE(source)
+  TYPE IS(RealVectorType)
+    ALLOCATE(RealVectorType :: dest(nvec))
+#ifdef HAVE_MPI
+  TYPE IS(NativeDistributedVectorType)
+    ALLOCATE(NativeDistributedVectorType :: dest(nvec))
+#endif
+#ifdef FUTILITY_HAVE_PETSC
+  TYPE IS(PETScVectorType)
+    ALLOCATE(PETScVectorType :: dest(nvec))
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+  TYPE IS(TrilinosVectorType)
+    ALLOCATE(TrilinosVectorType :: dest(nvec))
+#endif
+  ENDSELECT
+  DO i=1,nvec
+    CALL dest(i)%init(params)
+  ENDDO
+
+  IF(PRESENT(inparams)) CALL inparams%clear()
+ENDSUBROUTINE VectorResembleAllocArray
 !
 !-------------------------------------------------------------------------------
 !> @brief Function provides an interface to vector absolute value summation
