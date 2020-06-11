@@ -1177,35 +1177,22 @@ FUNCTION pathexists_HDF5FileType(thisHDF5File,path) RESULT(bool)
   CHARACTER(LEN=*),INTENT(IN) :: path
   LOGICAL(SBK) :: bool
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=16) :: tmp
-  TYPE(StringType) :: path2
-  INTEGER :: nextpos,oldpos
+  INTEGER :: iseg
+  TYPE(StringType) :: strpath,path2
+  TYPE(StringType),ALLOCATABLE :: segments(:)
 
   ! Make sure the object is initialized, and opened
   bool=.FALSE.
   IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
-    nextpos=1
-    oldpos=0
-    tmp=path
-    !If only the root path is passed in, it always exists.
-    IF((LEN_TRIM(tmp) == 1) .AND. (tmp(1:1) == '/')) THEN
-      bool=.TRUE.
-      nextpos=-1
-    ENDIF
-
-    !Loop over all sub paths to make sure they exist
-    DO WHILE (nextpos > -1)
-      nextpos=INDEX(path(nextpos:),'->')-1
-      IF(nextpos == -1) THEN
-        path2=convertPath(path)
-      ELSE
-        path2=convertPath(path(:nextpos+oldpos))
-        nextpos=nextpos+oldpos+3
-      ENDIF
+    strpath=convertPath(path)
+    segments=strpath%split('/')
+    bool=.TRUE.
+    path2=''
+    DO iseg=2,SIZE(segments)
+      path2=path2//'/'//segments(iseg)
       CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),bool,error)
       IF(.NOT.bool) EXIT
-      oldpos=nextpos-1
-    ENDDO
+    ENDDO !iseg
   ENDIF
 #else
   bool=.FALSE.
