@@ -952,6 +952,7 @@ RECURSIVE SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
   TYPE(StringType) :: path2,path3
   INTEGER(HID_T) :: group_id
   LOGICAL :: dset_exists
+  INTEGER(SIK) :: lastslash
 
   ! Make sure the object is initialized
   IF(.NOT.thisHDF5File%isinit) THEN
@@ -971,9 +972,12 @@ RECURSIVE SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
     ! Convert the path to use slashes
     path2=convertPath(path)
 
-    path3=path2%substr(1,INDEX(path2,'/',.TRUE.)-1)
-    IF(.NOT.thisHDF5File%pathExists(CHAR(path3))) THEN
-      CALL thisHDF5File%mkdir(CHAR(path3))
+    lastslash=INDEX(path2,'/',.TRUE.)
+    IF(lastslash > 1) THEN
+      path3=path2%substr(1,lastslash-1)
+      IF(.NOT.thisHDF5File%pathExists(CHAR(path3))) THEN
+        CALL thisHDF5File%mkdir(CHAR(path3))
+      ENDIF
     ENDIF
     CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
@@ -6450,6 +6454,7 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
   INTEGER(HSIZE_T) :: cdims(rank)
   INTEGER(HSIZE_T) :: oldsize,newsize
   LOGICAL :: dset_exists
+  INTEGER(SIK) :: lastslash
   TYPE(StringType) :: path2
 
   error=0
@@ -6529,9 +6534,12 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
     ENDIF
 
     !Create the path if it doesn't exist
-    path2=path(1:INDEX(path,'/',.TRUE.)-1)
-    IF(.NOT.thisHDF5File%pathExists(CHAR(path2))) THEN
-      CALL thisHDF5File%mkdir(CHAR(path2))
+    lastslash=INDEX(path,'/',.TRUE.)
+    IF(lastslash > 1) THEN
+      path2=path(1:lastslash-1)
+      IF(.NOT.thisHDF5File%pathExists(CHAR(path2))) THEN
+        CALL thisHDF5File%mkdir(CHAR(path2))
+      ENDIF
     ENDIF
 
     ! Create the dataset, if necessary
