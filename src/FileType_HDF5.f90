@@ -944,14 +944,15 @@ ENDSUBROUTINE ls_HDF5FileType
 !> This routine is used to create a new group in an HDF5 file. It can only be
 !> called if the file has write access.
 !>
-SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
+RECURSIVE SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
   CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
   CHARACTER(LEN=*),INTENT(IN) :: path
 #ifdef FUTILITY_HAVE_HDF5
   CHARACTER(LEN=*),PARAMETER :: myNAme='mkdir_HDF5FileType'
-  TYPE(StringType) :: path2
+  TYPE(StringType) :: path2,path3
   INTEGER(HID_T) :: group_id
   LOGICAL :: dset_exists
+  INTEGER(SIK) :: lastslash
 
   ! Make sure the object is initialized
   IF(.NOT.thisHDF5File%isinit) THEN
@@ -971,6 +972,13 @@ SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
     ! Convert the path to use slashes
     path2=convertPath(path)
 
+    lastslash=INDEX(path2,'/',.TRUE.)
+    IF(lastslash > 1) THEN
+      path3=path2%substr(1,lastslash-1)
+      IF(.NOT.thisHDF5File%pathExists(CHAR(path3))) THEN
+        CALL thisHDF5File%mkdir(CHAR(path3))
+      ENDIF
+    ENDIF
     CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
         ' - invalid group path:'//path)
@@ -1169,35 +1177,22 @@ FUNCTION pathexists_HDF5FileType(thisHDF5File,path) RESULT(bool)
   CHARACTER(LEN=*),INTENT(IN) :: path
   LOGICAL(SBK) :: bool
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=16) :: tmp
-  TYPE(StringType) :: path2
-  INTEGER :: nextpos,oldpos
+  INTEGER :: iseg
+  TYPE(StringType) :: strpath,path2
+  TYPE(StringType),ALLOCATABLE :: segments(:)
 
   ! Make sure the object is initialized, and opened
   bool=.FALSE.
   IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
-    nextpos=1
-    oldpos=0
-    tmp=path
-    !If only the root path is passed in, it always exists.
-    IF((LEN_TRIM(tmp) == 1) .AND. (tmp(1:1) == '/')) THEN
-      bool=.TRUE.
-      nextpos=-1
-    ENDIF
-
-    !Loop over all sub paths to make sure they exist
-    DO WHILE (nextpos > -1)
-      nextpos=INDEX(path(nextpos:),'->')-1
-      IF(nextpos == -1) THEN
-        path2=convertPath(path)
-      ELSE
-        path2=convertPath(path(:nextpos+oldpos))
-        nextpos=nextpos+oldpos+3
-      ENDIF
+    strpath=convertPath(path)
+    segments=strpath%split('/')
+    bool=.TRUE.
+    path2=''
+    DO iseg=2,SIZE(segments)
+      path2=path2//'/'//segments(iseg)
       CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),bool,error)
       IF(.NOT.bool) EXIT
-      oldpos=nextpos-1
-    ENDDO
+    ENDDO !iseg
   ENDIF
 #else
   bool=.FALSE.
@@ -6446,6 +6441,8 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
   INTEGER(HSIZE_T) :: cdims(rank)
   INTEGER(HSIZE_T) :: oldsize,newsize
   LOGICAL :: dset_exists
+  INTEGER(SIK) :: lastslash
+  TYPE(StringType) :: path2
 
   error=0
   dset_id=-1
@@ -6523,10 +6520,21 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
       ENDIF
     ENDIF
 
+    !Create the path if it doesn't exist
+    lastslash=INDEX(path,'/',.TRUE.)
+    IF(lastslash > 1) THEN
+      path2=path(1:lastslash-1)
+      IF(.NOT.thisHDF5File%pathExists(CHAR(path2))) THEN
+        CALL thisHDF5File%mkdir(CHAR(path2))
+      ENDIF
+    ENDIF
+
     ! Create the dataset, if necessary
     CALL h5lexists_f(file_id,path,dset_exists,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - invalid group path:'//path)
+    IF(error /= 0) THEN
+      CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - invalid group path:'//path)
+    ENDIF
 
     IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
       ! Open group for overwrite if it already exists and the file has overwrite status
