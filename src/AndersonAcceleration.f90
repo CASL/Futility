@@ -296,6 +296,9 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: x
 
+#ifdef HAVE_MPI | FUTILITY_HAVE_Trilinos
+  CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
+#endif
   INTEGER(SIK) :: i,j
 
   REQUIRE(x%n == solver%n)
@@ -310,12 +313,12 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
 #ifdef HAVE_MPI
     TYPE IS(NativeDistributedVectorType)
       CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-          '::reset_AndersonAccelerationType - Input vector type not supported!')
+          '::'//myName//' - Input vector type not supported!')
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
     TYPE IS(TrilinosVectorType)
       CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-          '::reset_AndersonAccelerationType - Input vector type not supported!')
+          '::'//myName//' - Input vector type not supported!')
 #endif
     ENDSELECT
 
