@@ -448,6 +448,7 @@ SUBROUTINE VectorResembleAllocScal(dest, source, inparams)
   CALL dest%init(params)
 
   IF(PRESENT(inparams)) CALL inparams%clear()
+  CALL params%clear()
 
 ENDSUBROUTINE VectorResembleAllocScal
 !
@@ -526,6 +527,8 @@ SUBROUTINE VectorResembleAllocArray(dest, source, nvec, inparams)
   ENDDO
 
   IF(PRESENT(inparams)) CALL inparams%clear()
+  CALL params%clear()
+  
 ENDSUBROUTINE VectorResembleAllocArray
 !
 !-------------------------------------------------------------------------------
