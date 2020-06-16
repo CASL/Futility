@@ -17,20 +17,49 @@
 #include "CTeuchos_ParameterList_Cpp.hpp"
 #include "trilinos_pc.hpp"
 #include "trilinos_solvers.hpp"
+#endif
+#ifdef FUTILITY_HAVE_Kokkos
+#include <Kokkos_Core.hpp>
+#endif 
+#include <iostream>
 // #include "trilinos_ts.hpp"
 
+#ifdef FUTILITY_HAVE_Trilinos
 bool futility_trilinos_isinit = false;
 Teuchos::RCP<TpetraVecStore> tvec(new TpetraVecStore);
 Teuchos::RCP<TpetraMatStore> tmat(new TpetraMatStore);
 Teuchos::RCP<PCStore> pcst(new PCStore);
 Teuchos::RCP<AnasaziStore> aeig(new AnasaziStore);
 Teuchos::RCP<BelosStore> bels(new BelosStore);
+#endif
 //Teuchos::RCP< AndersonStore  > andr(new AndersonStore);
 //Teuchos::RCP<TSStore> tsst(new TSStore);
+//------------------------------------------------------------------------------
+// Kokkos
+//------------------------------------------------------------------------------
+#ifdef FUTILITY_HAVE_Kokkos
+extern "C" void InitializeKokkos(int num_threads, int device_id)
+{
+    Kokkos::InitArguments args;
+    // Necessary to recase these as const.
+    const int threads = num_threads;
+    const int device = device_id;
+    args.num_threads = threads;
+    args.device_id = device;
+    Kokkos::initialize(args);
+    std::cout << "Kokkos init done" << std::endl;
+}
+
+extern "C" void FinalizeKokkos()
+{
+    Kokkos::finalize();
+}
+#endif
 
 //------------------------------------------------------------------------------
 // Vector
 //------------------------------------------------------------------------------
+#ifdef FUTILITY_HAVE_Trilinos 
 extern "C" void ForPETRA_VecInit(int &id, const int n, const int nlocal,
                                  const int Comm)
 {

@@ -132,7 +132,7 @@ ENDSUBROUTINE clear
 FUNCTION addTimer(this,name) RESULT(timer)
   CLASS(FutilityComputingEnvironment),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: name
-  TYPE(TimerType),POINTER :: timer
+  CLASS(TimerType),POINTER :: timer
   !
   INTEGER(SIK) :: iTimer
   TYPE(TimerPtrArray),ALLOCATABLE :: oldTimers(:)
@@ -185,7 +185,7 @@ SUBROUTINE removeTimer(this,name)
   CHARACTER(LEN=*),INTENT(IN) :: name
   !
   INTEGER(SIK) :: iTimer
-  TYPE(TimerType),POINTER :: timer
+  CLASS(TimerType),POINTER :: timer
   TYPE(TimerPtrArray),ALLOCATABLE :: oldTimers(:)
 
   timer => this%getTimer(name)
@@ -224,7 +224,7 @@ ENDSUBROUTINE removeTimer
 FUNCTION getTimer(this,name) RESULT(timer)
   CLASS(FutilityComputingEnvironment),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: name
-  TYPE(TimerType),POINTER :: timer
+  CLASS(TimerType),POINTER :: timer
   !
   INTEGER(SIK) :: iTimer
 

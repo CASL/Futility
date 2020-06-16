@@ -82,6 +82,7 @@ IF (NOT ${PROJECT_NAME}_EXCLUDE_PACKAGES)
     Phalanx
     KokkosTPL
     ShyLU
+    ShyLU_Node
     )
 ENDIF()
 

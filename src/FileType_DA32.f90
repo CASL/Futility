@@ -59,372 +59,368 @@
 !>    access file record (e.g. a specific block).
 !>
 !>  The least confusing way to refer to things is by blocks and words.
-!>
-!>
-!> @author Brendan Kochunas
-!>   @date 01/15/2014
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_DA32
-  USE ISO_FORTRAN_ENV
-  USE IntrType
-  USE ExceptionHandler
-  USE IO_Strings
-  USE FileType_Fortran
+USE ISO_FORTRAN_ENV
+USE IntrType
+USE ExceptionHandler
+USE IO_Strings
+USE FileType_Fortran
 
-  IMPLICIT NONE
-  PRIVATE
+IMPLICIT NONE
+PRIVATE
 
-  !List of Public Members
-  PUBLIC :: DA32FileType
-  PUBLIC :: RECL32
-  PUBLIC :: RECLSZ
-  PUBLIC :: RECL_UNIT
+!List of Public Members
+PUBLIC :: DA32FileType
+PUBLIC :: RECL32
+PUBLIC :: RECLSZ
+PUBLIC :: RECL_UNIT
 
-  !> Module name for error messages
-  CHARACTER(LEN=*),PARAMETER :: modName='FileType_DA32'
+!> Module name for error messages
+CHARACTER(LEN=*),PARAMETER :: modName='FileType_DA32'
 
 #ifdef __GFORTRAN__
-  !> The units of the record length value
-  CHARACTER(LEN=*),PARAMETER :: RECL_UNIT='BYTE'
-  !> The size of a 32-bit record
-  INTEGER(SIK),PARAMETER :: RECL32=4
+!> The units of the record length value
+CHARACTER(LEN=*),PARAMETER :: RECL_UNIT='BYTE'
+!> The size of a 32-bit record
+INTEGER(SIK),PARAMETER :: RECL32=4
 #else
-  !> The units of the record length value
-  CHARACTER(LEN=*),PARAMETER :: RECL_UNIT='WORD'
-  !> The size of a 32-bit record
-  INTEGER(SIK),PARAMETER :: RECL32=1
+!> The units of the record length value
+CHARACTER(LEN=*),PARAMETER :: RECL_UNIT='WORD'
+!> The size of a 32-bit record
+INTEGER(SIK),PARAMETER :: RECL32=1
 #endif
-  !> Number of words in a record
-  INTEGER(SIK),PARAMETER :: WORDSREC=256
-  !> Record size used in the operations of this implementation
-  INTEGER(SIK),PARAMETER :: RECLSZ=WORDSREC*RECL32
+!> Number of words in a record
+INTEGER(SIK),PARAMETER :: WORDSREC=256
+!> Record size used in the operations of this implementation
+INTEGER(SIK),PARAMETER :: RECLSZ=WORDSREC*RECL32
 
-  !> Size of buffers (in # of records) to use when reading/writing array data.
-  !> KEEP AS A MULTIPLE OF 2!
-  INTEGER(SIK),PARAMETER :: NBUF=WORDSREC
-  !> Number of characters that can fit into a 32-bit record
-  INTEGER(SIK),PARAMETER :: CH2REC=32/CHARACTER_STORAGE_SIZE
-  !> The buffer size in characters.
-  INTEGER(SIK),PARAMETER :: NBUFCH=NBUF*CH2REC
-  !> The buffer size in number of doubles
-  INTEGER(SIK),PARAMETER :: NBUFD=NBUF/2
+!> Size of buffers (in # of records) to use when reading/writing array data.
+!> KEEP AS A MULTIPLE OF 2!
+INTEGER(SIK),PARAMETER :: NBUF=WORDSREC
+!> Number of characters that can fit into a 32-bit record
+INTEGER(SIK),PARAMETER :: CH2REC=32/CHARACTER_STORAGE_SIZE
+!> The buffer size in characters.
+INTEGER(SIK),PARAMETER :: NBUFCH=NBUF*CH2REC
+!> The buffer size in number of doubles
+INTEGER(SIK),PARAMETER :: NBUFD=NBUF/2
 
-  !> @brief Derived type object for Fortran file that is unformatted and
-  !>        direct access with 32-bit records
-  !>
-  !> This is an extension of the abstract @ref FileType_Fortran
-  !> "FortranFileType". It has no additional attributes. It provides 2
-  !> additional public methods which are generic interfaces for reading and
-  !> writing data to the file.
-  TYPE,EXTENDS(FortranFileType) :: DA32FileType
+!> @brief Derived type object for Fortran file that is unformatted and
+!>        direct access with 32-bit records
+!>
+!> This is an extension of the abstract @ref FileType_Fortran
+!> "FortranFileType". It has no additional attributes. It provides 2
+!> additional public methods which are generic interfaces for reading and
+!> writing data to the file.
+TYPE,EXTENDS(FortranFileType) :: DA32FileType
 !
 !List of type bound procedures (methods) for the Fortran File type
-    CONTAINS
-      !> @copybrief FileType_DA32::maxRecVal
-      !> @copydetails FileType_DA32::maxRecVal
-      PROCEDURE,NOPASS :: maxRecVal
-      !> @copybrief FileType_DA32::getPad2NextBlk
-      !> @copydetails FileType_DA32::getPad2NextBlk
-      PROCEDURE,NOPASS :: getPad2NextBlk
-      !> @copybrief FileType_DA32::writeEmptyBlock
-      !> @copydetails FileType_DA32::writeEmptyBlock
-      PROCEDURE,PASS :: writeEmptyBlock
-      !> @copybrief FileType_DA32::init_DA32_file
-      !> @copydetails FileType_DA32::init_DA32_file
-      PROCEDURE,PASS :: initialize => init_DA32_file
-      !> @copybrief FileType_DA32::getNextRec_DA32_file
-      !> @copydetails FileType_DA32::getNextRec_DA32_file
-      PROCEDURE,PASS :: getNextRec => getNextRec_DA32_file
-      !> @copybrief FileType_DA32::readdat_char
-      !> @copydetails FileType_DA32::readdat_char
-      PROCEDURE,PASS,PRIVATE :: readdat_char
-      !> @copybrief FileType_DA32::readdat_sbk0
-      !> @copydetails FileType_DA32::readdat_sbk0
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk0
-      !> @copybrief FileType_DA32::readdat_snk0
-      !> @copydetails FileType_DA32::readdat_snk0
-      PROCEDURE,PASS,PRIVATE :: readdat_snk0
-      !> @copybrief FileType_DA32::readdat_slk0
-      !> @copydetails FileType_DA32::readdat_slk0
-      PROCEDURE,PASS,PRIVATE :: readdat_slk0
-      !> @copybrief FileType_DA32::readdat_ssk0
-      !> @copydetails FileType_DA32::readdat_ssk0
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk0
-      !> @copybrief FileType_DA32::readdat_sdk0
-      !> @copydetails FileType_DA32::readdat_sdk0
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk0
-      !> @copybrief FileType_DA32::readdat_sbk1
-      !> @copydetails FileType_DA32::readdat_sbk1
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk1
-      !> @copybrief FileType_DA32::readdat_snk1
-      !> @copydetails FileType_DA32::readdat_snk1
-      PROCEDURE,PASS,PRIVATE :: readdat_snk1
-      !> @copybrief FileType_DA32::readdat_slk1
-      !> @copydetails FileType_DA32::readdat_slk1
-      PROCEDURE,PASS,PRIVATE :: readdat_slk1
-      !> @copybrief FileType_DA32::readdat_ssk1
-      !> @copydetails FileType_DA32::readdat_ssk1
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk1
-      !> @copybrief FileType_DA32::readdat_sdk1
-      !> @copydetails FileType_DA32::readdat_sdk1
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk1
-      !> @copybrief FileType_DA32::readdat_sbk2
-      !> @copydetails FileType_DA32::readdat_sbk2
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk2
-      !> @copybrief FileType_DA32::readdat_snk2
-      !> @copydetails FileType_DA32::readdat_snk2
-      PROCEDURE,PASS,PRIVATE :: readdat_snk2
-      !> @copybrief FileType_DA32::readdat_slk2
-      !> @copydetails FileType_DA32::readdat_slk2
-      PROCEDURE,PASS,PRIVATE :: readdat_slk2
-      !> @copybrief FileType_DA32::readdat_ssk2
-      !> @copydetails FileType_DA32::readdat_ssk2
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk2
-      !> @copybrief FileType_DA32::readdat_sdk2
-      !> @copydetails FileType_DA32::readdat_sdk2
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk2
-      !> @copybrief FileType_DA32::readdat_sbk3
-      !> @copydetails FileType_DA32::readdat_sbk3
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk3
-      !> @copybrief FileType_DA32::readdat_snk3
-      !> @copydetails FileType_DA32::readdat_snk3
-      PROCEDURE,PASS,PRIVATE :: readdat_snk3
-      !> @copybrief FileType_DA32::readdat_slk3
-      !> @copydetails FileType_DA32::readdat_slk3
-      PROCEDURE,PASS,PRIVATE :: readdat_slk3
-      !> @copybrief FileType_DA32::readdat_ssk3
-      !> @copydetails FileType_DA32::readdat_ssk3
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk3
-      !> @copybrief FileType_DA32::readdat_sdk3
-      !> @copydetails FileType_DA32::readdat_sdk3
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk3
-      !> @copybrief FileType_DA32::readdat_sbk4
-      !> @copydetails FileType_DA32::readdat_sbk4
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk4
-      !> @copybrief FileType_DA32::readdat_snk4
-      !> @copydetails FileType_DA32::readdat_snk4
-      PROCEDURE,PASS,PRIVATE :: readdat_snk4
-      !> @copybrief FileType_DA32::readdat_slk4
-      !> @copydetails FileType_DA32::readdat_slk4
-      PROCEDURE,PASS,PRIVATE :: readdat_slk4
-      !> @copybrief FileType_DA32::readdat_ssk4
-      !> @copydetails FileType_DA32::readdat_ssk4
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk4
-      !> @copybrief FileType_DA32::readdat_sdk4
-      !> @copydetails FileType_DA32::readdat_sdk4
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk4
-      !> @copybrief FileType_DA32::readdat_sbk5
-      !> @copydetails FileType_DA32::readdat_sbk5
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk5
-      !> @copybrief FileType_DA32::readdat_snk5
-      !> @copydetails FileType_DA32::readdat_snk5
-      PROCEDURE,PASS,PRIVATE :: readdat_snk5
-      !> @copybrief FileType_DA32::readdat_slk5
-      !> @copydetails FileType_DA32::readdat_slk5
-      PROCEDURE,PASS,PRIVATE :: readdat_slk5
-      !> @copybrief FileType_DA32::readdat_ssk5
-      !> @copydetails FileType_DA32::readdat_ssk5
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk5
-      !> @copybrief FileType_DA32::readdat_sdk5
-      !> @copydetails FileType_DA32::readdat_sdk5
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk5
-      !> @copybrief FileType_DA32::readdat_sbk6
-      !> @copydetails FileType_DA32::readdat_sbk6
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk6
-      !> @copybrief FileType_DA32::readdat_snk6
-      !> @copydetails FileType_DA32::readdat_snk6
-      PROCEDURE,PASS,PRIVATE :: readdat_snk6
-      !> @copybrief FileType_DA32::readdat_slk6
-      !> @copydetails FileType_DA32::readdat_slk6
-      PROCEDURE,PASS,PRIVATE :: readdat_slk6
-      !> @copybrief FileType_DA32::readdat_ssk6
-      !> @copydetails FileType_DA32::readdat_ssk6
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk6
-      !> @copybrief FileType_DA32::readdat_sdk6
-      !> @copydetails FileType_DA32::readdat_sdk6
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk6
-      !> @copybrief FileType_DA32::readdat_sbk4
-      !> @copydetails FileType_DA32::readdat_sbk4
-      PROCEDURE,PASS,PRIVATE :: readdat_sbk7
-      !> @copybrief FileType_DA32::readdat_snk7
-      !> @copydetails FileType_DA32::readdat_snk7
-      PROCEDURE,PASS,PRIVATE :: readdat_snk7
-      !> @copybrief FileType_DA32::readdat_slk7
-      !> @copydetails FileType_DA32::readdat_slk7
-      PROCEDURE,PASS,PRIVATE :: readdat_slk7
-      !> @copybrief FileType_DA32::readdat_ssk7
-      !> @copydetails FileType_DA32::readdat_ssk7
-      PROCEDURE,PASS,PRIVATE :: readdat_ssk7
-      !> @copybrief FileType_DA32::readdat_sdk7
-      !> @copydetails FileType_DA32::readdat_sdk7
-      PROCEDURE,PASS,PRIVATE :: readdat_sdk7
-      !> Generic interface for reading data of an intrinsic type and kind
-      GENERIC :: readdat => readdat_char,readdat_sbk0,readdat_snk0, &
-                            readdat_slk0,readdat_ssk0,readdat_sdk0, &
-                            readdat_sbk1,readdat_snk1,readdat_slk1, &
-                            readdat_ssk1,readdat_sdk1,readdat_sbk2, &
-                            readdat_snk2,readdat_slk2,readdat_ssk2, &
-                            readdat_sdk2,readdat_sbk3,readdat_snk3, &
-                            readdat_slk3,readdat_ssk3,readdat_sdk3, &
-                            readdat_sbk4,readdat_snk4,readdat_slk4, &
-                            readdat_ssk4,readdat_sdk4,readdat_sbk5, &
-                            readdat_snk5,readdat_slk5,readdat_ssk5, &
-                            readdat_sdk5,readdat_sbk6,readdat_snk6, &
-                            readdat_slk6,readdat_ssk6,readdat_sdk6, &
-                            readdat_sbk7,readdat_snk7,readdat_slk7, &
-                            readdat_ssk7,readdat_sdk7
-      !> @copybrief FileType_DA32::writedat_char
-      !> @copydetails FileType_DA32::writedat_char
-      PROCEDURE,PASS,PRIVATE :: writedat_char
-      !> @copybrief FileType_DA32::writedat_sbk0
-      !> @copydetails FileType_DA32::writedat_sbk0
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk0
-      !> @copybrief FileType_DA32::writedat_snk0
-      !> @copydetails FileType_DA32::writedat_snk0
-      PROCEDURE,PASS,PRIVATE :: writedat_snk0
-      !> @copybrief FileType_DA32::writedat_slk0
-      !> @copydetails FileType_DA32::writedat_slk0
-      PROCEDURE,PASS,PRIVATE :: writedat_slk0
-      !> @copybrief FileType_DA32::writedat_ssk0
-      !> @copydetails FileType_DA32::writedat_ssk0
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk0
-      !> @copybrief FileType_DA32::writedat_sdk0
-      !> @copydetails FileType_DA32::writedat_sdk0
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk0
-      !> @copybrief FileType_DA32::writedat_sbk1
-      !> @copydetails FileType_DA32::writedat_sbk1
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk1
-      !> @copybrief FileType_DA32::writedat_snk1
-      !> @copydetails FileType_DA32::writedat_snk1
-      PROCEDURE,PASS,PRIVATE :: writedat_snk1
-      !> @copybrief FileType_DA32::writedat_slk1
-      !> @copydetails FileType_DA32::writedat_slk1
-      PROCEDURE,PASS,PRIVATE :: writedat_slk1
-      !> @copybrief FileType_DA32::writedat_ssk1
-      !> @copydetails FileType_DA32::writedat_ssk1
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk1
-      !> @copybrief FileType_DA32::writedat_sdk1
-      !> @copydetails FileType_DA32::writedat_sdk1
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk1
-      !> @copybrief FileType_DA32::writedat_sbk2
-      !> @copydetails FileType_DA32::writedat_sbk2
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk2
-      !> @copybrief FileType_DA32::writedat_snk2
-      !> @copydetails FileType_DA32::writedat_snk2
-      PROCEDURE,PASS,PRIVATE :: writedat_snk2
-      !> @copybrief FileType_DA32::writedat_slk2
-      !> @copydetails FileType_DA32::writedat_slk2
-      PROCEDURE,PASS,PRIVATE :: writedat_slk2
-      !> @copybrief FileType_DA32::writedat_ssk2
-      !> @copydetails FileType_DA32::writedat_ssk2
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk2
-      !> @copybrief FileType_DA32::writedat_sdk2
-      !> @copydetails FileType_DA32::writedat_sdk2
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk2
-      !> @copybrief FileType_DA32::writedat_sbk3
-      !> @copydetails FileType_DA32::writedat_sbk3
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk3
-      !> @copybrief FileType_DA32::writedat_snk3
-      !> @copydetails FileType_DA32::writedat_snk3
-      PROCEDURE,PASS,PRIVATE :: writedat_snk3
-      !> @copybrief FileType_DA32::writedat_slk3
-      !> @copydetails FileType_DA32::writedat_slk3
-      PROCEDURE,PASS,PRIVATE :: writedat_slk3
-      !> @copybrief FileType_DA32::writedat_ssk3
-      !> @copydetails FileType_DA32::writedat_ssk3
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk3
-      !> @copybrief FileType_DA32::writedat_sdk3
-      !> @copydetails FileType_DA32::writedat_sdk3
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk3
-      !> @copybrief FileType_DA32::writedat_sbk4
-      !> @copydetails FileType_DA32::writedat_sbk4
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk4
-      !> @copybrief FileType_DA32::writedat_snk4
-      !> @copydetails FileType_DA32::writedat_snk4
-      PROCEDURE,PASS,PRIVATE :: writedat_snk4
-      !> @copybrief FileType_DA32::writedat_slk4
-      !> @copydetails FileType_DA32::writedat_slk4
-      PROCEDURE,PASS,PRIVATE :: writedat_slk4
-      !> @copybrief FileType_DA32::writedat_ssk4
-      !> @copydetails FileType_DA32::writedat_ssk4
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk4
-      !> @copybrief FileType_DA32::writedat_sdk4
-      !> @copydetails FileType_DA32::writedat_sdk4
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk4
-      !> @copybrief FileType_DA32::writedat_sbk5
-      !> @copydetails FileType_DA32::writedat_sbk5
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk5
-      !> @copybrief FileType_DA32::writedat_snk5
-      !> @copydetails FileType_DA32::writedat_snk5
-      PROCEDURE,PASS,PRIVATE :: writedat_snk5
-      !> @copybrief FileType_DA32::writedat_slk5
-      !> @copydetails FileType_DA32::writedat_slk5
-      PROCEDURE,PASS,PRIVATE :: writedat_slk5
-      !> @copybrief FileType_DA32::writedat_ssk5
-      !> @copydetails FileType_DA32::writedat_ssk5
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk5
-      !> @copybrief FileType_DA32::writedat_sdk5
-      !> @copydetails FileType_DA32::writedat_sdk5
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk5
-      !> @copybrief FileType_DA32::writedat_sbk6
-      !> @copydetails FileType_DA32::writedat_sbk6
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk6
-      !> @copybrief FileType_DA32::writedat_snk6
-      !> @copydetails FileType_DA32::writedat_snk6
-      PROCEDURE,PASS,PRIVATE :: writedat_snk6
-      !> @copybrief FileType_DA32::writedat_slk6
-      !> @copydetails FileType_DA32::writedat_slk6
-      PROCEDURE,PASS,PRIVATE :: writedat_slk6
-      !> @copybrief FileType_DA32::writedat_ssk6
-      !> @copydetails FileType_DA32::writedat_ssk6
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk6
-      !> @copybrief FileType_DA32::writedat_sdk6
-      !> @copydetails FileType_DA32::writedat_sdk6
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk6
-      !> @copybrief FileType_DA32::writedat_sbk4
-      !> @copydetails FileType_DA32::writedat_sbk4
-      PROCEDURE,PASS,PRIVATE :: writedat_sbk7
-      !> @copybrief FileType_DA32::writedat_snk7
-      !> @copydetails FileType_DA32::writedat_snk7
-      PROCEDURE,PASS,PRIVATE :: writedat_snk7
-      !> @copybrief FileType_DA32::writedat_slk7
-      !> @copydetails FileType_DA32::writedat_slk7
-      PROCEDURE,PASS,PRIVATE :: writedat_slk7
-      !> @copybrief FileType_DA32::writedat_ssk7
-      !> @copydetails FileType_DA32::writedat_ssk7
-      PROCEDURE,PASS,PRIVATE :: writedat_ssk7
-      !> @copybrief FileType_DA32::writedat_sdk7
-      !> @copydetails FileType_DA32::writedat_sdk7
-      PROCEDURE,PASS,PRIVATE :: writedat_sdk7
-      !> Generic interface for writing data of an intrinsic type and kind
-      GENERIC :: writedat => writedat_char,writedat_sbk0,writedat_snk0, &
-                             writedat_slk0,writedat_ssk0,writedat_sdk0, &
-                             writedat_sbk1,writedat_snk1,writedat_slk1, &
-                             writedat_ssk1,writedat_sdk1,writedat_sbk2, &
-                             writedat_snk2,writedat_slk2,writedat_ssk2, &
-                             writedat_sdk2,writedat_sbk3,writedat_snk3, &
-                             writedat_slk3,writedat_ssk3,writedat_sdk3, &
-                             writedat_sbk4,writedat_snk4,writedat_slk4, &
-                             writedat_ssk4,writedat_sdk4,writedat_sbk5, &
-                             writedat_snk5,writedat_slk5,writedat_ssk5, &
-                             writedat_sdk5,writedat_sbk6,writedat_snk6, &
-                             writedat_slk6,writedat_ssk6,writedat_sdk6, &
-                             writedat_sbk7,writedat_snk7,writedat_slk7, &
-                             writedat_ssk7,writedat_sdk7
-  ENDTYPE DA32FileType
+  CONTAINS
+    !> @copybrief FileType_DA32::maxRecVal
+    !> @copydetails FileType_DA32::maxRecVal
+    PROCEDURE,NOPASS :: maxRecVal
+    !> @copybrief FileType_DA32::getPad2NextBlk
+    !> @copydetails FileType_DA32::getPad2NextBlk
+    PROCEDURE,NOPASS :: getPad2NextBlk
+    !> @copybrief FileType_DA32::writeEmptyBlock
+    !> @copydetails FileType_DA32::writeEmptyBlock
+    PROCEDURE,PASS :: writeEmptyBlock
+    !> @copybrief FileType_DA32::init_DA32_file
+    !> @copydetails FileType_DA32::init_DA32_file
+    PROCEDURE,PASS :: initialize => init_DA32_file
+    !> @copybrief FileType_DA32::getNextRec_DA32_file
+    !> @copydetails FileType_DA32::getNextRec_DA32_file
+    PROCEDURE,PASS :: getNextRec => getNextRec_DA32_file
+    !> @copybrief FileType_DA32::readdat_char
+    !> @copydetails FileType_DA32::readdat_char
+    PROCEDURE,PASS,PRIVATE :: readdat_char
+    !> @copybrief FileType_DA32::readdat_sbk0
+    !> @copydetails FileType_DA32::readdat_sbk0
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk0
+    !> @copybrief FileType_DA32::readdat_snk0
+    !> @copydetails FileType_DA32::readdat_snk0
+    PROCEDURE,PASS,PRIVATE :: readdat_snk0
+    !> @copybrief FileType_DA32::readdat_slk0
+    !> @copydetails FileType_DA32::readdat_slk0
+    PROCEDURE,PASS,PRIVATE :: readdat_slk0
+    !> @copybrief FileType_DA32::readdat_ssk0
+    !> @copydetails FileType_DA32::readdat_ssk0
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk0
+    !> @copybrief FileType_DA32::readdat_sdk0
+    !> @copydetails FileType_DA32::readdat_sdk0
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk0
+    !> @copybrief FileType_DA32::readdat_sbk1
+    !> @copydetails FileType_DA32::readdat_sbk1
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk1
+    !> @copybrief FileType_DA32::readdat_snk1
+    !> @copydetails FileType_DA32::readdat_snk1
+    PROCEDURE,PASS,PRIVATE :: readdat_snk1
+    !> @copybrief FileType_DA32::readdat_slk1
+    !> @copydetails FileType_DA32::readdat_slk1
+    PROCEDURE,PASS,PRIVATE :: readdat_slk1
+    !> @copybrief FileType_DA32::readdat_ssk1
+    !> @copydetails FileType_DA32::readdat_ssk1
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk1
+    !> @copybrief FileType_DA32::readdat_sdk1
+    !> @copydetails FileType_DA32::readdat_sdk1
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk1
+    !> @copybrief FileType_DA32::readdat_sbk2
+    !> @copydetails FileType_DA32::readdat_sbk2
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk2
+    !> @copybrief FileType_DA32::readdat_snk2
+    !> @copydetails FileType_DA32::readdat_snk2
+    PROCEDURE,PASS,PRIVATE :: readdat_snk2
+    !> @copybrief FileType_DA32::readdat_slk2
+    !> @copydetails FileType_DA32::readdat_slk2
+    PROCEDURE,PASS,PRIVATE :: readdat_slk2
+    !> @copybrief FileType_DA32::readdat_ssk2
+    !> @copydetails FileType_DA32::readdat_ssk2
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk2
+    !> @copybrief FileType_DA32::readdat_sdk2
+    !> @copydetails FileType_DA32::readdat_sdk2
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk2
+    !> @copybrief FileType_DA32::readdat_sbk3
+    !> @copydetails FileType_DA32::readdat_sbk3
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk3
+    !> @copybrief FileType_DA32::readdat_snk3
+    !> @copydetails FileType_DA32::readdat_snk3
+    PROCEDURE,PASS,PRIVATE :: readdat_snk3
+    !> @copybrief FileType_DA32::readdat_slk3
+    !> @copydetails FileType_DA32::readdat_slk3
+    PROCEDURE,PASS,PRIVATE :: readdat_slk3
+    !> @copybrief FileType_DA32::readdat_ssk3
+    !> @copydetails FileType_DA32::readdat_ssk3
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk3
+    !> @copybrief FileType_DA32::readdat_sdk3
+    !> @copydetails FileType_DA32::readdat_sdk3
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk3
+    !> @copybrief FileType_DA32::readdat_sbk4
+    !> @copydetails FileType_DA32::readdat_sbk4
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk4
+    !> @copybrief FileType_DA32::readdat_snk4
+    !> @copydetails FileType_DA32::readdat_snk4
+    PROCEDURE,PASS,PRIVATE :: readdat_snk4
+    !> @copybrief FileType_DA32::readdat_slk4
+    !> @copydetails FileType_DA32::readdat_slk4
+    PROCEDURE,PASS,PRIVATE :: readdat_slk4
+    !> @copybrief FileType_DA32::readdat_ssk4
+    !> @copydetails FileType_DA32::readdat_ssk4
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk4
+    !> @copybrief FileType_DA32::readdat_sdk4
+    !> @copydetails FileType_DA32::readdat_sdk4
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk4
+    !> @copybrief FileType_DA32::readdat_sbk5
+    !> @copydetails FileType_DA32::readdat_sbk5
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk5
+    !> @copybrief FileType_DA32::readdat_snk5
+    !> @copydetails FileType_DA32::readdat_snk5
+    PROCEDURE,PASS,PRIVATE :: readdat_snk5
+    !> @copybrief FileType_DA32::readdat_slk5
+    !> @copydetails FileType_DA32::readdat_slk5
+    PROCEDURE,PASS,PRIVATE :: readdat_slk5
+    !> @copybrief FileType_DA32::readdat_ssk5
+    !> @copydetails FileType_DA32::readdat_ssk5
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk5
+    !> @copybrief FileType_DA32::readdat_sdk5
+    !> @copydetails FileType_DA32::readdat_sdk5
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk5
+    !> @copybrief FileType_DA32::readdat_sbk6
+    !> @copydetails FileType_DA32::readdat_sbk6
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk6
+    !> @copybrief FileType_DA32::readdat_snk6
+    !> @copydetails FileType_DA32::readdat_snk6
+    PROCEDURE,PASS,PRIVATE :: readdat_snk6
+    !> @copybrief FileType_DA32::readdat_slk6
+    !> @copydetails FileType_DA32::readdat_slk6
+    PROCEDURE,PASS,PRIVATE :: readdat_slk6
+    !> @copybrief FileType_DA32::readdat_ssk6
+    !> @copydetails FileType_DA32::readdat_ssk6
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk6
+    !> @copybrief FileType_DA32::readdat_sdk6
+    !> @copydetails FileType_DA32::readdat_sdk6
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk6
+    !> @copybrief FileType_DA32::readdat_sbk4
+    !> @copydetails FileType_DA32::readdat_sbk4
+    PROCEDURE,PASS,PRIVATE :: readdat_sbk7
+    !> @copybrief FileType_DA32::readdat_snk7
+    !> @copydetails FileType_DA32::readdat_snk7
+    PROCEDURE,PASS,PRIVATE :: readdat_snk7
+    !> @copybrief FileType_DA32::readdat_slk7
+    !> @copydetails FileType_DA32::readdat_slk7
+    PROCEDURE,PASS,PRIVATE :: readdat_slk7
+    !> @copybrief FileType_DA32::readdat_ssk7
+    !> @copydetails FileType_DA32::readdat_ssk7
+    PROCEDURE,PASS,PRIVATE :: readdat_ssk7
+    !> @copybrief FileType_DA32::readdat_sdk7
+    !> @copydetails FileType_DA32::readdat_sdk7
+    PROCEDURE,PASS,PRIVATE :: readdat_sdk7
+    !> Generic interface for reading data of an intrinsic type and kind
+    GENERIC :: readdat => readdat_char,readdat_sbk0,readdat_snk0, &
+                          readdat_slk0,readdat_ssk0,readdat_sdk0, &
+                          readdat_sbk1,readdat_snk1,readdat_slk1, &
+                          readdat_ssk1,readdat_sdk1,readdat_sbk2, &
+                          readdat_snk2,readdat_slk2,readdat_ssk2, &
+                          readdat_sdk2,readdat_sbk3,readdat_snk3, &
+                          readdat_slk3,readdat_ssk3,readdat_sdk3, &
+                          readdat_sbk4,readdat_snk4,readdat_slk4, &
+                          readdat_ssk4,readdat_sdk4,readdat_sbk5, &
+                          readdat_snk5,readdat_slk5,readdat_ssk5, &
+                          readdat_sdk5,readdat_sbk6,readdat_snk6, &
+                          readdat_slk6,readdat_ssk6,readdat_sdk6, &
+                          readdat_sbk7,readdat_snk7,readdat_slk7, &
+                          readdat_ssk7,readdat_sdk7
+    !> @copybrief FileType_DA32::writedat_char
+    !> @copydetails FileType_DA32::writedat_char
+    PROCEDURE,PASS,PRIVATE :: writedat_char
+    !> @copybrief FileType_DA32::writedat_sbk0
+    !> @copydetails FileType_DA32::writedat_sbk0
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk0
+    !> @copybrief FileType_DA32::writedat_snk0
+    !> @copydetails FileType_DA32::writedat_snk0
+    PROCEDURE,PASS,PRIVATE :: writedat_snk0
+    !> @copybrief FileType_DA32::writedat_slk0
+    !> @copydetails FileType_DA32::writedat_slk0
+    PROCEDURE,PASS,PRIVATE :: writedat_slk0
+    !> @copybrief FileType_DA32::writedat_ssk0
+    !> @copydetails FileType_DA32::writedat_ssk0
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk0
+    !> @copybrief FileType_DA32::writedat_sdk0
+    !> @copydetails FileType_DA32::writedat_sdk0
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk0
+    !> @copybrief FileType_DA32::writedat_sbk1
+    !> @copydetails FileType_DA32::writedat_sbk1
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk1
+    !> @copybrief FileType_DA32::writedat_snk1
+    !> @copydetails FileType_DA32::writedat_snk1
+    PROCEDURE,PASS,PRIVATE :: writedat_snk1
+    !> @copybrief FileType_DA32::writedat_slk1
+    !> @copydetails FileType_DA32::writedat_slk1
+    PROCEDURE,PASS,PRIVATE :: writedat_slk1
+    !> @copybrief FileType_DA32::writedat_ssk1
+    !> @copydetails FileType_DA32::writedat_ssk1
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk1
+    !> @copybrief FileType_DA32::writedat_sdk1
+    !> @copydetails FileType_DA32::writedat_sdk1
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk1
+    !> @copybrief FileType_DA32::writedat_sbk2
+    !> @copydetails FileType_DA32::writedat_sbk2
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk2
+    !> @copybrief FileType_DA32::writedat_snk2
+    !> @copydetails FileType_DA32::writedat_snk2
+    PROCEDURE,PASS,PRIVATE :: writedat_snk2
+    !> @copybrief FileType_DA32::writedat_slk2
+    !> @copydetails FileType_DA32::writedat_slk2
+    PROCEDURE,PASS,PRIVATE :: writedat_slk2
+    !> @copybrief FileType_DA32::writedat_ssk2
+    !> @copydetails FileType_DA32::writedat_ssk2
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk2
+    !> @copybrief FileType_DA32::writedat_sdk2
+    !> @copydetails FileType_DA32::writedat_sdk2
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk2
+    !> @copybrief FileType_DA32::writedat_sbk3
+    !> @copydetails FileType_DA32::writedat_sbk3
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk3
+    !> @copybrief FileType_DA32::writedat_snk3
+    !> @copydetails FileType_DA32::writedat_snk3
+    PROCEDURE,PASS,PRIVATE :: writedat_snk3
+    !> @copybrief FileType_DA32::writedat_slk3
+    !> @copydetails FileType_DA32::writedat_slk3
+    PROCEDURE,PASS,PRIVATE :: writedat_slk3
+    !> @copybrief FileType_DA32::writedat_ssk3
+    !> @copydetails FileType_DA32::writedat_ssk3
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk3
+    !> @copybrief FileType_DA32::writedat_sdk3
+    !> @copydetails FileType_DA32::writedat_sdk3
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk3
+    !> @copybrief FileType_DA32::writedat_sbk4
+    !> @copydetails FileType_DA32::writedat_sbk4
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk4
+    !> @copybrief FileType_DA32::writedat_snk4
+    !> @copydetails FileType_DA32::writedat_snk4
+    PROCEDURE,PASS,PRIVATE :: writedat_snk4
+    !> @copybrief FileType_DA32::writedat_slk4
+    !> @copydetails FileType_DA32::writedat_slk4
+    PROCEDURE,PASS,PRIVATE :: writedat_slk4
+    !> @copybrief FileType_DA32::writedat_ssk4
+    !> @copydetails FileType_DA32::writedat_ssk4
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk4
+    !> @copybrief FileType_DA32::writedat_sdk4
+    !> @copydetails FileType_DA32::writedat_sdk4
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk4
+    !> @copybrief FileType_DA32::writedat_sbk5
+    !> @copydetails FileType_DA32::writedat_sbk5
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk5
+    !> @copybrief FileType_DA32::writedat_snk5
+    !> @copydetails FileType_DA32::writedat_snk5
+    PROCEDURE,PASS,PRIVATE :: writedat_snk5
+    !> @copybrief FileType_DA32::writedat_slk5
+    !> @copydetails FileType_DA32::writedat_slk5
+    PROCEDURE,PASS,PRIVATE :: writedat_slk5
+    !> @copybrief FileType_DA32::writedat_ssk5
+    !> @copydetails FileType_DA32::writedat_ssk5
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk5
+    !> @copybrief FileType_DA32::writedat_sdk5
+    !> @copydetails FileType_DA32::writedat_sdk5
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk5
+    !> @copybrief FileType_DA32::writedat_sbk6
+    !> @copydetails FileType_DA32::writedat_sbk6
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk6
+    !> @copybrief FileType_DA32::writedat_snk6
+    !> @copydetails FileType_DA32::writedat_snk6
+    PROCEDURE,PASS,PRIVATE :: writedat_snk6
+    !> @copybrief FileType_DA32::writedat_slk6
+    !> @copydetails FileType_DA32::writedat_slk6
+    PROCEDURE,PASS,PRIVATE :: writedat_slk6
+    !> @copybrief FileType_DA32::writedat_ssk6
+    !> @copydetails FileType_DA32::writedat_ssk6
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk6
+    !> @copybrief FileType_DA32::writedat_sdk6
+    !> @copydetails FileType_DA32::writedat_sdk6
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk6
+    !> @copybrief FileType_DA32::writedat_sbk4
+    !> @copydetails FileType_DA32::writedat_sbk4
+    PROCEDURE,PASS,PRIVATE :: writedat_sbk7
+    !> @copybrief FileType_DA32::writedat_snk7
+    !> @copydetails FileType_DA32::writedat_snk7
+    PROCEDURE,PASS,PRIVATE :: writedat_snk7
+    !> @copybrief FileType_DA32::writedat_slk7
+    !> @copydetails FileType_DA32::writedat_slk7
+    PROCEDURE,PASS,PRIVATE :: writedat_slk7
+    !> @copybrief FileType_DA32::writedat_ssk7
+    !> @copydetails FileType_DA32::writedat_ssk7
+    PROCEDURE,PASS,PRIVATE :: writedat_ssk7
+    !> @copybrief FileType_DA32::writedat_sdk7
+    !> @copydetails FileType_DA32::writedat_sdk7
+    PROCEDURE,PASS,PRIVATE :: writedat_sdk7
+    !> Generic interface for writing data of an intrinsic type and kind
+    GENERIC :: writedat => writedat_char,writedat_sbk0,writedat_snk0, &
+                           writedat_slk0,writedat_ssk0,writedat_sdk0, &
+                           writedat_sbk1,writedat_snk1,writedat_slk1, &
+                           writedat_ssk1,writedat_sdk1,writedat_sbk2, &
+                           writedat_snk2,writedat_slk2,writedat_ssk2, &
+                           writedat_sdk2,writedat_sbk3,writedat_snk3, &
+                           writedat_slk3,writedat_ssk3,writedat_sdk3, &
+                           writedat_sbk4,writedat_snk4,writedat_slk4, &
+                           writedat_ssk4,writedat_sdk4,writedat_sbk5, &
+                           writedat_snk5,writedat_slk5,writedat_ssk5, &
+                           writedat_sdk5,writedat_sbk6,writedat_snk6, &
+                           writedat_slk6,writedat_ssk6,writedat_sdk6, &
+                           writedat_sbk7,writedat_snk7,writedat_slk7, &
+                           writedat_ssk7,writedat_sdk7
+ENDTYPE DA32FileType
 !
 !===============================================================================
-  CONTAINS
+CONTAINS
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the value of the maximum addressable record (or word) in any
 !>        DA32FileType
 !> @returns val the maximum record value
 !>
-    PURE FUNCTION maxRecVal() RESULT(val)
-      INTEGER(SLK) :: val
-      val=INT(HUGE(1_SNK),SLK)*INT(WORDSREC,SLK)
-    ENDFUNCTION maxRecVal
+PURE FUNCTION maxRecVal() RESULT(val)
+  INTEGER(SLK) :: val
+  val=INT(HUGE(1_SNK),SLK)*INT(WORDSREC,SLK)
+ENDFUNCTION maxRecVal
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the value of the maximum addressable record (or word) in any
@@ -434,15 +430,15 @@ MODULE FileType_DA32
 !>
 !> e.g. irec+pad is the first record of the next block of the file.
 !>
-    PURE FUNCTION getPad2NextBlk(irec) RESULT(pad)
-      INTEGER(SLK),INTENT(IN) :: irec
-      INTEGER(SIK) :: pad
-      pad=-1
-      IF(irec > 0) THEN
-        pad=WORDSREC-INT(MOD(irec-1,INT(WORDSREC,SLK)),SIK)
-        IF(pad == INT(WORDSREC,SLK)) pad=0
-      ENDIF
-    ENDFUNCTION getPad2NextBlk
+PURE FUNCTION getPad2NextBlk(irec) RESULT(pad)
+  INTEGER(SLK),INTENT(IN) :: irec
+  INTEGER(SIK) :: pad
+  pad=-1
+  IF(irec > 0) THEN
+    pad=WORDSREC-INT(MOD(irec-1,INT(WORDSREC,SLK)),SIK)
+    IF(pad == INT(WORDSREC,SLK)) pad=0
+  ENDIF
+ENDFUNCTION getPad2NextBlk
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an empty block of data to the file where IREC exists in the
@@ -457,21 +453,21 @@ MODULE FileType_DA32
 !> that has data written to it already it will be wiped, so caution is
 !> is recommended when using this method.
 !>
-    SUBROUTINE writeEmptyBlock(thisDA32,rec,iostat)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SNK),PARAMETER :: bufdat(WORDSREC)=0
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: irec
+SUBROUTINE writeEmptyBlock(thisDA32,rec,iostat)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SNK),PARAMETER :: bufdat(WORDSREC)=0
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: irec
 
-      ioerr=IOSTAT_END
-      IF(thisDA32%isInit().AND.thisDA32%isOpen().AND.thisDA32%isWrite()) THEN
-        irec=(rec-1)/WORDSREC+1
-        WRITE(UNIT=thisDA32%getUnitNo(),REC=irec,IOSTAT=ioerr) bufdat
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-    ENDSUBROUTINE writeEmptyBlock
+  ioerr=IOSTAT_END
+  IF(thisDA32%isInit().AND.thisDA32%isOpen().AND.thisDA32%isWrite()) THEN
+    irec=(rec-1)/WORDSREC+1
+    WRITE(UNIT=thisDA32%getUnitNo(),REC=irec,IOSTAT=ioerr) bufdat
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+ENDSUBROUTINE writeEmptyBlock
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes a binary direct access file object.
@@ -493,61 +489,61 @@ MODULE FileType_DA32
 !> Bottom line is the other interfaces allow the client code to reference
 !> data within the file by
 !>
-    SUBROUTINE init_DA32_file(fileobj,unit,file,status,access,form, &
-                              position,action,pad,recl)
-      CHARACTER(LEN=*),PARAMETER :: myName='init_DA32_file'
-      CLASS(DA32FileType),INTENT(INOUT) :: fileobj
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
-      CHARACTER(LEN=*),INTENT(IN) :: file
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: form
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: position
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
-      CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
-      INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
-      CHARACTER(LEN=9) :: actionval
+SUBROUTINE init_DA32_file(fileobj,unit,file,status,access,form, &
+    position,action,pad,recl)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_DA32_file'
+  CLASS(DA32FileType),INTENT(INOUT) :: fileobj
+  INTEGER(SIK),OPTIONAL,INTENT(IN) :: unit
+  CHARACTER(LEN=*),INTENT(IN) :: file
+  CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: status
+  CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: access
+  CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: form
+  CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: position
+  CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: action
+  CHARACTER(LEN=*),OPTIONAL,INTENT(IN) :: pad
+  INTEGER(SIK),OPTIONAL,INTENT(IN) :: recl
+  CHARACTER(LEN=9) :: actionval
 
-      IF(PRESENT(access)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
-        ' - Optional argument "ACCESS='''//TRIM(ADJUSTL(access))// &
-          '''" is being ignored. DA32 File type is direct access.')
+  IF(PRESENT(access)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
+      ' - Optional argument "ACCESS='''//TRIM(ADJUSTL(access))// &
+      '''" is being ignored. DA32 File type is direct access.')
 
-      IF(PRESENT(form)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
-        ' - Optional argument "FORM='''//TRIM(ADJUSTL(form))// &
-          '''" is being ignored. DA32 File type is unformatted.')
+  IF(PRESENT(form)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
+      ' - Optional argument "FORM='''//TRIM(ADJUSTL(form))// &
+      '''" is being ignored. DA32 File type is unformatted.')
 
-      IF(PRESENT(recl)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
-        ' - Optional argument "RECL" is being ignored. '// &
-          'DA32 File type has 1 kb records.')
+  IF(PRESENT(recl)) CALL fileobj%e%raiseWarning(modName//'::'//myName// &
+      ' - Optional argument "RECL" is being ignored. '// &
+      'DA32 File type has 1 kb records.')
 
-      IF(PRESENT(action)) THEN
-        actionval=action
-        CALL toUPPER(actionval)
-        IF(TRIM(actionval) == 'WRITE') actionval='READWRITE'
-      ELSE
-        actionval='READWRITE'
-      ENDIF
+  IF(PRESENT(action)) THEN
+    actionval=action
+    CALL toUPPER(actionval)
+    IF(TRIM(actionval) == 'WRITE') actionval='READWRITE'
+  ELSE
+    actionval='READWRITE'
+  ENDIF
 
-      !Initialize the Direct Acces File using 1KB records. This allows for a
-      !maximum file size of 2 TB.
-      CALL init_fortran_file(fileobj,unit,file,status,'DIRECT', &
-        'UNFORMATTED',position,actionval,pad,RECLSZ)
-    ENDSUBROUTINE init_DA32_file
+  !Initialize the Direct Acces File using 1KB records. This allows for a
+  !maximum file size of 2 TB.
+  CALL init_fortran_file(fileobj,unit,file,status,'DIRECT', &
+      'UNFORMATTED',position,actionval,pad,RECLSZ)
+ENDSUBROUTINE init_DA32_file
 !
 !-------------------------------------------------------------------------------
 !> @brief
 !>
-    FUNCTION getNextRec_DA32_file(thisDA32) RESULT(next_rec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK) :: next_rec
-      next_rec=1
-      IF(thisDA32%isInit()) THEN
-        IF(thisDA32%isOpen()) THEN
-          INQUIRE(thisDA32%getUnitNo(),NEXTREC=next_rec)
-          next_rec=next_rec*INT(WORDSREC,SLK)
-        ENDIF
-      ENDIF
-    ENDFUNCTION getNextRec_DA32_file
+FUNCTION getNextRec_DA32_file(thisDA32) RESULT(next_rec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK) :: next_rec
+  next_rec=1
+  IF(thisDA32%isInit()) THEN
+    IF(thisDA32%isOpen()) THEN
+      INQUIRE(thisDA32%getUnitNo(),NEXTREC=next_rec)
+      next_rec=next_rec*INT(WORDSREC,SLK)
+    ENDIF
+  ENDIF
+ENDFUNCTION getNextRec_DA32_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a stream of records from a direct access file into a buffer
@@ -560,40 +556,40 @@ MODULE FileType_DA32
 !> The buffer is a 32-bit integer array. All other read routines eventually
 !> call this routine.
 !>
-    SUBROUTINE readdat_basic(funit,iaddr,dat,ioerr,nword)
-      INTEGER(SIK),INTENT(IN) :: funit
-      INTEGER(SLK),INTENT(IN) :: iaddr
-      INTEGER(SIK),INTENT(OUT) :: ioerr
-      INTEGER(SLK),INTENT(INOUT) :: nword
-      INTEGER(SNK),INTENT(OUT) :: dat(*)
-      INTEGER(SLK) :: i,irec,istt,istp,iword,nrec,nread
-      INTEGER(SNK) :: bufdat(WORDSREC)
+SUBROUTINE readdat_basic(funit,iaddr,dat,ioerr,nword)
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SLK),INTENT(IN) :: iaddr
+  INTEGER(SIK),INTENT(OUT) :: ioerr
+  INTEGER(SLK),INTENT(INOUT) :: nword
+  INTEGER(SNK),INTENT(OUT) :: dat(*)
+  INTEGER(SLK) :: i,irec,istt,istp,iword,nrec,nread
+  INTEGER(SNK) :: bufdat(WORDSREC)
 
-      ioerr=0
-      nread=0
-      irec=(iaddr-1)/WORDSREC+1
-      iword=MOD(iaddr-1_SLK,INT(WORDSREC,SLK))+1
-      nrec=nword/WORDSREC
-      IF(MOD(nword,INT(WORDSREC,SLK)) > 0) nrec=nrec+1
-      IF(WORDSREC-iword+1 < nword) nrec=nrec+1
+  ioerr=0
+  nread=0
+  irec=(iaddr-1)/WORDSREC+1
+  iword=MOD(iaddr-1_SLK,INT(WORDSREC,SLK))+1
+  nrec=nword/WORDSREC
+  IF(MOD(nword,INT(WORDSREC,SLK)) > 0) nrec=nrec+1
+  IF(WORDSREC-iword+1 < nword) nrec=nrec+1
 
-      READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
-      IF(ioerr == 0) THEN
-        istt=1
-        istp=MIN(nword,WORDSREC-iword+1)
-        dat(istt:istp)=bufdat(iword:iword+istp-istt)
-        nread=nread+istp-istt+1
-        DO i=1,nrec-1
-          READ(UNIT=funit,REC=irec+i,IOSTAT=ioerr) bufdat
-          IF(ioerr /= 0) EXIT
-          istt=istp+1
-          istp=MIN(istt+WORDSREC-1,nword)
-          dat(istt:istp)=bufdat(1:istp-istt+1)
-          nread=nread+istp-istt+1
-        ENDDO
-      ENDIF
-      nword=nread
-    ENDSUBROUTINE readdat_basic
+  READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
+  IF(ioerr == 0) THEN
+    istt=1
+    istp=MIN(nword,WORDSREC-iword+1)
+    dat(istt:istp)=bufdat(iword:iword+istp-istt)
+    nread=nread+istp-istt+1
+    DO i=1,nrec-1
+      READ(UNIT=funit,REC=irec+i,IOSTAT=ioerr) bufdat
+      IF(ioerr /= 0) EXIT
+      istt=istp+1
+      istp=MIN(istt+WORDSREC-1,nword)
+      dat(istt:istp)=bufdat(1:istp-istt+1)
+      nread=nread+istp-istt+1
+    ENDDO
+  ENDIF
+  nword=nread
+ENDSUBROUTINE readdat_basic
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a stream of records from a buffer.
@@ -606,52 +602,52 @@ MODULE FileType_DA32
 !> The buffer is a 32-bit integer array. All other write routines eventually
 !> call this routine.
 !>
-    SUBROUTINE writedat_basic(funit,iaddr,dat,ioerr,nword)
-      INTEGER(SIK),INTENT(IN) :: funit
-      INTEGER(SLK),INTENT(IN) :: iaddr
-      INTEGER(SIK),INTENT(OUT) :: ioerr
-      INTEGER(SLK),INTENT(INOUT) :: nword
-      INTEGER(SNK),INTENT(IN) :: dat(*)
-      INTEGER(SLK) :: i,irec,istt,istp,iword,nrec,nwrite
-      INTEGER(SNK) :: bufdat(WORDSREC)
+SUBROUTINE writedat_basic(funit,iaddr,dat,ioerr,nword)
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SLK),INTENT(IN) :: iaddr
+  INTEGER(SIK),INTENT(OUT) :: ioerr
+  INTEGER(SLK),INTENT(INOUT) :: nword
+  INTEGER(SNK),INTENT(IN) :: dat(*)
+  INTEGER(SLK) :: i,irec,istt,istp,iword,nrec,nwrite
+  INTEGER(SNK) :: bufdat(WORDSREC)
 
-      ioerr=0
-      nwrite=0
-      irec=(iaddr-1)/WORDSREC+1
-      iword=MOD(iaddr-1_SLK,INT(WORDSREC,SLK))+1
-      nrec=nword/WORDSREC
-      IF(MOD(nword,INT(WORDSREC,SLK)) > 0) nrec=nrec+1
-      IF(WORDSREC-iword+1 < nword) nrec=nrec+1
+  ioerr=0
+  nwrite=0
+  irec=(iaddr-1)/WORDSREC+1
+  iword=MOD(iaddr-1_SLK,INT(WORDSREC,SLK))+1
+  nrec=nword/WORDSREC
+  IF(MOD(nword,INT(WORDSREC,SLK)) > 0) nrec=nrec+1
+  IF(WORDSREC-iword+1 < nword) nrec=nrec+1
 
-      bufdat=0
-      IF(irec <= FileRecSize(funit)) &
-        READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
-      IF(ioerr == 0) THEN
-        istt=1
-        istp=MIN(nword,INT(WORDSREC-iword+1,SLK))
-        bufdat(iword:iword+istp-istt)=dat(istt:istp)
-        WRITE(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
-        DO i=1,nrec-1
-          IF(ioerr /= 0) EXIT
-          nwrite=nwrite+istp-istt+1
-          istt=istp+1
-          istp=MIN(istt+WORDSREC-1_SLK,nword)
-          IF(irec+i < FileRecSize(funit)) THEN
-            READ(UNIT=funit,REC=irec+i,IOSTAT=ioerr) bufdat
-            IF(ioerr /= 0) EXIT
-          ELSE
-            bufdat(istp-istt+1:WORDSREC)=0
-          ENDIF
-          bufdat(1:istp-istt+1)=dat(istt:istp)
-          WRITE(UNIT=funit,REC=irec+i,IOSTAT=ioerr) bufdat
-        ENDDO
-        IF(ioerr == 0) THEN
-          nwrite=nwrite+istp-istt+1
-          FLUSH(funit)
-        ENDIF
+  bufdat=0
+  IF(irec <= FileRecSize(funit)) &
+      READ(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
+  IF(ioerr == 0) THEN
+    istt=1
+    istp=MIN(nword,INT(WORDSREC-iword+1,SLK))
+    bufdat(iword:iword+istp-istt)=dat(istt:istp)
+    WRITE(UNIT=funit,REC=irec,IOSTAT=ioerr) bufdat
+    DO i=1,nrec-1
+      IF(ioerr /= 0) EXIT
+      nwrite=nwrite+istp-istt+1
+      istt=istp+1
+      istp=MIN(istt+WORDSREC-1_SLK,nword)
+      IF(irec+i < FileRecSize(funit)) THEN
+        READ(UNIT=funit,REC=irec+i,IOSTAT=ioerr) bufdat
+        IF(ioerr /= 0) EXIT
+      ELSE
+        bufdat(istp-istt+1:WORDSREC)=0
       ENDIF
-      nword=nwrite
-    ENDSUBROUTINE writedat_basic
+      bufdat(1:istp-istt+1)=dat(istt:istp)
+      WRITE(UNIT=funit,REC=irec+i,IOSTAT=ioerr) bufdat
+    ENDDO
+    IF(ioerr == 0) THEN
+      nwrite=nwrite+istp-istt+1
+      FLUSH(funit)
+    ENDIF
+  ENDIF
+  nword=nwrite
+ENDSUBROUTINE writedat_basic
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes character data to a DA32 file starting at REC.
@@ -662,49 +658,49 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_char(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      CHARACTER(LEN=*),INTENT(IN) :: dat
+SUBROUTINE writedat_char(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  CHARACTER(LEN=*),INTENT(IN) :: dat
 
-      CHARACTER(LEN=CH2REC) :: space_buffer
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: nlen,ioerr,istt,istp,i
-      INTEGER(SLK) :: n,irec
+  CHARACTER(LEN=CH2REC) :: space_buffer
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: nlen,ioerr,istt,istp,i
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        DO i=1,CH2REC
-          space_buffer(i:i)=' '
-        ENDDO
-        nlen=LEN(dat)
-        istt=1
-        istp=MIN(nlen,NBUFCH)
-        ioerr=0
-        DO WHILE(nlen > 0)
-          n=istp-istt+1
-          n=n/CH2REC
-          IF(MOD(istp-istt+1,CH2REC) > 0) THEN
-            n=n+1
-            tmpdat=TRANSFER(dat(istt:istp)//space_buffer,tmpdat)
-          ELSE
-            tmpdat=TRANSFER(dat(istt:istp),tmpdat)
-          ENDIF
-          CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-
-          IF(ioerr /= 0) EXIT
-          irec=irec+n
-          nlen=nlen-NBUFCH
-          istt=istp+1
-          istp=MIN(nlen,NBUFCH)+istt-1
-        ENDDO
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    DO i=1,CH2REC
+      space_buffer(i:i)=' '
+    ENDDO
+    nlen=LEN(dat)
+    istt=1
+    istp=MIN(nlen,NBUFCH)
+    ioerr=0
+    DO WHILE(nlen > 0)
+      n=istp-istt+1
+      n=n/CH2REC
+      IF(MOD(istp-istt+1,CH2REC) > 0) THEN
+        n=n+1
+        tmpdat=TRANSFER(dat(istt:istp)//space_buffer,tmpdat)
+      ELSE
+        tmpdat=TRANSFER(dat(istt:istp),tmpdat)
       ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_char
+      CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+
+      IF(ioerr /= 0) EXIT
+      irec=irec+n
+      nlen=nlen-NBUFCH
+      istt=istp+1
+      istp=MIN(nlen,NBUFCH)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_char
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a scalar logical to a DA32 file starting at REC.
@@ -715,27 +711,27 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat
+SUBROUTINE writedat_sbk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat
 
-      INTEGER(SNK) :: tmpdat(1)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(1)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      ioerr=IOSTAT_END
-      n=0
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        n=1
-        tmpdat=TRANSFER(dat,tmpdat)
-        CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE writedat_sbk0
+  ioerr=IOSTAT_END
+  n=0
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    n=1
+    tmpdat=TRANSFER(dat,tmpdat)
+    CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE writedat_sbk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a scalar 32-bit integer to a DA32 file starting at REC.
@@ -746,27 +742,27 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat
+SUBROUTINE writedat_snk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat
 
-      INTEGER(SNK) :: tmpdat(1)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(1)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      ioerr=IOSTAT_END
-      n=0
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        n=1
-        tmpdat=dat
-        CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE writedat_snk0
+  ioerr=IOSTAT_END
+  n=0
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    n=1
+    tmpdat=dat
+    CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE writedat_snk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a scalar 64-bit integer to a DA32 file starting at REC.
@@ -777,27 +773,27 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat
+SUBROUTINE writedat_slk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat
 
-      INTEGER(SNK) :: tmpdat(2)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(2)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      ioerr=IOSTAT_END
-      n=0
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        n=2
-        tmpdat=TRANSFER(dat,tmpdat)
-        CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE writedat_slk0
+  ioerr=IOSTAT_END
+  n=0
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    n=2
+    tmpdat=TRANSFER(dat,tmpdat)
+    CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE writedat_slk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a scalar 32-bit real to a DA32 file starting at REC.
@@ -808,27 +804,27 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat
+SUBROUTINE writedat_ssk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat
 
-      INTEGER(SNK) :: tmpdat(1)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(1)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      ioerr=IOSTAT_END
-      n=0
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        n=1
-        tmpdat=TRANSFER(dat,tmpdat)
-        CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE writedat_ssk0
+  ioerr=IOSTAT_END
+  n=0
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    n=1
+    tmpdat=TRANSFER(dat,tmpdat)
+    CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE writedat_ssk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a scalar 64-bit real to a DA32 File starting at REC.
@@ -839,27 +835,27 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat
+SUBROUTINE writedat_sdk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat
 
-      INTEGER(SNK) :: tmpdat(2)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(2)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      ioerr=IOSTAT_END
-      n=0
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        n=2
-        tmpdat=TRANSFER(dat,tmpdat)
-        CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE writedat_sdk0
+  ioerr=IOSTAT_END
+  n=0
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    n=2
+    tmpdat=TRANSFER(dat,tmpdat)
+    CALL writedat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE writedat_sdk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 1-D array of logicals to a DA32 file starting at REC.
@@ -870,38 +866,38 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat(:)
+SUBROUTINE writedat_sbk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUF)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          tmpdat=TRANSFER(dat(istt:istp),tmpdat)
-          n=istp-istt+1
-          CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          irec=irec+n
-          ndat=ndat-NBUF
-          istt=istp+1
-          istp=MIN(ndat,NBUF)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sbk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUF)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      tmpdat=TRANSFER(dat(istt:istp),tmpdat)
+      n=istp-istt+1
+      CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      irec=irec+n
+      ndat=ndat-NBUF
+      istt=istp+1
+      istp=MIN(ndat,NBUF)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sbk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 1-D array of 32-bit integers to a DA32 file starting at REC.
@@ -912,38 +908,38 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat(:)
+SUBROUTINE writedat_snk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUF)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          tmpdat(1:istp-istt+1)=dat(istt:istp)
-          n=istp-istt+1
-          CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          irec=irec+n
-          ndat=ndat-NBUF
-          istt=istp+1
-          istp=MIN(ndat,NBUF)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_snk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUF)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      tmpdat(1:istp-istt+1)=dat(istt:istp)
+      n=istp-istt+1
+      CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      irec=irec+n
+      ndat=ndat-NBUF
+      istt=istp+1
+      istp=MIN(ndat,NBUF)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_snk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 1-D array of 64-bit integers to a DA32 file starting at REC.
@@ -954,39 +950,39 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat(:)
+SUBROUTINE writedat_slk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUFD)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          tmpdat=TRANSFER(dat(istt:istp),tmpdat)
-          n=istp-istt+1
-          n=n*2
-          CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          irec=irec+n
-          ndat=ndat-NBUFD
-          istt=istp+1
-          istp=MIN(ndat,NBUFD)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_slk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUFD)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      tmpdat=TRANSFER(dat(istt:istp),tmpdat)
+      n=istp-istt+1
+      n=n*2
+      CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      irec=irec+n
+      ndat=ndat-NBUFD
+      istt=istp+1
+      istp=MIN(ndat,NBUFD)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_slk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 1-D array of 32-bit reals to a DA32 file starting at REC.
@@ -997,38 +993,38 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat(:)
+SUBROUTINE writedat_ssk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUF)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          tmpdat=TRANSFER(dat(istt:istp),tmpdat)
-          n=istp-istt+1
-          CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          irec=irec+n
-          ndat=ndat-NBUF
-          istt=istp+1
-          istp=MIN(ndat,NBUF)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_ssk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUF)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      tmpdat=TRANSFER(dat(istt:istp),tmpdat)
+      n=istp-istt+1
+      CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      irec=irec+n
+      ndat=ndat-NBUF
+      istt=istp+1
+      istp=MIN(ndat,NBUF)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_ssk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 1-D array of 64-bit reals to a DA32 file starting at REC.
@@ -1039,39 +1035,39 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat(:)
+SUBROUTINE writedat_sdk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUFD)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          tmpdat=TRANSFER(dat(istt:istp),tmpdat)
-          n=istp-istt+1
-          n=n*2
-          CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          irec=irec+n
-          ndat=ndat-NBUFD
-          istt=istp+1
-          istp=MIN(ndat,NBUFD)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sdk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUFD)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      tmpdat=TRANSFER(dat(istt:istp),tmpdat)
+      n=istp-istt+1
+      n=n*2
+      CALL writedat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      irec=irec+n
+      ndat=ndat-NBUFD
+      istt=istp+1
+      istp=MIN(ndat,NBUFD)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sdk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 2-D array of logicals to a DA32 file starting at REC.
@@ -1082,25 +1078,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sbk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL writedat_sbk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sbk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL writedat_sbk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sbk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 2-D array of 32-bit integers to a DA32 file starting at REC.
@@ -1111,25 +1107,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_snk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL writedat_snk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_snk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL writedat_snk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_snk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 2-D array of 64-bit integers to a DA32 file starting at REC.
@@ -1140,25 +1136,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_slk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL writedat_slk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_slk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL writedat_slk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_slk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 2-D array of 32-bit reals to a DA32 file starting at REC.
@@ -1169,25 +1165,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_ssk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL writedat_ssk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_ssk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL writedat_ssk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_ssk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 2-D array of 64-bit reals to a DA32 file starting at REC.
@@ -1198,25 +1194,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sdk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL writedat_sdk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sdk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL writedat_sdk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sdk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 3-D array of logicals to a DA32 file starting at REC.
@@ -1227,25 +1223,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sbk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL writedat_sbk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sbk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL writedat_sbk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sbk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 3-D array of 32-bit integers to a DA32 file starting at REC.
@@ -1256,25 +1252,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_snk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL writedat_snk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_snk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL writedat_snk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_snk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 3-D array of 64-bit integers to a DA32 file starting at REC.
@@ -1285,25 +1281,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_slk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL writedat_slk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_slk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL writedat_slk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_slk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 3-D array of 32-bit reals to a DA32 file starting at REC.
@@ -1314,25 +1310,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_ssk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL writedat_ssk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_ssk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL writedat_ssk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_ssk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 3-D array of 64-bit reals to a DA32 file starting at REC.
@@ -1343,25 +1339,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sdk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL writedat_sdk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sdk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL writedat_sdk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sdk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 4-D array of logicals to a DA32 file starting at REC.
@@ -1372,25 +1368,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sbk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL writedat_sbk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sbk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL writedat_sbk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sbk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 4-D array of 32-bit integers to a DA32 file starting at REC.
@@ -1401,25 +1397,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_snk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL writedat_snk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_snk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL writedat_snk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_snk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 4-D array of 64-bit integers to a DA32 file starting at REC.
@@ -1430,25 +1426,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_slk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL writedat_slk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_slk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL writedat_slk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_slk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 4-D array of 32-bit reals to a DA32 file starting at REC.
@@ -1459,25 +1455,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_ssk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL writedat_ssk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_ssk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL writedat_ssk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_ssk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 4-D array of 64-bit reals to a DA32 file starting at REC.
@@ -1488,25 +1484,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sdk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL writedat_sdk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sdk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL writedat_sdk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sdk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 5-D array of logicals to a DA32 file starting at REC.
@@ -1517,25 +1513,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sbk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL writedat_sbk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sbk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL writedat_sbk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sbk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 5-D array of 32-bit integers to a DA32 file starting at REC.
@@ -1546,25 +1542,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_snk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL writedat_snk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_snk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL writedat_snk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_snk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 5-D array of 64-bit integers to a DA32 file starting at REC.
@@ -1575,25 +1571,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_slk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL writedat_slk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_slk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL writedat_slk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_slk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 5-D array of 32-bit reals to a DA32 file starting at REC.
@@ -1604,25 +1600,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_ssk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL writedat_ssk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_ssk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL writedat_ssk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_ssk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 5-D array of 64-bit reals to a DA32 file starting at REC.
@@ -1633,25 +1629,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sdk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL writedat_sdk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sdk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL writedat_sdk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sdk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 6-D array of logicals to a DA32 file starting at REC.
@@ -1662,25 +1658,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sbk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL writedat_sbk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sbk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL writedat_sbk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sbk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 6-D array of 32-bit integers to a DA32 file starting at REC.
@@ -1691,25 +1687,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_snk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL writedat_snk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_snk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL writedat_snk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_snk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 6-D array of 64-bit integers to a DA32 file starting at REC.
@@ -1720,25 +1716,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_slk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL writedat_slk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_slk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL writedat_slk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_slk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 6-D array of 32-bit reals to a DA32 file starting at REC.
@@ -1749,25 +1745,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_ssk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL writedat_ssk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_ssk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL writedat_ssk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_ssk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 6-D array of 64-bit reals to a DA32 file starting at REC.
@@ -1778,25 +1774,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sdk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL writedat_sdk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sdk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL writedat_sdk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sdk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 7-D array of logicals to a DA32 file starting at REC.
@@ -1807,25 +1803,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sbk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sbk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL writedat_sbk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sbk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL writedat_sbk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sbk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 7-D array of 32-bit integers to a DA32 file starting at REC.
@@ -1836,25 +1832,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_snk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_snk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL writedat_snk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_snk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL writedat_snk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_snk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 7-D array of 64-bit integers to a DA32 file starting at REC.
@@ -1865,25 +1861,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_slk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_slk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL writedat_slk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_slk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL writedat_slk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_slk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 7-D array of 32-bit reals to a DA32 file starting at REC.
@@ -1894,25 +1890,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_ssk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_ssk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL writedat_ssk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_ssk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL writedat_ssk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_ssk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes a 7-D array of 64-bit reals to a DA32 file starting at REC.
@@ -1923,25 +1919,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records occupied by dat
 !>        in the file
 !>
-    SUBROUTINE writedat_sdk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE writedat_sdk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(INOUT) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(IN) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL writedat_sdk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE writedat_sdk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL writedat_sdk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE writedat_sdk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads character data from a DA32 file starting at REC.
@@ -1952,49 +1948,49 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_char(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      CHARACTER(LEN=*),INTENT(OUT) :: dat
+SUBROUTINE readdat_char(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  CHARACTER(LEN=*),INTENT(OUT) :: dat
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: nlen,ioerr,istt,istp,i
-      INTEGER(SLK) :: irec,n
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: nlen,ioerr,istt,istp,i
+  INTEGER(SLK) :: irec,n
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        nlen=LEN(dat)
-        istt=1
-        istp=MIN(nlen,NBUFCH)
-        ioerr=0
-        DO WHILE(nlen > 0)
-          n=istp-istt+1
-          n=n/CH2REC
-          IF(MOD(istp-istt+1,CH2REC) > 0) n=n+1
-          CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
-          irec=irec+n
-          nlen=nlen-NBUFCH
-          istt=istp+1
-          istp=MIN(nlen,NBUFCH)+istt-1
-        ENDDO
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    nlen=LEN(dat)
+    istt=1
+    istp=MIN(nlen,NBUFCH)
+    ioerr=0
+    DO WHILE(nlen > 0)
+      n=istp-istt+1
+      n=n/CH2REC
+      IF(MOD(istp-istt+1,CH2REC) > 0) n=n+1
+      CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
+      irec=irec+n
+      nlen=nlen-NBUFCH
+      istt=istp+1
+      istp=MIN(nlen,NBUFCH)+istt-1
+    ENDDO
 
-        !The transfer intrinsic generates 0 (or C NULL CHARS) for records
-        !that were not complete. This replaces the trailing NULL chars with
-        !spaces to facilitate the use of TRIM on the returned character string.
-        IF(ioerr == 0) THEN
-          DO i=1,LEN(dat)
-            IF(ICHAR(dat(i:i)) == 0) dat(i:i)=ACHAR(32)
-          ENDDO
-        ENDIF
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_char
+    !The transfer intrinsic generates 0 (or C NULL CHARS) for records
+    !that were not complete. This replaces the trailing NULL chars with
+    !spaces to facilitate the use of TRIM on the returned character string.
+    IF(ioerr == 0) THEN
+      DO i=1,LEN(dat)
+        IF(ICHAR(dat(i:i)) == 0) dat(i:i)=ACHAR(32)
+      ENDDO
+    ENDIF
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_char
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a scalar logical from a DA32 file starting at REC.
@@ -2005,23 +2001,23 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(OUT) :: dat
+SUBROUTINE readdat_sbk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(OUT) :: dat
 
-      INTEGER(SNK) :: tmpdat(1)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(1)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      n=1
-      CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      dat=TRANSFER(tmpdat,dat)
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE readdat_sbk0
+  n=1
+  CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  dat=TRANSFER(tmpdat,dat)
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE readdat_sbk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a scalar 32-bit integer from a DA32 file starting at REC.
@@ -2032,23 +2028,23 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(OUT) :: dat
+SUBROUTINE readdat_snk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(OUT) :: dat
 
-      INTEGER(SNK) :: tmpdat(1)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(1)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      n=1
-      CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      dat=tmpdat(1)
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE readdat_snk0
+  n=1
+  CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  dat=tmpdat(1)
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE readdat_snk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a scalar 64-bit integer from a DA32 file starting at REC.
@@ -2059,23 +2055,23 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(OUT) :: dat
+SUBROUTINE readdat_slk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(OUT) :: dat
 
-      INTEGER(SNK) :: tmpdat(2)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(2)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      n=2
-      CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      dat=TRANSFER(tmpdat,dat)
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE readdat_slk0
+  n=2
+  CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  dat=TRANSFER(tmpdat,dat)
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE readdat_slk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a scalar 32-bit real from a DA32 file starting at REC.
@@ -2086,23 +2082,23 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(OUT) :: dat
+SUBROUTINE readdat_ssk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(OUT) :: dat
 
-      INTEGER(SNK) :: tmpdat(1)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(1)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      n=1
-      CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      dat=TRANSFER(tmpdat,dat)
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE readdat_ssk0
+  n=1
+  CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  dat=TRANSFER(tmpdat,dat)
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE readdat_ssk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a scalar 64-bit real from a DA32 file starting at REC.
@@ -2113,23 +2109,23 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk0(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(OUT) :: dat
+SUBROUTINE readdat_sdk0(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(OUT) :: dat
 
-      INTEGER(SNK) :: tmpdat(2)
-      INTEGER(SIK) :: ioerr
-      INTEGER(SLK) :: n
+  INTEGER(SNK) :: tmpdat(2)
+  INTEGER(SIK) :: ioerr
+  INTEGER(SLK) :: n
 
-      n=2
-      CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
-      dat=TRANSFER(tmpdat,dat)
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=n
-    ENDSUBROUTINE readdat_sdk0
+  n=2
+  CALL readdat_basic(thisDA32%getUnitNo(),rec,tmpdat,ioerr,n)
+  dat=TRANSFER(tmpdat,dat)
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=n
+ENDSUBROUTINE readdat_sdk0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 1-D logical array from a DA32 file starting at REC.
@@ -2140,38 +2136,38 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(INOUT) :: dat(:)
+SUBROUTINE readdat_sbk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(INOUT) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUF)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          n=istp-istt+1
-          CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
-          irec=irec+n
-          ndat=ndat-NBUF
-          istt=istp+1
-          istp=MIN(ndat,NBUF)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sbk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUF)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      n=istp-istt+1
+      CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
+      irec=irec+n
+      ndat=ndat-NBUF
+      istt=istp+1
+      istp=MIN(ndat,NBUF)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sbk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 1-D array of 32-bit integers from a DA32 file starting at REC.
@@ -2182,38 +2178,38 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(INOUT) :: dat(:)
+SUBROUTINE readdat_snk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(INOUT) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUF)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          n=istp-istt+1
-          CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          dat(istt:istp)=tmpdat(1:n)
-          irec=irec+n
-          ndat=ndat-NBUF
-          istt=istp+1
-          istp=MIN(ndat,NBUF)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_snk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUF)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      n=istp-istt+1
+      CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      dat(istt:istp)=tmpdat(1:n)
+      irec=irec+n
+      ndat=ndat-NBUF
+      istt=istp+1
+      istp=MIN(ndat,NBUF)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_snk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 1-D array of 64-bit integers from a DA32 file starting at REC.
@@ -2224,39 +2220,39 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(INOUT) :: dat(:)
+SUBROUTINE readdat_slk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(INOUT) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUFD)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          n=istp-istt+1
-          n=n*2
-          CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
-          irec=irec+n
-          ndat=ndat-NBUFD
-          istt=istp+1
-          istp=MIN(ndat,NBUFD)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_slk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUFD)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      n=istp-istt+1
+      n=n*2
+      CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
+      irec=irec+n
+      ndat=ndat-NBUFD
+      istt=istp+1
+      istp=MIN(ndat,NBUFD)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_slk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 1-D array of 32-bit reals from a DA32 file starting at REC.
@@ -2267,38 +2263,38 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(INOUT) :: dat(:)
+SUBROUTINE readdat_ssk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(INOUT) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUF)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          n=istp-istt+1
-          CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
-          irec=irec+n
-          ndat=ndat-NBUF
-          istt=istp+1
-          istp=MIN(ndat,NBUF)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_ssk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUF)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      n=istp-istt+1
+      CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
+      irec=irec+n
+      ndat=ndat-NBUF
+      istt=istp+1
+      istp=MIN(ndat,NBUF)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_ssk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 1-D array of 64-bit reals from a DA32 file starting at REC.
@@ -2309,39 +2305,39 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk1(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(INOUT) :: dat(:)
+SUBROUTINE readdat_sdk1(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(INOUT) :: dat(:)
 
-      INTEGER(SNK) :: tmpdat(NBUF)
-      INTEGER(SIK) :: ndat,ioerr,istt,istp
-      INTEGER(SLK) :: n,irec
+  INTEGER(SNK) :: tmpdat(NBUF)
+  INTEGER(SIK) :: ndat,ioerr,istt,istp
+  INTEGER(SLK) :: n,irec
 
-      ioerr=IOSTAT_END
-      irec=rec
-      IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
-        ndat=SIZE(dat)
-        istt=1
-        istp=MIN(ndat,NBUFD)
-        ioerr=0
-        DO WHILE(ndat > 0)
-          n=istp-istt+1
-          n=n*2
-          CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
-          IF(ioerr /= 0) EXIT
-          dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
-          irec=irec+n
-          ndat=ndat-NBUFD
-          istt=istp+1
-          istp=MIN(ndat,NBUFD)+istt-1
-        ENDDO
-      ENDIF
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sdk1
+  ioerr=IOSTAT_END
+  irec=rec
+  IF(thisDA32%isInit() .AND. thisDA32%isOpen()) THEN
+    ndat=SIZE(dat)
+    istt=1
+    istp=MIN(ndat,NBUFD)
+    ioerr=0
+    DO WHILE(ndat > 0)
+      n=istp-istt+1
+      n=n*2
+      CALL readdat_basic(thisDA32%getUnitNo(),irec,tmpdat,ioerr,n)
+      IF(ioerr /= 0) EXIT
+      dat(istt:istp)=TRANSFER(tmpdat(1:n),dat)
+      irec=irec+n
+      ndat=ndat-NBUFD
+      istt=istp+1
+      istp=MIN(ndat,NBUFD)+istt-1
+    ENDDO
+  ENDIF
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sdk1
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 2-D logical array from a DA32 file starting at REC.
@@ -2352,25 +2348,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(INOUT) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sbk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(INOUT) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL readdat_sbk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sbk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL readdat_sbk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sbk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 2-D array of 32-bit integers from a DA32 file starting at REC.
@@ -2381,25 +2377,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(INOUT) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_snk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(INOUT) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL readdat_snk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_snk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL readdat_snk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_snk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 2-D array of 64-bit integers from a DA32 file starting at REC.
@@ -2410,25 +2406,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(INOUT) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_slk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(INOUT) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL readdat_slk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_slk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL readdat_slk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_slk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 2-D array of 32-bit reals from a DA32 file starting at REC.
@@ -2439,25 +2435,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(INOUT) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_ssk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(INOUT) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL readdat_ssk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_ssk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL readdat_ssk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_ssk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 2-D array of 64-bit reals from a DA32 file starting at REC.
@@ -2468,25 +2464,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk2(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(INOUT) :: dat(:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sdk2(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(INOUT) :: dat(:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=2)
-        CALL readdat_sdk1(thisDA32,irec,dat(:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sdk2
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=2)
+    CALL readdat_sdk1(thisDA32,irec,dat(:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sdk2
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 3-D logical array from a DA32 file starting at REC.
@@ -2497,25 +2493,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sbk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL readdat_sbk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sbk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL readdat_sbk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sbk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 3-D array of 32-bit integers from a DA32 file starting at REC.
@@ -2526,25 +2522,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_snk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL readdat_snk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_snk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL readdat_snk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_snk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 3-D array of 64-bit integers from a DA32 file starting at REC.
@@ -2555,25 +2551,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_slk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL readdat_slk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_slk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL readdat_slk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_slk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 3-D array of 32-bit reals from a DA32 file starting at REC.
@@ -2584,25 +2580,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(INOUT) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_ssk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(INOUT) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL readdat_ssk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_ssk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL readdat_ssk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_ssk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 3-D array of 64-bit reals from a DA32 file starting at REC.
@@ -2613,25 +2609,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk3(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(INOUT) :: dat(:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sdk3(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(INOUT) :: dat(:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=3)
-        CALL readdat_sdk2(thisDA32,irec,dat(:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sdk3
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=3)
+    CALL readdat_sdk2(thisDA32,irec,dat(:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sdk3
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 4-D logical array from a DA32 file starting at REC.
@@ -2642,25 +2638,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sbk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL readdat_sbk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sbk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL readdat_sbk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sbk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 4-D array of 32-bit integers from a DA32 file starting at REC.
@@ -2671,25 +2667,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_snk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL readdat_snk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_snk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL readdat_snk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_snk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 4-D array of 64-bit integers from a DA32 file starting at REC.
@@ -2700,25 +2696,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_slk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL readdat_slk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_slk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL readdat_slk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_slk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 4-D array of 32-bit reals from a DA32 file starting at REC.
@@ -2729,25 +2725,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_ssk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL readdat_ssk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_ssk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL readdat_ssk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_ssk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 4-D array of 64-bit reals from a DA32 file starting at REC.
@@ -2758,25 +2754,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk4(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sdk4(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=4)
-        CALL readdat_sdk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sdk4
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=4)
+    CALL readdat_sdk3(thisDA32,irec,dat(:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sdk4
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 5-D logical array from a DA32 file starting at REC.
@@ -2787,25 +2783,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sbk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL readdat_sbk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sbk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL readdat_sbk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sbk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 5-D array of 32-bit integers from a DA32 file starting at REC.
@@ -2816,25 +2812,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_snk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL readdat_snk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_snk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL readdat_snk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_snk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 5-D array of 64-bit integers from a DA32 file starting at REC.
@@ -2845,25 +2841,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_slk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL readdat_slk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_slk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL readdat_slk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_slk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 5-D array of 32-bit reals from a DA32 file starting at REC.
@@ -2874,25 +2870,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_ssk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL readdat_ssk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_ssk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL readdat_ssk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_ssk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 5-D array of 64-bit reals from a DA32 file starting at REC.
@@ -2903,25 +2899,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk5(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sdk5(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=5)
-        CALL readdat_sdk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sdk5
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=5)
+    CALL readdat_sdk4(thisDA32,irec,dat(:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sdk5
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 6-D logical array from a DA32 file starting at REC.
@@ -2932,25 +2928,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sbk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL readdat_sbk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sbk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL readdat_sbk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sbk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 6-D array of 32-bit integers from a DA32 file starting at REC.
@@ -2961,25 +2957,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_snk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL readdat_snk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_snk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL readdat_snk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_snk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 6-D array of 64-bit integers from a DA32 file starting at REC.
@@ -2990,25 +2986,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_slk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL readdat_slk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_slk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL readdat_slk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_slk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 6-D array of 32-bit reals from a DA32 file starting at REC.
@@ -3019,25 +3015,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_ssk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL readdat_ssk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_ssk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL readdat_ssk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_ssk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 6-D array of 64-bit reals from a DA32 file starting at REC.
@@ -3048,25 +3044,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk6(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sdk6(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=6)
-        CALL readdat_sdk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sdk6
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=6)
+    CALL readdat_sdk5(thisDA32,irec,dat(:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sdk6
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 7-D logical array from a DA32 file starting at REC.
@@ -3077,25 +3073,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sbk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sbk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  LOGICAL(SBK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL readdat_sbk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sbk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL readdat_sbk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sbk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 7-D array of 32-bit integers from a DA32 file starting at REC.
@@ -3106,25 +3102,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_snk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_snk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SNK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL readdat_snk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_snk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL readdat_snk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_snk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 7-D array of 64-bit integers from a DA32 file starting at REC.
@@ -3135,25 +3131,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_slk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_slk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  INTEGER(SLK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL readdat_slk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_slk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL readdat_slk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_slk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 7-D array of 32-bit reals from a DA32 file starting at REC.
@@ -3164,25 +3160,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_ssk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_ssk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SSK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL readdat_ssk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_ssk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL readdat_ssk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_ssk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a 7-D array of 64-bit reals from a DA32 file starting at REC.
@@ -3193,25 +3189,25 @@ MODULE FileType_DA32
 !> @param nrec optional return value for the number of records read from the
 !>        file
 !>
-    SUBROUTINE readdat_sdk7(thisDA32,rec,dat,iostat,nrec)
-      CLASS(DA32FileType),INTENT(IN) :: thisDA32
-      INTEGER(SLK),INTENT(IN) :: rec
-      INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
-      INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
-      REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
-      INTEGER(SIK) :: i,ioerr
-      INTEGER(SLK) :: irec,n
+SUBROUTINE readdat_sdk7(thisDA32,rec,dat,iostat,nrec)
+  CLASS(DA32FileType),INTENT(IN) :: thisDA32
+  INTEGER(SLK),INTENT(IN) :: rec
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: iostat
+  INTEGER(SLK),INTENT(OUT),OPTIONAL :: nrec
+  REAL(SDK),INTENT(INOUT) :: dat(:,:,:,:,:,:,:)
+  INTEGER(SIK) :: i,ioerr
+  INTEGER(SLK) :: irec,n
 
-      irec=rec
-      ioerr=0
-      DO i=1,SIZE(dat,DIM=7)
-        CALL readdat_sdk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
-        IF(ioerr /= 0) EXIT
-        irec=irec+n
-      ENDDO
-      IF(PRESENT(iostat)) iostat=ioerr
-      IF(PRESENT(nrec)) nrec=irec-rec
-    ENDSUBROUTINE readdat_sdk7
+  irec=rec
+  ioerr=0
+  DO i=1,SIZE(dat,DIM=7)
+    CALL readdat_sdk6(thisDA32,irec,dat(:,:,:,:,:,:,i),ioerr,n)
+    IF(ioerr /= 0) EXIT
+    irec=irec+n
+  ENDDO
+  IF(PRESENT(iostat)) iostat=ioerr
+  IF(PRESENT(nrec)) nrec=irec-rec
+ENDSUBROUTINE readdat_sdk7
 !
 !-------------------------------------------------------------------------------
 !> @brief Internal routine to determine the maximum number of records in the
@@ -3219,11 +3215,11 @@ MODULE FileType_DA32
 !> @param funit the unit number to check
 !> @returns fsize the size in number of records of the file
 !>
-    FUNCTION FileRecSize(funit) RESULT(fsize)
-      INTEGER(SIK),INTENT(IN) :: funit
-      INTEGER(SLK) :: fsize
-      INQUIRE(UNIT=funit,SIZE=fsize)
-      IF(fsize > 0) fsize=fsize*FILE_STORAGE_SIZE/(32*WORDSREC)
-    ENDFUNCTION FileRecSize
+FUNCTION FileRecSize(funit) RESULT(fsize)
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SLK) :: fsize
+  INQUIRE(UNIT=funit,SIZE=fsize)
+  IF(fsize > 0) fsize=fsize*FILE_STORAGE_SIZE/(32*WORDSREC)
+ENDFUNCTION FileRecSize
 !
 ENDMODULE FileType_DA32

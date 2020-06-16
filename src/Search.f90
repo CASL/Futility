@@ -7,282 +7,450 @@
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 !> @brief A Fortran 2003 module implementing some basic search algorithms.
-!>
-!> @par Module Dependencies
-!>  - @ref IntrType "IntrType": @copybrief IntrType
-!>
-!> @author Mitchell Young
-!>    @date 3/30/2017
-!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Search
-  USE IntrType
-  USE Strings
-  IMPLICIT NONE
+#include "Futility_DBC.h"
+USE IntrType
+USE Strings
+USE ArrayUtils
+USE Futility_DBC
 
-  PRIVATE
+IMPLICIT NONE
+PRIVATE
 
-  PUBLIC :: upperBound
-  PUBLIC :: lowerBound
-  PUBLIC :: find
-  PUBLIC :: binarySearch
+PUBLIC :: upperBound
+PUBLIC :: lowerBound
+PUBLIC :: getFirstGreater
+PUBLIC :: getFirstGreaterEqual
+PUBLIC :: find
+PUBLIC :: binarySearch
 
-  !> @brief Return the index of the first element of a list that compares
-  !> greater than the passed value
-  !> @param list the list to search. The list should be sorted, otherwise
-  !> undefined behavior.
-  !> @param val the value to find
-  !> @param tol the comparison tolerance to use for floating-point
-  !> implementations. Optional
-  !> @returns the index to the first element of the list that compares greater
-  !> than the passed search value
-  !>
-  !> If the value is greater than or equal to the largest element of the list,
-  !> returns SIZE + 1.
-  INTERFACE upperBound
-    MODULE PROCEDURE upper_bound_i
-    MODULE PROCEDURE upper_bound_r
-  ENDINTERFACE upperBound
+!TODO: Change names of these functions on MPACT side to the new versions below
+!      and eliminate these old confusing names:
+!> @brief Interface for getting "upper bounds"
+!>
+INTERFACE upperBound
+  !> @copybrief Search::getFirstGreater_i
+  !> @copydetails Search::getFirstGreater_i
+  MODULE PROCEDURE getFirstGreater_i
+  !> @copybrief Search::getFirstGreater_r
+  !> @copydetails Search::getFirstGreater_r
+  MODULE PROCEDURE getFirstGreater_r
+ENDINTERFACE upperBound
 
-  !> @brief  Return the index of the first element of a list that does not
-  !> compare less than the passed value
-  !> @param list the list to search. The list should be sorted, otherwise
-  !> undefined behavior
-  !> @param val the value to find
-  !> @param tol the comparison tolerance to use for floating-point
-  !> implementations. Optional
-  !> @returns the index to the first element of the list that does not compare
-  !> less than the passed value
-  !>
-  !> If the value is greater than the last element of the list, returns SIZE+1
-  INTERFACE lowerBound
-    MODULE PROCEDURE lower_bound_i
-    MODULE PROCEDURE lower_bound_r
-  ENDINTERFACE lowerBound
+!> @brief Interface for getting "lower bounds"
+!>
+INTERFACE lowerBound
+  !> @copybrief Search::getFirstGreaterEqual_i
+  !> @copydetails Search::getFirstGreaterEqual_i
+  MODULE PROCEDURE getFirstGreaterEqual_i
+  !> @copybrief Search::getFirstGreaterEqual_r
+  !> @copydetails Search::getFirstGreaterEqual_r
+  MODULE PROCEDURE getFirstGreaterEqual_r
+ENDINTERFACE lowerBound
 
-  !> @brief Return the index of an element in a list which compares equal to the
-  !> passed value.
-  !> @param list the list to search. Unlike for binarySearch, the list need not
-  !> be sorted.
-  !> @param val the value to find
-  !> @param tol the comparison tolerance to use for floating-point
-  !> implementations. Optional
-  !>
-  !> If the value is not found, return SIZE+1
-  INTERFACE find
-    MODULE PROCEDURE find_i
-    MODULE PROCEDURE find_r
-  ENDINTERFACE find
+!> @brief Interface for getting the first entry of an array greater than the input
+!>
+INTERFACE getFirstGreater
+  !> @copybrief Search::getFirstGreater_i
+  !> @copydetails Search::getFirstGreater_i
+  MODULE PROCEDURE getFirstGreater_i
+  !> @copybrief Search::getFirstGreater_r
+  !> @copydetails Search::getFirstGreater_r
+  MODULE PROCEDURE getFirstGreater_r
+ENDINTERFACE getFirstGreater
 
-  !> @brief Return the index of an element in a list which compares equal to the
-  !> passed value.
-  !> @param list the list to search. The list should be sorted, otherwise
-  !> undefined behavior
-  !> @param val the value to find
-  !> @param tol the comparison tolerance to use for floating-point
-  !> implementations. Optional
-  !>
-  !> If the value is not found, return SIZE+1
-  INTERFACE binarySearch
-    MODULE PROCEDURE binary_search_i
-    MODULE PROCEDURE binary_search_r
-  ENDINTERFACE binarySearch
+!> @brief Interface for getting the first entry of an array greater than or equal to the input
+!>
+INTERFACE getFirstGreaterEqual
+  !> @copybrief Search::getFirstGreaterEqual_i
+  !> @copydetails Search::getFirstGreaterEqual_i
+  MODULE PROCEDURE getFirstGreaterEqual_i
+  !> @copybrief Search::getFirstGreaterEqual_r
+  !> @copydetails Search::getFirstGreaterEqual_r
+  MODULE PROCEDURE getFirstGreaterEqual_r
+ENDINTERFACE getFirstGreaterEqual
 
+!> @brief Interface for finding entry of a 1D array using a linear search
+!>
+INTERFACE find
+  !> @copybrief Search::linearSearch_i
+  !> @copydetails Search::linearSearch_i
+  MODULE PROCEDURE linearSearch_i
+  !> @copybrief Search::linearSearch_r
+  !> @copydetails Search::linearSearch_r
+  MODULE PROCEDURE linearSearch_r
+ENDINTERFACE find
+
+!> @brief Interface for finding entry of a 1D array using a binary search
+!>
+INTERFACE binarySearch
+  !> @copybrief Search::binarySearch_i
+  !> @copydetails Search::binarySearch_i
+  MODULE PROCEDURE binarySearch_i
+  !> @copybrief Search::binarySearch_r
+  !> @copydetails Search::binarySearch_r
+  MODULE PROCEDURE binarySearch_r
+ENDINTERFACE binarySearch
 !
 !===============================================================================
-  CONTAINS
+CONTAINS
 !
 !-------------------------------------------------------------------------------
-    PURE FUNCTION upper_bound_i(list,val) RESULT (i)
-      INTEGER(SIK),INTENT(IN) :: list(:)
-      INTEGER(SIK),INTENT(IN) :: val
-      INTEGER(SIK) :: j
-      !
-      INTEGER(SIK) :: n, step, i
+!> @brief Returns the index of the first element of a list of integers that is
+!>        greater than val
+!> @param list 1D array of integers to search through. The list should be sorted in
+!>        ascending order
+!> @param val integer value to find the first entry of list that is greater than
+!> @returns i the index of the first element of list that is greater than val
+!>
+!> NOTE: If val is greater than or equal to the largest element of list this
+!>       returns SIZE(list)+1, and if val is smaller than the smallest element of
+!>       list this returns 1.
+!>
+FUNCTION getFirstGreater_i(list,val) RESULT (i)
+  INTEGER(SIK),INTENT(IN) :: list(:)
+  INTEGER(SIK),INTENT(IN) :: val
+  INTEGER(SIK) :: j
+  !
+  INTEGER(SIK) :: n,step,i
 
-      j=1
-      n=SIZE(list)
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
 
-      DO WHILE(n>0)
-        i=j
-        step=n/2
-        i=i+step
-        IF(.NOT. (val < list(i))) THEN
-          i=i+1
-          j=i
-          n=n-step-1
-        ELSE
-          n=step
-        ENDIF
-      ENDDO
+  !Perform binary search
+  j=1
+  n=SIZE(list)
+  DO WHILE(n>0)
+    step=n/2
+    i=j+step
+    IF(.NOT. (val < list(i))) THEN
+      i=i+1
+      j=i
+      n=n-step-1
+    ELSE
+      n=step
+    ENDIF
+  ENDDO
 
-    ENDFUNCTION upper_bound_i
+ENDFUNCTION getFirstGreater_i
 !
 !-------------------------------------------------------------------------------
-    PURE FUNCTION upper_bound_r(list,val,tol) RESULT (i)
-      REAL(SRK),INTENT(IN) :: list(:)
-      REAL(SRK),INTENT(IN) :: val
-      REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      INTEGER(SIK) :: j
-      !
-      INTEGER(SIK) :: n, step, i
-      REAL(SRK) :: eps
+!> @brief Returns the index of the first element of a list of reals that is
+!>        greater than val
+!> @param list 1D array of reals to search through. The list should be sorted in
+!>        ascending order
+!> @param val real value to find the first entry of list that is greater than
+!> @param tol the comparison tolerance to use. Optional
+!> @returns i the index of the first element of list that is greater than val
+!>
+!> NOTE: If val is greater than or equal to the largest element of list this
+!>       returns SIZE(list)+1. If val is smaller than the smallest element of list
+!>       this returns 1.
+!>
+FUNCTION getFirstGreater_r(list,val,tol) RESULT (i)
+  REAL(SRK),INTENT(IN) :: list(:)
+  REAL(SRK),INTENT(IN) :: val
+  REAL(SRK),INTENT(IN),OPTIONAL :: tol
+  INTEGER(SIK) :: j
+  !
+  INTEGER(SIK) :: n,step,i
+  REAL(SRK) :: eps
 
-      eps=EPSREAL
-      IF(PRESENT(tol)) THEN
-        eps=tol
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
+
+  !Set Soft comparison tolerance
+  IF(PRESENT(tol)) THEN
+    eps=tol
+  ELSE
+    eps=EPSREAL
+  ENDIF
+
+  !Perform binary search
+  j=1
+  n=SIZE(list)
+  DO WHILE(n>0)
+    step=n/2
+    i=j+step
+    IF(.NOT. SOFTLT(val,list(i),eps)) THEN
+      i=i+1
+      j=i
+      n=n-step-1
+    ELSE
+      n=step
+    ENDIF
+  ENDDO
+
+ENDFUNCTION getFirstGreater_r
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the index of the first element of a list that does not
+!>        compare less than the passed value
+!> @param list 1D array of integers to search through. The list should be sorted in
+!>        ascending order
+!> @param val integer value to find
+!> @returns j the index of the element of list that is immediatly less than val
+!>
+!> NOTE: If val is greater than the largest element of list this returns SIZE(list)+1.
+!>       If val is smaller than the smallest element of list this returns 1.
+!>
+FUNCTION getFirstGreaterEqual_i(list,val) RESULT(j)
+  INTEGER(SIK),INTENT(IN) :: list(:)
+  INTEGER(SIK),INTENT(IN) :: val
+  INTEGER(SIK) :: j
+  !
+  INTEGER(SIK) :: n,step,i
+  n=SIZE(list)
+  j=1
+
+  REQUIRE(isMonotonic(list) .OR. SIZE(list) == 1)
+
+  !Check length and return if insufficient
+  IF(n < 2) THEN
+    IF(list(1) < val) j=2
+    RETURN
+  ENDIF
+
+  !Perform binary search
+  IF(list(1) < list(n)) THEN
+    DO WHILE(n>0)
+      step=n/2
+      i=j+step
+      IF(list(i) < val) THEN
+        i=i+1
+        j=i
+        n=n-step-1
+      ELSE
+        n=step
       ENDIF
-
-      j=1
-      n=SIZE(list)
-
-      DO WHILE(n>0)
-        i=j
-        step=n/2
-        i=i+step
-        IF(.NOT. SOFTLT(val,list(i),eps)) THEN
-          i=i+1
-          j=i
-          n=n-step-1
-        ELSE
-          n=step
-        ENDIF
-      ENDDO
-
-    ENDFUNCTION upper_bound_r
-!
-!-------------------------------------------------------------------------------
-    PURE FUNCTION lower_bound_i(list,val) RESULT(j)
-      INTEGER(SIK),INTENT(IN) :: list(:)
-      INTEGER(SIK),INTENT(IN) :: val
-      INTEGER(SIK) :: j
-      !
-      INTEGER(SIK) :: n, step, i
-
-      j=1
-      n=SIZE(list)
-
-      DO WHILE(n>0)
-        i=j
-        step = n/2
-        i=i+step
-        IF(list(i) < val) THEN
-          i=i+1
-          j=i
-          n=n-step-1
-        ELSE
-          n=step
-        ENDIF
-      ENDDO
-
-    ENDFUNCTION lower_bound_i
-!
-!-------------------------------------------------------------------------------
-    PURE FUNCTION lower_bound_r(list,val,tol) RESULT(j)
-      REAL(SRK),INTENT(IN) :: list(:)
-      REAL(SRK),INTENT(IN) :: val
-      REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      INTEGER(SIK) :: j
-      !
-      INTEGER(SIK) :: n, step, i
-      REAL(SRK) :: eps
-
-      eps=EPSREAL
-      IF(PRESENT(tol)) THEN
-        eps=tol
+    ENDDO
+  ELSE
+    DO WHILE(n>0)
+      step=n/2
+      i=j+step
+      IF(list(i) > val) THEN
+        i=i+1
+        j=i
+        n=n-step-1
+      ELSE
+        n=step
       ENDIF
+    ENDDO
+  ENDIF
 
-      j=1
-      n=SIZE(list)
-
-      DO WHILE(n>0)
-        i=j
-        step = n/2
-        i=i+step
-        IF(SOFTLT(list(i),val,eps)) THEN
-          i=i+1
-          j=i
-          n=n-step-1
-        ELSE
-          n=step
-        ENDIF
-      ENDDO
-
-    ENDFUNCTION lower_bound_r
+ENDFUNCTION getFirstGreaterEqual_i
 !
 !-------------------------------------------------------------------------------
-    PURE FUNCTION find_i(list, val) RESULT(i)
-      INTEGER(SIK),INTENT(IN) :: list(:)
-      INTEGER(SIK),INTENT(IN) :: val
-      INTEGER(SIK) :: i
+!> @brief Return the index of the first element of a list that does not
+!>        compare less than the passed value
+!> @param list 1D array of reals to search through. The list should be sorted in
+!>        ascending order
+!> @param val real value to find
+!> @param tol the comparison tolerance to use. Optional
+!> @returns j the index of the element of list that is immediatly less than val
+!>
+!> NOTE: If val is greater than the largest element of list this returns SIZE(list)+1.
+!>       If val is smaller than the smallest element of list this returns 1.
+!>
+FUNCTION getFirstGreaterEqual_r(list,val,tol) RESULT(j)
+  REAL(SRK),INTENT(IN) :: list(:)
+  REAL(SRK),INTENT(IN) :: val
+  REAL(SRK),INTENT(IN),OPTIONAL :: tol
+  INTEGER(SIK) :: j
+  !
+  PROCEDURE(SOFTLTwrap),POINTER :: condComp
+  INTEGER(SIK) :: n,step,i
+  REAL(SRK) :: eps
+  n=SIZE(list)
+  j=1
 
-      DO i=1, SIZE(list)
-        IF(list(i) == val) RETURN
-      ENDDO
+  REQUIRE(isMonotonic(list) .OR. SIZE(list) == 1)
 
-      i=SIZE(list)+1
-    ENDFUNCTION find_i
+  !Set Soft comparison tolerance
+  IF(PRESENT(tol)) THEN
+    eps=tol
+  ELSE
+    eps=EPSREAL
+  ENDIF
+
+  !Check length and return if insufficient
+  IF(n < 2) THEN
+    IF(SOFTLT(list(1),val,eps)) j=2
+    RETURN
+  ENDIF
+
+  IF(list(1) < list(n)) THEN
+    condComp => SOFTLTwrap
+  ELSE
+    condComp => SOFTGTwrap
+  ENDIF
+
+  !Perform binary search
+  DO WHILE(n>0)
+    step=n/2
+    i=j+step
+    IF(condComp(list(i),val,eps)) THEN
+      i=i+1
+      j=i
+      n=n-step-1
+    ELSE
+      n=step
+    ENDIF
+  ENDDO
+
+ENDFUNCTION getFirstGreaterEqual_r
 !
 !-------------------------------------------------------------------------------
-    PURE FUNCTION find_r(list,val,tol) RESULT(i)
-      REAL(SRK),INTENT(IN) :: list(:)
-      REAL(SRK),INTENT(IN) :: val
-      REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      INTEGER(SIK) :: i
-      !
-      REAL(SRK) :: eps
+!> @brief Return the index of the element of a list of integers that is equal to
+!>        val using a linear search algorithm
+!> @param list 1D array of integers to search through. Unlike for binary_search,
+!>        sorting does not matter
+!> @param val integer value to find in list
+!> @returns i index of the element of list that equals val
+!>
+!> NOTE: If the value is not found this returns SIZE(list)+1
+!>
+FUNCTION linearSearch_i(list, val) RESULT(i)
+  INTEGER(SIK),INTENT(IN) :: list(:)
+  INTEGER(SIK),INTENT(IN) :: val
+  INTEGER(SIK) :: i
 
-      eps=EPSREAL
-      IF(PRESENT(tol)) THEN
-        eps=tol
-      ENDIF
+  !Perform linear search
+  DO i=1,SIZE(list)
+    IF(list(i) == val) RETURN
+  ENDDO
 
-      DO i=1, SIZE(list)
-        IF(SOFTEQ(list(i), val, eps)) RETURN
-      ENDDO
-
-      i=SIZE(list)+1
-    ENDFUNCTION find_r
+  i=SIZE(list)+1
+ENDFUNCTION linearSearch_i
 !
 !-------------------------------------------------------------------------------
-    PURE FUNCTION binary_search_i(list, val) RESULT(i)
-      INTEGER(SIK),INTENT(IN) :: list(:)
-      INTEGER(SIK),INTENT(IN) :: val
-      INTEGER(SIK) :: i
+!> @brief Return the index of the element of a list of reals that is equal to val
+!>        within tol using a linear search algorithm
+!> @param list 1D array of reals to search through. Unlike for binary_search,
+!>        sorting does not matter
+!> @param val real value to find in list
+!> @param tol the comparison tolerance to use. Optional
+!> @returns i index of the element of list that equals val
+!>
+!> NOTE: If the value is not found this returns SIZE(list)+1
+!>
+FUNCTION linearSearch_r(list,val,tol) RESULT(i)
+  REAL(SRK),INTENT(IN) :: list(:)
+  REAL(SRK),INTENT(IN) :: val
+  REAL(SRK),INTENT(IN),OPTIONAL :: tol
+  INTEGER(SIK) :: i
+  !
+  REAL(SRK) :: eps
 
-      i=lowerBound(list,val)
-      IF(i <= SIZE(list)) THEN
-        IF(list(i) == val) THEN
-          RETURN
-        ENDIF
-      ENDIF
+  !Set Soft comparison tolerance
+  IF(PRESENT(tol)) THEN
+    eps=tol
+  ELSE
+    eps=EPSREAL
+  ENDIF
 
-      i=SIZE(list)+1
-    ENDFUNCTION binary_search_i
+  !Perform linear search
+  DO i=1,SIZE(list)
+    IF(SOFTEQ(list(i), val, eps)) RETURN
+  ENDDO
+
+  i=SIZE(list)+1
+ENDFUNCTION linearSearch_r
 !
 !-------------------------------------------------------------------------------
-    PURE FUNCTION binary_search_r(list, val, tol) RESULT(i)
-      REAL(SRK),INTENT(IN) :: list(:)
-      REAL(SRK),INTENT(IN) :: val
-      REAL(SRK),INTENT(IN),OPTIONAL :: tol
-      INTEGER(SIK) :: i
-      !
-      REAL(SRK) :: eps
+!> @brief Return the index of the element of a list of integers that is equal to
+!>        val using a binary search algorithm
+!> @param list 1D array of integers to search through. The list should be sorted in
+!>        ascending order
+!> @param val integer value to find in list
+!> @returns i index of the element of list that equals val
+!>
+!> NOTE: If the value is not found this returns SIZE(list)+1
+!>
+FUNCTION binarySearch_i(list,val) RESULT(i)
+  INTEGER(SIK),INTENT(IN) :: list(:)
+  INTEGER(SIK),INTENT(IN) :: val
+  INTEGER(SIK) :: i
 
-      eps=EPSREAL
-      IF(PRESENT(tol)) THEN
-        eps=tol
-      ENDIF
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
 
-      i=lowerBound(list,val,tol)
-      IF(i <= SIZE(list)) THEN
-        IF(SOFTEQ(list(i),val,eps)) THEN
-          RETURN
-        ENDIF
-      ENDIF
+  !Find index of list entry at or just before val
+  i=getFirstGreaterEqual(list,val)
+  IF(i <= SIZE(list)) THEN
+    IF(list(i) == val) THEN
+      RETURN
+    ENDIF
+  ENDIF
 
-      i=SIZE(list)+1
-    ENDFUNCTION binary_search_r
+  !If above equality check failed increment index by one
+  i=SIZE(list)+1
+ENDFUNCTION binarySearch_i
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the index of the element of a list of reals that is equal to val
+!>        within tol using a binary search algorithm
+!> @param list 1D array of reals to search through. The list should be sorted in
+!>        ascending order
+!> @param val real value to find in list
+!> @param tol the comparison tolerance to use. Optional
+!> @returns i index of the element of list that equals val
+!>
+!> NOTE: If the value is not found this returns SIZE(list)+1
+!>
+FUNCTION binarySearch_r(list,val,tol) RESULT(i)
+  REAL(SRK),INTENT(IN) :: list(:)
+  REAL(SRK),INTENT(IN) :: val
+  REAL(SRK),INTENT(IN),OPTIONAL :: tol
+  INTEGER(SIK) :: i
+  !
+  REAL(SRK) :: eps
 
-      
+  REQUIRE(isIncreasing(list) .OR. SIZE(list) == 1)
+
+  !Set Soft comparison tolerance
+  IF(PRESENT(tol)) THEN
+    eps=tol
+  ELSE
+    eps=EPSREAL
+  ENDIF
+
+  !Find index of list entry at or just before val
+  i=getFirstGreaterEqual(list,val,tol)
+  IF(i <= SIZE(list)) THEN
+    IF(SOFTEQ(list(i),val,eps)) THEN
+      RETURN
+    ENDIF
+  ENDIF
+
+  !If above equality check failed increment index by one
+  i=SIZE(list)+1
+ENDFUNCTION binarySearch_r
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper functions for the SOFT GT and LT functions to give them
+!>        explicitly SRK type arguments and allow for precedure pointer usage
+!> @param r1 first real to compare
+!> @param r2 second real to comapre
+!> @param tol the comparison tolerance to use.
+!> @returns bool result of comparison
+!>
+FUNCTION SOFTLTwrap(r1,r2,tol) RESULT(bool)
+  REAL(SRK),INTENT(IN) :: r1
+  REAL(SRK),INTENT(IN) :: r2
+  REAL(SRK),INTENT(IN) :: tol
+  LOGICAL(SBK) :: bool
+
+  bool=SOFTLT(r1,r2,tol)
+
+ENDFUNCTION SOFTLTwrap
+!
+FUNCTION SOFTGTwrap(r1,r2,tol) RESULT(bool)
+  REAL(SRK),INTENT(IN) :: r1
+  REAL(SRK),INTENT(IN) :: r2
+  REAL(SRK),INTENT(IN) :: tol
+  LOGICAL(SBK) :: bool
+
+  bool=SOFTGT(r1,r2,tol)
+
+ENDFUNCTION SOFTGTwrap
+!
 ENDMODULE Search

@@ -30,6 +30,21 @@ MODULE trilinos_interfaces
 
   INTERFACE
 !-------------------------------------------------------------------------------
+! Kokkos
+!-------------------------------------------------------------------------------
+#ifdef FUTILITY_HAVE_Kokkos
+    SUBROUTINE InitializeKokkos(num_threads,device_id) bind(C,NAME="InitializeKokkos")
+      USE ISO_C_BINDING
+      INTEGER(C_INT),INTENT(IN),VALUE :: num_threads
+      INTEGER(C_INT),INTENT(IN),VALUE :: device_id
+    ENDSUBROUTINE
+    
+    SUBROUTINE FinalizeKokkos() bind(C,NAME="FinalizeKokkos")
+      USE ISO_C_BINDING
+    ENDSUBROUTINE
+#endif
+
+!-------------------------------------------------------------------------------
 ! Vector Interfaces
 !-------------------------------------------------------------------------------
     SUBROUTINE ForPETRA_VecInit(id,n,nlocal,comm) bind(C,NAME="ForPETRA_VecInit")

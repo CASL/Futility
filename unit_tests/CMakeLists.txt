@@ -7,6 +7,8 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
+ADD_SUBDIRECTORY(trilinos_interfaces)
+
 # List the names of all the tests (same as subdirectory)
 # The order of the names is reflective of the hierarchy of the code dependencies.
 # The tests at the beginning of the list have the least dependencies and the
@@ -18,6 +20,8 @@ SET(UNIT_TEST_NAMES
     testSelectedKinds
     testWaterSatProperties
     testArrayUtils
+    testConversions
+    testInterpolators
     testElementsIsotopes
     testExtendedMath
     testBLAS
@@ -66,7 +70,9 @@ SET(UNIT_TEST_NAMES
     testStochasticSampler
     testPartitionGraph
     testFutilityComputingEnvironment
+    testSchemaParser
     testSpeciesElements
+    testRSORprecon
 )
 
 IF("${PROJECT_NAME}" STREQUAL "Futility" OR "${PROJECT_NAME}" STREQUAL "MPACT")

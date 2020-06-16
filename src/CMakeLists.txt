@@ -34,6 +34,7 @@ TRIBITS_ADD_LIBRARY(Utils
       Search.f90
       Constants_Conversion.f90
       ExtendedMath.f90
+      Interpolators.f90
       ElementsIsotopes.f90
       WaterSatProperties.f90
       BLAS1.f90
@@ -98,15 +99,10 @@ TRIBITS_ADD_LIBRARY(Utils
       ArrayUtils.f90
       PartitionGraph.f90
       FutilityComputingEnvironment.f90
+      SchemaParser.f90
       SpeciesElements.f90
     DEPLIBS
       CUtils
       TrilinosUtils
 )
 
-
-TRIBITS_ADD_EXECUTABLE(test_interfaces
-     SOURCES trilinos_interfaces/test_interfaces.f90
-     NOEXEPREFIX
-     LINKER_LANGUAGE Fortran
-)

@@ -50,7 +50,7 @@ ENDIF()
 ## used to be after call to project
 
 # Pull in the TriBITS system and execute
-IF(NOT DEFINED(${${PROJECT_NAME}_TRIBITS_DIR}))
+IF("${${PROJECT_NAME}_TRIBITS_DIR}" STREQUAL "")
   IF(${PROJECT_NAME} STREQUAL "Futility")
     SET(${PROJECT_NAME}_TRIBITS_DIR
        "${${PROJECT_NAME}_MAIN_SOURCE_DIR}/cmake/tribits" CACHE INTERNAL "")
@@ -78,6 +78,13 @@ IF(NOT DEFINED Futility_ENABLE_DBC)
     SET(Futility_ENABLE_DBC FALSE)
   ENDIF()
 ENDIF()
+
+# Ensure Pthreads is defined for SCALE
+IF(NOT DEFINED TPL_ENABLE_Pthread)
+  SET(TPL_ENABLE_Pthread OFF)
+ENDIF()
+#SCALE wants Kokkos defined
+SET(Kokkos_ENABLE_OPENMP ${${PROJECT_NAME}_ENABLE_OpenMP})
 
 IF(WIN32)
   SET(${PROJECT_NAME}_GENERATE_REPO_VERSION_FILE OFF)
