@@ -404,6 +404,7 @@ def GenerateInputList(path='', ext=[]):
                 for e in ext:
                     if file.endswith(e):
                         inputs.append(os.path.join(root, file))
+    inputs.sort()           
     return inputs
 
 
