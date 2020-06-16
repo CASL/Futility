@@ -10,11 +10,11 @@ import itertools as it
 import pandas as pd
 import warnings
 import math
-from IPython.display import HTML
+#from IPython.display import HTML
 
 # Define comand line arguments
 parser = argparse.ArgumentParser(description='Searches recursively through system path to find tagged' +
-                                 ' requirements in files, extracts them, and compiles them into a table in an html file.')
+                                 ' requirements in files, extracts them, and compiles them into a table in a latex file.')
 parser.add_argument('--path', type=str,
                     help='The path to search recursively', default='.')
 parser.add_argument('--ext', action='append', type=str,
@@ -22,7 +22,7 @@ parser.add_argument('--ext', action='append', type=str,
 parser.add_argument('--output', type=str,
                     help='Base name of the output file', default='requirements')
 parser.add_argument('--skip-no-require', dest='skip_no_require', action='store_true',
-                    help='If added, files with no requirements present will not be added to the HTML file')
+                    help='If added, files with no requirements present will not be added to the latex file')
 parser.add_argument('--cdash-test-name-file',dest='cdash_test_names',type=str,
                     help="""
                          Path and file name of text file generated at TRIBITS configure time
