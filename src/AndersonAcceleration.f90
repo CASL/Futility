@@ -296,39 +296,36 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: x
 
+#ifdef HAVE_MPI | FUTILITY_HAVE_Trilinos
   CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
+#endif
   INTEGER(SIK) :: i,j
 
   REQUIRE(x%n == solver%n)
 
   !If this is the first call to set/reset must actually create vectors of needed type
-  IF(solver%s == 0) THEN
-    IF(.NOT.ALLOCATED(solver%x)) THEN
+  IF(.NOT.ALLOCATED(solver%x)) THEN
 
-      !!!TODO Once missing BLAS interfaces have been added for the following vector types
-      !do away with this error catch to allow use of these with Anderson Acceleration.
+    !!!TODO Once missing BLAS interfaces have been added for the following vector types
+    !do away with this error catch to allow use of these with Anderson Acceleration.
 
-      SELECT TYPE(x)
+    SELECT TYPE(x)
 #ifdef HAVE_MPI
-      TYPE IS(NativeDistributedVectorType)
-        CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-            '::'//myName//' - Input vector type not supported!')
+    TYPE IS(NativeDistributedVectorType)
+      CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
+          '::'//myName//' - Input vector type not supported!')
 #endif
 #ifdef FUTILITY_HAVE_Trilinos
-      TYPE IS(TrilinosVectorType)
-        CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-            '::'//myName//' - Input vector type not supported!')
-#endif
-      ENDSELECT
-
-      CALL VectorResembleAlloc(solver%x,x,solver%depth+1)
-      CALL VectorResembleAlloc(solver%Gx,x,solver%depth+1)
-      CALL VectorResembleAlloc(solver%r,x,solver%depth+1)
-      CALL VectorResembleAlloc(solver%tmpvec,x)
-    ELSE
+    TYPE IS(TrilinosVectorType)
       CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-          '::'//myName//' - At least one step required before reseting!')
-    ENDIF
+          '::'//myName//' - Input vector type not supported!')
+#endif
+    ENDSELECT
+
+    CALL VectorResembleAlloc(solver%x,x,solver%depth+1)
+    CALL VectorResembleAlloc(solver%Gx,x,solver%depth+1)
+    CALL VectorResembleAlloc(solver%r,x,solver%depth+1)
+    CALL VectorResembleAlloc(solver%tmpvec,x)
   ENDIF
 
   !Reset iteration counter

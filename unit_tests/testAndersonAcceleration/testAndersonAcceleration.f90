@@ -22,12 +22,11 @@ IMPLICIT NONE
 
 TYPE(FutilityComputingEnvironment),TARGET :: ce
 TYPE(ExceptionHandlerType),TARGET :: exceptHandler
-TYPE(ParamType) :: pList
 TYPE(AndersonAccelerationType) :: testAndAcc
 CLASS(VectorType),ALLOCATABLE :: mySol,exSol,inSol,tmpvec
-TYPE(ParamType)vecparams
-REAL(SRK) :: tmp1,tmp2
 TYPE(StochasticSamplingType) :: NativeRNG
+TYPE(ParamType) :: pList,vecparams
+REAL(SRK) :: tmp1,tmp2
 
 ALLOCATE(RealVectorType :: mySol,exSol,inSol,tmpvec)
 CALL vecparams%add("VectorType->n",10000_SIK)
@@ -66,6 +65,10 @@ CALL pList%add('AndersonAccelerationType->beta',0.5_SRK)
 CALL pList%add('AndersonAccelerationType->start',1)
 CALL NativeRNG%clear()
 CALL NativeRNG%init(RNG_MCNP_STD)
+CALL mySol%clear()
+CALL exSol%clear()
+CALL inSol%clear()
+CALL tmpvec%clear()
 DEALLOCATE(mySol,exSol,inSol,tmpvec)
 ALLOCATE(PETScVectorType :: mySol,exSol,inSol,tmpvec)
 CALL vecparams%add('VectorType->MPI_Comm_ID',PE_COMM_SELF)
@@ -82,9 +85,17 @@ REGISTER_SUBTEST('testStep(Distrib)',testStep)
 #endif
 !!!TODO: When support for TrilinosVectors and NativeDistributed are added, add testing for them
 
+CALL mySol%clear()
+CALL exSol%clear()
+CALL inSol%clear()
+CALL tmpvec%clear()
+DEALLOCATE(mySol,exSol,inSol,tmpvec)
+CALL NativeRNG%clear()
+CALL pList%clear()
+CALL vecparams%clear()
+
 FINALIZE_TEST()
 
-CALL pList%clear()
 CALL ce%clear()
 !
 !===============================================================================
