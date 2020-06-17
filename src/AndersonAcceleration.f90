@@ -143,6 +143,7 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
       ENDDO
       CALL solver%LS%b%set(j,0.0_SRK)
     ENDDO
+    CALL LSparams%clear()
   ENDIF
 
   !Allocate/create member arrays and vectors that can be done now and associate pointers
