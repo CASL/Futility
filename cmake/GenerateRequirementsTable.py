@@ -9,19 +9,26 @@ import re
 import itertools as it
 import pandas as pd
 import warnings
-from IPython.display import HTML
+import math
+#from IPython.display import HTML
 
 # Define comand line arguments
 parser = argparse.ArgumentParser(description='Searches recursively through system path to find tagged' +
-                                 ' requirements in files, extracts them, and compiles them into a table in an html file.')
+                                 ' requirements in files, extracts them, and compiles them into a table in a latex file.')
 parser.add_argument('--path', type=str,
                     help='The path to search recursively', default='.')
 parser.add_argument('--ext', action='append', type=str,
                     help='The file extensions to check in for requirements', default=[])
 parser.add_argument('--output', type=str,
-                    help='Name of the output file', default='requirements.html')
+                    help='Base name of the output file', default='requirements')
 parser.add_argument('--skip-no-require', dest='skip_no_require', action='store_true',
-                    help='If added, files with no requirements present will not be added to the HTML file')
+                    help='If added, files with no requirements present will not be added to the latex file')
+parser.add_argument('--cdash-test-name-file',dest='cdash_test_names',type=str,
+                    help="""
+                         Path and file name of text file generated at TRIBITS configure time
+                         that contains list of CMake generated test names and test inputs
+                         """
+                   )
 args = parser.parse_args()
 
 # Requirement ID Counter
@@ -50,6 +57,8 @@ class Requirement:
 
     Args:
        ID (int): Numeric identifier for this requirement
+       testName (str): The name of the test that shows up in the test report. This is 
+                       nominally the test name created by CMake that appears on CDash.
        testFile (str): The name of the file where this requirement was found
        rawReqBlock (list): See above documentation for a detailed description.  Passing None means this
           is not a requirement.
@@ -66,10 +75,17 @@ class Requirement:
 
     descr = None
     tix = None
+    tname = None
 
-    def __init__(self, ID, testFile, rawReqBlock):
+    def __init__(self, ID, testName, testFile, rawReqBlock):
         self.ID = ID
-        self.tfile = testFile
+        if "/" ==  args.path[-1]:
+            self.tfile = testFile[len(args.path):]
+        else:
+            self.tfile = testFile[len(args.path)+1:]
+        self.tname = testName
+        if self.tname is None:
+            self.tname = ""
         if rawReqBlock:
             match = self._re_desc.match(rawReqBlock[1])
             if not match:
@@ -111,6 +127,7 @@ class Requirement:
     def __str__(self):
         return '          Requirement ID: ' + str(self.ID) + '\n'\
             + 'Requirement  Description: ' + str(self.descr)+'\n'\
+            + '               Test Name: ' + str(self.tname)+'\n'\
             + '               Test File: ' + str(self.tfile)+'\n'\
             + '  Additional Information: ' + str(self.tix) + '\n'
 
@@ -118,8 +135,9 @@ class Requirement:
         return {
             'Requirement ID': self.ID,
             'Requirement Description': self.descr,
-            'Additional Information': self.tix,
+            'Test Name': self.tname,
             'Test File': self.tfile,
+            'Additional Information': self.tix,
         }
 
 ################################################################################
@@ -145,6 +163,19 @@ class File_RequirementParser:
         if not os.path.isfile(testFile):
             return
 
+        cdash_test_name = None
+        if args.cdash_test_names:
+            if os.path.isfile(args.cdash_test_names):
+                f_tnames = open(args.cdash_test_names, 'r')
+                fline = f_tnames.readline()
+                while fline:
+                    cdash_test_input = fline.split(" ")[1]
+                    cdash_test_input = cdash_test_input.rstrip("\n")
+                    if cdash_test_input in testFile:
+                       cdash_test_name = fline.split(" ")[0]
+                       break
+                    fline = f_tnames.readline()
+
         if sys.version_info[0] < 3:
             fobject = open(testFile, 'r')
         else:
@@ -154,18 +185,23 @@ class File_RequirementParser:
             if self._re_begin.search(fline):
                 reqBlock = []
                 reqBlock.append(fline)
+                endmatch = False 
                 while fline:
                     fline = fobject.readline()
                     reqBlock.append(fline)
                     if self._re_end.search(fline):
                         newID = next(reqID)+1
                         self.allReqs.append(Requirement(
-                            newID, testFile, reqBlock))
+                            newID, cdash_test_name, testFile, reqBlock))
+                        endmatch = True
                         break
+                if not endmatch:
+                    raise RuntimeError(
+                        '@beginreq was found but @endreq was not found in file: '+ testFile)
             fline = fobject.readline()
 
         if not self.allReqs:
-            self.allReqs.append(Requirement(None, testFile, None))
+            self.allReqs.append(Requirement(None, cdash_test_name, testFile, None))
 
     def __nonzero__(self):
         return bool(self.allReqs)
@@ -263,6 +299,87 @@ def ConvertToHTML(df):
                   .render())
     return html_table
 
+def ConvertToLatex(df):
+    """ Convert a Pandas DataFrame to a pretty LaTeX table
+
+      The pandas data frame should have an entry "Additional Information".
+
+      Args:
+         df (pandas.DataFrame): A pandas data frame
+
+      Returns:
+        str: LaTeX text for table
+    """
+    #df['Additional Information'] = df['Additional Information'].apply(
+        #convert_url_to_html_hyperlink)
+    #latex_table = (df.style
+                  #.highlight_null(null_color='red')
+                  #.set_table_styles(html_table_style())
+                  #.render())
+    #latex_table = df.to_latex(multicolumn=False,multirow=True,column_format='ll')
+
+    #Header
+    ws = '                   '
+
+    latex_table = '\\begin{longtable}[!ht]{|p{1.4cm}|p{14cm}|}\n' + \
+                  '\\caption{Requirements}\\label{tab:req}\\\\\n' + \
+                  '\n\\hline\n' + \
+                  '\\multirow{4}{*}{\\textbf{Req. ID}} & \\cellcolor{caslheader}\\textcolor{white}{\\textit{Requirement Description}} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Test Name} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor2} \\textit{Test Input} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Additional Info} \\\\\\hline\n' + \
+                  '\\endfirsthead\n\n' + \
+                  '\\hline\n' + \
+                  '\\multirow{4}{*}{\\textbf{Req. ID}} & \\cellcolor{caslheader}\\textcolor{white}{\\textit{Requirement Description}} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Test Name} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor2} \\textit{Test Input} \\\\\\cline{2-2}\n' + \
+                  ws + '& \cellcolor{caslcolor1} \\textit{Additional Info} \\\\\\hline\n' + \
+                  '\\endhead\n' + \
+                  '\\hline\n' + \
+                  '\\endfoot\n' + \
+                  '\\hline\n' + \
+                  '\\endlastfoot\n\n'
+
+    mr = '\multirow{4}{*}{'
+    pathpre = os.getcwd()
+    pathpre = pathpre.replace('_',r'\_')
+
+    #Data
+    i=0
+    for index, row in df.iterrows():
+      #Trim the last entry, which looks like a return.  Escape %, &, and escape _.
+      reqdesc = str(row['Requirement Description'])[:-1].replace('%',r'\%')
+      reqdesc = reqdesc.replace('_',r'\_')
+      reqdesc = reqdesc.replace('&',r'\&')
+
+      #Escape % and escape _.
+      testfile = row['Test File'].replace('%',r'\%')
+      testfile = testfile.replace('_',r'\_')
+      if (len(testfile) > 80):
+        insert_space = testfile.rfind('/',0,80)
+        testfile = testfile[:insert_space+1]+"\\newline "+testfile[insert_space+1:]
+      #cdash
+      cdashname = row['Test Name'].replace('_',r'\_')
+      cdashname = cdashname.replace('%',r'\%')
+      #Escape % and escape _.
+      addinfo = str(row['Additional Information']).replace('_',r'\_')
+      addinfo = addinfo.rstrip()
+      if (len(addinfo) > 0) and ('/' in addinfo):
+        addinfo = "\href{" + addinfo + "}{\# " + addinfo[addinfo.rfind('/')+1:] + "}"
+      rowid = ''
+      if (not math.isnan(row['Requirement ID'])):
+        rowid = str(int(row['Requirement ID']))
+      latex_table += mr + rowid + '} & \\cellcolor{caslheader}\\textcolor{white}{' + reqdesc + r"} \\\cline{2-2}" + '\n'
+      latex_table += ws + '& \\cellcolor{caslcolor1}' + cdashname + r" \\\cline{2-2}" +'\n'
+      latex_table += ws + '& \\cellcolor{caslcolor2}' + testfile + r" \\\cline{2-2}" +'\n'
+      latex_table += ws + '& \\cellcolor{caslcolor1}' + addinfo + r" \\\hline" + '\n'
+      i += 1
+      if (i % 6 == 5):
+        latex_table += '\\newpage'
+
+    #Footer
+    latex_table = latex_table + '\\end{longtable}\n'
+    return latex_table
 
 def GenerateInputList(path='', ext=[]):
     """ Collect a list of all the files to be parsed given a path and list of extensions
@@ -287,6 +404,7 @@ def GenerateInputList(path='', ext=[]):
                 for e in ext:
                     if file.endswith(e):
                         inputs.append(os.path.join(root, file))
+    inputs.sort()           
     return inputs
 
 
@@ -308,7 +426,7 @@ def CreateRequirementsDataFrame():
                 allReqs.append(r.to_dict())
 
     # Convert list of requirements to Pandas DataFrame
-    table_headers = ['Requirement ID', 'Requirement Description',
+    table_headers = ['Requirement ID', 'Requirement Description', 'Test Name',
                      'Test File', 'Additional Information']
     df = pd.DataFrame(data=allReqs, columns=table_headers)
     df = df.sort_values('Requirement ID')
@@ -319,8 +437,14 @@ def CreateRequirementsDataFrame():
 # Main
 if __name__ == "__main__":
     reqDF = CreateRequirementsDataFrame()
-    reqHTML = ConvertToHTML(reqDF)
+    #reqHTML = ConvertToHTML(reqDF)
+    reqLatex = ConvertToLatex(reqDF)
 
-    # Write to file
-    f = open(args.output, 'w')
-    f.write(reqHTML)
+    # Write to HTML file
+    #f = open(args.output+'.html', 'w')
+    #f.write(reqHTML)
+    #f.close()
+    f = open(args.output+'.tex', 'w')
+    f.write(reqLatex)
+    f.close()
+

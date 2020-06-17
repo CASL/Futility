@@ -1,0 +1,6 @@
+!> @beginreq
+!> - The GenerateRequirements.py script shall be able to parse requirement without a ticket entry.
+!> @endreq
+
+[CASEID]
+  title 'This is a test input for the requirement parser'
