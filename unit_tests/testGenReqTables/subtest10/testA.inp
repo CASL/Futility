@@ -1,0 +1,8 @@
+!> @beginreq
+!> - The GenerateRequirements.py script shall be able to detect if the end keyword is missing or as a typo.
+!> - ticket 5690
+!> @endrep
+
+[CASEID]
+  title 'This is a test input for the requirement parser'
+

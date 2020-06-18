@@ -1,0 +1,7 @@
+!> @beginreq
+!> - The GenerateRequirements.py script shall be able to parse requirement descriptions from multiple files with two different extentions (.inp).
+!> - ticket 5690
+!> @endreq
+
+[CASEID]
+  title 'This is a test input for the requirement parser'

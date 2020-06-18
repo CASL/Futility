@@ -1,0 +1,7 @@
+!> @beginreq
+!> - The GenerateRequirements.py script shall be able to parse requirement descriptions from one path argument and one file extension.
+!> - ticket 5690
+!> @endreq
+
+[CASEID]
+  title 'This is a test input for the requirement parser'
