@@ -297,7 +297,7 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: x
 
-#ifdef HAVE_MPI | FUTILITY_HAVE_Trilinos
+#if defined(HAVE_MPI) || defined(FUTILITY_HAVE_Trilinos)
   CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
 #endif
   INTEGER(SIK) :: i,j
