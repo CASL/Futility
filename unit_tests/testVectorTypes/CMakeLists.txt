@@ -8,6 +8,4 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 Futility_CreateUnitTest(testVectorTypes)
-IF (${PACKAGE_NAME}_ENABLE_MPI)
-    Futility_CreateParUnitTest(testVectorTypesParallel 2)
-ENDIF()
+Futility_CreateParUnitTest(testVectorTypesParallel 2)

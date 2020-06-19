@@ -735,7 +735,7 @@ SUBROUTINE setupP2C_cart(TLS,mesh_in,minX,maxX)
   h=maxX-minX
   cent=0.5_SRK*(maxX+minX)
 
-  CALL myPL%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL myPL%add('LinearSolverType->TPLType',NATIVE)
   CALL myPL%add('LinearSolverType->solverMethod',LU)
   CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
   CALL myPL%add('LinearSolverType->numberOMP',1_SNK)
@@ -856,7 +856,7 @@ SUBROUTINE setupV2C_cart(TLS,mesh_in,minX,maxX)
   h=(maxX-minX)
   cent=0.5_SRK*(maxX+minX)
 
-  CALL myPL%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL myPL%add('LinearSolverType->TPLType',NATIVE)
   CALL myPL%add('LinearSolverType->solverMethod',LU)
   CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
   CALL myPL%add('LinearSolverType->numberOMP',1_SNK)
@@ -1076,7 +1076,7 @@ SUBROUTINE setupP2C_cyl(TLS,mesh_in,maxR)
 
   nin=SIZE(mesh_in)
 
-  CALL myPL%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL myPL%add('LinearSolverType->TPLType',NATIVE)
   CALL myPL%add('LinearSolverType->solverMethod',LU)
   CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
   CALL myPL%add('LinearSolverType->numberOMP',1_SNK)
@@ -1195,7 +1195,7 @@ SUBROUTINE setupV2C_cyl(TLS,mesh_in,maxR)
 
   nin=SIZE(mesh_in)-1
 
-  CALL myPL%add('LinearSolverType->TPLType',LINSYS_NATIVE)
+  CALL myPL%add('LinearSolverType->TPLType',NATIVE)
   CALL myPL%add('LinearSolverType->solverMethod',LU)
   CALL myPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
   CALL myPL%add('LinearSolverType->numberOMP',1_SNK)
