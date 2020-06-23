@@ -2541,7 +2541,9 @@ SUBROUTINE convertTo2DStringArray_ParamType(thisParam,baseAddr,tablevals)
         CALL rowListPL%getString(TRIM(rowListPL%pdat%name),plstr)
         IF(LEN_TRIM(plstr) > 0) tablevals(i,j)=plstr
         CALL colListPL%getNextParam(addr,rowListPLPtr)
+        CALL rowListPL%clear()
       ENDDO
+      CALL colListPL%clear()
     ENDDO
 
     !Deallocate and nullify variables
