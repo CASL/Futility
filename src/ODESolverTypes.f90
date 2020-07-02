@@ -543,10 +543,10 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
       CALL BLAS_axpy(ydot,rhs,dt*(1.0_SRK-solver%theta))
       beta=solver%theta
       CALL solve_implicit(solver%f,solver%myLS,t,dt,yf,ydot,rhs,converged,beta,solver%tol, &
-        MOD(i-1,20)==0,solver%maxIter)
+          MOD(i-1,20)==0,solver%maxIter)
       IF(.NOT. converged .AND. .NOT. solver%keepSolving) THEN
         CALL eODESolverType%raiseError('Error in '// &
-          modName//'::'//myName//' - Failed to converge implicit step.')
+            modName//'::'//myName//' - Failed to converge implicit step.')
       ENDIF
     ENDDO
     CALL rhs%clear()
@@ -667,10 +667,10 @@ SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in,k
     CALL BLAS_scal(rhs,-1.0_SRK)
 
     CALL solve_implicit(f,myLS,t,dt,yf,ydot,rhs,converged,beta_bdf(ord), &
-      tol,updateJ,maxIter)
+        tol,updateJ,maxIter)
     IF(.NOT. converged .AND. .NOT. keepSolving) THEN
       CALL eODESolverType%raiseError('Error in '// &
-        modName//'::'//myName//' - Failed to converge implicit step.')
+          modName//'::'//myName//' - Failed to converge implicit step.')
     ENDIF
 
     !save data if needed for next iteration
