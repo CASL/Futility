@@ -146,8 +146,6 @@ TYPE,EXTENDS(ODESolverType_Base) :: ODESolverType_Native
   REAL(SRK) :: theta=0.5_SRK
   !> order of BDF method
   INTEGER(SIK) :: BDForder=5
-  !> controls behavior in case of nonlin iteration failure
-  LOGICAL(SBK) :: keepSolving=.FALSE.
   !> maximum number of nonlinear iterations allowed in implicit solve
   INTEGER(SIK) :: maxIter=5000_SIK
   !> size of substep
@@ -378,7 +376,6 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
   CLASS(ODESolverInterface_Base),POINTER :: f
 
   INTEGER(SIK) :: n, solvetype, bdf_order, max_iterations
-  LOGICAL(SBK) :: keep_solving
   REAL(SRK) :: theta, tol, substep
   TYPE(ParamType) :: tmpPL
 
@@ -394,11 +391,6 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
           'greater than 0!')
     ELSE
       solver%n=n
-    ENDIF
-
-    IF(Params%has('ODESolverType->keep_solving')) THEN
-      CALL Params%get('ODESolverType->keep_solving',keep_solving)
-      solver%keepSolving=keep_solving
     ENDIF
 
     IF(Params%has('ODESolverType->max_iterations')) THEN
@@ -488,7 +480,6 @@ SUBROUTINE clear_ODESolverType_Native(solver)
   solver%tol=1.0e-8_SRK
   solver%theta=0.5_SRK
   solver%BDForder=5
-  solver%keepSolving=.FALSE.
   solver%maxIter=5000_SIK
   solver%substep_size=0.1_SRK
 
@@ -544,7 +535,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
       beta=solver%theta
       CALL solve_implicit(solver%f,solver%myLS,t,dt,yf,ydot,rhs,converged,beta,solver%tol, &
           MOD(i-1,20)==0,solver%maxIter)
-      IF(.NOT. converged .AND. .NOT. solver%keepSolving) THEN
+      IF(.NOT. converged) THEN
         CALL eODESolverType%raiseError('Error in '// &
             modName//'::'//myName//' - Failed to converge implicit step.')
       ENDIF
@@ -570,7 +561,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
       DO j=1,i
         IF(ntmp>0) THEN
           CALL solve_bdf(solver%f,solver%myLS,i,ntmp,t,dt*m**(solver%BDForder-i),yf, &
-              ydot,solver%tol,ist,bdf_hist,.TRUE.,solver%keepSolving,solver%maxIter)
+              ydot,solver%tol,ist,bdf_hist,.TRUE.,solver%maxIter)
           CALL BLAS_copy(yf,bdf_hist(j+1,i+1))
         ENDIF
         ntmp=N
@@ -578,8 +569,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
     ENDDO
     ist=solver%BDForder
     CALL solve_bdf(solver%f,solver%myLS,solver%BDForder,nstep-solver%BDForder+1,t,dt, &
-        yf,ydot,solver%tol,ist,bdf_hist,keepSolving_in=solver%keepSolving, &
-        maxIter_in=solver%maxIter)
+        yf,ydot,solver%tol,ist,bdf_hist,maxIter_in=solver%maxIter)
     DO i=1,solver%BDForder
       DO j=1,solver%BDForder
         CALL bdf_hist(i,j)%clear()
@@ -607,14 +597,13 @@ ENDSUBROUTINE step_ODESolverType_Native
 !> @param bdf_hist 2D array of the historical data.  The second index corresponds to the bdf primer
 !>     hierarchy and should only be accessed as bdf_hist(:,ord)
 !> @param updateJ_in an optional logical to update the jacobian of the matrix
-!> @param keepSolving_in optionally controls behavior in case of nonlinear iteration failure
 !> @param maxIter_in optional maximum number of nonlinear iterations to perform
 !>
 !> This routine performs the BDF solve for n steps.  THis routine is seperate in support of the priming
 !> methodology that was implmeneted which introduces substeps for lower order methods to generate historical
 !> data needed by the higher order methods.
 !>
-SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in,keepSolving_in,maxIter_in)
+SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in,maxIter_in)
   CHARACTER(LEN=*),PARAMETER :: myName='solve_bdf'
   CLASS(ODESolverInterface_Base),INTENT(INOUT) :: f
   TYPE(LinearSolverType_Direct),INTENT(INOUT) :: myLS
@@ -628,19 +617,12 @@ SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in,k
   INTEGER(SIK),INTENT(INOUT) :: ist
   CLASS(VectorType),INTENT(INOUT) :: bdf_hist(:,:)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: updateJ_in
-  LOGICAL(SBK),INTENT(IN),OPTIONAL :: keepSolving_in
   INTEGER(SIK),INTENT(IN),OPTIONAL :: maxIter_in
 
   INTEGER(SIK) :: i,j, maxIter
   CLASS(VectorType),ALLOCATABLE :: rhs
-  LOGICAL(SBK) :: updateJ, converged, keepSolving
+  LOGICAL(SBK) :: updateJ, converged
   ALLOCATE(rhs,SOURCE=yf)
-
-  IF(PRESENT(keepSolving_in)) THEN
-    keepSolving=keepSolving_in
-  ELSE
-    keepSolving=.FALSE.
-  ENDIF
 
   IF(PRESENT(maxIter_in)) THEN
     maxIter=maxIter_in
@@ -668,7 +650,7 @@ SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in,k
 
     CALL solve_implicit(f,myLS,t,dt,yf,ydot,rhs,converged,beta_bdf(ord), &
         tol,updateJ,maxIter)
-    IF(.NOT. converged .AND. .NOT. keepSolving) THEN
+    IF(.NOT. converged) THEN
       CALL eODESolverType%raiseError('Error in '// &
           modName//'::'//myName//' - Failed to converge implicit step.')
     ENDIF
