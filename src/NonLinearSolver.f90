@@ -343,7 +343,7 @@ SUBROUTINE init_NonLinearSolverNative(this,ce,f,plist)
   ENDIF
   this%TPLType=NLSOLVER_TPL_NATIVE
 
-  CALL linSysPlist%add('LinearSolverType->TPLType',NATIVE)
+  CALL linSysPlist%add('LinearSolverType->TPLType',LINSYS_NATIVE)
   CALL linSysPlist%add('LinearSolverType->solverMethod',GE)
   CALL linSysPlist%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
   CALL linSysPlist%add('LinearSolverType->numberOMP',1_SNK)

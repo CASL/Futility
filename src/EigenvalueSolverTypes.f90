@@ -86,7 +86,10 @@ PUBLIC :: PETSC_SHELL_CALCRESID_extern
 #endif
 
 !> set enumeration scheme for TPLs
+INTEGER(SIK),PARAMETER,PUBLIC :: EIGEN_SLEPC=0,EIGEN_ANASAZI=1,EIGEN_NATIVE=4
+!> Temporary parameter to be retained until corresponding MPACT merge:
 INTEGER(SIK),PARAMETER,PUBLIC :: SLEPC=0,ANASAZI=1,NATIVE=4
+
 !> set enumeration scheme for solver methods
 INTEGER(SIK),PARAMETER,PUBLIC :: POWER_IT=0,JD=1,GD=2,ARNOLDI=3,NONLIN=4
 
