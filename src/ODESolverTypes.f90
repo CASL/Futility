@@ -146,6 +146,8 @@ TYPE,EXTENDS(ODESolverType_Base) :: ODESolverType_Native
   REAL(SRK) :: theta=0.5_SRK
   !> order of BDF method
   INTEGER(SIK) :: BDForder=5
+  !> maximum number of nonlinear iterations allowed in implicit solve
+  INTEGER(SIK) :: maxIter=5000_SIK
   !> size of substep
   REAL(SRK) :: substep_size=0.1_SRK
   !> Linear solver for implicit solve
@@ -373,7 +375,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
   TYPE(ParamType),INTENT(IN) :: Params
   CLASS(ODESolverInterface_Base),POINTER :: f
 
-  INTEGER(SIK) :: n, solvetype, bdf_order
+  INTEGER(SIK) :: n, solvetype, bdf_order, max_iterations
   REAL(SRK) :: theta, tol, substep
   TYPE(ParamType) :: tmpPL
 
@@ -389,6 +391,11 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
           'greater than 0!')
     ELSE
       solver%n=n
+    ENDIF
+
+    IF(Params%has('ODESolverType->max_iterations')) THEN
+      CALL Params%get('ODESolverType->max_iterations',max_iterations)
+      solver%maxIter=max_iterations
     ENDIF
 
     IF(solvetype == THETA_METHOD) THEN
@@ -414,6 +421,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
         ENDIF
 
       ENDIF
+
     ELSE
       CALL eODESolverType%raiseError('Incorrect input to '// &
           modName//'::'//myName//' - Unknown Solver Type')
@@ -435,7 +443,7 @@ SUBROUTINE init_ODESolverType_Native(solver,Params,f)
       solver%substep_size=substep
     ENDIF
 
-    CALL tmpPL%add('LinearSolverType->TPLType',NATIVE)
+    CALL tmpPL%add('LinearSolverType->TPLType',LINSYS_NATIVE)
     CALL tmpPL%add('LinearSolverType->solverMethod',GE)
     CALL tmpPL%add('LinearSolverType->MPI_Comm_ID',PE_COMM_SELF)
     CALL tmpPL%add('LinearSolverType->numberOMP',1_SNK)
@@ -472,6 +480,7 @@ SUBROUTINE clear_ODESolverType_Native(solver)
   solver%tol=1.0e-8_SRK
   solver%theta=0.5_SRK
   solver%BDForder=5
+  solver%maxIter=5000_SIK
   solver%substep_size=0.1_SRK
 
   CALL solver%myLS%clear()
@@ -489,6 +498,7 @@ ENDSUBROUTINE clear_ODESolverType_Native
 !> This routine performs a solve using the native solver
 !>
 SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
+  CHARACTER(LEN=*),PARAMETER :: myName='step_ODESolverType_Native'
   CLASS(ODESolverType_Native),INTENT(INOUT) :: solver
   REAL(SRK),INTENT(IN) :: t0
   CLASS(VectorType),INTENT(INOUT) :: y0
@@ -497,6 +507,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
 
   INTEGER(SIK) :: i,j,nstep,ist,N,ntmp
   REAL(SRK) :: t,dt,beta,m
+  LOGICAL(SBK) :: converged
   CLASS(VectorType),ALLOCATABLE :: ydot
   CLASS(VectorType),ALLOCATABLE :: rhs
   CLASS(VectorType),ALLOCATABLE :: bdf_hist(:,:)
@@ -522,7 +533,12 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
       CALL BLAS_copy(yf,rhs)
       CALL BLAS_axpy(ydot,rhs,dt*(1.0_SRK-solver%theta))
       beta=solver%theta
-      CALL solve_implicit(solver%f,solver%myLS,t,dt,yf,ydot,rhs,beta,solver%tol,MOD(i-1,20)==0)
+      CALL solve_implicit(solver%f,solver%myLS,t,dt,yf,ydot,rhs,converged,beta,solver%tol, &
+          MOD(i-1,20)==0,solver%maxIter)
+      IF(.NOT. converged) THEN
+        CALL eODESolverType%raiseError('Error in '// &
+            modName//'::'//myName//' - Failed to converge implicit step.')
+      ENDIF
     ENDDO
     CALL rhs%clear()
     DEALLOCATE(rhs)
@@ -545,7 +561,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
       DO j=1,i
         IF(ntmp>0) THEN
           CALL solve_bdf(solver%f,solver%myLS,i,ntmp,t,dt*m**(solver%BDForder-i),yf, &
-              ydot,solver%tol,ist,bdf_hist,.TRUE.)
+              ydot,solver%tol,ist,bdf_hist,.TRUE.,solver%maxIter)
           CALL BLAS_copy(yf,bdf_hist(j+1,i+1))
         ENDIF
         ntmp=N
@@ -553,7 +569,7 @@ SUBROUTINE step_ODESolverType_Native(solver,t0,y0,tf,yf)
     ENDDO
     ist=solver%BDForder
     CALL solve_bdf(solver%f,solver%myLS,solver%BDForder,nstep-solver%BDForder+1,t,dt, &
-        yf,ydot,solver%tol,ist,bdf_hist)
+        yf,ydot,solver%tol,ist,bdf_hist,maxIter_in=solver%maxIter)
     DO i=1,solver%BDForder
       DO j=1,solver%BDForder
         CALL bdf_hist(i,j)%clear()
@@ -581,12 +597,14 @@ ENDSUBROUTINE step_ODESolverType_Native
 !> @param bdf_hist 2D array of the historical data.  The second index corresponds to the bdf primer
 !>     hierarchy and should only be accessed as bdf_hist(:,ord)
 !> @param updateJ_in an optional logical to update the jacobian of the matrix
+!> @param maxIter_in optional maximum number of nonlinear iterations to perform
 !>
 !> This routine performs the BDF solve for n steps.  THis routine is seperate in support of the priming
 !> methodology that was implmeneted which introduces substeps for lower order methods to generate historical
 !> data needed by the higher order methods.
 !>
-SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in)
+SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in,maxIter_in)
+  CHARACTER(LEN=*),PARAMETER :: myName='solve_bdf'
   CLASS(ODESolverInterface_Base),INTENT(INOUT) :: f
   TYPE(LinearSolverType_Direct),INTENT(INOUT) :: myLS
   INTEGER(SIK),INTENT(IN) :: ord
@@ -599,11 +617,18 @@ SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in)
   INTEGER(SIK),INTENT(INOUT) :: ist
   CLASS(VectorType),INTENT(INOUT) :: bdf_hist(:,:)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: updateJ_in
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: maxIter_in
 
-  INTEGER(SIK) :: i,j
+  INTEGER(SIK) :: i,j, maxIter
   CLASS(VectorType),ALLOCATABLE :: rhs
-  LOGICAL(SBK) :: updateJ
+  LOGICAL(SBK) :: updateJ, converged
   ALLOCATE(rhs,SOURCE=yf)
+
+  IF(PRESENT(maxIter_in)) THEN
+    maxIter=maxIter_in
+  ELSE
+    maxIter=5000_SIK
+  ENDIF
 
   DO i=1,nstep
     IF(PRESENT(updateJ_in)) THEN
@@ -623,7 +648,12 @@ SUBROUTINE solve_bdf(f,myLS,ord,nstep,t,dt,yf,ydot,tol,ist,bdf_hist,updateJ_in)
     ENDDO
     CALL BLAS_scal(rhs,-1.0_SRK)
 
-    CALL solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta_bdf(ord),tol,updateJ)
+    CALL solve_implicit(f,myLS,t,dt,yf,ydot,rhs,converged,beta_bdf(ord), &
+        tol,updateJ,maxIter)
+    IF(.NOT. converged) THEN
+      CALL eODESolverType%raiseError('Error in '// &
+          modName//'::'//myName//' - Failed to converge implicit step.')
+    ENDIF
 
     !save data if needed for next iteration
     ist=MOD(ist,ord)+1
@@ -644,14 +674,16 @@ ENDSUBROUTINE solve_bdf
 !> @param yf the vector which contains the final solution
 !> @param ydot the vector which contains the solution derivative
 !> @param rhs the vector which contains the rhs of the solution
+!> @param converged boolean which contains success state of the solve
 !> @param beta the constant multipier to scale the implicit term
 !> @param tol the tolerance for the 2-norm which determines how tight to converge the implicit solve
 !> @param updateJ an optional logical to update the jacobian of the matrix
+!> @param maxIter_in an optional integer for maximum number of fp iterations
 !>
 !> This routine performs a newton iteration to converge for the implict component of the soluion.
 !> This routine is used for both theta method (theta/=0) and all BDF methods
 !>
-SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta,tol,updateJ)
+SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,converged,beta,tol,updateJ,maxIter_in)
   CLASS(ODESolverInterface_Base),INTENT(INOUT) :: f
   TYPE(LinearSolverType_Direct),INTENT(INOUT) :: myLS
   REAL(SRK),INTENT(IN) :: t
@@ -659,12 +691,21 @@ SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta,tol,updateJ)
   CLASS(VectorType),INTENT(INOUT) :: yf
   CLASS(VectorType),INTENT(INOUT) :: ydot
   CLASS(VectorType),INTENT(INOUT) :: rhs
+  LOGICAL(SBK),INTENT(OUT) :: converged
   REAL(SRK),INTENT(IN) :: beta
   REAL(SRK),INTENT(IN) :: tol
   LOGICAL(SBK),INTENT(IN) :: updateJ
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: maxIter_in
 
-  INTEGER(SIK) :: j
+  INTEGER(SIK) :: j, maxIterations
   REAL(SRK) :: resid
+
+  !set maximum number of iterations
+  IF(PRESENT(maxIter_in)) THEN
+    maxIterations=maxIter_in
+  ELSE
+    maxIterations=5000_SIK
+  ENDIF
 
   !setup LHS matrix
   IF (updateJ) THEN
@@ -675,8 +716,9 @@ SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta,tol,updateJ)
   CALL BLAS_axpy(ydot,yf,dt)
   !solve nonlinear system
   resid=2*tol
+  converged=.FALSE.
   j=1
-  DO WHILE (resid>tol)
+  DO WHILE (resid>tol .AND. j<=maxIterations)
     CALL f%eval(t+dt,yf,ydot)
     CALL BLAS_copy(rhs,myLS%b)
     CALL BLAS_axpy(yf,myLS%b,-1.0_SRK)
@@ -687,6 +729,7 @@ SUBROUTINE solve_implicit(f,myLS,t,dt,yf,ydot,rhs,beta,tol,updateJ)
     resid=BLAS_nrm2(myLS%x)
     j=j+1
   ENDDO
+  IF(resid<=tol) converged=.TRUE.
 ENDSUBROUTINE solve_implicit
 !
 !-------------------------------------------------------------------------------
