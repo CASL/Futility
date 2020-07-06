@@ -344,15 +344,15 @@ SUBROUTINE testDistrBandMatrix()
   CALL thisMatrix%zeroentries()
   SELECTTYPE(thisMatrix)
   TYPE IS(DistributedBandedMatrixType)
-    DO i=1,SIZE(thisMatrix%chunks(1)%bands)
-      ! The rank1 chunk1 will not be initialized, so skip
-      IF(rank==0) THEN
+    ! The rank1 chunk1 will not be initialized, so skip
+    IF(rank==0) THEN
+      DO i=1,SIZE(thisMatrix%chunks(1)%bands)
         DO j=1,SIZE(thisMatrix%chunks(1)%bands(i)%elem)
           bool=(thisMatrix%chunks(1)%bands(i)%elem(j) .APPROXEQ. 0.0_SRK)
           ASSERT(bool,"banded%zero()")
         ENDDO
-      ENDIF
-    ENDDO
+      ENDDO
+    ENDIF
     DO i=1,SIZE(thisMatrix%chunks(2)%bands)
       DO j=1,SIZE(thisMatrix%chunks(2)%bands(i)%elem)
         bool=(thisMatrix%chunks(2)%bands(i)%elem(j) .APPROXEQ. 0.0_SRK)
@@ -582,10 +582,8 @@ SUBROUTINE testDistrBlockBandMatrix()
   CALL plist%add('MatrixType->blockSize',2_SNK)
   CALL pList%add('MatrixType->nnz',10_SNK)
   CALL pList%add('MatrixType->MPI_COMM_ID',PE_COMM_WORLD)
-  CALL pList%edit(6)
   CALL pList%validate(pList,optListMat)
   CALL thisMatrix%init(pList)
-  WRITE(*,*) "Init status",thisMatrix%isInit
 
   CALL thisMatrix%set(1,1,1._SRK)
   CALL thisMatrix%set(1,2,2._SRK)
