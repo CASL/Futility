@@ -1872,6 +1872,7 @@ SUBROUTINE solveGMRES_partial(thisLS,u,tol,nIters,thisPC)
   DEALLOCATE(V)
   CALL Vy%clear()
   DEALLOCATE(Vy)
+  CALL vecPlist%clear()
 
 ENDSUBROUTINE solveGMRES_partial
 !
