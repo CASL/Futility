@@ -174,6 +174,7 @@ SUBROUTINE testIterativeSolve_GMRES()
   DEALLOCATE(thisB)
   DEALLOCATE(dummyvec)
   CALL thisLS%clear()
+  CALL plist%clear()
 
 ENDSUBROUTINE testIterativeSolve_GMRES
 #endif
