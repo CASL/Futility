@@ -10479,7 +10479,6 @@ SUBROUTINE get_ParamType_SDK_a4(thisParam,name,val)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a4)
-WRITE(*,*) 'A',CHAR(thisParam%name),TRIM(name)
     IF(thisParam%name == TRIM(name)) THEN
       val=thisParam%val
     ELSE
@@ -10494,7 +10493,6 @@ WRITE(*,*) 'A',CHAR(thisParam%name),TRIM(name)
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
       TYPE IS(ParamType_SDK_a4)
-WRITE(*,*) 'b',CHAR(p%name),TRIM(name)
         val=p%val
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
