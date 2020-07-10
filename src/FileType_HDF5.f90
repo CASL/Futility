@@ -443,31 +443,31 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     !> Generic typebound interface for pointer-based read operations
     GENERIC :: freadp => read_dp4
     !> @copybrief FileType_HDF5::write_attribute_st0
-    !> @copyoc FileType_HDF5_write_attribute_st0
+    !> @copydoc FileType_HDF5_write_attribute_st0
     PROCEDURE,PASS,PRIVATE :: write_attribute_st0
     !> @copybrief FileType_HDF5::write_attribute_c0
-    !> @copyoc FileType_HDF5_write_attribute_c0
+    !> @copydoc FileType_HDF5_write_attribute_c0
     PROCEDURE,PASS,PRIVATE :: write_attribute_c0
     !> @copybrief FileType_HDF5::write_attribute_i0
-    !> @copyoc FileType_HDF5_write_attribute_i0
+    !> @copydoc FileType_HDF5_write_attribute_i0
     PROCEDURE,PASS,PRIVATE :: write_attribute_i0
     !> @copybrief FileType_HDF5::write_attribute_d0
-    !> @copyoc FileType_HDF5_write_attribute_d0
+    !> @copydoc FileType_HDF5_write_attribute_d0
     PROCEDURE,PASS,PRIVATE :: write_attribute_d0
     !> Generic typebound interface for all @c attribute writes
     GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
         write_attribute_i0, write_attribute_d0
     !> @copybrief FileType_HDF5::read_str_attribure_help
-    !> @copyoc FileType_HDF5_read_str_attribure_help
+    !> @copydoc FileType_HDF5_read_str_attribure_help
     PROCEDURE,PASS,PRIVATE :: read_attribute_st0
     !> @copybrief FileType_HDF5::read_attribute_c0
-    !> @copyoc FileType_HDF5_read_attribute_c0
+    !> @copydoc FileType_HDF5_read_attribute_c0
     PROCEDURE,PASS,PRIVATE :: read_attribute_c0
     !> @copybrief FileType_HDF5::read_attribute_i0
-    !> @copyoc FileType_HDF5_read_attribute_i0
+    !> @copydoc FileType_HDF5_read_attribute_i0
     PROCEDURE,PASS,PRIVATE :: read_attribute_i0
     !> @copybrief FileType_HDF5::read_attribute_d0
-    !> @copyoc FileType_HDF5_read_attribute_d0
+    !> @copydoc FileType_HDF5_read_attribute_d0
     PROCEDURE,PASS,PRIVATE :: read_attribute_d0
     !> Generic typebound interface for all @c attribute writes
     GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
@@ -6167,7 +6167,7 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
   TYPE(StringType),INTENT(IN) :: h5path
   TYPE(ParamType),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=*),PARAMETER :: myName='read_pList_HDF5FileType'
+  CHARACTER(LEN=*),PARAMETER :: myName='read_parameter'
   INTEGER(SIK) :: i,j,k,error,ndims,class_type
   INTEGER(HID_T) :: dset_id,dspace_id,dtype
   INTEGER(SIZE_T) :: dtype_prec
@@ -6175,13 +6175,13 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
   LOGICAL(SBK) :: l0,isbool
   LOGICAL(SBK),ALLOCATABLE :: l1(:),l2(:,:),l3(:,:,:)
   INTEGER(SNK) :: is0
-  INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:),is4(:,:,:,:)
   INTEGER(SLK) :: id0
-  INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:),id4(:,:,:,:)
   REAL(SSK) :: rs0
-  REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:)
+  REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:),rs4(:,:,:,:)
   REAL(SDK) :: rd0
-  REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:)
+  REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:),rd4(:,:,:,:)
   TYPE(StringType) :: st0
   TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:)
 
@@ -6219,6 +6219,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_l3(thisHDF5File,CHAR(plpath),id3)
         CALL vals%add(CHAR(plpath),id3)
+      CASE(4)
+        CALL read_l4(thisHDF5File,CHAR(plpath),id4)
+        CALL vals%add(CHAR(plpath),id4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported INTEGER(SLK) dimension '//str(ndims)//'!')
       ENDSELECT
     !Ints
     ELSEIF(INT(dtype_prec,SIK) == 32) THEN
@@ -6236,6 +6242,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_n3(thisHDF5File,CHAR(plpath),is3)
         CALL vals%add(CHAR(plpath),is3)
+      CASE(4)
+        CALL read_n4(thisHDF5File,CHAR(plpath),is4)
+        CALL vals%add(CHAR(plpath),is4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported INTEGER(SNK) dimension '//str(ndims)//'!')
       ENDSELECT
     ENDIF
   !Real types
@@ -6256,6 +6268,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_d3(thisHDF5File,CHAR(plpath),rd3)
         CALL vals%add(CHAR(plpath),rd3)
+      CASE(4)
+        CALL read_d4(thisHDF5File,CHAR(plpath),rd4)
+        CALL vals%add(CHAR(plpath),rd4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported REAL(SDK) dimension '//str(ndims)//'!')
       ENDSELECT
     !Single
     ELSEIF(INT(dtype_prec,SIK) == 32) THEN
@@ -6273,6 +6291,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_s3(thisHDF5File,CHAR(plpath),rs3)
         CALL vals%add(CHAR(plpath),rs3)
+      CASE(4)
+        CALL read_s4(thisHDF5File,CHAR(plpath),rs4)
+        CALL vals%add(CHAR(plpath),rs4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported REAL(SSK) dimension '//str(ndims)//'!')
       ENDSELECT
     ENDIF
   !String and boolean types
@@ -6371,6 +6395,9 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
             'added to Parameter List.')
         !CALL vals%add(CHAR(plpath),st3)
       ENDIF
+    CASE DEFAULT
+      CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+          ' - Unsupported TYPE(StringType) dimension '//str(ndims)//'!')
     ENDSELECT
   ENDIF
 #endif
