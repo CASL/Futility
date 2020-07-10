@@ -75,6 +75,7 @@ PRIVATE !Default private for module contents
 ! List of Public items
 PUBLIC :: eParams
 PUBLIC :: ParamType
+PUBLIC :: ParamTypePtr
 PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(==)
 
@@ -533,6 +534,12 @@ TYPE :: ParamType
 #endif
 PROCEDURE :: procXMLTree
 ENDTYPE ParamType
+
+!> @brief Wrapper type for an array of ParamType pointers
+TYPE :: ParamTypePtr
+  !> Pointer to the ParamType
+  CLASS(ParamType),POINTER :: p => NULL()
+ENDTYPE ParamTypePtr
 
 !> @brief Extended type of a ParamType for defining a list of parameters
 TYPE,EXTENDS(ParamType) :: ParamType_List
