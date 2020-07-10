@@ -6137,7 +6137,12 @@ RECURSIVE SUBROUTINE read_pList(thisHDF5File,dsetname,vals)
   ! Create root directory
   baseh5path=TRIM(dsetname)
   baseh5path = baseh5path%replace('->','/')
-  baseh5path='/'//baseh5path
+  IF(baseh5path%at(1) /= '/') THEN
+    baseh5path='/'//baseh5path
+  ENDIF
+  IF(baseh5path%at(LEN(baseh5path)) == '/') THEN
+    baseh5path = baseh5path%substr(1,LEN(baseh5path)-1)
+  ENDIF
   !Check to make sure there are objects/groups to be read
   CALL ls_HDF5FileType(thisHDF5File,dsetname,lsobjs)
   !Then we have a list of parameters to loop over.
