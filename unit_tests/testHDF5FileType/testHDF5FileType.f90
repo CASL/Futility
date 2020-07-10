@@ -2359,6 +2359,23 @@ SUBROUTINE testHDF5FileTypeRead()
     ASSERT_EQ(TRIM(refsets(i)),TRIM(testST1(i)),refsets(i)//' List Failure')
   ENDDO
 
+  COMPONENT_TEST('%getDataType')
+  ASSERT_EQ(h5%getDataType('groupR->memD0'),'SDK','%getDataType SDK')
+  ASSERT_EQ(h5%getDataType('groupR->memS1'),'SSK','%getDataType SSK')
+  ASSERT_EQ(h5%getDataType('groupI->memN2'),'SNK','%getDataType SNK')
+  ASSERT_EQ(h5%getDataType('groupI->memL3'),'SLK','%getDataType SLK')
+  ASSERT_EQ(h5%getDataType('groupST->memST1'),'STR','%getDataType STR')
+
+  COMPONENT_TEST('%getDataShape')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD0')),0,'%getDataShape D0')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD1')),1,'%getDataShape D1')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD2')),2,'%getDataShape D2')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD3')),3,'%getDataShape D3')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD4')),4,'%getDataShape D4')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD5')),5,'%getDataShape D5')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD6')),6,'%getDataShape D6')
+  ASSERT_EQ(SIZE(h5%getDataShape('groupR->memD7')),7,'%getDataShape D7')
+
   COMPONENT_TEST('%fread values')
   ! Read a dataset (real-1)
   CALL h5%fread('groupR->memD0',testD0)
