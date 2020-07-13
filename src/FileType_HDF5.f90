@@ -6742,6 +6742,7 @@ SUBROUTINE preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
     ENDIF
   ENDIF
 ENDSUBROUTINE preRead
+#endif
 !
 !-------------------------------------------------------------------------------
 !> @brief returns the shape of the dataset
@@ -6886,6 +6887,7 @@ ENDFUNCTION getDataType
 !-------------------------------------------------------------------------------
 !> @brief
 !>
+#ifdef FUTILITY_HAVE_HDF5
 SUBROUTINE postRead(thisHDF5File,path,dset_id,dspace_id,error)
   CHARACTER(LEN=*),PARAMETER :: myName='postRead'
   CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
