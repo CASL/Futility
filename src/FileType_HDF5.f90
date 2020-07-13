@@ -6755,8 +6755,12 @@ FUNCTION getDataShape(thisHDF5File,dsetname) RESULT(dataShape)
   CHARACTER(LEN=*),INTENT(IN) :: dsetname
   INTEGER(SIK),ALLOCATABLE :: dataShape(:)
   !
-#ifdef FUTILITY_HAVE_HDF5
   CHARACTER(LEN=*),PARAMETER :: myName='getDataShape'
+#ifndef FUTILITY_HAVE_HDF5
+  CALL thisHDF5File%e%raiseError(modName//'::'//myName//' - Function cannot be called '// &
+        'with HDF5 disabled!')
+  ALLOCATE(dataShape(0))
+#else
   CHARACTER(LEN=LEN_TRIM(dsetname)) :: path
   INTEGER(SIK) :: error,ndims
   INTEGER(HID_T) :: dset_id
@@ -6819,8 +6823,12 @@ FUNCTION getDataType(thisHDF5File,dsetname) RESULT(dataType)
   CHARACTER(LEN=*),INTENT(IN) :: dsetname
   CHARACTER(LEN=3) :: dataType
   !
-#ifdef FUTILITY_HAVE_HDF5
   CHARACTER(LEN=*),PARAMETER :: myName='getDataType'
+#ifndef FUTILITY_HAVE_HDF5
+  CALL thisHDF5File%e%raiseError(modName//'::'//myName//' - Function cannot be called '// &
+        'with HDF5 disabled!')
+  dataType='N/A'
+#else
   CHARACTER(LEN=LEN_TRIM(dsetname)) :: path
   INTEGER(SIK) :: error,class_type
   INTEGER(HID_T) :: dset_id,dtype
