@@ -465,7 +465,7 @@ SUBROUTINE writepvtu_VTUXMLFileType(fileobj,funit,case,filen,procs,rank)
   INTEGER(SIK) :: i,j,iord
   CHARACTER(LEN=128) :: fname,fmtStr
   !
-  IF((procs>1).AND.rank == 0) THEN
+  IF(rank == 0) THEN
     sint='fsr_'//TRIM(case)//'/'
     CALL SlashRep(sint)
     OPEN(unit=funit,file=TRIM(sint)//TRIM(filen)//'.pvtu')
