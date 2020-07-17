@@ -30,8 +30,9 @@ PUBLIC :: XDMFFileType
 TYPE,EXTENDS(BaseFileType) :: XDMFFileType
   !> Logical indicating if file was initialized
   LOGICAL(SBK) :: isInit=.FALSE.
-  !> The unit number assigned to the file
-  INTEGER(SIK) :: unitNo=-1
+  !> Parameter list for XML light data
+  TYPE(ParamType) :: xmlPL
+  !> HDF5 File for heavy data
 !
 !List of type bound procedures
   CONTAINS
