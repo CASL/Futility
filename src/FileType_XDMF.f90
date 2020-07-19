@@ -24,6 +24,7 @@ USE Strings
 !USE IO_Strings
 USE FileType_Base
 USE FileType_XML
+USE FileType_HDF5
 USE VTKFiles
 
 IMPLICIT NONE
@@ -94,18 +95,26 @@ SUBROUTINE fdelete_XDMFFileType(file)
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,fname,vtkMesh)
+SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
   CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
-  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fname
+  CLASS(StringType),INTENT(IN) :: strpath
   CLASS(VTKMeshType),INTENT(INOUT) :: vtkMesh
   TYPE(XMLFileType) :: xml
-  TYPE(XMLElementType),POINTER :: xmle, children(:)
-  TYPE(StringType) :: strIn,strOut,elname
-  INTEGER(SIK) :: i
+  TYPE(HDF5FileType) :: h5
+  TYPE(XMLElementType),POINTER :: xmle, children(:),echildren(:)
+  TYPE(StringType) :: strIn,strOut,elname,content,fname
+  TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
+  INTEGER(SIK) :: i,nnodes
+
+  segments=strpath%split('.')
+  fname=segments(1)
+  ! HDF5
+  CALL h5%init(fname//'.h5','READ')
+  CALL h5%fopen()
 
   ! XML
-  CALL xml%importFromDisk(fname)
+  CALL xml%importFromDisk(CHAR(strpath))
   xmle => xml%root
   REQUIRE(ASSOCIATED(xmle))
   REQUIRE(xmle%name%upper() == 'XDMF')
@@ -136,9 +145,47 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,fname,vtkMesh)
   CALL children(1)%getChildren(children)
   REQUIRE(SIZE(children) > 0)
   DO i=1,SIZE(children)
-    elname=children(i)%name%upper()
+    xmle=children(i)
+    elname=xmle%name%upper()
     SELECTCASE(CHAR(elname))
     CASE('GEOMETRY')
+      ! GeometryType
+      strIn='GeometryType'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'XYZ') THEN
+        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          ' - GeometryType only supports XYZ right now.')              
+      ENDIF
+      ! Format
+      CALL xmle%getChildren(echildren)
+      REQUIRE(SIZE(echildren) == 1)
+      xmle=echildren(1)
+      strIn='Format'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'HDF') THEN
+        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          ' - only supports HDF5 geometry data right now.')              
+      ENDIF
+      ! Does precision matter?
+      ! Node Data
+      strIn='Dimensions'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      strArray=strOut%split()
+      REQUIRE(CHAR(strArray(2)) == '3')
+      ! Potential trouble with data types here if nnodes greater than SIK
+      nnodes=strArray(1)%stoi()
+      WRITE(*,*) nnodes
+      ALLOCATE(vtkMesh%nodelist(nnodes))
+      content=xmle%getContent()
+      WRITE(*,*) CHAR(content)
+
+      
+
+
+
+
+
+
 
     CASE DEFAULT
       CALL eXDMF%raiseWarning(modName//'::'//myName// &
