@@ -15,35 +15,33 @@
 !> 
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_XDMF
+#include "Futility_DBC.h"
+USE ExceptionHandler
+USE Futility_DBC
 USE ISO_FORTRAN_ENV
 USE IntrType
 USE Strings
-USE IO_Strings
+!USE IO_Strings
 USE FileType_Base
+USE FileType_XML
+USE VTKFiles
 
 IMPLICIT NONE
 PRIVATE
 
 PUBLIC :: XDMFFileType
 
+!> The module name
+CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
+
+!> Exception handler for the module
+TYPE(ExceptionHandlerType),SAVE :: eXDMF
+
 !> The XDMF File type
 TYPE,EXTENDS(BaseFileType) :: XDMFFileType
-  !> Logical indicating if file was initialized
-  LOGICAL(SBK) :: isInit=.FALSE.
-  !> Parameter list for XML light data
-  TYPE(ParamType) :: xmlPL
-  !> HDF5 File for heavy data
 !
 !List of type bound procedures
   CONTAINS
-    !> @copybrief FileType_XML::init_XDMFFileType
-    !> @copydoc FileType_XML::init_XDMFFileType
-    PROCEDURE,PASS :: init => init_XDMFFileType
-    !> @copybrief FileType_XML::clear_XDMFFileType
-    !> @copydoc FileType_XML::clear_XDMFFileType
-    PROCEDURE,PASS :: clear => clear_XDMFFileType
-    !> @copybrief FileType_XML::fopen_XDMFFileType
-    !> @copydoc FileType_XML::fopen_XDMFFileType
     PROCEDURE,PASS :: fopen => fopen_XDMFFileType
     !> @copybrief FileType_XML::fclose_XDMFFileType
     !> @copydoc FileType_XML::fclose_XDMFFileType
@@ -53,34 +51,12 @@ TYPE,EXTENDS(BaseFileType) :: XDMFFileType
     PROCEDURE,PASS :: fdelete => fdelete_XDMFFileType
     !> @copybrief FileType_XML::importFromDisk_XDMFFileType
     !> @copydoc FileType_XML::importFromDisk_XDMFFileType
-    PROCEDURE,PASS :: importFromDisk => importFromDisk_XDMFFileType
+    PROCEDURE,PASS :: importFromDiskToVTK => importFromDiskToVTK_XDMFFileType
 ENDTYPE XDMFFileType
 
-CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
 !
 !===============================================================================
 CONTAINS
-!
-!-------------------------------------------------------------------------------
-!> @brief Initializes an XDMF file type
-!> @param thisXDMFFile the XDML file type object
-!> @param fname the name of the file to process
-!> @param lread whether or not the file will be opened for reading or writing
-!>
-SUBROUTINE init_XDMFFileType(thisXDMFFile,fname,lread)
-  CHARACTER(LEN=*),PARAMETER :: myName='init_XDMFFileType'
-  CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
-  CHARACTER(LEN=*) :: fname
-  LOGICAL(SBK) :: lread
-ENDSUBROUTINE init_XDMFFileType
-!
-!-------------------------------------------------------------------------------
-!> @brief Clears the XDMF File object
-!> @param thisXDMFFile the XDMF file object
-!>
-SUBROUTINE clear_XDMFFileType(thisXDMFFile)
-  CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
-ENDSUBROUTINE clear_XDMFFileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Opens the XDMF file type for I/O
@@ -118,15 +94,60 @@ SUBROUTINE fdelete_XDMFFileType(file)
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
-!> @brief Loads an XDMF file from disk into the XDMF File type object in memory
-!> @param thisXDMFFile the XDMF file to populate from disk
-!> @param fname the name of the file to process
-!>
-SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile,fname)
+SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,fname,vtkMesh)
   CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fname
+  CLASS(VTKMeshType),INTENT(INOUT) :: vtkMesh
+  TYPE(XMLFileType) :: xml
+  TYPE(XMLElementType),POINTER :: xmle, children(:)
+  TYPE(StringType) :: strIn,strOut,elname
+  INTEGER(SIK) :: i
 
-ENDSUBROUTINE importFromDisk_XDMFFileType
+  ! XML
+  CALL xml%importFromDisk(fname)
+  xmle => xml%root
+  REQUIRE(ASSOCIATED(xmle))
+  REQUIRE(xmle%name%upper() == 'XDMF')
+  ! Version
+  strIn='Version'
+  CALL xmle%getAttributeValue(strIn,strOut)
+  IF(strOut /= '3.0') THEN
+    CALL eXDMF%raiseError(modName//'::'//myName// &
+      ' - Currently only supports XDMF version 3.0') 
+  ENDIF
+  ! Domain
+  CALL xmle%getChildren(children)
+  REQUIRE(SIZE(children) > 0)
+  REQUIRE(children(1)%name%upper() == 'DOMAIN')
+  IF(SIZE(children) > 1) THEN
+     CALL eXDMF%raiseError(modName//'::'//myName// &     
+       ' - Currently only supports single domain XDMF') 
+  ENDIF
+  ! Grid
+  CALL children(1)%getChildren(children)
+  REQUIRE(SIZE(children) > 0)
+  REQUIRE(children(1)%name%upper() == 'GRID')
+  IF(SIZE(children) > 1) THEN
+     CALL eXDMF%raiseError(modName//'::'//myName// &     
+       ' - Currently only supports single grid XDMF') 
+  ENDIF                                                    
+  ! Process mesh
+  CALL children(1)%getChildren(children)
+  REQUIRE(SIZE(children) > 0)
+  DO i=1,SIZE(children)
+    elname=children(i)%name%upper()
+    SELECTCASE(CHAR(elname))
+    CASE('GEOMETRY')
+
+    CASE DEFAULT
+      CALL eXDMF%raiseWarning(modName//'::'//myName// &
+      ' - Unsupported data in XDMF file '//CHAR(elname))      
+    ENDSELECT
+  ENDDO
+
+  
+
+ENDSUBROUTINE importFromDiskToVTK_XDMFFileType
 !
 ENDMODULE FileType_XDMF
