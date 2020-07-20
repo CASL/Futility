@@ -325,6 +325,7 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
       ' - Unsupported data in XDMF file '//CHAR(elname))      
     ENDSELECT
   ENDDO
+  vtkMesh%isInit=.TRUE.
 
   
 
