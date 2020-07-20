@@ -1039,7 +1039,7 @@ RECURSIVE SUBROUTINE RecursiveSpectralBisection(thisGraph)
   DO iv=1,nvert
     Order(iv)=iv
   ENDDO !iv
-  SELECTTYPE(evecs(1)); TYPEIS(PETScVectorType)
+  SELECTTYPE(evecs); TYPEIS(PETScVectorType)
     CALL recursiveEigenOrder(evecs(2:numvecs), Order)
   ENDSELECT
   DO iv=1,SIZE(evecs)
