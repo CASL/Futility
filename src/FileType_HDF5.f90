@@ -6761,7 +6761,7 @@ FUNCTION getDataShape(thisHDF5File,dsetname) RESULT(dataShape)
         'with HDF5 disabled!')
   ALLOCATE(dataShape(0))
 #else
-  CHARACTER(LEN=LEN_TRIM(dsetname)) :: path
+  CHARACTER(LEN=LEN_TRIM(dsetname)+1) :: path
   INTEGER(SIK) :: error,ndims
   INTEGER(HID_T) :: dset_id
   INTEGER(HID_T) :: dspace_id
@@ -6829,7 +6829,7 @@ FUNCTION getDataType(thisHDF5File,dsetname) RESULT(dataType)
         'with HDF5 disabled!')
   dataType='N/A'
 #else
-  CHARACTER(LEN=LEN_TRIM(dsetname)) :: path
+  CHARACTER(LEN=LEN_TRIM(dsetname)+1) :: path
   INTEGER(SIK) :: error,class_type
   INTEGER(HID_T) :: dset_id,dtype
   INTEGER(HSIZE_T) :: dtype_prec

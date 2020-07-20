@@ -103,15 +103,13 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
   TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:),echildren(:)
-  TYPE(StringType) :: strIn,strOut,elname,content,fname
+  TYPE(StringType) :: strIn,strOut,elname,content,fname,group
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
-  INTEGER(SIK) :: i,nnodes
-
-  segments=strpath%split('.')
-  fname=segments(1)
-  ! HDF5
-  CALL h5%init(fname//'.h5','READ')
-  CALL h5%fopen()
+  INTEGER(SIK) :: i,j
+  INTEGER(SIK),ALLOCATABLE :: dataShape(:)
+  INTEGER(SLK) :: nnodes
+  REAL(SSK),ALLOCATABLE :: vals4(:,:)
+  REAl(SDK),ALLOCATABLE :: vals8(:,:)
 
   ! XML
   CALL xml%importFromDisk(CHAR(strpath))
@@ -166,26 +164,47 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
         CALL eXDMF%raiseWarning(modName//'::'//myName// &
           ' - only supports HDF5 geometry data right now.')              
       ENDIF
-      ! Does precision matter?
       ! Node Data
       strIn='Dimensions'
       CALL xmle%getAttributeValue(strIn,strOut)
       strArray=strOut%split()
-      REQUIRE(CHAR(strArray(2)) == '3')
-      ! Potential trouble with data types here if nnodes greater than SIK
+      REQUIRE(strArray(2) == '3')
       nnodes=strArray(1)%stoi()
-      WRITE(*,*) nnodes
-      ALLOCATE(vtkMesh%nodelist(nnodes))
+      !H5 File
       content=xmle%getContent()
-      WRITE(*,*) CHAR(content)
-
-      
-
-
-
-
-
-
+      segments=content%split(':')
+      fname=segments(1)
+      group=segments(2)%substr(2,LEN(segments(2)))
+      CALL h5%init(TRIM(fname),'READ')
+      CALL h5%fopen()
+      REQUIRE(h5%pathExists(CHAR(group)))
+      dataShape=h5%getDataShape(CHAR(group))
+      REQUIRE(dataShape(1) == 3)
+      REQUIRE(dataShape(2) == nnodes)
+      ! Data type
+      strOut=h5%getDataType(CHAR(group))
+      IF(strOut == 'SSK') THEN
+        CALL h5%fread(CHAR(group),vals4)
+      ELSE
+        CALL h5%fread(CHAR(group),vals8)
+      ENDIF
+      !problem if SRK /= SDK? 
+      ALLOCATE(vtkMesh%x(nnodes))
+      ALLOCATE(vtkMesh%y(nnodes))
+      ALLOCATE(vtkMesh%z(nnodes))
+      IF(strOut == 'SSK') THEN
+        DO j=1,nnodes
+          vtkMesh%x(j)=vals4(1,j)
+          vtkMesh%y(j)=vals4(2,j)
+          vtkMesh%z(j)=vals4(3,j)
+        ENDDO
+      ELSE
+        DO j=1,nnodes
+          vtkMesh%x(j)=vals8(1,j)
+          vtkMesh%y(j)=vals8(2,j)
+          vtkMesh%z(j)=vals8(3,j)
+        ENDDO
+      ENDIF
 
     CASE DEFAULT
       CALL eXDMF%raiseWarning(modName//'::'//myName// &
