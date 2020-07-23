@@ -32,12 +32,29 @@ IMPLICIT NONE
 PRIVATE
 
 PUBLIC :: XDMFFileType
+PUBLIC :: XDMFSetType
 
 !> The module name
 CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
 
 !> Exception handler for the module
 TYPE(ExceptionHandlerType),SAVE :: eXDMF
+
+
+TYPE :: XDMFSetType
+  !> The name of the set
+  CHARACTER(LEN=64) :: setName=''
+  !> XDMF SetType (e.g. Cell, Face, Node, Edge)
+  CHARACTER(LEN=14) :: setType=''
+  !> XDMF DataType (e.g. float, int, etc.)
+  CHARACTER(LEN=14) :: dataType=''
+  !> Number of members in set
+  INTEGER(SIK) :: n=-1
+  !> ID of set members
+  INTEGER(SIK),ALLOCATABLE :: idList(:)
+  !> The data values at each member
+  REAL(SRK),ALLOCATABLE :: dataList(:)
+ENDTYPE XDMFSetType
 
 !> The XDMF File type
 TYPE,EXTENDS(BaseFileType) :: XDMFFileType
@@ -96,11 +113,15 @@ SUBROUTINE fdelete_XDMFFileType(file)
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
+SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh, &
+    vtkMatData, matNames, sets)
   CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
   CLASS(StringType),INTENT(IN) :: strpath
   CLASS(VTKMeshType),INTENT(INOUT) :: vtkMesh
+  CLASS(VTKDataType),INTENT(INOUT) :: vtkMatData
+  TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: matNames(:)
+  TYPE(XDMFSetType),ALLOCATABLE,INTENT(INOUT) :: sets(:)
   TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:),echildren(:)
@@ -109,10 +130,10 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
   INTEGER(SIK) :: i,k,vtkid,nperc,npercRef
   INTEGER(SIK),ALLOCATABLE :: dataShape(:)
   INTEGER(SLK) :: nnodes,j,ncells
-  REAL(SSK),ALLOCATABLE :: vals4(:,:)
-  REAl(SDK),ALLOCATABLE :: vals8(:,:)
-  REAL(SNK),ALLOCATABLE :: ivals4(:,:)
-  REAl(SLK),ALLOCATABLE :: ivals8(:,:)
+  REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
+  REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
+  INTEGER(SNK),ALLOCATABLE :: ivals4_2d(:,:)
+  INTEGER(SLK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
   TYPE(ParamType) :: topolist 
 !  TYPE(ParamType),POINTER :: pList(:)
   
@@ -216,9 +237,9 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
       ! Data type
       dtype=h5%getDataType(CHAR(group))
       IF(dtype == 'SSK') THEN
-        CALL h5%fread(CHAR(group),vals4)
+        CALL h5%fread(CHAR(group),vals4_2d)
       ELSE
-        CALL h5%fread(CHAR(group),vals8)
+        CALL h5%fread(CHAR(group),vals8_2d)
       ENDIF
       !problem if SRK /= SDK? 
       vtkMesh%numPoints=nnodes
@@ -227,18 +248,18 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
       ALLOCATE(vtkMesh%z(nnodes))
       IF(dtype == 'SSK') THEN
         DO j=1,nnodes
-          vtkMesh%x(j)=vals4(1,j)
-          vtkMesh%y(j)=vals4(2,j)
-          vtkMesh%z(j)=vals4(3,j)
+          vtkMesh%x(j)=vals4_2d(1,j)
+          vtkMesh%y(j)=vals4_2d(2,j)
+          vtkMesh%z(j)=vals4_2d(3,j)
         ENDDO
-        DEALLOCATE(vals4)
+        DEALLOCATE(vals4_2d)
       ELSE
         DO j=1,nnodes
-          vtkMesh%x(j)=vals8(1,j)
-          vtkMesh%y(j)=vals8(2,j)
-          vtkMesh%z(j)=vals8(3,j)
+          vtkMesh%x(j)=vals8_2d(1,j)
+          vtkMesh%y(j)=vals8_2d(2,j)
+          vtkMesh%z(j)=vals8_2d(3,j)
         ENDDO
-        DEALLOCATE(vals8)
+        DEALLOCATE(vals8_2d)
       ENDIF
     CASE('TOPOLOGY')
       vtkMesh%meshType=3 ! unstructured grid only
@@ -292,9 +313,9 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
         ! Data type
         dtype=h5%getDataType(CHAR(group))
         IF(dtype == 'SNK') THEN
-          CALL h5%fread(CHAR(group),ivals4)
+          CALL h5%fread(CHAR(group),ivals4_2d)
         ELSE
-          CALL h5%fread(CHAR(group),ivals8)
+          CALL h5%fread(CHAR(group),ivals8_2d)
         ENDIF
         !problem if SIK /= SLK?
         vtkMesh%numCells=ncells
@@ -306,28 +327,85 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh)
           DO j=1,ncells
             vtkMesh%cellList(j)=vtkid
             DO k=1,nperc
-              vtkMesh%nodeList(nperc*(j-1)+k)=ivals4(k,j)
+              vtkMesh%nodeList(nperc*(j-1)+k)=ivals4_2d(k,j)
             ENDDO
           ENDDO
-          DEALLOCATE(ivals4)
+          DEALLOCATE(ivals4_2d)
         ELSE
           DO j=1,ncells
             vtkMesh%cellList(j)=vtkid
             DO k=1,nperc
-              vtkMesh%nodeList(nperc*(j-1)+k)=ivals8(k,j)
+              vtkMesh%nodeList(nperc*(j-1)+k)=ivals8_2d(k,j)
             ENDDO
           ENDDO
-          DEALLOCATE(ivals8)
+          DEALLOCATE(ivals8_2d)
         ENDIF
       ENDIF                                                                   
+    CASE('ATTRIBUTE')
+      ! Make sure is material ID
+      strIn='Name'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'Material_ID') THEN
+        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          ' - Attribute is only used for material ID right now')              
+      ENDIF
+      strIn='Center'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      REQUIRE(strOut%upper() == 'CELL')
+      ! Format
+      CALL xmle%getChildren(echildren)
+      REQUIRE(SIZE(echildren) == 1)
+      xmle=echildren(1)
+      strIn='Format'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'HDF') THEN
+        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          ' - only supports HDF5 material ID data right now.')              
+      ENDIF
+      ! material ID data
+      strIn='Dimensions'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      ncells=strOut%stoi()
+      !H5 File
+      content=xmle%getContent()
+      segments=content%split(':')
+      fname=segments(1)
+      group=segments(2)%substr(2,LEN(segments(2)))
+!      CALL h5%init(TRIM(fname),'READ')
+!      CALL h5%fopen()
+      REQUIRE(h5%pathExists(CHAR(group)))
+      dataShape=h5%getDataShape(CHAR(group))
+      REQUIRE(dataShape(1) == ncells)
+      vtkMatData%varname='Material_ID'
+      vtkMatData%vtkDataFormat='int'
+      vtkMatData%isCellData=.TRUE.
+      vtkMatData%dataSetType=VTK_DATA_SCALARS
+      ALLOCATE(vtkMatData%dataList(ncells))
+      CALL h5%fread(CHAR(group),ivals8_1d)
+      DO j=1,ncells
+        vtkMatData%dataList(j)=REAL(ivals8_1d(j), SRK)
+      ENDDO
+      DEALLOCATE(ivals8_1d)
+    CASE('INFORMATION')
+      ! Make sure is material names
+      strIn='Name'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'Material_Names') THEN
+        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          ' - Information is only used for material names right now')              
+      ENDIF
+      content=xmle%getContent()
+      segments=content%split(' ')
+      ALLOCATE(matNames(SIZE(segments)))
+      matNames=segments
+    CASE('SET')
+
     CASE DEFAULT
       CALL eXDMF%raiseWarning(modName//'::'//myName// &
       ' - Unsupported data in XDMF file '//CHAR(elname))      
     ENDSELECT
   ENDDO
   vtkMesh%isInit=.TRUE.
-
-  
 
 ENDSUBROUTINE importFromDiskToVTK_XDMFFileType
 !
