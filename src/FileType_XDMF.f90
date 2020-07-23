@@ -127,9 +127,9 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh, &
   TYPE(XMLElementType),POINTER :: xmle, children(:),echildren(:)
   TYPE(StringType) :: strIn,strOut,elname,content,fname,group,toponame,dtype
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
-  INTEGER(SIK) :: i,k,vtkid,nperc,npercRef
+  INTEGER(SIK) :: i,k,vtkid,nperc,npercRef,setCtr
   INTEGER(SIK),ALLOCATABLE :: dataShape(:)
-  INTEGER(SLK) :: nnodes,j,ncells
+  INTEGER(SLK) :: nnodes,j,ncells,n
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
   REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
   INTEGER(SNK),ALLOCATABLE :: ivals4_2d(:,:)
@@ -195,6 +195,14 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh, &
   ! Process mesh
   CALL children(1)%getChildren(children)
   REQUIRE(SIZE(children) > 0)
+  setCtr=0
+  DO i=1,SIZE(children)
+    xmle=children(i)
+    elname=xmle%name%upper()
+    IF(elname == 'SET') setCtr=setCtr+1
+  ENDDO
+  ALLOCATE(sets(setCtr))
+  setCtr=1
   DO i=1,SIZE(children)
     xmle=children(i)
     elname=xmle%name%upper()
@@ -383,8 +391,10 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh, &
       ALLOCATE(vtkMatData%dataList(ncells))
       CALL h5%fread(CHAR(group),ivals8_1d)
       DO j=1,ncells
-        vtkMatData%dataList(j)=REAL(ivals8_1d(j), SRK)
+        ! 0 to 1 based index
+        vtkMatData%dataList(j)=REAL(ivals8_1d(j)+1, SRK)
       ENDDO
+      vtkMatData%isInit=.TRUE.
       DEALLOCATE(ivals8_1d)
     CASE('INFORMATION')
       ! Make sure is material names
@@ -399,7 +409,49 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh, &
       ALLOCATE(matNames(SIZE(segments)))
       matNames=segments
     CASE('SET')
+      strIn='Name'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      sets(setCtr)%setName=CHAR(strOut)
+      strIn='SetType'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      REQUIRE(strOut%upper() == 'CELL')
+      sets(setCtr)%setType=CHAR(strOut)
 
+      CALL xmle%getChildren(echildren)
+      REQUIRE(SIZE(echildren) == 1)
+      xmle=echildren(1)
+      strIn='Format'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'HDF') THEN
+        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          ' - only supports HDF5 data right now.')              
+      ENDIF
+      ! data
+      strIn='Dimensions'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      n=strOut%stoi()
+      sets(setCtr)%n=n
+      strIn='DataType'
+      CALL xmle%getAttributeValue(strIn,strOut)
+      sets(setCtr)%dataType=CHAR(strOut)
+      !H5 File
+      content=xmle%getContent()
+      segments=content%split(':')
+      fname=segments(1)
+      group=segments(2)%substr(2,LEN(segments(2)))
+!      CALL h5%init(TRIM(fname),'READ')
+!      CALL h5%fopen()
+      REQUIRE(h5%pathExists(CHAR(group)))
+      dataShape=h5%getDataShape(CHAR(group))
+      REQUIRE(dataShape(1) == n)
+      ALLOCATE(sets(setCtr)%idList(n))
+      CALL h5%fread(CHAR(group),ivals8_1d)
+      DO j=1,n
+        !0 to 1 based index
+        sets(setCtr)%idList(j)=ivals8_1d(j)+1
+      ENDDO
+      DEALLOCATE(ivals8_1d)
+      setCtr=setCtr+1
     CASE DEFAULT
       CALL eXDMF%raiseWarning(modName//'::'//myName// &
       ' - Unsupported data in XDMF file '//CHAR(elname))      
