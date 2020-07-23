@@ -22,15 +22,10 @@ CHARACTER(LEN=5) :: adum3
 CHARACTER(LEN=2) :: adum4
 CHARACTER(LEN=MAXLEN_DATE_STRING) :: adate
 CHARACTER(LEN=MAXLEN_CLOCK_STRING) :: aclock
+REAL(SRK) :: totalElapsed
 !
 !Check the timer resolution
 CREATE_TEST('TIMERS')
-!
-!Print module constants
-COMPONENT_TEST('PARAMETERS')
-WRITE(*,*) '  Passed:     MAXLEN_TIME_STRING = ',MAXLEN_TIME_STRING
-WRITE(*,*) '  Passed:     MAXLEN_DATE_STRING = ',MAXLEN_DATE_STRING
-WRITE(*,*) '  Passed:    MAXLEN_CLOCK_STRING = ',MAXLEN_CLOCK_STRING
 
 COMPONENT_TEST('getDate()')
 !
@@ -83,14 +78,11 @@ ASSERT(.NOT.(idum1 < 0 .OR. idum1 > 23),'hour')
 ASSERT(.NOT.(idum2 < 0 .OR. idum2 > 59),'minute')
 ASSERT(.NOT.(idum3 < 0 .OR. idum3 > 59),'second')
 ASSERT(adum1 == adum2 .AND. adum1 == ':',':')
-INFO(0) 'getClockTime() = '//getClockTime()
 
 COMPONENT_TEST('HI-RES TIMER')
 ASSERT(LEN_TRIM(testTimer%getTimerName()) == 0,'%getTimerName()')
 CALL testTimer%setTimerName('myName')
 ASSERT(TRIM(testTimer%getTimerName()) == 'myName','%setTimerName()')
-INFO(0) '  Passed: testTimer%getTimerResolution()=', &
-      testTimer%getTimerResolution()
 testTimer%elapsedtime=0.0001_SRK
 ASSERT(testTimer%getTimeReal() == 0.0001_SRK,'%getTimeReal()')
 ASSERT(testTimer%getTimeChar() == '  100.000 microsec','%getTimeChar() (us)')
@@ -113,10 +105,23 @@ ASSERT(testTimer%getTimeChar() == '    0.000 microsec','time char')
 CALL testTimer%tic()
 CALL sleep(1)
 CALL testTimer%toc()
-ASSERT(ABS(testTimer%elapsedtime-1._SRK) < 0.05_SRK,'tic/toc')
-FINFO() 'testTimer%toc()= ',testTimer%elapsedtime
+totalElapsed=testTimer%elapsedtime
+ASSERT(totalElapsed > 0.0_SRK,'tic/toc')
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT(testTimer%elapsedtime > totalElapsed,'tic/toc')
+FINFO() 'ref=',totalElapsed,'test=',testTimer%elapsedtime
+totalElapsed=testTimer%elapsedtime
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT(testTimer%elapsedtime > totalElapsed,'tic/toc')
+FINFO() 'ref=',totalElapsed,'test=',testTimer%elapsedtime
+totalElapsed=testTimer%elapsedtime
+ASSERT(totalElapsed < 60.0_SRK,'tic/toc too slow')
+FINFO() 'ref=',60.0_SRK,'test=',totalElapsed
 ASSERT(testTimer%getTimerHiResMode(),'%getTimerHiResMode()')
-INFO(0) '  Passed: testTimer%getRemainingTime()',testTimer%getRemainingTime()
 
 COMPONENT_TEST('LO-RES TIMER')
 CALL testTimer%setTimerHiResMode(.FALSE.)
@@ -151,17 +156,28 @@ ASSERT(.NOT.(idum1 < 0 .OR. idum1 > 23),'hour')
 ASSERT(.NOT.(idum2 < 0 .OR. idum2 > 59),'minute')
 ASSERT(.NOT.(idum3 < 0 .OR. idum3 > 59),'second')
 ASSERT(adum1 == adum2 .AND. adum1 == ':',':')
-INFO(0) '  Passed: testTimer%getTimerResolution()=', &
-      testTimer%getTimerResolution()
 testTimer%elapsedtime=0.0001_SRK
 
+COMPONENT_TEST('testTimer%getRemainingTime')
 CALL testTimer%tic()
 CALL sleep(1)
 CALL testTimer%toc()
-ASSERT(ABS(testTimer%elapsedtime-1._SRK) < 0.05_SRK,'tic/toc')
-FINFO() 'testTimer%toc()= ',testTimer%elapsedtime
-INFO(0) '  Passed: testTimer%getRemainingTime()', &
-      testTimer%getRemainingTime()
+totalElapsed=testTimer%elapsedtime
+ASSERT(totalElapsed > 0.0_SRK,'tic/toc')
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT(testTimer%elapsedtime > totalElapsed,'tic/toc')
+FINFO() 'ref=',totalElapsed,'test=',testTimer%elapsedtime
+totalElapsed=testTimer%elapsedtime
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT(testTimer%elapsedtime > totalElapsed,'tic/toc')
+FINFO() 'ref=',totalElapsed,'test=',testTimer%elapsedtime
+totalElapsed=testTimer%elapsedtime
+ASSERT(totalElapsed < 60.0_SRK,'tic/toc too slow')
+FINFO() 'ref=',60.0_SRK,'test=',totalElapsed
 
 FINALIZE_TEST()
 !
