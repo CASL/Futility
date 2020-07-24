@@ -22,15 +22,10 @@ CHARACTER(LEN=5) :: adum3
 CHARACTER(LEN=2) :: adum4
 CHARACTER(LEN=MAXLEN_DATE_STRING) :: adate
 CHARACTER(LEN=MAXLEN_CLOCK_STRING) :: aclock
+REAL(SRK) :: totalElapsed
 !
 !Check the timer resolution
 CREATE_TEST('TIMERS')
-!
-!Print module constants
-COMPONENT_TEST('PARAMETERS')
-WRITE(*,*) '  Passed:     MAXLEN_TIME_STRING = ',MAXLEN_TIME_STRING
-WRITE(*,*) '  Passed:     MAXLEN_DATE_STRING = ',MAXLEN_DATE_STRING
-WRITE(*,*) '  Passed:    MAXLEN_CLOCK_STRING = ',MAXLEN_CLOCK_STRING
 
 COMPONENT_TEST('getDate()')
 !
@@ -40,23 +35,26 @@ idum1=0
 idum2=0
 idum3=0
 READ(adate,'(i2,a1,i2,a1,i4)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-ASSERT(ioerr == 0,'ioerr')
-ASSERT(.NOT.(idum1 < 1 .OR. idum1 > 12),'month')
-ASSERT(.NOT.(idum2 < 1 .OR. idum2 > 31),'day')
-ASSERT(idum3 > 0,'year')
-ASSERT(adum1 == adum2,'adum')
-ASSERT(adum1 == '/','adum1')
+ASSERT_EQ(ioerr,0,'ioerr')
+ASSERT_GT(idum1,0,'month')
+ASSERT_LT(idum1,13,'month')
+ASSERT_GT(idum2,0,'day')
+ASSERT_LT(idum2,32,'day')
+ASSERT_GT(idum3,0,'year')
+ASSERT_EQ(adum1,adum2,'adum')
+ASSERT_EQ(adum1,'/','adum1')
 INFO(0) 'getDate() = '//getDate()
-ASSERT(getDate() == getDate(1),'getDate(1)')
+ASSERT_EQ(getDate(),getDate(1),'getDate(1)')
 
 idum1=0
 idum2=0
 adate=getDate(2)
 READ(adate,'(a5,i2,a2,i4)',iostat=ioerr) adum3,idum1,adum4,idum2
-ASSERT(ioerr == 0,'ioerr')
-ASSERT(.NOT.(idum1 < 1 .OR. idum1 > 31),'day')
-ASSERT(idum2 > 0,'year')
-ASSERT(adum4(1:1) == ',','month')
+ASSERT_EQ(ioerr,0,'ioerr')
+ASSERT_GT(idum1,0,'day')
+ASSERT_LT(idum1,32,'day')
+ASSERT_GT(idum2,0,'year')
+ASSERT_EQ(adum4(1:1),',','month')
 
 !Test getTimeFromDate
 COMPONENT_TEST('getTimeFromDate')
@@ -78,45 +76,56 @@ idum2=0
 idum3=0
 aclock=getClockTime()
 READ(aclock,'(i2,a1,i2,a1,i2)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-ASSERT(ioerr == 0,'ioerr')
-ASSERT(.NOT.(idum1 < 0 .OR. idum1 > 23),'hour')
-ASSERT(.NOT.(idum2 < 0 .OR. idum2 > 59),'minute')
-ASSERT(.NOT.(idum3 < 0 .OR. idum3 > 59),'second')
-ASSERT(adum1 == adum2 .AND. adum1 == ':',':')
-INFO(0) 'getClockTime() = '//getClockTime()
+ASSERT_EQ(ioerr,0,'ioerr')
+ASSERT_GT(idum1,-1,'hour')
+ASSERT_LT(idum1,24,'hour')
+ASSERT_GT(idum2,-1,'minute')
+ASSERT_LT(idum2,60,'minute')
+ASSERT_GT(idum3,-1,'minute')
+ASSERT_LT(idum3,60,'minute')
+ASSERT_EQ(adum1,':',':')
+ASSERT_EQ(adum1,adum2,':')
 
 COMPONENT_TEST('HI-RES TIMER')
-ASSERT(LEN_TRIM(testTimer%getTimerName()) == 0,'%getTimerName()')
+ASSERT_EQ(LEN_TRIM(testTimer%getTimerName()),0,'%getTimerName()')
 CALL testTimer%setTimerName('myName')
-ASSERT(TRIM(testTimer%getTimerName()) == 'myName','%setTimerName()')
-INFO(0) '  Passed: testTimer%getTimerResolution()=', &
-      testTimer%getTimerResolution()
+ASSERT_EQ(TRIM(testTimer%getTimerName()),'myName','%setTimerName()')
 testTimer%elapsedtime=0.0001_SRK
-ASSERT(testTimer%getTimeReal() == 0.0001_SRK,'%getTimeReal()')
-ASSERT(testTimer%getTimeChar() == '  100.000 microsec','%getTimeChar() (us)')
-ASSERT(testTimer%getTimeHHMMSS() == ' 00:00.00         ','%getTimeHHMMSS() (us)')
+ASSERT_EQ(testTimer%getTimeReal(),0.0001_SRK,'%getTimeReal()')
+ASSERT_EQ(testTimer%getTimeChar(),'  100.000 microsec','%getTimeChar() (us)')
+ASSERT_EQ(testTimer%getTimeHHMMSS(),' 00:00.00         ','%getTimeHHMMSS() (us)')
 testTimer%elapsedtime=0.999_SRK
-ASSERT(testTimer%getTimeChar() == '  999.000 ms      ','%getTimeChar() (ms)')
-ASSERT(testTimer%getTimeHHMMSS() == ' 00:00.99         ','%getTimeHHMMSS() (ms)')
+ASSERT_EQ(testTimer%getTimeChar(),'  999.000 ms      ','%getTimeChar() (ms)')
+ASSERT_EQ(testTimer%getTimeHHMMSS(),' 00:00.99         ','%getTimeHHMMSS() (ms)')
 testTimer%elapsedtime=100.637_SRK
-ASSERT(testTimer%getTimeChar() == '  100.637 s       ','%getTimeChar() (s)')
-ASSERT(testTimer%getTimeHHMMSS() == ' 01:40.64         ','%getTimeHHMMSS() (s)')
+ASSERT_EQ(testTimer%getTimeChar(),'  100.637 s       ','%getTimeChar() (s)')
+ASSERT_EQ(testTimer%getTimeHHMMSS(),' 01:40.64         ','%getTimeHHMMSS() (s)')
 testTimer%elapsedtime=100000.6_SRK
-ASSERT(testTimer%getTimeChar() == ' 27:46:41 hh:mm:ss','%getTimeChar() (hr)')
-ASSERT(testTimer%getTimeHHMMSS() == ' 27:46:41         ','%getTimeHHMMSS() (hr)')
+ASSERT_EQ(testTimer%getTimeChar(),' 27:46:41 hh:mm:ss','%getTimeChar() (hr)')
+ASSERT_EQ(testTimer%getTimeHHMMSS(),' 27:46:41         ','%getTimeHHMMSS() (hr)')
 testTimer%elapsedtime=3719.6_SRK
-ASSERT(testTimer%getTimeHHMMSS() == ' 01:01:59         ','%getTimeHHMMSS() (round)')
+ASSERT_EQ(testTimer%getTimeHHMMSS(),' 01:01:59         ','%getTimeHHMMSS() (round)')
 CALL testTimer%ResetTimer()
-ASSERT(LEN_TRIM(testTimer%getTimername()) == 0,'name')
-ASSERT(testTimer%elapsedtime == 0._SRK,'elapsedtime')
-ASSERT(testTimer%getTimeChar() == '    0.000 microsec','time char')
+ASSERT_EQ(LEN_TRIM(testTimer%getTimername()),0,'name')
+ASSERT_EQ(testTimer%elapsedtime,0._SRK,'elapsedtime')
+ASSERT_EQ(testTimer%getTimeChar(),'    0.000 microsec','time char')
 CALL testTimer%tic()
 CALL sleep(1)
 CALL testTimer%toc()
-ASSERT(ABS(testTimer%elapsedtime-1._SRK) < 0.05_SRK,'tic/toc')
-FINFO() 'testTimer%toc()= ',testTimer%elapsedtime
+totalElapsed=testTimer%elapsedtime
+ASSERT_GT(totalElapsed,0.0_SRK,'tic/toc')
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT_GT(testTimer%elapsedtime,totalElapsed,'tic/toc')
+totalElapsed=testTimer%elapsedtime
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT_GT(testTimer%elapsedtime,totalElapsed,'tic/toc')
+totalElapsed=testTimer%elapsedtime
+ASSERT_LT(totalElapsed,60.0_SRK,'tic/toc too slow')
 ASSERT(testTimer%getTimerHiResMode(),'%getTimerHiResMode()')
-INFO(0) '  Passed: testTimer%getRemainingTime()',testTimer%getRemainingTime()
 
 COMPONENT_TEST('LO-RES TIMER')
 CALL testTimer%setTimerHiResMode(.FALSE.)
@@ -126,42 +135,57 @@ idum1=0
 idum2=0
 idum3=0
 READ(adate,'(i2,a1,i2,a1,i4)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-ASSERT(ioerr == 0,'ioerr')
-ASSERT(.NOT.(idum1 < 1 .OR. idum1 > 12),'month')
-ASSERT(.NOT.(idum2 < 1 .OR. idum2 > 31),'day')
-ASSERT(idum3 > 0,'year')
-ASSERT(adum1 == adum2,'adum')
-ASSERT(adum1 == '/','adum1')
-ASSERT(testTimer%getDate() == testTimer%getDate(1),'%getDate(1)')
+ASSERT_EQ(ioerr,0,'ioerr')
+ASSERT_GT(idum1,0,'month')
+ASSERT_LT(idum1,13,'month')
+ASSERT_GT(idum2,0,'day')
+ASSERT_LT(idum2,32,'day')
+ASSERT_GT(idum3,0,'year')
+ASSERT_EQ(adum1,adum2,'adum')
+ASSERT_EQ(adum1,'/','adum1')
+ASSERT_EQ(testTimer%getDate(),testTimer%getDate(1),'%getDate(1)')
 idum1=0
 idum2=0
 adate=testTimer%getDate(2)
 READ(adate,'(a5,i2,a2,i4)',iostat=ioerr) adum3,idum1,adum4,idum2
-ASSERT(ioerr == 0,'ioerr')
-ASSERT(.NOT.(idum1 < 1 .OR. idum1 > 31),'day')
+ASSERT_EQ(ioerr,0,'ioerr')
+ASSERT_GT(idum1,0,'day')
+ASSERT_LT(idum1,32,'day')
 ASSERT(idum2 > 0,'year')
-ASSERT(adum4(1:1) == ',','month')
+ASSERT_EQ(adum4(1:1),',','month')
 idum1=0
 idum2=0
 idum3=0
 aclock=testTimer%getClockTime()
 READ(aclock,'(i2,a1,i2,a1,i2)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-ASSERT(ioerr == 0,'ioerr')
-ASSERT(.NOT.(idum1 < 0 .OR. idum1 > 23),'hour')
-ASSERT(.NOT.(idum2 < 0 .OR. idum2 > 59),'minute')
-ASSERT(.NOT.(idum3 < 0 .OR. idum3 > 59),'second')
-ASSERT(adum1 == adum2 .AND. adum1 == ':',':')
-INFO(0) '  Passed: testTimer%getTimerResolution()=', &
-      testTimer%getTimerResolution()
+ASSERT_EQ(ioerr,0,'ioerr')
+ASSERT_GT(idum1,-1,'hour')
+ASSERT_LT(idum1,24,'hour')
+ASSERT_GT(idum2,-1,'minute')
+ASSERT_LT(idum2,60,'minute')
+ASSERT_GT(idum3,-1,'minute')
+ASSERT_LT(idum3,60,'minute')
+ASSERT_EQ(adum1,':',':')
+ASSERT_EQ(adum1,adum2,':')
 testTimer%elapsedtime=0.0001_SRK
 
+COMPONENT_TEST('testTimer%getRemainingTime')
 CALL testTimer%tic()
 CALL sleep(1)
 CALL testTimer%toc()
-ASSERT(ABS(testTimer%elapsedtime-1._SRK) < 0.05_SRK,'tic/toc')
-FINFO() 'testTimer%toc()= ',testTimer%elapsedtime
-INFO(0) '  Passed: testTimer%getRemainingTime()', &
-      testTimer%getRemainingTime()
+totalElapsed=testTimer%elapsedtime
+ASSERT_GT(totalElapsed,0.0_SRK,'tic/toc')
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT_GT(testTimer%elapsedtime,totalElapsed,'tic/toc')
+totalElapsed=testTimer%elapsedtime
+CALL testTimer%tic()
+CALL sleep(1)
+CALL testTimer%toc()
+ASSERT_GT(testTimer%elapsedtime,totalElapsed,'tic/toc')
+totalElapsed=testTimer%elapsedtime
+ASSERT_LT(totalElapsed,60.0_SRK,'tic/toc too slow')
 
 FINALIZE_TEST()
 !

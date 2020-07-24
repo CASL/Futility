@@ -8,4 +8,6 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 Futility_CreateUnitTest(testMatrixTypes)
-Futility_CreateParUnitTest(testMatrixTypesParallel 2)
+IF (${PACKAGE_NAME}_ENABLE_MPI)
+    Futility_CreateParUnitTest(testMatrixTypesParallel 2)
+ENDIF()

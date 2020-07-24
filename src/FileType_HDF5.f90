@@ -443,35 +443,41 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     !> Generic typebound interface for pointer-based read operations
     GENERIC :: freadp => read_dp4
     !> @copybrief FileType_HDF5::write_attribute_st0
-    !> @copyoc FileType_HDF5_write_attribute_st0
+    !> @copydoc FileType_HDF5_write_attribute_st0
     PROCEDURE,PASS,PRIVATE :: write_attribute_st0
     !> @copybrief FileType_HDF5::write_attribute_c0
-    !> @copyoc FileType_HDF5_write_attribute_c0
+    !> @copydoc FileType_HDF5_write_attribute_c0
     PROCEDURE,PASS,PRIVATE :: write_attribute_c0
     !> @copybrief FileType_HDF5::write_attribute_i0
-    !> @copyoc FileType_HDF5_write_attribute_i0
+    !> @copydoc FileType_HDF5_write_attribute_i0
     PROCEDURE,PASS,PRIVATE :: write_attribute_i0
     !> @copybrief FileType_HDF5::write_attribute_d0
-    !> @copyoc FileType_HDF5_write_attribute_d0
+    !> @copydoc FileType_HDF5_write_attribute_d0
     PROCEDURE,PASS,PRIVATE :: write_attribute_d0
     !> Generic typebound interface for all @c attribute writes
     GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
         write_attribute_i0, write_attribute_d0
     !> @copybrief FileType_HDF5::read_str_attribure_help
-    !> @copyoc FileType_HDF5_read_str_attribure_help
+    !> @copydoc FileType_HDF5_read_str_attribure_help
     PROCEDURE,PASS,PRIVATE :: read_attribute_st0
     !> @copybrief FileType_HDF5::read_attribute_c0
-    !> @copyoc FileType_HDF5_read_attribute_c0
+    !> @copydoc FileType_HDF5_read_attribute_c0
     PROCEDURE,PASS,PRIVATE :: read_attribute_c0
     !> @copybrief FileType_HDF5::read_attribute_i0
-    !> @copyoc FileType_HDF5_read_attribute_i0
+    !> @copydoc FileType_HDF5_read_attribute_i0
     PROCEDURE,PASS,PRIVATE :: read_attribute_i0
     !> @copybrief FileType_HDF5::read_attribute_d0
-    !> @copyoc FileType_HDF5_read_attribute_d0
+    !> @copydoc FileType_HDF5_read_attribute_d0
     PROCEDURE,PASS,PRIVATE :: read_attribute_d0
     !> Generic typebound interface for all @c attribute writes
     GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
         read_attribute_i0, read_attribute_d0
+    !> @copybrief FileType_HDF5::getDataShape
+    !> @copydoc FileType_HDF5::getDataShape
+    PROCEDURE,PASS :: getDataShape
+    !> @copybrief FileType_HDF5::getDataType
+    !> @copydoc FileType_HDF5::getDataType
+    PROCEDURE,PASS :: getDataType
 ENDTYPE
 
 !> @brief Type that is a container so as to have an array of pointers to HDF5 files
@@ -981,7 +987,7 @@ RECURSIVE SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
     ENDIF
     CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - invalid group path:'//path)
+        ' - invalid group path: '//path)
 
     IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
       ! If group exists, do nothing, but only if overwrites are allowed
@@ -6131,7 +6137,12 @@ RECURSIVE SUBROUTINE read_pList(thisHDF5File,dsetname,vals)
   ! Create root directory
   baseh5path=TRIM(dsetname)
   baseh5path = baseh5path%replace('->','/')
-  baseh5path='/'//baseh5path
+  IF(baseh5path%at(1) /= '/') THEN
+    baseh5path='/'//baseh5path
+  ENDIF
+  IF(baseh5path%at(LEN(baseh5path)) == '/') THEN
+    baseh5path = baseh5path%substr(1,LEN(baseh5path)-1)
+  ENDIF
   !Check to make sure there are objects/groups to be read
   CALL ls_HDF5FileType(thisHDF5File,dsetname,lsobjs)
   !Then we have a list of parameters to loop over.
@@ -6167,7 +6178,7 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
   TYPE(StringType),INTENT(IN) :: h5path
   TYPE(ParamType),INTENT(INOUT) :: vals
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=*),PARAMETER :: myName='read_pList_HDF5FileType'
+  CHARACTER(LEN=*),PARAMETER :: myName='read_parameter'
   INTEGER(SIK) :: i,j,k,error,ndims,class_type
   INTEGER(HID_T) :: dset_id,dspace_id,dtype
   INTEGER(SIZE_T) :: dtype_prec
@@ -6175,13 +6186,13 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
   LOGICAL(SBK) :: l0,isbool
   LOGICAL(SBK),ALLOCATABLE :: l1(:),l2(:,:),l3(:,:,:)
   INTEGER(SNK) :: is0
-  INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:),is4(:,:,:,:)
   INTEGER(SLK) :: id0
-  INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:),id4(:,:,:,:)
   REAL(SSK) :: rs0
-  REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:)
+  REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:),rs4(:,:,:,:)
   REAL(SDK) :: rd0
-  REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:)
+  REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:),rd4(:,:,:,:)
   TYPE(StringType) :: st0
   TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:)
 
@@ -6219,6 +6230,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_l3(thisHDF5File,CHAR(plpath),id3)
         CALL vals%add(CHAR(plpath),id3)
+      CASE(4)
+        CALL read_l4(thisHDF5File,CHAR(plpath),id4)
+        CALL vals%add(CHAR(plpath),id4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported INTEGER(SLK) dimension '//str(ndims)//'!')
       ENDSELECT
     !Ints
     ELSEIF(INT(dtype_prec,SIK) == 32) THEN
@@ -6236,6 +6253,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_n3(thisHDF5File,CHAR(plpath),is3)
         CALL vals%add(CHAR(plpath),is3)
+      CASE(4)
+        CALL read_n4(thisHDF5File,CHAR(plpath),is4)
+        CALL vals%add(CHAR(plpath),is4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported INTEGER(SNK) dimension '//str(ndims)//'!')
       ENDSELECT
     ENDIF
   !Real types
@@ -6256,6 +6279,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_d3(thisHDF5File,CHAR(plpath),rd3)
         CALL vals%add(CHAR(plpath),rd3)
+      CASE(4)
+        CALL read_d4(thisHDF5File,CHAR(plpath),rd4)
+        CALL vals%add(CHAR(plpath),rd4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported REAL(SDK) dimension '//str(ndims)//'!')
       ENDSELECT
     !Single
     ELSEIF(INT(dtype_prec,SIK) == 32) THEN
@@ -6273,6 +6302,12 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(3)
         CALL read_s3(thisHDF5File,CHAR(plpath),rs3)
         CALL vals%add(CHAR(plpath),rs3)
+      CASE(4)
+        CALL read_s4(thisHDF5File,CHAR(plpath),rs4)
+        CALL vals%add(CHAR(plpath),rs4)
+      CASE DEFAULT
+        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+            ' - Unsupported REAL(SSK) dimension '//str(ndims)//'!')
       ENDSELECT
     ENDIF
   !String and boolean types
@@ -6371,6 +6406,9 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
             'added to Parameter List.')
         !CALL vals%add(CHAR(plpath),st3)
       ENDIF
+    CASE DEFAULT
+      CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
+          ' - Unsupported TYPE(StringType) dimension '//str(ndims)//'!')
     ENDSELECT
   ENDIF
 #endif
@@ -6704,10 +6742,160 @@ SUBROUTINE preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
     ENDIF
   ENDIF
 ENDSUBROUTINE preRead
+#endif
+!
+!-------------------------------------------------------------------------------
+!> @brief returns the shape of the dataset
+!> @param thisHDF5File the file to query
+!> @param dsetname the dataset to query
+!> @returns dataShape the shape of the data array; size-0 implies a scalar dataset
+!>
+FUNCTION getDataShape(thisHDF5File,dsetname) RESULT(dataShape)
+  CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+  CHARACTER(LEN=*),INTENT(IN) :: dsetname
+  INTEGER(SIK),ALLOCATABLE :: dataShape(:)
+  !
+  CHARACTER(LEN=*),PARAMETER :: myName='getDataShape'
+#ifndef FUTILITY_HAVE_HDF5
+  CALL thisHDF5File%e%raiseError(modName//'::'//myName//' - Function cannot be called '// &
+        'with HDF5 disabled!')
+  ALLOCATE(dataShape(0))
+#else
+  CHARACTER(LEN=LEN_TRIM(dsetname)) :: path
+  INTEGER(SIK) :: error,ndims
+  INTEGER(HID_T) :: dset_id
+  INTEGER(HID_T) :: dspace_id
+  INTEGER(HSIZE_T),ALLOCATABLE :: dims(:),maxdims(:)
+
+  error=0
+  ! Make sure the object is initialized
+  IF(.NOT.thisHDF5File%isinit) THEN
+    CALL thisHDF5File%e%setStopOnError(.FALSE.)
+    CALL thisHDF5File%e%raiseError(modName// &
+        '::'//myName//' - File object not initialized.')
+    error=-1
+  ELSEIF(.NOT.thisHDF5File%isRead()) THEN
+    CALL thisHDF5File%e%setStopOnError(.FALSE.)
+    CALL thisHDF5File%e%raiseError(modName// &
+        '::'//myName//' - File is not Readable!')
+    error=-2
+  ELSE
+    IF(.NOT.thisHDF5File%isOpen()) THEN
+        CALL thisHDF5File%fopen()
+    ENDIF
+    path=convertPath(dsetname)
+
+    ! Open the dataset
+    CALL h5dopen_f(thisHDF5File%file_id, TRIM(path), dset_id, error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to open dataset.')
+    CALL h5dget_space_f(dset_id,dspace_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to obtain the dataspace.')
+
+    ! Get the number of dimensions
+    CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+    IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrieve number of dataspace dimensions.')
+
+    ! Get the dimensions
+    ALLOCATE(dims(ndims))
+    ALLOCATE(maxdims(ndims))
+    CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+    IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrieve dataspace dimensions.')
+
+    ! Copy to the Futility integer type
+    ALLOCATE(dataShape(SIZE(dims)))
+    dataShape(:)=dims(:)
+  ENDIF
+#endif
+ENDFUNCTION getDataShape
+!
+!-------------------------------------------------------------------------------
+!> @brief returns the shape of the dataset
+!> @param thisHDF5File the file to query
+!> @param dsetname the dataset to query
+!> @returns dataType the type of the data array
+!>
+FUNCTION getDataType(thisHDF5File,dsetname) RESULT(dataType)
+  CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
+  CHARACTER(LEN=*),INTENT(IN) :: dsetname
+  CHARACTER(LEN=3) :: dataType
+  !
+  CHARACTER(LEN=*),PARAMETER :: myName='getDataType'
+#ifndef FUTILITY_HAVE_HDF5
+  CALL thisHDF5File%e%raiseError(modName//'::'//myName//' - Function cannot be called '// &
+        'with HDF5 disabled!')
+  dataType='N/A'
+#else
+  CHARACTER(LEN=LEN_TRIM(dsetname)) :: path
+  INTEGER(SIK) :: error,class_type
+  INTEGER(HID_T) :: dset_id,dtype
+  INTEGER(HSIZE_T) :: dtype_prec
+
+  error=0
+  ! Make sure the object is initialized
+  IF(.NOT.thisHDF5File%isinit) THEN
+    CALL thisHDF5File%e%setStopOnError(.FALSE.)
+    CALL thisHDF5File%e%raiseError(modName// &
+        '::'//myName//' - File object not initialized.')
+    error=-1
+  ELSEIF(.NOT.thisHDF5File%isRead()) THEN
+    CALL thisHDF5File%e%setStopOnError(.FALSE.)
+    CALL thisHDF5File%e%raiseError(modName// &
+        '::'//myName//' - File is not Readable!')
+    error=-2
+  ELSE
+    IF(.NOT.thisHDF5File%isOpen()) THEN
+        CALL thisHDF5File%fopen()
+    ENDIF
+    path=convertPath(dsetname)
+
+    ! Open the dataset
+    CALL h5dopen_f(thisHDF5File%file_id, TRIM(path), dset_id, error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to open dataset.')
+
+    ! Get the dataset type
+    CALL h5dget_type_f(dset_id,dtype,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrive dataset type identifier.')
+    CALL h5tget_class_f(dtype,class_type,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrive dataset class.')
+    CALL h5tget_precision_f(dtype,dtype_prec,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrive dataset precision.')
+
+    dataType='N/A'
+    IF(class_type == H5T_FLOAT_F) THEN
+      IF(dtype_prec == 64) THEN
+        dataType='SDK'
+      ELSEIF(dtype_prec == 32) THEN
+        dataType='SSK'
+      ENDIF
+    ELSEIF(class_type == H5T_INTEGER_F) THEN
+      IF(dtype_prec == 64) THEN
+        dataType='SLK'
+      ELSEIF(dtype_prec == 32) THEN
+        dataType='SNK'
+      ENDIF
+    ELSEIF(class_type == H5T_STRING_F) THEN
+      dataType='STR'
+    ELSE
+      CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+          ' - Unsupported data type '//str(class_type)//' returned!  Only types '// &
+          str(H5T_FLOAT_F)//', '//str(H5T_INTEGER_F)//', '//str(H5T_STRING_F)//' are supported.')
+    ENDIF
+  ENDIF
+#endif
+ENDFUNCTION getDataType
 !
 !-------------------------------------------------------------------------------
 !> @brief
 !>
+#ifdef FUTILITY_HAVE_HDF5
 SUBROUTINE postRead(thisHDF5File,path,dset_id,dspace_id,error)
   CHARACTER(LEN=*),PARAMETER :: myName='postRead'
   CLASS(HDF5FileType),INTENT(INOUT) :: thisHDF5File
