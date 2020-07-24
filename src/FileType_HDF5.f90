@@ -987,7 +987,7 @@ RECURSIVE SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
     ENDIF
     CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - invalid group path:'//path)
+        ' - invalid group path: '//path)
 
     IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
       ! If group exists, do nothing, but only if overwrites are allowed
