@@ -19,8 +19,13 @@ PRIVATE
 PUBLIC :: GAMMAF
 PUBLIC :: Rational_Fraction
 PUBLIC :: GreatestCommonDivisor
+PUBLIC :: LeastCommonMultiple
 PUBLIC :: ATAN2PI
 
+INTERFACE LeastCommonMultiple
+  MODULE PROCEDURE LeastCommonMultiple_scalar
+  MODULE PROCEDURE LeastCommonMultiple_A1
+ENDINTERFACE LeastCommonMultiple
 
 CONTAINS
 !
@@ -163,6 +168,56 @@ ELEMENTAL FUNCTION GreatestCommonDivisor(a1,a2) RESULT(b)
     ENDDO
   ENDIF
 ENDFUNCTION GreatestCommonDivisor
+!
+!-------------------------------------------------------------------------------
+!> @brief solves for the least common multiple of an array of integers
+!> @param u the array of integers to consider
+!> @returns lcm the least common multiple of the array
+!>
+PURE FUNCTION LeastCommonMultiple_A1(u) RESULT(lcm)
+  INTEGER(SIK),INTENT(IN) :: u(:)
+
+  INTEGER(SIK) :: lcm
+  INTEGER(SIK) :: i,a
+
+  lcm = 0
+  IF(SIZE(u) == 0) RETURN
+  IF(ANY(u == 0)) RETURN
+
+  lcm = abs(u(1))
+  IF(ALL(u == u(1))) THEN
+    RETURN
+  ENDIF
+
+  DO i=2,SIZE(u)
+    a = abs(u(i))
+    !In all likelihood there exists an 'a' and 'b' which will cause overflow
+    lcm = (lcm/GreatestCommonDivisor(lcm,a)) * a
+  ENDDO
+
+ENDFUNCTION LeastCommonMultiple_A1
+!
+!-------------------------------------------------------------------------------
+!> @brief solves for the least common multiple of a pair of integers
+!> @param u the first integer to consider
+!> @param v the second integer to consider
+!> @returns lcm the least common multiple of the array
+!>
+ELEMENTAL FUNCTION LeastCommonMultiple_scalar(u,v) RESULT(lcm)
+  INTEGER(SIK),INTENT(IN) :: u
+  INTEGER(SIK),INTENT(IN) :: v
+
+  INTEGER(SIK) :: lcm
+  INTEGER(SIK) :: a,b
+
+  lcm = 0
+  IF(u == 0 .OR. v == 0) RETURN
+  a = ABS(u)
+  b = ABS(v)
+
+  !In all likelihood there exists an 'a' and 'b' which will cause overflow
+  lcm = (a/GreatestCommonDivisor(a,b)) * b
+ENDFUNCTION LeastCommonMultiple_scalar
 !
 !-------------------------------------------------------------------------------
 !> @brief Calculates the angle from the origin to (x,y) from the +(x-axis) on
