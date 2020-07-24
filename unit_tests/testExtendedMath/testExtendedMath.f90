@@ -110,9 +110,14 @@ SUBROUTINE testLCM()
   ASSERT_EQ(LeastCommonMultiple(201,3),201, 'LCM')
   ASSERT_EQ(LeastCommonMultiple(33,198),198, 'LCM')
   ASSERT_EQ(LeastCommonMultiple(8,12),24, 'LCM')
-  ASSERT_EQ(LeastCommonMultiple(8,36),72, 'LCM')
+  ASSERT_EQ(LeastCommonMultiple(36,8),72, 'LCM')
 
-  ASSERT_EQ(LeastCommonMultiple((/8,12,36/)),LeastCommonMultiple(8,36),"LCM array")
+  ASSERT_EQ(LeastCommonMultiple((/8,12,36/)),72,"LCM array")
+  ASSERT_EQ(LeastCommonMultiple((/3,25,28/)),2100,"LCM array")
+  ASSERT_EQ(LeastCommonMultiple((/12,15,75,10/)),300,"LCM array")
+  ASSERT_EQ(LeastCommonMultiple((/100,1000,50,200,25/)),1000,"LCM array")
+  ASSERT_EQ(LeastCommonMultiple((/100,1000,50,200,24/)),3000,"LCM array")
+  ASSERT_EQ(LeastCommonMultiple((/198,150,24,205,87,200,154/)),164795400,"LCM array")
 ENDSUBROUTINE testLCM
 !
 !-------------------------------------------------------------------------------

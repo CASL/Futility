@@ -178,21 +178,16 @@ PURE FUNCTION LeastCommonMultiple_A1(u) RESULT(lcm)
   INTEGER(SIK),INTENT(IN) :: u(:)
 
   INTEGER(SIK) :: lcm
-  INTEGER(SIK) :: i,a
+  INTEGER(SIK) :: i
 
   lcm = 0
   IF(SIZE(u) == 0) RETURN
   IF(ANY(u == 0)) RETURN
 
   lcm = abs(u(1))
-  IF(ALL(u == u(1))) THEN
-    RETURN
-  ENDIF
-
   DO i=2,SIZE(u)
-    a = abs(u(i))
     !In all likelihood there exists an 'a' and 'b' which will cause overflow
-    lcm = (lcm/GreatestCommonDivisor(lcm,a)) * a
+    lcm = LeastCommonMultiple(lcm,u(i))
   ENDDO
 
 ENDFUNCTION LeastCommonMultiple_A1
@@ -215,8 +210,12 @@ ELEMENTAL FUNCTION LeastCommonMultiple_scalar(u,v) RESULT(lcm)
   a = ABS(u)
   b = ABS(v)
 
-  !In all likelihood there exists an 'a' and 'b' which will cause overflow
-  lcm = (a/GreatestCommonDivisor(a,b)) * b
+  IF(a == b) THEN
+    lcm = a
+  ELSE
+    !In all likelihood there exists an 'a' and 'b' which will cause overflow
+    lcm = (a/GreatestCommonDivisor(a,b)) * b
+  ENDIF
 ENDFUNCTION LeastCommonMultiple_scalar
 !
 !-------------------------------------------------------------------------------
