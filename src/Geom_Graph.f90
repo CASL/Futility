@@ -9,6 +9,9 @@
 !> @brief A Fortran 2003 module defining a graph type.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Graph
+#include "Futility_DBC.h"
+USE ExceptionHandler
+USE Futility_DBC
 USE IntrType
 USE Constants_Conversion
 USE ExtendedMath
@@ -25,7 +28,14 @@ PUBLIC :: GraphType
 PUBLIC :: DAGraphType
 PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(==)
+PUBLIC :: VTKMeshToGraphs
 !PUBLIC :: OPERATOR(+)
+
+!> The module name
+CHARACTER(LEN=*),PARAMETER :: modName='GEOM_GRAPH'
+
+!> Exception handler for the module
+TYPE(ExceptionHandlerType),SAVE :: eGraph
 
 !> @brief a Directed Acyclic Graph Type
 TYPE :: DAGraphType
@@ -2048,5 +2058,43 @@ SUBROUTINE assign_DAGraphType(g0,g1)
     g0%edgeMatrix=g1%edgeMatrix
   ENDIF
 ENDSUBROUTINE assign_DAGraphType
+
+FUNCTION VTKMeshToGraphs(thisMesh) RESULT(graphs)
+  CHARACTER(LEN=*),PARAMETER :: myName='VTKMeshToGraphs'
+  TYPE(VTKMeshType),INTENT(IN) :: thisMesh
+  TYPE(GraphType),ALLOCATABLE :: graphs(:) 
+  REAL(SRK) :: p1(2),p2(2),p3(2)
+  INTEGER(SIK) :: ngraph,i,ctype,nodeCtr
+
+  ngraph=thisMesh%numCells
+  ALLOCATE(graphs(ngraph))
+  nodeCtr=1
+  WRITE(*,*) thisMesh%nodeList
+  DO i=1,ngraph
+    ctype=thisMesh%cellList(i)
+    IF(ctype == VTK_TRIANGLE) THEN
+      ! 0 based index
+      p1(1)=thisMesh%x(thisMesh%nodeList(nodeCtr)+1)
+      p1(2)=thisMesh%y(thisMesh%nodeList(nodeCtr)+1)
+      p2(1)=thisMesh%x(thisMesh%nodeList(nodeCtr+1)+1)
+      p2(2)=thisMesh%y(thisMesh%nodeList(nodeCtr+1)+1)
+      p3(1)=thisMesh%x(thisMesh%nodeList(nodeCtr+2)+1)
+      p3(2)=thisMesh%y(thisMesh%nodeList(nodeCtr+2)+1)
+      CALL graphs(i)%insertVertex(p1)
+      CALL graphs(i)%insertVertex(p2)
+      CALL graphs(i)%insertVertex(p3)
+      CALL graphs(i)%defineEdge(p1,p2)
+      CALL graphs(i)%defineEdge(p2,p3)
+      CALL graphs(i)%defineEdge(p3,p1)
+      nodeCtr=nodeCtr+3
+    ELSE
+      CALL eGraph%raiseError(modName//'::'//myName// &
+        ' VTK cell type '//CHAR(ctype)//' not supported at this time.')
+    ENDIF
+!    graphs(i)
+  ENDDO
+
+ENDFUNCTION VTKMeshToGraphs
+
 !
 ENDMODULE Geom_Graph
