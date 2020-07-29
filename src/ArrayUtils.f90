@@ -12,6 +12,9 @@
 !>        real array, along with several others.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ArrayUtils
+#include "Futility_DBC.h"
+USE ISO_FORTRAN_ENV
+USE Futility_DBC
 USE IntrType
 USE Sorting
 USE Strings
@@ -31,6 +34,8 @@ PUBLIC :: isStrictlyDecreasing
 PUBLIC :: isMonotonic
 PUBLIC :: isIncreasing
 PUBLIC :: isDecreasing
+PUBLIC :: applyTol
+PUBLIC :: hasAnyRemainder
 !PUBLIC :: findIntersection
 !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
 !to see if the 1-D array exists in the 2-D array...
@@ -1315,5 +1320,110 @@ PURE FUNCTION isDecreasing_1DReal(r) RESULT(good)
   ENDIF
 
 ENDFUNCTION isDecreasing_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Queries an array to see if any value is specified with a greater
+!>        precision than the input tolerance value.
+!> @param r The input real array to query
+!> @param tol a number between 1.0E-20 and 1 to query the values on the array.
+!>
+!> @par Implementation notes:
+!> The exponent of the tolerance is used to choose the number of significant
+!> digits to set the precision on the mesh. So if 1.0E-07 or 7.07E-07 is passed
+!> as the tolerance, the number of digits set would be rounded to the 0.0000001
+!> place. Setting the min to 1.0E-20 guarantees that the float precision
+!> can be represented by 32 digits
+!>
+FUNCTION hasAnyRemainder(r,tol) RESULT(bool)
+  REAL(SRK),INTENT(IN) :: r(:)
+  REAL(SRK),INTENT(IN) :: tol
+  LOGICAL(SBK) :: bool
+
+  REAL(SRK) :: rem(SIZE(r)),tmpr
+  CHARACTER(LEN=32) :: dchar,fmtstr,fchar
+  INTEGER(SIK) :: i,d,w
+
+  REQUIRE(tol < 1.0_SRK)
+  REQUIRE(tol > 1.0E-20_SRK)
+
+  !Construct format string
+  WRITE(dchar,'(es12.5)') tol
+  READ(dchar(11:12),*) d
+  w=d+10
+
+  !Store the remainder
+  rem=r
+
+  !Round floating point numbers
+  WRITE(fmtstr,'(a,i0.4,a,i0.4,a)') '(f',w,'.',d,')'
+  DO i=1,SIZE(r)
+    WRITE(fchar,FMT=fmtstr) r(i)+1.0E-14_SRK
+    READ(fchar,*) tmpr
+    rem(i)=rem(i)-tmpr
+  ENDDO
+
+  !Compute the remainder, zero any floating precision values.
+  !rem=rem-r
+  WHERE(ABS(rem) <= 1.0E-14_SRK) rem=0.0_SRK
+  bool=ANY(rem > 1.0E-14_SRK)
+ENDFUNCTION hasAnyRemainder
+!
+!-------------------------------------------------------------------------------
+!> @brief Applies a tolerance to the axial mesh to adjust the precision
+!> @param this The axial mesh to be modified
+!> @param tol a number between 1.0E-20 and 1 to adjust the axial mesh
+!>
+!> @par Implementation notes:
+!> The exponent of the tolerance is used to choose the number of significant
+!> digits to set the precision on the mesh. So if 1.0E-07 or 7.07E-07 is passed
+!> as the tolerance, the number of digits set would be rounded to the 0.0000001
+!> place. Setting the min to 1.0E-20 guarantees that the float precision
+!> can be represented by 32 digits
+!>
+SUBROUTINE applyTol(r,tol)
+  REAL(SRK),INTENT(INOUT) :: r(:)
+  REAL(SRK),INTENT(IN) :: tol
+
+  REAL(SRK) :: rem(SIZE(r)),tmprem
+  CHARACTER(LEN=32) :: dchar,fmtstr,fchar
+  INTEGER(SIK) :: i,d,w
+
+  REQUIRE(tol < 1.0_SRK)
+  REQUIRE(tol > 1.0E-20_SRK)
+
+  !Construct format string
+  WRITE(dchar,'(es12.5)') tol
+  READ(dchar(11:12),*) d
+  w=d+10
+
+  !Store the remainder
+  rem=r
+
+  !Round floating point numbers
+  WRITE(fmtstr,'(a,i0.4,a,i0.4,a)') '(f',w,'.',d,')'
+  DO i=1,SIZE(r)
+    WRITE(fchar,FMT=fmtstr) r(i)+1.0E-14_SRK
+    READ(fchar,*) r(i)
+  ENDDO
+
+  !Compute the remainder, zero any floating precision values.
+  rem=rem-r
+  WHERE(ABS(rem) <= 1.0E-14_SRK) rem=0.0_SRK
+  tmprem=0.0_SRK
+  DO i=1,SIZE(r)
+    tmprem=tmprem+rem(i)
+    !If the sum of the previous remainders is greater than the tolerance,
+    !add it to the current array value to preserve the total.
+    IF(tmprem >= tol) THEN
+      r(i)=r(i)+tol
+      tmprem=tmprem-tol
+    !If the sum of the previous remainders is less than the tolerance,
+    !subtract it from the current array value to preserve the total.
+    ELSEIF(tmprem <= -tol) THEN
+      r(i)=r(i)-tol
+      tmprem=tmprem+tol
+    ENDIF
+  ENDDO
+ENDSUBROUTINE applyTol
 !
 ENDMODULE ArrayUtils
