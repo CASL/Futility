@@ -12,6 +12,9 @@
 !>        real array, along with several others.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ArrayUtils
+#include "Futility_DBC.h"
+USE ISO_FORTRAN_ENV
+USE Futility_DBC
 USE IntrType
 USE Sorting
 USE Strings
@@ -31,6 +34,7 @@ PUBLIC :: isStrictlyDecreasing
 PUBLIC :: isMonotonic
 PUBLIC :: isIncreasing
 PUBLIC :: isDecreasing
+PUBLIC :: hasAnyRemainder
 !PUBLIC :: findIntersection
 !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
 !to see if the 1-D array exists in the 2-D array...
@@ -1315,5 +1319,44 @@ PURE FUNCTION isDecreasing_1DReal(r) RESULT(good)
   ENDIF
 
 ENDFUNCTION isDecreasing_1DReal
+!
+!-------------------------------------------------------------------------------
+!> @brief Queries an array to see if any value is specified with a greater
+!>        precision than the input tolerance value.
+!> @param r The input real array to query
+!> @param tol a number between 1.0E-14 and 1 to query the values on the array.
+!>
+FUNCTION hasAnyRemainder(r,tol) RESULT(bool)
+  REAL(SRK),INTENT(IN) :: r(:)
+  REAL(SRK),INTENT(IN) :: tol
+  LOGICAL(SBK) :: bool
+
+  REAL(SRK) :: rem(SIZE(r)),tmpr
+  CHARACTER(LEN=32) :: dchar,fmtstr,fchar
+  INTEGER(SIK) :: i,d,w
+
+  REQUIRE(tol < 1.0_SRK)
+  REQUIRE(tol >= 1.0E-13_SRK)
+
+  !Construct format string
+  WRITE(dchar,'(es12.5)') tol
+  READ(dchar(11:12),*) d
+  w=d+10
+
+  !Store the remainder
+  rem=r
+
+  !Round floating point numbers
+  WRITE(fmtstr,'(a,i0.4,a,i0.4,a)') '(f',w,'.',d,')'
+  DO i=1,SIZE(r)
+    WRITE(fchar,FMT=fmtstr) r(i)+1.0E-14_SRK
+    READ(fchar,*) tmpr
+    rem(i)=rem(i)-tmpr
+  ENDDO
+
+  !Compute the remainder, zero any floating precision values.
+  WHERE(ABS(rem) < 1.0E-14_SRK) rem=0.0_SRK
+  bool=ANY(rem > 1.0E-14_SRK)
+ENDFUNCTION hasAnyRemainder
 !
 ENDMODULE ArrayUtils
