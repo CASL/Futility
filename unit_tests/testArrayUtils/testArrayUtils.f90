@@ -439,7 +439,7 @@ SUBROUTINE test1DReals()
   ASSERT(.NOT.isMonotonic(tmpintarray),'Failure to identify monotonically Decreasing int data')
 
   COMPONENT_TEST('hasAnyRemainder 1-D Array')
-  tmprealarray(1)=3.3351111111111_SRK
+  tmprealarray(1)=3.3351111111111151_SRK
   tmprealarray(2)=2.555111_SRK
   tmprealarray(3)=4.00505_SRK
   tmprealarray(4)=2.4444_SRK
@@ -449,23 +449,47 @@ SUBROUTINE test1DReals()
   tmprealarray(8)=2.55_SRK
   tmprealarray(9)=2.661_SRK
   tmprealarray(10)=10.0_SRK/3.0_SRK
-  ASSERT(hasAnyRemainder(tmprealarray,0.1_SRK),'0.1')
-  ASSERT(hasAnyRemainder(tmprealarray,0.01_SRK),'0.01')
-  ASSERT(hasAnyRemainder(tmprealarray,0.001_SRK),'0.001')
-  ASSERT(hasAnyRemainder(tmprealarray,0.0001_SRK),'0.0001')
-  ASSERT(hasAnyRemainder(tmprealarray,0.00001_SRK),'0.00001')
-  ASSERT(hasAnyRemainder(tmprealarray,0.000001_SRK),'0.000001')
-  ASSERT(hasAnyRemainder(tmprealarray,0.0000001_SRK),'0.0000001')
-  ASSERT(hasAnyRemainder(tmprealarray,0.00000001_SRK),'0.00000001')
-  ASSERT(hasAnyRemainder(tmprealarray,0.000000001_SRK),'0.000000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-1_SRK),'0.1')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-2_SRK),'0.01')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-3_SRK),'0.001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-4_SRK),'0.0001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-5_SRK),'0.00001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-6_SRK),'0.000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-7_SRK),'0.0000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-8_SRK),'0.00000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-9_SRK),'0.000000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-10_SRK),'0.0000000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-11_SRK),'0.00000000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-12_SRK),'0.000000000001')
+  ASSERT(hasAnyRemainder(tmprealarray,1.0E-13_SRK),'0.0000000000001')
 
-  ASSERT(.NOT. hasAnyRemainder(tmprealarray(7:7),0.1_SRK),'0.1')
-  ASSERT(.NOT. hasAnyRemainder(tmprealarray(7:7),0.01_SRK),'0.01')
-  ASSERT(.NOT. hasAnyRemainder(tmprealarray(8:8),0.001_SRK),'0.001')
-  ASSERT(.NOT. hasAnyRemainder(tmprealarray(7:9),0.0001_SRK),'0.0001')
-  ASSERT(.NOT. hasAnyRemainder(tmprealarray(4:4),0.00001_SRK),'0.00001')
-  ASSERT(.NOT. hasAnyRemainder(tmprealarray(3:3),0.000001_SRK),'0.000001')
-  ASSERT(.NOT. hasAnyRemainder(tmprealarray(2:2),0.0000001_SRK),'0.0000001')
+
+  tmprealarray(1)=3.3_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-1_SRK),'0.1')
+  tmprealarray(1)=3.34_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-2_SRK),'0.01')
+  tmprealarray(1)=3.345_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-3_SRK),'0.001')
+  tmprealarray(1)=3.3456_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-4_SRK),'0.0001')
+  tmprealarray(1)=3.34567_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-5_SRK),'0.00001')
+  tmprealarray(1)=3.345678_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-6_SRK),'0.000001')
+  tmprealarray(1)=3.3456789_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-7_SRK),'0.0000001')
+  tmprealarray(1)=3.34567891_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-8_SRK),'0.00000001')
+  tmprealarray(1)=3.345678912_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-9_SRK),'0.000000001')
+  tmprealarray(1)=3.3456789123_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-10_SRK),'0.0000000001')
+  tmprealarray(1)=3.34567891234_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-11_SRK),'0.00000000001')
+  tmprealarray(1)=3.345678912345_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-12_SRK),'0.000000000001')
+  tmprealarray(1)=3.3456789123456_SRK
+  ASSERT(.NOT. hasAnyRemainder(tmprealarray(1:1),1.0E-13_SRK),'0.0000000000001')
 
 ENDSUBROUTINE test1DReals
 !

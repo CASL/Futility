@@ -1336,7 +1336,7 @@ FUNCTION hasAnyRemainder(r,tol) RESULT(bool)
   INTEGER(SIK) :: i,d,w
 
   REQUIRE(tol < 1.0_SRK)
-  REQUIRE(tol >= 1.0E-14_SRK)
+  REQUIRE(tol >= 1.0E-13_SRK)
 
   !Construct format string
   WRITE(dchar,'(es12.5)') tol
@@ -1355,7 +1355,7 @@ FUNCTION hasAnyRemainder(r,tol) RESULT(bool)
   ENDDO
 
   !Compute the remainder, zero any floating precision values.
-  WHERE(ABS(rem) <= 1.0E-14_SRK) rem=0.0_SRK
+  WHERE(ABS(rem) < 1.0E-14_SRK) rem=0.0_SRK
   bool=ANY(rem > 1.0E-14_SRK)
 ENDFUNCTION hasAnyRemainder
 !
