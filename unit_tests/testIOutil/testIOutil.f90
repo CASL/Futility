@@ -513,6 +513,9 @@ SUBROUTINE testIO_Strings()
   DEALLOCATE(string1)
 
   COMPONENT_TEST('str')
+  !SBK
+  ASSERT_EQ(str(.TRUE.),'T','str(SBK)')
+  ASSERT_EQ(str(.FALSE.),'F','str(SBK)')
   !SNK
   ASSERT_EQ(str(0_SNK),'0','str(SNK)')
   ASSERT_EQ(str(2_SNK),'2','str(SNK)')
