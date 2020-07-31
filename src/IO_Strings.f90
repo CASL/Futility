@@ -349,6 +349,9 @@ ENDINTERFACE SlashRep
 
 !> @brief Generic interface for converting variables to strings
 INTERFACE str
+  !> @copybrief IO_Strings::str_SBK
+  !> @copydetails IO_Strings::str_SBK
+  MODULE PROCEDURE str_SBK
   !> @copybrief IO_Strings::str_SNK
   !> @copydetails IO_Strings::str_SNK
   MODULE PROCEDURE str_SNK
@@ -1335,6 +1338,25 @@ PURE SUBROUTINE SlashRep_c(string)
 #endif
   ENDDO
 ENDSUBROUTINE SlashRep_c
+!
+!-------------------------------------------------------------------------------
+!> @brief Converts a logical to a character
+!> @param bool the logical to convert
+!> @returns string
+!>
+!> Returns either "T" or "F" depending on the value of the logical
+!>
+FUNCTION str_SBK(bool) RESULT(string)
+  LOGICAL(SBK),INTENT(IN) :: bool
+  CHARACTER(LEN=1) :: string
+
+  IF(bool) THEN
+    string='T'
+  ELSE
+    string='F'
+  ENDIF
+
+ENDFUNCTION str_SBK
 !
 !-------------------------------------------------------------------------------
 !> @brief Converts an integer to a character
