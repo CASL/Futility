@@ -353,8 +353,8 @@ SUBROUTINE importFromDiskToVTK_XDMFFileType(thisXDMFFile,strpath,vtkMesh, &
       ! Make sure is material ID
       strIn='Name'
       CALL xmle%getAttributeValue(strIn,strOut)
-      IF(strOut /= 'Material_ID') THEN
-        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+      IF(strOut /= 'MATERIAL_ID') THEN
+        CALL eXDMF%raiseError(modName//'::'//myName// &
           ' - Attribute is only used for material ID right now')              
       ENDIF
       strIn='Center'
