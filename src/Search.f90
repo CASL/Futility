@@ -363,11 +363,11 @@ FUNCTION linearSearch_r(list,val,tol) RESULT(i)
 ENDFUNCTION linearSearch_r
 !
 !-------------------------------------------------------------------------------
-!> @brief Return the index of the element of a list of integers that is equal to
+!> @brief Return the index of the element of a list of strings that is equal to
 !>        val using a linear search algorithm
-!> @param list 1D array of integers to search through. Unlike for binary_search,
+!> @param list 1D array of strings to search through. Unlike for binary_search,
 !>        sorting does not matter
-!> @param val integer value to find in list
+!> @param val string value to find in list
 !> @returns i index of the element of list that equals val
 !>
 !> NOTE: If the value is not found this returns SIZE(list)+1
@@ -386,11 +386,11 @@ FUNCTION linearSearch_str(list, val) RESULT(i)
 ENDFUNCTION linearSearch_str
 !
 !-------------------------------------------------------------------------------
-!> @brief Return the index of the element of a list of integers that is equal to
+!> @brief Return the index of the element of a list of strings that is equal to
 !>        val using a linear search algorithm
-!> @param list 1D array of integers to search through. Unlike for binary_search,
+!> @param list 1D array of strings to search through. Unlike for binary_search,
 !>        sorting does not matter
-!> @param val integer value to find in list
+!> @param val character value to find in list
 !> @returns i index of the element of list that equals val
 !>
 !> NOTE: If the value is not found this returns SIZE(list)+1

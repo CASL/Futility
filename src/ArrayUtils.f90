@@ -361,20 +361,13 @@ FUNCTION findNUnique_1DInt(r,delta) RESULT(sout)
 ENDFUNCTION findNUnique_1DInt
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes an array of reals and returns the number of unique
-!>        entries within a given tolerance for the equivalence of reals.  The
-!>        optional delta input is whether the array is composed of incremental
-!>        values (deltas) or absolute values.  The optional tol input can
-!>        specifically decide the tolerance for whether two reals are unique.
-!> @param r The input array of reals
-!> @param delta The optional input for whether the array is incremental or not
-!> @param tol The tolerance for comparing two real values
+!> @brief This routine takes an array of strings and returns the number of unique
+!>        entries.
+!> @param r The input array of strings
 !> @returns sout The number of unique entries in the array r.
 !>
-FUNCTION findNUnique_1DString(r,delta,tol) RESULT(sout)
+FUNCTION findNUnique_1DString(r) RESULT(sout)
   TYPE(StringType),INTENT(IN) :: r(:)
-  LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
-  REAL(SRK),INTENT(IN),OPTIONAL :: tol
   INTEGER(SIK) :: sout
 
   INTEGER(SIK) :: i,j,n
@@ -401,20 +394,13 @@ FUNCTION findNUnique_1DString(r,delta,tol) RESULT(sout)
 ENDFUNCTION findNUnique_1DString
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes an array of reals and returns the number of unique
-!>        entries within a given tolerance for the equivalence of reals.  The
-!>        optional delta input is whether the array is composed of incremental
-!>        values (deltas) or absolute values.  The optional tol input can
-!>        specifically decide the tolerance for whether two reals are unique.
-!> @param r The input array of reals
-!> @param delta The optional input for whether the array is incremental or not
-!> @param tol The tolerance for comparing two real values
+!> @brief This routine takes a 2-D array of strings and returns the number of unique
+!>        entries.
+!> @param r The input 2-D array of strings
 !> @returns sout The number of unique entries in the array r.
 !>
-FUNCTION findNUnique_2DString(r,delta,tol) RESULT(sout)
+FUNCTION findNUnique_2DString(r) RESULT(sout)
   TYPE(StringType),INTENT(IN) :: r(:,:)
-  LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
-  REAL(SRK),INTENT(IN),OPTIONAL :: tol
   INTEGER(SIK) :: sout
 
   INTEGER(SIK) :: i,j,n,m,x1,y1,x2,y2
@@ -562,17 +548,13 @@ SUBROUTINE getUnique_1DInt(r,rout,delta)
 ENDSUBROUTINE getUnique_1DInt
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes an array of integers and returns the unique
-!>        entries.  The optional delta input is whether the array is composed of
-!>         incremental values (deltas) or absolute values.
-!> @param r The input array of integers
-!> @param rout The 1-D array of unique entries in the array r.
-!> @param delta The optional input for whether the array is incremental or not
+!> @brief This routine takes an array of strings and returns the array of unique
+!>        entries.
+!> @param r The input array of strings
 !>
-SUBROUTINE getUnique_1DString(r,rout,delta)
+SUBROUTINE getUnique_1DString(r,rout)
   TYPE(StringType),INTENT(IN) :: r(:)
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: rout(:)
-  LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
 
   INTEGER(SIK) :: i,j,n,sout
   TYPE(StringType),ALLOCATABLE :: tmpr(:)
@@ -608,17 +590,14 @@ SUBROUTINE getUnique_1DString(r,rout,delta)
 ENDSUBROUTINE getUnique_1DString
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine takes an array of integers and returns the unique
-!>        entries.  The optional delta input is whether the array is composed of
-!>         incremental values (deltas) or absolute values.
-!> @param r The input array of integers
+!> @brief This routine takes a 2-D array of strings and returns the array of unique
+!>        entries.
+!> @param r The input 2-D array of strings.
 !> @param rout The 1-D array of unique entries in the array r.
-!> @param delta The optional input for whether the array is incremental or not
 !>
-SUBROUTINE getUnique_2DString(r,rout,delta)
+SUBROUTINE getUnique_2DString(r,rout)
   TYPE(StringType),INTENT(IN) :: r(:,:)
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: rout(:)
-  LOGICAL(SBK),INTENT(IN),OPTIONAL :: delta
 
   INTEGER(SIK) :: i,j,n,m,x1,y1,x2,y2,sout
   TYPE(StringType),ALLOCATABLE :: tmpr(:,:)
