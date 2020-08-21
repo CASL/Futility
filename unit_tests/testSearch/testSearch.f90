@@ -10,6 +10,7 @@ PROGRAM testSearch
 #include "UnitTest.h"
 USE UnitTest
 USE IntrType
+USE Strings
 USE Search
 
 IMPLICIT NONE
@@ -25,6 +26,11 @@ REAL(SRK),DIMENSION(20) :: random_r = (/91.0_SRK,5.0_SRK,57.0_SRK,&
       25.0_SRK,64.0_SRK,18.0_SRK,84.0_SRK,20.0_SRK,39.0_SRK,9.0_SRK,39.0_SRK,&
       86.0_SRK/)
 
+TYPE(StringType) :: random_str(10)
+random_str(1)='test1'; random_str(2)='string'; random_str(3)='alpha'
+random_str(4)='bravo'; random_str(5)='charlie'; random_str(6)='delta'
+random_str(7)='echo'; random_str(8)='123'; random_str(9)=''
+random_str(10)='123'
 !
 !Check the timer resolution
 CREATE_TEST('SEARCH')
@@ -39,6 +45,7 @@ REGISTER_SUBTEST('upper bound(real)',testgetFirstGreater_r)
 REGISTER_SUBTEST('find(real)',testFind_r)
 REGISTER_SUBTEST('binarySearch(real)',testBinary_r)
 
+REGISTER_SUBTEST('find(string)',testFind_str)
 FINALIZE_TEST()
 !
 !
@@ -183,7 +190,7 @@ SUBROUTINE testFind_i()
 
   ! make sure that failed searches are handled right
   ASSERT_EQ(find(random_i,19),SIZE(random_i)+1,"Wrong nonexistant")
-ENDSUBROUTINE
+ENDSUBROUTINE testFind_i
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testFind_r()
@@ -197,7 +204,31 @@ SUBROUTINE testFind_r()
 
   ! make sure that failed searches are handled right
   ASSERT_EQ(find(random_r,19.0_SRK),SIZE(random_r)+1,"Wrong nonexistant")
-ENDSUBROUTINE
+ENDSUBROUTINE testFind_r
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testFind_str()
+  LOGICAL(SBK) :: bool
+  TYPE(StringType) :: tmpstr
+  tmpstr='test1'
+  ASSERT_EQ(find(random_str,tmpstr),1,"Wrong result for test1")
+  ASSERT_EQ(find(random_str,'test1'),1,"Wrong result for test1")
+  tmpstr='echo'
+  ASSERT_EQ(find(random_str,tmpstr),7,"Wrong result for echo")
+  ASSERT_EQ(find(random_str,'echo'),7,"Wrong result for echo")
+  ! this is a duplicate,technically the implementation may return either
+  tmpstr='123'
+  bool=(find(random_str,tmpstr) == 8 .OR. find(random_str,tmpstr) == 10)
+  ASSERT(bool,"Wrong result for 123")
+  tmpstr=''
+  ASSERT_EQ(find(random_str,tmpstr),9,"Wrong result for empty")
+  ASSERT_EQ(find(random_str,''),9,"Wrong result for empty")
+
+  ! make sure that failed searches are handled right
+  tmpstr='notpresent'
+  ASSERT_EQ(find(random_str,tmpstr),SIZE(random_str)+1,"Wrong nonexistant")
+  ASSERT_EQ(find(random_str,'notpresent'),SIZE(random_str)+1,"Wrong nonexistant")
+ENDSUBROUTINE testFind_str
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testBinary_i()

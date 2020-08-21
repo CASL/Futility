@@ -80,6 +80,12 @@ INTERFACE find
   !> @copybrief Search::linearSearch_r
   !> @copydetails Search::linearSearch_r
   MODULE PROCEDURE linearSearch_r
+  !> @copybrief Search::linearSearch_str
+  !> @copydetails Search::linearSearch_str
+  MODULE PROCEDURE linearSearch_str
+  !> @copybrief Search::linearSearch_strchar
+  !> @copydetails Search::linearSearch_strchar
+  MODULE PROCEDURE linearSearch_strchar
 ENDINTERFACE find
 
 !> @brief Interface for finding entry of a 1D array using a binary search
@@ -355,6 +361,52 @@ FUNCTION linearSearch_r(list,val,tol) RESULT(i)
 
   i=SIZE(list)+1
 ENDFUNCTION linearSearch_r
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the index of the element of a list of integers that is equal to
+!>        val using a linear search algorithm
+!> @param list 1D array of integers to search through. Unlike for binary_search,
+!>        sorting does not matter
+!> @param val integer value to find in list
+!> @returns i index of the element of list that equals val
+!>
+!> NOTE: If the value is not found this returns SIZE(list)+1
+!>
+FUNCTION linearSearch_str(list, val) RESULT(i)
+  TYPE(StringType),INTENT(IN) :: list(:)
+  TYPE(StringType),INTENT(IN) :: val
+  INTEGER(SIK) :: i
+
+  !Perform linear search
+  DO i=1,SIZE(list)
+    IF(list(i) == val) RETURN
+  ENDDO
+
+  i=SIZE(list)+1
+ENDFUNCTION linearSearch_str
+!
+!-------------------------------------------------------------------------------
+!> @brief Return the index of the element of a list of integers that is equal to
+!>        val using a linear search algorithm
+!> @param list 1D array of integers to search through. Unlike for binary_search,
+!>        sorting does not matter
+!> @param val integer value to find in list
+!> @returns i index of the element of list that equals val
+!>
+!> NOTE: If the value is not found this returns SIZE(list)+1
+!>
+FUNCTION linearSearch_strchar(list, val) RESULT(i)
+  TYPE(StringType),INTENT(IN) :: list(:)
+  CHARACTER(LEN=*),INTENT(IN) :: val
+  INTEGER(SIK) :: i
+
+  !Perform linear search
+  DO i=1,SIZE(list)
+    IF(list(i) == val) RETURN
+  ENDDO
+
+  i=SIZE(list)+1
+ENDFUNCTION linearSearch_strchar
 !
 !-------------------------------------------------------------------------------
 !> @brief Return the index of the element of a list of integers that is equal to

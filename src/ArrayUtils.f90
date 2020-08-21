@@ -594,9 +594,8 @@ SUBROUTINE getUnique_1DString(r,rout,delta)
       ENDDO
     ENDDO
 
-    rout(1)=tmpr(1)
-    sout=2
-    DO i=2,n
+    sout=1
+    DO i=1,n
       IF(TRIM(tmpr(i)) /= '') THEN
         rout(sout)=tmpr(i)
         sout=sout+1

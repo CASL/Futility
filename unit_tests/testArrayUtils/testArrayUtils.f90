@@ -600,6 +600,8 @@ SUBROUTINE test1DStrings()
   tmpstr1a(5)='four'
   tmpstr1a(10)='nine'
   ASSERT(findNUnique(tmpstr1a) == 7,'3 duplicates array')
+  tmpstr1a(1)=''
+  ASSERT(findNUnique(tmpstr1a) == 7,'2 duplicates, one null array')
   ASSERT(findNUnique(tmpstr1a(1:0)) == 0,'0 subset size')
   IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
   ALLOCATE(tmps1(0))
@@ -636,6 +638,11 @@ SUBROUTINE test1DStrings()
       tmps1(3) == 'four' .AND.  tmps1(4) == 'six' .AND. &
       tmps1(5) == 'seven' .AND. tmps1(6) == 'eight' .AND. tmps1(7) == 'nine'
   ASSERT(bool,'3 duplicates unique array')
+  tmpstr1a(1)=''
+  bool=tmps1(1) == 'two' .AND. tmps1(2) == 'three' .AND. &
+      tmps1(3) == 'four' .AND.  tmps1(4) == 'six' .AND. &
+      tmps1(5) == 'seven' .AND. tmps1(6) == 'eight' .AND. tmps1(7) == 'nine'
+  ASSERT(bool,'2 duplicates, one null unique array')
 
 ENDSUBROUTINE test1DStrings
 !
