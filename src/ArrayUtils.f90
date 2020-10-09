@@ -18,6 +18,7 @@ USE Futility_DBC
 USE IntrType
 USE Sorting
 USE Strings
+USE IO_Strings
 
 IMPLICIT NONE
 PRIVATE
@@ -1366,10 +1367,8 @@ SUBROUTINE replaceEntry_1DString(oldlist,sublist,entry)
   CALL MOVE_ALLOC(oldlist,tmplist)
   ALLOCATE(oldlist(SIZE(tmplist)+SIZE(sublist)-1))
   oldlist(1:entry-1)=tmplist(1:entry-1)
-  oldlist(entry:SIZE(tmplist)-1)=tmplist(entry+1:)
-  IF(SIZE(sublist) > 0) THEN
-    oldlist(SIZE(tmplist):)=sublist(:)
-  ENDIF
+  oldlist(entry:entry+SIZE(sublist)-1)=sublist(:)
+  oldlist(entry+SIZE(sublist):)=tmplist(entry+1:)
 
 ENDSUBROUTINE replaceEntry_1DString
 !
