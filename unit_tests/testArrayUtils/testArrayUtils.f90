@@ -32,6 +32,7 @@ REGISTER_SUBTEST('1-D INTEGERS',test1DInts)
 REGISTER_SUBTEST('1-D Strings',test1DStrings)
 REGISTER_SUBTEST('2-D Strings',test2DStrings)
 !REGISTER_SUBTEST('2-D INTEGERS',test2DInts)
+REGISTER_SUBTEST('ReplaceEntry',testReplaceEntry)
 
 FINALIZE_TEST()
 !
@@ -699,5 +700,53 @@ ENDSUBROUTINE test2DStrings
   !findNUnique_2DInt
   !getUnique_2DInt
 !ENDSUBROUTINE test2DInts
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testReplaceEntry()
+  INTEGER(SIK) :: index
+  TYPE(StringType),ALLOCATABLE :: strlist(:),strsublist(:)
+
+  COMPONENT_TEST('1D Strings')
+  ALLOCATE(strlist(3))
+  strlist(1)='string1'
+  strlist(2)='string 2'
+  strlist(3)='string  3'
+  ALLOCATE(strsublist(0))
+  CALL replaceEntry(strlist,strsublist,2)
+  ASSERT_EQ(SIZE(strlist),2,'0 list replacement')
+  ASSERT_EQ(CHAR(strlist(1)),'string1','strlist(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'string  3','strlist(2)')
+  DEALLOCATE(strsublist)
+  ALLOCATE(strsublist(2))
+  strsublist(1)='test string 1'
+  strsublist(2)='test string  2'
+  CALL replaceEntry(strlist,strsublist,2)
+  ASSERT_EQ(SIZE(strlist),3,'size strlist')
+  ASSERT_EQ(CHAR(strlist(1)),'string1','strlist(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'test string 1','strlist(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'test string  2','strlist(3)')
+  CALL replaceEntry(strlist,strsublist,1)
+  ASSERT_EQ(SIZE(strlist),4,'size strlist')
+  ASSERT_EQ(CHAR(strlist(1)),'test string 1','strlist(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'test string  2','strlist(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'test string 1','strlist(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'test string  2','strlist(4)')
+  CALL replaceEntry(strlist,strsublist,2)
+  ASSERT_EQ(SIZE(strlist),5,'size strlist')
+  ASSERT_EQ(CHAR(strlist(1)),'test string 1','strlist(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'test string 1','strlist(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'test string  2','strlist(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'test string 1','strlist(4)')
+  ASSERT_EQ(CHAR(strlist(5)),'test string  2','strlist(5)')
+  CALL replaceEntry(strlist,strsublist,5)
+  ASSERT_EQ(SIZE(strlist),6,'size strlist')
+  ASSERT_EQ(CHAR(strlist(1)),'test string 1','strlist(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'test string 1','strlist(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'test string  2','strlist(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'test string 1','strlist(4)')
+  ASSERT_EQ(CHAR(strlist(5)),'test string 1','strlist(5)')
+  ASSERT_EQ(CHAR(strlist(6)),'test string  2','strlist(6)')
+  
+ENDSUBROUTINE testReplaceEntry
 !
 ENDPROGRAM testArrayUtils
