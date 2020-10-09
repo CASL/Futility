@@ -134,6 +134,12 @@ TYPE :: StringType
     !FINAL :: clean_str
 ENDTYPE StringType
 
+INTERFACE StringType
+  !> @copybrief Strings::charToStringType
+  !> @copydetails Strings::charToStringType
+  MODULE PROCEDURE charToStringType
+ENDINTERFACE
+
 !> @brief Overloads the Fortran intrinsic procedure CHAR() so
 !> a string type argument may be passed.
 INTERFACE CHAR
@@ -1358,5 +1364,15 @@ FUNCTION isNumeric_str(this) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool = this%isInteger() .OR. this%isFloat()
 ENDFUNCTION isNumeric_str
+!
+!-------------------------------------------------------------------------------
+!> @brief Constructor for a @c StringType from a character
+!> @param char the character to use
+!> @returns string the resulting @c StringType object
+FUNCTION charToStringType(char) RESULT(string)
+  CHARACTER(LEN=*),INTENT(IN) :: char
+  TYPE(StringType) :: string
+  string=char
+ENDFUNCTION charToStringType
 !
 ENDMODULE Strings
