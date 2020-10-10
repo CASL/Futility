@@ -18,6 +18,7 @@ USE Futility_DBC
 USE IntrType
 USE Sorting
 USE Strings
+USE IO_Strings
 
 IMPLICIT NONE
 PRIVATE
@@ -35,6 +36,7 @@ PUBLIC :: isMonotonic
 PUBLIC :: isIncreasing
 PUBLIC :: isDecreasing
 PUBLIC :: hasAnyRemainder
+PUBLIC :: replaceEntry
 !PUBLIC :: findIntersection
 !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
 !to see if the 1-D array exists in the 2-D array...
@@ -175,6 +177,14 @@ INTERFACE isIncreasing
   !> @copybrief ArrayUtils::isIncreasing_1DReal
   !> @copydetails ArrayUtils::isIncreasing_1DReal
   MODULE PROCEDURE isIncreasing_1DReal
+ENDINTERFACE
+
+!> @brief Interface to replace an entry of a list with a new list
+!>
+INTERFACE replaceEntry
+  !> @copybrief ArrayUtils::replaceEntry_1DString
+  !> @copydetails ArrayUtils::replaceEntry_1DString
+  MODULE PROCEDURE replaceEntry_1DString
 ENDINTERFACE
 !
 !===============================================================================
@@ -1336,5 +1346,30 @@ FUNCTION hasAnyRemainder(r,tol) RESULT(bool)
   WHERE(ABS(rem) < 1.0E-14_SRK) rem=0.0_SRK
   bool=ANY(rem > 1.0E-14_SRK)
 ENDFUNCTION hasAnyRemainder
+!
+!-------------------------------------------------------------------------------
+!> @brief Replaces an entry in a string list with a list of entries
+!> @param oldlist the original list
+!> @param sublist the new list to insert
+!> @param entry the index of the entry to replace
+!>
+SUBROUTINE replaceEntry_1DString(oldlist,sublist,entry)
+  TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: oldlist(:)
+  TYPE(StringType),INTENT(IN) :: sublist(:)
+  INTEGER(SIK),INTENT(IN) :: entry
+  !
+  TYPE(StringType),ALLOCATABLE :: tmplist(:)
+
+  REQUIRE(ALLOCATED(oldlist))
+  REQUIRE(entry > 0)
+  REQUIRE(entry <= SIZE(oldlist))
+
+  CALL MOVE_ALLOC(oldlist,tmplist)
+  ALLOCATE(oldlist(SIZE(tmplist)+SIZE(sublist)-1))
+  oldlist(1:entry-1)=tmplist(1:entry-1)
+  oldlist(entry:entry+SIZE(sublist)-1)=sublist(:)
+  oldlist(entry+SIZE(sublist):)=tmplist(entry+1:)
+
+ENDSUBROUTINE replaceEntry_1DString
 !
 ENDMODULE ArrayUtils
