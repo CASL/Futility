@@ -1369,7 +1369,7 @@ ENDFUNCTION isNumeric_str
 !> @brief Constructor for a @c StringType from a character
 !> @param char the character to use
 !> @returns string the resulting @c StringType object
-FUNCTION charToStringType(char) RESULT(string)
+ELEMENTAL FUNCTION charToStringType(char) RESULT(string)
   CHARACTER(LEN=*),INTENT(IN) :: char
   TYPE(StringType) :: string
   string=char
