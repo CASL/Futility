@@ -33,6 +33,7 @@ REGISTER_SUBTEST('1-D Strings',test1DStrings)
 REGISTER_SUBTEST('2-D Strings',test2DStrings)
 !REGISTER_SUBTEST('2-D INTEGERS',test2DInts)
 REGISTER_SUBTEST('ReplaceEntry',testReplaceEntry)
+REGISTER_SUBTEST('popEntry',testPopEntry)
 
 FINALIZE_TEST()
 !
@@ -748,5 +749,41 @@ SUBROUTINE testReplaceEntry()
   ASSERT_EQ(CHAR(strlist(6)),'test string  2','strlist(6)')
   
 ENDSUBROUTINE testReplaceEntry
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testPopEntry()
+  TYPE(StringType) :: str
+  TYPE(StringType),ALLOCATABLE :: strlist(:)
+
+  COMPONENT_TEST('1D Strings')
+  ALLOCATE(strlist(9))
+  strlist(1)='test string 1'
+  strlist(2)='test string 2'
+  strlist(3)='test string 3'
+  strlist(4)='test string 4'
+  strlist(5)='test string 5'
+  strlist(6)='test string 6'
+  strlist(7)='test string 7'
+  strlist(8)='test string 8'
+  strlist(9)='test string 9'
+  str=popEntry(strlist,5)
+  ASSERT_EQ(SIZE(strlist),8,'pop middle size')
+  ASSERT_EQ(CHAR(str),'test string 5','pop middle')
+  str=popEntry(strlist,5)
+  ASSERT_EQ(SIZE(strlist),7,'pop middle size')
+  ASSERT_EQ(CHAR(str),'test string 6','pop middle')
+  str=popEntry(strlist,1)
+  ASSERT_EQ(SIZE(strlist),6,'pop start size')
+  ASSERT_EQ(CHAR(str),'test string 1','pop start')
+  str=popEntry(strlist,6)
+  ASSERT_EQ(SIZE(strlist),5,'pop end size')
+  ASSERT_EQ(CHAR(str),'test string 9','pop end')
+  ASSERT_EQ(CHAR(strlist(1)),'test string 2','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'test string 3','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'test string 4','list(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'test string 7','list(4)')
+  ASSERT_EQ(CHAR(strlist(5)),'test string 8','list(5)')
+
+ENDSUBROUTINE testPopEntry
 !
 ENDPROGRAM testArrayUtils

@@ -37,6 +37,7 @@ PUBLIC :: isIncreasing
 PUBLIC :: isDecreasing
 PUBLIC :: hasAnyRemainder
 PUBLIC :: replaceEntry
+PUBLIC :: popEntry
 !PUBLIC :: findIntersection
 !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
 !to see if the 1-D array exists in the 2-D array...
@@ -185,6 +186,14 @@ INTERFACE replaceEntry
   !> @copybrief ArrayUtils::replaceEntry_1DString
   !> @copydetails ArrayUtils::replaceEntry_1DString
   MODULE PROCEDURE replaceEntry_1DString
+ENDINTERFACE
+
+!> @brief Interface to pop an entry of a list from the list
+!>
+INTERFACE popEntry
+  !> @copybrief ArrayUtils::popEntry_1DString
+  !> @copydetails ArrayUtils::popEntry_1DString
+  MODULE PROCEDURE popEntry_1DString
 ENDINTERFACE
 !
 !===============================================================================
@@ -1371,5 +1380,30 @@ SUBROUTINE replaceEntry_1DString(oldlist,sublist,entry)
   oldlist(entry+SIZE(sublist):)=tmplist(entry+1:)
 
 ENDSUBROUTINE replaceEntry_1DString
+!
+!-------------------------------------------------------------------------------
+!> @brief Pops an entry from a string list
+!> @param list the original list
+!> @param entry the index of the entry to pop
+!> @returns popped the popped entry of the list
+!>
+FUNCTION popEntry_1DString(list,entry) RESULT(popped)
+  TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: list(:)
+  INTEGER(SIK),INTENT(IN) :: entry
+  TYPE(StringType) :: popped
+  !
+  TYPE(StringType),ALLOCATABLE :: tmplist(:)
+
+  REQUIRE(ALLOCATED(list))
+  REQUIRE(entry > 0)
+  REQUIRE(entry <= SIZE(list))
+
+  CALL MOVE_ALLOC(list,tmplist)
+  ALLOCATE(list(SIZE(tmplist)-1))
+  list(1:entry-1)=tmplist(1:entry-1)
+  list(entry:SIZE(tmplist)-1)=tmplist(entry+1:)
+  popped=tmplist(entry)
+
+ENDFUNCTION popEntry_1DString
 !
 ENDMODULE ArrayUtils
