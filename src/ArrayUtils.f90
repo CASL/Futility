@@ -38,6 +38,7 @@ PUBLIC :: isDecreasing
 PUBLIC :: hasAnyRemainder
 PUBLIC :: replaceEntry
 PUBLIC :: popEntry
+PUBLIC :: insertEntry
 !PUBLIC :: findIntersection
 !Need a routine in here that compares a 1-D array to a 2-D array for a given dimension
 !to see if the 1-D array exists in the 2-D array...
@@ -194,6 +195,17 @@ INTERFACE popEntry
   !> @copybrief ArrayUtils::popEntry_1DString
   !> @copydetails ArrayUtils::popEntry_1DString
   MODULE PROCEDURE popEntry_1DString
+ENDINTERFACE
+
+!> @brief Interface to insert an entry of a list from the list
+!>
+INTERFACE insertEntry
+!> @copybrief ArrayUtils::insertEntry_1DString_0Dentry
+!> @copydetails ArrayUtils::insertEntry_1DString_0Dentry
+MODULE PROCEDURE insertEntry_1DString_0Dentry
+  !> @copybrief ArrayUtils::insertEntry_1DString_1Dentry
+  !> @copydetails ArrayUtils::insertEntry_1DString_1Dentry
+  MODULE PROCEDURE insertEntry_1DString_1Dentry
 ENDINTERFACE
 !
 !===============================================================================
@@ -1405,5 +1417,65 @@ FUNCTION popEntry_1DString(list,entry) RESULT(popped)
   popped=tmplist(entry)
 
 ENDFUNCTION popEntry_1DString
+!
+!-------------------------------------------------------------------------------
+!> @brief Inserts a string into a list of strings
+!> @param list the original list
+!> @param insert the new string to insert
+!> @param entry the index to insert the new string at
+!>
+!> After insertion, the @c entry-th index of the list will be @c insert, with
+!> the original values at @c entry and later being moved back by one.  If
+!> @c entry is given a value of @c SIZE(list)+1, then @c insert is added to the
+!> back of the list
+!>
+SUBROUTINE insertEntry_1DString_0Dentry(list,insert,entry)
+  TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: list(:)
+  TYPE(StringType),INTENT(IN) :: insert
+  INTEGER(SIK),INTENT(IN) :: entry
+  !
+  TYPE(StringType),ALLOCATABLE :: oldlist(:)
+
+  REQUIRE(ALLOCATED(list))
+  REQUIRE(entry > 0)
+  REQUIRE(entry <= SIZE(list)+1)
+
+  CALL MOVE_ALLOC(list,oldlist)
+  ALLOCATE(list(SIZE(oldlist)+1))
+  list(1:entry-1)=oldlist(1:entry-1)
+  list(entry)=insert
+  list(entry+1:SIZE(list))=oldlist(entry:SIZE(oldlist))
+
+ENDSUBROUTINE insertEntry_1DString_0Dentry
+!
+!-------------------------------------------------------------------------------
+!> @brief Inserts a list of string into a list of strings
+!> @param list the original list
+!> @param insert the new list to insert
+!> @param entry the index to insert the new list at
+!>
+!> After insertion, the @c entry-th index of the list will be the first element
+!> of @c insert, with the original values at @c entry and later being moved back
+!> by one.  If @c entry is given a value of @c SIZE(list)+1, then @c insert is
+!> added to the back of the list
+!>
+SUBROUTINE insertEntry_1DString_1Dentry(list,insert,entry)
+  TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: list(:)
+  TYPE(StringType),INTENT(IN) :: insert(:)
+  INTEGER(SIK),INTENT(IN) :: entry
+  !
+  TYPE(StringType),ALLOCATABLE :: oldlist(:)
+
+  REQUIRE(ALLOCATED(list))
+  REQUIRE(entry > 0)
+  REQUIRE(entry <= SIZE(list)+1)
+
+  CALL MOVE_ALLOC(list,oldlist)
+  ALLOCATE(list(SIZE(oldlist)+SIZE(insert)))
+  list(1:entry-1)=oldlist(1:entry-1)
+  list(entry:entry+SIZE(insert)-1)=insert(:)
+  list(entry+SIZE(insert):SIZE(list))=oldlist(entry:SIZE(oldlist))
+
+ENDSUBROUTINE insertEntry_1DString_1Dentry
 !
 ENDMODULE ArrayUtils

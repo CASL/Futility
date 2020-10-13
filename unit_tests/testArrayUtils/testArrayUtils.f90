@@ -34,6 +34,7 @@ REGISTER_SUBTEST('2-D Strings',test2DStrings)
 !REGISTER_SUBTEST('2-D INTEGERS',test2DInts)
 REGISTER_SUBTEST('ReplaceEntry',testReplaceEntry)
 REGISTER_SUBTEST('popEntry',testPopEntry)
+REGISTER_SUBTEST('insertEntry',testInsertEntry)
 
 FINALIZE_TEST()
 !
@@ -785,5 +786,91 @@ SUBROUTINE testPopEntry()
   ASSERT_EQ(CHAR(strlist(5)),'test string 8','list(5)')
 
 ENDSUBROUTINE testPopEntry
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testInsertEntry()
+  TYPE(StringType) :: str0
+  TYPE(StringType),ALLOCATABLE :: str1(:),strlist(:)
+
+  COMPONENT_TEST('1D String, 0D String')
+  str0='inserted'
+  ALLOCATE(strlist(0))
+  CALL insertEntry(strlist,str0,1)
+  ASSERT_EQ(SIZE(strlist),1,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'inserted','list(1)')
+  str0='inserted 2'
+  CALL insertEntry(strlist,str0,1)
+  ASSERT_EQ(SIZE(strlist),2,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'inserted 2','list(1)')
+  str0='inserted 3'
+  CALL insertEntry(strlist,str0,1)
+  ASSERT_EQ(SIZE(strlist),3,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'inserted 3','list(1)')
+  str0='inserted 4'
+  CALL insertEntry(strlist,str0,4)
+  ASSERT_EQ(SIZE(strlist),4,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(4)),'inserted 4','list(4)')
+  str0='inserted 5'
+  CALL insertEntry(strlist,str0,4)
+  ASSERT_EQ(SIZE(strlist),5,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(4)),'inserted 5','list(4)')
+  str0='inserted 6'
+  CALL insertEntry(strlist,str0,2)
+  ASSERT_EQ(SIZE(strlist),6,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'inserted 3','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'inserted 6','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'inserted 2','list(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'inserted','list(4)')
+  ASSERT_EQ(CHAR(strlist(5)),'inserted 5','list(5)')
+  ASSERT_EQ(CHAR(strlist(6)),'inserted 4','list(6)')
+  DEALLOCATE(strlist)
+
+  COMPONENT_TEST('1D String, 1D String')
+  ALLOCATE(str1(2))
+  str1(1)='insert 1'
+  str1(2)='insert 2'
+  ALLOCATE(strlist(0))
+  CALL insertEntry(strlist,str1,1)
+  ASSERT_EQ(SIZE(strlist),2,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'insert 1','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'insert 2','list(2)')
+  CALL insertEntry(strlist,str1,1)
+  ASSERT_EQ(SIZE(strlist),4,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'insert 1','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'insert 2','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'insert 1','list(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'insert 2','list(4)')
+  CALL insertEntry(strlist,str1,2)
+  ASSERT_EQ(CHAR(strlist(1)),'insert 1','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'insert 1','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'insert 2','list(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'insert 2','list(4)')
+  DEALLOCATE(strlist)
+  ALLOCATE(strlist(1))
+  strlist(1)='test'
+  CALL insertEntry(strlist,str1,1)
+  ASSERT_EQ(SIZE(strlist),3,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'insert 1','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'insert 2','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'test','list(3)')
+  DEALLOCATE(strlist)
+  ALLOCATE(strlist(1))
+  strlist(1)='test'
+  CALL insertEntry(strlist,str1,2)
+  ASSERT_EQ(SIZE(strlist),3,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'test','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'insert 1','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'insert 2','list(3)')
+  CALL insertEntry(strlist, str1, 4)
+  ASSERT_EQ(SIZE(strlist),5,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'test','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'insert 1','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'insert 2','list(3)')
+  ASSERT_EQ(CHAR(strlist(4)),'insert 1','list(4)')
+  ASSERT_EQ(CHAR(strlist(5)),'insert 2','list(5)')
+  DEALLOCATE(strlist)
+  DEALLOCATE(str1)
+
+ENDSUBROUTINE testInsertEntry
 !
 ENDPROGRAM testArrayUtils
