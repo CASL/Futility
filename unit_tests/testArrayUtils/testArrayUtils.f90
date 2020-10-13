@@ -829,11 +829,13 @@ SUBROUTINE testInsertEntry()
   ALLOCATE(str1(2))
   str1(1)='insert 1'
   str1(2)='insert 2'
+  !Insert into empty list
   ALLOCATE(strlist(0))
   CALL insertEntry(strlist,str1,1)
   ASSERT_EQ(SIZE(strlist),2,'SIZE list')
   ASSERT_EQ(CHAR(strlist(1)),'insert 1','list(1)')
   ASSERT_EQ(CHAR(strlist(2)),'insert 2','list(2)')
+  !Insert into list with multiple entries
   CALL insertEntry(strlist,str1,1)
   ASSERT_EQ(SIZE(strlist),4,'SIZE list')
   ASSERT_EQ(CHAR(strlist(1)),'insert 1','list(1)')
@@ -846,6 +848,7 @@ SUBROUTINE testInsertEntry()
   ASSERT_EQ(CHAR(strlist(3)),'insert 2','list(3)')
   ASSERT_EQ(CHAR(strlist(4)),'insert 2','list(4)')
   DEALLOCATE(strlist)
+  !Insert into list with 1 entry
   ALLOCATE(strlist(1))
   strlist(1)='test'
   CALL insertEntry(strlist,str1,1)
@@ -854,6 +857,7 @@ SUBROUTINE testInsertEntry()
   ASSERT_EQ(CHAR(strlist(2)),'insert 2','list(2)')
   ASSERT_EQ(CHAR(strlist(3)),'test','list(3)')
   DEALLOCATE(strlist)
+  !Insert into other list with multiple entries
   ALLOCATE(strlist(1))
   strlist(1)='test'
   CALL insertEntry(strlist,str1,2)
@@ -870,6 +874,26 @@ SUBROUTINE testInsertEntry()
   ASSERT_EQ(CHAR(strlist(5)),'insert 2','list(5)')
   DEALLOCATE(strlist)
   DEALLOCATE(str1)
+  !Insert empty list
+  ALLOCATE(str1(0))
+  ALLOCATE(strlist(0))
+  CALL insertEntry(strlist,str1,1)
+  ASSERT_EQ(SIZE(strlist),0,'SIZE list')
+  DEALLOCATE(strlist)
+  ALLOCATE(strlist(3))
+  strlist(1)='string 1'
+  strlist(2)='string 2'
+  strlist(3)='string 3'
+  CALL insertEntry(strlist,str1,1)
+  CALL insertEntry(strlist,str1,2)
+  CALL insertEntry(strlist,str1,3)
+  CALL insertEntry(strlist,str1,4)
+  ASSERT_EQ(SIZE(strlist),3,'SIZE list')
+  ASSERT_EQ(CHAR(strlist(1)),'string 1','list(1)')
+  ASSERT_EQ(CHAR(strlist(2)),'string 2','list(2)')
+  ASSERT_EQ(CHAR(strlist(3)),'string 3','list(3)')
+  DEALLOCATE(str1)
+  DEALLOCATE(strlist)
 
 ENDSUBROUTINE testInsertEntry
 !
