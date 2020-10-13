@@ -23,6 +23,7 @@ REGISTER_SUBTEST('Array Assignments',testAssign_arrays)
 REGISTER_SUBTEST('Operator Overloading',testOperators)
 REGISTER_SUBTEST('Intrinsics',testIntrinsic)
 REGISTER_SUBTEST('string_functs',testStrFunct)
+REGISTER_SUBTEST('constructor',testConstructor)
 FINALIZE_TEST()
 !
 !-------------------------------------------------------------------------------
@@ -861,5 +862,22 @@ SUBROUTINE testStrFunct()
   ASSERT_EQ(CHAR(str_list(3)),'','string with multiple delimter found')
 
 ENDSUBROUTINE testStrFunct
+SUBROUTINE testConstructor
+  TYPE(StringType) :: test0
+  TYPE(StringType),ALLOCATABLE :: test1(:)
+
+  COMPONENT_TEST('Scalar')
+  test0=StringType('test 0')
+  ASSERT_EQ(CHAR(test0),'test 0','constructor')
+
+  COMPONENT_TEST('Array')
+  test1=StringType((/'test 1','test 2','test 3'/))
+  ASSERT(ALLOCATED(test1),'ALLOCATED constructor')
+  ASSERT_EQ(SIZE(test1),3,'SIZE constructor')
+  ASSERT_EQ(CHAR(test1(1)),'test 1','array(1)')
+  ASSERT_EQ(CHAR(test1(2)),'test 2','array(2)')
+  ASSERT_EQ(CHAR(test1(3)),'test 3','array(3)')
+  
+ENDSUBROUTINE testConstructor
 !
 ENDPROGRAM testStrings
