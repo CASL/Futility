@@ -524,6 +524,8 @@ SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
 
     !Deallocate
     DEALLOCATE(tmpr)
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
 ENDSUBROUTINE getUnique_1DReal
 !
@@ -575,6 +577,8 @@ SUBROUTINE getUnique_1DInt(r,rout,delta)
     ENDDO
     !Deallocate
     DEALLOCATE(tmpr)
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
 ENDSUBROUTINE getUnique_1DInt
 !
@@ -593,11 +597,11 @@ SUBROUTINE getUnique_1DString(r,rout)
   n=SIZE(r,DIM=1)
   ALLOCATE(tmpr(n))
   tmpr=r
+  IF(ALLOCATED(rout)) DEALLOCATE(rout)
 
   !Find the number of unique entries
   sout=findNUnique_1DString(r)
   IF(sout > 0) THEN
-    IF(ALLOCATED(rout)) DEALLOCATE(rout)
     ALLOCATE(rout(sout))
     rout=''
     !remove duplicate entries
@@ -614,6 +618,8 @@ SUBROUTINE getUnique_1DString(r,rout)
         sout=sout+1
       ENDIF
     ENDDO
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
 
   !Deallocate
@@ -636,11 +642,11 @@ SUBROUTINE getUnique_2DString(r,rout)
   m=SIZE(r,DIM=2)
   ALLOCATE(tmpr(n,m))
   tmpr=r
+  IF(ALLOCATED(rout)) DEALLOCATE(rout)
 
   !Find the number of unique entries
   sout=findNUnique_2DString(r)
   IF(sout > 0) THEN
-    IF(ALLOCATED(rout)) DEALLOCATE(rout)
     ALLOCATE(rout(sout))
     rout=''
     !Remove the duplicate entries
@@ -663,6 +669,8 @@ SUBROUTINE getUnique_2DString(r,rout)
         ENDIF
       ENDDO
     ENDDO
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
   !Deallocate
   DEALLOCATE(tmpr)
