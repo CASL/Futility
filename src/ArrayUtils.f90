@@ -62,8 +62,7 @@ INTERFACE getDelta
   MODULE PROCEDURE getDelta_1DReal
 ENDINTERFACE getDelta
 
-!> @brief Generic interface to ...
-!>
+!> @brief Generic interface to retrieve the unique entries of an array
 INTERFACE getUnique
   !> @copybrief ArrayUtils::getUnique_1DReal
   !> @copydetails ArrayUtils::getUnique_1DReal
@@ -477,6 +476,8 @@ ENDFUNCTION findNUnique_2DString
 !> @param delta The optional input for whether the array is incremental or not
 !> @param tol The tolerance for comparing two real values
 !>
+!> If the input array is size 0, the output array is allocated to size 0.
+!>
 SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
   REAL(SRK),INTENT(IN) :: r(:)
   REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
@@ -537,6 +538,8 @@ ENDSUBROUTINE getUnique_1DReal
 !> @param rout The 1-D array of unique entries in the array r.
 !> @param delta The optional input for whether the array is incremental or not
 !>
+!> If the input array is size 0, the output array is allocated to size 0.
+!>
 SUBROUTINE getUnique_1DInt(r,rout,delta)
   INTEGER(SIK),INTENT(IN) :: r(:)
   INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
@@ -586,6 +589,9 @@ ENDSUBROUTINE getUnique_1DInt
 !> @brief This routine takes an array of strings and returns the array of unique
 !>        entries.
 !> @param r The input array of strings
+!> @param rout the output array of unique strings
+!>
+!> If the input array is size 0, the output array is allocated to size 0.
 !>
 SUBROUTINE getUnique_1DString(r,rout)
   TYPE(StringType),INTENT(IN) :: r(:)
@@ -631,6 +637,8 @@ ENDSUBROUTINE getUnique_1DString
 !>        entries.
 !> @param r The input 2-D array of strings.
 !> @param rout The 1-D array of unique entries in the array r.
+!>
+!> If the input array is size 0, the output array is allocated to size 0.
 !>
 SUBROUTINE getUnique_2DString(r,rout)
   TYPE(StringType),INTENT(IN) :: r(:,:)
