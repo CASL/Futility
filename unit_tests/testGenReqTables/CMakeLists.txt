@@ -8,6 +8,7 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 INCLUDE(Futility_CopyFiles)
+INCLUDE(SetTestLabels)
 
 SET(ADDITIONAL_FILES
   subtest01/testA.inp
@@ -46,9 +47,11 @@ UNSET(ADDITIONAL_FILES)
 ASSERT_DEFINED(Futility_SOURCE_DIR)
 SET(UTILPATH ${Futility_SOURCE_DIR}/cmake/GenerateRequirementsTable.py)
 
-TRIBITS_ADD_ADVANCED_TEST(testGenReqTables
+SET(TESTNAME testGenReqTables)
+TRIBITS_ADD_ADVANCED_TEST(${TESTNAME}
   FAIL_FAST
   TIMEOUT 120
+  ADDED_TEST_NAME_OUT TESTNAME_OUT
   OVERALL_NUM_TOTAL_CORES_USED 1
   
   #Subtest01
@@ -131,5 +134,6 @@ TRIBITS_ADD_ADVANCED_TEST(testGenReqTables
     ARGS ${UTILPATH} --path subtest10/ --ext .inp
     PASS_REGULAR_EXPRESSION "@beginreq was found but @endreq was not found in file"
 )
+SetTestLabels(${TESTNAME_OUT} "BASIC")
 
 UNSET(UTILPATH)

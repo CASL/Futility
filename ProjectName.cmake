@@ -9,6 +9,8 @@
 
 SET(PROJECT_NAME Futility)
 
+SET(FUTILITY_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 INCLUDE(cmake/Project_Common.cmake)
 
 # Put in hard disables for excluded packages
