@@ -86,10 +86,16 @@ ENDIF()
 
 # Other Futility preprocessor symbols
 IF(${PACKAGE_NAME}_ENABLE_DBLREAL)
+    MESSAGE(STATUS "Enabling double precision reals")
     SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} DBL)
+ELSE()
+    MESSAGE(STATUS "Enabling single precision reals")
 ENDIF()
 IF(${PACKAGE_NAME}_ENABLE_DBLINT)
+    MESSAGE(STATUS "Enabling long integers")
     SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} DBLINT)
+ELSE()
+    MESSAGE(STATUS "Enabling short integers")
 ENDIF()
 
 # Disable PURE and ELEMENTAL

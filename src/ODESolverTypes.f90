@@ -171,7 +171,11 @@ TYPE,EXTENDS(ODESolverType_Base) :: ODESolverType_Sundials
   !> order of BDF method
   INTEGER(SIK) :: BDForder=5
   !> temporary allocatable array
+#ifdef DBL
   REAL(C_DOUBLE),ALLOCATABLE :: ytmp(:)
+#else
+  REAL(C_FLOAT),ALLOCATABLE :: ytmp(:)
+#endif
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -809,11 +813,19 @@ USE ISO_C_BINDING
 USE IntrType
 USE VectorTypes
 USE ODESolverTypes
+#ifdef DBL
 REAL(C_DOUBLE),INTENT(IN) :: t
 REAL(C_DOUBLE),INTENT(IN) :: y(*)
 REAL(C_DOUBLE),INTENT(INOUT) :: ydot(*)
 INTEGER(C_LONG),INTENT(IN) :: ipar(1)
 REAL(C_DOUBLE),INTENT(IN) :: rpar(1)
+#else
+  REAL(C_FLOAT),INTENT(IN) :: t
+  REAL(C_FLOAT),INTENT(IN) :: y(*)
+  REAL(C_FLOAT),INTENT(INOUT) :: ydot(*)
+  INTEGER(C_INT),INTENT(IN) :: ipar(1)
+  REAL(C_FLOAT),INTENT(IN) :: rpar(1)
+#endif
 INTEGER(C_INT),INTENT(INOUT) :: ierr
 
 INTEGER(SIK) :: n

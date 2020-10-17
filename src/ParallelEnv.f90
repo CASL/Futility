@@ -272,6 +272,9 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copybrief ParallelEnv::allReduceR_array_MPI_Env_type
     !> @copydetails  ParallelEnv::allReduceR_array_MPI_Env_type
     PROCEDURE,PASS :: allReduce => allReduceR_array_MPI_Env_type
+    !> @copybrief ParallelEnv::allReduceSSK_array_MPI_Env_type
+    !> @copydetails  ParallelEnv::allReduceSSK_array_MPI_Env_type
+    PROCEDURE,PASS :: allReduceS => allReduceSSK_array_MPI_Env_type
     !> @copybrief ParallelEnv::allReduceI_scalar_MPI_Env_type
     !> @copydetails  ParallelEnv::allReduceI_scalar_MPI_Env_type
     PROCEDURE,PASS :: allReduceI_scalar => allReduceI_scalar_MPI_Env_type
@@ -820,7 +823,7 @@ SUBROUTINE send_REAL_MPI_Env_type(myPE,sendbuf,destProc,in_tag)
 #ifdef DBL
   CALL MPI_send(sendBuf,1,MPI_DOUBLE_PRECISION,destProc,tag,myPE%comm,mpierr)
 #else
-  CALL MPI_send(sendBuf,1,MPI_SINGLE_PRECISION,destProc,tag,myPE%comm,mpierr)
+  CALL MPI_send(sendBuf,1,MPI_FLOAT,destProc,tag,myPE%comm,mpierr)
 #endif
 #endif
 ENDSUBROUTINE send_REAL_MPI_Env_type
@@ -846,7 +849,7 @@ SUBROUTINE send_REAL1_MPI_Env_type(myPE,sendbuf,n,destProc,in_tag)
 #ifdef DBL
   CALL MPI_send(sendBuf,n,MPI_DOUBLE_PRECISION,destProc,tag,myPE%comm,mpierr)
 #else
-  CALL MPI_send(sendBuf,n,MPI_SINGLE_PRECISION,destProc,tag,myPE%comm,mpierr)
+  CALL MPI_send(sendBuf,n,MPI_FLOAT,destProc,tag,myPE%comm,mpierr)
 #endif
 #endif
 ENDSUBROUTINE send_REAL1_MPI_Env_type
@@ -893,7 +896,7 @@ SUBROUTINE recv_REAL_MPI_Env_type(myPE,recvbuf,srcProc,in_tag)
 #ifdef DBL
   CALL MPI_recv(recvBuf,1,MPI_DOUBLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
 #else
-  CALL MPI_recv(recvBuf,1,MPI_SINGLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
+  CALL MPI_recv(recvBuf,1,MPI_FLOAT,srcProc,tag,myPE%comm,stat,mpierr)
 #endif
 #endif
 ENDSUBROUTINE recv_REAL_MPI_Env_type
@@ -920,7 +923,7 @@ SUBROUTINE recv_REAL1_MPI_Env_type(myPE,recvbuf,n,srcProc,in_tag)
 #ifdef DBL
   CALL MPI_recv(recvBuf,n,MPI_DOUBLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
 #else
-  CALL MPI_recv(recvBuf,n,MPI_SINGLE_PRECISION,srcProc,tag,myPE%comm,stat,mpierr)
+  CALL MPI_recv(recvBuf,n,MPI_FLOAT,srcProc,tag,myPE%comm,stat,mpierr)
 #endif
 #endif
 ENDSUBROUTINE recv_REAL1_MPI_Env_type
@@ -1470,7 +1473,7 @@ SUBROUTINE allReduceR_scalar_MPI_Env_type(myPE,x)
   CALL MPI_Allreduce(x,rbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
       myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,1,MPI_SINGLE_PRECISION,MPI_SUM, &
+  CALL MPI_Allreduce(x,rbuf,1,MPI_FLOAT,MPI_SUM, &
       myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
@@ -1504,7 +1507,7 @@ SUBROUTINE allReduceR_array_MPI_Env_type(myPE,n,x)
   CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
       myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM, &
+  CALL MPI_Allreduce(x,rbuf,n,MPI_FLOAT,MPI_SUM, &
       myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
@@ -1517,6 +1520,37 @@ SUBROUTINE allReduceR_array_MPI_Env_type(myPE,n,x)
   DEALLOCATE(rbuf)
 #endif
 ENDSUBROUTINE allReduceR_array_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Allreduce and performs a sum of operation
+!> for a real array.
+!> @param myPE the MPI parallel environment
+!> @param n the number of data elements to communicate
+!> @param x the partial sum to be returned as the total sum
+!>
+!> This routine only performs a sum operation and only for reals.
+!>
+SUBROUTINE allReduceSSK_array_MPI_Env_type(myPE,n,x)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  INTEGER(SIK),INTENT(IN) :: n
+  REAL(SSK),INTENT(INOUT) :: x(*)
+#ifdef HAVE_MPI
+  CHARACTER(LEN=*),PARAMETER :: myName='allReduceR_array_MPI_Env_type'
+  REAL(SSK),ALLOCATABLE :: rbuf(:)
+  REQUIRE(myPE%initstat)
+  ALLOCATE(rbuf(n))
+  CALL MPI_Allreduce(x,rbuf,n,MPI_FLOAT,MPI_SUM, &
+      myPE%comm,mpierr)
+  IF(mpierr /= MPI_SUCCESS) THEN
+    CALL eParEnv%raiseError(modName//'::'// &
+        myName//' - call to MPI_Allreduce returned an error!')
+  ELSE
+    !Copy the result to the output argument
+    CALL BLAS_copy(n,rbuf,1,x,1)
+  ENDIF
+  DEALLOCATE(rbuf)
+#endif
+ENDSUBROUTINE allReduceSSK_array_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Allreduce and performs a max operation
@@ -1536,7 +1570,7 @@ SUBROUTINE allReduceMaxR_scalar_MPI_Env_type(myPE,x)
 #ifdef DBL
   CALL MPI_Allreduce(x,rbuf,1,MPI_DOUBLE_PRECISION,MPI_MAX,myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX,myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,1,MPI_FLOAT,MPI_MAX,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
@@ -1568,7 +1602,7 @@ SUBROUTINE allReduceMaxR_array_MPI_Env_type(myPE,n,x)
   CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MAX, &
       myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX, &
+  CALL MPI_Allreduce(x,rbuf,n,MPI_FLOAT,MPI_MAX, &
       myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
@@ -1599,7 +1633,7 @@ SUBROUTINE allReduceMinR_scalar_MPI_Env_type(myPE,x)
 #ifdef DBL
   CALL MPI_Allreduce(x,rbuf,1,MPI_DOUBLE_PRECISION,MPI_MIN,myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN,myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,1,MPI_FLOAT,MPI_MIN,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
@@ -1631,7 +1665,7 @@ SUBROUTINE allReduceMinR_array_MPI_Env_type(myPE,n,x)
   CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MIN, &
       myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN, &
+  CALL MPI_Allreduce(x,rbuf,n,MPI_FLOAT,MPI_MIN, &
       myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN

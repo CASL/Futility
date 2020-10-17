@@ -80,7 +80,7 @@ PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(==)
 
 PUBLIC :: char_to_int_array
-PUBLIC :: char_to_double_array
+PUBLIC :: char_to_real_array
 PUBLIC :: char_to_string_array
 
 !> The module name
@@ -11104,7 +11104,7 @@ RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
   REAL(SSK) :: singleVal
   REAL(SDK) :: doubleVal
   INTEGER(SIK),ALLOCATABLE :: intArry(:)
-  REAL(SDK),ALLOCATABLE :: doubleArry(:)
+  REAL(SRK),ALLOCATABLE :: doubleArry(:)
   TYPE(StringType),ALLOCATABLE :: strArry(:)
 
   NULLIFY(pList)
@@ -11150,7 +11150,7 @@ RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
         CALL char_to_int_array(intArry,CHAR(attrVal))
         CALL thisParam%add(CHAR(tmpPath),intArry)
       CASE('ARRAY(DOUBLE)')
-        CALL char_to_double_array(doubleArry,CHAR(attrVal))
+        CALL char_to_real_array(doubleArry,CHAR(attrVal))
         CALL thisParam%add(CHAR(tmpPath),doubleArry,'XML_IN_VAL='//attrval)
       CASE('ARRAY(STRING)')
         CALL char_to_string_array(strArry,CHAR(attrVal))
@@ -11312,7 +11312,7 @@ RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
       IF(idx > 0) THEN
         idx=idx+11
         oVal = param%description%substr(idx,LEN_TRIM(param%description))
-        CALL char_to_double_array(oDoubleArry,CHAR(oVal))
+        CALL char_to_real_array(oDoubleArry,CHAR(oVal))
         CALL param%get(TRIM(param%name),doubleArry)
 
         IF(ALL(doubleArry == oDoubleArry)) THEN
@@ -11425,11 +11425,11 @@ ENDSUBROUTINE
 !> string to an array of doubles
 !> @param dArr the array of doubles
 !> @param c the character value
-SUBROUTINE char_to_double_array(dArr,c)
-  REAL(SDK),ALLOCATABLE,INTENT(OUT) :: dArr(:)
+SUBROUTINE char_to_real_array(dArr,c)
+  REAL(SRK),ALLOCATABLE,INTENT(OUT) :: dArr(:)
   CHARACTER(LEN=*),INTENT(IN) :: c
   CHARACTER(LEN=50) :: tmpStr
-  REAL(SDK) :: tmpDouble
+  REAL(SRK) :: tmpDouble
   INTEGER(SIK) :: numElts
   INTEGER(SIK) :: i,j,k
 
@@ -11454,7 +11454,7 @@ SUBROUTINE char_to_double_array(dArr,c)
       k=k+1
     ENDIF
   ENDDO
-ENDSUBROUTINE char_to_double_array
+ENDSUBROUTINE char_to_real_array
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing an assignment of a character
