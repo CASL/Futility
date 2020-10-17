@@ -171,7 +171,7 @@ SUBROUTINE test1DReals()
   bool=ALL(tmpr == (/1.0_SRK,1.0000000000100000_SRK,2.0_SRK/))
   ASSERT(bool,'getUnique, 3 unique with TOL')
   CALL getUnique(tmprealarray(1:0),tmpr)
-  ASSERT(.NOT. ALLOCATED(tmpr),'getUnique, size 0 array')
+  ASSERT_EQ(SIZE(tmpr),0,'getUnique, size 0 array')
 
   !
   COMPONENT_TEST('findIndex 1-D Array')
@@ -578,7 +578,7 @@ SUBROUTINE test1DInts()
   bool=ALL(tmpi == (/0,2,5,20,25,40,100/))
   ASSERT(bool,'getUnique, 3 duplicates')
   CALL getUnique(tmpintarray(1:0),tmpi)
-  ASSERT(.NOT. ALLOCATED(tmpi),'getUnique, size 0 array')
+  ASSERT_EQ(SIZE(tmpi),0,'getUnique, size 0 array')
 
 ENDSUBROUTINE test1DInts
 !
@@ -615,7 +615,7 @@ SUBROUTINE test1DStrings()
   tmpstr1a=''
   IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
   CALL getUnique(tmpstr1a,tmps1)
-  ASSERT(.NOT.ALLOCATED(tmps1),'empty array')
+  ASSERT_EQ(SIZE(tmps1),0,'empty array')
   tmpstr1a(1)='one'
   tmpstr1a(2)='two'
   tmpstr1a(3)='three'
@@ -677,7 +677,7 @@ SUBROUTINE test2DStrings()
   tmpstr2a=''
   IF(ALLOCATED(tmps1)) DEALLOCATE(tmps1)
   CALL getUnique(tmpstr2a,tmps1)
-  ASSERT(.NOT.ALLOCATED(tmps1),'empty array')
+  ASSERT_EQ(SIZE(tmps1),0,'empty array')
   tmpstr2a(1,1)='one'
   tmpstr2a(1,2)='three'
   tmpstr2a(2,1)='two'

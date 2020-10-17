@@ -62,8 +62,7 @@ INTERFACE getDelta
   MODULE PROCEDURE getDelta_1DReal
 ENDINTERFACE getDelta
 
-!> @brief Generic interface to ...
-!>
+!> @brief Generic interface to retrieve the unique entries of an array
 INTERFACE getUnique
   !> @copybrief ArrayUtils::getUnique_1DReal
   !> @copydetails ArrayUtils::getUnique_1DReal
@@ -477,6 +476,8 @@ ENDFUNCTION findNUnique_2DString
 !> @param delta The optional input for whether the array is incremental or not
 !> @param tol The tolerance for comparing two real values
 !>
+!> If the input array is size 0, the output array is allocated to size 0.
+!>
 SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
   REAL(SRK),INTENT(IN) :: r(:)
   REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: rout(:)
@@ -524,6 +525,8 @@ SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
 
     !Deallocate
     DEALLOCATE(tmpr)
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
 ENDSUBROUTINE getUnique_1DReal
 !
@@ -534,6 +537,8 @@ ENDSUBROUTINE getUnique_1DReal
 !> @param r The input array of integers
 !> @param rout The 1-D array of unique entries in the array r.
 !> @param delta The optional input for whether the array is incremental or not
+!>
+!> If the input array is size 0, the output array is allocated to size 0.
 !>
 SUBROUTINE getUnique_1DInt(r,rout,delta)
   INTEGER(SIK),INTENT(IN) :: r(:)
@@ -575,6 +580,8 @@ SUBROUTINE getUnique_1DInt(r,rout,delta)
     ENDDO
     !Deallocate
     DEALLOCATE(tmpr)
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
 ENDSUBROUTINE getUnique_1DInt
 !
@@ -582,6 +589,9 @@ ENDSUBROUTINE getUnique_1DInt
 !> @brief This routine takes an array of strings and returns the array of unique
 !>        entries.
 !> @param r The input array of strings
+!> @param rout the output array of unique strings
+!>
+!> If the input array is size 0, the output array is allocated to size 0.
 !>
 SUBROUTINE getUnique_1DString(r,rout)
   TYPE(StringType),INTENT(IN) :: r(:)
@@ -593,11 +603,11 @@ SUBROUTINE getUnique_1DString(r,rout)
   n=SIZE(r,DIM=1)
   ALLOCATE(tmpr(n))
   tmpr=r
+  IF(ALLOCATED(rout)) DEALLOCATE(rout)
 
   !Find the number of unique entries
   sout=findNUnique_1DString(r)
   IF(sout > 0) THEN
-    IF(ALLOCATED(rout)) DEALLOCATE(rout)
     ALLOCATE(rout(sout))
     rout=''
     !remove duplicate entries
@@ -614,6 +624,8 @@ SUBROUTINE getUnique_1DString(r,rout)
         sout=sout+1
       ENDIF
     ENDDO
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
 
   !Deallocate
@@ -626,6 +638,8 @@ ENDSUBROUTINE getUnique_1DString
 !> @param r The input 2-D array of strings.
 !> @param rout The 1-D array of unique entries in the array r.
 !>
+!> If the input array is size 0, the output array is allocated to size 0.
+!>
 SUBROUTINE getUnique_2DString(r,rout)
   TYPE(StringType),INTENT(IN) :: r(:,:)
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: rout(:)
@@ -636,11 +650,11 @@ SUBROUTINE getUnique_2DString(r,rout)
   m=SIZE(r,DIM=2)
   ALLOCATE(tmpr(n,m))
   tmpr=r
+  IF(ALLOCATED(rout)) DEALLOCATE(rout)
 
   !Find the number of unique entries
   sout=findNUnique_2DString(r)
   IF(sout > 0) THEN
-    IF(ALLOCATED(rout)) DEALLOCATE(rout)
     ALLOCATE(rout(sout))
     rout=''
     !Remove the duplicate entries
@@ -663,6 +677,8 @@ SUBROUTINE getUnique_2DString(r,rout)
         ENDIF
       ENDDO
     ENDDO
+  ELSE
+    ALLOCATE(rout(0))
   ENDIF
   !Deallocate
   DEALLOCATE(tmpr)
