@@ -153,22 +153,22 @@ INTEGER,PARAMETER :: SIK=SNK
 !> double precision real numbers.
 !>
 !> Only relevant for .APPROXEQ. operator
-REAL(SDK),PARAMETER :: EPSD=1.e-14_SDK
+REAL(SRK),PARAMETER :: EPSD=1.e-14_SRK
 
 !> @brief The number of significant digits to use when comparing
 !> single precision real numbers
 !>
 !> Only relevant for .APPROXEQ. operator
-REAL(SDK),PARAMETER :: EPSS=1.e-5_SDK
+REAL(SRK),PARAMETER :: EPSS=1.e-5_SRK
 
 !> @brief The number of significant digits to use when comparing
 !> real numbers.
 !>
 !> Only relevant for .APPROXEQ. operator
 #ifdef DBL
-REAL(SDK),PARAMETER :: EPSREAL=EPSD
+REAL(SRK),PARAMETER :: EPSREAL=EPSD
 #else
-REAL(SDK),PARAMETER :: EPSREAL=EPSS
+REAL(SRK),PARAMETER :: EPSREAL=EPSS
 #endif
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic

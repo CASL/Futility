@@ -334,7 +334,7 @@ FUNCTION findNUnique_1DReal(r,delta,tol) RESULT(sout)
       ALLOCATE(tmpr(n))
       tmpr=r
     ENDIF
-    loctol=REAL(EPSREAL,SRK)*100.0_SRK
+    loctol=EPSREAL*100.0_SRK
     IF(PRESENT(tol)) THEN
       IF((0.0_SRK < tol)) loctol=tol
     ENDIF
@@ -500,7 +500,7 @@ SUBROUTINE getUnique_1DReal(r,rout,delta,tol)
       ALLOCATE(tmpr(n))
       tmpr=r
     ENDIF
-    loctol=REAL(EPSREAL,SRK)*100.0_SRK
+    loctol=EPSREAL*100.0_SRK
     IF(PRESENT(tol)) THEN
       IF((0.0_SRK < tol)) loctol=tol
     ENDIF
@@ -700,7 +700,7 @@ SUBROUTINE getUnion_1DReal(r1,r2,rout,xi1,xi2,delta1,delta2,deltaout,tol)
   REAL(SRK) :: localtol
   REAL(SRK),ALLOCATABLE :: tmpout(:),tmpout2(:),tmp1(:),tmp2(:)
 
-  localtol=REAL(EPSREAL,SRK)
+  localtol=EPSREAL
   IF(PRESENT(tol)) localtol=tol
   IF(ALLOCATED(rout)) DEALLOCATE(rout)
   !Process the first array if it is a delta
@@ -850,9 +850,9 @@ PURE FUNCTION findIndex_1DReal(r,pos,delta,incl,tol) RESULT(ind)
   ENDIF
 
   !If there is a tolerance specified, assign it
-  l_tol=REAL(EPSREAL,SRK)
+  l_tol=EPSREAL
   IF(PRESENT(tol)) THEN
-    !Give tolerance a range of say 1000*REAL(EPSREAL,SRK)
+    !Give tolerance a range of say 1000*EPSREAL
     IF((0.0_SRK < tol)) l_tol=tol
   ENDIF
 
@@ -998,7 +998,7 @@ PURE FUNCTION findLowBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
   ENDIF
 
   !If tol is present
-  l_tol=REAL(EPSREAL,SRK)
+  l_tol=EPSREAL
   IF(PRESENT(tol)) THEN
     IF((0.0_SRK < tol)) l_tol=tol
   ENDIF
@@ -1058,7 +1058,7 @@ PURE FUNCTION findUpBound_1DReal(r,pos,delta,incl,tol) RESULT(val)
   ENDIF
 
   !If tol is present
-  l_tol=REAL(EPSREAL,SRK)
+  l_tol=EPSREAL
   IF(PRESENT(tol)) THEN
     IF((0.0_SRK < tol)) l_tol=tol
   ENDIF
@@ -1211,7 +1211,7 @@ PURE FUNCTION isStrictlyIncDec_1DReal(r) RESULT(good)
   good=.FALSE.
 
   IF(SIZE(r) > 1) THEN
-    IF(SOFTLT(r(1),r(2),REAL(EPSREAL,SRK))) THEN
+    IF(SOFTLT(r(1),r(2),EPSREAL)) THEN
       good=isStrictlyIncreasing(r)
     ELSE
       good=isStrictlyDecreasing(r)
@@ -1234,7 +1234,7 @@ PURE FUNCTION isStrictlyIncreasing_1DReal(r) RESULT(good)
 
   IF(SIZE(r) > 1) THEN
     DO i=2,SIZE(r)
-      IF(SOFTLE(r(i),r(i-1),REAL(EPSREAL,SRK))) good=.FALSE.
+      IF(SOFTLE(r(i),r(i-1),EPSREAL)) good=.FALSE.
     ENDDO
   ELSE
     good=.FALSE.
@@ -1256,7 +1256,7 @@ PURE FUNCTION isStrictlyDecreasing_1DReal(r) RESULT(good)
 
   IF(SIZE(r) > 1) THEN
     DO i=2,SIZE(r)
-      IF(SOFTGE(r(i),r(i-1),REAL(EPSREAL,SRK))) good=.FALSE.
+      IF(SOFTGE(r(i),r(i-1),EPSREAL)) good=.FALSE.
     ENDDO
   ELSE
     good=.FALSE.
@@ -1276,7 +1276,7 @@ PURE FUNCTION isMonotonic_1DReal(r) RESULT(good)
   good=.FALSE.
 
   IF(SIZE(r) > 1) THEN
-    IF(SOFTLT(r(1),r(SIZE(r)),REAL(EPSREAL,SRK))) THEN
+    IF(SOFTLT(r(1),r(SIZE(r)),EPSREAL)) THEN
       good=isIncreasing(r)
     ELSE
       good=isDecreasing(r)
@@ -1299,7 +1299,7 @@ PURE FUNCTION isIncreasing_1DReal(r) RESULT(good)
 
   IF(SIZE(r) > 1) THEN
     DO i=2,SIZE(r)
-      IF(SOFTLT(r(i),r(i-1),REAL(EPSREAL,SRK))) good=.FALSE.
+      IF(SOFTLT(r(i),r(i-1),EPSREAL)) good=.FALSE.
     ENDDO
   ELSE
     good=.FALSE.
@@ -1321,7 +1321,7 @@ PURE FUNCTION isDecreasing_1DReal(r) RESULT(good)
 
   IF(SIZE(r) > 1) THEN
     DO i=2,SIZE(r)
-      IF(SOFTGT(r(i),r(i-1),REAL(EPSREAL,SRK))) good=.FALSE.
+      IF(SOFTGT(r(i),r(i-1),EPSREAL)) good=.FALSE.
     ENDDO
   ELSE
     good=.FALSE.

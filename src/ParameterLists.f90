@@ -3243,7 +3243,7 @@ FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
     CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
     CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
     bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
-    IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+    IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,REAL(EPSD*10._SRK,SDK))
     ASSERT(bool, prefix//CHAR(thisParam%name))
     FINFO() 'test value=',tmpsdk1
     FINFO() 'ref. value=',tmpsdk2
@@ -3296,7 +3296,7 @@ FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
     FINFO() SIZE(tmpsdka11,DIM=1), SIZE(tmpsdka12,DIM=1)
     IF(bool) THEN
       bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
-      IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
+      IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,REAL(EPSD*1000._SRK,SDK)))
       ASSERT(bool, prefix//CHAR(thisParam%name))
       FINFO() 'test values=',tmpsdka11
       FINFO() 'ref. values=',tmpsdka12
@@ -3728,7 +3728,7 @@ FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
     CALL thisParam%get(CHAR(thisParam%name),tmpsdk1)
     CALL paramPtr%get(CHAR(paramPtr%name),tmpsdk2)
     bool=(tmpsdk1 .APPROXEQ. tmpsdk2)
-    IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,EPSD*10._SRK)
+    IF(.NOT.bool) bool=SOFTEQ(tmpsdk1,tmpsdk2,REAL(EPSD*10._SRK,SDK))
   TYPE IS(ParamType_SNK)
     CALL thisParam%get(CHAR(thisParam%name),tmpsnk1)
     CALL paramPtr%get(CHAR(paramPtr%name),tmpsnk2)
@@ -3761,7 +3761,7 @@ FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
     bool=SIZE(tmpsdka11,DIM=1) == SIZE(tmpsdka12,DIM=1)
     IF(bool) THEN
       bool=ALL(tmpsdka11 .APPROXEQ. tmpsdka12)
-      IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,EPSD*1000._SRK))
+      IF(.NOT.bool) bool=ALL(SOFTEQ(tmpsdka11,tmpsdka12,REAL(EPSD*1000._SRK,SDK)))
     ELSE
       errmesstt=' - Dimension 1'
     ENDIF
