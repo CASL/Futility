@@ -159,7 +159,7 @@ REAL(SRK),PARAMETER :: EPSD=1.e-14_SRK
 !> single precision real numbers
 !>
 !> Only relevant for .APPROXEQ. operator
-REAL(SRK),PARAMETER :: EPSS=1.e-5_SRK
+REAL(SRK),PARAMETER :: EPSS=1.e-7_SRK
 
 !> @brief The number of significant digits to use when comparing
 !> real numbers.
