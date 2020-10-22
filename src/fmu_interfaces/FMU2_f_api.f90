@@ -51,11 +51,11 @@ USE Strings
       USE ISO_C_BINDING
       IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
-      LOGICAL(C_BOOL),INTENT(IN) :: toleranceDefined
-      REAL(C_DOUBLE),INTENT(IN) :: tolerance
-      REAL(C_DOUBLE),INTENT(IN) :: startTime
-      LOGICAL(C_BOOL),INTENT(IN) :: stopTimeDefined
-      REAL(C_DOUBLE),INTENT(IN) :: stopTime
+      LOGICAL(C_BOOL),INTENT(IN),VALUE :: toleranceDefined
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: tolerance
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: startTime
+      LOGICAL(C_BOOL),INTENT(IN),VALUE :: stopTimeDefined
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: stopTime
     ENDSUBROUTINE
 
     SUBROUTINE getRealFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getRealFMU2_Slave")

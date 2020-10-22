@@ -26,14 +26,19 @@ C_FMU2Slave InitilizeFMU2_Slave(int slave_id, char* guid, char* modelIdentifier,
   std::cout << "FMU2_Slave Init instanceName: " << instanceName_str << std::endl;
   // return reinterpret_cast<void*>(new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName));
   fmikit::FMU2Slave *s = new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName);
+  s->instantiate(true);
   std::cout << "FMU2_Slave Init ptr: " << s << std::endl;
   std::cout << "FMU2_Slave Init id: " << slave_id << " init done!" << std::endl;
   return (C_FMU2Slave)s;
 }
 
-void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, double tolerance, double startTime, double stopTimeDefined, double stopTime)
+void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, double tolerance, double startTime, bool stopTimeDefined, double stopTime)
 {
+  std::cout << "FMU2_Slave  setupExperiment startTime: " << startTime << std::endl;
+  std::cout << "FMU2_Slave  setupExperiment stopTime: " << stopTime << std::endl;
+  std::cout << "FMU2_Slave  setupExperiment tol: " << tolerance << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setupExperiment(toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
+  std::cout << "FMU2_Slave  setupExperiment done! " << std::endl;
 }
 
 void getRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double& val)
@@ -41,7 +46,7 @@ void getRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double& val)
   std::cout << "FMU2_Slave  getReal address: " << fmu2_slave << std::endl;
   std::cout << "FMU2_Slave  getReal valueReference: " << valueReference << std::endl;
   val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getReal(valueReference);
-  std::cout << "FMU2_Slave getReal value" << val << std::endl;
+  std::cout << "FMU2_Slave  getReal value: " << val << std::endl;
 }
 
 void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
@@ -51,7 +56,8 @@ void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
 
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
-  std::cout << "FMU2_Slave address: " << fmu2_slave << std::endl;
-  std::cout << "FMU2_Slave Takeing step: " << h << std::endl;
+  std::cout << "FMU2_Slave doStep address: " << fmu2_slave << std::endl;
+  std::cout << "FMU2_Slave doStop dt: " << h << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);
+  std::cout << "FMU2_Slave doStop done! " << std::endl;
 }

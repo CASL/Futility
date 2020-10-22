@@ -227,7 +227,6 @@ SUBROUTINE doStep_FMU2_Slave(self,h)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   REAL(SRK),INTENT(IN) :: h
 
-  WRITE(*,*) "Do step: ", h
   CALL doStepFMU2_Slave(fmu_c_ptr, h)
 ENDSUBROUTINE
 

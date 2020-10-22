@@ -5,6 +5,7 @@
  *  This file is part of FMIKit. See LICENSE.txt in the project  *
  *  root for license information.                                *
  *****************************************************************/
+#include <iostream>
 # ifdef _WIN32
 #include <libloaderapi.h>
 # else

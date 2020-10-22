@@ -12,7 +12,7 @@ typedef void* C_FMU2Slave;
 
 extern "C" C_FMU2Slave InitilizeFMU2_Slave(int id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName);
 
-extern "C" void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, double tolerance, double startTime, double stopTimeDefined, double stopTime);
+extern "C" void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, double tolerance, double startTime, bool stopTimeDefined, double stopTime);
 
 // valueReference is the id of the variable you want to get from the FMU model.
 // valueReferences are defined in the FMU XML model def
