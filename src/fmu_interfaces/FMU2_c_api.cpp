@@ -14,20 +14,21 @@
 #include "FMU2_c_api.h"
 
 //void InitilizeFMU2_Slave(void* slave_ptr, int slave_id, const std::string &guid, const std::string &modelIdentifier, const std::string &unzipDirectory, const std::string &instanceName)
-void InitilizeFMU2_Slave(void* slave_ptr, int slave_id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName)
+C_FMU2Slave InitilizeFMU2_Slave(int slave_id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName)
 {
   std::string guid_str(guid);
   std::string modelIdentifier_str(modelIdentifier);
   std::string unzipDirectory_str(unzipDirectory);
   std::string instanceName_str(instanceName);
-  std::cout << "FMU2_Slave " << slave_id << " init ..." << std::endl;
-  std::cout << "FMU2_Slave guid: " << guid_str << std::endl;
-  std::cout << "FMU2_Slave modelIdentifier: " << modelIdentifier_str << std::endl;
-  std::cout << "FMU2_Slave unzipDirectory: " << unzipDirectory_str << std::endl;
-  std::cout << "FMU2_Slave instanceName: " << instanceName_str << std::endl;
-  slave_ptr = reinterpret_cast<void*>(new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName));
-  std::cout << "FMU2_Slave address: " << slave_ptr << std::endl;
-  std::cout << "FMU2_Slave: " << slave_id << " init done!" << std::endl;
+  std::cout << "FMU2_Slave Init guid: " << guid_str << std::endl;
+  std::cout << "FMU2_Slave Init modelIdentifier: " << modelIdentifier_str << std::endl;
+  std::cout << "FMU2_Slave Init unzipDirectory: " << unzipDirectory_str << std::endl;
+  std::cout << "FMU2_Slave Init instanceName: " << instanceName_str << std::endl;
+  // return reinterpret_cast<void*>(new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName));
+  fmikit::FMU2Slave *s = new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName);
+  std::cout << "FMU2_Slave Init ptr: " << s << std::endl;
+  std::cout << "FMU2_Slave Init id: " << slave_id << " init done!" << std::endl;
+  return (C_FMU2Slave)s;
 }
 
 void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, double tolerance, double startTime, double stopTimeDefined, double stopTime)

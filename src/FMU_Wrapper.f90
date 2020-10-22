@@ -178,7 +178,7 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
 
    ! Initilize the FMU
    ! WRITE(*,*) "GUID len: ", LEN(self%guid)
-  CALL InitilizeFMU2_Slave(fmu_c_ptr, self%idFMU, &
+  fmu_c_ptr = InitilizeFMU2_Slave(self%idFMU, &
     CHAR(self%guid)//c_null_char, &
     CHAR(self%modelIdentifier)//c_null_char, &
     CHAR(self%unzipDirectory)//c_null_char, &

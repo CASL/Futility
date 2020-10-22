@@ -36,21 +36,21 @@ USE Strings
 !-------------------------------------------------------------------------------
     ! When calling from FORTRAN, need to append C_NULL_CHAR to name:
     !    CHAR(my_guid)//c_null_char
-    SUBROUTINE InitilizeFMU2_Slave(slave_ptr,slave_id, guid, modelIdentifier, unzipDirectory, instanceName) bind(C,NAME="InitilizeFMU2_Slave")
+    FUNCTION InitilizeFMU2_Slave(slave_id, guid, modelIdentifier, unzipDirectory, instanceName) result(slave_ptr)bind(C,NAME="InitilizeFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
-      TYPE(C_PTR),INTENT(OUT) :: slave_ptr
       INTEGER(C_INT),INTENT(IN),VALUE :: slave_id
       CHARACTER(C_CHAR),INTENT(IN) :: guid
       CHARACTER(C_CHAR),INTENT(IN) :: modelIdentifier
       CHARACTER(C_CHAR),INTENT(IN) :: unzipDirectory
       CHARACTER(C_CHAR),INTENT(IN) :: instanceName
-    ENDSUBROUTINE
+      TYPE(C_PTR) :: slave_ptr
+    ENDFUNCTION
 
     SUBROUTINE setupExperimentFMU2_Slave(slave_ptr, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime) bind(C,NAME="setupExperimentFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
-      TYPE(C_PTR),INTENT(IN) :: slave_ptr
+      TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       LOGICAL(C_BOOL),INTENT(IN) :: toleranceDefined
       REAL(C_DOUBLE),INTENT(IN) :: tolerance
       REAL(C_DOUBLE),INTENT(IN) :: startTime
@@ -61,15 +61,15 @@ USE Strings
     SUBROUTINE getRealFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getRealFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
-      TYPE(C_PTR),INTENT(IN) :: slave_ptr
-      INTEGER(C_INT),INTENT(IN) :: valueReference
+      TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
       REAL(C_DOUBLE),INTENT(INOUT) :: val
     ENDSUBROUTINE
 
     SUBROUTINE setRealFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="setRealFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
-      TYPE(C_PTR),INTENT(IN) :: slave_ptr
+      TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       INTEGER(C_INT),INTENT(IN) :: valueReference
       REAL(C_DOUBLE),INTENT(IN) :: val
     ENDSUBROUTINE
@@ -77,8 +77,8 @@ USE Strings
     SUBROUTINE doStepFMU2_Slave(slave_ptr,h) bind(C,NAME="doStepFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
-      TYPE(C_PTR),INTENT(IN) :: slave_ptr
-      REAL(C_DOUBLE),INTENT(IN) :: h
+      TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: h
     ENDSUBROUTINE
 
   ENDINTERFACE
