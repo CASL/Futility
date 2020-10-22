@@ -47,6 +47,33 @@ USE Strings
       CHARACTER(C_CHAR),INTENT(IN) :: instanceName
     ENDSUBROUTINE
 
+    SUBROUTINE setupExperimentFMU2_Slave(slave_ptr, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime) bind(C,NAME="setupExperimentFMU2_Slave")
+      USE ISO_C_BINDING
+      IMPORT :: C_PTR
+      TYPE(C_PTR),INTENT(IN) :: slave_ptr
+      LOGICAL(C_BOOL),INTENT(IN) :: toleranceDefined
+      REAL(C_DOUBLE),INTENT(IN) :: tolerance
+      REAL(C_DOUBLE),INTENT(IN) :: startTime
+      LOGICAL(C_BOOL),INTENT(IN) :: stopTimeDefined
+      REAL(C_DOUBLE),INTENT(IN) :: stopTime
+    ENDSUBROUTINE
+
+    SUBROUTINE getRealFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getRealFMU2_Slave")
+      USE ISO_C_BINDING
+      IMPORT :: C_PTR
+      TYPE(C_PTR),INTENT(IN) :: slave_ptr
+      INTEGER(C_INT),INTENT(IN) :: valueReference
+      REAL(C_DOUBLE),INTENT(INOUT) :: val
+    ENDSUBROUTINE
+
+    SUBROUTINE setRealFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="setRealFMU2_Slave")
+      USE ISO_C_BINDING
+      IMPORT :: C_PTR
+      TYPE(C_PTR),INTENT(IN) :: slave_ptr
+      INTEGER(C_INT),INTENT(IN) :: valueReference
+      REAL(C_DOUBLE),INTENT(IN) :: val
+    ENDSUBROUTINE
+
     SUBROUTINE doStepFMU2_Slave(slave_ptr,h) bind(C,NAME="doStepFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR

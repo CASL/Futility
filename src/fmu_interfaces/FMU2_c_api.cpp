@@ -26,11 +26,31 @@ void InitilizeFMU2_Slave(void* slave_ptr, int slave_id, char* guid, char* modelI
   std::cout << "FMU2_Slave unzipDirectory: " << unzipDirectory_str << std::endl;
   std::cout << "FMU2_Slave instanceName: " << instanceName_str << std::endl;
   slave_ptr = reinterpret_cast<void*>(new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName));
+  std::cout << "FMU2_Slave address: " << slave_ptr << std::endl;
   std::cout << "FMU2_Slave: " << slave_id << " init done!" << std::endl;
+}
+
+void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, double tolerance, double startTime, double stopTimeDefined, double stopTime)
+{
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setupExperiment(toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
+}
+
+void getRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double& val)
+{
+  std::cout << "FMU2_Slave  getReal address: " << fmu2_slave << std::endl;
+  std::cout << "FMU2_Slave  getReal valueReference: " << valueReference << std::endl;
+  val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getReal(valueReference);
+  std::cout << "FMU2_Slave getReal value" << val << std::endl;
+}
+
+void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
+{
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setReal(valueReference, val);
 }
 
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
+  std::cout << "FMU2_Slave address: " << fmu2_slave << std::endl;
   std::cout << "FMU2_Slave Takeing step: " << h << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);
 }
