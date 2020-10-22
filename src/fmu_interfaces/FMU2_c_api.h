@@ -10,6 +10,6 @@
 
 typedef void* C_FMU2Slave;
 
-extern "C" void InitilizeFMU2_Slave(C_FMU2Slave fmu2_slave, int id);
+extern "C" void InitilizeFMU2_Slave(C_FMU2Slave fmu2_slave, int id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName);
 
 extern "C" void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h);

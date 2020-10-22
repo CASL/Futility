@@ -34,18 +34,24 @@ USE Strings
 !-------------------------------------------------------------------------------
 ! FMU2 Interface
 !-------------------------------------------------------------------------------
-    SUBROUTINE InitilizeFMU2_Slave(slave_ptr,slave_id) bind(C,NAME="InitilizeFMU2_Slave")
+    ! When calling from FORTRAN, need to append C_NULL_CHAR to name:
+    !    CHAR(my_guid)//c_null_char
+    SUBROUTINE InitilizeFMU2_Slave(slave_ptr,slave_id, guid, modelIdentifier, unzipDirectory, instanceName) bind(C,NAME="InitilizeFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
-      INTEGER(C_INT),INTENT(IN),VALUE :: slave_id
       TYPE(C_PTR),INTENT(OUT) :: slave_ptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: slave_id
+      CHARACTER(C_CHAR),INTENT(IN) :: guid
+      CHARACTER(C_CHAR),INTENT(IN) :: modelIdentifier
+      CHARACTER(C_CHAR),INTENT(IN) :: unzipDirectory
+      CHARACTER(C_CHAR),INTENT(IN) :: instanceName
     ENDSUBROUTINE
 
     SUBROUTINE doStepFMU2_Slave(slave_ptr,h) bind(C,NAME="doStepFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
-      REAL(C_DOUBLE),INTENT(IN) :: h
       TYPE(C_PTR),INTENT(IN) :: slave_ptr
+      REAL(C_DOUBLE),INTENT(IN) :: h
     ENDSUBROUTINE
 
   ENDINTERFACE

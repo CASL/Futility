@@ -12,6 +12,23 @@
 !> Currently supported FMU versions:
 !>  - 2.0
 !>
+!> The FMU is basically a zip file contaning an XML file and a *.so library.
+!> The file layout of an unzipped FMU is as follows:
+!>
+!>  FMU_unzipDirectory
+!>   |-> binaries
+!>   |   |-> linux64
+!>   |       |-> modelIdentifier.so
+!>   |-> modelIdentifier.xml
+!>
+!> Where modelIdentifier and unzipDirectory can be specified in the input pList
+!>
+!> An example v2.0 FMU is available at:
+!> https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2018/Rectifier/Rectifier.fmu
+!> The FMU is actually a zip file, and can be unziped in linux with:
+!>
+!>   unzip Rectifier.fmu
+!>
 !> See: https://fmi-standard.org for additional info.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FMU_Wrapper
@@ -44,10 +61,14 @@ INTEGER(SIK) :: FMU_n=0
 TYPE,ABSTRACT :: FMU_Base
   !> Initialization status
   LOGICAL(SBK) :: isInit=.FALSE.
-  !> Integer flag for the solution methodology desired
-  INTEGER(SIK) :: solverMethod=-1
   !> FMU C Pointer
   TYPE(C_PTR) :: fmu_c_ptr
+  !> Model id
+  INTEGER(SIK) :: idFMU
+  TYPE(StringType) :: guid
+  TYPE(StringType) :: modelIdentifier
+  TYPE(StringType) :: unzipDirectory
+  TYPE(StringType) :: instanceName
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -56,11 +77,11 @@ TYPE,ABSTRACT :: FMU_Base
 ENDTYPE FMU_Base
 
 ABSTRACT INTERFACE
-  SUBROUTINE fmu_init_sub_absintfc(self,id,Params)
+  SUBROUTINE fmu_init_sub_absintfc(self,id,pList)
     IMPORT FMU_Base,SIK,ParamType
     CLASS(FMU_Base),INTENT(INOUT) :: self
     INTEGER(SIK),INTENT(IN) :: id
-    TYPE(ParamType),INTENT(IN) :: Params
+    TYPE(ParamType),INTENT(IN) :: pList
   ENDSUBROUTINE
 ENDINTERFACE
 
@@ -90,18 +111,37 @@ CONTAINS
 !>
 !> @param self
 !> @param id Unique id for this FMU
-!> @param Params A parameter list with input options
+!> @param pList A parameter list with input options
 !>
-SUBROUTINE init_FMU2_Slave(self,id,Params)
+!>
+SUBROUTINE init_FMU2_Slave(self,id,pList)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_FM2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: id
-  TYPE(ParamType),INTENT(IN) :: Params
+  TYPE(ParamType),INTENT(IN) :: pList
 
-  ! Store path to FMU .so file that holds implemented fmu symbols
-  ! Store path to FMU xml file that holds model description and io vars
+  ! Required FMU pList
+  IF(.NOT. pList%has('guid')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU guid')
+  CALL pList%get('guid', self%guid)
+  IF(.NOT. pList%has('unzipDirectory')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU unzipDirectory')
+  CALL pList%get('unzipDirectory', self%unzipDirectory)
+  IF(.NOT. pList%has('modelIdentifier')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU modelIdentifier')
+  CALL pList%get('modelIdentifier', self%modelIdentifier)
+  ! Optional FMU pList
+  IF(pList%has('instanceName')) THEN
+    CALL pList%get('instanceName', self%instanceName)
+  ELSE
+    self%instanceName = "default_fmu_instance"
+  ENDIF
+  self%idFMU=id
 
-  ! Initilize the FMU
-  CALL InitilizeFMU2_Slave(self%fmu_c_ptr, id)
+   ! Initilize the FMU
+   ! WRITE(*,*) "GUID len: ", LEN(self%guid)
+  CALL InitilizeFMU2_Slave(self%fmu_c_ptr, self%idFMU, &
+    CHAR(self%guid)//c_null_char, &
+    CHAR(self%modelIdentifier)//c_null_char, &
+    CHAR(self%unzipDirectory)//c_null_char, &
+    CHAR(self%instanceName)//c_null_char)
 
   self%isInit=.TRUE.
 

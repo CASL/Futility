@@ -13,18 +13,24 @@
 #include <string.h>
 #include "FMU2_c_api.h"
 
-void InitilizeFMU2_Slave(void* slave_ptr, int slave_id)
+//void InitilizeFMU2_Slave(void* slave_ptr, int slave_id, const std::string &guid, const std::string &modelIdentifier, const std::string &unzipDirectory, const std::string &instanceName)
+void InitilizeFMU2_Slave(void* slave_ptr, int slave_id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName)
 {
-  std::cout << "FMU2_Slave " << slave_id << " init done" << std::endl;
-  const std::string guid = "abcde";
-  const std::string modelIdentifier = "abcde";
-  const std::string unzipDirectory = "abcde";
-  const std::string instanceName = "abcde";
+  std::string guid_str(guid);
+  std::string modelIdentifier_str(modelIdentifier);
+  std::string unzipDirectory_str(unzipDirectory);
+  std::string instanceName_str(instanceName);
+  std::cout << "FMU2_Slave " << slave_id << " init ..." << std::endl;
+  std::cout << "FMU2_Slave guid: " << guid_str << std::endl;
+  std::cout << "FMU2_Slave modelIdentifier: " << modelIdentifier_str << std::endl;
+  std::cout << "FMU2_Slave unzipDirectory: " << unzipDirectory_str << std::endl;
+  std::cout << "FMU2_Slave instanceName: " << instanceName_str << std::endl;
   slave_ptr = reinterpret_cast<void*>(new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName));
+  std::cout << "FMU2_Slave: " << slave_id << " init done!" << std::endl;
 }
 
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
-  std::cout << "Takeing step " << h << std::endl;
+  std::cout << "FMU2_Slave Takeing step: " << h << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);
 }
