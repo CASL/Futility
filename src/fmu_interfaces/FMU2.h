@@ -36,7 +36,7 @@ namespace fmikit {
 		ContinuousTimeModeState = 1 << 4,
 
 		// co-simulation states
-		StepCompleteState = 1 << 5,
+		StepCompleteState = 1 << 5,  // 32
 		StepInProgressState = 1 << 6,
 		StepFailedState = 1 << 7,
 		StepCanceledState = 1 << 8,

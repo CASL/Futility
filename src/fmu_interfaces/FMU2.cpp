@@ -212,7 +212,7 @@ namespace fmikit {
 		fmi2GetBooleanStatus				= getFunc<fmi2GetBooleanStatusTYPE>         ("fmi2GetBooleanStatus");
 		fmi2GetStringStatus					= getFunc<fmi2GetStringStatusTYPE>          ("fmi2GetStringStatus");
 
-    std::cout << "FMU2Slave init StepCompleteState: " << StepCompleteState << std::endl;
+    std::cout << "FMU2Slave init m_state: " << m_state << std::endl;
 	}
 
 	void FMU2Slave::doStep(double h) {
