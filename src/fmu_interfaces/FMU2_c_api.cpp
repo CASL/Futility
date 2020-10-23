@@ -61,10 +61,37 @@ void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setReal(valueReference, val);
 }
 
+void getIntegerFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, int& val)
+{
+    val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getInteger(valueReference);
+}
+
+void setIntegerFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, int val)
+{
+    reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setInteger(valueReference, val);
+}
+
+void getBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool& val)
+{
+    val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getBoolean(valueReference);
+}
+
+void setBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool val)
+{
+    reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setBoolean(valueReference, val);
+}
+
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
   if(verbosity) std::cout << "FMU2_Slave doStep address: " << fmu2_slave << std::endl;
   if(verbosity) std::cout << "FMU2_Slave doStep dt: " << h << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);
   if(verbosity) std::cout << "FMU2_Slave doStep done! " << std::endl;
+}
+
+void clearFMU2_Slave(C_FMU2Slave fmu2_slave)
+{
+  std::cout << "FMU2_Slave clear address: " << fmu2_slave << std::endl;
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->~FMU2Slave();
+  std::cout << "FMU2_Slave clear done! " << std::endl;
 }

@@ -52,6 +52,7 @@ PROGRAM testFMU2
   ENDDO
 
   ! Clean up
+  CALL test_fmu2_slave%clear()
   CALL FMU_params%clear()
 
 ENDPROGRAM testFMU2
