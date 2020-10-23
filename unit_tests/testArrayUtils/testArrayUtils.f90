@@ -172,6 +172,7 @@ SUBROUTINE test1DReals()
   ASSERT(bool,'getUnique, 3 unique with TOL')
   CALL getUnique(tmprealarray(1:0),tmpr)
   ASSERT_EQ(SIZE(tmpr),0,'getUnique, size 0 array')
+  DEALLOCATE(tmpr)
 
   !
   COMPONENT_TEST('findIndex 1-D Array')
@@ -579,6 +580,7 @@ SUBROUTINE test1DInts()
   ASSERT(bool,'getUnique, 3 duplicates')
   CALL getUnique(tmpintarray(1:0),tmpi)
   ASSERT_EQ(SIZE(tmpi),0,'getUnique, size 0 array')
+  DEALLOCATE(tmpi)
 
 ENDSUBROUTINE test1DInts
 !
