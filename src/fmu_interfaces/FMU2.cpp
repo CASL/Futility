@@ -101,6 +101,7 @@ namespace fmikit {
 	}
 
 	void FMU2::setupExperiment(bool toleranceDefined, double tolerance, double startTime, bool stopTimeDefined, double stopTime) {
+    std::cout << "FMU2Slave setupExperiment m_state: " << m_state << std::endl;
 		assertState(InstantiatedState);
 
 		this->m_stopTimeDefined = stopTimeDefined;
@@ -212,10 +213,11 @@ namespace fmikit {
 		fmi2GetBooleanStatus				= getFunc<fmi2GetBooleanStatusTYPE>         ("fmi2GetBooleanStatus");
 		fmi2GetStringStatus					= getFunc<fmi2GetStringStatusTYPE>          ("fmi2GetStringStatus");
 
-    std::cout << "FMU2Slave init m_state: " << m_state << std::endl;
+    std::cout << "FMU2Slave end init m_state: " << m_state << std::endl;
 	}
 
 	void FMU2Slave::doStep(double h) {
+    std::cout << "FMU2Slave doStep m_state: " << m_state << std::endl;
     std::cout << "FMU2Slave doStep StepCompleteState: " << StepCompleteState << std::endl;
 		assertState(StepCompleteState);
 
