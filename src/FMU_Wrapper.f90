@@ -68,6 +68,8 @@ TYPE,ABSTRACT :: FMU_Base
   TYPE(StringType) :: unzipDirectory
   !> User defined FMU instance label
   TYPE(StringType) :: instanceName
+  !> XML derived model description
+  TYPE(ParamType) :: modelDescription
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -197,7 +199,6 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: id
   TYPE(ParamType),INTENT(IN) :: pList
-  ! REAL,POINTER :: f_ptr
 
   ! Required FMU pList
   IF(.NOT. pList%has('guid')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU guid')
@@ -213,6 +214,12 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
     self%instanceName = "default_fmu_instance"
   ENDIF
   self%idFMU=id
+
+  ! Parse the FMU XML model description
+  CALL eFMU_Wrapper%raiseDebug('Opening FMU XML File: '//self%unzipDirectory//'/modelDescription.xml' )
+  ! File encoding "ISO-8859-1" is not supported
+  ! Change to UTF-8 or US-ASCII
+  CALL self%modelDescription%initFromXML(self%unzipDirectory//'/modelDescription.xml')
 
   ! Initilize the FMU
   fmu_c_ptr = InitilizeFMU2_Slave(self%idFMU, &
@@ -379,6 +386,7 @@ SUBROUTINE clear_FMU2_Slave(self)
   self%isInit=.FALSE.
   fmu_c_ptr = c_null_ptr
 
+  CALL self%modelDescription%clear()
   ENSURE(.NOT. c_associated(fmu_c_ptr))
 
 ENDSUBROUTINE

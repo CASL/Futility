@@ -21,10 +21,10 @@
 MODULE FMU_interface
 USE ISO_C_BINDING
 
+  !-------------------------------------------------------------------------------
+  ! FMU2 Interface
+  !-------------------------------------------------------------------------------
   INTERFACE
-!-------------------------------------------------------------------------------
-! FMU2 Interface
-!-------------------------------------------------------------------------------
     ! When calling from FORTRAN, need to append C_NULL_CHAR to name:
     !    CHAR(my_guid)//c_null_char
     FUNCTION InitilizeFMU2_Slave(slave_id, guid, modelIdentifier, unzipDirectory, instanceName) result(slave_ptr)bind(C,NAME="InitilizeFMU2_Slave")
