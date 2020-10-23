@@ -26,7 +26,6 @@ namespace fmikit {
 		FMU(guid, modelIdentifier, unzipDirectory, instanceName),
 		m_component(nullptr),
 		m_state(StartAndEndState) {
-    std::cout << "FMU2::FMU2 init StepCompleteState: " << StepCompleteState << std::endl;
 
 		m_fmiVersion = FMI_VERSION_2;
 
@@ -101,12 +100,10 @@ namespace fmikit {
 	}
 
 	void FMU2::setupExperiment(bool toleranceDefined, double tolerance, double startTime, bool stopTimeDefined, double stopTime) {
-    std::cout << "FMU2Slave setupExperiment m_state: " << m_state << std::endl;
 		assertState(InstantiatedState);
 
 		this->m_stopTimeDefined = stopTimeDefined;
 		this->m_stopTime = stopTime;
-    std::cout << "setupExperiment StepCompleteState: " << StepCompleteState << std::endl;
 
 		m_time = startTime;
 		ASSERT_NO_ERROR(fmi2SetupExperiment(m_component, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime), "Failed to set up experiment")
@@ -201,7 +198,6 @@ namespace fmikit {
 		FMU2(guid, modelIdentifier, unzipDirectory, instanceName, allocateMemory, freeMemory) {
 
 		m_kind = CO_SIMULATION;
-    std::cout << "FMU2Slave init StepCompleteState: " << StepCompleteState << std::endl;
 
 		fmi2SetRealInputDerivatives			= getFunc<fmi2SetRealInputDerivativesTYPE>  ("fmi2SetRealInputDerivatives");
 		fmi2GetRealOutputDerivatives		= getFunc<fmi2GetRealOutputDerivativesTYPE> ("fmi2GetRealOutputDerivatives");
@@ -213,12 +209,9 @@ namespace fmikit {
 		fmi2GetBooleanStatus				= getFunc<fmi2GetBooleanStatusTYPE>         ("fmi2GetBooleanStatus");
 		fmi2GetStringStatus					= getFunc<fmi2GetStringStatusTYPE>          ("fmi2GetStringStatus");
 
-    std::cout << "FMU2Slave end init m_state: " << m_state << std::endl;
 	}
 
 	void FMU2Slave::doStep(double h) {
-    std::cout << "FMU2Slave doStep m_state: " << m_state << std::endl;
-    std::cout << "FMU2Slave doStep StepCompleteState: " << StepCompleteState << std::endl;
 		assertState(StepCompleteState);
 
 		if (m_stopTimeDefined && m_time + h > m_stopTime - h / 1000) {

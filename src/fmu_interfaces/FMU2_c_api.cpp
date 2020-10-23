@@ -13,6 +13,8 @@
 #include <string.h>
 #include "FMU2_c_api.h"
 
+bool verbosity = false;
+
 //void InitilizeFMU2_Slave(void* slave_ptr, int slave_id, const std::string &guid, const std::string &modelIdentifier, const std::string &unzipDirectory, const std::string &instanceName)
 C_FMU2Slave InitilizeFMU2_Slave(int slave_id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName)
 {
@@ -20,7 +22,7 @@ C_FMU2Slave InitilizeFMU2_Slave(int slave_id, char* guid, char* modelIdentifier,
   std::string modelIdentifier_str(modelIdentifier);
   std::string unzipDirectory_str(unzipDirectory);
   std::string instanceName_str(instanceName);
-  std::cout << "FMU2_Slave Init guid: " << guid_str << std::endl;
+  if(verbosity) std::cout << "FMU2_Slave Init guid: " << guid_str << std::endl;
   std::cout << "FMU2_Slave Init modelIdentifier: " << modelIdentifier_str << std::endl;
   std::cout << "FMU2_Slave Init unzipDirectory: " << unzipDirectory_str << std::endl;
   std::cout << "FMU2_Slave Init instanceName: " << instanceName_str << std::endl;
@@ -45,21 +47,24 @@ void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, do
 
 void getRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double& val)
 {
-  std::cout << "FMU2_Slave  getReal address: " << fmu2_slave << std::endl;
-  std::cout << "FMU2_Slave  getReal valueReference: " << valueReference << std::endl;
+  if(verbosity) std::cout << "FMU2_Slave  getReal address: " << fmu2_slave << std::endl;
+  if(verbosity) std::cout << "FMU2_Slave  getReal valueReference: " << valueReference << std::endl;
   val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getReal(valueReference);
-  std::cout << "FMU2_Slave  getReal value: " << val << std::endl;
+  if(verbosity) std::cout << "FMU2_Slave  getReal value: " << val << std::endl;
 }
 
 void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
 {
+  std::cout << "FMU2_Slave setReal address: " << fmu2_slave << std::endl;
+  std::cout << "FMU2_Slave setReal valueReference: " << valueReference << std::endl;
+  std::cout << "FMU2_Slave setReal val: " << val << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setReal(valueReference, val);
 }
 
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
-  std::cout << "FMU2_Slave doStep address: " << fmu2_slave << std::endl;
-  std::cout << "FMU2_Slave doStep dt: " << h << std::endl;
+  if(verbosity) std::cout << "FMU2_Slave doStep address: " << fmu2_slave << std::endl;
+  if(verbosity) std::cout << "FMU2_Slave doStep dt: " << h << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);
-  std::cout << "FMU2_Slave doStep done! " << std::endl;
+  if(verbosity) std::cout << "FMU2_Slave doStep done! " << std::endl;
 }
