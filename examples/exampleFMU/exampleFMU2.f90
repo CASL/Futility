@@ -17,7 +17,8 @@ PROGRAM testFMU2
   TYPE(ParamType) :: FMU_params
   INTEGER(SIK) :: id=3_SIK
   REAL(SRK) :: h=1.0E-7_SRK
-  REAL(SRK) :: time
+  REAL(SRK) :: time, v1
+  INTEGER(SIK) :: i
 
   ! Example FMU parameter settings
   CALL FMU_params%clear()
@@ -37,10 +38,14 @@ PROGRAM testFMU2
   WRITE(*,*) 'TESTING FMU2...'
   WRITE(*,*) '==================================================='
   CALL test_fmu2_slave%init(id, FMU_params)
-  ! CALL test_fmu2_slave%setupExperiment(.TRUE., 1.0E-7_SRK, 0.0_SRK, .TRUE., 1.0E-1_SRK)
+  CALL test_fmu2_slave%setupExperiment(.TRUE., 1.0E-7_SRK, 0.0_SRK, .TRUE., 1.0E-1_SRK)
 
-  CALL test_fmu2_slave%getReal(0, time)
-  CALL test_fmu2_slave%doStep(h)
+  DO i=1,10
+    CALL test_fmu2_slave%getReal(0, time)
+    CALL test_fmu2_slave%getReal(1, v1)
+    CALL test_fmu2_slave%doStep(h)
+    write(*,*) time, v1
+  ENDDO
 
   ! Clean up
   CALL FMU_params%clear()

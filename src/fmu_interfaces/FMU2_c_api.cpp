@@ -38,6 +38,8 @@ void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, do
   std::cout << "FMU2_Slave  setupExperiment stopTime: " << stopTime << std::endl;
   std::cout << "FMU2_Slave  setupExperiment tol: " << tolerance << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setupExperiment(toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->enterInitializationMode();
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->exitInitializationMode();
   std::cout << "FMU2_Slave  setupExperiment done! " << std::endl;
 }
 
@@ -57,7 +59,7 @@ void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
   std::cout << "FMU2_Slave doStep address: " << fmu2_slave << std::endl;
-  std::cout << "FMU2_Slave doStop dt: " << h << std::endl;
+  std::cout << "FMU2_Slave doStep dt: " << h << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);
-  std::cout << "FMU2_Slave doStop done! " << std::endl;
+  std::cout << "FMU2_Slave doStep done! " << std::endl;
 }
