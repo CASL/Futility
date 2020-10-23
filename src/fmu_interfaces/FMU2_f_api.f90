@@ -20,15 +20,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FMU_interface
 USE ISO_C_BINDING
-USE IntrType
-USE BLAS
-!USE trilinos_interfaces
-USE ExceptionHandler
-USE Allocs
-USE ParameterLists
-USE ParallelEnv
-USE VectorTypes
-USE Strings
 
   INTERFACE
 !-------------------------------------------------------------------------------
