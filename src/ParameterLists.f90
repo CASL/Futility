@@ -533,6 +533,7 @@ TYPE :: ParamType
     PROCEDURE,PASS :: toTeuchosPlist
 #endif
 PROCEDURE :: procXMLTree
+PROCEDURE :: procFMUXMLTree
 ENDTYPE ParamType
 
 !> @brief Wrapper type for an array of ParamType pointers
@@ -11171,13 +11172,81 @@ RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
 ENDSUBROUTINE procXMLTree
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE initFromXML(thisParam, fname)
+RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  TYPE(StringType),INTENT(IN) :: currentPath
+  TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent
+  TYPE(ParamType),POINTER :: pList(:)
+  TYPE(StringType) :: elname,tmpStr,tmpPath,tmpNewPath
+  INTEGER(SIK) :: ic,ia,ib
+
+  TYPE(StringType),ALLOCATABLE :: tmpKeys(:)
+  TYPE(StringType),ALLOCATABLE :: tmpValues(:)
+  TYPE(StringType) :: tmpKey, tmpVal, tmpPathToTmpVar
+
+  NULLIFY(pList)
+  CALL parent%getChildren(children)
+  !Check to see if it's an empty parameter list
+  IF(.NOT.ASSOCIATED(children)) THEN
+    ALLOCATE(pList(0))
+    CALL thisParam%add(CHAR(currentPath),pList)
+    DEALLOCATE(pList)
+    RETURN
+  ENDIF
+
+  DO ic=1,SIZE(children)
+    tmpPath=currentPath//' -> '
+    iXMLE => children(ic)
+    elname=iXMLE%name%upper()
+    tmpNewPath = tmpPath // elname
+    IF(elname == 'SCALARVARIABLE') THEN
+      CALL iXMLE%getAttributes(tmpKeys, tmpValues)
+      DO ia=1,SIZE(tmpKeys)
+        tmpKey = tmpKeys(ia)
+        tmpVal = tmpValues(ia)
+        IF(tmpKey=='name') THEN
+          DO ib=1,SIZE(tmpKeys)
+            IF(tmpKeys(ib)=='valueReference') THEN
+              tmpPathToTmpVar = 'FMU'//currentPath//' -> '//tmpVal//' -> valueReference'
+              CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ib))
+            ELSE IF(tmpKeys(ib)=='causality') THEN
+              tmpPathToTmpVar = 'FMU'//currentPath//' -> '//tmpVal//' -> causality'
+              CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ib))
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDDO
+      DEALLOCATE(tmpKeys)
+      DEALLOCATE(tmpValues)
+    ELSE IF(elname == 'DEFAULTEXPERIMENT') THEN
+      CALL iXMLE%getAttributes(tmpKeys, tmpValues)
+      DO ia=1,SIZE(tmpKeys)
+        tmpPathToTmpVar = elname//currentPath//' -> '//tmpKeys(ia)
+        CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ia))
+      ENDDO
+    ELSE IF(elname == 'MODELVARIABLES') THEN
+      CALL procFMUXMLTree(thisParam,iXMLE,tmpNewPath)
+    ENDIF
+  ENDDO
+
+ENDSUBROUTINE procFMUXMLTree
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE initFromXML(thisParam, fname, fmuXML_opt)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: fname
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: fmuXML_opt
+  LOGICAL(SBK) :: fmuXML
   TYPE(StringType) :: tmpStr,nameVal
   TYPE(XMLFileType) :: xmlFile
   TYPE(XMLElementType),POINTER :: iXMLE
   TYPE(StringType) :: currentPath
+
+  IF(.NOT. PRESENT(fmuXML_opt)) THEN
+    fmuXML=.FALSE.
+  ELSE
+    fmuXML=fmuXML_opt
+  ENDIF
 
   SELECTTYPE(thisParam); TYPE IS(ParamType)
     IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
@@ -11187,7 +11256,11 @@ SUBROUTINE initFromXML(thisParam, fname)
       tmpStr='name'
       CALL iXMLE%getAttributeValue(tmpStr,nameVal)
       currentPath=nameVal
-      CALL procXMLTree(thisParam,iXMLE,currentPath)
+      IF(fmuXML) THEN
+        CALL procFMUXMLTree(thisParam,iXMLE,currentPath)
+      ELSE
+        CALL procXMLTree(thisParam,iXMLE,currentPath)
+      ENDIF
       CALL xmlfile%clear()
     ENDIF
   CLASS DEFAULT

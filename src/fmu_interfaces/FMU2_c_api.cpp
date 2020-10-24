@@ -28,7 +28,7 @@ C_FMU2Slave InitilizeFMU2_Slave(int slave_id, char* guid, char* modelIdentifier,
   std::cout << "FMU2_Slave Init instanceName: " << instanceName_str << std::endl;
   // return reinterpret_cast<void*>(new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName));
   fmikit::FMU2Slave *s = new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName);
-  s->instantiate(true);
+  s->instantiate(false);  // TODO: enable logging
   std::cout << "FMU2_Slave Init ptr: " << s << std::endl;
   std::cout << "FMU2_Slave Init id: " << slave_id << " init done!" << std::endl;
   return (C_FMU2Slave)s;
@@ -63,22 +63,22 @@ void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
 
 void getIntegerFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, int& val)
 {
-    val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getInteger(valueReference);
+  val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getInteger(valueReference);
 }
 
 void setIntegerFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, int val)
 {
-    reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setInteger(valueReference, val);
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setInteger(valueReference, val);
 }
 
 void getBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool& val)
 {
-    val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getBoolean(valueReference);
+  val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getBoolean(valueReference);
 }
 
 void setBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool val)
 {
-    reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setBoolean(valueReference, val);
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setBoolean(valueReference, val);
 }
 
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)

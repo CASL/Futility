@@ -175,6 +175,8 @@ TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
     PROCEDURE,PASS :: getBoolean => getBoolean_FMU2_Slave
     PROCEDURE,PASS :: setBoolean => setBoolean_FMU2_Slave
     PROCEDURE,PASS :: doStep => doStep_FMU2_Slave
+    PROCEDURE,PASS :: getValueReference => getValueReference_FMU2_Slave
+    PROCEDURE,PASS :: getCausality => getCausality_FMU2_Slave
 ENDTYPE FMU2_Slave
 
 !> Exception Handler for use in MatrixTypes
@@ -219,7 +221,7 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
   CALL eFMU_Wrapper%raiseDebug('Opening FMU XML File: '//self%unzipDirectory//'/modelDescription.xml' )
   ! File encoding "ISO-8859-1" is not supported
   ! Change to UTF-8 or US-ASCII
-  CALL self%modelDescription%initFromXML(self%unzipDirectory//'/modelDescription.xml')
+  CALL self%modelDescription%initFromXML(self%unzipDirectory//'/modelDescription.xml',.TRUE.)
 
   ! Initilize the FMU
   fmu_c_ptr = InitilizeFMU2_Slave(self%idFMU, &
@@ -252,6 +254,58 @@ SUBROUTINE setupExperiment_FMU2_Slave(self, toleranceDefined, tolerance, startTi
   CALL setupExperimentFMU2_Slave(fmu_c_ptr, LOGICAL(toleranceDefined,1), tolerance, startTime, &
     LOGICAL(stopTimeDefined,1), stopTime)
 ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+!> @param self
+!>
+FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
+  CHARACTER(LEN=*),PARAMETER :: myName='getValueReference_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  TYPE(StringType) :: valueReference_str
+  INTEGER(SIK) :: valueReference
+  TYPE(StringType) :: baseAddr
+
+  REQUIRE(self%isInit)
+
+  ! check that requrested variable exists in the modelDescription
+  baseAddr='MODELVARIABLES->'//variableName
+  IF(self%modelDescription%has(CHAR(baseAddr))) THEN
+    ! get valueReference assc with this variableName
+    CALL self%modelDescription%get(baseAddr//'->valueReference', valueReference_str)
+    ! convert str to int and check valueReference is valid
+    valueReference = valueReference_str%str_to_sik()
+    IF(valueReference<0) CALL eFMU_Wrapper%raiseError(modName//'::'//' - variable has invalid valueReference')
+  ELSE
+    CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No Variable named: '//variableName)
+  ENDIF
+ENDFUNCTION
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+!> @param self
+!>
+FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
+  CHARACTER(LEN=*),PARAMETER :: myName='getCausality_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  TYPE(StringType) :: causality
+  TYPE(StringType) :: baseAddr
+
+  REQUIRE(self%isInit)
+
+  ! check that requrested variable exists in the modelDescription
+  baseAddr='MODELVARIABLES->'//variableName
+  IF(self%modelDescription%has(CHAR(baseAddr))) THEN
+    ! get valueReference assc with this variableName
+    CALL self%modelDescription%get(baseAddr//'->causality', causality)
+  ELSE
+    CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No Variable named: '//variableName)
+  ENDIF
+ENDFUNCTION
 !
 !-------------------------------------------------------------------------------
 !> @brief

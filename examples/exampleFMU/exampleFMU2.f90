@@ -8,6 +8,7 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testFMU2
 
+  USE Strings
   USE IntrType
   USE ParameterLists
   USE FMU_Wrapper
@@ -22,6 +23,7 @@ PROGRAM testFMU2
   REAL(SRK) :: tol=1.0E-7_SRK
   REAL(SRK) :: time, v1
   INTEGER(SIK) :: i
+  TYPE(StringType) :: varName
 
   ! Example FMU parameter settings
   CALL FMU_params%clear()
@@ -43,13 +45,20 @@ PROGRAM testFMU2
   CALL test_fmu2_slave%init(id, FMU_params)
   CALL test_fmu2_slave%setupExperiment(.TRUE., tol, timeStart, .TRUE., timeEnd)
 
-  DO
-    IF(time >= timeEnd) EXIT
+  DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
     CALL test_fmu2_slave%getReal(1, v1)
     CALL test_fmu2_slave%doStep(h)
     write(*,*) time, v1
   ENDDO
+
+  ! get valueReference to variables
+  varName = "internalTime"
+  WRITE(*,*) test_fmu2_slave%getValueReference(varName)
+  WRITE(*,*) CHAR(test_fmu2_slave%getCausality(varName))
+  varName = "outputs"
+  WRITE(*,*) test_fmu2_slave%getValueReference(varName)
+  WRITE(*,*) CHAR(test_fmu2_slave%getCausality(varName))
 
   ! Clean up
   CALL test_fmu2_slave%clear()
