@@ -28,9 +28,18 @@ PROGRAM testFMU2
   ! Example FMU parameter settings
   CALL FMU_params%clear()
   CALL FMU_params%add('FMU_Wrapper->id',id)
-  CALL FMU_params%add('FMU_Wrapper->guid','{355fd1a1-5000-069a-f93c-629026df9008}')
-  CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus')
   CALL FMU_params%add('FMU_Wrapper->modelIdentifier','Rectifier')
+  ! 2019 test
+  CALL FMU_params%add('FMU_Wrapper->guid','{07a328c5-2b9e-d95c-a421-4975e2ade571}')
+  CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2019')
+
+  ! 2018 test (broken getFMUstate()!)
+  ! CALL FMU_params%add('FMU_Wrapper->guid','{355fd1a1-5000-069a-f93c-629026df9008}')
+  ! CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus')
+
+  ! 2016.2 test
+  ! CALL FMU_params%add('FMU_Wrapper->guid','{2616f0f0-e784-7ed0-2697-de3336af74cf}')
+  ! CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2016')
 
   ! In the Rectifier model:
   ! valueReference == 0 : time (s)
@@ -51,6 +60,9 @@ PROGRAM testFMU2
     CALL test_fmu2_slave%doStep(h)
     write(*,*) time, v1
   ENDDO
+
+  ! set restart point
+  CALL test_fmu2_slave%setRestart()
 
   ! get valueReference to variables
   varName = "internalTime"

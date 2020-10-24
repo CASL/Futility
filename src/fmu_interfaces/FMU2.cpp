@@ -49,7 +49,8 @@ namespace fmikit {
 		fmi2SetString					= getFunc<fmi2SetStringTYPE>                ("fmi2SetString");
 
 		/* FMU state functions (optional) */
-		fmi2GetFMUstate					= getFunc<fmi2GetFMUstateTYPE>				("fmi2GetFMUstate",              false);
+		// fmi2GetFMUstate					= getFunc<fmi2GetFMUstateTYPE>				("fmi2GetFMUstate",              false);
+		fmi2GetFMUstate					= getFunc<fmi2GetFMUstateTYPE>				("fmi2GetFMUstate",              true);
 		fmi2SetFMUstate					= getFunc<fmi2SetFMUstateTYPE>				("fmi2SetFMUstate",              false);
 		fmi2FreeFMUstate				= getFunc<fmi2FreeFMUstateTYPE>				("fmi2FreeFMUstate",             false);
 		fmi2SerializedFMUstateSize		= getFunc<fmi2SerializedFMUstateSizeTYPE>	("fmi2SerializedFMUstateSize",   false);
@@ -210,6 +211,11 @@ namespace fmikit {
 		fmi2GetStringStatus					= getFunc<fmi2GetStringStatusTYPE>          ("fmi2GetStringStatus");
 
 	}
+
+	void FMU2Slave::getStateSlave(void** current_state_ptr){
+    std::cout << current_state_ptr << std::endl;
+	  ASSERT_NO_ERROR(fmi2GetFMUstate(m_component, current_state_ptr), "Failed to get state")
+  }
 
 	void FMU2Slave::doStep(double h) {
 		assertState(StepCompleteState);

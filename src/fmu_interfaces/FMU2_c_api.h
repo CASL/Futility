@@ -31,3 +31,5 @@ extern "C" void getBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference
 extern "C" void setBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool val);
 
 extern "C" void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h);
+
+extern "C" void serializeStateFMU2_Slave(C_FMU2Slave fmu2_slave);

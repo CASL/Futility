@@ -85,6 +85,7 @@ namespace fmikit {
 
 		State getState() const { return m_state; }
 
+  // XXX
 	protected:
 		fmi2Component m_component;
 		fmi2CallbackFunctionsNonConst m_callbackFunctions;
@@ -161,6 +162,7 @@ namespace fmikit {
 		explicit FMU2Slave(const std::string &guid, const std::string &modelIdentifier, const std::string &unzipDirectory, const std::string &instanceName, allocateMemoryCallback *allocateMemory = nullptr, freeMemoryCallback *freeMemory = nullptr);
 		~FMU2Slave() {}
 
+    void getStateSlave(void** current_state_ptr);
 		void doStep(double h) override;
 		void setRealInputDerivative(ValueReference vr, int order, double value) override;
 

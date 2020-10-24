@@ -8,6 +8,10 @@
 /+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 #pragma once
 
+#include "fmi2Functions.h"
+#include "fmi2FunctionTypes.h"
+#include "fmi2TypesPlatform.h"
+#include "FMU.h"
 #include "FMU2.h"
 #include <iostream>
 #include <string.h>
@@ -94,4 +98,23 @@ void clearFMU2_Slave(C_FMU2Slave fmu2_slave)
   std::cout << "FMU2_Slave clear address: " << fmu2_slave << std::endl;
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->~FMU2Slave();
   std::cout << "FMU2_Slave clear done! " << std::endl;
+}
+
+void serializeStateFMU2_Slave(C_FMU2Slave fmu2_slave)
+{
+  std::cout << "FMU2_Slave serializeState address: " << fmu2_slave << std::endl;
+  fmi2Status status;
+  size_t mem_size_state;
+  // fmi2FMUstate is an opaque pointer to internal FMU state (void*)
+  fmi2FMUstate test_state = NULL;
+  // fmi2Component is an opaque pointer to FMU instance (void*)
+  std::cout << "start FMUstate: " << &test_state << std::endl;
+  //status = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->fmi2GetFMUstate(reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->m_component, &test_state);
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getStateSlave(&test_state);
+  std::cout << "Got FMUstate: " << test_state << std::endl;
+  // status = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->fmi2SerializedFMUstateSize(fmu2_slave, &test_state, &mem_size_state);
+  // create storage for state
+  // fmi2Byte test_byte_array[mem_size_state];
+  // status = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->fmi2SerializeFMUstate(fmu2_slave, test_state, test_byte_array, mem_size_state);
+  // return mem_size_state;
 }

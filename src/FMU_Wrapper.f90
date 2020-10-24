@@ -177,6 +177,8 @@ TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
     PROCEDURE,PASS :: doStep => doStep_FMU2_Slave
     PROCEDURE,PASS :: getValueReference => getValueReference_FMU2_Slave
     PROCEDURE,PASS :: getCausality => getCausality_FMU2_Slave
+    PROCEDURE,PASS :: setRestart => setRestart_FMU2_Slave
+    ! PROCEDURE,PASS :: rewindToRestart => rewindToRestart_FMU2_Slave
 ENDTYPE FMU2_Slave
 
 !> Exception Handler for use in MatrixTypes
@@ -425,6 +427,21 @@ SUBROUTINE doStep_FMU2_Slave(self,h)
   REQUIRE(c_associated(fmu_c_ptr))
 
   CALL doStepFMU2_Slave(fmu_c_ptr, h)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+!> @param self
+!>
+SUBROUTINE setRestart_FMU2_Slave(self)
+  CHARACTER(LEN=*),PARAMETER :: myName='setRestart_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+  CALL serializeStateFMU2_Slave(fmu_c_ptr)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------

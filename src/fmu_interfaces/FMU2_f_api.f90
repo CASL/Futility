@@ -104,6 +104,12 @@ USE ISO_C_BINDING
       REAL(C_DOUBLE),INTENT(IN),VALUE :: h
     ENDSUBROUTINE
 
+    SUBROUTINE serializeStateFMU2_Slave(slave_ptr) bind(C,NAME="serializeStateFMU2_Slave")
+      USE ISO_C_BINDING
+      IMPORT :: C_PTR
+      TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
+    ENDSUBROUTINE
+
     SUBROUTINE clearFMU2_Slave(slave_ptr) bind(C,NAME="clearFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR
