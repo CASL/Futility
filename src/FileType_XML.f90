@@ -55,7 +55,7 @@ INTEGER(SIK) :: DECLARATION_TAG=6
 !> Derived type for an XML element
 TYPE :: XMLElementType
   !> The number of attributes defined on the element
-  INTEGER(SIK) :: nAttr=0
+  INTEGER(SIK),PRIVATE :: nAttr=0
   !> The name of the element
   TYPE(StringType) :: name
   !> The content of the element (excluding attributes)
