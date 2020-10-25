@@ -30,17 +30,17 @@ PROGRAM testFMU2
   CALL FMU_params%clear()
   CALL FMU_params%add('FMU_Wrapper->id',id)
   CALL FMU_params%add('FMU_Wrapper->modelIdentifier','Rectifier')
-  ! 2019 test
-  CALL FMU_params%add('FMU_Wrapper->guid','{07a328c5-2b9e-d95c-a421-4975e2ade571}')
-  CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2019')
+  ! 2019 test (broken load state??)
+  !CALL FMU_params%add('FMU_Wrapper->guid','{07a328c5-2b9e-d95c-a421-4975e2ade571}')
+  !CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2019')
 
   ! 2018 test (broken getFMUstate()!)
   ! CALL FMU_params%add('FMU_Wrapper->guid','{355fd1a1-5000-069a-f93c-629026df9008}')
   ! CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus')
 
   ! 2016.2 test
-  ! CALL FMU_params%add('FMU_Wrapper->guid','{2616f0f0-e784-7ed0-2697-de3336af74cf}')
-  ! CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2016')
+  CALL FMU_params%add('FMU_Wrapper->guid','{2616f0f0-e784-7ed0-2697-de3336af74cf}')
+  CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2016')
 
   ! In the Rectifier model:
   ! valueReference == 0 : time (s)
@@ -60,15 +60,15 @@ PROGRAM testFMU2
   varName="minsamplestep"
   CALL test_fmu2_slave%setNamedVariable(varName, minsamplestep)
 
+  ! set restart point
+  CALL test_fmu2_slave%setRestart()
+
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
     CALL test_fmu2_slave%getReal(1, v1)
     CALL test_fmu2_slave%doStep(h)
     write(*,*) time, v1
   ENDDO
-
-  ! set restart point
-  CALL test_fmu2_slave%setRestart()
 
   ! get valueReference to variables
   varName = "internalTime"
@@ -77,6 +77,26 @@ PROGRAM testFMU2
   varName = "outputs"
   WRITE(*,*) test_fmu2_slave%getValueReference(varName)
   WRITE(*,*) CHAR(test_fmu2_slave%getCausality(varName))
+
+  ! set restart point
+  CALL test_fmu2_slave%setRestart()
+
+  DO i=1,10
+    CALL test_fmu2_slave%getReal(0, time)
+    CALL test_fmu2_slave%getReal(1, v1)
+    CALL test_fmu2_slave%doStep(h)
+    write(*,*) time, v1
+  ENDDO
+
+  ! rewind to restart
+  CALL test_fmu2_slave%rewindToRestart()
+
+  DO i=1,10
+    CALL test_fmu2_slave%getReal(0, time)
+    CALL test_fmu2_slave%getReal(1, v1)
+    CALL test_fmu2_slave%doStep(h)
+    write(*,*) time, v1
+  ENDDO
 
   ! get named variables
   varName = "internalTime"

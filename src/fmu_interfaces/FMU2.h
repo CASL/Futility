@@ -160,15 +160,26 @@ namespace fmikit {
 
 	public:
 		explicit FMU2Slave(const std::string &guid, const std::string &modelIdentifier, const std::string &unzipDirectory, const std::string &instanceName, allocateMemoryCallback *allocateMemory = nullptr, freeMemoryCallback *freeMemory = nullptr);
+		// virtual ~FMU2Slave();
 		~FMU2Slave() {}
 
-    void getStateSlave(void** current_state_ptr);
 		void doStep(double h) override;
 		void setRealInputDerivative(ValueReference vr, int order, double value) override;
+
+		// methods for saving and restoring FMU state
+    void getStateSlave(void** current_state_ptr);
+    void loadStateSlave(void** current_state_ptr);
 
 		bool terminated();
 
 	private:
+
+		// private data to store FMU state
+    // fmi2Byte* my_state_byte_s;
+    fmi2FMUstate my_stored_state=NULL;
+    //char* my_state_byte_s;
+    //size_t my_state_size;
+    //bool has_stored_state;
 
 		/***************************************************
 		Functions for FMI 2.0 for Co-Simulation

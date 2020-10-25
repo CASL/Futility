@@ -108,7 +108,7 @@ void serializeStateFMU2_Slave(C_FMU2Slave fmu2_slave)
   // fmi2FMUstate is an opaque pointer to internal FMU state (void*)
   fmi2FMUstate test_state = NULL;
   // fmi2Component is an opaque pointer to FMU instance (void*)
-  std::cout << "start FMUstate: " << &test_state << std::endl;
+  std::cout << "Start FMUstate: " << test_state << std::endl;
   //status = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->fmi2GetFMUstate(reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->m_component, &test_state);
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getStateSlave(&test_state);
   std::cout << "Got FMUstate: " << test_state << std::endl;
@@ -117,4 +117,12 @@ void serializeStateFMU2_Slave(C_FMU2Slave fmu2_slave)
   // fmi2Byte test_byte_array[mem_size_state];
   // status = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->fmi2SerializeFMUstate(fmu2_slave, test_state, test_byte_array, mem_size_state);
   // return mem_size_state;
+}
+
+void deSerializeStateFMU2_Slave(C_FMU2Slave fmu2_slave){
+  std::cout << "FMU2_Slave deSerializeState address: " << fmu2_slave << std::endl;
+  fmi2FMUstate test_state = NULL;
+  std::cout << "Start FMUstate: " << test_state << std::endl;
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->loadStateSlave(&test_state);
+  std::cout << "Got FMUstate: " << test_state << std::endl;
 }

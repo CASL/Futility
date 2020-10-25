@@ -483,6 +483,7 @@ SUBROUTINE rewindToRestart_FMU2_Slave(self)
   REQUIRE(self%isInit)
   REQUIRE(c_associated(fmu_c_ptr))
 
+  CALL deSerializeStateFMU2_Slave(fmu_c_ptr)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
