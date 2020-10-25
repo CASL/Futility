@@ -212,52 +212,15 @@ namespace fmikit {
 
 	}
 
-	//FMU2Slave::~FMU2Slave() {
-		//terminate();
-		//freeInstance();
-	//  if(has_stored_state) delete[] this->my_state_byte_s;
-	//}
-
-	void FMU2Slave::getStateSlave(void** current_state_ptr){
-	  /*
-	  if(has_stored_state) delete[] this->my_state_byte_s;
-    std::cout << "  Init state ptr: " << *current_state_ptr << std::endl;
-	  ASSERT_NO_ERROR(fmi2GetFMUstate(m_component, current_state_ptr), "Failed to get state")
-    std::cout << "  Got state ptr: " << *current_state_ptr << std::endl;
-    ASSERT_NO_ERROR(fmi2SerializedFMUstateSize(m_component, *current_state_ptr, &my_state_size), "failed to get FMU state size")
-    std::cout << "my_state_size: " << my_state_size << std::endl;
-    fmi2Byte state_byte_s[my_state_size];
-    this->my_state_byte_s = new char[my_state_size];
-    std::cout << "size of serializedState: " << my_state_size << " bytes" << std::endl;
-    fmi2SerializeFMUstate(m_component, *current_state_ptr, my_state_byte_s, my_state_size);
-    std::cout << my_state_byte_s[2] << std::endl;
-    // set stored state flag
-    this->has_stored_state = true;
-    fmi2DeSerializeFMUstate(m_component, state_byte_s, this->my_state_size, current_state_ptr);
-    fmi2SetFMUstate(m_component, current_state_ptr);
-    */
+	void FMU2Slave::getStateSlave() {
     if(my_stored_state!=NULL){
-      std::cout << " Store state cleared: " << my_stored_state << std::endl;
       fmi2FreeFMUstate(m_component, &my_stored_state);
     }
-    std::cout << " In my_stored_state: " << my_stored_state << std::endl;
 	  ASSERT_NO_ERROR(fmi2GetFMUstate(m_component, &my_stored_state), "Failed to get state")
-    //fmi2FreeFMUstate(m_component, &my_stored_state);
-    std::cout << " Out my_stored_state: " << my_stored_state << std::endl;
   }
 
-  void FMU2Slave::loadStateSlave(void** current_state_ptr){
-    /*
-    std::cout << "my_state_size: " << my_state_size << std::endl;
-    std::cout << "  Init state ptr: " << *current_state_ptr << std::endl;
-    std::cout << my_state_byte_s[2] << std::endl;
-    // fmi2DeSerializeFMUstate(m_component, this->my_state_byte_s, this->my_state_size, current_state_ptr);
-    std::cout << "  Got state ptr: " << *current_state_ptr << std::endl;
-    // fmi2SetFMUstate(m_component, current_state_ptr);
-    std::cout << "  set State." << std::endl;
-    */
-    std::cout << " Load my_stored_state: " << my_stored_state << std::endl;
-    fmi2SetFMUstate(m_component, my_stored_state);
+  void FMU2Slave::loadStateSlave() {
+    ASSERT_NO_ERROR(fmi2SetFMUstate(m_component, my_stored_state), "Failed to set state")
   }
 
 	void FMU2Slave::doStep(double h) {

@@ -167,19 +167,15 @@ namespace fmikit {
 		void setRealInputDerivative(ValueReference vr, int order, double value) override;
 
 		// methods for saving and restoring FMU state
-    void getStateSlave(void** current_state_ptr);
-    void loadStateSlave(void** current_state_ptr);
+    void getStateSlave();
+    void loadStateSlave();
 
 		bool terminated();
 
 	private:
 
-		// private data to store FMU state
-    // fmi2Byte* my_state_byte_s;
+		// Pointer to snapshot of FMU state
     fmi2FMUstate my_stored_state=NULL;
-    //char* my_state_byte_s;
-    //size_t my_state_size;
-    //bool has_stored_state;
 
 		/***************************************************
 		Functions for FMI 2.0 for Co-Simulation

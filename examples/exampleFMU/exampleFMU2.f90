@@ -62,6 +62,7 @@ PROGRAM testFMU2
 
   ! set restart point
   CALL test_fmu2_slave%setRestart()
+  WRITE(*,*) "Set restart"
 
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
@@ -72,14 +73,13 @@ PROGRAM testFMU2
 
   ! get valueReference to variables
   varName = "internalTime"
-  WRITE(*,*) test_fmu2_slave%getValueReference(varName)
-  WRITE(*,*) CHAR(test_fmu2_slave%getCausality(varName))
+  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
   varName = "outputs"
-  WRITE(*,*) test_fmu2_slave%getValueReference(varName)
-  WRITE(*,*) CHAR(test_fmu2_slave%getCausality(varName))
+  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
 
   ! set restart point
   CALL test_fmu2_slave%setRestart()
+  WRITE(*,*) "Set restart"
 
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
@@ -90,6 +90,7 @@ PROGRAM testFMU2
 
   ! rewind to restart
   CALL test_fmu2_slave%rewindToRestart()
+  WRITE(*,*) "Rewind to restart"
 
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
