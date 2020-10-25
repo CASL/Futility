@@ -21,11 +21,11 @@
 !>   |       |-> modelIdentifier.so
 !>   |-> modelIdentifier.xml
 !>
-!> Where modelIdentifier and unzipDirectory can be specified in the input pList
+!> Where modelIdentifier and unzipDirectory are specified in the input pList
 !>
 !> An example v2.0 FMU is available at:
-!> https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2018/Rectifier/Rectifier.fmu
-!> The FMU is actually a zip file, and can be unziped in linux with:
+!> https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2019/Rectifier/Rectifier.fmu
+!> The FMU is a zip file, and can be unziped:
 !>
 !>   unzip Rectifier.fmu
 !>
@@ -54,7 +54,8 @@ PUBLIC :: eFMU_Wrapper
 INTEGER(SIK) :: FMU_n=0
 
 
-!> @brief the base fmu type
+!> @brief the base fmu type.
+!> All FMU implementations must provide init, clear, get/set vars and doStep.
 TYPE,ABSTRACT :: FMU_Base
   !> Initialization status
   LOGICAL(SBK) :: isInit=.FALSE.
@@ -83,9 +84,13 @@ TYPE,ABSTRACT :: FMU_Base
     PROCEDURE(fmu_getReal_sub_absintfc),DEFERRED,PASS :: getReal
     !> Defered setReal routine
     PROCEDURE(fmu_setReal_sub_absintfc),DEFERRED,PASS :: setReal
+    !> Defered getInteger routine
     PROCEDURE(fmu_getInteger_sub_absintfc),DEFERRED,PASS :: getInteger
+    !> Defered setInteger routine
     PROCEDURE(fmu_setInteger_sub_absintfc),DEFERRED,PASS :: setInteger
+    !> Defered getBoolean routine
     PROCEDURE(fmu_getBoolean_sub_absintfc),DEFERRED,PASS :: getBoolean
+    !> Defered setBoolean routine
     PROCEDURE(fmu_setBoolean_sub_absintfc),DEFERRED,PASS :: setBoolean
     !> Defered doStep routine
     PROCEDURE(fmu_doStep_sub_absintfc),DEFERRED,PASS :: doStep
@@ -178,7 +183,18 @@ TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
     PROCEDURE,PASS :: getValueReference => getValueReference_FMU2_Slave
     PROCEDURE,PASS :: getCausality => getCausality_FMU2_Slave
     PROCEDURE,PASS :: setRestart => setRestart_FMU2_Slave
-    ! PROCEDURE,PASS :: rewindToRestart => rewindToRestart_FMU2_Slave
+    PROCEDURE,PASS :: rewindToRestart => rewindToRestart_FMU2_Slave
+    ! Convinience FMU wrapper getters and setters
+    PROCEDURE,PASS,PRIVATE :: getNamedReal_FMU2_Slave
+    PROCEDURE,PASS,PRIVATE :: setNamedReal_FMU2_Slave
+    PROCEDURE,PASS,PRIVATE :: getNamedInteger_FMU2_Slave
+    PROCEDURE,PASS,PRIVATE :: setNamedInteger_FMU2_Slave
+    PROCEDURE,PASS,PRIVATE :: getNamedBoolean_FMU2_Slave
+    PROCEDURE,PASS,PRIVATE :: setNamedBoolean_FMU2_Slave
+    GENERIC :: getNamedVariable => getNamedReal_FMU2_Slave, &
+        getNamedInteger_FMU2_Slave, getNamedBoolean_FMU2_Slave
+    GENERIC :: setNamedVariable => setNamedReal_FMU2_Slave, &
+        setNamedInteger_FMU2_Slave, setNamedBoolean_FMU2_Slave
 ENDTYPE FMU2_Slave
 
 !> Exception Handler for use in MatrixTypes
@@ -187,8 +203,9 @@ TYPE(ExceptionHandlerType),SAVE :: eFMU_Wrapper
 !> Name of module
 CHARACTER(LEN=*),PARAMETER :: modName='FMU_Wrapper'
 
+!
+!===============================================================================
 CONTAINS
-
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the FMU Slave
@@ -268,9 +285,11 @@ FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
   TYPE(StringType),INTENT(IN) :: variableName
   TYPE(StringType) :: valueReference_str
   INTEGER(SIK) :: valueReference
+
   TYPE(StringType) :: baseAddr
 
   REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
 
   ! check that requrested variable exists in the modelDescription
   baseAddr='MODELVARIABLES->'//variableName
@@ -295,7 +314,9 @@ FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   TYPE(StringType),INTENT(IN) :: variableName
   TYPE(StringType) :: causality
+
   TYPE(StringType) :: baseAddr
+  TYPE(StringType) :: causalityAddr
 
   REQUIRE(self%isInit)
 
@@ -303,7 +324,13 @@ FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
   baseAddr='MODELVARIABLES->'//variableName
   IF(self%modelDescription%has(CHAR(baseAddr))) THEN
     ! get valueReference assc with this variableName
-    CALL self%modelDescription%get(baseAddr//'->causality', causality)
+    causalityAddr = baseAddr//'->causality'
+    IF(self%modelDescription%has(CHAR(causalityAddr))) THEN
+      CALL self%modelDescription%get(CHAR(causalityAddr), causality)
+    ELSE
+      ! default causality is local as defined by FMI standard
+      causality='local'
+    ENDIF
   ELSE
     CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No Variable named: '//variableName)
   ENDIF
@@ -442,6 +469,150 @@ SUBROUTINE setRestart_FMU2_Slave(self)
   REQUIRE(c_associated(fmu_c_ptr))
 
   CALL serializeStateFMU2_Slave(fmu_c_ptr)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+!> @param self
+!>
+SUBROUTINE rewindToRestart_FMU2_Slave(self)
+  CHARACTER(LEN=*),PARAMETER :: myName='rewindToRestart_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+!> @param self
+!>
+SUBROUTINE getNamedReal_FMU2_Slave(self, variableName, val)
+  CHARACTER(LEN=*),PARAMETER :: myName='getNamedReal_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  REAL(SRK),INTENT(OUT) :: val
+
+  INTEGER(SIK) :: valueReference
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+  valueReference = self%getValueReference(variableName)
+  CALL self%getReal(valueReference, val)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the FMU Slave
+!>
+!> @param self
+!>
+SUBROUTINE setNamedReal_FMU2_Slave(self, variableName, val)
+  CHARACTER(LEN=*),PARAMETER :: myName='setNamedReal_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  REAL(SRK),INTENT(IN) :: val
+
+  INTEGER(SIK) :: valueReference
+  TYPE(StringType) :: causality
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+  valueReference = self%getValueReference(variableName)
+  causality = self%getCausality(variableName)
+  IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
+      CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - Cannot set variable with causality: '//causality)
+  CALL self%setReal(valueReference, val)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the FMU Slave
+!>
+!> @param self
+!>
+SUBROUTINE getNamedInteger_FMU2_Slave(self, variableName, val)
+  CHARACTER(LEN=*),PARAMETER :: myName='getNamedInteger_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  INTEGER(SIK),INTENT(OUT) :: val
+
+  INTEGER(SIK) :: valueReference
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+  valueReference = self%getValueReference(variableName)
+  CALL self%getInteger(valueReference, val)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the FMU Slave
+!>
+!> @param self
+!>
+SUBROUTINE setNamedInteger_FMU2_Slave(self, variableName, val)
+  CHARACTER(LEN=*),PARAMETER :: myName='setNamedInteger_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  INTEGER(SIK),INTENT(IN) :: val
+
+  INTEGER(SIK) :: valueReference
+  TYPE(StringType) :: causality
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+  valueReference = self%getValueReference(variableName)
+  IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
+      CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - Cannot set variable with causality: '//causality)
+  CALL self%setInteger(valueReference, val)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the FMU Slave
+!>
+!> @param self
+!>
+SUBROUTINE getNamedBoolean_FMU2_Slave(self, variableName, val)
+  CHARACTER(LEN=*),PARAMETER :: myName='getNamedBoolean_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  LOGICAL(SBK),INTENT(OUT) :: val
+
+  INTEGER(SIK) :: valueReference
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+  valueReference = self%getValueReference(variableName)
+  CALL self%getBoolean(valueReference, val)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes the FMU Slave
+!>
+!> @param self
+!>
+SUBROUTINE setNamedBoolean_FMU2_Slave(self, variableName, val)
+  CHARACTER(LEN=*),PARAMETER :: myName='setNamedBoolean_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  LOGICAL(SBK),INTENT(IN) :: val
+
+  INTEGER(SIK) :: valueReference
+  TYPE(StringType) :: causality
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(fmu_c_ptr))
+
+  valueReference = self%getValueReference(variableName)
+  IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
+      CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - Cannot set variable with causality: '//causality)
+  CALL self%setBoolean(valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------

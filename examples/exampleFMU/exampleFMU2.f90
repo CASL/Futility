@@ -22,6 +22,7 @@ PROGRAM testFMU2
   REAL(SRK) :: timeEnd=1.0E-1_SRK
   REAL(SRK) :: tol=1.0E-7_SRK
   REAL(SRK) :: time, v1
+  REAL(SRK) :: minsamplestep
   INTEGER(SIK) :: i
   TYPE(StringType) :: varName
 
@@ -54,6 +55,11 @@ PROGRAM testFMU2
   CALL test_fmu2_slave%init(id, FMU_params)
   CALL test_fmu2_slave%setupExperiment(.TRUE., tol, timeStart, .TRUE., timeEnd)
 
+  ! set named variables/parameters
+  minsamplestep=2.5e-2_SRK
+  varName="minsamplestep"
+  CALL test_fmu2_slave%setNamedVariable(varName, minsamplestep)
+
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
     CALL test_fmu2_slave%getReal(1, v1)
@@ -71,6 +77,11 @@ PROGRAM testFMU2
   varName = "outputs"
   WRITE(*,*) test_fmu2_slave%getValueReference(varName)
   WRITE(*,*) CHAR(test_fmu2_slave%getCausality(varName))
+
+  ! get named variables
+  varName = "internalTime"
+  CALL test_fmu2_slave%getNamedVariable(varName, time)
+  WRITE(*,*) "final time: ", time
 
   ! Clean up
   CALL test_fmu2_slave%clear()

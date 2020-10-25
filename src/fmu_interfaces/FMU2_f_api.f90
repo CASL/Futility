@@ -61,8 +61,8 @@ USE ISO_C_BINDING
       USE ISO_C_BINDING
       IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
-      INTEGER(C_INT),INTENT(IN) :: valueReference
-      REAL(C_DOUBLE),INTENT(IN) :: val
+      INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: val
     ENDSUBROUTINE
 
     SUBROUTINE getIntegerFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getIntegerFMU2_Slave")
@@ -77,8 +77,8 @@ USE ISO_C_BINDING
       USE ISO_C_BINDING
       IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
-      INTEGER(C_INT),INTENT(IN) :: valueReference
-      INTEGER(C_INT),INTENT(IN) :: val
+      INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
+      INTEGER(C_INT),INTENT(IN),VALUE :: val
     ENDSUBROUTINE
 
     SUBROUTINE getBooleanFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getBooleanFMU2_Slave")
@@ -93,8 +93,8 @@ USE ISO_C_BINDING
       USE ISO_C_BINDING
       IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
-      INTEGER(C_INT),INTENT(IN) :: valueReference
-      LOGICAL(C_BOOL),INTENT(IN) :: val
+      INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
+      LOGICAL(C_BOOL),INTENT(IN),VALUE :: val
     ENDSUBROUTINE
 
     SUBROUTINE doStepFMU2_Slave(slave_ptr,h) bind(C,NAME="doStepFMU2_Slave")
