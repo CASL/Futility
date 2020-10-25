@@ -25,7 +25,6 @@ C_FMU2Slave InitilizeFMU2_Slave(int slave_id, char* guid, char* modelIdentifier,
   std::cout << "FMU2_Slave Init modelIdentifier: " << modelIdentifier << std::endl;
   std::cout << "FMU2_Slave Init unzipDirectory: " << unzipDirectory << std::endl;
   std::cout << "FMU2_Slave Init instanceName: " << instanceName << std::endl;
-  // return reinterpret_cast<void*>(new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName));
   fmikit::FMU2Slave *s = new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName);
   s->instantiate(false);  // TODO: enable logging
   std::cout << "FMU2_Slave Init ptr: " << s << std::endl;

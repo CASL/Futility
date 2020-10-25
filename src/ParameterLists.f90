@@ -11224,6 +11224,12 @@ RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
         tmpPathToTmpVar = elname//currentPath//' -> '//tmpKeys(ia)
         CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ia))
       ENDDO
+    ELSE IF(elname == 'COSIMULATION') THEN
+      CALL iXMLE%getAttributes(tmpKeys, tmpValues)
+      DO ia=1,SIZE(tmpKeys)
+        tmpPathToTmpVar = elname//currentPath//' -> '//tmpKeys(ia)
+        CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ia))
+      ENDDO
     ELSE IF(elname == 'MODELVARIABLES') THEN
       CALL procFMUXMLTree(thisParam,iXMLE,tmpNewPath)
     ENDIF

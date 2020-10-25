@@ -283,9 +283,9 @@ FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
   CHARACTER(LEN=*),PARAMETER :: myName='getValueReference_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   TYPE(StringType),INTENT(IN) :: variableName
-  TYPE(StringType) :: valueReference_str
   INTEGER(SIK) :: valueReference
 
+  TYPE(StringType) :: valueReference_str
   TYPE(StringType) :: baseAddr
 
   REQUIRE(self%isInit)
@@ -465,8 +465,23 @@ SUBROUTINE setRestart_FMU2_Slave(self)
   CHARACTER(LEN=*),PARAMETER :: myName='setRestart_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
 
+  TYPE(StringType) :: baseAddr
+  TYPE(StringType) :: getSetAddr
+  TYPE(StringType) :: isGetSet_str
+
   REQUIRE(self%isInit)
   REQUIRE(c_associated(fmu_c_ptr))
+
+  ! check that requrested variable exists in the modelDescription
+  baseAddr='COSIMULATION'
+  getSetAddr=baseAddr//'->canGetAndSetFMUstate'
+  IF(self%modelDescription%has(CHAR(getSetAddr))) THEN
+    CALL self%modelDescription%get(baseAddr//'->canGetAndSetFMUstate', isGetSet_str)
+    IF(.NOT. (isGetSet_str=="true" .OR. isGetSet_str=="True" .OR. isGetSet_str=="TRUE")) &
+        CALL eFMU_Wrapper%raiseError(modName//'::'//' - FMU does not support GetSetFMUstate.')
+  ELSE
+    CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - GetSetFMUstate capability was not detected.')
+  ENDIF
 
   CALL serializeStateFMU2_Slave(fmu_c_ptr)
 ENDSUBROUTINE
