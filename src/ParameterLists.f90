@@ -11177,7 +11177,7 @@ RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
   TYPE(StringType),INTENT(IN) :: currentPath
   TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent
   TYPE(ParamType),POINTER :: pList(:)
-  TYPE(StringType) :: elname,tmpStr,tmpPath,tmpNewPath
+  TYPE(StringType) :: elname,tmpPath,tmpNewPath
   INTEGER(SIK) :: ic,ia,ib
 
   TYPE(StringType),ALLOCATABLE :: tmpKeys(:)

@@ -259,7 +259,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE setupExperiment_FMU2_Slave(self, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
-  CHARACTER(LEN=*),PARAMETER :: myName='setupExperiment_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   LOGICAL(SBK),INTENT(IN) :: toleranceDefined
   REAL(SRK),INTENT(IN) :: tolerance
@@ -342,7 +341,6 @@ ENDFUNCTION
 !> @param self
 !>
 SUBROUTINE getReal_FMU2_Slave(self, valueReference, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='getReal_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: valueReference
   REAL(SRK),INTENT(INOUT) :: val
@@ -359,7 +357,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE setReal_FMU2_Slave(self, valueReference, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='setReal_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: valueReference
   REAL(SRK),INTENT(IN) :: val
@@ -376,7 +373,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE getInteger_FMU2_Slave(self, valueReference, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='getInteger_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: valueReference
   INTEGER(SIK),INTENT(INOUT) :: val
@@ -393,7 +389,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE setInteger_FMU2_Slave(self, valueReference, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='setInteger_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: valueReference
   INTEGER(SIK),INTENT(IN) :: val
@@ -410,7 +405,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE getBoolean_FMU2_Slave(self, valueReference, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='getBoolean_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: valueReference
   LOGICAL(SBK),INTENT(INOUT) :: val
@@ -429,7 +423,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE setBoolean_FMU2_Slave(self, valueReference, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='setBoolean_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   INTEGER(SIK),INTENT(IN) :: valueReference
   LOGICAL(SBK),INTENT(IN) :: val
@@ -446,7 +439,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE doStep_FMU2_Slave(self,h)
-  CHARACTER(LEN=*),PARAMETER :: myName='doStep_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   REAL(SRK),INTENT(IN) :: h
 
@@ -492,7 +484,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE rewindToRestart_FMU2_Slave(self)
-  CHARACTER(LEN=*),PARAMETER :: myName='rewindToRestart_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
 
   REQUIRE(self%isInit)
@@ -507,7 +498,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE getNamedReal_FMU2_Slave(self, variableName, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='getNamedReal_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   TYPE(StringType),INTENT(IN) :: variableName
   REAL(SRK),INTENT(OUT) :: val
@@ -551,7 +541,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE getNamedInteger_FMU2_Slave(self, variableName, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='getNamedInteger_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   TYPE(StringType),INTENT(IN) :: variableName
   INTEGER(SIK),INTENT(OUT) :: val
@@ -594,7 +583,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE getNamedBoolean_FMU2_Slave(self, variableName, val)
-  CHARACTER(LEN=*),PARAMETER :: myName='getNamedBoolean_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   TYPE(StringType),INTENT(IN) :: variableName
   LOGICAL(SBK),INTENT(OUT) :: val
@@ -637,7 +625,6 @@ ENDSUBROUTINE
 !> @param self
 !>
 SUBROUTINE clear_FMU2_Slave(self)
-  CHARACTER(LEN=*),PARAMETER :: myName='clear_FM2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
 
   CALL clearFMU2_Slave(fmu_c_ptr)
