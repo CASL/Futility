@@ -11235,6 +11235,12 @@ RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
     ENDIF
   ENDDO
 
+  IF(parent%name%upper() == 'FMIMODELDESCRIPTION') THEN
+    tmpKey='guid'
+    CALL parent%getAttributeValue(tmpKey,tmpVal)
+    CALL thisParam%add(CHAR(tmpKey),tmpVal)
+  ENDIF
+
 ENDSUBROUTINE procFMUXMLTree
 !
 !-------------------------------------------------------------------------------

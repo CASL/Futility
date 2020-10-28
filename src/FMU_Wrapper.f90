@@ -222,25 +222,30 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
   TYPE(ParamType),INTENT(IN) :: pList
 
   ! Required FMU pList
-  IF(.NOT. pList%has('guid')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU guid')
-  CALL pList%get('guid', self%guid)
   IF(.NOT. pList%has('unzipDirectory')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU unzipDirectory')
   CALL pList%get('unzipDirectory', self%unzipDirectory)
-  IF(.NOT. pList%has('modelIdentifier')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU modelIdentifier')
-  CALL pList%get('modelIdentifier', self%modelIdentifier)
+  self%idFMU=id
+
+  ! Parse the FMU XML model description
+  CALL eFMU_Wrapper%raiseDebug('Opening FMU XML File: '//self%unzipDirectory//'/modelDescription.xml' )
+  CALL self%modelDescription%initFromXML(self%unzipDirectory//'/modelDescription.xml',.TRUE.)
+
   ! Optional FMU pList
   IF(pList%has('instanceName')) THEN
     CALL pList%get('instanceName', self%instanceName)
   ELSE
     self%instanceName = "default_fmu_instance"
   ENDIF
-  self%idFMU=id
-
-  ! Parse the FMU XML model description
-  CALL eFMU_Wrapper%raiseDebug('Opening FMU XML File: '//self%unzipDirectory//'/modelDescription.xml' )
-  ! File encoding "ISO-8859-1" is not supported
-  ! Change to UTF-8 or US-ASCII
-  CALL self%modelDescription%initFromXML(self%unzipDirectory//'/modelDescription.xml',.TRUE.)
+  IF(pList%has('modelIdentifier')) THEN
+    CALL pList%get('modelIdentifier', self%modelIdentifier)
+  ELSE
+    CALL self%modelDescription%get('modelIdentifier', self%modelIdentifier)
+  ENDIF
+  IF(pList%has('guid')) THEN
+    CALL pList%get('guid', self%guid)
+  ELSE
+    CALL self%modelDescription%get('guid', self%guid)
+  ENDIF
 
   ! Initilize the FMU
   fmu_c_ptr = InitilizeFMU2_Slave(self%idFMU, &
