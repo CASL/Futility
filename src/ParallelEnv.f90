@@ -1029,6 +1029,7 @@ SUBROUTINE gatherV_str_MPI_ENV_type(myPE,n,sendbuf,recvbuf,root)
   TYPE(StringType),INTENT(INOUT) :: recvbuf(*)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
 
+#ifndef HAVE_MPI
   INTEGER(SIK) :: rank,iEntry,iProc,maxChars
   INTEGER(SIK) :: charProc(n)
   CHARACTER(LEN=:),ALLOCATABLE :: chars
@@ -1068,6 +1069,7 @@ SUBROUTINE gatherV_str_MPI_ENV_type(myPE,n,sendbuf,recvbuf,root)
       ENDIF
     ENDDO
   ENDIF
+#endif
 ENDSUBROUTINE gatherV_str_MPI_ENV_type
 !
 !-------------------------------------------------------------------------------
