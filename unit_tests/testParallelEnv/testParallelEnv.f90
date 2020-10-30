@@ -348,32 +348,25 @@ SUBROUTINE testMPIEnv()
     IF(testMPI%rank == 0) THEN
       tstString(1) = "blah_master"
       ALLOCATE(tstRecv(2))
-      CALL testMPI%gatherV(2,tstString,tstRecv,0)
+      CALL testMPI%gatherV(tstString,0)
+      ASSERT_EQ(CHAR(tstString(1)),"blah_master","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString(2)),"blah_not_master","test gather at master, 2")
+      DEALLOCATE(tstString)
+      ALLOCATE(tstString(2))
+      tstString(1) = "blah_master"
+      CALL testMPI%gatherV(tstString,1)
       ASSERT_EQ(CHAR(tstString(1)),"blah_master","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString(2)),"","test gather at master, 2")
-      ASSERT_EQ(CHAR(tstRecv(1)),"blah_master","test gather at master, 1")
-      ASSERT_EQ(CHAR(tstRecv(2)),"blah_not_master","test gather at master, 2")
-      DEALLOCATE(tstRecv)
-      ALLOCATE(tstRecv(2))
-      CALL testMPI%gatherV(2,tstString,tstRecv,1)
-      ASSERT_EQ(CHAR(tstString(1)),"blah_master","test gather at master, 1")
-      ASSERT_EQ(CHAR(tstString(2)),"","test gather at master, 2")
-      ASSERT_EQ(CHAR(tstRecv(1)),"","test gather at master, 1")
-      ASSERT_EQ(CHAR(tstRecv(2)),"","test gather at master, 2")
     ELSEIF(testMPI%rank == 1) THEN
       tstString(2) = "blah_not_master"
       ALLOCATE(tstRecv(2))
-      CALL testMPI%gatherV(2,tstString,tstRecv,0)
+      CALL testMPI%gatherV(tstString,0)
       ASSERT_EQ(CHAR(tstString(1)),"","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString(2)),"blah_not_master","test gather at master, 2")
-      ASSERT_EQ(CHAR(tstRecv(1)),"","test gather not at master, 1")
-      ASSERT_EQ(CHAR(tstRecv(2)),"","test gather not at master, 2")
 
-      CALL testMPI%gatherV(2,tstString,tstRecv,1)
-      ASSERT_EQ(CHAR(tstString(1)),"","test gather at master, 1")
+      CALL testMPI%gatherV(tstString,1)
+      ASSERT_EQ(CHAR(tstString(1)),"blah_master","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString(2)),"blah_not_master","test gather at master, 2")
-      ASSERT_EQ(CHAR(tstRecv(1)),"blah_master","test gather not at master, 1")
-      ASSERT_EQ(CHAR(tstRecv(2)),"blah_not_master","test gather not at master, 2")
     ENDIF
   ENDIF
 

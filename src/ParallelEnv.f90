@@ -202,11 +202,14 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
         gather_SLK1_MPI_Env_type, &
         gather_SIK1_MPI_Env_type
 
-    !> @copybrief ParallelEnv::gatherV_str_MPI_ENV_type
-    !> @copydetails ParallelEnv::gatherV_str_MPI_ENV_type
-    PROCEDURE,PASS,PRIVATE :: gatherV_str_MPI_ENV_type
+    !> @copybrief ParallelEnv::gatherV_str1D_MPI_ENV_type
+    !> @copydetails ParallelEnv::gatherV_str1D_MPI_ENV_type
+    PROCEDURE,PASS,PRIVATE :: gatherV_str1D_MPI_ENV_type
+    !> @copybrief ParallelEnv::gatherV_str2D_MPI_ENV_type
+    !> @copydetails ParallelEnv::gatherV_str2D_MPI_ENV_type
+    PROCEDURE,PASS,PRIVATE :: gatherV_str2D_MPI_ENV_type
     !>
-    GENERIC :: gatherV => gatherV_str_MPI_ENV_type
+    GENERIC :: gatherV => gatherV_str1D_MPI_ENV_type,gatherV_str2D_MPI_ENV_type
 
     !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
     !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
@@ -1019,19 +1022,16 @@ ENDSUBROUTINE gather_SIK0_MPI_Env_type
 !> @brief Wrapper that emulates MPI_GatherV for non-contiguous array of Strings
 !> @param myPE parallel environment where the communication originates
 !> @param sendbuf the data which is to be sent
-!> @param recvbuf the data which is to be sent
 !> @param root the rank of the root process
 !>
-SUBROUTINE gatherV_str_MPI_ENV_type(myPE,n,sendbuf,recvbuf,root)
+SUBROUTINE gatherV_str2D_MPI_ENV_type(myPE,sendbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SIK),INTENT(IN) :: n
-  TYPE(StringType),INTENT(IN) :: sendbuf(*)
-  TYPE(StringType),INTENT(INOUT) :: recvbuf(*)
+  TYPE(StringType),INTENT(INOUT) :: sendbuf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
 
-#ifndef HAVE_MPI
-  INTEGER(SIK) :: rank,iEntry,iProc,maxChars
-  INTEGER(SIK) :: charProc(n)
+#ifdef HAVE_MPI
+  INTEGER(SIK) :: rank,i,j,iEntry,maxChars
+  INTEGER(SIK),ALLOCATABLE :: charProc(:,:)
   CHARACTER(LEN=:),ALLOCATABLE :: chars
   rank=0
   IF(PRESENT(root)) rank=root
@@ -1039,38 +1039,102 @@ SUBROUTINE gatherV_str_MPI_ENV_type(myPE,n,sendbuf,recvbuf,root)
   REQUIRE(rank < myPE%nproc)
 
   ! Need to know the maximum length
-  maxChars = MAXVAL(LEN(sendbuf(1:n)))
+  maxChars = MAXVAL(LEN(sendbuf(:,:)))
   CALL myPE%allReduceMaxI_scalar(maxChars)
 
   !Need to know which process is responsible for which string
+  ALLOCATE(charProc(UBOUND(sendbuf,DIM=1),UBOUND(sendbuf,DIM=2)))
   charProc = HUGE(rank)
-  DO iEntry=1,n
-    IF(LEN(sendbuf(iEntry)) > 0) charProc(iEntry) = myPE%rank
+  iEntry = 0
+  DO j=1,UBOUND(charProc,DIM=2)
+    DO i=1,UBOUND(charProc,DIM=1)
+      iEntry = iEntry + 1
+      IF(LEN(sendbuf(i,j)) > 0) charProc(i,j) = myPE%rank
+    ENDDO
   ENDDO
   !This is somewhat arbitrary, but giving preference to lowest rank's data
-  CALL myPE%allReduceMinI(n,charProc)
+  CALL myPE%allReduceMinI(SIZE(charProc),charProc)
 
   !Set-up individual send and receive for each string
   IF(myPE%rank /= rank) THEN
-    DO iEntry=1,n
+    iEntry = 0
+    DO j=1,UBOUND(sendbuf,DIM=2)
+      DO i=1,UBOUND(sendbuf,DIM=1)
+        IF(charProc(i,j) == myPE%rank) THEN
+          iEntry = iEntry + 1
+          CALL myPE%send(CHAR(sendbuf(i,j)),rank,iEntry)
+        ENDIF
+      ENDDO
+    ENDDO
+  ELSE
+    ALLOCATE(CHARACTER(maxChars) :: chars)
+    iEntry = 0
+    DO j=1,UBOUND(sendbuf,DIM=2)
+      DO i=1,UBOUND(sendbuf,DIM=1)
+        IF(charProc(i,j) /= rank) THEN
+          chars = REPEAT(" ",maxChars)
+          iEntry = iEntry + 1
+          CALL myPE%recv(chars,charProc(i,j),iEntry)
+          sendbuf(i,j) = TRIM(chars)
+        ENDIF
+      ENDDO
+    ENDDO
+  ENDIF
+#endif
+ENDSUBROUTINE gatherV_str2D_MPI_ENV_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper that emulates MPI_GatherV for non-contiguous array of Strings
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
+SUBROUTINE gatherV_str1D_MPI_ENV_type(myPE,sendbuf,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  TYPE(StringType),INTENT(INOUT) :: sendbuf(:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+
+#ifdef HAVE_MPI
+  INTEGER(SIK) :: rank,iEntry,maxChars
+  INTEGER(SIK),ALLOCATABLE :: charProc(:)
+  CHARACTER(LEN=:),ALLOCATABLE :: chars
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(0 <= rank)
+  REQUIRE(rank < myPE%nproc)
+
+  ! Need to know the maximum length
+  maxChars = MAXVAL(LEN(sendbuf(:)))
+  CALL myPE%allReduceMaxI_scalar(maxChars)
+
+  !Need to know which process is responsible for which string
+  ALLOCATE(charProc(SIZE(sendbuf)))
+  charProc = HUGE(rank)
+  DO iEntry=1,SIZE(sendbuf)
+    IF(LEN(sendbuf(iEntry)) > 0) charProc(iEntry) = myPE%rank
+  ENDDO
+  !This is somewhat arbitrary, but giving preference to lowest rank's data
+  CALL myPE%allReduceMinI(SIZE(charProc),charProc)
+
+  !Set-up individual send and receive for each string
+  IF(myPE%rank /= rank) THEN
+    DO iEntry=1,SIZE(sendbuf)
       IF(charProc(iEntry) == myPE%rank) THEN
         CALL myPE%send(CHAR(sendbuf(iEntry)),rank,iEntry)
       ENDIF
     ENDDO
   ELSE
     ALLOCATE(CHARACTER(maxChars) :: chars)
-    DO iEntry=1,n
-      IF(charProc(iEntry) == rank) THEN
-        recvbuf(iEntry) = sendbuf(iEntry)
-      ELSE
+    DO iEntry=1,SIZE(sendbuf)
+      IF(charProc(iEntry) /= rank) THEN
         chars = REPEAT(" ",maxChars)
         CALL myPE%recv(chars,charProc(iEntry),iEntry)
-        recvbuf(iEntry) = TRIM(chars)
+        sendbuf(iEntry) = TRIM(chars)
       ENDIF
     ENDDO
   ENDIF
 #endif
-ENDSUBROUTINE gatherV_str_MPI_ENV_type
+ENDSUBROUTINE gatherV_str1D_MPI_ENV_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather for an SIK array
