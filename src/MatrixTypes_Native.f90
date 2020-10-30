@@ -444,7 +444,8 @@ SUBROUTINE init_BandedMatrixParam(matrix,Params)
 
   ! Pull Data From Parameter List
   CALL validParams%get('MatrixType->n',n)
-  CALL validParams%get('MatrixType->m',m)
+  m=n
+  IF (validParams%has('MatrixType->m')) CALL validParams%get('MatrixType->m',m)
   CALL validParams%get('MatrixType->nnz',nnz)
   CALL validParams%clear()
 
@@ -691,11 +692,10 @@ SUBROUTINE assemble_BandedMatrixType(thisMatrix)
   INTEGER(SLK),ALLOCATABLE :: diagRank(:)
 
   REQUIRE(thisMatrix%isInit)
-  REQUIRE(thisMatrix%nnz == thisMatrix%counter)
 
-  ALLOCATE(diagRank(SIZE(thisMatrix%iTmp)))
-  ALLOCATE(idxOrig(SIZE(thisMatrix%iTmp)))
-  DO i=1,SIZE(thisMatrix%iTmp)
+  ALLOCATE(diagRank(thisMatrix%counter))
+  ALLOCATE(idxOrig(thisMatrix%counter))
+  DO i=1,thisMatrix%counter
     iLong=INT(thisMatrix%iTmp(i),kind=SLK)
     jLong=INT(thisMatrix%jTmp(i),kind=SLK)
     nLong=INT(thisMatrix%n,kind=SLK)
