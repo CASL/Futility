@@ -71,6 +71,8 @@ TYPE,ABSTRACT :: FMU_Base
   TYPE(StringType) :: instanceName
   !> XML derived model description
   TYPE(ParamType) :: modelDescription
+  !> FMU C opaque pointer to FMU obj
+  TYPE(C_PTR) :: fmu_c_ptr=c_null_ptr
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -159,8 +161,6 @@ ABSTRACT INTERFACE
   ENDSUBROUTINE
 ENDINTERFACE
 
-!> FMU C Pointer to opaque FMU obj
-TYPE(C_PTR),SAVE :: fmu_c_ptr=c_null_ptr
 !> @brief FMU run in slave mode intended for use with external driver, such as CTF
 TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
   !> FMU version
@@ -248,7 +248,7 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
   ENDIF
 
   ! Initilize the FMU
-  fmu_c_ptr = InitilizeFMU2_Slave(self%idFMU, &
+  self%fmu_c_ptr = InitilizeFMU2_Slave(self%idFMU, &
     CHAR(self%guid)//c_null_char, &
     CHAR(self%modelIdentifier)//c_null_char, &
     CHAR(self%unzipDirectory)//c_null_char, &
@@ -272,9 +272,9 @@ SUBROUTINE setupExperiment_FMU2_Slave(self, toleranceDefined, tolerance, startTi
   REAL(SRK),INTENT(IN) :: stopTime
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL setupExperimentFMU2_Slave(fmu_c_ptr, LOGICAL(toleranceDefined,1), tolerance, startTime, &
+  CALL setupExperimentFMU2_Slave(self%fmu_c_ptr, LOGICAL(toleranceDefined,1), tolerance, startTime, &
     LOGICAL(stopTimeDefined,1), stopTime)
 ENDSUBROUTINE
 !
@@ -293,7 +293,7 @@ FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
   TYPE(StringType) :: baseAddr
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   ! check that requrested variable exists in the modelDescription
   baseAddr='MODELVARIABLES->'//variableName
@@ -351,9 +351,9 @@ SUBROUTINE getReal_FMU2_Slave(self, valueReference, val)
   REAL(SRK),INTENT(INOUT) :: val
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL getRealFMU2_Slave(fmu_c_ptr, valueReference, val)
+  CALL getRealFMU2_Slave(self%fmu_c_ptr, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -367,9 +367,9 @@ SUBROUTINE setReal_FMU2_Slave(self, valueReference, val)
   REAL(SRK),INTENT(IN) :: val
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL setRealFMU2_Slave(fmu_c_ptr, valueReference, val)
+  CALL setRealFMU2_Slave(self%fmu_c_ptr, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -383,9 +383,9 @@ SUBROUTINE getInteger_FMU2_Slave(self, valueReference, val)
   INTEGER(SIK),INTENT(INOUT) :: val
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL getIntegerFMU2_Slave(fmu_c_ptr, valueReference, val)
+  CALL getIntegerFMU2_Slave(self%fmu_c_ptr, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -399,9 +399,9 @@ SUBROUTINE setInteger_FMU2_Slave(self, valueReference, val)
   INTEGER(SIK),INTENT(IN) :: val
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL setIntegerFMU2_Slave(fmu_c_ptr, valueReference, val)
+  CALL setIntegerFMU2_Slave(self%fmu_c_ptr, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -416,9 +416,9 @@ SUBROUTINE getBoolean_FMU2_Slave(self, valueReference, val)
   LOGICAL(1) :: tmp_val
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL getBooleanFMU2_Slave(fmu_c_ptr, valueReference, tmp_val)
+  CALL getBooleanFMU2_Slave(self%fmu_c_ptr, valueReference, tmp_val)
   val = tmp_val
 ENDSUBROUTINE
 !
@@ -433,9 +433,9 @@ SUBROUTINE setBoolean_FMU2_Slave(self, valueReference, val)
   LOGICAL(SBK),INTENT(IN) :: val
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL setBooleanFMU2_Slave(fmu_c_ptr, valueReference, LOGICAL(val,1))
+  CALL setBooleanFMU2_Slave(self%fmu_c_ptr, valueReference, LOGICAL(val,1))
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -448,9 +448,9 @@ SUBROUTINE doStep_FMU2_Slave(self,h)
   REAL(SRK),INTENT(IN) :: h
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL doStepFMU2_Slave(fmu_c_ptr, h)
+  CALL doStepFMU2_Slave(self%fmu_c_ptr, h)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -467,7 +467,7 @@ SUBROUTINE setRestart_FMU2_Slave(self)
   TYPE(StringType) :: isGetSet_str
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   ! check that requrested variable exists in the modelDescription
   baseAddr='COSIMULATION'
@@ -480,7 +480,7 @@ SUBROUTINE setRestart_FMU2_Slave(self)
     CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - GetSetFMUstate capability was not detected.')
   ENDIF
 
-  CALL serializeStateFMU2_Slave(fmu_c_ptr)
+  CALL serializeStateFMU2_Slave(self%fmu_c_ptr)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -492,9 +492,9 @@ SUBROUTINE rewindToRestart_FMU2_Slave(self)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL deSerializeStateFMU2_Slave(fmu_c_ptr)
+  CALL deSerializeStateFMU2_Slave(self%fmu_c_ptr)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -510,7 +510,7 @@ SUBROUTINE getNamedReal_FMU2_Slave(self, variableName, val)
   INTEGER(SIK) :: valueReference
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
   CALL self%getReal(valueReference, val)
@@ -531,7 +531,7 @@ SUBROUTINE setNamedReal_FMU2_Slave(self, variableName, val)
   TYPE(StringType) :: causality
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
@@ -553,7 +553,7 @@ SUBROUTINE getNamedInteger_FMU2_Slave(self, variableName, val)
   INTEGER(SIK) :: valueReference
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
   CALL self%getInteger(valueReference, val)
@@ -574,7 +574,7 @@ SUBROUTINE setNamedInteger_FMU2_Slave(self, variableName, val)
   TYPE(StringType) :: causality
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
@@ -595,7 +595,7 @@ SUBROUTINE getNamedBoolean_FMU2_Slave(self, variableName, val)
   INTEGER(SIK) :: valueReference
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
   CALL self%getBoolean(valueReference, val)
@@ -616,7 +616,7 @@ SUBROUTINE setNamedBoolean_FMU2_Slave(self, variableName, val)
   TYPE(StringType) :: causality
 
   REQUIRE(self%isInit)
-  REQUIRE(c_associated(fmu_c_ptr))
+  REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
@@ -632,12 +632,12 @@ ENDSUBROUTINE
 SUBROUTINE clear_FMU2_Slave(self)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
 
-  CALL clearFMU2_Slave(fmu_c_ptr)
+  CALL clearFMU2_Slave(self%fmu_c_ptr)
   self%isInit=.FALSE.
-  fmu_c_ptr = c_null_ptr
+  self%fmu_c_ptr = c_null_ptr
 
   CALL self%modelDescription%clear()
-  ENSURE(.NOT. c_associated(fmu_c_ptr))
+  ENSURE(.NOT. c_associated(self%fmu_c_ptr))
 
 ENDSUBROUTINE
 
