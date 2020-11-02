@@ -527,7 +527,6 @@ ENDSUBROUTINE partition_indices_ParEnvType
 !> 0-nremainder
 !>
 SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,idxmap)
-  CHARACTER(LEN=*),PARAMETER :: myName='partition_greedy_ParEnvType'
   CLASS(ParEnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(IN) :: iwgt(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: n1
