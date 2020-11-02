@@ -196,20 +196,19 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copybrief ParallelEnv::gather_SLK1_MPI_Env_type
     !> @copydetails ParallelEnv::gather_SLK1_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: gather_SLK1_MPI_Env_type
+    !> @copybrief ParallelEnv::gather_str1D_MPI_ENV_type
+    !> @copydetails ParallelEnv::gather_str1D_MPI_ENV_type
+    PROCEDURE,PASS,PRIVATE :: gather_str1D_MPI_ENV_type
+    !> @copybrief ParallelEnv::gather_str2D_MPI_ENV_type
+    !> @copydetails ParallelEnv::gather_str2D_MPI_ENV_type
+    PROCEDURE,PASS,PRIVATE :: gather_str2D_MPI_ENV_type
     !>
     GENERIC :: gather => gather_SIK0_MPI_Env_type, &
         gather_SLK0_MPI_Env_type, &
         gather_SLK1_MPI_Env_type, &
-        gather_SIK1_MPI_Env_type
-
-    !> @copybrief ParallelEnv::gatherV_str1D_MPI_ENV_type
-    !> @copydetails ParallelEnv::gatherV_str1D_MPI_ENV_type
-    PROCEDURE,PASS,PRIVATE :: gatherV_str1D_MPI_ENV_type
-    !> @copybrief ParallelEnv::gatherV_str2D_MPI_ENV_type
-    !> @copydetails ParallelEnv::gatherV_str2D_MPI_ENV_type
-    PROCEDURE,PASS,PRIVATE :: gatherV_str2D_MPI_ENV_type
-    !>
-    GENERIC :: gatherV => gatherV_str1D_MPI_ENV_type,gatherV_str2D_MPI_ENV_type
+        gather_SIK1_MPI_Env_type, &
+        gather_str1D_MPI_ENV_type, &
+        gather_str2D_MPI_ENV_type
 
     !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
     !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
@@ -1018,12 +1017,12 @@ SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
 ENDSUBROUTINE gather_SIK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper that emulates MPI_GatherV for non-contiguous array of Strings
+!> @brief Wrapper that emulates MPI_Gather for non-contiguous array of Strings
 !> @param myPE parallel environment where the communication originates
 !> @param sendbuf the data which is to be sent
 !> @param root the rank of the root process
 !>
-SUBROUTINE gatherV_str2D_MPI_ENV_type(myPE,sendbuf,root)
+SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   TYPE(StringType),INTENT(INOUT) :: sendbuf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1081,15 +1080,15 @@ SUBROUTINE gatherV_str2D_MPI_ENV_type(myPE,sendbuf,root)
     ENDDO
   ENDIF
 #endif
-ENDSUBROUTINE gatherV_str2D_MPI_ENV_type
+ENDSUBROUTINE gather_str2D_MPI_ENV_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper that emulates MPI_GatherV for non-contiguous array of Strings
+!> @brief Wrapper that emulates MPI_Gather for non-contiguous array of Strings
 !> @param myPE parallel environment where the communication originates
 !> @param sendbuf the data which is to be sent
 !> @param root the rank of the root process
 !>
-SUBROUTINE gatherV_str1D_MPI_ENV_type(myPE,sendbuf,root)
+SUBROUTINE gather_str1D_MPI_ENV_type(myPE,sendbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   TYPE(StringType),INTENT(INOUT) :: sendbuf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
@@ -1135,7 +1134,7 @@ SUBROUTINE gatherV_str1D_MPI_ENV_type(myPE,sendbuf,root)
     ENDDO
   ENDIF
 #endif
-ENDSUBROUTINE gatherV_str1D_MPI_ENV_type
+ENDSUBROUTINE gather_str1D_MPI_ENV_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather for an SIK array

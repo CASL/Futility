@@ -342,36 +342,36 @@ SUBROUTINE testMPIEnv()
     ENDIF
   ENDIF
 
-  COMPONENT_TEST('%allGatherV')
+  COMPONENT_TEST('%allGather')
   ALLOCATE(tstString1D(2))
   IF(testMPI%nproc > 1) THEN
     IF(testMPI%rank == 0) THEN
       tstString1D(1) = "blah_master"
       ALLOCATE(tstRecv1D(2))
-      CALL testMPI%gatherV(tstString1D,0)
+      CALL testMPI%gather(tstString1D,0)
       ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString1D(2)),"blah_not_master","test gather at master, 2")
       DEALLOCATE(tstString1D)
       ALLOCATE(tstString1D(2))
       tstString1D(1) = "blah_master"
-      CALL testMPI%gatherV(tstString1D,1)
+      CALL testMPI%gather(tstString1D,1)
       ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString1D(2)),"","test gather at master, 2")
     ELSEIF(testMPI%rank == 1) THEN
       tstString1D(2) = "blah_not_master"
       ALLOCATE(tstRecv1D(2))
-      CALL testMPI%gatherV(tstString1D,0)
+      CALL testMPI%gather(tstString1D,0)
       ASSERT_EQ(CHAR(tstString1D(1)),"","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString1D(2)),"blah_not_master","test gather at master, 2")
 
-      CALL testMPI%gatherV(tstString1D,1)
+      CALL testMPI%gather(tstString1D,1)
       ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString1D(2)),"blah_not_master","test gather at master, 2")
     ENDIF
   ELSE
     tstString1D(1) = "blah_master"
     ALLOCATE(tstRecv1D(2))
-    CALL testMPI%gatherV(tstString1D)
+    CALL testMPI%gather(tstString1D)
     ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
     ASSERT_EQ(CHAR(tstString1D(2)),"","test gather at master, 2")
     DEALLOCATE(tstString1D)
@@ -382,7 +382,7 @@ SUBROUTINE testMPIEnv()
       tstString2D(1,1) = "blah_master1_1"
       tstString2D(1,2) = "blah_master1_2"
       ALLOCATE(tstRecv2D(2,2))
-      CALL testMPI%gatherV(tstString2D,0)
+      CALL testMPI%gather(tstString2D,0)
       ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(2,1)),"blah_not_master2_1","test gather at master, 2")
@@ -391,7 +391,7 @@ SUBROUTINE testMPIEnv()
       ALLOCATE(tstString2D(2,2))
       tstString2D(1,1) = "blah_master1_1"
       tstString2D(1,2) = "blah_master1_2"
-      CALL testMPI%gatherV(tstString2D,1)
+      CALL testMPI%gather(tstString2D,1)
       ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(2,1)),"","test gather at master, 2")
@@ -400,13 +400,13 @@ SUBROUTINE testMPIEnv()
       tstString2D(2,1) = "blah_not_master2_1"
       tstString2D(2,2) = "blah_not_master2_2"
       ALLOCATE(tstRecv2D(2,2))
-      CALL testMPI%gatherV(tstString2D,0)
+      CALL testMPI%gather(tstString2D,0)
       ASSERT_EQ(CHAR(tstString2D(1,1)),"","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(1,2)),"","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(2,1)),"blah_not_master2_1","test gather at master, 2")
       ASSERT_EQ(CHAR(tstString2D(2,2)),"blah_not_master2_2","test gather at master, 2")
 
-      CALL testMPI%gatherV(tstString2D,1)
+      CALL testMPI%gather(tstString2D,1)
       ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
       ASSERT_EQ(CHAR(tstString2D(2,1)),"blah_not_master2_1","test gather at master, 2")
@@ -416,7 +416,7 @@ SUBROUTINE testMPIEnv()
     tstString2D(1,1) = "blah_master1_1"
     tstString2D(1,2) = "blah_master1_2"
     ALLOCATE(tstRecv2D(2,2))
-    CALL testMPI%gatherV(tstString2D)
+    CALL testMPI%gather(tstString2D)
     ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
     ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
     ASSERT_EQ(CHAR(tstString2D(2,1)),"","test gather at master, 2")
