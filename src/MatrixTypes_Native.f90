@@ -695,6 +695,7 @@ SUBROUTINE assemble_BandedMatrixType(thisMatrix)
 
   ALLOCATE(diagRank(thisMatrix%counter))
   ALLOCATE(idxOrig(thisMatrix%counter))
+  IF (thisMatrix%isAssembled) RETURN
   DO i=1,thisMatrix%counter
     iLong=INT(thisMatrix%iTmp(i),kind=SLK)
     jLong=INT(thisMatrix%jTmp(i),kind=SLK)
@@ -1369,6 +1370,7 @@ SUBROUTINE set_BandedMatrixType(matrix,i,j,setval)
   IF((j <= matrix%m) .AND. (i <= matrix%n) .AND. (i >= 1) .AND. (j >= 1)) THEN
     IF(.NOT. matrix%isAssembled) THEN
       ! If it is not assembled, add to tmp variables
+      REQUIRE(matrix%counter < matrix%nnz)
       matrix%counter=matrix%counter+1
       matrix%iTmp(matrix%counter)=i
       matrix%jTmp(matrix%counter)=j
