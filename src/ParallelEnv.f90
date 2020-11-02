@@ -1036,6 +1036,7 @@ SUBROUTINE gatherV_str2D_MPI_ENV_type(myPE,sendbuf,root)
   IF(PRESENT(root)) rank=root
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
+  IF(myPE%nproc == 0) RETURN
 
   ! Need to know the maximum length
   maxChars = MAXVAL(LEN(sendbuf(:,:)))
@@ -1101,6 +1102,7 @@ SUBROUTINE gatherV_str1D_MPI_ENV_type(myPE,sendbuf,root)
   IF(PRESENT(root)) rank=root
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
+  IF(myPE%nproc == 0) RETURN
 
   ! Need to know the maximum length
   maxChars = MAXVAL(LEN(sendbuf(:)))

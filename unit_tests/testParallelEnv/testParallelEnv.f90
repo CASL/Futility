@@ -121,7 +121,7 @@ SUBROUTINE testMPIEnv()
   LOGICAL(SBK) :: bool,bool1d(10),bool2d(2,5),bool3d(2,5,2),bool4d(2,5,2,5)
   TYPE(MPI_EnvType) :: testMPI,testMPI2
   CHARACTER(LEN=8) :: tmpChar
-  TYPE(StringType),ALLOCATABLE :: tstRecv(:),tstString(:)
+  TYPE(StringType),ALLOCATABLE :: tstRecv1D(:),tstString1D(:),tstRecv2D(:,:),tstString2D(:,:)
 
 
   COMPONENT_TEST('%isInit()')
@@ -343,31 +343,85 @@ SUBROUTINE testMPIEnv()
   ENDIF
 
   COMPONENT_TEST('%allGatherV')
+  ALLOCATE(tstString1D(2))
   IF(testMPI%nproc > 1) THEN
-    ALLOCATE(tstString(2))
     IF(testMPI%rank == 0) THEN
-      tstString(1) = "blah_master"
-      ALLOCATE(tstRecv(2))
-      CALL testMPI%gatherV(tstString,0)
-      ASSERT_EQ(CHAR(tstString(1)),"blah_master","test gather at master, 1")
-      ASSERT_EQ(CHAR(tstString(2)),"blah_not_master","test gather at master, 2")
-      DEALLOCATE(tstString)
-      ALLOCATE(tstString(2))
-      tstString(1) = "blah_master"
-      CALL testMPI%gatherV(tstString,1)
-      ASSERT_EQ(CHAR(tstString(1)),"blah_master","test gather at master, 1")
-      ASSERT_EQ(CHAR(tstString(2)),"","test gather at master, 2")
+      tstString1D(1) = "blah_master"
+      ALLOCATE(tstRecv1D(2))
+      CALL testMPI%gatherV(tstString1D,0)
+      ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString1D(2)),"blah_not_master","test gather at master, 2")
+      DEALLOCATE(tstString1D)
+      ALLOCATE(tstString1D(2))
+      tstString1D(1) = "blah_master"
+      CALL testMPI%gatherV(tstString1D,1)
+      ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString1D(2)),"","test gather at master, 2")
     ELSEIF(testMPI%rank == 1) THEN
-      tstString(2) = "blah_not_master"
-      ALLOCATE(tstRecv(2))
-      CALL testMPI%gatherV(tstString,0)
-      ASSERT_EQ(CHAR(tstString(1)),"","test gather at master, 1")
-      ASSERT_EQ(CHAR(tstString(2)),"blah_not_master","test gather at master, 2")
+      tstString1D(2) = "blah_not_master"
+      ALLOCATE(tstRecv1D(2))
+      CALL testMPI%gatherV(tstString1D,0)
+      ASSERT_EQ(CHAR(tstString1D(1)),"","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString1D(2)),"blah_not_master","test gather at master, 2")
 
-      CALL testMPI%gatherV(tstString,1)
-      ASSERT_EQ(CHAR(tstString(1)),"blah_master","test gather at master, 1")
-      ASSERT_EQ(CHAR(tstString(2)),"blah_not_master","test gather at master, 2")
+      CALL testMPI%gatherV(tstString1D,1)
+      ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString1D(2)),"blah_not_master","test gather at master, 2")
     ENDIF
+  ELSE
+    tstString1D(1) = "blah_master"
+    ALLOCATE(tstRecv1D(2))
+    CALL testMPI%gatherV(tstString1D)
+    ASSERT_EQ(CHAR(tstString1D(1)),"blah_master","test gather at master, 1")
+    ASSERT_EQ(CHAR(tstString1D(2)),"","test gather at master, 2")
+    DEALLOCATE(tstString1D)
+  ENDIF
+  ALLOCATE(tstString2D(2,2))
+  IF(testMPI%nproc > 1) THEN
+    IF(testMPI%rank == 0) THEN
+      tstString2D(1,1) = "blah_master1_1"
+      tstString2D(1,2) = "blah_master1_2"
+      ALLOCATE(tstRecv2D(2,2))
+      CALL testMPI%gatherV(tstString2D,0)
+      ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(2,1)),"blah_not_master2_1","test gather at master, 2")
+      ASSERT_EQ(CHAR(tstString2D(2,2)),"blah_not_master2_2","test gather at master, 2")
+      DEALLOCATE(tstString2D)
+      ALLOCATE(tstString2D(2,2))
+      tstString2D(1,1) = "blah_master1_1"
+      tstString2D(1,2) = "blah_master1_2"
+      CALL testMPI%gatherV(tstString2D,1)
+      ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(2,1)),"","test gather at master, 2")
+      ASSERT_EQ(CHAR(tstString2D(2,2)),"","test gather at master, 2")
+    ELSEIF(testMPI%rank == 1) THEN
+      tstString2D(2,1) = "blah_not_master2_1"
+      tstString2D(2,2) = "blah_not_master2_2"
+      ALLOCATE(tstRecv2D(2,2))
+      CALL testMPI%gatherV(tstString2D,0)
+      ASSERT_EQ(CHAR(tstString2D(1,1)),"","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(1,2)),"","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(2,1)),"blah_not_master2_1","test gather at master, 2")
+      ASSERT_EQ(CHAR(tstString2D(2,2)),"blah_not_master2_2","test gather at master, 2")
+
+      CALL testMPI%gatherV(tstString2D,1)
+      ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
+      ASSERT_EQ(CHAR(tstString2D(2,1)),"blah_not_master2_1","test gather at master, 2")
+      ASSERT_EQ(CHAR(tstString2D(2,2)),"blah_not_master2_2","test gather at master, 2")
+    ENDIF
+  ELSE
+    tstString2D(1,1) = "blah_master1_1"
+    tstString2D(1,2) = "blah_master1_2"
+    ALLOCATE(tstRecv2D(2,2))
+    CALL testMPI%gatherV(tstString2D)
+    ASSERT_EQ(CHAR(tstString2D(1,1)),"blah_master1_1","test gather at master, 1")
+    ASSERT_EQ(CHAR(tstString2D(1,2)),"blah_master1_2","test gather at master, 1")
+    ASSERT_EQ(CHAR(tstString2D(2,1)),"","test gather at master, 2")
+    ASSERT_EQ(CHAR(tstString2D(2,2)),"","test gather at master, 2")
+    DEALLOCATE(tstString2D)
   ENDIF
 
   COMPONENT_TEST('%trueForAll')
