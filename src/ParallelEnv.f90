@@ -21,6 +21,7 @@ USE IntrType
 USE ExceptionHandler
 USE BLAS
 USE trilinos_interfaces
+USE Strings
 USE Allocs
 !$ USE OMP_LIB
 
@@ -195,11 +196,20 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copybrief ParallelEnv::gather_SLK1_MPI_Env_type
     !> @copydetails ParallelEnv::gather_SLK1_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: gather_SLK1_MPI_Env_type
+    !> @copybrief ParallelEnv::gather_str1D_MPI_ENV_type
+    !> @copydetails ParallelEnv::gather_str1D_MPI_ENV_type
+    PROCEDURE,PASS,PRIVATE :: gather_str1D_MPI_ENV_type
+    !> @copybrief ParallelEnv::gather_str2D_MPI_ENV_type
+    !> @copydetails ParallelEnv::gather_str2D_MPI_ENV_type
+    PROCEDURE,PASS,PRIVATE :: gather_str2D_MPI_ENV_type
     !>
     GENERIC :: gather => gather_SIK0_MPI_Env_type, &
         gather_SLK0_MPI_Env_type, &
         gather_SLK1_MPI_Env_type, &
-        gather_SIK1_MPI_Env_type
+        gather_SIK1_MPI_Env_type, &
+        gather_str1D_MPI_ENV_type, &
+        gather_str2D_MPI_ENV_type
+
     !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
     !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: scatter_SLK0_MPI_Env_type
@@ -516,7 +526,6 @@ ENDSUBROUTINE partition_indices_ParEnvType
 !> 0-nremainder
 !>
 SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,idxmap)
-  CHARACTER(LEN=*),PARAMETER :: myName='partition_greedy_ParEnvType'
   CLASS(ParEnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(IN) :: iwgt(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: n1
@@ -525,6 +534,15 @@ SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,idxmap)
   INTEGER(SIK),ALLOCATABLE,INTENT(INOUT) :: idxmap(:)
   INTEGER(SIK) :: i,j,k,n,iwt,idx,iproc,nidx,pid
   INTEGER(SIK),ALLOCATABLE :: wsum(:),sorted_idx(:,:),tmpwt(:),nwtproc(:)
+  REQUIRE(myPE%initstat)
+
+  !Set-up options using default where appropriate
+  IF(PRESENT(ipart)) THEN
+    pid=ipart
+  ELSE
+    pid=myPE%rank
+  ENDIF
+  n=SIZE(iwgt)
 
   IF(PRESENT(n1)) THEN
     i=n1
@@ -536,79 +554,61 @@ SUBROUTINE partition_greedy_ParEnvType(myPE,iwgt,n1,n2,ipart,idxmap)
   ELSE
     j=UBOUND(iwgt,DIM=1)
   ENDIF
-  n=SIZE(iwgt)
+  REQUIRE(0 <= pid .AND. pid < myPE%nproc .AND. myPE%nproc <= n)
+  REQUIRE(j >= i .AND. LBOUND(iwgt,DIM=1) <= i .AND. j <= UBOUND(iwgt,DIM=1))
 
-  IF(myPE%initstat) THEN
-    IF(PRESENT(ipart)) THEN
-      pid=ipart
-    ELSE
-      pid=myPE%rank
-    ENDIF
-    IF(j >= i .AND. LBOUND(iwgt,DIM=1) <= i .AND. j <= UBOUND(iwgt,DIM=1)) THEN
-      IF(0 <= pid .AND. pid < myPE%nproc .AND. myPE%nproc <= n) THEN
-        IF(ALLOCATED(idxmap)) DEALLOCATE(idxmap)
+  IF(ALLOCATED(idxmap)) DEALLOCATE(idxmap)
 
-        CALL dmallocA(wsum,myPE%nproc)
-        CALL dmallocA(nwtproc,myPE%nproc)
-        CALL dmallocA(sorted_idx,myPE%nproc,n)
-        CALL dmallocA(tmpwt,n)
-        tmpwt=iwgt
-        wsum=0
-        nwtproc=0
-        sorted_idx=0
+  ALLOCATE(wsum(myPE%nproc))
+  ALLOCATE(nwtproc(myPE%nproc))
+  ALLOCATE(sorted_idx(myPE%nproc,n))
+  ALLOCATE(tmpwt(n))
+  tmpwt=iwgt
+  wsum=0
+  nwtproc=0
+  sorted_idx=0
 
-        !Assign the weights for each index into the "bin" (e.g. processor)
-        !with the current lowest sum
-        DO k=i,j
-          !Value and location of maximum weight
-          idx=MAXLOC(tmpwt(i:j),DIM=1)
-          iwt=tmpwt(idx)
+  !Assign the weights for each index into the "bin" (e.g. processor)
+  !with the current lowest sum
+  DO k=i,j
+    !Value and location of maximum weight
+    idx=MAXLOC(tmpwt(i:j),DIM=1)
+    iwt=tmpwt(idx)
 
 
-          !Location of minimum sum of weights per proc
-          iproc=MINLOC(wsum,DIM=1)
+    !Location of minimum sum of weights per proc
+    iproc=MINLOC(wsum,DIM=1)
 
-          !Index map for sorted_idx
-          nwtproc(iproc)=nwtproc(iproc)+1
+    !Index map for sorted_idx
+    nwtproc(iproc)=nwtproc(iproc)+1
 
-          !Update sum and sorted values
-          sorted_idx(iproc,nwtproc(iproc))=idx
-          wsum(iproc)=wsum(iproc)+iwt
-          tmpwt(idx)=0
-        ENDDO
+    !Update sum and sorted values
+    sorted_idx(iproc,nwtproc(iproc))=idx
+    wsum(iproc)=wsum(iproc)+iwt
+    tmpwt(idx)=0
+  ENDDO
 
 
-        !Assign results to output variable while sorting
-        pid=pid+1
-        nidx=nwtproc(pid)
-        ALLOCATE(idxmap(1:nidx))
-        DO k=nidx,1,-1
-          idx=MAXLOC(sorted_idx(pid,1:nidx),DIM=1)
-          idxmap(k)=sorted_idx(pid,idx)
-          sorted_idx(pid,idx)=0
-        ENDDO
+  !Assign results to output variable while sorting
+  pid=pid+1
+  nidx=nwtproc(pid)
+  ALLOCATE(idxmap(1:nidx))
+  DO k=nidx,1,-1
+    idx=MAXLOC(sorted_idx(pid,1:nidx),DIM=1)
+    idxmap(k)=sorted_idx(pid,idx)
+    sorted_idx(pid,idx)=0
+  ENDDO
 
-        !Clear locals
-        CALL demallocA(tmpwt)
-        CALL demallocA(sorted_idx)
-        CALL demallocA(nwtproc)
-        CALL demallocA(wsum)
-      ELSE
-        CALL eParEnv%raiseError(modName//'::'//myName// &
-            ' - Illegal value for ipart or too many processors!')
-      ENDIF
-    ELSE
-      CALL eParEnv%raiseError(modName//'::'//myName// &
-          ' - Error with dimensions of iwgt, n1, and n2!')
-    ENDIF
-  ELSE
-    CALL eParEnv%raiseError(modName//'::'//myName// &
-        ' - Parallel environment is not initialized!')
-  ENDIF
+  !Clear locals
+  DEALLOCATE(tmpwt)
+  DEALLOCATE(sorted_idx)
+  DEALLOCATE(nwtproc)
+  DEALLOCATE(wsum)
 ENDSUBROUTINE partition_greedy_ParEnvType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an MPI environment type object.
+!>
 SUBROUTINE init_MPI_Env_type(myPE,PEparam)
 #if defined(HAVE_MPI) || defined(FUTILITY_HAVE_PETSC)
   CHARACTER(LEN=*),PARAMETER :: myName='init_MPI_Env_type'
@@ -700,6 +700,7 @@ ENDSUBROUTINE init_MPI_Env_type
 !> Clears an MPI environment type object.
 !>
 !> If the communicator is not MPI_COMM_WORLD then it is also freed.
+!>
 SUBROUTINE clear_MPI_Env_type(myPE)
 #ifdef HAVE_MPI
   CHARACTER(LEN=*),PARAMETER :: myName='clear_MPI_Env_type'
@@ -725,6 +726,7 @@ ENDSUBROUTINE clear_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Barrier
+!>
 SUBROUTINE barrier_MPI_Env_type(myPE)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
 #ifdef HAVE_MPI
@@ -738,6 +740,7 @@ ENDSUBROUTINE barrier_MPI_Env_type
 !> @param sendbuf the data which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE send_CHAR_MPI_Env_type(myPE,sendbuf,destProc,tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   CHARACTER(LEN=*),INTENT(IN) :: sendbuf
@@ -757,6 +760,7 @@ ENDSUBROUTINE send_CHAR_MPI_Env_type
 !> @param sendbuf the scalar which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE send_INT_MPI_Env_type(myPE,sendbuf,destProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(IN) :: sendbuf
@@ -782,6 +786,7 @@ ENDSUBROUTINE send_INT_MPI_Env_type
 !> @param sendbuf the data which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE send_INT1_MPI_Env_type(myPE,sendbuf,n,destProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(IN) :: sendbuf(*)
@@ -807,6 +812,7 @@ ENDSUBROUTINE send_INT1_MPI_Env_type
 !> @param sendbuf the data which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE send_REAL_MPI_Env_type(myPE,sendbuf,destProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SRK),INTENT(IN) :: sendbuf
@@ -832,6 +838,7 @@ ENDSUBROUTINE send_REAL_MPI_Env_type
 !> @param sendbuf the data which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE send_REAL1_MPI_Env_type(myPE,sendbuf,n,destProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SRK),INTENT(IN) :: sendbuf(*)
@@ -857,6 +864,7 @@ ENDSUBROUTINE send_REAL1_MPI_Env_type
 !> @param sendbuf the data which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE recv_CHAR_MPI_Env_type(myPE,recvbuf,srcProc,tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   CHARACTER(LEN=*),INTENT(OUT) :: recvbuf
@@ -879,6 +887,7 @@ ENDSUBROUTINE recv_CHAR_MPI_Env_type
 !> @param sendbuf the scalar which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE recv_REAL_MPI_Env_type(myPE,recvbuf,srcProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SRK),INTENT(INOUT) :: recvbuf
@@ -905,6 +914,7 @@ ENDSUBROUTINE recv_REAL_MPI_Env_type
 !> @param n the number of elements to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE recv_REAL1_MPI_Env_type(myPE,recvbuf,n,srcProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SRK),INTENT(INOUT) :: recvbuf(:)
@@ -931,6 +941,7 @@ ENDSUBROUTINE recv_REAL1_MPI_Env_type
 !> @param recvbuf the scalar which is to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE recv_INT_MPI_Env_type(myPE,recvbuf,srcProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(INOUT) :: recvbuf
@@ -957,6 +968,7 @@ ENDSUBROUTINE recv_INT_MPI_Env_type
 !> @param n the number of elements to be sent
 !> @param destProc the rank of the recieving proc in myPE
 !> @param in_tag message id which can be provided to distiguish messages
+!>
 SUBROUTINE recv_INT1_MPI_Env_type(myPE,recvbuf,n,srcProc,in_tag)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(INOUT) :: recvbuf(:)
@@ -984,6 +996,7 @@ ENDSUBROUTINE recv_INT1_MPI_Env_type
 !> @param sendbuf the data which is to be sent
 !> @param recvbuf the data which is to be sent
 !> @param root the rank of the root process
+!>
 SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(IN) :: sendbuf
@@ -1004,11 +1017,132 @@ SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
 ENDSUBROUTINE gather_SIK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
+!> @brief Wrapper that emulates MPI_Gather for non-contiguous array of Strings
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
+SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  TYPE(StringType),INTENT(INOUT) :: sendbuf(:,:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+
+#ifdef HAVE_MPI
+  INTEGER(SIK) :: rank,i,j,iEntry,maxChars
+  INTEGER(SIK),ALLOCATABLE :: charProc(:,:)
+  CHARACTER(LEN=:),ALLOCATABLE :: chars
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(0 <= rank)
+  REQUIRE(rank < myPE%nproc)
+  IF(myPE%nproc == 0) RETURN
+
+  ! Need to know the maximum length
+  maxChars = MAXVAL(LEN(sendbuf(:,:)))
+  CALL myPE%allReduceMaxI_scalar(maxChars)
+
+  !Need to know which process is responsible for which string
+  ALLOCATE(charProc(UBOUND(sendbuf,DIM=1),UBOUND(sendbuf,DIM=2)))
+  charProc = HUGE(rank)
+  iEntry = 0
+  DO j=1,UBOUND(charProc,DIM=2)
+    DO i=1,UBOUND(charProc,DIM=1)
+      iEntry = iEntry + 1
+      IF(LEN(sendbuf(i,j)) > 0) charProc(i,j) = myPE%rank
+    ENDDO
+  ENDDO
+  !This is somewhat arbitrary, but giving preference to lowest rank's data
+  CALL myPE%allReduceMinI(SIZE(charProc),charProc)
+
+  !Set-up individual send and receive for each string
+  IF(myPE%rank /= rank) THEN
+    iEntry = 0
+    DO j=1,UBOUND(sendbuf,DIM=2)
+      DO i=1,UBOUND(sendbuf,DIM=1)
+        IF(charProc(i,j) == myPE%rank) THEN
+          iEntry = iEntry + 1
+          CALL myPE%send(CHAR(sendbuf(i,j)),rank,iEntry)
+        ENDIF
+      ENDDO
+    ENDDO
+  ELSE
+    ALLOCATE(CHARACTER(maxChars) :: chars)
+    iEntry = 0
+    DO j=1,UBOUND(sendbuf,DIM=2)
+      DO i=1,UBOUND(sendbuf,DIM=1)
+        IF(charProc(i,j) /= rank) THEN
+          chars = REPEAT(" ",maxChars)
+          iEntry = iEntry + 1
+          CALL myPE%recv(chars,charProc(i,j),iEntry)
+          sendbuf(i,j) = TRIM(chars)
+        ENDIF
+      ENDDO
+    ENDDO
+  ENDIF
+#endif
+ENDSUBROUTINE gather_str2D_MPI_ENV_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper that emulates MPI_Gather for non-contiguous array of Strings
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
+SUBROUTINE gather_str1D_MPI_ENV_type(myPE,sendbuf,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  TYPE(StringType),INTENT(INOUT) :: sendbuf(:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+
+#ifdef HAVE_MPI
+  INTEGER(SIK) :: rank,iEntry,maxChars
+  INTEGER(SIK),ALLOCATABLE :: charProc(:)
+  CHARACTER(LEN=:),ALLOCATABLE :: chars
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(0 <= rank)
+  REQUIRE(rank < myPE%nproc)
+  IF(myPE%nproc == 0) RETURN
+
+  ! Need to know the maximum length
+  maxChars = MAXVAL(LEN(sendbuf(:)))
+  CALL myPE%allReduceMaxI_scalar(maxChars)
+
+  !Need to know which process is responsible for which string
+  ALLOCATE(charProc(SIZE(sendbuf)))
+  charProc = HUGE(rank)
+  DO iEntry=1,SIZE(sendbuf)
+    IF(LEN(sendbuf(iEntry)) > 0) charProc(iEntry) = myPE%rank
+  ENDDO
+  !This is somewhat arbitrary, but giving preference to lowest rank's data
+  CALL myPE%allReduceMinI(SIZE(charProc),charProc)
+
+  !Set-up individual send and receive for each string
+  IF(myPE%rank /= rank) THEN
+    DO iEntry=1,SIZE(sendbuf)
+      IF(charProc(iEntry) == myPE%rank) THEN
+        CALL myPE%send(CHAR(sendbuf(iEntry)),rank,iEntry)
+      ENDIF
+    ENDDO
+  ELSE
+    ALLOCATE(CHARACTER(maxChars) :: chars)
+    DO iEntry=1,SIZE(sendbuf)
+      IF(charProc(iEntry) /= rank) THEN
+        chars = REPEAT(" ",maxChars)
+        CALL myPE%recv(chars,charProc(iEntry),iEntry)
+        sendbuf(iEntry) = TRIM(chars)
+      ENDIF
+    ENDDO
+  ENDIF
+#endif
+ENDSUBROUTINE gather_str1D_MPI_ENV_type
+!
+!-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather for an SIK array
 !> @param myPE parallel environment where the communication originates
 !> @param sendbuf the data which is to be sent
 !> @param recvbuf the data which is to be sent
 !> @param root the rank of the root process
+!>
 SUBROUTINE gather_SIK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SIK),INTENT(IN) :: sendbuf(:)
@@ -1045,6 +1179,11 @@ ENDSUBROUTINE gather_SIK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
 SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SLK),INTENT(IN) :: sendbuf
@@ -1066,6 +1205,11 @@ ENDSUBROUTINE gather_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Gather
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
 SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SLK),INTENT(IN) :: sendbuf(:)
@@ -1095,6 +1239,11 @@ ENDSUBROUTINE gather_SLK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Scatter
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
 SUBROUTINE scatter_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SLK),INTENT(IN) :: sendbuf(:)
@@ -1116,6 +1265,11 @@ ENDSUBROUTINE scatter_SLK0_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Scatter
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
 SUBROUTINE scatter_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SLK),INTENT(IN) :: sendbuf(:,:)
@@ -1467,11 +1621,9 @@ SUBROUTINE allReduceR_scalar_MPI_Env_type(myPE,x)
   REAL(SRK) :: rbuf
   REQUIRE(myPE%initstat)
 #ifdef DBL
-  CALL MPI_Allreduce(x,rbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,1,MPI_SINGLE_PRECISION,MPI_SUM, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,1,MPI_SINGLE_PRECISION,MPI_SUM,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
@@ -1501,11 +1653,9 @@ SUBROUTINE allReduceR_array_MPI_Env_type(myPE,n,x)
   REQUIRE(myPE%initstat)
   ALLOCATE(rbuf(n))
 #ifdef DBL
-  CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_SUM,myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_SUM,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
@@ -1565,11 +1715,9 @@ SUBROUTINE allReduceMaxR_array_MPI_Env_type(myPE,n,x)
   REAL(SRK) :: rbuf(n)
   REQUIRE(myPE%initstat)
 #ifdef DBL
-  CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MAX, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MAX,myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
@@ -1628,11 +1776,9 @@ SUBROUTINE allReduceMinR_array_MPI_Env_type(myPE,n,x)
   REAL(SRK) :: rbuf(n)
   REQUIRE(myPE%initstat)
 #ifdef DBL
-  CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MIN, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_DOUBLE_PRECISION,MPI_MIN,myPE%comm,mpierr)
 #else
-  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MIN,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
@@ -1778,8 +1924,7 @@ SUBROUTINE allReduceI_array_MPI_Env_type(myPE,n,x)
   CHARACTER(LEN=*),PARAMETER :: myName='allReduceI_array_MPI_Env_type'
   INTEGER(SIK) :: rbuf(n)
   REQUIRE(myPE%initstat)
-  CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_SUM, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_SUM,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -1805,8 +1950,7 @@ SUBROUTINE allReduceMaxI_scalar_MPI_Env_type(myPE,x)
   CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxI_scalar_MPI_Env_type'
   INTEGER(SIK) :: rbuf
   REQUIRE(myPE%initstat)
-  CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MAX, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MAX,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_AllreduceMax returned an error!')
@@ -1833,8 +1977,7 @@ SUBROUTINE allReduceMaxI_array_MPI_Env_type(myPE,n,x)
   CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxI_array_MPI_Env_type'
   INTEGER(SIK) :: rbuf(n)
   REQUIRE(myPE%initstat)
-  CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MAX, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MAX,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_AllreduceMax returned an error!')
@@ -1861,8 +2004,7 @@ SUBROUTINE allReduceMinI_scalar_MPI_Env_type(myPE,x)
   CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinI_scalar_MPI_Env_type'
   INTEGER(SIK) :: rbuf
   REQUIRE(myPE%initstat)
-  CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MIN, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,1,MPI_INTEGER,MPI_MIN,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_AllreduceMin returned an error!')
@@ -1889,8 +2031,7 @@ SUBROUTINE allReduceMinI_array_MPI_Env_type(myPE,n,x)
   CHARACTER(LEN=*),PARAMETER :: myName='allReduceMinI_array_MPI_Env_type'
   INTEGER(SIK) :: rbuf(n)
   REQUIRE(myPE%initstat)
-  CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MIN, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(x,rbuf,n,MPI_INTEGER,MPI_MIN,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_AllreduceMin returned an error!')
@@ -1915,8 +2056,7 @@ SUBROUTINE trueForAll_SBK0_MPI_Env_type(myPE,lstat)
   CHARACTER(LEN=*),PARAMETER :: myName='trueForAll_SBK0_MPI_Env_type'
   LOGICAL(SBK) :: lrbuf
   REQUIRE(myPE%initstat)
-  CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LAND, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(lstat,lrbuf,1,MPI_LOGICAL,MPI_LAND,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -1942,8 +2082,7 @@ SUBROUTINE trueForAll_SBK1_MPI_Env_type(myPE,lstat)
   REQUIRE(myPE%initstat)
   n1=SIZE(lstat,DIM=1)
   ALLOCATE(lrbuf(n1))
-  CALL MPI_Allreduce(lstat,lrbuf,n1,MPI_LOGICAL,MPI_LAND, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(lstat,lrbuf,n1,MPI_LOGICAL,MPI_LAND,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -1971,8 +2110,7 @@ SUBROUTINE trueForAll_SBK2_MPI_Env_type(myPE,lstat)
   n1=SIZE(lstat,DIM=1)
   n2=SIZE(lstat,DIM=2)
   ALLOCATE(lrbuf(n1,n2))
-  CALL MPI_Allreduce(lstat,lrbuf,n1*n2,MPI_LOGICAL,MPI_LAND, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(lstat,lrbuf,n1*n2,MPI_LOGICAL,MPI_LAND,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -2001,8 +2139,7 @@ SUBROUTINE trueForAll_SBK3_MPI_Env_type(myPE,lstat)
   n2=SIZE(lstat,DIM=2)
   n3=SIZE(lstat,DIM=3)
   ALLOCATE(lrbuf(n1,n2,n3))
-  CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3,MPI_LOGICAL,MPI_LAND, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3,MPI_LOGICAL,MPI_LAND,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -2084,8 +2221,7 @@ SUBROUTINE trueForAny_SBK1_MPI_Env_type(myPE,lstat)
   REQUIRE(myPE%initstat)
   n1=SIZE(lstat,DIM=1)
   ALLOCATE(lrbuf(n1))
-  CALL MPI_Allreduce(lstat,lrbuf,n1,MPI_LOGICAL,MPI_LOR, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(lstat,lrbuf,n1,MPI_LOGICAL,MPI_LOR,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -2113,8 +2249,7 @@ SUBROUTINE trueForAny_SBK2_MPI_Env_type(myPE,lstat)
   n1=SIZE(lstat,DIM=1)
   n2=SIZE(lstat,DIM=2)
   ALLOCATE(lrbuf(n1,n2))
-  CALL MPI_Allreduce(lstat,lrbuf,n1*n2,MPI_LOGICAL,MPI_LOR, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(lstat,lrbuf,n1*n2,MPI_LOGICAL,MPI_LOR,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -2143,8 +2278,7 @@ SUBROUTINE trueForAny_SBK3_MPI_Env_type(myPE,lstat)
   n2=SIZE(lstat,DIM=2)
   n3=SIZE(lstat,DIM=3)
   ALLOCATE(lrbuf(n1,n2,n3))
-  CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3,MPI_LOGICAL,MPI_LOR, &
-      myPE%comm,mpierr)
+  CALL MPI_Allreduce(lstat,lrbuf,n1*n2*n3,MPI_LOGICAL,MPI_LOR,myPE%comm,mpierr)
   IF(mpierr /= MPI_SUCCESS) THEN
     CALL eParEnv%raiseError(modName//'::'// &
         myName//' - call to MPI_Allreduce returned an error!')
@@ -2316,6 +2450,7 @@ ENDFUNCTION getInitStat_OMP_Env_type
 !>    explicitly request a number of threads using a num_threads clause, will
 !>    use the number of threads requested by the user, rather than the
 !>    value stored in OMP_NUM_THREADS.
+!>
 SUBROUTINE init_OMP_Env_type(myPE,PEparam)
   CLASS(OMP_EnvType),INTENT(INOUT) :: myPE
   INTEGER(SIK),INTENT(IN),OPTIONAL :: PEparam
@@ -2352,6 +2487,7 @@ ENDSUBROUTINE clear_OMP_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes an OpenMP environment type object.
+!>
 SUBROUTINE init_ParEnvType(myPE,commWorld,nspace,nenergy,nangle,nthreads)
   CHARACTER(LEN=*),PARAMETER :: myName='init_ParEnvType'
   CLASS(ParallelEnvType),INTENT(INOUT) :: myPE
