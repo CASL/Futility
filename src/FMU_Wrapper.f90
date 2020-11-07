@@ -181,6 +181,7 @@ TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
     PROCEDURE,PASS :: setBoolean => setBoolean_FMU2_Slave
     PROCEDURE,PASS :: doStep => doStep_FMU2_Slave
     PROCEDURE,PASS :: getValueReference => getValueReference_FMU2_Slave
+    PROCEDURE,PASS :: isXmlVar => isXmlVar_FMU2_Slave
     PROCEDURE,PASS :: getCausality => getCausality_FMU2_Slave
     PROCEDURE,PASS :: setRestart => setRestart_FMU2_Slave
     PROCEDURE,PASS :: rewindToRestart => rewindToRestart_FMU2_Slave
@@ -306,6 +307,28 @@ FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
   ELSE
     CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No Variable named: '//variableName)
   ENDIF
+ENDFUNCTION
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+!> @param self
+!>
+FUNCTION isXmlVar_FMU2_Slave(self, variableName) RESULT(isVar)
+  CHARACTER(LEN=*),PARAMETER :: myName='isXmlVar_FMU2_Slave'
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  TYPE(StringType),INTENT(IN) :: variableName
+  LOGICAL(SBK) :: isVar
+
+  REQUIRE(self%isInit)
+
+  ! check that requrested variable exists in the modelDescription
+  IF(self%modelDescription%has(CHAR(variableName))) THEN
+    isVar=.TRUE.
+  ELSE
+    isVar=.FALSE.
+  ENDIF
+
 ENDFUNCTION
 !
 !-------------------------------------------------------------------------------

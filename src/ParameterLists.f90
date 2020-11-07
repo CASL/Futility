@@ -11208,7 +11208,12 @@ RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
           DO ib=1,SIZE(tmpKeys)
             IF(tmpKeys(ib)=='valueReference') THEN
               tmpPathToTmpVar = 'FMU'//currentPath//' -> '//tmpVal//' -> valueReference'
-              CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ib))
+              IF(thisParam%has(CHAR(tmpPathToTmpVar))) THEN
+                CALL eParams%raiseWarning(modName//" - Duplicate FMU Variable: "//CHAR(tmpPathToTmpVar))
+                CALL thisParam%set(CHAR(tmpPathToTmpVar),tmpValues(ib))
+              ELSE
+                CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ib))
+              ENDIF
             ELSE IF(tmpKeys(ib)=='causality') THEN
               tmpPathToTmpVar = 'FMU'//currentPath//' -> '//tmpVal//' -> causality'
               CALL thisParam%add(CHAR(tmpPathToTmpVar),tmpValues(ib))
