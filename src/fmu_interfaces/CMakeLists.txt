@@ -25,6 +25,6 @@ TRIBITS_ADD_LIBRARY(FmuUtils
       FMU2.cpp
 )
 
-MESSAGE("-- Enabling Futility FMU Wrappers. CMAKE_DL_LIBS: " ${CMAKE_DL_LIBS})
+MESSAGE(STATUS "Enabling Futility FMU Wrappers. CMAKE_DL_LIBS: " ${CMAKE_DL_LIBS})
 target_link_libraries(FmuUtils ${CMAKE_DL_LIBS})
 
