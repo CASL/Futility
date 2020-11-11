@@ -18,10 +18,16 @@ USE MatrixTypes
 USE PreconditionerTypes
 USE LinearSolverTypes
 
+#ifdef FUTILITY_HAVE_PETSC
+#include <petscversion.h>
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+USE PETSCVEC
+#endif
+#endif
+
 IMPLICIT NONE
 
 !TYPE(ExceptionHandlerType),TARGET :: e
-#ifdef HAVE_MPI
 #ifdef FUTILITY_HAVE_PETSC
 #include <petscversion.h>
 #if ((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6))
@@ -31,13 +37,19 @@ IMPLICIT NONE
 #endif
 #undef IS
 PetscErrorCode  :: ierr
-CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
 #else
+#ifdef HAVE_MPI
 #include <mpif.h>
 INTEGER(SIK) :: ierr
-CALL MPI_Init(ierr)
+#endif
 #endif
 
+#ifdef HAVE_MPI
+CALL MPI_Init(ierr)
+#endif
+#ifdef FUTILITY_HAVE_PETSC
+CALL PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+#endif
 !Configure exception handler for test
 !CALL e%setStopOnError(.FALSE.)
 !CALL e%setQuietMode(.TRUE.)
@@ -64,6 +76,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testIterativeSolve_GMRES()
+#ifdef HAVE_MPI
   CLASS(LinearSolverType_Base),ALLOCATABLE :: thisLS
   TYPE(ParamType) :: pList
   REAL(SRK),ALLOCATABLE :: thisB(:),dummyvec(:)
