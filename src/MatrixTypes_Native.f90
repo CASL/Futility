@@ -339,6 +339,8 @@ SUBROUTINE init_SparseMatrixParam(matrix,Params)
   TYPE(ParamType) :: validParams
   INTEGER(SIK) :: n,nnz
 
+  REQUIRE(.NOT.matrix%isInit)
+
   !Check to set up required and optional param lists.
   IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
 
@@ -350,31 +352,23 @@ SUBROUTINE init_SparseMatrixParam(matrix,Params)
   CALL validParams%get('MatrixType->n',n)
   CALL validParams%get('MatrixType->nnz',nnz)
   CALL validParams%clear()
+  REQUIRE(n > 0)
+  REQUIRE(nnz > 0)
 
-  IF(.NOT. matrix%isInit) THEN
-    IF((n < 1).OR.(nnz < 1))  THEN
-      CALL eMatrixType%raiseError('Incorrect   input to '// &
-          modName//'::'//myName//' - Input parameters must be '// &
-          'greater than 1!')
-    ELSE
-      matrix%isInit=.TRUE.
-      matrix%n=n
-      matrix%nnz=nnz
-      matrix%jCount=0
-      matrix%iPrev=0
-      matrix%jPrev=0
-      !regardless of sparsity, SIZE(ia)=n+1
-      CALL dmallocA(matrix%ia,matrix%n+1)
-      CALL dmallocA(matrix%a,matrix%nnz)
-      CALL dmallocA(matrix%ja,matrix%nnz)
-      !last entry of ia is known in advanced
-      !this is per the intel MKL format
-      matrix%ia(matrix%n+1)=matrix%nnz+1
-    ENDIF
-  ELSE
-    CALL eMatrixType%raiseError('Incorrect call to '// &
-        modName//'::'//myName//' - MatrixType already initialized')
-  ENDIF
+  matrix%isInit=.TRUE.
+  matrix%n=n
+  matrix%nnz=nnz
+  matrix%jCount=0
+  matrix%iPrev=0
+  matrix%jPrev=0
+  !regardless of sparsity, SIZE(ia)=n+1
+  CALL dmallocA(matrix%ia,matrix%n+1)
+  CALL dmallocA(matrix%a,matrix%nnz)
+  CALL dmallocA(matrix%ja,matrix%nnz)
+  !last entry of ia is known in advanced
+  !this is per the intel MKL format
+  matrix%ia(matrix%n+1)=matrix%nnz+1
+
 ENDSUBROUTINE init_SparseMatrixParam
 !
 !-------------------------------------------------------------------------------
