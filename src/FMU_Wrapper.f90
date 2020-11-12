@@ -160,27 +160,71 @@ TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
     !> @copybrief FMU_Wrapper::init_FMU2_Slave
     !> @copydetails FMU_Wrapper::init_FMU2_Slave
     PROCEDURE,PASS :: init => init_FMU2_Slave
+    !> @copybrief FMU_Wrapper::clear_FMU2_Slave
+    !> @copydetails FMU_Wrapper::clear_FMU2_Slave
     PROCEDURE,PASS :: clear => clear_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setupExperiment_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setupExperiment_FMU2_Slave
     PROCEDURE,PASS :: setupExperiment => setupExperiment_FMU2_Slave
+    !> @copybrief FMU_Wrapper::getReal_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getReal_FMU2_Slave
     PROCEDURE,PASS :: getReal => getReal_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setReal_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setReal_FMU2_Slave
     PROCEDURE,PASS :: setReal => setReal_FMU2_Slave
+    !> @copybrief FMU_Wrapper::getInteger_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getInteger_FMU2_Slave
     PROCEDURE,PASS :: getInteger => getInteger_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setInteger_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setInteger_FMU2_Slave
     PROCEDURE,PASS :: setInteger => setInteger_FMU2_Slave
+    !> @copybrief FMU_Wrapper::getBoolean_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getBoolean_FMU2_Slave
     PROCEDURE,PASS :: getBoolean => getBoolean_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setBoolean_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setBoolean_FMU2_Slave
     PROCEDURE,PASS :: setBoolean => setBoolean_FMU2_Slave
+    !> @copybrief FMU_Wrapper::doStep_FMU2_Slave
+    !> @copydetails FMU_Wrapper::doStep_FMU2_Slave
     PROCEDURE,PASS :: doStep => doStep_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setNoRewindFlag_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setNoRewindFlag_FMU2_Slave
     PROCEDURE,PASS :: setNoRewindFlag => setNoRewindFlag_FMU2_Slave
+    !> @copybrief FMU_Wrapper::getValueReference_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getValueReference_FMU2_Slave
     PROCEDURE,PASS :: getValueReference => getValueReference_FMU2_Slave
+    !> @copybrief FMU_Wrapper::isXmlVar_FMU2_Slave
+    !> @copydetails FMU_Wrapper::isXmlVar_FMU2_Slave
     PROCEDURE,PASS :: isXmlVar => isXmlVar_FMU2_Slave
+    !> @copybrief FMU_Wrapper::getCausality_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getCausality_FMU2_Slave
     PROCEDURE,PASS :: getCausality => getCausality_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setRestart_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setRestart_FMU2_Slave
     PROCEDURE,PASS :: setRestart => setRestart_FMU2_Slave
+    !> @copybrief FMU_Wrapper::rewindToRestart_FMU2_Slave
+    !> @copydetails FMU_Wrapper::rewindToRestart_FMU2_Slave
     PROCEDURE,PASS :: rewindToRestart => rewindToRestart_FMU2_Slave
+    !
     ! Convinience FMU wrapper getters and setters
+    !
+    !> @copybrief FMU_Wrapper::getNamedReal_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getNamedReal_FMU2_Slave
     PROCEDURE,PASS,PRIVATE :: getNamedReal_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setNamedReal_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setNamedReal_FMU2_Slave
     PROCEDURE,PASS,PRIVATE :: setNamedReal_FMU2_Slave
+    !> @copybrief FMU_Wrapper::getNamedInteger_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getNamedInteger_FMU2_Slave
     PROCEDURE,PASS,PRIVATE :: getNamedInteger_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setNamedInteger_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setNamedInteger_FMU2_Slave
     PROCEDURE,PASS,PRIVATE :: setNamedInteger_FMU2_Slave
+    !> @copybrief FMU_Wrapper::getNamedBoolean_FMU2_Slave
+    !> @copydetails FMU_Wrapper::getNamedBoolean_FMU2_Slave
     PROCEDURE,PASS,PRIVATE :: getNamedBoolean_FMU2_Slave
+    !> @copybrief FMU_Wrapper::setNamedBoolean_FMU2_Slave
+    !> @copydetails FMU_Wrapper::setNamedBoolean_FMU2_Slave
     PROCEDURE,PASS,PRIVATE :: setNamedBoolean_FMU2_Slave
     GENERIC :: getNamedVariable => getNamedReal_FMU2_Slave, &
         getNamedInteger_FMU2_Slave, getNamedBoolean_FMU2_Slave
@@ -201,10 +245,9 @@ CONTAINS
 !-------------------------------------------------------------------------------
 !> @brief Initializes the FMU Slave
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
 !> @param id Unique id for this FMU
 !> @param pList A parameter list with input options
-!>
 !>
 SUBROUTINE init_FMU2_Slave(self,id,pList)
   CHARACTER(LEN=*),PARAMETER :: myName='init_FM2_Slave'
@@ -251,9 +294,14 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Set the FMU internal ODE integrator settings
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param toleranceDefined flag to override internal FMU ODE tolerance settings
+!> @param tolerance tolerance of FMU ODE integrator
+!> @param startTime start time of FMU ODE integration
+!> @param stopTimeDefined flag to determine if ODE integration stops at stopTime
+!> @param stopTime  end time of ODE integration
 !>
 SUBROUTINE setupExperiment_FMU2_Slave(self, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -271,9 +319,10 @@ SUBROUTINE setupExperiment_FMU2_Slave(self, toleranceDefined, tolerance, startTi
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Get the valueReference that corresponds to the FMU variableName
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
 !>
 FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
   CHARACTER(LEN=*),PARAMETER :: myName='getValueReference_FMU2_Slave'
@@ -301,9 +350,10 @@ FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
 ENDFUNCTION
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Check if variableName is in the FMU XML file
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
 !>
 FUNCTION isXmlVar_FMU2_Slave(self, variableName) RESULT(isVar)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -322,9 +372,10 @@ FUNCTION isXmlVar_FMU2_Slave(self, variableName) RESULT(isVar)
 ENDFUNCTION
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Get the causality of the FMU variable
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
 !>
 FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
   CHARACTER(LEN=*),PARAMETER :: myName='getCausality_FMU2_Slave'
@@ -354,9 +405,11 @@ FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
 ENDFUNCTION
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Get real FMU variable
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param valueReference the integer identifer of the FMU variable
+!> @param val variable value
 !>
 SUBROUTINE getReal_FMU2_Slave(self, valueReference, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -370,9 +423,11 @@ SUBROUTINE getReal_FMU2_Slave(self, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Set real FMU variable
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param valueReference the integer identifer of the FMU variable
+!> @param val variable value
 !>
 SUBROUTINE setReal_FMU2_Slave(self, valueReference, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -386,9 +441,11 @@ SUBROUTINE setReal_FMU2_Slave(self, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Get integer FMU variable
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param valueReference the integer identifer of the FMU variable
+!> @param val variable value
 !>
 SUBROUTINE getInteger_FMU2_Slave(self, valueReference, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -402,9 +459,11 @@ SUBROUTINE getInteger_FMU2_Slave(self, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Set integer FMU variable
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param valueReference the integer identifer of the FMU variable
+!> @param val variable value
 !>
 SUBROUTINE setInteger_FMU2_Slave(self, valueReference, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -418,9 +477,11 @@ SUBROUTINE setInteger_FMU2_Slave(self, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Get boolean FMU variable
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param valueReference the integer identifer of the FMU variable
+!> @param val variable value
 !>
 SUBROUTINE getBoolean_FMU2_Slave(self, valueReference, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -436,9 +497,11 @@ SUBROUTINE getBoolean_FMU2_Slave(self, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Set boolean FMU variable
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param valueReference the integer identifer of the FMU variable
+!> @param val variable value
 !>
 SUBROUTINE setBoolean_FMU2_Slave(self, valueReference, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -452,10 +515,13 @@ SUBROUTINE setBoolean_FMU2_Slave(self, valueReference, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Set flag to disable FMU rewind capability
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param noRw flag to disable rewind capability. Default in FMU2_Slave is
+!>   to allow the FMU to be rewound
 !>
+!> Depending on the FMU implementation, this flag may be ignored
 SUBROUTINE setNoRewindFlag_FMU2_Slave(self,noRw)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   LOGICAL(SBK),INTENT(IN) :: noRw
@@ -467,9 +533,10 @@ SUBROUTINE setNoRewindFlag_FMU2_Slave(self,noRw)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Step the FMU model forward in time
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param h time step size
 !>
 SUBROUTINE doStep_FMU2_Slave(self,h)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -482,9 +549,9 @@ SUBROUTINE doStep_FMU2_Slave(self,h)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Set FMU model restart point
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
 !>
 SUBROUTINE setRestart_FMU2_Slave(self)
   CHARACTER(LEN=*),PARAMETER :: myName='setRestart_FMU2_Slave'
@@ -512,9 +579,9 @@ SUBROUTINE setRestart_FMU2_Slave(self)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Rewind FMU model to restart point
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
 !>
 SUBROUTINE rewindToRestart_FMU2_Slave(self)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -526,9 +593,11 @@ SUBROUTINE rewindToRestart_FMU2_Slave(self)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Get a real variable in the FMU model
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
+!> @param val variable value
 !>
 SUBROUTINE getNamedReal_FMU2_Slave(self, variableName, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -545,9 +614,11 @@ SUBROUTINE getNamedReal_FMU2_Slave(self, variableName, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the FMU Slave
+!> @brief Set a real variable in the FMU model
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
+!> @param val variable value
 !>
 SUBROUTINE setNamedReal_FMU2_Slave(self, variableName, val)
   CHARACTER(LEN=*),PARAMETER :: myName='setNamedReal_FMU2_Slave'
@@ -569,9 +640,11 @@ SUBROUTINE setNamedReal_FMU2_Slave(self, variableName, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the FMU Slave
+!> @brief Get an integer variable in the FMU model
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
+!> @param val variable value
 !>
 SUBROUTINE getNamedInteger_FMU2_Slave(self, variableName, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -588,9 +661,11 @@ SUBROUTINE getNamedInteger_FMU2_Slave(self, variableName, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the FMU Slave
+!> @brief Set an integer variable in the FMU model to val
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
+!> @param val variable value
 !>
 SUBROUTINE setNamedInteger_FMU2_Slave(self, variableName, val)
   CHARACTER(LEN=*),PARAMETER :: myName='setNamedInteger_FMU2_Slave'
@@ -612,9 +687,11 @@ SUBROUTINE setNamedInteger_FMU2_Slave(self, variableName, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the FMU Slave
+!> @brief Get a boolean variable in the FMU model to val
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
+!> @param val variable value
 !>
 SUBROUTINE getNamedBoolean_FMU2_Slave(self, variableName, val)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -631,9 +708,11 @@ SUBROUTINE getNamedBoolean_FMU2_Slave(self, variableName, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the FMU Slave
+!> @brief Set a boolean variable in the FMU model to val
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
+!> @param variableName name of FMU variable
+!> @param val variable value
 !>
 SUBROUTINE setNamedBoolean_FMU2_Slave(self, variableName, val)
   CHARACTER(LEN=*),PARAMETER :: myName='setNamedBoolean_FMU2_Slave'
@@ -655,9 +734,9 @@ SUBROUTINE setNamedBoolean_FMU2_Slave(self, variableName, val)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Clear the FMU model
 !>
-!> @param self
+!> @param self the FMU2_Slave to act on
 !>
 SUBROUTINE clear_FMU2_Slave(self)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
