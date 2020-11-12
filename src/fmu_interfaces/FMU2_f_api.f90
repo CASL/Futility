@@ -97,6 +97,13 @@ USE ISO_C_BINDING
       LOGICAL(C_BOOL),INTENT(IN),VALUE :: val
     ENDSUBROUTINE
 
+    SUBROUTINE setNoRewindFlagFMU2_Slave(slave_ptr,noRw) bind(C,NAME="setNoRewindFlagFMU2_Slave")
+      USE ISO_C_BINDING
+      IMPORT :: C_PTR
+      TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
+      LOGICAL(C_BOOl),INTENT(IN),VALUE :: noRw
+    ENDSUBROUTINE
+
     SUBROUTINE doStepFMU2_Slave(slave_ptr,h) bind(C,NAME="doStepFMU2_Slave")
       USE ISO_C_BINDING
       IMPORT :: C_PTR

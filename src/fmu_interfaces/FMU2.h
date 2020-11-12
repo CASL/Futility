@@ -169,6 +169,7 @@ namespace fmikit {
 		// methods for saving and restoring FMU state
     void getStateSlave();
     void loadStateSlave();
+    void setNoRewindFlag(fmi2Boolean noRw);
 
 		bool terminated();
 
@@ -176,6 +177,12 @@ namespace fmikit {
 
 		// Pointer to snapshot of FMU state
     fmi2FMUstate my_stored_state=NULL;
+
+    // Flag that indicates rewind possible, depends on FMU implementation
+    fmi2Boolean noRewindFlag=fmi2False;
+
+    // Model time at which getState was called
+    double m_time_getStateSlave;
 
 		/***************************************************
 		Functions for FMI 2.0 for Co-Simulation

@@ -58,6 +58,11 @@ void setBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool val)
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setBoolean(valueReference, val);
 }
 
+void setNoRewindFlagFMU2_Slave(C_FMU2Slave fmu2_slave, bool noRw)
+{
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setNoRewindFlag(noRw);
+}
+
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);

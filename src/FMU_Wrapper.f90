@@ -47,18 +47,15 @@ PRIVATE
 !
 ! List of public members
 PUBLIC :: FMU2_Slave
-PUBLIC :: FMU_n
 PUBLIC :: eFMU_Wrapper
-
-!> Total number of FMU loaded
-INTEGER(SIK) :: FMU_n=0
-
 
 !> @brief the base fmu type.
 !> All FMU implementations must provide init, clear, get/set vars and doStep.
 TYPE,ABSTRACT :: FMU_Base
   !> Initialization status
   LOGICAL(SBK) :: isInit=.FALSE.
+  !> FMU version
+  INTEGER(SIK) :: FMU_version
   !> Model id
   INTEGER(SIK) :: idFMU
   !> Model globaly unique id
@@ -163,8 +160,6 @@ ENDINTERFACE
 
 !> @brief FMU run in slave mode intended for use with external driver, such as CTF
 TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
-  !> FMU version
-  INTEGER(SIK) :: FMU_version=2
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -180,6 +175,7 @@ TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
     PROCEDURE,PASS :: getBoolean => getBoolean_FMU2_Slave
     PROCEDURE,PASS :: setBoolean => setBoolean_FMU2_Slave
     PROCEDURE,PASS :: doStep => doStep_FMU2_Slave
+    PROCEDURE,PASS :: setNoRewindFlag => setNoRewindFlag_FMU2_Slave
     PROCEDURE,PASS :: getValueReference => getValueReference_FMU2_Slave
     PROCEDURE,PASS :: isXmlVar => isXmlVar_FMU2_Slave
     PROCEDURE,PASS :: getCausality => getCausality_FMU2_Slave
@@ -226,6 +222,7 @@ SUBROUTINE init_FMU2_Slave(self,id,pList)
   IF(.NOT. pList%has('unzipDirectory')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU unzipDirectory')
   CALL pList%get('unzipDirectory', self%unzipDirectory)
   self%idFMU=id
+  self%FMU_version=2_SIK
 
   ! Parse the FMU XML model description
   CALL eFMU_Wrapper%raiseDebug('Opening FMU XML File: '//self%unzipDirectory//'/modelDescription.xml' )
@@ -298,7 +295,7 @@ FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
 
   ! check that requrested variable exists in the modelDescription
   baseAddr='MODELVARIABLES->'//variableName
-  IF(self%modelDescription%has(CHAR(baseAddr))) THEN
+  IF(self%isXmlVar(variableName)) THEN
     ! get valueReference assc with this variableName
     CALL self%modelDescription%get(baseAddr//'->valueReference', valueReference_str)
     ! convert str to int and check valueReference is valid
@@ -349,7 +346,7 @@ FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
 
   ! check that requrested variable exists in the modelDescription
   baseAddr='MODELVARIABLES->'//variableName
-  IF(self%modelDescription%has(CHAR(baseAddr))) THEN
+  IF(self%isXmlVar(variableName)) THEN
     ! get valueReference assc with this variableName
     causalityAddr = baseAddr//'->causality'
     IF(self%modelDescription%has(CHAR(causalityAddr))) THEN
@@ -459,6 +456,21 @@ SUBROUTINE setBoolean_FMU2_Slave(self, valueReference, val)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
   CALL setBooleanFMU2_Slave(self%fmu_c_ptr, valueReference, LOGICAL(val,1))
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!>
+!> @param self
+!>
+SUBROUTINE setNoRewindFlag_FMU2_Slave(self,noRw)
+  CLASS(FMU2_Slave),INTENT(INOUT) :: self
+  LOGICAL(SBK),INTENT(IN) :: noRw
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  CALL setNoRewindFlagFMU2_Slave(self%fmu_c_ptr, LOGICAL(noRw,1))
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------

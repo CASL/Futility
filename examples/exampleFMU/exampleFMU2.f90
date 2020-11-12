@@ -17,10 +17,10 @@ PROGRAM testFMU2
   TYPE(FMU2_Slave) :: test_fmu2_slave
   TYPE(ParamType) :: FMU_params
   INTEGER(SIK) :: id=3_SIK
-  REAL(SRK) :: h=1.0E-4_SRK
+  REAL(SRK) :: h=1.0E-6_SRK
   REAL(SRK) :: timeStart=0.0_SRK
   REAL(SRK) :: timeEnd=1.0E-1_SRK
-  REAL(SRK) :: tol=1.0E-7_SRK
+  REAL(SRK) :: tol=1.0E-9_SRK
   REAL(SRK) :: time, v1
   REAL(SRK) :: minsamplestep
   INTEGER(SIK) :: i

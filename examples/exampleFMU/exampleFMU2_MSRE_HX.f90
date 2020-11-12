@@ -26,7 +26,6 @@ PROGRAM testFMU2
   INTEGER(SIK) :: i
   ! Storage for in/out vars
   REAL(SRK) :: T_out, P_out, mflow_out
-  REAL(SRK) :: T_in, P_in, mflow_in
   REAL(SRK) :: T_in_out, mflow_pump
   ! --- Outputs from FMU model ---
   TYPE(StringType) :: T_out_name
