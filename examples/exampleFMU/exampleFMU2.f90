@@ -6,8 +6,18 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!> @brief Program to demo basic FMU model interaction
+!>
+!> To use, Download the example third party FMU from the fmi-cross-check repo on github:
+!>   wget https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2016.2/Rectifier/Rectifier.fmu
+!>
+!> Extract the FMU with unzip:
+!>   unzip -d /path/to/fmu/rectifier_example_fmu Rectifier.fmu
+!>
+!> Run the example program:
+!>   ./Futility_exampleFMU2.exe /path/to/fmu/rectifier_example_fmu
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testFMU2
-
   USE Strings
   USE IntrType
   USE ParameterLists
@@ -16,6 +26,7 @@ PROGRAM testFMU2
 
   TYPE(FMU2_Slave) :: test_fmu2_slave
   TYPE(ParamType) :: FMU_params
+  CHARACTER(len=256) :: unzipDirectory
   INTEGER(SIK) :: id=3_SIK
   REAL(SRK) :: h=1.0E-6_SRK
   REAL(SRK) :: timeStart=0.0_SRK
@@ -30,14 +41,12 @@ PROGRAM testFMU2
   CALL FMU_params%clear()
   CALL FMU_params%add('FMU_Wrapper->id',id)
 
-  ! 2019 test (broken load state??)
-  !CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2019')
-
-  ! 2018 test (broken getFMUstate()!)
-  ! CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus')
-
-  ! 2016.2 test
-  CALL FMU_params%add('FMU_Wrapper->unzipDirectory','/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2016')
+  IF (IARGC()==1) THEN
+    CALL getarg(1, unzipDirectory)
+  ELSE
+    unzipDirectory='/home/hephaestus/proj/Futility_dev/Futility/examples/exampleFMU/reference_fmus_2016'
+  ENDIF
+  CALL FMU_params%add('FMU_Wrapper->unzipDirectory', trim(unzipDirectory))
 
   ! In the Rectifier model:
   ! valueReference == 0 : time (s)

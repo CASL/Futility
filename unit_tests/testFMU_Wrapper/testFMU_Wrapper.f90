@@ -17,16 +17,17 @@ USE ParameterLists
 USE FMU_Wrapper
 IMPLICIT NONE
 
-!> FMU XML model description
-TYPE(XMLFileType) :: testFMUXMLFile
 !> XML derived model description
 TYPE(ParamType) :: test_modelDescription
+!> Test FMU wrapper
+TYPE(FMU2_Slave) :: test_fmu2_slave
 
 CREATE_TEST('Test FMU_Wrapper')
 
 REGISTER_SUBTEST('%parseFMU_XML',testParseFMU_XML)
 REGISTER_SUBTEST('%loadFMU',testLoadFMU)
 REGISTER_SUBTEST('%stepFMU',testStepFMU)
+REGISTER_SUBTEST('%clearFMU',testClearFMU)
 
 FINALIZE_TEST()
 !
@@ -34,12 +35,12 @@ FINALIZE_TEST()
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-!Test get on parse FMU XML
+!Test on parse FMU XML
 SUBROUTINE testParseFMU_XML()
   TYPE(StringType) :: tmp_str
 
   WRITE(*,*) "Calling testParseFMU_XML"
-  CALL test_modelDescription%initFromXML('testFMU_modelDescription.xml',.TRUE.)
+  CALL test_modelDescription%initFromXML('testFMU_BouncingBall/modelDescription.xml',.TRUE.)
 
   ASSERT(test_modelDescription%has("guid"),'%has_guid')
   ASSERT(test_modelDescription%has("valueReference"),'%has_valueReference')
@@ -49,7 +50,7 @@ SUBROUTINE testParseFMU_XML()
   CALL test_modelDescription%get("guid",tmp_str)
   ASSERT(tmp_str=="123",'%guid')
   CALL test_modelDescription%get("modelIdentifier",tmp_str)
-  ASSERT(tmp_str=="BouncingBall2",'%modelIdentifier')
+  ASSERT(tmp_str=="testFMUBouncingBall",'%modelIdentifier')
   CALL test_modelDescription%get("HEIGHT->valueReference",tmp_str)
   ASSERT(tmp_str=="0",'%HEIGHT_vr')
   CALL test_modelDescription%get("HEIGHT_SPEED->valueReference",tmp_str)
@@ -62,15 +63,81 @@ SUBROUTINE testParseFMU_XML()
 ENDSUBROUTINE testParseFMU_XML
 !
 !-------------------------------------------------------------------------------
-!Test get on load FMU share object library
+!Test on load FMU shared object library
 SUBROUTINE testLoadFMU()
+  USE ISO_C_BINDING
+  TYPE(ParamType) :: FMU_params
+  INTEGER(SIK) :: id=1
+
+  CALL FMU_params%clear()
+  CALL FMU_params%add('FMU_Wrapper->id',id)
+  CALL FMU_params%add('FMU_Wrapper->unzipDirectory', './testFMU_BouncingBall')
+
+  CALL test_fmu2_slave%init(id, FMU_params)
+
+  ASSERT(test_fmu2_slave%isInit,"%fmu_isinit")
+  ASSERT(test_fmu2_slave%FMU_version==2_SIK,"%fmu_version")
+  ASSERT(c_associated(test_fmu2_slave%fmu_c_ptr),"fmu_c_ptr")
+
+  CALL FMU_params%clear()
 
 ENDSUBROUTINE testLoadFMU
 !
 !-------------------------------------------------------------------------------
-!Test get on stepping FMU model forward in time
+!Test on stepping FMU model forward in time
 SUBROUTINE testStepFMU()
+  REAL(SRK) :: fmu_ode_tol=1e-7
+  REAL(SRK) :: timeStart=0.0_SRK
+  REAL(SRK) :: dt=1e-2_SRK, time=0.0_SRK
+  REAL(SRK) :: grav_accl=-9.81_SRK, coeffRest=0.5_SRK
+
+  INTEGER(SIK) :: i
+  REAL(SRK) :: ballVel, ballHeight
+  REAL(SRK) :: expected_ballHeight, expected_ballVel
+  TYPE(StringType) :: ballHeight_name, ballVel_name, gravity_name, coeffRest_name
+
+  ! Named FMU Variables
+  ballHeight_name="HEIGHT"
+  ballVel_name="HEIGHT_SPEED"
+  gravity_name="GRAVITY"
+  coeffRest_name="BOUNCE_COF"
+
+  ! Setup FMU internal ode solver tolerance and start time
+  CALL test_fmu2_slave%setupExperiment(.TRUE., fmu_ode_tol, timeStart, .FALSE., 1.0E20_SRK)
+
+  ! Set model parameters
+  CALL test_fmu2_slave%setNamedVariable(gravity_name, grav_accl)
+  CALL test_fmu2_slave%setNamedVariable(coeffRest_name, coeffRest)
+
+  ! Set initial conditions
+  CALL test_fmu2_slave%setNamedVariable(ballHeight_name, 1.0_SRK)
+  CALL test_fmu2_slave%setNamedVariable(ballVel_name, 0.0_SRK)
+
+  expected_ballHeight=1.0_SRK
+  expected_ballVel=0.0_SRK
+  DO i=1,10
+    CALL test_fmu2_slave%doStep(dt)
+    expected_ballHeight=expected_ballHeight+dt*expected_ballVel
+    time=time+dt
+    CALL test_fmu2_slave%getNamedVariable(ballHeight_name, ballHeight)
+    CALL test_fmu2_slave%getNamedVariable(ballVel_name, ballVel)
+    expected_ballVel=expected_ballVel+dt*grav_accl
+    ASSERT_SOFTEQ(ballHeight,expected_ballHeight,1.0E-8_SRK,"%ballHeight")
+    ASSERT_SOFTEQ(ballVel,expected_ballVel,1.0E-8_SRK,"%ballVal")
+  ENDDO
 
 ENDSUBROUTINE testStepFMU
+!
+!-------------------------------------------------------------------------------
+!Test on clearing FMU model
+SUBROUTINE testClearFMU()
+  USE ISO_C_BINDING
+
+  CALL test_fmu2_slave%clear()
+
+  ASSERT(.NOT. test_fmu2_slave%isInit,"%fmu_isinit")
+  ASSERT(.NOT. c_associated(test_fmu2_slave%fmu_c_ptr),"fmu_c_ptr")
+
+ENDSUBROUTINE testClearFMU
 
 ENDPROGRAM

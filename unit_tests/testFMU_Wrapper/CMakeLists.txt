@@ -10,12 +10,5 @@ INCLUDE(Futility_CreateUnitTest)
 
 ADD_SUBDIRECTORY(testFMU_BouncingBall)
 
-# List any files from the main source directory that the test depends on
-SET(ADDITIONAL_FILES
-    testFMU_modelDescription.xml
-)
-
 Futility_CreateUnitTest(testFMU_Wrapper)
 
-Futility_CopyFiles(ADDITIONAL_FILES)
-UNSET(ADDITIONAL_FILES)

@@ -19,4 +19,13 @@ TRIBITS_ADD_LIBRARY(testFMUBouncingBall SHARED
 )
 
 target_link_libraries(testFMUBouncingBall FmuUtils)
+set_target_properties(testFMUBouncingBall PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/binaries/linux64
+    PREFIX "")
 
+# List any files from the main source directory that the test depends on
+SET(ADDITIONAL_FILES
+    modelDescription.xml
+)
+Futility_CopyFiles(ADDITIONAL_FILES)
+UNSET(ADDITIONAL_FILES)

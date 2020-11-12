@@ -12,22 +12,16 @@
 !> Currently supported FMU versions:
 !>  - 2.0
 !>
-!> The FMU is basically a zip file contaning an XML file and a *.so library.
+!> The FMU is a zip file contaning an XML file and a *.so library.
 !> The file layout of an unzipped FMU is as follows:
 !>
 !>  FMU_unzipDirectory
 !>   |-> binaries
 !>   |   |-> linux64
 !>   |       |-> modelIdentifier.so
-!>   |-> modelIdentifier.xml
+!>   |-> modelDescription.xml
 !>
 !> Where modelIdentifier and unzipDirectory are specified in the input pList
-!>
-!> An example v2.0 FMU is available at:
-!> https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2019/Rectifier/Rectifier.fmu
-!> The FMU is a zip file, and can be unziped:
-!>
-!>   unzip Rectifier.fmu
 !>
 !> See: https://fmi-standard.org for additional info.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
@@ -312,7 +306,6 @@ ENDFUNCTION
 !> @param self
 !>
 FUNCTION isXmlVar_FMU2_Slave(self, variableName) RESULT(isVar)
-  CHARACTER(LEN=*),PARAMETER :: myName='isXmlVar_FMU2_Slave'
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
   TYPE(StringType),INTENT(IN) :: variableName
   LOGICAL(SBK) :: isVar
@@ -571,7 +564,7 @@ SUBROUTINE setNamedReal_FMU2_Slave(self, variableName, val)
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
-      CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - Cannot set variable with causality: '//causality)
+      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setReal(valueReference, val)
 ENDSUBROUTINE
 !
@@ -612,8 +605,9 @@ SUBROUTINE setNamedInteger_FMU2_Slave(self, variableName, val)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
+  causality = self%getCausality(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
-      CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - Cannot set variable with causality: '//causality)
+      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setInteger(valueReference, val)
 ENDSUBROUTINE
 !
@@ -654,8 +648,9 @@ SUBROUTINE setNamedBoolean_FMU2_Slave(self, variableName, val)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
   valueReference = self%getValueReference(variableName)
+  causality = self%getCausality(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
-      CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - Cannot set variable with causality: '//causality)
+      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setBoolean(valueReference, val)
 ENDSUBROUTINE
 !

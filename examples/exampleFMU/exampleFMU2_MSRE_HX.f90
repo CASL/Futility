@@ -6,6 +6,18 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!> @brief Program to demo the Transform FMU model of an MSR heat exchanger.
+!> contact Scott Greenwood for additional information on the Transform FMU model.
+!>
+!> To use, Download the example third party FMU from the fmu-ctf-cross-check repo on gitlab:
+!>   wget https://code-int.ornl.gov/wgurecky/fmu-ctf-cross-check/fmus/Transform_v7.fmu
+!>
+!> Extract the FMU with unzip:
+!>   unzip -d /path/to/fmu/transform_example_fmu Transform_v7.fmu
+!>
+!> Run the example program:
+!>   ./Futility_exampleFMU2_MSRE_HX.exe /path/to/fmu/transform_example_fmu
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testFMU2
 
   USE Strings
@@ -119,7 +131,7 @@ PROGRAM testFMU2
     WRITE(*,*) time, T_in_out, T_out, mflow_out, mflow_pump, P_out
   ENDDO
 
-  ! Increase the flow rate, keep T_in the same
+  ! Decrease the flow rate, keep T_in the same
   CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 160.0_SRK)  ! kg/s
   CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 160.0_SRK)  ! kg/s
 
@@ -136,6 +148,7 @@ PROGRAM testFMU2
   ENDDO
   CALL test_fmu2_slave%setRestart()
 
+  ! Increase the flow rate, keep T_in the same
   CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 165.0_SRK)  ! kg/s
   CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 165.0_SRK)  ! kg/s
 
