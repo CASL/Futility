@@ -333,7 +333,6 @@ CONTAINS
 !> @param Params the parameter list
 !>
 SUBROUTINE init_SparseMatrixParam(matrix,Params)
-  CHARACTER(LEN=*),PARAMETER :: myName='init_SparseMatrixParam'
   CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
   CLASS(ParamType),INTENT(IN) :: Params
   TYPE(ParamType) :: validParams
