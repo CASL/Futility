@@ -562,7 +562,7 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   !For now, only Galerkin coarse grid operators are supported.
   !  Galerkin means A_c = R*A*I
 
-#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>7)) || (PETSC_VERSION_MAJOR>=4))
   CALL PCMGSetGalerkin(solver%pc,PC_MG_GALERKIN_BOTH,iperr)
 #else
   CALL PCMGSetGalerkin(solver%pc,PETSC_TRUE,iperr)
@@ -570,8 +570,8 @@ SUBROUTINE setupPETScMG_LinearSolverType_Multigrid(solver,Params)
   CALL KSPSetInitialGuessNonzero(solver%ksp,PETSC_TRUE,iperr)
 
   !Set # of levels:
-#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
-  CALL PCMGSetLevels(solver%pc,solver%nLevels,iperr)
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>7)) || (PETSC_VERSION_MAJOR>=4))
+  CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_PC,iperr)
 #else
   CALL PCMGSetLevels(solver%pc,solver%nLevels,PETSC_NULL_OBJECT,iperr)
 #endif
