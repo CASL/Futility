@@ -79,7 +79,7 @@ PROGRAM testFMU2
   WRITE(*,*) "guid: ", CHAR(test_fmu2_slave%guid)
   WRITE(*,*) "modelIdentifier: ", CHAR(test_fmu2_slave%modelIdentifier)
 
-  ! initilize "constants" with "variablility" == "fixed", causality="input"??
+  ! Set initial conditions
   CALL test_fmu2_slave%setNamedVariable(T_in_name, 907.0_SRK)  ! K
   CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 170.0_SRK)  ! kg/s
   CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 170.0_SRK)  ! kg/s
@@ -90,11 +90,6 @@ PROGRAM testFMU2
   WRITE(*,*) "Is T_in valid: ", test_fmu2_slave%isXmlVar(T_in_name)
   WRITE(*,*) "Is P_in valid: ", test_fmu2_slave%isXmlVar(P_in_name)
   WRITE(*,*) "Is dummy var valid: ", test_fmu2_slave%isXmlVar(junk_var_name)
-
-  ! set vars with "variablility" == "discrete", causality="input"??
-  !CALL test_fmu2_slave%setNamedVariable(T_in_name, 927.0_SRK)  ! K
-  !CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 171.238_SRK)  ! kg/s
-  !CALL test_fmu2_slave%setNamedVariable(P_in_name, 101.33E3_SRK)  ! Pa
 
   ! Initialization loop, let system come to Steady State
   DO i=1,2000
@@ -118,7 +113,7 @@ PROGRAM testFMU2
   ENDDO
 
   ! increase inlet T
-  CALL test_fmu2_slave%setNamedVariable(T_in_name, 927.0_SRK)  ! K
+  CALL test_fmu2_slave%setNamedVariable(T_in_name, 927.0_SRK)
 
   DO i=1,3000
     CALL test_fmu2_slave%getNamedVariable(T_out_name, T_out)
@@ -132,8 +127,8 @@ PROGRAM testFMU2
   ENDDO
 
   ! Decrease the flow rate, keep T_in the same
-  CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 160.0_SRK)  ! kg/s
-  CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 160.0_SRK)  ! kg/s
+  CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 160.0_SRK)
+  CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 160.0_SRK)
 
   dt=1.0E-1_SRK
   DO i=1,2000
@@ -149,8 +144,8 @@ PROGRAM testFMU2
   CALL test_fmu2_slave%setRestart()
 
   ! Increase the flow rate, keep T_in the same
-  CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 165.0_SRK)  ! kg/s
-  CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 165.0_SRK)  ! kg/s
+  CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 165.0_SRK)
+  CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 165.0_SRK)
 
   DO i=1,2000
     CALL test_fmu2_slave%getNamedVariable(T_out_name, T_out)

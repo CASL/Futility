@@ -48,13 +48,6 @@ PROGRAM testFMU2
   ENDIF
   CALL FMU_params%add('FMU_Wrapper->unzipDirectory', trim(unzipDirectory))
 
-  ! In the Rectifier model:
-  ! valueReference == 0 : time (s)
-  ! valueReference == 1 : Capacitor1 Voltage (Volts)
-  ! default startTime == 0.0 (s)
-  ! default stopTime == 1.0E-1 (s)
-  ! default stepSize == 1.0E-7 (s)
-
   WRITE(*,*) '==================================================='
   WRITE(*,*) 'TESTING FMU2...'
   WRITE(*,*) '==================================================='
@@ -79,9 +72,11 @@ PROGRAM testFMU2
 
   ! get valueReference to variables
   varName = "internalTime"
-  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
+  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), &
+      " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
   varName = "outputs"
-  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
+  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), &
+      " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
 
   ! set restart point
   CALL test_fmu2_slave%setRestart()
