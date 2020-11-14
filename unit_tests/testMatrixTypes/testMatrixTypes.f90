@@ -192,48 +192,6 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%clear()
   CALL pList%clear()
 
-  !now check init without m being provided
-  CALL pList%add('MatrixType->n',10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  bool = .NOT. thisMatrix%isInit
-  ASSERT(bool, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-
-  !init it twice so on 2nd init, isInit==.TRUE.
-  CALL thisMatrix%init(pList)
-  SELECT TYPE(thisMatrix); TYPE IS(SparseMatrixType)
-    thisMatrix%nnz=1
-  ENDSELECT
-  CALL thisMatrix%init(pList)
-  SELECT TYPE(thisMatrix); TYPE IS(SparseMatrixType)
-    ASSERT(thisMatrix%nnz==1, 'sparse%init(...)')
-  ENDSELECT
-  !init with n<1
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  CALL pList%add('MatrixType->n',-1_SNK)
-  CALL pList%add('MatrixType->nnz',10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  !n<1, and m not provided
-  CALL pList%add('MatrixType->n',-1_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  !init with m<1
-  CALL pList%add('MatrixType->n',10_SNK)
-  CALL pList%add('MatrixType->nnz',-10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-
   !test setShape
   COMPONENT_TEST("sparse%setshape")
   !intend to make: [1 0 2]
