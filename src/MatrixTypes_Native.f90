@@ -437,7 +437,8 @@ SUBROUTINE init_BandedMatrixParam(matrix,Params)
 
   ! Pull Data From Parameter List
   CALL validParams%get('MatrixType->n',n)
-  CALL validParams%get('MatrixType->m',m)
+  m=n
+  IF (validParams%has('MatrixType->m')) CALL validParams%get('MatrixType->m',m)
   CALL validParams%get('MatrixType->nnz',nnz)
   CALL validParams%clear()
 
@@ -684,11 +685,11 @@ SUBROUTINE assemble_BandedMatrixType(thisMatrix)
   INTEGER(SLK),ALLOCATABLE :: diagRank(:)
 
   REQUIRE(thisMatrix%isInit)
-  REQUIRE(thisMatrix%nnz == thisMatrix%counter)
 
-  ALLOCATE(diagRank(SIZE(thisMatrix%iTmp)))
-  ALLOCATE(idxOrig(SIZE(thisMatrix%iTmp)))
-  DO i=1,SIZE(thisMatrix%iTmp)
+  ALLOCATE(diagRank(thisMatrix%counter))
+  ALLOCATE(idxOrig(thisMatrix%counter))
+  IF (thisMatrix%isAssembled) RETURN
+  DO i=1,thisMatrix%counter
     iLong=INT(thisMatrix%iTmp(i),kind=SLK)
     jLong=INT(thisMatrix%jTmp(i),kind=SLK)
     nLong=INT(thisMatrix%n,kind=SLK)
@@ -1362,6 +1363,7 @@ SUBROUTINE set_BandedMatrixType(matrix,i,j,setval)
   IF((j <= matrix%m) .AND. (i <= matrix%n) .AND. (i >= 1) .AND. (j >= 1)) THEN
     IF(.NOT. matrix%isAssembled) THEN
       ! If it is not assembled, add to tmp variables
+      REQUIRE(matrix%counter < matrix%nnz)
       matrix%counter=matrix%counter+1
       matrix%iTmp(matrix%counter)=i
       matrix%jTmp(matrix%counter)=j

@@ -1360,6 +1360,30 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(3,3,5._SRK)
   CALL thisMatrix%set(3,4,6._SRK)
   CALL thisMatrix%set(4,4,7._SRK)
+
+  ! The banded matrix should be able to assemble without all entries
+  SELECT TYPE(thisMatrix)
+  TYPE IS(BandedMatrixType)
+    CALL thisMatrix%assemble()
+    bool = .TRUE.
+    bool = bool .AND. thisMatrix%bands(1)%elem(1) == 1
+    bool = bool .AND. thisMatrix%bands(1)%elem(2) == 3
+    bool = bool .AND. thisMatrix%bands(1)%elem(3) == 5
+    bool = bool .AND. thisMatrix%bands(1)%elem(4) == 7
+    bool = bool .AND. thisMatrix%bands(2)%elem(1) == 2
+    bool = bool .AND. thisMatrix%bands(2)%elem(2) == 6
+    ASSERT(bool, 'banded%set(...)')
+  ENDSELECT
+  CALL thisMatrix%clear()
+
+  ! Set should work for all nnz entries set
+  CALL thisMatrix%init(pList)
+  CALL thisMatrix%set(1,1,1._SRK)
+  CALL thisMatrix%set(1,2,2._SRK)
+  CALL thisMatrix%set(2,2,3._SRK)
+  CALL thisMatrix%set(3,3,5._SRK)
+  CALL thisMatrix%set(3,4,6._SRK)
+  CALL thisMatrix%set(4,4,7._SRK)
   CALL thisMatrix%set(4,2,9._SRK)
   SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
@@ -1372,6 +1396,27 @@ SUBROUTINE testMatrix()
     bool = bool .AND. thisMatrix%bands(3)%elem(1) == 2
     bool = bool .AND. thisMatrix%bands(3)%elem(2) == 6
     bool = bool .AND. thisMatrix%bands(1)%elem(1) == 9
+    ASSERT(bool, 'banded%set(...)')
+  ENDSELECT
+
+  ! Set should work post-assemble
+  CALL thisMatrix%set(1,1,-1._SRK)
+  CALL thisMatrix%set(1,2,-2._SRK)
+  CALL thisMatrix%set(2,2,-3._SRK)
+  CALL thisMatrix%set(3,3,-5._SRK)
+  CALL thisMatrix%set(3,4,-6._SRK)
+  CALL thisMatrix%set(4,4,-7._SRK)
+  CALL thisMatrix%set(4,2,-9._SRK)
+  SELECT TYPE(thisMatrix)
+  TYPE IS(BandedMatrixType)
+    bool = .TRUE.
+    bool = bool .AND. thisMatrix%bands(2)%elem(1) == -1
+    bool = bool .AND. thisMatrix%bands(2)%elem(2) == -3
+    bool = bool .AND. thisMatrix%bands(2)%elem(3) == -5
+    bool = bool .AND. thisMatrix%bands(2)%elem(4) == -7
+    bool = bool .AND. thisMatrix%bands(3)%elem(1) == -2
+    bool = bool .AND. thisMatrix%bands(3)%elem(2) == -6
+    bool = bool .AND. thisMatrix%bands(1)%elem(1) == -9
     ASSERT(bool, 'banded%set(...)')
   ENDSELECT
   CALL thisMatrix%clear()
@@ -1460,9 +1505,7 @@ SUBROUTINE testMatrix()
   SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     CALL thisMatrix%assemble()
-    WRITE(*,*) "calling matvec"
     CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
-    WRITE(*,*) "finished matvec call"
     DO i=1,4
       bool = ABS(dummyvec2(i)) < 1E-6
       ASSERT(bool, 'banded%matvec(...)')
