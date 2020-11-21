@@ -39,7 +39,6 @@ CONTAINS
 SUBROUTINE testParseFMU_XML()
   TYPE(StringType) :: tmp_str
 
-  WRITE(*,*) "Calling testParseFMU_XML"
   CALL test_modelDescription%initFromXML('testFMU_BouncingBall/modelDescription.xml',.TRUE.)
 
   ASSERT(test_modelDescription%has("guid"),'%has_guid')
