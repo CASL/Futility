@@ -333,11 +333,12 @@ CONTAINS
 !> @param Params the parameter list
 !>
 SUBROUTINE init_SparseMatrixParam(matrix,Params)
-  CHARACTER(LEN=*),PARAMETER :: myName='init_SparseMatrixParam'
   CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
   CLASS(ParamType),INTENT(IN) :: Params
   TYPE(ParamType) :: validParams
   INTEGER(SIK) :: n,nnz
+
+  REQUIRE(.NOT.matrix%isInit)
 
   !Check to set up required and optional param lists.
   IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -350,31 +351,23 @@ SUBROUTINE init_SparseMatrixParam(matrix,Params)
   CALL validParams%get('MatrixType->n',n)
   CALL validParams%get('MatrixType->nnz',nnz)
   CALL validParams%clear()
+  REQUIRE(n > 0)
+  REQUIRE(nnz > 0)
 
-  IF(.NOT. matrix%isInit) THEN
-    IF((n < 1).OR.(nnz < 1))  THEN
-      CALL eMatrixType%raiseError('Incorrect   input to '// &
-          modName//'::'//myName//' - Input parameters must be '// &
-          'greater than 1!')
-    ELSE
-      matrix%isInit=.TRUE.
-      matrix%n=n
-      matrix%nnz=nnz
-      matrix%jCount=0
-      matrix%iPrev=0
-      matrix%jPrev=0
-      !regardless of sparsity, SIZE(ia)=n+1
-      CALL dmallocA(matrix%ia,matrix%n+1)
-      CALL dmallocA(matrix%a,matrix%nnz)
-      CALL dmallocA(matrix%ja,matrix%nnz)
-      !last entry of ia is known in advanced
-      !this is per the intel MKL format
-      matrix%ia(matrix%n+1)=matrix%nnz+1
-    ENDIF
-  ELSE
-    CALL eMatrixType%raiseError('Incorrect call to '// &
-        modName//'::'//myName//' - MatrixType already initialized')
-  ENDIF
+  matrix%isInit=.TRUE.
+  matrix%n=n
+  matrix%nnz=nnz
+  matrix%jCount=0
+  matrix%iPrev=0
+  matrix%jPrev=0
+  !regardless of sparsity, SIZE(ia)=n+1
+  CALL dmallocA(matrix%ia,matrix%n+1)
+  CALL dmallocA(matrix%a,matrix%nnz)
+  CALL dmallocA(matrix%ja,matrix%nnz)
+  !last entry of ia is known in advanced
+  !this is per the intel MKL format
+  matrix%ia(matrix%n+1)=matrix%nnz+1
+
 ENDSUBROUTINE init_SparseMatrixParam
 !
 !-------------------------------------------------------------------------------
@@ -444,7 +437,8 @@ SUBROUTINE init_BandedMatrixParam(matrix,Params)
 
   ! Pull Data From Parameter List
   CALL validParams%get('MatrixType->n',n)
-  CALL validParams%get('MatrixType->m',m)
+  m=n
+  IF (validParams%has('MatrixType->m')) CALL validParams%get('MatrixType->m',m)
   CALL validParams%get('MatrixType->nnz',nnz)
   CALL validParams%clear()
 
@@ -691,11 +685,11 @@ SUBROUTINE assemble_BandedMatrixType(thisMatrix)
   INTEGER(SLK),ALLOCATABLE :: diagRank(:)
 
   REQUIRE(thisMatrix%isInit)
-  REQUIRE(thisMatrix%nnz == thisMatrix%counter)
 
-  ALLOCATE(diagRank(SIZE(thisMatrix%iTmp)))
-  ALLOCATE(idxOrig(SIZE(thisMatrix%iTmp)))
-  DO i=1,SIZE(thisMatrix%iTmp)
+  ALLOCATE(diagRank(thisMatrix%counter))
+  ALLOCATE(idxOrig(thisMatrix%counter))
+  IF (thisMatrix%isAssembled) RETURN
+  DO i=1,thisMatrix%counter
     iLong=INT(thisMatrix%iTmp(i),kind=SLK)
     jLong=INT(thisMatrix%jTmp(i),kind=SLK)
     nLong=INT(thisMatrix%n,kind=SLK)
@@ -1369,6 +1363,7 @@ SUBROUTINE set_BandedMatrixType(matrix,i,j,setval)
   IF((j <= matrix%m) .AND. (i <= matrix%n) .AND. (i >= 1) .AND. (j >= 1)) THEN
     IF(.NOT. matrix%isAssembled) THEN
       ! If it is not assembled, add to tmp variables
+      REQUIRE(matrix%counter < matrix%nnz)
       matrix%counter=matrix%counter+1
       matrix%iTmp(matrix%counter)=i
       matrix%jTmp(matrix%counter)=j

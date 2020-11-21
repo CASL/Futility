@@ -192,48 +192,6 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%clear()
   CALL pList%clear()
 
-  !now check init without m being provided
-  CALL pList%add('MatrixType->n',10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  bool = .NOT. thisMatrix%isInit
-  ASSERT(bool, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-
-  !init it twice so on 2nd init, isInit==.TRUE.
-  CALL thisMatrix%init(pList)
-  SELECT TYPE(thisMatrix); TYPE IS(SparseMatrixType)
-    thisMatrix%nnz=1
-  ENDSELECT
-  CALL thisMatrix%init(pList)
-  SELECT TYPE(thisMatrix); TYPE IS(SparseMatrixType)
-    ASSERT(thisMatrix%nnz==1, 'sparse%init(...)')
-  ENDSELECT
-  !init with n<1
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  CALL pList%add('MatrixType->n',-1_SNK)
-  CALL pList%add('MatrixType->nnz',10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  !n<1, and m not provided
-  CALL pList%add('MatrixType->n',-1_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-  CALL pList%clear()
-  !init with m<1
-  CALL pList%add('MatrixType->n',10_SNK)
-  CALL pList%add('MatrixType->nnz',-10_SNK)
-  CALL pList%validate(pList,optListMat)
-  CALL thisMatrix%init(pList) !expect exception
-  ASSERT(.NOT.thisMatrix%isInit, 'sparse%init(...)')
-  CALL thisMatrix%clear()
-
   !test setShape
   COMPONENT_TEST("sparse%setshape")
   !intend to make: [1 0 2]
@@ -1402,6 +1360,30 @@ SUBROUTINE testMatrix()
   CALL thisMatrix%set(3,3,5._SRK)
   CALL thisMatrix%set(3,4,6._SRK)
   CALL thisMatrix%set(4,4,7._SRK)
+
+  ! The banded matrix should be able to assemble without all entries
+  SELECT TYPE(thisMatrix)
+  TYPE IS(BandedMatrixType)
+    CALL thisMatrix%assemble()
+    bool = .TRUE.
+    bool = bool .AND. thisMatrix%bands(1)%elem(1) == 1
+    bool = bool .AND. thisMatrix%bands(1)%elem(2) == 3
+    bool = bool .AND. thisMatrix%bands(1)%elem(3) == 5
+    bool = bool .AND. thisMatrix%bands(1)%elem(4) == 7
+    bool = bool .AND. thisMatrix%bands(2)%elem(1) == 2
+    bool = bool .AND. thisMatrix%bands(2)%elem(2) == 6
+    ASSERT(bool, 'banded%set(...)')
+  ENDSELECT
+  CALL thisMatrix%clear()
+
+  ! Set should work for all nnz entries set
+  CALL thisMatrix%init(pList)
+  CALL thisMatrix%set(1,1,1._SRK)
+  CALL thisMatrix%set(1,2,2._SRK)
+  CALL thisMatrix%set(2,2,3._SRK)
+  CALL thisMatrix%set(3,3,5._SRK)
+  CALL thisMatrix%set(3,4,6._SRK)
+  CALL thisMatrix%set(4,4,7._SRK)
   CALL thisMatrix%set(4,2,9._SRK)
   SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
@@ -1414,6 +1396,27 @@ SUBROUTINE testMatrix()
     bool = bool .AND. thisMatrix%bands(3)%elem(1) == 2
     bool = bool .AND. thisMatrix%bands(3)%elem(2) == 6
     bool = bool .AND. thisMatrix%bands(1)%elem(1) == 9
+    ASSERT(bool, 'banded%set(...)')
+  ENDSELECT
+
+  ! Set should work post-assemble
+  CALL thisMatrix%set(1,1,-1._SRK)
+  CALL thisMatrix%set(1,2,-2._SRK)
+  CALL thisMatrix%set(2,2,-3._SRK)
+  CALL thisMatrix%set(3,3,-5._SRK)
+  CALL thisMatrix%set(3,4,-6._SRK)
+  CALL thisMatrix%set(4,4,-7._SRK)
+  CALL thisMatrix%set(4,2,-9._SRK)
+  SELECT TYPE(thisMatrix)
+  TYPE IS(BandedMatrixType)
+    bool = .TRUE.
+    bool = bool .AND. thisMatrix%bands(2)%elem(1) == -1
+    bool = bool .AND. thisMatrix%bands(2)%elem(2) == -3
+    bool = bool .AND. thisMatrix%bands(2)%elem(3) == -5
+    bool = bool .AND. thisMatrix%bands(2)%elem(4) == -7
+    bool = bool .AND. thisMatrix%bands(3)%elem(1) == -2
+    bool = bool .AND. thisMatrix%bands(3)%elem(2) == -6
+    bool = bool .AND. thisMatrix%bands(1)%elem(1) == -9
     ASSERT(bool, 'banded%set(...)')
   ENDSELECT
   CALL thisMatrix%clear()
@@ -1502,9 +1505,7 @@ SUBROUTINE testMatrix()
   SELECT TYPE(thisMatrix)
   TYPE IS(BandedMatrixType)
     CALL thisMatrix%assemble()
-    WRITE(*,*) "calling matvec"
     CALL BLAS_matvec(THISMATRIX=thisMatrix,X=dummyvec,Y=dummyvec2,ALPHA=1.0_SRK,BETA=0.0_SRK)
-    WRITE(*,*) "finished matvec call"
     DO i=1,4
       bool = ABS(dummyvec2(i)) < 1E-6
       ASSERT(bool, 'banded%matvec(...)')
