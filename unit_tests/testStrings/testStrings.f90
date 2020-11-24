@@ -698,9 +698,9 @@ SUBROUTINE testStrFunct()
   str = '-0.2468e-000'
   ASSERT(str%isFloat(),'with e-000')
   str = '-.2468e-000'
-  ASSERT(.NOT.str%isFloat(),'no leading digit')
+  ASSERT(str%isFloat(),'no leading digit')
   str = '-0.2468-000'
-  ASSERT(.NOT.str%isFloat(),'mixing exponent symbol')
+  ASSERT(str%isFloat(),'missiing exponent symbol')
   str = '-0.2a68000'
   ASSERT(.NOT.str%isFloat(),'with a')
   str = '-0.2a68e-000'
@@ -742,9 +742,9 @@ SUBROUTINE testStrFunct()
   str = '-0.2468e-000'
   ASSERT(str%isNumeric(),'with e-000')
   str = '-.2468e-000'
-  ASSERT(.NOT.str%isNumeric(),'no leading digit')
+  ASSERT(str%isNumeric(),'no leading digit')
   str = '-0.2468-000'
-  ASSERT(.NOT.str%isNumeric(),'mixing exponent symbol')
+  ASSERT(str%isNumeric(),'mixing exponent symbol')
   str = '-0.2a68000'
   ASSERT(.NOT.str%isNumeric(),'with a')
   str = '-0.2a68e-000'
@@ -753,6 +753,52 @@ SUBROUTINE testStrFunct()
   ASSERT(.NOT.str%isNumeric(),'missing exponent')
   str = '-0.2468e'
   ASSERT(.NOT.str%isNumeric(),'missing exponent')
+
+  COMPONENT_TEST('%stoi')
+  str = ''
+  ASSERT_EQ(str%stoi(),0_SIK,'empty')
+  str = '13579'
+  ASSERT_EQ(str%stoi(),13579_SIK,'13579')
+  str = '03579'
+  ASSERT_EQ(str%stoi(),03579_SIK,'with 0')
+  str = '+13579'
+  ASSERT_EQ(str%stoi(),13579_SIK,'with +')
+  str = '-13579'
+  ASSERT_EQ(str%stoi(),-13579_SIK,'with -')
+  str = 'e13579'
+  ASSERT_EQ(str%stoi(),0_SIK,'with e')
+  str = '$13579'
+  ASSERT_EQ(str%stoi(),0_SIK,'with $')
+
+  COMPONENT_TEST('%stof')
+  str = ''
+  ASSERT(ISNAN(str%stof()),'empty')
+  str = '0.2468'
+  ASSERT_APPROXEQ(str%stof(),0.2468_SRK,'0.2468')
+  str = '+0.2468'
+  ASSERT_APPROXEQ(str%stof(),0.2468_SRK,'with +')
+  str = '-0.2468'
+  ASSERT_APPROXEQ(str%stof(),-0.2468_SRK,'with -')
+  str = '-0.2468E000'
+  ASSERT_APPROXEQ(str%stof(),-0.2468e000_SRK,'with e000')
+  str = '-0.2468d000'
+  ASSERT_APPROXEQ(str%stof(),-0.2468e000_SRK,'with e000')
+  str = '-0.2468e000'
+  ASSERT_APPROXEQ(str%stof(),-0.2468e000_SRK,'with e000')
+  str = '-0.2468e+000'
+  ASSERT_APPROXEQ(str%stof(),-0.2468e+000_SRK,'with e+000')
+  str = '-0.2468e-000'
+  ASSERT_APPROXEQ(str%stof(),-0.2468e-000_SRK,'with e-000')
+  str = '-.2468e-000'
+  ASSERT_APPROXEQ(str%stof(),-.2468e-000_SRK,'no leading digit')
+  str = '-0.2468-000'
+  ASSERT_APPROXEQ(str%stof(),-0.2468e-000_SRK,'missiing exponent symbol')
+  str = '-0.2a68e-000'
+  ASSERT(ISNAN(str%stof()),'with a and exponent')
+  str = '-0.2468e-'
+  ASSERT(ISNAN(str%stof()),'missing exponent')
+  str = '-0.2468e'
+  ASSERT(ISNAN(str%stof()),'missing exponent')
 
   COMPONENT_TEST('%replace')
   !Test replacing characters in a string
