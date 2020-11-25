@@ -756,7 +756,7 @@ SUBROUTINE testStrFunct()
 
   COMPONENT_TEST('%stoi')
   str = ''
-  ASSERT_EQ(str%stoi(),0_SIK,'empty')
+  ASSERT_EQ(str%stoi(),-HUGE(0_SIK),'empty')
   str = '13579'
   ASSERT_EQ(str%stoi(),13579_SIK,'13579')
   str = '03579'
@@ -766,13 +766,29 @@ SUBROUTINE testStrFunct()
   str = '-13579'
   ASSERT_EQ(str%stoi(),-13579_SIK,'with -')
   str = 'e13579'
-  ASSERT_EQ(str%stoi(),0_SIK,'with e')
+  ASSERT_EQ(str%stoi(),-HUGE(0_SIK),'with e')
   str = '$13579'
-  ASSERT_EQ(str%stoi(),0_SIK,'with $')
+  ASSERT_EQ(str%stoi(),-HUGE(0_SIK),'with $')
 
   COMPONENT_TEST('%stof')
   str = ''
   ASSERT(ISNAN(str%stof()),'empty')
+  str = "nan"
+  ASSERT(ISNAN(str%stof()),'empty')
+  str = "nan()"
+  ASSERT(ISNAN(str%stof()),'empty')
+  str = "NAN"
+  ASSERT(ISNAN(str%stof()),'empty')
+  str = "NAN()"
+  ASSERT(ISNAN(str%stof()),'empty')
+  str = "INF"
+  ASSERT_GT(str%stof(),HUGE(0.0_SRK),"positive infinty")
+  str = "inf"
+  ASSERT_GT(str%stof(),HUGE(0.0_SRK),"positive infinty")
+  str = "-inf"
+  ASSERT_LT(str%stof(),-HUGE(0.0_SRK),"negative infinty")
+  str = "-INF"
+  ASSERT_LT(str%stof(),-HUGE(0.0_SRK),"negative infinty")
   str = '0.2468'
   ASSERT_APPROXEQ(str%stof(),0.2468_SRK,'0.2468')
   str = '+0.2468'

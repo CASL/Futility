@@ -1276,7 +1276,7 @@ FUNCTION str_to_sik(this,stt,stp) RESULT(i)
 
   !Test to see if it worked, return 0 on any error code
   IF(ioerr /= 0) THEN
-    i = 0_SIK
+    i = -HUGE(i)
   ENDIF
 ENDFUNCTION str_to_sik
 !
@@ -1285,13 +1285,13 @@ ENDFUNCTION str_to_sik
 !> @param this the string being converted
 !> @param stt position for starting conversion
 !> @param stp end of conversion
-!> @returns i the integer that will be output
+!> @returns r the float that will be output
 !>
-FUNCTION str_to_srk(this,stt,stp) RESULT(i)
+FUNCTION str_to_srk(this,stt,stp) RESULT(r)
   CLASS(StringType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stt
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
-  REAL(SRK) :: i
+  REAL(SRK) :: r
   !
   CHARACTER(LEN=:),ALLOCATABLE :: scratch
   INTEGER(SIK) :: begStr,endStr,ioerr
@@ -1311,13 +1311,13 @@ FUNCTION str_to_srk(this,stt,stp) RESULT(i)
     ELSE
       endStr = LEN(this%s)
     ENDIF
-    READ(this%s(begStr:endStr),*,IOSTAT=ioerr) i
+    READ(this%s(begStr:endStr),*,IOSTAT=ioerr) r
   ENDIF
 
   !Test to see if it worked, return nan on any error code
   IF(ioerr /= 0) THEN
     scratch='NAN()'
-    READ(scratch,*) i
+    READ(scratch,*) r
   ENDIF
 
 ENDFUNCTION str_to_srk
