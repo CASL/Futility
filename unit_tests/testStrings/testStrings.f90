@@ -700,7 +700,7 @@ SUBROUTINE testStrFunct()
   str = '-.2468e-000'
   ASSERT(str%isFloat(),'no leading digit')
   str = '-0.2468-000'
-  ASSERT(str%isFloat(),'missiing exponent symbol')
+  ASSERT(str%isFloat(),'missing exponent symbol')
   str = '-0.2a68000'
   ASSERT(.NOT.str%isFloat(),'with a')
   str = '-0.2a68e-000'
