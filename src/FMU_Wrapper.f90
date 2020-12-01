@@ -232,7 +232,7 @@ TYPE,EXTENDS(FMU_Base) :: FMU2_Slave
         setNamedInteger_FMU2_Slave, setNamedBoolean_FMU2_Slave
 ENDTYPE FMU2_Slave
 
-!> Exception Handler for use in MatrixTypes
+!> Exception Handler for use in the FMU_Wrapper
 TYPE(ExceptionHandlerType),SAVE :: eFMU_Wrapper
 
 !> Name of module
@@ -323,6 +323,7 @@ ENDSUBROUTINE
 !>
 !> @param self the FMU2_Slave to act on
 !> @param variableName name of FMU variable
+!> @returns valueReference the value reference of variable in the FMU
 !>
 FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
   CHARACTER(LEN=*),PARAMETER :: myName='getValueReference_FMU2_Slave'
@@ -354,6 +355,7 @@ ENDFUNCTION
 !>
 !> @param self the FMU2_Slave to act on
 !> @param variableName name of FMU variable
+!> @returns isVar boolean if the FMU XML contains the variableName
 !>
 FUNCTION isXmlVar_FMU2_Slave(self, variableName) RESULT(isVar)
   CLASS(FMU2_Slave),INTENT(INOUT) :: self
@@ -376,6 +378,7 @@ ENDFUNCTION
 !>
 !> @param self the FMU2_Slave to act on
 !> @param variableName name of FMU variable
+!> @returns causality the FMU variable causality
 !>
 FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
   CHARACTER(LEN=*),PARAMETER :: myName='getCausality_FMU2_Slave'
@@ -635,7 +638,8 @@ SUBROUTINE setNamedReal_FMU2_Slave(self, variableName, val)
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
-      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - Attempting to set variable '//variableName//' with causality: '//causality)
+      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName// &
+      ' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setReal(valueReference, val)
 ENDSUBROUTINE
 !
@@ -682,7 +686,8 @@ SUBROUTINE setNamedInteger_FMU2_Slave(self, variableName, val)
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
-      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - Attempting to set variable '//variableName//' with causality: '//causality)
+      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName// &
+      ' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setInteger(valueReference, val)
 ENDSUBROUTINE
 !
@@ -729,7 +734,8 @@ SUBROUTINE setNamedBoolean_FMU2_Slave(self, variableName, val)
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
   IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
-      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - Attempting to set variable '//variableName//' with causality: '//causality)
+      CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName// &
+      ' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setBoolean(valueReference, val)
 ENDSUBROUTINE
 !

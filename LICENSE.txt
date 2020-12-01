@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ---------------------------
-Only files in the src/fmu_interfaces directory are
+Files in the src/fmu_interfaces directory are
 
   Copyright© 2020, Dassault Systemes
 
