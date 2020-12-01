@@ -29,7 +29,6 @@ USE ISO_C_BINDING
     !    CHAR(my_guid)//c_null_char
     FUNCTION InitilizeFMU2_Slave(slave_id, guid, modelIdentifier, unzipDirectory, instanceName) result(slave_ptr)bind(C,NAME="InitilizeFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       INTEGER(C_INT),INTENT(IN),VALUE :: slave_id
       CHARACTER(C_CHAR),INTENT(IN) :: guid
       CHARACTER(C_CHAR),INTENT(IN) :: modelIdentifier
@@ -40,7 +39,6 @@ USE ISO_C_BINDING
 
     SUBROUTINE setupExperimentFMU2_Slave(slave_ptr, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime) bind(C,NAME="setupExperimentFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       LOGICAL(C_BOOL),INTENT(IN),VALUE :: toleranceDefined
       REAL(C_DOUBLE),INTENT(IN),VALUE :: tolerance
@@ -51,7 +49,6 @@ USE ISO_C_BINDING
 
     SUBROUTINE getRealFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getRealFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
       REAL(C_DOUBLE),INTENT(INOUT) :: val
@@ -59,7 +56,6 @@ USE ISO_C_BINDING
 
     SUBROUTINE setRealFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="setRealFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
       REAL(C_DOUBLE),INTENT(IN),VALUE :: val
@@ -67,7 +63,6 @@ USE ISO_C_BINDING
 
     SUBROUTINE getIntegerFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getIntegerFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
       INTEGER(C_INT),INTENT(INOUT) :: val
@@ -75,7 +70,6 @@ USE ISO_C_BINDING
 
     SUBROUTINE setIntegerFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="setIntegerFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
       INTEGER(C_INT),INTENT(IN),VALUE :: val
@@ -83,7 +77,6 @@ USE ISO_C_BINDING
 
     SUBROUTINE getBooleanFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="getBooleanFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
       LOGICAL(C_BOOL),INTENT(INOUT) :: val
@@ -91,7 +84,6 @@ USE ISO_C_BINDING
 
     SUBROUTINE setBooleanFMU2_Slave(slave_ptr, valueReference, val) bind(C,NAME="setBooleanFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       INTEGER(C_INT),INTENT(IN),VALUE :: valueReference
       LOGICAL(C_BOOL),INTENT(IN),VALUE :: val
@@ -99,33 +91,28 @@ USE ISO_C_BINDING
 
     SUBROUTINE setNoRewindFlagFMU2_Slave(slave_ptr,noRw) bind(C,NAME="setNoRewindFlagFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       LOGICAL(C_BOOl),INTENT(IN),VALUE :: noRw
     ENDSUBROUTINE
 
     SUBROUTINE doStepFMU2_Slave(slave_ptr,h) bind(C,NAME="doStepFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
       REAL(C_DOUBLE),INTENT(IN),VALUE :: h
     ENDSUBROUTINE
 
     SUBROUTINE serializeStateFMU2_Slave(slave_ptr) bind(C,NAME="serializeStateFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
     ENDSUBROUTINE
 
     SUBROUTINE deSerializeStateFMU2_Slave(slave_ptr) bind(C,NAME="deSerializeStateFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
     ENDSUBROUTINE
 
     SUBROUTINE clearFMU2_Slave(slave_ptr) bind(C,NAME="clearFMU2_Slave")
       USE ISO_C_BINDING
-      IMPORT :: C_PTR
       TYPE(C_PTR),INTENT(IN),VALUE :: slave_ptr
     ENDSUBROUTINE
 
