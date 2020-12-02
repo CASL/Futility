@@ -33,7 +33,7 @@ USE IntrType
 USE ExceptionHandler
 USE ParameterLists
 USE Strings
-USE FMU_interface
+USE FMU2_f_api
 
 IMPLICIT NONE
 PRIVATE
@@ -323,7 +323,8 @@ ENDSUBROUTINE
 !>
 !> @param self the FMU2_Slave to act on
 !> @param variableName name of FMU variable
-!> @returns valueReference the value reference of variable in the FMU
+!> @returns valueReference the value reference of variable in the FMU.
+!>          The valueReference is an integer handle to an FMU variable.
 !>
 FUNCTION getValueReference_FMU2_Slave(self, variableName) RESULT(valueReference)
   CHARACTER(LEN=*),PARAMETER :: myName='getValueReference_FMU2_Slave'
@@ -378,7 +379,9 @@ ENDFUNCTION
 !>
 !> @param self the FMU2_Slave to act on
 !> @param variableName name of FMU variable
-!> @returns causality the FMU variable causality
+!> @returns causality the FMU variable causality.  The causality is an FMU
+!>          variable property that signifies how the FMU variable obtains
+!>          its value.  See fmi-standard.org for additional info.
 !>
 FUNCTION getCausality_FMU2_Slave(self, variableName) RESULT(causality)
   CHARACTER(LEN=*),PARAMETER :: myName='getCausality_FMU2_Slave'

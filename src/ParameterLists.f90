@@ -11249,6 +11249,12 @@ RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
 ENDSUBROUTINE procFMUXMLTree
 !
 !-------------------------------------------------------------------------------
+!> @brief Initilize a parameter list from an XML file
+!> @param thisParam the parameter list to be populated from the XML file
+!> @param fname the name of the input XML file
+!> @param fmuXML_opt a flag to denote that the XML file is a Functional
+!>        Mockup Unit (FMU) model description
+!>
 SUBROUTINE initFromXML(thisParam, fname, fmuXML_opt)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: fname

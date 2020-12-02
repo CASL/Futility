@@ -18,7 +18,7 @@
 !> high level FMU control operations.
 !>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE FMU_interface
+MODULE FMU2_f_api
 USE ISO_C_BINDING
 
   !-------------------------------------------------------------------------------
@@ -117,4 +117,4 @@ USE ISO_C_BINDING
     ENDSUBROUTINE
 
   ENDINTERFACE
-ENDMODULE FMU_interface
+ENDMODULE FMU2_f_api
