@@ -58,6 +58,9 @@ REAL(SRK),PUBLIC,PARAMETER :: degrees2rad=PI/180.0_SRK
 !> Avogadro's Number; source: https://physics.nist.gov/cgi-bin/cuu/Value?na
 REAL(SRK),PUBLIC,PARAMETER :: NA=6.022140857E+23_SRK
 
+!> Gravity (m/s^2); source: https://en.wikipedia.org/wiki/Gravity_of_Earth
+REAL(SRK),PUBLIC,PARAMETER :: GRAV=9.80665_SRK
+
 ! Area conversion
 !> Conversion factor from barns to cm**2
 REAL(SRK),PUBLIC,PARAMETER :: barn2cm=1.0E-24_SRK
