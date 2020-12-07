@@ -59,8 +59,9 @@
 ! ASSERT_APPROXEQA used for reals where equality is a comparison to defined epsilon 
 #define ASSERT_APPROXEQA(b,a,msg) ASSERT(b.APPROXEQA.a,msg); FINFO()b,"/=",a
 
-! ASSERT_SOFTEQ used for comparing reals within user defiend tolerance
+! ASSERT_SOFTEQ  and ASSERT_SOFTEQR used for comparing reals within user defiend tolerance
 #define ASSERT_SOFTEQ(b,a,c,msg) ASSERT(SOFTEQ(b,a,c),msg); FINFO()b,"/=",a,c
+#define ASSERT_SOFTEQR(b,a,c,msg) ASSERT(SOFTEQR(b,a,c),msg); FINFO()b,"/=",a,c
 
 #define ASSERTFAIL(bool,msg)  ASSERT(bool,msg); IF(utest_lastfail) STOP UTEST_FAIL_CODE
 
