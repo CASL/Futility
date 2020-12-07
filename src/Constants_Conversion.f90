@@ -177,19 +177,19 @@ REAL(SRK),PUBLIC,PARAMETER :: Bar2MPa=0.1_SRK
 !> Conversion factor from MPa to bar
 REAL(SRK),PUBLIC,PARAMETER :: MPa2Bar=ONE/Bar2MPa
 !> Conversion factor from MPa to Pa
-REAL(SRK),PUBLIC,PARAMETER :: MPa2Pa=1000000.0_SRK
+REAL(SRK),PUBLIC,PARAMETER :: MPa2Pa=mega2base
 !> Conversion factor from Pa to MPa
-REAL(SRK),PUBLIC,PARAMETER :: Pa2MPa=ONE/MPa2Pa
+REAL(SRK),PUBLIC,PARAMETER :: Pa2MPa=base2mega
 
 !Mass conversions
 !> Conversion factor from kg to g
-REAL(SRK),PUBLIC,PARAMETER :: kg2g=1000.0_SRK
+REAL(SRK),PUBLIC,PARAMETER :: kg2g=kilo2base
 !> Conversion factor from g to kg
-REAL(SRK),PUBLIC,PARAMETER :: g2kg=ONE/kg2g
+REAL(SRK),PUBLIC,PARAMETER :: g2kg=base2kilo
 !> Conversion factor from g to mg
-REAL(SRK),PUBLIC,PARAMETER :: g2mg=1000.0_SRK
+REAL(SRK),PUBLIC,PARAMETER :: g2mg=base2milli
 !> Conversion factor from mg to g
-REAL(SRK),PUBLIC,PARAMETER :: mg2g=ONE/g2mg
+REAL(SRK),PUBLIC,PARAMETER :: mg2g=milli2base
 
 !Energy conversions
 !> Conversion factor from eV to J
@@ -241,9 +241,9 @@ REAL(SRK),PUBLIC,PARAMETER :: hr2yr=ONE/yr2hr
 
 !Length conversions
 !> Conversion factor from m to cm
-REAL(SRK),PUBLIC,PARAMETER :: m2cm=100.0_SRK
+REAL(SRK),PUBLIC,PARAMETER :: m2cm=base2centi
 !> Conversion factor from cm to m
-REAL(SRK),PUBLIC,PARAMETER :: cm2m=ONE/m2cm
+REAL(SRK),PUBLIC,PARAMETER :: cm2m=centi2base
 !> Conversion factor from ft to cm
 REAL(SRK),PUBLIC,PARAMETER :: ft2cm=30.48_SRK
 !> Conversion factor from cm to ft
