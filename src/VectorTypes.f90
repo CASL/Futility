@@ -420,6 +420,9 @@ SUBROUTINE VectorResembleAllocScal(dest, source, inparams)
     ENDIF
 #ifdef HAVE_MPI
   TYPE IS(NativeDistributedVectorType)
+    IF(.NOT. params%has("VectorType->nlocal")) THEN
+      CALL params%add("VectorType->nlocal",SIZE(source%b))
+    ENDIF
     IF(.NOT. params%has("VectorType->chunkSize")) THEN
       CALL params%add("VectorType->chunkSize",source%chunkSize)
     ENDIF
@@ -497,6 +500,9 @@ SUBROUTINE VectorResembleAllocArray(dest, source, nvec, inparams)
     ENDIF
 #ifdef HAVE_MPI
   TYPE IS(NativeDistributedVectorType)
+    IF(.NOT. params%has("VectorType->nlocal")) THEN
+      CALL params%add("VectorType->nlocal",SIZE(source%b))
+    ENDIF
     IF(.NOT. params%has("VectorType->chunkSize")) THEN
       CALL params%add("VectorType->chunkSize",source%chunkSize)
     ENDIF
