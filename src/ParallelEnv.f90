@@ -1051,7 +1051,8 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
       IF(LEN(sendbuf(i,j)) > 0) charProc(i,j) = myPE%rank
     ENDDO
   ENDDO
-  !This is somewhat arbitrary, but giving preference to lowest rank's data
+  !Ensure we get an updated rank for each character if possible
+  !Where data is empty on all processes, a rank of -HUGE will be skipped
   CALL myPE%allReduceMaxI(SIZE(charProc),charProc)
 
   !Set-up individual send and receive for each string
@@ -1113,7 +1114,8 @@ SUBROUTINE gather_str1D_MPI_ENV_type(myPE,sendbuf,root)
   DO iEntry=1,SIZE(sendbuf)
     IF(LEN(sendbuf(iEntry)) > 0) charProc(iEntry) = myPE%rank
   ENDDO
-  !This is somewhat arbitrary, but giving preference to lowest rank's data
+  !Ensure we get an updated rank for each character if possible
+  !Where data is empty on all processes, a rank of -HUGE will be skipped
   CALL myPE%allReduceMaxI(SIZE(charProc),charProc)
 
   !Set-up individual send and receive for each string
