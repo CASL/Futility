@@ -1043,7 +1043,7 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
 
   !Need to know which process is responsible for which string
   ALLOCATE(charProc(UBOUND(sendbuf,DIM=1),UBOUND(sendbuf,DIM=2)))
-  charProc = HUGE(rank)
+  charProc = -HUGE(rank)
   iEntry = 0
   DO j=1,UBOUND(charProc,DIM=2)
     DO i=1,UBOUND(charProc,DIM=1)
@@ -1051,8 +1051,9 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
       IF(LEN(sendbuf(i,j)) > 0) charProc(i,j) = myPE%rank
     ENDDO
   ENDDO
-  !This is somewhat arbitrary, but giving preference to lowest rank's data
-  CALL myPE%allReduceMinI(SIZE(charProc),charProc)
+  !Ensure we get an updated rank for each character if possible
+  !Where data is empty on all processes, a rank of -HUGE will be skipped
+  CALL myPE%allReduceMaxI(SIZE(charProc),charProc)
 
   !Set-up individual send and receive for each string
   IF(myPE%rank /= rank) THEN
@@ -1070,7 +1071,7 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
     iEntry = 0
     DO j=1,UBOUND(sendbuf,DIM=2)
       DO i=1,UBOUND(sendbuf,DIM=1)
-        IF(charProc(i,j) /= rank) THEN
+        IF(charProc(i,j) /= rank .AND. charProc(i,j) >= 0) THEN
           chars = REPEAT(" ",maxChars)
           iEntry = iEntry + 1
           CALL myPE%recv(chars,charProc(i,j),iEntry)
@@ -1109,12 +1110,13 @@ SUBROUTINE gather_str1D_MPI_ENV_type(myPE,sendbuf,root)
 
   !Need to know which process is responsible for which string
   ALLOCATE(charProc(SIZE(sendbuf)))
-  charProc = HUGE(rank)
+  charProc = -HUGE(rank)
   DO iEntry=1,SIZE(sendbuf)
     IF(LEN(sendbuf(iEntry)) > 0) charProc(iEntry) = myPE%rank
   ENDDO
-  !This is somewhat arbitrary, but giving preference to lowest rank's data
-  CALL myPE%allReduceMinI(SIZE(charProc),charProc)
+  !Ensure we get an updated rank for each character if possible
+  !Where data is empty on all processes, a rank of -HUGE will be skipped
+  CALL myPE%allReduceMaxI(SIZE(charProc),charProc)
 
   !Set-up individual send and receive for each string
   IF(myPE%rank /= rank) THEN
@@ -1126,7 +1128,7 @@ SUBROUTINE gather_str1D_MPI_ENV_type(myPE,sendbuf,root)
   ELSE
     ALLOCATE(CHARACTER(maxChars) :: chars)
     DO iEntry=1,SIZE(sendbuf)
-      IF(charProc(iEntry) /= rank) THEN
+      IF(charProc(iEntry) /= rank .AND. charProc(iEntry) >= 0) THEN
         chars = REPEAT(" ",maxChars)
         CALL myPE%recv(chars,charProc(iEntry),iEntry)
         sendbuf(iEntry) = TRIM(chars)
