@@ -1060,8 +1060,8 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
     iEntry = 0
     DO j=1,UBOUND(sendbuf,DIM=2)
       DO i=1,UBOUND(sendbuf,DIM=1)
+        iEntry = iEntry + 1
         IF(charProc(i,j) == myPE%rank) THEN
-          iEntry = iEntry + 1
           CALL myPE%send(CHAR(sendbuf(i,j)),rank,iEntry)
         ENDIF
       ENDDO
@@ -1071,9 +1071,9 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
     iEntry = 0
     DO j=1,UBOUND(sendbuf,DIM=2)
       DO i=1,UBOUND(sendbuf,DIM=1)
+        iEntry = iEntry + 1
         IF(charProc(i,j) /= rank .AND. charProc(i,j) >= 0) THEN
           chars = REPEAT(" ",maxChars)
-          iEntry = iEntry + 1
           CALL myPE%recv(chars,charProc(i,j),iEntry)
           sendbuf(i,j) = TRIM(chars)
         ENDIF
