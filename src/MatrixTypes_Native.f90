@@ -810,7 +810,7 @@ SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix,ierr)
     !  -1: All
     nTransmit=0
     IF(thisMatrix%chunks(i)%isInit) THEN
-      IF(2*thisMatrix%chunks(i)%nnz/3 < thisMatrix%chunks(i)%n) THEN
+      IF(thisMatrix%chunks(i)%nnz < thisMatrix%chunks(i)%n) THEN
         DO j=1,SIZE(thisMatrix%chunks(i)%bandIdx)
           nTransmit=nTransmit+SIZE(thisMatrix%chunks(i)%bands(j)%jIdx)
         ENDDO
@@ -825,6 +825,7 @@ SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix,ierr)
         thisMatrix%comm,mpierr)
     ! Have rank i-1 allocate
     IF(rank == i-1) THEN
+      nRecv(i)=0
       nTransmit=0
       DO j=1,SIZE(nRecv)
         IF (nRecv(j) > 0) THEN
@@ -836,20 +837,20 @@ SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix,ierr)
       ALLOCATE(thisMatrix%incIdxStp(nProc))
       thisMatrix%incIdxStt=0
       thisMatrix%incIdxStp=0
+      ! Use nTransmit as counter
+      nTransmit=1
       DO j=1,nProc
-        ! Use nTransmit as counter
-        nTransmit=1
         IF(j == i) THEN
-          thisMatrix%incIdxStt(j)=-1
-          thisMatrix%incIdxStp(j)=-1
+          thisMatrix%incIdxStt(j)=0
+          thisMatrix%incIdxStp(j)=0
         ELSE
           IF(nRecv(j) > 0) THEN
             thisMatrix%incIdxStt(j)=nTransmit
             thisMatrix%incIdxStp(j)=nTransmit+nRecv(j)-1
             ! We receive data (and don't want to bother sending idx's at mvmult
             ! time)
-            CALL MPI_Recv(thisMatrix%incIdxMap(nTransmit),nRecv(j),MPI_INTEGER, &
-                j-1,0,thisMatrix%comm,MPI_STATUS_IGNORE, mpierr)
+            CALL MPI_Recv(thisMatrix%incIdxMap(nTransmit:nTransmit+nRecv(j)-1), &
+                nRecv(j),MPI_INTEGER,j-1,0,thisMatrix%comm,MPI_STATUS_IGNORE, mpierr)
             nTransmit=nTransmit+nRecv(j)
           ELSE IF (nRecv(j) == -1) THEN
             thisMatrix%incIdxStt(j)=-1
