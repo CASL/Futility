@@ -701,7 +701,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   INTEGER(SIK) :: rank,k
   REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
   INTEGER(SIK) :: sendRequests(MATVEC_SLOTS),recvRequests(MATVEC_SLOTS)
-  INTEGER(SIK) :: lowIdx,highIdx,sendCounter,recvCounter
+  INTEGER(SIK) :: lowIdx,highIdx
 #ifdef HAVE_MPI
   ! Get rank
   INTEGER(SIK) :: ctRecv(MATVEC_SLOTS),srcRank,destRank
@@ -717,10 +717,8 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ! This allows one to be used for computation and the rest for
   ! communication.
   ! Which one to write to will be determined by *Counter MOD MATVEC_SLOTS
-  sendCounter=0
-  recvCounter=0
-  sendRequests=0
-  recvRequests=0
+  sendRequests=MPI_REQUEST_NULL
+  recvRequests=MPI_REQUEST_NULL
   ! The recv/sendResult array will sometimes hold it's full length,
   ! and sometimes less.
   ALLOCATE(recvResult(thisMatrix%iOffsets(2),MATVEC_SLOTS))
@@ -772,9 +770,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
     IF (thismatrix%chunks(destRank+1)%isInit) THEN
 
       ! Decide whether to send whole vector or multiple sparse
-      IF (2*thisMatrix%chunks(destRank+1)%nnz/3 >= thisMatrix%chunks(destRank+1)%n) THEN
-        sendCounter=sendCounter+1
-        idxTmp=MOD(sendCounter,MATVEC_SLOTS)+1
+      IF (thisMatrix%chunks(destRank+1)%nnz >= thisMatrix%chunks(destRank+1)%n) THEN
         ! Check if we can safely write to sendRequests
         CALL pop_send(sendResult,idxTmp,sendRequests)
         CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(destRank+1),X=x,&
@@ -783,8 +779,6 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
             MPI_DOUBLE_PRECISION,destRank,0,thisMatrix%comm,sendRequests(idxTmp),mpierr)
       ELSE
         ! Gather and send several sparse vectors
-        sendCounter=sendCounter+1
-        idxTmp=MOD(sendCounter,MATVEC_SLOTS)+1
         CALL pop_send(sendResult,idxTmp,sendRequests)
         lowIdx=1
         DO k=1,SIZE(thisMatrix%chunks(destRank+1)%bandIdx)
@@ -801,23 +795,19 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
     srcRank = MODULO(rank-i,nProc)
     IF (thisMatrix%incIdxStt(srcRank+1) == -1) THEN
       ! We are receiving a whole vector at once
-      recvCounter=recvCounter+1
-      idxTmp=MOD(recvCounter,MATVEC_SLOTS)+1
       ! If we've filled up the available storage, we need
       ! to wait for communication to finish up
       CALL pop_recv(tmpProduct,recvResult,thisMatrix, &
           ctRecv,idxTmp,recvRequests)
-      ctRecv(MOD(recvCounter,MATVEC_SLOTS)+1)=ctDefault
-      CALL MPI_IRecv(recvResult(1:ctDefault,idxTmp), ctDefault, &
+      ctRecv(idxTmp)=SIZE(tmpProduct)
+      CALL MPI_IRecv(recvResult(1:ctRecv(idxTmp),idxTmp), ctRecv(idxTmp), &
           MPI_DOUBLE_PRECISION,srcRank,0,thisMatrix%comm, &
           recvRequests(idxTmp),mpierr)
     ELSEIF (thisMatrix%incIdxStt(srcRank+1) > 0) THEN
       ! We are receiving multiple sparse chunks gathered together
-      recvCounter=recvCounter+1
-      idxTmp=MOD(recvCounter,MATVEC_SLOTS)+1
       CALL pop_recv(tmpProduct,recvResult,thisMatrix, &
           ctRecv,idxTmp,recvRequests)
-      ctRecv(idxTmp)= -srcRank
+      ctRecv(idxTmp)= -srcRank-1
       lowIdx=thisMatrix%incIdxStt(srcRank+1)
       highIdx=thisMatrix%incIdxStp(srcRank+1)
       CALL MPI_IRecv(recvResult(1:(highIdx-lowIdx+1),idxTmp),highIdx-lowIdx+1, &
@@ -826,11 +816,13 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ENDDO
   ! We've finished calling irecv. Wait for remaining
   ! requests to finish:
-  DO idxTmp=1,MATVEC_SLOTS
-    CALL pop_recv(tmpProduct,recvResult,thisMatrix,ctRecv,idxTmp,recvRequests)
+  DO k=1,MATVEC_SLOTS
+    idxTmp=k
+    CALL pop_recv(tmpProduct,recvResult,thisMatrix,ctRecv,idxTmp,recvRequests,.TRUE.)
   ENDDO
-  DO idxTmp=1,MATVEC_SLOTS
-    CALL pop_send(sendResult,idxTmp,sendRequests)
+  DO k=1,MATVEC_SLOTS
+    idxTmp=k
+    CALL pop_send(sendResult,idxTmp,sendRequests,.TRUE.)
   ENDDO
 #endif
 
@@ -892,25 +884,43 @@ ENDSUBROUTINE matvec_DistrBandedMatrixType
 !> @param req The array of active requests for data
 !> @param idxReq The array of requests for indices
 !>
-SUBROUTINE pop_recv(acc,valBuf,thisMat,ctBuf,idx,req)
+SUBROUTINE pop_recv(acc,valBuf,thisMat,ctBuf,idx,req,f)
   REAL(SRK), INTENT(INOUT) :: acc(:)
   REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
   CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMat
   INTEGER(SIK), INTENT(INOUT) :: ctBuf(MATVEC_SLOTS)
-  INTEGER(SIK), INTENT(IN) :: idx
+  INTEGER(SIK), INTENT(INOUT) :: idx
   INTEGER(SIK), INTENT(INOUT) :: req(MATVEC_SLOTS)
-  INTEGER(SIK) :: stt,stp,mpierr,i
+  LOGICAL(SBK),OPTIONAL,INTENT(IN) :: f
+  INTEGER(SIK) :: stt,stp,mpierr,i,rank
+  LOGICAL(SBK) :: force
+  CALL MPI_Comm_Rank(thisMat%comm,rank,mpierr)
 
-  IF(req(idx) == 0) RETURN
+  force=.FALSE.
+  IF (PRESENT(f)) force=f
+  IF (force) THEN
+    IF (req(idx) == MPI_REQUEST_NULL) RETURN
+    CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
+  ELSE
+    IF (ANY(req == MPI_REQUEST_NULL)) THEN
+      DO i=1,SIZE(req)
+        IF (req(i) == MPI_REQUEST_NULL) THEN
+          idx=i
+          RETURN
+        ENDIF
+      ENDDO
+    ELSE
+      CALL MPI_WaitAny(SIZE(req),req,idx,MPI_STATUS_IGNORE,mpierr)
+    ENDIF
+  ENDIF
 
-  CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
   IF(ctBuf(idx) > 0) THEN
     acc(1:ctBuf(idx))=acc(1:ctBuf(idx))+valBuf(1:ctBuf(idx),idx)
   ELSE
-    stt=thisMat%incIdxStt(-ctBuf(idx)+1)
-    stp=thisMat%incIdxStp(-ctBuf(idx)+1)
+    stt=thisMat%incIdxStt(-ctBuf(idx))
+    stp=thisMat%incIdxStp(-ctBuf(idx))
     DO i=stt,stp
-      acc(thisMat%incIdxMap(i))=acc(thisMat%incIdxMap(i))+valBuf(i,idx)
+      acc(thisMat%incIdxMap(i))=acc(thisMat%incIdxMap(i))+valBuf(i-stt+1,idx)
     ENDDO
   ENDIF
 ENDSUBROUTINE pop_recv
@@ -927,16 +937,34 @@ ENDSUBROUTINE pop_recv
 !> @param req The array of requests for data
 !> @param idxReq The array of requests for indices
 !>
-SUBROUTINE pop_send(valBuf, idx, req)
+SUBROUTINE pop_send(valBuf,idx,req,f)
   REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
   !> The buffer slot to pop
-  INTEGER(SIK), INTENT(IN) :: idx
+  INTEGER(SIK), INTENT(INOUT) :: idx
   !> The array of requests for data
   INTEGER(SIK), INTENT(INOUT) :: req(MATVEC_SLOTS)
-  INTEGER(SIK) :: mpierr
+  LOGICAL(SBK),OPTIONAL,INTENT(IN) :: f
+  INTEGER(SIK) :: mpierr,i
+  LOGICAL(SBK) :: force
 
-  IF(req(idx) == 0) RETURN
-  CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
+  force=.FALSE.
+  IF (PRESENT(f)) force=f
+  !IF(req(idx) == MPI_REQUEST_NULL) RETURN
+  IF (force) THEN
+    IF (req(idx) == MPI_REQUEST_NULL) RETURN
+    CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
+  ELSE
+    IF (ANY(req == MPI_REQUEST_NULL)) THEN
+      DO i=1,SIZE(req)
+        IF (req(i) == MPI_REQUEST_NULL) THEN
+          idx=i
+          RETURN
+        ENDIF
+      ENDDO
+    ELSE
+      CALL MPI_WaitAny(SIZE(req),req,idx,MPI_STATUS_IGNORE,mpierr)
+    ENDIF
+  ENDIF
 ENDSUBROUTINE pop_send
 #endif
 !
