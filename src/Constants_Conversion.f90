@@ -190,12 +190,21 @@ REAL(SRK),PUBLIC,PARAMETER :: g2kg=base2kilo
 REAL(SRK),PUBLIC,PARAMETER :: g2mg=base2milli
 !> Conversion factor from mg to g
 REAL(SRK),PUBLIC,PARAMETER :: mg2g=milli2base
+!> Conversion factor from kg to lbm
+REAL(SRK),PUBLIC,PARAMETER :: kg2lb=2.2046226218488_SRK
+!> Conversion factor from lbm to kg
+REAL(SRK),PUBLIC,PARAMETER :: lb2kg=ONE/kg2lb
 
 !Energy conversions
 !> Conversion factor from eV to J
 REAL(SRK),PUBLIC,PARAMETER :: eV2J=1.602176487e-19_SRK
 !> Conversion factor from J to eV
 REAL(SRK),PUBLIC,PARAMETER :: J2eV=ONE/eV2J
+!> Conversion factor from BTU to kJ
+REAL(SRK),PUBLIC,PARAMETER :: BTU2kJ=1.05505585262_SRK
+!> Conversion factor from kJ to BTU
+REAL(SRK),PUBLIC,PARAMETER :: kJ2BTU=ONE/BTU2kJ
+
 
 !Time conversions
 !> Conversion factor from min to s
@@ -248,6 +257,10 @@ REAL(SRK),PUBLIC,PARAMETER :: cm2m=centi2base
 REAL(SRK),PUBLIC,PARAMETER :: ft2cm=30.48_SRK
 !> Conversion factor from cm to ft
 REAL(SRK),PUBLIC,PARAMETER :: cm2ft=ONE/ft2cm
+!> Conversion factor from in to cm
+REAL(SRK),PUBLIC,PARAMETER :: in2cm=2.54_SRK
+!> Conversion factor from cm to in
+REAL(SRK),PUBLIC,PARAMETER :: cm2in=ONE/in2cm
 
 !Temperature conversions
 !> Additive Conversion factor from Celsius to Kelvin
