@@ -255,7 +255,7 @@ namespace fmikit {
     flush some result buffers and write simulation data to file etc. Alternatively,
     the slave FMU may simply ignore this parameter.
      */
-    m_time = m_time_getStateSlave;
+    this->m_time = m_time_getStateSlave;
     ASSERT_NO_ERROR(fmi2SetFMUstate(m_component, my_stored_state), "Failed to set state")
   }
 

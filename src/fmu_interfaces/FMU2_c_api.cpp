@@ -14,63 +14,82 @@
 #include "FMU2_c_api.h"
 
 
-C_FMU2Slave InitilizeFMU2_Slave(int slave_id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName)
+C_FMU2Base InitilizeFMU2_Base(int slave_id, char* guid, char* modelIdentifier, char* unzipDirectory, char* instanceName)
 {
-  fmikit::FMU2Slave *s = new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName);
-  s->instantiate(false);  // TODO: enable logging
-  return (C_FMU2Slave)s;
+  fmikit::FMU2 *fmu_ptr;
+  if (slave_id >= 0)
+    // Call init of FMU2Slave
+    fmu_ptr = new fmikit::FMU2Slave(guid, modelIdentifier, unzipDirectory, instanceName);
+  else
+    // Call init of FMU2Model
+    fmu_ptr = new fmikit::FMU2Model(guid, modelIdentifier, unzipDirectory, instanceName);
+  fmu_ptr->instantiate(false);  // TODO: enable logging
+  return (C_FMU2Base)fmu_ptr;
 }
 
-void setupExperimentFMU2_Slave(C_FMU2Slave fmu2_slave, bool toleranceDefined, double tolerance, double startTime, bool stopTimeDefined, double stopTime)
+void setupExperimentFMU2_Base(C_FMU2Base fmu2_base, bool toleranceDefined, double tolerance, double startTime, bool stopTimeDefined, double stopTime, bool finalizeInitialization)
 {
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setupExperiment(toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->enterInitializationMode();
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->exitInitializationMode();
+  reinterpret_cast<fmikit::FMU2*>(fmu2_base)->setupExperiment(toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime);
+  if(finalizeInitialization){
+    reinterpret_cast<fmikit::FMU2*>(fmu2_base)->enterInitializationMode();
+    reinterpret_cast<fmikit::FMU2*>(fmu2_base)->exitInitializationMode();
+  }
 }
 
-void getRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double& val)
+void enterInitializationModeFMU2_Base(C_FMU2Base fmu2_base)
 {
-  val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getReal(valueReference);
+  reinterpret_cast<fmikit::FMU2*>(fmu2_base)->enterInitializationMode();
 }
 
-void setRealFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, double val)
+void exitInitializationModeFMU2_Base(C_FMU2Base fmu2_base)
 {
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setReal(valueReference, val);
+  reinterpret_cast<fmikit::FMU2*>(fmu2_base)->exitInitializationMode();
 }
 
-void getIntegerFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, int& val)
+void getRealFMU2_Base(C_FMU2Base fmu2_base, int valueReference, double& val)
 {
-  val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getInteger(valueReference);
+  val = reinterpret_cast<fmikit::FMU2*>(fmu2_base)->getReal(valueReference);
 }
 
-void setIntegerFMU2_Slave(C_FMU2Slave fmu2_slave, int valueReference, int val)
+void setRealFMU2_Base(C_FMU2Base fmu2_base, int valueReference, double val)
 {
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setInteger(valueReference, val);
+  reinterpret_cast<fmikit::FMU2*>(fmu2_base)->setReal(valueReference, val);
 }
 
-void getBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool& val)
+void getIntegerFMU2_Base(C_FMU2Base fmu2_base, int valueReference, int& val)
 {
-  val = reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->getBoolean(valueReference);
+  val = reinterpret_cast<fmikit::FMU2*>(fmu2_base)->getInteger(valueReference);
 }
 
-void setBooleanFMU2_Slave(C_FMU2Slave fmu2_slave, bool valueReference, bool val)
+void setIntegerFMU2_Base(C_FMU2Base fmu2_base, int valueReference, int val)
 {
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setBoolean(valueReference, val);
+  reinterpret_cast<fmikit::FMU2*>(fmu2_base)->setInteger(valueReference, val);
 }
 
-void setNoRewindFlagFMU2_Slave(C_FMU2Slave fmu2_slave, bool noRw)
+void getBooleanFMU2_Base(C_FMU2Base fmu2_base, bool valueReference, bool& val)
 {
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setNoRewindFlag(noRw);
+  val = reinterpret_cast<fmikit::FMU2*>(fmu2_base)->getBoolean(valueReference);
 }
 
+void setBooleanFMU2_Base(C_FMU2Base fmu2_base, bool valueReference, bool val)
+{
+  reinterpret_cast<fmikit::FMU2*>(fmu2_base)->setBoolean(valueReference, val);
+}
+
+void clearFMU2_Base(C_FMU2Base fmu2_base)
+{
+  reinterpret_cast<fmikit::FMU2*>(fmu2_base)->~FMU2();
+}
+
+// Methods for Co-Simulation only
 void doStepFMU2_Slave(C_FMU2Slave fmu2_slave, double h)
 {
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->doStep(h);
 }
 
-void clearFMU2_Slave(C_FMU2Slave fmu2_slave)
+void setNoRewindFlagFMU2_Slave(C_FMU2Slave fmu2_slave, bool noRw)
 {
-  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->~FMU2Slave();
+  reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->setNoRewindFlag(noRw);
 }
 
 void serializeStateFMU2_Slave(C_FMU2Slave fmu2_slave)
