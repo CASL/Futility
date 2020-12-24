@@ -30,10 +30,10 @@ USE ISO_C_BINDING
     FUNCTION InitilizeFMU2_Base(fmu_id, guid, modelIdentifier, unzipDirectory, instanceName) result(fmu_ptr)bind(C,NAME="InitilizeFMU2_Base")
       USE ISO_C_BINDING
       INTEGER(C_INT),INTENT(IN),VALUE :: fmu_id
-      CHARACTER(C_CHAR),INTENT(IN) :: guid
-      CHARACTER(C_CHAR),INTENT(IN) :: modelIdentifier
-      CHARACTER(C_CHAR),INTENT(IN) :: unzipDirectory
-      CHARACTER(C_CHAR),INTENT(IN) :: instanceName
+      CHARACTER(C_CHAR),INTENT(IN) :: guid(*)
+      CHARACTER(C_CHAR),INTENT(IN) :: modelIdentifier(*)
+      CHARACTER(C_CHAR),INTENT(IN) :: unzipDirectory(*)
+      CHARACTER(C_CHAR),INTENT(IN) :: instanceName(*)
       TYPE(C_PTR) :: fmu_ptr
     ENDFUNCTION
 
@@ -126,6 +126,52 @@ USE ISO_C_BINDING
     SUBROUTINE deSerializeStateFMU2_Slave(fmu_ptr) bind(C,NAME="deSerializeStateFMU2_Slave")
       USE ISO_C_BINDING
       TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+    ENDSUBROUTINE
+
+    ! Methods for Model Exchange only
+    SUBROUTINE setTimeFMU2_Model(fmu_ptr, t) bind(C,NAME="setTimeFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+      REAL(C_DOUBLE),INTENT(IN),VALUE :: t
+    ENDSUBROUTINE
+
+    SUBROUTINE enterEventModeFMU2_Model(fmu_ptr) bind(C,NAME="enterEventModeFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+    ENDSUBROUTINE
+
+    SUBROUTINE completedIntegratorStepFMU2_Model(fmu_ptr, completed_step) bind(C,NAME="completedIntegratorStepFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+      LOGICAL(C_BOOL),INTENT(INOUT) :: completed_step
+    ENDSUBROUTINE
+
+    SUBROUTINE getDerivativesFMU2_Model(fmu_ptr, derivatives, nx) bind(C,NAME="getDerivativesFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: nx
+      REAL(C_DOUBLE),INTENT(INOUT) :: derivatives(nx)
+    ENDSUBROUTINE
+
+    SUBROUTINE getContinuousStatesFMU2_Model(fmu_ptr, x, nx) bind(C,NAME="getContinuousStatesFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: nx
+      REAL(C_DOUBLE),INTENT(INOUT) :: x(nx)
+    ENDSUBROUTINE
+
+    SUBROUTINE setContinuousStatesFMU2_Model(fmu_ptr, x, nx) bind(C,NAME="setContinuousStatesFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: nx
+      REAL(C_DOUBLE),INTENT(IN) :: x(nx)
+    ENDSUBROUTINE
+
+    SUBROUTINE getEventIndicatorsFMU2_Model(fmu_ptr, eventIndicators, ni) bind(C,NAME="getEventIndicatorsFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+      INTEGER(C_INT),INTENT(IN),VALUE :: ni
+      REAL(C_DOUBLE),INTENT(INOUT) :: eventIndicators(ni)
     ENDSUBROUTINE
 
   ENDINTERFACE

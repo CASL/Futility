@@ -41,7 +41,7 @@ PRIVATE
 !
 ! List of public members
 PUBLIC :: FMU2_Slave
-!PUBLIC :: FMU2_Model
+PUBLIC :: FMU2_Model
 PUBLIC :: eFMU_Wrapper
 
 !> @brief The base FMU type.
@@ -251,20 +251,32 @@ ENDTYPE FMU2_Slave
 
 !> @brief FMU run in model exchange mode for use with Futility ODESolverTypes.
 !>        Contains methods only applicable to Model Exchange FMUs.
-! TYPE,EXTENDS(FMU2_Base) :: FMU2_Model
-! !
-! !List of Type Bound Procedures
-!   CONTAINS
-!     PROCEDURE,PASS :: setTime => setTime_FMU2_Model
-!     PROCEDURE,PASS :: enterEventMode => enterEventMode_FMU2_Model
-!     PROCEDURE,PASS :: getDerivatives => getDerivatives_FMU2_Model
-!     PROCEDURE,PASS :: setContinuousStates => setContinuousStates_FMU2_Model
-!     PROCEDURE,PASS :: getEventIndicators => getEventIndicators_FMU2_Model
-!     PROCEDURE,PASS :: setContinuousStates => setContinuousStates_FMU2_Model
-!     PROCEDURE,PASS :: getNominalContinuousStates => getNominalContinuousStates_FMU2_Model
-!     PROCEDURE,PASS :: completedIntegratorStep => completedIntegratorStep_FMU2_Model
+TYPE,EXTENDS(FMU2_Base) :: FMU2_Model
 !
-! ENDTYPE FMU2_Model
+!List of Type Bound Procedures
+  CONTAINS
+    !> @copybrief FMU_Wrapper::setTime_FMU2_Model
+    !> @copydetails FMU_Wrapper::setTime_FMU2_Model
+    PROCEDURE,PASS :: setTime => setTime_FMU2_Model
+    !> @copybrief FMU_Wrapper::enterEventMode_FMU2_Model
+    !> @copydetails FMU_Wrapper::enterEventMode_FMU2_Model
+    PROCEDURE,PASS :: enterEventMode => enterEventMode_FMU2_Model
+    !> @copybrief FMU_Wrapper::getDerivatives_FMU2_Model
+    !> @copydetails FMU_Wrapper::getDerivatives_FMU2_Model
+    PROCEDURE,PASS :: getDerivatives => getDerivatives_FMU2_Model
+    !> @copybrief FMU_Wrapper::getEventIndicators_FMU2_Model
+    !> @copydetails FMU_Wrapper::getEventIndicators_FMU2_Model
+    PROCEDURE,PASS :: getEventIndicators => getEventIndicators_FMU2_Model
+    !> @copybrief FMU_Wrapper::getContinuousStates_FMU2_Model
+    !> @copydetails FMU_Wrapper::getContinuousStates_FMU2_Model
+    PROCEDURE,PASS :: getContinuousStates => getContinuousStates_FMU2_Model
+    !> @copybrief FMU_Wrapper::setContinuousStates_FMU2_Model
+    !> @copydetails FMU_Wrapper::setContinuousStates_FMU2_Model
+    PROCEDURE,PASS :: setContinuousStates => setContinuousStates_FMU2_Model
+    !> @copybrief FMU_Wrapper::completedIntegratorStep_FMU2_Model
+    !> @copydetails FMU_Wrapper::completedIntegratorStep_FMU2_Model
+    PROCEDURE,PASS :: completedIntegratorStep => completedIntegratorStep_FMU2_Model
+ENDTYPE FMU2_Model
 
 !> Exception Handler for use in the FMU_Wrapper
 TYPE(ExceptionHandlerType),SAVE :: eFMU_Wrapper
@@ -811,7 +823,7 @@ SUBROUTINE setRestart_FMU2_Slave(self)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> @brief Rewind FMU model to restart point
+!> @brief Rewind FMU to restart point
 !>
 !> @param self the FMU2_Slave to act on
 !>
@@ -822,6 +834,133 @@ SUBROUTINE rewindToRestart_FMU2_Slave(self)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
   CALL deSerializeStateFMU2_Slave(self%fmu_c_ptr)
+ENDSUBROUTINE
+!
+! ========================= Model Exchange Mode =============================
+!
+!-------------------------------------------------------------------------------
+!> @brief Set the Model Exchange FMU time
+!>
+!> @param self the FMU2_Model to act on
+!> @param time the time to pass to the FMU
+!>
+SUBROUTINE setTime_FMU2_Model(self, time)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+  REAL(SRK),INTENT(IN) :: time
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  CALL setTimeFMU2_Model(self%fmu_c_ptr, time)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Enter event mode in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!>
+SUBROUTINE enterEventMode_FMU2_Model(self)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  CALL enterEventModeFMU2_Model(self%fmu_c_ptr)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Get derivatives of all state vars in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!> @param dx A one dimensional array of derivatives of all state variables
+!>
+SUBROUTINE getDerivatives_FMU2_Model(self, dx)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+  REAL(SRK),INTENT(INOUT),ALLOCATABLE :: dx(:)
+
+  INTEGER(SIK) :: n_derivs
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  n_derivs = 20
+  ALLOCATE(dx(n_derivs))
+  CALL getDerivativesFMU2_Model(self%fmu_c_ptr, dx, n_derivs)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Get value of all state vars in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!> @param x A one dimensional array of state variable values
+!>
+SUBROUTINE getContinuousStates_FMU2_Model(self, x)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+  REAL(SRK),INTENT(INOUT),ALLOCATABLE :: x(:)
+
+  INTEGER(SIK) :: n_continuous_states
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  n_continuous_states = 20
+  ALLOCATE(x(n_continuous_states))
+  CALL getContinuousStatesFMU2_Model(self%fmu_c_ptr, x, n_continuous_states)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Set the value of all state vars in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!> @param x A one dimensional array of state variable values
+!>
+SUBROUTINE setContinuousStates_FMU2_Model(self, x)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+  REAL(SRK),INTENT(IN) :: x(:)
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  CALL setContinuousStatesFMU2_Model(self%fmu_c_ptr, x, SIZE(x))
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Get the event indicators in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!> @param xi A one dimensional array of all FMU event indicators
+!>
+SUBROUTINE getEventIndicators_FMU2_Model(self, xi)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+  REAL(SRK),INTENT(INOUT),ALLOCATABLE :: xi(:)
+
+  INTEGER(SIK) :: n_event_indicators
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  n_event_indicators = 20
+  ALLOCATE(xi(n_event_indicators))
+  CALL getEventIndicatorsFMU2_Model(self%fmu_c_ptr, xi, n_event_indicators)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Get the status of the integrator step in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!> @param completed_step flag is true if integrator step is complete
+!>
+SUBROUTINE completedIntegratorStep_FMU2_Model(self, completed_step)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+  LOGICAL(SBK),INTENT(OUT) :: completed_step
+
+  LOGICAL(1) :: tmp_val
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  CALL completedIntegratorStepFMU2_Model(self%fmu_c_ptr, tmp_val)
+  completed_step = tmp_val
 ENDSUBROUTINE
 
 ENDMODULE FMU_Wrapper

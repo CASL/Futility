@@ -100,3 +100,32 @@ void serializeStateFMU2_Slave(C_FMU2Slave fmu2_slave)
 void deSerializeStateFMU2_Slave(C_FMU2Slave fmu2_slave){
   reinterpret_cast<fmikit::FMU2Slave*>(fmu2_slave)->loadStateSlave();
 }
+
+// Methods for Model Exchange only
+void setTimeFMU2_Model(C_FMU2Model fmu2_model, double t){
+  reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->setTime(t);
+}
+
+void enterEventModeFMU2_Model(C_FMU2Model fmu2_model){
+  reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->enterEventMode();
+}
+
+void getDerivativesFMU2_Model(C_FMU2Model fmu2_model, double derivatives[], size_t nx){
+  reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->getDerivatives(derivatives, nx);
+}
+
+void completedIntegratorStepFMU2_Model(C_FMU2Model fmu2_model, bool& completed_step){
+  completed_step = reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->completedIntegratorStep();
+}
+
+void getContinuousStatesFMU2_Model(C_FMU2Model fmu2_model, double x[], size_t nx){
+  reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->getContinuousStates(x, nx);
+}
+
+void setContinuousStatesFMU2_Model(C_FMU2Model fmu2_model, const double x[], size_t nx){
+  reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->setContinuousStates(x, nx);
+}
+
+void getEventIndicatorsFMU2_Model(C_FMU2Model fmu2_model, double eventIndicators[], size_t ni){
+  reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->getEventIndicators(eventIndicators, ni);
+}
