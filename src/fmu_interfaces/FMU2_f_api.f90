@@ -140,6 +140,11 @@ USE ISO_C_BINDING
       TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
     ENDSUBROUTINE
 
+    SUBROUTINE enterContinuousTimeModeFMU2_Model(fmu_ptr) bind(C,NAME="enterContinuousTimeModeFMU2_Model")
+      USE ISO_C_BINDING
+      TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr
+    ENDSUBROUTINE
+
     SUBROUTINE completedIntegratorStepFMU2_Model(fmu_ptr, completed_step) bind(C,NAME="completedIntegratorStepFMU2_Model")
       USE ISO_C_BINDING
       TYPE(C_PTR),INTENT(IN),VALUE :: fmu_ptr

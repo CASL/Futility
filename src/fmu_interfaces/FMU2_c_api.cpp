@@ -110,6 +110,10 @@ void enterEventModeFMU2_Model(C_FMU2Model fmu2_model){
   reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->enterEventMode();
 }
 
+void enterContinuousTimeModeFMU2_Model(C_FMU2Model fmu2_model){
+  reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->enterContinuousTimeMode();
+}
+
 void getDerivativesFMU2_Model(C_FMU2Model fmu2_model, double derivatives[], size_t nx){
   reinterpret_cast<fmikit::FMU2Model*>(fmu2_model)->getDerivatives(derivatives, nx);
 }

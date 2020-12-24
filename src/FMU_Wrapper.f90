@@ -261,12 +261,18 @@ TYPE,EXTENDS(FMU2_Base) :: FMU2_Model
     !> @copybrief FMU_Wrapper::enterEventMode_FMU2_Model
     !> @copydetails FMU_Wrapper::enterEventMode_FMU2_Model
     PROCEDURE,PASS :: enterEventMode => enterEventMode_FMU2_Model
+    !> @copybrief FMU_Wrapper::enterContinuousTimeMode_FMU2_Model
+    !> @copydetails FMU_Wrapper::enterContinuousTimeMode_FMU2_Model
+    PROCEDURE,PASS :: enterContinuousTimeMode => enterContinuousTimeMode_FMU2_Model
     !> @copybrief FMU_Wrapper::getDerivatives_FMU2_Model
     !> @copydetails FMU_Wrapper::getDerivatives_FMU2_Model
     PROCEDURE,PASS :: getDerivatives => getDerivatives_FMU2_Model
     !> @copybrief FMU_Wrapper::getEventIndicators_FMU2_Model
     !> @copydetails FMU_Wrapper::getEventIndicators_FMU2_Model
     PROCEDURE,PASS :: getEventIndicators => getEventIndicators_FMU2_Model
+    !> @copybrief FMU_Wrapper::getNumberOfContinuousStates_FMU2_Model
+    !> @copydetails FMU_Wrapper::getNumberOfContinuousStates_FMU2_Model
+    PROCEDURE,PASS :: getNumberOfContinuousStates => getNumberOfContinuousStates_FMU2_Model
     !> @copybrief FMU_Wrapper::getContinuousStates_FMU2_Model
     !> @copydetails FMU_Wrapper::getContinuousStates_FMU2_Model
     PROCEDURE,PASS :: getContinuousStates => getContinuousStates_FMU2_Model
@@ -869,6 +875,20 @@ SUBROUTINE enterEventMode_FMU2_Model(self)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
+!> @brief Enter continuous time mode in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!>
+SUBROUTINE enterContinuousTimeMode_FMU2_Model(self)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  CALL enterContinuousTimeModeFMU2_Model(self%fmu_c_ptr)
+ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
 !> @brief Get derivatives of all state vars in the Model Exchange FMU
 !>
 !> @param self the FMU2_Model to act on
@@ -878,15 +898,32 @@ SUBROUTINE getDerivatives_FMU2_Model(self, dx)
   CLASS(FMU2_Model),INTENT(INOUT) :: self
   REAL(SRK),INTENT(INOUT),ALLOCATABLE :: dx(:)
 
-  INTEGER(SIK) :: n_derivs
+  INTEGER(SIK) :: nx
 
   REQUIRE(self%isInit)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
-  n_derivs = 20
-  ALLOCATE(dx(n_derivs))
-  CALL getDerivativesFMU2_Model(self%fmu_c_ptr, dx, n_derivs)
+  nx = self%getNumberOfContinuousStates()
+  ALLOCATE(dx(nx))
+  CALL getDerivativesFMU2_Model(self%fmu_c_ptr, dx, nx)
 ENDSUBROUTINE
+!
+!-------------------------------------------------------------------------------
+!> @brief Get number of continuous states in the Model Exchange FMU
+!>
+!> @param self the FMU2_Model to act on
+!> @returns number of continuous state variables in the FMU model
+!>
+FUNCTION getNumberOfContinuousStates_FMU2_Model(self) RESULT(nx)
+  CLASS(FMU2_Model),INTENT(INOUT) :: self
+
+  INTEGER(SIK) :: nx
+
+  REQUIRE(self%isInit)
+  REQUIRE(c_associated(self%fmu_c_ptr))
+
+  CALL self%modelDescription%get('nDerivatives', nx)
+ENDFUNCTION
 !
 !-------------------------------------------------------------------------------
 !> @brief Get value of all state vars in the Model Exchange FMU
@@ -898,14 +935,14 @@ SUBROUTINE getContinuousStates_FMU2_Model(self, x)
   CLASS(FMU2_Model),INTENT(INOUT) :: self
   REAL(SRK),INTENT(INOUT),ALLOCATABLE :: x(:)
 
-  INTEGER(SIK) :: n_continuous_states
+  INTEGER(SIK) :: nx
 
   REQUIRE(self%isInit)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
-  n_continuous_states = 20
-  ALLOCATE(x(n_continuous_states))
-  CALL getContinuousStatesFMU2_Model(self%fmu_c_ptr, x, n_continuous_states)
+  nx = self%getNumberOfContinuousStates()
+  ALLOCATE(x(nx))
+  CALL getContinuousStatesFMU2_Model(self%fmu_c_ptr, x, nx)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -934,14 +971,14 @@ SUBROUTINE getEventIndicators_FMU2_Model(self, xi)
   CLASS(FMU2_Model),INTENT(INOUT) :: self
   REAL(SRK),INTENT(INOUT),ALLOCATABLE :: xi(:)
 
-  INTEGER(SIK) :: n_event_indicators
+  INTEGER(SIK) :: ni
 
   REQUIRE(self%isInit)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
-  n_event_indicators = 20
-  ALLOCATE(xi(n_event_indicators))
-  CALL getEventIndicatorsFMU2_Model(self%fmu_c_ptr, xi, n_event_indicators)
+  CALL self%modelDescription%get('numberOfEventIndicators', ni)
+  ALLOCATE(xi(ni))
+  CALL getEventIndicatorsFMU2_Model(self%fmu_c_ptr, xi, ni)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------

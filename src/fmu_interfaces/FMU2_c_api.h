@@ -49,6 +49,8 @@ extern "C" void setTimeFMU2_Model(C_FMU2Model fmu2_model, double t);
 
 extern "C" void enterEventModeFMU2_Model(C_FMU2Model fmu2_model);
 
+extern "C" void enterContinuousTimeModeFMU2_Model(C_FMU2Model fmu2_model);
+
 extern "C" void getDerivativesFMU2_Model(C_FMU2Model fmu2_model, double derivatives[], size_t nx);
 
 extern "C" void completedIntegratorStepFMU2_Model(C_FMU2Model fmu2_model, bool& completed_step);

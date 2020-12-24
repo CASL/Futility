@@ -11175,7 +11175,7 @@ ENDSUBROUTINE procXMLTree
 RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   TYPE(StringType),INTENT(IN) :: currentPath
-  TYPE(XMLElementType),POINTER :: iXMLE,children(:),parent
+  TYPE(XMLElementType),POINTER :: iXMLE,children(:),derivChildren(:),parent
   TYPE(ParamType),POINTER :: pList(:)
   TYPE(StringType) :: elname,tmpPath,tmpNewPath
   INTEGER(SIK) :: ic,ia,ib
@@ -11237,6 +11237,12 @@ RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
       ENDDO
     ELSE IF(elname == 'MODELVARIABLES') THEN
       CALL procFMUXMLTree(thisParam,iXMLE,tmpNewPath)
+    ELSE IF(elname == 'MODELSTRUCTURE') THEN
+      CALL procFMUXMLTree(thisParam,iXMLE,tmpNewPath)
+    ELSE IF(elname == 'DERIVATIVES') THEN
+      CALL iXMLE%getChildren(derivChildren)
+      tmpPathToTmpVar = 'FMU'//currentPath//' -> '//' -> nDerivatives'
+      CALL thisParam%add(CHAR(tmpPathToTmpVar),SIZE(derivChildren))
     ENDIF
   ENDDO
 
