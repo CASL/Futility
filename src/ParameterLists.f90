@@ -11175,7 +11175,7 @@ ENDSUBROUTINE procXMLTree
 RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   TYPE(StringType),INTENT(IN) :: currentPath
-  TYPE(XMLElementType),POINTER :: iXMLE,children(:),derivChildren(:),parent
+  TYPE(XMLElementType),POINTER :: iXMLE,children(:),dChildren(:),parent
   TYPE(ParamType),POINTER :: pList(:)
   TYPE(StringType) :: elname,tmpPath,tmpNewPath
   INTEGER(SIK) :: ic,ia,ib
@@ -11238,11 +11238,18 @@ RECURSIVE SUBROUTINE procFMUXMLTree(thisParam,parent,currentPath)
     ELSE IF(elname == 'MODELVARIABLES') THEN
       CALL procFMUXMLTree(thisParam,iXMLE,tmpNewPath)
     ELSE IF(elname == 'MODELSTRUCTURE') THEN
-      CALL procFMUXMLTree(thisParam,iXMLE,tmpNewPath)
+      CALL iXMLE%getChildren(dChildren)
+      ! Check for empty parameterlist
+      IF(ASSOCIATED(dChildren)) THEN
+        CALL procFMUXMLTree(thisParam,iXMLE,tmpNewPath)
+      ENDIF
     ELSE IF(elname == 'DERIVATIVES') THEN
-      CALL iXMLE%getChildren(derivChildren)
-      tmpPathToTmpVar = 'FMU'//currentPath//' -> '//' -> nDerivatives'
-      CALL thisParam%add(CHAR(tmpPathToTmpVar),SIZE(derivChildren))
+      ! Count number of children
+      CALL iXMLE%getChildren(dChildren)
+      IF(ASSOCIATED(dChildren)) THEN
+        tmpPathToTmpVar = 'FMU'//currentPath//' -> '//' -> nDerivatives'
+        CALL thisParam%add(CHAR(tmpPathToTmpVar),SIZE(dChildren))
+      ENDIF
     ENDIF
   ENDDO
 
