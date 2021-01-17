@@ -36,10 +36,10 @@ CALL inSol%init(vecparams)
 CALL tmpvec%init(vecparams)
 
 !Setup Anderson parameter list
-CALL pList%add('AndersonAccelerationType->N',10000_SIK)
+CALL pList%add('SolutionAccelerationType->N',10000_SIK)
 CALL pList%add('AndersonAccelerationType->depth',10_SIK)
 CALL pList%add('AndersonAccelerationType->beta',0.5_SRK)
-CALL pList%add('AndersonAccelerationType->start',1)
+CALL pList%add('SolutionAccelerationType->start',1)
 
 !Configure exception handler for test
 ce%exceptHandler => exceptHandler
@@ -59,10 +59,10 @@ REGISTER_SUBTEST('testStep(Real)',testStep)
 !Reset everthing to test with different vector type
 !Setup Anderson parameter list
 CALL pList%clear()
-CALL pList%add('AndersonAccelerationType->N',10000_SIK)
+CALL pList%add('SolutionAccelerationType->N',10000_SIK)
 CALL pList%add('AndersonAccelerationType->depth',10_SIK)
 CALL pList%add('AndersonAccelerationType->beta',0.5_SRK)
-CALL pList%add('AndersonAccelerationType->start',1)
+CALL pList%add('SolutionAccelerationType->start',1)
 CALL NativeRNG%clear()
 CALL NativeRNG%init(RNG_MCNP_STD)
 CALL mySol%clear()
@@ -383,7 +383,7 @@ SUBROUTINE testStep()
   CALL testAndAcc%clear()
   CALL pList%set('AndersonAccelerationType->depth',1_SIK)
   CALL pList%set('AndersonAccelerationType->beta',1.0_SRK)
-  CALL pList%set('AndersonAccelerationType->start',4_SIK)
+  CALL pList%set('SolutionAccelerationType->start',4_SIK)
   CALL testAndAcc%init(ce,pList)
   CALL BLAS_copy(inSol,mySol)
   CALL testAndAcc%reset(mySol)
