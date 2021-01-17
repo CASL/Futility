@@ -86,7 +86,6 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   TYPE(ParamType) :: LSparams
   INTEGER(SIK) :: i,j,m
 
-  REQUIRE(Params%has('AndersonAccelerationType->n'))
   REQUIRE(.NOT.solver%isInit)
 
   CALL solver%init_base(ce,Params)
