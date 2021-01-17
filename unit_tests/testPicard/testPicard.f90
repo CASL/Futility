@@ -21,11 +21,11 @@ IMPLICIT NONE
 
 TYPE(FutilityComputingEnvironment),TARGET :: ce
 TYPE(ExceptionHandlerType),TARGET :: exceptHandler
+TYPE(ParallelEnvType),TARGET :: pe
 TYPE(RelaxedPicardType) :: testRlxPicard
 TYPE(ModifiedPicardType) :: testModPicard
 CLASS(VectorType),ALLOCATABLE :: x
 TYPE(ParamType) :: pList,vecparams
-REAL(SRK) :: tmp1,tmp2
 
 ALLOCATE(RealVectorType :: x)
 CALL vecparams%add("VectorType->n",2_SIK)
@@ -41,7 +41,10 @@ ce%exceptHandler => exceptHandler
 CALL ce%exceptHandler%setStopOnError(.FALSE.)
 CALL ce%exceptHandler%setQuietMode(.FALSE.)
 
-CREATE_TEST('Test Anderson Acceleration Solver')
+ce%parEnv => pe
+CALL pe%initialize(PE_COMM_WORLD,1,1,1,1)
+
+CREATE_TEST('Test Picard Solvers')
 
 REGISTER_SUBTEST('testInit Relaxed',testInitRlx)
 REGISTER_SUBTEST('testClear Relaxed',testClearRlx)
@@ -57,7 +60,7 @@ REGISTER_SUBTEST('testStep Modified',testStepMod)
 
 #ifdef FUTILITY_HAVE_PETSC
 !Reset everthing to test with different vector type
-!Setup Anderson parameter list
+!Setup Acceleration parameter list
 CALL pList%clear()
 CALL pList%add('SolutionAccelerationType->N',2_SIK)
 CALL pList%add('RelaxedPicardType->alpha',0.6_SRK)
@@ -89,7 +92,7 @@ CALL pList%clear()
 CALL vecparams%clear()
 
 FINALIZE_TEST()
-
+CALL pe%clear()
 CALL ce%clear()
 !
 !===============================================================================
@@ -122,11 +125,10 @@ ENDSUBROUTINE testClearRlx
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testSetRlx()
-  INTEGER(SIK) :: i,j
-  REAL(SRK) tmp1, tmp2
+  INTEGER(SIK) :: i
+  REAL(SRK) :: tmp1, tmp2
   LOGICAL(SBK) :: bool
 
-  !Init Anderson
   CALL testRlxPicard%init(ce,pList)
 
   !Test initial set
@@ -145,7 +147,7 @@ SUBROUTINE testSetRlx()
     CALL testRlxPicard%x(1)%get(i,tmp2)
     IF(tmp1 /= tmp2) bool=.FALSE.
   ENDDO
-  ASSERT(bool,'Anderson reset failed to set vector')
+  ASSERT(bool,'SetInitial failed to set vector')
 
   CALL testRlxPicard%clear()
 
@@ -153,11 +155,10 @@ ENDSUBROUTINE testSetRlx
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testResetRlx()
-  INTEGER(SIK) :: i,j
-  REAL(SRK) tmp1, tmp2
+  INTEGER(SIK) :: i
+  REAL(SRK) :: tmp1, tmp2
   LOGICAL(SBK) :: bool
 
-  !Init Anderson
   CALL testRlxPicard%init(ce,pList)
 
   !Test initial set
@@ -176,7 +177,7 @@ SUBROUTINE testResetRlx()
     CALL testRlxPicard%x(1)%get(i,tmp2)
     IF(tmp1 /= tmp2) bool=.FALSE.
   ENDDO
-  ASSERT(bool,'Anderson reset failed to set vector')
+  ASSERT(bool,'Reset failed to set vector')
 
   !Test subsequent reset
   COMPONENT_TEST('Subsequent Reset')
@@ -191,7 +192,7 @@ SUBROUTINE testResetRlx()
     CALL testRlxPicard%x(1)%get(i,tmp2)
     IF(tmp1 /= tmp2) bool=.FALSE.
   ENDDO
-  ASSERT(bool,'Anderson reset failed to reset vector')
+  ASSERT(bool,'Reset failed to reset vector')
   ASSERT_EQ(testRlxPicard%s,0_SIK,'%s incorrect iteration count')
 
   CALL testRlxPicard%clear()
@@ -200,10 +201,8 @@ ENDSUBROUTINE testResetRlx
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testStepRlx()
-  INTEGER(SIK) :: i
   REAL(SRK) :: outval(2), solval(2), val(2)
 
-  !Init Anderson
   CALL testRlxPicard%init(ce,pList)
 
   val=(/1.0_SRK, 2.0_SRK/)
@@ -288,11 +287,10 @@ ENDSUBROUTINE testClearMod
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testSetMod()
-  INTEGER(SIK) :: i,j
-  REAL(SRK) tmp1, tmp2
+  INTEGER(SIK) :: i
+  REAL(SRK) :: tmp1, tmp2
   LOGICAL(SBK) :: bool
 
-  !Init Anderson
   CALL testModPicard%init(ce,pList)
 
   !Test initial set
@@ -311,7 +309,7 @@ SUBROUTINE testSetMod()
     CALL testModPicard%x(1)%get(i,tmp2)
     IF(tmp1 /= tmp2) bool=.FALSE.
   ENDDO
-  ASSERT(bool,'Anderson reset failed to set vector')
+  ASSERT(bool,'SetInitial failed to set vector')
   ASSERT(ALLOCATED(testModPicard%tmpvec),'%tmpvec not allocated')
   ASSERT_EQ(testModPicard%tmpvec%n,testModPicard%N,'%tmpvec wrong vector size')
 
@@ -321,11 +319,10 @@ ENDSUBROUTINE testSetMod
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testResetMod()
-  INTEGER(SIK) :: i,j
-  REAL(SRK) tmp1, tmp2
+  INTEGER(SIK) :: i
+  REAL(SRK) :: tmp1, tmp2
   LOGICAL(SBK) :: bool
 
-  !Init Anderson
   CALL testModPicard%init(ce,pList)
 
   !Test initial set
@@ -344,7 +341,7 @@ SUBROUTINE testResetMod()
     CALL testModPicard%x(1)%get(i,tmp2)
     IF(tmp1 /= tmp2) bool=.FALSE.
   ENDDO
-  ASSERT(bool,'Anderson reset failed to set vector')
+  ASSERT(bool,'Reset failed to set vector')
   ASSERT(ALLOCATED(testModPicard%tmpvec),'%tmpvec not allocated')
   ASSERT_EQ(testModPicard%tmpvec%n,testModPicard%N,'%tmpvec wrong vector size')
 
@@ -361,7 +358,7 @@ SUBROUTINE testResetMod()
     CALL testModPicard%x(1)%get(i,tmp2)
     IF(tmp1 /= tmp2) bool=.FALSE.
   ENDDO
-  ASSERT(bool,'Anderson reset failed to reset vector')
+  ASSERT(bool,'Reset failed to reset vector')
   ASSERT(ALLOCATED(testModPicard%x),'%x not allocated')
   ASSERT_EQ(SIZE(testModPicard%x),1,'%x wrong number of vectors')
   ASSERT_EQ(testModPicard%x(1)%n,testModPicard%N,'%x wrong vector size')
@@ -376,10 +373,8 @@ ENDSUBROUTINE testResetMod
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testStepMod()
-  INTEGER(SIK) :: i
   REAL(SRK) :: outval(2), solval(2), val(2)
 
-  !Init Anderson
   CALL testModPicard%init(ce,pList)
 
   val=(/1.0_SRK, 2.0_SRK/)

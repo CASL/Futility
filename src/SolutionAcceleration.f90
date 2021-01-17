@@ -186,8 +186,8 @@ SUBROUTINE init_base_SolutionAccelerationType(solver,ce,Params)
 ENDSUBROUTINE init_base_SolutionAccelerationType
 !
 !-------------------------------------------------------------------------------
-!> @brief Clears the Anderson Acceleration Type
-!> @param solver The Anderson solver to act on
+!> @brief Clears the solution acceleration base class
+!> @param solver The solver to act on
 !>
 SUBROUTINE clear_base_SolutionAccelerationType(solver)
     CLASS(SolutionAccelerationType),INTENT(INOUT) :: solver
@@ -208,8 +208,8 @@ SUBROUTINE clear_base_SolutionAccelerationType(solver)
   ENDSUBROUTINE clear_base_SolutionAccelerationType
 !
 !-------------------------------------------------------------------------------
-!> @brief Initializes the Solution Acceleration base class
-!> @param solver The Solution Acceleration solver to act on
+!> @brief Initializes the relaxed picard type
+!> @param solver The relaxed picard solver to act on
 !> @param Params The options parameter list
 !> @param ce The computing environment to use for the calculation
 !>
@@ -234,8 +234,8 @@ SUBROUTINE init_RelaxedPicardType(solver,ce,Params)
 ENDSUBROUTINE init_RelaxedPicardType
 !
 !-------------------------------------------------------------------------------
-!> @brief Clears the Anderson Acceleration Type
-!> @param solver The Anderson solver to act on
+!> @brief Clears the relaxed picard type
+!> @param solver The solver to act on
 !>
 SUBROUTINE clear_RelaxedPicardType(solver)
   CLASS(RelaxedPicardType),INTENT(INOUT) :: solver
@@ -249,19 +249,19 @@ SUBROUTINE clear_RelaxedPicardType(solver)
 ENDSUBROUTINE clear_RelaxedPicardType
 !
 !-------------------------------------------------------------------------------
-!> @brief Performs a single step of Anderson Acceleration acting on the input solution vector.
-!>        If depth is set to zero, or if the iteration count is below the Anderson starting
-!>        point the behavior is to under-relax the solution using the mixing parameter (beta)
-!>        as the under-relaxation factor.
-!> @param solver Anderson solver to take step with
+!> @brief Sets the initial vector for relaxation
+!> @param solver Solver to take step with
 !> @param x_new New solution iterate and under-relaxed / accelerated return vector
+!>
+!> This sets the initial vector into internal storage.  Also initializes solver%x
+!> based on the type that is passed in.
 !>
 SUBROUTINE setInitial_RelaxedPicardType(solver,x)
   CLASS(RelaxedPicardType),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: x
 
 #if defined(HAVE_MPI) || defined(FUTILITY_HAVE_Trilinos)
-  CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
+  CHARACTER(LEN=*),PARAMETER :: myName='setInitial_RelaxedPicardType'
 #endif
 
   REQUIRE(x%n == solver%n)
@@ -270,7 +270,7 @@ SUBROUTINE setInitial_RelaxedPicardType(solver,x)
   !If this is the first call to set/reset must actually create vectors of needed type
   IF(.NOT.ALLOCATED(solver%x)) THEN
     !!!TODO Once missing BLAS interfaces have been added for the following vector types
-    !do away with this error catch to allow use of these with Anderson Acceleration.
+    !do away with this error catch to allow use of these
 
     SELECT TYPE(x)
 #ifdef HAVE_MPI
@@ -293,11 +293,8 @@ SUBROUTINE setInitial_RelaxedPicardType(solver,x)
 ENDSUBROUTINE setInitial_RelaxedPicardType
 !
 !-------------------------------------------------------------------------------
-!> @brief Performs a single step of Anderson Acceleration acting on the input solution vector.
-!>        If depth is set to zero, or if the iteration count is below the Anderson starting
-!>        point the behavior is to under-relax the solution using the mixing parameter (beta)
-!>        as the under-relaxation factor.
-!> @param solver Anderson solver to take step with
+!> @brief Performs a single step of Relaxed Picard acting on the input solution vector.
+!> @param solver Solver to take step with
 !> @param x_new New solution iterate and under-relaxed / accelerated return vector
 !>
 SUBROUTINE step_RelaxedPicardType(solver,x_new)
@@ -319,8 +316,8 @@ SUBROUTINE step_RelaxedPicardType(solver,x_new)
 ENDSUBROUTINE step_RelaxedPicardType
 !
 !-------------------------------------------------------------------------------
-!> @brief Set or reset the initial iterate and linear solver state for the Anderson solver
-!> @param solver The Anderson solver to act on
+!> @brief Reset the initial iterate for the solver
+!> @param solver The solver to act on
 !> @param x Initial iterate solve is starting from
 !>
 SUBROUTINE reset_RelaxedPicardType(solver,x)
@@ -337,62 +334,62 @@ SUBROUTINE reset_RelaxedPicardType(solver,x)
 ENDSUBROUTINE reset_RelaxedPicardType
 !
 !-------------------------------------------------------------------------------
-!> @brief Clears the Anderson Acceleration Type
-!> @param solver The Anderson solver to act on
+!> @brief Clears the modified picard Type
+!> @param solver The solver to act on
 !>
 SUBROUTINE clear_ModifiedPicardType(solver)
-    CLASS(ModifiedPicardType),INTENT(INOUT) :: solver
+  CLASS(ModifiedPicardType),INTENT(INOUT) :: solver
 
-    CALL solver%clear_picardbase()
+  CALL solver%clear_picardbase()
 
-    IF(ALLOCATED(solver%tmpvec)) DEALLOCATE(solver%tmpvec)
-    solver%isInit=.FALSE.
-  ENDSUBROUTINE clear_ModifiedPicardType
-  !
-  !-------------------------------------------------------------------------------
-  !> @brief Performs a single step of Anderson Acceleration acting on the input solution vector.
-  !>        If depth is set to zero, or if the iteration count is below the Anderson starting
-  !>        point the behavior is to under-relax the solution using the mixing parameter (beta)
-  !>        as the under-relaxation factor.
-  !> @param solver Anderson solver to take step with
-  !> @param x_new New solution iterate and under-relaxed / accelerated return vector
-  !>
-  SUBROUTINE setInitial_ModifiedPicardType(solver,x)
-    CLASS(ModifiedPicardType),INTENT(INOUT) :: solver
-    CLASS(VectorType),INTENT(INOUT) :: x
+  IF(ALLOCATED(solver%tmpvec)) THEN
+    CALL solver%tmpvec%clear()
+    DEALLOCATE(solver%tmpvec)
+  ENDIF
+  solver%isInit=.FALSE.
+ENDSUBROUTINE clear_ModifiedPicardType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the initial vector for relaxation
+!> @param solver Solver to take step with
+!> @param x_new New solution iterate and under-relaxed / accelerated return vector
+!>
+!> This sets the initial vector into internal storage.  Also initializes solver%x
+!> and tmpvec based on the type that is passed in.
+!>
+SUBROUTINE setInitial_ModifiedPicardType(solver,x)
+  CLASS(ModifiedPicardType),INTENT(INOUT) :: solver
+  CLASS(VectorType),INTENT(INOUT) :: x
 
-    CALL solver%setInitial_picardBase(x)
+  CALL solver%setInitial_picardBase(x)
 
-    IF(.NOT. ALLOCATED(solver%tmpvec)) CALL VectorResembleAlloc(solver%tmpvec,x)
+  IF(.NOT. ALLOCATED(solver%tmpvec)) CALL VectorResembleAlloc(solver%tmpvec,x)
 
-  ENDSUBROUTINE setInitial_ModifiedPicardType
-  !
-  !-------------------------------------------------------------------------------
-  !> @brief Performs a single step of Anderson Acceleration acting on the input solution vector.
-  !>        If depth is set to zero, or if the iteration count is below the Anderson starting
-  !>        point the behavior is to under-relax the solution using the mixing parameter (beta)
-  !>        as the under-relaxation factor.
-  !> @param solver Anderson solver to take step with
-  !> @param x_new New solution iterate and under-relaxed / accelerated return vector
-  !>
-  SUBROUTINE step_ModifiedPicardType(solver,x_new)
-    CLASS(ModifiedPicardType),INTENT(INOUT) :: solver
-    CLASS(VectorType),INTENT(INOUT) :: x_new
+ENDSUBROUTINE setInitial_ModifiedPicardType
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs a single step of Modified Picard acting on the input solution vector.
+!> @param solver Solver to take step with
+!> @param x_new New solution iterate and under-relaxed / accelerated return vector
+!>
+SUBROUTINE step_ModifiedPicardType(solver,x_new)
+  CLASS(ModifiedPicardType),INTENT(INOUT) :: solver
+  CLASS(VectorType),INTENT(INOUT) :: x_new
 
-    REQUIRE(x_new%n == solver%n)
+  REQUIRE(x_new%n == solver%n)
 
-    !Update iteration counter
-    solver%s=solver%s+1
+  !Update iteration counter
+  solver%s=solver%s+1
 
-    CALL BLAS_copy(x_new,solver%tmpvec)
+  CALL BLAS_copy(x_new,solver%tmpvec)
 
-    IF(solver%s >= solver%start) THEN
-      !Get under-relaxed solution using mixing parameter
-      CALL BLAS_scal(x_new,solver%alpha)
-      CALL BLAS_axpy(solver%x(1),x_new,1.0_SRK-solver%alpha)
-    ENDIF
-    CALL BLAS_copy(solver%tmpvec,solver%x(1))
+  IF(solver%s >= solver%start) THEN
+    !Get under-relaxed solution using mixing parameter
+    CALL BLAS_scal(x_new,solver%alpha)
+    CALL BLAS_axpy(solver%x(1),x_new,1.0_SRK-solver%alpha)
+  ENDIF
+  CALL BLAS_copy(solver%tmpvec,solver%x(1))
 
-  ENDSUBROUTINE step_ModifiedPicardType
+ENDSUBROUTINE step_ModifiedPicardType
 !
 ENDMODULE SolutionAccelerationModule
