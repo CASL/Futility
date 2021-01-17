@@ -20,6 +20,7 @@ USE ParallelEnv
 USE VectorTypes
 USE MatrixTypes
 USE LinearSolverTypes
+USE SolutionAccelerationModule
 
 IMPLICIT NONE
 
@@ -29,21 +30,11 @@ PRIVATE
 PUBLIC :: AndersonAccelerationType
 
 !> @brief the native Anderson Accelerator Type
-TYPE :: AndersonAccelerationType
-  !> Initialization status
-  LOGICAL(SBK) :: isInit=.FALSE.
-  !> Size of solution vector/matrix
-  INTEGER(SIK) :: n=-1
-  !> Current iteration count
-  INTEGER(SIK) :: s=0
+TYPE,EXTENDS(SolutionAccelerationType) :: AndersonAccelerationType
   !> Iteration depth of Anderson solver
   INTEGER(SIK) :: depth=1
-  !> Starting iteration for Anderson
-  INTEGER(SIK) :: start=1
   !> Value of mixing parameter
   REAL(SRK) :: beta=0.5_SRK
-  !> Initial iterates
-  CLASS(VectorType),ALLOCATABLE :: x(:)
   !> Gx vectors:
   CLASS(VectorType),ALLOCATABLE :: Gx(:)
   !> Difference vectors r=Gx-x
@@ -54,8 +45,6 @@ TYPE :: AndersonAccelerationType
   REAL(SRK),ALLOCATABLE :: alpha(:)
   !> Linear solver
   TYPE(LinearSolverType_Direct) :: LS
-  !> Futility computing environment
-  TYPE(FutilityComputingEnvironment),POINTER :: ce => NULL()
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -65,6 +54,9 @@ TYPE :: AndersonAccelerationType
     !> @copybrief AndersonAccelerationModule::clear_AndersonAccelerationType
     !> @copydetails AndersonAccelerationModule::clear_AndersonAccelerationType
     PROCEDURE,PASS :: clear => clear_AndersonAccelerationType
+    !> @copybrief AndersonAccelerationModule::setInitial_AndersonAccelerationType
+    !> @copydetails AndersonAccelerationModule::setInitial_AndersonAccelerationType
+    PROCEDURE,PASS :: setInitial => setInitial_AndersonAccelerationType
     !> @copybrief AndersonAccelerationModule::step_AndersonAccelerationType
     !> @copydetails AndersonAccelerationModule::step_AndersonAccelerationType
     PROCEDURE,PASS :: step => step_AndersonAccelerationType
@@ -97,23 +89,15 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   REQUIRE(Params%has('AndersonAccelerationType->n'))
   REQUIRE(.NOT.solver%isInit)
 
+  CALL solver%init_base(ce,Params)
   !Pull Data from Parameter List
-  CALL Params%get('AndersonAccelerationType->n',solver%n)
   IF(Params%has('AndersonAccelerationType->depth')) &
       CALL Params%get('AndersonAccelerationType->depth',solver%depth)
   IF(Params%has('AndersonAccelerationType->beta')) &
       CALL Params%get('AndersonAccelerationType->beta',solver%beta)
-  IF(Params%has('AndersonAccelerationType->start')) &
-      CALL Params%get('AndersonAccelerationType->start',solver%start)
-
-  IF(solver%n < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
-      '::'//myName//' - Number of unkowns (n) must be greater than 0!')
 
   IF(solver%depth < 0) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
       '::'//myName//' - Anderson depth must be greater than or equal to 0!')
-
-  IF(solver%start < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
-      '::'//myName//' - Anderson starting point must be greater than 1!')
 
   IF(solver%beta <= 0.0_SRK .OR. solver%beta > 1.0_SRK) THEN
     CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
@@ -150,8 +134,6 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   m=solver%depth+1
   ALLOCATE(solver%alpha(m))
   solver%alpha(:)=0.0_SRK
-  solver%s=0
-  solver%ce => ce
   solver%isInit=.TRUE.
 
 ENDSUBROUTINE init_AndersonAccelerationType
@@ -165,30 +147,73 @@ SUBROUTINE clear_AndersonAccelerationType(solver)
 
   INTEGER(SIK) :: i
 
+  CALL solver%clear_base()
+
   IF(solver%isInit) THEN
-    IF(ALLOCATED(solver%x)) THEN
+    IF(ALLOCATED(solver%tmpvec)) THEN
       DO i=1,solver%depth+1
-        CALL solver%x(i)%clear()
         CALL solver%Gx(i)%clear()
         CALL solver%r(i)%clear()
       ENDDO
       CALL solver%tmpvec%clear()
-      DEALLOCATE(solver%x)
       DEALLOCATE(solver%Gx)
       DEALLOCATE(solver%r)
       DEALLOCATE(solver%tmpvec)
     ENDIF
     DEALLOCATE(solver%alpha)
     IF(solver%LS%isinit) CALL solver%LS%clear()
-    solver%s=0
-    solver%n=-1
     solver%depth=1
-    solver%start=1
     solver%beta=0.5_SRK
     solver%isInit=.FALSE.
   ENDIF
 
 ENDSUBROUTINE clear_AndersonAccelerationType
+!
+!-------------------------------------------------------------------------------
+!> @brief Set the initial iterate for the Anderson solver
+!> @param solver The Anderson solver to act on
+!> @param x Initial iterate solve is starting from
+!>
+SUBROUTINE setInitial_AndersonAccelerationType(solver,x)
+  CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
+  CLASS(VectorType),INTENT(INOUT) :: x
+
+#if defined(HAVE_MPI) || defined(FUTILITY_HAVE_Trilinos)
+  CHARACTER(LEN=*),PARAMETER :: myName='setInitial_AndersonAccelerationType'
+#endif
+
+  REQUIRE(x%n == solver%n)
+  REQUIRE(solver%s == 0)
+
+  !If this is the first call to set/reset must actually create vectors of needed type
+  IF(.NOT.ALLOCATED(solver%x)) THEN
+
+    !!!TODO Once missing BLAS interfaces have been added for the following vector types
+    !do away with this error catch to allow use of these with Anderson Acceleration.
+
+    SELECT TYPE(x)
+#ifdef HAVE_MPI
+    TYPE IS(NativeDistributedVectorType)
+      CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
+          '::'//myName//' - Input vector type not supported!')
+#endif
+#ifdef FUTILITY_HAVE_Trilinos
+    TYPE IS(TrilinosVectorType)
+      CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
+          '::'//myName//' - Input vector type not supported!')
+#endif
+    ENDSELECT
+
+    CALL VectorResembleAlloc(solver%x,x,solver%depth+1)
+    CALL VectorResembleAlloc(solver%Gx,x,solver%depth+1)
+    CALL VectorResembleAlloc(solver%r,x,solver%depth+1)
+    CALL VectorResembleAlloc(solver%tmpvec,x)
+  ENDIF
+
+  !Grab initial iterate to initiate Anderson from
+  CALL BLAS_copy(x,solver%x(1))
+
+ENDSUBROUTINE setInitial_AndersonAccelerationType
 !
 !-------------------------------------------------------------------------------
 !> @brief Performs a single step of Anderson Acceleration acting on the input solution vector.
@@ -289,7 +314,7 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
 ENDSUBROUTINE step_AndersonAccelerationType
 !
 !-------------------------------------------------------------------------------
-!> @brief Set or reset the initial iterate and linear solver state for the Anderson solver
+!> @brief Reset the initial iterate and linear solver state for the Anderson solver
 !> @param solver The Anderson solver to act on
 !> @param x Initial iterate solve is starting from
 !>
@@ -297,43 +322,13 @@ SUBROUTINE reset_AndersonAccelerationType(solver,x)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
   CLASS(VectorType),INTENT(INOUT) :: x
 
-#if defined(HAVE_MPI) || defined(FUTILITY_HAVE_Trilinos)
-  CHARACTER(LEN=*),PARAMETER :: myName='reset_AndersonAccelerationType'
-#endif
   INTEGER(SIK) :: i,j
-
-  REQUIRE(x%n == solver%n)
-
-  !If this is the first call to set/reset must actually create vectors of needed type
-  IF(.NOT.ALLOCATED(solver%x)) THEN
-
-    !!!TODO Once missing BLAS interfaces have been added for the following vector types
-    !do away with this error catch to allow use of these with Anderson Acceleration.
-
-    SELECT TYPE(x)
-#ifdef HAVE_MPI
-    TYPE IS(NativeDistributedVectorType)
-      CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-          '::'//myName//' - Input vector type not supported!')
-#endif
-#ifdef FUTILITY_HAVE_Trilinos
-    TYPE IS(TrilinosVectorType)
-      CALL solver%ce%exceptHandler%raiseError('Incorrect call to '//modName// &
-          '::'//myName//' - Input vector type not supported!')
-#endif
-    ENDSELECT
-
-    CALL VectorResembleAlloc(solver%x,x,solver%depth+1)
-    CALL VectorResembleAlloc(solver%Gx,x,solver%depth+1)
-    CALL VectorResembleAlloc(solver%r,x,solver%depth+1)
-    CALL VectorResembleAlloc(solver%tmpvec,x)
-  ENDIF
 
   !Reset iteration counter
   solver%s=0_SIK
 
   !Grab initial iterate to initiate Anderson from
-  CALL BLAS_copy(x,solver%x(1))
+  CALL solver%setInitial(x)
 
   !Reset Anderson coefficient matrix
   IF(solver%LS%isinit) THEN
