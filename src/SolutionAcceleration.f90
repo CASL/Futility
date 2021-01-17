@@ -26,7 +26,7 @@ PRIVATE
 !List of public members
 PUBLIC :: SolutionAccelerationType
 PUBLIC :: RelaxedPicardType
-!PUBLIC :: ModifiedPicardType
+PUBLIC :: ModifiedPicardType
 
 !> @brief the base Solution Acceleration Type
 TYPE,ABSTRACT :: SolutionAccelerationType
@@ -265,6 +265,7 @@ SUBROUTINE setInitial_RelaxedPicardType(solver,x)
 #endif
 
   REQUIRE(x%n == solver%n)
+  REQUIRE(solver%s == 0)
 
   !If this is the first call to set/reset must actually create vectors of needed type
   IF(.NOT.ALLOCATED(solver%x)) THEN
@@ -328,10 +329,10 @@ SUBROUTINE reset_RelaxedPicardType(solver,x)
 
   REQUIRE(x%n == solver%n)
 
-  CALL solver%setInitial(x)
-
   !Reset iteration counter
   solver%s=0_SIK
+
+  CALL solver%setInitial(x)
 
 ENDSUBROUTINE reset_RelaxedPicardType
 !
