@@ -32,9 +32,9 @@ CALL vecparams%add("VectorType->n",2_SIK)
 CALL x%init(vecparams)
 
 !Setup parameter list
-CALL pList%add('SolutionAccelerationType->N',2_SIK)
-CALL pList%add('RelaxedPicardType->alpha',0.6_SRK)
-CALL pList%add('SolutionAccelerationType->start',3)
+CALL pList%add('SolutionAcceleration->num_unknowns',2_SIK)
+CALL pList%add('SolutionAcceleration->picard_relaxation_factor',0.6_SRK)
+CALL pList%add('SolutionAcceleration->starting_iteration',3)
 
 !Configure exception handler for test
 ce%exceptHandler => exceptHandler
@@ -60,11 +60,6 @@ REGISTER_SUBTEST('testStep Modified',testStepMod)
 
 #ifdef FUTILITY_HAVE_PETSC
 !Reset everthing to test with different vector type
-!Setup Acceleration parameter list
-CALL pList%clear()
-CALL pList%add('SolutionAccelerationType->N',2_SIK)
-CALL pList%add('RelaxedPicardType->alpha',0.6_SRK)
-CALL pList%add('SolutionAccelerationType->start',3)
 CALL x%clear()
 DEALLOCATE(x)
 ALLOCATE(PETScVectorType :: x)

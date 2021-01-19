@@ -74,8 +74,8 @@ CONTAINS
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Anderson Acceleration Type with an input parameter list
 !> @param solver The Anderson Acceleration solver to act on
-!> @param Params The Anderson options parameter list
 !> @param ce The computing environment to use for the calculation
+!> @param Params The Anderson options parameter list
 !>
 SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
   CLASS(AndersonAccelerationType),INTENT(INOUT) :: solver
@@ -90,10 +90,10 @@ SUBROUTINE init_AndersonAccelerationType(solver,ce,Params)
 
   CALL solver%init_base(ce,Params)
   !Pull Data from Parameter List
-  IF(Params%has('AndersonAccelerationType->depth')) &
-      CALL Params%get('AndersonAccelerationType->depth',solver%depth)
-  IF(Params%has('AndersonAccelerationType->beta')) &
-      CALL Params%get('AndersonAccelerationType->beta',solver%beta)
+  IF(Params%has('SolutionAcceleration->anderson_depth')) &
+      CALL Params%get('SolutionAcceleration->anderson_depth',solver%depth)
+  IF(Params%has('SolutionAcceleration->anderson_mixing_parameter')) &
+      CALL Params%get('SolutionAcceleration->anderson_mixing_parameter',solver%beta)
 
   IF(solver%depth < 0) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
       '::'//myName//' - Anderson depth must be greater than or equal to 0!')
@@ -148,23 +148,21 @@ SUBROUTINE clear_AndersonAccelerationType(solver)
 
   CALL solver%clear_base()
 
-  IF(solver%isInit) THEN
-    IF(ALLOCATED(solver%tmpvec)) THEN
-      DO i=1,solver%depth+1
-        CALL solver%Gx(i)%clear()
-        CALL solver%r(i)%clear()
-      ENDDO
-      CALL solver%tmpvec%clear()
-      DEALLOCATE(solver%Gx)
-      DEALLOCATE(solver%r)
-      DEALLOCATE(solver%tmpvec)
-    ENDIF
-    DEALLOCATE(solver%alpha)
-    IF(solver%LS%isinit) CALL solver%LS%clear()
-    solver%depth=1
-    solver%beta=0.5_SRK
-    solver%isInit=.FALSE.
+  IF(ALLOCATED(solver%tmpvec)) THEN
+    DO i=1,solver%depth+1
+      CALL solver%Gx(i)%clear()
+      CALL solver%r(i)%clear()
+    ENDDO
+    CALL solver%tmpvec%clear()
+    DEALLOCATE(solver%Gx)
+    DEALLOCATE(solver%r)
+    DEALLOCATE(solver%tmpvec)
   ENDIF
+  DEALLOCATE(solver%alpha)
+  IF(solver%LS%isinit) CALL solver%LS%clear()
+  solver%depth=1
+  solver%beta=0.5_SRK
+  solver%isInit=.FALSE.
 
 ENDSUBROUTINE clear_AndersonAccelerationType
 !

@@ -10,6 +10,8 @@
 !>        acceleration.  Module also includes both picard iteration and a
 !>        modified picard iteration.  Anderson Acceleration extends this base
 !>        class in the AndersonAcceleration module.
+!>
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE SolutionAccelerationModule
 #include "Futility_DBC.h"
 USE Futility_DBC
@@ -51,11 +53,9 @@ TYPE,ABSTRACT :: SolutionAccelerationType
     !> @copybrief SolutionAccelerationType::init_base_SolutionAccelerationType
     !> @copydetails SolutionAccelerationType::init_base_SolutionAccelerationType
     PROCEDURE,PASS :: init_base => init_base_SolutionAccelerationType
-    !> @copybrief SolutionAccelerationType::clear
-    !> @copydetails SolutionAccelerationType::clear
-    PROCEDURE(clear_absintfc),DEFERRED,PASS :: clear
-    !> @copybrief SolutionAccelerationType::clear_base_SolutionAccelerationType
-    !> @copydetails SolutionAccelerationType::clear_base_SolutionAccelerationType
+    !> @copybrief SolutionAccelerationType::clear_SolutionAccelerationType
+    !> @copydetails SolutionAccelerationType::clear_SolutionAccelerationType
+    PROCEDURE,PASS :: clear => clear_base_SolutionAccelerationType
     PROCEDURE,PASS :: clear_base => clear_base_SolutionAccelerationType
     !> @copybrief SolutionAccelerationType::setInitial
     !> @copydetails SolutionAccelerationType::setInitial
@@ -76,14 +76,6 @@ ABSTRACT INTERFACE
     TYPE(FutilityComputingEnvironment),TARGET,INTENT(IN) :: ce
     TYPE(ParamType),INTENT(IN) :: Params
   ENDSUBROUTINE init_absintfc
-ENDINTERFACE
-
-!> Definition of interface for clear
-ABSTRACT INTERFACE
-  SUBROUTINE clear_absintfc(solver)
-    IMPORT :: SolutionAccelerationType
-    CLASS(SolutionAccelerationType),INTENT(INOUT) :: solver
-  ENDSUBROUTINE clear_absintfc
 ENDINTERFACE
 
 !> Definition of interface for step
@@ -149,7 +141,7 @@ TYPE,EXTENDS(RelaxedPicardType) :: ModifiedPicardType
 ENDTYPE ModifiedPicardType
 
 !> Name of module
-CHARACTER(LEN=*),PARAMETER :: modName='SolutionAccelerationModules'
+CHARACTER(LEN=*),PARAMETER :: modName='SolutionAccelerationModule'
 !
 !===============================================================================
 CONTAINS
@@ -157,8 +149,8 @@ CONTAINS
 !-------------------------------------------------------------------------------
 !> @brief Initializes the Solution Acceleration base class
 !> @param solver The Solution Acceleration solver to act on
-!> @param Params The options parameter list
 !> @param ce The computing environment to use for the calculation
+!> @param Params The options parameter list
 !>
 SUBROUTINE init_base_SolutionAccelerationType(solver,ce,Params)
   CLASS(SolutionAccelerationType),INTENT(INOUT) :: solver
@@ -167,13 +159,13 @@ SUBROUTINE init_base_SolutionAccelerationType(solver,ce,Params)
 
   CHARACTER(LEN=*),PARAMETER :: myName='init_base_SolutionAccelerationType'
 
-  REQUIRE(Params%has('SolutionAccelerationType->n'))
+  REQUIRE(Params%has('SolutionAcceleration->num_unknowns'))
   REQUIRE(.NOT.solver%isInit)
 
   !Pull Data from Parameter List
-  CALL Params%get('SolutionAccelerationType->n',solver%n)
-  IF(Params%has('SolutionAccelerationType->start')) &
-      CALL Params%get('SolutionAccelerationType->start',solver%start)
+  CALL Params%get('SolutionAcceleration->num_unknowns',solver%n)
+  IF(Params%has('SolutionAcceleration->starting_iteration')) &
+      CALL Params%get('SolutionAcceleration->starting_iteration',solver%start)
 
   IF(solver%n < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
       '::'//myName//' - Number of unkowns (n) must be greater than 0!')
@@ -194,24 +186,23 @@ SUBROUTINE clear_base_SolutionAccelerationType(solver)
 
     INTEGER(SIK) :: i
 
-    IF(solver%isInit) THEN
-      IF(ALLOCATED(solver%x)) THEN
-        DO i=1,SIZE(solver%x)
-          CALL solver%x(i)%clear()
-        ENDDO
-        DEALLOCATE(solver%x)
-      ENDIF
-      solver%s=0
-      solver%n=-1
-      solver%start=1
+    IF(ALLOCATED(solver%x)) THEN
+      DO i=1,SIZE(solver%x)
+        CALL solver%x(i)%clear()
+      ENDDO
+      DEALLOCATE(solver%x)
     ENDIF
+    solver%s=0
+    solver%n=-1
+    solver%start=1
+    solver%isInit=.FALSE.
   ENDSUBROUTINE clear_base_SolutionAccelerationType
 !
 !-------------------------------------------------------------------------------
 !> @brief Initializes the relaxed picard type
 !> @param solver The relaxed picard solver to act on
-!> @param Params The options parameter list
 !> @param ce The computing environment to use for the calculation
+!> @param Params The options parameter list
 !>
 SUBROUTINE init_RelaxedPicardType(solver,ce,Params)
   CLASS(RelaxedPicardType),INTENT(INOUT) :: solver
@@ -224,8 +215,8 @@ SUBROUTINE init_RelaxedPicardType(solver,ce,Params)
 
   CALL solver%init_base(ce,Params)
 
-  IF(Params%has('RelaxedPicardType->alpha')) &
-      CALL Params%get('RelaxedPicardType->alpha',solver%alpha)
+  IF(Params%has('SolutionAcceleration->picard_relaxation_factor')) &
+      CALL Params%get('SolutionAcceleration->picard_relaxation_factor',solver%alpha)
 
   IF(solver%alpha <= 0.0_SRK) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
       '::'//myName//' - Relaxation coefficient must be greater than 0!')
@@ -242,10 +233,9 @@ SUBROUTINE clear_RelaxedPicardType(solver)
 
   CALL solver%clear_base()
 
-  IF(solver%isInit) THEN
-    solver%alpha=1.0_SRK
-    solver%isInit=.FALSE.
-  ENDIF
+  solver%alpha=1.0_SRK
+  solver%isInit=.FALSE.
+
 ENDSUBROUTINE clear_RelaxedPicardType
 !
 !-------------------------------------------------------------------------------
