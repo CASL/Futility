@@ -751,7 +751,10 @@ PURE SUBROUTINE getField_string_string(i,string,field,ierrout)
   TYPE(StringType),INTENT(IN) :: string
   TYPE(StringType),INTENT(OUT) :: field
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-  CALL getField_char_string(i,CHAR(string),field,ierrout)
+
+  INTEGER(SIK) :: ierr
+  CALL getField_char_string(i,CHAR(string),field,ierr)
+  IF(PRESENT(ierrout)) ierrout=ierr
 ENDSUBROUTINE getField_string_string
 !
 !-------------------------------------------------------------------------------
@@ -768,7 +771,10 @@ PURE SUBROUTINE getField_string_char(i,string,field,ierrout)
   TYPE(StringType),INTENT(IN) :: string
   CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: field
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-  CALL getField_char_char(i,CHAR(string),field,ierrout)
+  INTEGER(SIK) :: ierr
+
+  CALL getField_char_char(i,CHAR(string),field,ierr)
+  IF(PRESENT(ierrout)) ierrout=ierr
 ENDSUBROUTINE getField_string_char
 !
 !-------------------------------------------------------------------------------
@@ -785,10 +791,13 @@ PURE SUBROUTINE getField_string_int(i,string,field,ierrout)
   TYPE(StringType),INTENT(IN) :: string
   INTEGER(SIK),INTENT(OUT) :: field
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-  CHARACTER(LEN=:),ALLOCATABLE :: char_field
 
-  CALL getField_char_char(i,CHAR(string),char_field,ierrout)
-  IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
+  CHARACTER(LEN=:),ALLOCATABLE :: char_field
+  INTEGER(SIK) :: ierr
+
+  CALL getField_char_char(i,CHAR(string),char_field,ierr)
+  IF(ierr == 0) READ(char_field,*,IOSTAT=ierr) field
+  IF(PRESENT(ierrout)) ierrout=ierr
 ENDSUBROUTINE getField_string_int
 !
 !-------------------------------------------------------------------------------
@@ -805,10 +814,13 @@ PURE SUBROUTINE getField_string_real(i,string,field,ierrout)
   TYPE(StringType),INTENT(IN) :: string
   REAL(SRK),INTENT(OUT) :: field
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierrout
-  CHARACTER(LEN=:),ALLOCATABLE :: char_field
 
-  CALL getField_char_char(i,CHAR(string),char_field,ierrout)
-  IF(ierrout == 0) READ(char_field,*,IOSTAT=ierrout) field
+  CHARACTER(LEN=:),ALLOCATABLE :: char_field
+  INTEGER(SIK) :: ierr
+
+  CALL getField_char_char(i,CHAR(string),char_field,ierr)
+  IF(ierr == 0) READ(char_field,*,IOSTAT=ierr) field
+  IF(PRESENT(ierrout)) ierrout=ierr
 ENDSUBROUTINE getField_string_real
 !
 !-------------------------------------------------------------------------------

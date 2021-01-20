@@ -51,8 +51,9 @@ ENDSUBROUTINE testParameters
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testIO_Strings()
-  INTEGER :: stat
-  INTEGER,ALLOCATABLE :: tmpint(:)
+  INTEGER :: stat, tmpint
+  INTEGER,ALLOCATABLE :: tmpint2(:)
+  REAL(SRK) :: tmpreal
   CHARACTER(LEN=32) :: char
   CHARACTER(LEN=52) :: test_phrase
   CHARACTER(LEN=256) :: filepath,path,fname,ext
@@ -94,17 +95,17 @@ SUBROUTINE testIO_Strings()
   ASSERT_EQ(strarrayeqind(tmpStrArray,'test8',.TRUE.),10,'testing test8 reverse')
 
   COMPONENT_TEST('strfind')
-  CALL strfind('stesting','test',tmpint)
-  ASSERTFAIL(SIZE(tmpint) == 1,'testing SIZE')
-  ASSERT(ALL(tmpint == (/2/)),'testing')
-  DEALLOCATE(tmpint)
-  CALL strfind('TEAM','I',tmpint)
-  ASSERTFAIL(SIZE(tmpint) == 0,'TEAM')
-  DEALLOCATE(tmpint)
-  CALL strfind('t e s t',' ',tmpint)
-  ASSERTFAIL(SIZE(tmpint) == 3,'t e s t SIZE')
-  ASSERT(ALL(tmpint == (/2,4,6/)),'t e s t')
-  DEALLOCATE(tmpint)
+  CALL strfind('stesting','test',tmpint2)
+  ASSERTFAIL(SIZE(tmpint2) == 1,'testing SIZE')
+  ASSERT(ALL(tmpint2 == (/2/)),'testing')
+  DEALLOCATE(tmpint2)
+  CALL strfind('TEAM','I',tmpint2)
+  ASSERTFAIL(SIZE(tmpint2) == 0,'TEAM')
+  DEALLOCATE(tmpint2)
+  CALL strfind('t e s t',' ',tmpint2)
+  ASSERTFAIL(SIZE(tmpint2) == 3,'t e s t SIZE')
+  ASSERT(ALL(tmpint2 == (/2,4,6/)),'t e s t')
+  DEALLOCATE(tmpint2)
 
   COMPONENT_TEST('strrep')
   string='testing'
@@ -322,6 +323,36 @@ SUBROUTINE testIO_Strings()
   CALL getField(35,tmpStr,tmpStr2,stat)
   ASSERT_EQ(TRIM(tmpStr2),'2','multi-arg filepath 35 (field)')
   ASSERT_EQ(stat,0,'multi-arg filepath 35 (stat)')
+
+  COMPONENT_TEST('getField (string,int)')
+  tmpStr='     cardname 200*3 15*2'
+  CALL getField(50,tmpStr,tmpint,stat)
+  ASSERT_EQ(tmpint,3,'50th (field)')
+  ASSERT_EQ(stat,0,'50th (stat)')
+  CALL getField(205,tmpStr,tmpint,stat)
+  ASSERT_EQ(tmpint,2,'205th (field)')
+  ASSERT_EQ(stat,0,'205th (stat)')
+  tmpStr='cardname 1 1 2 3 1 6'
+  CALL getField(50,tmpStr,tmpint,stat)
+  ASSERT_EQ(stat,IOSTAT_END,' too many (stat)')
+  CALL getField(5,tmpStr,tmpint,stat)
+  ASSERT_EQ(tmpint,3,'normal (field)')
+  ASSERT_EQ(stat,0,'normal (stat)')
+
+  COMPONENT_TEST('getField (string,real)')
+  tmpStr='     cardname 200*3 15*2.3'
+  CALL getField(50,tmpStr,tmpreal,stat)
+  ASSERT_APPROXEQ(tmpreal,3.0_SRK,'50th (field)')
+  ASSERT_EQ(stat,0,'50th (stat)')
+  CALL getField(205,tmpStr,tmpreal,stat)
+  ASSERT_APPROXEQ(tmpreal,2.3_SRK,'205th (field)')
+  ASSERT_EQ(stat,0,'205th (stat)')
+  tmpStr='cardname 1.2 1.3 2.4 3.5 1.6 6.7'
+  CALL getField(50,tmpStr,tmpreal,stat)
+  ASSERT_EQ(stat,IOSTAT_END,' too many (stat)')
+  CALL getField(5,tmpStr,tmpreal,stat)
+  ASSERT_APPROXEQ(tmpreal,3.5_SRK,'normal (field)')
+  ASSERT_EQ(stat,0,'normal (stat)')
 
   COMPONENT_TEST('stripComment')
   string='some data !a comment !another comment?'
