@@ -171,7 +171,7 @@ SUBROUTINE init_base_SolutionAccelerationType(solver,ce,Params)
       '::'//myName//' - Number of unkowns (n) must be greater than 0!')
 
   IF(solver%start < 1) CALL ce%exceptHandler%raiseError('Incorrect input to '//modName// &
-      '::'//myName//' - Starting point must be greater than 1!')
+      '::'//myName//' - Starting iteration must be greater than 0!')
 
   solver%s=0
   solver%ce => ce
@@ -240,8 +240,9 @@ ENDSUBROUTINE clear_RelaxedPicardType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the initial vector for relaxation
-!> @param solver Solver to take step with
-!> @param x_new New solution iterate and under-relaxed / accelerated return vector
+!> @param solver Solver to set initial vector for
+!> @param x  Vector to use as initial condition and all other vector types have
+!>           to match size and type of this one
 !>
 !> This sets the initial vector into internal storage.  Also initializes solver%x
 !> based on the type that is passed in.
@@ -292,6 +293,7 @@ SUBROUTINE step_RelaxedPicardType(solver,x_new)
   CLASS(VectorType),INTENT(INOUT) :: x_new
 
   REQUIRE(x_new%n == solver%n)
+  REQUIRE(ALLOCATED(solver%x))
 
   !Update iteration counter
   solver%s=solver%s+1
@@ -341,8 +343,9 @@ ENDSUBROUTINE clear_ModifiedPicardType
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the initial vector for relaxation
-!> @param solver Solver to take step with
-!> @param x_new New solution iterate and under-relaxed / accelerated return vector
+!> @param solver Solver to set initial vector for
+!> @param x  Vector to use as initial condition and all other vector types have
+!>           to match size and type of this one
 !>
 !> This sets the initial vector into internal storage.  Also initializes solver%x
 !> and tmpvec based on the type that is passed in.
@@ -367,6 +370,8 @@ SUBROUTINE step_ModifiedPicardType(solver,x_new)
   CLASS(VectorType),INTENT(INOUT) :: x_new
 
   REQUIRE(x_new%n == solver%n)
+  REQUIRE(ALLOCATED(solver%x))
+  REQUIRE(ALLOCATED(solver%tmpvec))
 
   !Update iteration counter
   solver%s=solver%s+1

@@ -228,6 +228,10 @@ SUBROUTINE step_AndersonAccelerationType(solver,x_new)
   REAL(SRK) :: tmpA,tmpb
 
   REQUIRE(x_new%n == solver%n)
+  REQUIRE(ALLOCATED(solver%x))
+  REQUIRE(ALLOCATED(solver%Gx))
+  REQUIRE(ALLOCATED(solver%r))
+  REQUIRE(ALLOCATED(solver%tmpvec))
 
   !Update iteration counter
   solver%s=solver%s+1
