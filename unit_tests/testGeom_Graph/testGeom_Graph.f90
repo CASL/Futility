@@ -2360,6 +2360,80 @@ SUBROUTINE testCombine()
   ASSERT(bool,'edges 8')
   CALL g2%clear()
   CALL testGraph%clear()
+
+  !Test to cover a spacer grid bug for BWRs
+  COMPONENT_TEST('BWR Spacer Grid')
+  testCoord(:,1)=[-0.65000000000000002_SRK,0.63260303149822616_SRK]
+  CALL g2%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[-0.65000000000000002_SRK,0.64999999999999991_SRK]
+  CALL g2%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.14182486630031421_SRK,0.63260303149822616_SRK]
+  CALL g2%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.14182486630031421_SRK,0.64999999999999991_SRK]
+  CALL g2%insertVertex(testCoord(:,1))
+  g2%edgeMatrix=RESHAPE(SOURCE=[0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0],SHAPE=[4,4])
+  g2%quadEdges=0.0_SRK
+
+  testCoord(:,1)=[-0.65000000000000002_SRK,-0.65000000000000002_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[-0.65000000000000002_SRK,0.65000000000000002_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[-0.11519999999999886_SRK,-0.11519999999999886_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[-0.11519999999999882_SRK,0.64999999999999991_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.14182486630031421_SRK,0.14182486630031421_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.14182486630031424_SRK,0.63260303149822628_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.14182486630031424_SRK,0.64999999999999991_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.47308564490390465_SRK,0.65000000000000002_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.63260303149822628_SRk,0.14182486630031421_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.65000000000000002_SRK,-0.65000000000000002_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.64999999999999991_SRK,-0.11519999999999886_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.64999999999999991_SRK,0.14182486630031421_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.65000000000000002_SRK,0.47308564490390459_SRK]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testCoord(:,1)=[0.65000000000000002_SRK,0.65000000000000002_SRk]
+  CALL testGraph%insertVertex(testCoord(:,1))
+  testGraph%edgeMatrix(:, 1)=[0,1,0,0,0,0,0,0,0,1,0,0,0,0]
+  testGraph%edgeMatrix(:, 2)=[1,0,0,1,0,0,0,0,0,0,0,0,0,0]
+  testGraph%edgeMatrix(:, 3)=[0,0,0,1,0,0,0,0,0,0,1,0,0,0]
+  testGraph%edgeMatrix(:, 4)=[0,1,1,0,0,0,1,0,0,0,0,0,0,0]
+  testGraph%edgeMatrix(:, 5)=[0,0,0,0,0,1,0,0,1,0,0,0,0,0]
+  testGraph%edgeMatrix(:, 6)=[0,0,0,0,1,0,1,0,-1,0,0,0,0,0]
+  testGraph%edgeMatrix(:, 7)=[0,0,0,1,0,1,0,1,0,0,0,-1,0,0]
+  testGraph%edgeMatrix(:, 8)=[0,0,0,0,0,0,1,0,0,0,0,0,-1,1]
+  testGraph%edgeMatrix(:, 9)=[0,0,0,0,1,-1,0,0,0,0,0,1,0,0]
+  testGraph%edgeMatrix(:,10)=[1,0,0,0,0,0,0,0,0,0,1,0,0,0]
+  testGraph%edgeMatrix(:,11)=[0,0,1,0,0,0,0,0,0,1,0,1,0,0]
+  testGraph%edgeMatrix(:,12)=[0,0,0,0,0,0,-1,0,1,0,1,0,1,0]
+  testGraph%edgeMatrix(:,13)=[0,0,0,0,0,0,0,-1,0,0,0,1,0,1]
+  testGraph%edgeMatrix(:,14)=[0,0,0,0,0,0,0,1,0,0,0,0,1,0]
+  testGraph%quadEdges=0.0_SRK
+  testGraph%quadEdges(:,9,6)=[0.14182486630031421_SRK,0.14182486630031421_SRK,0.49077816519791206_SRK]
+  testGraph%quadEdges(:,12,7)=[0.14182486630031421_SRK,0.14182486630031421_SRK,0.50817513369968581_SRK]
+  testGraph%quadEdges(:,13,8)=[-0.11519999999999886_SRK,-0.11519999999999886_SRK,0.96519999999999995_SRK]
+  testGraph%quadEdges(:,6,9)=[0.14182486630031421_SRK,0.14182486630031421_SRK,0.49077816519791206_SRK]
+  testGraph%quadEdges(:,7,12)=[0.14182486630031421_SRK,0.14182486630031421_SRK,0.50817513369968581_SRK]
+  testGraph%quadEdges(:,8,13)=[-0.11519999999999886_SRK,-0.11519999999999886_SRK,0.96519999999999995_SRK]
+
+  CALL g2%editToVTK('bwr-grid-1.vtk')
+  CALL testGraph%editToVTK('bwr-grid-2.vtk')
+  CALL testGraph%combineGraph(g2)
+  CALL testGraph%editToVTK('bwr-grid-combined.vtk')
+
+  !This error occurs specifically in the 11th vertex, which should not get added at all
+  !It has a connection to just one other vertex, so it's just sort of floating there by itself
+  !It is added by "G:" debug edit in Geom_Graph, around line 1417
+  ASSERT(.NOT.ANY(testGraph%vertices(1:2,:) .APPROXEQ. 0.48885743497004952_SRK),'Bad point added!')
+
 ENDSUBROUTINE testCombine
 !
 !-------------------------------------------------------------------------------

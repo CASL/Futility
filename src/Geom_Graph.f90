@@ -965,31 +965,32 @@ SUBROUTINE getMCB_graphType(thisGraph,cycles)
 
   IF(ALLOCATED(cycles)) THEN
     DO i=1,SIZE(cycles)
-      CALL clear_graphType(cycles(i))
+      CALL cycles(i)%clear()
     ENDDO
     DEALLOCATE(cycles)
   ENDIF
   SELECTTYPE(thisGraph); TYPE IS(GraphType)
     g=thisGraph
   ENDSELECT
-  n=nVert_graphType(thisGraph)
-  CALL dmallocA(g%isCycleEdge,n,n)
+  n=thisGraph%nVert()
+  ALLOCATE(g%isCycleEdge(n,n))
+  g%isCycleEdge=.FALSE.
   ncycles=0
-  DO WHILE(nVert_graphType(g) > 0)
-    nadj=nAdjacent_graphType(g,1)
+  DO WHILE(g%nVert() > 0)
+    nadj=g%nAdjacent(1)
     IF(nadj == 0) THEN
-      CALL removeVertex_idx_graphType(g,1)
+      CALL g%removeVertexI(1)
     ELSEIF(nadj == 1) THEN
-      CALL removeFilament_vertIdx_graphType(g,1,1)
+      CALL g%removeFilamentFromVert(1,1)
     ELSE
       CALL extractPrimitive_graphType(g,1,primeGraph)
-      IF(isMinimumCycle_graphType(primeGraph)) THEN
+      IF(primeGraph%isMinimumCycle()) THEN
         !Found minimum cycle, so add it to basis
         ncycles=ncycles+1
         ALLOCATE(tmpCycles(ncycles))
         DO i=1,ncycles-1
           tmpCycles(i)=cycles(i)
-          CALL clear_graphType(cycles(i))
+          CALL cycles(i)%clear()
         ENDDO
         tmpCycles(ncycles)=primeGraph
         IF(ALLOCATED(cycles)) DEALLOCATE(cycles)
@@ -998,7 +999,7 @@ SUBROUTINE getMCB_graphType(thisGraph,cycles)
       ENDIF
     ENDIF
   ENDDO
-  CALL demallocA(g%isCycleEdge)
+  DEALLOCATE(g%isCycleEdge)
 ENDSUBROUTINE getMCB_graphType
 !
 !-------------------------------------------------------------------------------
@@ -1193,6 +1194,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
               IF(p1%dim == 2) THEN
                 CALL removeEdge_graphType(g0,c,d)
                 CALL insertVertex_graphType(g0,p1%coord)
+WRITE(2000,*) 'A:',p1%coord
                 CALL defineEdge_graphType(g0,c,p1%coord)
                 CALL defineEdge_graphType(g0,d,p1%coord)
                 CALL insertVertex_graphType(lineAB,p1%coord)
@@ -1264,7 +1266,9 @@ SUBROUTINE combine_GraphType(thisGraph,g)
               IF(p1%dim == 2 .AND. p2%dim == 2) THEN
                 CALL removeEdge_graphType(g0,c,d)
                 CALL insertVertex_graphType(g0,p1%coord)
+WRITE(2000,*) 'B:',p1%coord
                 CALL insertVertex_graphType(g0,p2%coord)
+WRITE(2000,*) 'C:',p2%coord
                 !Cord intersecting circle
                 CALL defineEdge_graphType(g0,p1%coord,p2%coord)
                 CALL defineEdge_graphType(g0,c,p1%coord) !is p1 always closer to c?
@@ -1283,6 +1287,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
                 IF(p1%dim == 2) THEN
                   CALL removeEdge_graphType(g0,c,d)
                   CALL insertVertex_graphType(g0,p1%coord)
+WRITE(2000,*) 'D:',p1%coord
                   CALL defineEdge_graphType(g0,c,p1%coord)
                   CALL defineEdge_graphType(g0,d,p1%coord)
                   CALL insertVertex_graphType(lineAB,p1%coord)
@@ -1402,11 +1407,14 @@ SUBROUTINE combine_GraphType(thisGraph,g)
 
                 CALL removeEdge_graphType(g0,c,d)
                 CALL insertVertex_graphType(g0,p1%coord)
+WRITE(2000,*) 'E:',p1%coord
                 CALL insertVertex_graphType(g0,p2%coord)
+WRITE(2000,*) 'F:',p2%coord
 
                 !Add midpoint of arc (keeps graph sane)
                 !p1 and p2 are connected by a straight point and an arc
                 CALL insertVertex_graphType(g0,m)
+WRITE(2000,*) 'G:',m
                 CALL defineQuadEdge_graphType(g0,m,p1%coord,c2%c%coord,c2%r)
                 CALL defineQuadEdge_graphType(g0,m,p2%coord,c2%c%coord,c2%r)
 
@@ -1423,6 +1431,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
                 IF(p1%dim == 2) THEN
                   CALL removeEdge_graphType(g0,c,d)
                   CALL insertVertex_graphType(g0,p1%coord)
+WRITE(2000,*) 'H:',p1%coord
                   CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
                   CALL defineQuadEdge_graphType(g0,d,p1%coord,c2%c%coord,c2%r)
                   CALL insertVertex_graphType(lineAB,p1%coord)
@@ -1438,8 +1447,10 @@ SUBROUTINE combine_GraphType(thisGraph,g)
       ENDDO
       IF(c1%r == 0.0_SRK) THEN
         CALL insertVertex_graphType(g0,lineAB%vertices(:,1))
+WRITE(2000,*) 'I:',1,lineAB%vertices(:,1)
         DO i=2,nVert_graphType(lineAB)
           CALL insertVertex_graphType(g0,lineAB%vertices(:,i))
+WRITE(2000,*) 'J:',i,lineAB%vertices(:,i)
           CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
               lineAB%vertices(:,i))
         ENDDO
@@ -1467,8 +1478,10 @@ SUBROUTINE combine_GraphType(thisGraph,g)
 
         !Add vertices in CW-order and define edges
         CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(1)))
+WRITE(2000,*) 'K:',1,lineAB%vertices(:,cwVerts(1))
         DO i=2,nVert_graphType(lineAB)
           CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(i)))
+WRITE(2000,*) 'L:',i,lineAB%vertices(:,cwVerts(i))
           CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,cwVerts(i-1)), &
               lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
         ENDDO
