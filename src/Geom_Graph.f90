@@ -1195,7 +1195,6 @@ SUBROUTINE combine_GraphType(thisGraph,g)
               IF(p1%dim == 2) THEN
                 CALL removeEdge_graphType(g0,c,d)
                 CALL insertVertex_graphType(g0,p1%coord)
-WRITE(2000,*) 'A:',p1%coord
                 CALL defineEdge_graphType(g0,c,p1%coord)
                 CALL defineEdge_graphType(g0,d,p1%coord)
                 CALL insertVertex_graphType(lineAB,p1%coord)
@@ -1267,9 +1266,7 @@ WRITE(2000,*) 'A:',p1%coord
               IF(p1%dim == 2 .AND. p2%dim == 2) THEN
                 CALL removeEdge_graphType(g0,c,d)
                 CALL insertVertex_graphType(g0,p1%coord)
-WRITE(2000,*) 'B:',p1%coord
                 CALL insertVertex_graphType(g0,p2%coord)
-WRITE(2000,*) 'C:',p2%coord
                 !Cord intersecting circle
                 CALL defineEdge_graphType(g0,p1%coord,p2%coord)
                 CALL defineEdge_graphType(g0,c,p1%coord) !is p1 always closer to c?
@@ -1288,7 +1285,6 @@ WRITE(2000,*) 'C:',p2%coord
                 IF(p1%dim == 2) THEN
                   CALL removeEdge_graphType(g0,c,d)
                   CALL insertVertex_graphType(g0,p1%coord)
-WRITE(2000,*) 'D:',p1%coord
                   CALL defineEdge_graphType(g0,c,p1%coord)
                   CALL defineEdge_graphType(g0,d,p1%coord)
                   CALL insertVertex_graphType(lineAB,p1%coord)
@@ -1409,7 +1405,6 @@ WRITE(2000,*) 'D:',p1%coord
                 CALL removeEdge_graphType(g0,c,d)
                 nold=g0%nVert()
                 CALL insertVertex_graphType(g0,p1%coord)
-WRITE(2000,*) 'E:',p1%coord
                 CALL insertVertex_graphType(g0,p2%coord)
 
                 !Add midpoint of arc (keeps graph sane), but only if
@@ -1435,7 +1430,6 @@ WRITE(2000,*) 'E:',p1%coord
                 IF(p1%dim == 2) THEN
                   CALL removeEdge_graphType(g0,c,d)
                   CALL insertVertex_graphType(g0,p1%coord)
-WRITE(2000,*) 'H:',p1%coord
                   CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
                   CALL defineQuadEdge_graphType(g0,d,p1%coord,c2%c%coord,c2%r)
                   CALL insertVertex_graphType(lineAB,p1%coord)
@@ -1451,10 +1445,8 @@ WRITE(2000,*) 'H:',p1%coord
       ENDDO
       IF(c1%r == 0.0_SRK) THEN
         CALL insertVertex_graphType(g0,lineAB%vertices(:,1))
-WRITE(2000,*) 'I:',1,lineAB%vertices(:,1)
         DO i=2,nVert_graphType(lineAB)
           CALL insertVertex_graphType(g0,lineAB%vertices(:,i))
-WRITE(2000,*) 'J:',i,lineAB%vertices(:,i)
           CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
               lineAB%vertices(:,i))
         ENDDO
@@ -1482,10 +1474,8 @@ WRITE(2000,*) 'J:',i,lineAB%vertices(:,i)
 
         !Add vertices in CW-order and define edges
         CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(1)))
-WRITE(2000,*) 'K:',1,lineAB%vertices(:,cwVerts(1))
         DO i=2,nVert_graphType(lineAB)
           CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(i)))
-WRITE(2000,*) 'L:',i,lineAB%vertices(:,cwVerts(i))
           CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,cwVerts(i-1)), &
               lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
         ENDDO
