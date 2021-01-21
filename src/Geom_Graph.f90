@@ -9,6 +9,8 @@
 !> @brief A Fortran 2003 module defining a graph type.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Graph
+#include "Futility_DBC.h"
+USE Futility_DBC
 USE IntrType
 USE Constants_Conversion
 USE ExtendedMath
@@ -1079,16 +1081,15 @@ SUBROUTINE clear_graphType(thisGraph)
 ENDSUBROUTINE clear_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Inserts all vertexes and edges from one graph into another
+!> @param thisGraph the target graph to be modified
+!> @param g the source graph whose pionts are being inserted
 !>
 SUBROUTINE combine_GraphType(thisGraph,g)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
   TYPE(GraphType),INTENT(IN) :: g
   TYPE(GraphType) :: g0,g1,lineAB
-  INTEGER(SIK) :: i,j,n,nAdj,v1,v2
+  INTEGER(SIK) :: i,j,n,nAdj,v1,v2,nold
   INTEGER(SIK),ALLOCATABLE :: cwVerts(:)
   REAL(SRK) :: alp1,alp2,theta,theta_shift,r,scal,x1,y1,r2
   REAL(SRK) :: a(2),b(2),c(2),d(2),m(2)
@@ -1406,17 +1407,20 @@ WRITE(2000,*) 'D:',p1%coord
                 m=m+c2%c%coord
 
                 CALL removeEdge_graphType(g0,c,d)
+                nold=g0%nVert()
                 CALL insertVertex_graphType(g0,p1%coord)
 WRITE(2000,*) 'E:',p1%coord
                 CALL insertVertex_graphType(g0,p2%coord)
-WRITE(2000,*) 'F:',p2%coord
 
-                !Add midpoint of arc (keeps graph sane)
-                !p1 and p2 are connected by a straight point and an arc
-                CALL insertVertex_graphType(g0,m)
-WRITE(2000,*) 'G:',m
-                CALL defineQuadEdge_graphType(g0,m,p1%coord,c2%c%coord,c2%r)
-                CALL defineQuadEdge_graphType(g0,m,p2%coord,c2%c%coord,c2%r)
+                !Add midpoint of arc (keeps graph sane), but only if
+                !at least one of p1 and p2 were new vertexes; otherwise, it
+                !is assumed that previously existing edge connections were fine
+                IF(g0%nVert() > nold) THEN
+                  !p1 and p2 are connected by a straight point and an arc
+                  CALL insertVertex_graphType(g0,m)
+                  CALL defineQuadEdge_graphType(g0,m,p1%coord,c2%c%coord,c2%r)
+                  CALL defineQuadEdge_graphType(g0,m,p2%coord,c2%c%coord,c2%r)
+                ENDIF
 
                 !Cord intersecting circle
                 CALL defineEdge_graphType(g0,p1%coord,p2%coord)
