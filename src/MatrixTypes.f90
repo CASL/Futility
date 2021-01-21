@@ -726,39 +726,6 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)- &
       thisMatrix%iOffsets(rank+1)))
 
-  ! First, take care of locally held data.
-  SELECT TYPE(thisMatrix)
-  TYPE IS(DistributedBlockBandedMatrixType)
-    IF(.NOT. thisMatrix%blockMask) THEN
-      DO k=1,thisMatrix%nlocalBlocks
-        lowIdx=(k-1)*thisMatrix%blockSize+1
-        highIdx=lowIdx-1+thisMatrix%blockSize
-        CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx), &
-            Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
-      ENDDO
-      IF(thisMatrix%chunks(rank+1)%isInit) THEN
-        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
-            y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
-      ENDIF
-    ELSE
-      IF(thisMatrix%chunks(rank+1)%isInit) THEN
-        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
-            y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
-      ELSE
-        tmpProduct=0.0_SRK
-      ENDIF
-    ENDIF
-  TYPE IS(DistributedBandedMatrixType)
-    IF(thisMatrix%chunks(rank+1)%isInit) THEN
-      CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
-          y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
-    ELSE
-      tmpProduct=0.0_SRK
-    ENDIF
-  CLASS DEFAULT
-    tmpProduct = 0.0_SRK
-  ENDSELECT
-
 #ifdef HAVE_MPI
   ! On each rank, loop over the chunks held (on diagonal moving down)
   DO i=1,SIZE(thisMatrix%iOffsets)-2
@@ -768,7 +735,6 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
 
     ! First do local computation and send
     IF (thismatrix%chunks(destRank+1)%isInit) THEN
-
       ! Decide whether to send whole vector or multiple sparse
       IF (thisMatrix%chunks(destRank+1)%nnz >= thisMatrix%chunks(destRank+1)%n) THEN
         ! Check if we can safely write to sendRequests
@@ -814,8 +780,39 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
           MPI_DOUBLE_PRECISION,srcRank,0,thisMatrix%comm,recvRequests(idxTmp), mpierr)
     ENDIF
   ENDDO
-  ! We've finished calling irecv. Wait for remaining
-  ! requests to finish:
+  ! Now, take care of locally held data.
+  SELECT TYPE(thisMatrix)
+  TYPE IS(DistributedBlockBandedMatrixType)
+    IF(.NOT. thisMatrix%blockMask) THEN
+      DO k=1,thisMatrix%nlocalBlocks
+        lowIdx=(k-1)*thisMatrix%blockSize+1
+        highIdx=lowIdx-1+thisMatrix%blockSize
+        CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx), &
+            Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
+      ENDDO
+      IF(thisMatrix%chunks(rank+1)%isInit) THEN
+        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+            y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+      ENDIF
+    ELSE
+      IF(thisMatrix%chunks(rank+1)%isInit) THEN
+        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+            y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+      ELSE
+        tmpProduct=0.0_SRK
+      ENDIF
+    ENDIF
+  TYPE IS(DistributedBandedMatrixType)
+    IF(thisMatrix%chunks(rank+1)%isInit) THEN
+      CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+          y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
+    ELSE
+      tmpProduct=0.0_SRK
+    ENDIF
+  CLASS DEFAULT
+    tmpProduct = 0.0_SRK
+  ENDSELECT
+  ! Wait for remaining requests to finish:
   DO k=1,MATVEC_SLOTS
     idxTmp=k
     CALL pop_recv(tmpProduct,recvResult,thisMatrix,ctRecv,idxTmp,recvRequests,.TRUE.)
