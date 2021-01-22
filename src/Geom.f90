@@ -214,10 +214,10 @@ SUBROUTINE newGeom_poly(params,geom)
       WRITE(ivchar,'(i8)') i; ivchar=ADJUSTL(ivchar)
       CALL params%get('PolygonGeom->vertex '//TRIM(ivchar),vert)
       CALL tmpG%insertVertex(vert)
-      CALL tmpG%defineEdge(vPrev,vert)
+      CALL tmpG%defineLinearEdge(vPrev,vert)
     ENDDO
     CALL params%get('PolygonGeom->vertex 1',vPrev)
-    CALL tmpG%defineEdge(vPrev,vert)
+    CALL tmpG%defineLinearEdge(vPrev,vert)
     DO i=1,m
       WRITE(ivchar,'(i8)') i; ivchar=ADJUSTL(ivchar)
       !CALL params%get('PolygonGeom->quad edge '//TRIM(ivchar))

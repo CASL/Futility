@@ -25,9 +25,7 @@ PRIVATE
 
 PUBLIC :: GraphType
 PUBLIC :: DAGraphType
-PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(==)
-!PUBLIC :: OPERATOR(+)
 
 !> @brief a Directed Acyclic Graph Type
 TYPE :: DAGraphType
@@ -101,9 +99,13 @@ TYPE :: GraphType
     !> @copybrief Geom_Graph::nEdge_graphType
     !> @copydetails Geom_Graph::nEdge_graphType
     PROCEDURE,PASS :: nEdge => nEdge_graphType
-    !> @copybrief Geom_Graph::getVertIndex_graphType
-    !> @copydetails Geom_Graph::getVertIndex_graphType
-    PROCEDURE,PASS :: getVertIndex => getVertIndex_graphType
+    !> @copybrief Geom_Graph::getVertIndex_Real
+    !> @copydetails Geom_Graph::getVertIndex_Real
+    PROCEDURE,PASS,PRIVATE :: getVertIndex_Real
+    !> @copybrief Geom_Graph::getVertIndex_Point
+    !> @copydetails Geom_Graph::getVertIndex_Point
+    PROCEDURE,PASS,PRIVATE :: getVertIndex_Point
+    GENERIC :: getVertIndex => getVertIndex_Real,getVertIndex_Point
     !> @copybrief Geom_Graph::nAdjacent_graphType
     !> @copydetails Geom_Graph::nAdjacent_graphType
     PROCEDURE,PASS :: nAdjacent => nAdjacent_graphType
@@ -116,33 +118,35 @@ TYPE :: GraphType
     !> @copybrief Geom_Graph::getCCWMostVert_graphType
     !> @copydetails Geom_Graph::getCCWMostVert_graphType
     PROCEDURE,PASS :: getCCWMostVert => getCCWMostVert_graphType
-    !> @copybrief Geom_Graph::getMidPointOnEdge_graphType
-    !> @copydetails Geom_Graph::getMidPointOnEdge_graphType
-    PROCEDURE,PASS :: getMidPointOnEdge => getMidPointOnEdge_graphType
+    !> @copybrief Geom_Graph::getMidPointOnEdge
+    !> @copydetails Geom_Graph::getMidPointOnEdge
+    PROCEDURE,PASS :: getMidPointOnEdge
     !> @copybrief Geom_Graph::isMinimumCycle_graphType
     !> @copydetails Geom_Graph::isMinimumCycle_graphType
     PROCEDURE,PASS :: isMinimumCycle => isMinimumCycle_graphType
     !> @copybrief Geom_Graph::insertVertex_graphType
     !> @copydetails Geom_Graph::insertVertex_graphType
     PROCEDURE,PASS :: insertVertex => insertVertex_graphType
-    !> @copybrief Geom_Graph::defineEdge_graphType
-    !> @copydetails Geom_Graph::defineEdge_graphType
-    PROCEDURE,PASS :: defineEdge => defineEdge_graphType
-    !> @copybrief Geom_Graph::defineQuadEdge_graphType
-    !> @copydetails Geom_Graph::defineQuadEdge_graphType
-    PROCEDURE,PASS :: defineQuadraticEdge => defineQuadEdge_graphType
+    !> @copybrief Geom_Graph::defineLinearEdge_graphType
+    !> @copydetails Geom_Graph::defineLinearEdge_graphType
+    PROCEDURE,PASS :: defineLinearEdge => defineLinearEdge_graphType
+    !> @copybrief Geom_Graph::defineQuadraticEdge
+    !> @copydetails Geom_Graph::defineQuadraticEdge
+    PROCEDURE,PASS :: defineQuadraticEdge
     !> @copybrief Geom_Graph::removeVertex_graphType
     !> @copydetails Geom_Graph::removeVertex_graphType
-    PROCEDURE,PASS :: removeVertex => removeVertex_graphType
+    PROCEDURE,PASS,PRIVATE :: removeVertex_graphType
     !> @copybrief Geom_Graph::removeVertex_idx_graphType
     !> @copydetails Geom_Graph::removeVertex_idx_graphType
-    PROCEDURE,PASS :: removeVertexI => removeVertex_idx_graphType
+    PROCEDURE,PASS,PRIVATE :: removeVertex_idx_graphType
+    GENERIC :: removeVertex => removeVertex_graphType,removeVertex_idx_graphType
     !> @copybrief Geom_Graph::removeEdge_graphType
     !> @copydetails Geom_Graph::removeEdge_graphType
-    PROCEDURE,PASS :: removeEdge => removeEdge_graphType
-    !> @copybrief Geom_Graph::removeVertex_idx_graphType
-    !> @copydetails Geom_Graph::removeVertex_idx_graphType
-    PROCEDURE,PASS :: removeEdgeIJ => removeEdge_IJ_graphType
+    PROCEDURE,PASS,PRIVATE :: removeEdge_graphType
+    !> @copybrief Geom_Graph::removeVertex_IJ_graphType
+    !> @copydetails Geom_Graph::removeVertex_IJ_graphType
+    PROCEDURE,PASS,PRIVATE :: removeEdge_IJ_graphType
+    GENERIC :: removeEdge => removeEdge_graphType,removeEdge_IJ_graphType
     !> @copybrief Geom_Graph::removeFilament_vertIdx_graphType
     !> @copydetails Geom_Graph::removeFilament_vertIdx_graphType
     PROCEDURE,PASS :: removeFilamentFromVert => removeFilament_vertIdx_graphType
@@ -161,37 +165,28 @@ TYPE :: GraphType
     !> @copybrief Geom_Graph::clear_graphType
     !> @copydetails Geom_Graph::clear_graphType
     PROCEDURE,PASS :: clear => clear_graphType
+    !> @copybrief Geom_Graph::divideLinearEdge
+    !> @copydetails Geom_Graph::divideLinearEdge
+    PROCEDURE,PASS,PRIVATE :: divideLinearEdge
+    !> @copybrief Geom_Graph::divideQuadEdge
+    !> @copydetails Geom_Graph::divideQuadEdge
+    PROCEDURE,PASS,PRIVATE :: divideQuadEdge
+    GENERIC :: divideEdge => divideLinearEdge,divideQuadEdge
 ENDTYPE GraphType
-
-INTERFACE ASSIGNMENT(=)
-  !> @copybrief Geom_Graph::assign_graphType
-  !> @copydetails Geom_Graph::assign_graphType
-  MODULE PROCEDURE assign_graphType
-  !> @copybrief Geom_Graph::assign_DAGraphType
-  !> @copydetails Geom_Graph::assign_DAGraphType
-  MODULE PROCEDURE assign_DAGraphType
-ENDINTERFACE
 
 INTERFACE OPERATOR(==)
   !> @copybrief Geom_Graph::isequal_graphType
   !> @copydetails Geom_Graph::isequal_graphType
   MODULE PROCEDURE isequal_graphType
 ENDINTERFACE
-
-!INTERFACE OPERATOR(+)
-!  !> @copybrief Geom_Graph::add_graphType
-!  !> @copydetails Geom_Graph::add_graphType
-!  MODULE PROCEDURE add_graphType
-!ENDINTERFACE
 !
 !===============================================================================
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Returns the number of vertexes in a graph object
+!> @param thisGraph the graph to interrogate
+!> @returns n the number of vertexes
 !>
 ELEMENTAL FUNCTION nVert_graphType(thisGraph) RESULT(n)
   CLASS(GraphType),INTENT(IN) :: thisGraph
@@ -201,10 +196,9 @@ ELEMENTAL FUNCTION nVert_graphType(thisGraph) RESULT(n)
 ENDFUNCTION nVert_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief returnes the number of edges in a graph object
+!> @param thisGraph the graph to interrogate
+!> @returns n the number of edges
 !>
 ELEMENTAL FUNCTION nEdge_graphType(thisGraph) RESULT(n)
   CLASS(GraphType),INTENT(IN) :: thisGraph
@@ -214,12 +208,14 @@ ELEMENTAL FUNCTION nEdge_graphType(thisGraph) RESULT(n)
 ENDFUNCTION nEdge_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns the index of a vertex in a graph given the coordinates
+!> @param thisGraph the graph to interrogate
+!> @param coord the coordinates of the vertex
+!> @returns idx the index of the vertex
 !>
+!> If the vertex could not be found, -1 is returned
 !>
-!>
-PURE FUNCTION getVertIndex_graphType(thisGraph,coord) RESULT(idx)
+FUNCTION getVertIndex_Real(thisGraph,coord) RESULT(idx)
   CLASS(GraphType),INTENT(IN) :: thisGraph
   REAL(SRK),INTENT(IN) :: coord(2)
   INTEGER(SIK) :: idx
@@ -242,13 +238,28 @@ PURE FUNCTION getVertIndex_graphType(thisGraph,coord) RESULT(idx)
       EXIT
     ENDIF
   ENDDO
-ENDFUNCTION getVertIndex_graphType
+ENDFUNCTION getVertIndex_Real
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns the index of a vertex in a graph given the coordinates
+!> @param thisGraph the graph to interrogate
+!> @param point the point containing the coordinates of the vertex
+!> @returns idx the index of the vertex
 !>
+!> If the vertex could not be found, -1 is returned
 !>
+FUNCTION getVertIndex_Point(thisGraph,point) RESULT(idx)
+  CLASS(GraphType),INTENT(IN) :: thisGraph
+  CLASS(PointType),INTENT(IN) :: point
+  REAL(SRK) :: idx
+  idx=thisGraph%getVertIndex_Real(point%coord)
+ENDFUNCTION getVertIndex_Point
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the number of points connected to a specified point
+!> @param thisGraph the graph to interrogate
+!> @param i the index of the vertex to interrogate
+!> @returns n the number of connected points
 !>
 ELEMENTAL FUNCTION nAdjacent_graphType(thisGraph,i) RESULT(n)
   CLASS(GraphType),INTENT(IN) :: thisGraph
@@ -262,10 +273,11 @@ ELEMENTAL FUNCTION nAdjacent_graphType(thisGraph,i) RESULT(n)
 ENDFUNCTION nAdjacent_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Returns a particular adjacent vertex
+!> @param thisGraph the graph object to interrogate
+!> @param v0 the index of the vertex to interrogate
+!> @param i which adjacent vertex to return (from 1 to @c thisGraph%nAdjacent(v0))
+!> @param v1 the graph vertex index for the @c i-th adjacent vertex to @c v0
 !>
 ELEMENTAL FUNCTION getAdjacentVert_graphType(thisGraph,v0,i) RESULT(v1)
   CLASS(GraphType),INTENT(IN) :: thisGraph
@@ -431,9 +443,9 @@ ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
 ENDFUNCTION getCCWMostVert_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
+!> @brief Determines if the graph is a minimum cycle
+!> @param thisGraph the graph to interrogate
+!> @returns bool logical indicating if the graph is a minimum cycle (true) or not (false)
 !>
 !>
 ELEMENTAL FUNCTION isMinimumCycle_graphType(thisGraph) RESULT(bool)
@@ -456,10 +468,9 @@ ELEMENTAL FUNCTION isMinimumCycle_graphType(thisGraph) RESULT(bool)
 ENDFUNCTION isMinimumCycle_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Inserts a new vertex into a graph object
+!> @param thisGraph the graph to modify
+!> @param coord the coordinates of the new vertex to add
 !>
 SUBROUTINE insertVertex_graphType(thisGraph,coord)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
@@ -559,31 +570,41 @@ SUBROUTINE insertVertex_graphType(thisGraph,coord)
 ENDSUBROUTINE insertVertex_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Defines a linear edge between 2 vertexes
+!> @param thisGraph the graph to modify
+!> @param coord1 the coordinates of the first vertex
+!> @param coord2 the coordinates of the second vertex
 !>
-!>
-!>
-PURE SUBROUTINE defineEdge_graphType(thisGraph,coord1,coord2)
+SUBROUTINE defineLinearEdge_graphType(thisGraph,coord1,coord2)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
   REAL(SRK),INTENT(IN) :: coord1(2)
   REAL(SRK),INTENT(IN) :: coord2(2)
+  !
   INTEGER(SIK) :: v1,v2
-  v1=getVertIndex_graphType(thisGraph,coord1)
-  v2=getVertIndex_graphType(thisGraph,coord2)
+  TYPE(PointType) :: m
+
+  v1=thisGraph%getVertIndex(coord1)
+  v2=thisGraph%getVertIndex(coord2)
   IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
-    thisGraph%edgeMatrix(v1,v2)=1
-    thisGraph%edgeMatrix(v2,v1)=1
+    IF(thisGraph%edgeMatrix(v1,v2) == -1) THEN
+      CALL m%init(COORD=thisGraph%getMidPointOnEdge(v1,v2))
+      CALL thisGraph%divideEdge(v1,v2,m)
+    ELSE
+      thisGraph%edgeMatrix(v1,v2)=1
+      thisGraph%edgeMatrix(v2,v1)=1
+    ENDIF
   ENDIF
-ENDSUBROUTINE defineEdge_graphType
+ENDSUBROUTINE defineLinearEdge_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Defines a quadratic edge between 2 vertexes
+!> @param thisGraph the graph to modify
+!> @param coord1 the coordinates of the first vertex
+!> @param coord2 the coordinates of the second vertex
+!> @param c0 the centroid of the circle/arc
+!> @param r the radius of the circle/arc
 !>
-!>
-!>
-PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
+SUBROUTINE defineQuadraticEdge(thisGraph,coord1,coord2,c0,r)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
   REAL(SRK),INTENT(IN) :: coord1(2)
   REAL(SRK),INTENT(IN) :: coord2(2)
@@ -592,6 +613,7 @@ PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
 
   INTEGER(SIK) :: v1,v2
   REAL(SRK) :: x1,y1,x2,y2,r1,r2,rsq,d
+  TYPE(PointType) :: m
 
   !Check that coord1 and coord2 exist on circle
   IF(.NOT.(r .APPROXEQA. 0.0_SRK)) THEN
@@ -603,51 +625,62 @@ PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
     r2=x2*x2+y2*y2
     rsq=r*r
     IF((rsq .APPROXEQA. r1) .AND. (rsq .APPROXEQA. r2)) THEN
-      v1=getVertIndex_graphType(thisGraph,coord1)
-      v2=getVertIndex_graphType(thisGraph,coord2)
+      v1=thisGraph%getVertIndex(coord1)
+      v2=thisGraph%getVertIndex(coord2)
       IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
-        !Update edge matrix
-        thisGraph%edgeMatrix(v1,v2)=-1
-        thisGraph%edgeMatrix(v2,v1)=-1
+        IF(thisGraph%edgeMatrix(v1,v2) == 1) THEN
+          CALL m%init(COORD=thisGraph%getMidPointOnEdge(v1,v2))
+          CALL thisGraph%divideEdge(v1,v2,m,r)
+        ELSE
+          !Update edge matrix
+          thisGraph%edgeMatrix(v1,v2)=-1
+          thisGraph%edgeMatrix(v2,v1)=-1
 
-        !Store circle info in quadEdges
-        thisGraph%quadEdges(1:2,v1,v2)=c0
-        thisGraph%quadEdges(3,v1,v2)=ABS(r)
+          !Store circle info in quadEdges
+          thisGraph%quadEdges(1:2,v1,v2)=c0
+          thisGraph%quadEdges(3,v1,v2)=ABS(r)
 
-        !Check for semi-circle and determine which half of circle
-        !connects the points
-        r1=(x2-x1)
-        r1=r1*r1
-        r2=(y2-y1)
-        r2=r2*r2
-        d=SQRT(r1+r2)
-        IF(d .APPROXEQA. 2.0_SRK*ABS(r)) &
-            thisGraph%quadEdges(3,v1,v2)=r !sign of r indicates which half
-                                           !of semi-circle, all other cases
-                                           !traverse shorter arc between points
-        thisGraph%quadEdges(:,v2,v1)=thisGraph%quadEdges(:,v1,v2)
+          !Check for semi-circle and determine which half of circle
+          !connects the points
+          r1=(x2-x1)
+          r1=r1*r1
+          r2=(y2-y1)
+          r2=r2*r2
+          d=SQRT(r1+r2)
+          IF(d .APPROXEQA. 2.0_SRK*ABS(r)) &
+              thisGraph%quadEdges(3,v1,v2)=r !sign of r indicates which half
+                                            !of semi-circle, all other cases
+                                            !traverse shorter arc between points
+          thisGraph%quadEdges(:,v2,v1)=thisGraph%quadEdges(:,v1,v2)
+        ENDIF
       ENDIF
     ENDIF
   ENDIF
-ENDSUBROUTINE defineQuadEdge_graphType
+ENDSUBROUTINE defineQuadraticEdge
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns the midpoint of an edge
+!> @param thisGraph the graph to interrogate
+!> @param v1 the index of the edge's first endpoint
+!> @param v2 the index of the edge's second endpoint
+!> @returns m the midpoint
 !>
-!>
-!>
-PURE SUBROUTINE getMidPointOnEdge_graphType(thisGraph,v1,v2,m)
+FUNCTION getMidPointOnEdge(thisGraph,v1,v2) RESULT(m)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
   INTEGER(SIK),INTENT(IN) :: v1
   INTEGER(SIK),INTENT(IN) :: v2
-  REAL(SRK),INTENT(INOUT) :: m(2)
+  REAL(SRK) :: m(2)
 
   INTEGER(SIK) :: n
   REAL(SRK) :: a(2),b(2),c(2),r,alp1,alp2,theta,scal
 
+  REQUIRE(v1 > 0)
+  REQUIRE(v2 > 0)
+  REQUIRE(v1 <= thisGraph%nVert())
+  REQUIRE(v2 <= thisGraph%nVert())
+
   m=-HUGE(m)
-  n=nVert_graphType(thisGraph)+1
+  n=thisGraph%nVert()+1
   IF(v1 > 0 .AND. v2 > 0 .AND. v1 < n .AND. v2 < n) THEN
     IF(thisGraph%edgeMatrix(v1,v2) == 1) THEN
       m=thisGraph%vertices(:,v1)+thisGraph%vertices(:,v2)
@@ -678,27 +711,26 @@ PURE SUBROUTINE getMidPointOnEdge_graphType(thisGraph,v1,v2,m)
       m=m+c
     ENDIF
   ENDIF
-ENDSUBROUTINE getMidPointOnEdge_graphType
+
+ENDFUNCTION getMidPointOnEdge
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Removes a vertex from a graph object
+!> @param thisGraph the graph to modify
+!> @param v the coordinates of the vertex to remove
 !>
 SUBROUTINE removeVertex_graphType(thisGraph,v)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
   REAL(SRK),INTENT(IN) :: v(2)
   INTEGER(SIK) :: i
-  i=getVertIndex_graphType(thisGraph,v)
+  i=thisGraph%getVertIndex(v)
   CALL removeVertex_idx_graphType(thisGraph,i)
 ENDSUBROUTINE removeVertex_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Removes a vertex from a graph object
+!> @param thisGraph the graph to modify
+!> @param idx the index of the vertex to remove
 !>
 SUBROUTINE removeVertex_idx_graphType(thisGraph,idx)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
@@ -745,19 +777,19 @@ SUBROUTINE removeVertex_idx_graphType(thisGraph,idx)
 ENDSUBROUTINE removeVertex_idx_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Removes an edge from a graph object
+!> @param thisGraph the graph to modify
+!> @param c1 the coordinates of the first edge vertex
+!> @param c2 the coordinates of the second edge vertex
 !>
-!>
-!>
-PURE SUBROUTINE removeEdge_graphType(thisGraph,c1,c2)
+SUBROUTINE removeEdge_graphType(thisGraph,c1,c2)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
   REAL(SRK),INTENT(IN) :: c1(2)
   REAL(SRK),INTENT(IN) :: c2(2)
   INTEGER(SIK) :: v1,v2
 
-  v1=getVertIndex_graphType(thisGraph,c1)
-  v2=getVertIndex_graphType(thisGraph,c2)
+  v1=thisGraph%getVertIndex(c1)
+  v2=thisGraph%getVertIndex(c2)
   IF(v1 > 0 .AND. v2 > 0) THEN
     thisGraph%edgeMatrix(v1,v2)=0
     thisGraph%edgeMatrix(v2,v1)=0
@@ -768,10 +800,10 @@ ENDSUBROUTINE removeEdge_graphType
 
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Removes an edge from a graph object
+!> @param thisGraph the graph to modify
+!> @param i the index of the first edge vertex
+!> @param j the index of the second edge vertex
 !>
 ELEMENTAL SUBROUTINE removeEdge_IJ_graphType(thisGraph,i,j)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
@@ -824,7 +856,7 @@ SUBROUTINE removeFilament_vertIdx_graphType(thisGraph,i0,i1)
         IF(thisGraph%isCycleEdge(v0,v1)) THEN
           xy=thisGraph%vertices(:,v1)
           CALL removeVertex_idx_graphType(thisGraph,v0)
-          v0=getVertIndex_graphType(thisGraph,xy)
+          v0=thisGraph%getVertIndex(xy)
           nAdj=nAdjacent_graphType(thisGraph,v0)
         ELSE
           EXIT
@@ -844,7 +876,7 @@ SUBROUTINE removeFilament_vertIdx_graphType(thisGraph,i0,i1)
         v1=getAdjacentVert_graphType(thisGraph,v0,1)
         xy=thisGraph%vertices(:,v1)
         CALL removeVertex_idx_graphType(thisGraph,v0)
-        v0=getVertIndex_graphType(thisGraph,xy)
+        v0=thisGraph%getVertIndex(xy)
         nAdj=nAdjacent_graphType(thisGraph,v0)
       ENDDO
       IF(nAdj == 0) CALL removeVertex_idx_graphType(thisGraph,v0)
@@ -881,11 +913,11 @@ SUBROUTINE extractPrimitive_graphType(thisGraph,v0,subgraph)
     coord2=thisGraph%vertices(:,vCurr)
     CALL insertVertex_graphType(subgraph,coord2)
     IF(thisGraph%edgeMatrix(vPrev,vCurr) == 1) THEN
-      CALL defineEdge_graphType(subgraph,coord1,coord2)
+      CALL subgraph%defineLinearEdge(coord1,coord2)
     ELSEIF(thisGraph%edgeMatrix(vPrev,vCurr) == -1) THEN
       c0=thisGraph%quadEdges(1:2,vPrev,vCurr)
       r=thisGraph%quadEdges(3,vPrev,vCurr)
-      CALL defineQuadEdge_graphType(subgraph,coord1,coord2,c0,r)
+      CALL subgraph%defineQuadraticEdge(coord1,coord2,c0,r)
     ENDIF
     visited(vCurr)=.TRUE.
     vNext=getCCWMostVert_graphType(thisGraph,vPrev,vCurr)
@@ -903,19 +935,19 @@ SUBROUTINE extractPrimitive_graphType(thisGraph,v0,subgraph)
     coord1=thisGraph%vertices(:,vPrev)
     coord2=thisGraph%vertices(:,vCurr)
     IF(thisGraph%edgeMatrix(vPrev,vCurr) == 1) THEN
-      CALL defineEdge_graphType(subgraph,coord1,coord2)
+      CALL subgraph%defineLinearEdge(coord1,coord2)
     ELSEIF(thisGraph%edgeMatrix(vPrev,vCurr) == -1) THEN
       c0=thisGraph%quadEdges(1:2,vPrev,vCurr)
       r=thisGraph%quadEdges(3,vPrev,vCurr)
-      CALL defineQuadEdge_graphType(subgraph,coord1,coord2,c0,r)
+      CALL subgraph%defineQuadraticEdge(coord1,coord2,c0,r)
     ENDIF
 
     n=nVert_graphType(subGraph)
     DO i=1,n
       j=i+1
       IF(i == n) j=1
-      vCurr=getVertIndex_graphType(thisGraph,subgraph%vertices(:,i))
-      vNext=getVertIndex_graphType(thisGraph,subgraph%vertices(:,j))
+      vCurr=thisGraph%getVertIndex(subgraph%vertices(:,i))
+      vNext=thisGraph%getVertIndex(subgraph%vertices(:,j))
       thisGraph%isCycleEdge(vCurr,vNext)=.TRUE.
     ENDDO
     vCurr=v0
@@ -981,7 +1013,7 @@ SUBROUTINE getMCB_graphType(thisGraph,cycles)
   DO WHILE(g%nVert() > 0)
     nadj=g%nAdjacent(1)
     IF(nadj == 0) THEN
-      CALL g%removeVertexI(1)
+      CALL g%removeVertex(1)
     ELSEIF(nadj == 1) THEN
       CALL g%removeFilamentFromVert(1,1)
     ELSE
@@ -1005,10 +1037,10 @@ SUBROUTINE getMCB_graphType(thisGraph,cycles)
 ENDSUBROUTINE getMCB_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Edits a graph object to a VTK file
+!> @param thisGraph the graph object to edit
+!> @param fname the file name to write to
+!> @param unitNo the unit number to use; optional
 !>
 SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
@@ -1068,8 +1100,8 @@ SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
 ENDSUBROUTINE editToVTK_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Clears a graph object
+!> @param thisGraph the graph object to clear
 !>
 !>
 !>
@@ -1088,428 +1120,669 @@ ENDSUBROUTINE clear_graphType
 SUBROUTINE combine_GraphType(thisGraph,g)
   CLASS(GraphType),INTENT(INOUT) :: thisGraph
   TYPE(GraphType),INTENT(IN) :: g
-  TYPE(GraphType) :: g0,g1,lineAB
-  INTEGER(SIK) :: i,j,n,nAdj,v1,v2,nold
+  TYPE(GraphType) :: target,source,source_edge
+  INTEGER(SIK) :: i,line_n,source_n,target_n,nAdj,target_edge_i1,target_edge_i2
+  INTEGER(SIK) :: target_i1,target_i2,source_i1,source_i2,source_edge_i1,source_edge_i2
   INTEGER(SIK),ALLOCATABLE :: cwVerts(:)
-  REAL(SRK) :: alp1,alp2,theta,theta_shift,r,scal,x1,y1,r2
-  REAL(SRK) :: a(2),b(2),c(2),d(2),m(2)
+  REAL(SRK) :: alp1,alp2,theta,theta_shift,r,x1,y1,r2
+  REAL(SRK) :: source_v1(2),source_v2(2),target_v1(2),target_v2(2)
   REAL(SRK),ALLOCATABLE :: vTheta(:)
-  TYPE(PointType) :: p0,p1,p2,p3,p4
-  TYPE(LineType) :: l1,l2
-  TYPE(CircleType) :: c1,c2
+  TYPE(PointType) :: centroid,intersection1,intersection2
+  TYPE(LineType) :: source_line,target_line
+  TYPE(CircleType) :: source_arc,target_arc
 
   SELECTTYPE(thisGraph); TYPE IS(GraphType)
-    CALL assign_GraphType(g0,thisGraph)
+    target=thisGraph
   ENDSELECT
-  CALL assign_GraphType(g1,g)
-  CALL l1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL l1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL l2%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL l2%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL p0%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  DO WHILE(nEdge_graphType(g1) > 0)
-    n=nVert_graphType(g1)
-    v1=0; v2=0
-    outer: DO i=1,n
-      DO j=i+1,n
-        IF(g1%edgeMatrix(j,i) /= 0) THEN
-          v1=i
-          v2=j
+  source=g
+  CALL source_line%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+  CALL source_line%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+  CALL target_line%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+  CALL target_line%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+  CALL centroid%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
+! WRITE(*,*)
+! DO i=1,source%nVert()
+!   WRITE(*,*) 'Z:',i,':',source%vertices(:,i),':',source%edgeMatrix(:,i),':',source%quadEdges(:,:,i)
+! ENDDO
+
+  !We will combine the graphs by analyzing one source edge at a time
+  DO WHILE(source%nEdge() > 0)
+! WRITE(*,*)
+! DO i=1,target%nVert()
+!   WRITE(*,*) 'X:',i,':',target%vertices(:,i),':',target%edgeMatrix(:,i),':',target%quadEdges(:,:,i)
+! ENDDO
+    !Find the first remaining edge in the source graph and store the vertex indexes
+    source_n=source%nVert()
+    outer: DO source_i1=1,source_n
+      DO source_i2=source_i1+1,source_n
+        IF(source%edgeMatrix(source_i2,source_i1) /= 0) THEN
           EXIT outer
         ENDIF
       ENDDO
     ENDDO outer
+    IF(source_i1 > source_n .OR. source_i2 > source_n) THEN
+      source_i1=0
+      source_i2=0
+    ENDIF
 
-    IF(v1 > 0 .AND. v2 > 0) THEN
-      a=g1%vertices(:,v1)
-      b=g1%vertices(:,v2)
-      CALL insertVertex_graphType(lineAB,a)
-      CALL insertVertex_graphType(lineAB,b)
-      IF(g1%edgeMatrix(v1,v2) == -1) THEN
-        p0%coord=g1%quadEdges(1:2,v1,v2)
-        r=g1%quadEdges(3,v1,v2)
-        alp1=ATAN2PI(a(1)-p0%coord(1),a(2)-p0%coord(2))
-        alp2=ATAN2PI(b(1)-p0%coord(1),b(2)-p0%coord(2))
+    !This just means we found an edge in the source graph
+    IF(source_i1 > 0 .AND. source_i2 > 0) THEN
+      !Construct a small graph source_edge that just holds the line from source_i1 to source_i2
+      !After we loop over all the edges of the target graph, we'll add the vertexes and
+      !edges of source_edge to the target graph
+      source_v1=source%vertices(:,source_i1)
+      source_v2=source%vertices(:,source_i2)
+      CALL source_edge%insertVertex(source_v1)
+      CALL source_edge%insertVertex(source_v2)
+      !If the source edge is quadratic, set up a circle object source_arc
+      IF(source%edgeMatrix(source_i1,source_i2) == -1) THEN
+        centroid%coord=source%quadEdges(1:2,source_i1,source_i2)
+        r=source%quadEdges(3,source_i1,source_i2)
+        alp1=ATAN2PI(source_v1(1)-centroid%coord(1),source_v1(2)-centroid%coord(2))
+        alp2=ATAN2PI(source_v2(1)-centroid%coord(1),source_v2(2)-centroid%coord(2))
 
-        !Insure we are traversing the shorter arc on the circle
+        !Set the source_edge edge
+        CALL source_edge%defineQuadraticEdge(source_v1,source_v2,centroid%coord,r)
+
+        !Ensure we are traversing the shorter arc on the circle
         IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN
           !Semi-circle, for this case we must look at sign of r
           IF(r < 0.0_SRK) THEN
-            CALL c1%set(p0,ABS(r),alp1,alp2)
+            CALL source_arc%set(centroid,ABS(r),alp1,alp2)
           ELSE
-            CALL c1%set(p0,ABS(r),alp2,alp1)
+            CALL source_arc%set(centroid,ABS(r),alp2,alp1)
           ENDIF
         ELSE
           !Distance between alpha_1 and alpha_2 is < PI
-          IF(a(2) .APPROXEQA. p0%coord(2)) THEN
-            IF(b(2) > a(2)) THEN
-              CALL c1%set(p0,ABS(r),alp2,alp1)
+          IF(source_v1(2) .APPROXEQA. centroid%coord(2)) THEN
+            IF(source_v2(2) > source_v1(2)) THEN
+              CALL source_arc%set(centroid,ABS(r),alp2,alp1)
             ELSE
-              CALL c1%set(p0,ABS(r),alp1,alp2)
+              CALL source_arc%set(centroid,ABS(r),alp1,alp2)
             ENDIF
-          ELSEIF(a(2) < p0%coord(2)) THEN
-            CALL c1%set(p0,ABS(r),alp1,alp2)
+          ELSEIF(source_v1(2) < centroid%coord(2)) THEN
+            CALL source_arc%set(centroid,ABS(r),alp1,alp2)
           ELSE
-            CALL c1%set(p0,ABS(r),alp2,alp1)
+            CALL source_arc%set(centroid,ABS(r),alp2,alp1)
           ENDIF
         ENDIF
-
-        !Compute arc midpoint
-        m=a+b-2.0_SRK*p0%coord
-        scal=SQRT(m(1)*m(1)+m(2)*m(2))
-        IF(scal .APPROXEQA. 0.0_SRK) THEN
-          !Half circle. Lame.
-          theta=0.5_SRK*(alp1+alp2)
-          !Adjust theta for the appropriate half of the circle
-          IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-              (theta .APPROXLE. c1%thetastp))) theta=theta-PI
-          m(1)=c1%r*COS(theta)
-          m(2)=c1%r*SIN(theta)
-        ELSE
-          scal=ABS(r)/scal
-          m=m*scal
-        ENDIF
-        m=m+c1%c%coord
 
         !Compute theta shift so that thetastp > thetastt when crossing x+ axis
         theta_shift=0.0_SRK
-        IF(c1%thetastt > c1%thetastp) theta_shift=TWOPI
+        IF(source_arc%thetastt > source_arc%thetastp) theta_shift=TWOPI
+      !If the source edge is linear, set up a line object
       ELSE
-        l1%p1%coord=a
-        l1%p2%coord=b
+        source_line%p1%coord=source_v1
+        source_line%p2%coord=source_v2
+        !set the source_edge edge
+        CALL source_edge%defineLinearEdge(source_v1,source_v2)
       ENDIF
 
-      n=nVert_graphType(thisGraph)
-      DO i=1,n
-        DO j=i+1,n
-          IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
-            c=thisGraph%vertices(:,i)
-            d=thisGraph%vertices(:,j)
+      !Now loop over all edges in the target graph
+      target_n=thisGraph%nVert()
+      DO target_i1=1,target_n
+        DO target_i2=target_i1+1,target_n
+          IF(thisGraph%edgeMatrix(target_i2,target_i1) /= 0) THEN
+            target_v1=thisGraph%vertices(:,target_i1)
+            target_v2=thisGraph%vertices(:,target_i2)
           ENDIF
-          IF(thisGraph%edgeMatrix(j,i) == 1) THEN
-            l2%p1%dim=2; l2%p2%dim=2
-            l2%p1%coord=c
-            l2%p2%coord=d
-            IF(c1%r == 0.0_SRK) THEN
-              p1=l1%intersectLine(l2)
-              IF(p1%dim == 2) THEN
-                CALL removeEdge_graphType(g0,c,d)
-                CALL insertVertex_graphType(g0,p1%coord)
-                CALL defineEdge_graphType(g0,c,p1%coord)
-                CALL defineEdge_graphType(g0,d,p1%coord)
-                CALL insertVertex_graphType(lineAB,p1%coord)
+          !Linear edge on the target graph
+          IF(thisGraph%edgeMatrix(target_i2,target_i1) == 1) THEN
+            target_line%p1%dim=2; target_line%p2%dim=2
+            target_line%p1%coord=target_v1
+            target_line%p2%coord=target_v2
+            !This is a line-line intersection
+            IF(source_arc%r == 0.0_SRK) THEN
+              intersection1=source_line%intersectLine(target_line)
+              !An intersection was found, so we need to replace the current
+              !edge with 2 new edges including the midpoint, then add the midpoint
+              !to the source edge that will get added at the end
+              IF(intersection1%dim == 2) THEN
+                target_edge_i1=target%getVertIndex(target_v1)
+                target_edge_i2=target%getVertIndex(target_v2)
+! WRITE(*,*) 'Added line-line intersection1:',target_edge_i1,target_edge_i2,intersection1%coord,target%edgeMatrix
+                CALL target%divideEdge(target_edge_i1,target_edge_i2,intersection1)
+                source_edge_i1=source_edge%getVertIndex(source_v1)
+                source_edge_i2=source_edge%getVertIndex(source_v2)
+                CALL source_edge%divideEdge(source_edge_i1,source_edge_i2,intersection1)
               ENDIF
+            !This is a circle-line intersection
             ELSE
-              !circle-line
-              CALL c1%intersectLine(l2,p1,p2)
+              CALL source_arc%intersectLine(target_line,intersection1,intersection2)
 
               !Count tangent points
-              IF(p1%dim == -3) p1%dim=2
-              IF(p1%dim == 0 .AND. p2%dim == 2) THEN
-                p1=p2
-                CALL p2%clear()
+              IF(intersection1%dim == -3) intersection1%dim=2
+              IF(intersection1%dim == 0 .AND. intersection2%dim == 2) THEN
+                intersection1=intersection2
+                CALL intersection2%clear()
               ENDIF
 
               !Check for intersections on ends of line segments
-              IF(p1%dim == 0) THEN
-                x1=c(1)-c1%c%coord(1)
-                y1=c(2)-c1%c%coord(2)
+              IF(intersection1%dim == 0) THEN
+                x1=target_v1(1)-source_arc%c%coord(1)
+                y1=target_v1(2)-source_arc%c%coord(2)
                 r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                  p1=l2%p1
-                  l2%p1%dim=0
+                IF(r2 .APPROXEQA. source_arc%r*source_arc%r) THEN
+                  intersection1=target_line%p1
+                  target_line%p1%dim=0
                 ELSE
-                  x1=d(1)-c1%c%coord(1)
-                  y1=d(2)-c1%c%coord(2)
+                  x1=target_v2(1)-source_arc%c%coord(1)
+                  y1=target_v2(2)-source_arc%c%coord(2)
                   r2=x1*x1+y1*y1
-                  IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                    p1=l2%p2
-                    l2%p2%dim=0
+                  IF(r2 .APPROXEQA. source_arc%r*source_arc%r) THEN
+                    intersection1=target_line%p2
+                    target_line%p2%dim=0
                   ENDIF
                 ENDIF
               ENDIF
-              IF(l2%p1%dim == 2 .AND. p2%dim == 0) THEN
-                x1=c(1)-c1%c%coord(1)
-                y1=c(2)-c1%c%coord(2)
+              IF(target_line%p1%dim == 2 .AND. intersection2%dim == 0) THEN
+                x1=target_v1(1)-source_arc%c%coord(1)
+                y1=target_v1(2)-source_arc%c%coord(2)
                 r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                  p2=l2%p1
-                  l2%p1%dim=0
+                IF(r2 .APPROXEQA. source_arc%r*source_arc%r) THEN
+                  intersection2=target_line%p1
+                  target_line%p1%dim=0
                 ENDIF
-              ELSEIF(l2%p2%dim == 2 .AND. p2%dim == 0) THEN
-                x1=d(1)-c1%c%coord(1)
-                y1=d(2)-c1%c%coord(2)
+              ELSEIF(target_line%p2%dim == 2 .AND. intersection2%dim == 0) THEN
+                x1=target_v2(1)-source_arc%c%coord(1)
+                y1=target_v2(2)-source_arc%c%coord(2)
                 r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                  p2=l2%p2
-                  l2%p2%dim=0
+                IF(r2 .APPROXEQA. source_arc%r*source_arc%r) THEN
+                  intersection2=target_line%p2
+                  target_line%p2%dim=0
                 ENDIF
               ENDIF
 
               !Filter points for interval of theta on arc. (might have bugs?)
-              IF(p1%dim == 2) THEN
-                theta=ATAN2PI(p1%coord(1)-c1%c%coord(1), &
-                              p1%coord(2)-c1%c%coord(2))
-                IF(p1%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
+              IF(intersection1%dim == 2) THEN
+                theta=ATAN2PI(intersection1%coord(1)-source_arc%c%coord(1), &
+                              intersection1%coord(2)-source_arc%c%coord(2))
+                IF(intersection1%coord(2)-source_arc%c%coord(2) .APPROXGE. 0.0_SRK) &
                     theta=theta+theta_shift
-                IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p1%clear()
+                IF(.NOT.((source_arc%thetastt .APPROXLE. theta) .AND. &
+                    (theta .APPROXLE. source_arc%thetastp+theta_shift))) CALL intersection1%clear()
               ENDIF
-              IF(p2%dim == 2) THEN
-                theta=ATAN2PI(p2%coord(1)-c1%c%coord(1), &
-                              p2%coord(2)-c1%c%coord(2))
-                IF(p2%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
+              IF(intersection2%dim == 2) THEN
+                theta=ATAN2PI(intersection2%coord(1)-source_arc%c%coord(1), &
+                              intersection2%coord(2)-source_arc%c%coord(2))
+                IF(intersection2%coord(2)-source_arc%c%coord(2) .APPROXGE. 0.0_SRK) &
                     theta=theta+theta_shift
-                IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p2%clear()
+                IF(.NOT.((source_arc%thetastt .APPROXLE. theta) .AND. &
+                    (theta .APPROXLE. source_arc%thetastp+theta_shift))) CALL intersection2%clear()
               ENDIF
-              IF(p1%dim == 2 .AND. p2%dim == 2) THEN
-                CALL removeEdge_graphType(g0,c,d)
-                CALL insertVertex_graphType(g0,p1%coord)
-                CALL insertVertex_graphType(g0,p2%coord)
-                !Cord intersecting circle
-                CALL defineEdge_graphType(g0,p1%coord,p2%coord)
-                CALL defineEdge_graphType(g0,c,p1%coord) !is p1 always closer to c?
-                CALL defineEdge_graphType(g0,d,p2%coord) !is p2 always closer to d?
-                CALL insertVertex_graphType(lineAB,p1%coord)
-                CALL insertVertex_graphType(lineAB,p2%coord)
 
-                !Add midpoint of arc (keeps graph sane)
-                !Need to store edge information here, because normal point sorting
-                !on graph type does not implicitly keep points ordered for arcs
-                CALL insertVertex_graphType(lineAB,m)
-                CALL defineEdge_graphType(lineAB,m,p1%coord)
-                CALL defineEdge_graphType(lineAB,m,p2%coord)
-              ELSE
-                IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
-                IF(p1%dim == 2) THEN
-                  CALL removeEdge_graphType(g0,c,d)
-                  CALL insertVertex_graphType(g0,p1%coord)
-                  CALL defineEdge_graphType(g0,c,p1%coord)
-                  CALL defineEdge_graphType(g0,d,p1%coord)
-                  CALL insertVertex_graphType(lineAB,p1%coord)
+              !The first intersection point has data, so divide based on that
+              IF(intersection1%dim == 2) THEN
+                target_edge_i1=target%getVertIndex(target_v1)
+                target_edge_i2=target%getVertIndex(target_v2)
+                CALL target%divideEdge(target_edge_i1,target_edge_i2,intersection1)
+! WRITE(*,*) 'Added line-circle intersection1:',intersection1%coord,target%edgeMatrix
+                source_edge_i1=source_edge%getVertIndex(source_v1)
+                source_edge_i2=source_edge%getVertIndex(source_v2)
+                CALL source_edge%divideEdge(source_edge_i1,source_edge_i2,intersection1,source_arc%r)
+                !Update i1 and i2 to be from the point of intersection to the second point.
+                !This is needed in case intersection2 also has data.  When adding a vertex,
+                !there is no guarantee that the previous target_edge_i1 and target_edge_i2 are the
+                !same, so we need to update those values
+                IF(intersection2%dim == 2) THEN
+                  target_edge_i1=target%getVertIndex(intersection1)
+                  target_edge_i2=target%getVertIndex(target_v2)
+                  source_edge_i1=source_edge%getVertIndex(intersection1)
+                  source_edge_i2=source_edge%getVertIndex(source_v2)
                 ENDIF
+              !No data in intersection 1, but prepare indexes to divide the segments based
+              !on intersection 2
+              ELSEIF(intersection2%dim == 2) THEN
+                target_edge_i1=target%getVertIndex(target_v1)
+                target_edge_i2=target%getVertIndex(target_v2)
+                source_edge_i1=source_edge%getVertIndex(source_v1)
+                source_edge_i2=source_edge%getVertIndex(source_v2)
+              ENDIF
+              !The second intersection point has data, so divide
+              IF(intersection2%dim == 2) THEN
+                CALL target%divideEdge(target_edge_i1,target_edge_i2,intersection2)
+! WRITE(*,*) 'Added line-circle intersection2:',intersection2%coord,target%edgeMatrix
+                CALL source_edge%divideEdge(source_edge_i1,source_edge_i2,intersection2,source_arc%r)
               ENDIF
             ENDIF
-          ELSEIF(thisGraph%edgeMatrix(j,i) == -1) THEN
-            p0%coord=thisGraph%quadEdges(1:2,i,j)
-            r=thisGraph%quadEdges(3,i,j)
-            alp1=ATAN2PI(c(1)-p0%coord(1),c(2)-p0%coord(2))
-            alp2=ATAN2PI(d(1)-p0%coord(1),d(2)-p0%coord(2))
+          !Quadratic edge on the target graph
+          ELSEIF(thisGraph%edgeMatrix(target_i2,target_i1) == -1) THEN
+            centroid%coord=thisGraph%quadEdges(1:2,target_i1,target_i2)
+            r=thisGraph%quadEdges(3,target_i1,target_i2)
+            alp1=ATAN2PI(target_v1(1)-centroid%coord(1),target_v1(2)-centroid%coord(2))
+            alp2=ATAN2PI(target_v2(1)-centroid%coord(1),target_v2(2)-centroid%coord(2))
             !Insure we are traversing the shorter arc on the circle
             IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN
               !Semi-circle, for this case we must look at sign of r
               IF(r < 0.0_SRK) THEN
-                CALL c2%set(p0,ABS(r),alp1,alp2)
+                CALL target_arc%set(centroid,ABS(r),alp1,alp2)
               ELSE
-                CALL c2%set(p0,ABS(r),alp2,alp1)
+                CALL target_arc%set(centroid,ABS(r),alp2,alp1)
               ENDIF
             ELSE
               !Distance between alpha_1 and alpha_2 is < PI
-              IF(c(2) .APPROXEQA. p0%coord(2)) THEN
-                IF(d(2) > c(2)) THEN
-                  CALL c2%set(p0,ABS(r),alp2,alp1)
+              IF(target_v1(2) .APPROXEQA. centroid%coord(2)) THEN
+                IF(target_v2(2) > target_v1(2)) THEN
+                  CALL target_arc%set(centroid,ABS(r),alp2,alp1)
                 ELSE
-                  CALL c2%set(p0,ABS(r),alp1,alp2)
+                  CALL target_arc%set(centroid,ABS(r),alp1,alp2)
                 ENDIF
-              ELSEIF(c(2) < p0%coord(2)) THEN
-                CALL c2%set(p0,ABS(r),alp1,alp2)
+              ELSEIF(target_v1(2) < centroid%coord(2)) THEN
+                CALL target_arc%set(centroid,ABS(r),alp1,alp2)
               ELSE
-                CALL c2%set(p0,ABS(r),alp2,alp1)
+                CALL target_arc%set(centroid,ABS(r),alp2,alp1)
               ENDIF
             ENDIF
-            IF(c1%r == 0.0_SRK) THEN
-              !line-circle
-              CALL c2%intersectLine(l1,p1,p2)
+            !A line-circle intersection
+            IF(source_arc%r == 0.0_SRK) THEN
+              CALL target_arc%intersectLine(source_line,intersection1,intersection2)
 
               !Count tangent points
-              IF(p1%dim == -3) p1%dim=2
-              IF(p1%dim == 0 .AND. p2%dim == 2) THEN
-                p1=p2
-                CALL p2%clear()
+              IF(intersection1%dim == -3) intersection1%dim=2
+              IF(intersection1%dim == 0 .AND. intersection2%dim == 2) THEN
+                intersection1=intersection2
+                CALL intersection2%clear()
               ENDIF
 
               !Check for intersections on ends of line segments
-              IF(p1%dim == 0) THEN
-                x1=a(1)-c2%c%coord(1)
-                y1=a(2)-c2%c%coord(2)
+              IF(intersection1%dim == 0) THEN
+                x1=source_v1(1)-target_arc%c%coord(1)
+                y1=source_v1(2)-target_arc%c%coord(2)
                 r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                  p1=l1%p1
-                  l1%p1%dim=0
+                IF(r2 .APPROXEQA. target_arc%r*target_arc%r) THEN
+                  intersection1=source_line%p1
+                  source_line%p1%dim=0
                 ELSE
-                  x1=b(1)-c2%c%coord(1)
-                  y1=b(2)-c2%c%coord(2)
+                  x1=source_v2(1)-target_arc%c%coord(1)
+                  y1=source_v2(2)-target_arc%c%coord(2)
                   r2=x1*x1+y1*y1
-                  IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                    p1=l1%p2
-                    l1%p2%dim=0
+                  IF(r2 .APPROXEQA. target_arc%r*target_arc%r) THEN
+                    intersection1=source_line%p2
+                    source_line%p2%dim=0
                   ENDIF
                 ENDIF
               ENDIF
-              IF(l1%p1%dim == 2 .AND. p2%dim == 0) THEN
-                x1=a(1)-c2%c%coord(1)
-                y1=a(2)-c2%c%coord(2)
+              IF(source_line%p1%dim == 2 .AND. intersection2%dim == 0) THEN
+                x1=source_v1(1)-target_arc%c%coord(1)
+                y1=source_v1(2)-target_arc%c%coord(2)
                 r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                  p2=l1%p1
-                  l1%p1%dim=0
+                IF(r2 .APPROXEQA. target_arc%r*target_arc%r) THEN
+                  intersection2=source_line%p1
+                  source_line%p1%dim=0
                 ENDIF
-              ELSEIF(l1%p2%dim == 2 .AND. p2%dim == 0) THEN
-                x1=b(1)-c2%c%coord(1)
-                y1=b(2)-c2%c%coord(2)
+              ELSEIF(source_line%p2%dim == 2 .AND. intersection2%dim == 0) THEN
+                x1=source_v2(1)-target_arc%c%coord(1)
+                y1=source_v2(2)-target_arc%c%coord(2)
                 r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                  p2=l1%p2
-                  l1%p2%dim=0
+                IF(r2 .APPROXEQA. target_arc%r*target_arc%r) THEN
+                  intersection2=source_line%p2
+                  source_line%p2%dim=0
                 ENDIF
               ENDIF
 
               !Filter points for interval of theta on arc. (might have bugs?)
               theta_shift=0.0_SRK
-              IF(c2%thetastt > c2%thetastp) theta_shift=TWOPI
-              IF(p1%dim == 2) THEN
-                theta=ATAN2PI(p1%coord(1)-c2%c%coord(1), &
-                              p1%coord(2)-c2%c%coord(2))
-                IF(p1%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
+              IF(target_arc%thetastt > target_arc%thetastp) theta_shift=TWOPI
+              IF(intersection1%dim == 2) THEN
+                theta=ATAN2PI(intersection1%coord(1)-target_arc%c%coord(1), &
+                              intersection1%coord(2)-target_arc%c%coord(2))
+                IF(intersection1%coord(2)-target_arc%c%coord(2) .APPROXGE. 0.0_SRK) &
                     theta=theta+theta_shift
-                IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p1%clear()
+                IF(.NOT.((target_arc%thetastt .APPROXLE. theta) .AND. &
+                    (theta .APPROXLE. target_arc%thetastp+theta_shift))) CALL intersection1%clear()
               ENDIF
-              IF(p2%dim == 2) THEN
-                theta=ATAN2PI(p2%coord(1)-c2%c%coord(1), &
-                              p2%coord(2)-c2%c%coord(2))
-                IF(p2%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
+              IF(intersection2%dim == 2) THEN
+                theta=ATAN2PI(intersection2%coord(1)-target_arc%c%coord(1), &
+                              intersection2%coord(2)-target_arc%c%coord(2))
+                IF(intersection2%coord(2)-target_arc%c%coord(2) .APPROXGE. 0.0_SRK) &
                     theta=theta+theta_shift
-                IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p2%clear()
+                IF(.NOT.((target_arc%thetastt .APPROXLE. theta) .AND. &
+                    (theta .APPROXLE. target_arc%thetastp+theta_shift))) CALL intersection2%clear()
               ENDIF
-              IF(p1%dim == 2 .AND. p2%dim == 2) THEN
-                !Compute arc midpoint
-                m=c+d-2.0_SRK*p0%coord
-                scal=SQRT(m(1)*m(1)+m(2)*m(2))
-                IF(scal .APPROXEQA. 0.0_SRK) THEN
-                  !Half circle. Lame.
-                  theta=0.5_SRK*(alp1+alp2)
-                  !Adjust theta for the appropriate half of the circle
-                  IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                      (theta .APPROXLE. c2%thetastp))) theta=theta-PI
-                  m(1)=c2%r*COS(theta)
-                  m(2)=c2%r*SIN(theta)
-                ELSE
-                  scal=ABS(r)/scal
-                  m=m*scal
-                ENDIF
-                m=m+c2%c%coord
 
-                CALL removeEdge_graphType(g0,c,d)
-                nold=g0%nVert()
-                CALL insertVertex_graphType(g0,p1%coord)
-                CALL insertVertex_graphType(g0,p2%coord)
-
-                !Add midpoint of arc (keeps graph sane), but only if
-                !at least one of p1 and p2 were new vertexes; otherwise, it
-                !is assumed that previously existing edge connections were fine
-                IF(g0%nVert() > nold) THEN
-                  !p1 and p2 are connected by a straight point and an arc
-                  CALL insertVertex_graphType(g0,m)
-                  CALL defineQuadEdge_graphType(g0,m,p1%coord,c2%c%coord,c2%r)
-                  CALL defineQuadEdge_graphType(g0,m,p2%coord,c2%c%coord,c2%r)
+              !The first intersection point has data, so divide based on that
+              IF(intersection1%dim == 2) THEN
+                target_edge_i1=target%getVertIndex(target_v1)
+                target_edge_i2=target%getVertIndex(target_v2)
+                CALL target%divideEdge(target_edge_i1,target_edge_i2,intersection1,target_arc%r)
+! WRITE(*,*) 'Added circle-line intersection1:',intersection1%coord,target%edgeMatrix
+                source_edge_i1=source_edge%getVertIndex(source_v1)
+                source_edge_i2=source_edge%getVertIndex(source_v2)
+                CALL source_edge%divideEdge(source_edge_i1,source_edge_i2,intersection1)
+                !Update i1 and i2 to be from the point of intersection to the second point.
+                !This is needed in case intersection2 also has data.  When adding a vertex,
+                !there is no guarantee that the previous target_edge_i1 and target_edge_i2 are the
+                !same, so we need to update those values
+                IF(intersection2%dim == 2) THEN
+                  target_edge_i1=target%getVertIndex(intersection1)
+                  target_edge_i2=target%getVertIndex(target_v2)
+                  source_edge_i1=source_edge%getVertIndex(intersection1)
+                  source_edge_i2=source_edge%getVertIndex(source_v2)
                 ENDIF
-
-                !Cord intersecting circle
-                CALL defineEdge_graphType(g0,p1%coord,p2%coord)
-                !is p1 always closer to c?
-                CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
-                !is p2 always closer to d?
-                CALL defineQuadEdge_graphType(g0,d,p2%coord,c2%c%coord,c2%r)
-                CALL insertVertex_graphType(lineAB,p1%coord)
-                CALL insertVertex_graphType(lineAB,p2%coord)
-              ELSE
-                IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
-                IF(p1%dim == 2) THEN
-                  CALL removeEdge_graphType(g0,c,d)
-                  CALL insertVertex_graphType(g0,p1%coord)
-                  CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
-                  CALL defineQuadEdge_graphType(g0,d,p1%coord,c2%c%coord,c2%r)
-                  CALL insertVertex_graphType(lineAB,p1%coord)
-                ENDIF
+              !No data in intersection 1, but prepare indexes to divide the segments based
+              !on intersection 2
+              ELSEIF(intersection2%dim == 2) THEN
+                target_edge_i1=target%getVertIndex(target_v1)
+                target_edge_i2=target%getVertIndex(target_v2)
+                source_edge_i1=source_edge%getVertIndex(source_v1)
+                source_edge_i2=source_edge%getVertIndex(source_v2)
               ENDIF
-              l1%p1%dim=2; l1%p2%dim=2
+              !The second intersection point has data, so divide
+              IF(intersection2%dim == 2) THEN
+                CALL target%divideEdge(target_edge_i1,target_edge_i2,intersection2,target_arc%r)
+! WRITE(*,*) 'Added circle-line intersection2:',intersection2%coord,target%edgeMatrix
+                CALL source_edge%divideEdge(source_edge_i1,source_edge_i2,intersection2)
+              ENDIF
             ELSE
               !circle-circle (F-this)
-
+              !This really shouldn't be hard... as with line-circle intersection,
+              !there can be either 1 or 2 points of intersection.  Once they're found,
+              !the remaining logic to divide edges is the same.  We just need a
+              !circle-circle intersection routine
             ENDIF
           ENDIF
-        ENDDO
-      ENDDO
-      IF(c1%r == 0.0_SRK) THEN
-        CALL insertVertex_graphType(g0,lineAB%vertices(:,1))
-        DO i=2,nVert_graphType(lineAB)
-          CALL insertVertex_graphType(g0,lineAB%vertices(:,i))
-          CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
-              lineAB%vertices(:,i))
-        ENDDO
+        ENDDO !target_i2
+      ENDDO !target_i1
+      !A linear edge is being inserted
+      IF(source_arc%r == 0.0_SRK) THEN
+        CALL target%insertVertex(source_edge%vertices(:,1))
+! WRITE(*,*) 'Added source edge vertex:',source_edge%vertices(:,1)
+        DO i=2,source_edge%nVert()
+          CALL target%insertVertex(source_edge%vertices(:,i))
+! WRITE(*,*) 'Added source edge vertex:',source_edge%vertices(:,i)
+          CALL target%defineLinearEdge(source_edge%vertices(:,i-1),source_edge%vertices(:,i))
+! WRITE(*,*) 'Added source edge:',target%edgeMatrix
+        ENDDO !i
+      !A quadratic edge is being inserted
       ELSE
         !Sort vertices in clock-wise order.
-        n=nVert_graphType(lineAB)
-        ALLOCATE(cwVerts(n)); cwVerts=0
-        ALLOCATE(vTheta(n));
-        DO i=1,n
-          vTheta(i)=ATAN2PI(lineAB%vertices(1,i)-c1%c%coord(1), &
-              lineAB%vertices(2,i)-c1%c%coord(2))
-        ENDDO
-        IF(c1%thetastt > c1%thetastp) THEN
+        !^^^ But why?  Whatever order the vertexes are on the source_edge should be fine...
+        line_n=source_edge%nVert()
+        ALLOCATE(cwVerts(line_n)); cwVerts=0
+        ALLOCATE(vTheta(line_n));
+        DO i=1,line_n
+          vTheta(i)=ATAN2PI(source_edge%vertices(1,i)-source_arc%c%coord(1), &
+              source_edge%vertices(2,i)-source_arc%c%coord(2))
+        ENDDO !i
+        IF(source_arc%thetastt > source_arc%thetastp) THEN
           !This arc crosses the positive x-axis, shift some angles by 2*PI
           !so vertex theta's can be ordered sequentially.
-          DO i=1,n
-            IF((0.0_SRK .APPROXLE. vTheta(i)) .AND. vTheta(i) < c1%thetastt) &
+          DO i=1,line_n
+            IF((0.0_SRK .APPROXLE. vTheta(i)) .AND. vTheta(i) < source_arc%thetastt) &
                 vTheta(i)=vTheta(i)+TWOPI
-          ENDDO
+          ENDDO !i
         ENDIF
-        DO i=1,n
+        DO i=1,line_n
           cwVerts(i)=MINLOC(vTheta,DIM=1)
           vTheta(cwVerts(i))=HUGE(vTheta(1))
-        ENDDO
+        ENDDO !i
 
         !Add vertices in CW-order and define edges
-        CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(1)))
-        DO i=2,nVert_graphType(lineAB)
-          CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(i)))
-          CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,cwVerts(i-1)), &
-              lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
-        ENDDO
+        CALL target%insertVertex(source_edge%vertices(:,cwVerts(1)))
+        DO i=2,source_edge%nVert()
+          CALL target%insertVertex(source_edge%vertices(:,cwVerts(i)))
+          CALL target%defineQuadraticEdge(source_edge%vertices(:,cwVerts(i-1)), &
+              source_edge%vertices(:,cwVerts(i)),source_arc%c%coord,source_arc%r)
+        ENDDO !i
         DEALLOCATE(vTheta,cwVerts)
       ENDIF
       SELECTTYPE(thisGraph); TYPE IS(GraphType)
-        CALL assign_GraphType(thisGraph,g0)
+        thisGraph=target
       ENDSELECT
       !CALL editToVTK_graphType(thisGraph,'tmpG.vtk')
-      CALL c1%clear()
-      CALL clear_graphType(lineAB)
+      CALL source_arc%clear()
+      CALL source_edge%clear()
     ENDIF
 
     !Remove the edge
-    CALL removeEdge_IJ_graphType(g1,v1,v2)
+    CALL source%removeEdge(source_i1,source_i2)
     !Remove any isoloated vertices
-    nAdj=nAdjacent_graphType(g1,v1)
-    IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v1)
-    v2=getVertIndex_graphType(g1,b)
-    nAdj=nAdjacent_graphType(g1,v2)
-    IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v2)
+    nAdj=source%nAdjacent(source_i1)
+    IF(nAdj == 0) THEN
+      CALL source%removeVertex(source_i1)
+    ENDIF
+    source_i2=source%getVertIndex(source_v2)
+    nAdj=source%nAdjacent(source_i2)
+    IF(nAdj == 0) THEN
+      CALL source%removeVertex(source_i2)
+    ENDIF
   ENDDO
-  CALL p0%clear()
-  CALL p1%clear()
-  CALL p2%clear()
-  CALL p3%clear()
-  CALL p4%clear()
-  CALL l1%clear()
-  CALL l2%clear()
-  CALL c1%clear()
-  CALL clear_graphType(lineAB)
-  CALL clear_graphType(g0)
-  CALL clear_graphType(g1)
+
+  CALL centroid%clear()
+  CALL intersection1%clear()
+  CALL intersection2%clear()
+  CALL source_line%clear()
+  CALL target_line%clear()
+  CALL source_arc%clear()
+  CALL source_edge%clear()
+  CALL target%clear()
+  CALL source%clear()
+
 ENDSUBROUTINE combine_GraphType
+!
+!-------------------------------------------------------------------------------
+!> @brief Recursively divides a linear edge between two vertexes given a midpoint
+!> @param this the graph object
+!> @param i1 the first vertex index
+!> @param i2 the second vertex index
+!> @param edge_midpoint the new midpoint to insert in the edge
+!>
+!> This routine inserts @c edge_midpoint as a new vertex in @c this.  It then
+!> removes the edge from @c i1 to @c i2 and replaces it with two new edges:
+!> one from @c i1 to @c edge_midpoint and one from @c edge_midpoint to @c i2.
+!>
+!> There are multiple corner cases that can occur if @c this already has a vertex
+!> at the location specified by @c edge_midpoint.  First, the vertex may already
+!> exist, edges to it may also exist from @c i1 and/or @c i2.  If those edges are
+!> linear, then they are simply left in place.  If they are quadratic, then
+!> a new midpoint is calculated between @c edge_midpoint and either @c i1 or @c i2.
+!> This routine is then recursively called using that new midpoint to generate 2
+!> line segments from @c i1 or @c i2 to @c edge_midpoint.  This allows the previously
+!> existing quadratic edge to also remain in place.
+!>
+!> One assumption that's made is that @c edge_midpoint actually lies on the line
+!> between @c i1 and @c i2.  If that's not actually the case, the edge will be
+!> removed.  It's assumed that the client code is truly calculating a midpoint of
+!> the existing edge.  If not, then this routine will likely be modifying the graph
+!> more than expected.
+!>
+RECURSIVE SUBROUTINE divideLinearEdge(this,i1,i2,edge_midpoint)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  INTEGER(SIK),INTENT(IN) :: i1
+  INTEGER(SIK),INTENT(IN) :: i2
+  TYPE(PointType),INTENT(IN) :: edge_midpoint
+  !
+  INTEGER(SIK) :: start_i,stop_i,new_i
+  REAL(SRK) :: startpoint(2),endpoint(2)
+  TYPE(PointType) :: new_midpoint
+
+  REQUIRE(i1 > 0)
+  REQUIRE(i2 > 0)
+  REQUIRE(i1 <= this%nVert())
+  REQUIRE(i2 <= this%nVert())
+  REQUIRE(edge_midpoint%dim == 2)
+
+  !Get the coordinates
+  start_i=i1
+  stop_i=i2
+  startpoint=this%vertices(:,start_i)
+  endpoint=this%vertices(:,stop_i)
+  !Remove the old edge if it's linear
+  IF(this%edgeMatrix(start_i,stop_i) == 1) THEN
+    CALL this%removeEdge(start_i,stop_i)
+  ENDIF
+  !Add the midpoint vertex
+  CALL this%insertVertex(edge_midpoint%coord)
+  !Get the new vertex index so we can check that if any edges to it already existed
+  start_i=this%getVertIndex(startpoint)
+  stop_i=this%getVertIndex(endpoint)
+  new_i=this%getVertIndex(edge_midpoint%coord)
+! WRITE(*,*) 'divideLinearEdge:',start_i,stop_i,':',edge_midpoint%coord,':',new_i
+! WRITE(*,*) 'lin edge check:',this%edgeMatrix(:,start_i)
+! WRITE(*,*) 'lin edge check:',this%edgeMatrix(:,new_i)
+! WRITE(*,*) 'lin edge check:',this%edgeMatrix(:,stop_i)
+
+  !Check the start of the line first
+  SELECTCASE(this%edgeMatrix(start_i,new_i))
+  ! There's already a linear edge there, so just continue
+  CASE(1)
+    CONTINUE
+  ! There's no edge here, so add it
+  CASE(0)
+    CALL this%defineLinearEdge(startpoint,edge_midpoint%coord)
+  ! There's a quadratic edge, so we'll need to divide again to store both edges
+  CASE(-1)
+    CALL new_midpoint%init(COORD=this%getMidPointOnEdge(start_i,new_i))
+    CALL this%divideEdge(start_i,new_i,new_midpoint)
+    CALL new_midpoint%clear()
+  ENDSELECT
+  start_i=this%getVertIndex(startpoint)
+  stop_i=this%getVertIndex(endpoint)
+
+  !Now check the end of the line
+  SELECTCASE(this%edgeMatrix(stop_i,new_i))
+  ! There's already a linear edge there, so just continue
+  CASE(1)
+    CONTINUE
+  ! There's no edge here, so add it
+  CASE(0)
+    CALL this%defineLinearEdge(edge_midpoint%coord,endpoint)
+  ! There's a quadratic edge, so we'll need to divide again to store both edges
+  CASE(-1)
+    CALL new_midpoint%init(COORD=this%getMidPointOnEdge(new_i,stop_i))
+    CALL this%divideLinearEdge(new_i,stop_i,new_midpoint)
+  ENDSELECT
+
+ENDSUBROUTINE divideLinearEdge
+!
+!-------------------------------------------------------------------------------
+!> @brief Recursively divides a quadratic edge between two vertexes given a midpoint
+!> @param this the graph object
+!> @param i1 the first vertex index
+!> @param i2 the second vertex index
+!> @param edge_midpoint the new midpoint to insert in the edge
+!>
+!> This routine inserts @c edge_midpoint as a new vertex in @c this.  It then
+!> removes the edge from @c i1 to @c i2 and replaces it with two new edges:
+!> one from @c i1 to @c edge_midpoint and one from @c edge_midpoint to @c i2.
+!>
+!> There are multiple corner cases that can occur if @c this already has a vertex
+!> at the location specified by @c edge_midpoint.  First, the vertex may already
+!> exist, edges to it may also exist from @c i1 and/or @c i2.  If those edges are
+!> quadratic with the same radius, then they are simply left in place.  If they are
+!> quadratic with a different radius or if they are linear, then
+!> a new midpoint is calculated between @c edge_midpoint and either @c i1 or @c i2.
+!> This routine is then recursively called using that new midpoint to generate 2
+!> quadratic edges from @c i1 or @c i2 to @c edge_midpoint.  This allows the previously
+!> existing quadratic edge to also remain in place.
+!>
+!> One assumption that's made is that @c edge_midpoint actually lies on the arc
+!> between @c i1 and @c i2.  If that's not actually the case, the edge will be
+!> removed.  It's assumed that the client code is truly calculating a midpoint of
+!> the existing arc.  If not, then this routine will likely be modifying the graph
+!> more than expected.
+!>
+RECURSIVE SUBROUTINE divideQuadEdge(this,i1,i2,edge_midpoint,radius)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  INTEGER(SIK),INTENT(IN) :: i1
+  INTEGER(SIK),INTENT(IN) :: i2
+  TYPE(PointType),INTENT(IN) :: edge_midpoint
+  REAL(SRK),INTENT(IN) :: radius
+  !
+  INTEGER(SIK) :: start_i,stop_i,new_i
+  REAL(SRK) :: startpoint(2),endpoint(2),centroid(2)
+  TYPE(PointType) :: new_midpoint
+
+  REQUIRE(i1 > 0)
+  REQUIRE(i2 > 0)
+  REQUIRE(i1 <= this%nVert())
+  REQUIRE(i2 <= this%nVert())
+  REQUIRE(edge_midpoint%dim == 2)
+  REQUIRE(radius > 0.0_SRK)
+
+  !Get the coordinates
+  start_i=i1
+  stop_i=i2
+  startpoint=this%vertices(:,start_i)
+  endpoint=this%vertices(:,stop_i)
+  centroid=this%quadEdges(1:2,start_i,stop_i)
+  !Remove the old edge if it's quadratic
+! WRITE(*,*) 'edge check:',this%edgeMatrix(:,start_i),':',this%edgeMatrix(:,stop_i)
+  IF(this%edgeMatrix(start_i,stop_i) == -1) THEN
+    CALL this%removeEdge(start_i,stop_i)
+  ENDIF
+  ! WRITE(*,*) 'edge check:',this%edgeMatrix(:,start_i),':',this%edgeMatrix(:,stop_i)
+  !Add the midpoint vertex
+  CALL this%insertVertex(edge_midpoint%coord)
+  !Get the new vertex index so we can check that if any edges to it already existed
+  start_i=this%getVertIndex(startpoint)
+  stop_i=this%getVertIndex(endpoint)
+  new_i=this%getVertIndex(edge_midpoint%coord)
+! WRITE(*,*) 'divideQuadEdge:',start_i,stop_i,':',edge_midpoint%coord,':',radius,':',new_i
+
+  !Check the start of the arc first
+  IF(start_i /= new_i) THEN
+    SELECTCASE(this%edgeMatrix(start_i,new_i))
+    ! There's already a quadratic edge here
+    CASE(-1)
+      !The radius is the same, so just leave this edge and continue
+      IF(radius .APPROXEQA. this%quadEdges(3,start_i,new_i)) THEN
+! WRITE(*,*) 'branch a1a'
+        CONTINUE
+      !A different radius, so divide again and keep both
+      ELSE
+! WRITE(*,*) 'branch a1b'
+        CALL new_midpoint%init(COORD=this%getMidPointOnEdge(start_i,new_i))
+        CALL this%divideQuadEdge(start_i,new_i,new_midpoint,radius)
+        CALL new_midpoint%clear()
+      ENDIF
+    ! There's no edge here, so add it
+    CASE(0)
+! WRITE(*,*) 'branch a2'
+      CALL this%defineQuadraticEdge(startpoint,edge_midpoint%coord,centroid,radius)
+    ! There's a linear edge here, so divide again
+    CASE(1)
+! WRITE(*,*) 'branch a3'
+      CALL new_midpoint%init(COORD=this%getMidPointOnEdge(start_i,new_i))
+      CALL this%divideQuadEdge(start_i,new_i,new_midpoint,radius)
+      CALL new_midpoint%clear()
+    ENDSELECT
+  ENDIF
+  start_i=this%getVertIndex(startpoint)
+  stop_i=this%getVertIndex(endpoint)
+  ! WRITE(*,*) 'edge check:',this%edgeMatrix(:,start_i),':',this%edgeMatrix(:,stop_i)
+
+  !Check the end of the arc
+  IF(new_i /= stop_i) THEN
+    SELECTCASE(this%edgeMatrix(new_i,stop_i))
+    ! There's already a quadratic edge here
+    CASE(-1)
+      !The radius is the same, so just leave this edge and continue
+      IF(radius .APPROXEQA. this%quadEdges(3,new_i,stop_i)) THEN
+! WRITE(*,*) 'branch b1a'
+        CONTINUE
+      !A different radius, so divide again and keep both
+      ELSE
+! WRITE(*,*) 'branch b1b'
+        CALL new_midpoint%init(COORD=this%getMidPointOnEdge(new_i,stop_i))
+        CALL this%divideQuadEdge(new_i,stop_i,new_midpoint,radius)
+      ENDIF
+    ! There's no edge here, so add it
+    CASE(0)
+! WRITE(*,*) 'branch b2'
+      CALL this%defineQuadraticEdge(edge_midpoint%coord,endpoint,centroid,radius)
+    ! There's a linear edge here, so divide again
+    CASE(1)
+! WRITE(*,*) 'branch b3'
+      CALL new_midpoint%init(COORD=this%getMidPointOnEdge(new_i,stop_i))
+      CALL this%divideQuadEdge(new_i,stop_i,new_midpoint,radius)
+    ENDSELECT
+  ENDIF
+start_i=this%getVertIndex(startpoint)
+stop_i=this%getVertIndex(endpoint)
+! WRITE(*,*) 'edge check:',this%edgeMatrix(:,start_i),':',this%edgeMatrix(:,stop_i)
+
+ENDSUBROUTINE divideQuadEdge
 !
 !-------------------------------------------------------------------------------
 !> @brief Takes cloud of points and computes Delaunay triangulation
@@ -1666,11 +1939,11 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
   ENDDO !End loop over each vertex
   !Create edges of final triangulation
   DO i=1,nTri
-    CALL thisGraph%defineEdge(thisGraph%vertices(:,v1(i)), &
+    CALL thisGraph%defineLinearEdge(thisGraph%vertices(:,v1(i)), &
         thisGraph%vertices(:,v2(i)))
-    CALL thisGraph%defineEdge(thisGraph%vertices(:,v2(i)), &
+    CALL thisGraph%defineLinearEdge(thisGraph%vertices(:,v2(i)), &
         thisGraph%vertices(:,v3(i)))
-    CALL thisGraph%defineEdge(thisGraph%vertices(:,v3(i)), &
+    CALL thisGraph%defineLinearEdge(thisGraph%vertices(:,v3(i)), &
         thisGraph%vertices(:,v1(i)))
   ENDDO
   !Remove superTriangle from arrays
@@ -1680,30 +1953,10 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
 ENDSUBROUTINE triangulateVerts_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
-!>
-SUBROUTINE assign_GraphType(g0,g1)
-  TYPE(GraphType),INTENT(INOUT) :: g0
-  TYPE(GraphType),INTENT(IN) :: g1
-  INTEGER(SIK) :: n
-  CALL clear_graphType(g0)
-  n=nVert_GraphType(g1)
-  IF(n > 0) THEN
-    CALL dmallocA(g0%vertices,2,n)
-    CALL dmallocA(g0%edgeMatrix,n,n)
-    CALL dmallocA(g0%quadEdges,3,n,n)
-    g0%vertices=g1%vertices
-    g0%edgeMatrix=g1%edgeMatrix
-    g0%quadEdges=g1%quadEdges
-  ENDIF
-ENDSUBROUTINE assign_GraphType
-!
-!-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Checks for equality between 2 graph objects
+!> @param g0 the first graph to compare
+!> @param g1 the second graph to compare
+!> @returns bool the result
 !>
 ELEMENTAL FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
   TYPE(GraphType),INTENT(IN) :: g0
@@ -1737,37 +1990,6 @@ ELEMENTAL FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
     ENDIF
   ENDIF
 ENDFUNCTION isequal_GraphType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief
-!!> @param
-!!>
-!!>
-!!>
-!    FUNCTION add_GraphType(g0,g1) RESULT(g)
-!      TYPE(GraphType),INTENT(IN) :: g0
-!      TYPE(GraphType),INTENT(IN) :: g1
-!      TYPE(GraphType) :: g
-!      INTEGER(SIK) :: i,j,n
-!
-!      CALL clear_graphType(g)
-!      g=g0
-!      n=nVert_graphType(g1)
-!      DO i=1,n
-!        CALL insertVertex_graphType(g,g1%vertices(:,i))
-!      ENDDO
-!      DO j=1,n
-!        DO i=j+1,n
-!          IF(g1%edgeMatrix(i,j) == 1) THEN
-!            CALL defineEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j))
-!          ELSEIF(g1%edgeMatrix(i,j) == -1) THEN
-!            CALL defineQuadEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j), &
-!              g1%quadEdges(1:2,i,j),g1%quadEdges(3,i,j))
-!          ENDIF
-!        ENDDO
-!      ENDDO
-!    ENDFUNCTION add_GraphType
-!
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -2034,26 +2256,12 @@ SUBROUTINE KATS_DAGraphType(thisGraph)
     ENDDO
     CALL thisGraph%getNextStartNode(oldIDs,ID)
   ENDDO
-  IF(ALL(thisGraph%edgeMatrix == 0)) thisGraph=sortedGraph
-  !IF(ALL(thisGraph%edgeMatrix == 0)) CALL assign_DAGraphType(thisGraph,sortedGraph)
+  IF(ALL(thisGraph%edgeMatrix == 0)) THEN
+    SELECTTYPE(thisGraph); TYPE IS(DAGraphType)
+      thisGraph=sortedGraph
+    ENDSELECT
+  ENDIF
   DEALLOCATE(oldIDs)
 ENDSUBROUTINE KATS_DAGraphType
-!
-!-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-SUBROUTINE assign_DAGraphType(g0,g1)
-  CLASS(DAGraphType),INTENT(INOUT) :: g0
-  CLASS(DAGraphType),INTENT(IN) :: g1
-  CALL clear_DAGraphType(g0)
-  IF(g1%n > 0) THEN
-    g0%n=g1%n
-    ALLOCATE(g0%nodes(g1%n))
-    ALLOCATE(g0%edgeMatrix(g1%n,g1%n))
-    g0%nodes=g1%nodes
-    g0%edgeMatrix=g1%edgeMatrix
-  ENDIF
-ENDSUBROUTINE assign_DAGraphType
 !
 ENDMODULE Geom_Graph
