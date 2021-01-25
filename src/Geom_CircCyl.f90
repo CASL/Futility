@@ -28,6 +28,7 @@ IMPLICIT NONE
 PRIVATE !Default contents of module to private
 !
 ! List of Public items
+PUBLIC :: generateCircle
 PUBLIC :: CircleType
 PUBLIC :: CylinderType
 PUBLIC :: OPERATOR(==)
@@ -53,13 +54,14 @@ TYPE :: CircleType
     PROCEDURE,PASS :: clear => clear_CircleType
     !> @copybrief Geom_CircCyl::intersect_CircleType_and_LineType
     !> @copydetails Geom_CircCyl::intersect_CircleType_and_LineType
-    PROCEDURE,PASS :: intersectLine => intersect_CircleType_and_LineType
+    PROCEDURE,PASS,PRIVATE :: intersectLine => intersect_CircleType_and_LineType
     !> @copybrief Geom_CircCyl::intersect_CircleType_and_CircleType
     !> @copydetails Geom_CircCyl::intersect_CircleType_and_CircleType
-    PROCEDURE,PASS :: intersectCircle => intersect_CircleType_and_CircleType
+    PROCEDURE,PASS,PRIVATE :: intersectCircle => intersect_CircleType_and_CircleType
     !> @copybrief Geom_CircCyl::intersect_ArcCircleType_and_LineType
     !> @copydetails Geom_CircCyl::intersect_ArcCircleType_and_LineType
-    PROCEDURE,PASS :: intersectArcLine => intersect_ArcCircleType_and_LineType
+    PROCEDURE,PASS,PRIVATE :: intersectArcLine => intersect_ArcCircleType_and_LineType
+    GENERIC :: intersect => intersectLine,intersectCircle,intersectArcLine
     !> @copybrief Geom_CircCyl::inside_CircleType
     !> @copydetails Geom_CircCyl::inside_CircleType
     PROCEDURE,PASS :: inside => inside_CircleType
@@ -107,6 +109,60 @@ ENDINTERFACE
 !
 !===============================================================================
 CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief Generates a circle object containing an arc between 2 points
+!> @param p1 the first point of the arc
+!> @param p2 the second point of the arc
+!> @param centroid the centroid of the circle/arc
+!> @param radius the radius of the arc
+!> @returns circle the resulting @c CircleType object
+!>
+!> The shortest arc from @c p1 to @c p2 is taken to generate the object.  In the
+!> event that a semi-circle is being represented, the arc will start at @c p1 and
+!> go in the positive azimuthal direction to @c p2 if @c radius is negative;
+!> otherwise it will begin at @c p2 and go in the positive azimuthal direction to @c p1
+!>
+FUNCTION generateCircle(p1,p2,centroid,radius) RESULT(circle)
+  TYPE(PointType),INTENT(IN) :: p1
+  TYPE(PointType),INTENT(IN) :: p2
+  TYPE(PointType),INTENT(IN) :: centroid
+  REAL(SRK),INTENT(IN) :: radius
+  TYPE(CircleType) :: circle
+  !
+  REAL(SRK) :: thetastt,thetastp
+
+  thetastt=ATAN2PI(p1%coord(1)-centroid%coord(1),p1%coord(2)-centroid%coord(2))
+  thetastp=ATAN2PI(p2%coord(1)-centroid%coord(1),p2%coord(2)-centroid%coord(2))
+
+  !Handle semi-circles first: in this case, the sign of the radius
+  !apparently tells us which semi-circle is actually intended
+  IF(ABS(thetastt-thetastp) .APPROXEQ. PI) THEN
+    IF(radius < ZERO) THEN
+      CALL circle%set(centroid,ABS(radius),thetastt,thetastp)
+    ELSE
+      CALL circle%set(centroid,ABS(radius),thetastp,thetastt)
+    ENDIF
+  !Now handle other arcs and ensure we're taking the shorter of 2 possibilities
+  ELSE
+    !Distance between thetastt and thetastp is < PI because point 1
+    !is on the x-axis so thetastt is either 0 or PI (and we want the shortest arc)
+    IF(p1%coord(2) .APPROXEQ. centroid%coord(2)) THEN
+      !Point 2 is above the x-axis
+      IF(p2%coord(2) >= p1%coord(2)) THEN
+        CALL circle%set(centroid,ABS(radius),thetastp,thetastt)
+      !Point 2 is below the x-axis
+      ELSE
+        CALL circle%set(centroid,ABS(radius),thetastt,thetastp)
+      ENDIF
+    ELSEIF(p1%coord(2) < centroid%coord(2)) THEN
+      CALL circle%set(centroid,ABS(radius),thetastt,thetastp)
+    ELSE
+      CALL circle%set(centroid,radius,thetastp,thetastt)
+    ENDIF
+  ENDIF
+
+ENDFUNCTION generateCircle
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the values for the CircleType object attributes

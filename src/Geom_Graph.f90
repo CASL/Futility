@@ -9,6 +9,8 @@
 !> @brief A Fortran 2003 module defining a graph type.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Geom_Graph
+#include "Futility_DBC.h"
+USE Futility_DBC
 USE IntrType
 USE Constants_Conversion
 USE ExtendedMath
@@ -23,9 +25,12 @@ PRIVATE
 
 PUBLIC :: GraphType
 PUBLIC :: DAGraphType
-PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(==)
 !PUBLIC :: OPERATOR(+)
+
+INTEGER(SIK),PARAMETER :: GRAPH_NULL_EDGE=0
+INTEGER(SIK),PARAMETER :: GRAPH_LINEAR_EDGE=1
+INTEGER(SIK),PARAMETER :: GRAPH_QUADRATIC_EDGE=-1
 
 !> @brief a Directed Acyclic Graph Type
 TYPE :: DAGraphType
@@ -87,7 +92,9 @@ TYPE :: GraphType
   !> size is (nvertices,nvertices)
   INTEGER(SIK),ALLOCATABLE :: edgeMatrix(:,:)
   !> Similar to edgeMatrix component except for entries with -1 it stores
-  !> the center of rotation and radius to define the quadratic edge.
+  !> the center of rotation and radius to define the quadratic edge.  The
+  !> radius can be stored as negative to indicate which semi-circle is being
+  !> stored.
   !> size is (3,nvertices,nvertices)
   REAL(SRK),ALLOCATABLE :: quadEdges(:,:,:)
 !
@@ -99,9 +106,13 @@ TYPE :: GraphType
     !> @copybrief Geom_Graph::nEdge_graphType
     !> @copydetails Geom_Graph::nEdge_graphType
     PROCEDURE,PASS :: nEdge => nEdge_graphType
-    !> @copybrief Geom_Graph::getVertIndex_graphType
-    !> @copydetails Geom_Graph::getVertIndex_graphType
-    PROCEDURE,PASS :: getVertIndex => getVertIndex_graphType
+    !> @copybrief Geom_Graph::getVertIndex_point
+    !> @copydetails Geom_Graph::getVertIndex_point
+    PROCEDURE,PASS,PRIVATE :: getVertIndex_point
+    !> @copybrief Geom_Graph::getVertIndex_coords
+    !> @copydetails Geom_Graph::getVertIndex_coords
+    PROCEDURE,PASS,PRIVATE :: getVertIndex_coords
+    GENERIC :: getVertIndex => getVertIndex_point,getVertIndex_coords
     !> @copybrief Geom_Graph::nAdjacent_graphType
     !> @copydetails Geom_Graph::nAdjacent_graphType
     PROCEDURE,PASS :: nAdjacent => nAdjacent_graphType
@@ -114,36 +125,63 @@ TYPE :: GraphType
     !> @copybrief Geom_Graph::getCCWMostVert_graphType
     !> @copydetails Geom_Graph::getCCWMostVert_graphType
     PROCEDURE,PASS :: getCCWMostVert => getCCWMostVert_graphType
-    !> @copybrief Geom_Graph::getMidPointOnEdge_graphType
-    !> @copydetails Geom_Graph::getMidPointOnEdge_graphType
-    PROCEDURE,PASS :: getMidPointOnEdge => getMidPointOnEdge_graphType
+    !> @copybrief Geom_Graph::getMidPointOnEdge_idx
+    !> @copydetails Geom_Graph::getMidPointOnEdge_idx
+    PROCEDURE,PASS,PRIVATE :: getMidPointOnEdge_idx
+    !> @copybrief Geom_Graph::getMidPointOnEdge_point
+    !> @copydetails Geom_Graph::getMidPointOnEdge_point
+    PROCEDURE,PASS,PRIVATE :: getMidPointOnEdge_point
+    GENERIC :: getMidPointOnEdge => getMidPointOnEdge_idx,getMidPointOnEdge_point
     !> @copybrief Geom_Graph::isMinimumCycle_graphType
     !> @copydetails Geom_Graph::isMinimumCycle_graphType
     PROCEDURE,PASS :: isMinimumCycle => isMinimumCycle_graphType
-    !> @copybrief Geom_Graph::insertVertex_graphType
-    !> @copydetails Geom_Graph::insertVertex_graphType
-    PROCEDURE,PASS :: insertVertex => insertVertex_graphType
-    !> @copybrief Geom_Graph::defineEdge_graphType
-    !> @copydetails Geom_Graph::defineEdge_graphType
-    PROCEDURE,PASS :: defineEdge => defineEdge_graphType
-    !> @copybrief Geom_Graph::defineQuadEdge_graphType
-    !> @copydetails Geom_Graph::defineQuadEdge_graphType
-    PROCEDURE,PASS :: defineQuadraticEdge => defineQuadEdge_graphType
-    !> @copybrief Geom_Graph::removeVertex_graphType
-    !> @copydetails Geom_Graph::removeVertex_graphType
-    PROCEDURE,PASS :: removeVertex => removeVertex_graphType
-    !> @copybrief Geom_Graph::removeVertex_idx_graphType
-    !> @copydetails Geom_Graph::removeVertex_idx_graphType
-    PROCEDURE,PASS :: removeVertexI => removeVertex_idx_graphType
-    !> @copybrief Geom_Graph::removeEdge_graphType
-    !> @copydetails Geom_Graph::removeEdge_graphType
-    PROCEDURE,PASS :: removeEdge => removeEdge_graphType
-    !> @copybrief Geom_Graph::removeVertex_idx_graphType
-    !> @copydetails Geom_Graph::removeVertex_idx_graphType
-    PROCEDURE,PASS :: removeEdgeIJ => removeEdge_IJ_graphType
-    !> @copybrief Geom_Graph::removeFilament_vertIdx_graphType
-    !> @copydetails Geom_Graph::removeFilament_vertIdx_graphType
-    PROCEDURE,PASS :: removeFilamentFromVert => removeFilament_vertIdx_graphType
+    !> @copybrief Geom_Graph::insertVertex_coords
+    !> @copydetails Geom_Graph::insertVertex_coords
+    PROCEDURE,PASS,PRIVATE :: insertVertex_coords
+    !> @copybrief Geom_Graph::insertVertex_point
+    !> @copydetails Geom_Graph::insertVertex_point
+    PROCEDURE,PASS,PRIVATE :: insertVertex_point
+    GENERIC :: insertVertex => insertVertex_coords,insertVertex_point
+    !> @copybrief Geom_Graph::defineLinearEdge_coords
+    !> @copydetails Geom_Graph::defineLinearEdge_coords
+    PROCEDURE,PASS,PRIVATE :: defineLinearEdge_coords
+    !> @copybrief Geom_Graph::defineLinearEdge_point
+    !> @copydetails Geom_Graph::defineLinearEdge_point
+    PROCEDURE,PASS,PRIVATE :: defineLinearEdge_point
+    !> @copybrief Geom_Graph::defineQuadraticEdge_coords
+    !> @copydetails Geom_Graph::defineQuadraticEdge_coords
+    PROCEDURE,PASS,PRIVATE :: defineQuadraticEdge_coords
+    !> @copybrief Geom_Graph::defineQuadraticEdge_point
+    !> @copydetails Geom_Graph::defineQuadraticEdge_point
+    PROCEDURE,PASS,PRIVATE :: defineQuadraticEdge_point
+    GENERIC :: defineEdge => defineLinearEdge_coords,defineLinearEdge_point, &
+        defineQuadraticEdge_coords,defineQuadraticEdge_point
+    !> @copybrief Geom_Graph::removeVertex_point
+    !> @copydetails Geom_Graph::removeVertex_point
+    PROCEDURE,PASS,PRIVATE :: removeVertex_point
+    !> @copybrief Geom_Graph::removeVertex_coords
+    !> @copydetails Geom_Graph::removeVertex_coords
+    PROCEDURE,PASS,PRIVATE :: removeVertex_coords
+    !> @copybrief Geom_Graph::removeVertex_index
+    !> @copydetails Geom_Graph::removeVertex_index
+    PROCEDURE,PASS,PRIVATE :: removeVertex_index
+    GENERIC :: removeVertex => removeVertex_point,removeVertex_coords,removeVertex_index
+    !> @copybrief Geom_Graph::removeEdge_point
+    !> @copydetails Geom_Graph::removeEdge_point
+    PROCEDURE,PASS,PRIVATE :: removeEdge_point
+    !> @copybrief Geom_Graph::removeEdge_coords
+    !> @copydetails Geom_Graph::removeEdge_coords
+    PROCEDURE,PASS,PRIVATE :: removeEdge_coords
+    !> @copybrief Geom_Graph::removeEdge_index
+    !> @copydetails Geom_Graph::removeEdge_index
+    PROCEDURE,PASS,PRIVATE :: removeEdge_index
+    GENERIC :: removeEdge => removeEdge_point,removeEdge_coords,removeEdge_index
+    !> @copybrief Geom_Graph::removeFilamentFromVert
+    !> @copydetails Geom_Graph::removeFilamentFromVert
+    PROCEDURE,PASS :: removeFilamentFromVert
+    !> @copybrief Geom_Graph::extractPrimitive
+    !> @copydetails Geom_Graph::extractPrimitive
+    PROCEDURE,PASS :: extractPrimitive
     !> @copybrief Geom_Graph::getMCB_graphType
     !> @copydetails Geom_Graph::getMCB_graphType
     PROCEDURE,PASS :: getMCB => getMCB_graphType
@@ -161,15 +199,6 @@ TYPE :: GraphType
     PROCEDURE,PASS :: clear => clear_graphType
 ENDTYPE GraphType
 
-INTERFACE ASSIGNMENT(=)
-  !> @copybrief Geom_Graph::assign_graphType
-  !> @copydetails Geom_Graph::assign_graphType
-  MODULE PROCEDURE assign_graphType
-  !> @copybrief Geom_Graph::assign_DAGraphType
-  !> @copydetails Geom_Graph::assign_DAGraphType
-  MODULE PROCEDURE assign_DAGraphType
-ENDINTERFACE
-
 INTERFACE OPERATOR(==)
   !> @copybrief Geom_Graph::isequal_graphType
   !> @copydetails Geom_Graph::isequal_graphType
@@ -186,52 +215,69 @@ ENDINTERFACE
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns the number of vertexes in a graph object
+!> @param this the graph to interrogate
+!> @returns n the number of vertexes
 !>
-!>
-!>
-ELEMENTAL FUNCTION nVert_graphType(thisGraph) RESULT(n)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+ELEMENTAL FUNCTION nVert_graphType(this) RESULT(n)
+  CLASS(GraphType),INTENT(IN) :: this
   INTEGER(SIK) :: n
   n=0
-  IF(ALLOCATED(thisGraph%vertices)) n=SIZE(thisGraph%vertices,DIM=2)
+  IF(ALLOCATED(this%vertices)) n=SIZE(this%vertices,DIM=2)
 ENDFUNCTION nVert_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief returnes the number of edges in a graph object
+!> @param this the graph to interrogate
+!> @returns n the number of edges
 !>
-!>
-!>
-ELEMENTAL FUNCTION nEdge_graphType(thisGraph) RESULT(n)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+ELEMENTAL FUNCTION nEdge_graphType(this) RESULT(n)
+  CLASS(GraphType),INTENT(IN) :: this
   INTEGER(SIK) :: n
   n=0
-  IF(ALLOCATED(thisGraph%edgeMatrix)) n=SUM(ABS(thisGraph%edgeMatrix))/2
+  IF(ALLOCATED(this%edgeMatrix)) n=SUM(ABS(this%edgeMatrix))/2
 ENDFUNCTION nEdge_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns the index of a vertex in a graph given the coordinates
+!> @param this the graph to interrogate
+!> @param point the point containing the coordinates of the vertex
+!> @returns idx the index of the vertex
 !>
+!> If the vertex could not be found, -1 is returned
 !>
+FUNCTION getVertIndex_point(this,point) RESULT(idx)
+  CLASS(GraphType),INTENT(IN) :: this
+  TYPE(PointType),INTENT(IN) :: point
+  INTEGER(SIK) :: idx
+
+  idx=this%getVertIndex(point%coord)
+
+ENDFUNCTION getVertIndex_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the index of a vertex in a graph given the coordinates
+!> @param this the graph to interrogate
+!> @param coord the coordinates of the vertex
+!> @returns idx the index of the vertex
 !>
-PURE FUNCTION getVertIndex_graphType(thisGraph,coord) RESULT(idx)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+!> If the vertex could not be found, -1 is returned
+!>
+FUNCTION getVertIndex_coords(this,coord) RESULT(idx)
+  CLASS(GraphType),INTENT(IN) :: this
   REAL(SRK),INTENT(IN) :: coord(2)
   INTEGER(SIK) :: idx
   INTEGER(SIK) :: i,j,n
   idx=-1
-  n=nVert_graphType(thisGraph)
+  n=this%nVert()
   DO i=1,n
-    IF(coord(1) .APPROXEQA. thisGraph%vertices(1,i)) THEN
-      IF(coord(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
+    IF(coord(1) .APPROXEQA. this%vertices(1,i)) THEN
+      IF(coord(2) .APPROXEQA. this%vertices(2,i)) THEN
         idx=i
       ELSE
         DO j=i+1,n
-          IF(.NOT.(coord(1) .APPROXEQA. thisGraph%vertices(1,j))) EXIT
-          IF(coord(2) .APPROXEQA. thisGraph%vertices(2,j)) THEN
+          IF(.NOT.(coord(1) .APPROXEQA. this%vertices(1,j))) EXIT
+          IF(coord(2) .APPROXEQA. this%vertices(2,j)) THEN
             idx=j
             EXIT
           ENDIF
@@ -240,45 +286,46 @@ PURE FUNCTION getVertIndex_graphType(thisGraph,coord) RESULT(idx)
       EXIT
     ENDIF
   ENDDO
-ENDFUNCTION getVertIndex_graphType
+ENDFUNCTION getVertIndex_coords
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns the number of points connected to a specified point
+!> @param this the graph to interrogate
+!> @param i the index of the vertex to interrogate
+!> @returns n the number of connected points
 !>
-!>
-!>
-ELEMENTAL FUNCTION nAdjacent_graphType(thisGraph,i) RESULT(n)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+ELEMENTAL FUNCTION nAdjacent_graphType(this,i) RESULT(n)
+  CLASS(GraphType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK) :: n
   n=0
-  IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
-    IF(0 < i .AND. i < SIZE(thisGraph%edgeMatrix,DIM=2)+1) &
-        n=SUM(ABS(thisGraph%edgeMatrix(:,i)))
+  IF(ALLOCATED(this%edgeMatrix)) THEN
+    IF(0 < i .AND. i < SIZE(this%edgeMatrix,DIM=2)+1) &
+        n=SUM(ABS(this%edgeMatrix(:,i)))
   ENDIF
 ENDFUNCTION nAdjacent_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns a particular adjacent vertex
+!> @param this the graph object to interrogate
+!> @param v0 the index of the vertex to interrogate
+!> @param i which adjacent vertex to return (from 1 to @c this%nAdjacent(v0))
+!> @param v1 the graph vertex index for the @c i-th adjacent vertex to @c v0
 !>
-!>
-!>
-ELEMENTAL FUNCTION getAdjacentVert_graphType(thisGraph,v0,i) RESULT(v1)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+ELEMENTAL FUNCTION getAdjacentVert_graphType(this,v0,i) RESULT(v1)
+  CLASS(GraphType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN) :: v0
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK) :: v1
   INTEGER(SIK) :: j,n,nVert
 
   v1=0
-  nVert=nVert_graphType(thisGraph)
+  nVert=this%nVert()
   IF(0 < v0 .AND. v0 < nVert+1) THEN
-    IF(0 < i .AND. i < SUM(ABS(thisGraph%edgeMatrix(:,v0)))+1) THEN
+    IF(0 < i .AND. i < SUM(ABS(this%edgeMatrix(:,v0)))+1) THEN
       n=0
       DO j=1,nVert
-        IF(thisGraph%edgeMatrix(j,v0) /= 0) n=n+1
+        IF(this%edgeMatrix(j,v0) /= 0) n=n+1
         IF(n == i) THEN
           v1=j
           EXIT
@@ -294,8 +341,8 @@ ENDFUNCTION getAdjacentVert_graphType
 !>
 !>
 !>
-ELEMENTAL FUNCTION getCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+ELEMENTAL FUNCTION getCWMostVert_graphType(this,v0,vCurr) RESULT(vNext)
+  CLASS(GraphType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN) :: vCurr
   INTEGER(SIK),INTENT(IN) :: v0
   LOGICAL(SBK) :: isVCurrConvex,badEdge
@@ -303,23 +350,23 @@ ELEMENTAL FUNCTION getCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
   REAL(SRK) :: dcurr(2),dnext(2),di(2)
 
   vNext=0
-  nVert=nVert_graphType(thisGraph)
+  nVert=this%nVert()
   vPrev=v0
   IF(vPrev == vCurr) vPrev=0
   IF(0 < vCurr .AND. vCurr <= nVert .AND. 0 <= vPrev .AND. vPrev <= nVert) THEN
     badEdge=.FALSE.
-    IF(vPrev > 0) badEdge=thisGraph%edgeMatrix(vCurr,vPrev) == 0
+    IF(vPrev > 0) badEdge=this%edgeMatrix(vCurr,vPrev) == 0
 
     IF(.NOT.badEdge) THEN
-      nAdj=nAdjacent_graphType(thisGraph,vCurr)
+      nAdj=this%nAdjacent(vCurr)
       IF(nAdj == 1) THEN
         !Shortcut for 1 adjacent vert
-        vNext=getAdjacentVert_graphType(thisGraph,vCurr,1)
+        vNext=this%getAdjacentVert(vCurr,1)
         IF(vNext == vPrev) vNext=0
       ELSEIF(nAdj > 1) THEN
         !Get default vNext (first vertice found that is not vPrev)
         DO i=1,nAdj
-          vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+          vi=this%getAdjacentVert(vCurr,i)
           IF(vi /= vPrev) THEN
             vNext=vi
             EXIT
@@ -328,14 +375,14 @@ ELEMENTAL FUNCTION getCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
 
         !Search other vertices
         dcurr=(/0.0_SRK,-1.0_SRK/)
-        IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
-            thisGraph%vertices(:,vPrev)
-        dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
+        IF(vPrev > 0) dcurr=this%vertices(:,vCurr)- &
+            this%vertices(:,vPrev)
+        dnext=this%vertices(:,vNext)-this%vertices(:,vCurr)
         isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
         DO i=1,nAdj
-          vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+          vi=this%getAdjacentVert(vCurr,i)
           IF(vi /= vPrev .AND. vi /= vNext) THEN
-            di=thisGraph%vertices(:,vi)-thisGraph%vertices(:,vCurr)
+            di=this%vertices(:,vi)-this%vertices(:,vCurr)
             IF(isVCurrConvex) THEN
               IF(dcurr(1)*di(2)-dcurr(2)*di(1) < 0.0_SRK .OR. &
                   dnext(1)*di(2)-dnext(2)*di(1) < 0.0_SRK) THEN
@@ -364,8 +411,8 @@ ENDFUNCTION getCWMostVert_graphType
 !>
 !>
 !>
-ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+ELEMENTAL FUNCTION getCCWMostVert_graphType(this,v0,vCurr) RESULT(vNext)
+  CLASS(GraphType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN) :: vCurr
   INTEGER(SIK),INTENT(IN) :: v0
   LOGICAL(SBK) :: isVCurrConvex,badEdge
@@ -373,23 +420,23 @@ ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
   REAL(SRK) :: dcurr(2),dnext(2),di(2)
 
   vNext=0
-  nVert=nVert_graphType(thisGraph)
+  nVert=this%nVert()
   vPrev=v0
   IF(vPrev == vCurr) vPrev=0
   IF(0 < vCurr .AND. vCurr <= nVert .AND. 0 <= vPrev .AND. vPrev <= nVert) THEN
     badEdge=.FALSE.
-    IF(vPrev > 0) badEdge=thisGraph%edgeMatrix(vCurr,vPrev) == 0
+    IF(vPrev > 0) badEdge=this%edgeMatrix(vCurr,vPrev) == 0
 
     IF(.NOT.badEdge) THEN
-      nAdj=nAdjacent_graphType(thisGraph,vCurr)
+      nAdj=this%nAdjacent(vCurr)
       IF(nAdj == 1) THEN
         !Shortcut for 1 adjacent vert
-        vNext=getAdjacentVert_graphType(thisGraph,vCurr,1)
+        vNext=this%getAdjacentVert(vCurr,1)
         IF(vNext == vPrev) vNext=0
       ELSEIF(nAdj > 1) THEN
         !Get default vNext (first vertice found that is not vPrev)
         DO i=1,nAdj
-          vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+          vi=this%getAdjacentVert(vCurr,i)
           IF(vi /= vPrev) THEN
             vNext=vi
             EXIT
@@ -398,14 +445,14 @@ ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
 
         !Search other vertices
         dcurr=(/0.0_SRK,-1.0_SRK/)
-        IF(vPrev > 0) dcurr=thisGraph%vertices(:,vCurr)- &
-            thisGraph%vertices(:,vPrev)
-        dnext=thisGraph%vertices(:,vNext)-thisGraph%vertices(:,vCurr)
+        IF(vPrev > 0) dcurr=this%vertices(:,vCurr)- &
+            this%vertices(:,vPrev)
+        dnext=this%vertices(:,vNext)-this%vertices(:,vCurr)
         isVCurrConvex=(dnext(1)*dcurr(2)-dnext(2)*dcurr(1) .APPROXLE. 0.0_SRK)
         DO i=1,nAdj
-          vi=getAdjacentVert_graphType(thisGraph,vCurr,i)
+          vi=this%getAdjacentVert(vCurr,i)
           IF(vi /= vPrev .AND. vi /= vNext) THEN
-            di=thisGraph%vertices(:,vi)-thisGraph%vertices(:,vCurr)
+            di=this%vertices(:,vi)-this%vertices(:,vCurr)
             IF(isVCurrConvex) THEN
               IF(dcurr(1)*di(2)-dcurr(2)*di(1) > 0.0_SRK .AND. &
                   dnext(1)*di(2)-dnext(2)*di(1) > 0.0_SRK) THEN
@@ -429,22 +476,21 @@ ELEMENTAL FUNCTION getCCWMostVert_graphType(thisGraph,v0,vCurr) RESULT(vNext)
 ENDFUNCTION getCCWMostVert_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Determines if the graph is a minimum cycle
+!> @param this the graph to interrogate
+!> @returns bool logical indicating if the graph is a minimum cycle (true) or not (false)
 !>
-!>
-!>
-ELEMENTAL FUNCTION isMinimumCycle_graphType(thisGraph) RESULT(bool)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+ELEMENTAL FUNCTION isMinimumCycle_graphType(this) RESULT(bool)
+  CLASS(GraphType),INTENT(IN) :: this
   LOGICAL(SBK) :: bool
   LOGICAL(SBK) :: isMinCyc
   INTEGER(SIK) :: i,n
   bool=.FALSE.
-  n=nVert_graphType(thisGraph)
+  n=this%nVert()
   IF(n > 2) THEN
     isMinCyc=.TRUE. !Assume true
     DO i=1,n !Verify all vertices have 2 neighbors
-      IF(nAdjacent_graphType(thisGraph,i) /= 2) THEN
+      IF(this%nAdjacent(i) /= 2) THEN
         isMinCyc=.FALSE.
         EXIT
       ENDIF
@@ -454,44 +500,56 @@ ELEMENTAL FUNCTION isMinimumCycle_graphType(thisGraph) RESULT(bool)
 ENDFUNCTION isMinimumCycle_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Inserts a new vertex into a graph object
+!> @param this the graph to modify
+!> @param point the point containing coordinates of the new vertex to add
 !>
+SUBROUTINE insertVertex_point(this,point)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: point
+
+  CALL this%insertVertex(point%coord)
+
+ENDSUBROUTINE insertVertex_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Inserts a new vertex into a graph object
+!> @param this the graph to modify
+!> @param coord the coordinates of the new vertex to add
 !>
-!>
-SUBROUTINE insertVertex_graphType(thisGraph,coord)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE insertVertex_coords(this,coord)
+  CLASS(GraphType),INTENT(INOUT) :: this
   REAL(SRK),INTENT(IN) :: coord(2)
   INTEGER(SIK) :: i,j,n,k,idx
   INTEGER(SIK),ALLOCATABLE :: tmpE(:,:)
   REAL(SRK),ALLOCATABLE :: tmpVertices(:,:),tmpQE(:,:,:)
-  IF(ALLOCATED(thisGraph%vertices)) THEN
-    n=SIZE(thisGraph%vertices,DIM=2)
+  IF(ALLOCATED(this%vertices)) THEN
+    n=SIZE(this%vertices,DIM=2)
     CALL dmallocA(tmpVertices,2,n+1)
     j=0
     k=0
     DO i=1,n
-      IF(coord(1) .APPROXLE. thisGraph%vertices(1,i)) THEN
-        IF(coord(1) .APPROXEQA. thisGraph%vertices(1,i)) THEN
-          IF(coord(2) .APPROXEQA. thisGraph%vertices(2,i)) THEN
+      IF(coord(1) .APPROXLE. this%vertices(1,i)) THEN
+        IF(coord(1) .APPROXEQA. this%vertices(1,i)) THEN
+          IF(coord(2) .APPROXEQA. this%vertices(2,i)) THEN
             idx=-1 !Duplicate vertex
             EXIT
-          ELSEIF(coord(2) < thisGraph%vertices(2,i)) THEN
+          ELSEIF(coord(2) < this%vertices(2,i)) THEN
             idx=i !Before i
           ELSE
             !After i
             DO j=i+1,n
               !Find index for end of sequence with same x value
-              IF(.NOT.(coord(1) .APPROXEQA. thisGraph%vertices(1,j))) EXIT
+              IF(.NOT.(coord(1) .APPROXEQA. this%vertices(1,j))) EXIT
             ENDDO
             j=j-1
 
             !Search on y through sequence of same x
             DO k=i+1,j
-              IF(coord(2) .APPROXEQA. thisGraph%vertices(2,k)) THEN
+              IF(coord(2) .APPROXEQA. this%vertices(2,k)) THEN
                 idx=-1
                 EXIT
-              ELSEIF(coord(2) < thisGraph%vertices(2,k)) THEN
+              ELSEIF(coord(2) < this%vertices(2,k)) THEN
                 idx=k
                 EXIT
               ENDIF
@@ -507,82 +565,116 @@ SUBROUTINE insertVertex_graphType(thisGraph,coord)
     IF(j /= 0) i=j
     IF(i == n+1) idx=n+1 !Last point
     IF(idx > 0) THEN
-      IF(idx > 1) tmpVertices(:,1:idx-1)=thisGraph%vertices(:,1:idx-1)
+      IF(idx > 1) tmpVertices(:,1:idx-1)=this%vertices(:,1:idx-1)
       tmpVertices(:,idx)=coord
-      IF(idx <= n) tmpVertices(:,idx+1:n+1)=thisGraph%vertices(:,idx:n)
-      CALL demallocA(thisGraph%vertices)
-      CALL MOVE_ALLOC(tmpVertices,thisGraph%vertices)
+      IF(idx <= n) tmpVertices(:,idx+1:n+1)=this%vertices(:,idx:n)
+      CALL demallocA(this%vertices)
+      CALL MOVE_ALLOC(tmpVertices,this%vertices)
       !Expand Edge Matrices
       CALL dmallocA(tmpE,n+1,n+1)
       CALL dmallocA(tmpQE,3,n+1,n+1)
       DO j=1,idx-1
         DO i=1,idx-1
-          tmpE(i,j)=thisGraph%edgeMatrix(i,j)
-          tmpE(j,i)=thisGraph%edgeMatrix(j,i)
-          tmpQE(:,i,j)=thisGraph%quadEdges(:,i,j)
-          tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i)
+          tmpE(i,j)=this%edgeMatrix(i,j)
+          tmpE(j,i)=this%edgeMatrix(j,i)
+          tmpQE(:,i,j)=this%quadEdges(:,i,j)
+          tmpQE(:,j,i)=this%quadEdges(:,j,i)
         ENDDO
         DO i=idx+1,n+1
-          tmpE(i,j)=thisGraph%edgeMatrix(i-1,j)
-          tmpE(j,i)=thisGraph%edgeMatrix(j,i-1)
-          tmpQE(:,i,j)=thisGraph%quadEdges(:,i-1,j)
-          tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i-1)
+          tmpE(i,j)=this%edgeMatrix(i-1,j)
+          tmpE(j,i)=this%edgeMatrix(j,i-1)
+          tmpQE(:,i,j)=this%quadEdges(:,i-1,j)
+          tmpQE(:,j,i)=this%quadEdges(:,j,i-1)
         ENDDO
       ENDDO
       DO j=idx+1,n+1
         DO i=1,idx-1
-          tmpE(i,j)=thisGraph%edgeMatrix(i,j-1)
-          tmpE(j,i)=thisGraph%edgeMatrix(j-1,i)
-          tmpQE(:,i,j)=thisGraph%quadEdges(:,i,j-1)
-          tmpQE(:,j,i)=thisGraph%quadEdges(:,j-1,i)
+          tmpE(i,j)=this%edgeMatrix(i,j-1)
+          tmpE(j,i)=this%edgeMatrix(j-1,i)
+          tmpQE(:,i,j)=this%quadEdges(:,i,j-1)
+          tmpQE(:,j,i)=this%quadEdges(:,j-1,i)
         ENDDO
         DO i=idx+1,n+1
-          tmpE(i,j)=thisGraph%edgeMatrix(i-1,j-1)
-          tmpE(j,i)=thisGraph%edgeMatrix(j-1,i-1)
-          tmpQE(:,i,j)=thisGraph%quadEdges(:,i-1,j-1)
-          tmpQE(:,j,i)=thisGraph%quadEdges(:,j-1,i-1)
+          tmpE(i,j)=this%edgeMatrix(i-1,j-1)
+          tmpE(j,i)=this%edgeMatrix(j-1,i-1)
+          tmpQE(:,i,j)=this%quadEdges(:,i-1,j-1)
+          tmpQE(:,j,i)=this%quadEdges(:,j-1,i-1)
         ENDDO
       ENDDO
-      CALL demallocA(thisGraph%edgeMatrix)
-      CALL MOVE_ALLOC(tmpE,thisGraph%edgeMatrix)
-      CALL demallocA(thisGraph%quadEdges)
-      CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
+      CALL demallocA(this%edgeMatrix)
+      CALL MOVE_ALLOC(tmpE,this%edgeMatrix)
+      CALL demallocA(this%quadEdges)
+      CALL MOVE_ALLOC(tmpQE,this%quadEdges)
     ENDIF
   ELSE
-    CALL dmallocA(thisGraph%vertices,2,1)
-    thisGraph%vertices(:,1)=coord
-    CALL dmallocA(thisGraph%edgeMatrix,1,1)
-    CALL dmallocA(thisGraph%quadEdges,3,1,1)
+    CALL dmallocA(this%vertices,2,1)
+    this%vertices(:,1)=coord
+    CALL dmallocA(this%edgeMatrix,1,1)
+    CALL dmallocA(this%quadEdges,3,1,1)
   ENDIF
-ENDSUBROUTINE insertVertex_graphType
+ENDSUBROUTINE insertVertex_coords
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Defines a linear edge between 2 vertexes
+!> @param this the graph to modify
+!> @param p1 the point containing the coordinates of the first vertex
+!> @param p1 the point containing the coordinates of the second vertex
 !>
+SUBROUTINE defineLinearEdge_point(this,p1,p2)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: p1
+  TYPE(PointType),INTENT(IN) :: p2
+  CALL this%defineLinearEdge_coords(p1%coord,p2%coord)
+ENDSUBROUTINE defineLinearEdge_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines a linear edge between 2 vertexes
+!> @param this the graph to modify
+!> @param coord1 the coordinates of the first vertex
+!> @param coord2 the coordinates of the second vertex
 !>
-!>
-PURE SUBROUTINE defineEdge_graphType(thisGraph,coord1,coord2)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE defineLinearEdge_coords(this,coord1,coord2)
+  CLASS(GraphType),INTENT(INOUT) :: this
   REAL(SRK),INTENT(IN) :: coord1(2)
   REAL(SRK),INTENT(IN) :: coord2(2)
   INTEGER(SIK) :: v1,v2
-  v1=getVertIndex_graphType(thisGraph,coord1)
-  v2=getVertIndex_graphType(thisGraph,coord2)
+  v1=this%getVertIndex(coord1)
+  v2=this%getVertIndex(coord2)
   IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
-    thisGraph%edgeMatrix(v1,v2)=1
-    thisGraph%edgeMatrix(v2,v1)=1
+    this%edgeMatrix(v1,v2)=1
+    this%edgeMatrix(v2,v1)=1
   ENDIF
-ENDSUBROUTINE defineEdge_graphType
+ENDSUBROUTINE defineLinearEdge_coords
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Defines a quadratic edge between 2 vertexes
+!> @param this the graph to modify
+!> @param p1 the point containing the coordinates of the first vertex
+!> @param p2 the point containing the coordinates of the second vertex
+!> @param c0 the centroid of the circle/arc
+!> @param r the radius of the circle/arc
 !>
+SUBROUTINE defineQuadraticEdge_point(this,p1,p2,c0,r)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: p1
+  TYPE(PointType),INTENT(IN) :: p2
+  TYPE(PointType),INTENT(IN) :: c0
+  REAL(SRK),INTENT(IN) :: r
+
+  CALL this%defineQuadraticEdge_coords(p1%coord,p2%coord,c0%coord,r)
+
+ENDSUBROUTINE defineQuadraticEdge_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines a quadratic edge between 2 vertexes
+!> @param this the graph to modify
+!> @param coord1 the coordinates of the first vertex
+!> @param coord2 the coordinates of the second vertex
+!> @param c0 the centroid of the circle/arc
+!> @param r the radius of the circle/arc
 !>
-!>
-PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE defineQuadraticEdge_coords(this,coord1,coord2,c0,r)
+  CLASS(GraphType),INTENT(INOUT) :: this
   REAL(SRK),INTENT(IN) :: coord1(2)
   REAL(SRK),INTENT(IN) :: coord2(2)
   REAL(SRK),INTENT(IN) :: c0(2)
@@ -601,16 +693,16 @@ PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
     r2=x2*x2+y2*y2
     rsq=r*r
     IF((rsq .APPROXEQA. r1) .AND. (rsq .APPROXEQA. r2)) THEN
-      v1=getVertIndex_graphType(thisGraph,coord1)
-      v2=getVertIndex_graphType(thisGraph,coord2)
+      v1=this%getVertIndex(coord1)
+      v2=this%getVertIndex(coord2)
       IF(v1 > 0 .AND. v2 > 0 .AND. v1 /= v2) THEN
         !Update edge matrix
-        thisGraph%edgeMatrix(v1,v2)=-1
-        thisGraph%edgeMatrix(v2,v1)=-1
+        this%edgeMatrix(v1,v2)=-1
+        this%edgeMatrix(v2,v1)=-1
 
         !Store circle info in quadEdges
-        thisGraph%quadEdges(1:2,v1,v2)=c0
-        thisGraph%quadEdges(3,v1,v2)=ABS(r)
+        this%quadEdges(1:2,v1,v2)=c0
+        this%quadEdges(3,v1,v2)=ABS(r)
 
         !Check for semi-circle and determine which half of circle
         !connects the points
@@ -620,23 +712,45 @@ PURE SUBROUTINE defineQuadEdge_graphType(thisGraph,coord1,coord2,c0,r)
         r2=r2*r2
         d=SQRT(r1+r2)
         IF(d .APPROXEQA. 2.0_SRK*ABS(r)) &
-            thisGraph%quadEdges(3,v1,v2)=r !sign of r indicates which half
+            this%quadEdges(3,v1,v2)=r !sign of r indicates which half
                                            !of semi-circle, all other cases
                                            !traverse shorter arc between points
-        thisGraph%quadEdges(:,v2,v1)=thisGraph%quadEdges(:,v1,v2)
+        this%quadEdges(:,v2,v1)=this%quadEdges(:,v1,v2)
       ENDIF
     ENDIF
   ENDIF
-ENDSUBROUTINE defineQuadEdge_graphType
+ENDSUBROUTINE defineQuadraticEdge_coords
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Returns the midpoint of an edge
+!> @param this the graph to interrogate
+!> @param p1 the point with the coordinates of the edge's first endpoint
+!> @param p2 the point with the coordinates of the edge's second endpoint
+!> @returns m the midpoint
 !>
+SUBROUTINE getMidPointOnEdge_point(this,p1,p2,m)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: p1
+  TYPE(PointType),INTENT(IN) :: p2
+  TYPE(PointType),INTENT(OUT) :: m
+  !
+  REAL(SRK) :: coords(2)
+
+  CALL m%clear()
+  CALL this%getMidPointOnEdge(this%getVertIndex(p1),this%getVertIndex(p2),coords)
+  CALL m%init(COORD=coords)
+
+ENDSUBROUTINE getMidPointOnEdge_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the midpoint of an edge
+!> @param this the graph to interrogate
+!> @param v1 the index of the edge's first endpoint
+!> @param v2 the index of the edge's second endpoint
+!> @returns m the midpoint
 !>
-!>
-PURE SUBROUTINE getMidPointOnEdge_graphType(thisGraph,v1,v2,m)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE getMidPointOnEdge_idx(this,v1,v2,m)
+  CLASS(GraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: v1
   INTEGER(SIK),INTENT(IN) :: v2
   REAL(SRK),INTENT(INOUT) :: m(2)
@@ -645,16 +759,16 @@ PURE SUBROUTINE getMidPointOnEdge_graphType(thisGraph,v1,v2,m)
   REAL(SRK) :: a(2),b(2),c(2),r,alp1,alp2,theta,scal
 
   m=-HUGE(m)
-  n=nVert_graphType(thisGraph)+1
+  n=this%nVert()+1
   IF(v1 > 0 .AND. v2 > 0 .AND. v1 < n .AND. v2 < n) THEN
-    IF(thisGraph%edgeMatrix(v1,v2) == 1) THEN
-      m=thisGraph%vertices(:,v1)+thisGraph%vertices(:,v2)
+    IF(this%edgeMatrix(v1,v2) == 1) THEN
+      m=this%vertices(:,v1)+this%vertices(:,v2)
       m=0.5_SRK*m
-    ELSEIF(thisGraph%edgeMatrix(v1,v2) == -1) THEN
-      a=thisGraph%vertices(:,v1)
-      b=thisGraph%vertices(:,v2)
-      c=thisGraph%quadEdges(1:2,v1,v2)
-      r=thisGraph%quadEdges(3,v1,v2)
+    ELSEIF(this%edgeMatrix(v1,v2) == -1) THEN
+      a=this%vertices(:,v1)
+      b=this%vertices(:,v2)
+      c=this%quadEdges(1:2,v1,v2)
+      r=this%quadEdges(3,v1,v2)
       m=a+b-2.0_SRK*c
       scal=SQRT(m(1)*m(1)+m(2)*m(2))
       IF(scal .APPROXEQA. 0.0_SRK) THEN
@@ -676,115 +790,134 @@ PURE SUBROUTINE getMidPointOnEdge_graphType(thisGraph,v1,v2,m)
       m=m+c
     ENDIF
   ENDIF
-ENDSUBROUTINE getMidPointOnEdge_graphType
+ENDSUBROUTINE getMidPointOnEdge_idx
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Removes a vertex from a graph object
+!> @param this the graph to modify
+!> @param p the point containing the coordinates of the vertex to remove
 !>
+SUBROUTINE removeVertex_point(this,p)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: p
+  INTEGER(SIK) :: i
+  i=this%getVertIndex(p%coord)
+  CALL this%removeVertex(i)
+ENDSUBROUTINE removeVertex_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Removes a vertex from a graph object
+!> @param this the graph to modify
+!> @param v the coordinates of the vertex to remove
 !>
-!>
-SUBROUTINE removeVertex_graphType(thisGraph,v)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeVertex_coords(this,v)
+  CLASS(GraphType),INTENT(INOUT) :: this
   REAL(SRK),INTENT(IN) :: v(2)
   INTEGER(SIK) :: i
-  i=getVertIndex_graphType(thisGraph,v)
-  CALL removeVertex_idx_graphType(thisGraph,i)
-ENDSUBROUTINE removeVertex_graphType
+  i=this%getVertIndex(v)
+  CALL this%removeVertex(i)
+ENDSUBROUTINE removeVertex_coords
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Removes a vertex from a graph object
+!> @param this the graph to modify
+!> @param idx the index of the vertex to remove
 !>
-!>
-!>
-SUBROUTINE removeVertex_idx_graphType(thisGraph,idx)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeVertex_index(this,idx)
+  CLASS(GraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: idx
   INTEGER(SIK) :: i,j,n
   INTEGER(SIK),ALLOCATABLE :: tmpEdge(:,:)
   REAL(SRK),ALLOCATABLE :: tmpVert(:,:),tmpQE(:,:,:)
 
-  n=nVert_graphType(thisGraph)
+  n=this%nVert()
   IF(0 < idx .AND. idx <= n) THEN
     CALL dmallocA(tmpVert,2,n-1)
     CALL dmallocA(tmpEdge,n-1,n-1)
     CALL dmallocA(tmpQE,3,n-1,n-1)
     DO i=1,idx-1
-      tmpVert(:,i)=thisGraph%vertices(:,i)
+      tmpVert(:,i)=this%vertices(:,i)
       DO j=1,idx-1
-        tmpEdge(j,i)=thisGraph%edgeMatrix(j,i)
-        tmpQE(:,j,i)=thisGraph%quadEdges(:,j,i)
+        tmpEdge(j,i)=this%edgeMatrix(j,i)
+        tmpQE(:,j,i)=this%quadEdges(:,j,i)
       ENDDO
       DO j=idx+1,n
-        tmpEdge(j-1,i)=thisGraph%edgeMatrix(j,i)
-        tmpQE(:,j-1,i)=thisGraph%quadEdges(:,j,i)
+        tmpEdge(j-1,i)=this%edgeMatrix(j,i)
+        tmpQE(:,j-1,i)=this%quadEdges(:,j,i)
       ENDDO
     ENDDO
     DO i=idx+1,n
-      tmpVert(:,i-1)=thisGraph%vertices(:,i)
+      tmpVert(:,i-1)=this%vertices(:,i)
       DO j=1,idx-1
-        tmpEdge(j,i-1)=thisGraph%edgeMatrix(j,i)
-        tmpQE(:,j,i-1)=thisGraph%quadEdges(:,j,i)
+        tmpEdge(j,i-1)=this%edgeMatrix(j,i)
+        tmpQE(:,j,i-1)=this%quadEdges(:,j,i)
       ENDDO
       DO j=idx+1,n
-        tmpEdge(j-1,i-1)=thisGraph%edgeMatrix(j,i)
-        tmpQE(:,j-1,i-1)=thisGraph%quadEdges(:,j,i)
+        tmpEdge(j-1,i-1)=this%edgeMatrix(j,i)
+        tmpQE(:,j-1,i-1)=this%quadEdges(:,j,i)
       ENDDO
     ENDDO
-    CALL clear_graphType(thisGraph)
+    CALL this%clear()
     IF(ALLOCATED(tmpVert)) &
-        CALL MOVE_ALLOC(tmpVert,thisGraph%vertices)
+        CALL MOVE_ALLOC(tmpVert,this%vertices)
     IF(ALLOCATED(tmpEdge)) &
-        CALL MOVE_ALLOC(tmpEdge,thisGraph%edgeMatrix)
+        CALL MOVE_ALLOC(tmpEdge,this%edgeMatrix)
     IF(ALLOCATED(tmpQE)) &
-        CALL MOVE_ALLOC(tmpQE,thisGraph%quadEdges)
+        CALL MOVE_ALLOC(tmpQE,this%quadEdges)
   ENDIF
-ENDSUBROUTINE removeVertex_idx_graphType
+ENDSUBROUTINE removeVertex_index
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Removes an edge from a graph object
+!> @param this the graph to modify
+!> @param p1 the point containing the coordinates of the first edge vertex
+!> @param p2 the point containing the coordinates of the second edge vertex
 !>
+SUBROUTINE removeEdge_point(this,p1,p2)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: p1
+  TYPE(PointType),INTENT(IN) :: p2
+
+  CALL this%removeEdge(this%getVertIndex(p1%coord),this%getVertIndex(p2%coord))
+
+ENDSUBROUTINE removeEdge_point
+!
+!-------------------------------------------------------------------------------
+!> @brief Removes an edge from a graph object
+!> @param this the graph to modify
+!> @param c1 the coordinates of the first edge vertex
+!> @param c2 the coordinates of the second edge vertex
 !>
-!>
-PURE SUBROUTINE removeEdge_graphType(thisGraph,c1,c2)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeEdge_coords(this,c1,c2)
+  CLASS(GraphType),INTENT(INOUT) :: this
   REAL(SRK),INTENT(IN) :: c1(2)
   REAL(SRK),INTENT(IN) :: c2(2)
-  INTEGER(SIK) :: v1,v2
 
-  v1=getVertIndex_graphType(thisGraph,c1)
-  v2=getVertIndex_graphType(thisGraph,c2)
-  IF(v1 > 0 .AND. v2 > 0) THEN
-    thisGraph%edgeMatrix(v1,v2)=0
-    thisGraph%edgeMatrix(v2,v1)=0
-    thisGraph%quadEdges(:,v1,v2)=0.0_SRK
-    thisGraph%quadEdges(:,v2,v1)=0.0_SRK
-  ENDIF
-ENDSUBROUTINE removeEdge_graphType
+  CALL this%removeEdge(this%getVertIndex(c1),this%getVertIndex(c2))
+
+ENDSUBROUTINE removeEdge_coords
 
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Removes an edge from a graph object
+!> @param this the graph to modify
+!> @param i the index of the first edge vertex
+!> @param j the index of the second edge vertex
 !>
-!>
-!>
-ELEMENTAL SUBROUTINE removeEdge_IJ_graphType(thisGraph,i,j)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeEdge_index(this,i,j)
+  CLASS(GraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: i
   INTEGER(SIK),INTENT(IN) :: j
   INTEGER(SIK) :: n
 
-  n=nVert_graphType(thisGraph)+1
+  n=this%nVert()+1
   IF(i > 0 .AND. j > 0 .AND. i < n .AND. j < n) THEN
-    thisGraph%edgeMatrix(i,j)=0
-    thisGraph%edgeMatrix(j,i)=0
-    thisGraph%quadEdges(:,i,j)=0.0_SRK
-    thisGraph%quadEdges(:,j,i)=0.0_SRK
+    this%edgeMatrix(i,j)=0
+    this%edgeMatrix(j,i)=0
+    this%quadEdges(:,i,j)=0.0_SRK
+    this%quadEdges(:,j,i)=0.0_SRK
   ENDIF
-ENDSUBROUTINE removeEdge_IJ_graphType
+ENDSUBROUTINE removeEdge_index
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -792,8 +925,8 @@ ENDSUBROUTINE removeEdge_IJ_graphType
 !>
 !>
 !>
-SUBROUTINE removeFilament_vertIdx_graphType(thisGraph,i0,i1)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeFilamentFromVert(this,i0,i1)
+  CLASS(GraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: i0
   INTEGER(SIK),INTENT(IN) :: i1
 
@@ -801,54 +934,54 @@ SUBROUTINE removeFilament_vertIdx_graphType(thisGraph,i0,i1)
   INTEGER(SIK) :: n,nAdj,v0,v1
   REAL(SRK) :: xy(2)
 
-  n=nVert_graphType(thisGraph)
+  n=this%nVert()
   IF(0 < i0 .AND. i0 <= n .AND. 0 < i1 .AND. i1 <= n) THEN
     v0=i0
     v1=i1
     isCycleEdge=.FALSE.
-    IF(ALLOCATED(thisGraph%isCycleEdge)) THEN
-      isCycleEdge=thisGraph%isCycleEdge(v0,v1)
+    IF(ALLOCATED(this%isCycleEdge)) THEN
+      isCycleEdge=this%isCycleEdge(v0,v1)
     ENDIF
     IF(isCycleEdge) THEN
-      nAdj=nAdjacent_graphType(thisGraph,v0)
+      nAdj=this%nAdjacent(v0)
       IF(nAdj > 2) THEN
-        CALL removeEdge_IJ_graphType(thisGraph,v0,v1)
+        CALL this%removeEdge(v0,v1)
         v0=v1
-        nAdj=nAdjacent_graphType(thisGraph,v0)
-        IF(nAdj == 1) v1=getAdjacentVert_graphType(thisGraph,v0,1)
+        nAdj=this%nAdjacent(v0)
+        IF(nAdj == 1) v1=this%getAdjacentVert(v0,1)
       ENDIF
       DO WHILE(nAdj == 1)
-        v1=getAdjacentVert_graphType(thisGraph,v0,1)
-        IF(thisGraph%isCycleEdge(v0,v1)) THEN
-          xy=thisGraph%vertices(:,v1)
-          CALL removeVertex_idx_graphType(thisGraph,v0)
-          v0=getVertIndex_graphType(thisGraph,xy)
-          nAdj=nAdjacent_graphType(thisGraph,v0)
+        v1=this%getAdjacentVert(v0,1)
+        IF(this%isCycleEdge(v0,v1)) THEN
+          xy=this%vertices(:,v1)
+          CALL this%removeVertex(v0)
+          v0=this%getVertIndex(xy)
+          nAdj=this%nAdjacent(v0)
         ELSE
           EXIT
         ENDIF
       ENDDO
-      nAdj=nAdjacent_graphType(thisGraph,v0)
-      IF(nAdj == 0) CALL removeVertex_idx_graphType(thisGraph,v0)
+      nAdj=this%nAdjacent(v0)
+      IF(nAdj == 0) CALL this%removeVertex(v0)
     ELSE
-      nAdj=nAdjacent_graphType(thisGraph,v0)
+      nAdj=this%nAdjacent(v0)
       IF(nAdj > 2 .AND. v1 /= v0) THEN
-        CALL removeEdge_IJ_graphType(thisGraph,v0,v1)
+        CALL this%removeEdge(v0,v1)
         v0=v1
-        nAdj=nAdjacent_graphType(thisGraph,v0)
-        IF(nAdj == 1) v1=getAdjacentVert_graphType(thisGraph,v0,1)
+        nAdj=this%nAdjacent(v0)
+        IF(nAdj == 1) v1=this%getAdjacentVert(v0,1)
       ENDIF
       DO WHILE(nAdj == 1)
-        v1=getAdjacentVert_graphType(thisGraph,v0,1)
-        xy=thisGraph%vertices(:,v1)
-        CALL removeVertex_idx_graphType(thisGraph,v0)
-        v0=getVertIndex_graphType(thisGraph,xy)
-        nAdj=nAdjacent_graphType(thisGraph,v0)
+        v1=this%getAdjacentVert(v0,1)
+        xy=this%vertices(:,v1)
+        CALL this%removeVertex(v0)
+        v0=this%getVertIndex(xy)
+        nAdj=this%nAdjacent(v0)
       ENDDO
-      IF(nAdj == 0) CALL removeVertex_idx_graphType(thisGraph,v0)
+      IF(nAdj == 0) CALL this%removeVertex(v0)
     ENDIF
   ENDIF
-ENDSUBROUTINE removeFilament_vertIdx_graphType
+ENDSUBROUTINE removeFilamentFromVert
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -856,8 +989,8 @@ ENDSUBROUTINE removeFilament_vertIdx_graphType
 !>
 !>
 !>
-SUBROUTINE extractPrimitive_graphType(thisGraph,v0,subgraph)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE extractPrimitive(this,v0,subgraph)
+  CLASS(GraphType),INTENT(INOUT) :: this
   INTEGER(SIK) :: v0
   CLASS(GraphType),INTENT(INOUT) :: subgraph
 
@@ -865,90 +998,88 @@ SUBROUTINE extractPrimitive_graphType(thisGraph,v0,subgraph)
   INTEGER(SIK) :: i,j,n,nAdj,vCurr,vNext,vPrev
   REAL(SRK) :: coord1(2),coord2(2),c0(2),r
 
-  CALL clear_graphType(subGraph)
-  n=nVert_graphType(thisGraph)
+  CALL subGraph%clear()
+  n=this%nVert()
   ALLOCATE(visited(0:n)); visited=.FALSE.
-  vNext=getCWMostVert_graphType(thisGraph,0,v0)
+  vNext=this%getCWMostVert(0,v0)
   vPrev=v0
   vCurr=vNext
 
-  coord1=thisGraph%vertices(:,vPrev)
-  CALL insertVertex_graphType(subgraph,coord1)
+  coord1=this%vertices(:,vPrev)
+  CALL subgraph%insertVertex(coord1)
   DO WHILE(vCurr /= 0 .AND. vCurr /= v0 .AND. .NOT.visited(vCurr))
-    coord1=thisGraph%vertices(:,vPrev)
-    coord2=thisGraph%vertices(:,vCurr)
-    CALL insertVertex_graphType(subgraph,coord2)
-    IF(thisGraph%edgeMatrix(vPrev,vCurr) == 1) THEN
-      CALL defineEdge_graphType(subgraph,coord1,coord2)
-    ELSEIF(thisGraph%edgeMatrix(vPrev,vCurr) == -1) THEN
-      c0=thisGraph%quadEdges(1:2,vPrev,vCurr)
-      r=thisGraph%quadEdges(3,vPrev,vCurr)
-      CALL defineQuadEdge_graphType(subgraph,coord1,coord2,c0,r)
+    coord1=this%vertices(:,vPrev)
+    coord2=this%vertices(:,vCurr)
+    CALL subgraph%insertVertex(coord2)
+    IF(this%edgeMatrix(vPrev,vCurr) == 1) THEN
+      CALL subgraph%defineEdge(coord1,coord2)
+    ELSEIF(this%edgeMatrix(vPrev,vCurr) == -1) THEN
+      c0=this%quadEdges(1:2,vPrev,vCurr)
+      r=this%quadEdges(3,vPrev,vCurr)
+      CALL subgraph%defineEdge(coord1,coord2,c0,r)
     ENDIF
     visited(vCurr)=.TRUE.
-    vNext=getCCWMostVert_graphType(thisGraph,vPrev,vCurr)
+    vNext=this%getCCWMostVert(vPrev,vCurr)
     vPrev=vCurr
     vCurr=vNext
   ENDDO
   IF(vCurr == 0) THEN
     !Found a filament, not necessarily rooted at vPrev
-    vCurr=getAdjacentVert_graphType(thisGraph,vPrev,1)
-    CALL removeFilament_vertIdx_graphType(thisGraph,vPrev,vCurr)
+    vCurr=this%getAdjacentVert(vPrev,1)
+    CALL this%removeFilamentFromVert(vPrev,vCurr)
   ELSEIF(vCurr == v0) THEN
     !Minimum Cycle Found!
 
     !Add Last/First point and last edge
-    coord1=thisGraph%vertices(:,vPrev)
-    coord2=thisGraph%vertices(:,vCurr)
-    IF(thisGraph%edgeMatrix(vPrev,vCurr) == 1) THEN
-      CALL defineEdge_graphType(subgraph,coord1,coord2)
-    ELSEIF(thisGraph%edgeMatrix(vPrev,vCurr) == -1) THEN
-      c0=thisGraph%quadEdges(1:2,vPrev,vCurr)
-      r=thisGraph%quadEdges(3,vPrev,vCurr)
-      CALL defineQuadEdge_graphType(subgraph,coord1,coord2,c0,r)
+    coord1=this%vertices(:,vPrev)
+    coord2=this%vertices(:,vCurr)
+    IF(this%edgeMatrix(vPrev,vCurr) == 1) THEN
+      CALL subgraph%defineEdge(coord1,coord2)
+    ELSEIF(this%edgeMatrix(vPrev,vCurr) == -1) THEN
+      c0=this%quadEdges(1:2,vPrev,vCurr)
+      r=this%quadEdges(3,vPrev,vCurr)
+      CALL subgraph%defineEdge(coord1,coord2,c0,r)
     ENDIF
 
-    n=nVert_graphType(subGraph)
+    n=subGraph%nVert()
     DO i=1,n
       j=i+1
       IF(i == n) j=1
-      vCurr=getVertIndex_graphType(thisGraph,subgraph%vertices(:,i))
-      vNext=getVertIndex_graphType(thisGraph,subgraph%vertices(:,j))
-      thisGraph%isCycleEdge(vCurr,vNext)=.TRUE.
+      vCurr=this%getVertIndex(subgraph%vertices(:,i))
+      vNext=this%getVertIndex(subgraph%vertices(:,j))
+      this%isCycleEdge(vCurr,vNext)=.TRUE.
     ENDDO
     vCurr=v0
-    vNext=getCWMostVert_graphType(thisGraph,0,v0)
-    CALL removeEdge_IJ_graphType(thisGraph,vCurr,vNext)
-    nAdj=nAdjacent_graphType(thisGraph,vCurr)
+    vNext=this%getCWMostVert(0,v0)
+    CALL this%removeEdge(vCurr,vNext)
+    nAdj=this%nAdjacent(vCurr)
     IF(nAdj == 1) THEN
-      CALL removeFilament_vertIdx_graphType(thisGraph,vCurr, &
-          getAdjacentVert_graphType(thisGraph,vCurr,1))
+      CALL this%removeFilamentFromVert(vCurr,this%getAdjacentVert(vCurr,1))
     ENDIF
-    nAdj=nAdjacent_graphType(thisGraph,vNext)
+    nAdj=this%nAdjacent(vNext)
     IF(nAdj == 1) THEN
-      CALL removeFilament_vertIdx_graphType(thisGraph,vNext, &
-          getAdjacentVert_graphType(thisGraph,vNext,1))
+      CALL this%removeFilamentFromVert(vNext,this%getAdjacentVert(vNext,1))
     ENDIF
   ELSE
     !vCurr was visited earlier, but we do not have a minimal cycle
     !This  implies v0 is part of a filament. Therefore we locate
     !a direction away from the initial vNext.
     vCurr=v0
-    vNext=getCWMostVert_graphType(thisGraph,0,v0)
-    nAdj=nAdjacent_graphType(thisGraph,vCurr)
+    vNext=this%getCWMostVert(0,v0)
+    nAdj=this%nAdjacent(vCurr)
     DO WHILE(nAdj == 2)
-      IF(getAdjacentVert_graphType(thisGraph,vCurr,1) /= vNext) THEN
+      IF(this%getAdjacentVert(vCurr,1) /= vNext) THEN
         vNext=vCurr
-        vCurr=getAdjacentVert_graphType(thisGraph,vCurr,1)
+        vCurr=this%getAdjacentVert(vCurr,1)
       ELSE
         vNext=vCurr
-        vCurr=getAdjacentVert_graphType(thisGraph,vCurr,2)
+        vCurr=this%getAdjacentVert(vCurr,2)
       ENDIF
-      nAdj=nAdjacent_graphType(thisGraph,vCurr)
+      nAdj=this%nAdjacent(vCurr)
     ENDDO
-    CALL removeFilament_vertIdx_graphType(thisGraph,vCurr,vNext)
+    CALL this%removeFilamentFromVert(vCurr,vNext)
   ENDIF
-ENDSUBROUTINE extractPrimitive_graphType
+ENDSUBROUTINE extractPrimitive
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -956,8 +1087,8 @@ ENDSUBROUTINE extractPrimitive_graphType
 !>
 !>
 !>
-SUBROUTINE getMCB_graphType(thisGraph,cycles)
-  CLASS(GraphType),INTENT(IN) :: thisGraph
+SUBROUTINE getMCB_graphType(this,cycles)
+  CLASS(GraphType),INTENT(IN) :: this
   TYPE(GraphType),ALLOCATABLE :: cycles(:)
   INTEGER(SIK) :: i,n,nadj,ncycles
   TYPE(GraphType) :: g,primeGraph
@@ -965,31 +1096,29 @@ SUBROUTINE getMCB_graphType(thisGraph,cycles)
 
   IF(ALLOCATED(cycles)) THEN
     DO i=1,SIZE(cycles)
-      CALL clear_graphType(cycles(i))
+      CALL cycles(i)%clear()
     ENDDO
     DEALLOCATE(cycles)
   ENDIF
-  SELECTTYPE(thisGraph); TYPE IS(GraphType)
-    g=thisGraph
-  ENDSELECT
-  n=nVert_graphType(thisGraph)
+  g=this
+  n=this%nVert()
   CALL dmallocA(g%isCycleEdge,n,n)
   ncycles=0
-  DO WHILE(nVert_graphType(g) > 0)
-    nadj=nAdjacent_graphType(g,1)
+  DO WHILE(g%nVert() > 0)
+    nadj=g%nAdjacent(1)
     IF(nadj == 0) THEN
-      CALL removeVertex_idx_graphType(g,1)
+      CALL g%removeVertex(1)
     ELSEIF(nadj == 1) THEN
-      CALL removeFilament_vertIdx_graphType(g,1,1)
+      CALL g%removeFilamentFromVert(1,1)
     ELSE
-      CALL extractPrimitive_graphType(g,1,primeGraph)
+      CALL g%extractPrimitive(1,primeGraph)
       IF(isMinimumCycle_graphType(primeGraph)) THEN
         !Found minimum cycle, so add it to basis
         ncycles=ncycles+1
         ALLOCATE(tmpCycles(ncycles))
         DO i=1,ncycles-1
           tmpCycles(i)=cycles(i)
-          CALL clear_graphType(cycles(i))
+          CALL cycles(i)%clear()
         ENDDO
         tmpCycles(ncycles)=primeGraph
         IF(ALLOCATED(cycles)) DEALLOCATE(cycles)
@@ -1002,13 +1131,13 @@ SUBROUTINE getMCB_graphType(thisGraph,cycles)
 ENDSUBROUTINE getMCB_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Edits a graph object to a VTK file
+!> @param this the graph object to edit
+!> @param fname the file name to write to
+!> @param unitNo the unit number to use; optional
 !>
-!>
-!>
-SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE editToVTK_graphType(this,fname,unitNo)
+  CLASS(GraphType),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: fname
   INTEGER(SIK),INTENT(IN),OPTIONAL :: unitNo
 
@@ -1016,7 +1145,7 @@ SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
   TYPE(VTKMeshType) :: vtkMesh
   TYPE(VTKLegFileType) :: vtkFile
 
-  nvert=nVert_graphType(thisGraph)
+  nvert=this%nVert()
   IF(nvert > 0) THEN
     vtkMesh%meshType=VTK_UNSTRUCTURED_GRID
     vtkMesh%dims=nvert
@@ -1025,11 +1154,11 @@ SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
     ALLOCATE(vtkMesh%y(nvert))
     ALLOCATE(vtkMesh%z(nvert))
     DO i=1,nvert
-      vtkMesh%x(i)=thisGraph%vertices(1,i)
-      vtkMesh%y(i)=thisGraph%vertices(2,i)
+      vtkMesh%x(i)=this%vertices(1,i)
+      vtkMesh%y(i)=this%vertices(2,i)
       vtkMesh%z(i)=0.0_SRK
     ENDDO
-    nedge=nEdge_graphType(thisGraph)
+    nedge=this%nEdge()
     !Set up cell list (edges only isoloated verteces are ommitted)
     vtkMesh%numCells=nedge
     ALLOCATE(vtkMesh%cellList(vtkMesh%numCells))
@@ -1043,7 +1172,7 @@ SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
       ALLOCATE(vtkMesh%nodelist(2*nedge))
       DO i=1,nvert
         DO j=i+1,nvert
-          IF(ABS(thisGraph%edgeMatrix(i,j)) == 1) THEN
+          IF(ABS(this%edgeMatrix(i,j)) == 1) THEN
             n=n+1
             vtkMesh%nodelist(n)=i-1
             n=n+1
@@ -1065,26 +1194,23 @@ SUBROUTINE editToVTK_graphType(thisGraph,fname,unitNo)
 ENDSUBROUTINE editToVTK_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Clears a graph object
+!> @param this the graph object to clear
 !>
-!>
-!>
-SUBROUTINE clear_graphType(thisGraph)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
-  CALL demallocA(thisGraph%vertices)
-  CALL demallocA(thisGraph%edgeMatrix)
-  CALL demallocA(thisGraph%quadEdges)
+SUBROUTINE clear_graphType(this)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  CALL demallocA(this%vertices)
+  CALL demallocA(this%edgeMatrix)
+  CALL demallocA(this%quadEdges)
 ENDSUBROUTINE clear_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Inserts all vertexes and edges from one graph into another
+!> @param this the target graph to be modified
+!> @param g the source graph whose pionts are being inserted
 !>
-!>
-!>
-SUBROUTINE combine_GraphType(thisGraph,g)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE combine_GraphType(this,g)
+  CLASS(GraphType),INTENT(INOUT) :: this
   TYPE(GraphType),INTENT(IN) :: g
   TYPE(GraphType) :: g0,g1,lineAB
   INTEGER(SIK) :: i,j,n,nAdj,v1,v2
@@ -1096,17 +1222,15 @@ SUBROUTINE combine_GraphType(thisGraph,g)
   TYPE(LineType) :: l1,l2
   TYPE(CircleType) :: c1,c2
 
-  SELECTTYPE(thisGraph); TYPE IS(GraphType)
-    CALL assign_GraphType(g0,thisGraph)
-  ENDSELECT
-  CALL assign_GraphType(g1,g)
+  g0 = this
+  g1 = g
   CALL l1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
   CALL l1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
   CALL l2%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
   CALL l2%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
   CALL p0%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  DO WHILE(nEdge_graphType(g1) > 0)
-    n=nVert_graphType(g1)
+  DO WHILE(g1%nEdge() > 0)
+    n=g1%nVert()
     v1=0; v2=0
     outer: DO i=1,n
       DO j=i+1,n
@@ -1121,8 +1245,8 @@ SUBROUTINE combine_GraphType(thisGraph,g)
     IF(v1 > 0 .AND. v2 > 0) THEN
       a=g1%vertices(:,v1)
       b=g1%vertices(:,v2)
-      CALL insertVertex_graphType(lineAB,a)
-      CALL insertVertex_graphType(lineAB,b)
+      CALL lineAB%insertVertex(a)
+      CALL lineAB%insertVertex(b)
       IF(g1%edgeMatrix(v1,v2) == -1) THEN
         p0%coord=g1%quadEdges(1:2,v1,v2)
         r=g1%quadEdges(3,v1,v2)
@@ -1177,29 +1301,29 @@ SUBROUTINE combine_GraphType(thisGraph,g)
         l1%p2%coord=b
       ENDIF
 
-      n=nVert_graphType(thisGraph)
+      n=this%nVert()
       DO i=1,n
         DO j=i+1,n
-          IF(thisGraph%edgeMatrix(j,i) /= 0) THEN
-            c=thisGraph%vertices(:,i)
-            d=thisGraph%vertices(:,j)
+          IF(this%edgeMatrix(j,i) /= 0) THEN
+            c=this%vertices(:,i)
+            d=this%vertices(:,j)
           ENDIF
-          IF(thisGraph%edgeMatrix(j,i) == 1) THEN
+          IF(this%edgeMatrix(j,i) == 1) THEN
             l2%p1%dim=2; l2%p2%dim=2
             l2%p1%coord=c
             l2%p2%coord=d
             IF(c1%r == 0.0_SRK) THEN
-              p1=l1%intersectLine(l2)
+              p1=l1%intersect(l2)
               IF(p1%dim == 2) THEN
-                CALL removeEdge_graphType(g0,c,d)
-                CALL insertVertex_graphType(g0,p1%coord)
-                CALL defineEdge_graphType(g0,c,p1%coord)
-                CALL defineEdge_graphType(g0,d,p1%coord)
-                CALL insertVertex_graphType(lineAB,p1%coord)
+                CALL g0%removeEdge(c,d)
+                CALL g0%insertVertex(p1%coord)
+                CALL g0%defineEdge(c,p1%coord)
+                CALL g0%defineEdge(d,p1%coord)
+                CALL lineAB%insertVertex(p1%coord)
               ENDIF
             ELSE
               !circle-line
-              CALL c1%intersectLine(l2,p1,p2)
+              CALL c1%intersect(l2,p1,p2)
 
               !Count tangent points
               IF(p1%dim == -3) p1%dim=2
@@ -1262,36 +1386,36 @@ SUBROUTINE combine_GraphType(thisGraph,g)
                     (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p2%clear()
               ENDIF
               IF(p1%dim == 2 .AND. p2%dim == 2) THEN
-                CALL removeEdge_graphType(g0,c,d)
-                CALL insertVertex_graphType(g0,p1%coord)
-                CALL insertVertex_graphType(g0,p2%coord)
+                CALL g0%removeEdge(c,d)
+                CALL g0%insertVertex(p1%coord)
+                CALL g0%insertVertex(p2%coord)
                 !Cord intersecting circle
-                CALL defineEdge_graphType(g0,p1%coord,p2%coord)
-                CALL defineEdge_graphType(g0,c,p1%coord) !is p1 always closer to c?
-                CALL defineEdge_graphType(g0,d,p2%coord) !is p2 always closer to d?
-                CALL insertVertex_graphType(lineAB,p1%coord)
-                CALL insertVertex_graphType(lineAB,p2%coord)
+                CALL g0%defineEdge(p1%coord,p2%coord)
+                CALL g0%defineEdge(c,p1%coord) !is p1 always closer to c?
+                CALL g0%defineEdge(d,p2%coord) !is p2 always closer to d?
+                CALL lineAB%insertVertex(p1%coord)
+                CALL lineAB%insertVertex(p2%coord)
 
                 !Add midpoint of arc (keeps graph sane)
                 !Need to store edge information here, because normal point sorting
                 !on graph type does not implicitly keep points ordered for arcs
-                CALL insertVertex_graphType(lineAB,m)
-                CALL defineEdge_graphType(lineAB,m,p1%coord)
-                CALL defineEdge_graphType(lineAB,m,p2%coord)
+                CALL lineAB%insertVertex(m)
+                CALL lineAB%defineEdge(m,p1%coord)
+                CALL lineAB%defineEdge(m,p2%coord)
               ELSE
                 IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
                 IF(p1%dim == 2) THEN
-                  CALL removeEdge_graphType(g0,c,d)
-                  CALL insertVertex_graphType(g0,p1%coord)
-                  CALL defineEdge_graphType(g0,c,p1%coord)
-                  CALL defineEdge_graphType(g0,d,p1%coord)
-                  CALL insertVertex_graphType(lineAB,p1%coord)
+                  CALL g0%removeEdge(c,d)
+                  CALL g0%insertVertex(p1%coord)
+                  CALL g0%defineEdge(c,p1%coord)
+                  CALL g0%defineEdge(d,p1%coord)
+                  CALL lineAB%insertVertex(p1%coord)
                 ENDIF
               ENDIF
             ENDIF
-          ELSEIF(thisGraph%edgeMatrix(j,i) == -1) THEN
-            p0%coord=thisGraph%quadEdges(1:2,i,j)
-            r=thisGraph%quadEdges(3,i,j)
+          ELSEIF(this%edgeMatrix(j,i) == -1) THEN
+            p0%coord=this%quadEdges(1:2,i,j)
+            r=this%quadEdges(3,i,j)
             alp1=ATAN2PI(c(1)-p0%coord(1),c(2)-p0%coord(2))
             alp2=ATAN2PI(d(1)-p0%coord(1),d(2)-p0%coord(2))
             !Insure we are traversing the shorter arc on the circle
@@ -1318,7 +1442,7 @@ SUBROUTINE combine_GraphType(thisGraph,g)
             ENDIF
             IF(c1%r == 0.0_SRK) THEN
               !line-circle
-              CALL c2%intersectLine(l1,p1,p2)
+              CALL c2%intersect(l1,p1,p2)
 
               !Count tangent points
               IF(p1%dim == -3) p1%dim=2
@@ -1400,32 +1524,32 @@ SUBROUTINE combine_GraphType(thisGraph,g)
                 ENDIF
                 m=m+c2%c%coord
 
-                CALL removeEdge_graphType(g0,c,d)
-                CALL insertVertex_graphType(g0,p1%coord)
-                CALL insertVertex_graphType(g0,p2%coord)
+                CALL g0%removeEdge(c,d)
+                CALL g0%insertVertex(p1%coord)
+                CALL g0%insertVertex(p2%coord)
 
                 !Add midpoint of arc (keeps graph sane)
                 !p1 and p2 are connected by a straight point and an arc
-                CALL insertVertex_graphType(g0,m)
-                CALL defineQuadEdge_graphType(g0,m,p1%coord,c2%c%coord,c2%r)
-                CALL defineQuadEdge_graphType(g0,m,p2%coord,c2%c%coord,c2%r)
+                CALL g0%insertVertex(m)
+                CALL g0%defineEdge(m,p1%coord,c2%c%coord,c2%r)
+                CALL g0%defineEdge(m,p2%coord,c2%c%coord,c2%r)
 
                 !Cord intersecting circle
-                CALL defineEdge_graphType(g0,p1%coord,p2%coord)
+                CALL g0%defineEdge(p1%coord,p2%coord)
                 !is p1 always closer to c?
-                CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
+                CALL g0%defineEdge(c,p1%coord,c2%c%coord,c2%r)
                 !is p2 always closer to d?
-                CALL defineQuadEdge_graphType(g0,d,p2%coord,c2%c%coord,c2%r)
-                CALL insertVertex_graphType(lineAB,p1%coord)
-                CALL insertVertex_graphType(lineAB,p2%coord)
+                CALL g0%defineEdge(d,p2%coord,c2%c%coord,c2%r)
+                CALL lineAB%insertVertex(p1%coord)
+                CALL lineAB%insertVertex(p2%coord)
               ELSE
                 IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
                 IF(p1%dim == 2) THEN
-                  CALL removeEdge_graphType(g0,c,d)
-                  CALL insertVertex_graphType(g0,p1%coord)
-                  CALL defineQuadEdge_graphType(g0,c,p1%coord,c2%c%coord,c2%r)
-                  CALL defineQuadEdge_graphType(g0,d,p1%coord,c2%c%coord,c2%r)
-                  CALL insertVertex_graphType(lineAB,p1%coord)
+                  CALL g0%removeEdge(c,d)
+                  CALL g0%insertVertex(p1%coord)
+                  CALL g0%defineEdge(c,p1%coord,c2%c%coord,c2%r)
+                  CALL g0%defineEdge(d,p1%coord,c2%c%coord,c2%r)
+                  CALL lineAB%insertVertex(p1%coord)
                 ENDIF
               ENDIF
               l1%p1%dim=2; l1%p2%dim=2
@@ -1437,15 +1561,15 @@ SUBROUTINE combine_GraphType(thisGraph,g)
         ENDDO
       ENDDO
       IF(c1%r == 0.0_SRK) THEN
-        CALL insertVertex_graphType(g0,lineAB%vertices(:,1))
-        DO i=2,nVert_graphType(lineAB)
-          CALL insertVertex_graphType(g0,lineAB%vertices(:,i))
-          CALL defineEdge_graphType(g0,lineAB%vertices(:,i-1), &
+        CALL g0%insertVertex(lineAB%vertices(:,1))
+        DO i=2,lineAB%nVert()
+          CALL g0%insertVertex(lineAB%vertices(:,i))
+          CALL g0%defineEdge(lineAB%vertices(:,i-1), &
               lineAB%vertices(:,i))
         ENDDO
       ELSE
         !Sort vertices in clock-wise order.
-        n=nVert_graphType(lineAB)
+        n=lineAB%nVert()
         ALLOCATE(cwVerts(n)); cwVerts=0
         ALLOCATE(vTheta(n));
         DO i=1,n
@@ -1466,30 +1590,30 @@ SUBROUTINE combine_GraphType(thisGraph,g)
         ENDDO
 
         !Add vertices in CW-order and define edges
-        CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(1)))
-        DO i=2,nVert_graphType(lineAB)
-          CALL insertVertex_graphType(g0,lineAB%vertices(:,cwVerts(i)))
-          CALL defineQuadEdge_graphType(g0,lineAB%vertices(:,cwVerts(i-1)), &
+        CALL g0%insertVertex(lineAB%vertices(:,cwVerts(1)))
+        DO i=2,lineAB%nVert()
+          CALL g0%insertVertex(lineAB%vertices(:,cwVerts(i)))
+          CALL g0%defineEdge(lineAB%vertices(:,cwVerts(i-1)), &
               lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
         ENDDO
         DEALLOCATE(vTheta,cwVerts)
       ENDIF
-      SELECTTYPE(thisGraph); TYPE IS(GraphType)
-        CALL assign_GraphType(thisGraph,g0)
+      SELECTTYPE(this); TYPE IS(GraphType)
+        this = g0
       ENDSELECT
-      !CALL editToVTK_graphType(thisGraph,'tmpG.vtk')
+      !CALL editToVTK_graphType(this,'tmpG.vtk')
       CALL c1%clear()
-      CALL clear_graphType(lineAB)
+      CALL lineAB%clear()
     ENDIF
 
     !Remove the edge
-    CALL removeEdge_IJ_graphType(g1,v1,v2)
+    CALL g1%removeEdge(v1,v2)
     !Remove any isoloated vertices
-    nAdj=nAdjacent_graphType(g1,v1)
-    IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v1)
-    v2=getVertIndex_graphType(g1,b)
-    nAdj=nAdjacent_graphType(g1,v2)
-    IF(nAdj == 0) CALL removeVertex_idx_graphType(g1,v2)
+    nAdj=g1%nAdjacent(v1)
+    IF(nAdj == 0) CALL g1%removeVertex(v1)
+    v2=g1%getVertIndex(b)
+    nAdj=g1%nAdjacent(v2)
+    IF(nAdj == 0) CALL g1%removeVertex(v2)
   ENDDO
   CALL p0%clear()
   CALL p1%clear()
@@ -1499,17 +1623,17 @@ SUBROUTINE combine_GraphType(thisGraph,g)
   CALL l1%clear()
   CALL l2%clear()
   CALL c1%clear()
-  CALL clear_graphType(lineAB)
-  CALL clear_graphType(g0)
-  CALL clear_graphType(g1)
+  CALL lineAB%clear()
+  CALL g0%clear()
+  CALL g1%clear()
 ENDSUBROUTINE combine_GraphType
 !
 !-------------------------------------------------------------------------------
 !> @brief Takes cloud of points and computes Delaunay triangulation
-!> @param thisGraph the graph containing the cloud of points
+!> @param this the graph containing the cloud of points
 !>
-SUBROUTINE triangulateVerts_graphType(thisGraph)
-  CLASS(GraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE triangulateVerts_graphType(this)
+  CLASS(GraphType),INTENT(INOUT) :: this
 
   INTEGER(SIK) :: nVert,nTri,nEdges,i,j,k
   INTEGER(SIK),ALLOCATABLE :: v1(:),v2(:),v3(:)
@@ -1522,8 +1646,8 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
   LOGICAL(SBK) :: incircum
   REAL(SRK) :: r,xc,yc
 
-  thisGraph%edgeMatrix=0
-  nVert=thisGraph%nVert()
+  this%edgeMatrix=0
+  nVert=this%nVert()
 
   !Maximum of n-2 triangles...n+1 with super-triangle
   ALLOCATE(v1(6*nVert+6),v2(6*nVert+6),v3(6*nVert+6))
@@ -1536,17 +1660,17 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
   complete=.FALSE.
   !Make a copy of vertices before adding in super-triangle
   ALLOCATE(verts(2,nVert))
-  verts=thisGraph%vertices
+  verts=this%vertices
   !Find the minimum and maximum x-values in the graph
-  xMin=thisGraph%vertices(1,1)
-  yMin=thisGraph%vertices(2,1)
+  xMin=this%vertices(1,1)
+  yMin=this%vertices(2,1)
   xMax=xMin
   yMax=yMin
   DO i=2,nVert
-    xMin=MIN(xMin,thisGraph%vertices(1,i))
-    xMax=MAX(xMax,thisGraph%vertices(1,i))
-    yMin=MIN(yMin,thisGraph%vertices(2,i))
-    yMax=MAX(yMax,thisGraph%vertices(2,i))
+    xMin=MIN(xMin,this%vertices(1,i))
+    xMax=MAX(xMax,this%vertices(1,i))
+    yMin=MIN(yMin,this%vertices(2,i))
+    yMax=MAX(yMax,this%vertices(2,i))
   ENDDO
 
   dx=xMax-xMin
@@ -1559,13 +1683,13 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
   superTri(:,1)=(/xMid-20.0_SRK*dm,yMid-dm/)
   superTri(:,2)=(/xMid,yMid+20.0_SRK*dm/)
   superTri(:,3)=(/xMid+20.0_SRK*dm,yMid-dm/)
-  CALL thisGraph%insertVertex(superTri(:,1))
-  CALL thisGraph%insertVertex(superTri(:,2))
-  CALL thisGraph%insertVertex(superTri(:,3))
+  CALL this%insertVertex(superTri(:,1))
+  CALL this%insertVertex(superTri(:,2))
+  CALL this%insertVertex(superTri(:,3))
 
-  v1(1)=thisGraph%getVertIndex(superTri(:,1))
-  v2(1)=thisGraph%getVertIndex(superTri(:,2))
-  v3(1)=thisGraph%getVertIndex(superTri(:,3))
+  v1(1)=this%getVertIndex(superTri(:,1))
+  v2(1)=this%getVertIndex(superTri(:,2))
+  v3(1)=this%getVertIndex(superTri(:,3))
   complete=.FALSE.
   nTri=1
 
@@ -1577,12 +1701,12 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
       IF(.NOT. complete(j)) THEN
         !Check to see if it is inside the circumcircle
         !of triangle j
-        x1=thisGraph%vertices(1,v1(j))
-        x2=thisGraph%vertices(1,v2(j))
-        x3=thisGraph%vertices(1,v3(j))
-        y1=thisGraph%vertices(2,v1(j))
-        y2=thisGraph%vertices(2,v2(j))
-        y3=thisGraph%vertices(2,v3(j))
+        x1=this%vertices(1,v1(j))
+        x2=this%vertices(1,v2(j))
+        x3=this%vertices(1,v3(j))
+        y1=this%vertices(2,v1(j))
+        y2=this%vertices(2,v2(j))
+        y3=this%vertices(2,v3(j))
 
         r1=x1*x1+y1*y1
         r2=x2*x2+y2*y2
@@ -1652,51 +1776,31 @@ SUBROUTINE triangulateVerts_graphType(thisGraph)
         nTri=nTri+1
         v1(nTri)=polEdges(1,j)
         v2(nTri)=polEdges(2,j)
-        v3(nTri)=thisGraph%getVertIndex(verts(:,i))
+        v3(nTri)=this%getVertIndex(verts(:,i))
         complete(nTri)=.FALSE.
       ENDIF
     ENDDO
   ENDDO !End loop over each vertex
   !Create edges of final triangulation
   DO i=1,nTri
-    CALL thisGraph%defineEdge(thisGraph%vertices(:,v1(i)), &
-        thisGraph%vertices(:,v2(i)))
-    CALL thisGraph%defineEdge(thisGraph%vertices(:,v2(i)), &
-        thisGraph%vertices(:,v3(i)))
-    CALL thisGraph%defineEdge(thisGraph%vertices(:,v3(i)), &
-        thisGraph%vertices(:,v1(i)))
+    CALL this%defineEdge(this%vertices(:,v1(i)), &
+        this%vertices(:,v2(i)))
+    CALL this%defineEdge(this%vertices(:,v2(i)), &
+        this%vertices(:,v3(i)))
+    CALL this%defineEdge(this%vertices(:,v3(i)), &
+        this%vertices(:,v1(i)))
   ENDDO
   !Remove superTriangle from arrays
-  CALL thisGraph%removeVertex(superTri(:,1))
-  CALL thisGraph%removeVertex(superTri(:,2))
-  CALL thisGraph%removeVertex(superTri(:,3))
+  CALL this%removeVertex(superTri(:,1))
+  CALL this%removeVertex(superTri(:,2))
+  CALL this%removeVertex(superTri(:,3))
 ENDSUBROUTINE triangulateVerts_graphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
-!>
-SUBROUTINE assign_GraphType(g0,g1)
-  TYPE(GraphType),INTENT(INOUT) :: g0
-  TYPE(GraphType),INTENT(IN) :: g1
-  INTEGER(SIK) :: n
-  CALL clear_graphType(g0)
-  n=nVert_GraphType(g1)
-  IF(n > 0) THEN
-    CALL dmallocA(g0%vertices,2,n)
-    CALL dmallocA(g0%edgeMatrix,n,n)
-    CALL dmallocA(g0%quadEdges,3,n,n)
-    g0%vertices=g1%vertices
-    g0%edgeMatrix=g1%edgeMatrix
-    g0%quadEdges=g1%quadEdges
-  ENDIF
-ENDSUBROUTINE assign_GraphType
-!
-!-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief Checks for equality between 2 graph objects
+!> @param g0 the first graph to compare
+!> @param g1 the second graph to compare
+!> @returns bool the result
 !>
 ELEMENTAL FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
   TYPE(GraphType),INTENT(IN) :: g0
@@ -1730,55 +1834,24 @@ ELEMENTAL FUNCTION isequal_GraphType(g0,g1) RESULT(bool)
     ENDIF
   ENDIF
 ENDFUNCTION isequal_GraphType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief
-!!> @param
-!!>
-!!>
-!!>
-!    FUNCTION add_GraphType(g0,g1) RESULT(g)
-!      TYPE(GraphType),INTENT(IN) :: g0
-!      TYPE(GraphType),INTENT(IN) :: g1
-!      TYPE(GraphType) :: g
-!      INTEGER(SIK) :: i,j,n
-!
-!      CALL clear_graphType(g)
-!      g=g0
-!      n=nVert_graphType(g1)
-!      DO i=1,n
-!        CALL insertVertex_graphType(g,g1%vertices(:,i))
-!      ENDDO
-!      DO j=1,n
-!        DO i=j+1,n
-!          IF(g1%edgeMatrix(i,j) == 1) THEN
-!            CALL defineEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j))
-!          ELSEIF(g1%edgeMatrix(i,j) == -1) THEN
-!            CALL defineQuadEdge_graphType(g,g1%vertices(:,i),g1%vertices(:,j), &
-!              g1%quadEdges(1:2,i,j),g1%quadEdges(3,i,j))
-!          ENDIF
-!        ENDDO
-!      ENDDO
-!    ENDFUNCTION add_GraphType
-!
 !
 !-------------------------------------------------------------------------------
 !> @brief
 !> @param
 !>
-SUBROUTINE init_DAGraphType(thisGraph,n,nodes)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE init_DAGraphType(this,n,nodes)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: n
   INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: nodes(:)
 
-  IF(.NOT. ALLOCATED(thisGraph%nodes) .AND. ALLOCATED(nodes)) THEN
+  IF(.NOT. ALLOCATED(this%nodes) .AND. ALLOCATED(nodes)) THEN
     IF(n > 0) THEN
       IF(SIZE(nodes) == n) THEN
-        thisGraph%n=n
-        ALLOCATE(thisGraph%nodes(n))
-        ALLOCATE(thisGraph%edgeMatrix(n,n))
-        thisGraph%nodes=nodes
-        thisGraph%edgeMatrix=0
+        this%n=n
+        ALLOCATE(this%nodes(n))
+        ALLOCATE(this%edgeMatrix(n,n))
+        this%nodes=nodes
+        this%edgeMatrix=0
       ENDIF
     ENDIF
   ENDIF
@@ -1788,20 +1861,20 @@ ENDSUBROUTINE init_DAGraphType
 !> @brief
 !> @param
 !>
-SUBROUTINE clear_DAGraphType(thisGraph)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE clear_DAGraphType(this)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
 
-  thisGraph%n=0
-  IF(ALLOCATED(thisGraph%nodes)) DEALLOCATE(thisGraph%nodes)
-  IF(ALLOCATED(thisGraph%edgeMatrix)) DEALLOCATE(thisGraph%edgeMatrix)
+  this%n=0
+  IF(ALLOCATED(this%nodes)) DEALLOCATE(this%nodes)
+  IF(ALLOCATED(this%edgeMatrix)) DEALLOCATE(this%edgeMatrix)
 ENDSUBROUTINE clear_DAGraphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
 !> @param
 !>
-SUBROUTINE insertNode_DAGraphType(thisGraph,ID,ind)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE insertNode_DAGraphType(this,ID,ind)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: ID
   INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
   INTEGER(SIK) :: index
@@ -1809,37 +1882,37 @@ SUBROUTINE insertNode_DAGraphType(thisGraph,ID,ind)
 
   index=1
   IF(PRESENT(ind)) index=ind
-  IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
-    IF(ALL(thisGraph%nodes /= ID)) THEN
+  IF(ALLOCATED(this%edgeMatrix)) THEN
+    IF(ALL(this%nodes /= ID)) THEN
       !Store values temporarily
-      ALLOCATE(tmpNodes(thisGraph%n))
-      ALLOCATE(tmpEdges(thisGraph%n,thisGraph%n))
-      tmpNodes=thisGraph%nodes
-      tmpEdges=thisGraph%edgeMatrix
+      ALLOCATE(tmpNodes(this%n))
+      ALLOCATE(tmpEdges(this%n,this%n))
+      tmpNodes=this%nodes
+      tmpEdges=this%edgeMatrix
       !Resize arrays on graph type
-      DEALLOCATE(thisGraph%nodes)
-      DEALLOCATE(thisGraph%edgeMatrix)
-      thisGraph%n=thisGraph%n+1
-      ALLOCATE(thisGraph%nodes(thisGraph%n))
-      ALLOCATE(thisGraph%edgeMatrix(thisGraph%n,thisGraph%n))
-      thisGraph%edgeMatrix=0
+      DEALLOCATE(this%nodes)
+      DEALLOCATE(this%edgeMatrix)
+      this%n=this%n+1
+      ALLOCATE(this%nodes(this%n))
+      ALLOCATE(this%edgeMatrix(this%n,this%n))
+      this%edgeMatrix=0
       !reassign old data and assign new node
-      thisGraph%nodes(1:index-1)=tmpNodes(1:index-1)
-      thisGraph%nodes(index)=ID
-      thisGraph%nodes(index+1:thisGraph%n)=tmpNodes(index:)
-      thisGraph%edgeMatrix(1:index-1,1:index-1)=tmpEdges(1:index-1,1:index-1)
-      thisGraph%edgeMatrix(index+1:,1:index-1)=tmpEdges(index:,1:index-1)
-      thisGraph%edgeMatrix(1:index-1,index+1:)=tmpEdges(1:index-1,index:)
-      thisGraph%edgeMatrix(index+1:,index+1:)=tmpEdges(index:,index:)
+      this%nodes(1:index-1)=tmpNodes(1:index-1)
+      this%nodes(index)=ID
+      this%nodes(index+1:this%n)=tmpNodes(index:)
+      this%edgeMatrix(1:index-1,1:index-1)=tmpEdges(1:index-1,1:index-1)
+      this%edgeMatrix(index+1:,1:index-1)=tmpEdges(index:,1:index-1)
+      this%edgeMatrix(1:index-1,index+1:)=tmpEdges(1:index-1,index:)
+      this%edgeMatrix(index+1:,index+1:)=tmpEdges(index:,index:)
       DEALLOCATE(tmpNodes)
       DEALLOCATE(tmpEdges)
     ENDIF
   ELSE
-    ALLOCATE(thisGraph%edgeMatrix(1,1))
-    ALLOCATE(thisGraph%nodes(1))
-    thisGraph%edgeMatrix=0
-    thisGraph%nodes=ID
-    thisGraph%n=1
+    ALLOCATE(this%edgeMatrix(1,1))
+    ALLOCATE(this%nodes(1))
+    this%edgeMatrix=0
+    this%nodes=ID
+    this%n=1
   ENDIF
 ENDSUBROUTINE insertNode_DAGraphType
 !
@@ -1847,8 +1920,8 @@ ENDSUBROUTINE insertNode_DAGraphType
 !> @brief
 !> @param
 !>
-SUBROUTINE removeNode_DAGraphType(thisGraph,ID,ind)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeNode_DAGraphType(this,ID,ind)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN),OPTIONAL :: ID
   INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
   INTEGER(SIK) :: i,index
@@ -1856,16 +1929,16 @@ SUBROUTINE removeNode_DAGraphType(thisGraph,ID,ind)
   index=0
   IF(PRESENT(ID)) THEN
     !Find the index to remove
-    DO i=1,thisGraph%n
-      IF(ID == thisGraph%nodes(i)) THEN
+    DO i=1,this%n
+      IF(ID == this%nodes(i)) THEN
         index=i
         EXIT
       ENDIF
     ENDDO
     !If the ID was found, remove the index.
-    IF(index > 0) CALL removeNodeByIndex_DAGraphType(thisGraph,index)
+    IF(index > 0) CALL removeNodeByIndex_DAGraphType(this,index)
   ELSEIF(PRESENT(ind)) THEN
-    CALL removeNodeByIndex_DAGraphType(thisGraph,ind)
+    CALL removeNodeByIndex_DAGraphType(this,ind)
   ENDIF
 ENDSUBROUTINE removeNode_DAGraphType
 !
@@ -1873,36 +1946,36 @@ ENDSUBROUTINE removeNode_DAGraphType
 !> @brief
 !> @param
 !>
-SUBROUTINE removeNodeByIndex_DAGraphType(thisGraph,ind)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeNodeByIndex_DAGraphType(this,ind)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: ind
   INTEGER(SIK) :: i
   INTEGER(SIK),ALLOCATABLE :: tmpN(:),tmpEdge(:,:)
 
-  IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
-    IF((1 <= ind) .AND. (ind <= thisGraph%n)) THEN
+  IF(ALLOCATED(this%edgeMatrix)) THEN
+    IF((1 <= ind) .AND. (ind <= this%n)) THEN
       !Store values temporarily
-      i=thisGraph%n
+      i=this%n
       ALLOCATE(tmpN(i))
       ALLOCATE(tmpEdge(i,i))
-      tmpN=thisGraph%nodes
-      tmpEdge=thisGraph%edgeMatrix
+      tmpN=this%nodes
+      tmpEdge=this%edgeMatrix
       !Resize arrays on graph type
-      DEALLOCATE(thisGraph%nodes)
-      DEALLOCATE(thisGraph%edgeMatrix)
-      thisGraph%n=thisGraph%n-1
-      IF(thisGraph%n > 0) THEN
-        ALLOCATE(thisGraph%nodes(thisGraph%n))
-        ALLOCATE(thisGraph%edgeMatrix(thisGraph%n,thisGraph%n))
-        thisGraph%edgeMatrix=0
+      DEALLOCATE(this%nodes)
+      DEALLOCATE(this%edgeMatrix)
+      this%n=this%n-1
+      IF(this%n > 0) THEN
+        ALLOCATE(this%nodes(this%n))
+        ALLOCATE(this%edgeMatrix(this%n,this%n))
+        this%edgeMatrix=0
         !reassign old data and assign new node
-        thisGraph%nodes(1:ind-1)=tmpN(1:ind-1)
-        thisGraph%edgeMatrix(1:ind-1,1:ind-1)=tmpEdge(1:ind-1,1:ind-1)
-        IF(ind <= thisGraph%n) THEN
-          thisGraph%nodes(ind:thisGraph%n)=tmpN(ind+1:)
-          thisGraph%edgeMatrix(ind:,1:ind-1)=tmpEdge(ind+1:,1:ind-1)
-          thisGraph%edgeMatrix(1:ind-1,ind:)=tmpEdge(1:ind-1,ind+1:)
-          thisGraph%edgeMatrix(ind:,ind:)=tmpEdge(ind+1:,ind+1:)
+        this%nodes(1:ind-1)=tmpN(1:ind-1)
+        this%edgeMatrix(1:ind-1,1:ind-1)=tmpEdge(1:ind-1,1:ind-1)
+        IF(ind <= this%n) THEN
+          this%nodes(ind:this%n)=tmpN(ind+1:)
+          this%edgeMatrix(ind:,1:ind-1)=tmpEdge(ind+1:,1:ind-1)
+          this%edgeMatrix(1:ind-1,ind:)=tmpEdge(1:ind-1,ind+1:)
+          this%edgeMatrix(ind:,ind:)=tmpEdge(ind+1:,ind+1:)
         ENDIF
       ENDIF
       !CALL demalloc(tmpint)
@@ -1915,8 +1988,8 @@ ENDSUBROUTINE removeNodeByIndex_DAGraphType
 !> @brief
 !> @param
 !>
-FUNCTION isStartNode_DAGraphType(thisGraph,ID,ind) RESULT(bool)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+FUNCTION isStartNode_DAGraphType(this,ID,ind) RESULT(bool)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN),OPTIONAL :: ID
   INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
   INTEGER(SIK) :: index
@@ -1924,10 +1997,10 @@ FUNCTION isStartNode_DAGraphType(thisGraph,ID,ind) RESULT(bool)
 
   bool=.FALSE.
   IF(PRESENT(ID)) THEN
-    index=thisGraph%getIndex(ID)
-    IF(ALL(thisGraph%edgeMatrix(:,index) == 0)) bool=.TRUE.
+    index=this%getIndex(ID)
+    IF(ALL(this%edgeMatrix(:,index) == 0)) bool=.TRUE.
   ELSEIF(PRESENT(ind)) THEN
-    IF(ALL(thisGraph%edgeMatrix(:,ind) == 0)) bool=.TRUE.
+    IF(ALL(this%edgeMatrix(:,ind) == 0)) bool=.TRUE.
   ENDIF
 ENDFUNCTION isStartNode_DAGraphType
 !
@@ -1935,16 +2008,16 @@ ENDFUNCTION isStartNode_DAGraphType
 !> @brief
 !> @param
 !>
-SUBROUTINE getNextStartNode_DAGraphType(thisGraph,old,ID)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE getNextStartNode_DAGraphType(this,old,ID)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(INOUT) :: old(:)
   INTEGER(SIK),INTENT(OUT) :: ID
   INTEGER(SIK) :: i
 
   ID=0
-  DO i=1,thisGraph%n
-    IF(thisGraph%isStartNode(IND=i) .AND. ALL(thisGraph%nodes(i) /= old)) THEN
-      ID=thisGraph%nodes(i)
+  DO i=1,this%n
+    IF(this%isStartNode(IND=i) .AND. ALL(this%nodes(i) /= old)) THEN
+      ID=this%nodes(i)
       old(i)=ID
       EXIT
     ENDIF
@@ -1955,16 +2028,16 @@ ENDSUBROUTINE getNextStartNode_DAGraphType
 !> @brief
 !> @param
 !>
-SUBROUTINE defineEdge_DAGraphType(thisGraph,fromID,toID)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE defineEdge_DAGraphType(this,fromID,toID)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: fromID
   INTEGER(SIK),INTENT(IN) :: toID
   INTEGER(SIK) :: fromInd,toInd
 
-  IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
-    fromInd=thisGraph%getIndex(fromID)
-    toInd=thisGraph%getIndex(toID)
-    IF((fromInd > 0) .AND. (toInd > 0)) thisGraph%edgeMatrix(fromInd,toInd)=1
+  IF(ALLOCATED(this%edgeMatrix)) THEN
+    fromInd=this%getIndex(fromID)
+    toInd=this%getIndex(toID)
+    IF((fromInd > 0) .AND. (toInd > 0)) this%edgeMatrix(fromInd,toInd)=1
   ENDIF
 ENDSUBROUTINE defineEdge_DAGraphType
 !
@@ -1972,16 +2045,16 @@ ENDSUBROUTINE defineEdge_DAGraphType
 !> @brief
 !> @param
 !>
-SUBROUTINE removeEdge_DAGraphType(thisGraph,fromID,toID)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE removeEdge_DAGraphType(this,fromID,toID)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: fromID
   INTEGER(SIK),INTENT(IN) :: toID
   INTEGER(SIK) :: fromInd,toInd
 
-  IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
-    fromInd=thisGraph%getIndex(fromID)
-    toInd=thisGraph%getIndex(toID)
-    IF((fromInd > 0) .AND. (toInd > 0)) thisGraph%edgeMatrix(fromInd,toInd)=0
+  IF(ALLOCATED(this%edgeMatrix)) THEN
+    fromInd=this%getIndex(fromID)
+    toInd=this%getIndex(toID)
+    IF((fromInd > 0) .AND. (toInd > 0)) this%edgeMatrix(fromInd,toInd)=0
   ENDIF
 ENDSUBROUTINE removeEdge_DAGraphType
 !
@@ -1989,15 +2062,15 @@ ENDSUBROUTINE removeEdge_DAGraphType
 !> @brief
 !> @param
 !>
-FUNCTION getIndex_DAGraphType(thisGraph,ID) RESULT(ind)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+FUNCTION getIndex_DAGraphType(this,ID) RESULT(ind)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: ID
   INTEGER(SIK) :: i,ind
 
   ind=0
-  IF(ALLOCATED(thisGraph%edgeMatrix)) THEN
-    DO i=1,thisGraph%n
-      IF(thisGraph%nodes(i) == ID) THEN
+  IF(ALLOCATED(this%edgeMatrix)) THEN
+    DO i=1,this%n
+      IF(this%nodes(i) == ID) THEN
         ind=i
         EXIT
       ENDIF
@@ -2009,26 +2082,29 @@ ENDFUNCTION getIndex_DAGraphType
 !> @brief Kahn's Algorithm for Topological Sorting (KATS).
 !> @param
 !>
-SUBROUTINE KATS_DAGraphType(thisGraph)
-  CLASS(DAGraphType),INTENT(INOUT) :: thisGraph
+SUBROUTINE KATS_DAGraphType(this)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
   TYPE(DAGraphType) :: sortedGraph
   INTEGER(SIK) :: i,ID
   INTEGER(SIK),ALLOCATABLE :: oldIDs(:)
 
   ID=0
-  ALLOCATE(oldIDs(thisGraph%n))
+  ALLOCATE(oldIDs(this%n))
   oldIDs=0
-  CALL thisGraph%getNextStartNode(oldIDs,ID)
+  CALL this%getNextStartNode(oldIDs,ID)
 
   DO WHILE(ID /= 0)
     CALL sortedGraph%insertNode(ID,1)
-    DO i=1,thisGraph%n
-      CALL thisGraph%removeEdge(ID,thisGraph%nodes(i))
+    DO i=1,this%n
+      CALL this%removeEdge(ID,this%nodes(i))
     ENDDO
-    CALL thisGraph%getNextStartNode(oldIDs,ID)
+    CALL this%getNextStartNode(oldIDs,ID)
   ENDDO
-  IF(ALL(thisGraph%edgeMatrix == 0)) thisGraph=sortedGraph
-  !IF(ALL(thisGraph%edgeMatrix == 0)) CALL assign_DAGraphType(thisGraph,sortedGraph)
+  IF(ALL(this%edgeMatrix == 0)) THEN
+    SELECTTYPE(this); TYPE IS(DAGraphtype)
+      this=sortedGraph
+    ENDSELECT
+  ENDIF
   DEALLOCATE(oldIDs)
 ENDSUBROUTINE KATS_DAGraphType
 !
