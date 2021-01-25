@@ -7,7 +7,7 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
-SET(EXAMPLENAME exampleFMU2)
+SET(EXAMPLENAME exampleFMU2_rectifier)
 
 TRIBITS_ADD_EXECUTABLE(${EXAMPLENAME}
     SOURCES ${EXAMPLENAME}.f90
@@ -16,7 +16,7 @@ TRIBITS_ADD_EXECUTABLE(${EXAMPLENAME}
 UNSET(EXAMPLENAME)
 
 
-SET(EXAMPLENAME exampleFMU2_MSRE_HX)
+SET(EXAMPLENAME exampleFMU2_bouncing_ball)
 
 TRIBITS_ADD_EXECUTABLE(${EXAMPLENAME}
     SOURCES ${EXAMPLENAME}.f90
