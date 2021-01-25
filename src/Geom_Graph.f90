@@ -176,6 +176,25 @@ TYPE :: GraphType
     !> @copydetails Geom_Graph::removeEdge_index
     PROCEDURE,PASS,PRIVATE :: removeEdge_index
     GENERIC :: removeEdge => removeEdge_point,removeEdge_coords,removeEdge_index
+    !> @copybrief Geom_Graph::divideEdge_scalar
+    !> @copydetails Geom_Graph::divideEdge_scalar
+    PROCEDURE,PASS,PRIVATE :: divideEdge_scalar
+    !> @copybrief Geom_Graph::divideEdge_array
+    !> @copydetails Geom_Graph::divideEdge_array
+    PROCEDURE,PASS,PRIVATE :: divideEdge_array
+    GENERIC :: divideEdge => divideEdge_scalar,divideEdge_array
+    !> @copybrief Geom_Graph::divideLinearEdge
+    !> @copydetails Geom_Graph::divideLinearEdge
+    PROCEDURE,PASS :: divideLinearEdge
+    !> @copybrief Geom_Graph::divideQuadraticEdge
+    !> @copydetails Geom_Graph::divideQuadraticEdge
+    PROCEDURE,PASS :: divideQuadraticEdge
+    !> @copybrief Geom_Graph::applyLinearSplit
+    !> @copydetails Geom_Graph::applyLinearSplit
+    PROCEDURE,PASS,PRIVATE :: applyLinearSplit
+    !> @copybrief Geom_Graph::applyQuadraticSplit
+    !> @copydetails Geom_Graph::applyQuadraticSplit
+    PROCEDURE,PASS,PRIVATE :: applyQuadraticSplit
     !> @copybrief Geom_Graph::removeFilamentFromVert
     !> @copydetails Geom_Graph::removeFilamentFromVert
     PROCEDURE,PASS :: removeFilamentFromVert
@@ -190,7 +209,7 @@ TYPE :: GraphType
     PROCEDURE,PASS :: editToVTK => editToVTK_graphType
     !> @copybrief Geom_Graph::combine_graphType
     !> @copydetails Geom_Graph::combine_graphType
-    PROCEDURE,PASS :: combineGraph => combine_graphType
+    PROCEDURE,PASS :: combineGraph => combine_GraphType
     !> @copybrief Geom_Graph::triangulateVerts_graphType
     !> @copydetails Geom_Graph::triangulateVerts_graphType
     PROCEDURE,PASS :: triangulateVerts => triangulateVerts_graphType
@@ -1212,6 +1231,214 @@ ENDSUBROUTINE clear_graphType
 SUBROUTINE combine_GraphType(this,g)
   CLASS(GraphType),INTENT(INOUT) :: this
   TYPE(GraphType),INTENT(IN) :: g
+  !
+  INTEGER(SIK) :: source_i1,source_i2,source_edge_type,edge_endpoint_i1,edge_endpoint_i2
+  INTEGER(SIK) :: target_edge_type
+  TYPE(PointType) :: source_p1,source_p2,target_p1,target_p2,centroid
+  TYPE(PointType) :: intersect_p1,intersect_p2
+  TYPE(PointType),ALLOCATABLE :: intersection_points(:)
+  TYPE(LineType) :: source_line,target_line
+  TYPE(CircleType) :: source_circle,target_circle
+  TYPE(GraphType) :: source_edge,target,source
+
+  target=this
+  source=g
+
+  DO WHILE(source%nEdge() > 0)
+    !Find the next edge in the source graph
+    find_source_edge: DO source_i1=1,source%nVert()
+      DO source_i2=source_i1+1,source%nVert()
+        IF(source%edgeMatrix(source_i1,source_i2) /= 0) THEN
+          EXIT find_source_edge
+        ENDIF
+      ENDDO !source_i1
+    ENDDO find_source_edge
+    source_edge_type = source%edgeMatrix(source_i1,source_i2)
+
+    !Get the coordinates for the source edge
+    CALL source_p1%init(COORD=source%vertices(1:2,source_i1))
+    CALL source_p2%init(COORD=source%vertices(1:2,source_i2))
+
+    !Set up a separate graph that will just contain this edge
+    CALL source_edge%insertVertex(source_p1)
+    CALL source_edge%insertVertex(source_p2)
+    SELECTCASE(source_edge_type)
+    CASE(GRAPH_LINEAR_EDGE)
+      CALL source_edge%defineEdge(source_p1,source_p2)
+    CASE(GRAPH_QUADRATIC_EDGE)
+      CALL centroid%init(COORD=source%quadEdges(1:2,source_i1,source_i2))
+      CALL source_edge%defineEdge(source_p1,source_p2,centroid,source%quadEdges(3,source_i1,source_i2))
+      CALL centroid%clear()
+    ENDSELECT
+
+    !Set up either a line or a circle object for the source edge
+    SELECTCASE(source_edge_type)
+    CASE(GRAPH_LINEAR_EDGE)
+      CALL source_line%set(source_p1,source_p2)
+    CASE(GRAPH_QUADRATIC_EDGE)
+      CALL centroid%init(COORD=source%quadEdges(1:2,source_i1,source_i2))
+      source_circle=generateCircle(source_p1,source_p2, &
+          centroid,source%quadEdges(3,source_i1,source_i2))
+      CALL centroid%clear()
+    ENDSELECT
+
+    !Loop over all target edges and search for intersections
+    DO edge_endpoint_i1=1,this%nVert()
+      DO edge_endpoint_i2=edge_endpoint_i1+1,this%nVert()
+        target_edge_type=this%edgeMatrix(edge_endpoint_i1,edge_endpoint_i2)
+        !If there's no edge, then just cycle to the next set of points
+        IF(target_edge_type == GRAPH_NULL_EDGE) THEN
+          CYCLE
+        ENDIF
+
+        !Get the coordinates for the target edge
+        CALL target_p1%init(COORD=this%vertices(1:2,edge_endpoint_i1))
+        CALL target_p2%init(COORD=this%vertices(1:2,edge_endpoint_i2))
+
+        !Set up either a line or a circle object for the target edge
+        SELECTCASE(target_edge_type)
+        CASE(GRAPH_LINEAR_EDGE)
+          CALL target_line%set(target_p1,target_p2)
+        CASE(GRAPH_QUADRATIC_EDGE)
+          CALL centroid%init(COORD=this%quadEdges(1:2,edge_endpoint_i1,edge_endpoint_i2))
+          target_circle=generateCircle(target_p1,target_p2, &
+              centroid,this%quadEdges(3,edge_endpoint_i1,edge_endpoint_i2))
+          CALL centroid%clear()
+        ENDSELECT
+
+        !Now we need to get all the intersection points.  There can be either
+        !0, 1, or 2 points of interection between the source and target edges:
+        !  Source   Target   Intersections
+        !    line     line     0, 1
+        !    line   circle     0, 1, 2
+        !  circle     line     0, 1, 2
+        !  circle   circle     0, 1, 2
+        SELECTCASE(source_edge_type)
+        CASE(GRAPH_LINEAR_EDGE)
+          SELECTCASE(target_edge_type)
+          CASE(GRAPH_LINEAR_EDGE)
+            intersect_p1 = source_line%intersect(target_line)
+            SELECTCASE(intersect_p1%dim)
+            CASE(2) !Intersection found
+              ALLOCATE(intersection_points(1))
+              intersection_points(1)=intersect_p1
+            CASE DEFAULT !No intersection
+              ALLOCATE(intersection_points(0))
+            ENDSELECT
+          CASE(GRAPH_QUADRATIC_EDGE)
+            CALL target_circle%intersect(source_line,intersect_p1,intersect_p2)
+            !Tangent line, so 1 point of intersection
+            IF(intersect_p1%dim == -3 .AND. intersect_p2%dim == -3) THEN
+              ALLOCATE(intersection_points(1))
+              intersect_p1%dim=2
+              intersection_points(1)=intersect_p1
+            !Two intersections
+            ELSEIF(intersect_p1%dim == 2 .AND. intersect_p2%dim == 2) THEN
+              ALLOCATE(intersection_points(2))
+              intersection_points(1)=intersect_p1
+              intersection_points(2)=intersect_p2
+            !Only the first point is an intersection
+            ELSEIF(intersect_p1%dim == 2) THEN
+              ALLOCATE(intersection_points(1))
+              intersection_points(1)=intersect_p1
+            !Only the second point is an intersection
+            ELSEIF(intersect_p2%dim == 2) THEN
+              ALLOCATE(intersection_points(1))
+              intersection_points(1)=intersect_p2
+            !Neither point is an intersection
+            ELSE
+              ALLOCATE(intersection_points(0))
+            ENDIF
+          ENDSELECT
+        CASE(GRAPH_QUADRATIC_EDGE)
+          SELECTCASE(target_edge_type)
+          CASE(GRAPH_LINEAR_EDGE)
+            CALL source_circle%intersect(target_line,intersect_p1,intersect_p2)
+            !Tangent line, so 1 point of intersection
+            IF(intersect_p1%dim == -3 .AND. intersect_p2%dim == -3) THEN
+              ALLOCATE(intersection_points(1))
+              intersect_p1%dim=2
+              intersection_points(1)=intersect_p1
+            !Two intersections
+            ELSEIF(intersect_p1%dim == 2 .AND. intersect_p2%dim == 2) THEN
+              ALLOCATE(intersection_points(2))
+              intersection_points(1)=intersect_p1
+              intersection_points(2)=intersect_p2
+            !Only the first point is an intersection
+            ELSEIF(intersect_p1%dim == 2) THEN
+              ALLOCATE(intersection_points(1))
+              intersection_points(1)=intersect_p1
+            !Only the second point is an intersection
+            ELSEIF(intersect_p2%dim == 2) THEN
+              ALLOCATE(intersection_points(1))
+              intersection_points(1)=intersect_p2
+            !Neither point is an intersection
+            ELSE
+              ALLOCATE(intersection_points(0))
+            ENDIF
+          CASE(GRAPH_QUADRATIC_EDGE)
+            CALL source_circle%intersect(target_circle,intersect_p1,intersect_p2)
+            !Circles are tangent
+            IF(intersect_p1%dim == -3 .AND. intersect_p2%dim == -3) THEN
+              ALLOCATE(intersection_points(1))
+              intersect_p1%dim=2
+              intersection_points(1)=intersect_p1
+            !Two intersections
+            ELSEIF(intersect_p1%dim == 2 .AND. intersect_p2%dim == 2) THEN
+              ALLOCATE(intersection_points(2))
+              intersection_points(1)=intersect_p1
+              intersection_points(2)=intersect_p2
+            !No intersections found (or circles overlap or some other degerate case)
+            ELSE
+              ALLOCATE(intersection_points(0))
+            ENDIF
+          ENDSELECT
+        ENDSELECT
+        CALL intersect_p1%clear()
+        CALL intersect_p2%clear()
+
+        !Divide the target edge for each intersection
+        CALL target%divideEdge(target_p1,target_p2,intersection_points)
+
+        !Divide the source edge for each intersection
+        CALL source_edge%divideEdge(source_p1,source_p2,intersection_points)
+
+        DEALLOCATE(intersection_points)
+      ENDDO !edge_endpoint_i2
+    ENDDO !edge_endpoint_i1
+
+    !Now we need to insert all the vertexes/edges from the source edge
+    source_i1=1
+    CALL target%insertVertex(source_edge%vertices(1:2,source_i1))
+    DO source_i2=2,source_edge%nVert()
+      CALL target%insertVertex(source_edge%vertices(1:2,source_i2))
+      SELECTCASE(source_edge_type)
+      CASE(GRAPH_LINEAR_EDGE)
+        CALL target%defineEdge(source_p1,source_p2)
+      CASE(GRAPH_QUADRATIC_EDGE)
+        CALL target%defineEdge(source_p1,source_p2,source_circle%c, &
+            source_circle%r)
+      ENDSELECT
+      source_i1=source_i2
+    ENDDO !source_i2
+
+    !Clear up objects
+    CALL source_edge%clear()
+    CALL source_line%clear()
+    CALL source_circle%clear()
+  ENDDO !WHILE(source%nEdge() > 0)
+
+  !Copy the temporary graph into the input graph, then clean up
+  SELECTTYPE(this); TYPE IS(GraphType)
+    this=target
+  ENDSELECT
+  CALL target%clear()
+  CALL source%clear()
+
+ENDSUBROUTINE combine_GraphType
+SUBROUTINE combine_GraphType_old(this,g)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(GraphType),INTENT(IN) :: g
   TYPE(GraphType) :: g0,g1,lineAB
   INTEGER(SIK) :: i,j,n,nAdj,v1,v2
   INTEGER(SIK),ALLOCATABLE :: cwVerts(:)
@@ -1626,7 +1853,260 @@ SUBROUTINE combine_GraphType(this,g)
   CALL lineAB%clear()
   CALL g0%clear()
   CALL g1%clear()
-ENDSUBROUTINE combine_GraphType
+ENDSUBROUTINE combine_GraphType_old
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE divideEdge_array(this,endpoint_p1,endpoint_p2,intersections)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: endpoint_p1
+  TYPE(PointType),INTENT(IN) :: endpoint_p2
+  TYPE(PointType),INTENT(IN) :: intersections(:)
+  !
+  INTEGER(SIK) :: i
+
+  IF(SIZE(intersections) > 0) THEN
+    CALL this%divideEdge_scalar(endpoint_p1,endpoint_p2,intersections(1))
+  ENDIF
+  DO i=2,SIZE(intersections)
+    CALL this%divideEdge_scalar(intersections(i-1),endpoint_p2,intersections(i))
+  ENDDO !i
+
+ENDSUBROUTINE divideEdge_array
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE divideEdge_scalar(this,endpoint_p1,endpoint_p2,intersection)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: endpoint_p1
+  TYPE(PointType),INTENT(IN) :: endpoint_p2
+  TYPE(PointType),INTENT(IN) :: intersection
+  !
+  INTEGER(SIK) :: endpoint_i1,endpoint_i2
+
+  endpoint_i1=this%getVertIndex(endpoint_p1)
+  endpoint_i2=this%getVertIndex(endpoint_p2)
+
+  SELECTCASE(this%edgeMatrix(endpoint_i1,endpoint_i2))
+  !No edge, so do nothing
+  CASE(GRAPH_NULL_EDGE)
+    CONTINUE
+  !Linear edge
+  CASE(GRAPH_LINEAR_EDGE)
+    CALL this%divideEdge(endpoint_p1,endpoint_p2,intersection)
+  !Quadratic edge
+  CASE(GRAPH_QUADRATIC_EDGE)
+    CALL this%divideEdge(endpoint_p1,endpoint_p2,intersection)
+  ENDSELECT
+
+ENDSUBROUTINE divideEdge_scalar
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE divideLinearEdge(this,endpoint_p1,endpoint_p2,intersection)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: endpoint_p1
+  TYPE(PointType),INTENT(IN) :: endpoint_p2
+  TYPE(PointType),INTENT(IN) :: intersection
+  !
+  LOGICAL(SBK) :: lnewPoint
+  INTEGER(SIK) :: endpoint_i1,endpoint_i2,intersection_index
+  TYPE(PointType) :: new_midpoint
+
+  REQUIRE(endpoint_p1%dim == 2)
+  REQUIRE(endpoint_p2%dim == 2)
+  REQUIRE(intersection%dim == 2)
+  REQUIRE(this%edgeMatrix(this%getVertIndex(endpoint_p1),this%getVertIndex(endpoint_p2)) \
+      == GRAPH_LINEAR_EDGE)
+
+  !If the intersection point already exists, get the index
+  intersection_index=this%getVertIndex(intersection)
+  !If it wasn't found, add it and get the index
+  IF(intersection_index == -1) THEN
+    lnewPoint=.TRUE.
+    CALL this%insertVertex(intersection)
+    intersection_index=this%getVertIndex(intersection)
+  ELSE
+    lnewPoint=.FALSE.
+  ENDIF
+
+  !Get the endpoint indexes after inserting new points
+  endpoint_i1=this%getVertIndex(endpoint_p1)
+  endpoint_i2=this%getVertIndex(endpoint_p2)
+
+  !If the point is new, we know there are no edges, so we can just easily add them
+  IF(lnewPoint) THEN
+    CALL this%applyLinearSplit(endpoint_i1,endpoint_i2,intersection_index)
+  !The point existed before, so we need to do some special handling for pre-existing
+  !edges
+  ELSE
+    !No quadratic edges, so the new linear edges can just be added like normal
+    !If any linear edges already existed, then they'll just remain
+    IF(ANY(this%edgeMatrix(endpoint_i1,intersection_index) == [GRAPH_NULL_EDGE,GRAPH_LINEAR_EDGE]) .AND. &
+        ANY(this%edgeMatrix(intersection_index,endpoint_i2) == [GRAPH_NULL_EDGE,GRAPH_LINEAR_EDGE])) THEN
+      CALL this%applyLinearSplit(endpoint_i1,endpoint_i2,intersection_index)
+    !At least one edge is quadratic, so we have to do some extra work.  Basically, we'll insert
+    !an addition vertex between the point of intersection and the endpoint, then draw 2 linear
+    !edges to make the connection.  This prevents overwriting the quadratic edge(s) that already
+    !existed
+    ELSE
+      !There's a quadratic edge here, so get the midpoint and divide again
+      IF(this%edgeMatrix(endpoint_i1,intersection_index) == GRAPH_QUADRATIC_EDGE) THEN
+        CALL this%getMidPointOnEdge(endpoint_p1,intersection,new_midpoint)
+        CALL this%divideQuadraticEdge(endpoint_p1,intersection,new_midpoint)
+        CALL new_midpoint%clear()
+        CALL this%defineEdge(endpoint_p1,intersection)
+        !Get the endpoint indexes after inserting new points
+        endpoint_i1=this%getVertIndex(endpoint_p1)
+        endpoint_i2=this%getVertIndex(endpoint_p2)
+        intersection_index=this%getVertIndex(intersection)
+        !No quadratic edge for this part, so just apply the split
+      ELSE
+        CALL this%defineEdge(endpoint_p1,intersection)
+      ENDIF
+      !There's a quadratic edge here, so get the midpoint and divide again
+      IF(this%edgeMatrix(intersection_index,endpoint_i2) == GRAPH_QUADRATIC_EDGE) THEN
+        CALL this%getMidPointOnEdge(intersection,endpoint_p2,new_midpoint)
+        CALL this%divideQuadraticEdge(intersection,endpoint_p2,new_midpoint)
+        CALL new_midpoint%clear()
+        CALL this%defineEdge(endpoint_p1,intersection)
+      !No quadratic edge for this part, so just apply the split
+      ELSE
+        CALL this%defineEdge(intersection,endpoint_p2)
+      ENDIF
+      CALL this%removeEdge(endpoint_i1,endpoint_i2)
+    ENDIF
+  ENDIF
+
+ENDSUBROUTINE divideLinearEdge
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE applyLinearSplit(this,endpoint_i1,endpoint_i2,intersection)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  INTEGER(SIK),INTENT(IN) :: endpoint_i1
+  INTEGER(SIK),INTENT(IN) :: endpoint_i2
+  INTEGER(SIK),INTENT(IN) :: intersection
+
+  CALL this%removeEdge(endpoint_i1,endpoint_i2)
+  CALL this%defineEdge(this%vertices(:,endpoint_i1),this%vertices(:,intersection))
+  CALL this%defineEdge(this%vertices(:,intersection),this%vertices(:,endpoint_i2))
+
+ENDSUBROUTINE applyLinearSplit
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE divideQuadraticEdge(this,endpoint_p1,endpoint_p2,intersection)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  TYPE(PointType),INTENT(IN) :: endpoint_p1
+  TYPE(PointType),INTENT(IN) :: endpoint_p2
+  TYPE(PointType),INTENT(IN) :: intersection
+  !
+  LOGICAL(SBK) :: lnewPoint
+  INTEGER(SIK) :: endpoint_i1,endpoint_i2,intersection_index
+  REAL(SRK) :: radius
+  TYPE(PointType) :: new_midpoint,centroid
+
+  REQUIRE(endpoint_p1%dim == 2)
+  REQUIRE(endpoint_p2%dim == 2)
+  REQUIRE(intersection%dim == 2)
+  REQUIRE(this%edgeMatrix(this%getVertIndex(endpoint_p1),this%getVertIndex(endpoint_p2)) == \
+      GRAPH_QUADRATIC_EDGE)
+
+  !If the intersection point already exists, get the index
+  intersection_index=this%getVertIndex(intersection)
+  !If it wasn't found, add it and get the index
+  IF(intersection_index == -1) THEN
+    lnewPoint=.TRUE.
+    CALL this%insertVertex(intersection)
+    intersection_index=this%getVertIndex(intersection)
+  ELSE
+    lnewPoint=.FALSE.
+  ENDIF
+
+  !Get the endpoint indexes after inserting new points
+  endpoint_i1=this%getVertIndex(endpoint_p1)
+  endpoint_i2=this%getVertIndex(endpoint_p2)
+
+  !If the point is new, we know there are no edges, so we can just easily add them
+  IF(lnewPoint) THEN
+    CALL this%applyQuadraticSplit(endpoint_i1,endpoint_i2,intersection_index)
+  !The point existed before, so we need to do some special handling for pre-existing
+  !edges
+  ELSE
+    !No edges, so the new ones can just be added like normal
+    IF(this%edgeMatrix(endpoint_i1,intersection_index) == GRAPH_NULL_EDGE .AND. &
+        this%edgeMatrix(intersection_index,endpoint_i2) == GRAPH_NULL_EDGE) THEN
+      CALL this%applyQuadraticSplit(endpoint_i1,endpoint_i2,intersection_index)
+    !At least one part of the edge exists before, so we have to do some extra work.
+    !If either pre-existing segment is also quadratic with the same centroid and radius,
+    !then we can just leave it.  Otherwise, we'll need to split the segment again
+    ELSE
+      CALL centroid%init(COORD=this%quadEdges(1:2,endpoint_i1,endpoint_i2))
+      radius=this%quadEdges(3,endpoint_i1,endpoint_i2)
+      !Check for pre-existing edges from endpoint 1
+      SELECTCASE(this%edgeMatrix(endpoint_i1,intersection_index))
+      CASE(GRAPH_QUADRATIC_EDGE)
+        !Parameters match, so just leave that edge alone
+        IF(ALL(centroid%coord .APPROXEQA. this%quadEdges(1:2,endpoint_i1,intersection_index)) .AND. &
+            (radius .APPROXEQA. this%quadEdges(3,endpoint_i1,intersection_index))) THEN
+          CONTINUE
+          !Parameters do not match, so split this new edge
+        ELSE
+          CALL this%getMidPointOnEdge(endpoint_p1,intersection,new_midpoint)
+          CALL this%divideQuadraticEdge(endpoint_p1,intersection,new_midpoint)
+          CALL this%defineEdge(endpoint_p1,intersection,centroid,radius)
+        ENDIF
+      CASE(GRAPH_LINEAR_EDGE)
+        CALL this%divideLinearEdge(endpoint_p1,intersection,Midpoint(endpoint_p1,intersection))
+        CALL this%defineEdge(endpoint_p1,intersection,centroid,radius)
+      CASE(GRAPH_NULL_EDGE)
+        CALL this%defineEdge(endpoint_p1,intersection,centroid,radius)
+      ENDSELECT
+      !Get the endpoint indexes after inserting new points
+      endpoint_i1=this%getVertIndex(endpoint_p1)
+      endpoint_i2=this%getVertIndex(endpoint_p2)
+      intersection_index=this%getVertIndex(intersection)
+      !Check for pre-existing edges from endpoint 2
+      SELECTCASE(this%edgeMatrix(intersection_index,endpoint_i2))
+      CASE(GRAPH_QUADRATIC_EDGE)
+        !Parameters match, so just leave that edge alone
+        IF(ALL(centroid%coord .APPROXEQA. this%quadEdges(1:2,intersection_index,endpoint_i2)) .AND. &
+            (radius .APPROXEQA. this%quadEdges(3,intersection_index,endpoint_i2))) THEN
+          CONTINUE
+          !Parameters do not match, so split this new edge
+        ELSE
+          CALL this%getMidPointOnEdge(intersection,endpoint_p2,new_midpoint)
+          CALL this%divideQuadraticEdge(intersection,endpoint_p2,new_midpoint)
+          CALL this%defineEdge(intersection,endpoint_p2,centroid,radius)
+        ENDIF
+      CASE(GRAPH_LINEAR_EDGE)
+        CALL this%divideLinearEdge(intersection,endpoint_p2,Midpoint(intersection,endpoint_p2))
+        CALL this%defineEdge(intersection,endpoint_p2,centroid,radius)
+      CASE(GRAPH_NULL_EDGE)
+        CALL this%defineEdge(intersection,endpoint_p2,centroid,radius)
+      ENDSELECT
+      CALL this%removeEdge(endpoint_p1,endpoint_p2)
+    ENDIF
+  ENDIF
+
+ENDSUBROUTINE divideQuadraticEdge
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE applyQuadraticSplit(this,endpoint_i1,endpoint_i2,intersection)
+  CLASS(GraphType),INTENT(INOUT) :: this
+  INTEGER(SIK),INTENT(IN) :: endpoint_i1
+  INTEGER(SIK),INTENT(IN) :: endpoint_i2
+  INTEGER(SIK),INTENT(IN) :: intersection
+  !
+  REAL(SRK) :: radius
+  TYPE(PointType) :: centroid
+
+  CALL centroid%init(COORD=this%quadEdges(1:2,endpoint_i1,endpoint_i2))
+  radius=this%quadEdges(3,endpoint_i1,endpoint_i2)
+  CALL this%removeEdge(endpoint_i1,endpoint_i2)
+  CALL this%defineEdge(this%vertices(:,endpoint_i1),this%vertices(:,intersection), &
+      centroid%coord,radius)
+  CALL this%defineEdge(this%vertices(:,intersection),this%vertices(:,endpoint_i2), &
+      centroid%coord,radius)
+  CALL centroid%clear()
+
+ENDSUBROUTINE applyQuadraticSplit
 !
 !-------------------------------------------------------------------------------
 !> @brief Takes cloud of points and computes Delaunay triangulation
