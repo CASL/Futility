@@ -48,18 +48,19 @@ PUBLIC :: eFMU_Wrapper
 !>        Defines interface methods applicable all FMUs and all FMI standards.
 !>        The abstract methods here define what an FMU is, from the perspective of Futilty.
 TYPE,ABSTRACT :: FMU
+  PRIVATE
   !> Initialization status
-  LOGICAL(SBK) :: isInit=.FALSE.
+  LOGICAL(SBK),PUBLIC :: isInit=.FALSE.
   !> Model id
-  INTEGER(SIK) :: idFMU
+  INTEGER(SIK),PUBLIC :: idFMU
   !> Model globaly unique id
-  TYPE(StringType) :: guid
+  TYPE(StringType),PUBLIC :: guid
   !> Model file name used in FMU XML file open
-  TYPE(StringType) :: modelIdentifier
+  TYPE(StringType),PUBLIC :: modelIdentifier
   !> Path to unziped FMU
-  TYPE(StringType) :: unzipDirectory
+  TYPE(StringType),PUBLIC :: unzipDirectory
   !> User defined FMU instance label
-  TYPE(StringType) :: instanceName
+  TYPE(StringType),PUBLIC :: instanceName
   !> XML derived model description
   TYPE(ParamType) :: modelDescription
   !> FMU C opaque pointer to FMU obj

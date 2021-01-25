@@ -76,7 +76,6 @@ SUBROUTINE testLoadFMU()
 
   ASSERT(test_fmu2_slave%isInit,"%fmu_isinit")
   ASSERT(test_fmu2_slave%FMU_version==2_SIK,"%fmu_version")
-  ASSERT(c_associated(test_fmu2_slave%fmu_c_ptr),"fmu_c_ptr")
 
   CALL FMU_params%clear()
 
@@ -143,7 +142,6 @@ SUBROUTINE testClearFMU()
   CALL test_fmu2_slave%clear()
 
   ASSERT(.NOT. test_fmu2_slave%isInit,"%fmu_isinit")
-  ASSERT(.NOT. c_associated(test_fmu2_slave%fmu_c_ptr),"fmu_c_ptr")
 
 ENDSUBROUTINE testClearFMU
 
