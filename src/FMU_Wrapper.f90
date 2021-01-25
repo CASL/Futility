@@ -71,8 +71,6 @@ TYPE,ABSTRACT :: FMU
     PROCEDURE(fmu_init_sub_absintfc),DEFERRED,PASS :: init
     !> Defered clear routine
     PROCEDURE(fmu_clear_sub_absintfc),DEFERRED,PASS :: clear
-    !> Defered setupExperiment routine
-    PROCEDURE(fmu_setupExperiment_sub_absintfc),DEFERRED,PASS :: setupExperiment
     !> Defered getReal routine
     PROCEDURE(fmu_getReal_sub_absintfc),DEFERRED,PASS :: getReal
     !> Defered setReal routine
@@ -97,17 +95,6 @@ ABSTRACT INTERFACE
   SUBROUTINE fmu_clear_sub_absintfc(self)
     IMPORT FMU,SIK,ParamType
     CLASS(FMU),INTENT(INOUT) :: self
-  ENDSUBROUTINE
-  SUBROUTINE fmu_setupExperiment_sub_absintfc(self, toleranceDefined, tolerance, startTime, &
-      stopTimeDefined, stopTime, finalizeInitialization_opt)
-    IMPORT FMU,SIK,SBK,SRK
-    CLASS(FMU),INTENT(INOUT) :: self
-    LOGICAL(SBK),INTENT(IN) :: toleranceDefined
-    REAL(SRK),INTENT(IN) :: tolerance
-    REAL(SRK),INTENT(IN) :: startTime
-    LOGICAL(SBK),INTENT(IN) :: stopTimeDefined
-    REAL(SRK),INTENT(IN) :: stopTime
-    LOGICAL(SBK),INTENT(IN),OPTIONAL :: finalizeInitialization_opt
   ENDSUBROUTINE
   SUBROUTINE fmu_getReal_sub_absintfc(self, valueReference, val)
     IMPORT FMU,SIK,SRK
