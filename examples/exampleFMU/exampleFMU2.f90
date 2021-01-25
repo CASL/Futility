@@ -32,10 +32,8 @@ PROGRAM testFMU2
   REAL(SRK) :: timeStart=0.0_SRK
   REAL(SRK) :: timeEnd=1.0E-1_SRK
   REAL(SRK) :: tol=1.0E-9_SRK
-  REAL(SRK) :: time, v1
-  REAL(SRK) :: minsamplestep
+  REAL(SRK) :: time, voltage1
   INTEGER(SIK) :: i
-  TYPE(StringType) :: varName
 
   ! Example FMU parameter settings
   CALL FMU_params%clear()
@@ -55,9 +53,7 @@ PROGRAM testFMU2
   CALL test_fmu2_slave%setupExperiment(.TRUE., tol, timeStart, .TRUE., timeEnd)
 
   ! set named variables/parameters
-  minsamplestep=2.5e-2_SRK
-  varName="minsamplestep"
-  CALL test_fmu2_slave%setNamedVariable(varName, minsamplestep)
+  CALL test_fmu2_slave%setNamedVariable("minsamplestep", 2.5e-2_SRK)
 
   ! set restart point
   CALL test_fmu2_slave%setRestart()
@@ -65,18 +61,16 @@ PROGRAM testFMU2
 
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
-    CALL test_fmu2_slave%getReal(1, v1)
+    CALL test_fmu2_slave%getReal(1, voltage1)
     CALL test_fmu2_slave%doStep(h)
-    write(*,*) time, v1
+    write(*,*) time, voltage1
   ENDDO
 
   ! get valueReference to variables
-  varName = "internalTime"
-  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), &
-      " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
-  varName = "outputs"
-  WRITE(*,*) CHAR(varName), " valueReference: ", test_fmu2_slave%getValueReference(varName), &
-      " causality: ", CHAR(test_fmu2_slave%getCausality(varName))
+  WRITE(*,*) "internalTime", " valueReference: ", test_fmu2_slave%getValueReference("internalTime"), &
+      " causality: ", CHAR(test_fmu2_slave%getCausality("internalTime"))
+  WRITE(*,*) "outputs", " valueReference: ", test_fmu2_slave%getValueReference("outputs"), &
+      " causality: ", CHAR(test_fmu2_slave%getCausality("outputs"))
 
   ! set restart point
   CALL test_fmu2_slave%setRestart()
@@ -84,9 +78,9 @@ PROGRAM testFMU2
 
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
-    CALL test_fmu2_slave%getReal(1, v1)
+    CALL test_fmu2_slave%getReal(1, voltage1)
     CALL test_fmu2_slave%doStep(h)
-    write(*,*) time, v1
+    write(*,*) time, voltage1
   ENDDO
 
   ! rewind to restart
@@ -95,14 +89,13 @@ PROGRAM testFMU2
 
   DO i=1,10
     CALL test_fmu2_slave%getReal(0, time)
-    CALL test_fmu2_slave%getReal(1, v1)
+    CALL test_fmu2_slave%getReal(1, voltage1)
     CALL test_fmu2_slave%doStep(h)
-    write(*,*) time, v1
+    write(*,*) time, voltage1
   ENDDO
 
   ! get named variables
-  varName = "internalTime"
-  CALL test_fmu2_slave%getNamedVariable(varName, time)
+  CALL test_fmu2_slave%getNamedVariable("internalTime", time)
   WRITE(*,*) "final time: ", time
 
   ! Clean up

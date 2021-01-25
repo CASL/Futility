@@ -105,12 +105,12 @@ SUBROUTINE testStepFMU()
   CALL test_fmu2_slave%setupExperiment(.TRUE., fmu_ode_tol, timeStart, .FALSE., 1.0E20_SRK)
 
   ! Set model parameters
-  CALL test_fmu2_slave%setNamedVariable(gravity_name, grav_accl)
-  CALL test_fmu2_slave%setNamedVariable(coeffRest_name, coeffRest)
+  CALL test_fmu2_slave%setNamedVariable(CHAR(gravity_name), grav_accl)
+  CALL test_fmu2_slave%setNamedVariable(CHAR(coeffRest_name), coeffRest)
 
   ! Set initial conditions
-  CALL test_fmu2_slave%setNamedVariable(ballHeight_name, 1.0_SRK)
-  CALL test_fmu2_slave%setNamedVariable(ballVel_name, 0.0_SRK)
+  CALL test_fmu2_slave%setNamedVariable(CHAR(ballHeight_name), 1.0_SRK)
+  CALL test_fmu2_slave%setNamedVariable(CHAR(ballVel_name), 0.0_SRK)
 
   expected_ballHeight=1.0_SRK
   expected_ballVel=0.0_SRK
@@ -118,8 +118,8 @@ SUBROUTINE testStepFMU()
     CALL test_fmu2_slave%doStep(dt)
     expected_ballHeight=expected_ballHeight+dt*expected_ballVel
     time=time+dt
-    CALL test_fmu2_slave%getNamedVariable(ballHeight_name, ballHeight)
-    CALL test_fmu2_slave%getNamedVariable(ballVel_name, ballVel)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(ballHeight_name), ballHeight)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(ballVel_name), ballVel)
     expected_ballVel=expected_ballVel+dt*grav_accl
     ASSERT_SOFTEQ(ballHeight,expected_ballHeight,1.0E-8_SRK,"%ballHeight")
     ASSERT_SOFTEQ(ballVel,expected_ballVel,1.0E-8_SRK,"%ballVal")

@@ -98,7 +98,8 @@ ABSTRACT INTERFACE
     IMPORT FMU,SIK,ParamType
     CLASS(FMU),INTENT(INOUT) :: self
   ENDSUBROUTINE
-  SUBROUTINE fmu_setupExperiment_sub_absintfc(self, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime, finalizeInitialization_opt)
+  SUBROUTINE fmu_setupExperiment_sub_absintfc(self, toleranceDefined, tolerance, startTime, &
+      stopTimeDefined, stopTime, finalizeInitialization_opt)
     IMPORT FMU,SIK,SBK,SRK
     CLASS(FMU),INTENT(INOUT) :: self
     LOGICAL(SBK),INTENT(IN) :: toleranceDefined
@@ -386,7 +387,7 @@ ENDSUBROUTINE
 FUNCTION getValueReference_FMU2_Base(self, variableName) RESULT(valueReference)
   CHARACTER(LEN=*),PARAMETER :: myName='getValueReference_FMU2_Base'
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   INTEGER(SIK) :: valueReference
 
   TYPE(StringType) :: valueReference_str
@@ -417,13 +418,13 @@ ENDFUNCTION
 !>
 FUNCTION isXmlVar_FMU2_Base(self, variableName) RESULT(isVar)
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   LOGICAL(SBK) :: isVar
 
   REQUIRE(self%isInit)
 
   ! check that requrested variable exists in the modelDescription
-  IF(self%modelDescription%has(CHAR(variableName))) THEN
+  IF(self%modelDescription%has(variableName)) THEN
     isVar=.TRUE.
   ELSE
     isVar=.FALSE.
@@ -443,7 +444,7 @@ ENDFUNCTION
 FUNCTION getCausality_FMU2_Base(self, variableName) RESULT(causality)
   CHARACTER(LEN=*),PARAMETER :: myName='getCausality_FMU2_Base'
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   TYPE(StringType) :: causality
 
   TYPE(StringType) :: baseAddr
@@ -586,7 +587,7 @@ ENDSUBROUTINE
 !>
 SUBROUTINE getNamedReal_FMU2_Base(self, variableName, val)
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   REAL(SRK),INTENT(OUT) :: val
 
   INTEGER(SIK) :: valueReference
@@ -608,7 +609,7 @@ ENDSUBROUTINE
 SUBROUTINE setNamedReal_FMU2_Base(self, variableName, val)
   CHARACTER(LEN=*),PARAMETER :: myName='setNamedReal_FMU2_Base'
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   REAL(SRK),INTENT(IN) :: val
 
   INTEGER(SIK) :: valueReference
@@ -634,7 +635,7 @@ ENDSUBROUTINE
 !>
 SUBROUTINE getNamedInteger_FMU2_Base(self, variableName, val)
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   INTEGER(SIK),INTENT(OUT) :: val
 
   INTEGER(SIK) :: valueReference
@@ -656,7 +657,7 @@ ENDSUBROUTINE
 SUBROUTINE setNamedInteger_FMU2_Base(self, variableName, val)
   CHARACTER(LEN=*),PARAMETER :: myName='setNamedInteger_FMU2_Base'
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   INTEGER(SIK),INTENT(IN) :: val
 
   INTEGER(SIK) :: valueReference
@@ -682,7 +683,7 @@ ENDSUBROUTINE
 !>
 SUBROUTINE getNamedBoolean_FMU2_Base(self, variableName, val)
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   LOGICAL(SBK),INTENT(OUT) :: val
 
   INTEGER(SIK) :: valueReference
@@ -704,7 +705,7 @@ ENDSUBROUTINE
 SUBROUTINE setNamedBoolean_FMU2_Base(self, variableName, val)
   CHARACTER(LEN=*),PARAMETER :: myName='setNamedBoolean_FMU2_Base'
   CLASS(FMU2_Base),INTENT(INOUT) :: self
-  TYPE(StringType),INTENT(IN) :: variableName
+  CHARACTER(LEN=*),INTENT(IN) :: variableName
   LOGICAL(SBK),INTENT(IN) :: val
 
   INTEGER(SIK) :: valueReference

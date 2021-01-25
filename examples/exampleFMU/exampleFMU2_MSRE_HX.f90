@@ -84,20 +84,20 @@ PROGRAM testFMU2
   WRITE(*,*) "modelIdentifier: ", CHAR(test_fmu2_slave%modelIdentifier)
 
   ! Set initial conditions
-  CALL test_fmu2_slave%setNamedVariable(T_in_name, 927.0_SRK)  ! K
-  CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 170.0_SRK)  ! kg/s
-  CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 170.0_SRK)  ! kg/s
-  CALL test_fmu2_slave%setNamedVariable(P_in_name, 101.33E3_SRK)  ! Pa
-  CALL test_fmu2_slave%setNamedVariable(P_corein_name, 301.33E3_SRK)  ! Pa
-  CALL test_fmu2_slave%setNamedVariable(mflow_secondary_name, 105.745_SRK)  ! kg/s
+  CALL test_fmu2_slave%setNamedVariable(CHAR(T_in_name), 927.0_SRK)  ! K
+  CALL test_fmu2_slave%setNamedVariable(CHAR(mflow_in_name), 170.0_SRK)  ! kg/s
+  CALL test_fmu2_slave%setNamedVariable(CHAR(mflow_pump_name), 170.0_SRK)  ! kg/s
+  CALL test_fmu2_slave%setNamedVariable(CHAR(P_in_name), 101.33E3_SRK)  ! Pa
+  CALL test_fmu2_slave%setNamedVariable(CHAR(P_corein_name), 301.33E3_SRK)  ! Pa
+  CALL test_fmu2_slave%setNamedVariable(CHAR(mflow_secondary_name), 105.745_SRK)  ! kg/s
 
   CALL test_fmu2_slave%setupExperiment(.TRUE., tol, timeStart, .TRUE., timeEnd)
 
-  WRITE(*,*) "Is T_in valid: ", test_fmu2_slave%isXmlVar(T_in_name)
-  WRITE(*,*) "Is P_in valid: ", test_fmu2_slave%isXmlVar(P_in_name)
-  WRITE(*,*) "Is P_corein valid: ", test_fmu2_slave%isXmlVar(P_corein_name)
-  WRITE(*,*) "Is mflow_secondary valid: ", test_fmu2_slave%isXmlVar(mflow_secondary_name)
-  WRITE(*,*) "Is dummy var valid: ", test_fmu2_slave%isXmlVar(junk_var_name)
+  WRITE(*,*) "Is T_in valid: ", test_fmu2_slave%isXmlVar(CHAR(T_in_name))
+  WRITE(*,*) "Is P_in valid: ", test_fmu2_slave%isXmlVar(CHAR(P_in_name))
+  WRITE(*,*) "Is P_corein valid: ", test_fmu2_slave%isXmlVar(CHAR(P_corein_name))
+  WRITE(*,*) "Is mflow_secondary valid: ", test_fmu2_slave%isXmlVar(CHAR(mflow_secondary_name))
+  WRITE(*,*) "Is dummy var valid: ", test_fmu2_slave%isXmlVar(CHAR(junk_var_name))
 
   ! Initialization loop, let system come to Steady State
   DO i=1,2000
@@ -110,49 +110,49 @@ PROGRAM testFMU2
 
   WRITE(*,*) "time(s), T_in(K), T_out(K), mflow_out(kg/s), P_out(Pa)"
   DO i=1,3000
-    CALL test_fmu2_slave%getNamedVariable(T_out_name, T_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_out_name, mflow_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_pump_name, mflow_pump)
-    CALL test_fmu2_slave%getNamedVariable(mflow_secondary_name, mflow_secondary)
-    CALL test_fmu2_slave%getNamedVariable(P_out_name, P_out)
-    CALL test_fmu2_slave%getNamedVariable(T_in_name, T_in_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_out_name), T_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_out_name), mflow_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_pump_name), mflow_pump)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_secondary_name), mflow_secondary)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(P_out_name), P_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_in_name), T_in_out)
     CALL test_fmu2_slave%doStep(dt)
     time=time+dt
     WRITE(*,*) time, T_in_out, T_out, mflow_out, mflow_pump, mflow_secondary
   ENDDO
 
   ! increase inlet T
-  CALL test_fmu2_slave%setNamedVariable(T_in_name, 927.0_SRK)
+  CALL test_fmu2_slave%setNamedVariable(CHAR(T_in_name), 927.0_SRK)
 
   DO i=1,3000
-    CALL test_fmu2_slave%getNamedVariable(T_out_name, T_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_out_name, mflow_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_pump_name, mflow_pump)
-    CALL test_fmu2_slave%getNamedVariable(mflow_secondary_name, mflow_secondary)
-    CALL test_fmu2_slave%getNamedVariable(P_out_name, P_out)
-    CALL test_fmu2_slave%getNamedVariable(T_in_name, T_in_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_out_name), T_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_out_name), mflow_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_pump_name), mflow_pump)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_secondary_name), mflow_secondary)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(P_out_name), P_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_in_name), T_in_out)
     CALL test_fmu2_slave%doStep(dt)
     time=time+dt
     WRITE(*,*) time, T_in_out, T_out, mflow_out, mflow_pump, mflow_secondary
   ENDDO
 
   ! Decrease the flow rate, keep T_in the same
-  !CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 168.0_SRK)
-  !CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 168.0_SRK)
-  CALL test_fmu2_slave%setNamedVariable(mflow_secondary_name, 103.0_SRK)  ! kg/s
+  !CALL test_fmu2_slave%setNamedVariable(CHAR(mflow_in_name), 168.0_SRK)
+  !CALL test_fmu2_slave%setNamedVariable(CHAR(mflow_pump_name), 168.0_SRK)
+  CALL test_fmu2_slave%setNamedVariable(CHAR(mflow_secondary_name), 103.0_SRK)  ! kg/s
 
   dt=1.0E-2_SRK
   DO i=1,2000
-    CALL test_fmu2_slave%getNamedVariable(T_out_name, T_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_out_name, mflow_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_pump_name, mflow_pump)
-    CALL test_fmu2_slave%getNamedVariable(mflow_secondary_name, mflow_secondary)
-    CALL test_fmu2_slave%getNamedVariable(P_out_name, P_out)
-    CALL test_fmu2_slave%getNamedVariable(T_in_name, T_in_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_out_name), T_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_out_name), mflow_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_pump_name), mflow_pump)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_secondary_name), mflow_secondary)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(P_out_name), P_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_in_name), T_in_out)
     ! ramp down mflow secondary
     IF(mflow_secondary>5.0_SRK) &
-      CALL test_fmu2_slave%setNamedVariable(mflow_secondary_name, mflow_secondary*0.95_SRK)
-    CALL test_fmu2_slave%setNamedVariable(T_in_name, 927.0_SRK)
+      CALL test_fmu2_slave%setNamedVariable(CHAR(mflow_secondary_name), mflow_secondary*0.95_SRK)
+    CALL test_fmu2_slave%setNamedVariable(CHAR(T_in_name), 927.0_SRK)
     CALL test_fmu2_slave%doStep(dt)
     CALL test_fmu2_slave%doStep(dt)
     time=time+dt*2
@@ -160,18 +160,13 @@ PROGRAM testFMU2
   ENDDO
   CALL test_fmu2_slave%setRestart()
 
-  ! Increase the flow rate, keep T_in the same
-  !CALL test_fmu2_slave%setNamedVariable(mflow_in_name, 170.0_SRK)
-  !CALL test_fmu2_slave%setNamedVariable(mflow_pump_name, 170.0_SRK)
-  !CALL test_fmu2_slave%setNamedVariable(mflow_secondary_name, 0.0_SRK)  ! kg/s
-
   DO i=1,2000
-    CALL test_fmu2_slave%getNamedVariable(T_out_name, T_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_out_name, mflow_out)
-    CALL test_fmu2_slave%getNamedVariable(mflow_pump_name, mflow_pump)
-    CALL test_fmu2_slave%getNamedVariable(mflow_secondary_name, mflow_secondary)
-    CALL test_fmu2_slave%getNamedVariable(P_out_name, P_out)
-    CALL test_fmu2_slave%getNamedVariable(T_in_name, T_in_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_out_name), T_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_out_name), mflow_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_pump_name), mflow_pump)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(mflow_secondary_name), mflow_secondary)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(P_out_name), P_out)
+    CALL test_fmu2_slave%getNamedVariable(CHAR(T_in_name), T_in_out)
     CALL test_fmu2_slave%doStep(dt)
     time=time+dt
     WRITE(*,*) time, T_in_out, T_out, mflow_out, mflow_pump, mflow_secondary
