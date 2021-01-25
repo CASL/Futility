@@ -1254,17 +1254,28 @@ FUNCTION str_to_sik(this,stt,stp) RESULT(i)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
   INTEGER(SIK) :: i
   !
-  CHARACTER(LEN=:),ALLOCATABLE :: scratch
+  INTEGER(SIK) :: begStr,endStr,ioerr
 
-  IF(PRESENT(stt) .OR. PRESENT(stp)) THEN
-    scratch = this%s(stt:stp)
-  ELSE
-    scratch = this%s
+  !Bypass the world if the string isn't allocated
+  ioerr = -HUGE(ioerr)
+  IF(ALLOCATED(this%s)) THEN
+    !Find the beginning
+    IF(PRESENT(stt)) THEN
+      begStr = stt
+    ELSE
+      begStr = 1
+    ENDIF
+    !Find the end
+    IF(PRESENT(stp)) THEN
+      endStr = stp
+    ELSE
+      endStr = LEN(this%s)
+    ENDIF
+    READ(this%s(begStr:endStr),*,IOSTAT=ioerr) i
   ENDIF
 
-  IF(LEN(scratch) > 0) THEN
-    READ(scratch,*) i
-  ELSE
+  !Test to see if it worked, return 0 on any error code
+  IF(ioerr /= 0) THEN
     i = -HUGE(i)
   ENDIF
 ENDFUNCTION str_to_sik
@@ -1274,27 +1285,41 @@ ENDFUNCTION str_to_sik
 !> @param this the string being converted
 !> @param stt position for starting conversion
 !> @param stp end of conversion
-!> @returns i the integer that will be output
+!> @returns r the float that will be output
 !>
-FUNCTION str_to_srk(this,stt,stp) RESULT(i)
+FUNCTION str_to_srk(this,stt,stp) RESULT(r)
   CLASS(StringType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stt
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
-  REAL(SRK) :: i
+  REAL(SRK) :: r
   !
   CHARACTER(LEN=:),ALLOCATABLE :: scratch
+  INTEGER(SIK) :: begStr,endStr,ioerr
 
-  IF(PRESENT(stt) .OR.  PRESENT(stp)) THEN
-    scratch = this%s(stt:stp)
-  ELSE
-    scratch = this%s
+  !Bypass the world if the string isn't allocated
+  ioerr = -HUGE(ioerr)
+  IF(ALLOCATED(this%s)) THEN
+    !Find the beginning
+    IF(PRESENT(stt)) THEN
+      begStr = stt
+    ELSE
+      begStr = 1
+    ENDIF
+    !Find the end
+    IF(PRESENT(stp)) THEN
+      endStr = stp
+    ELSE
+      endStr = LEN(this%s)
+    ENDIF
+    READ(this%s(begStr:endStr),*,IOSTAT=ioerr) r
   ENDIF
 
-  IF(LEN(scratch) > 0) THEN
-    READ(scratch,*) i
-  ELSE
-    i = -HUGE(i)
+  !Test to see if it worked, return nan on any error code
+  IF(ioerr /= 0) THEN
+    scratch='NAN()'
+    READ(scratch,*) r
   ENDIF
+
 ENDFUNCTION str_to_srk
 !
 !-------------------------------------------------------------------------------
@@ -1305,13 +1330,15 @@ ENDFUNCTION str_to_srk
 FUNCTION isInteger(this) RESULT(bool)
   CLASS(StringType),INTENT(IN) :: this
   LOGICAL(SBK) :: bool
-  INTEGER(SIK) :: stt
+  INTEGER(SIK) :: x,ioerr
 
-  bool=.FALSE.
   IF(ALLOCATED(this%s)) THEN
-    stt = MAX(INDEX(this%s,'+'),INDEX(this%s,'-'))
-    bool = isNumeric(this%s(stt+1:LEN(this%s)))
+    READ(this%s,*,IOSTAT=ioerr) x
+  ELSE
+    ioerr = -HUGE(1_SIK)
   ENDIF
+  bool = (ioerr == 0)
+
 ENDFUNCTION isInteger
 !
 !-------------------------------------------------------------------------------
@@ -1322,36 +1349,15 @@ ENDFUNCTION isInteger
 FUNCTION isFloat(this) RESULT(bool)
   CLASS(StringType),INTENT(IN) :: this
   LOGICAL(SBK) :: bool
-  INTEGER(SIK) :: stt,dec_pos,exp_pos,pos_neg_exp
+  INTEGER(SIK) :: ioerr
+  REAL(SRK) :: x
 
-  bool = .FALSE.
   IF(ALLOCATED(this%s)) THEN
-    ! Enforce that a decimal is required in order to be a float
-    dec_pos = INDEX(this%s,'.')
-    IF(dec_pos > 0) THEN
-      ! Look for leading '+' and '-'
-      stt = MAX(INDEX(this%s(1:dec_pos),'+'),INDEX(this%s(1:dec_pos),'-'))
-      ! Check that the leading characters are numeric
-      IF(isNumeric(this%s(stt+1:dec_pos-1))) THEN
-        ! Look for Currently acceptable exponents
-        exp_pos = MAX(INDEX(this%s,'e'),INDEX(this%s,'E'),INDEX(this%s,'d'))
-        IF(exp_pos > 0) THEN
-          ! Account for sign on exponent
-          pos_neg_exp = exp_pos + MAX(INDEX(this%s(exp_pos+1:LEN(this%s)),'-'),INDEX(this%s(exp_pos+1:LEN(this%s)),'+'))
-          IF(pos_neg_exp > 0) THEN
-            bool = isNumeric(this%s(dec_pos+1:exp_pos-1)) .AND. &
-                isNumeric(this%s(pos_neg_exp+1:LEN(this%s)))
-          ELSE
-            bool = isNumeric(this%s(dec_pos+1:exp_pos-1)) .AND. &
-                isNumeric(this%s(exp_pos+1:LEN(this%s)))
-          ENDIF
-        ELSE
-          ! No exponent check decimal to end
-          bool = isNumeric(this%s(dec_pos+1:LEN(this%s)))
-        ENDIF
-      ENDIF
-    ENDIF
+    READ(this%s,*,IOSTAT=ioerr) x
+  ELSE
+    ioerr = -HUGE(1_SIK)
   ENDIF
+  bool = (ioerr == 0)
 ENDFUNCTION isFloat
 !
 !-------------------------------------------------------------------------------
