@@ -112,6 +112,14 @@ SUBROUTINE testStepFMU()
   CALL test_fmu2_slave%setNamedVariable(CHAR(ballHeight_name), 1.0_SRK)
   CALL test_fmu2_slave%setNamedVariable(CHAR(ballVel_name), 0.0_SRK)
 
+  ! Check variable valueReferences
+  ASSERT_EQ(test_fmu2_slave%getValueReference(CHAR(ballHeight_name)),0_SIK,"%ballHeight_valueReference")
+  CALL test_fmu2_slave%getReal(0_SIK, ballHeight)
+  ASSERT_EQ(ballHeight, 1.0_SRK,"%ballHeight")
+  ASSERT_EQ(test_fmu2_slave%getValueReference(CHAR(ballVel_name)),1_SIK,"%ballVel_valueReference")
+  CALL test_fmu2_slave%getReal(1_SIK, ballVel)
+  ASSERT_EQ(ballVel, 0.0_SRK, "%ballVel")
+
   expected_ballHeight=1.0_SRK
   expected_ballVel=0.0_SRK
   DO i=1,10
