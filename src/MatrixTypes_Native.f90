@@ -189,7 +189,7 @@ TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
   !> The column of banded matrix 'chunks' stored locally
   TYPE(BandedMatrixType),ALLOCATABLE :: chunks(:)
   !> Number of nonzero elements
-  INTEGER(SIK) :: nnz
+  INTEGER(SLK) :: nnz
   !> Number of columns
   INTEGER(SIK) :: m
   !> Block size (smallest indivisble unit)
@@ -479,7 +479,8 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
 #ifdef HAVE_MPI
   CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBandedMatrixParam'
   TYPE(ParamType) :: validParams
-  INTEGER(SIK) :: n,m,nnz,commID,rank,mpierr,nproc,i,blocksize,nlocal
+  INTEGER(SIK) :: n,m,commID,rank,mpierr,nproc,i,blocksize,nlocal
+  INTEGER(SLK) :: nnz
 
   !Check to set up required and optional param lists.
   IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()

@@ -240,13 +240,15 @@ CONTAINS
 !> The optional parameters for the PETSc Matrix Type do not exist.
 !>
 SUBROUTINE MatrixTypes_Declare_ValidParams()
-  INTEGER(SIK) :: n,m,nnz,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal,blockSize
+  INTEGER(SIK) :: n,m,nnz_int,dnnz(1),onnz(1),matType,MPI_COMM_ID,nlocal,blockSize
+  INTEGER(SLK) :: nnz_long
   LOGICAL(SBK) :: isSym
 
   !Setup the required and optional parameter lists
   n=1
   m=1
-  nnz=1
+  nnz_int=1
+  nnz_long=1
   dnnz=-1
   onnz=-1
   isSym=.FALSE.
@@ -256,14 +258,14 @@ SUBROUTINE MatrixTypes_Declare_ValidParams()
   blockSize=1
   !Sparse Matrix Type - Required
   CALL SparseMatrixType_reqParams%add('MatrixType->n',n)
-  CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz)
+  CALL SparseMatrixType_reqParams%add('MatrixType->nnz',nnz_int)
   !Tri-Diagonal Matrix Type - Required
   CALL TriDiagMatrixType_reqParams%add('MatrixType->n',n)
   CALL TriDiagMatrixType_reqParams%add('MatrixType->isSym',isSym)
   !Banded Matrix Type - Required
   CALL BandedMatrixType_reqParams%add('MatrixType->n',n)
   CALL BandedMatrixType_reqParams%add('MatrixType->m',m)
-  CALL BandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
+  CALL BandedMatrixType_reqParams%add('MatrixType->nnz',nnz_int)
   !Dense Rectangular Matrix Type - Required
   CALL DenseRectMatrixType_reqParams%add('MatrixType->n',n)
   CALL DenseRectMatrixType_reqParams%add('MatrixType->m',m)
@@ -278,14 +280,14 @@ SUBROUTINE MatrixTypes_Declare_ValidParams()
   !Distributed Banded Matrix Type - Required
   CALL DistributedBandedMatrixType_reqParams%add('MatrixType->n',n)
   CALL DistributedBandedMatrixType_reqParams%add('MatrixType->m',m)
-  CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
+  CALL DistributedBandedMatrixType_reqParams%add('MatrixType->nnz',nnz_long)
   CALL DistributedBandedMatrixType_reqParams%add('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
   !Distributed Banded Matrix Type - Optional
   CALL DistributedBandedMatrixType_optParams%add('MatrixType->blockSize',blockSize)
   CALL DistributedBandedMatrixType_optParams%add('MatrixType->nlocal',nlocal)
   !Distributed Block Banded Matrix Type - Required
   CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->n',n)
-  CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
+  CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->nnz',nnz_long)
   CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->MPI_Comm_ID',MPI_COMM_ID)
   CALL DistributedBlockBandedMatrixType_reqParams%add('MatrixType->blockSize',blockSize)
   !Distributed Block Banded Matrix Type - Optional
