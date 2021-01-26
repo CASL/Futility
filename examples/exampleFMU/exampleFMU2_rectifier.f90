@@ -6,16 +6,40 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Program to demo basic FMU model interaction
+!> @brief Program to demo basic FMU model interaction.
+!> This example downloads a Co-Simulation FMU model of a rectifier circuit from
+!> https://github.com/modelica/fmi-cross-check, unpacks the FMU zip archive into
+!> a FMU shared object library and an XML model description file, then loads the
+!> FMU shared object library and parses the XML model description using the
+!> Futility FMU Wrapper. The loaded FMU is stepped forward in time by 1E-7(s)
+!> increments until a final time of 0.1(s) is reached.
+!> Results are written to file every 2.0E-4(s) to be consistant with
+!> the available gold result files provided by the fmi-cross-check repository
+!> for this FMU. The results from the Futility FMU Wrapper are compared to the
+!> golden standard results. Finally, to test the rewind capability of the FMU
+!> Wrapper, a restart point is set at 0.1(s), the solutin is stepped forward by
+!> 10 time steps, then the FMU is rewound to the restart point and the same 10
+!> time steps are performed again.  The results from the 10 steps before the
+!> rewind are compared against the 10 steps following the rewind.
 !>
-!> To use, Download the example third party FMU from the fmi-cross-check repo on github:
+!> For information regarding the Functional Mockup Interface (FMI) and
+!> Functional Mockup Units (FMU), see https://fmi-standard.org.
+!>
+!> By default the program attempts to automatically download the FMU:
+!>   ./Futility_exampleFMU2_rectifier.exe
+!>
+!> For manual execution:
+!> Download the example third party FMU from the fmi-cross-check repo on github:
 !>   wget https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2016.2/Rectifier/Rectifier.fmu
 !>
+!> Benchmark results are provided by:
+!>   wget https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/MapleSim/2016.2/Rectifier/Rectifier_ref.csv
+!>
 !> Extract the FMU with unzip:
-!>   unzip -d /path/to/fmu/rectifier_example_fmu Rectifier.fmu
+!>   unzip Rectifier.fmu -d /path/to/fmu/rectifier_example_fmu
 !>
 !> Run the example program:
-!>   ./Futility_exampleFMU2_rectifier.exe /path/to/fmu/rectifier_example_fmu
+!>   ./Futility_exampleFMU2_rectifier.exe /path/to/fmu/rectifier_example_fmu Recitfier_ref.csv
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testFMU2
   USE Strings
@@ -31,7 +55,7 @@ PROGRAM testFMU2
   INTEGER(SIK) :: id=3_SIK
   REAL(SRK) :: h=1.0E-7_SRK
   REAL(SRK) :: timeStart=0.0_SRK
-  REAL(SRK) :: timeEnd=1.0E-1_SRK
+  REAL(SRK) :: timeEnd=1.5E-1_SRK
   REAL(SRK) :: tol=1.0E-9_SRK
   REAL(SRK) :: time, voltage1
   REAL(SRK) :: write_time=0.0_SRK
@@ -41,7 +65,7 @@ PROGRAM testFMU2
   CALL FMU_params%clear()
   CALL FMU_params%add('FMU_Wrapper->id',id)
 
-  IF (IARGC()==1) THEN
+  IF (IARGC()==2) THEN
     CALL getarg(1, unzipDirectory)
     CALL getarg(2, goldFile)
   ELSE
@@ -74,7 +98,7 @@ PROGRAM testFMU2
       write_time = 0.0_SRK
     ENDIF
     write_time = write_time + h
-    IF(time > timeEnd-0.05) EXIT
+    IF(time >= timeEnd-0.5E-1_SRK) EXIT
   ENDDO
 
   ! get valueReference to variables

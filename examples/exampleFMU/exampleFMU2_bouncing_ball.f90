@@ -6,19 +6,43 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief Program to demo basic FMU model interaction
+!> @brief Program to demo basic FMU model interaction.
+!> This example downloads a Co-Simulation FMU model of a bouncing ball from
+!> https://github.com/modelica/fmi-cross-check, unpacks the FMU zip archive into
+!> a FMU shared object library and an XML model description file, then loads the
+!> FMU shared object library and parses the XML model description using the
+!> Futility FMU Wrapper.  The Futility FMU Wrapper allows one to interact with
+!> an FMU model from a fortran program.
+!> The loaded FMU is stepped forward in time by 1E-3(s) increments until a
+!> final time of 3.0(s) is reached.
+!> Results are written to file every 1.0E-2(s) to be consistant with
+!> the available gold result files provided by the fmi-cross-check repository
+!> for this FMU. The results from the Futility FMU Wrapper are compared to the
+!> golden standard results.
 !>
-!> To use, Download the example third party FMU from the fmi-cross-check repo on github:
+!> The model simulates a ball dropped from rest at an initial height of 1(m).
+!> The model ignores air resistance and the ball has a coefficient of
+!> restitution of 0.7.
+!>
+!> For information regarding the Functional Mockup Interface (FMI) and
+!> Functional Mockup Units (FMU), see https://fmi-standard.org.
+!>
+!> By default the example program attempts to automatically download the FMU:
+!>   ./Futility_exampleFMU2_bouncing_ball.exe
+!>
+!> For manual execution:
+!> Download the example third party FMU from the fmi-cross-check repo on github:
 !>   wget https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/Test-FMUs/0.0.2/BouncingBall/BouncingBall.fmu
 !>
 !> Benchmark results are provided by:
 !>   wget https://github.com/modelica/fmi-cross-check/raw/master/fmus/2.0/cs/linux64/Test-FMUs/0.0.2/BouncingBall/BouncingBall_ref.csv
 !>
 !> Extract the FMU with unzip:
-!>   unzip -p /path/to/fmu/BouncingBall BouncingBall.fmu
+!>   unzip BouncingBall.fmu -d /path/to/fmu/BouncingBall
 !>
 !> Run the example program:
-!>   ./Futility_exampleFMU2_bouncing_ball.exe /path/to/fmu/BouncingBall
+!>   ./Futility_exampleFMU2_bouncing_ball.exe /path/to/fmu/BouncingBall BouncingBall_ref.csv
+!>
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 PROGRAM testFMU2_BouncingBall
   USE Strings
@@ -41,7 +65,7 @@ PROGRAM testFMU2_BouncingBall
   REAL(SRK) :: dt=1.0E-3_SRK
   ! Start and end of simulation time
   REAL(SRK) :: timeStart=0.0_SRK
-  REAL(SRK) :: timeEnd=1.2_SRK
+  REAL(SRK) :: timeEnd=3.0_SRK
   ! FMU ODE solver tolerance
   REAL(SRK) :: tol=1.0E-5_SRK
   ! Local time storage
