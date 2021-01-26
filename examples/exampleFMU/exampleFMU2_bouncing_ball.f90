@@ -123,9 +123,9 @@ PROGRAM testFMU2_BouncingBall
       CHAR(test_fmu2_cs%getCausality(CHAR(varName)))
 
   ! set gravity acceleration parameter
-  !CALL test_fmu2_cs%setNamedVariable('g', -9.81_SRK)
+  CALL test_fmu2_cs%setNamedVariable('g', -9.81_SRK)
   ! set the coefficient of restitution
-  !CALL test_fmu2_cs%setNamedVariable('e', 0.7_SRK)
+  CALL test_fmu2_cs%setNamedVariable('e', 0.7_SRK)
 
   ! Open an output file
   OPEN(unit=42, file="exampleFMU2_bouncing_ball_out.csv")
@@ -144,7 +144,6 @@ PROGRAM testFMU2_BouncingBall
     ! Print the result to stdout
     IF(ABS(write_time-0.01_SRK) < 1.0e-8_SRK .OR. time<=1.0e-16_SRK) THEN
       WRITE(42,*) time, ball_height, ball_velocity
-      WRITE(*,*) time, ball_height, ball_velocity
       write_time = 0.0_SRK
       imax = imax + 1
     ENDIF
@@ -158,6 +157,7 @@ PROGRAM testFMU2_BouncingBall
 
   ! Check result against fmi-cross-check benchmark values
   WRITE(*,*) "Checking results against BouncingBall_ref.csv"
+  WRITE(*,'(A15,A15,A15,A15)') "Time(s)", "Calc Ball H(m)", "Gold Ball H(m)", "Diff"
   OPEN(unit=42, file="exampleFMU2_bouncing_ball_out.csv")
   OPEN(unit=43, file=goldFile)
   ALLOCATE(t_calc(imax))
@@ -174,7 +174,7 @@ PROGRAM testFMU2_BouncingBall
     ELSE
       READ(42,*) t_calc(i), h_calc(i), v_calc(i)
       READ(43,*) t_gold(i), h_gold(i), v_gold(i)
-      WRITE(*,*) "Time: ", t_calc(i), "Diff: ", h_calc(i) - h_gold(i)
+      WRITE(*,'(F15.7,ES15.7,ES15.7,ES15.7)') t_calc(i), h_calc(i), h_gold(i), h_calc(i)-h_gold(i)
     ENDIF
   ENDDO
   CLOSE(unit=42)

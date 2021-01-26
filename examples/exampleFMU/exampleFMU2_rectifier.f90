@@ -59,6 +59,10 @@ PROGRAM testFMU2
   REAL(SRK) :: tol=1.0E-9_SRK
   REAL(SRK) :: time, voltage1
   REAL(SRK) :: write_time=0.0_SRK
+  REAL(SRK) :: pre_rewind_t(10)
+  REAL(SRK) :: pre_rewind_v(10)
+  REAL(SRK) :: post_rewind_t(10)
+  REAL(SRK) :: post_rewind_v(10)
   INTEGER(SIK) :: i
 
   ! Example FMU parameter settings
@@ -88,20 +92,28 @@ PROGRAM testFMU2
   CALL test_fmu2_cs%init(id, FMU_params)
   CALL test_fmu2_cs%setupExperiment(.FALSE., tol, timeStart, .TRUE., timeEnd)
 
+  ! Open an output file
+  OPEN(unit=42, file="exampleFMU2_rectifier_out.csv")
+
+  ! Write output header
+  WRITE(*,*) "Writing results to exampleFMU2_rectifier_out.csv"
+  WRITE(42,*) "time[s],   voltage1[v]"
+
   ! Step the FMU forward
   DO
     CALL test_fmu2_cs%getReal(0, time)
     CALL test_fmu2_cs%getReal(1, voltage1)
     CALL test_fmu2_cs%doStep(h)
     IF(ABS(write_time-0.0002_SRK)<1.0e-8_SRK) THEN
-      WRITE(*,*) time, voltage1
+      WRITE(42,*) time, voltage1
       write_time = 0.0_SRK
     ENDIF
     write_time = write_time + h
     IF(time >= timeEnd-0.5E-1_SRK) EXIT
   ENDDO
+  CLOSE(unit=42)
 
-  ! get valueReference to variables
+  ! get valueReference to variables and causality
   WRITE(*,*) "internalTime", " valueReference: ", test_fmu2_cs%getValueReference("internalTime"), &
       " causality: ", CHAR(test_fmu2_cs%getCausality("internalTime"))
   WRITE(*,*) "outputs", " valueReference: ", test_fmu2_cs%getValueReference("outputs"), &
@@ -115,7 +127,8 @@ PROGRAM testFMU2
     CALL test_fmu2_cs%getReal(0, time)
     CALL test_fmu2_cs%getReal(1, voltage1)
     CALL test_fmu2_cs%doStep(h)
-    WRITE(*,*) time, voltage1
+    pre_rewind_t(i) = time
+    pre_rewind_v(i) = voltage1
   ENDDO
 
   ! rewind to restart
@@ -126,7 +139,14 @@ PROGRAM testFMU2
     CALL test_fmu2_cs%getReal(0, time)
     CALL test_fmu2_cs%getReal(1, voltage1)
     CALL test_fmu2_cs%doStep(h)
-    WRITE(*,*) time, voltage1
+    post_rewind_t(i) = time
+    post_rewind_v(i) = voltage1
+  ENDDO
+
+  WRITE(*,'(A15,A15,A15,A15,A15)') "Pre RW T(s)", "Post RW T(s)", "Pre RW (V)", "Post RW (V)", "Diff"
+  DO i=1,10
+    WRITE(*,'(F15.7,F15.7,F15.7,F15.7,E15.7)') pre_rewind_t(i), post_rewind_t(i), pre_rewind_v(i), &
+      post_rewind_v(i), post_rewind_v(i)-pre_rewind_v(i)
   ENDDO
 
   ! get named variables
