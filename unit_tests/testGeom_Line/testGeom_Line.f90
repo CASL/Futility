@@ -104,10 +104,10 @@ SUBROUTINE TestLine
   CALL line2%p1%init(DIM=2,X=1.0_SRK,Y=0.0_SRK)
   CALL line2%p2%init(DIM=2,X=1.0_SRK,Y=1.0_SRK)
   !Overlap
-  point=line1%intersectLine(line1)
+  point=line1%intersect(line1)
   ASSERT(point%dim == -2, 'line1%intersectLine(...)')
   !disjoint
-  point=line1%intersectLine(line2)
+  point=line1%intersect(line2)
   ASSERT(point%dim == -3, 'line1%intersectLine(...)')
   !Normal
   CALL line1%clear()
@@ -116,7 +116,7 @@ SUBROUTINE TestLine
   CALL line1%p2%init(COORD=(/0.0_SRK,1.0_SRK/))
   CALL line2%p1%init(COORD=(/-0.5_SRK,0.5_SRK/))
   CALL line2%p2%init(COORD=(/1.0_SRK,0.5_SRK/))
-  point=line1%intersectLine(line2)
+  point=line1%intersect(line2)
   bool = .NOT.(point%dim /= 2 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.0_SRK) .OR. &
       .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK))
   ASSERT(bool, 'line1%intersectLine(...)')
@@ -128,7 +128,7 @@ SUBROUTINE TestLine
   CALL line1%p2%init(COORD=(/0.23706666666670007_SRK, 0.64833499999999977_SRK/))
   CALL line2%p1%init(COORD=(/-0.11302999999999996_SRK,-0.30416500000000024_SRK/))
   CALL line2%p2%init(COORD=(/0.93725999999999998_SRK,-0.30416500000000024_SRK/))
-  point=line1%intersectLine(line2)
+  point=line1%intersect(line2)
   ASSERT(point%dim == 2,'line1%intersectLine(...)')
   bool=ALL(point%coord .APPROXEQ. (/0.23706666666670007_SRK,-0.3041650000000002_SRK/))
   ASSERT(bool,'%coord')
@@ -140,10 +140,10 @@ SUBROUTINE TestLine
   CALL line2%p1%init(COORD=(/0.0_SRK,0.0_SRK,1.0_SRK/))
   CALL line2%p2%init(COORD=(/1.0_SRK,0.0_SRK,1.0_SRK/))
   !Overlap
-  point=line1%intersectLine(line1)
+  point=line1%intersect(line1)
   ASSERT(point%dim == -2, 'line1%intersectLine(...)')
   !disjoint
-  point=line1%intersectLine(line2)
+  point=line1%intersect(line2)
   ASSERT(point%dim == -3, 'line1%intersectLine(...)')
   !Normal
   CALL line1%clear()
@@ -152,7 +152,7 @@ SUBROUTINE TestLine
   CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
   CALL line2%p1%init(COORD=(/1.0_SRK,0.0_SRK,0.0_SRK/))
   CALL line2%p2%init(COORD=(/0.0_SRK,1.0_SRK,1.0_SRK/))
-  point=line1%intersectLine(line2)
+  point=line1%intersect(line2)
   bool = .NOT.(point%dim /= 3 .OR. .NOT.(point%coord(1) .APPROXEQ. 0.5_SRK) .OR. &
       .NOT.(point%coord(2) .APPROXEQ. 0.5_SRK) .OR. &
       .NOT.(point%coord(3) .APPROXEQ. 0.5_SRK))
@@ -160,12 +160,12 @@ SUBROUTINE TestLine
 
   !Redundant calls to test error checking.
   CALL line2%clear()
-  point=line1%intersectLine(line2) !mismatched dimensions
+  point=line1%intersect(line2) !mismatched dimensions
   ASSERT(point%dim == -1, 'point=line1%intersectLine(line2)')
   CALL line1%clear()
   CALL line1%p1%init(DIM=1,X=0.5_SRK)
   CALL line1%p2%init(DIM=1,X=0.0_SRK)
-  point=line1%intersectLine(line1)
+  point=line1%intersect(line1)
   ASSERT(point%dim == -2, '1-D line1%intersectLine(...)')
 
   CALL line1%clear()
@@ -174,7 +174,7 @@ SUBROUTINE TestLine
   CALL line1%p2%init(COORD=(/0.0_SRK,1.0_SRK/))
   CALL line2%p1%init(COORD=(/-0.5_SRK,2.5_SRK/))
   CALL line2%p2%init(COORD=(/1.0_SRK,2.5_SRK/))
-  point=line1%intersectLine(line2)
+  point=line1%intersect(line2)
   ASSERT(point%dim == -3, 'line1%intersectLine(...)')
 
 !Test for %distance2Line(...)
@@ -382,7 +382,7 @@ SUBROUTINE TestLine
   ASSERT(bool, 'lines%midPoint()')
 
   COMPONENT_TEST('Elemental %intersectLine()')
-  points=lines%intersectLine(lines)
+  points=lines%intersect(lines)
   bool = .NOT.(points(1)%dim /= -2 .OR. points(2)%dim /= -2)
   ASSERT(bool, 'lines%intersectLine(...)')
 

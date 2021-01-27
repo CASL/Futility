@@ -179,6 +179,7 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
 
   !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
   CALL clear_PolygonType(thisPoly)
+WRITE(*,*) ALLOCATED(thatGraph%vertices),thatGraph%isMinimumCycle()
   IF(ALLOCATED(thatGraph%vertices) .AND. thatGraph%isMinimumCycle()) THEN
     !Get the number of vertices and edges (equal, since it's a minimum cycle)
     thisPoly%nVert=thatGraph%nVert()
@@ -593,7 +594,7 @@ ENDFUNCTION getOuterRadius_PolygonType
 !> @param bool The logical result of this operation.  TRUE if the point is on
 !>        the surface.
 !>
-PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(bool)
+RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PointType),INTENT(IN) :: point
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: incSubReg
@@ -691,7 +692,7 @@ ENDFUNCTION onSurface_PolygonType
 !> @param isSub Optional logical of whether or not it is a recursive subregion check.
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
-PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bool)
+RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PointType),INTENT(IN) :: point
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: isSub
@@ -1043,7 +1044,7 @@ ENDFUNCTION polygon_inside_PolygonType
 !> @param line The line type to intersect with the polygon
 !> @param bool The logical result of the operation
 !>
-PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
+FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPolygon
   TYPE(LineType),INTENT(IN) :: line
   LOGICAL(SBK) :: bool
@@ -1153,7 +1154,7 @@ ENDFUNCTION doesLineIntersect_PolygonType
 !> @param thatPoly The second polygon type to intersect with the first
 !> @param bool The logical result of the operation
 !>
-PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
+FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PolygonType),INTENT(IN) :: thatPoly
   LOGICAL(SBK) :: bool
@@ -1358,7 +1359,7 @@ ENDFUNCTION doesPolyIntersect_PolygonType
 !> @brief
 !> @param
 !>
-PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
+SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
   CLASS(PolygonType),INTENT(IN) :: thisPolygon
   TYPE(LineType),INTENT(IN) :: line
   TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
@@ -1502,7 +1503,7 @@ ENDSUBROUTINE intersectLine_PolygonType
 !> @brief
 !> @param
 !>
-PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
+SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PolygonType),INTENT(IN) :: thatPoly
   TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
@@ -1967,7 +1968,7 @@ ENDSUBROUTINE Polygonize_ABBox
 !> @param p2 The second polygon type to compare
 !> @param bool The logical result of the operation
 !>
-PURE RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
+RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
   TYPE(PolygonType),INTENT(IN) :: p1
   TYPE(PolygonType),INTENT(IN) :: p2
   LOGICAL(SBK) :: bool
@@ -2009,7 +2010,7 @@ ENDFUNCTION isequal_PolygonType
 !> @param iquad The desired quadratic edge index to convert to a circle type
 !> @param circle The circle type created from the polygon's quadratic edge
 !>
-PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
+SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   INTEGER(SIK),INTENT(IN) :: iquad
   TYPE(CircleType),INTENT(INOUT) :: circle

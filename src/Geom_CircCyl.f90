@@ -92,7 +92,8 @@ TYPE :: CylinderType
     PROCEDURE,PASS :: clear => clear_CylinderType
     !> @copybrief Geom_CircCyl::intersect_CylinderType_and_LineType
     !> @copydetails Geom_CircCyl::intersect_CylinderType_and_LineType
-    PROCEDURE,PASS :: intersectLine => intersect_CylinderType_and_LineType
+    PROCEDURE,PASS,PRIVATE :: intersectLine => intersect_CylinderType_and_LineType
+    GENERIC :: intersect => intersectLine
 ENDTYPE CylinderType
 
 !> @brief Generic interface for 'is equal to' operator (==)
@@ -138,11 +139,7 @@ FUNCTION generateCircle(p1,p2,centroid,radius) RESULT(circle)
   !Handle semi-circles first: in this case, the sign of the radius
   !apparently tells us which semi-circle is actually intended
   IF(ABS(thetastt-thetastp) .APPROXEQ. PI) THEN
-    IF(radius < ZERO) THEN
-      CALL circle%set(centroid,ABS(radius),thetastt,thetastp)
-    ELSE
-      CALL circle%set(centroid,ABS(radius),thetastp,thetastt)
-    ENDIF
+    CALL circle%set(centroid,radius,thetastt,thetastp)
   !Now handle other arcs and ensure we're taking the shorter of 2 possibilities
   ELSE
     !Distance between thetastt and thetastp is < PI because point 1
@@ -177,7 +174,7 @@ ELEMENTAL SUBROUTINE set_CircleType(circ,p,r,angstt,angstp)
   REAL(SRK),INTENT(IN),OPTIONAL :: angstp
   REAL(SRK) :: dtheta
   CALL circ%clear()
-  IF(p%dim == 2 .AND. r > ZERO) THEN
+  IF(p%dim == 2 .AND. .NOT.(r .APPROXEQA. ZERO)) THEN
     circ%c=p
     circ%r=r
     circ%thetastt=ZERO
@@ -223,7 +220,7 @@ ELEMENTAL SUBROUTINE set_CylinderType(cyl,p,q,r,angstt,angstp)
   REAL(SRK),INTENT(IN),OPTIONAL :: angstp
   REAL(SRK) :: dtheta
   CALL cyl%clear()
-  IF(p%dim == 3 .AND. .NOT.(p .APPROXEQA. q)  .AND. r > ZERO) THEN
+  IF(p%dim == 3 .AND. .NOT.(p .APPROXEQA. q)  .AND. .NOT.(r .APPROXEQA. ZERO)) THEN
     CALL cyl%axis%set(p,q)
     cyl%r=r
     cyl%thetastt=ZERO
@@ -274,7 +271,7 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_LineType(circle,line,p1,p2)
   p1%dim=-1
   p2%dim=-1
   IF(circle%c%dim == 2 .AND. line%p1%dim == 2 .AND. &
-      line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+      line%p2%dim == 2 .AND. .NOT.(circle%r .APPROXEQA. ZERO)) THEN
     u(1)=line%p2%coord(1)-line%p1%coord(1)  !dx
     u(2)=line%p2%coord(2)-line%p1%coord(2)  !dy
     w(1)=line%p1%coord(1)-circle%c%coord(1)
@@ -282,12 +279,14 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_LineType(circle,line,p1,p2)
     b=w(1)*u(1)+w(2)*u(2)
     c=w(1)*w(1)+w(2)*w(2)-circle%r*circle%r
 
+! WRITE(*,*) 'intersect_CircleType_and_LineType a:',u,':',w,':',b,c
     IF(c > zero .AND. b > zero) THEN
       p1%dim=-2
       p2%dim=-2
     ELSE
       a=u(1)*u(1)+u(2)*u(2) !dr^2
       discr=b*b-a*c
+! WRITE(*,*) 'intersect_CircleType_and_LineType b:',a,discr
       IF(discr < -EPSREAL) THEN
         !Disjoint
         p1%dim=-2
@@ -314,12 +313,13 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_LineType(circle,line,p1,p2)
         discr=SQRT(discr)
         t1=(-b-discr)*ra
         t2=(-b+discr)*ra
-        IF(ZERO < t1 .AND. t1 < ONE) THEN
+! WRITE(*,*) 'intersect_CircleType_and_LineType c:',t1,t2
+        IF(ZERO <= t1 .AND. t1 <= ONE) THEN
           p1=line%p1
           p1%coord(1)=p1%coord(1)+u(1)*t1
           p1%coord(2)=p1%coord(2)+u(2)*t1
         ENDIF
-        IF(ZERO < t2 .AND. t2 < ONE) THEN
+        IF(ZERO <= t2 .AND. t2 <= ONE) THEN
           p2=line%p1
           p2%coord(1)=p2%coord(1)+u(1)*t2
           p2%coord(2)=p2%coord(2)+u(2)*t2
@@ -356,9 +356,9 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_CircleType(c1,c2,p1,p2)
   p2%dim=-1
 
   IF(c1%c%dim==2 .AND. c2%c%dim==2 .AND. &
-      c1%r > 0.0_SRK .AND. c2%r > 0.0_SRK) THEN
+      .NOT.(c1%r .APPROXEQA. ZERO) .AND. .NOT.(c2%r .APPROXEQA. ZERO)) THEN
     d=Distance(c1%c,c2%c)
-    s=c1%r+c2%r
+    s=ABS(c1%r)+ABS(c2%r)
     IF(d > s) THEN
       p1%dim=-2
       p2%dim=-2
@@ -369,8 +369,8 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_CircleType(c1,c2,p1,p2)
       v1%coord(1)=v1%coord(1)/m
       v1%coord(2)=v1%coord(2)/m
       CALL p1%init(DIM=2,X=ZERO,Y=ZERO)
-      p1%coord(1)=c1%c%coord(1)+v1%coord(1)*c1%r
-      p1%coord(2)=c1%c%coord(2)+v1%coord(2)*c1%r
+      p1%coord(1)=c1%c%coord(1)+v1%coord(1)*ABS(c1%r)
+      p1%coord(2)=c1%c%coord(2)+v1%coord(2)*ABS(c1%r)
       p1%dim=-3
       p2=p1
     ELSE
@@ -461,7 +461,7 @@ ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p
   p3%dim=-1
   p4%dim=-1
   IF(circle%c%dim == 2 .AND. line%p1%dim == 2 .AND. &
-      line%p2%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+      line%p2%dim == 2 .AND. .NOT.(circle%r .APPROXEQA. ZERO)) THEN
     u(1)=line%p2%coord(1)-line%p1%coord(1)  !dx
     u(2)=line%p2%coord(2)-line%p1%coord(2)  !dy
     w(1)=line%p1%coord(1)-circle%c%coord(1)
@@ -526,10 +526,10 @@ ELEMENTAL SUBROUTINE intersect_ArcCircleType_and_LineType(circle,line,p1,p2,p3,p
         !and ends of arc
         arcLine%p1=circle%c
         c0=circle%c%coord
-        c1(1)=c0(1)+circle%r*COS(circle%thetastt)
-        c1(2)=c0(2)+circle%r*SIN(circle%thetastt)
-        c2(1)=c0(1)+circle%r*COS(circle%thetastp)
-        c2(2)=c0(2)+circle%r*SIN(circle%thetastp)
+        c1(1)=c0(1)+ABS(circle%r)*COS(circle%thetastt)
+        c1(2)=c0(2)+ABS(circle%r)*SIN(circle%thetastt)
+        c2(1)=c0(1)+ABS(circle%r)*COS(circle%thetastp)
+        c2(2)=c0(2)+ABS(circle%r)*SIN(circle%thetastp)
         CALL arcLine%p2%init(DIM=2,X=c1(1),Y=c1(2))
         p3=arcLine%intersect(line)
         arcLine%p2%coord=c2
@@ -641,7 +641,7 @@ ELEMENTAL SUBROUTINE intersect_CylinderType_and_LineType(cyl,line,p1,p2)
   p2%dim=-1
   !Check for valid input
   IF(cyl%axis%p1%dim == 3 .AND. cyl%axis%p2%dim == 3 .AND. &
-      line%p1%dim == 3 .AND. line%p2%dim == 3 .AND. cyl%r > zero) THEN
+      line%p1%dim == 3 .AND. line%p2%dim == 3 .AND. .NOT.(cyl%r .APPROXEQA. ZERO)) THEN
     p1%dim=0
     p2%dim=0
 
@@ -852,7 +852,7 @@ ELEMENTAL FUNCTION onSurface_CircleType(circle,point) RESULT(bool)
   LOGICAL(SBK) :: bool
   REAL(SRK) :: x,y,theta,theta_shift
   bool=.FALSE.
-  IF(point%dim == 2 .AND. circle%r > 0.0_SRK) THEN
+  IF(point%dim == 2 .AND. .NOT.(circle%r .APPROXEQA. ZERO)) THEN
     x=point%coord(1)-circle%c%coord(1)
     y=point%coord(2)-circle%c%coord(2)
     IF((x*x+y*y) .APPROXEQA. circle%r*circle%r) THEN
