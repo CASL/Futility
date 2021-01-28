@@ -1147,10 +1147,9 @@ SUBROUTINE extractPrimitive(this,v0,subgraph)
 ENDSUBROUTINE extractPrimitive
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
-!>
-!>
+!> @brief Gets a list of all minimum cycles in a graph
+!> @param this the GraphType object
+!> @param cycles the list of minimum cycles found in the graph
 !>
 SUBROUTINE getMCB_graphType(this,cycles)
   CLASS(GraphType),INTENT(IN) :: this
@@ -1732,6 +1731,24 @@ SUBROUTINE combine_GraphType(this,g)
   CALL source%clear()
 
 ENDSUBROUTINE combine_GraphType
+!
+!-------------------------------------------------------------------------------
+!> @brief determines if a point of intersection is within an arc on a circle
+!> @param circle the circle object that was intersected
+!> @param point the point object resulting from the intersection
+!> @param shift optional input argument to shift the end of the arc by 2*PI; optional
+!>
+!> @c point is assumed to have been an intersection found on the circumference
+!> of @c circle accounting only for the centroid and radius of @c circle.
+!> This routine additionally determines if @c point falls between the @c thetastt
+!> and @c thetastp points on the circumference of @c circle.  If no, the point
+!> is cleared.  If yes, the point is unmodified.
+!>
+!> @c thetashift defaults to 0.0, but can be used to shift the @c thetastp parameter
+!> in special cases (such as specifying which semi-circle of @c circle is of interest).
+!>
+!It's unclear to me why this functionality does not live in the circle intersection
+!routines, but I'm not going to fix what isn't broken at this particular moment.
 SUBROUTINE filter_point_arc(circle,point,shift)
   TYPE(CircleType),INTENT(IN) :: circle
   TYPE(PointType),INTENT(INOUT) :: point
@@ -1752,426 +1769,17 @@ SUBROUTINE filter_point_arc(circle,point,shift)
   ENDIF
 
 ENDSUBROUTINE filter_point_arc
-SUBROUTINE combine_GraphType_old(this,g)
-  CLASS(GraphType),INTENT(INOUT) :: this
-  TYPE(GraphType),INTENT(IN) :: g
-  TYPE(GraphType) :: g0,g1,lineAB
-  INTEGER(SIK) :: i,j,n,nAdj,v1,v2
-  INTEGER(SIK),ALLOCATABLE :: cwVerts(:)
-  REAL(SRK) :: alp1,alp2,theta,theta_shift,r,scal,x1,y1,r2
-  REAL(SRK) :: a(2),b(2),c(2),d(2),m(2)
-  REAL(SRK),ALLOCATABLE :: vTheta(:)
-  TYPE(PointType) :: p0,p1,p2,p3,p4
-  TYPE(LineType) :: l1,l2
-  TYPE(CircleType) :: c1,c2
-
-  g0 = this
-  g1 = g
-  CALL l1%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL l1%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL l2%p1%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL l2%p2%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  CALL p0%init(DIM=2,X=0.0_SRK,Y=0.0_SRK)
-  DO WHILE(g1%nEdge() > 0)
-    n=g1%nVert()
-    v1=0; v2=0
-    outer: DO i=1,n
-      DO j=i+1,n
-        IF(g1%edgeMatrix(j,i) /= 0) THEN
-          v1=i
-          v2=j
-          EXIT outer
-        ENDIF
-      ENDDO
-    ENDDO outer
-
-    IF(v1 > 0 .AND. v2 > 0) THEN
-      a=g1%vertices(:,v1)
-      b=g1%vertices(:,v2)
-      CALL lineAB%insertVertex(a)
-      CALL lineAB%insertVertex(b)
-      IF(g1%edgeMatrix(v1,v2) == -1) THEN
-        p0%coord=g1%quadEdges(1:2,v1,v2)
-        r=g1%quadEdges(3,v1,v2)
-        alp1=ATAN2PI(a(1)-p0%coord(1),a(2)-p0%coord(2))
-        alp2=ATAN2PI(b(1)-p0%coord(1),b(2)-p0%coord(2))
-
-        !Ensure we are traversing the shorter arc on the circle
-        IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN
-          !Semi-circle, for this case we must look at sign of r
-          IF(r < 0.0_SRK) THEN
-            CALL c1%set(p0,ABS(r),alp1,alp2)
-          ELSE
-            CALL c1%set(p0,ABS(r),alp2,alp1)
-          ENDIF
-        ELSE
-          !Distance between alpha_1 and alpha_2 is < PI
-          IF(a(2) .APPROXEQA. p0%coord(2)) THEN
-            IF(b(2) > a(2)) THEN
-              CALL c1%set(p0,ABS(r),alp2,alp1)
-            ELSE
-              CALL c1%set(p0,ABS(r),alp1,alp2)
-            ENDIF
-          ELSEIF(a(2) < p0%coord(2)) THEN
-            CALL c1%set(p0,ABS(r),alp1,alp2)
-          ELSE
-            CALL c1%set(p0,ABS(r),alp2,alp1)
-          ENDIF
-        ENDIF
-
-        !Compute arc midpoint
-        m=a+b-2.0_SRK*p0%coord
-        scal=SQRT(m(1)*m(1)+m(2)*m(2))
-        IF(scal .APPROXEQA. 0.0_SRK) THEN
-          !Half circle. Lame.
-          theta=0.5_SRK*(alp1+alp2)
-          !Adjust theta for the appropriate half of the circle
-          IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-              (theta .APPROXLE. c1%thetastp))) theta=theta-PI
-          m(1)=c1%r*COS(theta)
-          m(2)=c1%r*SIN(theta)
-        ELSE
-          scal=ABS(r)/scal
-          m=m*scal
-        ENDIF
-        m=m+c1%c%coord
-
-        !Compute theta shift so that thetastp > thetastt when crossing x+ axis
-        theta_shift=0.0_SRK
-        IF(c1%thetastt > c1%thetastp) theta_shift=TWOPI
-      ELSE
-        l1%p1%coord=a
-        l1%p2%coord=b
-      ENDIF
-
-      n=this%nVert()
-      DO i=1,n
-        DO j=i+1,n
-          IF(this%edgeMatrix(j,i) /= 0) THEN
-            c=this%vertices(:,i)
-            d=this%vertices(:,j)
-          ENDIF
-          IF(this%edgeMatrix(j,i) == 1) THEN
-            l2%p1%dim=2; l2%p2%dim=2
-            l2%p1%coord=c
-            l2%p2%coord=d
-            IF(c1%r == 0.0_SRK) THEN
-              p1=l1%intersect(l2)
-              IF(p1%dim == 2) THEN
-                CALL g0%removeEdge(c,d)
-                CALL g0%insertVertex(p1%coord)
-                CALL g0%defineEdge(c,p1%coord)
-                CALL g0%defineEdge(d,p1%coord)
-                CALL lineAB%insertVertex(p1%coord)
-              ENDIF
-            ELSE
-              !circle-line
-              CALL c1%intersect(l2,p1,p2)
-
-              !Count tangent points
-              IF(p1%dim == -3) p1%dim=2
-              IF(p1%dim == 0 .AND. p2%dim == 2) THEN
-                p1=p2
-                CALL p2%clear()
-              ENDIF
-
-              !Check for intersections on ends of line segments
-              IF(p1%dim == 0) THEN
-                x1=c(1)-c1%c%coord(1)
-                y1=c(2)-c1%c%coord(2)
-                r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                  p1=l2%p1
-                  l2%p1%dim=0
-                ELSE
-                  x1=d(1)-c1%c%coord(1)
-                  y1=d(2)-c1%c%coord(2)
-                  r2=x1*x1+y1*y1
-                  IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                    p1=l2%p2
-                    l2%p2%dim=0
-                  ENDIF
-                ENDIF
-              ENDIF
-              IF(l2%p1%dim == 2 .AND. p2%dim == 0) THEN
-                x1=c(1)-c1%c%coord(1)
-                y1=c(2)-c1%c%coord(2)
-                r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                  p2=l2%p1
-                  l2%p1%dim=0
-                ENDIF
-              ELSEIF(l2%p2%dim == 2 .AND. p2%dim == 0) THEN
-                x1=d(1)-c1%c%coord(1)
-                y1=d(2)-c1%c%coord(2)
-                r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c1%r*c1%r) THEN
-                  p2=l2%p2
-                  l2%p2%dim=0
-                ENDIF
-              ENDIF
-
-              !Filter points for interval of theta on arc. (might have bugs?)
-              IF(p1%dim == 2) THEN
-                theta=ATAN2PI(p1%coord(1)-c1%c%coord(1), &
-                              p1%coord(2)-c1%c%coord(2))
-                IF(p1%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
-                    theta=theta+theta_shift
-                IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p1%clear()
-              ENDIF
-              IF(p2%dim == 2) THEN
-                theta=ATAN2PI(p2%coord(1)-c1%c%coord(1), &
-                              p2%coord(2)-c1%c%coord(2))
-                IF(p2%coord(2)-c1%c%coord(2) .APPROXGE. 0.0_SRK) &
-                    theta=theta+theta_shift
-                IF(.NOT.((c1%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c1%thetastp+theta_shift))) CALL p2%clear()
-              ENDIF
-              IF(p1%dim == 2 .AND. p2%dim == 2) THEN
-                CALL g0%removeEdge(c,d)
-                CALL g0%insertVertex(p1%coord)
-                CALL g0%insertVertex(p2%coord)
-                !Cord intersecting circle
-                CALL g0%defineEdge(p1%coord,p2%coord)
-                CALL g0%defineEdge(c,p1%coord) !is p1 always closer to c?
-                CALL g0%defineEdge(d,p2%coord) !is p2 always closer to d?
-                CALL lineAB%insertVertex(p1%coord)
-                CALL lineAB%insertVertex(p2%coord)
-
-                !Add midpoint of arc (keeps graph sane)
-                !Need to store edge information here, because normal point sorting
-                !on graph type does not implicitly keep points ordered for arcs
-                CALL lineAB%insertVertex(m)
-                CALL lineAB%defineEdge(m,p1%coord)
-                CALL lineAB%defineEdge(m,p2%coord)
-              ELSE
-                IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
-                IF(p1%dim == 2) THEN
-                  CALL g0%removeEdge(c,d)
-                  CALL g0%insertVertex(p1%coord)
-                  CALL g0%defineEdge(c,p1%coord)
-                  CALL g0%defineEdge(d,p1%coord)
-                  CALL lineAB%insertVertex(p1%coord)
-                ENDIF
-              ENDIF
-            ENDIF
-          ELSEIF(this%edgeMatrix(j,i) == -1) THEN
-            p0%coord=this%quadEdges(1:2,i,j)
-            r=this%quadEdges(3,i,j)
-            alp1=ATAN2PI(c(1)-p0%coord(1),c(2)-p0%coord(2))
-            alp2=ATAN2PI(d(1)-p0%coord(1),d(2)-p0%coord(2))
-            !Ensure we are traversing the shorter arc on the circle
-            IF(ABS(alp1-alp2) .APPROXEQA. PI) THEN
-              !Semi-circle, for this case we must look at sign of r
-              IF(r < 0.0_SRK) THEN
-                CALL c2%set(p0,ABS(r),alp1,alp2)
-              ELSE
-                CALL c2%set(p0,ABS(r),alp2,alp1)
-              ENDIF
-            ELSE
-              !Distance between alpha_1 and alpha_2 is < PI
-              IF(c(2) .APPROXEQA. p0%coord(2)) THEN
-                IF(d(2) > c(2)) THEN
-                  CALL c2%set(p0,ABS(r),alp2,alp1)
-                ELSE
-                  CALL c2%set(p0,ABS(r),alp1,alp2)
-                ENDIF
-              ELSEIF(c(2) < p0%coord(2)) THEN
-                CALL c2%set(p0,ABS(r),alp1,alp2)
-              ELSE
-                CALL c2%set(p0,ABS(r),alp2,alp1)
-              ENDIF
-            ENDIF
-            IF(c1%r == 0.0_SRK) THEN
-              !line-circle
-              CALL c2%intersect(l1,p1,p2)
-
-              !Count tangent points
-              IF(p1%dim == -3) p1%dim=2
-              IF(p1%dim == 0 .AND. p2%dim == 2) THEN
-                p1=p2
-                CALL p2%clear()
-              ENDIF
-
-              !Check for intersections on ends of line segments
-              IF(p1%dim == 0) THEN
-                x1=a(1)-c2%c%coord(1)
-                y1=a(2)-c2%c%coord(2)
-                r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                  p1=l1%p1
-                  l1%p1%dim=0
-                ELSE
-                  x1=b(1)-c2%c%coord(1)
-                  y1=b(2)-c2%c%coord(2)
-                  r2=x1*x1+y1*y1
-                  IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                    p1=l1%p2
-                    l1%p2%dim=0
-                  ENDIF
-                ENDIF
-              ENDIF
-              IF(l1%p1%dim == 2 .AND. p2%dim == 0) THEN
-                x1=a(1)-c2%c%coord(1)
-                y1=a(2)-c2%c%coord(2)
-                r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                  p2=l1%p1
-                  l1%p1%dim=0
-                ENDIF
-              ELSEIF(l1%p2%dim == 2 .AND. p2%dim == 0) THEN
-                x1=b(1)-c2%c%coord(1)
-                y1=b(2)-c2%c%coord(2)
-                r2=x1*x1+y1*y1
-                IF(r2 .APPROXEQA. c2%r*c2%r) THEN
-                  p2=l1%p2
-                  l1%p2%dim=0
-                ENDIF
-              ENDIF
-
-              !Filter points for interval of theta on arc. (might have bugs?)
-              theta_shift=0.0_SRK
-              IF(c2%thetastt > c2%thetastp) theta_shift=TWOPI
-              IF(p1%dim == 2) THEN
-                theta=ATAN2PI(p1%coord(1)-c2%c%coord(1), &
-                              p1%coord(2)-c2%c%coord(2))
-                IF(p1%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
-                    theta=theta+theta_shift
-                IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p1%clear()
-              ENDIF
-              IF(p2%dim == 2) THEN
-                theta=ATAN2PI(p2%coord(1)-c2%c%coord(1), &
-                              p2%coord(2)-c2%c%coord(2))
-                IF(p2%coord(2)-c2%c%coord(2) .APPROXGE. 0.0_SRK) &
-                    theta=theta+theta_shift
-                IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                    (theta .APPROXLE. c2%thetastp+theta_shift))) CALL p2%clear()
-              ENDIF
-              IF(p1%dim == 2 .AND. p2%dim == 2) THEN
-                !Compute arc midpoint
-                m=c+d-2.0_SRK*p0%coord
-                scal=SQRT(m(1)*m(1)+m(2)*m(2))
-                IF(scal .APPROXEQA. 0.0_SRK) THEN
-                  !Half circle. Lame.
-                  theta=0.5_SRK*(alp1+alp2)
-                  !Adjust theta for the appropriate half of the circle
-                  IF(.NOT.((c2%thetastt .APPROXLE. theta) .AND. &
-                      (theta .APPROXLE. c2%thetastp))) theta=theta-PI
-                  m(1)=c2%r*COS(theta)
-                  m(2)=c2%r*SIN(theta)
-                ELSE
-                  scal=ABS(r)/scal
-                  m=m*scal
-                ENDIF
-                m=m+c2%c%coord
-
-                CALL g0%removeEdge(c,d)
-                CALL g0%insertVertex(p1%coord)
-                CALL g0%insertVertex(p2%coord)
-
-                !Add midpoint of arc (keeps graph sane)
-                !p1 and p2 are connected by a straight point and an arc
-                CALL g0%insertVertex(m)
-                CALL g0%defineEdge(m,p1%coord,c2%c%coord,c2%r)
-                CALL g0%defineEdge(m,p2%coord,c2%c%coord,c2%r)
-
-                !Cord intersecting circle
-                CALL g0%defineEdge(p1%coord,p2%coord)
-                !is p1 always closer to c?
-                CALL g0%defineEdge(c,p1%coord,c2%c%coord,c2%r)
-                !is p2 always closer to d?
-                CALL g0%defineEdge(d,p2%coord,c2%c%coord,c2%r)
-                CALL lineAB%insertVertex(p1%coord)
-                CALL lineAB%insertVertex(p2%coord)
-              ELSE
-                IF(p1%dim /= 2 .AND. p2%dim == 2) p1=p2
-                IF(p1%dim == 2) THEN
-                  CALL g0%removeEdge(c,d)
-                  CALL g0%insertVertex(p1%coord)
-                  CALL g0%defineEdge(c,p1%coord,c2%c%coord,c2%r)
-                  CALL g0%defineEdge(d,p1%coord,c2%c%coord,c2%r)
-                  CALL lineAB%insertVertex(p1%coord)
-                ENDIF
-              ENDIF
-              l1%p1%dim=2; l1%p2%dim=2
-            ELSE
-              !circle-circle (F-this)
-
-            ENDIF
-          ENDIF
-        ENDDO
-      ENDDO
-      IF(c1%r == 0.0_SRK) THEN
-        CALL g0%insertVertex(lineAB%vertices(:,1))
-        DO i=2,lineAB%nVert()
-          CALL g0%insertVertex(lineAB%vertices(:,i))
-          CALL g0%defineEdge(lineAB%vertices(:,i-1), &
-              lineAB%vertices(:,i))
-        ENDDO
-      ELSE
-        !Sort vertices in clock-wise order.
-        n=lineAB%nVert()
-        ALLOCATE(cwVerts(n)); cwVerts=0
-        ALLOCATE(vTheta(n));
-        DO i=1,n
-          vTheta(i)=ATAN2PI(lineAB%vertices(1,i)-c1%c%coord(1), &
-              lineAB%vertices(2,i)-c1%c%coord(2))
-        ENDDO
-        IF(c1%thetastt > c1%thetastp) THEN
-          !This arc crosses the positive x-axis, shift some angles by 2*PI
-          !so vertex theta's can be ordered sequentially.
-          DO i=1,n
-            IF((0.0_SRK .APPROXLE. vTheta(i)) .AND. vTheta(i) < c1%thetastt) &
-                vTheta(i)=vTheta(i)+TWOPI
-          ENDDO
-        ENDIF
-        DO i=1,n
-          cwVerts(i)=MINLOC(vTheta,DIM=1)
-          vTheta(cwVerts(i))=HUGE(vTheta(1))
-        ENDDO
-
-        !Add vertices in CW-order and define edges
-        CALL g0%insertVertex(lineAB%vertices(:,cwVerts(1)))
-        DO i=2,lineAB%nVert()
-          CALL g0%insertVertex(lineAB%vertices(:,cwVerts(i)))
-          CALL g0%defineEdge(lineAB%vertices(:,cwVerts(i-1)), &
-              lineAB%vertices(:,cwVerts(i)),c1%c%coord,c1%r)
-        ENDDO
-        DEALLOCATE(vTheta,cwVerts)
-      ENDIF
-      SELECTTYPE(this); TYPE IS(GraphType)
-        this = g0
-      ENDSELECT
-      !CALL editToVTK_graphType(this,'tmpG.vtk')
-      CALL c1%clear()
-      CALL lineAB%clear()
-    ENDIF
-
-    !Remove the edge
-    CALL g1%removeEdge(v1,v2)
-    !Remove any isoloated vertices
-    nAdj=g1%nAdjacent(v1)
-    IF(nAdj == 0) CALL g1%removeVertex(v1)
-    v2=g1%getVertIndex(b)
-    nAdj=g1%nAdjacent(v2)
-    IF(nAdj == 0) CALL g1%removeVertex(v2)
-  ENDDO
-  CALL p0%clear()
-  CALL p1%clear()
-  CALL p2%clear()
-  CALL p3%clear()
-  CALL p4%clear()
-  CALL l1%clear()
-  CALL l2%clear()
-  CALL c1%clear()
-  CALL lineAB%clear()
-  CALL g0%clear()
-  CALL g1%clear()
-ENDSUBROUTINE combine_GraphType_old
 !
 !-------------------------------------------------------------------------------
+!> @brief Divides a graph's edge into multiple segments
+!> @param this the graph whose edge should be divided
+!> @param endpoint_p1 the @c PointType containing coordinates of an edge endpoint
+!> @param endpoint_p2 the @c PointType containing coordinates of an edge endpoint
+!> @param intersections the list of intersection locations, stored in @c PointTypes
+!>
+!> It is simply assumed that each intersection point does in fact lie on the edge.
+!> This routine does no checking to ensure that.
+!>
 SUBROUTINE divideEdge_array(this,endpoint_p1,endpoint_p2,intersections)
   CLASS(GraphType),INTENT(INOUT) :: this
   TYPE(PointType),INTENT(IN) :: endpoint_p1
@@ -2192,6 +1800,15 @@ SUBROUTINE divideEdge_array(this,endpoint_p1,endpoint_p2,intersections)
 ENDSUBROUTINE divideEdge_array
 !
 !-------------------------------------------------------------------------------
+!> @brief Divides a graph's edge into multiple segments
+!> @param this the graph whose edge should be divided
+!> @param endpoint_p1 the @c PointType containing coordinates of an edge endpoint
+!> @param endpoint_p2 the @c PointType containing coordinates of an edge endpoint
+!> @param intersection the intersection location, stored in a @c PointType
+!>
+!> It is simply assumed that the intersection point does in fact lie on the edge.
+!> This routine does no checking to ensure that.
+!>
 SUBROUTINE divideEdge_scalar(this,endpoint_p1,endpoint_p2,intersection)
   CLASS(GraphType),INTENT(INOUT) :: this
   TYPE(PointType),INTENT(IN) :: endpoint_p1
@@ -2218,6 +1835,24 @@ SUBROUTINE divideEdge_scalar(this,endpoint_p1,endpoint_p2,intersection)
 ENDSUBROUTINE divideEdge_scalar
 !
 !-------------------------------------------------------------------------------
+!> @brief Divides a graph's linear edge into multiple segments
+!> @param this the graph whose edge should be divided
+!> @param endpoint_p1 the @c PointType containing coordinates of an edge endpoint
+!> @param endpoint_p2 the @c PointType containing coordinates of an edge endpoint
+!> @param intersection the intersection location, stored in a @c PointType
+!>
+!> It is simply assumed that each intersection point does in fact lie on the edge.
+!> This routine does no checking to ensure that.
+!>
+!> If any of the resulting pairs of vertexes that would have had an edge created
+!> by this routine have a pre-existing edge between them (such as if the intersection
+!> point was already in the graph), this routine will do one of 2 things:
+!>   1. If the pre-existing edge is linear, it will be left in place
+!>   2. If the pre-existing edge is quadratic, then the midpoint of the new linear
+!>      edge is found.  This routine is then called recursively with that midpoint.
+!>      This adds an additional vertex, but allows the prior quadratic edge to exist
+!>      as well.
+!>
 SUBROUTINE divideLinearEdge(this,endpoint_p1,endpoint_p2,intersection)
   CLASS(GraphType),INTENT(INOUT) :: this
   TYPE(PointType),INTENT(IN) :: endpoint_p1
@@ -2297,6 +1932,15 @@ SUBROUTINE divideLinearEdge(this,endpoint_p1,endpoint_p2,intersection)
 ENDSUBROUTINE divideLinearEdge
 !
 !-------------------------------------------------------------------------------
+!> @brief A small helper function to split a linear edge into 2
+!> @param this the graph type to modify
+!> @param endpoint_i1 the endpoint index for the edge
+!> @param endpoint_i2 the endpoint index for the edge
+!> @param intersection the intersection endpoint at which to split the edge
+!>
+!> This routine does no error checking at all.  It is the client's responsibility
+!> to ensure reasonable inputs.
+!>
 SUBROUTINE applyLinearSplit(this,endpoint_i1,endpoint_i2,intersection)
   CLASS(GraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: endpoint_i1
@@ -2310,6 +1954,30 @@ SUBROUTINE applyLinearSplit(this,endpoint_i1,endpoint_i2,intersection)
 ENDSUBROUTINE applyLinearSplit
 !
 !-------------------------------------------------------------------------------
+!> @brief Divides a graph's quadratic edge into multiple segments
+!> @param this the graph whose edge should be divided
+!> @param endpoint_p1 the @c PointType containing coordinates of an edge endpoint
+!> @param endpoint_p2 the @c PointType containing coordinates of an edge endpoint
+!> @param intersection the intersection location, stored in a @c PointType
+!>
+!> It is simply assumed that each intersection point does in fact lie on the edge.
+!> This routine does no checking to ensure that.
+!>
+!> If any of the resulting pairs of vertexes that would have had an edge created
+!> by this routine have a pre-existing edge between them (such as if the intersection
+!> point was already in the graph), this routine will do one of 2 things:
+!>   1. If the pre-existing edge is linear, that edge will be split by calling
+!>      @c divideLinearEdge with the edge midpoint.  The new quadratic edge will
+!>      then be added.
+!>   2. If the pre-existing edge is quadratic and the centroid and radius of the
+!>      edge are the same, then it is left in place unchanged (since it's equivalent
+!>      to what was being added already)
+!>   3. If the pre-existing edge is quadratic and has a different centroid or radius,
+!>      the midpoint of that edge is found.  This routine is then recursively called
+!>      using the midpoint to divide the pre-existing edge.  This add's an additional
+!>      vertex beyond @c intersection in the original call, but allows both quadratic
+!>      edges to be represented in the graph.
+!>
 RECURSIVE SUBROUTINE divideQuadraticEdge(this,endpoint_p1,endpoint_p2,intersection)
   CLASS(GraphType),INTENT(INOUT) :: this
   TYPE(PointType),INTENT(IN) :: endpoint_p1
@@ -2425,6 +2093,15 @@ RECURSIVE SUBROUTINE divideQuadraticEdge(this,endpoint_p1,endpoint_p2,intersecti
 ENDSUBROUTINE divideQuadraticEdge
 !
 !-------------------------------------------------------------------------------
+!> @brief A small helper function to split a quadratic edge into 2
+!> @param this the graph type to modify
+!> @param endpoint_i1 the endpoint index for the edge
+!> @param endpoint_i2 the endpoint index for the edge
+!> @param intersection the intersection endpoint at which to split the edge
+!>
+!> This routine does no error checking at all.  It is the client's responsibility
+!> to ensure reasonable inputs.
+!>
 SUBROUTINE applyQuadraticSplit(this,endpoint_i1,endpoint_i2,intersection)
   CLASS(GraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: endpoint_i1
