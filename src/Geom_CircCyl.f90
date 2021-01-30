@@ -279,14 +279,12 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_LineType(circle,line,p1,p2)
     b=w(1)*u(1)+w(2)*u(2)
     c=w(1)*w(1)+w(2)*w(2)-circle%r*circle%r
 
-! WRITE(*,*) 'intersect_CircleType_and_LineType a:',u,':',w,':',b,c
     IF(c > zero .AND. b > zero) THEN
       p1%dim=-2
       p2%dim=-2
     ELSE
       a=u(1)*u(1)+u(2)*u(2) !dr^2
       discr=b*b-a*c
-! WRITE(*,*) 'intersect_CircleType_and_LineType b:',a,discr
       IF(discr < -EPSREAL) THEN
         !Disjoint
         p1%dim=-2
@@ -313,7 +311,6 @@ ELEMENTAL SUBROUTINE intersect_CircleType_and_LineType(circle,line,p1,p2)
         discr=SQRT(discr)
         t1=(-b-discr)*ra
         t2=(-b+discr)*ra
-! WRITE(*,*) 'intersect_CircleType_and_LineType c:',t1,t2
         IF(ZERO <= t1 .AND. t1 <= ONE) THEN
           p1=line%p1
           p1%coord(1)=p1%coord(1)+u(1)*t1
