@@ -1608,99 +1608,62 @@ SUBROUTINE combine_GraphType(this,g)
       DO source_i1=1,source_edge%nVert()
         vTheta(source_i1)=ATAN2PI(source_edge%vertices(1,source_i1)-source_circle%c%coord(1), &
             source_edge%vertices(2,source_i1)-source_circle%c%coord(2))
+        IF(vTheta(source_i1) < source_circle%thetastt) THEN
+          vTheta(source_i1)=vTheta(source_i1)+TWOPI
+        ENDIF
         intersection_indexes(source_i1)=source_i1
       ENDDO !source_i1
+      !Now check for crossing of the x-axis
       CALL sort(vTheta,intersection_indexes,.TRUE.)
       DO source_i1=1,SIZE(vTheta)
-        !We found the start of the arc, so we don't need to continue looping
-        !(after we find the end of the arc)
         IF(intersection_indexes(source_i1) == edge_endpoint_i1) THEN
-          !Points are ordered counterclockwise and don't cross the axis
-          IF(source_i1 == 1 .AND. intersection_indexes(SIZE(vTheta)) == edge_endpoint_i2) THEN
-            source_i2=SIZE(vTheta)
-            direction=1
-          !Points are ordered clockwise and don't cross the axis
-          ELSEIF(source_i1 == SIZE(vTheta) .AND. intersection_indexes(1) == edge_endpoint_i2) THEN
-            source_i2=1
-            direction=-1
-          !Points are ordered counterclockwise, but cross the axis
-          ELSEIF(intersection_indexes(source_i1-1) == edge_endpoint_i2) THEN
-            source_i2=source_i1-1
-            direction=1
-          !Points are ordered clockwise, but cross the axis
-          ELSEIF(intersection_indexes(source_i1+1) == edge_endpoint_i2) THEN
-            source_i2=source_i1-1
-            direction=-1
-          ENDIF
           EXIT
         ENDIF
       ENDDO !source_i1
+      DO source_i2=1,SIZE(vTheta)
+        IF(intersection_indexes(source_i2) == edge_endpoint_i2) THEN
+          EXIT
+        ENDIF
+      ENDDO !source_i2
+      IF(source_i1 > source_i2) THEN
+        direction=-1
+      ELSE
+        direction=1
+      ENDIF
       DEALLOCATE(vTheta)
+      edge_endpoint_i1=source_i1
+      DO WHILE(edge_endpoint_i1 /= source_i2)
+        edge_endpoint_i2=edge_endpoint_i1+direction
+        IF(edge_endpoint_i2 == 0) THEN
+          edge_endpoint_i2=SIZE(vTheta)
+        ELSEIF(edge_endpoint_i2 > SIZE(vTheta)) THEN
+          edge_endpoint_i2=1
+        ENDIF
+        CALL intersect_p1%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1)))
+        CALL intersect_p2%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i2)))
+        CALL target%defineEdge(intersect_p1,intersect_p2,source_circle%c,source_circle%r)
+        CALL intersect_p1%clear()
+        CALL intersect_p2%clear()
+        edge_endpoint_i1=edge_endpoint_i1+direction
+        IF(edge_endpoint_i1 == 0) THEN
+          edge_endpoint_i1=SIZE(vTheta)
+        ELSEIF(edge_endpoint_i1 > SIZE(vTheta)) THEN
+          edge_endpoint_i1=1
+        ENDIF
+      ENDDO
 
-      !Add edges for the first portion of the arc:
-      IF(direction == 1) THEN
-        DO WHILE(edge_endpoint_i1 < source_edge%nVert())
-          CALL intersect_p1%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1)))
-          CALL intersect_p2%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1+1)))
-          CALL target%defineEdge(intersect_p1,intersect_p2,source_circle%c,source_circle%r)
 ! WRITE(*,*) 'defining edge a:',intersection_indexes(edge_endpoint_i1),intersection_indexes(edge_endpoint_i1+1),':', &
 ! intersect_p1%coord,':',intersect_p2%coord
-          CALL intersect_p1%clear()
-          CALL intersect_p2%clear()
-          edge_endpoint_i1=edge_endpoint_i1+1
-        ENDDO
-        IF(source_i2 < source_i1) THEN
-          CALL intersect_p1%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1)))
-          CALL intersect_p2%init(COORD=source_edge%vertices(:,intersection_indexes(1)))
-          CALL target%defineEdge(intersect_p1,intersect_p2,source_circle%c,source_circle%r)
 ! WRITE(*,*) 'defining edge b:',intersection_indexes(edge_endpoint_i1),intersection_indexes(1),':', &
 ! intersect_p1%coord,':',intersect_p2%coord
-          CALL intersect_p1%clear()
-          CALL intersect_p2%clear()
-        ENDIF
-        edge_endpoint_i1=1
-        DO WHILE(edge_endpoint_i1 < source_i2)
-          CALL intersect_p1%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1)))
-          CALL intersect_p2%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1+1)))
-          CALL target%defineEdge(intersect_p1,intersect_p2,source_circle%c,source_circle%r)
 ! WRITE(*,*) 'defining edge c:',intersection_indexes(edge_endpoint_i1),intersection_indexes(edge_endpoint_i1+1),':', &
 ! intersect_p1%coord,':',intersect_p2%coord
-          CALL intersect_p1%clear()
-          CALL intersect_p2%clear()
-          edge_endpoint_i1=edge_endpoint_i1+1
-        ENDDO
-      ELSE
-        DO WHILE(edge_endpoint_i1 > 1)
-          CALL intersect_p1%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1)))
-          CALL intersect_p2%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1-1)))
-          CALL target%defineEdge(intersect_p1,intersect_p2,source_circle%c,source_circle%r)
 ! WRITE(*,*) 'defining edge d:',intersection_indexes(edge_endpoint_i1),intersection_indexes(edge_endpoint_i1-1),':', &
 ! intersect_p1%coord,':',intersect_p2%coord
-          CALL intersect_p1%clear()
-          CALL intersect_p2%clear()
-          edge_endpoint_i1=edge_endpoint_i1-1
-        ENDDO
-        IF(source_i2 > source_i1) THEN
-          CALL intersect_p1%init(COORD=source_edge%vertices(:,intersection_indexes(1)))
-          CALL intersect_p2%init(COORD=source_edge%vertices(:,intersection_indexes(SIZE(intersection_indexes))))
-          CALL target%defineEdge(intersect_p1,intersect_p2,source_circle%c,source_circle%r)
 ! WRITE(*,*) 'defining edge e:',intersection_indexes(1),intersection_indexes(SIZE(intersection_indexes)),':', &
 ! intersect_p1%coord,':',intersect_p2%coord
-          CALL intersect_p1%clear()
-          CALL intersect_p2%clear()
-        ENDIF
-        edge_endpoint_i1=SIZE(intersection_indexes)
-        DO WHILE(edge_endpoint_i1 > source_i2)
-          CALL intersect_p1%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1)))
-          CALL intersect_p2%init(COORD=source_edge%vertices(:,intersection_indexes(edge_endpoint_i1-1)))
-          CALL target%defineEdge(intersect_p1,intersect_p2,source_circle%c,source_circle%r)
 ! WRITE(*,*) 'defining edge f:',intersection_indexes(edge_endpoint_i1),intersection_indexes(edge_endpoint_i1-1),':', &
 ! intersect_p1%coord,':',intersect_p2%coord
-          CALL intersect_p1%clear()
-          CALL intersect_p2%clear()
-          edge_endpoint_i1=edge_endpoint_i1-1
-        ENDDO
-      ENDIF
       DEALLOCATE(intersection_indexes)
     ENDSELECT
 

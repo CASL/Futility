@@ -179,7 +179,6 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
 
   !Check if thatGraph is closed (i.e. each vertex has only two neighbors)
   CALL clear_PolygonType(thisPoly)
-! WRITE(*,*) ALLOCATED(thatGraph%vertices),thatGraph%isMinimumCycle()
   IF(ALLOCATED(thatGraph%vertices) .AND. thatGraph%isMinimumCycle()) THEN
     !Get the number of vertices and edges (equal, since it's a minimum cycle)
     thisPoly%nVert=thatGraph%nVert()
