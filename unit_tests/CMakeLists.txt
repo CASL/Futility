@@ -66,6 +66,7 @@ SET(UNIT_TEST_NAMES
     testEigenvalueSolver
     testODESolver
     testNonLinearSolver
+    testPicard
     testAndersonAcceleration
     testStochasticSampler
     testPartitionGraph
