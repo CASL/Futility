@@ -653,7 +653,7 @@ ENDSUBROUTINE defineLinearEdge_point
 !> @param coord1 the coordinates of the first vertex
 !> @param coord2 the coordinates of the second vertex
 !>
-SUBROUTINE defineLinearEdge_coords(this,coord1,coord2)
+RECURSIVE SUBROUTINE defineLinearEdge_coords(this,coord1,coord2)
   CLASS(GraphType),INTENT(INOUT) :: this
   REAL(SRK),INTENT(IN) :: coord1(2)
   REAL(SRK),INTENT(IN) :: coord2(2)
@@ -713,7 +713,7 @@ ENDSUBROUTINE defineQuadraticEdge_point
 !> @param c0 the centroid of the circle/arc
 !> @param r the radius of the circle/arc
 !>
-SUBROUTINE defineQuadraticEdge_coords(this,coord1,coord2,c0,r)
+RECURSIVE SUBROUTINE defineQuadraticEdge_coords(this,coord1,coord2,c0,r)
   CLASS(GraphType),INTENT(INOUT) :: this
   REAL(SRK),INTENT(IN) :: coord1(2)
   REAL(SRK),INTENT(IN) :: coord2(2)
