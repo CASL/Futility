@@ -375,7 +375,7 @@ ELEMENTAL FUNCTION getCWMostVert_graphType(this,v0,vCurr) RESULT(vNext)
   IF(vPrev == vCurr) vPrev=0
   IF(0 < vCurr .AND. vCurr <= nVert .AND. 0 <= vPrev .AND. vPrev <= nVert) THEN
     badEdge=.FALSE.
-    IF(vPrev > 0) badEdge=this%edgeMatrix(vCurr,vPrev) == 0
+    IF(vPrev > 0) badEdge=this%edgeMatrix(vCurr,vPrev) == GRAPH_NULL_EDGE
 
     IF(.NOT.badEdge) THEN
       nAdj=this%nAdjacent(vCurr)
@@ -445,7 +445,7 @@ ELEMENTAL FUNCTION getCCWMostVert_graphType(this,v0,vCurr) RESULT(vNext)
   IF(vPrev == vCurr) vPrev=0
   IF(0 < vCurr .AND. vCurr <= nVert .AND. 0 <= vPrev .AND. vPrev <= nVert) THEN
     badEdge=.FALSE.
-    IF(vPrev > 0) badEdge=this%edgeMatrix(vCurr,vPrev) == 0
+    IF(vPrev > 0) badEdge=this%edgeMatrix(vCurr,vPrev) == GRAPH_NULL_EDGE
 
     IF(.NOT.badEdge) THEN
       nAdj=this%nAdjacent(vCurr)
@@ -671,8 +671,8 @@ RECURSIVE SUBROUTINE defineLinearEdge_coords(this,coord1,coord2)
       oldQuadraticEdge=.TRUE.
       quadParams=this%quadEdges(:,v1,v2)
     ENDIF
-    this%edgeMatrix(v1,v2)=1
-    this%edgeMatrix(v2,v1)=1
+    this%edgeMatrix(v1,v2)=GRAPH_LINEAR_EDGE
+    this%edgeMatrix(v2,v1)=GRAPH_LINEAR_EDGE
     IF(oldQuadraticEdge) THEN
       CALL p1%init(COORD=coord1)
       CALL p2%init(COORD=coord2)
@@ -746,8 +746,8 @@ RECURSIVE SUBROUTINE defineQuadraticEdge_coords(this,coord1,coord2,c0,r)
         ENDIF
 
         !Update edge matrix
-        this%edgeMatrix(v1,v2)=-1
-        this%edgeMatrix(v2,v1)=-1
+        this%edgeMatrix(v1,v2)=GRAPH_QUADRATIC_EDGE
+        this%edgeMatrix(v2,v1)=GRAPH_QUADRATIC_EDGE
 
         !Store circle info in quadEdges
         this%quadEdges(1:2,v1,v2)=c0
@@ -819,10 +819,10 @@ SUBROUTINE getMidPointOnEdge_idx(this,v1,v2,m)
   m=-HUGE(m)
   n=this%nVert()+1
   IF(v1 > 0 .AND. v2 > 0 .AND. v1 < n .AND. v2 < n) THEN
-    IF(this%edgeMatrix(v1,v2) == 1) THEN
+    IF(this%edgeMatrix(v1,v2) == GRAPH_LINEAR_EDGE) THEN
       m=this%vertices(:,v1)+this%vertices(:,v2)
       m=0.5_SRK*m
-    ELSEIF(this%edgeMatrix(v1,v2) == -1) THEN
+    ELSEIF(this%edgeMatrix(v1,v2) == GRAPH_QUADRATIC_EDGE) THEN
       a=this%vertices(:,v1)
       b=this%vertices(:,v2)
       c=this%quadEdges(1:2,v1,v2)
@@ -973,8 +973,8 @@ SUBROUTINE removeEdge_index(this,i,j)
 
   n=this%nVert()+1
   IF(i > 0 .AND. j > 0 .AND. i < n .AND. j < n) THEN
-    this%edgeMatrix(i,j)=0
-    this%edgeMatrix(j,i)=0
+    this%edgeMatrix(i,j)=GRAPH_NULL_EDGE
+    this%edgeMatrix(j,i)=GRAPH_NULL_EDGE
     this%quadEdges(:,i,j)=0.0_SRK
     this%quadEdges(:,j,i)=0.0_SRK
   ENDIF
@@ -1072,9 +1072,9 @@ SUBROUTINE extractPrimitive(this,v0,subgraph)
     coord1=this%vertices(:,vPrev)
     coord2=this%vertices(:,vCurr)
     CALL subgraph%insertVertex(coord2)
-    IF(this%edgeMatrix(vPrev,vCurr) == 1) THEN
+    IF(this%edgeMatrix(vPrev,vCurr) == GRAPH_LINEAR_EDGE) THEN
       CALL subgraph%defineEdge(coord1,coord2)
-    ELSEIF(this%edgeMatrix(vPrev,vCurr) == -1) THEN
+    ELSEIF(this%edgeMatrix(vPrev,vCurr) == GRAPH_QUADRATIC_EDGE) THEN
       c0=this%quadEdges(1:2,vPrev,vCurr)
       r=this%quadEdges(3,vPrev,vCurr)
       CALL subgraph%defineEdge(coord1,coord2,c0,r)
@@ -1094,9 +1094,9 @@ SUBROUTINE extractPrimitive(this,v0,subgraph)
     !Add Last/First point and last edge
     coord1=this%vertices(:,vPrev)
     coord2=this%vertices(:,vCurr)
-    IF(this%edgeMatrix(vPrev,vCurr) == 1) THEN
+    IF(this%edgeMatrix(vPrev,vCurr) == GRAPH_LINEAR_EDGE) THEN
       CALL subgraph%defineEdge(coord1,coord2)
-    ELSEIF(this%edgeMatrix(vPrev,vCurr) == -1) THEN
+    ELSEIF(this%edgeMatrix(vPrev,vCurr) == GRAPH_QUADRATIC_EDGE) THEN
       c0=this%quadEdges(1:2,vPrev,vCurr)
       r=this%quadEdges(3,vPrev,vCurr)
       CALL subgraph%defineEdge(coord1,coord2,c0,r)
@@ -1232,7 +1232,7 @@ SUBROUTINE editToVTK_graphType(this,fname,unitNo)
       ALLOCATE(vtkMesh%nodelist(2*nedge))
       DO i=1,nvert
         DO j=i+1,nvert
-          IF(ABS(this%edgeMatrix(i,j)) == 1) THEN
+          IF(ABS(this%edgeMatrix(i,j)) == GRAPH_LINEAR_EDGE) THEN
             n=n+1
             vtkMesh%nodelist(n)=i-1
             n=n+1
@@ -1292,7 +1292,7 @@ SUBROUTINE combine_GraphType(this,g)
     !Find the next edge in the source graph
     find_source_edge: DO source_i1=1,source%nVert()
       DO source_i2=source_i1+1,source%nVert()
-        IF(source%edgeMatrix(source_i1,source_i2) /= 0) THEN
+        IF(source%edgeMatrix(source_i1,source_i2) /= GRAPH_NULL_EDGE) THEN
           EXIT find_source_edge
         ENDIF
       ENDDO !source_i1
@@ -2013,7 +2013,7 @@ SUBROUTINE triangulateVerts_graphType(this)
   LOGICAL(SBK) :: incircum
   REAL(SRK) :: r,xc,yc
 
-  this%edgeMatrix=0
+  this%edgeMatrix=GRAPH_NULL_EDGE
   nVert=this%nVert()
 
   !Maximum of n-2 triangles...n+1 with super-triangle
