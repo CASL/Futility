@@ -53,8 +53,8 @@ TYPE :: LineType
     PROCEDURE,PASS :: midPoint => midPoint_LineType
     !> @copybrief GeomLine::intersect_LineType_and_LineType
     !> @copydetails GeomLine::intersect_LineType_and_LineType
-    PROCEDURE,PASS :: intersect => intersect_LineType_and_LineType
-    PROCEDURE,PASS :: intersectLine => intersect_LineType_and_LineType
+    PROCEDURE,PASS,PRIVATE :: intersectLine => intersect_LineType_and_LineType
+    GENERIC :: intersect => intersectLine
     !> @copybrief GeomLine::distance_LineType_to_PointType
     !> @copydetails GeomLine::distance_LineType_to_PointType
     PROCEDURE,PASS :: distance2Point => distance_LineType_to_PointType

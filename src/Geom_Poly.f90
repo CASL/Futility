@@ -111,6 +111,7 @@ TYPE :: PolygonType
     !> @copybrief Geom_Poly::intersectPoly_PolygonType
     !> @copydetails Geom_Poly::intersectPoly_PolygonType
     PROCEDURE,PASS :: intersectPoly => intersectPoly_PolygonType
+    GENERIC :: intersect => intersectLine,intersectPoly
     !> @copybrief Geom_Poly::getRadius_PolygonType
     !> @copydetails Geom_Poly::getRadius_PolygonType
     PROCEDURE,PASS :: getRadius => getRadius_PolygonType
@@ -592,7 +593,7 @@ ENDFUNCTION getOuterRadius_PolygonType
 !> @param bool The logical result of this operation.  TRUE if the point is on
 !>        the surface.
 !>
-PURE RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(bool)
+RECURSIVE FUNCTION onSurface_PolygonType(thisPoly,point,incSubReg) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PointType),INTENT(IN) :: point
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: incSubReg
@@ -690,7 +691,7 @@ ENDFUNCTION onSurface_PolygonType
 !> @param isSub Optional logical of whether or not it is a recursive subregion check.
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
-PURE RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bool)
+RECURSIVE FUNCTION point_inside_PolygonType(thisPoly,point,isSub) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PointType),INTENT(IN) :: point
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: isSub
@@ -844,12 +845,12 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
             IF(ALL(thatPoly%quad2edge /= j)) THEN
               CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
                   thatPoly%vert(thatPoly%edge(2,j)))
-              p1=Lines(i)%intersectLine(tmpLine)
+              p1=Lines(i)%intersect(tmpLine)
             ENDIF
           ELSE
             CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
                 thatPoly%vert(thatPoly%edge(2,j)))
-            p1=Lines(i)%intersectLine(tmpLine)
+            p1=Lines(i)%intersect(tmpLine)
           ENDIF
           !Check if there was an intersection
           IF(p1%dim > 0) THEN
@@ -870,7 +871,7 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
         !Check for line-circle intersections
         DO j=1,thatPoly%nQuadEdge
           CALL createArcFromQuad(thatPoly,j,tmpCirc)
-          CALL tmpCirc%intersectLine(Lines(i),p1,p2)
+          CALL tmpCirc%intersect(Lines(i),p1,p2)
 
           IF(p1%dim == -3) p1%dim=2 !Include tangent points
 
@@ -911,14 +912,14 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
               IF(ALL(thatPoly%quad2edge /= i)) THEN
                 CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
                     thatPoly%vert(thatPoly%edge(2,j)))
-                CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+                CALL Circs(i)%intersect(tmpLine,p1,p2)
               ELSE
                 CYCLE
               ENDIF
             ELSE
               CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
                   thatPoly%vert(thatPoly%edge(2,j)))
-              CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+              CALL Circs(i)%intersect(tmpLine,p1,p2)
             ENDIF
 
             IF(p1%dim == -3) p1%dim=2 !Include tangent points
@@ -952,7 +953,7 @@ FUNCTION polygon_inside_PolygonType(thisPoly,thatPoly) RESULT(bool)
           !Loop over quadratic edges
           DO j=1,thatPoly%nQuadEdge
             CALL createArcFromQuad(thatPoly,j,tmpCirc)
-            CALL tmpCirc%intersectCircle(Circs(i),p1,p2)
+            CALL tmpCirc%intersect(Circs(i),p1,p2)
 
             IF(p1%dim == -3) p1%dim=2 !Include tangent points
 
@@ -1042,7 +1043,7 @@ ENDFUNCTION polygon_inside_PolygonType
 !> @param line The line type to intersect with the polygon
 !> @param bool The logical result of the operation
 !>
-PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
+FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPolygon
   TYPE(LineType),INTENT(IN) :: line
   LOGICAL(SBK) :: bool
@@ -1072,7 +1073,7 @@ PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
   !Intersect circles first if necessary
   ipoint=1
   Quad: DO i=1,thisPolygon%nQuadEdge
-    CALL circles(i)%intersectArcLine(line,tmppoints(ipoint), &
+    CALL circles(i)%intersect(line,tmppoints(ipoint), &
         tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
     !Check if the points are on the circle
     DO j=0,3
@@ -1097,7 +1098,7 @@ PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
       DO i=1,SIZE(lines)
         !Intersect the line
         IF(ALL(i /= thisPolygon%quad2edge)) THEN
-          tmppoints(ipoint)=lines(i)%intersectLine(line)
+          tmppoints(ipoint)=lines(i)%intersect(line)
           IF(tmppoints(ipoint)%dim > 0) THEN
             bool=.TRUE.
             EXIT
@@ -1107,7 +1108,7 @@ PURE FUNCTION doesLineIntersect_PolygonType(thisPolygon,line) RESULT(bool)
       ENDDO
     ELSE
       DO i=1,SIZE(lines)
-        tmppoints(ipoint)=lines(i)%intersectLine(line)
+        tmppoints(ipoint)=lines(i)%intersect(line)
         IF(tmppoints(ipoint)%dim > 0) THEN
           bool=.TRUE.
           EXIT
@@ -1152,7 +1153,7 @@ ENDFUNCTION doesLineIntersect_PolygonType
 !> @param thatPoly The second polygon type to intersect with the first
 !> @param bool The logical result of the operation
 !>
-PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
+FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PolygonType),INTENT(IN) :: thatPoly
   LOGICAL(SBK) :: bool
@@ -1198,12 +1199,12 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
           IF(ALL(thatPoly%quad2edge /= j)) THEN
             CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
                 thatPoly%vert(thatPoly%edge(2,j)))
-            p1=Lines(i)%intersectLine(tmpLine)
+            p1=Lines(i)%intersect(tmpLine)
           ENDIF
         ELSE
           CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
               thatPoly%vert(thatPoly%edge(2,j)))
-          p1=Lines(i)%intersectLine(tmpLine)
+          p1=Lines(i)%intersect(tmpLine)
         ENDIF
         !Check if there was an intersection
         IF(p1%dim > 0) THEN
@@ -1224,7 +1225,7 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
       !Check for line-circle intersections
       DO j=1,thatPoly%nQuadEdge
         CALL createArcFromQuad(thatPoly,j,tmpCirc)
-        CALL tmpCirc%intersectLine(Lines(i),p1,p2)
+        CALL tmpCirc%intersect(Lines(i),p1,p2)
 
         IF(p1%dim == -3) p1%dim=2 !Include tangent points
 
@@ -1260,14 +1261,14 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
             IF(ALL(thatPoly%quad2edge /= j)) THEN
               CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
                   thatPoly%vert(thatPoly%edge(2,j)))
-              CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+              CALL Circs(i)%intersect(tmpLine,p1,p2)
             ELSE
               CYCLE
             ENDIF
           ELSE
             CALL tmpLine%set(thatPoly%vert(thatPoly%edge(1,j)), &
                 thatPoly%vert(thatPoly%edge(2,j)))
-            CALL Circs(i)%intersectLine(tmpLine,p1,p2)
+            CALL Circs(i)%intersect(tmpLine,p1,p2)
           ENDIF
 
 
@@ -1297,7 +1298,7 @@ PURE FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
         !Loop over quadratic edges
         DO j=1,thatPoly%nQuadEdge
           CALL createArcFromQuad(thatPoly,j,tmpCirc)
-          CALL tmpCirc%intersectCircle(Circs(i),p1,p2)
+          CALL tmpCirc%intersect(Circs(i),p1,p2)
 
           IF(p1%dim == -3) p1%dim=2 !Include tangent points
 
@@ -1357,7 +1358,7 @@ ENDFUNCTION doesPolyIntersect_PolygonType
 !> @brief
 !> @param
 !>
-PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
+SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
   CLASS(PolygonType),INTENT(IN) :: thisPolygon
   TYPE(LineType),INTENT(IN) :: line
   TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
@@ -1409,7 +1410,7 @@ PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
     npoints=0
     IF(nlines > 0) THEN
       DO i=1,nlines
-        p1=lines(i)%intersectLine(line)
+        p1=lines(i)%intersect(line)
         IF(p1%dim == 2) THEN
           npoints=npoints+1
           tmpPoints(npoints)=p1
@@ -1426,7 +1427,7 @@ PURE SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
     !Test against arcs
     IF(narcs > 0) THEN
       DO i=1,narcs
-        CALL circles(i)%intersectLine(line,p1,p2)
+        CALL circles(i)%intersect(line,p1,p2)
         IF(p1%dim == -3) p1%dim=2 !Include tangent points
 
         !If line segment end points are on circle, intersections
@@ -1501,7 +1502,7 @@ ENDSUBROUTINE intersectLine_PolygonType
 !> @brief
 !> @param
 !>
-PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
+SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   TYPE(PolygonType),INTENT(IN) :: thatPoly
   TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
@@ -1557,7 +1558,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
       ENDDO
       !All lines with the those circles
       DO j=1,thatPoly%nQuadEdge
-        CALL thoseCircs(j)%intersectArcLine(theseLines(i),tmppoints(ipoint), &
+        CALL thoseCircs(j)%intersect(theseLines(i),tmppoints(ipoint), &
             tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
         !Check if the points are on the circle
         DO k=0,3
@@ -1576,7 +1577,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
     !TheseCircs
     DO i=1,thisPoly%nQuadEdge
       DO j=1,thatPoly%nVert
-        CALL theseCircs(i)%intersectArcLine(thoseLines(j),tmppoints(ipoint), &
+        CALL theseCircs(i)%intersect(thoseLines(j),tmppoints(ipoint), &
             tmppoints(ipoint+1),tmppoints(ipoint+2),tmppoints(ipoint+3))
         !Check if the points are on the circle
         DO k=0,3
@@ -1592,7 +1593,7 @@ PURE SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
       ENDDO
       !ThoseCircs
       DO j=1,thatPoly%nQuadEdge
-        CALL theseCircs(i)%intersectCircle(thoseCircs(j),tmppoints(ipoint), &
+        CALL theseCircs(i)%intersect(thoseCircs(j),tmppoints(ipoint), &
             tmppoints(ipoint+1))
         ipoint=ipoint+2
       ENDDO
@@ -1765,7 +1766,7 @@ RECURSIVE SUBROUTINE generateGraph_PolygonType(thisPoly,g,incSubReg)
       r=thisPoly%quadEdge(3,i)
       v0=thisPoly%edge(1,j)
       v1=thisPoly%edge(2,j)
-      CALL g%defineQuadraticEdge(verts(:,v0),verts(:,v1),c,r)
+      CALL g%defineEdge(verts(:,v0),verts(:,v1),c,r)
     ENDDO
     DO i=1,thisPoly%nVert
       IF(.NOT.isQuadEdge(i)) THEN
@@ -1816,10 +1817,10 @@ SUBROUTINE Polygonize_Circle(circle,polygon)
       CALL g%insertVertex(v1)
       CALL g%insertVertex(v2)
       CALL g%insertVertex(v3)
-      CALL g%defineQuadraticEdge(v0,v1,c,r)
-      CALL g%defineQuadraticEdge(v1,v2,c,r)
-      CALL g%defineQuadraticEdge(v2,v3,c,r)
-      CALL g%defineQuadraticEdge(v0,v3,c,r)
+      CALL g%defineEdge(v0,v1,c,r)
+      CALL g%defineEdge(v1,v2,c,r)
+      CALL g%defineEdge(v2,v3,c,r)
+      CALL g%defineEdge(v0,v3,c,r)
     ELSE
       v0(1)=c(1); v0(2)=c(2)
       v1(1)=c(1)+r*COS(circle%thetastt)
@@ -1832,7 +1833,7 @@ SUBROUTINE Polygonize_Circle(circle,polygon)
       CALL g%insertVertex(v2)
       CALL g%defineEdge(v0,v1)
       CALL g%defineEdge(v0,v2)
-      CALL g%defineQuadraticEdge(v1,v2,c,r)
+      CALL g%defineEdge(v1,v2,c,r)
     ENDIF
 
     CALL polygon%set(g)
@@ -1868,10 +1869,10 @@ SUBROUTINE Polygonize_Cylinder(cylinder,polygon)
       CALL g%insertVertex(v1)
       CALL g%insertVertex(v2)
       CALL g%insertVertex(v3)
-      CALL g%defineQuadraticEdge(v0,v1,c(1:2),r)
-      CALL g%defineQuadraticEdge(v1,v2,c(1:2),r)
-      CALL g%defineQuadraticEdge(v2,v3,c(1:2),r)
-      CALL g%defineQuadraticEdge(v0,v3,c(1:2),r)
+      CALL g%defineEdge(v0,v1,c(1:2),r)
+      CALL g%defineEdge(v1,v2,c(1:2),r)
+      CALL g%defineEdge(v2,v3,c(1:2),r)
+      CALL g%defineEdge(v0,v3,c(1:2),r)
     ELSE
       v0(1)=c(1); v0(2)=c(2)
       v1(1)=c(1)+r*COS(cylinder%thetastt)
@@ -1884,7 +1885,7 @@ SUBROUTINE Polygonize_Cylinder(cylinder,polygon)
       CALL g%insertVertex(v2)
       CALL g%defineEdge(v0,v1)
       CALL g%defineEdge(v0,v2)
-      CALL g%defineQuadraticEdge(v1,v2,c(1:2),r)
+      CALL g%defineEdge(v1,v2,c(1:2),r)
     ENDIF
 
     CALL polygon%set(g)
@@ -1966,7 +1967,7 @@ ENDSUBROUTINE Polygonize_ABBox
 !> @param p2 The second polygon type to compare
 !> @param bool The logical result of the operation
 !>
-PURE RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
+RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
   TYPE(PolygonType),INTENT(IN) :: p1
   TYPE(PolygonType),INTENT(IN) :: p2
   LOGICAL(SBK) :: bool
@@ -2008,7 +2009,7 @@ ENDFUNCTION isequal_PolygonType
 !> @param iquad The desired quadratic edge index to convert to a circle type
 !> @param circle The circle type created from the polygon's quadratic edge
 !>
-PURE SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
+SUBROUTINE createArcFromQuad(thisPoly,iquad,circle)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
   INTEGER(SIK),INTENT(IN) :: iquad
   TYPE(CircleType),INTENT(INOUT) :: circle
