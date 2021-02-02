@@ -61,43 +61,43 @@ SUBROUTINE TestPlane
   CALL line1%clear()
   CALL line1%p1%init(COORD=(/0._SRK,0._SRK,0._SRK/))
   CALL line1%p2%init(COORD=(/0.1_SRK,0.1_SRK,0.1_SRK/))
-  point2=plane1%intersectLine(line1)
+  point2=plane1%intersect(line1)
   ASSERT(point2%dim == -3, 'plane%intersect(...)')
 
   !Test for collinearity
   CALL line1%clear()
   CALL line1%p1%init(COORD=(/0.5_SRK,0.5_SRK,0.5_SRK/))
   CALL line1%p2%init(COORD=(/0.75_SRK,0.75_SRK,0._SRK/))
-  point2=plane1%intersectLine(line1)
+  point2=plane1%intersect(line1)
   ASSERT(point2%dim == -2, 'plane%intersect(...)')
 
   !Test for parallel
   CALL line1%clear()
   CALL line1%p1%init(COORD=(/0.4_SRK,0.4_SRK,0.4_SRK/))
   CALL line1%p2%init(COORD=(/0.65_SRK,0.65_SRK,-0.1_SRK/))
-  point2=plane1%intersectLine(line1)
+  point2=plane1%intersect(line1)
   ASSERT(point2%dim == -3, 'plane%intersect(...)')
 
   CALL line1%clear()
   CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
   CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
-  point2=plane1%intersectLine(line1)
+  point2=plane1%intersect(line1)
   bool = .NOT.(point2%dim /= 3 .OR. ANY(.NOT.(point2%coord .APPROXEQ. 0.5_SRK)))
   ASSERT(bool, 'plane1%intersect(...)')
 
   !Test for bad input
   CALL line1%clear()
-  point2=plane1%intersectLine(line1)
+  point2=plane1%intersect(line1)
   ASSERT(point2%dim == -1, 'plane%intersect(...)')
 
   CALL line2%clear
   CALL line2%p1%init(COORD=(/-0.5_SRK,2.5_SRK/))
   CALL line2%p2%init(COORD=(/1.0_SRK,2.5_SRK/))
-  point2=plane1%intersectLine(line2)
+  point2=plane1%intersect(line2)
   ASSERT(point2%dim == -1, 'plane%intersect(...)')
 
   CALL plane1%clear()
-  point2=plane1%intersectLine(line2)
+  point2=plane1%intersect(line2)
   ASSERT(point2%dim == -1, 'plane%intersect(...)')
 
   !Test for equivalence operation
@@ -119,7 +119,7 @@ SUBROUTINE TestPlane
   CALL line1%clear()
   CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK,0.0_SRK/))
   CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK,1.0_SRK/))
-  points=planes%intersectLine(line1)
+  points=planes%intersect(line1)
   bool = .NOT.(points(1)%dim /= 3 .OR. ANY(.NOT.(points(1)%coord .APPROXEQ. 0.5_SRK)) .OR. &
       points(2)%dim /= 3 .OR. ANY(.NOT.(points(2)%coord .APPROXEQ. 0.5_SRK)))
   ASSERT(bool, 'planes%intersect(...)')

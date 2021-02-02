@@ -44,7 +44,8 @@ TYPE :: PlaneType
     PROCEDURE,PASS :: clear => clear_PlaneType
     !> @copybrief GeomPlane::intersect_PlaneType_and_LineType
     !> @copydetails GeomPlane::intersect_PlaneType_and_LineType
-    PROCEDURE,PASS :: intersectLine => intersect_PlaneType_and_LineType
+    PROCEDURE,PASS,PRIVATE :: intersectLine => intersect_PlaneType_and_LineType
+    GENERIC :: intersect => intersectLine
 ENDTYPE PlaneType
 
 !> @brief Generic interface for 'is equal to' operator (==)
