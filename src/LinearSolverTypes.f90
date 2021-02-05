@@ -546,7 +546,14 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
           !PC calls
           CALL KSPGetPC(solver%ksp,pc,ierr)
           CALL PCSetType(pc,PCLU,iperr)
-#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)) || (PETSC_VERSION_MAJOR>=4))
+#if   (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=12)) || (PETSC_VERSION_MAJOR>=4))
+          IF (solver%MPIparallelEnv%nproc>1) THEN
+             CALL PCFactorSetMatSolverType(pc,MATSOLVERSUPERLU_DIST,iperr)
+          ELSE
+             CALL PCFactorSetMatSolverType(pc,MATSOLVERSUPERLU,iperr)
+          ENDIF
+          CALL PCFactorSetUpMatSolverType(pc,iperr)
+#elif (PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>6)
           CALL PCFactorSetMatSolverType(pc,MATSOLVERSUPERLU,iperr)
           CALL PCFactorSetUpMatSolverType(pc,iperr)
 #else
