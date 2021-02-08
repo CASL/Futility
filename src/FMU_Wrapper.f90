@@ -66,7 +66,7 @@ TYPE,ABSTRACT :: FMU
   !> FMU C opaque pointer to FMU obj
   TYPE(C_PTR) :: fmu_c_ptr=c_null_ptr
 !
-!List of Type Bound Procedures
+! List of Type Bound Procedures
   CONTAINS
     !> Defered init routine
     PROCEDURE(fmu_init_sub_absintfc),DEFERRED,PASS :: init
@@ -136,7 +136,7 @@ ABSTRACT INTERFACE
 ENDINTERFACE
 
 !> @brief The base FMU2 type.
-!>        Contains methods applicable all FMUs that conform to the FMI v2.0 standard.
+!>        Contains methods applicable to all FMUs that conform to the FMI v2.0 standard.
 TYPE,EXTENDS(FMU) :: FMU2_Base
   !> FMU version
   INTEGER(SIK) :: FMU_version=2_SIK
@@ -218,7 +218,7 @@ TYPE,EXTENDS(FMU) :: FMU2_Base
         setNamedInteger_FMU2_Base, setNamedBoolean_FMU2_Base
 ENDTYPE FMU2_Base
 
-!> @brief FMU run in slave mode intended for use with external driver, such as CTF
+!> @brief FMU run in slave mode intended for use with external driver, such as CTF.
 !>        Contains methods only applicable to Co-Simulation FMUs.
 TYPE,EXTENDS(FMU2_Base) :: FMU2_Slave
 !
@@ -297,14 +297,17 @@ SUBROUTINE init_FMU2_Base(self,id,pList)
   TYPE(ParamType),INTENT(IN) :: pList
 
   ! Required FMU pList
-  IF(.NOT. pList%has('unzipDirectory')) CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No FMU unzipDirectory')
+  IF(.NOT. pList%has('unzipDirectory')) CALL eFMU_Wrapper%raiseError( &
+      modName//'::'//myName//' - No FMU unzipDirectory')
   CALL pList%get('unzipDirectory', self%unzipDirectory)
   self%idFMU=id
   self%FMU_version=2_SIK
 
   ! Parse the FMU XML model description
-  CALL eFMU_Wrapper%raiseDebug('Opening FMU XML File: '//self%unzipDirectory//'/modelDescription.xml' )
-  CALL self%modelDescription%initFromXML(self%unzipDirectory//'/modelDescription.xml',.TRUE.)
+  CALL eFMU_Wrapper%raiseDebug('Opening FMU XML File: '// &
+      self%unzipDirectory//'/modelDescription.xml' )
+  CALL self%modelDescription%initFromXML(self%unzipDirectory// &
+      '/modelDescription.xml',.TRUE.)
 
   ! Optional FMU pList
   IF(pList%has('instanceName')) THEN
@@ -344,7 +347,8 @@ ENDSUBROUTINE
 !> @param stopTimeDefined flag to determine if ODE integration stops at stopTime
 !> @param stopTime  end time of ODE integration
 !>
-SUBROUTINE setupExperiment_FMU2_Base(self, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime, finalizeInitialization_opt)
+SUBROUTINE setupExperiment_FMU2_Base(self, toleranceDefined, tolerance, startTime, &
+    stopTimeDefined, stopTime, finalizeInitialization_opt)
   CLASS(FMU2_Base),INTENT(INOUT) :: self
   LOGICAL(SBK),INTENT(IN) :: toleranceDefined
   REAL(SRK),INTENT(IN) :: tolerance
@@ -355,13 +359,13 @@ SUBROUTINE setupExperiment_FMU2_Base(self, toleranceDefined, tolerance, startTim
 
   LOGICAL(SBK) :: finalizeInitialization=.TRUE.
 
-  IF(PRESENT(finalizeInitialization_opt)) finalizeInitialization = finalizeInitialization_opt
+  IF(PRESENT(finalizeInitialization_opt)) finalizeInitialization=finalizeInitialization_opt
 
   REQUIRE(self%isInit)
   REQUIRE(c_associated(self%fmu_c_ptr))
 
-  CALL setupExperimentFMU2_Base(self%fmu_c_ptr, LOGICAL(toleranceDefined,1), tolerance, startTime, &
-    LOGICAL(stopTimeDefined,1), stopTime, LOGICAL(finalizeInitialization,1))
+  CALL setupExperimentFMU2_Base(self%fmu_c_ptr, LOGICAL(toleranceDefined,1), tolerance, &
+      startTime, LOGICAL(stopTimeDefined,1), stopTime, LOGICAL(finalizeInitialization,1))
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
@@ -391,7 +395,8 @@ FUNCTION getValueReference_FMU2_Base(self, variableName) RESULT(valueReference)
     CALL self%modelDescription%get(baseAddr//'->valueReference', valueReference_str)
     ! convert str to int and check valueReference is valid
     valueReference = valueReference_str%str_to_sik()
-    IF(valueReference<0) CALL eFMU_Wrapper%raiseError(modName//'::'//' - variable has invalid valueReference')
+    IF(valueReference < 0) CALL eFMU_Wrapper%raiseError(modName//'::'// &
+        ' - variable has invalid valueReference')
   ELSE
     CALL eFMU_Wrapper%raiseError(modName//'::'//myName//' - No Variable named: '//variableName)
   ENDIF
@@ -608,7 +613,7 @@ SUBROUTINE setNamedReal_FMU2_Base(self, variableName, val)
 
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
-  IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
+  IF(.NOT.(causality == 'parameter' .OR. causality == 'input')) &
       CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName// &
       ' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setReal(valueReference, val)
@@ -656,7 +661,7 @@ SUBROUTINE setNamedInteger_FMU2_Base(self, variableName, val)
 
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
-  IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
+  IF(.NOT.(causality == 'parameter' .OR. causality == 'input')) &
       CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName// &
       ' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setInteger(valueReference, val)
@@ -704,7 +709,7 @@ SUBROUTINE setNamedBoolean_FMU2_Base(self, variableName, val)
 
   valueReference = self%getValueReference(variableName)
   causality = self%getCausality(variableName)
-  IF(.NOT.(causality=='parameter' .OR. causality=='input')) &
+  IF(.NOT.(causality == 'parameter' .OR. causality == 'input')) &
       CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName// &
       ' - Attempting to set variable '//variableName//' with causality: '//causality)
   CALL self%setBoolean(valueReference, val)
@@ -808,10 +813,11 @@ SUBROUTINE setRestart_FMU2_Slave(self)
   getSetAddr=baseAddr//'->canGetAndSetFMUstate'
   IF(self%modelDescription%has(CHAR(getSetAddr))) THEN
     CALL self%modelDescription%get(baseAddr//'->canGetAndSetFMUstate', isGetSet_str)
-    IF(.NOT. (isGetSet_str=="true" .OR. isGetSet_str=="True" .OR. isGetSet_str=="TRUE")) &
+    IF(.NOT. (isGetSet_str == "true" .OR. isGetSet_str == "True" .OR. isGetSet_str == "TRUE")) &
         CALL eFMU_Wrapper%raiseError(modName//'::'//' - FMU does not support GetSetFMUstate.')
   ELSE
-    CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName//' - GetSetFMUstate capability was not detected.')
+    CALL eFMU_Wrapper%raiseWarning(modName//'::'//myName// &
+        ' - GetSetFMUstate capability was not detected.')
   ENDIF
 
   CALL serializeStateFMU2_Slave(self%fmu_c_ptr)

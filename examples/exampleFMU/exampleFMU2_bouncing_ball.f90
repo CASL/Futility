@@ -83,7 +83,6 @@ PROGRAM testFMU2_BouncingBall
   REAL(SRK),ALLOCATABLE :: h_gold(:)
   REAL(SRK),ALLOCATABLE :: v_gold(:)
 
-
   ! Example FMU parameter settings
   CALL FMU_params%clear()
   CALL FMU_params%add('FMU_Wrapper->id',fmu_id)
@@ -142,7 +141,7 @@ PROGRAM testFMU2_BouncingBall
     CALL test_fmu2_cs%getNamedVariable('v', ball_velocity)
     CALL test_fmu2_cs%getNamedVariable('h', ball_height)
     ! Print the result to stdout
-    IF(ABS(write_time-0.01_SRK) < 1.0e-8_SRK .OR. time<=1.0e-16_SRK) THEN
+    IF(ABS(write_time - 0.01_SRK) < 1.0e-8_SRK .OR. time <= 1.0e-16_SRK) THEN
       WRITE(42,*) time, ball_height, ball_velocity
       write_time = 0.0_SRK
       imax = imax + 1
@@ -183,5 +182,11 @@ PROGRAM testFMU2_BouncingBall
   ! Clean up
   CALL test_fmu2_cs%clear()
   CALL FMU_params%clear()
+  DEALLOCATE(t_calc)
+  DEALLOCATE(h_calc)
+  DEALLOCATE(v_calc)
+  DEALLOCATE(t_gold)
+  DEALLOCATE(h_gold)
+  DEALLOCATE(v_gold)
 
 ENDPROGRAM testFMU2_BouncingBall

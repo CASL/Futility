@@ -69,7 +69,7 @@ PROGRAM testFMU2
   CALL FMU_params%clear()
   CALL FMU_params%add('FMU_Wrapper->id',id)
 
-  IF (IARGC()==2) THEN
+  IF (IARGC() == 2) THEN
     CALL getarg(1, unzipDirectory)
     CALL getarg(2, goldFile)
   ELSE
@@ -104,7 +104,7 @@ PROGRAM testFMU2
     CALL test_fmu2_cs%getReal(0, time)
     CALL test_fmu2_cs%getReal(1, voltage1)
     CALL test_fmu2_cs%doStep(h)
-    IF(ABS(write_time-0.0002_SRK)<1.0e-8_SRK) THEN
+    IF(ABS(write_time - 0.0002_SRK) < 1.0e-8_SRK) THEN
       WRITE(42,*) time, voltage1
       write_time = 0.0_SRK
     ENDIF

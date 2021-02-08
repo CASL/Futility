@@ -47,17 +47,17 @@ SUBROUTINE testParseFMU_XML()
   ASSERT(.NOT. test_modelDescription%has("not_present_dummy_var"),'%not_present_var')
 
   CALL test_modelDescription%get("guid",tmp_str)
-  ASSERT(tmp_str=="123",'%guid')
+  ASSERT(tmp_str == "123",'%guid')
   CALL test_modelDescription%get("modelIdentifier",tmp_str)
-  ASSERT(tmp_str=="testFMUBouncingBall",'%modelIdentifier')
+  ASSERT(tmp_str == "testFMUBouncingBall",'%modelIdentifier')
   CALL test_modelDescription%get("HEIGHT->valueReference",tmp_str)
-  ASSERT(tmp_str=="0",'%HEIGHT_vr')
+  ASSERT(tmp_str == "0",'%HEIGHT_vr')
   CALL test_modelDescription%get("HEIGHT_SPEED->valueReference",tmp_str)
-  ASSERT(tmp_str=="1",'%HEIGHT_SPEED_vr')
+  ASSERT(tmp_str == "1",'%HEIGHT_SPEED_vr')
   CALL test_modelDescription%get("GRAVITY->valueReference",tmp_str)
-  ASSERT(tmp_str=="2",'%GRAVITY_vr')
+  ASSERT(tmp_str == "2",'%GRAVITY_vr')
   CALL test_modelDescription%get("BOUNCE_COF->valueReference",tmp_str)
-  ASSERT(tmp_str=="3",'%BOUNCE_COF_vr')
+  ASSERT(tmp_str == "3",'%BOUNCE_COF_vr')
 
 ENDSUBROUTINE testParseFMU_XML
 !
@@ -75,7 +75,7 @@ SUBROUTINE testLoadFMU()
   CALL test_fmu2_slave%init(id, FMU_params)
 
   ASSERT(test_fmu2_slave%isInit,"%fmu_isinit")
-  ASSERT(test_fmu2_slave%FMU_version==2_SIK,"%fmu_version")
+  ASSERT(test_fmu2_slave%FMU_version == 2_SIK,"%fmu_version")
 
   CALL FMU_params%clear()
 
