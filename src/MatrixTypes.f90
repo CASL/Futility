@@ -111,7 +111,7 @@ PUBLIC :: BandedMatrixType
 PUBLIC :: DistributedBandedMatrixType
 PUBLIC :: DistributedBlockBandedMatrixType
 PUBLIC :: SparseMatrixType
-INTEGER(SIK),PARAMETER,PUBLIC :: MATVEC_SLOTS=4
+INTEGER(SIK),PARAMETER,PUBLIC :: MATVEC_SLOTS=10
 ! PETSc implementations
 #ifdef FUTILITY_HAVE_PETSC
 PUBLIC :: PETScMatrixType
@@ -725,6 +725,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ALLOCATE(sendResult(thisMatrix%iOffsets(2),MATVEC_SLOTS))
   ALLOCATE(tmpProduct(thisMatrix%iOffsets(rank+2)- &
       thisMatrix%iOffsets(rank+1)))
+  tmpProduct=0.0_SRK
 
 #ifdef HAVE_MPI
   ! On each rank, loop over the chunks held (on diagonal moving down)
@@ -783,34 +784,23 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   ! Now, take care of locally held data.
   SELECT TYPE(thisMatrix)
   TYPE IS(DistributedBlockBandedMatrixType)
+    IF(thisMatrix%chunks(rank+1)%isInit) THEN
+      CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
+          y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
+    ENDIF
     IF(.NOT. thisMatrix%blockMask) THEN
       DO k=1,thisMatrix%nlocalBlocks
         lowIdx=(k-1)*thisMatrix%blockSize+1
         highIdx=lowIdx-1+thisMatrix%blockSize
         CALL matvec_MatrixType(THISMATRIX=thisMatrix%blocks(k),X=x(lowIdx:highIdx), &
-            Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=0.0_SRK)
+            Y=tmpProduct(lowIdx:highIdx),ALPHA=1.0_SRK,BETA=1.0_SRK)
       ENDDO
-      IF(thisMatrix%chunks(rank+1)%isInit) THEN
-        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
-            y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
-      ENDIF
-    ELSE
-      IF(thisMatrix%chunks(rank+1)%isInit) THEN
-        CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
-            y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
-      ELSE
-        tmpProduct=0.0_SRK
-      ENDIF
     ENDIF
   TYPE IS(DistributedBandedMatrixType)
     IF(thisMatrix%chunks(rank+1)%isInit) THEN
       CALL BLAS_matvec(THISMATRIX=thisMatrix%chunks(rank+1),X=x, &
-          y=tmpProduct,ALPHA=1.0_SRK,BETA=0.0_SRK)
-    ELSE
-      tmpProduct=0.0_SRK
+          y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
     ENDIF
-  CLASS DEFAULT
-    tmpProduct = 0.0_SRK
   ENDSELECT
   ! Wait for remaining requests to finish:
   DO k=1,MATVEC_SLOTS

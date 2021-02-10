@@ -607,6 +607,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
           !set preconditioner
           IF((solver%solverMethod == GMRES) .OR. (solver%solverMethod == BICGSTAB)) THEN
             CALL KSPGetPC(solver%ksp,solver%pc,iperr)
+#if 0
             IF(TRIM(PreCondType)=='SOR') THEN
               CALL PCSetType(solver%pc,PCSOR,iperr)
             ELSEIF(TRIM(PreCondType)=='JACOBI') THEN
@@ -640,6 +641,8 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
             ELSE   ! Regardless of what else is set, we'll use block-jacobi ILU
               CALL PCSetType(solver%pc,PCBJACOBI,iperr)
             ENDIF
+#endif
+            CALL PCSetType(solver%pc,PCJACOBI,iperr)
           ENDIF
           CALL KSPSetFromOptions(solver%ksp,iperr)
 
