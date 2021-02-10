@@ -97,7 +97,7 @@ SUBROUTINE setupRSORTest()
   ENDDO
 
   !setup the sparse version of the matrix
-  CALL PListMat%add('MatrixType->nnz',numnonzero)
+  CALL PListMat%add('MatrixType->nnz',INT(numnonzero,kind=8))
 
   !setup the banded version of the matrix
   ALLOCATE(DistributedBandedMatrixType :: testBandedMatrix)
