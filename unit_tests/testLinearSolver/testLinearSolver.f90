@@ -536,7 +536,7 @@ SUBROUTINE testDirectSolve()
 
   ALLOCATE(LinearSolverType_Direct :: thisLS)
 
-!Test GE (Dense-Square)
+  COMPONENT_TEST('Native GE')
   ! initialize linear system
   CALL pList%clear()
   CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
@@ -576,8 +576,7 @@ SUBROUTINE testDirectSolve()
   ASSERT(thisLS%info == -1,'CALL Direct%solve() -GE method FAILED!')
   CALL thisLS%clear()
 
-! Test LU (Dense-Square)
-
+  COMPONENT_TEST('Native LU')
   ! initialize linear system
   CALL pList%clear()
   CALL pList%add('LinearSolverType->TPLType',LINSYS_NATIVE)
@@ -644,7 +643,7 @@ SUBROUTINE testDirectSolve()
   ENDSELECT
   CALL thisLS%clear()
 
-! Test LU (Tridiagonal)
+  COMPONENT_TEST('Native LU Tridiag')
 
   ! initialize linear system
   CALL pList%clear()
@@ -728,6 +727,7 @@ SUBROUTINE testDirectSolve()
   CALL thisLS%A%clear()
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native GE Sparse')
   !Sparse matrix, just make sure it could go to CGNR and could
   ! get result, the details will be tested in CGNR
   ! initialize linear system
@@ -800,6 +800,7 @@ SUBROUTINE testDirectSolve()
   FINFO() thisLS%info
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native GE Denserect')
   !DenseRect matrix, just make sure that it could go to CGNR.
   !The result will be checked later.
   ! initialize linear system
@@ -848,6 +849,7 @@ SUBROUTINE testDirectSolve()
   ASSERT(bool, 'Direct%solve() -GE method')
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native LU Densquare Tridiag')
 !Test LU (Dense square matrix and tridiagonal matrix
 !other matrix will raise error message)
   !Dense square
@@ -895,6 +897,7 @@ SUBROUTINE testDirectSolve()
   ASSERT(bool, 'Direct%solve() -LU method')
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native LU 2')
   ! Normal Case (non-singular)
   ! initialize linear system
   CALL pList%clear()
@@ -993,6 +996,7 @@ SUBROUTINE testDirectSolve()
   ENDSELECT
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native LU Singular Tridiag')
   !Tridiagonal (singular case)
   ! initialize linear system
   CALL pList%clear()
@@ -1032,6 +1036,7 @@ SUBROUTINE testDirectSolve()
   ASSERT(bool, 'Direct%solve() -LU method')
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native LU non-singular tridiag')
   ! Tridiagonal (non-singular case)
   ! initialize linear system
   CALL pList%clear()
@@ -1110,6 +1115,7 @@ SUBROUTINE testDirectSolve()
   ENDSELECT
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native LU non-diag dom. tridiag')
   !test solve for TriDiag with a non-diagonally dominant A
   !just make sure we get the output statement.
   ! initialize linear system
@@ -1147,6 +1153,7 @@ SUBROUTINE testDirectSolve()
   CALL thisLS%solve()
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native GE Sparse')
   !Sparse matrix, just make sure it could go to CGNR and could
   ! get result, the details will be test in CGNR
   ! initialize linear system
@@ -1215,6 +1222,7 @@ SUBROUTINE testDirectSolve()
   ASSERT(bool, 'Direct%solve() -LU method')
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Native LU Densrect')
   !DenseRect matrix, just make sure that it could go to CGNR.
   !The result will be checked later.
   ! initialize linear system
@@ -1261,6 +1269,7 @@ SUBROUTINE testDirectSolve()
   CALL thisLS%clear()
 
 #ifdef HAVE_PARDISO
+  COMPONENT_TEST('Pardiso GE Sparse')
   ! test with GE (doesn't affect actual solve)
   ! initialize linear system
   CALL pList%clear()
@@ -1312,6 +1321,7 @@ SUBROUTINE testDirectSolve()
   ENDSELECT
   CALL thisLS%clear()
 
+  COMPONENT_TEST('Pardiso LU Sparse')
   ! test with LU (doesn't affect actual solve)
   ! initialize linear system
   CALL pList%clear()
@@ -1365,6 +1375,7 @@ SUBROUTINE testDirectSolve()
 #endif
 
 #ifdef FUTILITY_HAVE_PETSC
+  COMPONENT_TEST('Petsc LU Sparse')
   ! test with SuperLU through PETSc
   ! initialize linear system
   CALL pList%clear()
@@ -1375,7 +1386,6 @@ SUBROUTINE testDirectSolve()
   CALL pList%add('LinearSolverType->timerName','testTimer')
   CALL pList%add('LinearSolverType->matType',SPARSE)
   CALL pList%add('LinearSolverType->A->MatrixType->n',3)
-  CALL pList%add('LinearSolverType->A->MatrixType->nnz',8)
   CALL pList%add('LinearSolverType->x->VectorType->n',3)
   CALL pList%add('LinearSolverType->b->VectorType->n',3)
   CALL pList%validate(pList,optListLS)
