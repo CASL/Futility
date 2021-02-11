@@ -165,13 +165,9 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
       ENDIF
 
       IF (matType == SPARSE) THEN
-        IF(nlocal == matrix%n .AND. mlocal == matrix%m) THEN
-          CALL MatSetType(matrix%a,MATAIJ,ierr)
-        ELSE
-          CALL MatSetType(matrix%a,MATMPIAIJ,ierr)
-        ENDIF
+        CALL MatSetType(matrix%a,MATAIJ,ierr)
       ELSEIF (matType == DENSESQUARE) THEN
-        CALL MatSetType(matrix%a,MATMPIDENSE,ierr)
+        CALL MatSetType(matrix%a,MATDENSE,ierr)
       ELSE
         CALL eMatrixType%raiseError('Invalid matrix type in '// &
             modName//'::'//myName//' - Only sparse and dense square '// &
@@ -179,11 +175,8 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
       ENDIF
 
       IF(MINVAL(dnnz) > 0_SIK .AND. MINVAL(onnz) >= 0_SIK) THEN
-        IF(nlocal == matrix%n .AND. mlocal == matrix%m) THEN
-          CALL MatSeqAIJSetPreallocation(matrix%A,0,dnnz,ierr)
-        ELSE
-          CALL MatMPIAIJSetPreallocation(matrix%A,0,dnnz,0,onnz,ierr)
-        ENDIF
+        CALL MatSeqAIJSetPreallocation(matrix%A,0,dnnz,ierr)
+        CALL MatMPIAIJSetPreallocation(matrix%A,0,dnnz,0,onnz,ierr)
       ELSE
         CALL MatSetUp(matrix%a,ierr)
       ENDIF

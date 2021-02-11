@@ -1411,6 +1411,12 @@ SUBROUTINE testDirectSolve()
     CALL b%set(3,42._SRK)
   ENDSELECT
 
+  SELECTTYPE(x => thisLS%x); TYPE IS(PETScVectorType)
+    CALL x%set(1, 0.0_SRK)
+    CALL x%set(2, 0.0_SRK)
+    CALL x%set(3, 0.0_SRK)
+  ENDSELECT
+
   CALL thisLS%solve()
 
   ! check X
