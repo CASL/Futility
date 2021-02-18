@@ -60,6 +60,8 @@ PUBLIC :: OPERATOR(.APPROXEQA.)
 PUBLIC :: OPERATOR(.APPROXEQR.)
 PUBLIC :: OPERATOR(.APPROXLE.)
 PUBLIC :: OPERATOR(.APPROXGE.)
+PUBLIC :: OPERATOR(.APPROXEQDS.)
+PUBLIC :: OPERATOR(.APPROXEQRDS.)
 PUBLIC :: OPERATOR(==)
 PUBLIC :: OPERATOR(/=)
 PUBLIC :: ASSIGNMENT(=)
@@ -178,6 +180,10 @@ INTERFACE OPERATOR(.APPROXEQ.)
   MODULE PROCEDURE approxeq_abs_single
   !> @copybrief IntrType::approxeq_abs_double
   MODULE PROCEDURE approxeq_abs_double
+  !> @copybrief IntrType::approxeq_abs_mixsd
+  MODULE PROCEDURE approxeq_abs_mixsd
+  !> @copybrief IntrType::approxeq_abs_mixds
+  MODULE PROCEDURE approxeq_abs_mixds
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -187,6 +193,17 @@ INTERFACE OPERATOR(.APPROXEQA.)
   MODULE PROCEDURE approxeq_abs_single
   !> @copybrief IntrType::approxeq_abs_double
   MODULE PROCEDURE approxeq_abs_double
+  !> @copybrief IntrType::approxeq_abs_mixsd
+  MODULE PROCEDURE approxeq_abs_mixsd
+  !> @copybrief IntrType::approxeq_abs_mixds
+  MODULE PROCEDURE approxeq_abs_mixds
+ENDINTERFACE
+
+!> @brief Interface for the operator for "approximately equals" for double
+!> real kinds. Performs absolute comparison to single precision
+INTERFACE OPERATOR(.APPROXEQDS.)
+  !> @copybrief IntrType::approxeq_abs_double2single
+  MODULE PROCEDURE approxeq_abs_double2single
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -196,6 +213,17 @@ INTERFACE OPERATOR(.APPROXEQR.)
   MODULE PROCEDURE approxeq_rel_single
   !> @copybrief IntrType::approxeq_rel_double
   MODULE PROCEDURE approxeq_rel_double
+  !> @copybrief IntrType::approxeq_rel_mixsd
+  MODULE PROCEDURE approxeq_rel_mixsd
+  !> @copybrief IntrType::approxeq_rel_mixds
+  MODULE PROCEDURE approxeq_rel_mixds
+ENDINTERFACE
+
+!> @brief Interface for the operator for "approximately equals" for double
+!> real kinds. Performs relative comparison to single precision
+INTERFACE OPERATOR(.APPROXEQRDS.)
+  !> @copybrief IntrType::approxeq_rel_double2single
+  MODULE PROCEDURE approxeq_rel_double2single
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -398,6 +426,63 @@ ELEMENTAL FUNCTION approxeq_abs_double(a,b) RESULT(bool)
 ENDFUNCTION approxeq_abs_double
 !
 !-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an absolute comparison of one
+!> single-precision and one double-precision reals with .APPROXEQA.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This routine just does a simple absolute comparison using an epsilon that is
+!> a compile time constant. It should be used whenever possible because it has
+!> the least overhead. However, it is not appropriate to use when @c a and @c b
+!> are either very large or very small.
+!>
+ELEMENTAL FUNCTION approxeq_abs_mixsd(a,b) RESULT(bool)
+  REAL(SSK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  bool=(ABS(a-b) <= EPSS)
+ENDFUNCTION approxeq_abs_mixsd
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an absolute comparison of one
+!> double-precision and one single-precision reals with .APPROXEQA.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This routine just does a simple absolute comparison using an epsilon that is
+!> a compile time constant. It should be used whenever possible because it has
+!> the least overhead. However, it is not appropriate to use when @c a and @c b
+!> are either very large or very small.
+!>
+ELEMENTAL FUNCTION approxeq_abs_mixds(a,b) RESULT(bool)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SSK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  bool=(ABS(a-b) <= EPSS)
+ENDFUNCTION approxeq_abs_mixds
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an absolute comparison of two
+!> double-precision reals with .APPROXEQA. using single precision criterion.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This routine just does a simple absolute comparison using an epsilon that is
+!> a compile time constant. It should be used whenever possible because it has
+!> the least overhead. However, it is not appropriate to use when @c a and @c b
+!> are either very large or very small.
+!>
+ELEMENTAL FUNCTION approxeq_abs_double2single(a,b) RESULT(bool)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  bool=(ABS(a-b) <= EPSS)
+ENDFUNCTION approxeq_abs_double2single
+!
+!-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing a relative comparison of two
 !> single precision reals with .APPROXEQA.
 !> @param a
@@ -438,6 +523,72 @@ ELEMENTAL FUNCTION approxeq_rel_double(a,b) RESULT(bool)
   IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSD
   bool=(ABS(a-b) <= eps)
 ENDFUNCTION approxeq_rel_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a relative comparison of one
+!> single-precision and one double-precision reals with .APPROXEQR.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a relative comparison by scaling the default epsilon value to
+!> the size of the larger of the two. It should be used when @c and @b are of
+!> the same magnitude and very large or very small. If either @c a or @c b is
+!> zero (exactly) then this routine is equivalent to an absolute comparison.
+!>
+ELEMENTAL FUNCTION approxeq_rel_mixsd(a,b) RESULT(bool)
+  REAL(SSK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  REAL(SDK) :: eps
+  eps=MAX(ABS(a),ABS(b))*EPSS
+  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSS
+  bool=(ABS(a-b) <= eps)
+ENDFUNCTION approxeq_rel_mixsd
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a relative comparison of one
+!> double-precision and one single-precision reals with .APPROXEQR.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a relative comparison by scaling the default epsilon value to
+!> the size of the larger of the two. It should be used when @c and @b are of
+!> the same magnitude and very large or very small. If either @c a or @c b is
+!> zero (exactly) then this routine is equivalent to an absolute comparison.
+!>
+ELEMENTAL FUNCTION approxeq_rel_mixds(a,b) RESULT(bool)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SSK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  REAL(SDK) :: eps
+  eps=MAX(ABS(a),ABS(b))*EPSS
+  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSS
+  bool=(ABS(a-b) <= eps)
+ENDFUNCTION approxeq_rel_mixds
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a relative comparison of two
+!> double-precision reals with .APPROXEQR. using single-precision criterion.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a relative comparison by scaling the default epsilon value to
+!> the size of the larger of the two. It should be used when @c and @b are of
+!> the same magnitude and very large or very small. If either @c a or @c b is
+!> zero (exactly) then this routine is equivalent to an absolute comparison.
+!>
+ELEMENTAL FUNCTION approxeq_rel_double2single(a,b) RESULT(bool)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  REAL(SDK) :: eps
+  eps=MAX(ABS(a),ABS(b))*EPSS
+  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSS
+  bool=(ABS(a-b) <= eps)
+ENDFUNCTION approxeq_rel_double2single
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing a comparison of two single
