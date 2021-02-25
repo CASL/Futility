@@ -48,6 +48,7 @@ REGISTER_SUBTEST('%boundsPoly',testPolyInside)
 REGISTER_SUBTEST('%doesPolyIntersect',testDoesPolyIntersect)
 REGISTER_SUBTEST('%subtractSubVolume',testSubtractSubVol)
 REGISTER_SUBTEST('Operator(==)',testEquivalence)
+REGISTER_SUBTEST('Assignment(=)',testAssignment)
 REGISTER_SUBTEST('RotateClockwise',testRotateClockwise)
 
 FINALIZE_TEST()
@@ -2755,6 +2756,41 @@ SUBROUTINE testGenerateGraph
   CALL testGraph%clear()
   CALL testPolyType%clear()
 ENDSUBROUTINE testGenerateGraph
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testAssignment()
+  TYPE(PolygonType) :: testPolyType
+  INTEGER(SIK) :: i
+  REAL(SRK) :: testCoord(2,9),c0(2)
+  TYPE(PolygonType) :: testPoly2,testPoly3
+
+  CALL testPolyType%clear()
+  CALL testGraph%clear()
+  !Setup test graph - isosceles triangle
+  testCoord(:,1)=(/-1.0_SRK,-2.0_SRK/)
+  testCoord(:,2)=(/1.0_SRK,-2.0_SRK/)
+  testCoord(:,3)=(/0.0_SRK,1.0_SRK/)
+  DO i=1,3
+    CALL testGraph%insertVertex(testCoord(:,i))
+  ENDDO
+  CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
+  CALL testGraph%defineEdge(testCoord(:,2),testCoord(:,3))
+  CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,1))
+
+  CALL testPolyType%set(testGraph)
+  testPoly2=testPolyType
+  ASSERT(testPolyType%isInit == testPoly2%isInit,'%isInit')
+  ASSERT_APPROXEQ(testPolyType%area,testPoly2%area,'%area')
+  ASSERT_EQ(testPolyType%nVert,testPoly2%nVert,'%nVert')
+  ASSERT_EQ(testPolyType%nQuadEdge,testPoly2%nQuadEdge,'%nQuadEdge')
+  ASSERT(testPolyType%centroid == testPoly2%centroid,'%centroid')
+  ASSERT(ALL(testPolyType%vert == testPoly2%vert),'%vert')
+  ASSERT(ALL(testPolyType%edge == testPoly2%edge),'%edge')
+  ASSERT(ALL(testPolyType%quadEdge .APPROXEQ. testPoly2%quadEdge),'%quadEdge')
+  !Since there are no subregions, ASSOCIATED returns false if the target is NULL.
+  ASSERT(.NOT. ASSOCIATED(testPolyType%nextPoly),'%nextPoly')
+  ASSERT(.NOT. ASSOCIATED(testPolyType%subRegions),'%subRegions')
+ENDSUBROUTINE testAssignment
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testEquivalence()

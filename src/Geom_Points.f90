@@ -16,6 +16,7 @@
 MODULE Geom_Points
 USE IntrType
 USE Constants_Conversion
+USE ExtendedMath
 
 IMPLICIT NONE
 PRIVATE !Default contents of module to private
@@ -53,6 +54,9 @@ TYPE :: PointType
     !> @copybrief GeomPoints::clear_PointType
     !> @copydetails GeomPoints::clear_PointType
     PROCEDURE,PASS :: clear => clear_PointType
+    !> @copybrief GeomPoints::RotateQtrClockwise_PointType
+    !> @copydetails GeomPoints::RotateQtrClockwise_PointType
+    PROCEDURE,PASS :: RotateQtrClockwise => RotateQtrClockwise_PointType
     !> @copybrief GeomPoints::coord2str_PointType
     !> @copydetails GeomPoints::coord2str_PointType
     PROCEDURE,PASS :: getCoordString => coord2str_PointType
@@ -255,6 +259,23 @@ ELEMENTAL SUBROUTINE clear_PointType(p)
   p%dim=0
   IF(ALLOCATED(p%coord)) DEALLOCATE(p%coord)
 ENDSUBROUTINE clear_PointType
+!
+!-------------------------------------------------------------------------------
+!> @brief Routine rotates the x-y coordinates of a point type variable @nrot number
+!>        of clockwise quarter rotations.
+!> @param p the point type variable to rotate
+!> @param nrot the number of clockwise quarter rotations.
+!>
+!> @note: Values from [-3,-1] will be handled as well, even though they
+!>        represent counter clockwise rotations.  This will only work for 2-D or
+!>        greater point dimensions.
+ELEMENTAL SUBROUTINE RotateQtrClockwise_PointType(p,nrot)
+  CLASS(PointType),INTENT(INOUT) :: p
+  INTEGER(SIK),INTENT(IN) :: nrot 
+  
+  IF(ALLOCATED(p%coord) .AND. p%dim >= 2) &
+      CALL RotateQtrClockwise(p%coord(1),p%coord(2),nrot)
+ENDSUBROUTINE RotateQtrClockwise_PointType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the addition operation between two points e.g. @c p=p0+p1
