@@ -32,6 +32,7 @@ PUBLIC :: generateCircle
 PUBLIC :: CircleType
 PUBLIC :: CylinderType
 PUBLIC :: OPERATOR(==)
+PUBLIC :: ASSIGNMENT(=)
 
 !> @brief Type for a circle
 TYPE :: CircleType
@@ -106,6 +107,15 @@ INTERFACE OPERATOR(==)
   !> @copybrief Geom_CircCyl::isequal_CylinderType
   !> @copydetails Geom_CircCyl::isequal_CylinderType
   MODULE PROCEDURE isequal_CylinderType
+ENDINTERFACE
+
+!> @brief Generic interface for assignment operator (=)
+!>
+!> Adds assignment capability for Circle types.
+INTERFACE ASSIGNMENT(=)
+  !> @copybrief GeomPoints::assign_CircleType
+  !> @copydetails GeomPoints::assign_CircleType
+  MODULE PROCEDURE assign_CircleType
 ENDINTERFACE
 !
 !===============================================================================
@@ -895,5 +905,25 @@ ELEMENTAL FUNCTION isequal_CylinderType(c0,c1) RESULT(bool)
   IF((c0%r .APPROXEQA. c1%r) .AND. (c0%thetastt .APPROXEQA. c1%thetastt) .AND. &
       (c0%thetastp .APPROXEQA. c1%thetastp)) bool=(c0%axis == c1%axis)
 ENDFUNCTION isequal_CylinderType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the assignment operation between two circles
+!> e.g. c0 = c1
+!> @param c0 the first circle
+!> @param c1 the second circle
+!>
+!> Function is elemental so it can be used on an array of circles.
+ELEMENTAL SUBROUTINE assign_CircleType(c0,c1)
+  TYPE(CircleType),INTENT(INOUT) :: c0
+  TYPE(CircleType),INTENT(IN) :: c1
+  IF(c1%c%dim > 0) THEN
+    c0%c=c1%c
+    c0%r=c1%r
+    c0%thetastt=c1%thetastt
+    c0%thetastp=c1%thetastp
+  ELSE
+    CALL c0%clear()
+  ENDIF
+ENDSUBROUTINE assign_CircleType
 !
 ENDMODULE Geom_CircCyl

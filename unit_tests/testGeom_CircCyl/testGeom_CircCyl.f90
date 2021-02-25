@@ -469,6 +469,15 @@ SUBROUTINE TestCircle_and_Cylinder
   ASSERT(.NOT.circle2%inside(point),'Circle Arc external point Q4')
 
   !
+  !Test for assignment operation
+  COMPONENT_TEST('ASSIGNMENT(=)')
+  circle2=circle1
+  ASSERT(circle1%c == circle2%c,'circle %c equivalence')
+  ASSERT(circle1%r == circle2%r,'circle %r equivalence')
+  ASSERT(circle1%thetastt == circle2%thetastt,'circle %thetastt equivalence')
+  ASSERT(circle1%thetastp == circle2%thetastp,'circle %thetastp equivalence')
+
+  !
   !Test for equivalence operation (implicitly tests assignment operation)
   COMPONENT_TEST('OPERATOR(==)')
   circle2=circle1

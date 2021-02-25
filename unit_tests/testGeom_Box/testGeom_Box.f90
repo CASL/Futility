@@ -339,7 +339,12 @@ SUBROUTINE TestOBBox
   CALL point%init(DIM=2,X=0.0_SRK,Y=-0.5_SRK)
   ASSERT(.NOT.box%inside(point),'%hasPoint')
 
-
+  !Test for assignment operation
+  COMPONENT_TEST('ASSIGNMENT(=)')
+  box2=box
+  ASSERT(ALL(box%u == box2%u),'box%u assignment equivalence')
+  ASSERT(ALL(box%e == box2%e),'box%e assignment equivalence')
+  ASSERT(box%p0 == box2%p0,'box%p0 assignment equivalence')
 
   !Test for equivalence operation (implicitly tests assignment operation)
   COMPONENT_TEST('OPERATOR(==)')

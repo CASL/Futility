@@ -23,6 +23,7 @@ USE Futility_DBC
 USE IntrType
 USE Allocs
 USE Constants_Conversion
+USE ExtendedMath
 USE Geom_Graph
 USE Geom_Points
 USE Geom_Line
@@ -36,6 +37,7 @@ PRIVATE
 
 PUBLIC :: PolygonType
 PUBLIC :: Polygonize
+PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(==)
 
 !> @brief Type used to describe a polygon.
@@ -155,6 +157,13 @@ INTERFACE OPERATOR(==)
   !> @copybrief Geom_Poly::isequal_PolygonType
   !> @copydetails Geom_Poly::isequal_PolygonType
   MODULE PROCEDURE isequal_PolygonType
+ENDINTERFACE
+
+!> @brief
+INTERFACE ASSIGNMENT(=)
+  !> @copybrief Geom_Poly::assign_PolygonType
+  !> @copydetails Geom_Poly::assign_PolygonType
+  MODULE PROCEDURE assign_PolygonType
 ENDINTERFACE
 !
 !===============================================================================
@@ -2003,6 +2012,35 @@ RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
 ENDFUNCTION isequal_PolygonType
 !
 !-------------------------------------------------------------------------------
+!> @brief An overloaded operator routine to assign one polygon type to another.
+!> @param p1 The target polygon type to assign to.
+!> @param p2 The source polygon type to assign from.
+!>
+SUBROUTINE assign_PolygonType(p1,p2)
+  TYPE(PolygonType),INTENT(INOUT) :: p1
+  TYPE(PolygonType),INTENT(IN) :: p2
+
+  CALL p1%clear()
+  IF(p2%isinit) THEN
+    p1%isInit=p2%isInit
+    p1%area=p2%area
+    p1%nVert=p2%nVert
+    p1%nQuadEdge=p2%nQuadEdge
+    p1%centroid=p2%centroid
+    ALLOCATE(p1%vert(p2%nVert))
+    ALLOCATE(p1%edge(2,p2%nVert))
+    p1%vert=p2%vert
+    p1%edge=p2%edge
+    ALLOCATE(p1%quad2edge(p2%nQuadEdge))
+    ALLOCATE(p1%quadEdge(3,p2%nQuadEdge))
+    p1%quad2edge=p2%quad2edge
+    p1%quadEdge=p2%quadEdge
+    p1%nextPoly => p2%nextPoly
+    p1%subRegions => p2%subRegions
+  ENDIF
+ENDSUBROUTINE assign_PolygonType
+!
+!-------------------------------------------------------------------------------
 !> @brief This is a local subroutine to create an arc-circle from a specified
 !>        quadratic edge for a given polygon type
 !> @param thisPoly The polygon type from which to create the arc-circle
@@ -2095,54 +2133,24 @@ FUNCTION rotateClockwise(this,nrotations) RESULT(new)
 
   !If the user asked for a negative number of rotations or more than 3, shift
   !it to a reasonable number
-  nrot=nrotations
-  DO WHILE(nrot < 0)
-    nrot=nrot+4
-  ENDDO
-  DO WHILE(nrot > 3)
-    nrot=nrot-4
-  ENDDO
+  SELECTCASE(MOD(nrotations,4))
+  CASE(0)
+    nrot=0
+  CASE(1,-3)
+    nrot=1
+  CASE(2,-2)
+    nrot=2
+  CASE(3,-1)
+    nrot=3
+  ENDSELECT
 
   !0 rotations means we don't actually need to do anything
   IF(nrot == 0) RETURN
 
-  DO i=1,this%nVert
-    !Get the old vertex position
-    x=this%vert(i)%coord(1)
-    y=this%vert(i)%coord(2)
+  CALL new%vert%RotateQtrClockwise(nrot)
 
-    !Now rotate
-    DO irot=1,nrot
-      tmpx=y
-      tmpy=-x
-      !Store the current values for the next rotation
-      x=tmpx
-      y=tmpy
-    ENDDO !irot
-
-    new%vert(i)%coord(1)=x
-    new%vert(i)%coord(2)=y
-  ENDDO !i
-
-  DO i=1,this%nQuadEdge
-    new%quad2edge(i)=this%quad2edge(i)
-    !Get the old vertex position
-    x=this%quadEdge(1,i)
-    y=this%quadEdge(2,i)
-
-    !Now rotate
-    DO irot=1,nrot
-      tmpx=y
-      tmpy=-x
-      !Store the current values for the next rotation
-      x=tmpx
-      y=tmpy
-    ENDDO !irot
-
-    new%quadEdge(1,i)=x
-    new%quadEdge(2,i)=y
-    new%quadEdge(3,i)=this%quadEdge(3,i)
-  ENDDO !i
+  CALL RotateQtrClockwise(new%quadEdge(1,:),new%quadEdge(2,:),nrot)
+  new%quadEdge(3,:)=this%quadEdge(3,:)
 
   CALL new%calcCentroid()
 

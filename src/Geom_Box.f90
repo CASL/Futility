@@ -30,6 +30,7 @@ PRIVATE
 PUBLIC OBBoxType
 PUBLIC ABBoxType
 PUBLIC :: OPERATOR(==)
+PUBLIC :: ASSIGNMENT(=)
 
 !> @brief Type for a Box
 TYPE OBBoxType
@@ -106,6 +107,15 @@ INTERFACE OPERATOR(==)
   !> @copybrief Geom_Box::isequal_OBBoxType
   !> @copydetails Geom_Box::isequal_OBBoxType
   MODULE PROCEDURE isequal_OBBoxType
+ENDINTERFACE
+
+!> @brief Generic interface for assignment operator (=)
+!>
+!> Adds assignment capability for OBBox types.
+INTERFACE ASSIGNMENT(=)
+  !> @copybrief GeomPoints::assign_OBBoxType
+  !> @copydetails GeomPoints::assign_OBBoxType
+  MODULE PROCEDURE assign_OBBoxType
 ENDINTERFACE
 !
 !===============================================================================
@@ -494,8 +504,8 @@ ENDFUNCTION inside_OBBoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two OBBoxes e.g. @c b0==b1
-!> @param p0 the first box
-!> @param p1 the second box
+!> @param b0 the first box
+!> @param b1 the second box
 !> @returns @c bool the boolean result of the operation
 !>
 !> Function is elemental so it can be used on an array of boxes.
@@ -506,6 +516,25 @@ ELEMENTAL FUNCTION isequal_OBBoxType(b0,b1) RESULT(bool)
   IF(b0%p0 == b1%p0 .AND. ALL(b0%u .APPROXEQA. b1%u)) &
       bool=ALL(b0%e.APPROXEQA. b1%e)
 ENDFUNCTION isequal_OBBoxType
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the assignment operation between two OBBoxes
+!> e.g. b0 = b1
+!> @param b0 the first box
+!> @param b1 the second box
+!>
+!> Function is elemental so it can be used on an array of OBBoxes.
+ELEMENTAL SUBROUTINE assign_OBBoxType(b0,b1)
+  TYPE(OBBoxType),INTENT(INOUT) :: b0
+  TYPE(OBBoxType),INTENT(IN) :: b1
+  IF(b1%p0%dim > 0) THEN
+    b0%p0=b1%p0
+    b0%u=b1%u
+    b0%e=b1%e
+  ELSE
+    CALL b0%clear()
+  ENDIF
+ENDSUBROUTINE assign_OBBoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Constructor for the ABBoxType
