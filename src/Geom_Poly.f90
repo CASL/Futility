@@ -152,14 +152,17 @@ ENDINTERFACE
 !  MODULE PROCEDURE point_inside_PolygonType
 !ENDINTERFACE
 
-!> @brief
+!> @brief Overloads the Fortran intrinsic operator for comparing
+!> two variables to see if they are equal
 INTERFACE OPERATOR(==)
   !> @copybrief Geom_Poly::isequal_PolygonType
   !> @copydetails Geom_Poly::isequal_PolygonType
   MODULE PROCEDURE isequal_PolygonType
 ENDINTERFACE
 
-!> @brief
+!> @brief Overloads the assignment operator.
+!>
+!> This is so new polygeom types can be assigned to each other.
 INTERFACE ASSIGNMENT(=)
   !> @copybrief Geom_Poly::assign_PolygonType
   !> @copydetails Geom_Poly::assign_PolygonType
@@ -259,6 +262,9 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
 ENDSUBROUTINE set_PolygonType
 !
 !-------------------------------------------------------------------------------
+!> @brief This routine calculates the area of an initialized polygon.
+!> @param thisPoly The polygon type of which to calculate the area.
+!>
 SUBROUTINE calcArea(this)
   CLASS(PolygonType),INTENT(INOUT) :: this
   !
@@ -324,6 +330,9 @@ SUBROUTINE calcArea(this)
 ENDSUBROUTINE calcArea
 !
 !-------------------------------------------------------------------------------
+!> @brief This routine calculates the centroid of an initialized polygon.
+!> @param thisPoly The polygon type of which to calculate the centroid.
+!>
 SUBROUTINE calcCentroid(this)
   CLASS(PolygonType),INTENT(INOUT) :: this
   !
@@ -433,8 +442,13 @@ SUBROUTINE clear_PolygonType(thisPolygon)
 ENDSUBROUTINE clear_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This function checks if a polygon has any associated polygon
+!>        subregions.  If it does not have any, they polygon type is simple 
+!>        (e.g. a circle, square, triangle, etc...).  An example of a non-simple
+!>        polygon would be concentric circles, where the smaller circle is the
+!>        subregion of the larger one.
+!> @param thisPoly The polygon type to query if it is simple or not.
+!> @param bool The logical result of if the polygon is simple.
 !>
 ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
@@ -1364,8 +1378,12 @@ FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
 ENDFUNCTION doesPolyIntersect_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This subroutine calculates the points where a given line intersects
+!>        with a given polygon.  If there is no intersection, points is returned
+!>        unallocated.
+!> @param thisPolygon The polygon type to be intersected.
+!> @param line The line type to intersect with the polygon.
+!> @param points The point types of the intersection with the polygon.
 !>
 SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
   CLASS(PolygonType),INTENT(IN) :: thisPolygon
@@ -1508,8 +1526,12 @@ SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
 ENDSUBROUTINE intersectLine_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This subroutine calculates the points where a given polygon intersects
+!>        with another given polygon.  If there is no intersection, points is 
+!>        returned unallocated.
+!> @param thisPoly The polygon type to be intersected.
+!> @param thatPoly The polygon type to intersect with the polygon.
+!> @param points The point types of the intersection with the polygon.
 !>
 SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
@@ -1661,8 +1683,12 @@ SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
 ENDSUBROUTINE intersectPoly_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This routine subtracts the area of an initialized contained (bound)
+!>        sub polygon from a containing polygon.
+!> @param thisPoly The containing (bounding) polygon type from which to subtract
+!>        the area.
+!> @param thatPoly The contained (bound) polygon type whose area will be used to
+!>        subtract from the containing polygon.
 !>
 SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
   CLASS(PolygonType),INTENT(INOUT) :: thisPoly
@@ -2015,6 +2041,9 @@ ENDFUNCTION isequal_PolygonType
 !> @brief An overloaded operator routine to assign one polygon type to another.
 !> @param p1 The target polygon type to assign to.
 !> @param p2 The source polygon type to assign from.
+!>
+!> Note: The pointer assignments are shallow copies only.  The clear routine
+!>       will only nullify a polygon, not deallocate an allocated pointer.
 !>
 SUBROUTINE assign_PolygonType(p1,p2)
   TYPE(PolygonType),INTENT(INOUT) :: p1
