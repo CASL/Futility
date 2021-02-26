@@ -50,7 +50,7 @@ IMPLICIT NONE
 PRIVATE !Default private for module contents
 !
 ! List of Public items
-PUBLIC :: SBK,SNK,SLK,SIK,SSK,SDK,SRK
+PUBLIC :: SBK,SNK,SLK,SIK,SSK,SDK,SRK,SCK,SGK,SFK
 PUBLIC :: EPSS
 PUBLIC :: EPSD
 PUBLIC :: EPSREAL
@@ -141,6 +141,21 @@ INTEGER,PARAMETER :: SRK=SDK
 INTEGER,PARAMETER :: SRK=SSK
 #endif
 
+!> @brief Mixed-precision REAL kind
+!>
+!> Optionally allow single precision for the variables of large
+!> memory footprint. SGK, SCK and SFK are defined for different
+!> variables of interest and may be changed separately as needed.
+#ifdef MIXPRECISION
+INTEGER,PARAMETER :: SGK=SSK
+INTEGER,PARAMETER :: SCK=SSK
+INTEGER,PARAMETER :: SFK=SSK
+#else
+INTEGER,PARAMETER :: SGK=SRK
+INTEGER,PARAMETER :: SCK=SRK
+INTEGER,PARAMETER :: SFK=SRK
+#endif
+
 !> @brief INTEGER kind for integers
 !>
 !> The selected integer kind ensuring integers up to 10^(N_INT_ORDER)
@@ -200,7 +215,8 @@ INTERFACE OPERATOR(.APPROXEQA.)
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for double
-!> real kinds. Performs absolute comparison to single precision
+!> real kinds. Performs absolute comparison to EPSS if mixed precision
+!> is used. Otherwise compared to EPSREAL.
 INTERFACE OPERATOR(.APPROXEQDS.)
   !> @copybrief IntrType::approxeq_abs_double2single
   MODULE PROCEDURE approxeq_abs_double2single
@@ -220,7 +236,8 @@ INTERFACE OPERATOR(.APPROXEQR.)
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for double
-!> real kinds. Performs relative comparison to single precision
+!> real kinds. Performs relative comparison to EPSS if mixed precision
+!> is used. Otherwise compared to EPSREAL.
 INTERFACE OPERATOR(.APPROXEQRDS.)
   !> @copybrief IntrType::approxeq_rel_double2single
   MODULE PROCEDURE approxeq_rel_double2single
@@ -479,7 +496,11 @@ ELEMENTAL FUNCTION approxeq_abs_double2single(a,b) RESULT(bool)
   REAL(SDK),INTENT(IN) :: a
   REAL(SDK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
+#ifdef MIXPRECISION
   bool=(ABS(a-b) <= EPSS)
+#else
+  bool=(ABS(a-b) <= EPSD)
+#endif 
 ENDFUNCTION approxeq_abs_double2single
 !
 !-------------------------------------------------------------------------------
@@ -585,9 +606,15 @@ ELEMENTAL FUNCTION approxeq_rel_double2single(a,b) RESULT(bool)
   REAL(SDK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
   REAL(SDK) :: eps
+#ifdef MIXPRECISION
   eps=MAX(ABS(a),ABS(b))*EPSS
   IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSS
   bool=(ABS(a-b) <= eps)
+#else
+  eps=MAX(ABS(a),ABS(b))*EPSD
+  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSD
+  bool=(ABS(a-b) <= eps)
+#endif
 ENDFUNCTION approxeq_rel_double2single
 !
 !-------------------------------------------------------------------------------

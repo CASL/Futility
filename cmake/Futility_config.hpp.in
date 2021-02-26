@@ -7,4 +7,4 @@
 #cmakedefine HAVE_MKL
 #cmakedefine DBL
 #cmakedefine DBLINT
-
+#cmakedefine MIXPRECISION

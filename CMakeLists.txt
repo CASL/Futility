@@ -45,6 +45,19 @@ ELSE()
       OFF
   )
 
+  # Define option for mixed precision
+  IF(DEFINED ${PROJECT_NAME}_ENABLE_MIXPRECISION)
+      SET(${PNAME}_ENABLE_MIXPRECISION_DEFAULT ${${PROJECT_NAME}_ENABLE_MIXPRECISION})
+  ELSE()
+      SET(${PNAME}_ENABLE_MIXPRECISION_DEFAULT ON)
+  ENDIF()
+  TRIBITS_ADD_OPTION_AND_DEFINE(
+      ${PNAME}_ENABLE_MIXPRECISION
+      MIXPRECISION
+      "Option for using mixed precision to mitigate memory footprint."
+      ${${PNAME}_ENABLE_MIXPRECISION_DEFAULT}
+  )
+
   # Define Package dependent option for MPI TPL
   IF(TPL_ENABLE_MPI)
       SET(${PNAME}_ENABLE_MPI_DEFAULT ON)
