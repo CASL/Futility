@@ -2761,8 +2761,8 @@ ENDSUBROUTINE testGenerateGraph
 SUBROUTINE testAssignment()
   TYPE(PolygonType) :: testPolyType
   INTEGER(SIK) :: i
-  REAL(SRK) :: testCoord(2,9),c0(2)
-  TYPE(PolygonType) :: testPoly2,testPoly3
+  REAL(SRK) :: testCoord(2,9)
+  TYPE(PolygonType) :: testPoly2
 
   CALL testPolyType%clear()
   CALL testGraph%clear()

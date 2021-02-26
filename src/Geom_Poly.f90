@@ -2149,8 +2149,7 @@ FUNCTION rotateClockwise(this,nrotations) RESULT(new)
   INTEGER(SIK),INTENT(IN) :: nrotations
   TYPE(PolygonType) :: new
   !
-  INTEGER(SIK) :: i,irot,nrot
-  REAL(SRK) :: x,y,tmpx,tmpy
+  INTEGER(SIK) :: nrot
 
   REQUIRE(this%isInit)
   SELECTTYPE(this)
