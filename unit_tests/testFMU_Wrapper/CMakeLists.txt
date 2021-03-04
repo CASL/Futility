@@ -6,5 +6,9 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-ADD_SUBDIRECTORY(exampleTAU_Stubs)
-ADD_SUBDIRECTORY(exampleFMU)
+INCLUDE(Futility_CreateUnitTest)
+
+ADD_SUBDIRECTORY(testFMU_BouncingBall)
+
+Futility_CreateUnitTest(testFMU_Wrapper)
+
