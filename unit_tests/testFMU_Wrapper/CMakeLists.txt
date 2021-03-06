@@ -7,8 +7,5 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
-
-ADD_SUBDIRECTORY(testFMU_BouncingBall)
-
 Futility_CreateUnitTest(testFMU_Wrapper)
 
