@@ -20,6 +20,7 @@ TRIBITS_ADD_LIBRARY(CUtils
     )
 
 ADD_SUBDIRECTORY(trilinos_interfaces)
+ADD_SUBDIRECTORY(fmu_interfaces)
 
 #Library for utility code
 TRIBITS_ADD_LIBRARY(Utils
@@ -42,6 +43,7 @@ TRIBITS_ADD_LIBRARY(Utils
       BLAS2.f90
       BLAS3.f90
       BLAS.f90
+      FMU_Wrapper.f90
       trilinos_interfaces/trilinos_f_interfaces.f90
       Strings.f90
       Times.f90
@@ -106,5 +108,6 @@ TRIBITS_ADD_LIBRARY(Utils
     DEPLIBS
       CUtils
       TrilinosUtils
+      FmuUtils
 )
 
