@@ -55,6 +55,18 @@
 !>  - 4-D arrays of 64-bit integers
 !>  - 4-D arrays of single precision reals
 !>  - 4-D arrays of double precision reals
+!>  - 5-D arrays of 32-bit integers
+!>  - 5-D arrays of 64-bit integers
+!>  - 5-D arrays of single precision reals
+!>  - 5-D arrays of double precision reals
+!>  - 6-D arrays of 32-bit integers
+!>  - 6-D arrays of 64-bit integers
+!>  - 6-D arrays of single precision reals
+!>  - 6-D arrays of double precision reals
+!>  - 7-D arrays of 32-bit integers
+!>  - 7-D arrays of 64-bit integers
+!>  - 7-D arrays of single precision reals
+!>  - 7-D arrays of double precision reals
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE ParameterLists
 #include "UnitTest.h"
@@ -205,12 +217,50 @@ TYPE :: ParamType
     !> @copybrief ParameterLists::init_ParamType_SLK_a4
     !> @copydoc ParameterLists::init_ParamType_SLK_a4
     PROCEDURE,PASS,PRIVATE :: initSLKa4 => init_ParamType_SLK_a4
+    !> @copybrief ParameterLists::init_ParamType_SSK_a5
+    !> @copydoc ParameterLists::init_ParamType_SSK_a5
+    PROCEDURE,PASS,PRIVATE :: initSSKa5 => init_ParamType_SSK_a5
+    !> @copybrief ParameterLists::init_ParamType_SDK_a5
+    !> @copydoc ParameterLists::init_ParamType_SDK_a5
+    PROCEDURE,PASS,PRIVATE :: initSDKa5 => init_ParamType_SDK_a5
+    !> @copybrief ParameterLists::init_ParamType_SNK_a5
+    !> @copydoc ParameterLists::init_ParamType_SNK_a5
+    PROCEDURE,PASS,PRIVATE :: initSNKa5 => init_ParamType_SNK_a5
+    !> @copybrief ParameterLists::init_ParamType_SLK_a5
+    !> @copydoc ParameterLists::init_ParamType_SLK_a5
+    PROCEDURE,PASS,PRIVATE :: initSLKa5 => init_ParamType_SLK_a5
+    !> @copybrief ParameterLists::init_ParamType_SSK_a6
+    !> @copydoc ParameterLists::init_ParamType_SSK_a6
+    PROCEDURE,PASS,PRIVATE :: initSSKa6 => init_ParamType_SSK_a6
+    !> @copybrief ParameterLists::init_ParamType_SDK_a6
+    !> @copydoc ParameterLists::init_ParamType_SDK_a6
+    PROCEDURE,PASS,PRIVATE :: initSDKa6 => init_ParamType_SDK_a6
+    !> @copybrief ParameterLists::init_ParamType_SNK_a6
+    !> @copydoc ParameterLists::init_ParamType_SNK_a6
+    PROCEDURE,PASS,PRIVATE :: initSNKa6 => init_ParamType_SNK_a6
+    !> @copybrief ParameterLists::init_ParamType_SLK_a6
+    !> @copydoc ParameterLists::init_ParamType_SLK_a6
+    PROCEDURE,PASS,PRIVATE :: initSLKa6 => init_ParamType_SLK_a6
+    !> @copybrief ParameterLists::init_ParamType_SSK_a7
+    !> @copydoc ParameterLists::init_ParamType_SSK_a7
+    PROCEDURE,PASS,PRIVATE :: initSSKa7 => init_ParamType_SSK_a7
+    !> @copybrief ParameterLists::init_ParamType_SDK_a7
+    !> @copydoc ParameterLists::init_ParamType_SDK_a7
+    PROCEDURE,PASS,PRIVATE :: initSDKa7 => init_ParamType_SDK_a7
+    !> @copybrief ParameterLists::init_ParamType_SNK_a7
+    !> @copydoc ParameterLists::init_ParamType_SNK_a7
+    PROCEDURE,PASS,PRIVATE :: initSNKa7 => init_ParamType_SNK_a7
+    !> @copybrief ParameterLists::init_ParamType_SLK_a7
+    !> @copydoc ParameterLists::init_ParamType_SLK_a7
+    PROCEDURE,PASS,PRIVATE :: initSLKa7 => init_ParamType_SLK_a7
     !> Generic type bound interface for all @c init operations
     GENERIC :: init => initParamList,initSSK,initSDK,initSNK,initSLK, &
         initSBK,initSTR,initCHAR,initSSKa1,initSDKa1,initSNKa1, &
         initSLKa1,initSBKa1,initSTRa1,initSSKa2,initSDKa2,initSNKa2, &
         initSLKa2,initSTRa2,initSSKa3,initSDKa3,initSNKa3,initSLKa3, &
-        initSSKa4,initSDKa4,initSNKa4,initSLKa4
+        initSSKa4,initSDKa4,initSNKa4,initSLKa4,initSSKa5,initSDKa5, &
+        initSNKa5,initSLKa5,initSSKa6,initSDKa6,initSNKa6,initSLKa6, &
+        initSSKa7,initSDKa7,initSNKa7,initSLKa7
     PROCEDURE,PASS :: initFromXML
     !> @copybrief ParameterLists::set_ParamType_List
     !> @copydoc ParameterLists::set_ParamType_List
@@ -293,12 +343,50 @@ TYPE :: ParamType
     !> @copybrief ParameterLists::set_ParamType_SLK_a4
     !> @copydoc ParameterLists::set_ParamType_SLK_a4
     PROCEDURE,PASS,PRIVATE :: setSLKa4 => set_ParamType_SLK_a4
+    !> @copybrief ParameterLists::set_ParamType_SSK_a5
+    !> @copydoc ParameterLists::set_ParamType_SSK_a5
+    PROCEDURE,PASS,PRIVATE :: setSSKa5 => set_ParamType_SSK_a5
+    !> @copybrief ParameterLists::set_ParamType_SDK_a5
+    !> @copydoc ParameterLists::set_ParamType_SDK_a5
+    PROCEDURE,PASS,PRIVATE :: setSDKa5 => set_ParamType_SDK_a5
+    !> @copybrief ParameterLists::set_ParamType_SNK_a5
+    !> @copydoc ParameterLists::set_ParamType_SNK_a5
+    PROCEDURE,PASS,PRIVATE :: setSNKa5 => set_ParamType_SNK_a5
+    !> @copybrief ParameterLists::set_ParamType_SLK_a5
+    !> @copydoc ParameterLists::set_ParamType_SLK_a5
+    PROCEDURE,PASS,PRIVATE :: setSLKa5 => set_ParamType_SLK_a5
+    !> @copybrief ParameterLists::set_ParamType_SSK_a6
+    !> @copydoc ParameterLists::set_ParamType_SSK_a6
+    PROCEDURE,PASS,PRIVATE :: setSSKa6 => set_ParamType_SSK_a6
+    !> @copybrief ParameterLists::set_ParamType_SDK_a6
+    !> @copydoc ParameterLists::set_ParamType_SDK_a6
+    PROCEDURE,PASS,PRIVATE :: setSDKa6 => set_ParamType_SDK_a6
+    !> @copybrief ParameterLists::set_ParamType_SNK_a6
+    !> @copydoc ParameterLists::set_ParamType_SNK_a6
+    PROCEDURE,PASS,PRIVATE :: setSNKa6 => set_ParamType_SNK_a6
+    !> @copybrief ParameterLists::set_ParamType_SLK_a6
+    !> @copydoc ParameterLists::set_ParamType_SLK_a6
+    PROCEDURE,PASS,PRIVATE :: setSLKa6 => set_ParamType_SLK_a6
+    !> @copybrief ParameterLists::set_ParamType_SSK_a7
+    !> @copydoc ParameterLists::set_ParamType_SSK_a7
+    PROCEDURE,PASS,PRIVATE :: setSSKa7 => set_ParamType_SSK_a7
+    !> @copybrief ParameterLists::set_ParamType_SDK_a7
+    !> @copydoc ParameterLists::set_ParamType_SDK_a7
+    PROCEDURE,PASS,PRIVATE :: setSDKa7 => set_ParamType_SDK_a7
+    !> @copybrief ParameterLists::set_ParamType_SNK_a7
+    !> @copydoc ParameterLists::set_ParamType_SNK_a7
+    PROCEDURE,PASS,PRIVATE :: setSNKa7 => set_ParamType_SNK_a7
+    !> @copybrief ParameterLists::set_ParamType_SLK_a7
+    !> @copydoc ParameterLists::set_ParamType_SLK_a7
+    PROCEDURE,PASS,PRIVATE :: setSLKa7 => set_ParamType_SLK_a7
     !> Generic type bound interface for all @c set operations
     GENERIC :: set => setParamList,setSSK,setSDK,setSNK,setSLK, &
         setSBK,setSTR,setCHAR,setSSKa1,setSDKa1,setSNKa1, &
         setSLKa1,setSBKa1,setSTRa1,setSSKa2,setSDKa2,setSNKa2, &
         setSLKa2,setSTRa2,setSSKa3,setSDKa3,setSNKa3,setSLKa3, &
-        setSSKa4,setSDKa4,setSNKa4,setSLKa4
+        setSSKa4,setSDKa4,setSNKa4,setSLKa4,setSSKa5,setSDKa5, &
+        setSNKa5,setSLKa5,setSSKa6,setSDKa6,setSNKa6,setSLKa6, &
+        setSSKa7,setSDKa7,setSNKa7,setSLKa7
     !> @copybrief ParameterLists::get_ParamType
     !> @copydoc ParameterLists::get_ParamType
     PROCEDURE,PASS,PRIVATE :: getParam => get_ParamType
@@ -383,12 +471,50 @@ TYPE :: ParamType
     !> @copybrief ParameterLists::get_ParamType_SLK_a4
     !> @copydoc ParameterLists::get_ParamType_SLK_a4
     PROCEDURE,PASS,PRIVATE :: getSLKa4 => get_ParamType_SLK_a4
+    !> @copybrief ParameterLists::get_ParamType_SSK_a5
+    !> @copydoc ParameterLists::get_ParamType_SSK_a5
+    PROCEDURE,PASS,PRIVATE :: getSSKa5 => get_ParamType_SSK_a5
+    !> @copybrief ParameterLists::get_ParamType_SDK_a5
+    !> @copydoc ParameterLists::get_ParamType_SDK_a5
+    PROCEDURE,PASS,PRIVATE :: getSDKa5 => get_ParamType_SDK_a5
+    !> @copybrief ParameterLists::get_ParamType_SNK_a5
+    !> @copydoc ParameterLists::get_ParamType_SNK_a5
+    PROCEDURE,PASS,PRIVATE :: getSNKa5 => get_ParamType_SNK_a5
+    !> @copybrief ParameterLists::get_ParamType_SLK_a5
+    !> @copydoc ParameterLists::get_ParamType_SLK_a5
+    PROCEDURE,PASS,PRIVATE :: getSLKa5 => get_ParamType_SLK_a5
+    !> @copybrief ParameterLists::get_ParamType_SSK_a6
+    !> @copydoc ParameterLists::get_ParamType_SSK_a6
+    PROCEDURE,PASS,PRIVATE :: getSSKa6 => get_ParamType_SSK_a6
+    !> @copybrief ParameterLists::get_ParamType_SDK_a6
+    !> @copydoc ParameterLists::get_ParamType_SDK_a6
+    PROCEDURE,PASS,PRIVATE :: getSDKa6 => get_ParamType_SDK_a6
+    !> @copybrief ParameterLists::get_ParamType_SNK_a6
+    !> @copydoc ParameterLists::get_ParamType_SNK_a6
+    PROCEDURE,PASS,PRIVATE :: getSNKa6 => get_ParamType_SNK_a6
+    !> @copybrief ParameterLists::get_ParamType_SLK_a6
+    !> @copydoc ParameterLists::get_ParamType_SLK_a6
+    PROCEDURE,PASS,PRIVATE :: getSLKa6 => get_ParamType_SLK_a6
+    !> @copybrief ParameterLists::get_ParamType_SSK_a7
+    !> @copydoc ParameterLists::get_ParamType_SSK_a7
+    PROCEDURE,PASS,PRIVATE :: getSSKa7 => get_ParamType_SSK_a7
+    !> @copybrief ParameterLists::get_ParamType_SDK_a7
+    !> @copydoc ParameterLists::get_ParamType_SDK_a7
+    PROCEDURE,PASS,PRIVATE :: getSDKa7 => get_ParamType_SDK_a7
+    !> @copybrief ParameterLists::get_ParamType_SNK_a7
+    !> @copydoc ParameterLists::get_ParamType_SNK_a7
+    PROCEDURE,PASS,PRIVATE :: getSNKa7 => get_ParamType_SNK_a7
+    !> @copybrief ParameterLists::get_ParamType_SLK_a7
+    !> @copydoc ParameterLists::get_ParamType_SLK_a7
+    PROCEDURE,PASS,PRIVATE :: getSLKa7 => get_ParamType_SLK_a7
     !> Generic type bound interface for all @c get operations
     GENERIC :: get => getParam,getParamList,getSSK,getSDK,getSNK, &
         getSLK,getSBK,getSTR,getCHAR,getSSKa1,getSDKa1,getSNKa1, &
         getSBKa1,getSLKa1,getSTRa1,getSSKa2,getSDKa2,getSNKa2, &
         getSLKa2,getSTRa2,getSSKa3,getSDKa3,getSNKa3,getSLKa3, &
-        getSSKa4,getSDKa4,getSNKa4,getSLKa4
+        getSSKa4,getSDKa4,getSNKa4,getSLKa4,getSSKa5,getSDKa5, &
+        getSNKa5,getSLKa5,getSSKa6,getSDKa6,getSNKa6,getSLKa6, &
+        getSSKa7,getSDKa7,getSNKa7,getSLKa7
     !> @copybrief ParameterLists::add_ParamType
     !> @copydoc ParameterLists::add_ParamType
     PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
@@ -473,12 +599,50 @@ TYPE :: ParamType
     !> @copybrief ParameterLists::add_ParamType_SLK_a4
     !> @copydoc ParameterLists::add_ParamType_SLK_a4
     PROCEDURE,PASS,PRIVATE :: addSLKa4 => add_ParamType_SLK_a4
+    !> @copybrief ParameterLists::add_ParamType_SSK_a5
+    !> @copydoc ParameterLists::add_ParamType_SSK_a5
+    PROCEDURE,PASS,PRIVATE :: addSSKa5 => add_ParamType_SSK_a5
+    !> @copybrief ParameterLists::add_ParamType_SDK_a5
+    !> @copydoc ParameterLists::add_ParamType_SDK_a5
+    PROCEDURE,PASS,PRIVATE :: addSDKa5 => add_ParamType_SDK_a5
+    !> @copybrief ParameterLists::add_ParamType_SNK_a5
+    !> @copydoc ParameterLists::add_ParamType_SNK_a5
+    PROCEDURE,PASS,PRIVATE :: addSNKa5 => add_ParamType_SNK_a5
+    !> @copybrief ParameterLists::add_ParamType_SLK_a5
+    !> @copydoc ParameterLists::add_ParamType_SLK_a5
+    PROCEDURE,PASS,PRIVATE :: addSLKa5 => add_ParamType_SLK_a5
+    !> @copybrief ParameterLists::add_ParamType_SSK_a6
+    !> @copydoc ParameterLists::add_ParamType_SSK_a6
+    PROCEDURE,PASS,PRIVATE :: addSSKa6 => add_ParamType_SSK_a6
+    !> @copybrief ParameterLists::add_ParamType_SDK_a6
+    !> @copydoc ParameterLists::add_ParamType_SDK_a6
+    PROCEDURE,PASS,PRIVATE :: addSDKa6 => add_ParamType_SDK_a6
+    !> @copybrief ParameterLists::add_ParamType_SNK_a6
+    !> @copydoc ParameterLists::add_ParamType_SNK_a6
+    PROCEDURE,PASS,PRIVATE :: addSNKa6 => add_ParamType_SNK_a6
+    !> @copybrief ParameterLists::add_ParamType_SLK_a6
+    !> @copydoc ParameterLists::add_ParamType_SLK_a6
+    PROCEDURE,PASS,PRIVATE :: addSLKa6 => add_ParamType_SLK_a6
+    !> @copybrief ParameterLists::add_ParamType_SSK_a7
+    !> @copydoc ParameterLists::add_ParamType_SSK_a7
+    PROCEDURE,PASS,PRIVATE :: addSSKa7 => add_ParamType_SSK_a7
+    !> @copybrief ParameterLists::add_ParamType_SDK_a7
+    !> @copydoc ParameterLists::add_ParamType_SDK_a7
+    PROCEDURE,PASS,PRIVATE :: addSDKa7 => add_ParamType_SDK_a7
+    !> @copybrief ParameterLists::add_ParamType_SNK_a7
+    !> @copydoc ParameterLists::add_ParamType_SNK_a7
+    PROCEDURE,PASS,PRIVATE :: addSNKa7 => add_ParamType_SNK_a7
+    !> @copybrief ParameterLists::add_ParamType_SLK_a7
+    !> @copydoc ParameterLists::add_ParamType_SLK_a7
+    PROCEDURE,PASS,PRIVATE :: addSLKa7 => add_ParamType_SLK_a7
     !> Generic type bound interface for all @c add operations
     GENERIC :: add => addParam,addList,addSSK,addSDK, &
         addSNK,addSLK,addSBK,addSTR,addCHAR,addSSKa1,addSDKa1, &
         addSNKa1,addSLKa1,addSBKa1,addSTRa1,addSSKa2,addSDKa2, &
         addSNKa2,addSLKa2,addSTRa2,addSSKa3,addSDKa3,addSNKa3,addSLKa3, &
-        addSSKa4,addSDKa4,addSNKa4,addSLKa4
+        addSSKa4,addSDKa4,addSNKa4,addSLKa4,addSSKa5,addSDKa5, &
+        addSNKa5,addSLKa5,addSSKa6,addSDKa6,addSNKa6,addSLKa6, &
+        addSSKa7,addSDKa7,addSNKa7,addSLKa7
     !> @copybrief ParameterLists::remove_ParamType
     !> @copydoc ParameterLists::remove_ParamType
     PROCEDURE,PASS :: remove => remove_ParamType
@@ -965,6 +1129,204 @@ TYPE,EXTENDS(ParamType) :: ParamType_SLK_a4
     !> @copydoc ParameterLists::clear_ParamType_SLK_a4
     PROCEDURE,PASS :: clear => clear_ParamType_SLK_a4
 ENDTYPE ParamType_SLK_a4
+!----------------------------------------------------------------------
+!     Five-Dimensional Arrays
+!----------------------------------------------------------------------
+!> @brief Extended type of a ParamType for defining a five dimensional
+!> array parameter of single precision reals
+TYPE,EXTENDS(ParamType) :: ParamType_SSK_a5
+  !> The value of the parameter
+  REAL(SSK),ALLOCATABLE :: val(:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SSK_a5
+    !> @copydoc ParameterLists::edit_ParamType_SSK_a5
+    PROCEDURE,PASS :: edit => edit_ParamType_SSK_a5
+    !> @copybrief ParameterLists::clear_ParamType_SSK_a5
+    !> @copydoc ParameterLists::clear_ParamType_SSK_a5
+    PROCEDURE,PASS :: clear => clear_ParamType_SSK_a5
+ENDTYPE ParamType_SSK_a5
+
+!> @brief Extended type of a ParamType for defining a five dimensional
+!> array parameter of double precision reals
+TYPE,EXTENDS(ParamType) :: ParamType_SDK_a5
+  !> The value of the parameter
+  REAL(SDK),ALLOCATABLE :: val(:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SDK_a5
+    !> @copydoc ParameterLists::edit_ParamType_SDK_a5
+    PROCEDURE,PASS :: edit => edit_ParamType_SDK_a5
+    !> @copybrief ParameterLists::clear_ParamType_SDK_a5
+    !> @copydoc ParameterLists::clear_ParamType_SDK_a5
+    PROCEDURE,PASS :: clear => clear_ParamType_SDK_a5
+ENDTYPE ParamType_SDK_a5
+
+!> @brief Extended type of a ParamType for defining a five dimensional
+!> array parameter of 32-bit integers
+TYPE,EXTENDS(ParamType) :: ParamType_SNK_a5
+  !> The value of the parameter
+  INTEGER(SNK),ALLOCATABLE :: val(:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SNK_a5
+    !> @copydoc ParameterLists::edit_ParamType_SNK_a5
+    PROCEDURE,PASS :: edit => edit_ParamType_SNK_a5
+    !> @copybrief ParameterLists::clear_ParamType_SNK_a5
+    !> @copydoc ParameterLists::clear_ParamType_SNK_a5
+    PROCEDURE,PASS :: clear => clear_ParamType_SNK_a5
+ENDTYPE ParamType_SNK_a5
+
+!> @brief Extended type of a ParamType for defining a five dimensional
+!> array parameter of 64-bit integers
+TYPE,EXTENDS(ParamType) :: ParamType_SLK_a5
+  !> The value of the parameter
+  INTEGER(SLK),ALLOCATABLE :: val(:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SLK_a5
+    !> @copydoc ParameterLists::edit_ParamType_SLK_a5
+    PROCEDURE,PASS :: edit => edit_ParamType_SLK_a5
+    !> @copybrief ParameterLists::clear_ParamType_SLK_a5
+    !> @copydoc ParameterLists::clear_ParamType_SLK_a5
+    PROCEDURE,PASS :: clear => clear_ParamType_SLK_a5
+ENDTYPE ParamType_SLK_a5
+!----------------------------------------------------------------------
+!     Six-Dimensional Arrays
+!----------------------------------------------------------------------
+!> @brief Extended type of a ParamType for defining a six dimensional
+!> array parameter of single precision reals
+TYPE,EXTENDS(ParamType) :: ParamType_SSK_a6
+  !> The value of the parameter
+  REAL(SSK),ALLOCATABLE :: val(:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SSK_a6
+    !> @copydoc ParameterLists::edit_ParamType_SSK_a6
+    PROCEDURE,PASS :: edit => edit_ParamType_SSK_a6
+    !> @copybrief ParameterLists::clear_ParamType_SSK_a6
+    !> @copydoc ParameterLists::clear_ParamType_SSK_a6
+    PROCEDURE,PASS :: clear => clear_ParamType_SSK_a6
+ENDTYPE ParamType_SSK_a6
+
+!> @brief Extended type of a ParamType for defining a six dimensional
+!> array parameter of double precision reals
+TYPE,EXTENDS(ParamType) :: ParamType_SDK_a6
+  !> The value of the parameter
+  REAL(SDK),ALLOCATABLE :: val(:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SDK_a6
+    !> @copydoc ParameterLists::edit_ParamType_SDK_a6
+    PROCEDURE,PASS :: edit => edit_ParamType_SDK_a6
+    !> @copybrief ParameterLists::clear_ParamType_SDK_a6
+    !> @copydoc ParameterLists::clear_ParamType_SDK_a6
+    PROCEDURE,PASS :: clear => clear_ParamType_SDK_a6
+ENDTYPE ParamType_SDK_a6
+
+!> @brief Extended type of a ParamType for defining a six dimensional
+!> array parameter of 32-bit integers
+TYPE,EXTENDS(ParamType) :: ParamType_SNK_a6
+  !> The value of the parameter
+  INTEGER(SNK),ALLOCATABLE :: val(:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SNK_a6
+    !> @copydoc ParameterLists::edit_ParamType_SNK_a6
+    PROCEDURE,PASS :: edit => edit_ParamType_SNK_a6
+    !> @copybrief ParameterLists::clear_ParamType_SNK_a6
+    !> @copydoc ParameterLists::clear_ParamType_SNK_a6
+    PROCEDURE,PASS :: clear => clear_ParamType_SNK_a6
+ENDTYPE ParamType_SNK_a6
+
+!> @brief Extended type of a ParamType for defining a six dimensional
+!> array parameter of 64-bit integers
+TYPE,EXTENDS(ParamType) :: ParamType_SLK_a6
+  !> The value of the parameter
+  INTEGER(SLK),ALLOCATABLE :: val(:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SLK_a6
+    !> @copydoc ParameterLists::edit_ParamType_SLK_a6
+    PROCEDURE,PASS :: edit => edit_ParamType_SLK_a6
+    !> @copybrief ParameterLists::clear_ParamType_SLK_a6
+    !> @copydoc ParameterLists::clear_ParamType_SLK_a6
+    PROCEDURE,PASS :: clear => clear_ParamType_SLK_a6
+ENDTYPE ParamType_SLK_a6
+!----------------------------------------------------------------------
+!     Seven-Dimensional Arrays
+!----------------------------------------------------------------------
+!> @brief Extended type of a ParamType for defining a seven dimensional
+!> array parameter of single precision reals
+TYPE,EXTENDS(ParamType) :: ParamType_SSK_a7
+  !> The value of the parameter
+  REAL(SSK),ALLOCATABLE :: val(:,:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SSK_a7
+    !> @copydoc ParameterLists::edit_ParamType_SSK_a7
+    PROCEDURE,PASS :: edit => edit_ParamType_SSK_a7
+    !> @copybrief ParameterLists::clear_ParamType_SSK_a7
+    !> @copydoc ParameterLists::clear_ParamType_SSK_a7
+    PROCEDURE,PASS :: clear => clear_ParamType_SSK_a7
+ENDTYPE ParamType_SSK_a7
+
+!> @brief Extended type of a ParamType for defining a seven dimensional
+!> array parameter of double precision reals
+TYPE,EXTENDS(ParamType) :: ParamType_SDK_a7
+  !> The value of the parameter
+  REAL(SDK),ALLOCATABLE :: val(:,:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SDK_a7
+    !> @copydoc ParameterLists::edit_ParamType_SDK_a7
+    PROCEDURE,PASS :: edit => edit_ParamType_SDK_a7
+    !> @copybrief ParameterLists::clear_ParamType_SDK_a7
+    !> @copydoc ParameterLists::clear_ParamType_SDK_a7
+    PROCEDURE,PASS :: clear => clear_ParamType_SDK_a7
+ENDTYPE ParamType_SDK_a7
+
+!> @brief Extended type of a ParamType for defining a seven dimensional
+!> array parameter of 32-bit integers
+TYPE,EXTENDS(ParamType) :: ParamType_SNK_a7
+  !> The value of the parameter
+  INTEGER(SNK),ALLOCATABLE :: val(:,:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SNK_a7
+    !> @copydoc ParameterLists::edit_ParamType_SNK_a7
+    PROCEDURE,PASS :: edit => edit_ParamType_SNK_a7
+    !> @copybrief ParameterLists::clear_ParamType_SNK_a7
+    !> @copydoc ParameterLists::clear_ParamType_SNK_a7
+    PROCEDURE,PASS :: clear => clear_ParamType_SNK_a7
+ENDTYPE ParamType_SNK_a7
+
+!> @brief Extended type of a ParamType for defining a seven dimensional
+!> array parameter of 64-bit integers
+TYPE,EXTENDS(ParamType) :: ParamType_SLK_a7
+  !> The value of the parameter
+  INTEGER(SLK),ALLOCATABLE :: val(:,:,:,:,:,:,:)
+!
+!List of type bound procedures
+  CONTAINS
+    !> @copybrief ParameterLists::edit_ParamType_SLK_a7
+    !> @copydoc ParameterLists::edit_ParamType_SLK_a7
+    PROCEDURE,PASS :: edit => edit_ParamType_SLK_a7
+    !> @copybrief ParameterLists::clear_ParamType_SLK_a7
+    !> @copydoc ParameterLists::clear_ParamType_SLK_a7
+    PROCEDURE,PASS :: clear => clear_ParamType_SLK_a7
+ENDTYPE ParamType_SLK_a7
 !
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !> Generic interface adds a procedure to overload the intrinsic assignment
@@ -1133,6 +1495,42 @@ RECURSIVE SUBROUTINE assign_ParamType(thisParam,param)
       CALL thisParam%init(CHAR(p%name),p%val, &
           CHAR(p%description))
     TYPE IS(ParamType_SLK_a4)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SSK_a5)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SDK_a5)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SNK_a5)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SLK_a5)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SSK_a6)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SDK_a6)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SNK_a6)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SLK_a6)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SSK_a7)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SDK_a7)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SNK_a7)
+      CALL thisParam%init(CHAR(p%name),p%val, &
+          CHAR(p%description))
+    TYPE IS(ParamType_SLK_a7)
       CALL thisParam%init(CHAR(p%name),p%val, &
           CHAR(p%description))
     TYPE IS(ParamType_List)
@@ -1382,6 +1780,114 @@ RECURSIVE PURE FUNCTION isEqual_ParamType(p1,p2) RESULT(bool)
             dims1(1:4)=SHAPE(p1%val)
             dims2(1:4)=SHAPE(p2%val)
             IF(ALL(dims1(1:4) == dims2(1:4))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SSK_a5)
+        SELECTTYPE(p2); TYPE IS(ParamType_SSK_a5)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:5)=SHAPE(p1%val)
+            dims2(1:5)=SHAPE(p2%val)
+            IF(ALL(dims1(1:5) == dims2(1:5))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SDK_a5)
+        SELECTTYPE(p2); TYPE IS(ParamType_SDK_a5)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:5)=SHAPE(p1%val)
+            dims2(1:5)=SHAPE(p2%val)
+            IF(ALL(dims1(1:5) == dims2(1:5))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SNK_a5)
+        SELECTTYPE(p2); TYPE IS(ParamType_SNK_a5)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:5)=SHAPE(p1%val)
+            dims2(1:5)=SHAPE(p2%val)
+            IF(ALL(dims1(1:5) == dims2(1:5))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SLK_a5)
+        SELECTTYPE(p2); TYPE IS(ParamType_SLK_a5)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:5)=SHAPE(p1%val)
+            dims2(1:5)=SHAPE(p2%val)
+            IF(ALL(dims1(1:5) == dims2(1:5))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SSK_a6)
+        SELECTTYPE(p2); TYPE IS(ParamType_SSK_a6)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:6)=SHAPE(p1%val)
+            dims2(1:6)=SHAPE(p2%val)
+            IF(ALL(dims1(1:6) == dims2(1:6))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SDK_a6)
+        SELECTTYPE(p2); TYPE IS(ParamType_SDK_a6)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:6)=SHAPE(p1%val)
+            dims2(1:6)=SHAPE(p2%val)
+            IF(ALL(dims1(1:6) == dims2(1:6))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SNK_a6)
+        SELECTTYPE(p2); TYPE IS(ParamType_SNK_a6)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:6)=SHAPE(p1%val)
+            dims2(1:6)=SHAPE(p2%val)
+            IF(ALL(dims1(1:6) == dims2(1:6))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SLK_a6)
+        SELECTTYPE(p2); TYPE IS(ParamType_SLK_a6)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:6)=SHAPE(p1%val)
+            dims2(1:6)=SHAPE(p2%val)
+            IF(ALL(dims1(1:6) == dims2(1:6))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SSK_a7)
+        SELECTTYPE(p2); TYPE IS(ParamType_SSK_a7)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:7)=SHAPE(p1%val)
+            dims2(1:7)=SHAPE(p2%val)
+            IF(ALL(dims1(1:7) == dims2(1:7))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SDK_a7)
+        SELECTTYPE(p2); TYPE IS(ParamType_SDK_a7)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:7)=SHAPE(p1%val)
+            dims2(1:7)=SHAPE(p2%val)
+            IF(ALL(dims1(1:7) == dims2(1:7))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SNK_a7)
+        SELECTTYPE(p2); TYPE IS(ParamType_SNK_a7)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:7)=SHAPE(p1%val)
+            dims2(1:7)=SHAPE(p2%val)
+            IF(ALL(dims1(1:7) == dims2(1:7))) bool=ALL(p1%val == p2%val)
+          ENDIF
+        ENDSELECT
+      TYPE IS(ParamType_SLK_a7)
+        SELECTTYPE(p2); TYPE IS(ParamType_SLK_a7)
+          bool=(ALLOCATED(p1%val) .EQV. ALLOCATED(p2%val))
+          IF(ALLOCATED(p1%val) .AND. ALLOCATED(p1%val)) THEN
+            dims1(1:7)=SHAPE(p1%val)
+            dims2(1:7)=SHAPE(p2%val)
+            IF(ALL(dims1(1:7) == dims2(1:7))) bool=ALL(p1%val == p2%val)
           ENDIF
         ENDSELECT
       ENDSELECT
@@ -2146,7 +2652,7 @@ SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
   TYPE(StringType),INTENT(OUT) :: string
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sskfmt
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: sdkfmt
-  INTEGER(SIK) :: i,j,k,m
+  INTEGER(SIK) :: i,j,k,m,n,p,q
   CLASS(ParamType),POINTER :: param
   CHARACTER(LEN=16) :: sskfmtDef,sdkfmtDef
   CHARACTER(LEN=128) :: tmpchar
@@ -2337,6 +2843,192 @@ SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
           DO j=1,SIZE(param%val,DIM=2)
             DO i=1,SIZE(param%val,DIM=1)
               string=string//delim//str(param%val(i,j,k,m))//delim//' '
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SSK_a5)
+      string=''
+      DO n=1,SIZE(param%val,DIM=5)
+        DO m=1,SIZE(param%val,DIM=4)
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k,m,n)
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SDK_a5)
+      string=''
+      DO n=1,SIZE(param%val,DIM=5)
+        DO m=1,SIZE(param%val,DIM=4)
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k,m,n)
+                string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SNK_a5)
+      string=''
+      DO n=1,SIZE(param%val,DIM=5)
+        DO m=1,SIZE(param%val,DIM=4)
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string=string//delim//str(param%val(i,j,k,m,n))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SLK_a5)
+      string=''
+      DO n=1,SIZE(param%val,DIM=5)
+        DO m=1,SIZE(param%val,DIM=4)
+          DO k=1,SIZE(param%val,DIM=3)
+            DO j=1,SIZE(param%val,DIM=2)
+              DO i=1,SIZE(param%val,DIM=1)
+                string=string//delim//str(param%val(i,j,k,m,n))//delim//' '
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SSK_a6)
+      string=''
+      DO p=1,SIZE(param%val,DIM=6)
+        DO n=1,SIZE(param%val,DIM=5)
+          DO m=1,SIZE(param%val,DIM=4)
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k,m,n,p)
+                  string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SDK_a6)
+      string=''
+      DO p=1,SIZE(param%val,DIM=6)
+        DO n=1,SIZE(param%val,DIM=5)
+          DO m=1,SIZE(param%val,DIM=4)
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k,m,n,p)
+                  string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SNK_a6)
+      string=''
+      DO p=1,SIZE(param%val,DIM=6)
+        DO n=1,SIZE(param%val,DIM=5)
+          DO m=1,SIZE(param%val,DIM=4)
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  string=string//delim//str(param%val(i,j,k,m,n,p))//delim//' '
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SLK_a6)
+      string=''
+      DO p=1,SIZE(param%val,DIM=6)
+        DO n=1,SIZE(param%val,DIM=5)
+          DO m=1,SIZE(param%val,DIM=4)
+            DO k=1,SIZE(param%val,DIM=3)
+              DO j=1,SIZE(param%val,DIM=2)
+                DO i=1,SIZE(param%val,DIM=1)
+                  string=string//delim//str(param%val(i,j,k,m,n,p))//delim//' '
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SSK_a7)
+      string=''
+      DO q=1,SIZE(param%val,DIM=7)
+        DO p=1,SIZE(param%val,DIM=6)
+          DO n=1,SIZE(param%val,DIM=5)
+            DO m=1,SIZE(param%val,DIM=4)
+              DO k=1,SIZE(param%val,DIM=3)
+                DO j=1,SIZE(param%val,DIM=2)
+                  DO i=1,SIZE(param%val,DIM=1)
+                    WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i,j,k,m,n,p,q)
+                    string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+                  ENDDO
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SDK_a7)
+      string=''
+      DO q=1,SIZE(param%val,DIM=7)
+        DO p=1,SIZE(param%val,DIM=6)
+          DO n=1,SIZE(param%val,DIM=5)
+            DO m=1,SIZE(param%val,DIM=4)
+              DO k=1,SIZE(param%val,DIM=3)
+                DO j=1,SIZE(param%val,DIM=2)
+                  DO i=1,SIZE(param%val,DIM=1)
+                    WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i,j,k,m,n,p,q)
+                    string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+                  ENDDO
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SNK_a7)
+      string=''
+      DO q=1,SIZE(param%val,DIM=7)
+        DO p=1,SIZE(param%val,DIM=6)
+          DO n=1,SIZE(param%val,DIM=5)
+            DO m=1,SIZE(param%val,DIM=4)
+              DO k=1,SIZE(param%val,DIM=3)
+                DO j=1,SIZE(param%val,DIM=2)
+                  DO i=1,SIZE(param%val,DIM=1)
+                    string=string//delim//str(param%val(i,j,k,m,n,p,q))//delim//' '
+                  ENDDO
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    TYPE IS(ParamType_SLK_a7)
+      string=''
+      DO q=1,SIZE(param%val,DIM=7)
+        DO p=1,SIZE(param%val,DIM=6)
+          DO n=1,SIZE(param%val,DIM=5)
+            DO m=1,SIZE(param%val,DIM=4)
+              DO k=1,SIZE(param%val,DIM=3)
+                DO j=1,SIZE(param%val,DIM=2)
+                  DO i=1,SIZE(param%val,DIM=1)
+                    string=string//delim//str(param%val(i,j,k,m,n,p,q))//delim//' '
+                  ENDDO
+                ENDDO
+              ENDDO
             ENDDO
           ENDDO
         ENDDO
@@ -3213,16 +3905,24 @@ FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
   LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
   REAL(SSK) :: tmpssk1,tmpssk2
   REAL(SSK),ALLOCATABLE :: tmpsska11(:),tmpsska21(:,:),tmpsska31(:,:,:),tmpsska41(:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: tmpsska51(:,:,:,:,:),tmpsska61(:,:,:,:,:,:),tmpsska71(:,:,:,:,:,:,:)
   REAL(SSK),ALLOCATABLE :: tmpsska12(:),tmpsska22(:,:),tmpsska32(:,:,:),tmpsska42(:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: tmpsska52(:,:,:,:,:),tmpsska62(:,:,:,:,:,:),tmpsska72(:,:,:,:,:,:,:)
   REAL(SDK) :: tmpsdk1,tmpsdk2
   REAL(SDK),ALLOCATABLE :: tmpsdka11(:),tmpsdka21(:,:),tmpsdka31(:,:,:),tmpsdka41(:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: tmpsdka51(:,:,:,:,:),tmpsdka61(:,:,:,:,:,:),tmpsdka71(:,:,:,:,:,:,:)
   REAL(SDK),ALLOCATABLE :: tmpsdka12(:),tmpsdka22(:,:),tmpsdka32(:,:,:),tmpsdka42(:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: tmpsdka52(:,:,:,:,:),tmpsdka62(:,:,:,:,:,:),tmpsdka72(:,:,:,:,:,:,:)
   INTEGER(SNK) :: tmpsnk1,tmpsnk2
   INTEGER(SNK),ALLOCATABLE :: tmpsnka11(:),tmpsnka21(:,:),tmpsnka31(:,:,:),tmpsnka41(:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: tmpsnka51(:,:,:,:,:),tmpsnka61(:,:,:,:,:,:),tmpsnka71(:,:,:,:,:,:,:)
   INTEGER(SNK),ALLOCATABLE :: tmpsnka12(:),tmpsnka22(:,:),tmpsnka32(:,:,:),tmpsnka42(:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: tmpsnka52(:,:,:,:,:),tmpsnka62(:,:,:,:,:,:),tmpsnka72(:,:,:,:,:,:,:)
   INTEGER(SLK) :: tmpslk1,tmpslk2
   INTEGER(SLK),ALLOCATABLE :: tmpslka11(:),tmpslka21(:,:),tmpslka31(:,:,:),tmpslka41(:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: tmpslka51(:,:,:,:,:),tmpslka61(:,:,:,:,:,:),tmpslka71(:,:,:,:,:,:,:)
   INTEGER(SLK),ALLOCATABLE :: tmpslka12(:),tmpslka22(:,:),tmpslka32(:,:,:),tmpslka42(:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: tmpslka52(:,:,:,:,:),tmpslka62(:,:,:,:,:,:),tmpslka72(:,:,:,:,:,:,:)
   TYPE(StringType) :: tmpstr1,tmpstr2
   TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
   TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
@@ -3660,6 +4360,462 @@ FUNCTION matchTest_ParamType(thisParam,thatParam,prefix) RESULT(bool)
       ENDIF
     ENDIF
     DEALLOCATE(tmpslka41); DEALLOCATE(tmpslka42)
+  TYPE IS(ParamType_SSK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska52)
+    bool=SIZE(tmpsska51,DIM=1) == SIZE(tmpsska52,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsska51,DIM=1), SIZE(tmpsska52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska51,DIM=2) == SIZE(tmpsska52,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsska51,DIM=2), SIZE(tmpsska52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska51,DIM=3) == SIZE(tmpsska52,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsska51,DIM=3), SIZE(tmpsska52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsska51,DIM=4) == SIZE(tmpsska52,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsska51,DIM=4),SIZE(tmpsska52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsska51,DIM=5) == SIZE(tmpsska52,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsska51,DIM=5),SIZE(tmpsska52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpsska51 == tmpsska52)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpsska51
+              FINFO() 'ref. values=',tmpsska52
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsska51); DEALLOCATE(tmpsska52)
+  TYPE IS(ParamType_SDK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka52)
+    bool=SIZE(tmpsdka51,DIM=1) == SIZE(tmpsdka52,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsdka51,DIM=1), SIZE(tmpsdka52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka51,DIM=2) == SIZE(tmpsdka52,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsdka51,DIM=2), SIZE(tmpsdka52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsdka51,DIM=3) == SIZE(tmpsdka52,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsdka51,DIM=3), SIZE(tmpsdka52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsdka51,DIM=4) == SIZE(tmpsdka52,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsdka51,DIM=4),SIZE(tmpsdka52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka51,DIM=5) == SIZE(tmpsdka52,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsdka51,DIM=5),SIZE(tmpsdka52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpsdka51 == tmpsdka52)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpsdka51
+              FINFO() 'ref. values=',tmpsdka52
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsdka51); DEALLOCATE(tmpsdka52)
+  TYPE IS(ParamType_SNK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka52)
+    bool=SIZE(tmpsnka51,DIM=1) == SIZE(tmpsnka52,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsnka51,DIM=1), SIZE(tmpsnka52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka51,DIM=2) == SIZE(tmpsnka52,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsnka51,DIM=2), SIZE(tmpsnka52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsnka51,DIM=3) == SIZE(tmpsnka52,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsnka51,DIM=3), SIZE(tmpsnka52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsnka51,DIM=4) == SIZE(tmpsnka52,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsnka51,DIM=4),SIZE(tmpsnka52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka51,DIM=5) == SIZE(tmpsnka52,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsnka51,DIM=5),SIZE(tmpsnka52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpsnka51 == tmpsnka52)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpsnka51
+              FINFO() 'ref. values=',tmpsnka52
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsnka51); DEALLOCATE(tmpsnka52)
+  TYPE IS(ParamType_SLK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka52)
+    bool=SIZE(tmpslka51,DIM=1) == SIZE(tmpslka52,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpslka51,DIM=1), SIZE(tmpslka52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka51,DIM=2) == SIZE(tmpslka52,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpslka51,DIM=2), SIZE(tmpslka52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpslka51,DIM=3) == SIZE(tmpslka52,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpslka51,DIM=3), SIZE(tmpslka52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpslka51,DIM=4) == SIZE(tmpslka52,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpslka51,DIM=4),SIZE(tmpslka52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpslka51,DIM=5) == SIZE(tmpslka52,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpslka51,DIM=5),SIZE(tmpslka52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpslka51 == tmpslka52)
+              ASSERT(bool, prefix//CHAR(thisParam%name))
+              FINFO() 'test values=',tmpslka51
+              FINFO() 'ref. values=',tmpslka52
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpslka51); DEALLOCATE(tmpslka52)
+  TYPE IS(ParamType_SSK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska62)
+    bool=SIZE(tmpsska61,DIM=1) == SIZE(tmpsska62,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsska61,DIM=1), SIZE(tmpsska62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska61,DIM=2) == SIZE(tmpsska62,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsska61,DIM=2), SIZE(tmpsska62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska61,DIM=3) == SIZE(tmpsska62,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsska61,DIM=3), SIZE(tmpsska62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsska61,DIM=4) == SIZE(tmpsska62,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsska61,DIM=4),SIZE(tmpsska62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsska61,DIM=5) == SIZE(tmpsska62,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsska61,DIM=5),SIZE(tmpsska62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsska61,DIM=6) == SIZE(tmpsska62,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpsska61,DIM=6),SIZE(tmpsska62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpsska61 == tmpsska62)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpsska61
+                FINFO() 'ref. values=',tmpsska62
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsska61); DEALLOCATE(tmpsska62)
+  TYPE IS(ParamType_SDK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka62)
+    bool=SIZE(tmpsdka61,DIM=1) == SIZE(tmpsdka62,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsdka61,DIM=1), SIZE(tmpsdka62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka61,DIM=2) == SIZE(tmpsdka62,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsdka61,DIM=2), SIZE(tmpsdka62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsdka61,DIM=3) == SIZE(tmpsdka62,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsdka61,DIM=3), SIZE(tmpsdka62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsdka61,DIM=4) == SIZE(tmpsdka62,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsdka61,DIM=4),SIZE(tmpsdka62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka61,DIM=5) == SIZE(tmpsdka62,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsdka61,DIM=5),SIZE(tmpsdka62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka61,DIM=6) == SIZE(tmpsdka62,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpsdka61,DIM=6),SIZE(tmpsdka62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpsdka61 == tmpsdka62)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpsdka61
+                FINFO() 'ref. values=',tmpsdka62
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsdka61); DEALLOCATE(tmpsdka62)
+  TYPE IS(ParamType_SNK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka62)
+    bool=SIZE(tmpsnka61,DIM=1) == SIZE(tmpsnka62,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsnka61,DIM=1), SIZE(tmpsnka62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka61,DIM=2) == SIZE(tmpsnka62,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsnka61,DIM=2), SIZE(tmpsnka62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsnka61,DIM=3) == SIZE(tmpsnka62,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsnka61,DIM=3), SIZE(tmpsnka62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsnka61,DIM=4) == SIZE(tmpsnka62,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsnka61,DIM=4),SIZE(tmpsnka62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka61,DIM=5) == SIZE(tmpsnka62,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsnka61,DIM=5),SIZE(tmpsnka62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka61,DIM=6) == SIZE(tmpsnka62,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpsnka61,DIM=6),SIZE(tmpsnka62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpsnka61 == tmpsnka62)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpsnka61
+                FINFO() 'ref. values=',tmpsnka62
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsnka61); DEALLOCATE(tmpsnka62)
+  TYPE IS(ParamType_SLK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka62)
+    bool=SIZE(tmpslka61,DIM=1) == SIZE(tmpslka62,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpslka61,DIM=1), SIZE(tmpslka62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka61,DIM=2) == SIZE(tmpslka62,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpslka61,DIM=2), SIZE(tmpslka62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpslka61,DIM=3) == SIZE(tmpslka62,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpslka61,DIM=3), SIZE(tmpslka62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpslka61,DIM=4) == SIZE(tmpslka62,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpslka61,DIM=4),SIZE(tmpslka62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpslka61,DIM=5) == SIZE(tmpslka62,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpslka61,DIM=5),SIZE(tmpslka62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpslka61,DIM=6) == SIZE(tmpslka62,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpslka61,DIM=6),SIZE(tmpslka62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpslka61 == tmpslka62)
+                ASSERT(bool, prefix//CHAR(thisParam%name))
+                FINFO() 'test values=',tmpslka61
+                FINFO() 'ref. values=',tmpslka62
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpslka61); DEALLOCATE(tmpslka62)
+  TYPE IS(ParamType_SSK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska72)
+    bool=SIZE(tmpsska71,DIM=1) == SIZE(tmpsska72,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsska71,DIM=1), SIZE(tmpsska72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska71,DIM=2) == SIZE(tmpsska72,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsska71,DIM=2), SIZE(tmpsska72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska71,DIM=3) == SIZE(tmpsska72,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsska71,DIM=3), SIZE(tmpsska72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsska71,DIM=4) == SIZE(tmpsska72,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsska71,DIM=4),SIZE(tmpsska72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsska71,DIM=5) == SIZE(tmpsska72,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsska71,DIM=5),SIZE(tmpsska72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsska71,DIM=6) == SIZE(tmpsska72,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpsska71,DIM=6),SIZE(tmpsska72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpsska71,DIM=7) == SIZE(tmpsska72,DIM=7)
+                ASSERT(bool, 'SIZE DIM=7 of '//PREFIX//char(thisParam%name))
+                FINFO() SIZE(tmpsska71,DIM=7),SIZE(tmpsska72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpsska71 == tmpsska72)
+                  ASSERT(bool, prefix//CHAR(thisParam%name))
+                  FINFO() 'test values=',tmpsska71
+                  FINFO() 'ref. values=',tmpsska72
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsska71); DEALLOCATE(tmpsska72)
+  TYPE IS(ParamType_SDK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka72)
+    bool=SIZE(tmpsdka71,DIM=1) == SIZE(tmpsdka72,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsdka71,DIM=1), SIZE(tmpsdka72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka71,DIM=2) == SIZE(tmpsdka72,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsdka71,DIM=2), SIZE(tmpsdka72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsdka71,DIM=3) == SIZE(tmpsdka72,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsdka71,DIM=3), SIZE(tmpsdka72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsdka71,DIM=4) == SIZE(tmpsdka72,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsdka71,DIM=4),SIZE(tmpsdka72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka71,DIM=5) == SIZE(tmpsdka72,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsdka71,DIM=5),SIZE(tmpsdka72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka71,DIM=6) == SIZE(tmpsdka72,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpsdka71,DIM=6),SIZE(tmpsdka72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpsdka71,DIM=7) == SIZE(tmpsdka72,DIM=7)
+                ASSERT(bool, 'SIZE DIM=7 of '//PREFIX//char(thisParam%name))
+                FINFO() SIZE(tmpsdka71,DIM=7),SIZE(tmpsdka72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpsdka71 == tmpsdka72)
+                  ASSERT(bool, prefix//CHAR(thisParam%name))
+                  FINFO() 'test values=',tmpsdka71
+                  FINFO() 'ref. values=',tmpsdka72
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsdka71); DEALLOCATE(tmpsdka72)
+  TYPE IS(ParamType_SNK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka72)
+    bool=SIZE(tmpsnka71,DIM=1) == SIZE(tmpsnka72,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpsnka71,DIM=1), SIZE(tmpsnka72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka71,DIM=2) == SIZE(tmpsnka72,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpsnka71,DIM=2), SIZE(tmpsnka72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsnka71,DIM=3) == SIZE(tmpsnka72,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpsnka71,DIM=3), SIZE(tmpsnka72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsnka71,DIM=4) == SIZE(tmpsnka72,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpsnka71,DIM=4),SIZE(tmpsnka72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka71,DIM=5) == SIZE(tmpsnka72,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpsnka71,DIM=5),SIZE(tmpsnka72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka71,DIM=6) == SIZE(tmpsnka72,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpsnka71,DIM=6),SIZE(tmpsnka72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpsnka71,DIM=7) == SIZE(tmpsnka72,DIM=7)
+                ASSERT(bool, 'SIZE DIM=7 of '//PREFIX//char(thisParam%name))
+                FINFO() SIZE(tmpsnka71,DIM=7),SIZE(tmpsnka72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpsnka71 == tmpsnka72)
+                  ASSERT(bool, prefix//CHAR(thisParam%name))
+                  FINFO() 'test values=',tmpsnka71
+                  FINFO() 'ref. values=',tmpsnka72
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpsnka71); DEALLOCATE(tmpsnka72)
+  TYPE IS(ParamType_SLK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka72)
+    bool=SIZE(tmpslka71,DIM=1) == SIZE(tmpslka72,DIM=1)
+    ASSERT(bool, 'SIZE DIM=1 of '//prefix//CHAR(thisParam%name))
+    FINFO() SIZE(tmpslka71,DIM=1), SIZE(tmpslka72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka71,DIM=2) == SIZE(tmpslka72,DIM=2)
+      ASSERT(bool, 'SIZE DIM=2 of '//prefix//CHAR(thisParam%name))
+      FINFO() SIZE(tmpslka71,DIM=2), SIZE(tmpslka72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpslka71,DIM=3) == SIZE(tmpslka72,DIM=3)
+        ASSERT(bool, 'SIZE DIM=3 of '//prefix//CHAR(thisParam%name))
+        FINFO() SIZE(tmpslka71,DIM=3), SIZE(tmpslka72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpslka71,DIM=4) == SIZE(tmpslka72,DIM=4)
+          ASSERT(bool, 'SIZE DIM=4 of '//PREFIX//char(thisParam%name))
+          FINFO() SIZE(tmpslka71,DIM=4),SIZE(tmpslka72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpslka71,DIM=5) == SIZE(tmpslka72,DIM=5)
+            ASSERT(bool, 'SIZE DIM=5 of '//PREFIX//char(thisParam%name))
+            FINFO() SIZE(tmpslka71,DIM=5),SIZE(tmpslka72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpslka71,DIM=6) == SIZE(tmpslka72,DIM=6)
+              ASSERT(bool, 'SIZE DIM=6 of '//PREFIX//char(thisParam%name))
+              FINFO() SIZE(tmpslka71,DIM=6),SIZE(tmpslka72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpslka71,DIM=7) == SIZE(tmpslka72,DIM=7)
+                ASSERT(bool, 'SIZE DIM=7 of '//PREFIX//char(thisParam%name))
+                FINFO() SIZE(tmpslka71,DIM=7),SIZE(tmpslka72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpslka71 == tmpslka72)
+                  ASSERT(bool, prefix//CHAR(thisParam%name))
+                  FINFO() 'test values=',tmpslka71
+                  FINFO() 'ref. values=',tmpslka72
+                ENDIF
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+    DEALLOCATE(tmpslka71); DEALLOCATE(tmpslka72)
   TYPE IS(ParamType_List)
     bool=SAME_TYPE_AS(thisParam,paramPtr)
     ASSERT(bool,'ParamType_List for'//prefix//CHAR(thisParam%name))
@@ -3698,16 +4854,24 @@ FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
   LOGICAL(SBK),ALLOCATABLE :: tmpsbka11(:),tmpsbka12(:)
   REAL(SSK) :: tmpssk1,tmpssk2
   REAL(SSK),ALLOCATABLE :: tmpsska11(:),tmpsska21(:,:),tmpsska31(:,:,:),tmpsska41(:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: tmpsska51(:,:,:,:,:),tmpsska61(:,:,:,:,:,:),tmpsska71(:,:,:,:,:,:,:)
   REAL(SSK),ALLOCATABLE :: tmpsska12(:),tmpsska22(:,:),tmpsska32(:,:,:),tmpsska42(:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: tmpsska52(:,:,:,:,:),tmpsska62(:,:,:,:,:,:),tmpsska72(:,:,:,:,:,:,:)
   REAL(SDK) :: tmpsdk1,tmpsdk2
   REAL(SDK),ALLOCATABLE :: tmpsdka11(:),tmpsdka21(:,:),tmpsdka31(:,:,:),tmpsdka41(:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: tmpsdka51(:,:,:,:,:),tmpsdka61(:,:,:,:,:,:),tmpsdka71(:,:,:,:,:,:,:)
   REAL(SDK),ALLOCATABLE :: tmpsdka12(:),tmpsdka22(:,:),tmpsdka32(:,:,:),tmpsdka42(:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: tmpsdka52(:,:,:,:,:),tmpsdka62(:,:,:,:,:,:),tmpsdka72(:,:,:,:,:,:,:)
   INTEGER(SNK) :: tmpsnk1,tmpsnk2
   INTEGER(SNK),ALLOCATABLE :: tmpsnka11(:),tmpsnka21(:,:),tmpsnka31(:,:,:),tmpsnka41(:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: tmpsnka51(:,:,:,:,:),tmpsnka61(:,:,:,:,:,:),tmpsnka71(:,:,:,:,:,:,:)
   INTEGER(SNK),ALLOCATABLE :: tmpsnka12(:),tmpsnka22(:,:),tmpsnka32(:,:,:),tmpsnka42(:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: tmpsnka52(:,:,:,:,:),tmpsnka62(:,:,:,:,:,:),tmpsnka72(:,:,:,:,:,:,:)
   INTEGER(SLK) :: tmpslk1,tmpslk2
   INTEGER(SLK),ALLOCATABLE :: tmpslka11(:),tmpslka21(:,:),tmpslka31(:,:,:),tmpslka41(:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: tmpslka51(:,:,:,:,:),tmpslka61(:,:,:,:,:,:),tmpslka71(:,:,:,:,:,:,:)
   INTEGER(SLK),ALLOCATABLE :: tmpslka12(:),tmpslka22(:,:),tmpslka32(:,:,:),tmpslka42(:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: tmpslka52(:,:,:,:,:),tmpslka62(:,:,:,:,:,:),tmpslka72(:,:,:,:,:,:,:)
   TYPE(StringType) :: tmpstr1,tmpstr2
   TYPE(StringType),ALLOCATABLE :: tmpstra11(:),tmpstra21(:,:)
   TYPE(StringType),ALLOCATABLE :: tmpstra12(:),tmpstra22(:,:)
@@ -4072,6 +5236,426 @@ FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
       errmesstt=' - Dimension 1'
     ENDIF
     DEALLOCATE(tmpslka41); DEALLOCATE(tmpslka42)
+  TYPE IS(ParamType_SSK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska52)
+    bool=SIZE(tmpsska51,DIM=1) == SIZE(tmpsska52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska51,DIM=2) == SIZE(tmpsska52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska51,DIM=3) == SIZE(tmpsska52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsska51,DIM=4) == SIZE(tmpsska52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsska51,DIM=5) == SIZE(tmpsska52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpsska51 == tmpsska52)
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsska51); DEALLOCATE(tmpsska52)
+  TYPE IS(ParamType_SDK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka52)
+    bool=SIZE(tmpsdka51,DIM=1) == SIZE(tmpsdka52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka51,DIM=2) == SIZE(tmpsdka52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsdka51,DIM=3) == SIZE(tmpsdka52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsdka51,DIM=4) == SIZE(tmpsdka52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka51,DIM=5) == SIZE(tmpsdka52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpsdka51 == tmpsdka52)
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsdka51); DEALLOCATE(tmpsdka52)
+  TYPE IS(ParamType_SNK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka52)
+    bool=SIZE(tmpsnka51,DIM=1) == SIZE(tmpsnka52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka51,DIM=2) == SIZE(tmpsnka52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsnka51,DIM=3) == SIZE(tmpsnka52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsnka51,DIM=4) == SIZE(tmpsnka52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka51,DIM=5) == SIZE(tmpsnka52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpsnka51 == tmpsnka52)
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsnka51); DEALLOCATE(tmpsnka52)
+  TYPE IS(ParamType_SLK_a5)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka51)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka52)
+    bool=SIZE(tmpslka51,DIM=1) == SIZE(tmpslka52,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka51,DIM=2) == SIZE(tmpslka52,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpslka51,DIM=3) == SIZE(tmpslka52,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpslka51,DIM=4) == SIZE(tmpslka52,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpslka51,DIM=5) == SIZE(tmpslka52,DIM=5)
+            IF(bool) THEN
+              bool=ALL(tmpslka51 == tmpslka52)
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpslka51); DEALLOCATE(tmpslka52)
+  TYPE IS(ParamType_SSK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska62)
+    bool=SIZE(tmpsska61,DIM=1) == SIZE(tmpsska62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska61,DIM=2) == SIZE(tmpsska62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska61,DIM=3) == SIZE(tmpsska62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsska61,DIM=4) == SIZE(tmpsska62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsska61,DIM=5) == SIZE(tmpsska62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsska61,DIM=6) == SIZE(tmpsska62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpsska61 == tmpsska62)
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsska61); DEALLOCATE(tmpsska62)
+  TYPE IS(ParamType_SDK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka62)
+    bool=SIZE(tmpsdka61,DIM=1) == SIZE(tmpsdka62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka61,DIM=2) == SIZE(tmpsdka62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsdka61,DIM=3) == SIZE(tmpsdka62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsdka61,DIM=4) == SIZE(tmpsdka62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka61,DIM=5) == SIZE(tmpsdka62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka61,DIM=6) == SIZE(tmpsdka62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpsdka61 == tmpsdka62)
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsdka61); DEALLOCATE(tmpsdka62)
+  TYPE IS(ParamType_SNK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka62)
+    bool=SIZE(tmpsnka61,DIM=1) == SIZE(tmpsnka62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka61,DIM=2) == SIZE(tmpsnka62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsnka61,DIM=3) == SIZE(tmpsnka62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsnka61,DIM=4) == SIZE(tmpsnka62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka61,DIM=5) == SIZE(tmpsnka62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka61,DIM=6) == SIZE(tmpsnka62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpsnka61 == tmpsnka62)
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsnka61); DEALLOCATE(tmpsnka62)
+  TYPE IS(ParamType_SLK_a6)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka61)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka62)
+    bool=SIZE(tmpslka61,DIM=1) == SIZE(tmpslka62,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka61,DIM=2) == SIZE(tmpslka62,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpslka61,DIM=3) == SIZE(tmpslka62,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpslka61,DIM=4) == SIZE(tmpslka62,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpslka61,DIM=5) == SIZE(tmpslka62,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpslka61,DIM=6) == SIZE(tmpslka62,DIM=6)
+              IF(bool) THEN
+                bool=ALL(tmpslka61 == tmpslka62)
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpslka61); DEALLOCATE(tmpslka62)
+  TYPE IS(ParamType_SSK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsska71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsska72)
+    bool=SIZE(tmpsska71,DIM=1) == SIZE(tmpsska72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsska71,DIM=2) == SIZE(tmpsska72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsska71,DIM=3) == SIZE(tmpsska72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsska71,DIM=4) == SIZE(tmpsska72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsska71,DIM=5) == SIZE(tmpsska72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsska71,DIM=6) == SIZE(tmpsska72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpsska71,DIM=7) == SIZE(tmpsska72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpsska71 == tmpsska72)
+                ELSE
+                  errmesstt=' - Dimension 7'
+                ENDIF
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsska71); DEALLOCATE(tmpsska72)
+  TYPE IS(ParamType_SDK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsdka71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsdka72)
+    bool=SIZE(tmpsdka71,DIM=1) == SIZE(tmpsdka72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsdka71,DIM=2) == SIZE(tmpsdka72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsdka71,DIM=3) == SIZE(tmpsdka72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsdka71,DIM=4) == SIZE(tmpsdka72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsdka71,DIM=5) == SIZE(tmpsdka72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsdka71,DIM=6) == SIZE(tmpsdka72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpsdka71,DIM=7) == SIZE(tmpsdka72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpsdka71 == tmpsdka72)
+                ELSE
+                  errmesstt=' - Dimension 7'
+                ENDIF
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsdka71); DEALLOCATE(tmpsdka72)
+  TYPE IS(ParamType_SNK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpsnka71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpsnka72)
+    bool=SIZE(tmpsnka71,DIM=1) == SIZE(tmpsnka72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpsnka71,DIM=2) == SIZE(tmpsnka72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpsnka71,DIM=3) == SIZE(tmpsnka72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpsnka71,DIM=4) == SIZE(tmpsnka72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpsnka71,DIM=5) == SIZE(tmpsnka72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpsnka71,DIM=6) == SIZE(tmpsnka72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpsnka71,DIM=7) == SIZE(tmpsnka72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpsnka71 == tmpsnka72)
+                ELSE
+                  errmesstt=' - Dimension 7'
+                ENDIF
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpsnka71); DEALLOCATE(tmpsnka72)
+  TYPE IS(ParamType_SLK_a7)
+    CALL thisParam%get(CHAR(thisParam%name),tmpslka71)
+    CALL paramPtr%get(CHAR(paramPtr%name),tmpslka72)
+    bool=SIZE(tmpslka71,DIM=1) == SIZE(tmpslka72,DIM=1)
+    IF(bool) THEN
+      bool=SIZE(tmpslka71,DIM=2) == SIZE(tmpslka72,DIM=2)
+      IF(bool) THEN
+        bool=SIZE(tmpslka71,DIM=3) == SIZE(tmpslka72,DIM=3)
+        IF(bool) THEN
+          bool=SIZE(tmpslka71,DIM=4) == SIZE(tmpslka72,DIM=4)
+          IF(bool) THEN
+            bool=SIZE(tmpslka71,DIM=5) == SIZE(tmpslka72,DIM=5)
+            IF(bool) THEN
+              bool=SIZE(tmpslka71,DIM=6) == SIZE(tmpslka72,DIM=6)
+              IF(bool) THEN
+                bool=SIZE(tmpslka71,DIM=7) == SIZE(tmpslka72,DIM=7)
+                IF(bool) THEN
+                  bool=ALL(tmpslka71 == tmpslka72)
+                ELSE
+                  errmesstt=' - Dimension 7'
+                ENDIF
+              ELSE
+                errmesstt=' - Dimension 6'
+              ENDIF
+            ELSE
+              errmesstt=' - Dimension 5'
+            ENDIF
+          ELSE
+            errmesstt=' - Dimension 4'
+          ENDIF
+        ELSE
+          errmesstt=' - Dimension 3'
+        ENDIF
+      ELSE
+        errmesstt=' - Dimension 2'
+      ENDIF
+    ELSE
+      errmesstt=' - Dimension 1'
+    ENDIF
+    DEALLOCATE(tmpslka71); DEALLOCATE(tmpslka72)
   TYPE IS(ParamType_List)
     bool=SAME_TYPE_AS(thisParam,paramPtr)
     errmesstt=' - The parameters'
@@ -11090,6 +12674,3260 @@ SUBROUTINE add_ParamType_SLK_a4(thisParam,name,param,description)
         '" already exists! Use set method or full parameter list path!')
   ENDIF
 ENDSUBROUTINE add_ParamType_SLK_a4
+!
+!5555555555555555555555555555555555555555555555555555555555555555555555555555555
+!        Five Dimensional Arrays
+!5555555555555555555555555555555555555555555555555555555555555555555555555555555
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a five dimensional array of single
+!>        precision reals
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a five dimensional array of single precision reals
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a five dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SSK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SSK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SSK_a5 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='5-D ARRAY REAL(SSK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SSK_a5)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4),SIZE(param,5)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SSK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a five dimensional array of single precision real valued parameters
+!> @param thisParam the five dimensional array of single precision real valued
+!>        parameters to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (five
+!> more than the significant number in a single precision real) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SSK_a5(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SSK_a5),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO p=1,SIZE(thisParam%val,5)
+    DO n=1,SIZE(thisParam%val,4)
+      DO k=1,SIZE(thisParam%val,3)
+        DO l=1,SIZE(thisParam%val,2)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+              TRIM(fmt3)//'(g13.7))') (thisParam%val(m,l,k,n,P),m=1,SIZE(thisParam%val,1))
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SSK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a five dimensional array of single precision real valued parameter
+!> @param thisParam the five dimensional array of single precision real valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SSK_a5(thisParam)
+  CLASS(ParamType_SSK_a5),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SSK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing five dimensional array of single precision real valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of single precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SSK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a5)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SSK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the five dimensional array of single precision real value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of single precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SSK_a5(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a5'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SSK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a5)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SSK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new five dimensional array of single precision real valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the single precision real value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SSK "initSSK".
+!>
+SUBROUTINE add_ParamType_SSK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SSK_a5(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SSK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a five dimensional array of double precision real
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a five dimensional array of double precision real
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a five dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SDK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SDK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SDK_a5 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='5-D ARRAY REAL(SDK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SDK_a5)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4),SIZE(param,5)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SDK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a five dimensional array of double precision real valued parameter
+!> @param thisParam the five dimensional array of double precision real valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (five
+!> more than the significant number in a double precision real) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SDK_a5(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SDK_a5),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO p=1,SIZE(thisParam%val,5)
+    DO n=1,SIZE(thisParam%val,4)
+      DO k=1,SIZE(thisParam%val,3)
+        DO l=1,SIZE(thisParam%val,2)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+              TRIM(fmt3)//'(g20.14))') (thisParam%val(m,l,k,n,p),m=1,SIZE(thisParam%val,1))
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SDK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a five dimensional array of double precision real valued parameter
+!> @param thisParam the five dimensional array of double precision real valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SDK_a5(thisParam)
+  CLASS(ParamType_SDK_a5),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SDK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing five dimensional array of double precision real valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of double precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SDK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a5)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SDK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the five dimensional array of double precision real value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of double precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SDK_a5(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a5'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SDK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a5)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SDK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new five dimensional array of double precision real valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the double precision real value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SDK "initSDK".
+!>
+SUBROUTINE add_ParamType_SDK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SDK_a5(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SDK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a five dimensional array of 32-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a five dimensional array of 32-bit integer
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a five dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SNK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SNK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SNK_a5 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='5-D ARRAY INTEGER(SNK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SNK_a5)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4),SIZE(param,5)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SNK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a five dimensional array of 32-bit integer valued parameter
+!> @param thisParam the five dimensional array of 32-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (five
+!> more than the significant number in a 32-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SNK_a5(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SNK_a5),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO p=1,SIZE(thisParam%val,5)
+    DO n=1,SIZE(thisParam%val,4)
+      DO k=1,SIZE(thisParam%val,3)
+        DO l=1,SIZE(thisParam%val,2)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+              TRIM(fmt3)//'(g13.7))') (thisParam%val(m,l,k,n,p),m=1,SIZE(thisParam%val,1))
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SNK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a five dimensional array of 32-bit integer valued parameter
+!> @param thisParam the five dimensional array of 32-bit integer valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SNK_a5(thisParam)
+  CLASS(ParamType_SNK_a5),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SNK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing five dimensional array of 32-bit integer valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SNK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a5)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SNK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the five dimensional array of 32-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SNK_a5(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a5'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SNK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a5)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SNK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new five dimensional array of 32-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 32-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SNK "initSNK".
+!>
+SUBROUTINE add_ParamType_SNK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SNK_a5(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SNK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a five dimensional array of 64-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a five dimensional array of 64-bit integer
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a five dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SLK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SLK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SLK_a5 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='5-D ARRAY INTEGER(SLK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SLK_a5)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4),SIZE(param,5)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SLK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a five dimensional array of 64-bit integer valued parameter
+!> @param thisParam the five dimensional array of 64-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (five
+!> more than the significant number in a 64-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SLK_a5(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SLK_a5),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO p=1,SIZE(thisParam%val,5)
+    DO n=1,SIZE(thisParam%val,4)
+      DO k=1,SIZE(thisParam%val,3)
+        DO l=1,SIZE(thisParam%val,2)
+          WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+              TRIM(fmt3)//'(g20.14))') (thisParam%val(m,l,k,n,p),m=1,SIZE(thisParam%val,1))
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SLK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a five dimensional array of 64-bit integer valued parameter
+!> @param thisParam the five dimensional array of 64-bit integer valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SLK_a5(thisParam)
+  CLASS(ParamType_SLK_a5),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SLK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing five dimensional array of 64-bit integer valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SLK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a5)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SLK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the five dimensional array of 64-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a five dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SLK_a5(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a5'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SLK_a5)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a5)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SLK_a5
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new five dimensional array of 64-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 64-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SLK "initSLK".
+!>
+SUBROUTINE add_ParamType_SLK_a5(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK_a5'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SLK_a5(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SLK_a5
+!
+!6666666666666666666666666666666666666666666666666666666666666666666666666666666
+!        Six Dimensional Arrays
+!6666666666666666666666666666666666666666666666666666666666666666666666666666666
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a six dimensional array of single
+!>        precision reals
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a six dimensional array of single precision reals
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a six dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SSK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SSK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SSK_a6 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='6-D ARRAY REAL(SSK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SSK_a6)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SSK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a six dimensional array of single precision real valued parameters
+!> @param thisParam the six dimensional array of single precision real valued
+!>        parameters to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (six
+!> more than the significant number in a single precision real) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SSK_a6(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SSK_a6),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO q=1,SIZE(thisParam%val,6)
+    DO p=1,SIZE(thisParam%val,5)
+      DO n=1,SIZE(thisParam%val,4)
+        DO k=1,SIZE(thisParam%val,3)
+          DO l=1,SIZE(thisParam%val,2)
+            WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                TRIM(fmt3)//'(g13.7))') (thisParam%val(m,l,k,n,p,q),m=1,SIZE(thisParam%val,1))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SSK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a six dimensional array of single precision real valued parameter
+!> @param thisParam the six dimensional array of single precision real valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SSK_a6(thisParam)
+  CLASS(ParamType_SSK_a6),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SSK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing six dimensional array of single precision real valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of single precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SSK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a6)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SSK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the six dimensional array of single precision real value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of single precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SSK_a6(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a6'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SSK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a6)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SSK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new six dimensional array of single precision real valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the single precision real value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SSK "initSSK".
+!>
+SUBROUTINE add_ParamType_SSK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SSK_a6(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SSK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a six dimensional array of double precision real
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a six dimensional array of double precision real
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a six dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SDK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SDK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SDK_a6 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='6-D ARRAY REAL(SDK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SDK_a6)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SDK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a six dimensional array of double precision real valued parameter
+!> @param thisParam the six dimensional array of double precision real valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (six
+!> more than the significant number in a double precision real) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SDK_a6(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SDK_a6),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO q=1,SIZE(thisParam%val,6)
+    DO p=1,SIZE(thisParam%val,5)
+      DO n=1,SIZE(thisParam%val,4)
+        DO k=1,SIZE(thisParam%val,3)
+          DO l=1,SIZE(thisParam%val,2)
+            WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                TRIM(fmt3)//'(g20.14))') (thisParam%val(m,l,k,n,p,q),m=1,SIZE(thisParam%val,1))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SDK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a six dimensional array of double precision real valued parameter
+!> @param thisParam the six dimensional array of double precision real valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SDK_a6(thisParam)
+  CLASS(ParamType_SDK_a6),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SDK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing six dimensional array of double precision real valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of double precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SDK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a6)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SDK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the six dimensional array of double precision real value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of double precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SDK_a6(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a6'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SDK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a6)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SDK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new six dimensional array of double precision real valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the double precision real value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SDK "initSDK".
+!>
+SUBROUTINE add_ParamType_SDK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SDK_a6(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SDK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a six dimensional array of 32-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a six dimensional array of 32-bit integer
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a six dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SNK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SNK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SNK_a6 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='6-D ARRAY INTEGER(SNK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SNK_a6)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SNK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a six dimensional array of 32-bit integer valued parameter
+!> @param thisParam the six dimensional array of 32-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (six
+!> more than the significant number in a 32-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SNK_a6(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SNK_a6),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO q=1,SIZE(thisParam%val,6)
+    DO p=1,SIZE(thisParam%val,5)
+      DO n=1,SIZE(thisParam%val,4)
+        DO k=1,SIZE(thisParam%val,3)
+          DO l=1,SIZE(thisParam%val,2)
+            WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                TRIM(fmt3)//'(g13.7))') (thisParam%val(m,l,k,n,p,q),m=1,SIZE(thisParam%val,1))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SNK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a six dimensional array of 32-bit integer valued parameter
+!> @param thisParam the six dimensional array of 32-bit integer valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SNK_a6(thisParam)
+  CLASS(ParamType_SNK_a6),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SNK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing six dimensional array of 32-bit integer valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SNK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a6)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SNK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the six dimensional array of 32-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SNK_a6(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a6'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SNK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a6)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SNK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new six dimensional array of 32-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 32-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SNK "initSNK".
+!>
+SUBROUTINE add_ParamType_SNK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SNK_a6(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SNK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a six dimensional array of 64-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a six dimensional array of 64-bit integer
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a six dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SLK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SLK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SLK_a6 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='6-D ARRAY INTEGER(SLK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SLK_a6)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SLK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a six dimensional array of 64-bit integer valued parameter
+!> @param thisParam the six dimensional array of 64-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (six
+!> more than the significant number in a 64-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SLK_a6(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SLK_a6),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO q=1,SIZE(thisParam%val,6)
+    DO p=1,SIZE(thisParam%val,5)
+      DO n=1,SIZE(thisParam%val,4)
+        DO k=1,SIZE(thisParam%val,3)
+          DO l=1,SIZE(thisParam%val,2)
+            WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                TRIM(fmt3)//'(g20.14))') (thisParam%val(m,l,k,n,p,q),m=1,SIZE(thisParam%val,1))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SLK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a six dimensional array of 64-bit integer valued parameter
+!> @param thisParam the six dimensional array of 64-bit integer valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SLK_a6(thisParam)
+  CLASS(ParamType_SLK_a6),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SLK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing six dimensional array of 64-bit integer valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SLK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a6)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SLK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the six dimensional array of 64-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a six dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SLK_a6(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a6'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SLK_a6)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a6)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SLK_a6
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new six dimensional array of 64-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 64-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SLK "initSLK".
+!>
+SUBROUTINE add_ParamType_SLK_a6(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK_a6'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SLK_a6(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SLK_a6
+!
+!7777777777777777777777777777777777777777777777777777777777777777777777777777777
+!        Seven Dimensional Arrays
+!7777777777777777777777777777777777777777777777777777777777777777777777777777777
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a seven dimensional array of single
+!>        precision reals
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a seven dimensional array of single precision reals
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a seven dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SSK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SSK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SSK_a7 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='7-D ARRAY REAL(SSK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SSK_a7)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6),SIZE(param,7)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SSK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a seven dimensional array of single precision real valued parameters
+!> @param thisParam the seven dimensional array of single precision real valued
+!>        parameters to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (seven
+!> more than the significant number in a single precision real) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SSK_a7(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SSK_a7),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q,r
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO r=1,SIZE(thisParam%val,7)
+    DO q=1,SIZE(thisParam%val,6)
+      DO p=1,SIZE(thisParam%val,6)
+        DO n=1,SIZE(thisParam%val,4)
+          DO k=1,SIZE(thisParam%val,3)
+            DO l=1,SIZE(thisParam%val,2)
+              WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                  TRIM(fmt3)//'(g13.7))') (thisParam%val(m,l,k,n,p,q,r),m=1,SIZE(thisParam%val,1))
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SSK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a seven dimensional array of single precision real valued parameter
+!> @param thisParam the seven dimensional array of single precision real valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SSK_a7(thisParam)
+  CLASS(ParamType_SSK_a7),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SSK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing seven dimensional array of single precision real valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of single precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SSK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a7)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SSK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the seven dimensional array of single precision real value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of single precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SSK_a7(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a7'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SSK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SSK_a7)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY REAL(SSK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SSK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new seven dimensional array of single precision real valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the single precision real value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SSK "initSSK".
+!>
+SUBROUTINE add_ParamType_SSK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SSK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SSK_a7(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SSK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a seven dimensional array of double precision real
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a seven dimensional array of double precision real
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a seven dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SDK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SDK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SDK_a7 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='7-D ARRAY REAL(SDK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SDK_a7)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6),SIZE(param,7)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SDK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a seven dimensional array of double precision real valued parameter
+!> @param thisParam the seven dimensional array of double precision real valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (seven
+!> more than the significant number in a double precision real) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SDK_a7(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SDK_a7),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q,r
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO r=1,SIZE(thisParam%val,7)
+    DO q=1,SIZE(thisParam%val,6)
+      DO p=1,SIZE(thisParam%val,5)
+        DO n=1,SIZE(thisParam%val,4)
+          DO k=1,SIZE(thisParam%val,3)
+            DO l=1,SIZE(thisParam%val,2)
+              WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                  TRIM(fmt3)//'(g20.14))') (thisParam%val(m,l,k,n,p,q,r),m=1,SIZE(thisParam%val,1))
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SDK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a seven dimensional array of double precision real valued parameter
+!> @param thisParam the seven dimensional array of double precision real valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SDK_a7(thisParam)
+  CLASS(ParamType_SDK_a7),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SDK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing seven dimensional array of double precision real valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of double precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SDK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a7)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SDK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the seven dimensional array of double precision real value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of double precision real valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SDK_a7(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a7'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SDK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SDK_a7)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY REAL(SDK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SDK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new seven dimensional array of double precision real valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the double precision real value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SDK "initSDK".
+!>
+SUBROUTINE add_ParamType_SDK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SDK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SDK_a7(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SDK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a seven dimensional array of 32-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a seven dimensional array of 32-bit integer
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a seven dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SNK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SNK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SNK_a7 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='7-D ARRAY INTEGER(SNK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SNK_a7)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6),SIZE(param,7)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SNK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a seven dimensional array of 32-bit integer valued parameter
+!> @param thisParam the seven dimensional array of 32-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (seven
+!> more than the significant number in a 32-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SNK_a7(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SNK_a7),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q,r
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO r=1,SIZE(thisParam%val,7)
+    DO q=1,SIZE(thisParam%val,6)
+      DO p=1,SIZE(thisParam%val,5)
+        DO n=1,SIZE(thisParam%val,4)
+          DO k=1,SIZE(thisParam%val,3)
+            DO l=1,SIZE(thisParam%val,2)
+              WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                  TRIM(fmt3)//'(g13.7))') (thisParam%val(m,l,k,n,p,q,r),m=1,SIZE(thisParam%val,1))
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SNK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a seven dimensional array of 32-bit integer valued parameter
+!> @param thisParam the seven dimensional array of 32-bit integer valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SNK_a7(thisParam)
+  CLASS(ParamType_SNK_a7),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SNK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing seven dimensional array of 32-bit integer valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SNK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a7)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SNK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the seven dimensional array of 32-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of 32-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SNK_a7(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a7'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SNK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SNK_a7)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SNK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new seven dimensional array of 32-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 32-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SNK "initSNK".
+!>
+SUBROUTINE add_ParamType_SNK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SNK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SNK_a7(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SNK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Initializes a ParamType object as a seven dimensional array of 64-bit integer
+!> @param thisParam the parameter to initialize
+!> @param name the name of the parameter
+!> @param param a seven dimensional array of 64-bit integer
+!> @param description an optional description for this parameter
+!>
+!> This routine is not recursive, so it is like setting a seven dimensional array of parameter.
+!> Therefore the name cannot contain the "->" symbol to indicate access to a
+!> sub-list. @c thisParam must not already be inititalized.
+!>
+SUBROUTINE init_ParamType_SLK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='init_ParamType_SLK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  INTEGER(SIK) :: ipos
+
+  IF(.NOT.ASSOCIATED(thisParam%pdat)) THEN
+    !Check that '->' character is not in name
+    ipos=INDEX(name,'->')
+    IF(ipos == 0) THEN
+      ALLOCATE(ParamType_SLK_a7 :: thisParam%pdat)
+      thisParam%pdat%name=TRIM(name)
+      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      thisParam%pdat%dataType='7-D ARRAY INTEGER(SLK)'
+      SELECTTYPE(p=>thisParam%pdat)
+      TYPE IS(ParamType_SLK_a7)
+        ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3),SIZE(param,4), &
+            SIZE(param,5),SIZE(param,6),SIZE(param,7)))
+        p%val=param
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - "->" symbol is not allowed in name!')
+    ENDIF
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter is already initialized! Use set method!')
+  ENDIF
+ENDSUBROUTINE init_ParamType_SLK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Edits a seven dimensional array of 64-bit integer valued parameter
+!> @param thisParam the seven dimensional array of 64-bit integer valued parameter to edit
+!> @param funit the unit number to edit the parameter to
+!> @param indent optional indicates the number of blank spaces to precede the
+!>        beginning of text to edit.
+!>
+!> The formatted write uses the "general" edit descriptor so that 7 digits (seven
+!> more than the significant number in a 64-bit integer) are always
+!> printed if the number is very large in absolute value engineering format
+!> is used otherwise floating point form is used to write the value.
+!>
+SUBROUTINE edit_ParamType_SLK_a7(thisParam,funit,indent,prefix,paddtw)
+  CLASS(ParamType_SLK_a7),INTENT(IN) :: thisParam
+  INTEGER(SIK),INTENT(IN) :: funit
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: indent
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: prefix
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: paddtw
+  CHARACTER(LEN=12) :: fmt,fmt2,fmt3
+  CHARACTER(LEN=:),ALLOCATABLE :: dtype
+  INTEGER(SIK) :: i,j,k,l,m,n,p,q,r
+  TYPE(StringType) :: sprefix,sdtype
+
+  i=1
+  j=6
+  IF(PRESENT(indent)) i=i+indent
+  IF(PRESENT(prefix)) sprefix=prefix
+  sdtype=thisParam%datatype
+  IF(PRESENT(paddtw)) THEN
+    IF(paddtw) THEN
+      ALLOCATE(CHARACTER(PARAM_MAX_DAT_LEN) :: dtype)
+      dtype=CHAR(thisParam%dataType)
+      sdtype=dtype
+    ENDIF
+  ENDIF
+  WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
+  IF(LEN_TRIM(thisParam%description) == 0) THEN
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ...'
+  ELSE
+    WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,a)') sprefix// &
+        sdtype//' :: '//thisParam%name//'= ... !'//thisParam%description
+  ENDIF
+  j=j+LEN(sdtype)+LEN(thisParam%name)
+  WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
+  WRITE(fmt3,'(i12)') SIZE(thisParam%val,1); fmt3=ADJUSTL(fmt3)
+  DO r=1,SIZE(thisParam%val,7)
+    DO q=1,SIZE(thisParam%val,6)
+      DO p=1,SIZE(thisParam%val,5)
+        DO n=1,SIZE(thisParam%val,4)
+          DO k=1,SIZE(thisParam%val,3)
+            DO l=1,SIZE(thisParam%val,2)
+              WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,'//TRIM(fmt2)//'x,'// &
+                  TRIM(fmt3)//'(g20.14))') (thisParam%val(m,l,k,n,p,q,r),m=1,SIZE(thisParam%val,1))
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDDO
+  ENDDO
+ENDSUBROUTINE edit_ParamType_SLK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a seven dimensional array of 64-bit integer valued parameter
+!> @param thisParam the seven dimensional array of 64-bit integer valued parameter to clear
+!>
+SUBROUTINE clear_ParamType_SLK_a7(thisParam)
+  CLASS(ParamType_SLK_a7),INTENT(INOUT) :: thisParam
+  DEALLOCATE(thisParam%val)
+  thisParam%name=''
+  thisParam%dataType=''
+  thisParam%description=''
+ENDSUBROUTINE clear_ParamType_SLK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the value of an existing seven dimensional array of 64-bit integer valued
+!> parameter to a new value.
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will be to set the new value of @c param
+!> @param name the name of an existing parameter to set the value of
+!> @param param the new value to set for the parameter
+!> @param description an optional new description for the parameter identified
+!>        by @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SLK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      thisParam%val=param
+      IF(PRESENT(description)) thisParam%description=TRIM(description)
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch! Tried to set "'//TRIM(name)// &
+          '" but name is "'//thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a7)
+        p%val=param
+        IF(PRESENT(description)) p%description=TRIM(description)
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE set_ParamType_SLK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the seven dimensional array of 64-bit integer value for a specified parameter
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If a parameter with @c name is not found an error is produced. If the
+!> parameter with @c name is not a seven dimensional array of 64-bit integer valued parameter
+!> then an error is produced.
+!>
+SUBROUTINE get_ParamType_SLK_a7(thisParam,name,val)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a7'
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  CLASS(ParamType),POINTER :: tmpParam
+
+  SELECTTYPE(thisParam)
+  TYPE IS(ParamType_SLK_a7)
+    IF(thisParam%name == TRIM(name)) THEN
+      val=thisParam%val
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - parameter name mismatch "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  CLASS DEFAULT
+    !Search for the parameter name
+    CALL thisParam%getParam(name,tmpParam)
+    IF(ASSOCIATED(tmpParam)) THEN
+      !Parameter was found
+      SELECTTYPE(p=>tmpParam)
+      TYPE IS(ParamType_SLK_a7)
+        val=p%val
+      CLASS DEFAULT
+        CALL eParams%raiseError(modName//'::'//myName// &
+            ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
+            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
+      ENDSELECT
+    ELSE
+      CALL eParams%raiseError(modName//'::'//myName// &
+          ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
+          thisParam%name//'"!')
+    ENDIF
+  ENDSELECT
+ENDSUBROUTINE get_ParamType_SLK_a7
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds a new seven dimensional array of 64-bit integer valued parameter to a set of
+!> parameters
+!> @param thisParam the set of parameters to which a new parameter will be added
+!> @param name the location and name of the new parameter
+!> @param param the 64-bit integer value of the new parameter
+!> @param description an optional input for a description of the new parameter
+!>
+!> This routine creates a new parameter within @c thisParam with @c name.
+!> @c name may contain a full or partial path to the new parameter. If @c name
+!> can be matched to an existing parameter in @c thisParam an error is produced
+!> If @c name contains a full path for which intermediate lists do not exist
+!> then this lists are created in the process of adding the new parameter.
+!> If @c thisParam is not initialized and @c name does not contain a "->"
+!> symbol then this routine behaves equivalently to
+!> @ref ParameterLists::init_ParamType_SLK "initSLK".
+!>
+SUBROUTINE add_ParamType_SLK_a7(thisParam,name,param,description)
+  CHARACTER(LEN=*),PARAMETER :: myName='add_ParamType_SLK_a7'
+  CLASS(ParamType),INTENT(INOUT) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:,:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  CHARACTER(LEN=LEN(name)) :: prevname,thisname
+  INTEGER(SIK) :: ipos
+  TYPE(ParamType) :: newParam
+  CLASS(ParamType),POINTER :: tmpParam
+
+  !Search for the name to make sure it does not exist
+  CALL get_ParamType(thisParam,name,tmpParam)
+
+  IF(.NOT.ASSOCIATED(tmpParam)) THEN
+    prevname=''
+    thisname=ADJUSTL(name)
+    ipos=INDEX(name,'->',.TRUE.)
+    IF(ipos > 0) THEN
+      prevname=ADJUSTL(name(1:ipos-1))
+      thisname=ADJUSTL(name(ipos+2:LEN(name)))
+    ENDIF
+
+    !Initialize the new parameter
+    CALL init_ParamType_SLK_a7(newParam,thisname,param,description)
+
+    !Add the new parameter to thisParam
+    CALL add_ParamType(thisParam,prevname,newParam)
+    CALL newParam%clear()
+  ELSE
+    CALL eParams%raiseError(modName//'::'//myName// &
+        ' - parameter name "'//TRIM(name)// &
+        '" already exists! Use set method or full parameter list path!')
+  ENDIF
+ENDSUBROUTINE add_ParamType_SLK_a7
 !
 !-------------------------------------------------------------------------------
 RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
