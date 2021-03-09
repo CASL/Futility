@@ -14,11 +14,13 @@ TRIBITS_ADD_LIBRARY(testFMUBouncingBall SHARED
     HEADERS
       fmu2_model.h
       fmu2_model_defines.h
+      ${Futility_SOURCE_DIR}/src/fmu_interfaces/fmi2Functions.h
+      ${Futility_SOURCE_DIR}/src/fmu_interfaces/fmi2FunctionTypes.h
+      ${Futility_SOURCE_DIR}/src/fmu_interfaces/fmi2TypesPlatform.h
     SOURCES
       fmu2_model_cs.c
 )
 
-target_link_libraries(testFMUBouncingBall FmuUtils)
 set_target_properties(testFMUBouncingBall PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/binaries/linux64
     PREFIX "")
