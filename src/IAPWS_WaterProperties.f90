@@ -1,7 +1,15 @@
-!>         IAPWS Industrial Formulation 1997
-!>   for the Thermodynamic Properties of Water and Steam
-!>                  (IAPWS-IF97)
-
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!                          Futility Development Group                          !
+!                             All rights reserved.                             !
+!                                                                              !
+! Futility is a jointly-maintained, open-source project between the University !
+! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
+! can be found in LICENSE.txt in the head directory of this repository.        !
+!++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+!> IAPWS Industrial Formulation 1997
+!> for the Thermodynamic Properties of Water and Steam
+!> (IAPWS-IF97)
+!>
 !> References:
 !>  -# "Revised Release on the IAPWS Industrial Formulation 1997 for the
 !>  Thermodynamic Properties of Water and Steam"
@@ -25,40 +33,44 @@
 !>  Plzen,,Czech Republic
 !>  2011
 !>  http://www.iapws.ORg/relguide/ThCond.pdf
-
-!===============================================================================
-! These functions follow reference 1 by first calculating the dimmensionless
-! free energy and/or its derivatives, and using those values to calculate
-! material properties and derivatives. This can be done relatively easily since
-! the correlations are almost entirely in the form of power series. After the
-! dimm. free energy is found the rest of the material properties can be
-! evaulated based off of these values. These functions were optimized in
-! regions 1 and 2 by expanding the looped calculations and hard coding the
-! exponents.
-
-! A small speed up was implemented in region 3. Instead of using the
-! power_derivatives function, each derivative of the gibbs free energy instead
-! has its own function.
-!
+!>
+!-------------------------------------------------------------------------------
+!> These functions follow reference 1 by first calculating the dimmensionless
+!> free energy and/or its derivatives, and using those values to calculate
+!> material properties and derivatives. This can be done relatively easily since
+!> the correlations are almost entirely in the form of power series. After the
+!> dimm. free energy is found the rest of the material properties can be
+!> evaulated based off of these values. These functions were optimized in
+!> regions 1 and 2 by expanding the looped calculations and hard coding the
+!> exponents.
+!>
+!> A small speed up was implemented in region 3. Instead of using the
+!> power_derivatives function, each derivative of the gibbs free energy instead
+!> has its own function.
+!-------------------------------------------------------------------------------
 !
 MODULE IAPWSWaterPropertiesModule
 #include "Futility_DBC.h"
 USE Futility_DBC
 USE IntrType
+USE ExceptionHandler
 
 IMPLICIT NONE
 
 PRIVATE
 
-! Parameters --------------------------------------------------------------
+! Parameters
 PUBLIC :: Tcrit, Dcrit, Pcrit
-
 ! accessor functions
 PUBLIC :: regsopt, regsph
 ! property functions
 PUBLIC :: vpt, hpt, cppt, cvpt, viscvt, thconvt, surftt, tsatpn, psattn, tph, pvt3n
-PUBLIC :: dvdp_if97, dvdt_if97, dhdp_if97, dhdt_if97, dvdh_if97
+PUBLIC :: dvdp, dvdt, dhdp, dhdt, dvdh
 PUBLIC :: setRepresentation, clean_IAPWS
+PUBLIC :: eWaterProp
+
+!> Exception Handler for Water Properties
+TYPE(ExceptionHandlerType),SAVE :: eWaterProp
 
 !> expr_opt = 1 means do the original analytical solution
 !> expr_opt = 2 means represent with simplified representation to reduce
@@ -79,9 +91,8 @@ REAL(SRK), PARAMETER :: tolerance = 1.0E-10_SRK, &
 ! Coefficient Tables in Reference 1
 ! All values here are dimensionless
 !===============================================================================
-!=====================================
 ! Region 1:
-!=====================================
+!-------------------------------------------------------------------------------
 REAL(SRK), PARAMETER, DIMENSION(34) :: & ! Table 2
   N1 = [0.14632971213167E0_SRK, &
         -0.84548187169114E0_SRK, &
@@ -127,9 +138,9 @@ INTEGER(SIK), PARAMETER, DIMENSION(SIZE(N1)) :: &
         0, 6, -5, -2, 10, -8, -11, -6, -29, -31, &
         -38, -39, -40, -41]
 
-!=====================================
+!===============================================================================
 ! Region 2: Tables 10 and 11
-!=====================================
+!-------------------------------------------------------------------------------
 REAL(SRK), PARAMETER, DIMENSION(9) :: & ! Table 10
   No2 = [-0.96927686500217E01_SRK, &
          0.10086655968018E02_SRK, &
@@ -198,9 +209,9 @@ INTEGER(SIK), PARAMETER, DIMENSION(SIZE(N2)) :: &
         16, 35, 0, 11, 25, 8, 36, 13, 4, 10, &
         14, 29, 50, 57, 20, 35, 48, 21, 53, 39, &
         26, 40, 58]
-!=====================================
+!===============================================================================
 ! Region 3: Table 30
-!=====================================
+!-------------------------------------------------------------------------------
 REAL(SRK), PARAMETER, DIMENSION(40) :: &
   N3 = [0.10658070028513E01_SRK, &
         -0.15732845290239E02_SRK, &
@@ -251,9 +262,10 @@ INTEGER(SIK), PARAMETER, DIMENSION(SIZE(N3)) :: &
         15, 17, 0, 2, 6, 7, 22, 26, 0, 2, &
         4, 16, 26, 0, 2, 4, 26, 1, 3, 26, &
         0, 2, 26, 2, 26, 2, 26, 0, 1, 26]
-!=====================================
+
+!===============================================================================
 ! Region 5: Tables 37 and 38
-!=====================================
+!-------------------------------------------------------------------------------
 REAL(SRK), PARAMETER, DIMENSION(6) :: &
   N5 = [0.15736404855259E-02_SRK, &
         0.90153761673944E-03_SRK, &
@@ -261,6 +273,7 @@ REAL(SRK), PARAMETER, DIMENSION(6) :: &
         0.22440037409485E-05_SRK, &
         -0.41163275453471E-05_SRK, &
         0.37919454822955E-07_SRK]
+
 INTEGER(SIK), PARAMETER, DIMENSION(SIZE(N5)) :: &
   I5 = [1, 1, 1, 2, 2, 3], &
   J5 = [1, 2, 3, 3, 9, 7]
@@ -276,32 +289,33 @@ INTEGER(SIK), PARAMETER, DIMENSION(SIZE(No5)) :: &
   Jo5 = [0, 1, -3, -2, -1, 2]
 
 CONTAINS
-
-SUBROUTINE Clean_IAPWS
-   expr_opt = 1
-ENDSUBROUTINE
-
 !===============================================================================
 ! FUNCTIONS
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Call to override the default IAPWS representation with a simplified one
 !> to improve performance
-!!
+!>
 !> @param expr_opt 1 - original, 2 - simplified
-!===============================================================================
+!>
 SUBROUTINE setRepresentation(opt)
-   INTEGER(SIK), INTENT(IN) :: opt
-   REQUIRE(opt == 1 .OR. opt == 2)
-   expr_opt = opt
+  INTEGER(SIK), INTENT(IN) :: opt
+  REQUIRE(opt == 1 .OR. opt == 2)
+  expr_opt = opt
 ENDSUBROUTINE
-
+!
+!-------------------------------------------------------------------------------
+!> TODO add documentation
+SUBROUTINE Clean_IAPWS()
+  expr_opt = 1
+ENDSUBROUTINE
+!
 !===============================================================================
 ! Section: Supporting Custom Functions
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> This function calculates the coefficient of a power series from taking a derivative of any order
 !> f=x^(n) where n is the exponent of the function
 !> derivative_order(f)= C*x^(n-order) where C is the value of this function
@@ -309,9 +323,11 @@ ENDSUBROUTINE
 !> @param expnt the exponent of the function
 !> @param order the order of the derivative
 !> @return coefficient of the derivative
-!===============================================================================
+!>
 FUNCTION power_derivative(expnt, order)
-  INTEGER(SIK), INTENT(IN) :: expnt, order ! Exponent of power series, Order of the derivative
+  INTEGER(SIK), INTENT(IN) :: expnt
+  INTEGER(SIK), INTENT(IN) :: order
+
   INTEGER(SIK) :: i
   INTEGER(SIK) :: power_derivative
 
@@ -322,32 +338,33 @@ FUNCTION power_derivative(expnt, order)
     power_derivative = power_derivative*(expnt - i + 1)
   ENDDO
 ENDFUNCTION power_derivative
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculates dimensionless density
 !> \f$\delta=\frac{D}{D^{*}}\f$
 !> D* is a reference parameter from Reference 1 (Density at the Critical Point)
 !> @param rho density in \f$\frac{kg}{m^3}\f$
 !> @return dimensionless density \f$\delta\f$
-!===============================================================================
+!>
 FUNCTION normalize_density(rho)
-   REAL(SRK), INTENT(IN) :: rho
-   REAL(SRK) :: normalize_density
+  REAL(SRK), INTENT(IN) :: rho
 
-   normalize_density = rho/Dcrit
+  REAL(SRK) :: normalize_density
+
+  normalize_density = rho/Dcrit
 ENDFUNCTION
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculates dimensionless pressure
 !> \f$\pi=\frac{P}{P^{*}}\f$
 !> P* is a reference parameter from Reference 1
 !> @param P Pressure in MPa
 !> @param ireg region number [1,2,3,5]
 !> @return dimensionless pressure \f$\pi\f$
-!===============================================================================
+!>
 FUNCTION normalize_pressure(P, ireg)
+  REAL(SRK), INTENT(IN) :: P
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P ! Pressure in MPa
   REAL(SRK) :: normalize_pressure
 
   ! Normalization Reference Values for each region
@@ -367,18 +384,18 @@ FUNCTION normalize_pressure(P, ireg)
     REQUIRE(.FALSE.)
   ENDIF
 ENDFUNCTION
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculates dimensionless temperature
 !> \f$\tau=\frac{T}{T^{*}}\f$
 !> T* is a reference parameter from Reference 1
 !> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return dimensionless temperature \f$\tau\f$
-!===============================================================================
+!>
 FUNCTION normalize_temperature(T, ireg)
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: T ! Temperature in K
   REAL(SRK) :: normalize_temperature
 
   ! Normalization Reference Values (T*) for each region
@@ -401,16 +418,18 @@ ENDFUNCTION
 !===============================================================================
 ! Gibbs Free Energy and Hemholtz Free energy and their derivatives
 !===============================================================================
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Dimensionless Gibbs free energy first derivative with respect pi \f$\gamma_{\pi}\f$  for region 1
 !> Reference 1
 !> Table : 4
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma_{\pi}\f$
-!************************************************************************
+!>
 FUNCTION gamma1_p1_t0(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma1_p1_t0
 
   REAL(SRK), PARAMETER ::C1 = 7.1E0_SRK, C2 = 1.222E0_SRK
@@ -466,18 +485,19 @@ FUNCTION gamma1_p1_t0(pi, tau)
   !  DO i=1,SIZE(N1)
   !    gamma1 = gamma1 - N1(i)*I1(i)*(C1-pi)**(I1(i)-order_pi)*(tau-C2)**(J1(i)-order_tau)
   !  ENDDO
-   ENDFUNCTION gamma1_p1_t0
-
-!===============================================================================
+ENDFUNCTION gamma1_p1_t0
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Dimensionless Gibbs free energy first derivative with respect tau and pi \f$\gamma_{\pi\tau}\f$  for region 1
 !> Reference 1
 !> Table : 4
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma_{\pi\tau}\f$
-!===============================================================================
+!>
 FUNCTION gamma1_p1_t1(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma1_p1_t1
 
   REAL(SRK), PARAMETER ::C1 = 7.1E0_SRK, C2 = 1.222E0_SRK
@@ -525,17 +545,18 @@ FUNCTION gamma1_p1_t1(pi, tau)
 !        gamma1 = gamma1 - N1(i)*I1(i)*J1(i)*(C1-pi)**(I1(i)-order_pi)*(tau-C2)**(J1(i)-order_tau)
 !    ENDDO
 ENDFUNCTION gamma1_p1_t1
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Dimensionless Gibbs free energy first derivative with respect tau \f$\gamma_{\tau}\f$  for region 1
 !> Reference 1
 !> Table : 4
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma_{\tau}\f$
-!===============================================================================
+!>
 FUNCTION gamma1_p0_t1(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma1_p0_t1
 
   REAL(SRK), PARAMETER ::C1 = 7.1E0_SRK, C2 = 1.222E0_SRK
@@ -591,17 +612,18 @@ FUNCTION gamma1_p0_t1(pi, tau)
 !        gamma1_p0_t1 = gamma1_p0_t1 + N1(i)*J1(i)*(C1-pi)**(I1(i)-order_pi)*(tau-C2)**(J1(i)-order_tau)
 !    ENDDO
 ENDFUNCTION gamma1_p0_t1
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Dimensionless Gibbs free energy second derivative with respect pi \f$\gamma_{\pi\pi}\f$ for region 1
 !> Reference 1
 !> Table : 4
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma_{\pi\pi}\f$
-!===============================================================================
+!>
 FUNCTION gamma1_p2_t0(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma1_p2_t0
 
   REAL(SRK), PARAMETER ::C1 = 7.1E0_SRK, C2 = 1.222E0_SRK
@@ -650,17 +672,18 @@ FUNCTION gamma1_p2_t0(pi, tau)
 !            gamma1_p2_t0 = gamma1_p2_t0 + N1(i)*I1(i)*(I1(i)-1)*(C1-pi)**(I1(i)-2)*(tau-C2)**(J1(i)-0)
 !        ENDDO
 ENDFUNCTION gamma1_p2_t0
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Dimensionless Gibbs free energy second derivative with respect tau \f$\gamma_{\tau\tau}\f$ for region 1
 !> Reference 1
 !> Table : 4
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma_{\tau\tau}\f$
-!===============================================================================
+!>
 FUNCTION gamma1_p0_t2(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma1_p0_t2
 
   REAL(SRK), PARAMETER ::C1 = 7.1E0_SRK, C2 = 1.222E0_SRK
@@ -717,17 +740,18 @@ FUNCTION gamma1_p0_t2(pi, tau)
 !      gamma1_p0_t2 = gamma1_p0_t2 + N1(i)*J1(i)*(J1(i)-1)*(C1-pi)**(I1(i)-0)*(tau-C2)**(J1(i)-2)
 !    ENDDO
 ENDFUNCTION gamma1_p0_t2
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Residual Component of the Dimensionless Gibbs free energy first derivative with respect pi \f$\gamma^{r}_{\pi}\f$  for region 2
 !> Reference 1
 !> Table : 14
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma^{r}_{\pi}\f$
-!===============================================================================
+!>
 FUNCTION gamma2_r_p1_t0(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma2_r_p1_t0
 
   REAL(SRK) :: taun1
@@ -789,17 +813,18 @@ FUNCTION gamma2_r_p1_t0(pi, tau)
 !        gamma2_r_p1_t0 = gamma2_r_p1_t0 + N2(i)*I2(i)*(pi)**(I2(i)-1)*(tau-0.50_SRK)**(J2(i))
 !    ENDDO
 ENDFUNCTION gamma2_r_p1_t0
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Residual Component of the Dimensionless Gibbs free energy first derivative with respect pi and tau \f$\gamma^{r}_{\pi\tau}\f$  for region 2
 !> Reference 1
 !> Table : 14
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma^{r}_{\pi\tau}\f$
-!===============================================================================
+!>
 FUNCTION gamma2_r_p1_t1(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma2_r_p1_t1
 
   REAL(SRK) :: taun1
@@ -861,17 +886,18 @@ FUNCTION gamma2_r_p1_t1(pi, tau)
 !        gamma2_r_p1_t1 = gamma2_r_p1_t1 + N2(i)*I2(i)*J2(i)*(pi)**(I2(i)-1)*(tau-0.50_SRK)**(J2(i)-1)
 !    ENDDO
 ENDFUNCTION gamma2_r_p1_t1
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Residual Component of the Dimensionless Gibbs free energy first derivative with respect tau \f$\gamma^{r}_{\tau}\f$  for region 2
 !> Reference 1
 !> Table : 14
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma^{r}_{\tau}\f$
-!===============================================================================
+!>
 FUNCTION gamma2_r_p0_t1(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma2_r_p0_t1
 
   REAL(SRK) :: taun1
@@ -933,20 +959,21 @@ FUNCTION gamma2_r_p0_t1(pi, tau)
 !        gamma2_r_p0_t1 = gamma2_r_p0_t1 + N2(i)*J2(i)*(pi)**(I2(i))*(tau-0.50_SRK)**(J2(i)-1)
 !    ENDDO
 ENDFUNCTION gamma2_r_p0_t1
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Residual Component of the Dimensionless Gibbs free energy second derivative with respect pi \f$\gamma^{r}_{\pi\pi}\f$  for region 2
 !> Reference 1
 !> Table : 14
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma^{r}_{\pi\pi}\f$
-!===============================================================================
+!>
 FUNCTION gamma2_r_p2_t0(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
-  REAL(SRK) :: taun1
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma2_r_p2_t0
 
+  REAL(SRK) :: taun1
   !> Table 14.
   !> \f[
   !> \gamma^{r}_{\pi\pi}=\sum\limits_{i=1}^{43} n_{i}(I_{i}-1)I_{i}\pi^{I_{i}-2}(\tau-0.5)^{J_{i}}
@@ -1004,8 +1031,8 @@ FUNCTION gamma2_r_p2_t0(pi, tau)
 !        gamma2_r_p2_t0 = gamma2_r_p2_t0 + N2(i)*I2(i)*(I2(i)-1)*(pi)**(I2(i)-2)*(tau-0.50_SRK)**(J2(i))
 !    ENDDO
 ENDFUNCTION gamma2_r_p2_t0
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Residual Component of the Dimensionless Gibbs
 !> free energy second derivative with respect pi \f$\gamma^{r}_{\tau\tau}\f$  for region 2
 !!
@@ -1014,9 +1041,10 @@ ENDFUNCTION gamma2_r_p2_t0
 !> @param pi Dimensionless Pressure \f$\pi\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\gamma^{r}_{\tau\tau}\f$
-!===============================================================================
+!>
 FUNCTION gamma2_r_p0_t2(pi, tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: gamma2_r_p0_t2
 
   REAL(SRK) :: taun1
@@ -1078,8 +1106,8 @@ FUNCTION gamma2_r_p0_t2(pi, tau)
 !        gamma2_r_p0_t2 = gamma2_r_p0_t2 + N2(i)*(J2(i)-1)*J2(i)*(pi)**(I2(i))*(tau-0.50_SRK)**(J2(i)-1)
 !    ENDDO
 ENDFUNCTION gamma2_r_p0_t2
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Ideal Gas Component of the Dimensionless Gibbs free energy and its derivatives with respect to order of pi and order of tau for region 2 \f$\gamma^{o}\f$
 !> Reference 1
 !> Table : 13
@@ -1088,10 +1116,12 @@ ENDFUNCTION gamma2_r_p0_t2
 !> @param order_pi Order of the derivative with respect to \f$\pi\f$
 !> @param order_tau Order of the derivative with respect to \f$\tau\f$
 !> @return \f$\gamma^{o}\f$
-!===============================================================================
+!>
 FUNCTION gamma2_o(pi, tau, order_pi, order_tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
-  INTEGER(SIK), INTENT(IN) :: order_pi, order_tau ! Order with wich to take derivatives to corresponding variables
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
+  INTEGER(SIK), INTENT(IN) :: order_pi
+  INTEGER(SIK), INTENT(IN) :: order_tau
   REAL(SRK) :: gamma2_o
 
   INTEGER(SIK) :: i
@@ -1105,7 +1135,7 @@ FUNCTION gamma2_o(pi, tau, order_pi, order_tau)
         "Derivative order [0 < x < 2] "// &
         "Derivative order with respect to temperature", order_tau, &
         "Derivative order with respect to pressure", order_pi
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 
   ! Calculate the derivative of gibbs free energy with respect to pi and tau
@@ -1137,8 +1167,8 @@ FUNCTION gamma2_o(pi, tau, order_pi, order_tau)
     gamma2_o = -1.0_SRK/(pi*pi)
   ENDIF
 ENDFUNCTION gamma2_o
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Residual Component of the Dimensionless Gibbs free energy and its derivatives with respect to order of pi and order of tau for region 5 \f$\gamma^{r}\f$
 !> Reference 1
 !> Table : 41
@@ -1148,10 +1178,12 @@ ENDFUNCTION gamma2_o
 !> @param order_pi Order of the derivative with respect to \f$\pi\f$
 !> @param order_tau Order of the derivative with respect to \f$\tau\f$
 !> @return \f$\gamma^{r}\f$
-!===============================================================================
+!>
 FUNCTION gamma5_r(pi, tau, order_pi, order_tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
-  INTEGER(SIK), INTENT(IN) :: order_pi, order_tau ! Order with wich to take derivatives to corresponding variables
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
+  INTEGER(SIK), INTENT(IN) :: order_pi
+  INTEGER(SIK), INTENT(IN) :: order_tau
   REAL(SRK) :: gamma5_r
 
   INTEGER(SIK) :: i
@@ -1164,7 +1196,7 @@ FUNCTION gamma5_r(pi, tau, order_pi, order_tau)
         "Derivative order must be greater than or equal to 0 "// &
         "Derivative order with respect to temperature", order_tau, &
         "Derivative order with respect to pressure", order_pi
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 
   ! Calculate Residual component of the derivative of gibbs free energy with respect to pi and tau
@@ -1177,8 +1209,8 @@ FUNCTION gamma5_r(pi, tau, order_pi, order_tau)
     gamma5_r = gamma5_r + N5(i)*term_pi*term_tau
   ENDDO
 ENDFUNCTION gamma5_r
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Ideal Gas Component of the Dimensionless Gibbs free energy and its derivatives with respect to order of pi and order of tau for region 5 \f$\gamma^{o}\f$
 !> Reference 1
 !> Table : 40
@@ -1187,10 +1219,12 @@ ENDFUNCTION gamma5_r
 !> @param order_pi Order of the derivative with respect to \f$\pi\f$
 !> @param order_tau Order of the derivative with respect to \f$\tau\f$
 !> @return \f$\gamma^{o}\f$
-!===============================================================================
+!>
 FUNCTION gamma5_o(pi, tau, order_pi, order_tau)
-  REAL(SRK), INTENT(IN) :: pi, tau ! Dimensionless pressure and temperature
-  INTEGER(SIK), INTENT(IN) :: order_pi, order_tau ! Order with wich to take derivatives to corresponding variables
+  REAL(SRK), INTENT(IN) :: pi
+  REAL(SRK), INTENT(IN) :: tau
+  INTEGER(SIK), INTENT(IN) :: order_pi
+  INTEGER(SIK), INTENT(IN) :: order_tau
   REAL(SRK) :: gamma5_o
 
   INTEGER(SIK) :: i
@@ -1202,7 +1236,7 @@ FUNCTION gamma5_o(pi, tau, order_pi, order_tau)
         "Derivative order must be greater than or equal to 0 "// &
         "Derivative order with respect to temperature", order_tau, &
         "Derivative order with respect to pressure", order_pi
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 
   ! Calculate the first term of the equation
@@ -1225,8 +1259,8 @@ FUNCTION gamma5_o(pi, tau, order_pi, order_tau)
     ENDDO
   ENDIF
 ENDFUNCTION gamma5_o
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation the Dimensionless Helmholtz free energy and its derivatives with respect to order of delta and order of tau for region 3 \f$\phi\f$
 !> Reference 1
 !> Table : 32
@@ -1235,10 +1269,12 @@ ENDFUNCTION gamma5_o
 !> @param order_pi Order of the derivative with respect to \f$\delta\f$
 !> @param order_tau Order of the derivative with respect to \f$\tau\f$
 !> @return \f$\phi\f$
-!===============================================================================
+!>
 FUNCTION phi3(delta, tau, order_delta, order_tau)
-  REAL(SRK), INTENT(IN) :: delta, tau    ! Dimensionless density and temperature
-  INTEGER(SIK), INTENT(IN) :: order_delta, order_tau ! Order with wich to take derivatives
+  REAL(SRK), INTENT(IN) :: delta
+  REAL(SRK), INTENT(IN) :: tau
+  INTEGER(SIK), INTENT(IN) :: order_delta
+  INTEGER(SIK), INTENT(IN) :: order_tau
   REAL(SRK) :: phi3
 
   phi3 = 0.0_SRK
@@ -1252,29 +1288,30 @@ FUNCTION phi3(delta, tau, order_delta, order_tau)
     phi3 = phi_delta(delta, tau)
   ELSEIF (order_delta == 2 .AND. order_tau == 0) THEN
     phi3 = phi_delta_delta(delta, tau)
-!  ELSE
-!TODO    CALL exc%raiseFatalError( &
-!       "Function phi3 was given a derivative order that was out of bounds "// &
-!       "order_delta = 0, 1, or 2 "// &
-!       "order_tau = 0, 1, or 2")
+  ELSE
+    CALL eWaterProp%raiseFatalError( &
+       "Function phi3 was given a derivative order that was out of bounds "// &
+       "order_delta = 0, 1, or 2 "// &
+       "order_tau = 0, 1, or 2")
   ENDIF
 ENDFUNCTION phi3
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation the Dimensionless Helmholtz free energy with respect to tau for region 3 \f$\phi_{\tau}\f$
 !> Reference 1
 !> Table : 32
 !> @param pi Dimensionless Density \f$\delta\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\phi_{\tau}\f$
-!===============================================================================
+!>
 FUNCTION phi_tau(delta, tau)
-  REAL(SRK), INTENT(IN) :: delta, tau    ! Dimensionless density and temperature
+  REAL(SRK), INTENT(IN) :: delta
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: phi_tau
 
   INTEGER(SIK) :: i
   REAL(SRK) :: delta_term, tau_term
-!TODO check if SAVE can be used here, else get rid of variables and logic below
+
   REAL(SRK) :: delta_old = 0, tau_old = 0, value_old = 0
   !
   ! Check to see if at the same D/T
@@ -1294,17 +1331,18 @@ FUNCTION phi_tau(delta, tau)
     value_old = phi_tau
   ENDIF
 ENDFUNCTION phi_tau
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation the Dimensionless Helmholtz free energy with second respect to tau for region 3 \f$\phi_{\tau\tau}\f$
 !> Reference 1
 !> Table : 32
 !> @param pi Dimensionless Density \f$\delta\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\phi_{\tau\tau}\f$
-!===============================================================================
+!>
 FUNCTION phi_tau_tau(delta, tau)
-  REAL(SRK), INTENT(IN) :: delta, tau    ! Dimensionless density and temperature
+  REAL(SRK), INTENT(IN) :: delta
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: phi_tau_tau
 
   INTEGER(SIK) :: i
@@ -1329,17 +1367,18 @@ FUNCTION phi_tau_tau(delta, tau)
     value_old = phi_tau_tau
   ENDIF
 ENDFUNCTION phi_tau_tau
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation the Dimensionless Helmholtz free energy with second respect to tau and delta for region 3 \f$\phi_{\delta\tau}\f$
 !> Reference 1
 !> Table : 32
 !> @param pi Dimensionless Density \f$\delta\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\phi_{\delta\tau}\f$
-!===============================================================================
+!>
 FUNCTION phi_delta_tau(delta, tau)
-  REAL(SRK), INTENT(IN) :: delta, tau    ! Dimensionless density and temperature
+  REAL(SRK), INTENT(IN) :: delta
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: phi_delta_tau
 
   INTEGER(SIK) :: i
@@ -1365,17 +1404,18 @@ FUNCTION phi_delta_tau(delta, tau)
     value_old = phi_delta_tau
   ENDIF
 ENDFUNCTION phi_delta_tau
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation the Dimensionless Helmholtz free energy with second respect to delta for region 3 \f$\phi_{\delta}\f$
 !> Reference 1
 !> Table : 32
 !> @param pi Dimensionless Density \f$\delta\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\phi_{\delta}\f$
-!===============================================================================
+!>
 FUNCTION phi_delta(delta, tau)
-  REAL(SRK), INTENT(IN) :: delta, tau    ! Dimensionless density and temperature
+  REAL(SRK), INTENT(IN) :: delta
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: phi_delta
 
   INTEGER(SIK) :: i
@@ -1401,17 +1441,18 @@ FUNCTION phi_delta(delta, tau)
     value_old = phi_delta
   ENDIF
 ENDFUNCTION phi_delta
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation the Dimensionless Helmholtz free energy with second respect to delta for region 3 \f$\phi_{\delta\delta}\f$
 !> Reference 1
 !> Table : 32
 !> @param pi Dimensionless Density \f$\delta\f$
 !> @param tau Dimensionless Temperature \f$\tau\f$
 !> @return \f$\phi_{\delta\delta}\f$
-!===============================================================================
+!>
 FUNCTION phi_delta_delta(delta, tau)
-  REAL(SRK), INTENT(IN) :: delta, tau    ! Dimensionless density and temperature
+  REAL(SRK), INTENT(IN) :: delta
+  REAL(SRK), INTENT(IN) :: tau
   REAL(SRK) :: phi_delta_delta
 
   INTEGER(SIK) :: i
@@ -1436,13 +1477,13 @@ FUNCTION phi_delta_delta(delta, tau)
     tau_old = tau
     value_old = phi_delta_delta
   ENDIF
-ENDFUNCTION
-
+ENDFUNCTION phi_delta_delta
+!
 !===============================================================================
 ! Section: Base Property Functions
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Specific Volume \f$v\f$
 !> Reference 1
 !> Tables : 3,12,31,39
@@ -1450,10 +1491,11 @@ ENDFUNCTION
 !> @param T Temperature in Kelvin
 !> @param ireg flow regime ID
 !> @return \f$v\f$ m^3/kg
-!===============================================================================
+!>
 FUNCTION vpt(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [K]
   REAL(SRK) :: vpt
 
   REAL(SRK) :: pi, tau ! Dimensionless pressure and temperature
@@ -1503,11 +1545,11 @@ FUNCTION vpt(P, T, ireg)
        "Pressure and Temperature are out of bounds "// &
        " Pressure [bar] Temperature [C] ", &
        P*1.0E1_SRK, T - 273.15_SRK
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION vpt
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Specific Enthalpy \f$h\f$
 !> Reference 1
 !> Tables : 3,12,31,39
@@ -1515,10 +1557,11 @@ ENDFUNCTION vpt
 !> @param T Temperature in Kelvin
 !> @param ireg flow regime ID
 !> @return \f$h\f$ kJ/kg
-!===============================================================================
-FUNCTION hpt(P, T, IREG)
+!>
+FUNCTION hpt(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [K]
   REAL(SRK) :: hpt
 
   REAL(SRK) :: pi, tau ! Dimensionless pressure and temperature
@@ -1572,11 +1615,11 @@ FUNCTION hpt(P, T, IREG)
        "Pressure and Temperature are out of bounds "// &
        " Pressure [bar] Temperature [C] ", &
        P*1.0E1_SRK, T - 273.15_SRK
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION hpt
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Isobaric Specific heat \f$c_{p}\f$
 !> Reference 1
 !> Tables : 3,12,31,39
@@ -1584,11 +1627,12 @@ ENDFUNCTION hpt
 !> @param T Temperature in Kelvin
 !> @param ireg flow regime ID
 !> @return \f$c_{p}\f$ kJ/kg-K
-!===============================================================================
+!>
 FUNCTION cppt(P, T, ireg, V_in)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [K]
-  REAL(SRK), INTENT(IN), OPTIONAL :: V_in ! Specific Volume [m^3/kg]
+  REAL(SRK), INTENT(IN), OPTIONAL :: V_in
   REAL(SRK) :: cppt
 
   REAL(SRK) :: pi, tau, delta ! Dimensionless pressure, temperature, delta
@@ -1659,11 +1703,11 @@ FUNCTION cppt(P, T, ireg, V_in)
        "Pressure and Temperature are out of bounds "// &
        " Pressure [bar] Temperature [C] ", &
        P*1.0E1_SRK, T - 273.15_SRK
- !TODO   CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION cppt
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Isochoric Specific heat \f$c_{v}\f$
 !> Reference 1
 !> Tables :   3,12,31,39
@@ -1671,11 +1715,12 @@ ENDFUNCTION cppt
 !> @param T Temperature in Kelvin
 !> @param ireg flow regime ID
 !> @return \f$c_{v}\f$ kJ/kg-K
-!===============================================================================
-FUNCTION cvpt(p, t, ireg, V_in)
+!>
+FUNCTION cvpt(P, T, ireg, V_in)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [K]
-  REAL(SRK), INTENT(IN), OPTIONAL :: V_in ! Specific Volume [m^3/kg]
+  REAL(SRK), INTENT(IN), OPTIONAL :: V_in
   REAL(SRK) :: cvpt
 
   REAL(SRK) :: pi, tau, delta ! Dimensionless pressure, temperature, delta
@@ -1764,23 +1809,23 @@ FUNCTION cvpt(p, t, ireg, V_in)
        "Pressure and Temperature are out of bounds "// &
        " Pressure [bar] Temperature [C] ", &
        P*1.0E1_SRK, T - 273.15_SRK
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION cvpt
-
+!
 !===============================================================================
 ! Section: Transport Property Functions
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Surface Tension \f$c_{v}\f$
 !> Reference 2
 !> Equation : 1
 !> @param T Temperature in Kelvin
 !> @return \f$\sigma\f$ N/m
-!===============================================================================
+!>
 FUNCTION surftt(T)
-  REAL(SRK), INTENT(IN) :: T ! Temperature [K]
+  REAL(SRK), INTENT(IN) :: T
   REAL(SRK) :: surftt
 
   REAL(SRK) :: tau
@@ -1799,20 +1844,20 @@ FUNCTION surftt(T)
     WRITE (msg, *) &
        "Surface Tension Temperature is out of bounds "// &
        "Temperature: [K]", T
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION surftt
-
-!===============================================================================
-!> Calculation of Dynamic Viscosity \f$\mu\f$ in Pa-s.
 !
+!-------------------------------------------------------------------------------
+!> Calculation of Dynamic Viscosity \f$\mu\f$ in Pa-s.
 !> @param V Specific volume in m^3/kg
 !> @param T Temperature in Kelvin
 !> @param [P]    Only required for range checking. Pressure in MPa
 !> @param [ireg] Only required for range checking. flow regime ID
 !> @return \f$\mu\f$ Pa-s
-FUNCTION viscvt(V, T, P, IREG)
-  REAL(SRK), INTENT(IN) :: T, V
+FUNCTION viscvt(V, T, P, ireg)
+  REAL(SRK), INTENT(IN) :: V
+  REAL(SRK), INTENT(IN) :: T
   REAL(SRK), OPTIONAL, INTENT(IN) :: P
   INTEGER(SIK), OPTIONAL, INTENT(IN) :: ireg
   REAL(SRK) :: viscvt
@@ -1847,7 +1892,7 @@ FUNCTION viscvt(V, T, P, IREG)
          'P [MPa] = ', P, &
          'T [K] = ', T, &
          'IREG = ', iregInt
-!TODO      CALL exc%raiseFatalError(trim(msg))
+      CALL eWaterProp%raiseFatalError(trim(msg))
     ENDIF
   ENDIF
 
@@ -1909,7 +1954,7 @@ FUNCTION viscvt(V, T, P, IREG)
   !        Dh=(Dr-1.0_SRK)**J(ii)
   !        u1=u1+Th*Dh*H(ii)
   !      ENDDO
-  u1 = exp(Dr*u1)
+  u1 = EXP(Dr*u1)
 
   !> The critical heat enhancement factor \f$\mu_{2}=1\f$ for increased numerical
   !> computations as recommended for Industrial Application in section 3
@@ -1920,8 +1965,8 @@ FUNCTION viscvt(V, T, P, IREG)
   !> \f]
   viscvt = u0*u1*1E-6_SRK ! Convert from uPa-s to Pa-s
 ENDFUNCTION viscvt
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of thermal conductivity for all regions
 !> Reference 4
 !> @param P Pressure in bar
@@ -1929,10 +1974,12 @@ ENDFUNCTION viscvt
 !> @param T Temperature in Kelvin
 !> @param ireg flow regime ID
 !> @return \f$\lambda\f$ W/m-K
-!===============================================================================
+!>
 FUNCTION thconvt(P, V, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: V
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, V, T
   REAL(SRK) :: thconvt
 
   CHARACTER(LEN=MAX_CHAR_LEN) :: msg
@@ -1976,7 +2023,7 @@ FUNCTION thconvt(P, V, T, ireg)
   REAL(SRK), PARAMETER :: &! Parameters from table 3
     lambda = 177.8514_SRK, qd = 1.0_SRK/(0.40_SRK), T_crit = 1.5_SRK, &
     Gamma_o = 0.06_SRK, u_g = 0.630_SRK/1.239_SRK, xi_o = 0.13_SRK, &
-    pi = 4.0_SRK*atan(1.0_SRK) ! This is just pi(numerical const.)
+    pi = 4.0_SRK*ATAN(1.0_SRK) ! This is just pi(numerical const.)
 
   REAL(SRK), PARAMETER ::  u_ref = 1.0E-6_SRK ! Reference Viscosity [Pa-s]
 
@@ -2008,8 +2055,7 @@ FUNCTION thconvt(P, V, T, ireg)
        "Pressure: [MPa]", P, &
        "Temperature: [K]", T, &
        "IREG: ", iregInt
-       STOP 1
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 
   ! Normalize Values
@@ -2057,7 +2103,7 @@ FUNCTION thconvt(P, V, T, ireg)
   !           k1=k1+Th*Dh*L1(i,j)
   !         ENDDO
   !       ENDDO
-  k1 = exp(Dr*k1)
+  k1 = EXP(Dr*k1)
 
   !> Calculate \f$\bar{\lambda}_{2}\f$ using equation 18 and the industrial formulation recommendations
   !> \f[
@@ -2102,7 +2148,7 @@ FUNCTION thconvt(P, V, T, ireg)
        "Temperature: [K]", T, &
        "IREG: ", iregInt
        STOP
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 
   ! Supporting Variables / dimmensionless properties
@@ -2116,7 +2162,7 @@ FUNCTION thconvt(P, V, T, ireg)
   IF (y < 1.2E-7_SRK) THEN
     z = 0.0_SRK
   ELSE
-    z = 2.0_SRK/(pi*y)*(((1.0_SRK - 1.0_SRK/cp_cv)*atan(y) + y/cp_cv) - (1.0_SRK - exp(-1.0_SRK/(1.0_SRK/y + y*y/(3.0_SRK*Dr*Dr)))))
+    z = 2.0_SRK/(pi*y)*(((1.0_SRK - 1.0_SRK/cp_cv)*ATAN(y) + y/cp_cv) - (1.0_SRK - EXP(-1.0_SRK/(1.0_SRK/y + y*y/(3.0_SRK*Dr*Dr)))))
   ENDIF
   IF (z < 0.0_SRK) THEN
     z = 0.0_SRK
@@ -2135,36 +2181,32 @@ FUNCTION thconvt(P, V, T, ireg)
   !> \f]
   thconvt = (k0*k1 + k2)*1.0E-3_SRK ! Conversion factor from mW to W
 ENDFUNCTION thconvt
-
+!
 !===============================================================================
 ! Section: Derivative Wrappers
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculates derivative of Specific Volume with respect to Enthalpy
 !> \f$\left(\frac{\partial v}{\partial h}\right)_{P}\f$
 !> Always evaluated using a chain rule
 !> @param P Pressure in MPa
-!> @param T Temperature in C
+!> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative m^3/kg/(kJ/kg)
-!===============================================================================
-FUNCTION dvdh_if97(P, T, ireg)
-  INTEGER(SIK), INTENT(IN) :: ireg ! Fluid Region. Put 0 if unknown and no assumptions
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [C]
-  REAL(SRK) :: dvdh_if97
+!>
+FUNCTION dvdh(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  INTEGER(SIK), INTENT(IN) :: ireg
+  REAL(SRK) :: dvdh
 
-  REAL(SRK) :: Tk ! Temp. in [K], Specific Volume [m^3/kg]
-  REAL(SRK) :: dhdt, dvdt ! Analytical Derivatives to chain rule
-  REAL(SRK), PARAMETER :: dH = 1.0E-6_SRK ! Pertubation value for taylor series [MPa]
+  REAL(SRK) :: dhdt_val, dvdt_val ! Analytical Derivatives to chain rule
   INTEGER(SIK) :: iregInt
-
-  ! Temperature in Kelvin
-  Tk = T + 273.15_SRK
 
   ! Determine the fluid region if necessary
   IF (ireg == 0) THEN
-    CALL regsopt(P, Tk, iregInt)
+    CALL regsopt(P, T, iregInt)
   ELSE
     iregInt = ireg
   ENDIF
@@ -2174,39 +2216,37 @@ FUNCTION dvdh_if97(P, T, ireg)
   !> \left(\frac{\partial v}{\partial h}\right)_{P}=
   !> \frac{\left(\frac{\partial v}{\partial T}\right)}{ \left(\frac{\partial h}{\partial T}\right) }|_{P}
   !> \f]
-  dhdt = dhdt_if97(P, T, iregInt)
-  dvdt = dvdt_if97(P, T, iregInt)
+  dhdt_val = dhdt(P, T, iregInt)
+  dvdt_val = dvdt(P, T, iregInt)
 
   ! Partial Derivative assuming different constant properties
-  !dvdh_if97= ( dvdp/dhdp ) + ( dvdt/dhdt ) ! Total Partial (variable pressure and temperature)
-  !dvdh_if97= ( dvdp/dhdp )                 ! Constant Temperature
-  dvdh_if97 = (dvdt/dhdt)  ! Constant Pressure
-ENDFUNCTION dvdh_if97
-
-!===============================================================================
+  !dvdh= ( dvdp/dhdp ) + ( dvdt/dhdt ) ! Total Partial (variable pressure and temperature)
+  !dvdh= ( dvdp/dhdp )                 ! Constant Temperature
+  dvdh = (dvdt_val/dhdt_val)  ! Constant Pressure
+ENDFUNCTION dvdh
+!
+!-------------------------------------------------------------------------------
 !> Calculates derivative of Enthalpy with respect to Temperature at constant Pressure
 !> \f$\left(\frac{\partial h}{\partial T}\right)_{P}\f$
 !> If iproperties = 2, then the derivative is evaluated as a second order accurate central finite difference of a first derivative
 !> @param P Pressure in MPa
-!> @param T Temperature in C
+!> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative (kJ/kg)/K
-!===============================================================================
-FUNCTION dhdt_if97(P, T, ireg)
-  INTEGER(SIK), INTENT(IN) :: ireg ! Fluid Region. Put 0 if unknown and no assumptions
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [C]
-  REAL(SRK) :: dhdt_if97
+!>
+FUNCTION dhdt(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  INTEGER(SIK), INTENT(IN) :: ireg
+  REAL(SRK) :: dhdt
 
-  REAL(SRK) :: Tk, H1, H2 ! Temp. in [K],  Enthalpies 1 and 2 [kJ/kg]
+  REAL(SRK) :: H1, H2 ! Enthalpies 1 and 2 [kJ/kg]
   REAL(SRK), PARAMETER :: dT = 1.0E-6_SRK ! Pertubation value for taylor series [K]
   INTEGER(SIK) :: iregInt
 
-  ! Temperature in Kelvin
-  Tk = T + 273.15_SRK
-
   ! Determine the fluid region if necessary
   IF (ireg == 0) THEN
-    CALL regsopt(P, Tk, iregInt)
+    CALL regsopt(P, T, iregInt)
   ELSE
     iregInt = ireg
   ENDIF
@@ -2216,46 +2256,44 @@ FUNCTION dhdt_if97(P, T, ireg)
     !> \f[
     !> \left(\frac{\partial h}{\partial T}\right)_{P}=c_{p}(P,T)
     !> \f]
-    dhdt_if97 = cppt(P, Tk, iregInt) ! [ kJ/(kg-MPa) ]
+    dhdt = cppt(P, T, iregInt) ! [ kJ/(kg-MPa) ]
   ELSEIF (expr_opt == 2) THEN
     !> Second Order Accurate Taylor Series Approximation
     !> \f[
     !> \left(\frac{\partial h}{\partial T}\right)_{P} \approx
     !> \frac{h(P,T+\Delta T)-h(P,T-\Delta T)}{2\Delta T}
     !> \f]
-    H1 = hpt(P, Tk + dT, iregInt) ! Point ahead  [ kJ/(kg-MPa) ]
-    H2 = hpt(P, Tk - dT, iregInt) ! Point behind [ kJ/(kg-MPa) ]
-    dhdt_if97 = (H1 - H2)/(2*dT) ! [ kJ/(kg-MPa) ]
+    H1 = hpt(P, T + dT, iregInt) ! Point ahead  [ kJ/(kg-MPa) ]
+    H2 = hpt(P, T - dT, iregInt) ! Point behind [ kJ/(kg-MPa) ]
+    dhdt = (H1 - H2)/(2*dT) ! [ kJ/(kg-MPa) ]
   ELSE
-    dhdt_if97 = 0.0_SRK
+    dhdt = 0.0_SRK
     REQUIRE(.FALSE.)
   ENDIF
-ENDFUNCTION dhdt_if97
-
-!===============================================================================
+ENDFUNCTION dhdt
+!
+!-------------------------------------------------------------------------------
 !> Calculates derivative of Enthalpy with respect to Pressure at constant Temperature
 !> \f$\left(\frac{\partial h}{\partial P}\right)_{T}\f$
 !> If iproperties = 2, then the derivative is evaluated as a second order accurate central finite difference of a first derivative
 !> @param P Pressure in MPa
-!> @param T Temperature in C
+!> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative (kJ/kg)/MPa
-!===============================================================================
-FUNCTION dhdp_if97(P, T, ireg)
-  INTEGER(SIK), INTENT(IN) :: ireg ! Fluid Region. Put 0 if unknown and no assumptions
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [C]
-  REAL(SRK) :: dhdp_if97
+!>
+FUNCTION dhdp(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  INTEGER(SIK), INTENT(IN) :: ireg
+  REAL(SRK) :: dhdp
 
-  REAL(SRK) :: Tk, V, H1, H2 ! Temp. in [K], Specific Volume [m^3/kg] and Enthalpies 1 and 2 [kJ/kg]
+  REAL(SRK) :: V, H1, H2 ! Specific Volume [m^3/kg] and Enthalpies 1 and 2 [kJ/kg]
   REAL(SRK), PARAMETER :: dP = 1.0E-6_SRK ! Pertubation value for taylor series [MPa]
   INTEGER(SIK) :: iregInt
 
-  ! Temperature in Kelvin
-  Tk = T + 273.15_SRK
-
   ! Determine the fluid region if necessary
   IF (ireg == 0) THEN
-    CALL regsopt(P, Tk, iregInt)
+    CALL regsopt(P, T, iregInt)
   ELSE
     iregInt = ireg
   ENDIF
@@ -2265,47 +2303,45 @@ FUNCTION dhdp_if97(P, T, ireg)
      !> \f[
      !> \left(\frac{\partial h}{\partial P}\right)_{T}(P,v,T)
      !> \f]
-     V = vpt(P, Tk, iregInt)
-     dhdp_if97 = dhdppt(P, V, Tk, iregInt) ! [ kJ/(kg-MPa) ]
+     V = vpt(P, T, iregInt)
+     dhdp = dhdppt(P, V, T, iregInt) ! [ kJ/(kg-MPa) ]
   ELSEIF (expr_opt == 2) THEN
     !> Second Order Accurate Taylor Series Approximation
     !> \f[
     !> \left(\frac{\partial h}{\partial P}\right)_{T} \approx
     !> \frac{h(P+\Delta P,T)-h(P-\Delta P,T)}{2\Delta P}
     !> \f]
-    H1 = hpt(P + dp, Tk, iregInt) ! Point ahead  [ kJ/(kg-MPa) ]
-    H2 = hpt(P - dp, Tk, iregInt) ! Point behind [ kJ/(kg-MPa) ]
-    dhdp_if97 = (H1 - H2)/(2*dP) ! [ kJ/(kg-MPa) ]
+    H1 = hpt(P + dp, T, iregInt) ! Point ahead  [ kJ/(kg-MPa) ]
+    H2 = hpt(P - dp, T, iregInt) ! Point behind [ kJ/(kg-MPa) ]
+    dhdp = (H1 - H2)/(2*dP) ! [ kJ/(kg-MPa) ]
   ELSE
-    dhdp_if97 = 0.0_SRK
+    dhdp = 0.0_SRK
     REQUIRE(.FALSE.)
   ENDIF
-ENDFUNCTION dhdp_if97
-
-!===============================================================================
+ENDFUNCTION dhdp
+!
+!-------------------------------------------------------------------------------
 !> Calculates derivative of Specific Volume with respect to Pressure at constant Temperature
 !> \f$\left(\frac{\partial v}{\partial P}\right)_{T}\f$
 !> If iproperties = 2, then the derivative is evaluated as a second order accurate central finite difference of a first derivative
 !> @param P Pressure in MPa
-!> @param T Temperature in C
+!> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative (m^3/kg)/MPa
-!===============================================================================
-FUNCTION dvdp_if97(P, T, ireg)
-  INTEGER(SIK), INTENT(IN) :: ireg ! Fluid Region. Put 0 if unknown and no assumptions
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [C]
-  REAL(SRK) :: dvdp_if97
+!>
+FUNCTION dvdp(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  INTEGER(SIK), INTENT(IN) :: ireg
+  REAL(SRK) :: dvdp
 
-  REAL(SRK) :: Tk, V, V1, V2  ! Temp. in [K], Specific Volume [m^3/kg] at Current P,T and Taylor Points 1 and 2
+  REAL(SRK) :: V, V1, V2  ! Specific Volume [m^3/kg] at Current P,T and Taylor Points 1 and 2
   REAL(SRK), PARAMETER :: dP = 1.0E-6_SRK
   INTEGER(SIK) :: iregInt
 
-  ! Temperature in Kelvin
-  Tk = T + 273.15_SRK
-
   ! Determine the fluid region if necessary
   IF (ireg == 0) THEN
-    CALL regsopt(P, Tk, iregInt)
+    CALL regsopt(P, T, iregInt)
   ELSE
     iregInt = ireg
   ENDIF
@@ -2315,47 +2351,45 @@ FUNCTION dvdp_if97(P, T, ireg)
     !> \f[
     !> \left(\frac{\partial v}{\partial P}\right)_{T}(P,v,T)
     !> \f]
-    V = vpt(P, Tk, iregInt) ! [m^3/kg]
-    dvdp_if97 = dvdppt(P, V, Tk, iregInt) ! [m^3/(kg-MPa)]
+    V = vpt(P, T, iregInt) ! [m^3/kg]
+    dvdp = dvdppt(P, V, T, iregInt) ! [m^3/(kg-MPa)]
   ELSEIF (expr_opt == 2) THEN
     !> Second Order Accurate Taylor Series Approximation
     !> \f[
     !> \left(\frac{\partial v}{\partial P}\right)_{T} \approx
     !> \frac{v(P+\Delta P,T)-v(P-\Delta P,T)}{2\Delta P}
     !> \f]
-    V1 = vpt(P + dp, Tk, iregInt) ! Point Ahead [m^3/kg]
-    V2 = vpt(P - dp, Tk, iregInt) ! Point Behind [m^3/kg]
-    dvdp_if97 = (V1 - V2)/(2*dP) ! [m^3/(kg-MPa)]
+    V1 = vpt(P + dp, T, iregInt) ! Point Ahead [m^3/kg]
+    V2 = vpt(P - dp, T, iregInt) ! Point Behind [m^3/kg]
+    dvdp = (V1 - V2)/(2*dP) ! [m^3/(kg-MPa)]
   ELSE
-    dvdp_if97 = 0.0_SRK
+    dvdp = 0.0_SRK
     REQUIRE(.FALSE.)
   ENDIF
-ENDFUNCTION dvdp_if97
-
-!===============================================================================
+ENDFUNCTION dvdp
+!
+!-------------------------------------------------------------------------------
 !> Calculates derivative of Specific Volume with respect to Temperature at constant Pressure
 !> \f$\left(\frac{\partial v}{\partial T}\right)_{P}\f$
 !> If iproperties = 2, then the derivative is evaluated as a second order accurate central finite difference of a first derivative
 !> @param P Pressure in MPa
-!> @param T Temperature in C
+!> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative (m^3/kg)/K
-!===============================================================================
-FUNCTION dvdt_if97(P, T, ireg)
-  INTEGER(SIK), INTENT(IN) :: ireg ! Fluid Region. Put 0 if unknown and no assumptions
-  REAL(SRK), INTENT(IN) :: P, T ! Pressure [MPa], Temperature [C]
-  REAL(SRK) :: dvdt_if97
+!>
+FUNCTION dvdt(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  INTEGER(SIK), INTENT(IN) :: ireg
+  REAL(SRK) :: dvdt
 
-  REAL(SRK) :: Tk, V, V1, V2
+  REAL(SRK) :: V, V1, V2
   REAL(SRK), PARAMETER :: dT = 1.0E-6_SRK
   INTEGER(SIK) :: iregInt
 
-  ! Temperature in Kelvin
-  Tk = T + 273.15_SRK
-
   ! Determine the fluid region if necessary
   IF (ireg == 0) THEN
-    CALL regsopt(P, Tk, iregInt)
+    CALL regsopt(P, T, iregInt)
   ELSE
     iregInt = ireg
   ENDIF
@@ -2365,27 +2399,28 @@ FUNCTION dvdt_if97(P, T, ireg)
     !> \f[
     !> \left(\frac{\partial v}{\partial T}\right)_{P}(P,v,T)
     !> \f]
-     V = vpt(P, Tk, iregInt) ! [m^3/kg]
-     dvdt_if97 = dvdtpt(P, V, Tk, iregInt) ! [m^3/(kg-K)]
+     V = vpt(P, T, iregInt) ! [m^3/kg]
+     dvdt = dvdtpt(P, V, T, iregInt) ! [m^3/(kg-K)]
   ELSEIF (expr_opt == 2) THEN
     !> Second Order Accurate Taylor Series Approximation
     !> \f[
     !> \left(\frac{\partial v}{\partial T}\right)_{P} \approx
     !> \frac{v(P,T+\Delta T)-v(P,T-\Delta T)}{2\Delta T}
     !> \f]
-    V1 = vpt(P, Tk + dT, iregInt) ! [m^3/(kg-K)]
-    V2 = vpt(P, Tk - dT, iregInt) ! [m^3/(kg-K)]
-    dvdt_if97 = (V1 - V2)/(2*dT) ! [m^3/(kg-K)]
+    V1 = vpt(P, T + dT, iregInt) ! [m^3/(kg-K)]
+    V2 = vpt(P, T - dT, iregInt) ! [m^3/(kg-K)]
+    dvdt = (V1 - V2)/(2*dT) ! [m^3/(kg-K)]
   ELSE
-    dvdt_if97 = 0.0_SRK
+    dvdt = 0.0_SRK
     REQUIRE(.FALSE.)
   ENDIF
-ENDFUNCTION dvdt_if97
+ENDFUNCTION dvdt
+!
 !===============================================================================
 ! Section: Property Derivatives
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Analytical derivative of Specific Volume with respect to Pressure at constant Temperature
 !> \f$\left(\frac{\partial v}{\partial T}\right)_{P}\f$
 !> If iproperties = 2, then the derivative is evaluated as a second order accurate central finite difference of a first derivative
@@ -2394,10 +2429,12 @@ ENDFUNCTION dvdt_if97
 !> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative (m^3/kg)/MPa
-!===============================================================================
-FUNCTION dvdppt(P, V, T, IREG)
+!>
+FUNCTION dvdppt(P, V, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: V
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, V, T
   REAL(SRK) :: dvdppt
 
   REAL(SRK) :: pi, tau, delta, rho, & ! Normalized Pressure, Temperature, and Density
@@ -2479,11 +2516,11 @@ FUNCTION dvdppt(P, V, T, IREG)
     ! Not supposed to be saturated exactly (9), should be either
     ! liquid (1) or vapor (2) at saturated P and T
     WRITE (msg, *) "Derivative dv/dp is out of bounds", P, T, iregInt
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION dvdppt
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Analytical derivative of Enthalpy with respect to Pressure at constant Temperature
 !> \f$\left(\frac{\partial h}{\partial T}\right)_{P}\f$
 !> If iproperties = 2, then the derivative is evaluated as a second order accurate central finite difference of a first derivative
@@ -2492,10 +2529,12 @@ ENDFUNCTION dvdppt
 !> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative (kJ/kg)/MPa
-!===============================================================================
-FUNCTION dhdppt(P, V, T, IREG)
+!>
+FUNCTION dhdppt(P, V, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: V
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, V, T
   REAL(SRK) :: dhdppt
 
   CHARACTER(LEN=MAX_CHAR_LEN) :: msg
@@ -2591,11 +2630,11 @@ FUNCTION dhdppt(P, V, T, IREG)
     ! Not supposed to be saturated exactly (9), should be either
     ! liquid (1) or vapor (2) at saturated P and T
     WRITE (msg, *) "Derivative dh/dp is out of bounds", P, T, iregInt
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION dhdppt
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Analytical derivative of Specific Volume with respect to Temperature at constant Pressure
 !> \f$\left(\frac{\partial v}{\partial T}\right)_{P}\f$
 !> If iproperties = 2, then the derivative is evaluated as a second order accurate central finite difference of a first derivative
@@ -2604,10 +2643,12 @@ ENDFUNCTION dhdppt
 !> @param T Temperature in K
 !> @param ireg region number [1,2,3,5]
 !> @return derivative (m^3/kg)/K
-!===============================================================================
+!>
 FUNCTION dvdtpt(P, V, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: V
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(IN) :: ireg
-  REAL(SRK), INTENT(IN) :: P, V, T
   REAL(SRK) :: dvdtpt
 
   REAL(SRK) :: pi, tau, delta, rho, &  ! Normalized Pressure, Temperature, and Density
@@ -2699,20 +2740,20 @@ FUNCTION dvdtpt(P, V, T, ireg)
     ! Not supposed to be saturated exactly (9), should be either
     ! liquid (1) or vapor (2) at saturated P and T
     WRITE (msg, *) "Derivative dv/dt is out of bounds", P, T, iregInt
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION dvdtpt
-
+!
 !===============================================================================
 ! Section: Saturation Temperature and Pressure Functions
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Saturated Temperature
 !> Reference 1 Section 8.2 equation 31
 !> @param P Pressure in MPa
 !> @return Tsat Saturated Temperature in K
-!===============================================================================
+!>
 FUNCTION tsatpn(P)
   REAL(SRK), INTENT(IN) :: P
   REAL(SRK) :: tsatpn
@@ -2746,16 +2787,16 @@ FUNCTION tsatpn(P)
        "tsatpn(P) Pressure is out of bounds "// &
        "P [MPa]: 5.0E-4 < P < 30.0 "// &
        "P [MPa]: ", P
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION tsatpn
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Saturated Pressure
 !> Reference 1 Section 8.1 equations 29-30
 !> @param T Saturated Temperature in K
 !> @return Psat Saturated Pressure in MPa
-!===============================================================================
+!>
 FUNCTION psattn(ts)
   REAL(SRK), INTENT(IN) :: ts
   REAL(SRK) psattn
@@ -2788,18 +2829,18 @@ FUNCTION psattn(ts)
        "Temperature is out of bounds "// &
        " 270.0 < ts < 650.0 [K] "// &
        "Temperature [K] ", ts
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION psattn
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation for the temperature at the boundary between regions 2 and 3
 !> Reference 1
 !> @param P Pressure in MPa
 !> @return T23 Temperature in K
-!===============================================================================
-FUNCTION fb23p(p)
-  REAL(SRK), INTENT(IN) :: P ! MPa
+!>
+FUNCTION fb23p(P)
+  REAL(SRK), INTENT(IN) :: P
   REAL(SRK) :: fb23p
 
   CHARACTER(LEN=MAX_CHAR_LEN) :: msg
@@ -2812,36 +2853,37 @@ FUNCTION fb23p(p)
        "fb23p(p): Pressure is out of bounds "// &
        " p < 13.91884 MPa "// &
        "Pressure [MPa] ", p
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 ENDFUNCTION fb23p
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation for the pressure at the boundary between regions 2 and 3
 !> Reference 1
 !> @param  T Temperature in K
 !> @return P23 Pressure in MPa
-!===============================================================================
+!>
 FUNCTION FB23(T)
   REAL(SRK), INTENT(IN) :: T
   REAL(SRK) :: FB23
 
   FB23 = (0.10192970039326E-02_SRK*T - 0.11671859879975E+01_SRK)*T + 0.34805185628969E+03_SRK
 ENDFUNCTION FB23
-
+!
 !===============================================================================
 ! Section: Backwards Equations
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Backward calculations for the temperature given pressure and enthalpy
 !> Reference 1
 !> @param P Pressure in MPa
 !> @param h Enthalpy in kJ/kg
 !> @return T Temperature in K
-!===============================================================================
-RECURSIVE FUNCTION tph(p, h, ireg)
-  REAL(SRK), INTENT(IN) :: P, H
+!>
+RECURSIVE FUNCTION tph(P, h, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: h
   INTEGER(SIK), INTENT(IN) :: ireg
   REAL(SRK) :: tph
 
@@ -2881,7 +2923,7 @@ RECURSIVE FUNCTION tph(p, h, ireg)
        "IREG: ", iregInt, &
        "Pressure [MPa]: ", p, &
        "Enthalpy [kJ/kg]: ", h
-!TODO    CALL exc%raiseFatalError(trim(msg))
+    CALL eWaterProp%raiseFatalError(trim(msg))
   ENDIF
 
   IF ((iregInt == 1) .AND. (p <= 16.529164253_SRK)) THEN
@@ -2894,17 +2936,18 @@ RECURSIVE FUNCTION tph(p, h, ireg)
     IF (tph < tsat) tph = tsat + 1.E-5
   ENDIF
 ENDFUNCTION tph
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Backward calculations for the temperature given pressure and enthalpy for
 !> region 1
 !> Reference 1
 !> @param P Pressure in MPa
 !> @param h Enthalpy in kJ/kg
 !> @return T Temperature in K
-!===============================================================================
-FUNCTION tph1n(p, h)
-  REAL(SRK), INTENT(IN) :: p, h ! Pressure [MPa], Enthalpy [kJ/kg]
+!>
+FUNCTION tph1n(P, h)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: h
   REAL(SRK) :: tph1n
 
   INTEGER(SIK), PARAMETER, DIMENSION(20) :: &
@@ -2945,17 +2988,18 @@ FUNCTION tph1n(p, h)
   ENDDO
   tph1n = tph1n*1.0_SRK ! Un-normalize tph1n (T*=1K)
 ENDFUNCTION tph1n
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Backward calculations for the temperature given pressure and enthalpy for
 !> region 2
 !> Reference 1
 !> @param P Pressure in MPa
 !> @param h Enthalpy in kJ/kg
 !> @return T Temperature in K
-!===============================================================================
-FUNCTION tph2n(p, h)
-  REAL(SRK), INTENT(IN) :: p, h
+!>
+FUNCTION tph2n(P, h)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: h
   REAL(SRK) ::tph2n
 
   ! B2bc-equation, table 19
@@ -3113,17 +3157,18 @@ FUNCTION tph2n(p, h)
     ENDIF
   ENDIF
 ENDFUNCTION tph2n
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Backward calculations for the temperature given pressure and enthalpy for
 !> region 5
 !> Reference 1
 !> @param P Pressure in MPa
 !> @param h Enthalpy in kJ/kg
 !> @return T Temperature in K
-!===============================================================================
-FUNCTION tph5n(p, h)
-  REAL(SRK), INTENT(IN) :: p, h
+!>
+FUNCTION tph5n(P, h)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: h
   REAL(SRK) ::tph5n
 
   REAL(SRK), PARAMETER :: eps = 1.E-6
@@ -3144,12 +3189,12 @@ FUNCTION tph5n(p, h)
   CALL wnph3(t1, t2, 5, h, p, eps, x, ix)
   tph5n = x
 ENDFUNCTION tph5n
-
+!
 !===============================================================================
 ! Section: Fluid Region Functions
 !===============================================================================
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of fluid region number based off of pressure and temperature
 !> Reference 1.
 !>  -# Subcooled Liquid
@@ -3160,9 +3205,10 @@ ENDFUNCTION tph5n
 !> @param P Pressure in MPa
 !> @param T Temperature in K
 !> @param ireg Fluid Region ID number
-!===============================================================================
-SUBROUTINE regsopt(p, t, ireg)
-  REAL(SRK), INTENT(IN) :: p, t
+!>
+SUBROUTINE regsopt(P, T, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(INOUT) :: ireg
 
   REAL(SRK), PARAMETER :: &
@@ -3230,10 +3276,9 @@ SUBROUTINE regsopt(p, t, ireg)
   told = t
   pold = p
   iregold = ireg
-
 ENDSUBROUTINE regsopt
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of fluid region number based off of pressure and enthalpy
 !> Reference 1.
 !>  -# Subcooled Liquid
@@ -3244,9 +3289,10 @@ ENDSUBROUTINE regsopt
 !> @param P Pressure in MPa
 !> @param h Enthalpy in kJ/kg
 !> @param ireg Fluid Region ID number
-!===============================================================================
-SUBROUTINE regsph(p, h, ireg)
-  REAL(SRK), INTENT(IN) :: p, h
+!>
+SUBROUTINE regsph(P, h, ireg)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: h
   INTEGER(SIK), INTENT(INOUT) :: ireg
 
   REAL(SRK), PARAMETER :: pgr = 16.52916425260452_SRK, tgr13 = 623.15E+0_SRK, eps = 1.0E-10_SRK
@@ -3258,12 +3304,12 @@ SUBROUTINE regsph(p, h, ireg)
 
   IF ((ABS(h - hold) < eps) .AND. (ABS(p - pold) < eps)) THEN
     ireg = iregold
-    goto 999
+    RETURN
   ENDIF
 
   IF ((p > 100.0_SRK) .OR. (p < 5.0E-4_SRK) .OR. (h < -0.05_SRK) .OR. (h > 7.4E3_SRK)) THEN
      ireg = 0
-     goto 999
+     RETURN
   ENDIF
 
   ireg = 0
@@ -3350,19 +3396,20 @@ SUBROUTINE regsph(p, h, ireg)
     ENDIF
   ENDIF
 
-999   continue
-
   hold = h
   pold = p
   iregold = ireg
 ENDSUBROUTINE regsph
-
+!
 !===============================================================================
 ! Section: Region 3 Iterative Functions
 !===============================================================================
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
 FUNCTION vpt3n(P, T)
-  REAL(SRK), INTENT(IN) :: P, T
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   REAL(SRK) :: vpt3n
 
   REAL(SRK), SAVE :: P_old = 0.0_SRK, T_old = 0.0_SRK, vpt3n_old = 0.0_SRK
@@ -3383,10 +3430,12 @@ FUNCTION vpt3n(P, T)
   T_old = T
   vpt3n_old = VPT3N
 ENDFUNCTION vpt3n
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
-SUBROUTINE reg3s(p, t, ireg3)
-  REAL(SRK), INTENT(IN) :: p, t
+SUBROUTINE reg3s(P, T, ireg3)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(OUT) :: ireg3
 
   REAL(SRK) :: ts, pg
@@ -3419,10 +3468,12 @@ SUBROUTINE reg3s(p, t, ireg3)
     ireg3 = 7
   ENDIF
 ENDSUBROUTINE reg3s
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
 FUNCTION vest3(P, T, ireg3)
-  REAL(SRK), INTENT(IN) :: P, T
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
   INTEGER(SIK), INTENT(INOUT) :: ireg3
   REAL(SRK) :: vest3
 
@@ -3797,16 +3848,20 @@ FUNCTION vest3(P, T, ireg3)
     vest3 = vpt3n
   ENDIF
 ENDFUNCTION vest3
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Returns the specific volume of the phase.  Works for saturated liquid or
 !> vapor.
 !> @param P    The saturation pressure
 !> @param T    The saturation temperature
 !> @param DEST The density of the fluid [kg/m**3]
-!===============================================================================
+!> @param EPS  TODO - what is EPS
+!>
 FUNCTION diter3(P, T, DEST, EPS)
-  REAL(SRK), INTENT(IN) :: P, T, DEST, EPS
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  REAL(SRK), INTENT(IN) :: DEST
+  REAL(SRK), INTENT(IN) :: EPS
   REAL(SRK) :: diter3
 
   REAL(SRK) :: d1v, d2v, d1, d2, x
@@ -3832,10 +3887,13 @@ FUNCTION diter3(P, T, DEST, EPS)
   CALL WNPT3(d1, d2, p, t, eps, x)
   DITER3 = x
 ENDFUNCTION diter3
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
 FUNCTION NULLP3N(D, T, P)
-  REAL(SRK), INTENT(IN) :: D, T, P
+  REAL(SRK), INTENT(IN) :: D
+  REAL(SRK), INTENT(IN) :: T
+  REAL(SRK), INTENT(IN) :: P
   REAL(SRK) :: NULLP3N
 
   REAL(SRK) :: V
@@ -3843,10 +3901,15 @@ FUNCTION NULLP3N(D, T, P)
   V = 1.0_SRK/D
   NULLP3N = PVT3N(V, T) - P
 ENDFUNCTION nullp3n
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
 SUBROUTINE WNPT3(XA, XB, P, T, EPS, X)
-  REAL(SRK), INTENT(IN) :: XA, XB, P, T, EPS
+  REAL(SRK), INTENT(IN) :: XA
+  REAL(SRK), INTENT(IN) :: XB
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  REAL(SRK), INTENT(IN) :: EPS
   REAL(SRK), INTENT(OUT) :: X
 
   REAL(SRK) :: X1, F1, F2, F3, X2, P1, P3, X3
@@ -3863,7 +3926,7 @@ SUBROUTINE WNPT3(XA, XB, P, T, EPS, X)
     IF (F1 /= F3) THEN
       X = X1 + (X3 - X1)*F1/(F1 - F3)
     ELSE
-      EXIT !TODO CHECK
+      EXIT
     ENDIF
     IF (X < 0.0_SRK) X = (X1 + X3)/2.0_SRK
     IF (ABS(X) < 1.E-8) THEN
@@ -3908,16 +3971,17 @@ SUBROUTINE WNPT3(XA, XB, P, T, EPS, X)
     F1 = F2
   ENDDO
 ENDSUBROUTINE WNPT3
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
-FUNCTION tph3n(p, h)
-  REAL(SRK), INTENT(IN) :: p, h
+FUNCTION tph3n(P, h)
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: h
   REAL(SRK) :: tph3n
-
 
   REAL(SRK) :: eps, TE
   REAL(SRK) :: T1, T2, TG, X
-  INTEGER(SIK) :: IX, IF
+  INTEGER(SIK) :: IX, i2
   REAL(SRK), PARAMETER :: &
     hc = 2087.54684511650_SRK, &
     a1 = 646.836937239618_SRK, &
@@ -3957,8 +4021,8 @@ FUNCTION tph3n(p, h)
     T2 = TE*1.004_SRK
   ENDIF
 
-  IF = 3  !TODO rename variable
-  CALL wnph3(t1, t2, IF, h, p, eps, x, ix)
+  i2 = 3
+  CALL wnph3(t1, t2, i2, h, p, eps, x, ix)
 
   IF (ix <= 0) THEN
      tph3n = x
@@ -3966,11 +4030,14 @@ FUNCTION tph3n(p, h)
      tph3n = 0.0_SRK
   ENDIF
 ENDFUNCTION tph3n
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
-FUNCTION nullh35n(t, p, h, reg)
-  REAL(SRK), INTENT(IN) :: T, P, H
-  INTEGER(SIK), INTENT(IN) :: REG
+FUNCTION nullh35n(T, P, h, reg)
+  REAL(SRK), INTENT(IN) :: T
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: h
+  INTEGER(SIK), INTENT(IN) :: reg
   REAL(SRK) :: nullh35n
 
   REAL(SRK) :: VE
@@ -3982,87 +4049,93 @@ FUNCTION nullh35n(t, p, h, reg)
     NULLH35N = hpt(P, T, 5) - H
   ENDIF
 ENDFUNCTION nullh35n
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
-SUBROUTINE wnph3(xa, xb, reg, p, t, eps, x, ix)
-  REAL(SRK), INTENT(IN) :: xa, xb, p, t, eps
-  REAL(SRK), INTENT(OUT) :: x
+SUBROUTINE wnph3(xa, xb, reg, P, T, eps, x, ix)
+  REAL(SRK), INTENT(IN) :: xa
+  REAL(SRK), INTENT(IN) :: xb
   INTEGER(SIK), INTENT(IN) :: reg
+  REAL(SRK), INTENT(IN) :: P
+  REAL(SRK), INTENT(IN) :: T
+  REAL(SRK), INTENT(IN) :: eps
+  REAL(SRK), INTENT(OUT) :: x
+  INTEGER(SIK),INTENT(OUT) :: ix
 
-  INTEGER(SIK) :: ix
   INTEGER(SIK) :: i, irem
   REAL(SRK) :: x1, x2, x3, f1, f2, f3, p1, p3
 
-  !TODO  reformat after goto/continues are removed
-      x1 = xa
-      f1 = nullh35n(x1, t, p, reg)
-      x3 = xb
-      f3 = nullh35n(x3, t, p, reg)
-      ix = 0
-      DO 100 i = 1, 40
-      IF (f1 /= f3) THEN
-         x = x1 + (x3 - x1)*f1/(f1 - f3)
-      ELSE
-         ix = 3
-         goto 999
-      ENDIF
-      IF (x < 0.0_SRK) x = (x1 + x3)/2.0_SRK
-      IF (ABS(x) < 1.E-8) THEN
-         IF (ABS(x - x1) < eps) return
-      ELSE
-         IF (ABS((x - x1)/x) < eps) return
-      ENDIF
+  x1 = xa
+  f1 = nullh35n(x1, t, p, reg)
+  x3 = xb
+  f3 = nullh35n(x3, t, p, reg)
+  ix = 0
+  DO i = 1, 40
+    IF (f1 /= f3) THEN
+      x = x1 + (x3 - x1)*f1/(f1 - f3)
+    ELSE
+      ix = 3
+      RETURN
+    ENDIF
+    IF (x < 0.0_SRK) x = (x1 + x3)/2.0_SRK
+    IF (ABS(x) < 1.0E-8) THEN
+      IF (ABS(x - x1) < eps) RETURN
+    ELSE
+      IF (ABS((x - x1)/x) < eps) RETURN
+    ENDIF
+    f2 = nullh35n(x, t, p, reg)
+    x2 = x1 - (x1 - x3)/2.0_SRK
+    p1 = f2*f1
+    p3 = f2*f3
+    IF ((p1 < 0.0_SRK) .AND. (p3 < 0.0_SRK)) THEN
+      p1 = ABS(p1)
+      p3 = ABS(p3)
+    ENDIF
+    IF (p1 <= p3) THEN
+      x3 = x1
+      f3 = f1
+    ENDIF
+    x1 = x
+    f1 = f2
+    IF ((x2 - x3)*(x2 - x1) >= 0.0_SRK) CYCLE
+    !      x=(x1+x3)/2.0_SRK
+    IF ((ABS(f1/f3)) <= (0.3_SRK)) THEN
+      x = x1 + ABS(f1/f3)*1.5_SRK*(x3 - x1)
+      irem = 1
+    ELSEIF ((ABS(f1/f3)) >= (3.0_SRK)) THEN
+      irem = 2
+    ELSE
+      x = (x1 + x3)/2.0_SRK
+      irem = 0
+    ENDIF
+    f2 = nullh35n(x, t, p, reg)
+    IF ((((f2*f1) >= 0.0_SRK) .AND. (irem == 1)) .OR. (((f2*f3) >= 0.0_SRK) .AND. (irem == 2))) THEN
+      x = (x1 + x3)/2.0_SRK
       f2 = nullh35n(x, t, p, reg)
-      x2 = x1 - (x1 - x3)/2.0_SRK
-      p1 = f2*f1
-      p3 = f2*f3
-      IF ((p1 < 0.0_SRK) .AND. (p3 < 0.0_SRK)) THEN
-         p1 = ABS(p1)
-         p3 = ABS(p3)
-      ENDIF
-      IF (p1 <= p3) THEN
-         x3 = x1
-         f3 = f1
-      ENDIF
-      x1 = x
-      f1 = f2
-      IF ((x2 - x3)*(x2 - x1) >= 0.0_SRK) goto 100
-      !      x=(x1+x3)/2.0_SRK
-      IF ((ABS(f1/f3)) <= (0.3_SRK)) THEN
-         x = x1 + ABS(f1/f3)*1.5_SRK*(x3 - x1)
-         irem = 1
-      ELSEIF ((ABS(f1/f3)) >= (3.0_SRK)) THEN
-         irem = 2
-      ELSE
-         x = (x1 + x3)/2.0_SRK
-         irem = 0
-      ENDIF
-      f2 = nullh35n(x, t, p, reg)
-      IF ((((f2*f1) >= 0.0_SRK) .AND. (irem == 1)) .OR. (((f2*f3) >= 0.0_SRK) .AND. (irem == 2))) THEN
-         x = (x1 + x3)/2.0_SRK
-         f2 = nullh35n(x, t, p, reg)
-      ENDIF
-      IF (f2*f1 <= f2*f3) THEN
-         x3 = x1
-         f3 = f1
-      ENDIF
-      x1 = x
-      f1 = f2
-100   continue
-      ix = 1
-999   return
+    ENDIF
+    IF (f2*f1 <= f2*f3) THEN
+      x3 = x1
+      f3 = f1
+    ENDIF
+    x1 = x
+    f1 = f2
+  ENDDO
+  ix = 1
 ENDSUBROUTINE wnph3
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculating tsat,saturated vapour and liquid volume for a given p
 !> @param dvout Specific volume of vapor [m**3/kg]
 !> @param dlout Specific volume of liquid [m**3/kg]
 !> @param tin Temperature
 !TODO all inputs need header
-!===============================================================================
+!>
 SUBROUTINE fsatp(dvout, dlout, tout, tin, pin)
-  REAL(SRK), INTENT(IN) :: tin, pin
-  REAL(SRK), INTENT(OUT) :: tout, dvout, dlout
+  REAL(SRK), INTENT(OUT) :: dvout
+  REAL(SRK), INTENT(OUT) :: dlout
+  REAL(SRK), INTENT(OUT) :: tout
+  REAL(SRK), INTENT(IN) :: tin
+  REAL(SRK), INTENT(IN) :: pin
 
   REAL(SRK) :: p, t
   REAL(SRK), PARAMETER :: eps = 1.E-10
@@ -4089,15 +4162,15 @@ SUBROUTINE fsatp(dvout, dlout, tout, tin, pin)
   dvout = diter3(p, t, dve, eps)
   tout = t
 ENDSUBROUTINE fsatp
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Estimates the liquid density for region 3
 !> Returns density [kg/m^3]
 !> @param t The saturation temperature at which liquid density will be evaluated
 !>          [K]
-!===============================================================================
-FUNCTION dlest(t)
-  REAL(SRK), INTENT(IN) :: t
+!>
+FUNCTION dlest(T)
+  REAL(SRK), INTENT(IN) :: T
   REAL(SRK) :: dlest
 
   REAL(SRK), PARAMETER :: &
@@ -4112,7 +4185,8 @@ FUNCTION dlest(t)
   dlest = Dcrit*(1.0_SRK + b1*tauh + b2*tauh*tauh + b3*tauh**5 &
                  + b4*tauh**16 + b5*tauh**43 + b6*tauh**110)
 ENDFUNCTION dlest
-
+!
+!-------------------------------------------------------------------------------
 !TODO needs header
 ! Estimates the vapor density for region 3
 ! Returns density [kg/m^3]
@@ -4133,17 +4207,18 @@ FUNCTION dvest(t)
   dvest = Dcrit*EXP(dh)
 
 ENDFUNCTION dvest
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Specific Volume \f$v\f$
 !> Reference 1
 !> Tables : 31
 !> @param P Pressure in MPa
 !> @param T Temperature in Kelvin
 !> @return \f$v\f$ m^3/kg
-!===============================================================================
+!>
 FUNCTION hvt3n(V, T)
-  REAL(SRK), INTENT(IN) :: V, T ! Spec. Volume [m^3/kg], Temperature [K]
+  REAL(SRK), INTENT(IN) :: V
+  REAL(SRK), INTENT(IN) :: T
   REAL(SRK) ::hvt3n
 
   REAL(SRK) :: delta, tau ! Dimensionless density and temperature
@@ -4156,17 +4231,18 @@ FUNCTION hvt3n(V, T)
   hvt3n = R*T*(tau*phi3(delta, tau, 0, 1) + delta*phi3(delta, tau, 1, 0)) ! [kJ/kg]
 
 ENDFUNCTION hvt3n
-
-!===============================================================================
+!
+!-------------------------------------------------------------------------------
 !> Calculation of Pressure \f$v\f$
 !> Reference 1
 !> Tables : 31
 !> @param P Pressure in MPa
 !> @param T Temperature in Kelvin
 !> @return P [MPa]
-!===============================================================================
+!>
 FUNCTION pvt3n(V, T)
-  REAL(SRK), INTENT(IN) :: V, T ! Spec. Volume [m^3/kg], Temperature [K]
+  REAL(SRK), INTENT(IN) :: V
+  REAL(SRK), INTENT(IN) :: T
   REAL(SRK) :: pvt3n
 
   REAL(SRK) :: delta, tau ! Dimensionless density and temperature
@@ -4178,5 +4254,5 @@ FUNCTION pvt3n(V, T)
   ! Calculate property based off of table 31.
   pvt3n = R*T/V*delta*phi3(delta, tau, 1, 0)*1.0E-3_SRK ! [MPa]
 ENDFUNCTION pvt3n
-
+!
 ENDMODULE IAPWSWaterPropertiesModule
