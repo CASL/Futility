@@ -1312,7 +1312,7 @@ FUNCTION phi_tau(delta, tau)
   INTEGER(SIK) :: i
   REAL(SRK) :: delta_term, tau_term
 
-  REAL(SRK) :: delta_old = 0, tau_old = 0, value_old = 0
+  REAL(SRK),SAVE :: delta_old = 0, tau_old = 0, value_old = 0
   !
   ! Check to see if at the same D/T
   IF (ABS(delta - delta_old) < tolerance .AND. ABS(tau - tau_old) < tolerance) THEN
@@ -1347,8 +1347,8 @@ FUNCTION phi_tau_tau(delta, tau)
 
   INTEGER(SIK) :: i
   REAL(SRK) :: delta_term, tau_term
-!TODO   see if SAVE can be used else, remove these variables
-  REAL(SRK) :: delta_old = 0, tau_old = 0, value_old = 0
+
+  REAL(SRK),SAVE :: delta_old = 0, tau_old = 0, value_old = 0
   !
   ! Check to see if at the same D/T
   IF (ABS(delta - delta_old) < tolerance .AND. ABS(tau - tau_old) < tolerance) THEN
@@ -1383,8 +1383,8 @@ FUNCTION phi_delta_tau(delta, tau)
 
   INTEGER(SIK) :: i
   REAL(SRK) :: delta_term, tau_term
-!TODO   see if SAVE can be used else, remove these variables
-  REAL(SRK) :: delta_old = 0, tau_old = 0, value_old = 0
+
+  REAL(SRK),SAVE :: delta_old = 0, tau_old = 0, value_old = 0
   !
   ! Check to see if at the same D/T
   IF (ABS(delta - delta_old) < tolerance .AND. ABS(tau - tau_old) < tolerance) THEN
@@ -1420,8 +1420,8 @@ FUNCTION phi_delta(delta, tau)
 
   INTEGER(SIK) :: i
   REAL(SRK) :: delta_term, tau_term
-!TODO   see if SAVE can be used else, remove these variables
-  REAL(SRK) :: delta_old = 0, tau_old = 0, value_old = 0
+
+  REAL(SRK),SAVE :: delta_old = 0, tau_old = 0, value_old = 0
   !
   ! Check to see if at the same D and T
   IF (ABS(delta - delta_old) < tolerance .AND. ABS(tau - tau_old) < tolerance) THEN
@@ -1457,8 +1457,8 @@ FUNCTION phi_delta_delta(delta, tau)
 
   INTEGER(SIK) :: i
   REAL(SRK) :: delta_term, tau_term
-!TODO   see if SAVE can be used else, remove these variables
-  REAL(SRK) :: delta_old = 0, tau_old = 0, value_old = 0
+
+  REAL(SRK),SAVE :: delta_old = 0, tau_old = 0, value_old = 0
   !
   ! Check to see if at the same D and T
   IF (ABS(delta - delta_old) < tolerance .AND. ABS(tau - tau_old) < tolerance) THEN
