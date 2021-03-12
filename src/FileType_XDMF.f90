@@ -124,6 +124,40 @@ SUBROUTINE fdelete_XDMFFileType(file)
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
+RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle)
+  CHARACTER(LEN=*),PARAMETER :: myName='create_XDMFMesh_from_file'
+  TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
+  TYPE(XMLElementType), INTENT(INOUT) :: xmle
+  TYPE(XDMFMeshType), POINTER  :: mesh_children(:)
+  TYPE(XMLElementType), POINTER :: xmle_children(:)
+  TYPE(StringType) :: strIn, strOut
+  INTEGER(SIK) :: i
+
+  strIn='Name'
+  CALL xmle%getAttributeValue(strIn,strOut)
+  WRITE(*,*) ADJUSTL(strOut)
+  ! If this mesh has children
+  IF(xmle%hasChildren()) THEN
+    CALL xmle%getChildren(xmle_children)
+    WRITE(*,*) SIZE(xmle_children)
+!    ALLOCATE(mesh_children(SIZE(xmle_children)))
+!    DO i=1,SIZE(xmle_children)
+!      CALL create_XDMFMesh_from_file(mesh_children(i), xmle_children(i))
+!    ENDDO
+  ! If this mesh does not have children it is a leaf on the tree.
+  ! Add vertices, cells, etc.
+  ELSE
+    WRITE(*,*) "   No children"
+  ENDIF
+
+ENDSUBROUTINE create_XDMFMesh_from_file
+
+
+
+
+
+!
+!-------------------------------------------------------------------------------
 FUNCTION importFromDisk_XDMFFileType(thisXDMFFile, strpath) RESULT(mesh)
   CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
@@ -151,9 +185,17 @@ FUNCTION importFromDisk_XDMFFileType(thisXDMFFile, strpath) RESULT(mesh)
   CALL xmle%getChildren(children)
   REQUIRE(SIZE(children) > 0)
   REQUIRE(children(1)%name%upper() == 'DOMAIN')
-  DO i=1, SIZE(children)
-    WRITE(*,*) ADJUSTL(children(i)%name%upper())
+  ! Information
+  CALL children(1)%getChildren(children)
+  REQUIRE(SIZE(children) > 1)
+  REQUIRE(children(1)%name%upper() == 'INFORMATION')
+  ! Create grids
+  DO i = 2, SIZE(children)
+    REQUIRE(children(i)%name%upper() == 'GRID')
+    CALL create_XDMFMesh_from_file(mesh, children(i))
+
   ENDDO
+
 
 
 ENDFUNCTION importFromDisk_XDMFFileType 
