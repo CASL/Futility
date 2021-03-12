@@ -45,6 +45,7 @@ SET(UNIT_TEST_NAMES
     testAllocs
     testParameterLists
     testFileType_XML
+    testFileType_XDMF
     testFMU_Wrapper
     testIOutil
     testFileType_Base

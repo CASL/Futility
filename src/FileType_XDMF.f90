@@ -63,7 +63,6 @@ TYPE :: XDMFMeshType
   REAL(SRK), ALLOCATABLE :: vertices(:, :)
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
-
 ENDTYPE XDMFMeshType
 
 !> The XDMF File type
@@ -71,15 +70,18 @@ TYPE,EXTENDS(BaseFileType) :: XDMFFileType
 !
 !List of type bound procedures
   CONTAINS
-    !> @copybrief FileType_XML::fopen_XDMFFileType
-    !> @copydoc FileType_XML::fopen_XDMFFileType
+    !> @copybrief FileType_XDMF::fopen_XDMFFileType
+    !> @copydoc FileType_XDMF::fopen_XDMFFileType
     PROCEDURE,PASS :: fopen => fopen_XDMFFileType
-    !> @copybrief FileType_XML::fclose_XDMFFileType
-    !> @copydoc FileType_XML::fclose_XDMFFileType
+    !> @copybrief FileType_XDMF::fclose_XDMFFileType
+    !> @copydoc FileType_XDMF::fclose_XDMFFileType
     PROCEDURE,PASS :: fclose => fclose_XDMFFileType
-    !> @copybrief FileType_XML::fdelete_XDMFFileType
-    !> @copydoc FileType_XML::fdelete_XDMFFileType
+    !> @copybrief FileType_XDMF::fdelete_XDMFFileType
+    !> @copydoc FileType_XDMF::fdelete_XDMFFileType
     PROCEDURE,PASS :: fdelete => fdelete_XDMFFileType
+    !> @copybrief FileType_XDMF::importFromDisk_XDMFFileType
+    !> @copydoc FileType_XDMF::importFromDisk_XDMFFileType
+    PROCEDURE,PASS :: importFromDisk => importFromDisk_XDMFFileType
 ENDTYPE XDMFFileType
 
 !
@@ -122,4 +124,38 @@ SUBROUTINE fdelete_XDMFFileType(file)
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
+FUNCTION importFromDisk_XDMFFileType(thisXDMFFile, strpath) RESULT(mesh)
+  CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
+  CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
+  CLASS(StringType),INTENT(IN) :: strpath
+  TYPE(XDMFMeshType)  :: mesh
+  TYPE(XMLFileType) :: xml 
+  TYPE(HDF5FileType) :: h5
+  TYPE(XMLElementType),POINTER :: xmle, children(:),echildren(:)
+  TYPE(StringType) :: strIn, strOut
+  INTEGER(SIK) :: i
+  
+  !XML
+  CALL xml%importFromDisk(ADJUSTL(strpath))
+  xmle => xml%root
+  REQUIRE(ASSOCIATED(xmle))
+  REQUIRE(xmle%name%upper() == 'XDMF')
+  ! Version
+  strIn='Version'
+  CALL xmle%getAttributeValue(strIn,strOut)
+  IF(strOut /= '3.0') THEN
+    CALL eXDMF%raiseError(modName//'::'//myName// &
+      ' - Currently only supports XDMF version 3.0') 
+  ENDIF
+  ! Domain
+  CALL xmle%getChildren(children)
+  REQUIRE(SIZE(children) > 0)
+  REQUIRE(children(1)%name%upper() == 'DOMAIN')
+  DO i=1, SIZE(children)
+    WRITE(*,*) ADJUSTL(children(i)%name%upper())
+  ENDDO
+
+
+ENDFUNCTION importFromDisk_XDMFFileType 
+
 ENDMODULE FileType_XDMF
