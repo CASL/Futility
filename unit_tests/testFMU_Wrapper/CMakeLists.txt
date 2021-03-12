@@ -8,8 +8,6 @@
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
 
-IF (BUILD_SHARED_LIBS)
-    ADD_SUBDIRECTORY(testFMU_BouncingBall)
-    Futility_CreateUnitTest(testFMU_Wrapper)
-ENDIF()
+ADD_SUBDIRECTORY(testFMU_BouncingBall)
+Futility_CreateUnitTest(testFMU_Wrapper)
 
