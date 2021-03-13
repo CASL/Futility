@@ -296,9 +296,9 @@ SUBROUTINE test_viscvt()
   ! For the verification of computer program implementations of the tables.
   ! See Table 4.
   REAL(SRK), PARAMETER, DIMENSION(11) :: & ! Temp. in [K], Density in [kg/m^3], and viscosity [uPa-s] (from literature)
-    T = [298.15E0_SRK, 298.15E0_SRK, 373.15E0_SRK, 433.15E0_SRK, 433.15E0_SRK, 873.15E0_SRK, 873.15E0_SRK, 873.15E0_SRK, 1173.15E0_SRK, 1173.15E0_SRK, 1173.15E0_SRK], &
-    Rho = [998.0E0_SRK, 1200.0E0_SRK, 1000.0E0_SRK, 1.0E0_SRK, 1000.0E0_SRK, 1.0E0_SRK, 100.0E0_SRK, 600.0E0_SRK, 1.0E0_SRK, 100.0E0_SRK, 400.0E0_SRK], &
-    U_lit = [889.735100_SRK, 1437.649467_SRK, 307.883622_SRK, 14.538324_SRK, 217.685358_SRK, 32.619287_SRK, 35.802262_SRK, 77.430195_SRK, 44.217245_SRK, 47.640433_SRK, 64.154608_SRK]
+      T = [298.15E0_SRK, 298.15E0_SRK, 373.15E0_SRK, 433.15E0_SRK, 433.15E0_SRK, 873.15E0_SRK, 873.15E0_SRK, 873.15E0_SRK, 1173.15E0_SRK, 1173.15E0_SRK, 1173.15E0_SRK], &
+      Rho = [998.0E0_SRK, 1200.0E0_SRK, 1000.0E0_SRK, 1.0E0_SRK, 1000.0E0_SRK, 1.0E0_SRK, 100.0E0_SRK, 600.0E0_SRK, 1.0E0_SRK, 100.0E0_SRK, 400.0E0_SRK], &
+      U_lit = [889.735100_SRK, 1437.649467_SRK, 307.883622_SRK, 14.538324_SRK, 217.685358_SRK, 32.619287_SRK, 35.802262_SRK, 77.430195_SRK, 44.217245_SRK, 47.640433_SRK, 64.154608_SRK]
   INTEGER(SIK) :: i
   REAL(SRK) :: tol=1.0E-6_SRK
 
@@ -312,10 +312,10 @@ SUBROUTINE test_thconvt()
   ! Unit Test comparing function to LITERATURE values
   ! Values should be EXACT
   REAL(SRK), PARAMETER, DIMENSION(6) :: & ! Table 7,8,9 covering regions 1,2,and 3 respectively
-    P = [20.00E0_SRK, 50.0E0_SRK, 0.3E0_SRK, 50.0E0_SRK, 22.064E0_SRK, 22.064E0_SRK], &
-    T = [620.0E0_SRK, 620.0E0_SRK, 650.0E0_SRK, 800.0E0_SRK, 647.35E0_SRK, 647.35E0_SRK], &
-    Rho = [0.613227777E3_SRK, 0.699226043E3_SRK, 0.100452141E1_SRK, 0.218030012E3_SRK, 222.0E0_SRK, 322.0E0_SRK], &
-    K_lit = [0.481485195E3_SRK, 0.545038940E3_SRK, 0.522311024E2_SRK, 0.177709914E3_SRK, 0.366879411E3_SRK, 0.124182415E4_SRK]
+      P = [20.00E0_SRK, 50.0E0_SRK, 0.3E0_SRK, 50.0E0_SRK, 22.064E0_SRK, 22.064E0_SRK], &
+      T = [620.0E0_SRK, 620.0E0_SRK, 650.0E0_SRK, 800.0E0_SRK, 647.35E0_SRK, 647.35E0_SRK], &
+      Rho = [0.613227777E3_SRK, 0.699226043E3_SRK, 0.100452141E1_SRK, 0.218030012E3_SRK, 222.0E0_SRK, 322.0E0_SRK], &
+      K_lit = [0.481485195E3_SRK, 0.545038940E3_SRK, 0.522311024E2_SRK, 0.177709914E3_SRK, 0.366879411E3_SRK, 0.124182415E4_SRK]
   INTEGER(SIK) :: i
   REAL(SRK) :: tol=2.0E-5_SRK
 
@@ -345,19 +345,19 @@ subroutine test_SaturatedRegion()
 
   ! Gold Values
   REAL(SRK), PARAMETER, DIMENSION(5) :: &
-    P = [0.01_SRK, 0.1_SRK, 1.00_SRK, 10.0_SRK, 16.0_SRK], &    ! Pressure [ MPa ]
-    T = [318.956_SRK, 372.76_SRK, 453.03_SRK, 584.15_SRK, 620.5_SRK], &    ! Temperature [ C ]
-    h1 = [191.81_SRK, 417.40_SRK, 762.52_SRK, 1408.1_SRK, 1649.7_SRK], &    ! Fluid Enthalpy [kJ/kg]
-    h2 = [2583.9_SRK, 2674.95_SRK, 2777.1_SRK, 2725.5_SRK, 2580.8_SRK], &    ! Vapor Enthalpy [kJ/kg]
-    cp1 = [4.1805_SRK, 4.2152_SRK, 4.4045_SRK, 6.1237_SRK, 9.4633_SRK], &    ! Fluid Specific Heat [kJ/kg-C]
-    cp2 = [1.9400_SRK, 2.0784_SRK, 2.711_SRK, 7.1408_SRK, 15.198_SRK], &    ! Vapor Specific Heat [kJ/kg-C]
-    k1 = [0.63838_SRK, 0.67897_SRK, 0.67337_SRK, 0.52683_SRK, 0.45303_SRK], &   ! Fluid Thermal Conductivity [W/m-K]
-    k2 = [0.020037_SRK, 0.025053_SRK, 0.036427_SRK, 0.076543_SRK, 0.12804_SRK], &   ! Vapor Thermal Conductivity [W/m-K]
-    v1 = [0.0010103_SRK, 0.0010432_SRK, 0.0011272_SRK, 0.0014526_SRK, 0.0017094_SRK], & ! Fluid Specific Volume m^3/kg
-    v2 = [14.670_SRK, 1.6939000_SRK, 0.1943600_SRK, 0.0180300_SRK, 0.0093088_SRK], & ! Vapor Specific Volume m^3/kg
-    u1 = [0.00058764_SRK, 0.00028291_SRK, 0.00015024_SRK, 8.1795E-05_SRK, 6.7146E-05_SRK], & ! Fluid Dynamic Viscosity Pa-s
-    u2 = [1.0486E-05_SRK, 1.2256E-05_SRK, 1.5021E-05_SRK, 2.0267E-05_SRK, 2.3442E-05_SRK], & ! Vapor Dynamic Viscosity Pa-s
-    st = [0.068643_SRK, 0.058988_SRK, 0.042217_SRK, 0.011865_SRK, 0.0041700_SRK] ! Fluid surface tension [N/m]
+      P = [0.01_SRK, 0.1_SRK, 1.00_SRK, 10.0_SRK, 16.0_SRK], &    ! Pressure [ MPa ]
+      T = [318.956_SRK, 372.76_SRK, 453.03_SRK, 584.15_SRK, 620.5_SRK], &    ! Temperature [ C ]
+      h1 = [191.81_SRK, 417.40_SRK, 762.52_SRK, 1408.1_SRK, 1649.7_SRK], &    ! Fluid Enthalpy [kJ/kg]
+      h2 = [2583.9_SRK, 2674.95_SRK, 2777.1_SRK, 2725.5_SRK, 2580.8_SRK], &    ! Vapor Enthalpy [kJ/kg]
+      cp1 = [4.1805_SRK, 4.2152_SRK, 4.4045_SRK, 6.1237_SRK, 9.4633_SRK], &    ! Fluid Specific Heat [kJ/kg-C]
+      cp2 = [1.9400_SRK, 2.0784_SRK, 2.711_SRK, 7.1408_SRK, 15.198_SRK], &    ! Vapor Specific Heat [kJ/kg-C]
+      k1 = [0.63838_SRK, 0.67897_SRK, 0.67337_SRK, 0.52683_SRK, 0.45303_SRK], &   ! Fluid Thermal Conductivity [W/m-K]
+      k2 = [0.020037_SRK, 0.025053_SRK, 0.036427_SRK, 0.076543_SRK, 0.12804_SRK], &   ! Vapor Thermal Conductivity [W/m-K]
+      v1 = [0.0010103_SRK, 0.0010432_SRK, 0.0011272_SRK, 0.0014526_SRK, 0.0017094_SRK], & ! Fluid Specific Volume m^3/kg
+      v2 = [14.670_SRK, 1.6939000_SRK, 0.1943600_SRK, 0.0180300_SRK, 0.0093088_SRK], & ! Vapor Specific Volume m^3/kg
+      u1 = [0.00058764_SRK, 0.00028291_SRK, 0.00015024_SRK, 8.1795E-05_SRK, 6.7146E-05_SRK], & ! Fluid Dynamic Viscosity Pa-s
+      u2 = [1.0486E-05_SRK, 1.2256E-05_SRK, 1.5021E-05_SRK, 2.0267E-05_SRK, 2.3442E-05_SRK], & ! Vapor Dynamic Viscosity Pa-s
+      st = [0.068643_SRK, 0.058988_SRK, 0.042217_SRK, 0.011865_SRK, 0.0041700_SRK] ! Fluid surface tension [N/m]
   ! Custom variables
   REAL(SRK) :: tol=1.0E-3
   INTEGER(SIK) :: i, ireg
@@ -388,13 +388,13 @@ SUBROUTINE test_SubcooledRegion()
   ! T<350[C] P>P_sat
   ! Gold Values
   REAL(SRK), PARAMETER, DIMENSION(4) :: &
-    P = [0.1_SRK, 0.1_SRK, 10.0_SRK, 10.0_SRK], & ! Pressure [ MPa ]
-    T = [283.15_SRK, 363.15_SRK, 323.15_SRK, 573.15_SRK], & ! Temperature [ C ]
-    h = [42.118_SRK, 377.06_SRK, 217.94_SRK, 1343.3_SRK], & ! Enthalpy [kJ/kg]
-    cp = [4.1952_SRK, 4.2052_SRK, 4.1592_SRK, 5.6807_SRK], & ! Specific Heat [kJ/kg-C]
-    k = [0.58005_SRK, 0.67527_SRK, 0.64819_SRK, 0.55067_SRK], & ! Thermal Conductivity [W/m-K]
-    v = [0.0010003_SRK, 0.0010359_SRK, 0.0010078_SRK, 0.0013980_SRK], & ! Specific Volume [kg/m^3]
-    u = [0.0013059_SRK, 0.00031441_SRK, 0.00054863_SRK, 8.6460E-05_SRK]   ! Dynamic Viscosity [Pa-S]
+      P = [0.1_SRK, 0.1_SRK, 10.0_SRK, 10.0_SRK], & ! Pressure [ MPa ]
+      T = [283.15_SRK, 363.15_SRK, 323.15_SRK, 573.15_SRK], & ! Temperature [ C ]
+      h = [42.118_SRK, 377.06_SRK, 217.94_SRK, 1343.3_SRK], & ! Enthalpy [kJ/kg]
+      cp = [4.1952_SRK, 4.2052_SRK, 4.1592_SRK, 5.6807_SRK], & ! Specific Heat [kJ/kg-C]
+      k = [0.58005_SRK, 0.67527_SRK, 0.64819_SRK, 0.55067_SRK], & ! Thermal Conductivity [W/m-K]
+      v = [0.0010003_SRK, 0.0010359_SRK, 0.0010078_SRK, 0.0013980_SRK], & ! Specific Volume [kg/m^3]
+      u = [0.0013059_SRK, 0.00031441_SRK, 0.00054863_SRK, 8.6460E-05_SRK]   ! Dynamic Viscosity [Pa-S]
   INTEGER(SIK) :: i, ireg
   REAL(SRK) :: tol=1.0E-3_SRK
 
@@ -418,13 +418,13 @@ SUBROUTINE test_SuperheatedRegion1()
 
   ! Gold Values
   REAL(SRK), PARAMETER, DIMENSION(6) :: &
-    P = [0.01_SRK, 0.1_SRK, 1.0_SRK, 10.0_SRK, 10.0_SRK, 10.0_SRK], & ! Pressure [ MPa ]
-    T = [373.15_SRK, 383.15_SRK, 523.15_SRK, 623.15_SRK, 873.15_SRK, 1073.15_SRK], & ! Temperature [ K ]
-    h = [2687.5_SRK, 2696.3_SRK, 2943.1_SRK, 2924.0_SRK, 3625.8_SRK, 4114.5_SRK], & ! Enthalpy [kJ/kg]
-    cp = [1.9058_SRK, 2.0415_SRK, 2.2106_SRK, 4.0117_SRK, 2.4576_SRK, 2.4571_SRK], &   ! Specific Heat [kJ/kg-C]
-    k = [0.024009_SRK, 0.025767_SRK, 0.040516_SRK, 0.068090_SRK, 0.087139_SRK, 0.11317_SRK], & ! Thermal Conductivity [W/m-K]
-    v = [17.196_SRK, 1.7447_SRK, 0.23275_SRK, 0.022440_SRK, 0.038378_SRK, 0.048629_SRK], & ! Specific Volume [kg/m^3]
-    u = [1.2344E-05_SRK, 1.2644E-05_SRK, 1.8046E-05_SRK, 2.2151E-05_SRK, 3.3089E-05_SRK, 4.0884E-05_SRK]   ! Dynamic Viscosity [Pa-S]
+      P = [0.01_SRK, 0.1_SRK, 1.0_SRK, 10.0_SRK, 10.0_SRK, 10.0_SRK], & ! Pressure [ MPa ]
+      T = [373.15_SRK, 383.15_SRK, 523.15_SRK, 623.15_SRK, 873.15_SRK, 1073.15_SRK], & ! Temperature [ K ]
+      h = [2687.5_SRK, 2696.3_SRK, 2943.1_SRK, 2924.0_SRK, 3625.8_SRK, 4114.5_SRK], & ! Enthalpy [kJ/kg]
+      cp = [1.9058_SRK, 2.0415_SRK, 2.2106_SRK, 4.0117_SRK, 2.4576_SRK, 2.4571_SRK], &   ! Specific Heat [kJ/kg-C]
+      k = [0.024009_SRK, 0.025767_SRK, 0.040516_SRK, 0.068090_SRK, 0.087139_SRK, 0.11317_SRK], & ! Thermal Conductivity [W/m-K]
+      v = [17.196_SRK, 1.7447_SRK, 0.23275_SRK, 0.022440_SRK, 0.038378_SRK, 0.048629_SRK], & ! Specific Volume [kg/m^3]
+      u = [1.2344E-05_SRK, 1.2644E-05_SRK, 1.8046E-05_SRK, 2.2151E-05_SRK, 3.3089E-05_SRK, 4.0884E-05_SRK]   ! Dynamic Viscosity [Pa-S]
   INTEGER(SIK) :: i, ireg
   REAL(SRK) :: tol=1.0E-3_SRK
 
@@ -451,13 +451,13 @@ SUBROUTINE test_Superciritical()
 
   ! Gold Values
   REAL(SRK), PARAMETER, DIMENSION(4) :: &
-    P = [20.0_SRK, 30.0_SRK, 100.0_SRK, 100.0_SRK], & ! Pressure [ MPa ]
-    T = [633.15_SRK, 673.15_SRK, 748.15_SRK, 823.15_SRK], & ! Temperature [ C ]
-    h = [1740.1_SRK, 2152.8_SRK, 2178.5_SRK, 2595.9_SRK], & ! Enthalpy [kJ/kg]
-    cp = [11.475_SRK, 25.868_SRK, 5.4372_SRK, 5.5516_SRK], & ! Specific Heat [kJ/kg-C]
-    v = [0.0018248_SRK, 0.0027978_SRK, 0.0017491_SRK, 0.0022495_SRK], & ! Specific Volume [m^3/kg]
-    k = [0.43345_SRK, 0.33204_SRK, 0.43664_SRK, 0.31935_SRK], & ! Thermal Conductivity [W/m-K]
-    u = [6.2803E-05_SRK, 4.3937E-05_SRK, 7.0322E-05_SRK, 5.9123E-05_SRK]   ! Dynamic Viscosity [Pa-S]
+      P = [20.0_SRK, 30.0_SRK, 100.0_SRK, 100.0_SRK], & ! Pressure [ MPa ]
+      T = [633.15_SRK, 673.15_SRK, 748.15_SRK, 823.15_SRK], & ! Temperature [ C ]
+      h = [1740.1_SRK, 2152.8_SRK, 2178.5_SRK, 2595.9_SRK], & ! Enthalpy [kJ/kg]
+      cp = [11.475_SRK, 25.868_SRK, 5.4372_SRK, 5.5516_SRK], & ! Specific Heat [kJ/kg-C]
+      v = [0.0018248_SRK, 0.0027978_SRK, 0.0017491_SRK, 0.0022495_SRK], & ! Specific Volume [m^3/kg]
+      k = [0.43345_SRK, 0.33204_SRK, 0.43664_SRK, 0.31935_SRK], & ! Thermal Conductivity [W/m-K]
+      u = [6.2803E-05_SRK, 4.3937E-05_SRK, 7.0322E-05_SRK, 5.9123E-05_SRK]   ! Dynamic Viscosity [Pa-S]
   INTEGER(SIK) :: i, ireg
   REAL(SRK) :: tol=1.0E-3_SRK
 
@@ -484,13 +484,13 @@ SUBROUTINE test_SuperheatedRegion2()
   ! is limited to T<1000.1[C]
   ! Gold Values
   REAL(SRK), PARAMETER, DIMENSION(6) :: &
-    P = [0.1_SRK, 1.0_SRK, 10.0_SRK, 0.1_SRK, 1.0_SRK, 10.0_SRK], & ! Pressure [ MPa ]
-    T = [1123.15_SRK, 1123.15_SRK, 1123.15_SRK, 1273.15_SRK, 1273.15_SRK, 1273.15_SRK], & ! Temperature [ K ]
-    h = [4278.2_SRK, 4274.6_SRK, 4237.8_SRK, 4642.6_SRK, 4639.9_SRK, 4613.8_SRK], & ! Enthalpy [kJ/kg]
-    cp = [2.3781_SRK, 2.3866_SRK, 2.4747_SRK, 2.4782_SRK, 2.4839_SRK, 2.5411_SRK], & ! Specific Heat [kJ/kg-C]
-    k = [0.11446_SRK, 0.11486_SRK, 0.11980_SRK, 0.13633_SRK, 0.13655_SRK, 0.13972_SRK], & ! Thermal Conductivity [W/m-K]
-    v = [5.1828_SRK, 0.51762_SRK, 0.051099_SRK, 5.8754_SRK, 0.58721_SRK, 0.058390_SRK], & ! Specific Volume [kg/m^3]
-    u = [4.2243E-05_SRK, 4.2280E-05_SRK, 4.2733E-05_SRK, 4.7665E-05_SRK, 4.7696E-05_SRK, 4.8072E-05_SRK]   ! Dynamic Viscosity [Pa-S]
+      P = [0.1_SRK, 1.0_SRK, 10.0_SRK, 0.1_SRK, 1.0_SRK, 10.0_SRK], & ! Pressure [ MPa ]
+      T = [1123.15_SRK, 1123.15_SRK, 1123.15_SRK, 1273.15_SRK, 1273.15_SRK, 1273.15_SRK], & ! Temperature [ K ]
+      h = [4278.2_SRK, 4274.6_SRK, 4237.8_SRK, 4642.6_SRK, 4639.9_SRK, 4613.8_SRK], & ! Enthalpy [kJ/kg]
+      cp = [2.3781_SRK, 2.3866_SRK, 2.4747_SRK, 2.4782_SRK, 2.4839_SRK, 2.5411_SRK], & ! Specific Heat [kJ/kg-C]
+      k = [0.11446_SRK, 0.11486_SRK, 0.11980_SRK, 0.13633_SRK, 0.13655_SRK, 0.13972_SRK], & ! Thermal Conductivity [W/m-K]
+      v = [5.1828_SRK, 0.51762_SRK, 0.051099_SRK, 5.8754_SRK, 0.58721_SRK, 0.058390_SRK], & ! Specific Volume [kg/m^3]
+      u = [4.2243E-05_SRK, 4.2280E-05_SRK, 4.2733E-05_SRK, 4.7665E-05_SRK, 4.7696E-05_SRK, 4.8072E-05_SRK]   ! Dynamic Viscosity [Pa-S]
   INTEGER(SIK) :: i, ireg
   REAL(SRK) :: tol=1.0E-3_SRK
 
