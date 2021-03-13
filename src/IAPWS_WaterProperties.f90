@@ -3923,7 +3923,7 @@ SUBROUTINE WNPT3(XA, XB, P, T, EPS, X)
 
   x = 0.0_SRK
   DO I = 1, 40
-    IF (F1 /= F3) THEN
+    IF (ABS(F1 - F3) > EPS) THEN
       X = X1 + (X3 - X1)*F1/(F1 - F3)
     ELSE
       EXIT
@@ -4069,7 +4069,7 @@ SUBROUTINE wnph3(xa, xb, reg, P, T, eps, x, ix)
   f3 = nullh35n(x3, t, p, reg)
   ix = 0
   DO i = 1, 40
-    IF (f1 /= f3) THEN
+    IF (ABS(f1 - f3) > eps) THEN
       x = x1 + (x3 - x1)*f1/(f1 - f3)
     ELSE
       ix = 3
