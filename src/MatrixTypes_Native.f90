@@ -189,7 +189,7 @@ TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
   !> The column of banded matrix 'chunks' stored locally
   TYPE(BandedMatrixType),ALLOCATABLE :: chunks(:)
   !> Number of nonzero elements
-  INTEGER(SIK) :: nnz
+  INTEGER(SLK) :: nnz
   !> Number of columns
   INTEGER(SIK) :: m
   !> Block size (smallest indivisble unit)
@@ -479,7 +479,9 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
 #ifdef HAVE_MPI
   CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBandedMatrixParam'
   TYPE(ParamType) :: validParams
-  INTEGER(SIK) :: n,m,nnz,commID,rank,mpierr,nproc,i,blocksize,nlocal
+  INTEGER(SIK),ALLOCATABLE :: onnz(:),dnnz(:)
+  INTEGER(SIK) :: n,m,commID,rank,mpierr,nproc,i,blocksize,nlocal,nnz_int
+  INTEGER(SLK) :: nnz
 
   !Check to set up required and optional param lists.
   IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -493,10 +495,21 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
   CALL validParams%get('MatrixType->n',n)
   CALL validParams%get('MatrixType->m',m)
   CALL validParams%get('MatrixType->MPI_Comm_ID',commID)
-  CALL validParams%get('MatrixType->nnz',nnz)
+  CALL validParams%get('MatrixType->nnz',nnz_int)
   CALL validParams%get('MatrixType->blockSize',blockSize)
   CALL validParams%get('MatrixType->nlocal',nlocal)
-  CALL validParams%clear()
+  nnz=INT(nnz_int,kind=8)
+  IF(nnz_int <= 1) THEN
+    IF (validParams%has("MatrixType->dnnz") .AND. validParams%has("MatrixType->onnz")) THEN
+      nnz=0_SLK
+      CALL validParams%get("MatrixType->onnz",onnz)
+      CALL validParams%get("MatrixType->dnnz",dnnz)
+      DO i=1,SIZE(onnz)
+        nnz=nnz+INT(onnz(i)*blockSize,kind=SLK)
+        nnz=nnz+INT(dnnz(i)*blockSize,kind=SLK)
+      ENDDO
+    ENDIF
+  ENDIF
 
   IF(.NOT. matrix%isInit) THEN
     IF(n <= 1) THEN
@@ -577,6 +590,7 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
     CALL eMatrixType%raiseError('Incorrect call to '// &
         modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
+  CALL validParams%clear()
 #endif
 ENDSUBROUTINE init_DistributedBandedMatrixParam
 

@@ -758,7 +758,7 @@ SUBROUTINE init_DistributedSOR_PreCondtype(thisPC,A,params)
 
   thisPC%A => A
   !get omega from the parameter list
-  thisPC%omega = 0.0_SRK
+  thisPC%omega = 1.0_SRK
   IF (params%has('PreCondType->omega')) &
     CALL params%get('PreCondType->omega',thisPC%omega)
 
