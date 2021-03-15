@@ -698,12 +698,11 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
   CHARACTER(LEN=1),INTENT(IN) :: ul
   CHARACTER(LEN=1),INTENT(IN) :: d
   INTEGER(SIK),INTENT(IN) :: incx
-  INTEGER(SIK) :: rank,k
+  INTEGER(SIK) :: rank,k,lowIdx,highIdx
   REAL(SRK),ALLOCATABLE :: recvResult(:,:),sendResult(:,:),tmpProduct(:)
-  INTEGER(SIK) :: sendRequests(MATVEC_SLOTS),recvRequests(MATVEC_SLOTS)
-  INTEGER(SIK) :: lowIdx,highIdx
 #ifdef HAVE_MPI
   ! Get rank
+  INTEGER(SIK) :: sendRequests(MATVEC_SLOTS),recvRequests(MATVEC_SLOTS)
   INTEGER(SIK) :: ctRecv(MATVEC_SLOTS),srcRank,destRank
   INTEGER(SIK) :: i,idxTmp,ctDefault,mpierr,nproc
   CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
@@ -781,6 +780,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
           MPI_DOUBLE_PRECISION,srcRank,0,thisMatrix%comm,recvRequests(idxTmp), mpierr)
     ENDIF
   ENDDO
+#endif
   ! Now, take care of locally held data.
   SELECT TYPE(thisMatrix)
   TYPE IS(DistributedBlockBandedMatrixType)
@@ -802,6 +802,7 @@ SUBROUTINE matvec_DistrBandedMatrixType(thisMatrix,x,y,t,ul,d,incx,a,b)
           y=tmpProduct,ALPHA=1.0_SRK,BETA=1.0_SRK)
     ENDIF
   ENDSELECT
+#if HAVE_MPI
   ! Wait for remaining requests to finish:
   DO k=1,MATVEC_SLOTS
     idxTmp=k
