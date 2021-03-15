@@ -98,6 +98,118 @@ SUBROUTINE TestPoints
 #endif
   ASSERT(bool, 'point%getCoordString(...))')
 !
+!Test RotateQtrClockwise
+  COMPONENT_TEST('%RotateQtrClockwise()')
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK/)) !test 1-D
+  CALL point%RotateQtrClockwise(1)
+  ASSERT_EQ(point%coord(1),1.0_SRK, 'point%RotateQtrClockwise(1) 1-D point')
+
+  CALL point%clear()
+  CALL point%init(COORD=(/1.7_SRK,1.8_SRK,1.9_SRK,1.0_SRK/)) !test N-D
+  CALL point%RotateQtrClockwise(2)
+  ASSERT_APPROXEQ(point%coord(1),-1.7_SRK, '%RotateQtrClockwise(2) coord(1) 4-D point')
+  ASSERT_APPROXEQ(point%coord(2),-1.8_SRK, '%RotateQtrClockwise(2) coord(2) 4-D point')
+
+  !No rotation
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,0.0_SRK/))
+  CALL point%RotateQtrClockwise(0)
+  ASSERT_APPROXEQ(point%coord(1),1.0_SRK, '%RotateQtrClockwise(0) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),0.0_SRK, '%RotateQtrClockwise(0) coord(2) 2-D point')
+
+  !Rotate 90 degrees CW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,0.0_SRK/))
+  CALL point%RotateQtrClockwise(1)
+  ASSERT_APPROXEQ(point%coord(1),0.0_SRK, '%RotateQtrClockwise(1) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),-1.0_SRK, '%RotateQtrClockwise(1) coord(2) 2-D point')
+
+  !Rotate 270 degrees CCW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,0.0_SRK/))
+  CALL point%RotateQtrClockwise(-3)
+  ASSERT_APPROXEQ(point%coord(1),0.0_SRK, '%RotateQtrClockwise(-3) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),-1.0_SRK, '%RotateQtrClockwise(-3) coord(2) 2-D point')
+
+  !Rotate 180 degrees CW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,0.0_SRK/))
+  CALL point%RotateQtrClockwise(2)
+  ASSERT_APPROXEQ(point%coord(1),-1.0_SRK, '%RotateQtrClockwise(2) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),0.0_SRK, '%RotateQtrClockwise(2) coord(2) 2-D point')
+
+  !Rotate 180 degrees CCW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,0.0_SRK/))
+  CALL point%RotateQtrClockwise(-2)
+  ASSERT_APPROXEQ(point%coord(1),-1.0_SRK, '%RotateQtrClockwise(-2) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),0.0_SRK, '%RotateQtrClockwise(-2) coord(2) 2-D point')
+
+  !Rotate 270 degrees CW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,0.0_SRK/))
+  CALL point%RotateQtrClockwise(3)
+  ASSERT_APPROXEQ(point%coord(1),0.0_SRK, '%RotateQtrClockwise(3) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),1.0_SRK, '%RotateQtrClockwise(3) coord(2) 2-D point')
+
+  !Rotate 90 degrees CCW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,0.0_SRK/))
+  CALL point%RotateQtrClockwise(-1)
+  ASSERT_APPROXEQ(point%coord(1),0.0_SRK, '%RotateQtrClockwise(-1) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),1.0_SRK, '%RotateQtrClockwise(-1) coord(2) 2-D point')
+
+  !No rotation
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,1.0_SRK/))
+  CALL point%RotateQtrClockwise(0)
+  ASSERT_APPROXEQ(point%coord(1),1.0_SRK, '%RotateQtrClockwise(0) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),1.0_SRK, '%RotateQtrClockwise(0) coord(2) 2-D point')
+
+  !Rotate 90 degrees CW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,1.0_SRK/))
+  CALL point%RotateQtrClockwise(1)
+  ASSERT_APPROXEQ(point%coord(1),1.0_SRK, '%RotateQtrClockwise(1) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),-1.0_SRK, '%RotateQtrClockwise(1) coord(2) 2-D point')
+
+  !Rotate 270 degrees CCW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,1.0_SRK/))
+  CALL point%RotateQtrClockwise(-3)
+  ASSERT_APPROXEQ(point%coord(1),1.0_SRK, '%RotateQtrClockwise(-3) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),-1.0_SRK, '%RotateQtrClockwise(-3) coord(2) 2-D point')
+
+  !Rotate 180 degrees CW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,1.0_SRK/))
+  CALL point%RotateQtrClockwise(2)
+  ASSERT_APPROXEQ(point%coord(1),-1.0_SRK, '%RotateQtrClockwise(2) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),-1.0_SRK, '%RotateQtrClockwise(2) coord(2) 2-D point')
+
+  !Rotate 180 degrees CCW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,1.0_SRK/))
+  CALL point%RotateQtrClockwise(-2)
+  ASSERT_APPROXEQ(point%coord(1),-1.0_SRK, '%RotateQtrClockwise(-2) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),-1.0_SRK, '%RotateQtrClockwise(-2) coord(2) 2-D point')
+
+  !Rotate 270 degrees CW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,1.0_SRK/))
+  CALL point%RotateQtrClockwise(3)
+  ASSERT_APPROXEQ(point%coord(1),-1.0_SRK, '%RotateQtrClockwise(3) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),1.0_SRK, '%RotateQtrClockwise(3) coord(2) 2-D point')
+
+  !Rotate 90 degrees CCW
+  CALL point%clear()
+  CALL point%init(COORD=(/1.0_SRK,1.0_SRK/))
+  CALL point%RotateQtrClockwise(-1)
+  ASSERT_APPROXEQ(point%coord(1),-1.0_SRK, '%RotateQtrClockwise(-1) coord(1) 2-D point')
+  ASSERT_APPROXEQ(point%coord(2),1.0_SRK, '%RotateQtrClockwise(-1) coord(2) 2-D point')
+
+!
 !Test Distance
   COMPONENT_TEST('Distance()')
   CALL point2%init(DIM=1,X=0.5_SRK)

@@ -23,6 +23,7 @@ USE Futility_DBC
 USE IntrType
 USE Allocs
 USE Constants_Conversion
+USE ExtendedMath
 USE Geom_Graph
 USE Geom_Points
 USE Geom_Line
@@ -36,6 +37,7 @@ PRIVATE
 
 PUBLIC :: PolygonType
 PUBLIC :: Polygonize
+PUBLIC :: ASSIGNMENT(=)
 PUBLIC :: OPERATOR(==)
 
 !> @brief Type used to describe a polygon.
@@ -150,11 +152,21 @@ ENDINTERFACE
 !  MODULE PROCEDURE point_inside_PolygonType
 !ENDINTERFACE
 
-!> @brief
+!> @brief Overloads the Fortran intrinsic operator for comparing
+!> two variables to see if they are equal
 INTERFACE OPERATOR(==)
   !> @copybrief Geom_Poly::isequal_PolygonType
   !> @copydetails Geom_Poly::isequal_PolygonType
   MODULE PROCEDURE isequal_PolygonType
+ENDINTERFACE
+
+!> @brief Overloads the assignment operator.
+!>
+!> This is so new polygeom types can be assigned to each other.
+INTERFACE ASSIGNMENT(=)
+  !> @copybrief Geom_Poly::assign_PolygonType
+  !> @copydetails Geom_Poly::assign_PolygonType
+  MODULE PROCEDURE assign_PolygonType
 ENDINTERFACE
 !
 !===============================================================================
@@ -250,6 +262,9 @@ SUBROUTINE set_PolygonType(thisPoly,thatGraph)
 ENDSUBROUTINE set_PolygonType
 !
 !-------------------------------------------------------------------------------
+!> @brief This routine calculates the area of an initialized polygon.
+!> @param thisPoly The polygon type of which to calculate the area.
+!>
 SUBROUTINE calcArea(this)
   CLASS(PolygonType),INTENT(INOUT) :: this
   !
@@ -315,6 +330,9 @@ SUBROUTINE calcArea(this)
 ENDSUBROUTINE calcArea
 !
 !-------------------------------------------------------------------------------
+!> @brief This routine calculates the centroid of an initialized polygon.
+!> @param thisPoly The polygon type of which to calculate the centroid.
+!>
 SUBROUTINE calcCentroid(this)
   CLASS(PolygonType),INTENT(INOUT) :: this
   !
@@ -424,8 +442,13 @@ SUBROUTINE clear_PolygonType(thisPolygon)
 ENDSUBROUTINE clear_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This function checks if a polygon has any associated polygon
+!>        subregions.  If it does not have any, they polygon type is simple 
+!>        (e.g. a circle, square, triangle, etc...).  An example of a non-simple
+!>        polygon would be concentric circles, where the smaller circle is the
+!>        subregion of the larger one.
+!> @param thisPoly The polygon type to query if it is simple or not.
+!> @param bool The logical result of if the polygon is simple.
 !>
 ELEMENTAL FUNCTION isSimple_PolygonType(thisPoly) RESULT(bool)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
@@ -1355,8 +1378,12 @@ FUNCTION doesPolyIntersect_PolygonType(thisPoly,thatPoly) RESULT(bool)
 ENDFUNCTION doesPolyIntersect_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This subroutine calculates the points where a given line intersects
+!>        with a given polygon.  If there is no intersection, points is returned
+!>        unallocated.
+!> @param thisPolygon The polygon type to be intersected.
+!> @param line The line type to intersect with the polygon.
+!> @param points The point types of the intersection with the polygon.
 !>
 SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
   CLASS(PolygonType),INTENT(IN) :: thisPolygon
@@ -1499,8 +1526,12 @@ SUBROUTINE intersectLine_PolygonType(thisPolygon,line,points)
 ENDSUBROUTINE intersectLine_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This subroutine calculates the points where a given polygon intersects
+!>        with another given polygon.  If there is no intersection, points is 
+!>        returned unallocated.
+!> @param thisPoly The polygon type to be intersected.
+!> @param thatPoly The polygon type to intersect with the polygon.
+!> @param points The point types of the intersection with the polygon.
 !>
 SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
   CLASS(PolygonType),INTENT(IN) :: thisPoly
@@ -1652,8 +1683,12 @@ SUBROUTINE intersectPoly_PolygonType(thisPoly,thatPoly,points)
 ENDSUBROUTINE intersectPoly_PolygonType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief This routine subtracts the area of an initialized contained (bound)
+!>        sub polygon from a containing polygon.
+!> @param thisPoly The containing (bounding) polygon type from which to subtract
+!>        the area.
+!> @param thatPoly The contained (bound) polygon type whose area will be used to
+!>        subtract from the containing polygon.
 !>
 SUBROUTINE subtractSubVolume_PolygonType(thisPoly,subPoly)
   CLASS(PolygonType),INTENT(INOUT) :: thisPoly
@@ -2003,6 +2038,38 @@ RECURSIVE FUNCTION isequal_PolygonType(p1,p2) RESULT(bool)
 ENDFUNCTION isequal_PolygonType
 !
 !-------------------------------------------------------------------------------
+!> @brief An overloaded operator routine to assign one polygon type to another.
+!> @param p1 The target polygon type to assign to.
+!> @param p2 The source polygon type to assign from.
+!>
+!> Note: The pointer assignments are shallow copies only.  The clear routine
+!>       will only nullify a polygon, not deallocate an allocated pointer.
+!>
+SUBROUTINE assign_PolygonType(p1,p2)
+  TYPE(PolygonType),INTENT(INOUT) :: p1
+  TYPE(PolygonType),INTENT(IN) :: p2
+
+  CALL p1%clear()
+  IF(p2%isinit) THEN
+    p1%isInit=p2%isInit
+    p1%area=p2%area
+    p1%nVert=p2%nVert
+    p1%nQuadEdge=p2%nQuadEdge
+    p1%centroid=p2%centroid
+    ALLOCATE(p1%vert(p2%nVert))
+    ALLOCATE(p1%edge(2,p2%nVert))
+    p1%vert=p2%vert
+    p1%edge=p2%edge
+    ALLOCATE(p1%quad2edge(p2%nQuadEdge))
+    ALLOCATE(p1%quadEdge(3,p2%nQuadEdge))
+    p1%quad2edge=p2%quad2edge
+    p1%quadEdge=p2%quadEdge
+    p1%nextPoly => p2%nextPoly
+    p1%subRegions => p2%subRegions
+  ENDIF
+ENDSUBROUTINE assign_PolygonType
+!
+!-------------------------------------------------------------------------------
 !> @brief This is a local subroutine to create an arc-circle from a specified
 !>        quadratic edge for a given polygon type
 !> @param thisPoly The polygon type from which to create the arc-circle
@@ -2082,8 +2149,7 @@ FUNCTION rotateClockwise(this,nrotations) RESULT(new)
   INTEGER(SIK),INTENT(IN) :: nrotations
   TYPE(PolygonType) :: new
   !
-  INTEGER(SIK) :: i,irot,nrot
-  REAL(SRK) :: x,y,tmpx,tmpy
+  INTEGER(SIK) :: nrot
 
   REQUIRE(this%isInit)
   SELECTTYPE(this)
@@ -2095,54 +2161,24 @@ FUNCTION rotateClockwise(this,nrotations) RESULT(new)
 
   !If the user asked for a negative number of rotations or more than 3, shift
   !it to a reasonable number
-  nrot=nrotations
-  DO WHILE(nrot < 0)
-    nrot=nrot+4
-  ENDDO
-  DO WHILE(nrot > 3)
-    nrot=nrot-4
-  ENDDO
+  SELECTCASE(MOD(nrotations,4))
+  CASE(0)
+    nrot=0
+  CASE(1,-3)
+    nrot=1
+  CASE(2,-2)
+    nrot=2
+  CASE(3,-1)
+    nrot=3
+  ENDSELECT
 
   !0 rotations means we don't actually need to do anything
   IF(nrot == 0) RETURN
 
-  DO i=1,this%nVert
-    !Get the old vertex position
-    x=this%vert(i)%coord(1)
-    y=this%vert(i)%coord(2)
+  CALL new%vert%RotateQtrClockwise(nrot)
 
-    !Now rotate
-    DO irot=1,nrot
-      tmpx=y
-      tmpy=-x
-      !Store the current values for the next rotation
-      x=tmpx
-      y=tmpy
-    ENDDO !irot
-
-    new%vert(i)%coord(1)=x
-    new%vert(i)%coord(2)=y
-  ENDDO !i
-
-  DO i=1,this%nQuadEdge
-    new%quad2edge(i)=this%quad2edge(i)
-    !Get the old vertex position
-    x=this%quadEdge(1,i)
-    y=this%quadEdge(2,i)
-
-    !Now rotate
-    DO irot=1,nrot
-      tmpx=y
-      tmpy=-x
-      !Store the current values for the next rotation
-      x=tmpx
-      y=tmpy
-    ENDDO !irot
-
-    new%quadEdge(1,i)=x
-    new%quadEdge(2,i)=y
-    new%quadEdge(3,i)=this%quadEdge(3,i)
-  ENDDO !i
+  CALL RotateQtrClockwise(new%quadEdge(1,:),new%quadEdge(2,:),nrot)
+  new%quadEdge(3,:)=this%quadEdge(3,:)
 
   CALL new%calcCentroid()
 

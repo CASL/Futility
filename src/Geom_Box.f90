@@ -494,8 +494,8 @@ ENDFUNCTION inside_OBBoxType
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two OBBoxes e.g. @c b0==b1
-!> @param p0 the first box
-!> @param p1 the second box
+!> @param b0 the first box
+!> @param b1 the second box
 !> @returns @c bool the boolean result of the operation
 !>
 !> Function is elemental so it can be used on an array of boxes.

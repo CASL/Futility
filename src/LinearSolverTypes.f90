@@ -317,7 +317,6 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
   CHARACTER(LEN=256) :: ReqTPLTypeStr,TPLTypeStr
   CHARACTER(LEN=:),ALLOCATABLE :: timerName,PreCondType
 #ifdef FUTILITY_HAVE_PETSC
-  KSP :: ksp_temp
   PC :: pc
   PetscErrorCode  :: iperr
 #endif

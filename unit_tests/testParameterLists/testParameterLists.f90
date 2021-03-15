@@ -48,6 +48,18 @@ REAL(SSK),ALLOCATABLE :: valsska4(:,:,:,:)
 REAL(SDK),ALLOCATABLE :: valsdka4(:,:,:,:)
 INTEGER(SNK),ALLOCATABLE :: valsnka4(:,:,:,:)
 INTEGER(SLK),ALLOCATABLE :: valslka4(:,:,:,:)
+REAL(SSK),ALLOCATABLE :: valsska5(:,:,:,:,:)
+REAL(SDK),ALLOCATABLE :: valsdka5(:,:,:,:,:)
+INTEGER(SNK),ALLOCATABLE :: valsnka5(:,:,:,:,:)
+INTEGER(SLK),ALLOCATABLE :: valslka5(:,:,:,:,:)
+REAL(SSK),ALLOCATABLE :: valsska6(:,:,:,:,:,:)
+REAL(SDK),ALLOCATABLE :: valsdka6(:,:,:,:,:,:)
+INTEGER(SNK),ALLOCATABLE :: valsnka6(:,:,:,:,:,:)
+INTEGER(SLK),ALLOCATABLE :: valslka6(:,:,:,:,:,:)
+REAL(SSK),ALLOCATABLE :: valsska7(:,:,:,:,:,:,:)
+REAL(SDK),ALLOCATABLE :: valsdka7(:,:,:,:,:,:,:)
+INTEGER(SNK),ALLOCATABLE :: valsnka7(:,:,:,:,:,:,:)
+INTEGER(SLK),ALLOCATABLE :: valslka7(:,:,:,:,:,:,:)
 TYPE(ExceptionHandlerType),POINTER :: e
 
 TYPE(ParamType) :: testParam,testParam2,testParam3,testList(5),testList2(3)
@@ -86,6 +98,18 @@ REGISTER_SUBTEST('4-D SNK',testSNKa4)
 REGISTER_SUBTEST('4-D SLK',testSLKa4)
 REGISTER_SUBTEST('4-D SSK',testSSKa4)
 REGISTER_SUBTEST('4-D SDK',testSDKa4)
+REGISTER_SUBTEST('5-D SNK',testSNKa5)
+REGISTER_SUBTEST('5-D SLK',testSLKa5)
+REGISTER_SUBTEST('5-D SSK',testSSKa5)
+REGISTER_SUBTEST('5-D SDK',testSDKa5)
+REGISTER_SUBTEST('6-D SNK',testSNKa6)
+REGISTER_SUBTEST('6-D SLK',testSLKa6)
+REGISTER_SUBTEST('6-D SSK',testSSKa6)
+REGISTER_SUBTEST('6-D SDK',testSDKa6)
+REGISTER_SUBTEST('7-D SNK',testSNKa7)
+REGISTER_SUBTEST('7-D SLK',testSLKa7)
+REGISTER_SUBTEST('7-D SSK',testSSKa7)
+REGISTER_SUBTEST('7-D SDK',testSDKa7)
 REGISTER_SUBTEST('ParameterList',testParamListType)
 REGISTER_SUBTEST('%add(...)',testAdd)
 REGISTER_SUBTEST('%getString(...)',testGetString)
@@ -4651,6 +4675,2790 @@ SUBROUTINE testSDKa4()
   ASSERT(testParam2 == testParam,'OPERATOR(==)')
   CALL clear_test_vars()
 ENDSUBROUTINE testSDKa4
+!
+!-------------------------------------------------------------------------------
+!Test 5-D Array SNK support
+SUBROUTINE testSNKa5()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsnka5(2,2,2,2,1))
+  valsnka5(1,1,1,:,1)=1_SNK
+  valsnka5(2,1,1,:,1)=2_SNK
+  valsnka5(1,2,1,:,1)=3_SNK
+  valsnka5(2,2,1,:,1)=4_SNK
+  valsnka5(1,1,2,:,1)=5_SNK
+  valsnka5(2,1,2,:,1)=6_SNK
+  valsnka5(1,2,2,:,1)=7_SNK
+  valsnka5(2,2,2,:,1)=8_SNK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSNKa5',valsnka5,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a5'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSNKa5',valsnka5,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSNKa5','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY INTEGER(SNK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsnka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a5'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSNKa5',valsnka5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSNKa5',valsnka5)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSNKa5',valsnka5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSNKa5',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSNKa5',valsnka5)
+  bool=SIZE(valsnka5,DIM=1) == 2 .AND. SIZE(valsnka5,DIM=2) == 2 &
+      .AND. SIZE(valsnka5,DIM=3) == 2 .AND. SIZE(valsnka5,DIM=4) == 2 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsnka5 size 1')
+  bool=ALL(valsnka5(1,1,1,:,1) == 1) .AND. ALL(valsnka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valsnka5(1,2,1,:,1) == 3) .AND. ALL(valsnka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valsnka5(1,1,2,:,1) == 5) .AND. ALL(valsnka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valsnka5(1,2,2,:,1) == 7) .AND. ALL(valsnka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valsnka5 1')
+  DEALLOCATE(valsnka5)
+
+  ALLOCATE(valsnka5(1,1,1,1,1))
+  CALL someParam%get('testSNKa5',valsnka5)
+  bool=SIZE(valsnka5,DIM=1) == 2 .AND. SIZE(valsnka5,DIM=2) == 2 &
+      .AND. SIZE(valsnka5,DIM=3) == 2 .AND. SIZE(valsnka5,DIM=4) == 2 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsnka5 size 1')
+  bool=ALL(valsnka5(1,1,1,:,1) == 1) .AND. ALL(valsnka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valsnka5(1,2,1,:,1) == 3) .AND. ALL(valsnka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valsnka5(1,1,2,:,1) == 5) .AND. ALL(valsnka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valsnka5(1,2,2,:,1) == 7) .AND. ALL(valsnka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valsnka5 1')
+  DEALLOCATE(valsnka5)
+
+  CALL someParam%get('testSNKa5',valsnka5)
+  bool=SIZE(valsnka5,DIM=1) == 2 .AND. SIZE(valsnka5,DIM=2) == 2 &
+      .AND. SIZE(valsnka5,DIM=3) == 2 .AND. SIZE(valsnka5,DIM=4) == 2 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsnka5 size 1')
+  bool=ALL(valsnka5(1,1,1,:,1) == 1) .AND. ALL(valsnka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valsnka5(1,2,1,:,1) == 3) .AND. ALL(valsnka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valsnka5(1,1,2,:,1) == 5) .AND. ALL(valsnka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valsnka5(1,2,2,:,1) == 7) .AND. ALL(valsnka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valsnka5 1')
+  DEALLOCATE(valsnka5)
+
+  ALLOCATE(valsnka5(2,2,1,1,1))
+  CALL testParam%get('testSNKa5',valsnka5)
+  bool=SIZE(valsnka5,DIM=1) == 2 .AND. SIZE(valsnka5,DIM=2) == 2 &
+      .AND. SIZE(valsnka5,DIM=3) == 2 .AND. SIZE(valsnka5,DIM=4) == 2 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsnka5 size 1')
+  bool=ALL(valsnka5(1,1,1,:,1) == 1) .AND. ALL(valsnka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valsnka5(1,2,1,:,1) == 3) .AND. ALL(valsnka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valsnka5(1,1,2,:,1) == 5) .AND. ALL(valsnka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valsnka5(1,2,2,:,1) == 7) .AND. ALL(valsnka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valsnka5 1')
+  DEALLOCATE(valsnka5)
+
+  CALL testParam%get('testSNKa5',valsnka5)
+  bool=SIZE(valsnka5,DIM=1) == 2 .AND. SIZE(valsnka5,DIM=2) == 2 &
+      .AND. SIZE(valsnka5,DIM=3) == 2 .AND. SIZE(valsnka5,DIM=4) == 2 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsnka5 size 1')
+  bool=ALL(valsnka5(1,1,1,:,1) == 1) .AND. ALL(valsnka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valsnka5(1,2,1,:,1) == 3) .AND. ALL(valsnka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valsnka5(1,1,2,:,1) == 5) .AND. ALL(valsnka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valsnka5(1,2,2,:,1) == 7) .AND. ALL(valsnka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valsnka5 1')
+
+  CALL testParam%get('testError',valsnka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a5'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsnka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a5'// &
+      ' - parameter name mismatch "testError" in "testSNKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSNKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSNKa5',valsnka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a5'// &
+      ' - parameter data type mismatch! Parameter testSNKa5 type is test_type and'// &
+      ' must be 5-D ARRAY INTEGER(SNK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSNKa5',RESHAPE((/-10/),(/1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSNKa5',valsnka5)
+  ASSERT(testParam%pdat%name == 'testSNKa5','%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY INTEGER(SNK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsnka5,DIM=1) == 1 .AND. SIZE(valsnka5,DIM=2) == 1 &
+      .AND. SIZE(valsnka5,DIM=3) == 1 .AND. SIZE(valsnka5,DIM=4) == 1 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'testParam valsnka5 size 1')
+  bool=valsnka5(1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsnka5 1')
+
+  CALL testParam%set('testSNKa5',RESHAPE((/3,-5,3,-5/),(/2,2,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSNKa5',valsnka5)
+  bool=SIZE(valsnka5,DIM=1) == 2 .AND. SIZE(valsnka5,DIM=2) == 2 &
+      .AND. SIZE(valsnka5,DIM=3) == 1 .AND. SIZE(valsnka5,DIM=4) == 1 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'testParam valsnka5 size 2')
+  bool=valsnka5(1,1,1,1,1) == 3 .AND. valsnka5(2,1,1,1,1) == -5 .AND. &
+      valsnka5(1,2,1,1,1) == 3 .AND. valsnka5(2,2,1,1,1) == -5
+  ASSERT(bool,'testParam valsnka5 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSNKa5',RESHAPE((/-10/),(/1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSNKa5',valsnka5)
+  ASSERT(someParam%name == 'testSNKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY INTEGER(SNK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsnka5,DIM=1) == 1 .AND. SIZE(valsnka5,DIM=2) == 1 &
+      .AND. SIZE(valsnka5,DIM=3) == 1 .AND. SIZE(valsnka5,DIM=4) == 1 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsnka5 size 1')
+  bool=valsnka5(1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsnka5 1')
+
+  CALL someParam%set('testSNKa5',RESHAPE((/5,7/),(/1,1,2,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSNKa5',valsnka5)
+  ASSERT(someParam%name == 'testSNKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY INTEGER(SNK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsnka5,DIM=1) == 1 .AND. SIZE(valsnka5,DIM=2) == 1 &
+      .AND. SIZE(valsnka5,DIM=3) == 2 .AND. SIZE(valsnka5,DIM=4) == 1 &
+      .AND. SIZE(valsnka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsnka5 size 2')
+  bool=valsnka5(1,1,1,1,1) == 5 .AND. valsnka5(1,1,2,1,1) == 7
+  ASSERT(bool,'testParam valsnka5 2')
+  DEALLOCATE(valsnka5)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1/),(/1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a5 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa5',RESHAPE((/-1/),(/1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a5 -'// &
+      ' unable to locate parameter "testSNKa5" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSNKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSNKa5',RESHAPE((/-1/),(/1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a5 -'// &
+      ' parameter data type mismatch! Parameter testSNKa5 type is test_type'// &
+      ' and must be 5-D ARRAY INTEGER(SNK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSNKa5',RESHAPE((/-1/),(/1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSNKa5','%name')
+  ASSERT(testParam2%pdat%datatype == '5-D ARRAY INTEGER(SNK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSNKa5
+!
+!-------------------------------------------------------------------------------
+! Test 5-D Array SLK support
+SUBROUTINE testSLKa5()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valslka5(2,2,2,2,1))
+  valslka5(1,1,1,:,1)=1_SLK
+  valslka5(2,1,1,:,1)=2_SLK
+  valslka5(1,2,1,:,1)=3_SLK
+  valslka5(2,2,1,:,1)=4_SLK
+  valslka5(1,1,2,:,1)=5_SLK
+  valslka5(2,1,2,:,1)=6_SLK
+  valslka5(1,2,2,:,1)=7_SLK
+  valslka5(2,2,2,:,1)=8_SLK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSLKa5',valslka5,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a5'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSLKa5',valslka5,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSLKa5','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY INTEGER(SLK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valslka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a5'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSLKa5',valslka5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSLKa5',valslka5)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSLKa5',valslka5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSLKa5',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSLKa5',valslka5)
+  bool=SIZE(valslka5,DIM=1) == 2 .AND. SIZE(valslka5,DIM=2) == 2 &
+      .AND. SIZE(valslka5,DIM=3) == 2 .AND. SIZE(valslka5,DIM=4) == 2 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'someParam valslka5 size 1')
+  bool=ALL(valslka5(1,1,1,:,1) == 1) .AND. ALL(valslka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valslka5(1,2,1,:,1) == 3) .AND. ALL(valslka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valslka5(1,1,2,:,1) == 5) .AND. ALL(valslka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valslka5(1,2,2,:,1) == 7) .AND. ALL(valslka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valslka5 1')
+  DEALLOCATE(valslka5)
+
+  ALLOCATE(valslka5(1,1,1,1,1))
+  CALL someParam%get('testSLKa5',valslka5)
+  bool=SIZE(valslka5,DIM=1) == 2 .AND. SIZE(valslka5,DIM=2) == 2 &
+      .AND. SIZE(valslka5,DIM=3) == 2 .AND. SIZE(valslka5,DIM=4) == 2 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'someParam valslka5 size 1')
+  bool=ALL(valslka5(1,1,1,:,1) == 1) .AND. ALL(valslka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valslka5(1,2,1,:,1) == 3) .AND. ALL(valslka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valslka5(1,1,2,:,1) == 5) .AND. ALL(valslka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valslka5(1,2,2,:,1) == 7) .AND. ALL(valslka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valslka5 1')
+  DEALLOCATE(valslka5)
+
+  CALL someParam%get('testSLKa5',valslka5)
+  bool=SIZE(valslka5,DIM=1) == 2 .AND. SIZE(valslka5,DIM=2) == 2 &
+      .AND. SIZE(valslka5,DIM=3) == 2 .AND. SIZE(valslka5,DIM=4) == 2 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'someParam valslka5 size 1')
+  bool=ALL(valslka5(1,1,1,:,1) == 1) .AND. ALL(valslka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valslka5(1,2,1,:,1) == 3) .AND. ALL(valslka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valslka5(1,1,2,:,1) == 5) .AND. ALL(valslka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valslka5(1,2,2,:,1) == 7) .AND. ALL(valslka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valslka5 1')
+  DEALLOCATE(valslka5)
+
+  ALLOCATE(valslka5(2,2,1,1,1))
+  CALL testParam%get('testSLKa5',valslka5)
+  bool=SIZE(valslka5,DIM=1) == 2 .AND. SIZE(valslka5,DIM=2) == 2 &
+      .AND. SIZE(valslka5,DIM=3) == 2 .AND. SIZE(valslka5,DIM=4) == 2 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'someParam valslka5 size 1')
+  bool=ALL(valslka5(1,1,1,:,1) == 1) .AND. ALL(valslka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valslka5(1,2,1,:,1) == 3) .AND. ALL(valslka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valslka5(1,1,2,:,1) == 5) .AND. ALL(valslka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valslka5(1,2,2,:,1) == 7) .AND. ALL(valslka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valslka5 1')
+  DEALLOCATE(valslka5)
+
+  CALL testParam%get('testSLKa5',valslka5)
+  bool=SIZE(valslka5,DIM=1) == 2 .AND. SIZE(valslka5,DIM=2) == 2 &
+      .AND. SIZE(valslka5,DIM=3) == 2 .AND. SIZE(valslka5,DIM=4) == 2 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'someParam valslka5 size 1')
+  bool=ALL(valslka5(1,1,1,:,1) == 1) .AND. ALL(valslka5(2,1,1,:,1) == 2) &
+      .AND. ALL(valslka5(1,2,1,:,1) == 3) .AND. ALL(valslka5(2,2,1,:,1) == 4) &
+      .AND. ALL(valslka5(1,1,2,:,1) == 5) .AND. ALL(valslka5(2,1,2,:,1) == 6) &
+      .AND. ALL(valslka5(1,2,2,:,1) == 7) .AND. ALL(valslka5(2,2,2,:,1) == 8)
+  ASSERT(bool,'someParam valslka5 1')
+
+  CALL testParam%get('testError',valslka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a5'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valslka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a5'// &
+      ' - parameter name mismatch "testError" in "testSLKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSLKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSLKa5',valslka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a5'// &
+      ' - parameter data type mismatch! Parameter testSLKa5 type is test_type and'// &
+      ' must be 5-D ARRAY INTEGER(SLK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSLKa5',RESHAPE((/-10_SLK/),(/1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSLKa5',valslka5)
+  ASSERT(testParam%pdat%name == 'testSLKa5','%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY INTEGER(SLK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valslka5,DIM=1) == 1 .AND. SIZE(valslka5,DIM=2) == 1 &
+      .AND. SIZE(valslka5,DIM=3) == 1 .AND. SIZE(valslka5,DIM=4) == 1 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'testParam valslka5 size 1')
+  bool=valslka5(1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valslka5 1')
+
+  CALL testParam%set('testSLKa5',RESHAPE((/3_SLK,-5_SLK,3_SLK,-5_SLK/),(/2,2,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSLKa5',valslka5)
+  bool=SIZE(valslka5,DIM=1) == 2 .AND. SIZE(valslka5,DIM=2) == 2 &
+      .AND. SIZE(valslka5,DIM=3) == 1 .AND. SIZE(valslka5,DIM=4) == 1 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'testParam valslka5 size 2')
+  bool=valslka5(1,1,1,1,1) == 3 .AND. valslka5(2,1,1,1,1) == -5 .AND. &
+      valslka5(1,2,1,1,1) == 3 .AND. valslka5(2,2,1,1,1) == -5
+  ASSERT(bool,'testParam valslka5 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSLKa5',RESHAPE((/-10_SLK/),(/1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSLKa5',valslka5)
+  ASSERT(someParam%name == 'testSLKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY INTEGER(SLK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valslka5,DIM=1) == 1 .AND. SIZE(valslka5,DIM=2) == 1 &
+      .AND. SIZE(valslka5,DIM=3) == 1 .AND. SIZE(valslka5,DIM=4) == 1 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'someParam valslka5 size 1')
+  bool=valslka5(1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valslka5 1')
+
+  CALL someParam%set('testSLKa5',RESHAPE((/5_SLK,7_SLK/),(/1,1,2,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSLKa5',valslka5)
+  ASSERT(someParam%name == 'testSLKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY INTEGER(SLK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valslka5,DIM=1) == 1 .AND. SIZE(valslka5,DIM=2) == 1 &
+      .AND. SIZE(valslka5,DIM=3) == 2 .AND. SIZE(valslka5,DIM=4) == 1 &
+      .AND. SIZE(valslka5,DIM=5) == 1
+  ASSERT(bool,'someParam valslka5 size 2')
+  bool=valslka5(1,1,1,1,1) == 5 .AND. valslka5(1,1,2,1,1) == 7
+  ASSERT(bool,'testParam valslka5 2')
+  DEALLOCATE(valslka5)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a5 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa5',RESHAPE((/-1_SLK/),(/1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a5 -'// &
+      ' unable to locate parameter "testSLKa5" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSLKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSLKa5',RESHAPE((/-1_SLK/),(/1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a5 -'// &
+      ' parameter data type mismatch! Parameter testSLKa5 type is test_type'// &
+      ' and must be 5-D ARRAY INTEGER(SLK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSLKa5',RESHAPE((/-1_SLK/),(/1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSLKa5','%name')
+  ASSERT(testParam2%pdat%datatype == '5-D ARRAY INTEGER(SLK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSLKa5
+!
+!-------------------------------------------------------------------------------
+!Test 5-D Array SSK support
+SUBROUTINE testSSKa5()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsska5(2,2,2,2,1))
+  valsska5(1,1,1,:,1)=1.0_SSK
+  valsska5(2,1,1,:,1)=2.0_SSK
+  valsska5(1,2,1,:,1)=3.0_SSK
+  valsska5(2,2,1,:,1)=4.0_SSK
+  valsska5(1,1,2,:,1)=5.0_SSK
+  valsska5(2,1,2,:,1)=6.0_SSK
+  valsska5(1,2,2,:,1)=7.0_SSK
+  valsska5(2,2,2,:,1)=8.0_SSK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSSKa5',valsska5,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a5'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSSKa5',valsska5,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSSKa5','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY REAL(SSK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsska5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a5'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSSKa5',valsska5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSSKa5',valsska5)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSSKa5',valsska5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSSKa5',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSSKa5',valsska5)
+  bool=SIZE(valsska5,DIM=1) == 2 .AND. SIZE(valsska5,DIM=2) == 2 &
+      .AND. SIZE(valsska5,DIM=3) == 2 .AND. SIZE(valsska5,DIM=4) == 2 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'someParam valsska5 size 1')
+  bool=ALL(valsska5(1,1,1,:,1) == 1.0_SSK) .AND. ALL(valsska5(2,1,1,:,1) == 2.0_SSK) &
+      .AND. ALL(valsska5(1,2,1,:,1) == 3.0_SSK) .AND. ALL(valsska5(2,2,1,:,1) == 4.0_SSK) &
+      .AND. ALL(valsska5(1,1,2,:,1) == 5.0_SSK) .AND. ALL(valsska5(2,1,2,:,1) == 6.0_SSK) &
+      .AND. ALL(valsska5(1,2,2,:,1) == 7.0_SSK) .AND. ALL(valsska5(2,2,2,:,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska5 1')
+  DEALLOCATE(valsska5)
+
+  ALLOCATE(valsska5(1,1,1,1,1))
+  CALL someParam%get('testSSKa5',valsska5)
+  bool=SIZE(valsska5,DIM=1) == 2 .AND. SIZE(valsska5,DIM=2) == 2 &
+      .AND. SIZE(valsska5,DIM=3) == 2 .AND. SIZE(valsska5,DIM=4) == 2 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'someParam valsska5 size 1')
+  bool=ALL(valsska5(1,1,1,:,1) == 1.0_SSK) .AND. ALL(valsska5(2,1,1,:,1) == 2.0_SSK) &
+      .AND. ALL(valsska5(1,2,1,:,1) == 3.0_SSK) .AND. ALL(valsska5(2,2,1,:,1) == 4.0_SSK) &
+      .AND. ALL(valsska5(1,1,2,:,1) == 5.0_SSK) .AND. ALL(valsska5(2,1,2,:,1) == 6.0_SSK) &
+      .AND. ALL(valsska5(1,2,2,:,1) == 7.0_SSK) .AND. ALL(valsska5(2,2,2,:,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska5 1')
+  DEALLOCATE(valsska5)
+
+  CALL someParam%get('testSSKa5',valsska5)
+  bool=SIZE(valsska5,DIM=1) == 2 .AND. SIZE(valsska5,DIM=2) == 2 &
+      .AND. SIZE(valsska5,DIM=3) == 2 .AND. SIZE(valsska5,DIM=4) == 2 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'someParam valsska5 size 1')
+  bool=ALL(valsska5(1,1,1,:,1) == 1.0_SSK) .AND. ALL(valsska5(2,1,1,:,1) == 2.0_SSK) &
+      .AND. ALL(valsska5(1,2,1,:,1) == 3.0_SSK) .AND. ALL(valsska5(2,2,1,:,1) == 4.0_SSK) &
+      .AND. ALL(valsska5(1,1,2,:,1) == 5.0_SSK) .AND. ALL(valsska5(2,1,2,:,1) == 6.0_SSK) &
+      .AND. ALL(valsska5(1,2,2,:,1) == 7.0_SSK) .AND. ALL(valsska5(2,2,2,:,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska5 1')
+  DEALLOCATE(valsska5)
+
+  ALLOCATE(valsska5(2,2,1,1,1))
+  CALL testParam%get('testSSKa5',valsska5)
+  bool=SIZE(valsska5,DIM=1) == 2 .AND. SIZE(valsska5,DIM=2) == 2 &
+      .AND. SIZE(valsska5,DIM=3) == 2 .AND. SIZE(valsska5,DIM=4) == 2 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'someParam valsska5 size 1')
+  bool=ALL(valsska5(1,1,1,:,1) == 1.0_SSK) .AND. ALL(valsska5(2,1,1,:,1) == 2.0_SSK) &
+      .AND. ALL(valsska5(1,2,1,:,1) == 3.0_SSK) .AND. ALL(valsska5(2,2,1,:,1) == 4.0_SSK) &
+      .AND. ALL(valsska5(1,1,2,:,1) == 5.0_SSK) .AND. ALL(valsska5(2,1,2,:,1) == 6.0_SSK) &
+      .AND. ALL(valsska5(1,2,2,:,1) == 7.0_SSK) .AND. ALL(valsska5(2,2,2,:,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska5 1')
+  DEALLOCATE(valsska5)
+
+  CALL testParam%get('testSSKa5',valsska5)
+  bool=SIZE(valsska5,DIM=1) == 2 .AND. SIZE(valsska5,DIM=2) == 2 &
+      .AND. SIZE(valsska5,DIM=3) == 2 .AND. SIZE(valsska5,DIM=4) == 2 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'someParam valsska5 size 1')
+  bool=ALL(valsska5(1,1,1,:,1) == 1.0_SSK) .AND. ALL(valsska5(2,1,1,:,1) == 2.0_SSK) &
+      .AND. ALL(valsska5(1,2,1,:,1) == 3.0_SSK) .AND. ALL(valsska5(2,2,1,:,1) == 4.0_SSK) &
+      .AND. ALL(valsska5(1,1,2,:,1) == 5.0_SSK) .AND. ALL(valsska5(2,1,2,:,1) == 6.0_SSK) &
+      .AND. ALL(valsska5(1,2,2,:,1) == 7.0_SSK) .AND. ALL(valsska5(2,2,2,:,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska5 1')
+
+  CALL testParam%get('testError',valsska5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a5'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsska5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a5'// &
+      ' - parameter name mismatch "testError" in "testSSKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSSKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSSKa5',valsska5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a5'// &
+      ' - parameter data type mismatch! Parameter testSSKa5 type is test_type and'// &
+      ' must be 5-D ARRAY REAL(SSK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSSKa5',RESHAPE((/-10.0_SSK/),(/1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSSKa5',valsska5)
+  ASSERT(testParam%pdat%name == 'testSSKa5','%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY REAL(SSK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsska5,DIM=1) == 1 .AND. SIZE(valsska5,DIM=2) == 1 &
+      .AND. SIZE(valsska5,DIM=3) == 1 .AND. SIZE(valsska5,DIM=4) == 1 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'testParam valsska5 size 1')
+  bool=valsska5(1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsska5 1')
+
+  CALL testParam%set('testSSKa5',RESHAPE((/3.0_SSK,-5.0_SSK,3.0_SSK,-5.0_SSK/),(/2,2,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSSKa5',valsska5)
+  bool=SIZE(valsska5,DIM=1) == 2 .AND. SIZE(valsska5,DIM=2) == 2 &
+      .AND. SIZE(valsska5,DIM=3) == 1 .AND. SIZE(valsska5,DIM=4) == 1 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'testParam valsska5 size 2')
+  bool=valsska5(1,1,1,1,1) == 3 .AND. valsska5(2,1,1,1,1) == -5 .AND. &
+      valsska5(1,2,1,1,1) == 3 .AND. valsska5(2,2,1,1,1) == -5
+  ASSERT(bool,'testParam valsska5 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSSKa5',RESHAPE((/-10.0_SSK/),(/1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSSKa5',valsska5)
+  ASSERT(someParam%name == 'testSSKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY REAL(SSK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsska5,DIM=1) == 1 .AND. SIZE(valsska5,DIM=2) == 1 &
+      .AND. SIZE(valsska5,DIM=3) == 1 .AND. SIZE(valsska5,DIM=4) == 1 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'someParam valsska5 size 1')
+  bool=valsska5(1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsska5 1')
+
+  CALL someParam%set('testSSKa5',RESHAPE((/5.0_SSK,7.0_SSK/),(/1,1,2,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSSKa5',valsska5)
+  ASSERT(someParam%name == 'testSSKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY REAL(SSK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsska5,DIM=1) == 1 .AND. SIZE(valsska5,DIM=2) == 1 &
+      .AND. SIZE(valsska5,DIM=3) == 2 .AND. SIZE(valsska5,DIM=4) == 1 &
+      .AND. SIZE(valsska5,DIM=5) == 1
+  ASSERT(bool,'someParam valsska5 size 2')
+  bool=valsska5(1,1,1,1,1) == 5 .AND. valsska5(1,1,2,1,1) == 7
+  ASSERT(bool,'testParam valsska5 2')
+  DEALLOCATE(valsska5)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a5 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa5',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a5 -'// &
+      ' unable to locate parameter "testSSKa5" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSSKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSSKa5',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a5 -'// &
+      ' parameter data type mismatch! Parameter testSSKa5 type is test_type'// &
+      ' and must be 5-D ARRAY REAL(SSK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSSKa5',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSSKa5','%name')
+  ASSERT(testParam2%pdat%datatype == '5-D ARRAY REAL(SSK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSSKa5
+!
+!-------------------------------------------------------------------------------
+!Test 5-D Array SDK support
+SUBROUTINE testSDKa5()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsdka5(2,2,2,2,1))
+  valsdka5(1,1,1,:,1)=1.0_SDK
+  valsdka5(2,1,1,:,1)=2.0_SDK
+  valsdka5(1,2,1,:,1)=3.0_SDK
+  valsdka5(2,2,1,:,1)=4.0_SDK
+  valsdka5(1,1,2,:,1)=5.0_SDK
+  valsdka5(2,1,2,:,1)=6.0_SDK
+  valsdka5(1,2,2,:,1)=7.0_SDK
+  valsdka5(2,2,2,:,1)=8.0_SDK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSDKa5',valsdka5,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a5'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSDKa5',valsdka5,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSDKa5','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY REAL(SDK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsdka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a5'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSDKa5',valsdka5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSDKa5',valsdka5)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSDKa5',valsdka5,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSDKa5',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSDKa5',valsdka5)
+  bool=SIZE(valsdka5,DIM=1) == 2 .AND. SIZE(valsdka5,DIM=2) == 2 &
+      .AND. SIZE(valsdka5,DIM=3) == 2 .AND. SIZE(valsdka5,DIM=4) == 2 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsdka5 size 1')
+  bool=ALL(valsdka5(1,1,1,:,1) == 1.0_SDK) .AND. ALL(valsdka5(2,1,1,:,1) == 2.0_SDK) &
+      .AND. ALL(valsdka5(1,2,1,:,1) == 3.0_SDK) .AND. ALL(valsdka5(2,2,1,:,1) == 4.0_SDK) &
+      .AND. ALL(valsdka5(1,1,2,:,1) == 5.0_SDK) .AND. ALL(valsdka5(2,1,2,:,1) == 6.0_SDK) &
+      .AND. ALL(valsdka5(1,2,2,:,1) == 7.0_SDK) .AND. ALL(valsdka5(2,2,2,:,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka5 1')
+  DEALLOCATE(valsdka5)
+
+  ALLOCATE(valsdka5(1,1,1,1,1))
+  CALL someParam%get('testSDKa5',valsdka5)
+  bool=SIZE(valsdka5,DIM=1) == 2 .AND. SIZE(valsdka5,DIM=2) == 2 &
+      .AND. SIZE(valsdka5,DIM=3) == 2 .AND. SIZE(valsdka5,DIM=4) == 2 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsdka5 size 1')
+  bool=ALL(valsdka5(1,1,1,:,1) == 1.0_SDK) .AND. ALL(valsdka5(2,1,1,:,1) == 2.0_SDK) &
+      .AND. ALL(valsdka5(1,2,1,:,1) == 3.0_SDK) .AND. ALL(valsdka5(2,2,1,:,1) == 4.0_SDK) &
+      .AND. ALL(valsdka5(1,1,2,:,1) == 5.0_SDK) .AND. ALL(valsdka5(2,1,2,:,1) == 6.0_SDK) &
+      .AND. ALL(valsdka5(1,2,2,:,1) == 7.0_SDK) .AND. ALL(valsdka5(2,2,2,:,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka5 1')
+  DEALLOCATE(valsdka5)
+
+  CALL someParam%get('testSDKa5',valsdka5)
+  bool=SIZE(valsdka5,DIM=1) == 2 .AND. SIZE(valsdka5,DIM=2) == 2 &
+      .AND. SIZE(valsdka5,DIM=3) == 2 .AND. SIZE(valsdka5,DIM=4) == 2 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsdka5 size 1')
+  bool=ALL(valsdka5(1,1,1,:,1) == 1.0_SDK) .AND. ALL(valsdka5(2,1,1,:,1) == 2.0_SDK) &
+      .AND. ALL(valsdka5(1,2,1,:,1) == 3.0_SDK) .AND. ALL(valsdka5(2,2,1,:,1) == 4.0_SDK) &
+      .AND. ALL(valsdka5(1,1,2,:,1) == 5.0_SDK) .AND. ALL(valsdka5(2,1,2,:,1) == 6.0_SDK) &
+      .AND. ALL(valsdka5(1,2,2,:,1) == 7.0_SDK) .AND. ALL(valsdka5(2,2,2,:,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka5 1')
+  DEALLOCATE(valsdka5)
+
+  ALLOCATE(valsdka5(2,2,1,1,1))
+  CALL testParam%get('testSDKa5',valsdka5)
+  bool=SIZE(valsdka5,DIM=1) == 2 .AND. SIZE(valsdka5,DIM=2) == 2 &
+      .AND. SIZE(valsdka5,DIM=3) == 2 .AND. SIZE(valsdka5,DIM=4) == 2 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsdka5 size 1')
+  bool=ALL(valsdka5(1,1,1,:,1) == 1.0_SDK) .AND. ALL(valsdka5(2,1,1,:,1) == 2.0_SDK) &
+      .AND. ALL(valsdka5(1,2,1,:,1) == 3.0_SDK) .AND. ALL(valsdka5(2,2,1,:,1) == 4.0_SDK) &
+      .AND. ALL(valsdka5(1,1,2,:,1) == 5.0_SDK) .AND. ALL(valsdka5(2,1,2,:,1) == 6.0_SDK) &
+      .AND. ALL(valsdka5(1,2,2,:,1) == 7.0_SDK) .AND. ALL(valsdka5(2,2,2,:,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka5 1')
+  DEALLOCATE(valsdka5)
+
+  CALL testParam%get('testSDKa5',valsdka5)
+  bool=SIZE(valsdka5,DIM=1) == 2 .AND. SIZE(valsdka5,DIM=2) == 2 &
+      .AND. SIZE(valsdka5,DIM=3) == 2 .AND. SIZE(valsdka5,DIM=4) == 2 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsdka5 size 1')
+  bool=ALL(valsdka5(1,1,1,:,1) == 1.0_SDK) .AND. ALL(valsdka5(2,1,1,:,1) == 2.0_SDK) &
+      .AND. ALL(valsdka5(1,2,1,:,1) == 3.0_SDK) .AND. ALL(valsdka5(2,2,1,:,1) == 4.0_SDK) &
+      .AND. ALL(valsdka5(1,1,2,:,1) == 5.0_SDK) .AND. ALL(valsdka5(2,1,2,:,1) == 6.0_SDK) &
+      .AND. ALL(valsdka5(1,2,2,:,1) == 7.0_SDK) .AND. ALL(valsdka5(2,2,2,:,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka5 1')
+
+  CALL testParam%get('testError',valsdka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a5'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsdka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a5'// &
+      ' - parameter name mismatch "testError" in "testSDKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSDKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSDKa5',valsdka5)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a5'// &
+      ' - parameter data type mismatch! Parameter testSDKa5 type is test_type and'// &
+      ' must be 5-D ARRAY REAL(SDK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSDKa5',RESHAPE((/-10.0_SDK/),(/1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSDKa5',valsdka5)
+  ASSERT(testParam%pdat%name == 'testSDKa5','%name')
+  ASSERT(testParam%pdat%datatype == '5-D ARRAY REAL(SDK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsdka5,DIM=1) == 1 .AND. SIZE(valsdka5,DIM=2) == 1 &
+      .AND. SIZE(valsdka5,DIM=3) == 1 .AND. SIZE(valsdka5,DIM=4) == 1 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'testParam valsdka5 size 1')
+  bool=valsdka5(1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsdka5 1')
+
+  CALL testParam%set('testSDKa5',RESHAPE((/3.0_SDK,-5.0_SDK,3.0_SDK,-5.0_SDK/),(/2,2,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSDKa5',valsdka5)
+  bool=SIZE(valsdka5,DIM=1) == 2 .AND. SIZE(valsdka5,DIM=2) == 2 &
+      .AND. SIZE(valsdka5,DIM=3) == 1 .AND. SIZE(valsdka5,DIM=4) == 1 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'testParam valsdka5 size 2')
+  bool=valsdka5(1,1,1,1,1) == 3 .AND. valsdka5(2,1,1,1,1) == -5 .AND. &
+      valsdka5(1,2,1,1,1) == 3 .AND. valsdka5(2,2,1,1,1) == -5
+  ASSERT(bool,'testParam valsdka5 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSDKa5',RESHAPE((/-10.0_SDK/),(/1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSDKa5',valsdka5)
+  ASSERT(someParam%name == 'testSDKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY REAL(SDK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsdka5,DIM=1) == 1 .AND. SIZE(valsdka5,DIM=2) == 1 &
+      .AND. SIZE(valsdka5,DIM=3) == 1 .AND. SIZE(valsdka5,DIM=4) == 1 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsdka5 size 1')
+  bool=valsdka5(1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsdka5 1')
+
+  CALL someParam%set('testSDKa5',RESHAPE((/5.0_SDK,7.0_SDK/),(/1,1,2,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSDKa5',valsdka5)
+  ASSERT(someParam%name == 'testSDKa5','someParam%name')
+  ASSERT(someParam%datatype == '5-D ARRAY REAL(SDK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsdka5,DIM=1) == 1 .AND. SIZE(valsdka5,DIM=2) == 1 &
+      .AND. SIZE(valsdka5,DIM=3) == 2 .AND. SIZE(valsdka5,DIM=4) == 1 &
+      .AND. SIZE(valsdka5,DIM=5) == 1
+  ASSERT(bool,'someParam valsdka5 size 2')
+  bool=valsdka5(1,1,1,1,1) == 5 .AND. valsdka5(1,1,2,1,1) == 7
+  ASSERT(bool,'testParam valsdka5 2')
+  DEALLOCATE(valsdka5)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a5 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa5"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa5',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a5 -'// &
+      ' unable to locate parameter "testSDKa5" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSDKa5'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSDKa5',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a5 -'// &
+      ' parameter data type mismatch! Parameter testSDKa5 type is test_type'// &
+      ' and must be 5-D ARRAY REAL(SDK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSDKa5',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSDKa5','%name')
+  ASSERT(testParam2%pdat%datatype == '5-D ARRAY REAL(SDK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSDKa5
+!
+!-------------------------------------------------------------------------------
+!Test 6-D Array SNK support
+SUBROUTINE testSNKa6()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsnka6(2,2,2,2,1,1))
+  valsnka6(1,1,1,:,1,1)=1_SNK
+  valsnka6(2,1,1,:,1,1)=2_SNK
+  valsnka6(1,2,1,:,1,1)=3_SNK
+  valsnka6(2,2,1,:,1,1)=4_SNK
+  valsnka6(1,1,2,:,1,1)=5_SNK
+  valsnka6(2,1,2,:,1,1)=6_SNK
+  valsnka6(1,2,2,:,1,1)=7_SNK
+  valsnka6(2,2,2,:,1,1)=8_SNK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSNKa6',valsnka6,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a6'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSNKa6',valsnka6,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSNKa6','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY INTEGER(SNK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsnka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a6'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSNKa6',valsnka6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSNKa6',valsnka6)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSNKa6',valsnka6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSNKa6',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSNKa6',valsnka6)
+  bool=SIZE(valsnka6,DIM=1) == 2 .AND. SIZE(valsnka6,DIM=2) == 2 &
+      .AND. SIZE(valsnka6,DIM=3) == 2 .AND. SIZE(valsnka6,DIM=4) == 2 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsnka6 size 1')
+  bool=ALL(valsnka6(1,1,1,:,1,1) == 1) .AND. ALL(valsnka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valsnka6(1,2,1,:,1,1) == 3) .AND. ALL(valsnka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valsnka6(1,1,2,:,1,1) == 5) .AND. ALL(valsnka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valsnka6(1,2,2,:,1,1) == 7) .AND. ALL(valsnka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valsnka6 1')
+  DEALLOCATE(valsnka6)
+
+  ALLOCATE(valsnka6(1,1,1,1,1,1))
+  CALL someParam%get('testSNKa6',valsnka6)
+  bool=SIZE(valsnka6,DIM=1) == 2 .AND. SIZE(valsnka6,DIM=2) == 2 &
+      .AND. SIZE(valsnka6,DIM=3) == 2 .AND. SIZE(valsnka6,DIM=4) == 2 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsnka6 size 1')
+  bool=ALL(valsnka6(1,1,1,:,1,1) == 1) .AND. ALL(valsnka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valsnka6(1,2,1,:,1,1) == 3) .AND. ALL(valsnka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valsnka6(1,1,2,:,1,1) == 5) .AND. ALL(valsnka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valsnka6(1,2,2,:,1,1) == 7) .AND. ALL(valsnka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valsnka6 1')
+  DEALLOCATE(valsnka6)
+
+  CALL someParam%get('testSNKa6',valsnka6)
+  bool=SIZE(valsnka6,DIM=1) == 2 .AND. SIZE(valsnka6,DIM=2) == 2 &
+      .AND. SIZE(valsnka6,DIM=3) == 2 .AND. SIZE(valsnka6,DIM=4) == 2 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsnka6 size 1')
+  bool=ALL(valsnka6(1,1,1,:,1,1) == 1) .AND. ALL(valsnka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valsnka6(1,2,1,:,1,1) == 3) .AND. ALL(valsnka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valsnka6(1,1,2,:,1,1) == 5) .AND. ALL(valsnka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valsnka6(1,2,2,:,1,1) == 7) .AND. ALL(valsnka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valsnka6 1')
+  DEALLOCATE(valsnka6)
+
+  ALLOCATE(valsnka6(2,2,1,1,1,1))
+  CALL testParam%get('testSNKa6',valsnka6)
+  bool=SIZE(valsnka6,DIM=1) == 2 .AND. SIZE(valsnka6,DIM=2) == 2 &
+      .AND. SIZE(valsnka6,DIM=3) == 2 .AND. SIZE(valsnka6,DIM=4) == 2 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsnka6 size 1')
+  bool=ALL(valsnka6(1,1,1,:,1,1) == 1) .AND. ALL(valsnka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valsnka6(1,2,1,:,1,1) == 3) .AND. ALL(valsnka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valsnka6(1,1,2,:,1,1) == 5) .AND. ALL(valsnka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valsnka6(1,2,2,:,1,1) == 7) .AND. ALL(valsnka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valsnka6 1')
+  DEALLOCATE(valsnka6)
+
+  CALL testParam%get('testSNKa6',valsnka6)
+  bool=SIZE(valsnka6,DIM=1) == 2 .AND. SIZE(valsnka6,DIM=2) == 2 &
+      .AND. SIZE(valsnka6,DIM=3) == 2 .AND. SIZE(valsnka6,DIM=4) == 2 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsnka6 size 1')
+  bool=ALL(valsnka6(1,1,1,:,1,1) == 1) .AND. ALL(valsnka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valsnka6(1,2,1,:,1,1) == 3) .AND. ALL(valsnka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valsnka6(1,1,2,:,1,1) == 5) .AND. ALL(valsnka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valsnka6(1,2,2,:,1,1) == 7) .AND. ALL(valsnka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valsnka6 1')
+
+  CALL testParam%get('testError',valsnka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a6'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsnka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a6'// &
+      ' - parameter name mismatch "testError" in "testSNKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSNKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSNKa6',valsnka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a6'// &
+      ' - parameter data type mismatch! Parameter testSNKa6 type is test_type and'// &
+      ' must be 6-D ARRAY INTEGER(SNK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSNKa6',RESHAPE((/-10/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSNKa6',valsnka6)
+  ASSERT(testParam%pdat%name == 'testSNKa6','%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY INTEGER(SNK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsnka6,DIM=1) == 1 .AND. SIZE(valsnka6,DIM=2) == 1 &
+      .AND. SIZE(valsnka6,DIM=3) == 1 .AND. SIZE(valsnka6,DIM=4) == 1 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'testParam valsnka6 size 1')
+  bool=valsnka6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsnka6 1')
+
+  CALL testParam%set('testSNKa6',RESHAPE((/3,-5,3,-5/),(/2,2,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSNKa6',valsnka6)
+  bool=SIZE(valsnka6,DIM=1) == 2 .AND. SIZE(valsnka6,DIM=2) == 2 &
+      .AND. SIZE(valsnka6,DIM=3) == 1 .AND. SIZE(valsnka6,DIM=4) == 1 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'testParam valsnka6 size 2')
+  bool=valsnka6(1,1,1,1,1,1) == 3 .AND. valsnka6(2,1,1,1,1,1) == -5 .AND. &
+      valsnka6(1,2,1,1,1,1) == 3 .AND. valsnka6(2,2,1,1,1,1) == -5
+  ASSERT(bool,'testParam valsnka6 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSNKa6',RESHAPE((/-10/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSNKa6',valsnka6)
+  ASSERT(someParam%name == 'testSNKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY INTEGER(SNK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsnka6,DIM=1) == 1 .AND. SIZE(valsnka6,DIM=2) == 1 &
+      .AND. SIZE(valsnka6,DIM=3) == 1 .AND. SIZE(valsnka6,DIM=4) == 1 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsnka6 size 1')
+  bool=valsnka6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsnka6 1')
+
+  CALL someParam%set('testSNKa6',RESHAPE((/5,7/),(/1,1,2,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSNKa6',valsnka6)
+  ASSERT(someParam%name == 'testSNKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY INTEGER(SNK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsnka6,DIM=1) == 1 .AND. SIZE(valsnka6,DIM=2) == 1 &
+      .AND. SIZE(valsnka6,DIM=3) == 2 .AND. SIZE(valsnka6,DIM=4) == 1 &
+      .AND. SIZE(valsnka6,DIM=5) == 1 .AND. SIZE(valsnka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsnka6 size 2')
+  bool=valsnka6(1,1,1,1,1,1) == 5 .AND. valsnka6(1,1,2,1,1,1) == 7
+  ASSERT(bool,'testParam valsnka6 2')
+  DEALLOCATE(valsnka6)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1/),(/1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a6 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa6',RESHAPE((/-1/),(/1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a6 -'// &
+      ' unable to locate parameter "testSNKa6" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSNKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSNKa6',RESHAPE((/-1/),(/1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a6 -'// &
+      ' parameter data type mismatch! Parameter testSNKa6 type is test_type'// &
+      ' and must be 6-D ARRAY INTEGER(SNK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSNKa6',RESHAPE((/-1/),(/1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSNKa6','%name')
+  ASSERT(testParam2%pdat%datatype == '6-D ARRAY INTEGER(SNK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSNKa6
+!
+!-------------------------------------------------------------------------------
+! Test 6-D Array SLK support
+SUBROUTINE testSLKa6()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valslka6(2,2,2,2,1,1))
+  valslka6(1,1,1,:,1,1)=1_SLK
+  valslka6(2,1,1,:,1,1)=2_SLK
+  valslka6(1,2,1,:,1,1)=3_SLK
+  valslka6(2,2,1,:,1,1)=4_SLK
+  valslka6(1,1,2,:,1,1)=5_SLK
+  valslka6(2,1,2,:,1,1)=6_SLK
+  valslka6(1,2,2,:,1,1)=7_SLK
+  valslka6(2,2,2,:,1,1)=8_SLK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSLKa6',valslka6,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a6'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSLKa6',valslka6,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSLKa6','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY INTEGER(SLK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valslka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a6'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSLKa6',valslka6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSLKa6',valslka6)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSLKa6',valslka6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSLKa6',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSLKa6',valslka6)
+  bool=SIZE(valslka6,DIM=1) == 2 .AND. SIZE(valslka6,DIM=2) == 2 &
+      .AND. SIZE(valslka6,DIM=3) == 2 .AND. SIZE(valslka6,DIM=4) == 2 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'someParam valslka6 size 1')
+  bool=ALL(valslka6(1,1,1,:,1,1) == 1) .AND. ALL(valslka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valslka6(1,2,1,:,1,1) == 3) .AND. ALL(valslka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valslka6(1,1,2,:,1,1) == 5) .AND. ALL(valslka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valslka6(1,2,2,:,1,1) == 7) .AND. ALL(valslka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valslka6 1')
+  DEALLOCATE(valslka6)
+
+  ALLOCATE(valslka6(1,1,1,1,1,1))
+  CALL someParam%get('testSLKa6',valslka6)
+  bool=SIZE(valslka6,DIM=1) == 2 .AND. SIZE(valslka6,DIM=2) == 2 &
+      .AND. SIZE(valslka6,DIM=3) == 2 .AND. SIZE(valslka6,DIM=4) == 2 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'someParam valslka6 size 1')
+  bool=ALL(valslka6(1,1,1,:,1,1) == 1) .AND. ALL(valslka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valslka6(1,2,1,:,1,1) == 3) .AND. ALL(valslka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valslka6(1,1,2,:,1,1) == 5) .AND. ALL(valslka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valslka6(1,2,2,:,1,1) == 7) .AND. ALL(valslka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valslka6 1')
+  DEALLOCATE(valslka6)
+
+  CALL someParam%get('testSLKa6',valslka6)
+  bool=SIZE(valslka6,DIM=1) == 2 .AND. SIZE(valslka6,DIM=2) == 2 &
+      .AND. SIZE(valslka6,DIM=3) == 2 .AND. SIZE(valslka6,DIM=4) == 2 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'someParam valslka6 size 1')
+  bool=ALL(valslka6(1,1,1,:,1,1) == 1) .AND. ALL(valslka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valslka6(1,2,1,:,1,1) == 3) .AND. ALL(valslka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valslka6(1,1,2,:,1,1) == 5) .AND. ALL(valslka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valslka6(1,2,2,:,1,1) == 7) .AND. ALL(valslka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valslka6 1')
+  DEALLOCATE(valslka6)
+
+  ALLOCATE(valslka6(2,2,1,1,1,1))
+  CALL testParam%get('testSLKa6',valslka6)
+  bool=SIZE(valslka6,DIM=1) == 2 .AND. SIZE(valslka6,DIM=2) == 2 &
+      .AND. SIZE(valslka6,DIM=3) == 2 .AND. SIZE(valslka6,DIM=4) == 2 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'someParam valslka6 size 1')
+  bool=ALL(valslka6(1,1,1,:,1,1) == 1) .AND. ALL(valslka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valslka6(1,2,1,:,1,1) == 3) .AND. ALL(valslka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valslka6(1,1,2,:,1,1) == 5) .AND. ALL(valslka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valslka6(1,2,2,:,1,1) == 7) .AND. ALL(valslka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valslka6 1')
+  DEALLOCATE(valslka6)
+
+  CALL testParam%get('testSLKa6',valslka6)
+  bool=SIZE(valslka6,DIM=1) == 2 .AND. SIZE(valslka6,DIM=2) == 2 &
+      .AND. SIZE(valslka6,DIM=3) == 2 .AND. SIZE(valslka6,DIM=4) == 2 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'someParam valslka6 size 1')
+  bool=ALL(valslka6(1,1,1,:,1,1) == 1) .AND. ALL(valslka6(2,1,1,:,1,1) == 2) &
+      .AND. ALL(valslka6(1,2,1,:,1,1) == 3) .AND. ALL(valslka6(2,2,1,:,1,1) == 4) &
+      .AND. ALL(valslka6(1,1,2,:,1,1) == 5) .AND. ALL(valslka6(2,1,2,:,1,1) == 6) &
+      .AND. ALL(valslka6(1,2,2,:,1,1) == 7) .AND. ALL(valslka6(2,2,2,:,1,1) == 8)
+  ASSERT(bool,'someParam valslka6 1')
+
+  CALL testParam%get('testError',valslka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a6'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valslka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a6'// &
+      ' - parameter name mismatch "testError" in "testSLKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSLKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSLKa6',valslka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a6'// &
+      ' - parameter data type mismatch! Parameter testSLKa6 type is test_type and'// &
+      ' must be 6-D ARRAY INTEGER(SLK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSLKa6',RESHAPE((/-10_SLK/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSLKa6',valslka6)
+  ASSERT(testParam%pdat%name == 'testSLKa6','%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY INTEGER(SLK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valslka6,DIM=1) == 1 .AND. SIZE(valslka6,DIM=2) == 1 &
+      .AND. SIZE(valslka6,DIM=3) == 1 .AND. SIZE(valslka6,DIM=4) == 1 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'testParam valslka6 size 1')
+  bool=valslka6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valslka6 1')
+
+  CALL testParam%set('testSLKa6',RESHAPE((/3_SLK,-5_SLK,3_SLK,-5_SLK/),(/2,2,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSLKa6',valslka6)
+  bool=SIZE(valslka6,DIM=1) == 2 .AND. SIZE(valslka6,DIM=2) == 2 &
+      .AND. SIZE(valslka6,DIM=3) == 1 .AND. SIZE(valslka6,DIM=4) == 1 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'testParam valslka6 size 2')
+  bool=valslka6(1,1,1,1,1,1) == 3 .AND. valslka6(2,1,1,1,1,1) == -5 .AND. &
+      valslka6(1,2,1,1,1,1) == 3 .AND. valslka6(2,2,1,1,1,1) == -5
+  ASSERT(bool,'testParam valslka6 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSLKa6',RESHAPE((/-10_SLK/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSLKa6',valslka6)
+  ASSERT(someParam%name == 'testSLKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY INTEGER(SLK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valslka6,DIM=1) == 1 .AND. SIZE(valslka6,DIM=2) == 1 &
+      .AND. SIZE(valslka6,DIM=3) == 1 .AND. SIZE(valslka6,DIM=4) == 1 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'someParam valslka6 size 1')
+  bool=valslka6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valslka6 1')
+
+  CALL someParam%set('testSLKa6',RESHAPE((/5_SLK,7_SLK/),(/1,1,2,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSLKa6',valslka6)
+  ASSERT(someParam%name == 'testSLKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY INTEGER(SLK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valslka6,DIM=1) == 1 .AND. SIZE(valslka6,DIM=2) == 1 &
+      .AND. SIZE(valslka6,DIM=3) == 2 .AND. SIZE(valslka6,DIM=4) == 1 &
+      .AND. SIZE(valslka6,DIM=5) == 1 .AND. SIZE(valslka6,DIM=6) == 1
+  ASSERT(bool,'someParam valslka6 size 2')
+  bool=valslka6(1,1,1,1,1,1) == 5 .AND. valslka6(1,1,2,1,1,1) == 7
+  ASSERT(bool,'testParam valslka6 2')
+  DEALLOCATE(valslka6)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a6 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa6',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a6 -'// &
+      ' unable to locate parameter "testSLKa6" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSLKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSLKa6',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a6 -'// &
+      ' parameter data type mismatch! Parameter testSLKa6 type is test_type'// &
+      ' and must be 6-D ARRAY INTEGER(SLK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSLKa6',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSLKa6','%name')
+  ASSERT(testParam2%pdat%datatype == '6-D ARRAY INTEGER(SLK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSLKa6
+!
+!-------------------------------------------------------------------------------
+!Test 6-D Array SSK support
+SUBROUTINE testSSKa6()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsska6(2,2,2,2,1,1))
+  valsska6(1,1,1,:,1,1)=1.0_SSK
+  valsska6(2,1,1,:,1,1)=2.0_SSK
+  valsska6(1,2,1,:,1,1)=3.0_SSK
+  valsska6(2,2,1,:,1,1)=4.0_SSK
+  valsska6(1,1,2,:,1,1)=5.0_SSK
+  valsska6(2,1,2,:,1,1)=6.0_SSK
+  valsska6(1,2,2,:,1,1)=7.0_SSK
+  valsska6(2,2,2,:,1,1)=8.0_SSK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSSKa6',valsska6,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a6'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSSKa6',valsska6,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSSKa6','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY REAL(SSK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsska6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a6'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSSKa6',valsska6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSSKa6',valsska6)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSSKa6',valsska6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSSKa6',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSSKa6',valsska6)
+  bool=SIZE(valsska6,DIM=1) == 2 .AND. SIZE(valsska6,DIM=2) == 2 &
+      .AND. SIZE(valsska6,DIM=3) == 2 .AND. SIZE(valsska6,DIM=4) == 2 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'someParam valsska6 size 1')
+  bool=ALL(valsska6(1,1,1,:,1,1) == 1.0_SSK) .AND. ALL(valsska6(2,1,1,:,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska6(1,2,1,:,1,1) == 3.0_SSK) .AND. ALL(valsska6(2,2,1,:,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska6(1,1,2,:,1,1) == 5.0_SSK) .AND. ALL(valsska6(2,1,2,:,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska6(1,2,2,:,1,1) == 7.0_SSK) .AND. ALL(valsska6(2,2,2,:,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska6 1')
+  DEALLOCATE(valsska6)
+
+  ALLOCATE(valsska6(1,1,1,1,1,1))
+  CALL someParam%get('testSSKa6',valsska6)
+  bool=SIZE(valsska6,DIM=1) == 2 .AND. SIZE(valsska6,DIM=2) == 2 &
+      .AND. SIZE(valsska6,DIM=3) == 2 .AND. SIZE(valsska6,DIM=4) == 2 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'someParam valsska6 size 1')
+  bool=ALL(valsska6(1,1,1,:,1,1) == 1.0_SSK) .AND. ALL(valsska6(2,1,1,:,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska6(1,2,1,:,1,1) == 3.0_SSK) .AND. ALL(valsska6(2,2,1,:,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska6(1,1,2,:,1,1) == 5.0_SSK) .AND. ALL(valsska6(2,1,2,:,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska6(1,2,2,:,1,1) == 7.0_SSK) .AND. ALL(valsska6(2,2,2,:,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska6 1')
+  DEALLOCATE(valsska6)
+
+  CALL someParam%get('testSSKa6',valsska6)
+  bool=SIZE(valsska6,DIM=1) == 2 .AND. SIZE(valsska6,DIM=2) == 2 &
+      .AND. SIZE(valsska6,DIM=3) == 2 .AND. SIZE(valsska6,DIM=4) == 2 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'someParam valsska6 size 1')
+  bool=ALL(valsska6(1,1,1,:,1,1) == 1.0_SSK) .AND. ALL(valsska6(2,1,1,:,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska6(1,2,1,:,1,1) == 3.0_SSK) .AND. ALL(valsska6(2,2,1,:,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska6(1,1,2,:,1,1) == 5.0_SSK) .AND. ALL(valsska6(2,1,2,:,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska6(1,2,2,:,1,1) == 7.0_SSK) .AND. ALL(valsska6(2,2,2,:,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska6 1')
+  DEALLOCATE(valsska6)
+
+  ALLOCATE(valsska6(2,2,1,1,1,1))
+  CALL testParam%get('testSSKa6',valsska6)
+  bool=SIZE(valsska6,DIM=1) == 2 .AND. SIZE(valsska6,DIM=2) == 2 &
+      .AND. SIZE(valsska6,DIM=3) == 2 .AND. SIZE(valsska6,DIM=4) == 2 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'someParam valsska6 size 1')
+  bool=ALL(valsska6(1,1,1,:,1,1) == 1.0_SSK) .AND. ALL(valsska6(2,1,1,:,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska6(1,2,1,:,1,1) == 3.0_SSK) .AND. ALL(valsska6(2,2,1,:,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska6(1,1,2,:,1,1) == 5.0_SSK) .AND. ALL(valsska6(2,1,2,:,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska6(1,2,2,:,1,1) == 7.0_SSK) .AND. ALL(valsska6(2,2,2,:,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska6 1')
+  DEALLOCATE(valsska6)
+
+  CALL testParam%get('testSSKa6',valsska6)
+  bool=SIZE(valsska6,DIM=1) == 2 .AND. SIZE(valsska6,DIM=2) == 2 &
+      .AND. SIZE(valsska6,DIM=3) == 2 .AND. SIZE(valsska6,DIM=4) == 2 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'someParam valsska6 size 1')
+  bool=ALL(valsska6(1,1,1,:,1,1) == 1.0_SSK) .AND. ALL(valsska6(2,1,1,:,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska6(1,2,1,:,1,1) == 3.0_SSK) .AND. ALL(valsska6(2,2,1,:,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska6(1,1,2,:,1,1) == 5.0_SSK) .AND. ALL(valsska6(2,1,2,:,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska6(1,2,2,:,1,1) == 7.0_SSK) .AND. ALL(valsska6(2,2,2,:,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska6 1')
+
+  CALL testParam%get('testError',valsska6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a6'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsska6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a6'// &
+      ' - parameter name mismatch "testError" in "testSSKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSSKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSSKa6',valsska6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a6'// &
+      ' - parameter data type mismatch! Parameter testSSKa6 type is test_type and'// &
+      ' must be 6-D ARRAY REAL(SSK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSSKa6',RESHAPE((/-10.0_SSK/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSSKa6',valsska6)
+  ASSERT(testParam%pdat%name == 'testSSKa6','%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY REAL(SSK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsska6,DIM=1) == 1 .AND. SIZE(valsska6,DIM=2) == 1 &
+      .AND. SIZE(valsska6,DIM=3) == 1 .AND. SIZE(valsska6,DIM=4) == 1 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'testParam valsska6 size 1')
+  bool=valsska6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsska6 1')
+
+  CALL testParam%set('testSSKa6',RESHAPE((/3.0_SSK,-5.0_SSK,3.0_SSK,-5.0_SSK/),(/2,2,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSSKa6',valsska6)
+  bool=SIZE(valsska6,DIM=1) == 2 .AND. SIZE(valsska6,DIM=2) == 2 &
+      .AND. SIZE(valsska6,DIM=3) == 1 .AND. SIZE(valsska6,DIM=4) == 1 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'testParam valsska6 size 2')
+  bool=valsska6(1,1,1,1,1,1) == 3 .AND. valsska6(2,1,1,1,1,1) == -5 .AND. &
+      valsska6(1,2,1,1,1,1) == 3 .AND. valsska6(2,2,1,1,1,1) == -5
+  ASSERT(bool,'testParam valsska6 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSSKa6',RESHAPE((/-10.0_SSK/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSSKa6',valsska6)
+  ASSERT(someParam%name == 'testSSKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY REAL(SSK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsska6,DIM=1) == 1 .AND. SIZE(valsska6,DIM=2) == 1 &
+      .AND. SIZE(valsska6,DIM=3) == 1 .AND. SIZE(valsska6,DIM=4) == 1 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'someParam valsska6 size 1')
+  bool=valsska6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsska6 1')
+
+  CALL someParam%set('testSSKa6',RESHAPE((/5.0_SSK,7.0_SSK/),(/1,1,2,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSSKa6',valsska6)
+  ASSERT(someParam%name == 'testSSKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY REAL(SSK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsska6,DIM=1) == 1 .AND. SIZE(valsska6,DIM=2) == 1 &
+      .AND. SIZE(valsska6,DIM=3) == 2 .AND. SIZE(valsska6,DIM=4) == 1 &
+      .AND. SIZE(valsska6,DIM=5) == 1 .AND. SIZE(valsska6,DIM=6) == 1
+  ASSERT(bool,'someParam valsska6 size 2')
+  bool=valsska6(1,1,1,1,1,1) == 5 .AND. valsska6(1,1,2,1,1,1) == 7
+  ASSERT(bool,'testParam valsska6 2')
+  DEALLOCATE(valsska6)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a6 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa6',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a6 -'// &
+      ' unable to locate parameter "testSSKa6" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSSKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSSKa6',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a6 -'// &
+      ' parameter data type mismatch! Parameter testSSKa6 type is test_type'// &
+      ' and must be 6-D ARRAY REAL(SSK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSSKa6',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSSKa6','%name')
+  ASSERT(testParam2%pdat%datatype == '6-D ARRAY REAL(SSK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSSKa6
+!
+!-------------------------------------------------------------------------------
+!Test 6-D Array SDK support
+SUBROUTINE testSDKa6()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsdka6(2,2,2,2,1,1))
+  valsdka6(1,1,1,:,1,1)=1.0_SDK
+  valsdka6(2,1,1,:,1,1)=2.0_SDK
+  valsdka6(1,2,1,:,1,1)=3.0_SDK
+  valsdka6(2,2,1,:,1,1)=4.0_SDK
+  valsdka6(1,1,2,:,1,1)=5.0_SDK
+  valsdka6(2,1,2,:,1,1)=6.0_SDK
+  valsdka6(1,2,2,:,1,1)=7.0_SDK
+  valsdka6(2,2,2,:,1,1)=8.0_SDK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSDKa6',valsdka6,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a6'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSDKa6',valsdka6,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSDKa6','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY REAL(SDK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsdka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a6'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSDKa6',valsdka6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSDKa6',valsdka6)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSDKa6',valsdka6,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSDKa6',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSDKa6',valsdka6)
+  bool=SIZE(valsdka6,DIM=1) == 2 .AND. SIZE(valsdka6,DIM=2) == 2 &
+      .AND. SIZE(valsdka6,DIM=3) == 2 .AND. SIZE(valsdka6,DIM=4) == 2 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsdka6 size 1')
+  bool=ALL(valsdka6(1,1,1,:,1,1) == 1.0_SDK) .AND. ALL(valsdka6(2,1,1,:,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka6(1,2,1,:,1,1) == 3.0_SDK) .AND. ALL(valsdka6(2,2,1,:,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka6(1,1,2,:,1,1) == 5.0_SDK) .AND. ALL(valsdka6(2,1,2,:,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka6(1,2,2,:,1,1) == 7.0_SDK) .AND. ALL(valsdka6(2,2,2,:,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka6 1')
+  DEALLOCATE(valsdka6)
+
+  ALLOCATE(valsdka6(1,1,1,1,1,1))
+  CALL someParam%get('testSDKa6',valsdka6)
+  bool=SIZE(valsdka6,DIM=1) == 2 .AND. SIZE(valsdka6,DIM=2) == 2 &
+      .AND. SIZE(valsdka6,DIM=3) == 2 .AND. SIZE(valsdka6,DIM=4) == 2 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsdka6 size 1')
+  bool=ALL(valsdka6(1,1,1,:,1,1) == 1.0_SDK) .AND. ALL(valsdka6(2,1,1,:,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka6(1,2,1,:,1,1) == 3.0_SDK) .AND. ALL(valsdka6(2,2,1,:,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka6(1,1,2,:,1,1) == 5.0_SDK) .AND. ALL(valsdka6(2,1,2,:,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka6(1,2,2,:,1,1) == 7.0_SDK) .AND. ALL(valsdka6(2,2,2,:,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka6 1')
+  DEALLOCATE(valsdka6)
+
+  CALL someParam%get('testSDKa6',valsdka6)
+  bool=SIZE(valsdka6,DIM=1) == 2 .AND. SIZE(valsdka6,DIM=2) == 2 &
+      .AND. SIZE(valsdka6,DIM=3) == 2 .AND. SIZE(valsdka6,DIM=4) == 2 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsdka6 size 1')
+  bool=ALL(valsdka6(1,1,1,:,1,1) == 1.0_SDK) .AND. ALL(valsdka6(2,1,1,:,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka6(1,2,1,:,1,1) == 3.0_SDK) .AND. ALL(valsdka6(2,2,1,:,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka6(1,1,2,:,1,1) == 5.0_SDK) .AND. ALL(valsdka6(2,1,2,:,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka6(1,2,2,:,1,1) == 7.0_SDK) .AND. ALL(valsdka6(2,2,2,:,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka6 1')
+  DEALLOCATE(valsdka6)
+
+  ALLOCATE(valsdka6(2,2,1,1,1,1))
+  CALL testParam%get('testSDKa6',valsdka6)
+  bool=SIZE(valsdka6,DIM=1) == 2 .AND. SIZE(valsdka6,DIM=2) == 2 &
+      .AND. SIZE(valsdka6,DIM=3) == 2 .AND. SIZE(valsdka6,DIM=4) == 2 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsdka6 size 1')
+  bool=ALL(valsdka6(1,1,1,:,1,1) == 1.0_SDK) .AND. ALL(valsdka6(2,1,1,:,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka6(1,2,1,:,1,1) == 3.0_SDK) .AND. ALL(valsdka6(2,2,1,:,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka6(1,1,2,:,1,1) == 5.0_SDK) .AND. ALL(valsdka6(2,1,2,:,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka6(1,2,2,:,1,1) == 7.0_SDK) .AND. ALL(valsdka6(2,2,2,:,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka6 1')
+  DEALLOCATE(valsdka6)
+
+  CALL testParam%get('testSDKa6',valsdka6)
+  bool=SIZE(valsdka6,DIM=1) == 2 .AND. SIZE(valsdka6,DIM=2) == 2 &
+      .AND. SIZE(valsdka6,DIM=3) == 2 .AND. SIZE(valsdka6,DIM=4) == 2 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsdka6 size 1')
+  bool=ALL(valsdka6(1,1,1,:,1,1) == 1.0_SDK) .AND. ALL(valsdka6(2,1,1,:,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka6(1,2,1,:,1,1) == 3.0_SDK) .AND. ALL(valsdka6(2,2,1,:,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka6(1,1,2,:,1,1) == 5.0_SDK) .AND. ALL(valsdka6(2,1,2,:,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka6(1,2,2,:,1,1) == 7.0_SDK) .AND. ALL(valsdka6(2,2,2,:,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka6 1')
+
+  CALL testParam%get('testError',valsdka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a6'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsdka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a6'// &
+      ' - parameter name mismatch "testError" in "testSDKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSDKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSDKa6',valsdka6)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a6'// &
+      ' - parameter data type mismatch! Parameter testSDKa6 type is test_type and'// &
+      ' must be 6-D ARRAY REAL(SDK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSDKa6',RESHAPE((/-10.0_SDK/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSDKa6',valsdka6)
+  ASSERT(testParam%pdat%name == 'testSDKa6','%name')
+  ASSERT(testParam%pdat%datatype == '6-D ARRAY REAL(SDK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsdka6,DIM=1) == 1 .AND. SIZE(valsdka6,DIM=2) == 1 &
+      .AND. SIZE(valsdka6,DIM=3) == 1 .AND. SIZE(valsdka6,DIM=4) == 1 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'testParam valsdka6 size 1')
+  bool=valsdka6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsdka6 1')
+
+  CALL testParam%set('testSDKa6',RESHAPE((/3.0_SDK,-5.0_SDK,3.0_SDK,-5.0_SDK/),(/2,2,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSDKa6',valsdka6)
+  bool=SIZE(valsdka6,DIM=1) == 2 .AND. SIZE(valsdka6,DIM=2) == 2 &
+      .AND. SIZE(valsdka6,DIM=3) == 1 .AND. SIZE(valsdka6,DIM=4) == 1 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'testParam valsdka6 size 2')
+  bool=valsdka6(1,1,1,1,1,1) == 3 .AND. valsdka6(2,1,1,1,1,1) == -5 .AND. &
+      valsdka6(1,2,1,1,1,1) == 3 .AND. valsdka6(2,2,1,1,1,1) == -5
+  ASSERT(bool,'testParam valsdka6 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSDKa6',RESHAPE((/-10.0_SDK/),(/1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSDKa6',valsdka6)
+  ASSERT(someParam%name == 'testSDKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY REAL(SDK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsdka6,DIM=1) == 1 .AND. SIZE(valsdka6,DIM=2) == 1 &
+      .AND. SIZE(valsdka6,DIM=3) == 1 .AND. SIZE(valsdka6,DIM=4) == 1 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsdka6 size 1')
+  bool=valsdka6(1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsdka6 1')
+
+  CALL someParam%set('testSDKa6',RESHAPE((/5.0_SDK,7.0_SDK/),(/1,1,2,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSDKa6',valsdka6)
+  ASSERT(someParam%name == 'testSDKa6','someParam%name')
+  ASSERT(someParam%datatype == '6-D ARRAY REAL(SDK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsdka6,DIM=1) == 1 .AND. SIZE(valsdka6,DIM=2) == 1 &
+      .AND. SIZE(valsdka6,DIM=3) == 2 .AND. SIZE(valsdka6,DIM=4) == 1 &
+      .AND. SIZE(valsdka6,DIM=5) == 1 .AND. SIZE(valsdka6,DIM=6) == 1
+  ASSERT(bool,'someParam valsdka6 size 2')
+  bool=valsdka6(1,1,1,1,1,1) == 5 .AND. valsdka6(1,1,2,1,1,1) == 7
+  ASSERT(bool,'testParam valsdka6 2')
+  DEALLOCATE(valsdka6)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a6 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa6"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa6',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a6 -'// &
+      ' unable to locate parameter "testSDKa6" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSDKa6'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSDKa6',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a6 -'// &
+      ' parameter data type mismatch! Parameter testSDKa6 type is test_type'// &
+      ' and must be 6-D ARRAY REAL(SDK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSDKa6',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSDKa6','%name')
+  ASSERT(testParam2%pdat%datatype == '6-D ARRAY REAL(SDK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSDKa6
+!
+!-------------------------------------------------------------------------------
+!Test 7-D Array SNK support
+SUBROUTINE testSNKa7()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsnka7(2,2,2,2,1,1,1))
+  valsnka7(1,1,1,:,1,1,1)=1_SNK
+  valsnka7(2,1,1,:,1,1,1)=2_SNK
+  valsnka7(1,2,1,:,1,1,1)=3_SNK
+  valsnka7(2,2,1,:,1,1,1)=4_SNK
+  valsnka7(1,1,2,:,1,1,1)=5_SNK
+  valsnka7(2,1,2,:,1,1,1)=6_SNK
+  valsnka7(1,2,2,:,1,1,1)=7_SNK
+  valsnka7(2,2,2,:,1,1,1)=8_SNK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSNKa7',valsnka7,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a7'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSNKa7',valsnka7,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSNKa7','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY INTEGER(SNK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsnka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SNK_a7'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSNKa7',valsnka7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSNKa7',valsnka7)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSNKa7',valsnka7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSNKa7',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSNKa7',valsnka7)
+  bool=SIZE(valsnka7,DIM=1) == 2 .AND. SIZE(valsnka7,DIM=2) == 2 &
+      .AND. SIZE(valsnka7,DIM=3) == 2 .AND. SIZE(valsnka7,DIM=4) == 2 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsnka7 size 1')
+  bool=ALL(valsnka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valsnka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valsnka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valsnka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valsnka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valsnka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valsnka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valsnka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valsnka7 1')
+  DEALLOCATE(valsnka7)
+
+  ALLOCATE(valsnka7(1,1,1,1,1,1,1))
+  CALL someParam%get('testSNKa7',valsnka7)
+  bool=SIZE(valsnka7,DIM=1) == 2 .AND. SIZE(valsnka7,DIM=2) == 2 &
+      .AND. SIZE(valsnka7,DIM=3) == 2 .AND. SIZE(valsnka7,DIM=4) == 2 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsnka7 size 1')
+  bool=ALL(valsnka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valsnka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valsnka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valsnka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valsnka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valsnka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valsnka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valsnka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valsnka7 1')
+  DEALLOCATE(valsnka7)
+
+  CALL someParam%get('testSNKa7',valsnka7)
+  bool=SIZE(valsnka7,DIM=1) == 2 .AND. SIZE(valsnka7,DIM=2) == 2 &
+      .AND. SIZE(valsnka7,DIM=3) == 2 .AND. SIZE(valsnka7,DIM=4) == 2 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsnka7 size 1')
+  bool=ALL(valsnka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valsnka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valsnka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valsnka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valsnka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valsnka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valsnka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valsnka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valsnka7 1')
+  DEALLOCATE(valsnka7)
+
+  ALLOCATE(valsnka7(2,2,1,1,1,1,1))
+  CALL testParam%get('testSNKa7',valsnka7)
+  bool=SIZE(valsnka7,DIM=1) == 2 .AND. SIZE(valsnka7,DIM=2) == 2 &
+      .AND. SIZE(valsnka7,DIM=3) == 2 .AND. SIZE(valsnka7,DIM=4) == 2 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsnka7 size 1')
+  bool=ALL(valsnka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valsnka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valsnka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valsnka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valsnka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valsnka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valsnka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valsnka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valsnka7 1')
+  DEALLOCATE(valsnka7)
+
+  CALL testParam%get('testSNKa7',valsnka7)
+  bool=SIZE(valsnka7,DIM=1) == 2 .AND. SIZE(valsnka7,DIM=2) == 2 &
+      .AND. SIZE(valsnka7,DIM=3) == 2 .AND. SIZE(valsnka7,DIM=4) == 2 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsnka7 size 1')
+  bool=ALL(valsnka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valsnka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valsnka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valsnka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valsnka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valsnka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valsnka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valsnka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valsnka7 1')
+
+  CALL testParam%get('testError',valsnka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a7'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsnka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a7'// &
+      ' - parameter name mismatch "testError" in "testSNKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSNKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSNKa7',valsnka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SNK_a7'// &
+      ' - parameter data type mismatch! Parameter testSNKa7 type is test_type and'// &
+      ' must be 7-D ARRAY INTEGER(SNK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSNKa7',RESHAPE((/-10/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSNKa7',valsnka7)
+  ASSERT(testParam%pdat%name == 'testSNKa7','%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY INTEGER(SNK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsnka7,DIM=1) == 1 .AND. SIZE(valsnka7,DIM=2) == 1 &
+      .AND. SIZE(valsnka7,DIM=3) == 1 .AND. SIZE(valsnka7,DIM=4) == 1 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'testParam valsnka7 size 1')
+  bool=valsnka7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsnka7 1')
+
+  CALL testParam%set('testSNKa7',RESHAPE((/3,-5,3,-5/),(/2,2,1,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSNKa7',valsnka7)
+  bool=SIZE(valsnka7,DIM=1) == 2 .AND. SIZE(valsnka7,DIM=2) == 2 &
+      .AND. SIZE(valsnka7,DIM=3) == 1 .AND. SIZE(valsnka7,DIM=4) == 1 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'testParam valsnka7 size 2')
+  bool=valsnka7(1,1,1,1,1,1,1) == 3 .AND. valsnka7(2,1,1,1,1,1,1) == -5 .AND. &
+      valsnka7(1,2,1,1,1,1,1) == 3 .AND. valsnka7(2,2,1,1,1,1,1) == -5
+  ASSERT(bool,'testParam valsnka7 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSNKa7',RESHAPE((/-10/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSNKa7',valsnka7)
+  ASSERT(someParam%name == 'testSNKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY INTEGER(SNK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsnka7,DIM=1) == 1 .AND. SIZE(valsnka7,DIM=2) == 1 &
+      .AND. SIZE(valsnka7,DIM=3) == 1 .AND. SIZE(valsnka7,DIM=4) == 1 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsnka7 size 1')
+  bool=valsnka7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsnka7 1')
+
+  CALL someParam%set('testSNKa7',RESHAPE((/5,7/),(/1,1,2,1,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSNKa7',valsnka7)
+  ASSERT(someParam%name == 'testSNKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY INTEGER(SNK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsnka7,DIM=1) == 1 .AND. SIZE(valsnka7,DIM=2) == 1 &
+      .AND. SIZE(valsnka7,DIM=3) == 2 .AND. SIZE(valsnka7,DIM=4) == 1 &
+      .AND. SIZE(valsnka7,DIM=5) == 1 .AND. SIZE(valsnka7,DIM=6) == 1 &
+      .AND. SIZE(valsnka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsnka7 size 2')
+  bool=valsnka7(1,1,1,1,1,1,1) == 5 .AND. valsnka7(1,1,2,1,1,1,1) == 7
+  ASSERT(bool,'testParam valsnka7 2')
+  DEALLOCATE(valsnka7)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1/),(/1,1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a7 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSNKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa7',RESHAPE((/-1/),(/1,1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a7 -'// &
+      ' unable to locate parameter "testSNKa7" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSNKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSNKa7',RESHAPE((/-1/),(/1,1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a7 -'// &
+      ' parameter data type mismatch! Parameter testSNKa7 type is test_type'// &
+      ' and must be 7-D ARRAY INTEGER(SNK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSNKa7',RESHAPE((/-1/),(/1,1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSNKa7','%name')
+  ASSERT(testParam2%pdat%datatype == '7-D ARRAY INTEGER(SNK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSNKa7
+!
+!-------------------------------------------------------------------------------
+! Test 7-D Array SLK support
+SUBROUTINE testSLKa7()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valslka7(2,2,2,2,1,1,1))
+  valslka7(1,1,1,:,1,1,1)=1_SLK
+  valslka7(2,1,1,:,1,1,1)=2_SLK
+  valslka7(1,2,1,:,1,1,1)=3_SLK
+  valslka7(2,2,1,:,1,1,1)=4_SLK
+  valslka7(1,1,2,:,1,1,1)=5_SLK
+  valslka7(2,1,2,:,1,1,1)=6_SLK
+  valslka7(1,2,2,:,1,1,1)=7_SLK
+  valslka7(2,2,2,:,1,1,1)=8_SLK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSLKa7',valslka7,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a7'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSLKa7',valslka7,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSLKa7','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY INTEGER(SLK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valslka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SLK_a7'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSLKa7',valslka7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSLKa7',valslka7)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSLKa7',valslka7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSLKa7',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSLKa7',valslka7)
+  bool=SIZE(valslka7,DIM=1) == 2 .AND. SIZE(valslka7,DIM=2) == 2 &
+      .AND. SIZE(valslka7,DIM=3) == 2 .AND. SIZE(valslka7,DIM=4) == 2 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'someParam valslka7 size 1')
+  bool=ALL(valslka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valslka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valslka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valslka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valslka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valslka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valslka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valslka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valslka7 1')
+  DEALLOCATE(valslka7)
+
+  ALLOCATE(valslka7(1,1,1,1,1,1,1))
+  CALL someParam%get('testSLKa7',valslka7)
+  bool=SIZE(valslka7,DIM=1) == 2 .AND. SIZE(valslka7,DIM=2) == 2 &
+      .AND. SIZE(valslka7,DIM=3) == 2 .AND. SIZE(valslka7,DIM=4) == 2 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'someParam valslka7 size 1')
+  bool=ALL(valslka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valslka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valslka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valslka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valslka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valslka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valslka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valslka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valslka7 1')
+  DEALLOCATE(valslka7)
+
+  CALL someParam%get('testSLKa7',valslka7)
+  bool=SIZE(valslka7,DIM=1) == 2 .AND. SIZE(valslka7,DIM=2) == 2 &
+      .AND. SIZE(valslka7,DIM=3) == 2 .AND. SIZE(valslka7,DIM=4) == 2 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'someParam valslka7 size 1')
+  bool=ALL(valslka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valslka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valslka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valslka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valslka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valslka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valslka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valslka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valslka7 1')
+  DEALLOCATE(valslka7)
+
+  ALLOCATE(valslka7(2,2,1,1,1,1,1))
+  CALL testParam%get('testSLKa7',valslka7)
+  bool=SIZE(valslka7,DIM=1) == 2 .AND. SIZE(valslka7,DIM=2) == 2 &
+      .AND. SIZE(valslka7,DIM=3) == 2 .AND. SIZE(valslka7,DIM=4) == 2 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'someParam valslka7 size 1')
+  bool=ALL(valslka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valslka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valslka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valslka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valslka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valslka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valslka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valslka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valslka7 1')
+  DEALLOCATE(valslka7)
+
+  CALL testParam%get('testSLKa7',valslka7)
+  bool=SIZE(valslka7,DIM=1) == 2 .AND. SIZE(valslka7,DIM=2) == 2 &
+      .AND. SIZE(valslka7,DIM=3) == 2 .AND. SIZE(valslka7,DIM=4) == 2 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'someParam valslka7 size 1')
+  bool=ALL(valslka7(1,1,1,:,1,1,1) == 1) .AND. ALL(valslka7(2,1,1,:,1,1,1) == 2) &
+      .AND. ALL(valslka7(1,2,1,:,1,1,1) == 3) .AND. ALL(valslka7(2,2,1,:,1,1,1) == 4) &
+      .AND. ALL(valslka7(1,1,2,:,1,1,1) == 5) .AND. ALL(valslka7(2,1,2,:,1,1,1) == 6) &
+      .AND. ALL(valslka7(1,2,2,:,1,1,1) == 7) .AND. ALL(valslka7(2,2,2,:,1,1,1) == 8)
+  ASSERT(bool,'someParam valslka7 1')
+
+  CALL testParam%get('testError',valslka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a7'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valslka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a7'// &
+      ' - parameter name mismatch "testError" in "testSLKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSLKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSLKa7',valslka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SLK_a7'// &
+      ' - parameter data type mismatch! Parameter testSLKa7 type is test_type and'// &
+      ' must be 7-D ARRAY INTEGER(SLK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSLKa7',RESHAPE((/-10_SLK/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSLKa7',valslka7)
+  ASSERT(testParam%pdat%name == 'testSLKa7','%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY INTEGER(SLK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valslka7,DIM=1) == 1 .AND. SIZE(valslka7,DIM=2) == 1 &
+      .AND. SIZE(valslka7,DIM=3) == 1 .AND. SIZE(valslka7,DIM=4) == 1 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'testParam valslka7 size 1')
+  bool=valslka7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valslka7 1')
+
+  CALL testParam%set('testSLKa7',RESHAPE((/3_SLK,-5_SLK,3_SLK,-5_SLK/),(/2,2,1,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSLKa7',valslka7)
+  bool=SIZE(valslka7,DIM=1) == 2 .AND. SIZE(valslka7,DIM=2) == 2 &
+      .AND. SIZE(valslka7,DIM=3) == 1 .AND. SIZE(valslka7,DIM=4) == 1 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'testParam valslka7 size 2')
+  bool=valslka7(1,1,1,1,1,1,1) == 3 .AND. valslka7(2,1,1,1,1,1,1) == -5 .AND. &
+      valslka7(1,2,1,1,1,1,1) == 3 .AND. valslka7(2,2,1,1,1,1,1) == -5
+  ASSERT(bool,'testParam valslka7 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSLKa7',RESHAPE((/-10_SLK/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSLKa7',valslka7)
+  ASSERT(someParam%name == 'testSLKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY INTEGER(SLK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valslka7,DIM=1) == 1 .AND. SIZE(valslka7,DIM=2) == 1 &
+      .AND. SIZE(valslka7,DIM=3) == 1 .AND. SIZE(valslka7,DIM=4) == 1 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'someParam valslka7 size 1')
+  bool=valslka7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valslka7 1')
+
+  CALL someParam%set('testSLKa7',RESHAPE((/5_SLK,7_SLK/),(/1,1,2,1,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSLKa7',valslka7)
+  ASSERT(someParam%name == 'testSLKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY INTEGER(SLK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valslka7,DIM=1) == 1 .AND. SIZE(valslka7,DIM=2) == 1 &
+      .AND. SIZE(valslka7,DIM=3) == 2 .AND. SIZE(valslka7,DIM=4) == 1 &
+      .AND. SIZE(valslka7,DIM=5) == 1 .AND. SIZE(valslka7,DIM=6) == 1 &
+      .AND. SIZE(valslka7,DIM=7) == 1
+  ASSERT(bool,'someParam valslka7 size 2')
+  bool=valslka7(1,1,1,1,1,1,1) == 5 .AND. valslka7(1,1,2,1,1,1,1) == 7
+  ASSERT(bool,'testParam valslka7 2')
+  DEALLOCATE(valslka7)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a7 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSLKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa7',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a7 -'// &
+      ' unable to locate parameter "testSLKa7" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSLKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSLKa7',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a7 -'// &
+      ' parameter data type mismatch! Parameter testSLKa7 type is test_type'// &
+      ' and must be 7-D ARRAY INTEGER(SLK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSLKa7',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSLKa7','%name')
+  ASSERT(testParam2%pdat%datatype == '7-D ARRAY INTEGER(SLK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSLKa7
+!
+!-------------------------------------------------------------------------------
+!Test 7-D Array SSK support
+SUBROUTINE testSSKa7()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsska7(2,2,2,2,1,1,1))
+  valsska7(1,1,1,:,1,1,1)=1.0_SSK
+  valsska7(2,1,1,:,1,1,1)=2.0_SSK
+  valsska7(1,2,1,:,1,1,1)=3.0_SSK
+  valsska7(2,2,1,:,1,1,1)=4.0_SSK
+  valsska7(1,1,2,:,1,1,1)=5.0_SSK
+  valsska7(2,1,2,:,1,1,1)=6.0_SSK
+  valsska7(1,2,2,:,1,1,1)=7.0_SSK
+  valsska7(2,2,2,:,1,1,1)=8.0_SSK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSSKa7',valsska7,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a7'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSSKa7',valsska7,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSSKa7','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY REAL(SSK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsska7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SSK_a7'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSSKa7',valsska7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSSKa7',valsska7)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSSKa7',valsska7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSSKa7',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSSKa7',valsska7)
+  bool=SIZE(valsska7,DIM=1) == 2 .AND. SIZE(valsska7,DIM=2) == 2 &
+      .AND. SIZE(valsska7,DIM=3) == 2 .AND. SIZE(valsska7,DIM=4) == 2 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'someParam valsska7 size 1')
+  bool=ALL(valsska7(1,1,1,:,1,1,1) == 1.0_SSK) .AND. ALL(valsska7(2,1,1,:,1,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska7(1,2,1,:,1,1,1) == 3.0_SSK) .AND. ALL(valsska7(2,2,1,:,1,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska7(1,1,2,:,1,1,1) == 5.0_SSK) .AND. ALL(valsska7(2,1,2,:,1,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska7(1,2,2,:,1,1,1) == 7.0_SSK) .AND. ALL(valsska7(2,2,2,:,1,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska7 1')
+  DEALLOCATE(valsska7)
+
+  ALLOCATE(valsska7(1,1,1,1,1,1,1))
+  CALL someParam%get('testSSKa7',valsska7)
+  bool=SIZE(valsska7,DIM=1) == 2 .AND. SIZE(valsska7,DIM=2) == 2 &
+      .AND. SIZE(valsska7,DIM=3) == 2 .AND. SIZE(valsska7,DIM=4) == 2 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'someParam valsska7 size 1')
+  bool=ALL(valsska7(1,1,1,:,1,1,1) == 1.0_SSK) .AND. ALL(valsska7(2,1,1,:,1,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska7(1,2,1,:,1,1,1) == 3.0_SSK) .AND. ALL(valsska7(2,2,1,:,1,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska7(1,1,2,:,1,1,1) == 5.0_SSK) .AND. ALL(valsska7(2,1,2,:,1,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska7(1,2,2,:,1,1,1) == 7.0_SSK) .AND. ALL(valsska7(2,2,2,:,1,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska7 1')
+  DEALLOCATE(valsska7)
+
+  CALL someParam%get('testSSKa7',valsska7)
+  bool=SIZE(valsska7,DIM=1) == 2 .AND. SIZE(valsska7,DIM=2) == 2 &
+      .AND. SIZE(valsska7,DIM=3) == 2 .AND. SIZE(valsska7,DIM=4) == 2 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'someParam valsska7 size 1')
+  bool=ALL(valsska7(1,1,1,:,1,1,1) == 1.0_SSK) .AND. ALL(valsska7(2,1,1,:,1,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska7(1,2,1,:,1,1,1) == 3.0_SSK) .AND. ALL(valsska7(2,2,1,:,1,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska7(1,1,2,:,1,1,1) == 5.0_SSK) .AND. ALL(valsska7(2,1,2,:,1,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska7(1,2,2,:,1,1,1) == 7.0_SSK) .AND. ALL(valsska7(2,2,2,:,1,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska7 1')
+  DEALLOCATE(valsska7)
+
+  ALLOCATE(valsska7(2,2,1,1,1,1,1))
+  CALL testParam%get('testSSKa7',valsska7)
+  bool=SIZE(valsska7,DIM=1) == 2 .AND. SIZE(valsska7,DIM=2) == 2 &
+      .AND. SIZE(valsska7,DIM=3) == 2 .AND. SIZE(valsska7,DIM=4) == 2 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'someParam valsska7 size 1')
+  bool=ALL(valsska7(1,1,1,:,1,1,1) == 1.0_SSK) .AND. ALL(valsska7(2,1,1,:,1,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska7(1,2,1,:,1,1,1) == 3.0_SSK) .AND. ALL(valsska7(2,2,1,:,1,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska7(1,1,2,:,1,1,1) == 5.0_SSK) .AND. ALL(valsska7(2,1,2,:,1,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska7(1,2,2,:,1,1,1) == 7.0_SSK) .AND. ALL(valsska7(2,2,2,:,1,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska7 1')
+  DEALLOCATE(valsska7)
+
+  CALL testParam%get('testSSKa7',valsska7)
+  bool=SIZE(valsska7,DIM=1) == 2 .AND. SIZE(valsska7,DIM=2) == 2 &
+      .AND. SIZE(valsska7,DIM=3) == 2 .AND. SIZE(valsska7,DIM=4) == 2 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'someParam valsska7 size 1')
+  bool=ALL(valsska7(1,1,1,:,1,1,1) == 1.0_SSK) .AND. ALL(valsska7(2,1,1,:,1,1,1) == 2.0_SSK) &
+      .AND. ALL(valsska7(1,2,1,:,1,1,1) == 3.0_SSK) .AND. ALL(valsska7(2,2,1,:,1,1,1) == 4.0_SSK) &
+      .AND. ALL(valsska7(1,1,2,:,1,1,1) == 5.0_SSK) .AND. ALL(valsska7(2,1,2,:,1,1,1) == 6.0_SSK) &
+      .AND. ALL(valsska7(1,2,2,:,1,1,1) == 7.0_SSK) .AND. ALL(valsska7(2,2,2,:,1,1,1) == 8.0_SSK)
+  ASSERT(bool,'someParam valsska7 1')
+
+  CALL testParam%get('testError',valsska7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a7'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsska7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a7'// &
+      ' - parameter name mismatch "testError" in "testSSKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSSKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSSKa7',valsska7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SSK_a7'// &
+      ' - parameter data type mismatch! Parameter testSSKa7 type is test_type and'// &
+      ' must be 7-D ARRAY REAL(SSK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSSKa7',RESHAPE((/-10.0_SSK/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSSKa7',valsska7)
+  ASSERT(testParam%pdat%name == 'testSSKa7','%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY REAL(SSK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsska7,DIM=1) == 1 .AND. SIZE(valsska7,DIM=2) == 1 &
+      .AND. SIZE(valsska7,DIM=3) == 1 .AND. SIZE(valsska7,DIM=4) == 1 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'testParam valsska7 size 1')
+  bool=valsska7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsska7 1')
+
+  CALL testParam%set('testSSKa7',RESHAPE((/3.0_SSK,-5.0_SSK,3.0_SSK,-5.0_SSK/),(/2,2,1,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSSKa7',valsska7)
+  bool=SIZE(valsska7,DIM=1) == 2 .AND. SIZE(valsska7,DIM=2) == 2 &
+      .AND. SIZE(valsska7,DIM=3) == 1 .AND. SIZE(valsska7,DIM=4) == 1 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'testParam valsska7 size 2')
+  bool=valsska7(1,1,1,1,1,1,1) == 3 .AND. valsska7(2,1,1,1,1,1,1) == -5 .AND. &
+      valsska7(1,2,1,1,1,1,1) == 3 .AND. valsska7(2,2,1,1,1,1,1) == -5
+  ASSERT(bool,'testParam valsska7 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSSKa7',RESHAPE((/-10.0_SSK/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSSKa7',valsska7)
+  ASSERT(someParam%name == 'testSSKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY REAL(SSK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsska7,DIM=1) == 1 .AND. SIZE(valsska7,DIM=2) == 1 &
+      .AND. SIZE(valsska7,DIM=3) == 1 .AND. SIZE(valsska7,DIM=4) == 1 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'someParam valsska7 size 1')
+  bool=valsska7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsska7 1')
+
+  CALL someParam%set('testSSKa7',RESHAPE((/5.0_SSK,7.0_SSK/),(/1,1,2,1,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSSKa7',valsska7)
+  ASSERT(someParam%name == 'testSSKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY REAL(SSK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsska7,DIM=1) == 1 .AND. SIZE(valsska7,DIM=2) == 1 &
+      .AND. SIZE(valsska7,DIM=3) == 2 .AND. SIZE(valsska7,DIM=4) == 1 &
+      .AND. SIZE(valsska7,DIM=5) == 1 .AND. SIZE(valsska7,DIM=6) == 1 &
+      .AND. SIZE(valsska7,DIM=7) == 1
+  ASSERT(bool,'someParam valsska7 size 2')
+  bool=valsska7(1,1,1,1,1,1,1) == 5 .AND. valsska7(1,1,2,1,1,1,1) == 7
+  ASSERT(bool,'testParam valsska7 2')
+  DEALLOCATE(valsska7)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a7 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSSKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa7',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a7 -'// &
+      ' unable to locate parameter "testSSKa7" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSSKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSSKa7',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a7 -'// &
+      ' parameter data type mismatch! Parameter testSSKa7 type is test_type'// &
+      ' and must be 7-D ARRAY REAL(SSK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSSKa7',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSSKa7','%name')
+  ASSERT(testParam2%pdat%datatype == '7-D ARRAY REAL(SSK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSSKa7
+!
+!-------------------------------------------------------------------------------
+!Test 7-D Array SDK support
+SUBROUTINE testSDKa7()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valsdka7(2,2,2,2,1,1,1))
+  valsdka7(1,1,1,:,1,1,1)=1.0_SDK
+  valsdka7(2,1,1,:,1,1,1)=2.0_SDK
+  valsdka7(1,2,1,:,1,1,1)=3.0_SDK
+  valsdka7(2,2,1,:,1,1,1)=4.0_SDK
+  valsdka7(1,1,2,:,1,1,1)=5.0_SDK
+  valsdka7(2,1,2,:,1,1,1)=6.0_SDK
+  valsdka7(1,2,2,:,1,1,1)=7.0_SDK
+  valsdka7(2,2,2,:,1,1,1)=8.0_SDK
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSDKa7',valsdka7,'The numbers 5, 7, 6, & 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a7'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSDKa7',valsdka7,'The numbers 5, 7, 6, & 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 4')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 4')
+  ASSERT(LEN(testParam%description) == 0,'%description 4')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 4')
+  ASSERT(testParam%pdat%name == 'testSDKa7','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY REAL(SDK)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The numbers 5, 7, 6, & 8','%pdat%description')
+  CALL testParam%init('testError',valsdka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_SDK_a7'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSDKa7',valsdka7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSDKa7',valsdka7)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSDKa7',valsdka7,'The numbers 5, 7, 6, & 8')
+  CALL testParam%get('testSDKa7',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSDKa7',valsdka7)
+  bool=SIZE(valsdka7,DIM=1) == 2 .AND. SIZE(valsdka7,DIM=2) == 2 &
+      .AND. SIZE(valsdka7,DIM=3) == 2 .AND. SIZE(valsdka7,DIM=4) == 2 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsdka7 size 1')
+  bool=ALL(valsdka7(1,1,1,:,1,1,1) == 1.0_SDK) .AND. ALL(valsdka7(2,1,1,:,1,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka7(1,2,1,:,1,1,1) == 3.0_SDK) .AND. ALL(valsdka7(2,2,1,:,1,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka7(1,1,2,:,1,1,1) == 5.0_SDK) .AND. ALL(valsdka7(2,1,2,:,1,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka7(1,2,2,:,1,1,1) == 7.0_SDK) .AND. ALL(valsdka7(2,2,2,:,1,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka7 1')
+  DEALLOCATE(valsdka7)
+
+  ALLOCATE(valsdka7(1,1,1,1,1,1,1))
+  CALL someParam%get('testSDKa7',valsdka7)
+  bool=SIZE(valsdka7,DIM=1) == 2 .AND. SIZE(valsdka7,DIM=2) == 2 &
+      .AND. SIZE(valsdka7,DIM=3) == 2 .AND. SIZE(valsdka7,DIM=4) == 2 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsdka7 size 1')
+  bool=ALL(valsdka7(1,1,1,:,1,1,1) == 1.0_SDK) .AND. ALL(valsdka7(2,1,1,:,1,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka7(1,2,1,:,1,1,1) == 3.0_SDK) .AND. ALL(valsdka7(2,2,1,:,1,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka7(1,1,2,:,1,1,1) == 5.0_SDK) .AND. ALL(valsdka7(2,1,2,:,1,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka7(1,2,2,:,1,1,1) == 7.0_SDK) .AND. ALL(valsdka7(2,2,2,:,1,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka7 1')
+  DEALLOCATE(valsdka7)
+
+  CALL someParam%get('testSDKa7',valsdka7)
+  bool=SIZE(valsdka7,DIM=1) == 2 .AND. SIZE(valsdka7,DIM=2) == 2 &
+      .AND. SIZE(valsdka7,DIM=3) == 2 .AND. SIZE(valsdka7,DIM=4) == 2 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsdka7 size 1')
+  bool=ALL(valsdka7(1,1,1,:,1,1,1) == 1.0_SDK) .AND. ALL(valsdka7(2,1,1,:,1,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka7(1,2,1,:,1,1,1) == 3.0_SDK) .AND. ALL(valsdka7(2,2,1,:,1,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka7(1,1,2,:,1,1,1) == 5.0_SDK) .AND. ALL(valsdka7(2,1,2,:,1,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka7(1,2,2,:,1,1,1) == 7.0_SDK) .AND. ALL(valsdka7(2,2,2,:,1,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka7 1')
+  DEALLOCATE(valsdka7)
+
+  ALLOCATE(valsdka7(2,2,1,1,1,1,1))
+  CALL testParam%get('testSDKa7',valsdka7)
+  bool=SIZE(valsdka7,DIM=1) == 2 .AND. SIZE(valsdka7,DIM=2) == 2 &
+      .AND. SIZE(valsdka7,DIM=3) == 2 .AND. SIZE(valsdka7,DIM=4) == 2 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsdka7 size 1')
+  bool=ALL(valsdka7(1,1,1,:,1,1,1) == 1.0_SDK) .AND. ALL(valsdka7(2,1,1,:,1,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka7(1,2,1,:,1,1,1) == 3.0_SDK) .AND. ALL(valsdka7(2,2,1,:,1,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka7(1,1,2,:,1,1,1) == 5.0_SDK) .AND. ALL(valsdka7(2,1,2,:,1,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka7(1,2,2,:,1,1,1) == 7.0_SDK) .AND. ALL(valsdka7(2,2,2,:,1,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka7 1')
+  DEALLOCATE(valsdka7)
+
+  CALL testParam%get('testSDKa7',valsdka7)
+  bool=SIZE(valsdka7,DIM=1) == 2 .AND. SIZE(valsdka7,DIM=2) == 2 &
+      .AND. SIZE(valsdka7,DIM=3) == 2 .AND. SIZE(valsdka7,DIM=4) == 2 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsdka7 size 1')
+  bool=ALL(valsdka7(1,1,1,:,1,1,1) == 1.0_SDK) .AND. ALL(valsdka7(2,1,1,:,1,1,1) == 2.0_SDK) &
+      .AND. ALL(valsdka7(1,2,1,:,1,1,1) == 3.0_SDK) .AND. ALL(valsdka7(2,2,1,:,1,1,1) == 4.0_SDK) &
+      .AND. ALL(valsdka7(1,1,2,:,1,1,1) == 5.0_SDK) .AND. ALL(valsdka7(2,1,2,:,1,1,1) == 6.0_SDK) &
+      .AND. ALL(valsdka7(1,2,2,:,1,1,1) == 7.0_SDK) .AND. ALL(valsdka7(2,2,2,:,1,1,1) == 8.0_SDK)
+  ASSERT(bool,'someParam valsdka7 1')
+
+  CALL testParam%get('testError',valsdka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a7'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valsdka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a7'// &
+      ' - parameter name mismatch "testError" in "testSDKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSDKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSDKa7',valsdka7)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_SDK_a7'// &
+      ' - parameter data type mismatch! Parameter testSDKa7 type is test_type and'// &
+      ' must be 7-D ARRAY REAL(SDK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  CALL testParam%set('testSDKa7',RESHAPE((/-10.0_SDK/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL testParam%get('testSDKa7',valsdka7)
+  ASSERT(testParam%pdat%name == 'testSDKa7','%name')
+  ASSERT(testParam%pdat%datatype == '7-D ARRAY REAL(SDK)','testParam%datatype')
+  ASSERT_EQ(CHAR(testParam%pdat%description),'The number -10','%description')
+  bool=SIZE(valsdka7,DIM=1) == 1 .AND. SIZE(valsdka7,DIM=2) == 1 &
+      .AND. SIZE(valsdka7,DIM=3) == 1 .AND. SIZE(valsdka7,DIM=4) == 1 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'testParam valsdka7 size 1')
+  bool=valsdka7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'testParam valsdka7 1')
+
+  CALL testParam%set('testSDKa7',RESHAPE((/3.0_SDK,-5.0_SDK,3.0_SDK,-5.0_SDK/),(/2,2,1,1,1,1,1/)),'The numbers 3 & -5')
+  CALL testParam%get('testSDKa7',valsdka7)
+  bool=SIZE(valsdka7,DIM=1) == 2 .AND. SIZE(valsdka7,DIM=2) == 2 &
+      .AND. SIZE(valsdka7,DIM=3) == 1 .AND. SIZE(valsdka7,DIM=4) == 1 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'testParam valsdka7 size 2')
+  bool=valsdka7(1,1,1,1,1,1,1) == 3 .AND. valsdka7(2,1,1,1,1,1,1) == -5 .AND. &
+      valsdka7(1,2,1,1,1,1,1) == 3 .AND. valsdka7(2,2,1,1,1,1,1) == -5
+  ASSERT(bool,'testParam valsdka7 2')
+  ASSERT(testParam%pdat%description == 'The numbers 3 & -5','%description')
+  !
+  CALL someParam%set('testSDKa7',RESHAPE((/-10.0_SDK/),(/1,1,1,1,1,1,1/)),'The number -10')
+  CALL someParam%get('testSDKa7',valsdka7)
+  ASSERT(someParam%name == 'testSDKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY REAL(SDK)','someParam%datatype')
+  ASSERT(someParam%description == 'The number -10','someParam%description')
+  bool=SIZE(valsdka7,DIM=1) == 1 .AND. SIZE(valsdka7,DIM=2) == 1 &
+      .AND. SIZE(valsdka7,DIM=3) == 1 .AND. SIZE(valsdka7,DIM=4) == 1 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsdka7 size 1')
+  bool=valsdka7(1,1,1,1,1,1,1) == -10
+  ASSERT(bool,'someParam valsdka7 1')
+
+  CALL someParam%set('testSDKa7',RESHAPE((/5.0_SDK,7.0_SDK/),(/1,1,2,1,1,1,1/)),'The numbers 5 & 7')
+  CALL someParam%get('testSDKa7',valsdka7)
+  ASSERT(someParam%name == 'testSDKa7','someParam%name')
+  ASSERT(someParam%datatype == '7-D ARRAY REAL(SDK)','someParam%datatype')
+  ASSERT(someParam%description == 'The numbers 5 & 7','someParam%description')
+  bool=SIZE(valsdka7,DIM=1) == 1 .AND. SIZE(valsdka7,DIM=2) == 1 &
+      .AND. SIZE(valsdka7,DIM=3) == 2 .AND. SIZE(valsdka7,DIM=4) == 1 &
+      .AND. SIZE(valsdka7,DIM=5) == 1 .AND. SIZE(valsdka7,DIM=6) == 1 &
+      .AND. SIZE(valsdka7,DIM=7) == 1
+  ASSERT(bool,'someParam valsdka7 size 2')
+  bool=valsdka7(1,1,1,1,1,1,1) == 5 .AND. valsdka7(1,1,2,1,1,1,1) == 7
+  ASSERT(bool,'testParam valsdka7 2')
+  DEALLOCATE(valsdka7)
+  !
+  CALL someParam%set('testError',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1,1/))) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a7 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSDKa7"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa7',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1,1/))) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a7 -'// &
+      ' unable to locate parameter "testSDKa7" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSDKa7'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSDKa7',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1,1/))) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a7 -'// &
+      ' parameter data type mismatch! Parameter testSDKa7 type is test_type'// &
+      ' and must be 7-D ARRAY REAL(SDK)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  CALL testParam%init('testSDKa7',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1,1/)))
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSDKa7','%name')
+  ASSERT(testParam2%pdat%datatype == '7-D ARRAY REAL(SDK)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  CALL clear_test_vars()
+ENDSUBROUTINE testSDKa7
 !
 !-------------------------------------------------------------------------------
 !Test ParamList support
