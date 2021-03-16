@@ -33,12 +33,17 @@ PRIVATE
 
 PUBLIC :: XDMFFileType
 PUBLIC :: XDMFMeshType
+PUBLIC :: XDMFTopologyList
+PUBLIC :: ASSIGNMENT(=)
 
 !> The module name
 CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
 
 !> Exception handler for the module
 TYPE(ExceptionHandlerType),SAVE :: eXDMF
+
+!> Parameter list that holds XDMF topology names, ids, etc. 
+TYPE(ParamType),SAVE :: XDMFTopologyList
 
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
@@ -51,10 +56,14 @@ TYPE :: XDMFCellSet
   INTEGER(SIK), ALLOCATABLE :: cell_list(:)
 ENDTYPE XDMFCellSet
 
+TYPE :: XDMFMeshPtrArrayType
+  TYPE(XDMFMeshType), POINTER :: mesh => NULL()
+ENDTYPE XDMFMeshPtrArrayType
+
 !> Mesh to hold XDMF Data
 TYPE :: XDMFMeshType
   !> The name of the set
-  CHARACTER(LEN=64) :: name=''
+  TYPE(StringType) :: name
   !> Looks like:
   !> x1, x2, x3, ..., xn
   !> y1, y2, y3, ..., yn
@@ -63,7 +72,10 @@ TYPE :: XDMFMeshType
   REAL(SDK), ALLOCATABLE :: vertices(:, :)
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
+  TYPE(XDMFMeshType), POINTER :: parent => NULL(), children(:) => NULL()
+!  TYPE(XDMFMeshPtrArrayType), ALLOCATABLE :: children(:)
 ENDTYPE XDMFMeshType
+
 
 !> The XDMF File type
 TYPE,EXTENDS(BaseFileType) :: XDMFFileType
@@ -83,6 +95,11 @@ TYPE,EXTENDS(BaseFileType) :: XDMFFileType
     !> @copydoc FileType_XDMF::importFromDisk_XDMFFileType
     PROCEDURE,PASS :: importFromDisk => importFromDisk_XDMFFileType
 ENDTYPE XDMFFileType
+
+
+INTERFACE ASSIGNMENT(=)
+  MODULE PROCEDURE assign_XDMFMeshType
+ENDINTERFACE
 
 !
 !===============================================================================
@@ -124,19 +141,46 @@ SUBROUTINE fdelete_XDMFFileType(file)
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
+SUBROUTINE init_XDMFTopologyList()
+  CHARACTER(LEN=*),PARAMETER :: myName='init_XDMFTopologyList'
+  ! Setup param lists for cell type conversions
+  ! id is XDMF topology id, 
+  ! n is number of vertices,
+  ! multiple names for same topology for interoperability
+  CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4)
+  CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->n'           , 6)
+  CALL XDMFTopologyList%add('Topology->Tri_6->id'               ,36)
+  CALL XDMFTopologyList%add('Topology->Tri_6->n'                , 6)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->id'       , 5)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->n'        , 4)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->id'     ,37)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8)
+  CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37)
+  CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8)
+  
+  CALL XDMFTopologyList%add('XDMFID->4' ,'Triangle'       )
+  CALL XDMFTopologyList%add('XDMFID->36','Triangle_6'     )   
+  CALL XDMFTopologyList%add('XDMFID->5' ,'Quadrilateral'  )   
+  CALL XDMFTopologyList%add('XDMFID->37','Quadrilateral_8')
+ENDSUBROUTINE init_XDMFTopologyList
+
+!
+!-------------------------------------------------------------------------------
 RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='create_XDMFMesh_from_file'
-  TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
+  TYPE(XDMFMeshType),TARGET, INTENT(INOUT)  :: mesh
   TYPE(XMLElementType), INTENT(INOUT) :: xmle
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
-  TYPE(XDMFMeshType), ALLOCATABLE  :: mesh_children(:)
+!  TYPE(XDMFMeshType), ALLOCATABLE, TARGET  :: mesh_children(:)
   TYPE(XMLElementType), POINTER :: xmle_children(:)
   TYPE(StringType) :: strIn, strOut
-  INTEGER(SIK) :: i, grid_ctr
+  INTEGER(SIK) :: i, grid_ctr, mesh_ctr
 
-  strIn='Name'
-  CALL xmle%getAttributeValue(strIn,strOut)
-  WRITE(*,*) ADJUSTL(strOut)
+
+
+
 
   ! If this mesh has children
   IF(xmle%hasChildren()) THEN
@@ -146,20 +190,29 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
     DO i=1,SIZE(xmle_children)
       IF(xmle_children(i)%name%upper() == 'GRID') grid_ctr = grid_ctr + 1
     ENDDO
-    ! If some children are grids, recurse
+
+    ! If some children are grids
     IF(grid_ctr > 0) THEN
-      ALLOCATE(mesh_children(grid_ctr))
-      ! Recurse for each grid
+      ! Allocate children for current mesh and create entities
+      ALLOCATE(mesh%children(grid_ctr))
+      mesh_ctr=1
+      ! Create children of each grid
       DO i=1,SIZE(xmle_children)
         IF(xmle_children(i)%name%upper() == 'GRID') THEN
-          CALL create_XDMFMesh_from_file(mesh_children(i), xmle_children(i), h5)
+          strIn='Name'
+          CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+          WRITE(*,*) ADJUSTL(strOut)
+          mesh%children(mesh_ctr)%name = strOut
+          mesh%children(mesh_ctr)%parent => mesh
+          CALL create_XDMFMesh_from_file(mesh%children(mesh_ctr), xmle_children(i), h5)
+          mesh_ctr = mesh_ctr + 1
         ENDIF
       ENDDO
     ! If this mesh does not have grid children it is a leaf on the tree.
     ! Add vertices, cells, etc.
     ELSE
       WRITE(*,*) "Lowest level. Initializing mesh attributes"
-      CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5) 
+!      CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5) 
     ENDIF
   ELSE
     CALL eXDMF%raiseError(modName//'::'//myName// &
@@ -176,7 +229,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(XMLElementType), INTENT(INOUT) :: xmle 
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
-  TYPE(StringType) :: elname, strIn, strOut, content, group, dtype
+  TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
   INTEGER(SLK) :: nnodes
   INTEGER(SIK) :: i,j
@@ -240,7 +293,20 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           DEALLOCATE(vals8_2d)
         ENDIF
       CASE("TOPOLOGY")
-        WRITE(*,*) "Topo block"
+        ! TopologyType
+        strIn='TopologyType'
+        CALL xmle_children(i)%getAttributeValue(strIn,toponame)
+        IF(toponame%upper() == 'MIXED') THEN
+          WRITE(*,*) "Mixed"
+        ELSE
+          ! Single topology
+          IF(.NOT.XDMFTopologyList%has(CHAR(toponame))) CALL eXDMF%raiseError(modName// &
+            '::'//myName//' - Topology type '//TRIM(strOut)//' currently supported')
+
+
+        ENDIF
+
+
       CASE("ATTRIBUTE")
         WRITE(*,*) "Attribute block"
       CASE("SET")
@@ -255,17 +321,19 @@ ENDSUBROUTINE setup_leaf_XDMFMesh_from_file
 
 !
 !-------------------------------------------------------------------------------
-FUNCTION importFromDisk_XDMFFileType(thisXDMFFile, strpath) RESULT(mesh)
+SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
   CLASS(StringType),INTENT(IN) :: strpath
-  TYPE(XDMFMeshType)  :: mesh
+  TYPE(XDMFMeshType),INTENT(OUT)  :: mesh
   TYPE(XMLFileType) :: xml 
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:)
   TYPE(StringType) :: strIn, strOut
   INTEGER(SIK) :: i
   CHARACTER(LEN=200) :: charpath
+
+  IF(.NOT.XDMFTopologyList%has('Topology')) CALL init_XDMFTopologyList()
 
   !H5
   ! Note it is assumed that the h5 and xml files have the same name.
@@ -294,17 +362,42 @@ FUNCTION importFromDisk_XDMFFileType(thisXDMFFile, strpath) RESULT(mesh)
   REQUIRE(children(1)%name%upper() == 'DOMAIN')
 
   ! Information
-  ! Note the assumption that material information is before any grids.
+  ! Note the assumption that material information is before any grids
+  ! and that all grids are contained in one overall grid.
   CALL children(1)%getChildren(children)
-  REQUIRE(SIZE(children) > 1)
+  REQUIRE(SIZE(children) == 2)
   REQUIRE(children(1)%name%upper() == 'INFORMATION')
+  REQUIRE(children(2)%name%upper() == 'GRID')
+
+  ! Init root mesh
+  strIn="Name"
+  CALL children(2)%getAttributeValue(strIn,strOut)
+  mesh%name = strOut
 
   ! Create grids
-  DO i = 2, SIZE(children)
-    REQUIRE(children(i)%name%upper() == 'GRID')
-    CALL create_XDMFMesh_from_file(mesh, children(i), h5)
-  ENDDO
+  CALL create_XDMFMesh_from_file(mesh, children(2), h5)
 
-ENDFUNCTION importFromDisk_XDMFFileType 
+ENDSUBROUTINE importFromDisk_XDMFFileType 
+
+SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
+  TYPE(XDMFMeshType), INTENT(INOUT) :: thismesh
+  TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
+
+  thismesh%name = thatmesh%name
+!  IF ALLOCATED(thatmesh%vertices) THEN
+!    IF ALLOCATED(thismesh%vertices) DEALLOCATE(thismesh%vertices)
+!    ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2))
+!  ENDIF
+!  REAL(SDK), ALLOCATABLE :: vertices(:, :)
+!  TYPE(XDMFCell), ALLOCATABLE :: cells(:)
+!  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
+!  TYPE(XDMFMeshType), POINTER :: parent => NULL()
+!  TYPE(XDMFMeshPtrArrayType), ALLOCATABLE :: children(:)
+
+  
+
+ENDSUBROUTINE assign_XDMFMeshType
+
+
 
 ENDMODULE FileType_XDMF
