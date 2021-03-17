@@ -173,14 +173,9 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(XDMFMeshType),TARGET, INTENT(INOUT)  :: mesh
   TYPE(XMLElementType), INTENT(INOUT) :: xmle
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
-!  TYPE(XDMFMeshType), ALLOCATABLE, TARGET  :: mesh_children(:)
   TYPE(XMLElementType), POINTER :: xmle_children(:)
   TYPE(StringType) :: strIn, strOut
   INTEGER(SIK) :: i, grid_ctr, mesh_ctr
-
-
-
-
 
   ! If this mesh has children
   IF(xmle%hasChildren()) THEN
@@ -212,7 +207,7 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
     ! Add vertices, cells, etc.
     ELSE
       WRITE(*,*) "Lowest level. Initializing mesh attributes"
-!      CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5) 
+      CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5) 
     ENDIF
   ELSE
     CALL eXDMF%raiseError(modName//'::'//myName// &
@@ -225,7 +220,7 @@ ENDSUBROUTINE create_XDMFMesh_from_file
 !-------------------------------------------------------------------------------
 SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='setup_leaf_XDMFMesh_from_file'
-  TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
+  TYPE(XDMFMeshType),INTENT(INOUT),TARGET  :: mesh
   TYPE(XMLElementType), INTENT(INOUT) :: xmle 
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
@@ -325,7 +320,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
   CLASS(StringType),INTENT(IN) :: strpath
-  TYPE(XDMFMeshType),INTENT(OUT)  :: mesh
+  TYPE(XDMFMeshType),INTENT(OUT),TARGET  :: mesh
   TYPE(XMLFileType) :: xml 
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:)
@@ -384,14 +379,21 @@ SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
 
   thismesh%name = thatmesh%name
-!  IF ALLOCATED(thatmesh%vertices) THEN
-!    IF ALLOCATED(thismesh%vertices) DEALLOCATE(thismesh%vertices)
-!    ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2))
+  IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
+  !Should recursively clean all children.
+  IF(ASSOCIATED(thatmesh%children)) THEN 
+    ALLOCATE(thismesh%children(SIZE(thatmesh%children)))
+    thismesh%children => thatmesh%children
+  ENDIF
+  IF( ALLOCATED(thatmesh%vertices) ) THEN
+    IF(ALLOCATED(thismesh%vertices)) DEALLOCATE(thismesh%vertices)
+    ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2)))
+    thismesh%vertices = thatmesh%vertices
+  ENDIF
 !  ENDIF
 !  REAL(SDK), ALLOCATABLE :: vertices(:, :)
 !  TYPE(XDMFCell), ALLOCATABLE :: cells(:)
 !  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
-!  TYPE(XDMFMeshType), POINTER :: parent => NULL()
 !  TYPE(XDMFMeshPtrArrayType), ALLOCATABLE :: children(:)
 
   
