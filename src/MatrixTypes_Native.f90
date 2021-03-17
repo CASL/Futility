@@ -498,16 +498,17 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
   CALL validParams%get('MatrixType->nnz',nnz_int)
   CALL validParams%get('MatrixType->blockSize',blockSize)
   CALL validParams%get('MatrixType->nlocal',nlocal)
-  nnz=INT(nnz_int,kind=8)
+  nnz=INT(nnz_int,KIND=8)
   IF(nnz_int <= 1) THEN
     IF (validParams%has("MatrixType->dnnz") .AND. validParams%has("MatrixType->onnz")) THEN
       nnz=0_SLK
       CALL validParams%get("MatrixType->onnz",onnz)
       CALL validParams%get("MatrixType->dnnz",dnnz)
       DO i=1,SIZE(onnz)
-        nnz=nnz+INT(onnz(i)*blockSize,kind=SLK)
-        nnz=nnz+INT(dnnz(i)*blockSize,kind=SLK)
+        nnz=nnz+INT(onnz(i),KIND=SLK)
+        nnz=nnz+INT(dnnz(i),KIND=SLK)
       ENDDO
+      CALL MPI_AllReduce(nnz,MPI_IN_PLACE,1,MPI_LONG,MPI_SUM,commID,mpierr)
     ENDIF
   ENDIF
 
@@ -700,10 +701,10 @@ SUBROUTINE assemble_BandedMatrixType(thisMatrix)
   ALLOCATE(idxOrig(thisMatrix%counter))
   IF (thisMatrix%isAssembled) RETURN
   DO i=1,thisMatrix%counter
-    iLong=INT(thisMatrix%iTmp(i),kind=SLK)
-    jLong=INT(thisMatrix%jTmp(i),kind=SLK)
-    nLong=INT(thisMatrix%n,kind=SLK)
-    mLong=INT(thisMatrix%m,kind=SLK)
+    iLong=INT(thisMatrix%iTmp(i),KIND=SLK)
+    jLong=INT(thisMatrix%jTmp(i),KIND=SLK)
+    nLong=INT(thisMatrix%n,KIND=SLK)
+    mLong=INT(thisMatrix%m,KIND=SLK)
     idxOrig(i)=i
     ! The diagonal rank counts upwards as one moves southeast in the matrix,
     ! starting at a large negative number in the bottom left, and reaching

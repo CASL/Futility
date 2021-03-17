@@ -864,21 +864,29 @@ ENDSUBROUTINE matvec_DistrBandedMatrixType
 !> @brief Helper routine that handles the movement of data out of the
 !>        recieving buffer. This buffer has multiple "slots" that are either
 !>        being worked on directly or receiving data from MPI in background.
+!>        Empty slots are denoted with MPI_REQUEST_NULL
 !> @param acc The accumulating vector
 !> @param valBuf The recv buffer for values
+!> @param thisMat The matrixtype used in multiplication
 !> @param ctBuf Count of elements in each buffer slot
-!> @param idxBuf The recv buffer for indices
-!> @param idx The buffer slot to pop
+!> @param idx The empty buffer slot that was popped
 !> @param req The array of active requests for data
-!> @param idxReq The array of requests for indices
+!> @param f Optional bool to flush all requests
 !>
 SUBROUTINE pop_recv(acc,valBuf,thisMat,ctBuf,idx,req,f)
+  !> Local vector data
   REAL(SRK), INTENT(INOUT) :: acc(:)
+  !> List of buffers
   REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
+  !> Matrix used in SpMV
   CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: thisMat
+  !> Array of buffer sizes
   INTEGER(SIK), INTENT(INOUT) :: ctBuf(MATVEC_SLOTS)
-  INTEGER(SIK), INTENT(INOUT) :: idx
+  !> The buffer slot popped
+  INTEGER(SIK), INTENT(OUT) :: idx
+  !> List of MPI Requests
   INTEGER(SIK), INTENT(INOUT) :: req(MATVEC_SLOTS)
+  !> Optional argument to flush all buffers
   LOGICAL(SBK),OPTIONAL,INTENT(IN) :: f
   INTEGER(SIK) :: stt,stp,mpierr,i,rank
   LOGICAL(SBK) :: force
@@ -915,29 +923,29 @@ ENDSUBROUTINE pop_recv
 
 !
 !-------------------------------------------------------------------------------
-!> @brief Helper routine that keeps of data in the send buffer while
+!> @brief Helper routine that keeps track of data in the send buffer while
 !>        MPI is still working. This buffer has multiple "slots" that are
 !>        either being worked on directly or contain data being sent by
-!>        MPI in background.
+!>        MPI in background. Empty slots are denoted with MPI_REQUEST_NULL
 !> @param valBuf The send buffer for values
-!> @param idxBuf The send buffer for indices
-!> @param idx The buffer slot to pop
+!> @param idx The buffer slot popped
 !> @param req The array of requests for data
-!> @param idxReq The array of requests for indices
+!> @param f Optional bool to flush all requests
 !>
 SUBROUTINE pop_send(valBuf,idx,req,f)
+  !> Set of data buffers
   REAL(SRK), INTENT(INOUT) :: valBuf(:,:)
-  !> The buffer slot to pop
-  INTEGER(SIK), INTENT(INOUT) :: idx
-  !> The array of requests for data
+  !> The buffer slot popped
+  INTEGER(SIK), INTENT(OUT) :: idx
+  !> The array of MPI requests
   INTEGER(SIK), INTENT(INOUT) :: req(MATVEC_SLOTS)
+  !> Optional argument to flush all buffers
   LOGICAL(SBK),OPTIONAL,INTENT(IN) :: f
   INTEGER(SIK) :: mpierr,i
   LOGICAL(SBK) :: force
 
   force=.FALSE.
   IF (PRESENT(f)) force=f
-  !IF(req(idx) == MPI_REQUEST_NULL) RETURN
   IF (force) THEN
     IF (req(idx) == MPI_REQUEST_NULL) RETURN
     CALL MPI_Wait(req(idx),MPI_STATUS_IGNORE,mpierr)
