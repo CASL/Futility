@@ -306,7 +306,7 @@ SUBROUTINE setRepresentation(opt)
 ENDSUBROUTINE
 !
 !-------------------------------------------------------------------------------
-!> TODO add documentation
+!> Resets all module data
 SUBROUTINE Clean_IAPWS()
   expr_opt = 1
 ENDSUBROUTINE
@@ -2467,7 +2467,7 @@ FUNCTION dvdppt(P, V, T, ireg)
     !> \f[
     !> \left(\frac{\partial v}{\partial P}\right)_{T}=RT \left(\frac{\pi}{P}\right)^{2} \gamma_{\pi\pi}
     !> \f]
-    dvdppt = gamma1_p2_t0(pi, tau)*R*T*(pi*pi/P/P)*(1.E-3) ![m^3/kg-MPa]
+    dvdppt = gamma1_p2_t0(pi, tau)*R*T*(pi*pi/P/P)*(1.E-3_SRK) ![m^3/kg-MPa]
   ELSEIF (iregInt == 2) THEN
     ! Calculate the derivative of gibbs free energy with respect to
     ! pressure (pi) for both first and second order
@@ -2478,7 +2478,7 @@ FUNCTION dvdppt(P, V, T, ireg)
     !> \f[
     !> \left(\frac{\partial v}{\partial P}\right)_{T}=RT \left(\frac{\pi}{P}\right)^{2} \left(\gamma^o_{\pi\pi}+\gamma^r_{\pi\pi}\right)
     !> \f]
-    dvdppt = gamma_pi_pi*R*T*(pi*pi/P/P)*(1.E-3) ![m^3/kg-MPa]
+    dvdppt = gamma_pi_pi*R*T*(pi*pi/P/P)*(1.E-3_SRK) ![m^3/kg-MPa]
   ELSEIF (iregInt == 3) THEN
     ! Calculate the derivative of hemholtz free energy with respect to
     ! the second order of density
@@ -2509,7 +2509,7 @@ FUNCTION dvdppt(P, V, T, ireg)
     !> \f[
     !> \left(\frac{\partial v}{\partial P}\right)_{T}=RT \left(\frac{\pi}{P}\right)^{2} \left(\gamma^o_{\pi\pi}+\gamma^r_{\pi\pi}\right)
     !> \f]
-    dvdppt = gamma_pi_pi*R*T*((pi/P)*(pi/P))*(1.E-3) ![m^3/kg-MPa]
+    dvdppt = gamma_pi_pi*R*T*((pi/P)*(pi/P))*(1.E-3_SRK) ![m^3/kg-MPa]
 
   ELSE
     ! Error out if saturated or out of bounds
@@ -3406,7 +3406,10 @@ ENDSUBROUTINE regsph
 !===============================================================================
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
+!> Returns density for passed pressure and temperature for Region 3 of the
+!> property map in units of kg/m^3
+!> @param P pressure in MPa
+!> @param T temperature in K
 FUNCTION vpt3n(P, T)
   REAL(SRK), INTENT(IN) :: P
   REAL(SRK), INTENT(IN) :: T
