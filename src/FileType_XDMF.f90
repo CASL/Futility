@@ -51,7 +51,7 @@ TYPE :: XDMFCell
 ENDTYPE XDMFCell
 
 TYPE :: XDMFCellSet
-  CHARACTER(LEN=64) :: name=''
+  TYPE(StringType) :: name
   !> The cell ids
   INTEGER(SLK), ALLOCATABLE :: cell_list(:)
 ENDTYPE XDMFCellSet
@@ -229,12 +229,13 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
   INTEGER(SLK) :: nverts, ncells
-  INTEGER(SIK) :: i,j,xdmf_id
+  INTEGER(SIK) :: i,j,xdmf_id,ncell_sets
   INTEGER(SIK),ALLOCATABLE :: dshape(:)
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
   REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
   INTEGER(SNK),ALLOCATABLE :: ivals4_1d(:),ivals4_2d(:,:)
   INTEGER(SLK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
+  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets_temp(:)
 
 
 
@@ -343,14 +344,16 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             DO j=1,ncells
               ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
               mesh%cells(j)%vertex_list(1) = xdmf_id
-              mesh%cells(j)%vertex_list(2:) = ivals4_2d(:, j)
+              ! Account for 0based to 1based index switch
+              mesh%cells(j)%vertex_list(2:) = ivals4_2d(:, j) + 1
             ENDDO
             DEALLOCATE(ivals4_2d)
           ELSE
             DO j=1,ncells
               ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
               mesh%cells(j)%vertex_list(1) = xdmf_id
-              mesh%cells(j)%vertex_list(2:) = ivals8_2d(:, j)
+              ! Account for 0based to 1based index switch
+              mesh%cells(j)%vertex_list(2:) = ivals8_2d(:, j) + 1
             ENDDO
             DEALLOCATE(ivals8_2d)
           ENDIF
@@ -394,10 +397,12 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           ! Problem if SNK?
           ALLOCATE(mesh%material_ids(ncells))
           IF(dtype == 'SNK') THEN
-            mesh%material_ids = ivals4_1d
+            ! Account for 0based to 1based index switch
+            mesh%material_ids = ivals4_1d + 1
             DEALLOCATE(ivals4_1d)
           ELSE
-            mesh%material_ids = ivals8_1d
+            ! Account for 0based to 1based index switch
+            mesh%material_ids = ivals8_1d + 1
             DEALLOCATE(ivals8_1d)
           ENDIF
         ELSE
@@ -405,7 +410,87 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             TRIM(strOut)//' not supported')
         ENDIF
       CASE("SET")
-        WRITE(*,*) "Set block"
+        ! SetType
+        strIn='SetType'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+        IF(strOut /= 'Cell') THEN
+          CALL eXDMF%raiseWarning(modName//'::'//myName// &
+            ' - only supports SetType="Cell" right now.')
+        ENDIF
+        ! SetName
+        strIn='Name'
+        CALL xmle_children(i)%getAttributeValue(strIn,elname)
+        ! Format
+        CALL xmle_children(i)%getChildren(ele_children)
+        REQUIRE(SIZE(ele_children) == 1)
+        strIn='Format'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        IF(strOut /= 'HDF') THEN
+          CALL eXDMF%raiseWarning(modName//'::'//myName// &
+            ' - only supports HDF5 cell set data right now.')
+        ENDIF
+        ! Cell Set Data
+        strIn='Dimensions'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        ncells=strOut%stoi()
+        REQUIRE(ALLOCATED(mesh%cells))
+        REQUIRE(ncells <= SIZE(mesh%cells))
+        ! This is all awful string manipulation to get the h5 group
+        content=ele_children(1)%getContent()
+        segments=content%split(':')
+        group=segments(2)%substr(2,LEN(segments(2)))
+        REQUIRE(h5%pathExists(CHAR(group)))
+        group = group%replace("/", "->")
+        ! Data shape
+        dshape=h5%getDataShape(CHAR(group))
+        REQUIRE(SIZE(dshape) == 1)
+        REQUIRE(dshape(1) == ncells)
+        ! Data type
+        dtype=h5%getDataType(CHAR(group))
+        IF(dtype == 'SNK') THEN
+          CALL h5%fread(CHAR(group),ivals4_1d)
+        ELSE
+          CALL h5%fread(CHAR(group),ivals8_1d)
+        ENDIF
+        ! Resize cell sets if needed
+        ! This is expected to happen infrequently
+        IF(ALLOCATED(mesh%cell_sets)) THEN
+          ! Copy current sets to temp, deallocate current sets
+          ncell_sets = SIZE(mesh%cell_sets)
+          ALLOCATE(cell_sets_temp(ncell_sets))
+          DO j=1, ncell_sets
+            ALLOCATE(cell_sets_temp(j)%cell_list(SIZE(mesh%cell_sets(j)%cell_list)))
+            cell_sets_temp(j)%cell_list = mesh%cell_sets(j)%cell_list
+            cell_sets_temp(j)%name = mesh%cell_sets(j)%name
+            DEALLOCATE(mesh%cell_sets(j)%cell_list)
+          ENDDO
+          DEALLOCATE(mesh%cell_sets)
+          ! Reallocate cell sets to be on bigger and copy all old sets over
+          ALLOCATE(mesh%cell_sets(ncell_sets+1))
+          DO j=1, ncell_sets
+            ALLOCATE(mesh%cell_sets(j)%cell_list(SIZE(cell_sets_temp(j)%cell_list))) 
+            mesh%cell_sets(j)%cell_list = cell_sets_temp(j)%cell_list
+            mesh%cell_sets(j)%name = cell_sets_temp(j)%name
+            DEALLOCATE(cell_sets_temp(j)%cell_list)
+            CALL cell_sets_temp(j)%name%clear()
+          ENDDO
+          DEALLOCATE(cell_sets_temp)
+        ELSE
+          ncell_sets = 0
+          ALLOCATE(mesh%cell_sets(1))
+        ENDIF
+        ! Add the one new cell set
+        mesh%cell_sets(ncell_sets + 1)%name = elname
+        ALLOCATE(mesh%cell_sets(ncell_sets + 1)%cell_list(ncells))
+        IF(dtype == 'SNK') THEN
+          ! Account for 0based to 1based index switch
+          mesh%cell_sets(ncell_sets + 1)%cell_list = ivals4_1d + 1
+          DEALLOCATE(ivals4_1d)
+        ELSE
+          mesh%cell_sets(ncell_sets + 1)%cell_list = ivals8_1d + 1
+          DEALLOCATE(ivals8_1d)
+        ENDIF
+
       CASE DEFAULT
         CALL eXDMF%raiseWarning(modName//'::'//myName// &
           ' - Unsupported data in XDMF file '//CHAR(elname))
@@ -509,8 +594,23 @@ SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     ALLOCATE(thismesh%material_ids(SIZE(thatmesh%material_ids)))
     thismesh%material_ids = thatmesh%material_ids
   ENDIF
+  IF( ALLOCATED(thatmesh%cell_sets) ) THEN
+    IF(ALLOCATED(thismesh%cell_sets))THEN
+      DO i=1, SIZE(thismesh%cell_sets)
+        DEALLOCATE(thismesh%cell_sets(i)%cell_list)
+      ENDDO
+      DEALLOCATE(thismesh%cell_sets)
+    ENDIF
+    ALLOCATE(thismesh%cell_sets(SIZE(thatmesh%cell_sets)))
+    DO i = 1, SIZE(thatmesh%cell_sets)
+      ALLOCATE(thismesh%cell_sets(i)%cell_list(SIZE(thatmesh%cell_sets(i)%cell_list)))
+      thismesh%cell_sets(i)%cell_list = thatmesh%cell_sets(i)%cell_list
+      thismesh%cell_sets(i)%name = thatmesh%cell_sets(i)%name
+    ENDDO
+  ENDIF
 
-!  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
+
+
 
 ENDSUBROUTINE assign_XDMFMeshType
 

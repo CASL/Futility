@@ -228,20 +228,25 @@ SUBROUTINE test_two_pins()
   ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
   DO i=1,46
     ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
-    DO j=1,7
-      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i), "Wrong cell type or vertex id")
+    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
     ENDDO
   ENDDO
   !     pin1 material_ids
   ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
   ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
   DO i=1,46
-    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i), "Unequal material_id")
+    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
   ENDDO
-
-
-
-
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
 
 
 
