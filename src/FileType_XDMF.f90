@@ -545,17 +545,26 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   ! Note the assumption that material information is before any grids
   ! and that all grids are contained in one overall grid.
   CALL children(1)%getChildren(children)
-  REQUIRE(SIZE(children) == 2)
-  REQUIRE(children(1)%name%upper() == 'INFORMATION')
-  REQUIRE(children(2)%name%upper() == 'GRID')
+  ! Has materials
+  IF (SIZE(children) == 2) THEN
+    REQUIRE(children(1)%name%upper() == 'INFORMATION')
+    REQUIRE(children(2)%name%upper() == 'GRID')
+    i = 2
+  ELSE IF(SIZE(children) == 1) THEN
+    REQUIRE(children(1)%name%upper() == 'GRID')
+    i = 1
+  ELSE
+    CALL eXDMF%raiseError(modName//'::'//myName// &
+      ' - Expecting information and grid elements only.') 
+  ENDIF
 
   ! Init root mesh
   strIn="Name"
-  CALL children(2)%getAttributeValue(strIn,strOut)
+  CALL children(i)%getAttributeValue(strIn,strOut)
   mesh%name = strOut
 
   ! Create grids
-  CALL create_XDMFMesh_from_file(mesh, children(2), h5)
+  CALL create_XDMFMesh_from_file(mesh, children(i), h5)
 
 ENDSUBROUTINE importFromDisk_XDMFFileType 
 
@@ -566,7 +575,7 @@ SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
 
   thismesh%name = thatmesh%name
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
-  !Should recursively clean all children.
+  !Should recursively clean and assign all children.
   IF(ASSOCIATED(thatmesh%children)) THEN 
     ALLOCATE(thismesh%children(SIZE(thatmesh%children)))
     thismesh%children => thatmesh%children
@@ -608,9 +617,6 @@ SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
       thismesh%cell_sets(i)%name = thatmesh%cell_sets(i)%name
     ENDDO
   ENDIF
-
-
-
 
 ENDSUBROUTINE assign_XDMFMeshType
 

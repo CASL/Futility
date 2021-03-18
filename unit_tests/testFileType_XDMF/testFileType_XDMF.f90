@@ -186,6 +186,7 @@ INTEGER(SNK) :: two_pins_pin1_material_ids(46) = (/ &
 
 CREATE_TEST('XDMF TYPE')
 REGISTER_SUBTEST('two_pins',test_two_pins)
+REGISTER_SUBTEST('three_level_grid',test_three_level_grid)
 
 
 FINALIZE_TEST()
@@ -197,9 +198,8 @@ CONTAINS
 !
 SUBROUTINE test_two_pins()
   TYPE(XDMFFileType) :: testXDMFFile
-  TYPE(XDMFMeshType) :: mesh, pin1, pin2
-  TYPE(StringType) :: fname, str_in, str_out
-  LOGICAL(SBK) :: bool
+  TYPE(XDMFMeshType) :: mesh, pin1
+  TYPE(StringType) :: fname
   INTEGER(SIK) :: i,j
 
   fname='gridmesh_two_pins.xdmf'
@@ -249,12 +249,38 @@ SUBROUTINE test_two_pins()
   ENDDO
 
 
-
-
-
-
-
-
-
 ENDSUBROUTINE test_two_pins
+
+
+SUBROUTINE test_three_level_grid()
+  TYPE(XDMFFileType) :: testXDMFFile
+  TYPE(XDMFMeshType) :: mesh, L1, L2
+  TYPE(StringType) :: fname
+  INTEGER(SIK) :: i,j
+
+  fname='gridmesh_three_level_grid.xdmf'
+  CALL testXDMFFile%importFromDisk(fname, mesh)
+  ! Check correct number of children
+  ASSERT(mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
+  ASSERT(ASSOCIATED(mesh%children), "Children not associated")
+  ASSERT(SIZE(mesh%children)==1, "Wrong number of children")
+  ! Check L1
+  L1 = mesh%children(1)
+  ASSERT(L1%name == "GRID_L1_1_1", "L1 mesh name is incorrect")
+  ASSERT(ASSOCIATED(L1%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
+  ASSERT(L1%parent%name == "three_lvl_grid", "L1 parent name is incorrect")
+  ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
+  ! Check L2_2_1
+  L2 = L1%children(2)
+  WRITE(*,*) CHAR(L2%name)
+  ASSERT(L1%name == "GRID_L2_2_1", "L2 mesh name is incorrect")
+  ASSERT(ASSOCIATED(L2%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L2%parent), "Parent not associated")
+  ASSERT(L2%parent%name == "GRID_L1_1_1", "L2 parent name is incorrect")
+
+
+
+
+ENDSUBROUTINE test_three_level_grid
 ENDPROGRAM testXDMFFileType
