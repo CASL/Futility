@@ -9,6 +9,5 @@
 INCLUDE(Futility_CreateUnitTest)
 
 ADD_SUBDIRECTORY(testFMU_BouncingBall)
-
 Futility_CreateUnitTest(testFMU_Wrapper)
 
