@@ -1,0 +1,12 @@
+<Xdmf Version="3.0">
+  <Domain>
+    <Grid Name="mixed_topology" GridType="Uniform">
+      <Geometry GeometryType="XYZ">
+        <DataItem DataType="Float" Dimensions="9 3" Format="HDF" Precision="8">mixed_topology.h5:/mixed_topology/vertices</DataItem>
+      </Geometry>
+      <Topology TopologyType="Mixed" NumberOfElements="3">
+        <DataItem DataType="Int" Dimensions="16" Format="HDF" Precision="8">mixed_topology.h5:/mixed_topology/cells</DataItem>
+      </Topology>
+    </Grid>
+  </Domain>
+</Xdmf>

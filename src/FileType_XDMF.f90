@@ -47,13 +47,13 @@ TYPE(ParamType),SAVE :: XDMFTopologyList
 
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
-  INTEGER(SIK), ALLOCATABLE :: vertex_list(:)
+  INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
 ENDTYPE XDMFCell
 
 TYPE :: XDMFCellSet
   CHARACTER(LEN=64) :: name=''
   !> The cell ids
-  INTEGER(SIK), ALLOCATABLE :: cell_list(:)
+  INTEGER(SLK), ALLOCATABLE :: cell_list(:)
 ENDTYPE XDMFCellSet
 
 TYPE :: XDMFMeshPtrArrayType
@@ -64,6 +64,7 @@ ENDTYPE XDMFMeshPtrArrayType
 TYPE :: XDMFMeshType
   !> The name of the set
   TYPE(StringType) :: name
+  LOGICAL(SBK) :: singleTopology=.FALSE. 
   !> Looks like:
   !> x1, x2, x3, ..., xn
   !> y1, y2, y3, ..., yn
@@ -71,6 +72,7 @@ TYPE :: XDMFMeshType
   !> Therefore vertices will be of shape (3, N)
   REAL(SDK), ALLOCATABLE :: vertices(:, :)
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
+  INTEGER(SNK), ALLOCATABLE :: material_ids(:)
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
   TYPE(XDMFMeshType), POINTER :: parent => NULL(), children(:) => NULL()
 !  TYPE(XDMFMeshPtrArrayType), ALLOCATABLE :: children(:)
@@ -226,11 +228,14 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
   TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
-  INTEGER(SLK) :: nnodes
-  INTEGER(SIK) :: i,j
+  INTEGER(SLK) :: nverts, ncells
+  INTEGER(SIK) :: i,j,xdmf_id
   INTEGER(SIK),ALLOCATABLE :: dshape(:)
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
   REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
+  INTEGER(SNK),ALLOCATABLE :: ivals4_1d(:),ivals4_2d(:,:)
+  INTEGER(SLK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
+
 
 
   REQUIRE(xmle%hasChildren())
@@ -255,12 +260,12 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           CALL eXDMF%raiseWarning(modName//'::'//myName// &
             ' - only supports HDF5 geometry data right now.')
         ENDIF
-        ! Node Data
+        ! Vertex Data
         strIn='Dimensions'
         CALL ele_children(1)%getAttributeValue(strIn,strOut)
         strArray=strOut%split()
         REQUIRE(strArray(2) == '3')
-        nnodes=strArray(1)%stoi()
+        nverts=strArray(1)%stoi()
         ! This is all awful string manipulation to get the h5 group
         content=ele_children(1)%getContent()
         segments=content%split(':')
@@ -270,7 +275,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         ! Data shape
         dshape=h5%getDataShape(CHAR(group))
         REQUIRE(dshape(1) == 3)
-        REQUIRE(dshape(2) == nnodes)
+        REQUIRE(dshape(2) == nverts)
         ! Data type
         dtype=h5%getDataType(CHAR(group))
         IF(dtype == 'SSK') THEN
@@ -279,7 +284,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           CALL h5%fread(CHAR(group),vals8_2d)
         ENDIF
         ! Problem if SSK?
-        ALLOCATE(mesh%vertices(3,nnodes))
+        ALLOCATE(mesh%vertices(3,nverts))
         IF(dtype == 'SSK') THEN
           mesh%vertices=vals4_2d
           DEALLOCATE(vals4_2d)
@@ -296,14 +301,109 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         ELSE
           ! Single topology
           IF(.NOT.XDMFTopologyList%has(CHAR(toponame))) CALL eXDMF%raiseError(modName// &
-            '::'//myName//' - Topology type '//TRIM(strOut)//' currently supported')
-
-
+            '::'//myName//' - Topology type '//TRIM(strOut)//' not supported')
+          ! XDMF ID
+          CALL XDMFTopologyList%get(CHAR(toponame)//'->id', xdmf_id)
+          ! Format
+          CALL xmle_children(i)%getChildren(ele_children)
+          REQUIRE(SIZE(ele_children) == 1)
+          strIn='Format'
+          CALL ele_children(1)%getAttributeValue(strIn,strOut)
+          IF(strOut /= 'HDF') THEN
+            CALL eXDMF%raiseWarning(modName//'::'//myName// &
+              ' - only supports HDF5 topology data right now.')
+          ENDIF
+          ! Topology Data
+          strIn='NumberOfElements'
+          CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+          ncells=strOut%stoi()
+          strIn='NodesPerElement'
+          CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+          nverts=strOut%stoi()
+          ! This is all awful string manipulation to get the h5 group
+          content=ele_children(1)%getContent()
+          segments=content%split(':')
+          group=segments(2)%substr(2,LEN(segments(2)))
+          REQUIRE(h5%pathExists(CHAR(group)))
+          group = group%replace("/", "->")
+          ! Data shape
+          dshape=h5%getDataShape(CHAR(group))
+          REQUIRE(dshape(1) == nverts)
+          REQUIRE(dshape(2) == ncells)
+          ! Data type
+          dtype=h5%getDataType(CHAR(group))
+          IF(dtype == 'SNK') THEN
+            CALL h5%fread(CHAR(group),ivals4_2d)
+          ELSE
+            CALL h5%fread(CHAR(group),ivals8_2d)
+          ENDIF
+          ! Problem if SNK?
+          ALLOCATE(mesh%cells(ncells))
+          IF(dtype == 'SNK') THEN
+            DO j=1,ncells
+              ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
+              mesh%cells(j)%vertex_list(1) = xdmf_id
+              mesh%cells(j)%vertex_list(2:) = ivals4_2d(:, j)
+            ENDDO
+            DEALLOCATE(ivals4_2d)
+          ELSE
+            DO j=1,ncells
+              ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
+              mesh%cells(j)%vertex_list(1) = xdmf_id
+              mesh%cells(j)%vertex_list(2:) = ivals8_2d(:, j)
+            ENDDO
+            DEALLOCATE(ivals8_2d)
+          ENDIF
         ENDIF
-
-
       CASE("ATTRIBUTE")
-        WRITE(*,*) "Attribute block"
+        strIn='Name'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+        IF(strOut%upper() == 'MATERIALID') THEN
+          ! Format
+          CALL xmle_children(i)%getChildren(ele_children)
+          REQUIRE(SIZE(ele_children) == 1)
+          strIn='Format'
+          CALL ele_children(1)%getAttributeValue(strIn,strOut)
+          IF(strOut /= 'HDF') THEN
+            CALL eXDMF%raiseWarning(modName//'::'//myName// &
+              ' - only supports HDF5 material data right now.')
+          ENDIF                                                          
+          ! Material Data
+          strIn='Dimensions'
+          CALL ele_children(1)%getAttributeValue(strIn,strOut)
+          ncells=strOut%stoi()
+          REQUIRE(ALLOCATED(mesh%cells))
+          REQUIRE(ncells == SIZE(mesh%cells))
+          ! This is all awful string manipulation to get the h5 group
+          content=ele_children(1)%getContent()
+          segments=content%split(':')
+          group=segments(2)%substr(2,LEN(segments(2)))
+          REQUIRE(h5%pathExists(CHAR(group)))
+          group = group%replace("/", "->")
+          ! Data shape
+          dshape=h5%getDataShape(CHAR(group))
+          REQUIRE(SIZE(dshape) == 1)
+          REQUIRE(dshape(1) == ncells)
+          ! Data type
+          dtype=h5%getDataType(CHAR(group))
+          IF(dtype == 'SNK') THEN
+            CALL h5%fread(CHAR(group),ivals4_1d)
+          ELSE
+            CALL h5%fread(CHAR(group),ivals8_1d)
+          ENDIF
+          ! Problem if SNK?
+          ALLOCATE(mesh%material_ids(ncells))
+          IF(dtype == 'SNK') THEN
+            mesh%material_ids = ivals4_1d
+            DEALLOCATE(ivals4_1d)
+          ELSE
+            mesh%material_ids = ivals8_1d
+            DEALLOCATE(ivals8_1d)
+          ENDIF
+        ELSE
+          CALL eXDMF%raiseWarning(modName//'::'//myName//' - mesh attribute '//&
+            TRIM(strOut)//' not supported')
+        ENDIF
       CASE("SET")
         WRITE(*,*) "Set block"
       CASE DEFAULT
@@ -377,6 +477,7 @@ ENDSUBROUTINE importFromDisk_XDMFFileType
 SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   TYPE(XDMFMeshType), INTENT(INOUT) :: thismesh
   TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
+  INTEGER(SNK) :: i
 
   thismesh%name = thatmesh%name
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
@@ -390,13 +491,26 @@ SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2)))
     thismesh%vertices = thatmesh%vertices
   ENDIF
-!  ENDIF
-!  REAL(SDK), ALLOCATABLE :: vertices(:, :)
-!  TYPE(XDMFCell), ALLOCATABLE :: cells(:)
-!  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
-!  TYPE(XDMFMeshPtrArrayType), ALLOCATABLE :: children(:)
+  IF( ALLOCATED(thatmesh%cells) ) THEN
+    IF(ALLOCATED(thismesh%cells))THEN
+      DO i=1, SIZE(thismesh%cells)
+        DEALLOCATE(thismesh%cells(i)%vertex_list)
+      ENDDO
+      DEALLOCATE(thismesh%cells)
+    ENDIF
+    ALLOCATE(thismesh%cells(SIZE(thatmesh%cells)))
+    DO i = 1, SIZE(thatmesh%cells)
+      ALLOCATE(thismesh%cells(i)%vertex_list(SIZE(thatmesh%cells(i)%vertex_list)))
+      thismesh%cells(i)%vertex_list = thatmesh%cells(i)%vertex_list
+    ENDDO
+  ENDIF
+  IF( ALLOCATED(thatmesh%material_ids) )THEN
+    IF(ALLOCATED(thismesh%material_ids)) DEALLOCATE(thismesh%material_ids)
+    ALLOCATE(thismesh%material_ids(SIZE(thatmesh%material_ids)))
+    thismesh%material_ids = thatmesh%material_ids
+  ENDIF
 
-  
+!  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
 
 ENDSUBROUTINE assign_XDMFMeshType
 
