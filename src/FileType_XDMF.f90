@@ -56,10 +56,6 @@ TYPE :: XDMFCellSet
   INTEGER(SLK), ALLOCATABLE :: cell_list(:)
 ENDTYPE XDMFCellSet
 
-TYPE :: XDMFMeshPtrArrayType
-  TYPE(XDMFMeshType), POINTER :: mesh => NULL()
-ENDTYPE XDMFMeshPtrArrayType
-
 !> Mesh to hold XDMF Data
 TYPE :: XDMFMeshType
   !> The name of the set
@@ -75,7 +71,6 @@ TYPE :: XDMFMeshType
   INTEGER(SNK), ALLOCATABLE :: material_ids(:)
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
   TYPE(XDMFMeshType), POINTER :: parent => NULL(), children(:) => NULL()
-!  TYPE(XDMFMeshPtrArrayType), ALLOCATABLE :: children(:)
 ENDTYPE XDMFMeshType
 
 
@@ -179,7 +174,7 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(StringType) :: strIn, strOut
   INTEGER(SIK) :: i, grid_ctr, mesh_ctr
 
-  ! If this mesh has children
+  ! If this xml element has children
   IF(xmle%hasChildren()) THEN
     ! Determine the number or XML children that are grids
     CALL xmle%getChildren(xmle_children)
@@ -198,7 +193,6 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
         IF(xmle_children(i)%name%upper() == 'GRID') THEN
           strIn='Name'
           CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-          WRITE(*,*) ADJUSTL(strOut)
           mesh%children(mesh_ctr)%name = strOut
           mesh%children(mesh_ctr)%parent => mesh
           CALL create_XDMFMesh_from_file(mesh%children(mesh_ctr), xmle_children(i), h5)
@@ -208,7 +202,6 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
     ! If this mesh does not have grid children it is a leaf on the tree.
     ! Add vertices, cells, etc.
     ELSE
-      WRITE(*,*) "Lowest level. Initializing mesh attributes"
       CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5) 
     ENDIF
   ELSE
@@ -357,6 +350,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             ENDDO
             DEALLOCATE(ivals8_2d)
           ENDIF
+          mesh%singleTopology = .TRUE.
         ENDIF
       CASE("ATTRIBUTE")
         strIn='Name'
@@ -568,12 +562,13 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
 
 ENDSUBROUTINE importFromDisk_XDMFFileType 
 
-SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
+RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   TYPE(XDMFMeshType), INTENT(INOUT) :: thismesh
   TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
   INTEGER(SNK) :: i
 
   thismesh%name = thatmesh%name
+  thismesh%singleTopology = thatmesh%singleTopology
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
   !Should recursively clean and assign all children.
   IF(ASSOCIATED(thatmesh%children)) THEN 
