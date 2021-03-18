@@ -12,10 +12,10 @@ INCLUDE(Futility_CreateUnitTest)
 SET(ADDITIONAL_FILES
   gridmesh_two_pins.xdmf
   gridmesh_two_pins.h5
-  gridmesh_two_pins_GRID_L1_1_1.xdmf
-  gridmesh_two_pins_GRID_L1_1_1.h5
-  gridmesh_two_pins_GRID_L1_2_1.xdmf
-  gridmesh_two_pins_GRID_L1_2_1.h5
+  gridmesh_three_level_grid.xdmf
+  gridmesh_three_level_grid.h5
+  three_level_grid.xdmf
+  three_level_grid.h5
 )
 
 
