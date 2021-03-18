@@ -14,8 +14,8 @@ SET(ADDITIONAL_FILES
   gridmesh_two_pins.h5
   gridmesh_three_level_grid.xdmf
   gridmesh_three_level_grid.h5
-  mixed_topology.xdmf
-  mixed_topology.h5
+  three_level_grid.xdmf
+  three_level_grid.h5
 )
 
 

@@ -144,18 +144,18 @@ SUBROUTINE init_XDMFTopologyList()
   ! id is XDMF topology id, 
   ! n is number of vertices,
   ! multiple names for same topology for interoperability
-  CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4)
-  CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3)
-  CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36)
-  CALL XDMFTopologyList%add('Topology->Triangle_6->n'           , 6)
-  CALL XDMFTopologyList%add('Topology->Tri_6->id'               ,36)
-  CALL XDMFTopologyList%add('Topology->Tri_6->n'                , 6)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral->id'       , 5)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral->n'        , 4)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->id'     ,37)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8)
-  CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37)
-  CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8)
+  CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4_SLK)
+  CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3_SLK)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36_SLK)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->n'           , 6_SLK)
+  CALL XDMFTopologyList%add('Topology->Tri_6->id'               ,36_SLK)
+  CALL XDMFTopologyList%add('Topology->Tri_6->n'                , 6_SLK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->id'       , 5_SLK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->n'        , 4_SLK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->id'     ,37_SLK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8_SLK)
+  CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37_SLK)
+  CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8_SLK)
   
   CALL XDMFTopologyList%add('XDMFID->4' ,'Triangle'       )
   CALL XDMFTopologyList%add('XDMFID->36','Triangle_6'     )   
@@ -219,10 +219,11 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(XMLElementType), INTENT(INOUT) :: xmle 
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
-  TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame
+  TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame, &
+    xdmf_id_str
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
-  INTEGER(SLK) :: nverts, ncells
-  INTEGER(SIK) :: i,j,xdmf_id,ncell_sets
+  INTEGER(SLK) :: nverts, ncells, xdmf_id
+  INTEGER(SIK) :: i,j,ncell_sets,vert_ctr
   INTEGER(SIK),ALLOCATABLE :: dshape(:)
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
   REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
@@ -291,7 +292,74 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         strIn='TopologyType'
         CALL xmle_children(i)%getAttributeValue(strIn,toponame)
         IF(toponame%upper() == 'MIXED') THEN
-          WRITE(*,*) "Mixed"
+          ! Mixed topology
+          ! Format
+          CALL xmle_children(i)%getChildren(ele_children)
+          REQUIRE(SIZE(ele_children) == 1)
+          strIn='Format'
+          CALL ele_children(1)%getAttributeValue(strIn,strOut)
+          IF(strOut /= 'HDF') THEN
+            CALL eXDMF%raiseWarning(modName//'::'//myName// &
+              ' - only supports HDF5 topology data right now.')
+          ENDIF
+          ! Topology Data
+          strIn='NumberOfElements'
+          CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+          ncells=strOut%stoi()
+          ! This is all awful string manipulation to get the h5 group
+          content=ele_children(1)%getContent()
+          segments=content%split(':')
+          group=segments(2)%substr(2,LEN(segments(2)))
+          REQUIRE(h5%pathExists(CHAR(group)))
+          group = group%replace("/", "->")
+          ! Data shape
+          dshape=h5%getDataShape(CHAR(group))
+          REQUIRE(SIZE(dshape) == 1)
+          ! Data type
+          dtype=h5%getDataType(CHAR(group))
+          IF(dtype == 'SNK') THEN
+            CALL h5%fread(CHAR(group),ivals4_1d)
+          ELSE
+            CALL h5%fread(CHAR(group),ivals8_1d)
+          ENDIF
+          ! Problem if SNK?
+          ALLOCATE(mesh%cells(ncells))
+          vert_ctr = 1
+          IF(dtype == 'SNK') THEN
+            DO j=1,ncells
+              xdmf_id = ivals4_1d(vert_ctr)
+              xdmf_id_str = xdmf_id
+              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN 
+                CALL eXDMF%raiseError(modName//'::'//myName//&
+                  ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
+              ELSE
+                CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
+                CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
+              ENDIF
+              ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
+              mesh%cells(j)%vertex_list(1) = xdmf_id
+              mesh%cells(j)%vertex_list(2:nverts+1) = ivals4_1d(vert_ctr:vert_ctr+nverts) + 1
+              vert_ctr = vert_ctr + nverts
+            ENDDO
+            DEALLOCATE(ivals4_1d)
+          ELSE
+            DO j=1,ncells
+              xdmf_id = ivals8_1d(vert_ctr)
+              xdmf_id_str = xdmf_id
+              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN 
+                CALL eXDMF%raiseError(modName//'::'//myName//&
+                  ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
+              ELSE
+                CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
+                CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
+              ENDIF
+              ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
+              mesh%cells(j)%vertex_list(1) = xdmf_id
+              mesh%cells(j)%vertex_list(2:nverts+1) = ivals8_1d(vert_ctr+1:vert_ctr+nverts) + 1
+              vert_ctr = vert_ctr + nverts + 1
+            ENDDO
+            DEALLOCATE(ivals8_1d)
+          ENDIF
         ELSE
           ! Single topology
           IF(.NOT.XDMFTopologyList%has(CHAR(toponame))) CALL eXDMF%raiseError(modName// &

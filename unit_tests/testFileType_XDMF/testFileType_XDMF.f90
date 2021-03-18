@@ -199,9 +199,11 @@ INTEGER(SLK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
 3, 0, 4  &
 /), (/3, 3/))
 
+
 CREATE_TEST('XDMF TYPE')
 REGISTER_SUBTEST('two_pins',test_two_pins)
 REGISTER_SUBTEST('three_level_grid',test_three_level_grid)
+REGISTER_SUBTEST('three_level_grid_IH', test_three_level_grid_implicit_hierarchy)
 
 
 FINALIZE_TEST()
@@ -323,4 +325,62 @@ SUBROUTINE test_three_level_grid()
   ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated") 
   ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated") 
 ENDSUBROUTINE test_three_level_grid
+
+
+SUBROUTINE test_three_level_grid_implicit_hierarchy()
+  TYPE(XDMFFileType) :: testXDMFFile
+  TYPE(XDMFMeshType) :: mesh
+  TYPE(StringType) :: fname
+  INTEGER(SIK) :: i,j
+  INTEGER(SLK),ALLOCATABLE :: cells_ref(:)
+
+  fname='three_level_grid.xdmf'
+  CALL testXDMFFile%importFromDisk(fname, mesh)
+  ! Check correct number of children
+  ASSERT(mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
+  ! vertices
+  ASSERT(ALLOCATED(mesh%vertices), "Vertices not allocated")
+  ASSERT(SIZE(mesh%vertices)==42*3, "Wrong number of vertices")
+  ASSERT(SIZE(mesh%vertices, DIM=2)==42, "Wrong shape of vertices")
+  ! cells
+  ASSERT(ALLOCATED(mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(mesh%cells)==46, "Wrong number of cells")
+  ASSERT(mesh%singleTopology == .FALSE., "Mesh is single topology")
+  ! Spot check cells
+  ! Cell 1, quad
+  j=1
+  ALLOCATE(cells_ref(5))
+  cells_ref = (/5, 26, 2, 27, 38/)
+  ASSERT(SIZE(mesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( mesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+  ENDDO
+  ! Cell 4, quad
+  j=4
+  cells_ref = (/5, 4, 29, 38, 28/)
+  ASSERT(SIZE(mesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( mesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ! Cell 18, tri
+  j=18
+  ALLOCATE(cells_ref(4))
+  cells_ref = (/4, 6, 40, 8/)
+  ASSERT(SIZE(mesh%cells(j)%vertex_list)==4, "Wrong size for vertex list")
+  DO i=1,4
+    ASSERT( mesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ASSERT(.NOT. ALLOCATED(mesh%material_ids), "Material IDS are allocated") 
+  ! Check cell sets
+  ASSERT(ALLOCATED(mesh%cell_sets), "Cell sets are allocated") 
+  ASSERT(SIZE(mesh%cell_sets)==21, "Wrong number of cell sets")
+  ASSERT(mesh%cell_sets(6)%name=="GRID_L3_1_1", "Wrong set name")
+  ASSERT(SIZE(mesh%cell_sets(6)%cell_list)==4, "Wrong set size")
+  DO i =1,4
+    ASSERT(mesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
+  ENDDO
+ENDSUBROUTINE test_three_level_grid_implicit_hierarchy
 ENDPROGRAM testXDMFFileType
