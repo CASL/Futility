@@ -3406,7 +3406,7 @@ ENDSUBROUTINE regsph
 !===============================================================================
 !
 !-------------------------------------------------------------------------------
-!> Returns density for passed pressure and temperature for Region 3 of the
+!> Returns specific volume for Region 3 of the
 !> property map in units of kg/m^3
 !> @param P pressure in MPa
 !> @param T temperature in K
@@ -3435,7 +3435,16 @@ FUNCTION vpt3n(P, T)
 ENDFUNCTION vpt3n
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
+!> Determines the subregion for Region 3
+!> region 3a (t<tc, p<24 MPa, liquid): ireg3 = 1
+!> region 3b (t>tc, v<~vc, p<24 MPa): ireg3 = 2
+!> region 3c (v>~vc, PCrit<p<24 MPa): ireg3 = 3
+!> region 3d (t>tsat, p<PCrit): ireg3 = 4
+!> region 3e (v<~vc, 24 MPa<p<40 MPa): ireg3 = 5
+!> region 3g (40 MPa<p<100 MPa): ireg3 = 7
+!> @param P Pressure [MPa]
+!> @param T Temperature [K]
+!> @param ireg3 Subregion number
 SUBROUTINE reg3s(P, T, ireg3)
   REAL(SRK), INTENT(IN) :: P
   REAL(SRK), INTENT(IN) :: T
@@ -3473,7 +3482,9 @@ SUBROUTINE reg3s(P, T, ireg3)
 ENDSUBROUTINE reg3s
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
+!> Specific volume of water for Region 3
+!> @param P Pressure in MPa
+!> @param T Temperature in K
 FUNCTION vest3(P, T, ireg3)
   REAL(SRK), INTENT(IN) :: P
   REAL(SRK), INTENT(IN) :: T
@@ -3853,13 +3864,11 @@ FUNCTION vest3(P, T, ireg3)
 ENDFUNCTION vest3
 !
 !-------------------------------------------------------------------------------
-!> Returns the specific volume of the phase.  Works for saturated liquid or
+!> Returns the density of the phase.  Works for saturated liquid or
 !> vapor.
-!> @param P    The saturation pressure
-!> @param T    The saturation temperature
+!> @param P    The saturation pressure [MPa]
+!> @param T    The saturation temperature [K]
 !> @param DEST The density of the fluid [kg/m**3]
-!> @param EPS  TODO - what is EPS
-!>
 FUNCTION diter3(P, T, DEST, EPS)
   REAL(SRK), INTENT(IN) :: P
   REAL(SRK), INTENT(IN) :: T
@@ -3892,7 +3901,11 @@ FUNCTION diter3(P, T, DEST, EPS)
 ENDFUNCTION diter3
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
+!> Determines the difference in passed pressure and the pressure as calculated
+!> from passed density and temperature [MPa]
+!> @param D Density of the fluid [kg/m^3]
+!> @param T Temperature of the fluid [K]
+!> @param P Pressure that will be compared [MPa]
 FUNCTION NULLP3N(D, T, P)
   REAL(SRK), INTENT(IN) :: D
   REAL(SRK), INTENT(IN) :: T
@@ -3906,7 +3919,17 @@ FUNCTION NULLP3N(D, T, P)
 ENDFUNCTION nullp3n
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
+!> Performs an iterative solution to determine the density associated with the
+!> passed pressure and temperature.  The bounds for the iteration must be provided
+!> along with the tolerance for the pressure.  When the difference between the passed
+!> pressure and the pressure associated with the calculated density match to within
+!> the tolerance, the procedure will return that density.
+!> @param XA Lower density bound [kg/m^3]
+!> @param XB Upper density bound [kg/m^3]
+!> @param P Pressure [MPa]
+!> @param T Temerature [K]
+!> @param EPS Tolerance for the pressure check [MPa]
+!> @param X Returned density [kg/m^3]
 SUBROUTINE WNPT3(XA, XB, P, T, EPS, X)
   REAL(SRK), INTENT(IN) :: XA
   REAL(SRK), INTENT(IN) :: XB
@@ -3976,7 +3999,9 @@ SUBROUTINE WNPT3(XA, XB, P, T, EPS, X)
 ENDSUBROUTINE WNPT3
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
+!> Calculates the temperature from passed pressure and enthalpy for Region 3
+!> @param P Pressure [MPa]
+!> @param h Enthalpy [kJ/kg]
 FUNCTION tph3n(P, h)
   REAL(SRK), INTENT(IN) :: P
   REAL(SRK), INTENT(IN) :: h
@@ -4033,7 +4058,12 @@ FUNCTION tph3n(P, h)
 ENDFUNCTION tph3n
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
+!> Calculates the difference between the passed enthalpy and the enthalpy calculated
+!> from the passed temperature and pressure.  This is only valid for regions 3 and 5.
+!> @param T Temperature [K]
+!> @param P Pressure [MPa]
+!> @param h Enthalpy [kJ/kg]
+!> @param reg Region number
 FUNCTION nullh35n(T, P, h, reg)
   REAL(SRK), INTENT(IN) :: T
   REAL(SRK), INTENT(IN) :: P
@@ -4052,13 +4082,27 @@ FUNCTION nullh35n(T, P, h, reg)
 ENDFUNCTION nullh35n
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
-SUBROUTINE wnph3(xa, xb, reg, P, T, eps, x, ix)
+!> Performs an iteration to determine the temperature of the fluid based on passed
+!> pressure and enthalpy for Region 3.  Lower and upper bounds for the temperaure
+!> must be provided.  The procedure will iterate until the enthalpy difference
+!> between the calculated temperature point and the passed enthalpy match to within
+!> the passed tolerance.
+!> @param xa Lower temperature bound [K]
+!> @param xb Upper temperature bound [K]
+!> @param reg Region number
+!> @param h Enthalpy for which temperature will be calculated [kJ/kg]
+!> @param P Pressure for which temperature will be calculated [kJ/kg]
+!> @param eps The tolerance for the enthalpy check [kJ/kg]
+!> @param x The calculated temperature for P/h
+!> @param ix Determines if the iteration was successful (0) or if it failed
+!>        because the bounds were less than eps (3) or because the temperature was
+!>        not found (1)
+SUBROUTINE wnph3(xa, xb, reg, h, P, eps, x, ix)
   REAL(SRK), INTENT(IN) :: xa
   REAL(SRK), INTENT(IN) :: xb
   INTEGER(SIK), INTENT(IN) :: reg
   REAL(SRK), INTENT(IN) :: P
-  REAL(SRK), INTENT(IN) :: T
+  REAL(SRK), INTENT(IN) :: h
   REAL(SRK), INTENT(IN) :: eps
   REAL(SRK), INTENT(OUT) :: x
   INTEGER(SIK),INTENT(OUT) :: ix
@@ -4067,9 +4111,9 @@ SUBROUTINE wnph3(xa, xb, reg, P, T, eps, x, ix)
   REAL(SRK) :: x1, x2, x3, f1, f2, f3, p1, p3
 
   x1 = xa
-  f1 = nullh35n(x1, t, p, reg)
+  f1 = nullh35n(x1, p, h, reg)
   x3 = xb
-  f3 = nullh35n(x3, t, p, reg)
+  f3 = nullh35n(x3, p, h, reg)
   ix = 0
   DO i = 1, 40
     IF (ABS(f1 - f3) > eps) THEN
@@ -4084,7 +4128,7 @@ SUBROUTINE wnph3(xa, xb, reg, P, T, eps, x, ix)
     ELSE
       IF (ABS((x - x1)/x) < eps) RETURN
     ENDIF
-    f2 = nullh35n(x, t, p, reg)
+    f2 = nullh35n(x, p, h, reg)
     x2 = x1 - (x1 - x3)*0.5_SRK
     p1 = f2*f1
     p3 = f2*f3
@@ -4109,10 +4153,10 @@ SUBROUTINE wnph3(xa, xb, reg, P, T, eps, x, ix)
       x = (x1 + x3)*0.5_SRK
       irem = 0
     ENDIF
-    f2 = nullh35n(x, t, p, reg)
+    f2 = nullh35n(x, p, h, reg)
     IF ((((f2*f1) >= 0.0_SRK) .AND. (irem == 1)) .OR. (((f2*f3) >= 0.0_SRK) .AND. (irem == 2))) THEN
       x = (x1 + x3)*0.5_SRK
-      f2 = nullh35n(x, t, p, reg)
+      f2 = nullh35n(x, p, h, reg)
     ENDIF
     IF (f2*f1 <= f2*f3) THEN
       x3 = x1
@@ -4125,12 +4169,12 @@ SUBROUTINE wnph3(xa, xb, reg, P, T, eps, x, ix)
 ENDSUBROUTINE wnph3
 !
 !-------------------------------------------------------------------------------
-!> Calculating tsat,saturated vapour and liquid volume for a given p
-!> @param dvout Specific volume of vapor [m**3/kg]
-!> @param dlout Specific volume of liquid [m**3/kg]
-!> @param tin Temperature
-!TODO all inputs need header
-!>
+!> Calculating tsat,saturated vapour and liquid density for a given p
+!> @param tin Temperature K
+!> @param pin Pressure MPa
+!> @param tout Saturation temperature K
+!> @param dvout Saturation vapor density [kg/m^3]
+!> @param dlout Saturation liquid density [kg/m^3]
 SUBROUTINE fsatp(dvout, dlout, tout, tin, pin)
   REAL(SRK), INTENT(OUT) :: dvout
   REAL(SRK), INTENT(OUT) :: dlout
@@ -4188,9 +4232,8 @@ FUNCTION dlest(T)
 ENDFUNCTION dlest
 !
 !-------------------------------------------------------------------------------
-!TODO needs header
-! Estimates the vapor density for region 3
-! Returns density [kg/m^3]
+!> Estimates the vapor density for region 3 in kg/m^3
+!> @param T Temperature [K]
 FUNCTION dvest(t)
   REAL(SRK), INTENT(IN) :: t
   REAL(SRK) :: dvest
@@ -4210,10 +4253,10 @@ FUNCTION dvest(t)
 ENDFUNCTION dvest
 !
 !-------------------------------------------------------------------------------
-!> Calculation of Specific Volume \f$v\f$
+!> Calculation of specific enthalpy \f$v\f$
 !> Reference 1
 !> Tables : 31
-!> @param P Pressure in MPa
+!> @param V Specific volume m^3/kg
 !> @param T Temperature in Kelvin
 !> @return \f$v\f$ m^3/kg
 !>
@@ -4237,7 +4280,7 @@ ENDFUNCTION hvt3n
 !> Calculation of Pressure \f$v\f$
 !> Reference 1
 !> Tables : 31
-!> @param P Pressure in MPa
+!> @param V Specific volume in m^3/kg
 !> @param T Temperature in Kelvin
 !> @return P [MPa]
 !>
