@@ -314,6 +314,11 @@ SUBROUTINE test_two_pins()
   DO i=1,46
     ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
   ENDDO
+
+  ! Export
+  fname='write_two_pins.xdmf'
+  CALL testXDMFFile%exportToDisk(fname, mesh)
+  CALL mesh%clear()
 ENDSUBROUTINE test_two_pins
 !
 !-------------------------------------------------------------------------------
@@ -371,6 +376,10 @@ SUBROUTINE test_three_level_grid()
   ENDDO
   ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
   ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated")
+  CALL mesh%clear()
+  CALL L1%clear()
+  CALL L2%clear()
+  CALL L3%clear()
 ENDSUBROUTINE test_three_level_grid
 !
 !-------------------------------------------------------------------------------
@@ -429,5 +438,6 @@ SUBROUTINE test_three_level_grid_implicit_hierarchy()
   DO i =1,4
     ASSERT(mesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
   ENDDO
+  CALL mesh%clear()
 ENDSUBROUTINE test_three_level_grid_implicit_hierarchy
 ENDPROGRAM testXDMFFileType

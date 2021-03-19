@@ -45,7 +45,6 @@ SET(UNIT_TEST_NAMES
     testAllocs
     testParameterLists
     testFileType_XML
-    testFileType_XDMF
     testFMU_Wrapper
     testIOutil
     testFileType_Base
@@ -113,6 +112,7 @@ IF(${PACKAGE_NAME}_ENABLE_HDF5)
         ${UNIT_TEST_NAMES}
         testHDF5FileType
         testTPLHDF5
+        testFileType_XDMF
         )
 ENDIF()
 

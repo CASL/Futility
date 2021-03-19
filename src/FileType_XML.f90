@@ -55,19 +55,19 @@ INTEGER(SIK) :: DECLARATION_TAG=6
 !> Derived type for an XML element
 TYPE :: XMLElementType
   !> The number of attributes defined on the element
-  INTEGER(SIK),PRIVATE :: nAttr=0
+  INTEGER(SIK) :: nAttr=0
   !> The name of the element
   TYPE(StringType) :: name
   !> The content of the element (excluding attributes)
   TYPE(StringType) :: content
   !> The names of the attributes on this element
-  TYPE(StringType),ALLOCATABLE,PRIVATE :: attr_names(:)
+  TYPE(StringType),ALLOCATABLE :: attr_names(:)
   !> The corresponding values of the attributes on this element
-  TYPE(StringType),ALLOCATABLE,PRIVATE :: attr_values(:)
+  TYPE(StringType),ALLOCATABLE :: attr_values(:)
   !> The parent element of this XML element
-  TYPE(XMLElementType),POINTER,PRIVATE :: parent => NULL()
+  TYPE(XMLElementType),POINTER :: parent => NULL()
   !> The child elements of this element
-  TYPE(XMLElementType),POINTER,PRIVATE :: children(:) => NULL()
+  TYPE(XMLElementType),POINTER :: children(:) => NULL()
 !
 !List of type bound procedures
   CONTAINS
