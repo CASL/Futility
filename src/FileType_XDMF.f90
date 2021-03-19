@@ -6,13 +6,11 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-!> @brief 
+!> @brief Module defines objects for representing an XDMF file as a hierarchical
+!> mesh
 !>
-!> 
-!> 
-!> 
-!> 
-!> 
+!> This module reads an XDMF file and stores the information in a hierarchical
+!> mesh type. It can also write the hierarchical mesh to XDMF.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE FileType_XDMF
 #include "Futility_DBC.h"
@@ -21,16 +19,15 @@ USE Futility_DBC
 USE ISO_FORTRAN_ENV
 USE IntrType
 USE Strings
-!USE IO_Strings
 USE FileType_Base
 USE FileType_XML
 USE FileType_HDF5
-USE VTKFiles
 USE ParameterLists
 
 IMPLICIT NONE
 PRIVATE
 
+! Public members
 PUBLIC :: XDMFFileType
 PUBLIC :: XDMFMeshType
 PUBLIC :: XDMFTopologyList
@@ -45,39 +42,55 @@ TYPE(ExceptionHandlerType),SAVE :: eXDMF
 !> Parameter list that holds XDMF topology names, ids, etc. 
 TYPE(ParamType),SAVE :: XDMFTopologyList
 
+!> Type to hold the vertices that make up a mesh cell
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
+  !> XDMF ID, v1, v2, ..., v_n
   INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
 ENDTYPE XDMFCell
 
+!> Type to hold a list of cell IDs that make up a named set.
 TYPE :: XDMFCellSet
+  !> The name of the set
   TYPE(StringType) :: name
-  !> The cell ids
+  !> The cell IDs
   INTEGER(SLK), ALLOCATABLE :: cell_list(:)
 ENDTYPE XDMFCellSet
 
-!> Mesh to hold XDMF Data
+!> Type to hold the XDMF mesh data
 TYPE :: XDMFMeshType
-  !> The name of the set
+  !> The name of the mesh
   TYPE(StringType) :: name
+  !> If the mesh cells are all the same topology
   LOGICAL(SBK) :: singleTopology=.FALSE. 
+  !> The vertices that compose the mesh
   !> Looks like:
   !> x1, x2, x3, ..., xn
   !> y1, y2, y3, ..., yn
   !> z1, z2, z3, ..., zn
   !> Therefore vertices will be of shape (3, N)
   REAL(SDK), ALLOCATABLE :: vertices(:, :)
+  !> The mesh cells
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
+  !> Material for each mesh cell
   INTEGER(SNK), ALLOCATABLE :: material_ids(:)
+  !> Named sets within the mesh
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
+  !> Child and parent meshes
   TYPE(XDMFMeshType), POINTER :: parent => NULL(), children(:) => NULL()
+  CONTAINS
+    !> @copybrief XDMFMeshType::clear_XDMFMeshType
+    !> @copydoc XDMFMeshType::clear_XDMFMeshType
+    PROCEDURE,PASS :: clear => clear_XDMFMeshType
 ENDTYPE XDMFMeshType
-
 
 !> The XDMF File type
 TYPE,EXTENDS(BaseFileType) :: XDMFFileType
 !
 !List of type bound procedures
+!
+!Import and export are the only procedures used. 
+!open, close, and delete are members of the base type.
   CONTAINS
     !> @copybrief FileType_XDMF::fopen_XDMFFileType
     !> @copydoc FileType_XDMF::fopen_XDMFFileType
@@ -88,16 +101,20 @@ TYPE,EXTENDS(BaseFileType) :: XDMFFileType
     !> @copybrief FileType_XDMF::fdelete_XDMFFileType
     !> @copydoc FileType_XDMF::fdelete_XDMFFileType
     PROCEDURE,PASS :: fdelete => fdelete_XDMFFileType
+
+
+
     !> @copybrief FileType_XDMF::importFromDisk_XDMFFileType
     !> @copydoc FileType_XDMF::importFromDisk_XDMFFileType
     PROCEDURE,PASS :: importFromDisk => importFromDisk_XDMFFileType
 ENDTYPE XDMFFileType
 
-
+!> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
+  !> @copybrief FileType_XDMF::assign_XDMFFileType
+  !> @copydoc FileType_XDMF::assign_XDMFFileType
   MODULE PROCEDURE assign_XDMFMeshType
 ENDINTERFACE
-
 !
 !===============================================================================
 CONTAINS
@@ -106,15 +123,10 @@ CONTAINS
 !> @brief Opens the XDMF file type for I/O
 !> @param file the XDMF file type object
 !>
-!> @todo fix how the unit number is set
-!>
 SUBROUTINE fopen_XDMFFileType(file)
   CHARACTER(LEN=*),PARAMETER :: myName='fopen_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: file
-  LOGICAL(SBK) :: lopen
-  INTEGER(SIK) :: funit,ierr
-  TYPE(StringType) :: fname
-
+  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.') 
 ENDSUBROUTINE fopen_XDMFFileType
 !
 !-------------------------------------------------------------------------------
@@ -124,7 +136,7 @@ ENDSUBROUTINE fopen_XDMFFileType
 SUBROUTINE fclose_XDMFFileType(file)
   CHARACTER(LEN=*),PARAMETER :: myName='fclose_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: file
-  INTEGER(SIK) :: ierr
+  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.') 
 ENDSUBROUTINE fclose_XDMFFileType
 !
 !-------------------------------------------------------------------------------
@@ -134,13 +146,14 @@ ENDSUBROUTINE fclose_XDMFFileType
 SUBROUTINE fdelete_XDMFFileType(file)
   CHARACTER(LEN=*),PARAMETER :: myName='fdelete_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: file
-  INTEGER(SIK) :: ierr
+  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.') 
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
+!> @brief Initializes the XDMFTopologyList
+!>
 SUBROUTINE init_XDMFTopologyList()
-  CHARACTER(LEN=*),PARAMETER :: myName='init_XDMFTopologyList'
-  ! Setup param lists for cell type conversions
+  ! Setup param list for cell type conversions
   ! id is XDMF topology id, 
   ! n is number of vertices,
   ! multiple names for same topology for interoperability
@@ -156,15 +169,18 @@ SUBROUTINE init_XDMFTopologyList()
   CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8_SLK)
   CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37_SLK)
   CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8_SLK)
-  
   CALL XDMFTopologyList%add('XDMFID->4' ,'Triangle'       )
   CALL XDMFTopologyList%add('XDMFID->36','Triangle_6'     )   
   CALL XDMFTopologyList%add('XDMFID->5' ,'Quadrilateral'  )   
   CALL XDMFTopologyList%add('XDMFID->37','Quadrilateral_8')
 ENDSUBROUTINE init_XDMFTopologyList
-
 !
 !-------------------------------------------------------------------------------
+!> @brief Create the XDMF mesh object
+!> @param mesh the parent mesh
+!> @param xmle the child XML element
+!> @param h5 the HDF5 file containing mesh data 
+!>
 RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='create_XDMFMesh_from_file'
   TYPE(XDMFMeshType),TARGET, INTENT(INOUT)  :: mesh
@@ -183,12 +199,12 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
       IF(xmle_children(i)%name%upper() == 'GRID') grid_ctr = grid_ctr + 1
     ENDDO
 
-    ! If some children are grids
+    ! If some children are grids, it is not a leaf
     IF(grid_ctr > 0) THEN
       ! Allocate children for current mesh and create entities
       ALLOCATE(mesh%children(grid_ctr))
       mesh_ctr=1
-      ! Create children of each grid
+      ! Recursively create children of each grid
       DO i=1,SIZE(xmle_children)
         IF(xmle_children(i)%name%upper() == 'GRID') THEN
           strIn='Name'
@@ -208,11 +224,14 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
     CALL eXDMF%raiseError(modName//'::'//myName// &
       ' - Expected the XML element to have children.') 
   ENDIF
-
 ENDSUBROUTINE create_XDMFMesh_from_file
-
 !
 !-------------------------------------------------------------------------------
+!> @brief Setup the leaf mesh objects which contain vertices, cells, etc.
+!> @param mesh the parent mesh
+!> @param xmle the child XML element
+!> @param h5 the HDF5 file containing mesh data 
+!>
 SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='setup_leaf_XDMFMesh_from_file'
   TYPE(XDMFMeshType),INTENT(INOUT),TARGET  :: mesh
@@ -222,19 +241,19 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame, &
     xdmf_id_str
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
-  INTEGER(SLK) :: nverts, ncells, xdmf_id
-  INTEGER(SIK) :: i,j,ncell_sets,vert_ctr
-  INTEGER(SIK),ALLOCATABLE :: dshape(:)
+  INTEGER(SLK) :: nverts, ncells, xdmf_id,vert_ctr,i,j
+  INTEGER(SNK) :: ncell_sets
+  INTEGER(SNK),ALLOCATABLE :: dshape(:)
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
   REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
   INTEGER(SNK),ALLOCATABLE :: ivals4_1d(:),ivals4_2d(:,:)
   INTEGER(SLK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets_temp(:)
 
-
-
   REQUIRE(xmle%hasChildren())
   CALL xmle%getChildren(xmle_children)
+  ! Each XML element has a type of information.
+  ! Handle each with a CASE
   DO i=1,SIZE(xmle_children)
     elname=xmle_children(i)%name%upper()
     SELECTCASE(ADJUSTL(elname))
@@ -278,7 +297,6 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         ELSE
           CALL h5%fread(CHAR(group),vals8_2d)
         ENDIF
-        ! Problem if SSK?
         ALLOCATE(mesh%vertices(3,nverts))
         IF(dtype == 'SSK') THEN
           mesh%vertices=vals4_2d
@@ -322,7 +340,6 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           ELSE
             CALL h5%fread(CHAR(group),ivals8_1d)
           ENDIF
-          ! Problem if SNK?
           ALLOCATE(mesh%cells(ncells))
           vert_ctr = 1
           IF(dtype == 'SNK') THEN
@@ -399,7 +416,6 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           ELSE
             CALL h5%fread(CHAR(group),ivals8_2d)
           ENDIF
-          ! Problem if SNK?
           ALLOCATE(mesh%cells(ncells))
           IF(dtype == 'SNK') THEN
             DO j=1,ncells
@@ -456,7 +472,6 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           ELSE
             CALL h5%fread(CHAR(group),ivals8_1d)
           ENDIF
-          ! Problem if SNK?
           ALLOCATE(mesh%material_ids(ncells))
           IF(dtype == 'SNK') THEN
             ! Account for 0based to 1based index switch
@@ -464,6 +479,8 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             DEALLOCATE(ivals4_1d)
           ELSE
             ! Account for 0based to 1based index switch
+            ! material ids will not exceed MAX(INTEGER(4)),
+            ! so narrowing will not occur.
             mesh%material_ids = ivals8_1d + 1
             DEALLOCATE(ivals8_1d)
           ENDIF
@@ -559,10 +576,13 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
     ENDSELECT
   ENDDO
 ENDSUBROUTINE setup_leaf_XDMFMesh_from_file
-
-
 !
 !-------------------------------------------------------------------------------
+!> @brief Imports the mesh data in the file to a mesh object.
+!> @param thisXDMFFile the XDMF file type object
+!> @param strpath the string holding the path to the XDMF file
+!> @param mesh the XDMF mesh object
+!>
 SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
@@ -575,10 +595,11 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   INTEGER(SIK) :: i
   CHARACTER(LEN=200) :: charpath
 
+  ! Initialize the XDMFTopologyList if it has not been
   IF(.NOT.XDMFTopologyList%has('Topology')) CALL init_XDMFTopologyList()
 
   !H5
-  ! Note it is assumed that the h5 and xml files have the same name.
+  ! NOTE: it is assumed that the h5 and xml files have the same name.
   i = LEN_TRIM(strpath)
   charpath = CHAR(strpath)
   CALL h5%init(charpath(1:i-4)//"h5",'READ')
@@ -604,10 +625,9 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   REQUIRE(children(1)%name%upper() == 'DOMAIN')
 
   ! Information
-  ! Note the assumption that material information is before any grids
+  ! NOTE: It is assumed that material information is before any grids
   ! and that all grids are contained in one overall grid.
   CALL children(1)%getChildren(children)
-  ! Has materials
   IF (SIZE(children) == 2) THEN
     REQUIRE(children(1)%name%upper() == 'INFORMATION')
     REQUIRE(children(2)%name%upper() == 'GRID')
@@ -629,7 +649,45 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   CALL create_XDMFMesh_from_file(mesh, children(i), h5)
 
 ENDSUBROUTINE importFromDisk_XDMFFileType 
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the XDMF mesh
+!> @param thismesh the XDMF mesh object being assigned to
+!>
+RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SNK) :: i
 
+  CALL thismesh%name%clear()
+  thismesh%singleTopology = .FALSE.
+  IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
+  IF(ASSOCIATED(thismesh%children)) THEN 
+    DO i=1,SIZE(thismesh%children)
+      CALL thismesh%children(i)%clear()
+    ENDDO
+    thismesh%children => NULL()
+  ENDIF
+  IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
+  IF( ALLOCATED(thismesh%cells) ) THEN
+    DO i=1, SIZE(thismesh%cells)
+      DEALLOCATE(thismesh%cells(i)%vertex_list)
+    ENDDO
+    DEALLOCATE(thismesh%cells)
+  ENDIF
+  IF( ALLOCATED(thismesh%material_ids) ) DEALLOCATE(thismesh%material_ids)
+  IF( ALLOCATED(thismesh%cell_sets) ) THEN
+    DO i=1, SIZE(thismesh%cell_sets)
+      DEALLOCATE(thismesh%cell_sets(i)%cell_list)
+    ENDDO
+    DEALLOCATE(thismesh%cell_sets)
+  ENDIF
+ENDSUBROUTINE clear_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Assigns an XDMF mesh type to another
+!> @param thismesh the XDMF mesh object being assigned to
+!> @param thatmesh the XDMF mesh object being assigned from
+!>
 RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   TYPE(XDMFMeshType), INTENT(INOUT) :: thismesh
   TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
@@ -638,7 +696,10 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   thismesh%name = thatmesh%name
   thismesh%singleTopology = thatmesh%singleTopology
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
-  !Should recursively clean and assign all children.
+  ! NOTE: Children cannot be recursively cleared without risk of 
+  ! modify other mesh objects due to the pointer to other meshes.
+  ! Therefore, it is assumed that one will manually clear a mesh
+  ! if the children are to be deleted.
   IF(ASSOCIATED(thatmesh%children)) THEN 
     ALLOCATE(thismesh%children(SIZE(thatmesh%children)))
     thismesh%children => thatmesh%children
@@ -680,9 +741,5 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
       thismesh%cell_sets(i)%name = thatmesh%cell_sets(i)%name
     ENDDO
   ENDIF
-
 ENDSUBROUTINE assign_XDMFMeshType
-
-
-
 ENDMODULE FileType_XDMF

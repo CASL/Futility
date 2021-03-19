@@ -212,7 +212,6 @@ FINALIZE_TEST()
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-!
 SUBROUTINE test_two_pins()
   TYPE(XDMFFileType) :: testXDMFFile
   TYPE(XDMFMeshType) :: mesh, pin1
@@ -265,11 +264,59 @@ SUBROUTINE test_two_pins()
   DO i=1,46
     ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
   ENDDO
-
-
+  !     pin1 clear
+  CALL pin1%clear()
+  ASSERT(pin1%name == "", "pin1 mesh name is incorrect")
+  ASSERT(pin1%singleTopology == .FALSE., "single topology did not reset")
+  ASSERT(.NOT.ALLOCATED(pin1%vertices), "Vertices are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%cells), "Cells are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%material_ids), "materials are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are associated")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(.NOT.ASSOCIATED(pin1%parent), "Parent is associated")
+  !     Check that clear did not interfere with the original mesh
+  pin1 = mesh%children(1)
+  ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
+  ASSERT(pin1%parent%name == "mesh_domain", "pin1 parent name is incorrect")
+  ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
+  !     pin1 vertices
+  ASSERT(ALLOCATED(pin1%vertices), "Vertices not allocated")
+  ASSERT(SIZE(pin1%vertices)==109*3, "Wrong number of vertices")
+  ASSERT(SIZE(pin1%vertices, DIM=2)==109, "Wrong shape of vertices")
+  DO i=1,109
+    DO j=1,3
+      ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-6), "Unequal vertices")
+    ENDDO
+  ENDDO
+  !     pin1 cells
+  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
+  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
+    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  !     pin1 material_ids
+  ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
+  ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+  ENDDO
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
 ENDSUBROUTINE test_two_pins
-
-
+!
+!-------------------------------------------------------------------------------
 SUBROUTINE test_three_level_grid()
   TYPE(XDMFFileType) :: testXDMFFile
   TYPE(XDMFMeshType) :: mesh, L1, L2, L3
@@ -325,8 +372,8 @@ SUBROUTINE test_three_level_grid()
   ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated") 
   ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated") 
 ENDSUBROUTINE test_three_level_grid
-
-
+!
+!-------------------------------------------------------------------------------
 SUBROUTINE test_three_level_grid_implicit_hierarchy()
   TYPE(XDMFFileType) :: testXDMFFile
   TYPE(XDMFMeshType) :: mesh
