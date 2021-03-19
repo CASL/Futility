@@ -750,11 +750,28 @@ ENDSUBROUTINE assign_XDMFMeshType
 !> @param xmle the XML element
 !> @param h5 the HDF5 file
 !>
-RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, h5)
-  CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_XDMFFileType'
+SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, h5)
+  CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_XDMFFileType'
   TYPE(XDMFMeshType),INTENT(IN)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
-  TYPE(HDF5FileType), INTENT(IN) :: h5
+  TYPE(HDF5FileType), INTENT(INOUT) :: h5
+
+  WRITE(*,*) "Leaf: ", CHAR(mesh%name)
+  ! Write geometry
+
+ENDSUBROUTINE export_leaf_XDMFFileType
+!
+!-------------------------------------------------------------------------------
+!> @brief Create the xml hierarchy for the mesh
+!> @param mesh the mesh
+!> @param xmle the XML element
+!> @param h5 the HDF5 file
+!>
+RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, h5)
+  CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_XDMFFileType'
+  TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
+  TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
+  TYPE(HDF5FileType), INTENT(INOUT) :: h5
   INTEGER(SNK) :: i
   TYPE(StringType) :: str_name, str_value
   TYPE(XMLElementType), ALLOCATABLE, TARGET, SAVE :: xml_children(:)
@@ -762,14 +779,11 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, h5)
   WRITE(*,*) CHAR(mesh%name)
   ! If this mesh has children
   IF(ASSOCIATED(mesh%children)) THEN
-    ! Add XML element as tree
     ! Add XML element children
     ALLOCATE(xml_children(SIZE(mesh%children)))
     xmle%children => xml_children
-    WRITE(*,*) "Num children: ", SIZE(mesh%children)
     DO i=1,SIZE(mesh%children)
       ! Set attributes then recurse
-      WRITE(*,*) "Child name: ", CHAR(mesh%children(i)%name)
       str_name="Grid"
       CALL xml_children(i)%setName(str_name) 
       xml_children(i)%nAttr=0
@@ -788,8 +802,7 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, h5)
       CALL create_xml_hierarchy_XDMFFileType(mesh%children(i), xml_children(i), h5) 
     ENDDO
   ELSE
-    ! No childrem, call leaf routine
-    WRITE(*,*) "No children, call leaf routine"
+    CALL export_leaf_XDMFFileType(mesh, xmle, h5)
   ENDIF
 ENDSUBROUTINE create_xml_hierarchy_XDMFFileType
 !
@@ -803,7 +816,7 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   CHARACTER(LEN=*),PARAMETER :: myName='exportToDisk_XDMFFileType'
   CLASS(XDMFFileType),INTENT(IN) :: thisXDMFFile
   CLASS(StringType),INTENT(IN) :: strpath
-  TYPE(XDMFMeshType),INTENT(IN),TARGET  :: mesh
+  TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
   TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children_ptr(:) 
