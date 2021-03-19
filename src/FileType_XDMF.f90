@@ -39,7 +39,7 @@ CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
 !> Exception handler for the module
 TYPE(ExceptionHandlerType),SAVE :: eXDMF
 
-!> Parameter list that holds XDMF topology names, ids, etc. 
+!> Parameter list that holds XDMF topology names, ids, etc.
 TYPE(ParamType),SAVE :: XDMFTopologyList
 
 !> Type to hold the vertices that make up a mesh cell
@@ -62,7 +62,7 @@ TYPE :: XDMFMeshType
   !> The name of the mesh
   TYPE(StringType) :: name
   !> If the mesh cells are all the same topology
-  LOGICAL(SBK) :: singleTopology=.FALSE. 
+  LOGICAL(SBK) :: singleTopology=.FALSE.
   !> The vertices that compose the mesh
   !> Looks like:
   !> x1, x2, x3, ..., xn
@@ -89,7 +89,7 @@ TYPE,EXTENDS(BaseFileType) :: XDMFFileType
 !
 !List of type bound procedures
 !
-!Import and export are the only procedures used. 
+!Import and export are the only procedures used.
 !open, close, and delete are members of the base type.
   CONTAINS
     !> @copybrief FileType_XDMF::fopen_XDMFFileType
@@ -126,7 +126,7 @@ CONTAINS
 SUBROUTINE fopen_XDMFFileType(file)
   CHARACTER(LEN=*),PARAMETER :: myName='fopen_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: file
-  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.') 
+  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.')
 ENDSUBROUTINE fopen_XDMFFileType
 !
 !-------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ ENDSUBROUTINE fopen_XDMFFileType
 SUBROUTINE fclose_XDMFFileType(file)
   CHARACTER(LEN=*),PARAMETER :: myName='fclose_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: file
-  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.') 
+  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.')
 ENDSUBROUTINE fclose_XDMFFileType
 !
 !-------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ ENDSUBROUTINE fclose_XDMFFileType
 SUBROUTINE fdelete_XDMFFileType(file)
   CHARACTER(LEN=*),PARAMETER :: myName='fdelete_XDMFFileType'
   CLASS(XDMFFileType),INTENT(INOUT) :: file
-  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.') 
+  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.')
 ENDSUBROUTINE fdelete_XDMFFileType
 !
 !-------------------------------------------------------------------------------
@@ -154,7 +154,7 @@ ENDSUBROUTINE fdelete_XDMFFileType
 !>
 SUBROUTINE init_XDMFTopologyList()
   ! Setup param list for cell type conversions
-  ! id is XDMF topology id, 
+  ! id is XDMF topology id,
   ! n is number of vertices,
   ! multiple names for same topology for interoperability
   CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4_SLK)
@@ -170,8 +170,8 @@ SUBROUTINE init_XDMFTopologyList()
   CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37_SLK)
   CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8_SLK)
   CALL XDMFTopologyList%add('XDMFID->4' ,'Triangle'       )
-  CALL XDMFTopologyList%add('XDMFID->36','Triangle_6'     )   
-  CALL XDMFTopologyList%add('XDMFID->5' ,'Quadrilateral'  )   
+  CALL XDMFTopologyList%add('XDMFID->36','Triangle_6'     )
+  CALL XDMFTopologyList%add('XDMFID->5' ,'Quadrilateral'  )
   CALL XDMFTopologyList%add('XDMFID->37','Quadrilateral_8')
 ENDSUBROUTINE init_XDMFTopologyList
 !
@@ -179,7 +179,7 @@ ENDSUBROUTINE init_XDMFTopologyList
 !> @brief Create the XDMF mesh object
 !> @param mesh the parent mesh
 !> @param xmle the child XML element
-!> @param h5 the HDF5 file containing mesh data 
+!> @param h5 the HDF5 file containing mesh data
 !>
 RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='create_XDMFMesh_from_file'
@@ -218,11 +218,11 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
     ! If this mesh does not have grid children it is a leaf on the tree.
     ! Add vertices, cells, etc.
     ELSE
-      CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5) 
+      CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
     ENDIF
   ELSE
     CALL eXDMF%raiseError(modName//'::'//myName// &
-      ' - Expected the XML element to have children.') 
+      ' - Expected the XML element to have children.')
   ENDIF
 ENDSUBROUTINE create_XDMFMesh_from_file
 !
@@ -230,12 +230,12 @@ ENDSUBROUTINE create_XDMFMesh_from_file
 !> @brief Setup the leaf mesh objects which contain vertices, cells, etc.
 !> @param mesh the parent mesh
 !> @param xmle the child XML element
-!> @param h5 the HDF5 file containing mesh data 
+!> @param h5 the HDF5 file containing mesh data
 !>
 SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='setup_leaf_XDMFMesh_from_file'
   TYPE(XDMFMeshType),INTENT(INOUT),TARGET  :: mesh
-  TYPE(XMLElementType), INTENT(INOUT) :: xmle 
+  TYPE(XMLElementType), INTENT(INOUT) :: xmle
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
   TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame, &
@@ -346,7 +346,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             DO j=1,ncells
               xdmf_id = ivals4_1d(vert_ctr)
               xdmf_id_str = xdmf_id
-              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN 
+              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
                 CALL eXDMF%raiseError(modName//'::'//myName//&
                   ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
               ELSE
@@ -363,7 +363,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             DO j=1,ncells
               xdmf_id = ivals8_1d(vert_ctr)
               xdmf_id_str = xdmf_id
-              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN 
+              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
                 CALL eXDMF%raiseError(modName//'::'//myName//&
                   ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
               ELSE
@@ -448,7 +448,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           IF(strOut /= 'HDF') THEN
             CALL eXDMF%raiseWarning(modName//'::'//myName// &
               ' - only supports HDF5 material data right now.')
-          ENDIF                                                          
+          ENDIF
           ! Material Data
           strIn='Dimensions'
           CALL ele_children(1)%getAttributeValue(strIn,strOut)
@@ -547,7 +547,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           ! Reallocate cell sets to be on bigger and copy all old sets over
           ALLOCATE(mesh%cell_sets(ncell_sets+1))
           DO j=1, ncell_sets
-            ALLOCATE(mesh%cell_sets(j)%cell_list(SIZE(cell_sets_temp(j)%cell_list))) 
+            ALLOCATE(mesh%cell_sets(j)%cell_list(SIZE(cell_sets_temp(j)%cell_list)))
             mesh%cell_sets(j)%cell_list = cell_sets_temp(j)%cell_list
             mesh%cell_sets(j)%name = cell_sets_temp(j)%name
             DEALLOCATE(cell_sets_temp(j)%cell_list)
@@ -588,7 +588,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
   CLASS(StringType),INTENT(IN) :: strpath
   TYPE(XDMFMeshType),INTENT(OUT),TARGET  :: mesh
-  TYPE(XMLFileType) :: xml 
+  TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:)
   TYPE(StringType) :: strIn, strOut
@@ -604,7 +604,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   charpath = CHAR(strpath)
   CALL h5%init(charpath(1:i-4)//"h5",'READ')
   CALL h5%fopen()
-  
+
   !XML
   CALL xml%importFromDisk(ADJUSTL(strpath))
   xmle => xml%root
@@ -616,7 +616,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   CALL xmle%getAttributeValue(strIn,strOut)
   IF(strOut /= '3.0') THEN
     CALL eXDMF%raiseError(modName//'::'//myName// &
-      ' - Currently only supports XDMF version 3.0') 
+      ' - Currently only supports XDMF version 3.0')
   ENDIF
 
   ! Domain
@@ -637,7 +637,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
     i = 1
   ELSE
     CALL eXDMF%raiseError(modName//'::'//myName// &
-      ' - Expecting information and grid elements only.') 
+      ' - Expecting information and grid elements only.')
   ENDIF
 
   ! Init root mesh
@@ -648,7 +648,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   ! Create grids
   CALL create_XDMFMesh_from_file(mesh, children(i), h5)
 
-ENDSUBROUTINE importFromDisk_XDMFFileType 
+ENDSUBROUTINE importFromDisk_XDMFFileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the XDMF mesh
@@ -661,7 +661,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
   IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
-  IF(ASSOCIATED(thismesh%children)) THEN 
+  IF(ASSOCIATED(thismesh%children)) THEN
     DO i=1,SIZE(thismesh%children)
       CALL thismesh%children(i)%clear()
     ENDDO
@@ -696,11 +696,11 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   thismesh%name = thatmesh%name
   thismesh%singleTopology = thatmesh%singleTopology
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
-  ! NOTE: Children cannot be recursively cleared without risk of 
+  ! NOTE: Children cannot be recursively cleared without risk of
   ! modify other mesh objects due to the pointer to other meshes.
   ! Therefore, it is assumed that one will manually clear a mesh
   ! if the children are to be deleted.
-  IF(ASSOCIATED(thatmesh%children)) THEN 
+  IF(ASSOCIATED(thatmesh%children)) THEN
     ALLOCATE(thismesh%children(SIZE(thatmesh%children)))
     thismesh%children => thatmesh%children
   ENDIF
