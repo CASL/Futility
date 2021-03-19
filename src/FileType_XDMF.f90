@@ -756,6 +756,7 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, h5)
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(HDF5FileType), INTENT(IN) :: h5
   INTEGER(SNK) :: i
+  TYPE(StringType) :: str_name, str_value
   TYPE(XMLElementType), ALLOCATABLE, TARGET, SAVE :: xml_children(:)
 
   WRITE(*,*) CHAR(mesh%name)
@@ -769,12 +770,21 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, h5)
     DO i=1,SIZE(mesh%children)
       ! Set attributes then recurse
       WRITE(*,*) "Child name: ", CHAR(mesh%children(i)%name)
-      CALL xml_children(i)%setName(mesh%children(i)%name) 
+      str_name="Grid"
+      CALL xml_children(i)%setName(str_name) 
       xml_children(i)%nAttr=0
       xml_children(i)%parent => xmle
-!      ! content
-!      ! attr_names
-!      ! attr_vales
+      str_name='Name'
+      str_value = mesh%children(i)%name
+      CALL xml_children(i)%setAttribute(str_name, str_value)
+      str_name='GridType'
+      IF(ASSOCIATED(mesh%children(i)%children))THEN
+        str_value = 'Tree'
+      ELSE
+        str_value = 'Uniform'
+      ENDIF
+      CALL xml_children(i)%setAttribute(str_name, str_value)
+
       CALL create_xml_hierarchy_XDMFFileType(mesh%children(i), xml_children(i), h5) 
     ENDDO
   ELSE
