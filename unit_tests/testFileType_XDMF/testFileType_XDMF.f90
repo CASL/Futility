@@ -376,6 +376,10 @@ SUBROUTINE test_three_level_grid()
   ENDDO
   ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
   ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated")
+
+  ! Export
+  fname='write_three_level_grid.xdmf'
+  CALL testXDMFFile%exportToDisk(fname, mesh)
   CALL mesh%clear()
   CALL L1%clear()
   CALL L2%clear()
@@ -438,6 +442,9 @@ SUBROUTINE test_three_level_grid_implicit_hierarchy()
   DO i =1,4
     ASSERT(mesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
   ENDDO
+  ! Export
+  fname='write_three_level_grid_IH.xdmf'
+  CALL testXDMFFile%exportToDisk(fname, mesh)
   CALL mesh%clear()
 ENDSUBROUTINE test_three_level_grid_implicit_hierarchy
 ENDPROGRAM testXDMFFileType
