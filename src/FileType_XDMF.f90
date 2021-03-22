@@ -748,6 +748,7 @@ ENDSUBROUTINE assign_XDMFMeshType
 !> @brief Create the xml hierarchy for the mesh
 !> @param mesh the mesh
 !> @param xmle the XML element
+!> @param strpath the string holding the path to the XDMF file
 !> @param h5 the HDF5 file
 !>
 RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
@@ -759,9 +760,9 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   TYPE(XMLElementType),POINTER :: current_xml, child_xml
   TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str 
   INTEGER(SNK) :: nchildren, child_ctr
-  INTEGER(SLK) :: xdmf_id, nverts, ncells, i
+  INTEGER(SLK) :: xdmf_id, nverts, ncells, i, vctr
   CHARACTER(LEN=200) :: charpath
-  INTEGER(SLK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:, :)
+  INTEGER(SLK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:)
 
   ! Create HDF5 group
   CALL h5%mkdir(CHAR(mesh%name))
@@ -825,6 +826,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   current_xml%nAttr=0
   current_xml%parent => xmle
 
+  ! Single topology
   IF(mesh%singleTopology)THEN
     str_name= "TopologyType"
     xdmf_id = mesh%cells(1)%vertex_list(1)
@@ -877,15 +879,61 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
       ! Convert 1 based to 0 based index
       vertex_list_2d(:,i) = mesh%cells(i)%vertex_list(2:) - 1
     ENDDO
-
     CALL h5%fwrite(CHAR(mesh%name)//'->cells',vertex_list_2d)
-
     DEALLOCATE(vertex_list_2d)
+  ! Mixed topology
+  ELSE
+    str_name= "TopologyType"
+    str_value = "Mixed"
+    CALL current_xml%setAttribute(str_name, str_value)
 
-!  ELSE
-!    str_name= "TopologyType"
-!    str_value = "Mixed"
-!    CALL current_xml%setAttribute(str_name, str_value)
+    str_name= "NumberOfElements"
+    ncells = SIZE(mesh%cells)
+    str_value = ncells
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    ALLOCATE(current_xml%children(1))
+    child_xml => current_xml%children(1)
+    str_name="DataItem"
+    CALL child_xml%setName(str_name) 
+    child_xml%nAttr=0
+    child_xml%parent => current_xml
+
+    str_name= "DataType"
+    str_value = "Int"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    nverts = 0
+    DO i = 1, ncells
+      nverts = nverts + SIZE(mesh%cells(i)%vertex_list)
+    ENDDO
+    str_name="Dimensions"
+    str_value = nverts
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Format"
+    str_value = "HDF"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Precision"
+    str_value = "8"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    i = LEN_TRIM(strpath)
+    charpath = CHAR(strpath)
+    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/cells"
+
+    ALLOCATE(vertex_list_1d(nverts))
+    vctr = 1
+    DO i = 1, ncells
+      nverts = SIZE(mesh%cells(i)%vertex_list)
+      ! Convert 1 based to 0 based index
+      vertex_list_1d(vctr) = mesh%cells(i)%vertex_list(1)
+      vertex_list_1d(vctr + 1 : vctr + nverts - 1) = mesh%cells(i)%vertex_list(2:) - 1
+      vctr = vctr + nverts
+    ENDDO
+    CALL h5%fwrite(CHAR(mesh%name)//'->cells',vertex_list_1d)
+    DEALLOCATE(vertex_list_1d)
   ENDIF
 
 
@@ -895,6 +943,7 @@ ENDSUBROUTINE export_leaf_XDMFFileType
 !> @brief Create the xml hierarchy for the mesh
 !> @param mesh the mesh
 !> @param xmle the XML element
+!> @param strpath the string holding the path to the XDMF file
 !> @param h5 the HDF5 file
 !>
 RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
@@ -986,7 +1035,11 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   str_value = mesh%name
   CALL xmle%children(1)%setAttribute(str_name, str_value)
   str_name='GridType'
-  str_value = 'Tree'
+  IF(.NOT.ASSOCIATED(mesh%children))THEN
+    str_value = 'Uniform'
+  ELSE
+    str_value = 'Tree'
+  ENDIF
   CALL xmle%children(1)%setAttribute(str_name, str_value)
 
   ! Recursively add xml elements for each grid. Only the leaves have vertices,
