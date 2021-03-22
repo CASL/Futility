@@ -157,7 +157,7 @@ SUBROUTINE init_XDMFTopologyList()
   ! Setup param list for cell type conversions
   ! id is XDMF topology id,
   ! n is number of vertices,
-  ! multiple names for same topology for interoperability
+  ! multiple valid names exist for the same topology, ex: Tri_6 == Triangle_6
   CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4_SLK)
   CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3_SLK)
   CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36_SLK)
@@ -422,7 +422,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             DO j=1,ncells
               ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
               mesh%cells(j)%vertex_list(1) = xdmf_id
-              ! Account for 0based to 1based index switch
+              ! Account for 0 based to 1 based index switch
               mesh%cells(j)%vertex_list(2:) = ivals4_2d(:, j) + 1
             ENDDO
             DEALLOCATE(ivals4_2d)
@@ -430,7 +430,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             DO j=1,ncells
               ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
               mesh%cells(j)%vertex_list(1) = xdmf_id
-              ! Account for 0based to 1based index switch
+              ! Account for 0 based to 1 based index switch
               mesh%cells(j)%vertex_list(2:) = ivals8_2d(:, j) + 1
             ENDDO
             DEALLOCATE(ivals8_2d)
@@ -475,11 +475,11 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           ENDIF
           ALLOCATE(mesh%material_ids(ncells))
           IF(dtype == 'SNK') THEN
-            ! Account for 0based to 1based index switch
+            ! Account for 0 based to 1 based index switch
             mesh%material_ids = ivals4_1d + 1
             DEALLOCATE(ivals4_1d)
           ELSE
-            ! Account for 0based to 1based index switch
+            ! Account for 0 based to 1 based index switch
             ! material ids will not exceed MAX(INTEGER(4)),
             ! so narrowing will not occur.
             mesh%material_ids = ivals8_1d + 1
@@ -563,7 +563,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         mesh%cell_sets(ncell_sets + 1)%name = elname
         ALLOCATE(mesh%cell_sets(ncell_sets + 1)%cell_list(ncells))
         IF(dtype == 'SNK') THEN
-          ! Account for 0based to 1based index switch
+          ! Account for 0 based to 1 based index switch
           mesh%cell_sets(ncell_sets + 1)%cell_list = ivals4_1d + 1
           DEALLOCATE(ivals4_1d)
         ELSE
@@ -745,7 +745,7 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
 ENDSUBROUTINE assign_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
-!> @brief Create the xml hierarchy for the mesh
+!> @brief Export the leaf nodes of the mesh hierarchy
 !> @param mesh the mesh
 !> @param xmle the XML element
 !> @param strpath the string holding the path to the XDMF file
@@ -760,9 +760,9 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   TYPE(XMLElementType),POINTER :: current_xml, child_xml
   TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str 
   INTEGER(SNK) :: nchildren, child_ctr
-  INTEGER(SLK) :: xdmf_id, nverts, ncells, i, vctr
+  INTEGER(SLK) :: xdmf_id, nverts, ncells, i, j, vctr
   CHARACTER(LEN=200) :: charpath
-  INTEGER(SLK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:)
+  INTEGER(SLK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:), cell_list_1d(:)
 
   ! Create HDF5 group
   CALL h5%mkdir(CHAR(mesh%name))
@@ -986,9 +986,61 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     vertex_list_1d = mesh%material_ids - 1
     CALL h5%fwrite(CHAR(mesh%name)//'->material_id',vertex_list_1d)
     DEALLOCATE(vertex_list_1d)
+    child_ctr = child_ctr + 1
   ENDIF
 
+  ! CELL SETS
+  IF(ALLOCATED(mesh%cell_sets))THEN
+    DO i=child_ctr, nchildren
+      current_xml => xmle%children(i)
+      str_name="Set"
+      CALL current_xml%setName(str_name) 
+      current_xml%nAttr=0
+      current_xml%parent => xmle
 
+      str_name= "Name"
+      str_value = mesh%cell_sets(i - child_ctr + 1)%name
+      CALL current_xml%setAttribute(str_name, str_value)
+
+      str_name= "SetType"
+      str_value = "Cell"
+      CALL current_xml%setAttribute(str_name, str_value)
+
+      ALLOCATE(current_xml%children(i))
+      child_xml => current_xml%children(i)
+      str_name="DataItem"
+      CALL child_xml%setName(str_name) 
+      child_xml%nAttr=0
+      child_xml%parent => current_xml
+
+      str_name= "DataType"
+      str_value = "Int"
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      str_name="Dimensions"
+      ncells = SIZE(mesh%cell_sets(i-child_ctr+1)%cell_list)
+      str_value = ncells
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      str_name= "Format"
+      str_value = "HDF"
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      str_name= "Precision"
+      str_value = "8"
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      j = LEN_TRIM(strpath)
+      charpath = CHAR(strpath)
+      child_xml%content = charpath(1:j-4)//"h5:/"//mesh%name//mesh%cell_sets(i-child_ctr+1)%name
+
+      ALLOCATE(cell_list_1d(ncells))
+      ! Convert 1 based to 0 based index
+      cell_list_1d = mesh%cell_sets(i-child_ctr+1)%cell_list - 1
+      CALL h5%fwrite(CHAR(mesh%name)//'->'//CHAR(mesh%cell_sets(i-child_ctr+1)%name),cell_list_1d)
+      DEALLOCATE(cell_list_1d)
+    ENDDO
+  ENDIF
 ENDSUBROUTINE export_leaf_XDMFFileType
 !
 !-------------------------------------------------------------------------------
@@ -1036,7 +1088,7 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
 ENDSUBROUTINE create_xml_hierarchy_XDMFFileType
 !
 !-------------------------------------------------------------------------------
-!> @brief Exports mesh data to an XDMF fiel.
+!> @brief Exports mesh data to an XDMF file.
 !> @param thisXDMFFile the XDMF file type object
 !> @param strpath the string holding the path to the XDMF file
 !> @param mesh the XDMF mesh object
