@@ -774,7 +774,6 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   IF(ALLOCATED(mesh%material_ids)) nchildren = nchildren + 1
   IF(ALLOCATED(mesh%cell_sets)) nchildren = nchildren + SIZE(mesh%cell_sets)
   ALLOCATE(xmle%children(nchildren))
-  child_ctr = 1
 
   ! GEOMETRY
   current_xml => xmle%children(1)
@@ -936,6 +935,59 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     DEALLOCATE(vertex_list_1d)
   ENDIF
 
+  child_ctr = 3
+
+  ! MATERIAL ID
+  IF(ALLOCATED(mesh%material_ids))THEN
+    current_xml => xmle%children(child_ctr)
+    str_name="Attribute"
+    CALL current_xml%setName(str_name) 
+    current_xml%nAttr=0
+    current_xml%parent => xmle
+
+    str_name= "Center"
+    str_value = "Cell"
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    str_name= "Name"
+    str_value = "MaterialID"
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    ALLOCATE(current_xml%children(child_ctr))
+    child_xml => current_xml%children(child_ctr)
+    str_name="DataItem"
+    CALL child_xml%setName(str_name) 
+    child_xml%nAttr=0
+    child_xml%parent => current_xml
+
+    str_name= "DataType"
+    str_value = "Int"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name="Dimensions"
+    ncells = SIZE(mesh%cells)
+    str_value = ncells
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Format"
+    str_value = "HDF"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Precision"
+    str_value = "4"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    i = LEN_TRIM(strpath)
+    charpath = CHAR(strpath)
+    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/material_id"
+
+    ALLOCATE(vertex_list_1d(ncells))
+    ! Convert 1 based to 0 based index
+    vertex_list_1d = mesh%material_ids - 1
+    CALL h5%fwrite(CHAR(mesh%name)//'->material_id',vertex_list_1d)
+    DEALLOCATE(vertex_list_1d)
+  ENDIF
+
 
 ENDSUBROUTINE export_leaf_XDMFFileType
 !
@@ -955,7 +1007,6 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
   INTEGER(SNK) :: i
   TYPE(StringType) :: str_name, str_value
 
-  WRITE(*,*) CHAR(mesh%name)
   ! If this mesh has children
   IF(ASSOCIATED(mesh%children)) THEN
     ! Add XML element children
