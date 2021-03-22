@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <Xdmf Version="3.0">
   <Domain>
     <Grid Name="three_lvl_grid" GridType="Tree">

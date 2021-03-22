@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <Xdmf Version="3.0">
   <Domain>
     <Information Name="MaterialNames">MATERIAL_UO2 MATERIAL_WATER MATERIAL_MOX</Information>
