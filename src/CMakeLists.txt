@@ -37,6 +37,7 @@ TRIBITS_ADD_LIBRARY(Utils
       ExtendedMath.f90
       Interpolators.f90
       ElementsIsotopes.f90
+      IAPWS_WaterProperties.f90
       WaterSatProperties.f90
       BLAS1.f90
       BLAS2.f90
