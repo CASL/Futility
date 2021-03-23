@@ -214,7 +214,7 @@ CONTAINS
 !-------------------------------------------------------------------------------
 SUBROUTINE test_two_pins()
   TYPE(XDMFFileType) :: testXDMFFile
-  TYPE(XDMFMeshType) :: mesh, pin1
+  TYPE(XDMFMeshType) :: mesh, pin1, emesh
   TYPE(StringType) :: fname
   INTEGER(SIK) :: i,j
 
@@ -318,13 +318,60 @@ SUBROUTINE test_two_pins()
   ! Export
   fname='write_two_pins.xdmf'
   CALL testXDMFFile%exportToDisk(fname, mesh)
+  CALL testXDMFFile%importFromDisk(fname, emesh)
+  ASSERT(emesh%name == "mesh_domain", "Root mesh name is incorrect")
+  ASSERT(ASSOCIATED(emesh%children), "Children not associated")
+  ASSERT(SIZE(emesh%children)==2, "Wrong number of children")
+  ! Check pin1
+  pin1 = emesh%children(1)
+  ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
+  ASSERT(pin1%parent%name == "mesh_domain", "pin1 parent name is incorrect")
+  ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
+  !     pin1 vertices
+  ASSERT(ALLOCATED(pin1%vertices), "Vertices not allocated")
+  ASSERT(SIZE(pin1%vertices)==109*3, "Wrong number of vertices")
+  ASSERT(SIZE(pin1%vertices, DIM=2)==109, "Wrong shape of vertices")
+  DO i=1,109
+    DO j=1,3
+      ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-6), "Unequal vertices")
+    ENDDO
+  ENDDO
+  !     pin1 cells
+  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
+  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
+    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  !     pin1 material_ids
+  ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
+  ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+  ENDDO
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
+
   CALL mesh%clear()
+  CALL emesh%clear()
+  CALL pin1%clear()
 ENDSUBROUTINE test_two_pins
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE test_three_level_grid()
   TYPE(XDMFFileType) :: testXDMFFile
-  TYPE(XDMFMeshType) :: mesh, L1, L2, L3
+  TYPE(XDMFMeshType) :: mesh, L1, L2, L3, emesh
   TYPE(StringType) :: fname
   INTEGER(SIK) :: i,j
 
@@ -380,7 +427,56 @@ SUBROUTINE test_three_level_grid()
   ! Export
   fname='write_three_level_grid.xdmf'
   CALL testXDMFFile%exportToDisk(fname, mesh)
+  CALL testXDMFFile%importFromDisk(fname, emesh)
+  ! Check correct number of children
+  ASSERT(emesh%name == "three_lvl_grid", "Root mesh name is incorrect")
+  ASSERT(ASSOCIATED(emesh%children), "Children not associated")
+  ASSERT(SIZE(emesh%children)==1, "Wrong number of children")
+  ! Check L1
+  L1 = emesh%children(1)
+  ASSERT(L1%name == "GRID_L1_1_1", "L1 mesh name is incorrect")
+  ASSERT(ASSOCIATED(L1%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
+  ASSERT(L1%parent%name == "three_lvl_grid", "L1 parent name is incorrect")
+  ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
+  ! Check L2_2_1
+  L2 = L1%children(2)
+  ASSERT(L2%name == "GRID_L2_2_1", "L2 mesh name is incorrect")
+  ASSERT(ASSOCIATED(L2%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L2%parent), "Parent not associated")
+  ASSERT(L2%parent%name == "GRID_L1_1_1", "L2 parent name is incorrect")
+  ASSERT(SIZE(L2%children) == 4, "Wrong number of children")
+  ! Check L3_3_2
+  L3 = L2%children(3)
+  ASSERT(L3%name == "GRID_L3_3_2", "L3 mesh name is incorrect")
+  ASSERT(.NOT. ASSOCIATED(L3%children), "Children are associated")
+  ASSERT(ASSOCIATED(L3%parent), "Parent not associated")
+  ASSERT(L3%parent%name == "GRID_L2_2_1", "L3 parent name is incorrect")
+  !     L3_3_2 vertices
+  ASSERT(ALLOCATED(L3%vertices), "Vertices not allocated")
+  ASSERT(SIZE(L3%vertices)==5*3, "Wrong number of vertices")
+  ASSERT(SIZE(L3%vertices, DIM=2)==5, "Wrong shape of vertices")
+  DO i=1,5
+    DO j=1,3
+      ASSERT( (ABS(L3%vertices(j, i) - three_level_grid_L3_vertices(j,i)) < 1.0E-6), "Unequal vertices")
+    ENDDO
+  ENDDO
+  !     L3_3_2 cells
+  ASSERT(ALLOCATED(L3%cells), "Cells not allocated")
+  ASSERT(SIZE(L3%cells)==3, "Wrong number of cells")
+  ASSERT(L3%singleTopology == .TRUE., "L3 is not single topology")
+  DO i=1,3
+    ASSERT(SIZE(L3%cells(i)%vertex_list)==4, "Wrong size for vertex list")
+    ASSERT( L3%cells(i)%vertex_list(1) == 4, "Wrong cell type, should be triangle=4")
+    DO j=2,4
+      ASSERT( L3%cells(i)%vertex_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
+  ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated")
+
   CALL mesh%clear()
+  CALL emesh%clear()
   CALL L1%clear()
   CALL L2%clear()
   CALL L3%clear()
@@ -389,7 +485,7 @@ ENDSUBROUTINE test_three_level_grid
 !-------------------------------------------------------------------------------
 SUBROUTINE test_three_level_grid_implicit_hierarchy()
   TYPE(XDMFFileType) :: testXDMFFile
-  TYPE(XDMFMeshType) :: mesh
+  TYPE(XDMFMeshType) :: mesh, emesh
   TYPE(StringType) :: fname
   INTEGER(SIK) :: i,j
   INTEGER(SLK),ALLOCATABLE :: cells_ref(:)
@@ -442,9 +538,60 @@ SUBROUTINE test_three_level_grid_implicit_hierarchy()
   DO i =1,4
     ASSERT(mesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
   ENDDO
+
   ! Export
   fname='write_three_level_grid_IH.xdmf'
   CALL testXDMFFile%exportToDisk(fname, mesh)
+  CALL testXDMFFile%importFromDisk(fname, emesh)
+  ! Check correct number of children
+  ASSERT(emesh%name == "three_lvl_grid", "Root mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(emesh%children), "Children are associated")
+  ! vertices
+  ASSERT(ALLOCATED(emesh%vertices), "Vertices not allocated")
+  ASSERT(SIZE(emesh%vertices)==42*3, "Wrong number of vertices")
+  ASSERT(SIZE(emesh%vertices, DIM=2)==42, "Wrong shape of vertices")
+  ! cells
+  ASSERT(ALLOCATED(emesh%cells), "Cells not allocated")
+  ASSERT(SIZE(emesh%cells)==46, "Wrong number of cells")
+  ASSERT(emesh%singleTopology == .FALSE., "Mesh is single topology")
+  ! Spot check cells
+  ! Cell 1, quad
+  j=1
+  ALLOCATE(cells_ref(5))
+  cells_ref = (/5, 26, 2, 27, 38/)
+  ASSERT(SIZE(emesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( emesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+  ENDDO
+  ! Cell 4, quad
+  j=4
+  cells_ref = (/5, 4, 29, 38, 28/)
+  ASSERT(SIZE(emesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( emesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ! Cell 18, tri
+  j=18
+  ALLOCATE(cells_ref(4))
+  cells_ref = (/4, 6, 40, 8/)
+  ASSERT(SIZE(emesh%cells(j)%vertex_list)==4, "Wrong size for vertex list")
+  DO i=1,4
+    ASSERT( emesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ASSERT(.NOT. ALLOCATED(emesh%material_ids), "Material IDS are allocated")
+  ! Check cell sets
+  ASSERT(ALLOCATED(emesh%cell_sets), "Cell sets are allocated")
+  ASSERT(SIZE(emesh%cell_sets)==21, "Wrong number of cell sets")
+  ASSERT(emesh%cell_sets(6)%name=="GRID_L3_1_1", "Wrong set name")
+  ASSERT(SIZE(emesh%cell_sets(6)%cell_list)==4, "Wrong set size")
+  DO i =1,4
+    ASSERT(emesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
+  ENDDO
+
+
   CALL mesh%clear()
+  CALL emesh%clear()
 ENDSUBROUTINE test_three_level_grid_implicit_hierarchy
 ENDPROGRAM testXDMFFileType
