@@ -285,6 +285,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         content=ele_children(1)%getContent()
         segments=content%split(':')
         group=segments(2)%substr(2,LEN(segments(2)))
+        group = group%replace(NEW_LINE("A"),"")
         REQUIRE(h5%pathExists(CHAR(group)))
         group = group%replace("/", "->")
         ! Data shape
@@ -329,6 +330,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           content=ele_children(1)%getContent()
           segments=content%split(':')
           group=segments(2)%substr(2,LEN(segments(2)))
+          group = group%replace(NEW_LINE("A"),"")
           REQUIRE(h5%pathExists(CHAR(group)))
           group = group%replace("/", "->")
           ! Data shape
@@ -404,6 +406,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           content=ele_children(1)%getContent()
           segments=content%split(':')
           group=segments(2)%substr(2,LEN(segments(2)))
+          group = group%replace(NEW_LINE("A"),"")
           REQUIRE(h5%pathExists(CHAR(group)))
           group = group%replace("/", "->")
           ! Data shape
@@ -460,6 +463,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           content=ele_children(1)%getContent()
           segments=content%split(':')
           group=segments(2)%substr(2,LEN(segments(2)))
+          group = group%replace(NEW_LINE("A"),"")
           REQUIRE(h5%pathExists(CHAR(group)))
           group = group%replace("/", "->")
           ! Data shape
@@ -519,6 +523,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         content=ele_children(1)%getContent()
         segments=content%split(':')
         group=segments(2)%substr(2,LEN(segments(2)))
+        group = group%replace(NEW_LINE("A"),"")
         REQUIRE(h5%pathExists(CHAR(group)))
         group = group%replace("/", "->")
         ! Data shape
@@ -1032,7 +1037,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
 
       j = LEN_TRIM(strpath)
       charpath = CHAR(strpath)
-      child_xml%content = charpath(1:j-4)//"h5:/"//mesh%name//mesh%cell_sets(i-child_ctr+1)%name
+      child_xml%content = charpath(1:j-4)//"h5:/"//mesh%name//"/"//mesh%cell_sets(i-child_ctr+1)%name
 
       ALLOCATE(cell_list_1d(ncells))
       ! Convert 1 based to 0 based index
