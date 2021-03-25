@@ -83,6 +83,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::clear_XDMFMeshType
     !> @copydoc XDMFMeshType::clear_XDMFMeshType
     PROCEDURE,PASS :: clear => clear_XDMFMeshType
+    !> @copybrief XDMFMeshType::distanceToLeaf_XDMFMeshType
+    !> @copydoc XDMFMeshType::distanceToLeaf_XDMFMeshType
+    PROCEDURE,PASS :: distanceToLeaf => distanceToLeaf_XDMFMeshType
 ENDTYPE XDMFMeshType
 
 !> The XDMF File type
@@ -658,7 +661,7 @@ ENDSUBROUTINE importFromDisk_XDMFFileType
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the XDMF mesh
-!> @param thismesh the XDMF mesh object being assigned to
+!> @param thismesh the XDMF mesh object
 !>
 RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
@@ -688,6 +691,28 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
     DEALLOCATE(thismesh%cell_sets)
   ENDIF
 ENDSUBROUTINE clear_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the number of grid levels to a leaf node
+!> @param thismesh the XDMF mesh object
+!>
+RECURSIVE FUNCTION distanceToLeaf_XDMFMeshType(thismesh) RESULT(n)
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SNK) :: n
+  ! It is assumed that all siblings have children if any sibling has children
+  ! Hence it is sufficient to assess thismesh%children(1)'s depth recursively
+  ! Ex:     Possible                Not Possible      
+  !           L1                        L1
+  !          /  \                      /  \
+  !      L2_1   L2_2               L2_1   L2_2 <-- Should have children.
+  !     /  \     |                /  \     
+  ! L3_1  L3_2  L3_3           L3_1  L3_2 
+  IF(ASSOCIATED(thismesh%children))THEN
+    n = thismesh%children(1)%distanceToLeaf() + 1 
+  ELSE
+    n = 0
+  ENDIF
+ENDFUNCTION distanceToLeaf_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns an XDMF mesh type to another

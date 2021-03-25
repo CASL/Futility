@@ -264,6 +264,9 @@ SUBROUTINE test_two_pins()
   DO i=1,46
     ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
   ENDDO
+  !     pin1 distanceToLeaf
+  i = pin1%distanceToLeaf()
+  ASSERT(i == 0, "Wrong number of levels")
   !     pin1 clear
   CALL pin1%clear()
   ASSERT(pin1%name == "", "pin1 mesh name is incorrect")
@@ -381,6 +384,8 @@ SUBROUTINE test_three_level_grid()
   ASSERT(mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
   ASSERT(ASSOCIATED(mesh%children), "Children not associated")
   ASSERT(SIZE(mesh%children)==1, "Wrong number of children")
+  i = mesh%distanceToLeaf()
+  ASSERT(i == 3, "Wrong number of levels")
   ! Check L1
   L1 = mesh%children(1)
   ASSERT(L1%name == "GRID_L1_1_1", "L1 mesh name is incorrect")
@@ -388,6 +393,8 @@ SUBROUTINE test_three_level_grid()
   ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
   ASSERT(L1%parent%name == "three_lvl_grid", "L1 parent name is incorrect")
   ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
+  i = L1%distanceToLeaf()
+  ASSERT(i == 2, "Wrong number of levels")
   ! Check L2_2_1
   L2 = L1%children(2)
   ASSERT(L2%name == "GRID_L2_2_1", "L2 mesh name is incorrect")
