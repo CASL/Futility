@@ -64,6 +64,9 @@ TYPE :: XDMFMeshType
   TYPE(StringType) :: name
   !> If the mesh cells are all the same topology
   LOGICAL(SBK) :: singleTopology=.FALSE.
+  !> The bounding box for the mesh
+  !> xmin, xmax, ymin, ymax
+  REAL(SDK) :: boundingBox(4) = 0.0_SDK
   !> The vertices that compose the mesh
   !> Looks like:
   !> x1, x2, x3, ..., xn
@@ -86,6 +89,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::distanceToLeaf_XDMFMeshType
     !> @copydoc XDMFMeshType::distanceToLeaf_XDMFMeshType
     PROCEDURE,PASS :: distanceToLeaf => distanceToLeaf_XDMFMeshType
+    !> @copybrief XDMFMeshType::recomputeBoundingBox_XDMFMeshType
+    !> @copydoc XDMFMeshType::recomputeBoundingBox_XDMFMeshType
+    PROCEDURE,PASS :: recomputeBoundingBox => recomputeBoundingBox_XDMFMeshType
 ENDTYPE XDMFMeshType
 
 !> The XDMF File type
@@ -657,6 +663,9 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   ! Create grids
   CALL create_XDMFMesh_from_file(mesh, children(i), h5)
 
+  ! Setup bounding boxes
+  CALL mesh%recomputeBoundingBox()
+
 ENDSUBROUTINE importFromDisk_XDMFFileType
 !
 !-------------------------------------------------------------------------------
@@ -715,6 +724,43 @@ RECURSIVE FUNCTION distanceToLeaf_XDMFMeshType(thismesh) RESULT(n)
 ENDFUNCTION distanceToLeaf_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
+!> @brief Recompute the bounding box for this mesh and all children.
+!> @param thismesh the XDMF mesh object
+!>
+RECURSIVE SUBROUTINE recomputeBoundingBox_XDMFMeshType(thismesh)
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  REAL(SDK) :: xmin, xmax, ymin, ymax
+  INTEGER(SLK) :: i
+  xmin = HUGE(xmin)
+  xmax = -HUGE(xmax)
+  ymin = HUGE(ymin) 
+  ymax = -HUGE(ymax)
+  IF(ASSOCIATED(thismesh%children))THEN
+    DO i = 1, SIZE(thismesh%children)
+      CALL thismesh%children(i)%recomputeBoundingBox()
+    ENDDO
+    DO i = 1, SIZE(thismesh%children)
+      IF(thismesh%children(i)%boundingBox(1) < xmin) &
+        xmin = thismesh%children(i)%boundingBox(1)
+      IF(thismesh%children(i)%boundingBox(2) > xmax) &
+        xmax = thismesh%children(i)%boundingBox(2)
+      IF(thismesh%children(i)%boundingBox(3) < ymin) &
+        ymin = thismesh%children(i)%boundingBox(3)
+      IF(thismesh%children(i)%boundingBox(4) > ymax) &
+        ymax = thismesh%children(i)%boundingBox(4)
+    ENDDO
+  ELSE
+    DO i = 1, SIZE(thismesh%vertices, DIM=2)
+      IF(thismesh%vertices(1,i) < xmin) xmin = thismesh%vertices(1,i)
+      IF(thismesh%vertices(1,i) > xmax) xmax = thismesh%vertices(1,i)
+      IF(thismesh%vertices(2,i) < ymin) ymin = thismesh%vertices(2,i)
+      IF(thismesh%vertices(2,i) > ymax) ymax = thismesh%vertices(2,i)
+    ENDDO
+  ENDIF
+  thismesh%boundingBox = (/xmin, xmax, ymin, ymax/)
+ENDSUBROUTINE recomputeBoundingBox_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
 !> @brief Assigns an XDMF mesh type to another
 !> @param thismesh the XDMF mesh object being assigned to
 !> @param thatmesh the XDMF mesh object being assigned from
@@ -726,6 +772,7 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
 
   thismesh%name = thatmesh%name
   thismesh%singleTopology = thatmesh%singleTopology
+  thismesh%boundingBox = thatmesh%boundingBox
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
   ! NOTE: Children cannot be recursively cleared without risk of
   ! modify other mesh objects due to the pointer to other meshes.

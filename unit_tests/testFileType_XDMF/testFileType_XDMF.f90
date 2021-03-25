@@ -482,6 +482,17 @@ SUBROUTINE test_three_level_grid()
   ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
   ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated")
 
+  ! BB
+  ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-6_SDK), "Incorrect x_min")
+  ASSERT( (ABS(mesh%boundingBox(2) - 4.0_SDK) < 1.0E-6_SDK), "Incorrect x_max")
+  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-6_SDK), "Incorrect y_min")
+  ASSERT( (ABS(mesh%boundingBox(4) - 4.0_SDK) < 1.0E-6_SDK), "Incorrect y_max")
+  ASSERT( (ABS(L2%boundingBox(1) - 2.0_SDK) < 1.0E-6_SDK), "Incorrect x_min")
+  ASSERT( (ABS(L2%boundingBox(2) - 4.0_SDK) < 1.0E-6_SDK), "Incorrect x_max")
+  ASSERT( (ABS(L2%boundingBox(3) - 0.0_SDK) < 1.0E-6_SDK), "Incorrect y_min")
+  ASSERT( (ABS(L2%boundingBox(4) - 2.0_SDK) < 1.0E-6_SDK), "Incorrect y_max")
+
+
   CALL mesh%clear()
   CALL emesh%clear()
   CALL L1%clear()
