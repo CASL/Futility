@@ -198,31 +198,31 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType), POINTER :: xmle_children(:)
   TYPE(StringType) :: strIn, strOut
-  INTEGER(SIK) :: i, grid_ctr, mesh_ctr
+  INTEGER(SIK) :: i, nGrid, iMesh
 
   ! If this xml element has children
   IF(xmle%hasChildren()) THEN
     ! Determine the number or XML children that are grids
     CALL xmle%getChildren(xmle_children)
-    grid_ctr = 0
+    nGrid = 0
     DO i=1,SIZE(xmle_children)
-      IF(xmle_children(i)%name%upper() == 'GRID') grid_ctr = grid_ctr + 1
+      IF(xmle_children(i)%name%upper() == 'GRID') nGrid = nGrid + 1
     ENDDO
 
     ! If some children are grids, it is not a leaf
-    IF(grid_ctr > 0) THEN
+    IF(nGrid > 0) THEN
       ! Allocate children for current mesh and create entities
-      ALLOCATE(mesh%children(grid_ctr))
-      mesh_ctr=1
+      ALLOCATE(mesh%children(nGrid))
+      iMesh=1
       ! Recursively create children of each grid
       DO i=1,SIZE(xmle_children)
         IF(xmle_children(i)%name%upper() == 'GRID') THEN
           strIn='Name'
           CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-          mesh%children(mesh_ctr)%name = strOut
-          mesh%children(mesh_ctr)%parent => mesh
-          CALL create_XDMFMesh_from_file(mesh%children(mesh_ctr), xmle_children(i), h5)
-          mesh_ctr = mesh_ctr + 1
+          mesh%children(iMesh)%name = strOut
+          mesh%children(iMesh)%parent => mesh
+          CALL create_XDMFMesh_from_file(mesh%children(iMesh), xmle_children(i), h5)
+          iMesh = iMesh + 1
         ENDIF
       ENDDO
     ! If this mesh does not have grid children it is a leaf on the tree.
@@ -251,7 +251,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame, &
     xdmf_id_str
   TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
-  INTEGER(SLK) :: nverts, ncells, xdmf_id,vert_ctr,i,j
+  INTEGER(SLK) :: nverts, ncells, xdmf_id,ivert,i,j
   INTEGER(SNK) :: ncell_sets
   INTEGER(SNK),ALLOCATABLE :: dshape(:)
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
@@ -260,7 +260,8 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   INTEGER(SLK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets_temp(:)
 
-  REQUIRE(xmle%hasChildren())
+  IF(.NOT.xmle%hasChildren())  CALL eXDMF%raiseError(modName//'::'//myName// &
+    ' - XML element for '//CHAR(mesh%name)//' should have children.')
   CALL xmle%getChildren(xmle_children)
   ! Each XML element has a type of information.
   ! Handle each with a CASE
@@ -272,35 +273,48 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         strIn='GeometryType'
         CALL xmle_children(i)%getAttributeValue(strIn,strOut)
         IF(strOut /= 'XYZ') THEN
-          CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          CALL eXDMF%raiseError(modName//'::'//myName// &
             ' - GeometryType only supports XYZ right now.')
         ENDIF
         ! Format
         CALL xmle_children(i)%getChildren(ele_children)
-        REQUIRE(SIZE(ele_children) == 1)
+        IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - Expected Geometry to have only one child.')
         strIn='Format'
         CALL ele_children(1)%getAttributeValue(strIn,strOut)
         IF(strOut /= 'HDF') THEN
-          CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          CALL eXDMF%raiseError(modName//'::'//myName// &
             ' - only supports HDF5 geometry data right now.')
         ENDIF
         ! Vertex Data
         strIn='Dimensions'
         CALL ele_children(1)%getAttributeValue(strIn,strOut)
         strArray=strOut%split()
-        REQUIRE(strArray(2) == '3')
+        IF(strArray(2) /= '3') CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - Expected vertex data to be 3 dimensional.')
         nverts=strArray(1)%stoi()
-        ! This is all awful string manipulation to get the h5 group
+        ! This is all string manipulation to get the h5 group
+        ! Content of ele_children should be the h5 filename with the
+        ! path to the vertex data
         content=ele_children(1)%getContent()
+        ! Split file from group data
         segments=content%split(':')
+        ! Just grab the group data
         group=segments(2)%substr(2,LEN(segments(2)))
+        ! Replace newline char
         group = group%replace(NEW_LINE("A"),"")
-        REQUIRE(h5%pathExists(CHAR(group)))
+        ! Make sure the h5 path exists
+        IF(.NOT.h5%pathExists(CHAR(group)))THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - HDF5 group containing vertex data does not exist in h5 file.')
+        ENDIF
         group = group%replace("/", "->")
         ! Data shape
         dshape=h5%getDataShape(CHAR(group))
-        REQUIRE(dshape(1) == 3)
-        REQUIRE(dshape(2) == nverts)
+        IF(.NOT.(dshape(1) == 3 .AND. dshape(2) == nverts))THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - HDF5 vertex data shape does not match XDMF vertex data shape.')
+        ENDIF
         ! Data type
         dtype=h5%getDataType(CHAR(group))
         IF(dtype == 'SSK') THEN
@@ -324,7 +338,8 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           ! Mixed topology
           ! Format
           CALL xmle_children(i)%getChildren(ele_children)
-          REQUIRE(SIZE(ele_children) == 1)
+          IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - Expected Topology to have only one child.')
           strIn='Format'
           CALL ele_children(1)%getAttributeValue(strIn,strOut)
           IF(strOut /= 'HDF') THEN
@@ -335,16 +350,28 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           strIn='NumberOfElements'
           CALL xmle_children(i)%getAttributeValue(strIn,strOut)
           ncells=strOut%stoi()
-          ! This is all awful string manipulation to get the h5 group
+          ! This is all string manipulation to get the h5 group
+          ! Content of ele_children should be the h5 filename with the
+          ! path to the vertex data
           content=ele_children(1)%getContent()
+          ! Split file from group data
           segments=content%split(':')
+          ! Just grab the group data
           group=segments(2)%substr(2,LEN(segments(2)))
+          ! Replace newline char
           group = group%replace(NEW_LINE("A"),"")
-          REQUIRE(h5%pathExists(CHAR(group)))
+          ! Make sure the h5 path exists
+          IF(.NOT.h5%pathExists(CHAR(group)))THEN
+            CALL eXDMF%raiseError(modName//'::'//myName//&
+              ' - HDF5 group containing topology data does not exist in h5 file.')
+          ENDIF
           group = group%replace("/", "->")
           ! Data shape
           dshape=h5%getDataShape(CHAR(group))
-          REQUIRE(SIZE(dshape) == 1)
+          IF(SIZE(dshape) /= 1)THEN
+            CALL eXDMF%raiseError(modName//'::'//myName//&
+              ' - HDF5 mixed topology data shape does not match XDMF data shape.')
+          ENDIF
           ! Data type
           dtype=h5%getDataType(CHAR(group))
           IF(dtype == 'SNK') THEN
@@ -353,10 +380,10 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
             CALL h5%fread(CHAR(group),ivals8_1d)
           ENDIF
           ALLOCATE(mesh%cells(ncells))
-          vert_ctr = 1
+          ivert = 1
           IF(dtype == 'SNK') THEN
             DO j=1,ncells
-              xdmf_id = ivals4_1d(vert_ctr)
+              xdmf_id = ivals4_1d(ivert)
               xdmf_id_str = xdmf_id
               IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
                 CALL eXDMF%raiseError(modName//'::'//myName//&
@@ -367,13 +394,13 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
               ENDIF
               ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
               mesh%cells(j)%vertex_list(1) = xdmf_id
-              mesh%cells(j)%vertex_list(2:nverts+1) = ivals4_1d(vert_ctr:vert_ctr+nverts) + 1
-              vert_ctr = vert_ctr + nverts
+              mesh%cells(j)%vertex_list(2:nverts+1) = ivals4_1d(ivert:ivert+nverts) + 1
+              ivert = ivert + nverts
             ENDDO
             DEALLOCATE(ivals4_1d)
           ELSE
             DO j=1,ncells
-              xdmf_id = ivals8_1d(vert_ctr)
+              xdmf_id = ivals8_1d(ivert)
               xdmf_id_str = xdmf_id
               IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
                 CALL eXDMF%raiseError(modName//'::'//myName//&
@@ -384,8 +411,8 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
               ENDIF
               ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
               mesh%cells(j)%vertex_list(1) = xdmf_id
-              mesh%cells(j)%vertex_list(2:nverts+1) = ivals8_1d(vert_ctr+1:vert_ctr+nverts) + 1
-              vert_ctr = vert_ctr + nverts + 1
+              mesh%cells(j)%vertex_list(2:nverts+1) = ivals8_1d(ivert+1:ivert+nverts) + 1
+              ivert = ivert + nverts + 1
             ENDDO
             DEALLOCATE(ivals8_1d)
           ENDIF
@@ -397,7 +424,8 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           CALL XDMFTopologyList%get(CHAR(toponame)//'->id', xdmf_id)
           ! Format
           CALL xmle_children(i)%getChildren(ele_children)
-          REQUIRE(SIZE(ele_children) == 1)
+          IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - Expected Topology to have only one child.')
           strIn='Format'
           CALL ele_children(1)%getAttributeValue(strIn,strOut)
           IF(strOut /= 'HDF') THEN
@@ -411,17 +439,28 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           strIn='NodesPerElement'
           CALL xmle_children(i)%getAttributeValue(strIn,strOut)
           nverts=strOut%stoi()
-          ! This is all awful string manipulation to get the h5 group
+          ! This is all string manipulation to get the h5 group
+          ! Content of ele_children should be the h5 filename with the
+          ! path to the vertex data
           content=ele_children(1)%getContent()
+          ! Split file from group data
           segments=content%split(':')
+          ! Just grab the group data
           group=segments(2)%substr(2,LEN(segments(2)))
+          ! Replace newline char
           group = group%replace(NEW_LINE("A"),"")
-          REQUIRE(h5%pathExists(CHAR(group)))
+          ! Make sure the h5 path exists
+          IF(.NOT.h5%pathExists(CHAR(group)))THEN
+            CALL eXDMF%raiseError(modName//'::'//myName//&
+              ' - HDF5 group containing topology data does not exist in h5 file.')
+          ENDIF
           group = group%replace("/", "->")
           ! Data shape
           dshape=h5%getDataShape(CHAR(group))
-          REQUIRE(dshape(1) == nverts)
-          REQUIRE(dshape(2) == ncells)
+          IF(.NOT.(dshape(1) == nverts .AND. dshape(2) == ncells))THEN
+            CALL eXDMF%raiseError(modName//'::'//myName//&
+              ' - HDF5 mixed topology data shape does not match XDMF data shape.')
+          ENDIF
           ! Data type
           dtype=h5%getDataType(CHAR(group))
           IF(dtype == 'SNK') THEN
@@ -455,7 +494,8 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         IF(strOut%upper() == 'MATERIALID') THEN
           ! Format
           CALL xmle_children(i)%getChildren(ele_children)
-          REQUIRE(SIZE(ele_children) == 1)
+          IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - Expected Attribute to have only one child.')
           strIn='Format'
           CALL ele_children(1)%getAttributeValue(strIn,strOut)
           IF(strOut /= 'HDF') THEN
@@ -466,19 +506,32 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
           strIn='Dimensions'
           CALL ele_children(1)%getAttributeValue(strIn,strOut)
           ncells=strOut%stoi()
-          REQUIRE(ALLOCATED(mesh%cells))
-          REQUIRE(ncells == SIZE(mesh%cells))
-          ! This is all awful string manipulation to get the h5 group
+          IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells == SIZE(mesh%cells))) THEN
+            CALL eXDMF%raiseError(modName//'::'//myName//&
+              ' - material data is before topology data, or is the wrong size.')
+          ENDIF
+          ! This is all string manipulation to get the h5 group
+          ! Content of ele_children should be the h5 filename with the
+          ! path to the vertex data
           content=ele_children(1)%getContent()
+          ! Split file from group data
           segments=content%split(':')
+          ! Just grab the group data
           group=segments(2)%substr(2,LEN(segments(2)))
+          ! Replace newline char
           group = group%replace(NEW_LINE("A"),"")
-          REQUIRE(h5%pathExists(CHAR(group)))
+          ! Make sure the h5 path exists
+          IF(.NOT.h5%pathExists(CHAR(group)))THEN
+            CALL eXDMF%raiseError(modName//'::'//myName//&
+              ' - HDF5 group containing material data does not exist in h5 file.')
+          ENDIF
           group = group%replace("/", "->")
           ! Data shape
           dshape=h5%getDataShape(CHAR(group))
-          REQUIRE(SIZE(dshape) == 1)
-          REQUIRE(dshape(1) == ncells)
+          IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
+            CALL eXDMF%raiseError(modName//'::'//myName//&
+              ' - material data in h5 file is the wrong size or shape.')
+          ENDIF
           ! Data type
           dtype=h5%getDataType(CHAR(group))
           IF(dtype == 'SNK') THEN
@@ -515,7 +568,9 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         CALL xmle_children(i)%getAttributeValue(strIn,elname)
         ! Format
         CALL xmle_children(i)%getChildren(ele_children)
-        REQUIRE(SIZE(ele_children) == 1)
+        IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - Expected Set to have only one child.')
+        strIn='Format'
         strIn='Format'
         CALL ele_children(1)%getAttributeValue(strIn,strOut)
         IF(strOut /= 'HDF') THEN
@@ -526,19 +581,32 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         strIn='Dimensions'
         CALL ele_children(1)%getAttributeValue(strIn,strOut)
         ncells=strOut%stoi()
-        REQUIRE(ALLOCATED(mesh%cells))
-        REQUIRE(ncells <= SIZE(mesh%cells))
-        ! This is all awful string manipulation to get the h5 group
+        IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells <= SIZE(mesh%cells))) THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - material data is before topology data, or is too big.')
+        ENDIF
+        ! This is all string manipulation to get the h5 group
+        ! Content of ele_children should be the h5 filename with the
+        ! path to the vertex data
         content=ele_children(1)%getContent()
+        ! Split file from group data
         segments=content%split(':')
+        ! Just grab the group data
         group=segments(2)%substr(2,LEN(segments(2)))
+        ! Replace newline char
         group = group%replace(NEW_LINE("A"),"")
-        REQUIRE(h5%pathExists(CHAR(group)))
+        ! Make sure the h5 path exists
+        IF(.NOT.h5%pathExists(CHAR(group)))THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - HDF5 group containing set data does not exist in h5 file.')
+        ENDIF
         group = group%replace("/", "->")
         ! Data shape
         dshape=h5%getDataShape(CHAR(group))
-        REQUIRE(SIZE(dshape) == 1)
-        REQUIRE(dshape(1) == ncells)
+        IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - set data in h5 file is the wrong size or shape.')
+        ENDIF
         ! Data type
         dtype=h5%getDataType(CHAR(group))
         IF(dtype == 'SNK') THEN
@@ -607,7 +675,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:)
   TYPE(StringType) :: strIn, strOut
-  INTEGER(SIK) :: i
+  INTEGER(SIK) :: i, gridIdx
   CHARACTER(LEN=200) :: charpath
 
   ! Initialize the XDMFTopologyList if it has not been
@@ -623,8 +691,10 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   !XML
   CALL xml%importFromDisk(ADJUSTL(strpath))
   xmle => xml%root
-  REQUIRE(ASSOCIATED(xmle))
-  REQUIRE(xmle%name%upper() == 'XDMF')
+  IF(.NOT.ASSOCIATED(xmle)) CALL eXDMF%raiseError(modName//'::'//myName// &
+    ' - XML data import encountered an error. Pointer to root not associated.')
+  IF(.NOT.xmle%name%upper() == 'XDMF') CALL eXDMF%raiseError(modName//'::'//&
+    myName//' - Expected XDMF XML element to be the root element.')
 
   ! Version
   strIn='Version'
@@ -636,20 +706,31 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
 
   ! Domain
   CALL xmle%getChildren(children)
-  REQUIRE(SIZE(children) > 0)
-  REQUIRE(children(1)%name%upper() == 'DOMAIN')
+  IF(.NOT.(SIZE(children) == 1 .AND. children(1)%name%upper() == 'DOMAIN'))THEN
+    CALL eXDMF%raiseError(modName//'::'//myName// &
+    ' - Expected XDMF XML element to have one child (Domain).')
+  ENDIF
 
   ! Information
   ! NOTE: It is assumed that material information is before any grids
   ! and that all grids are contained in one overall grid.
   CALL children(1)%getChildren(children)
   IF (SIZE(children) == 2) THEN
-    REQUIRE(children(1)%name%upper() == 'INFORMATION')
-    REQUIRE(children(2)%name%upper() == 'GRID')
-    i = 2
+    IF(.NOT.children(1)%name%upper() == 'INFORMATION')THEN
+      CALL eXDMF%raiseError(modName//'::'//myName// &
+        ' - Expected Domain XML element to have one Information before Grid.')
+    ENDIF
+    IF(.NOT.children(2)%name%upper() == 'GRID')THEN
+      CALL eXDMF%raiseError(modName//'::'//myName// &
+        ' - Expected Domain XML element to have Grid after Information.')
+    ENDIF
+    gridIdx = 2
   ELSE IF(SIZE(children) == 1) THEN
-    REQUIRE(children(1)%name%upper() == 'GRID')
-    i = 1
+    IF(.NOT.children(1)%name%upper() == 'GRID')THEN
+      CALL eXDMF%raiseError(modName//'::'//myName// &
+        ' - Expected Domain XML element to have Grid child.')
+    ENDIF
+    gridIdx = 1
   ELSE
     CALL eXDMF%raiseError(modName//'::'//myName// &
       ' - Expecting information and grid elements only.')
@@ -657,11 +738,11 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
 
   ! Init root mesh
   strIn="Name"
-  CALL children(i)%getAttributeValue(strIn,strOut)
+  CALL children(gridIdx)%getAttributeValue(strIn,strOut)
   mesh%name = strOut
 
   ! Create grids
-  CALL create_XDMFMesh_from_file(mesh, children(i), h5)
+  CALL create_XDMFMesh_from_file(mesh, children(gridIdx), h5)
 
   ! Setup bounding boxes
   CALL mesh%recomputeBoundingBox()
@@ -710,14 +791,14 @@ RECURSIVE FUNCTION distanceToLeaf_XDMFMeshType(thismesh) RESULT(n)
   INTEGER(SNK) :: n
   ! It is assumed that all siblings have children if any sibling has children
   ! Hence it is sufficient to assess thismesh%children(1)'s depth recursively
-  ! Ex:     Possible                Not Possible      
+  ! Ex:     Possible                Not Possible
   !           L1                        L1
   !          /  \                      /  \
   !      L2_1   L2_2               L2_1   L2_2 <-- Should have children.
-  !     /  \     |                /  \     
-  ! L3_1  L3_2  L3_3           L3_1  L3_2 
+  !     /  \     |                /  \
+  ! L3_1  L3_2  L3_3           L3_1  L3_2
   IF(ASSOCIATED(thismesh%children))THEN
-    n = thismesh%children(1)%distanceToLeaf() + 1 
+    n = thismesh%children(1)%distanceToLeaf() + 1
   ELSE
     n = 0
   ENDIF
@@ -733,7 +814,7 @@ RECURSIVE SUBROUTINE recomputeBoundingBox_XDMFMeshType(thismesh)
   INTEGER(SLK) :: i
   xmin = HUGE(xmin)
   xmax = -HUGE(xmax)
-  ymin = HUGE(ymin) 
+  ymin = HUGE(ymin)
   ymax = -HUGE(ymax)
   IF(ASSOCIATED(thismesh%children))THEN
     DO i = 1, SIZE(thismesh%children)
@@ -832,14 +913,18 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_XDMFFileType'
   TYPE(XDMFMeshType),INTENT(IN)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
-  TYPE(StringType),INTENT(INOUT) :: strpath
+  TYPE(StringType),INTENT(IN) :: strpath
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType),POINTER :: current_xml, child_xml
-  TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str 
-  INTEGER(SNK) :: nchildren, child_ctr
-  INTEGER(SLK) :: xdmf_id, nverts, ncells, i, j, vctr
+  TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str
+  INTEGER(SNK) :: nchildren, ichild
+  INTEGER(SLK) :: xdmf_id, nverts, ncells, i, j, ivert
   CHARACTER(LEN=200) :: charpath
   INTEGER(SLK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:), cell_list_1d(:)
+  INTEGER(SNK),PARAMETER :: GEOMETRY_IDX=1
+  INTEGER(SNK),PARAMETER :: TOPOLOGY_IDX=2
+
+  REQUIRE(ALLOCATED(mesh%vertices) .AND. ALLOCATED(mesh%cells))
 
   ! Create HDF5 group
   CALL h5%mkdir(CHAR(mesh%name))
@@ -853,9 +938,9 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   ALLOCATE(xmle%children(nchildren))
 
   ! GEOMETRY
-  current_xml => xmle%children(1)
+  current_xml => xmle%children(GEOMETRY_IDX)
   str_name="Geometry"
-  CALL current_xml%setName(str_name) 
+  CALL current_xml%setName(str_name)
   current_xml%nAttr=0
   current_xml%parent => xmle
 
@@ -866,7 +951,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   ALLOCATE(current_xml%children(1))
   child_xml => current_xml%children(1)
   str_name="DataItem"
-  CALL child_xml%setName(str_name) 
+  CALL child_xml%setName(str_name)
   child_xml%nAttr=0
   child_xml%parent => current_xml
 
@@ -896,9 +981,9 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   CALL h5%fwrite(CHAR(mesh%name)//'->vertices',mesh%vertices)
 
   ! TOPOLOGY
-  current_xml => xmle%children(2)
+  current_xml => xmle%children(TOPOLOGY_IDX)
   str_name="Topology"
-  CALL current_xml%setName(str_name) 
+  CALL current_xml%setName(str_name)
   current_xml%nAttr=0
   current_xml%parent => xmle
 
@@ -919,12 +1004,12 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
 
     str_name= "NodesPerElement"
     str_value = nverts
-    CALL current_xml%setAttribute(str_name, str_value)    
+    CALL current_xml%setAttribute(str_name, str_value)
 
     ALLOCATE(current_xml%children(1))
     child_xml => current_xml%children(1)
     str_name="DataItem"
-    CALL child_xml%setName(str_name) 
+    CALL child_xml%setName(str_name)
     child_xml%nAttr=0
     child_xml%parent => current_xml
 
@@ -971,7 +1056,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     ALLOCATE(current_xml%children(1))
     child_xml => current_xml%children(1)
     str_name="DataItem"
-    CALL child_xml%setName(str_name) 
+    CALL child_xml%setName(str_name)
     child_xml%nAttr=0
     child_xml%parent => current_xml
 
@@ -1000,25 +1085,25 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/cells"
 
     ALLOCATE(vertex_list_1d(nverts))
-    vctr = 1
+    ivert = 1
     DO i = 1, ncells
       nverts = SIZE(mesh%cells(i)%vertex_list)
       ! Convert 1 based to 0 based index
-      vertex_list_1d(vctr) = mesh%cells(i)%vertex_list(1)
-      vertex_list_1d(vctr + 1 : vctr + nverts - 1) = mesh%cells(i)%vertex_list(2:) - 1
-      vctr = vctr + nverts
+      vertex_list_1d(ivert) = mesh%cells(i)%vertex_list(1)
+      vertex_list_1d(ivert + 1 : ivert + nverts - 1) = mesh%cells(i)%vertex_list(2:) - 1
+      ivert = ivert + nverts
     ENDDO
     CALL h5%fwrite(CHAR(mesh%name)//'->cells',vertex_list_1d)
     DEALLOCATE(vertex_list_1d)
   ENDIF
 
-  child_ctr = 3
+  ichild = 3
 
   ! MATERIAL ID
   IF(ALLOCATED(mesh%material_ids))THEN
-    current_xml => xmle%children(child_ctr)
+    current_xml => xmle%children(ichild)
     str_name="Attribute"
-    CALL current_xml%setName(str_name) 
+    CALL current_xml%setName(str_name)
     current_xml%nAttr=0
     current_xml%parent => xmle
 
@@ -1030,10 +1115,10 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     str_value = "MaterialID"
     CALL current_xml%setAttribute(str_name, str_value)
 
-    ALLOCATE(current_xml%children(child_ctr))
-    child_xml => current_xml%children(child_ctr)
+    ALLOCATE(current_xml%children(ichild))
+    child_xml => current_xml%children(ichild)
     str_name="DataItem"
-    CALL child_xml%setName(str_name) 
+    CALL child_xml%setName(str_name)
     child_xml%nAttr=0
     child_xml%parent => current_xml
 
@@ -1063,20 +1148,20 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     vertex_list_1d = mesh%material_ids - 1
     CALL h5%fwrite(CHAR(mesh%name)//'->material_id',vertex_list_1d)
     DEALLOCATE(vertex_list_1d)
-    child_ctr = child_ctr + 1
+    ichild = ichild + 1
   ENDIF
 
   ! CELL SETS
   IF(ALLOCATED(mesh%cell_sets))THEN
-    DO i=child_ctr, nchildren
+    DO i=ichild, nchildren
       current_xml => xmle%children(i)
       str_name="Set"
-      CALL current_xml%setName(str_name) 
+      CALL current_xml%setName(str_name)
       current_xml%nAttr=0
       current_xml%parent => xmle
 
       str_name= "Name"
-      str_value = mesh%cell_sets(i - child_ctr + 1)%name
+      str_value = mesh%cell_sets(i - ichild + 1)%name
       CALL current_xml%setAttribute(str_name, str_value)
 
       str_name= "SetType"
@@ -1086,7 +1171,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
       ALLOCATE(current_xml%children(i))
       child_xml => current_xml%children(i)
       str_name="DataItem"
-      CALL child_xml%setName(str_name) 
+      CALL child_xml%setName(str_name)
       child_xml%nAttr=0
       child_xml%parent => current_xml
 
@@ -1095,7 +1180,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
       CALL child_xml%setAttribute(str_name, str_value)
 
       str_name="Dimensions"
-      ncells = SIZE(mesh%cell_sets(i-child_ctr+1)%cell_list)
+      ncells = SIZE(mesh%cell_sets(i-ichild+1)%cell_list)
       str_value = ncells
       CALL child_xml%setAttribute(str_name, str_value)
 
@@ -1109,12 +1194,12 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
 
       j = LEN_TRIM(strpath)
       charpath = CHAR(strpath)
-      child_xml%content = charpath(1:j-4)//"h5:/"//mesh%name//"/"//mesh%cell_sets(i-child_ctr+1)%name
+      child_xml%content = charpath(1:j-4)//"h5:/"//mesh%name//"/"//mesh%cell_sets(i-ichild+1)%name
 
       ALLOCATE(cell_list_1d(ncells))
       ! Convert 1 based to 0 based index
-      cell_list_1d = mesh%cell_sets(i-child_ctr+1)%cell_list - 1
-      CALL h5%fwrite(CHAR(mesh%name)//'->'//CHAR(mesh%cell_sets(i-child_ctr+1)%name),cell_list_1d)
+      cell_list_1d = mesh%cell_sets(i-ichild+1)%cell_list - 1
+      CALL h5%fwrite(CHAR(mesh%name)//'->'//CHAR(mesh%cell_sets(i-ichild+1)%name),cell_list_1d)
       DEALLOCATE(cell_list_1d)
     ENDDO
   ENDIF
@@ -1143,7 +1228,7 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
     DO i=1,SIZE(mesh%children)
       ! Set attributes then recurse
       str_name="Grid"
-      CALL xmle%children(i)%setName(str_name) 
+      CALL xmle%children(i)%setName(str_name)
       xmle%children(i)%nAttr=0
       xmle%children(i)%parent => xmle
       str_name='Name'
@@ -1157,7 +1242,7 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
       ENDIF
       CALL xmle%children(i)%setAttribute(str_name, str_value)
 
-      CALL create_xml_hierarchy_XDMFFileType(mesh%children(i), xmle%children(i), strpath, h5) 
+      CALL create_xml_hierarchy_XDMFFileType(mesh%children(i), xmle%children(i), strpath, h5)
     ENDDO
   ELSE
     CALL export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
@@ -1177,7 +1262,7 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
   TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
-  TYPE(XMLElementType),POINTER :: xmle 
+  TYPE(XMLElementType),POINTER :: xmle
   TYPE(StringType) :: str_name, str_value
   INTEGER(SNK) :: i
   CHARACTER(LEN=200) :: charpath
@@ -1191,7 +1276,8 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   ! Create XML file
   CALL xml%init(ADJUSTL(strpath),.FALSE.)
   xmle => xml%root
-  REQUIRE(ASSOCIATED(xmle))
+  IF(.NOT.ASSOCIATED(xmle)) CALL eXDMF%raiseError(modName//'::'//myName// &
+    ' - XML data init encountered an error. Pointer to root not associated.')
   !   Set Xdmf
   str_name='Xdmf'
   CALL xmle%setName(str_name)
