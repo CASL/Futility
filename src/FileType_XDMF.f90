@@ -776,6 +776,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   IF( ALLOCATED(thismesh%material_ids) ) DEALLOCATE(thismesh%material_ids)
   IF( ALLOCATED(thismesh%cell_sets) ) THEN
     DO i=1, SIZE(thismesh%cell_sets)
+      CALL thismesh%cell_sets(i)%name%clear()
       DEALLOCATE(thismesh%cell_sets(i)%cell_list)
     ENDDO
     DEALLOCATE(thismesh%cell_sets)
