@@ -759,6 +759,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
+  thismesh%boundingBox = 0.0_SDK
   IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
   IF(ASSOCIATED(thismesh%children)) THEN
     DO i=1,SIZE(thismesh%children)

@@ -277,6 +277,9 @@ SUBROUTINE test_two_pins()
   ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are associated")
   ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
   ASSERT(.NOT.ASSOCIATED(pin1%parent), "Parent is associated")
+  DO i = 1,4
+    ASSERT(pin1%boundingBox(i) == 0.0_SDK, "BB not reset")
+  ENDDO
   !     Check that clear did not interfere with the original mesh
   pin1 = mesh%children(1)
   ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
