@@ -50,8 +50,7 @@ IMPLICIT NONE
 PRIVATE !Default private for module contents
 !
 ! List of Public items
-PUBLIC :: SBK,SNK,SLK,SIK,SSK,SDK,SRK,SCK,SGK,SFK
-PUBLIC :: FSCALE1,FSCALE2,FSCALE3,FSCALE4,FSCALE5,FSCALE6,FSCALE7,FSCALE8,FSCALE9
+PUBLIC :: SBK,SNK,SLK,SIK,SSK,SDK,SRK
 PUBLIC :: EPSS
 PUBLIC :: EPSD
 PUBLIC :: EPSREAL
@@ -61,8 +60,6 @@ PUBLIC :: OPERATOR(.APPROXEQA.)
 PUBLIC :: OPERATOR(.APPROXEQR.)
 PUBLIC :: OPERATOR(.APPROXLE.)
 PUBLIC :: OPERATOR(.APPROXGE.)
-PUBLIC :: OPERATOR(.APPROXEQDS.)
-PUBLIC :: OPERATOR(.APPROXEQRDS.)
 PUBLIC :: OPERATOR(==)
 PUBLIC :: OPERATOR(/=)
 PUBLIC :: ASSIGNMENT(=)
@@ -142,41 +139,6 @@ INTEGER,PARAMETER :: SRK=SDK
 INTEGER,PARAMETER :: SRK=SSK
 #endif
 
-!> @brief Mixed-precision REAL kind
-!>
-!> Optionally allow single precision for the variables of large
-!> memory footprint. SGK, SCK and SFK are defined for different
-!> variables of interest and may be changed separately for testing.
-!> The scaling factors (FSCALE#) are only used in unit tests to
-!> increase the tolerance for mixed precisions.
-#ifdef MIXPRECISION
-INTEGER,PARAMETER :: SGK=SSK
-INTEGER,PARAMETER :: SCK=SSK
-INTEGER,PARAMETER :: SFK=SSK
-REAL(SDK),PARAMETER :: FSCALE9=1.e9_SDK
-REAL(SDK),PARAMETER :: FSCALE8=1.e8_SDK
-REAL(SDK),PARAMETER :: FSCALE7=1.e7_SDK
-REAL(SDK),PARAMETER :: FSCALE6=1.e6_SDK
-REAL(SDK),PARAMETER :: FSCALE5=1.e5_SDK
-REAL(SDK),PARAMETER :: FSCALE4=1.e4_SDK
-REAL(SDK),PARAMETER :: FSCALE3=1.e3_SDK
-REAL(SDK),PARAMETER :: FSCALE2=1.e2_SDK
-REAL(SDK),PARAMETER :: FSCALE1=1.e1_SDK
-#else
-INTEGER,PARAMETER :: SGK=SRK
-INTEGER,PARAMETER :: SCK=SRK
-INTEGER,PARAMETER :: SFK=SRK
-REAL(SDK),PARAMETER :: FSCALE9=1._SDK
-REAL(SDK),PARAMETER :: FSCALE8=1._SDK
-REAL(SDK),PARAMETER :: FSCALE7=1._SDK
-REAL(SDK),PARAMETER :: FSCALE6=1._SDK
-REAL(SDK),PARAMETER :: FSCALE5=1._SDK
-REAL(SDK),PARAMETER :: FSCALE4=1._SDK
-REAL(SDK),PARAMETER :: FSCALE3=1._SDK
-REAL(SDK),PARAMETER :: FSCALE2=1._SDK
-REAL(SDK),PARAMETER :: FSCALE1=1._SDK
-#endif
-
 !> @brief INTEGER kind for integers
 !>
 !> The selected integer kind ensuring integers up to 10^(N_INT_ORDER)
@@ -235,14 +197,6 @@ INTERFACE OPERATOR(.APPROXEQA.)
   MODULE PROCEDURE approxeq_abs_mixds
 ENDINTERFACE
 
-!> @brief Interface for the operator for "approximately equals" for double
-!> real kinds. Performs absolute comparison to EPSS if mixed precision
-!> is used. Otherwise compared to EPSREAL.
-INTERFACE OPERATOR(.APPROXEQDS.)
-  !> @copybrief IntrType::approxeq_abs_double2single
-  MODULE PROCEDURE approxeq_abs_double2single
-ENDINTERFACE
-
 !> @brief Interface for the operator for "approximately equals" for intrinsic
 !> real kinds. Performs relative comparison to EPSREAL
 INTERFACE OPERATOR(.APPROXEQR.)
@@ -254,14 +208,6 @@ INTERFACE OPERATOR(.APPROXEQR.)
   MODULE PROCEDURE approxeq_rel_mixsd
   !> @copybrief IntrType::approxeq_rel_mixds
   MODULE PROCEDURE approxeq_rel_mixds
-ENDINTERFACE
-
-!> @brief Interface for the operator for "approximately equals" for double
-!> real kinds. Performs relative comparison to EPSS if mixed precision
-!> is used. Otherwise compared to EPSREAL.
-INTERFACE OPERATOR(.APPROXEQRDS.)
-  !> @copybrief IntrType::approxeq_rel_double2single
-  MODULE PROCEDURE approxeq_rel_double2single
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -479,7 +425,7 @@ ELEMENTAL FUNCTION approxeq_abs_mixsd(a,b) RESULT(bool)
   REAL(SSK),INTENT(IN) :: a
   REAL(SDK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
-  bool=(ABS(a-b) <= EPSS)
+  bool=approxeq_abs_single(a, REAL(b,SSK))
 ENDFUNCTION approxeq_abs_mixsd
 !
 !-------------------------------------------------------------------------------
@@ -498,31 +444,8 @@ ELEMENTAL FUNCTION approxeq_abs_mixds(a,b) RESULT(bool)
   REAL(SDK),INTENT(IN) :: a
   REAL(SSK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
-  bool=(ABS(a-b) <= EPSS)
+  bool=approxeq_abs_single(REAL(a,SSK),b)
 ENDFUNCTION approxeq_abs_mixds
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing an absolute comparison of two
-!> double-precision reals with .APPROXEQA. using single precision criterion.
-!> @param a
-!> @param b
-!> @returns bool logical indicating if a and b are approximately equal
-!>
-!> This routine just does a simple absolute comparison using an epsilon that is
-!> a compile time constant. It should be used whenever possible because it has
-!> the least overhead. However, it is not appropriate to use when @c a and @c b
-!> are either very large or very small.
-!>
-ELEMENTAL FUNCTION approxeq_abs_double2single(a,b) RESULT(bool)
-  REAL(SDK),INTENT(IN) :: a
-  REAL(SDK),INTENT(IN) :: b
-  LOGICAL(SBK) :: bool
-#ifdef MIXPRECISION
-  bool=(ABS(a-b) <= EPSS)
-#else
-  bool=(ABS(a-b) <= EPSD)
-#endif 
-ENDFUNCTION approxeq_abs_double2single
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing a relative comparison of two
@@ -583,9 +506,7 @@ ELEMENTAL FUNCTION approxeq_rel_mixsd(a,b) RESULT(bool)
   REAL(SDK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
   REAL(SDK) :: eps
-  eps=MAX(ABS(a),ABS(b))*EPSS
-  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSS
-  bool=(ABS(a-b) <= eps)
+  bool=approxeq_rel_single(a, REAL(b,SSK))
 ENDFUNCTION approxeq_rel_mixsd
 !
 !-------------------------------------------------------------------------------
@@ -605,38 +526,8 @@ ELEMENTAL FUNCTION approxeq_rel_mixds(a,b) RESULT(bool)
   REAL(SSK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
   REAL(SDK) :: eps
-  eps=MAX(ABS(a),ABS(b))*EPSS
-  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSS
-  bool=(ABS(a-b) <= eps)
+  bool=approxeq_rel_single(REAL(a,SSK),b)
 ENDFUNCTION approxeq_rel_mixds
-!
-!-------------------------------------------------------------------------------
-!> @brief Defines the operation for performing a relative comparison of two
-!> double-precision reals with .APPROXEQR. using single-precision criterion.
-!> @param a
-!> @param b
-!> @returns bool logical indicating if a and b are approximately equal
-!>
-!> This performs a relative comparison by scaling the default epsilon value to
-!> the size of the larger of the two. It should be used when @c and @b are of
-!> the same magnitude and very large or very small. If either @c a or @c b is
-!> zero (exactly) then this routine is equivalent to an absolute comparison.
-!>
-ELEMENTAL FUNCTION approxeq_rel_double2single(a,b) RESULT(bool)
-  REAL(SDK),INTENT(IN) :: a
-  REAL(SDK),INTENT(IN) :: b
-  LOGICAL(SBK) :: bool
-  REAL(SDK) :: eps
-#ifdef MIXPRECISION
-  eps=MAX(ABS(a),ABS(b))*EPSS
-  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSS
-  bool=(ABS(a-b) <= eps)
-#else
-  eps=MAX(ABS(a),ABS(b))*EPSD
-  IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSD
-  bool=(ABS(a-b) <= eps)
-#endif
-ENDFUNCTION approxeq_rel_double2single
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing a comparison of two single
