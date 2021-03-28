@@ -19,7 +19,6 @@ USE Futility_DBC
 USE ISO_FORTRAN_ENV
 USE IntrType
 USE Strings
-USE FileType_Base
 USE FileType_XML
 USE FileType_HDF5
 USE ParameterLists
@@ -80,8 +79,10 @@ TYPE :: XDMFMeshType
   INTEGER(SNK), ALLOCATABLE :: material_ids(:)
   !> Named sets within the mesh
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
-  !> Child and parent meshes
-  TYPE(XDMFMeshType), POINTER :: parent => NULL(), children(:) => NULL()
+  !> Parent mesh
+  TYPE(XDMFMeshType), POINTER :: parent => NULL()
+  !> Child meshes
+  TYPE(XDMFMeshType), POINTER :: children(:) => NULL()
   CONTAINS
     !> @copybrief XDMFMeshType::clear_XDMFMeshType
     !> @copydoc XDMFMeshType::clear_XDMFMeshType
@@ -95,22 +96,11 @@ TYPE :: XDMFMeshType
 ENDTYPE XDMFMeshType
 
 !> The XDMF File type
-TYPE,EXTENDS(BaseFileType) :: XDMFFileType
+TYPE :: XDMFFileType
 !
 !List of type bound procedures
 !
-!Import and export are the only procedures used.
-!open, close, and delete are members of the base type.
   CONTAINS
-    !> @copybrief FileType_XDMF::fopen_XDMFFileType
-    !> @copydoc FileType_XDMF::fopen_XDMFFileType
-    PROCEDURE,PASS :: fopen => fopen_XDMFFileType
-    !> @copybrief FileType_XDMF::fclose_XDMFFileType
-    !> @copydoc FileType_XDMF::fclose_XDMFFileType
-    PROCEDURE,PASS :: fclose => fclose_XDMFFileType
-    !> @copybrief FileType_XDMF::fdelete_XDMFFileType
-    !> @copydoc FileType_XDMF::fdelete_XDMFFileType
-    PROCEDURE,PASS :: fdelete => fdelete_XDMFFileType
     !> @copybrief FileType_XDMF::importFromDisk_XDMFFileType
     !> @copydoc FileType_XDMF::importFromDisk_XDMFFileType
     PROCEDURE,PASS :: importFromDisk => importFromDisk_XDMFFileType
@@ -130,36 +120,6 @@ ENDINTERFACE
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief Opens the XDMF file type for I/O
-!> @param file the XDMF file type object
-!>
-SUBROUTINE fopen_XDMFFileType(file)
-  CHARACTER(LEN=*),PARAMETER :: myName='fopen_XDMFFileType'
-  CLASS(XDMFFileType),INTENT(INOUT) :: file
-  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.')
-ENDSUBROUTINE fopen_XDMFFileType
-!
-!-------------------------------------------------------------------------------
-!> @brief Closes the XDMF file object
-!> @param file the XDMF file object
-!>
-SUBROUTINE fclose_XDMFFileType(file)
-  CHARACTER(LEN=*),PARAMETER :: myName='fclose_XDMFFileType'
-  CLASS(XDMFFileType),INTENT(INOUT) :: file
-  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.')
-ENDSUBROUTINE fclose_XDMFFileType
-!
-!-------------------------------------------------------------------------------
-!> @brief Deletes the XDMF file from disk
-!> @param file the XDMF file object
-!>
-SUBROUTINE fdelete_XDMFFileType(file)
-  CHARACTER(LEN=*),PARAMETER :: myName='fdelete_XDMFFileType'
-  CLASS(XDMFFileType),INTENT(INOUT) :: file
-  CALL eXDMF%raiseError(modName//'::'//myName//' - Not implemented.')
-ENDSUBROUTINE fdelete_XDMFFileType
-!
-!-------------------------------------------------------------------------------
 !> @brief Initializes the XDMFTopologyList
 !>
 SUBROUTINE init_XDMFTopologyList()
@@ -167,18 +127,18 @@ SUBROUTINE init_XDMFTopologyList()
   ! id is XDMF topology id,
   ! n is number of vertices,
   ! multiple valid names exist for the same topology, ex: Tri_6 == Triangle_6
-  CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4_SLK)
-  CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3_SLK)
-  CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36_SLK)
-  CALL XDMFTopologyList%add('Topology->Triangle_6->n'           , 6_SLK)
-  CALL XDMFTopologyList%add('Topology->Tri_6->id'               ,36_SLK)
-  CALL XDMFTopologyList%add('Topology->Tri_6->n'                , 6_SLK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral->id'       , 5_SLK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral->n'        , 4_SLK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->id'     ,37_SLK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8_SLK)
-  CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37_SLK)
-  CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8_SLK)
+  CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4_SNK)
+  CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3_SNK)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36_SNK)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->n'           , 6_SNK)
+  CALL XDMFTopologyList%add('Topology->Tri_6->id'               ,36_SNK)
+  CALL XDMFTopologyList%add('Topology->Tri_6->n'                , 6_SNK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->id'       , 5_SNK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->n'        , 4_SNK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->id'     ,37_SNK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8_SNK)
+  CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37_SNK)
+  CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8_SNK)
   CALL XDMFTopologyList%add('XDMFID->4' ,'Triangle'       )
   CALL XDMFTopologyList%add('XDMFID->36','Triangle_6'     )
   CALL XDMFTopologyList%add('XDMFID->5' ,'Quadrilateral'  )
@@ -186,10 +146,30 @@ SUBROUTINE init_XDMFTopologyList()
 ENDSUBROUTINE init_XDMFTopologyList
 !
 !-------------------------------------------------------------------------------
+!> @brief Returns the hdf5 group where heavy data is stored
+!> @param xmle XML element storing the file path and group to the heavy data
+!> @returns group The hdf5 group where the heavy data is stored
+!>
+FUNCTION getH5GroupFromXMLContent(xmle) RESULT(group)
+  TYPE(XMLElementType),INTENT(IN) :: xmle
+  TYPE(StringType) :: content, group
+  TYPE(StringType), ALLOCATABLE :: segments(:)
+  ! Content of xmle should be the h5 filename with the
+  ! path to the data
+  content=xmle%getContent()
+  ! Split file from group data
+  segments=content%split(':')
+  ! Just grab the group data
+  group=segments(2)%substr(2,LEN(segments(2)))
+  ! Replace newline char
+  group = group%replace(NEW_LINE("A"),"")
+ENDFUNCTION getH5GroupFromXMLContent
+!
+!-------------------------------------------------------------------------------
 !> @brief Create the XDMF mesh object
 !> @param mesh the parent mesh
 !> @param xmle the child XML element
-!> @param h5 the HDF5 file containing mesh data
+!> @param h5 the HDF5 fil containing mesh data
 !>
 RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
   CHARACTER(LEN=*),PARAMETER :: myName='create_XDMFMesh_from_file'
@@ -232,7 +212,7 @@ RECURSIVE SUBROUTINE create_XDMFMesh_from_file(mesh, xmle, h5)
     ENDIF
   ELSE
     CALL eXDMF%raiseError(modName//'::'//myName// &
-      ' - Expected the XML element to have children.')
+      ' - Expected the XML element '//mesh%name//' to have children.')
   ENDIF
 ENDSUBROUTINE create_XDMFMesh_from_file
 !
@@ -248,11 +228,11 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(XMLElementType), INTENT(INOUT) :: xmle
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
-  TYPE(StringType) :: elname, strIn, strOut, content, group, dtype, toponame, &
+  TYPE(StringType) :: elname, strIn, strOut, group, dtype, toponame, &
     xdmf_id_str
-  TYPE(StringType),ALLOCATABLE :: strArray(:),segments(:)
-  INTEGER(SLK) :: nverts, ncells, xdmf_id,ivert,i,j
-  INTEGER(SNK) :: ncell_sets
+  TYPE(StringType),ALLOCATABLE :: strArray(:)
+  INTEGER(SLK) :: nverts, ncells,ivert,i,j
+  INTEGER(SNK) :: ncell_sets, xdmf_id, verts_per_cell
   INTEGER(SNK),ALLOCATABLE :: dshape(:)
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
   REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
@@ -268,344 +248,91 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   DO i=1,SIZE(xmle_children)
     elname=xmle_children(i)%name%upper()
     SELECTCASE(ADJUSTL(elname))
-      CASE("GEOMETRY")
-        ! GeometryType
-        strIn='GeometryType'
-        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-        IF(strOut /= 'XYZ') THEN
-          CALL eXDMF%raiseError(modName//'::'//myName// &
-            ' - GeometryType only supports XYZ right now.')
-        ENDIF
+    CASE("GEOMETRY")
+      ! GeometryType
+      strIn='GeometryType'
+      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'XYZ') THEN
+        CALL eXDMF%raiseError(modName//'::'//myName// &
+          ' - GeometryType only supports XYZ right now.')
+      ENDIF
+      ! Format
+      CALL xmle_children(i)%getChildren(ele_children)
+      IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+        ' - Expected Geometry to have only one child.')
+      strIn='Format'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'HDF') THEN
+        CALL eXDMF%raiseError(modName//'::'//myName// &
+          ' - only supports HDF5 geometry data right now.')
+      ENDIF
+      ! Vertex Data
+      strIn='Dimensions'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      strArray=strOut%split()
+      IF(strArray(2) /= '3') CALL eXDMF%raiseError(modName//'::'//myName//&
+        ' - Expected vertex data to be 3 dimensional.')
+      nverts=strArray(1)%stoi()
+      group=getH5GroupFromXMLContent(ele_children(1))
+      ! Make sure the h5 path exists
+      IF(.NOT.h5%pathExists(CHAR(group)))THEN
+        CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - HDF5 group containing vertex data does not exist in h5 file.')
+      ENDIF
+      group = group%replace("/", "->")
+      ! Data shape
+      dshape=h5%getDataShape(CHAR(group))
+      IF(.NOT.(dshape(1) == 3 .AND. dshape(2) == nverts))THEN
+        CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - HDF5 vertex data shape does not match XDMF vertex data shape.')
+      ENDIF
+      ! Data type
+      dtype=h5%getDataType(CHAR(group))
+      IF(dtype == 'SSK') THEN
+        CALL h5%fread(CHAR(group),vals4_2d)
+      ELSE
+        CALL h5%fread(CHAR(group),vals8_2d)
+      ENDIF
+      ALLOCATE(mesh%vertices(3,nverts))
+      IF(dtype == 'SSK') THEN
+        mesh%vertices=vals4_2d
+        DEALLOCATE(vals4_2d)
+      ELSE
+        mesh%vertices=vals8_2d
+        DEALLOCATE(vals8_2d)
+      ENDIF
+    CASE("TOPOLOGY")
+      ! TopologyType
+      strIn='TopologyType'
+      CALL xmle_children(i)%getAttributeValue(strIn,toponame)
+      IF(toponame%upper() == 'MIXED') THEN
+        ! Mixed topology
         ! Format
         CALL xmle_children(i)%getChildren(ele_children)
         IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
-          ' - Expected Geometry to have only one child.')
-        strIn='Format'
-        CALL ele_children(1)%getAttributeValue(strIn,strOut)
-        IF(strOut /= 'HDF') THEN
-          CALL eXDMF%raiseError(modName//'::'//myName// &
-            ' - only supports HDF5 geometry data right now.')
-        ENDIF
-        ! Vertex Data
-        strIn='Dimensions'
-        CALL ele_children(1)%getAttributeValue(strIn,strOut)
-        strArray=strOut%split()
-        IF(strArray(2) /= '3') CALL eXDMF%raiseError(modName//'::'//myName//&
-          ' - Expected vertex data to be 3 dimensional.')
-        nverts=strArray(1)%stoi()
-        ! This is all string manipulation to get the h5 group
-        ! Content of ele_children should be the h5 filename with the
-        ! path to the vertex data
-        content=ele_children(1)%getContent()
-        ! Split file from group data
-        segments=content%split(':')
-        ! Just grab the group data
-        group=segments(2)%substr(2,LEN(segments(2)))
-        ! Replace newline char
-        group = group%replace(NEW_LINE("A"),"")
-        ! Make sure the h5 path exists
-        IF(.NOT.h5%pathExists(CHAR(group)))THEN
-          CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - HDF5 group containing vertex data does not exist in h5 file.')
-        ENDIF
-        group = group%replace("/", "->")
-        ! Data shape
-        dshape=h5%getDataShape(CHAR(group))
-        IF(.NOT.(dshape(1) == 3 .AND. dshape(2) == nverts))THEN
-          CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - HDF5 vertex data shape does not match XDMF vertex data shape.')
-        ENDIF
-        ! Data type
-        dtype=h5%getDataType(CHAR(group))
-        IF(dtype == 'SSK') THEN
-          CALL h5%fread(CHAR(group),vals4_2d)
-        ELSE
-          CALL h5%fread(CHAR(group),vals8_2d)
-        ENDIF
-        ALLOCATE(mesh%vertices(3,nverts))
-        IF(dtype == 'SSK') THEN
-          mesh%vertices=vals4_2d
-          DEALLOCATE(vals4_2d)
-        ELSE
-          mesh%vertices=vals8_2d
-          DEALLOCATE(vals8_2d)
-        ENDIF
-      CASE("TOPOLOGY")
-        ! TopologyType
-        strIn='TopologyType'
-        CALL xmle_children(i)%getAttributeValue(strIn,toponame)
-        IF(toponame%upper() == 'MIXED') THEN
-          ! Mixed topology
-          ! Format
-          CALL xmle_children(i)%getChildren(ele_children)
-          IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - Expected Topology to have only one child.')
-          strIn='Format'
-          CALL ele_children(1)%getAttributeValue(strIn,strOut)
-          IF(strOut /= 'HDF') THEN
-            CALL eXDMF%raiseWarning(modName//'::'//myName// &
-              ' - only supports HDF5 topology data right now.')
-          ENDIF
-          ! Topology Data
-          strIn='NumberOfElements'
-          CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-          ncells=strOut%stoi()
-          ! This is all string manipulation to get the h5 group
-          ! Content of ele_children should be the h5 filename with the
-          ! path to the vertex data
-          content=ele_children(1)%getContent()
-          ! Split file from group data
-          segments=content%split(':')
-          ! Just grab the group data
-          group=segments(2)%substr(2,LEN(segments(2)))
-          ! Replace newline char
-          group = group%replace(NEW_LINE("A"),"")
-          ! Make sure the h5 path exists
-          IF(.NOT.h5%pathExists(CHAR(group)))THEN
-            CALL eXDMF%raiseError(modName//'::'//myName//&
-              ' - HDF5 group containing topology data does not exist in h5 file.')
-          ENDIF
-          group = group%replace("/", "->")
-          ! Data shape
-          dshape=h5%getDataShape(CHAR(group))
-          IF(SIZE(dshape) /= 1)THEN
-            CALL eXDMF%raiseError(modName//'::'//myName//&
-              ' - HDF5 mixed topology data shape does not match XDMF data shape.')
-          ENDIF
-          ! Data type
-          dtype=h5%getDataType(CHAR(group))
-          IF(dtype == 'SNK') THEN
-            CALL h5%fread(CHAR(group),ivals4_1d)
-          ELSE
-            CALL h5%fread(CHAR(group),ivals8_1d)
-          ENDIF
-          ALLOCATE(mesh%cells(ncells))
-          ivert = 1
-          IF(dtype == 'SNK') THEN
-            DO j=1,ncells
-              xdmf_id = ivals4_1d(ivert)
-              xdmf_id_str = xdmf_id
-              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
-                CALL eXDMF%raiseError(modName//'::'//myName//&
-                  ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
-              ELSE
-                CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
-                CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
-              ENDIF
-              ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
-              mesh%cells(j)%vertex_list(1) = xdmf_id
-              mesh%cells(j)%vertex_list(2:nverts+1) = ivals4_1d(ivert:ivert+nverts) + 1
-              ivert = ivert + nverts
-            ENDDO
-            DEALLOCATE(ivals4_1d)
-          ELSE
-            DO j=1,ncells
-              xdmf_id = ivals8_1d(ivert)
-              xdmf_id_str = xdmf_id
-              IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
-                CALL eXDMF%raiseError(modName//'::'//myName//&
-                  ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
-              ELSE
-                CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
-                CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
-              ENDIF
-              ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
-              mesh%cells(j)%vertex_list(1) = xdmf_id
-              mesh%cells(j)%vertex_list(2:nverts+1) = ivals8_1d(ivert+1:ivert+nverts) + 1
-              ivert = ivert + nverts + 1
-            ENDDO
-            DEALLOCATE(ivals8_1d)
-          ENDIF
-        ELSE
-          ! Single topology
-          IF(.NOT.XDMFTopologyList%has(CHAR(toponame))) CALL eXDMF%raiseError(modName// &
-            '::'//myName//' - Topology type '//TRIM(strOut)//' not supported')
-          ! XDMF ID
-          CALL XDMFTopologyList%get(CHAR(toponame)//'->id', xdmf_id)
-          ! Format
-          CALL xmle_children(i)%getChildren(ele_children)
-          IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - Expected Topology to have only one child.')
-          strIn='Format'
-          CALL ele_children(1)%getAttributeValue(strIn,strOut)
-          IF(strOut /= 'HDF') THEN
-            CALL eXDMF%raiseWarning(modName//'::'//myName// &
-              ' - only supports HDF5 topology data right now.')
-          ENDIF
-          ! Topology Data
-          strIn='NumberOfElements'
-          CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-          ncells=strOut%stoi()
-          strIn='NodesPerElement'
-          CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-          nverts=strOut%stoi()
-          ! This is all string manipulation to get the h5 group
-          ! Content of ele_children should be the h5 filename with the
-          ! path to the vertex data
-          content=ele_children(1)%getContent()
-          ! Split file from group data
-          segments=content%split(':')
-          ! Just grab the group data
-          group=segments(2)%substr(2,LEN(segments(2)))
-          ! Replace newline char
-          group = group%replace(NEW_LINE("A"),"")
-          ! Make sure the h5 path exists
-          IF(.NOT.h5%pathExists(CHAR(group)))THEN
-            CALL eXDMF%raiseError(modName//'::'//myName//&
-              ' - HDF5 group containing topology data does not exist in h5 file.')
-          ENDIF
-          group = group%replace("/", "->")
-          ! Data shape
-          dshape=h5%getDataShape(CHAR(group))
-          IF(.NOT.(dshape(1) == nverts .AND. dshape(2) == ncells))THEN
-            CALL eXDMF%raiseError(modName//'::'//myName//&
-              ' - HDF5 mixed topology data shape does not match XDMF data shape.')
-          ENDIF
-          ! Data type
-          dtype=h5%getDataType(CHAR(group))
-          IF(dtype == 'SNK') THEN
-            CALL h5%fread(CHAR(group),ivals4_2d)
-          ELSE
-            CALL h5%fread(CHAR(group),ivals8_2d)
-          ENDIF
-          ALLOCATE(mesh%cells(ncells))
-          IF(dtype == 'SNK') THEN
-            DO j=1,ncells
-              ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
-              mesh%cells(j)%vertex_list(1) = xdmf_id
-              ! Account for 0 based to 1 based index switch
-              mesh%cells(j)%vertex_list(2:) = ivals4_2d(:, j) + 1
-            ENDDO
-            DEALLOCATE(ivals4_2d)
-          ELSE
-            DO j=1,ncells
-              ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
-              mesh%cells(j)%vertex_list(1) = xdmf_id
-              ! Account for 0 based to 1 based index switch
-              mesh%cells(j)%vertex_list(2:) = ivals8_2d(:, j) + 1
-            ENDDO
-            DEALLOCATE(ivals8_2d)
-          ENDIF
-          mesh%singleTopology = .TRUE.
-        ENDIF
-      CASE("ATTRIBUTE")
-        strIn='Name'
-        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-        IF(strOut%upper() == 'MATERIALID') THEN
-          ! Format
-          CALL xmle_children(i)%getChildren(ele_children)
-          IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - Expected Attribute to have only one child.')
-          strIn='Format'
-          CALL ele_children(1)%getAttributeValue(strIn,strOut)
-          IF(strOut /= 'HDF') THEN
-            CALL eXDMF%raiseWarning(modName//'::'//myName// &
-              ' - only supports HDF5 material data right now.')
-          ENDIF
-          ! Material Data
-          strIn='Dimensions'
-          CALL ele_children(1)%getAttributeValue(strIn,strOut)
-          ncells=strOut%stoi()
-          IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells == SIZE(mesh%cells))) THEN
-            CALL eXDMF%raiseError(modName//'::'//myName//&
-              ' - material data is before topology data, or is the wrong size.')
-          ENDIF
-          ! This is all string manipulation to get the h5 group
-          ! Content of ele_children should be the h5 filename with the
-          ! path to the vertex data
-          content=ele_children(1)%getContent()
-          ! Split file from group data
-          segments=content%split(':')
-          ! Just grab the group data
-          group=segments(2)%substr(2,LEN(segments(2)))
-          ! Replace newline char
-          group = group%replace(NEW_LINE("A"),"")
-          ! Make sure the h5 path exists
-          IF(.NOT.h5%pathExists(CHAR(group)))THEN
-            CALL eXDMF%raiseError(modName//'::'//myName//&
-              ' - HDF5 group containing material data does not exist in h5 file.')
-          ENDIF
-          group = group%replace("/", "->")
-          ! Data shape
-          dshape=h5%getDataShape(CHAR(group))
-          IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
-            CALL eXDMF%raiseError(modName//'::'//myName//&
-              ' - material data in h5 file is the wrong size or shape.')
-          ENDIF
-          ! Data type
-          dtype=h5%getDataType(CHAR(group))
-          IF(dtype == 'SNK') THEN
-            CALL h5%fread(CHAR(group),ivals4_1d)
-          ELSE
-            CALL h5%fread(CHAR(group),ivals8_1d)
-          ENDIF
-          ALLOCATE(mesh%material_ids(ncells))
-          IF(dtype == 'SNK') THEN
-            ! Account for 0 based to 1 based index switch
-            mesh%material_ids = ivals4_1d + 1
-            DEALLOCATE(ivals4_1d)
-          ELSE
-            ! Account for 0 based to 1 based index switch
-            ! material ids will not exceed MAX(INTEGER(4)),
-            ! so narrowing will not occur.
-            mesh%material_ids = ivals8_1d + 1
-            DEALLOCATE(ivals8_1d)
-          ENDIF
-        ELSE
-          CALL eXDMF%raiseWarning(modName//'::'//myName//' - mesh attribute '//&
-            TRIM(strOut)//' not supported')
-        ENDIF
-      CASE("SET")
-        ! SetType
-        strIn='SetType'
-        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-        IF(strOut /= 'Cell') THEN
-          CALL eXDMF%raiseWarning(modName//'::'//myName// &
-            ' - only supports SetType="Cell" right now.')
-        ENDIF
-        ! SetName
-        strIn='Name'
-        CALL xmle_children(i)%getAttributeValue(strIn,elname)
-        ! Format
-        CALL xmle_children(i)%getChildren(ele_children)
-        IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
-          ' - Expected Set to have only one child.')
-        strIn='Format'
+          ' - Expected Topology to have only one child.')
         strIn='Format'
         CALL ele_children(1)%getAttributeValue(strIn,strOut)
         IF(strOut /= 'HDF') THEN
           CALL eXDMF%raiseWarning(modName//'::'//myName// &
-            ' - only supports HDF5 cell set data right now.')
+            ' - only supports HDF5 topology data right now.')
         ENDIF
-        ! Cell Set Data
-        strIn='Dimensions'
-        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        ! Topology Data
+        strIn='NumberOfElements'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
         ncells=strOut%stoi()
-        IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells <= SIZE(mesh%cells))) THEN
-          CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - material data is before topology data, or is too big.')
-        ENDIF
-        ! This is all string manipulation to get the h5 group
-        ! Content of ele_children should be the h5 filename with the
-        ! path to the vertex data
-        content=ele_children(1)%getContent()
-        ! Split file from group data
-        segments=content%split(':')
-        ! Just grab the group data
-        group=segments(2)%substr(2,LEN(segments(2)))
-        ! Replace newline char
-        group = group%replace(NEW_LINE("A"),"")
+        group=getH5GroupFromXMLContent(ele_children(1))
         ! Make sure the h5 path exists
         IF(.NOT.h5%pathExists(CHAR(group)))THEN
           CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - HDF5 group containing set data does not exist in h5 file.')
+            ' - HDF5 group containing topology data does not exist in h5 file.')
         ENDIF
         group = group%replace("/", "->")
         ! Data shape
         dshape=h5%getDataShape(CHAR(group))
-        IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
+        IF(SIZE(dshape) /= 1)THEN
           CALL eXDMF%raiseError(modName//'::'//myName//&
-            ' - set data in h5 file is the wrong size or shape.')
+            ' - HDF5 mixed topology data shape does not match XDMF data shape.')
         ENDIF
         ! Data type
         dtype=h5%getDataType(CHAR(group))
@@ -614,48 +341,260 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         ELSE
           CALL h5%fread(CHAR(group),ivals8_1d)
         ENDIF
-        ! Resize cell sets if needed
-        ! This is expected to happen infrequently
-        IF(ALLOCATED(mesh%cell_sets)) THEN
-          ! Copy current sets to temp, deallocate current sets
-          ncell_sets = SIZE(mesh%cell_sets)
-          ALLOCATE(cell_sets_temp(ncell_sets))
-          DO j=1, ncell_sets
-            ALLOCATE(cell_sets_temp(j)%cell_list(SIZE(mesh%cell_sets(j)%cell_list)))
-            cell_sets_temp(j)%cell_list = mesh%cell_sets(j)%cell_list
-            cell_sets_temp(j)%name = mesh%cell_sets(j)%name
-            DEALLOCATE(mesh%cell_sets(j)%cell_list)
-          ENDDO
-          DEALLOCATE(mesh%cell_sets)
-          ! Reallocate cell sets to be on bigger and copy all old sets over
-          ALLOCATE(mesh%cell_sets(ncell_sets+1))
-          DO j=1, ncell_sets
-            ALLOCATE(mesh%cell_sets(j)%cell_list(SIZE(cell_sets_temp(j)%cell_list)))
-            mesh%cell_sets(j)%cell_list = cell_sets_temp(j)%cell_list
-            mesh%cell_sets(j)%name = cell_sets_temp(j)%name
-            DEALLOCATE(cell_sets_temp(j)%cell_list)
-            CALL cell_sets_temp(j)%name%clear()
-          ENDDO
-          DEALLOCATE(cell_sets_temp)
-        ELSE
-          ncell_sets = 0
-          ALLOCATE(mesh%cell_sets(1))
-        ENDIF
-        ! Add the one new cell set
-        mesh%cell_sets(ncell_sets + 1)%name = elname
-        ALLOCATE(mesh%cell_sets(ncell_sets + 1)%cell_list(ncells))
+        ALLOCATE(mesh%cells(ncells))
+        ivert = 1
         IF(dtype == 'SNK') THEN
-          ! Account for 0 based to 1 based index switch
-          mesh%cell_sets(ncell_sets + 1)%cell_list = ivals4_1d + 1
+          DO j=1,ncells
+            xdmf_id = ivals4_1d(ivert)
+            xdmf_id_str = xdmf_id
+            IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
+              CALL eXDMF%raiseError(modName//'::'//myName//&
+                ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
+            ELSE
+              CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
+              CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
+            ENDIF
+            ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
+            mesh%cells(j)%vertex_list(1) = xdmf_id
+            mesh%cells(j)%vertex_list(2:nverts+1) = ivals4_1d(ivert:ivert+nverts) + 1
+            ivert = ivert + nverts
+          ENDDO
           DEALLOCATE(ivals4_1d)
         ELSE
-          mesh%cell_sets(ncell_sets + 1)%cell_list = ivals8_1d + 1
+          DO j=1,ncells
+            ! This number should be well below HUGE(ivals8_1d), so narrowing
+            ! is not a concern
+            xdmf_id = ivals8_1d(ivert)
+            xdmf_id_str = xdmf_id
+            IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
+              CALL eXDMF%raiseError(modName//'::'//myName//&
+                ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
+            ELSE
+              CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
+              CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', &
+                verts_per_cell)
+            ENDIF
+            ALLOCATE(mesh%cells(j)%vertex_list(verts_per_cell+1))
+            mesh%cells(j)%vertex_list(1) = xdmf_id
+            mesh%cells(j)%vertex_list(2:verts_per_cell+1) = &
+              ivals8_1d(ivert+1:ivert+verts_per_cell) + 1
+            ivert = ivert + verts_per_cell + 1
+          ENDDO
           DEALLOCATE(ivals8_1d)
         ENDIF
-
-      CASE DEFAULT
+      ELSE
+        ! Single topology
+        IF(.NOT.XDMFTopologyList%has(CHAR(toponame))) CALL eXDMF%raiseError(modName// &
+          '::'//myName//' - Topology type '//TRIM(strOut)//' not supported')
+        ! XDMF ID
+        CALL XDMFTopologyList%get(CHAR(toponame)//'->id', xdmf_id)
+        ! Format
+        CALL xmle_children(i)%getChildren(ele_children)
+        IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - Expected Topology to have only one child.')
+        strIn='Format'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        IF(strOut /= 'HDF') THEN
+          CALL eXDMF%raiseWarning(modName//'::'//myName// &
+            ' - only supports HDF5 topology data right now.')
+        ENDIF
+        ! Topology Data
+        strIn='NumberOfElements'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+        ncells=strOut%stoi()
+        strIn='NodesPerElement'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+        nverts=strOut%stoi()
+        group=getH5GroupFromXMLContent(ele_children(1))
+        ! Make sure the h5 path exists
+        IF(.NOT.h5%pathExists(CHAR(group)))THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - HDF5 group containing topology data does not exist in h5 file.')
+        ENDIF
+        group = group%replace("/", "->")
+        ! Data shape
+        dshape=h5%getDataShape(CHAR(group))
+        IF(.NOT.(dshape(1) == nverts .AND. dshape(2) == ncells))THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - HDF5 mixed topology data shape does not match XDMF data shape.')
+        ENDIF
+        ! Data type
+        dtype=h5%getDataType(CHAR(group))
+        IF(dtype == 'SNK') THEN
+          CALL h5%fread(CHAR(group),ivals4_2d)
+        ELSE
+          CALL h5%fread(CHAR(group),ivals8_2d)
+        ENDIF
+        ALLOCATE(mesh%cells(ncells))
+        IF(dtype == 'SNK') THEN
+          DO j=1,ncells
+            ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
+            mesh%cells(j)%vertex_list(1) = xdmf_id
+            ! Account for 0 based to 1 based index switch
+            mesh%cells(j)%vertex_list(2:) = ivals4_2d(:, j) + 1
+          ENDDO
+          DEALLOCATE(ivals4_2d)
+        ELSE
+          DO j=1,ncells
+            ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
+            mesh%cells(j)%vertex_list(1) = xdmf_id
+            ! Account for 0 based to 1 based index switch
+            mesh%cells(j)%vertex_list(2:) = ivals8_2d(:, j) + 1
+          ENDDO
+          DEALLOCATE(ivals8_2d)
+        ENDIF
+        mesh%singleTopology = .TRUE.
+      ENDIF
+    CASE("ATTRIBUTE")
+      strIn='Name'
+      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+      IF(strOut%upper() == 'MATERIALID') THEN
+        ! Format
+        CALL xmle_children(i)%getChildren(ele_children)
+        IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - Expected Attribute to have only one child.')
+        strIn='Format'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        IF(strOut /= 'HDF') THEN
+          CALL eXDMF%raiseWarning(modName//'::'//myName// &
+            ' - only supports HDF5 material data right now.')
+        ENDIF
+        ! Material Data
+        strIn='Dimensions'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        ncells=strOut%stoi()
+        IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells == SIZE(mesh%cells))) THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - material data is before topology data, or is the wrong size.')
+        ENDIF
+        group=getH5GroupFromXMLContent(ele_children(1))
+        ! Make sure the h5 path exists
+        IF(.NOT.h5%pathExists(CHAR(group)))THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - HDF5 group containing material data does not exist in h5 file.')
+        ENDIF
+        group = group%replace("/", "->")
+        ! Data shape
+        dshape=h5%getDataShape(CHAR(group))
+        IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
+          CALL eXDMF%raiseError(modName//'::'//myName//&
+            ' - material data in h5 file is the wrong size or shape.')
+        ENDIF
+        ! Data type
+        dtype=h5%getDataType(CHAR(group))
+        IF(dtype == 'SNK') THEN
+          CALL h5%fread(CHAR(group),ivals4_1d)
+        ELSE
+          CALL h5%fread(CHAR(group),ivals8_1d)
+        ENDIF
+        ALLOCATE(mesh%material_ids(ncells))
+        IF(dtype == 'SNK') THEN
+          ! Account for 0 based to 1 based index switch
+          mesh%material_ids = ivals4_1d + 1
+          DEALLOCATE(ivals4_1d)
+        ELSE
+          ! Account for 0 based to 1 based index switch
+          ! material ids will not exceed MAX(INTEGER(4)),
+          ! so narrowing will not occur.
+          mesh%material_ids = ivals8_1d + 1
+          DEALLOCATE(ivals8_1d)
+        ENDIF
+      ELSE
+        CALL eXDMF%raiseWarning(modName//'::'//myName//' - mesh attribute '//&
+          TRIM(strOut)//' not supported')
+      ENDIF
+    CASE("SET")
+      ! SetType
+      strIn='SetType'
+      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'Cell') THEN
         CALL eXDMF%raiseWarning(modName//'::'//myName// &
-          ' - Unsupported data in XDMF file '//CHAR(elname))
+          ' - only supports SetType="Cell" right now.')
+      ENDIF
+      ! SetName
+      strIn='Name'
+      CALL xmle_children(i)%getAttributeValue(strIn,elname)
+      ! Format
+      CALL xmle_children(i)%getChildren(ele_children)
+      IF(SIZE(ele_children) /= 1) CALL eXDMF%raiseError(modName//'::'//myName//&
+        ' - Expected Set to have only one child.')
+      strIn='Format'
+      strIn='Format'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'HDF') THEN
+        CALL eXDMF%raiseWarning(modName//'::'//myName// &
+          ' - only supports HDF5 cell set data right now.')
+      ENDIF
+      ! Cell Set Data
+      strIn='Dimensions'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      ncells=strOut%stoi()
+      IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells <= SIZE(mesh%cells))) THEN
+        CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - material data is before topology data, or is too big.')
+      ENDIF
+      group=getH5GroupFromXMLContent(ele_children(1))
+      ! Make sure the h5 path exists
+      IF(.NOT.h5%pathExists(CHAR(group)))THEN
+        CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - HDF5 group containing set data does not exist in h5 file.')
+      ENDIF
+      group = group%replace("/", "->")
+      ! Data shape
+      dshape=h5%getDataShape(CHAR(group))
+      IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
+        CALL eXDMF%raiseError(modName//'::'//myName//&
+          ' - set data in h5 file is the wrong size or shape.')
+      ENDIF
+      ! Data type
+      dtype=h5%getDataType(CHAR(group))
+      IF(dtype == 'SNK') THEN
+        CALL h5%fread(CHAR(group),ivals4_1d)
+      ELSE
+        CALL h5%fread(CHAR(group),ivals8_1d)
+      ENDIF
+      ! Resize cell sets if needed
+      ! This is expected to happen infrequently
+      IF(ALLOCATED(mesh%cell_sets)) THEN
+        ! Copy current sets to temp, deallocate current sets
+        ncell_sets = SIZE(mesh%cell_sets)
+        ALLOCATE(cell_sets_temp(ncell_sets))
+        DO j=1, ncell_sets
+          ALLOCATE(cell_sets_temp(j)%cell_list(SIZE(mesh%cell_sets(j)%cell_list)))
+          cell_sets_temp(j)%cell_list = mesh%cell_sets(j)%cell_list
+          cell_sets_temp(j)%name = mesh%cell_sets(j)%name
+          DEALLOCATE(mesh%cell_sets(j)%cell_list)
+        ENDDO
+        DEALLOCATE(mesh%cell_sets)
+        ! Reallocate cell sets to be on bigger and copy all old sets over
+        ALLOCATE(mesh%cell_sets(ncell_sets+1))
+        DO j=1, ncell_sets
+          ALLOCATE(mesh%cell_sets(j)%cell_list(SIZE(cell_sets_temp(j)%cell_list)))
+          mesh%cell_sets(j)%cell_list = cell_sets_temp(j)%cell_list
+          mesh%cell_sets(j)%name = cell_sets_temp(j)%name
+          DEALLOCATE(cell_sets_temp(j)%cell_list)
+          CALL cell_sets_temp(j)%name%clear()
+        ENDDO
+        DEALLOCATE(cell_sets_temp)
+      ELSE
+        ncell_sets = 0
+        ALLOCATE(mesh%cell_sets(1))
+      ENDIF
+      ! Add the one new cell set
+      mesh%cell_sets(ncell_sets + 1)%name = elname
+      ALLOCATE(mesh%cell_sets(ncell_sets + 1)%cell_list(ncells))
+      IF(dtype == 'SNK') THEN
+        ! Account for 0 based to 1 based index switch
+        mesh%cell_sets(ncell_sets + 1)%cell_list = ivals4_1d + 1
+        DEALLOCATE(ivals4_1d)
+      ELSE
+        mesh%cell_sets(ncell_sets + 1)%cell_list = ivals8_1d + 1
+        DEALLOCATE(ivals8_1d)
+      ENDIF
+
+    CASE DEFAULT
+      CALL eXDMF%raiseWarning(modName//'::'//myName// &
+        ' - Unsupported data in XDMF file '//CHAR(elname))
     ENDSELECT
   ENDDO
 ENDSUBROUTINE setup_leaf_XDMFMesh_from_file
@@ -787,6 +726,7 @@ ENDSUBROUTINE clear_XDMFMeshType
 !-------------------------------------------------------------------------------
 !> @brief Gets the number of grid levels to a leaf node
 !> @param thismesh the XDMF mesh object
+!> @returns n the number of levels to a leaf node
 !>
 RECURSIVE FUNCTION distanceToLeaf_XDMFMeshType(thismesh) RESULT(n)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
@@ -919,7 +859,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType),POINTER :: current_xml, child_xml
   TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str
-  INTEGER(SNK) :: nchildren, ichild
+  INTEGER(SNK) :: nchildren, ichild, verts_in_cell
   INTEGER(SLK) :: xdmf_id, nverts, ncells, i, j, ivert
   CHARACTER(LEN=200) :: charpath
   INTEGER(SLK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:), cell_list_1d(:)
@@ -995,7 +935,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     xdmf_id = mesh%cells(1)%vertex_list(1)
     xdmf_id_str = xdmf_id
     CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
-    CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
+    CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', verts_in_cell)
     str_value = toponame
     CALL current_xml%setAttribute(str_name, str_value)
 
@@ -1005,7 +945,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     CALL current_xml%setAttribute(str_name, str_value)
 
     str_name= "NodesPerElement"
-    str_value = nverts
+    str_value = verts_in_cell
     CALL current_xml%setAttribute(str_name, str_value)
 
     ALLOCATE(current_xml%children(1))
@@ -1021,7 +961,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
 
     str_name="Dimensions"
     str1 = ncells
-    str2 = nverts
+    str2 = verts_in_cell
     str_value = str1//" "//str2
     CALL child_xml%setAttribute(str_name, str_value)
 
@@ -1037,7 +977,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     charpath = CHAR(strpath)
     child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/cells"
 
-    ALLOCATE(vertex_list_2d(nverts, ncells))
+    ALLOCATE(vertex_list_2d(verts_in_cell, ncells))
     DO i = 1, ncells
       ! Convert 1 based to 0 based index
       vertex_list_2d(:,i) = mesh%cells(i)%vertex_list(2:) - 1
