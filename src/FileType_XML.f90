@@ -55,17 +55,17 @@ INTEGER(SIK) :: DECLARATION_TAG=6
 !> Derived type for an XML element
 TYPE :: XMLElementType
   !> The number of attributes defined on the element
-  INTEGER(SIK) :: nAttr=0
+  INTEGER(SIK),PRIVATE :: nAttr=0
   !> The name of the element
   TYPE(StringType) :: name
   !> The content of the element (excluding attributes)
   TYPE(StringType) :: content
   !> The names of the attributes on this element
-  TYPE(StringType),ALLOCATABLE :: attr_names(:)
+  TYPE(StringType),ALLOCATABLE,PRIVATE :: attr_names(:)
   !> The corresponding values of the attributes on this element
-  TYPE(StringType),ALLOCATABLE :: attr_values(:)
+  TYPE(StringType),ALLOCATABLE,PRIVATE :: attr_values(:)
   !> The parent element of this XML element
-  TYPE(XMLElementType),POINTER :: parent => NULL()
+  TYPE(XMLElementType),POINTER,PRIVATE :: parent => NULL()
   !> The child elements of this element
   TYPE(XMLElementType),POINTER :: children(:) => NULL()
 !
@@ -89,6 +89,9 @@ TYPE :: XMLElementType
     !> @copybrief FileType_XML::getParent_XMLElementType
     !> @copydoc FileType_XML::getParent_XMLElementType
     PROCEDURE,PASS :: getParent => getParent_XMLElementType
+    !> @copybrief FileType_XML::setParent_XMLElementType
+    !> @copydoc FileType_XML::setParent_XMLElementType
+    PROCEDURE,PASS :: setParent => setParent_XMLElementType
     !> @copybrief FileType_XML::hasChildren_XMLElementType
     !> @copydoc FileType_XML::hasChildren_XMLElementType
     PROCEDURE,PASS :: hasChildren => hasChildren_XMLElementType
@@ -435,6 +438,18 @@ PURE SUBROUTINE getParent_XMLElementType(thisXMLE,parent)
   NULLIFY(parent)
   parent => thisXMLE%parent
 ENDSUBROUTINE getParent_XMLElementType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the XML element objects parent
+!> @param thisXMLE the XML element object
+!> @param parent the parent XML element object
+!>
+PURE SUBROUTINE setParent_XMLElementType(thisXMLE,parent)
+  CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
+  CLASS(XMLElementType),INTENT(INOUT),TARGET :: parent
+  NULLIFY(thisXMLE%parent)
+  thisXMLE%parent => parent
+ENDSUBROUTINE setParent_XMLElementType
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a logical of whether or not the XML element has child

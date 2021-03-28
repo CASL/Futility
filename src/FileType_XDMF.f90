@@ -883,8 +883,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   current_xml => xmle%children(GEOMETRY_IDX)
   str_name="Geometry"
   CALL current_xml%setName(str_name)
-  current_xml%nAttr=0
-  current_xml%parent => xmle
+  CALL current_xml%setParent(xmle)
 
   str_name= "GeometryType"
   str_value = "XYZ"
@@ -894,8 +893,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   child_xml => current_xml%children(1)
   str_name="DataItem"
   CALL child_xml%setName(str_name)
-  child_xml%nAttr=0
-  child_xml%parent => current_xml
+  CALL child_xml%setParent(current_xml)
 
   str_name= "DataType"
   str_value = "Float"
@@ -926,8 +924,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   current_xml => xmle%children(TOPOLOGY_IDX)
   str_name="Topology"
   CALL current_xml%setName(str_name)
-  current_xml%nAttr=0
-  current_xml%parent => xmle
+  CALL current_xml%setParent(xmle)
 
   ! Single topology
   IF(mesh%singleTopology)THEN
@@ -952,8 +949,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     child_xml => current_xml%children(1)
     str_name="DataItem"
     CALL child_xml%setName(str_name)
-    child_xml%nAttr=0
-    child_xml%parent => current_xml
+    CALL child_xml%setParent(current_xml)
 
     str_name= "DataType"
     str_value = "Int"
@@ -999,8 +995,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     child_xml => current_xml%children(1)
     str_name="DataItem"
     CALL child_xml%setName(str_name)
-    child_xml%nAttr=0
-    child_xml%parent => current_xml
+    CALL child_xml%setParent(current_xml)
 
     str_name= "DataType"
     str_value = "Int"
@@ -1046,8 +1041,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     current_xml => xmle%children(ichild)
     str_name="Attribute"
     CALL current_xml%setName(str_name)
-    current_xml%nAttr=0
-    current_xml%parent => xmle
+    CALL current_xml%setParent(xmle)
 
     str_name= "Center"
     str_value = "Cell"
@@ -1061,8 +1055,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     child_xml => current_xml%children(ichild)
     str_name="DataItem"
     CALL child_xml%setName(str_name)
-    child_xml%nAttr=0
-    child_xml%parent => current_xml
+    CALL child_xml%setParent(current_xml)
 
     str_name= "DataType"
     str_value = "Int"
@@ -1099,8 +1092,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
       current_xml => xmle%children(i)
       str_name="Set"
       CALL current_xml%setName(str_name)
-      current_xml%nAttr=0
-      current_xml%parent => xmle
+      CALL current_xml%setParent(xmle)
 
       str_name= "Name"
       str_value = mesh%cell_sets(i - ichild + 1)%name
@@ -1114,8 +1106,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
       child_xml => current_xml%children(i)
       str_name="DataItem"
       CALL child_xml%setName(str_name)
-      child_xml%nAttr=0
-      child_xml%parent => current_xml
+      CALL child_xml%setParent(current_xml)
 
       str_name= "DataType"
       str_value = "Int"
@@ -1171,8 +1162,7 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
       ! Set attributes then recurse
       str_name="Grid"
       CALL xmle%children(i)%setName(str_name)
-      xmle%children(i)%nAttr=0
-      xmle%children(i)%parent => xmle
+      CALL xmle%children(i)%setParent(xmle)
       str_name='Name'
       str_value = mesh%children(i)%name
       CALL xmle%children(i)%setAttribute(str_name, str_value)
@@ -1230,15 +1220,13 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   ALLOCATE(xmle%children(1))
   str_name='Domain'
   CALL xmle%children(1)%setName(str_name)
-  xmle%children(1)%parent => xml%root
-  xmle%children(1)%nAttr = 0
+  CALL xmle%children(1)%setParent(xml%root)
   ! Setup the grid that contains everything
   xmle => xmle%children(1)
   ALLOCATE(xmle%children(1))
   str_name="Grid"
   CALL xmle%children(1)%setName(str_name)
-  xmle%children(1)%parent => xmle
-  xmle%children(1)%nAttr = 0
+  CALL xmle%children(1)%setParent(xmle)
   str_name='Name'
   str_value = mesh%name
   CALL xmle%children(1)%setAttribute(str_name, str_value)
