@@ -857,7 +857,8 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(IN) :: strpath
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
-  TYPE(XMLElementType),POINTER :: current_xml, child_xml
+  TYPE(XMLElementType),POINTER :: current_xml, child_xml, children(:), &
+    children2(:)
   TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str
   INTEGER(SNK) :: nchildren, ichild, verts_in_cell
   INTEGER(SLK) :: xdmf_id, nverts, ncells, i, j, ivert
@@ -877,10 +878,11 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   nchildren = 2
   IF(ALLOCATED(mesh%material_ids)) nchildren = nchildren + 1
   IF(ALLOCATED(mesh%cell_sets)) nchildren = nchildren + SIZE(mesh%cell_sets)
-  ALLOCATE(xmle%children(nchildren))
+  ALLOCATE(children(nchildren))
+  CALL xmle%setChildren(children)
 
   ! GEOMETRY
-  current_xml => xmle%children(GEOMETRY_IDX)
+  current_xml => children(GEOMETRY_IDX)
   str_name="Geometry"
   CALL current_xml%setName(str_name)
   CALL current_xml%setParent(xmle)
@@ -889,8 +891,10 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
   str_value = "XYZ"
   CALL current_xml%setAttribute(str_name, str_value)
 
-  ALLOCATE(current_xml%children(1))
-  child_xml => current_xml%children(1)
+  children => NULL()
+  ALLOCATE(children(1))
+  CALL current_xml%setChildren(children)
+  child_xml => children(1)
   str_name="DataItem"
   CALL child_xml%setName(str_name)
   CALL child_xml%setParent(current_xml)
@@ -920,8 +924,11 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
 
   CALL h5%fwrite(CHAR(mesh%name)//'->vertices',mesh%vertices)
 
+  children => NULL()
+
   ! TOPOLOGY
-  current_xml => xmle%children(TOPOLOGY_IDX)
+  CALL xmle%getChildren(children)
+  current_xml => children(TOPOLOGY_IDX)
   str_name="Topology"
   CALL current_xml%setName(str_name)
   CALL current_xml%setParent(xmle)
@@ -945,8 +952,11 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     str_value = verts_in_cell
     CALL current_xml%setAttribute(str_name, str_value)
 
-    ALLOCATE(current_xml%children(1))
-    child_xml => current_xml%children(1)
+    children => NULL()
+    ALLOCATE(children(1))
+
+    CALL current_xml%setChildren(children)
+    child_xml => children(1)
     str_name="DataItem"
     CALL child_xml%setName(str_name)
     CALL child_xml%setParent(current_xml)
@@ -991,8 +1001,10 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     str_value = ncells
     CALL current_xml%setAttribute(str_name, str_value)
 
-    ALLOCATE(current_xml%children(1))
-    child_xml => current_xml%children(1)
+    children => NULL()
+    ALLOCATE(children(1))
+    CALL current_xml%setChildren(children)
+    child_xml => children(1)
     str_name="DataItem"
     CALL child_xml%setName(str_name)
     CALL child_xml%setParent(current_xml)
@@ -1038,7 +1050,9 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
 
   ! MATERIAL ID
   IF(ALLOCATED(mesh%material_ids))THEN
-    current_xml => xmle%children(ichild)
+    children => NULL()
+    CALL xmle%getChildren(children)
+    current_xml => children(ichild)
     str_name="Attribute"
     CALL current_xml%setName(str_name)
     CALL current_xml%setParent(xmle)
@@ -1051,8 +1065,11 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
     str_value = "MaterialID"
     CALL current_xml%setAttribute(str_name, str_value)
 
-    ALLOCATE(current_xml%children(ichild))
-    child_xml => current_xml%children(ichild)
+    children => NULL()
+    ALLOCATE(children(1))
+    CALL current_xml%setChildren(children)
+    child_xml => children(1)
+
     str_name="DataItem"
     CALL child_xml%setName(str_name)
     CALL child_xml%setParent(current_xml)
@@ -1088,8 +1105,10 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
 
   ! CELL SETS
   IF(ALLOCATED(mesh%cell_sets))THEN
+    children => NULL()
+    CALL xmle%getChildren(children)
     DO i=ichild, nchildren
-      current_xml => xmle%children(i)
+      current_xml => children(i)
       str_name="Set"
       CALL current_xml%setName(str_name)
       CALL current_xml%setParent(xmle)
@@ -1102,8 +1121,9 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
       str_value = "Cell"
       CALL current_xml%setAttribute(str_name, str_value)
 
-      ALLOCATE(current_xml%children(i))
-      child_xml => current_xml%children(i)
+      ALLOCATE(children2(1))
+      CALL current_xml%setChildren(children2)
+      child_xml => children2(1)
       str_name="DataItem"
       CALL child_xml%setName(str_name)
       CALL child_xml%setParent(current_xml)
@@ -1151,30 +1171,32 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(INOUT) :: strpath
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
+  TYPE(XMLElementType), POINTER :: children(:)
   INTEGER(SNK) :: i
   TYPE(StringType) :: str_name, str_value
 
   ! If this mesh has children
   IF(ASSOCIATED(mesh%children)) THEN
     ! Add XML element children
-    ALLOCATE(xmle%children(SIZE(mesh%children)))
+    ALLOCATE(children(SIZE(mesh%children)))
+    CALL xmle%setChildren(children)
     DO i=1,SIZE(mesh%children)
       ! Set attributes then recurse
       str_name="Grid"
-      CALL xmle%children(i)%setName(str_name)
-      CALL xmle%children(i)%setParent(xmle)
+      CALL children(i)%setName(str_name)
+      CALL children(i)%setParent(xmle)
       str_name='Name'
       str_value = mesh%children(i)%name
-      CALL xmle%children(i)%setAttribute(str_name, str_value)
+      CALL children(i)%setAttribute(str_name, str_value)
       str_name='GridType'
       IF(ASSOCIATED(mesh%children(i)%children))THEN
         str_value = 'Tree'
       ELSE
         str_value = 'Uniform'
       ENDIF
-      CALL xmle%children(i)%setAttribute(str_name, str_value)
+      CALL children(i)%setAttribute(str_name, str_value)
 
-      CALL create_xml_hierarchy_XDMFFileType(mesh%children(i), xmle%children(i), strpath, h5)
+      CALL create_xml_hierarchy_XDMFFileType(mesh%children(i), children(i), strpath, h5)
     ENDDO
   ELSE
     CALL export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
@@ -1194,7 +1216,7 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
   TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
-  TYPE(XMLElementType),POINTER :: xmle
+  TYPE(XMLElementType),POINTER :: xmle, children(:), children2(:)
   TYPE(StringType) :: str_name, str_value
   INTEGER(SNK) :: i
   CHARACTER(LEN=200) :: charpath
@@ -1217,30 +1239,33 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   str_value = '3.0'
   CALL xmle%setAttribute(str_name, str_value)
   !   Set Domain
-  ALLOCATE(xmle%children(1))
+  ALLOCATE(children(1))
+  CALL xmle%setChildren(children)
   str_name='Domain'
-  CALL xmle%children(1)%setName(str_name)
-  CALL xmle%children(1)%setParent(xml%root)
+  CALL children(1)%setName(str_name)
+  CALL children(1)%setParent(xml%root)
   ! Setup the grid that contains everything
-  xmle => xmle%children(1)
-  ALLOCATE(xmle%children(1))
+  xmle => children(1)
+
+  ALLOCATE(children2(1))
+  CALL xmle%setChildren(children2)
   str_name="Grid"
-  CALL xmle%children(1)%setName(str_name)
-  CALL xmle%children(1)%setParent(xmle)
+  CALL children2(1)%setName(str_name)
+  CALL children2(1)%setParent(xmle)
   str_name='Name'
   str_value = mesh%name
-  CALL xmle%children(1)%setAttribute(str_name, str_value)
+  CALL children2(1)%setAttribute(str_name, str_value)
   str_name='GridType'
   IF(.NOT.ASSOCIATED(mesh%children))THEN
     str_value = 'Uniform'
   ELSE
     str_value = 'Tree'
   ENDIF
-  CALL xmle%children(1)%setAttribute(str_name, str_value)
+  CALL children2(1)%setAttribute(str_name, str_value)
 
   ! Recursively add xml elements for each grid. Only the leaves have vertices,
   ! so only the leaves have HDF5 groups/data.
-  xmle => xmle%children(1)
+  xmle => children2(1)
   CALL create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
 
   ! Finish up

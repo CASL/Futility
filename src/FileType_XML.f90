@@ -67,7 +67,7 @@ TYPE :: XMLElementType
   !> The parent element of this XML element
   TYPE(XMLElementType),POINTER,PRIVATE :: parent => NULL()
   !> The child elements of this element
-  TYPE(XMLElementType),POINTER :: children(:) => NULL()
+  TYPE(XMLElementType),POINTER,PRIVATE :: children(:) => NULL()
 !
 !List of type bound procedures
   CONTAINS
