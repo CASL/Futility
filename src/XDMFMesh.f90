@@ -12,7 +12,7 @@
 !> This module reads an XDMF file and stores the information in a hierarchical
 !> mesh type. It can also write the hierarchical mesh to XDMF.
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-MODULE FileType_XDMF
+MODULE XDMFMesh
 #include "Futility_DBC.h"
 USE ExceptionHandler
 USE Futility_DBC
@@ -28,9 +28,10 @@ PRIVATE
 
 #ifdef FUTILITY_HAVE_HDF5
 ! Public members
-PUBLIC :: XDMFFileType
 PUBLIC :: XDMFMeshType
 PUBLIC :: XDMFTopologyList
+PUBLIC :: ImportXDMFMesh
+PUBLIC :: ExportXDMFMesh
 PUBLIC :: ASSIGNMENT(=)
 
 !> The module name
@@ -95,24 +96,10 @@ TYPE :: XDMFMeshType
     PROCEDURE,PASS :: recomputeBoundingBox => recomputeBoundingBox_XDMFMeshType
 ENDTYPE XDMFMeshType
 
-!> The XDMF File type
-TYPE :: XDMFFileType
-!
-!List of type bound procedures
-!
-  CONTAINS
-    !> @copybrief FileType_XDMF::importFromDisk_XDMFFileType
-    !> @copydoc FileType_XDMF::importFromDisk_XDMFFileType
-    PROCEDURE,PASS :: importFromDisk => importFromDisk_XDMFFileType
-    !> @copybrief FileType_XDMF::exportToDisk_XDMFFileType
-    !> @copydoc FileType_XDMF::exportToDisk_XDMFFileType
-    PROCEDURE,PASS :: exportToDisk => exportToDisk_XDMFFileType
-ENDTYPE XDMFFileType
-
 !> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
-  !> @copybrief FileType_XDMF::assign_XDMFFileType
-  !> @copydoc FileType_XDMF::assign_XDMFFileType
+  !> @copybrief FileType_XDMF::assign_XDMFMeshType
+  !> @copydoc FileType_XDMF::assign_XDMFMeshType
   MODULE PROCEDURE assign_XDMFMeshType
 ENDINTERFACE
 !
@@ -601,13 +588,11 @@ ENDSUBROUTINE setup_leaf_XDMFMesh_from_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Imports the mesh data in the file to a mesh object.
-!> @param thisXDMFFile the XDMF file type object
 !> @param strpath the string holding the path to the XDMF file
 !> @param mesh the XDMF mesh object
 !>
-SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
-  CHARACTER(LEN=*),PARAMETER :: myName='importFromDisk_XDMFFileType'
-  CLASS(XDMFFileType),INTENT(INOUT) :: thisXDMFFile
+SUBROUTINE importXDMFMesh(strpath, mesh)
+  CHARACTER(LEN=*),PARAMETER :: myName='importXDMFMesh'
   TYPE(StringType),INTENT(INOUT) :: strpath
   TYPE(XDMFMeshType),INTENT(OUT),TARGET  :: mesh
   TYPE(XMLFileType) :: xml
@@ -686,7 +671,7 @@ SUBROUTINE importFromDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   ! Setup bounding boxes
   CALL mesh%recomputeBoundingBox()
 
-ENDSUBROUTINE importFromDisk_XDMFFileType
+ENDSUBROUTINE importXDMFMesh
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears the XDMF mesh
@@ -851,8 +836,8 @@ ENDSUBROUTINE assign_XDMFMeshType
 !> @param strpath the string holding the path to the XDMF file
 !> @param h5 the HDF5 file
 !>
-RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
-  CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_XDMFFileType'
+RECURSIVE SUBROUTINE export_leaf_XDMF(mesh, xmle, strpath, h5)
+  CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_XDMF'
   TYPE(XDMFMeshType),INTENT(IN)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(IN) :: strpath
@@ -1156,7 +1141,7 @@ RECURSIVE SUBROUTINE export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
       DEALLOCATE(cell_list_1d)
     ENDDO
   ENDIF
-ENDSUBROUTINE export_leaf_XDMFFileType
+ENDSUBROUTINE export_leaf_XDMF
 !
 !-------------------------------------------------------------------------------
 !> @brief Create the xml hierarchy for the mesh
@@ -1165,8 +1150,8 @@ ENDSUBROUTINE export_leaf_XDMFFileType
 !> @param strpath the string holding the path to the XDMF file
 !> @param h5 the HDF5 file
 !>
-RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
-  CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_XDMFFileType'
+RECURSIVE SUBROUTINE create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
+  CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_XDMF'
   TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(INOUT) :: strpath
@@ -1196,22 +1181,20 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
       ENDIF
       CALL children(i)%setAttribute(str_name, str_value)
 
-      CALL create_xml_hierarchy_XDMFFileType(mesh%children(i), children(i), strpath, h5)
+      CALL create_xml_hierarchy_XDMF(mesh%children(i), children(i), strpath, h5)
     ENDDO
   ELSE
-    CALL export_leaf_XDMFFileType(mesh, xmle, strpath, h5)
+    CALL export_leaf_XDMF(mesh, xmle, strpath, h5)
   ENDIF
-ENDSUBROUTINE create_xml_hierarchy_XDMFFileType
+ENDSUBROUTINE create_xml_hierarchy_XDMF
 !
 !-------------------------------------------------------------------------------
 !> @brief Exports mesh data to an XDMF file.
-!> @param thisXDMFFile the XDMF file type object
 !> @param strpath the string holding the path to the XDMF file
 !> @param mesh the XDMF mesh object
 !>
-SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
-  CHARACTER(LEN=*),PARAMETER :: myName='exportToDisk_XDMFFileType'
-  CLASS(XDMFFileType),INTENT(IN) :: thisXDMFFile
+SUBROUTINE exportXDMFMesh(strpath, mesh)
+  CHARACTER(LEN=*),PARAMETER :: myName='exportXDMFMesh'
   TYPE(StringType),INTENT(INOUT) :: strpath
   TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
   TYPE(XMLFileType) :: xml
@@ -1266,12 +1249,12 @@ SUBROUTINE exportToDisk_XDMFFileType(thisXDMFFile, strpath, mesh)
   ! Recursively add xml elements for each grid. Only the leaves have vertices,
   ! so only the leaves have HDF5 groups/data.
   xmle => children2(1)
-  CALL create_xml_hierarchy_XDMFFileType(mesh, xmle, strpath, h5)
+  CALL create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
 
   ! Finish up
   CALL xml%exportToDisk(CHAR(strpath))
   CALL h5%fclose()
 
-ENDSUBROUTINE exportToDisk_XDMFFileType
+ENDSUBROUTINE exportXDMFMesh
 #endif
-ENDMODULE FileType_XDMF
+ENDMODULE XDMFMesh

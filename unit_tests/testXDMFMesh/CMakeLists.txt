@@ -19,7 +19,7 @@ SET(ADDITIONAL_FILES
 )
 
 
-Futility_CreateUnitTest(testFileType_XDMF)
+Futility_CreateUnitTest(testXDMFMesh)
 
 Futility_CopyFiles(ADDITIONAL_FILES)
 UNSET(ADDITIONAL_FILES)

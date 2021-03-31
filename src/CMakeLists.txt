@@ -69,7 +69,6 @@ TRIBITS_ADD_LIBRARY(Utils
       FileType_DA32.f90
       FileType_HDF5.f90
       FileType_XML.f90
-      FileType_XDMF.f90
       FileType_Log.f90
       FileType_Checkpoint.f90
       FileType_Input.f90
@@ -106,6 +105,7 @@ TRIBITS_ADD_LIBRARY(Utils
       FutilityComputingEnvironment.f90
       SchemaParser.f90
       SpeciesElements.f90
+      XDMFMesh.f90
     DEPLIBS
       CUtils
       TrilinosUtils
