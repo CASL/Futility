@@ -84,6 +84,14 @@ TYPE :: XDMFMeshType
   TYPE(XDMFMeshType), POINTER :: parent => NULL()
   !> Child meshes
   TYPE(XDMFMeshType), POINTER :: children(:) => NULL()
+  !> Map of the children within the parent
+  !> Indexing looks like this:
+  !> y
+  !> | (1,3)  (2,3)
+  !> | (1,2)  (2,2)
+  !> | (1,1)  (2,1)  
+  !> +------> x
+  INTEGER(SNK),ALLOCATABLE :: map(:,:)
   CONTAINS
     !> @copybrief XDMFMeshType::clear_XDMFMeshType
     !> @copydoc XDMFMeshType::clear_XDMFMeshType
@@ -671,6 +679,9 @@ SUBROUTINE importXDMFMesh(strpath, mesh)
   ! Setup bounding boxes
   CALL mesh%recomputeBoundingBox()
 
+  ! Setup map
+  CALL setupRectangularMap(mesh)
+
 ENDSUBROUTINE importXDMFMesh
 !
 !-------------------------------------------------------------------------------
@@ -684,6 +695,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
   thismesh%boundingBox = 0.0_SDK
+  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
   IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
   IF(ASSOCIATED(thismesh%children)) THEN
     DO i=1,SIZE(thismesh%children)
@@ -776,11 +788,18 @@ ENDSUBROUTINE recomputeBoundingBox_XDMFMeshType
 RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   TYPE(XDMFMeshType), INTENT(INOUT) :: thismesh
   TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
-  INTEGER(SNK) :: i
+  INTEGER(SNK) :: i,j
 
   thismesh%name = thatmesh%name
   thismesh%singleTopology = thatmesh%singleTopology
   thismesh%boundingBox = thatmesh%boundingBox
+  IF(ALLOCATED(thatmesh%map))THEN
+    i = SIZE(thatmesh%map, DIM=1)
+    j = SIZE(thatmesh%map, DIM=2)
+    IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
+    ALLOCATE(thismesh%map(i,j))
+    thismesh%map = thatmesh%map
+  ENDIF
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
   ! NOTE: Children cannot be recursively cleared without risk of
   ! modify other mesh objects due to the pointer to other meshes.
@@ -828,6 +847,60 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     ENDDO
   ENDIF
 ENDSUBROUTINE assign_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Setup a rectangular map for this mesh and all children.
+!> @param thismesh the XDMF mesh object
+!>
+RECURSIVE SUBROUTINE setupRectangularMap(thismesh)
+  CHARACTER(LEN=*),PARAMETER :: myName='setupRectangularMap'
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SNK) :: i, xmin, ymin, xmax, ymax, j, x, y
+  TYPE(StringType) :: meshname, xstr, ystr
+  TYPE(StringType), ALLOCATABLE :: segments(:)
+
+  xmin = HUGE(xmin)
+  ymin = HUGE(ymin)
+  xmax = -HUGE(xmax)
+  ymax = -HUGE(ymax)
+  IF(ASSOCIATED(thismesh%children))THEN
+    ! Loop through all children names and find the bottom left child 
+    ! and top right child (xmin, ymin) and (xmax, ymax)
+    DO i = 1, SIZE(thismesh%children)
+      meshname = thismesh%children(i)%name
+      segments = meshname%split('_')
+      xstr = segments(SIZE(segments) - 1)
+      ystr = segments(SIZE(segments))
+      x = xstr%stoi()
+      y = ystr%stoi()
+      IF(x < xmin) xmin = x
+      IF(y < ymin) ymin = y
+      IF(x > xmax) xmax = x
+      IF(y > ymax) ymax = y
+    ENDDO
+    ALLOCATE(thismesh%map(xmax - xmin + 1, ymax - ymin + 1))
+    thismesh%map = 0
+    DO i = 1, SIZE(thismesh%children)
+      meshname = thismesh%children(i)%name
+      segments = meshname%split('_')
+      xstr = segments(SIZE(segments) - 1)
+      ystr = segments(SIZE(segments))
+      x = xstr%stoi()
+      y = ystr%stoi()
+      thismesh%map(x - xmin + 1, y - ymin + 1) = i
+    ENDDO
+    ! Check that all entries are non-zero
+    DO i = 1, xmax - xmin + 1
+      DO j = 1, ymax - ymin + 1
+        IF(thismesh%map(i,j) == 0) CALL eXDMF%raiseError(modName//'::'//myName// &
+          ' - An entry in the map was not assigned! Are grid indices continuous?')
+      ENDDO
+    ENDDO
+    DO i = 1, SIZE(thismesh%children)
+      CALL setupRectangularMap(thismesh%children(i))
+    ENDDO
+  ENDIF
+ENDSUBROUTINE setupRectangularMap
 !
 !-------------------------------------------------------------------------------
 !> @brief Export the leaf nodes of the mesh hierarchy
