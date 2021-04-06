@@ -203,6 +203,7 @@ REGISTER_SUBTEST('CLEAR', testClear)
 REGISTER_SUBTEST('ASSIGNMENT', testAssign)
 REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
+REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
 REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
 FINALIZE_TEST()
@@ -424,6 +425,58 @@ SUBROUTINE testRecomputeBoundingBox()
   CALL mesh%clear()
   NULLIFY(pin1)
 ENDSUBROUTINE testRecomputeBoundingBox
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testSetupRectangularMap()
+  TYPE(XDMFMeshType) :: mesh
+
+  ALLOCATE(mesh%children(2))
+  mesh%children(1)%name = 'GRID_L1_1_1' 
+  mesh%children(2)%name = 'GRID_L1_2_1' 
+
+  ! Check original map
+  CALL mesh%setupRectangularMap()
+  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
+  ASSERT(SIZE(mesh%map, DIM=1) == 2, "Map is wrong size")
+  ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
+  ASSERT(mesh%map(1,1) == 1, "Wrong child!")
+  ASSERT(mesh%map(2,1) == 2, "Wrong child!")
+
+  ! Check that nothing changes when rerun
+  CALL mesh%setupRectangularMap()
+  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
+  ASSERT(SIZE(mesh%map, DIM=1) == 2, "Map is wrong size")
+  ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
+  ASSERT(mesh%map(1,1) == 1, "Wrong child!")
+  ASSERT(mesh%map(2,1) == 2, "Wrong child!")
+
+  ! Make a 2 by 3 grid, labeled as such
+  ! -------------
+  ! | 3 | 2 | 6 |
+  ! -------------
+  ! | 1 | 4 | 5 |
+  ! -------------
+  DEALLOCATE(mesh%children)
+  ALLOCATE(mesh%children(6))
+  mesh%children(1)%name = 'GRID_L1_1_1' 
+  mesh%children(2)%name = 'GRID_L1_2_2' 
+  mesh%children(3)%name = 'GRID_L1_1_2' 
+  mesh%children(4)%name = 'GRID_L1_2_1' 
+  mesh%children(5)%name = 'GRID_L1_3_1' 
+  mesh%children(6)%name = 'GRID_L1_3_2' 
+  CALL mesh%setupRectangularMap()
+  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
+  ASSERT(SIZE(mesh%map, DIM=1) == 3, "Map is wrong size")
+  ASSERT(SIZE(mesh%map, DIM=2) == 2, "Map is wrong size")
+  ASSERT(mesh%map(1,1) == 1, "Wrong child!")
+  ASSERT(mesh%map(2,1) == 4, "Wrong child!")
+  ASSERT(mesh%map(3,1) == 5, "Wrong child!")
+  ASSERT(mesh%map(1,2) == 3, "Wrong child!")
+  ASSERT(mesh%map(2,2) == 2, "Wrong child!")
+  ASSERT(mesh%map(3,2) == 6, "Wrong child!")
+
+  CALL mesh%clear()
+ENDSUBROUTINE testSetupRectangularMap
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testImportXDMFMesh()

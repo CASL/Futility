@@ -102,6 +102,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::recomputeBoundingBox_XDMFMeshType
     !> @copydoc XDMFMeshType::recomputeBoundingBox_XDMFMeshType
     PROCEDURE,PASS :: recomputeBoundingBox => recomputeBoundingBox_XDMFMeshType
+    !> @copybrief XDMFMeshType::setupRectangularMap_XDMFMeshType
+    !> @copydoc XDMFMeshType::setupRectangularMap_XDMFMeshType
+    PROCEDURE,PASS :: setupRectangularMap => setupRectangularMap_XDMFMeshType
 ENDTYPE XDMFMeshType
 
 !> @brief Interface for assignment operator (=)
@@ -680,7 +683,7 @@ SUBROUTINE importXDMFMesh(strpath, mesh)
   CALL mesh%recomputeBoundingBox()
 
   ! Setup map
-  CALL setupRectangularMap(mesh)
+  CALL mesh%setupRectangularMap()
 
 ENDSUBROUTINE importXDMFMesh
 !
@@ -852,13 +855,14 @@ ENDSUBROUTINE assign_XDMFMeshType
 !> @brief Setup a rectangular map for this mesh and all children.
 !> @param thismesh the XDMF mesh object
 !>
-RECURSIVE SUBROUTINE setupRectangularMap(thismesh)
-  CHARACTER(LEN=*),PARAMETER :: myName='setupRectangularMap'
+RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
+  CHARACTER(LEN=*),PARAMETER :: myName='setupRectangularMap_XDMFMeshType'
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
   INTEGER(SNK) :: i, xmin, ymin, xmax, ymax, j, x, y
   TYPE(StringType) :: meshname, xstr, ystr
   TYPE(StringType), ALLOCATABLE :: segments(:)
 
+  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
   xmin = HUGE(xmin)
   ymin = HUGE(ymin)
   xmax = -HUGE(xmax)
@@ -897,10 +901,10 @@ RECURSIVE SUBROUTINE setupRectangularMap(thismesh)
       ENDDO
     ENDDO
     DO i = 1, SIZE(thismesh%children)
-      CALL setupRectangularMap(thismesh%children(i))
+      CALL thismesh%children(i)%setupRectangularMap()
     ENDDO
   ENDIF
-ENDSUBROUTINE setupRectangularMap
+ENDSUBROUTINE setupRectangularMap_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Export the leaf nodes of the mesh hierarchy
