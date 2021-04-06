@@ -192,13 +192,11 @@ REAL(SDK) :: three_level_grid_L3_vertices(3,5) = RESHAPE( (/ &
  3.0, 2.0, 0.0 &
 /), (/3, 5/))
 
-
 INTEGER(SLK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
 0, 2, 4, &
 1, 2, 0, &
 3, 0, 4  &
 /), (/3, 3/))
-
 
 CREATE_TEST('XDMF TYPE')
 REGISTER_SUBTEST('CLEAR', testClear)
@@ -207,7 +205,6 @@ REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
 REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
-
 FINALIZE_TEST()
 !
 !===============================================================================
@@ -228,7 +225,7 @@ SUBROUTINE setup_pin1(mesh)
   children(1)%singleTopology = .TRUE.
   children(1)%parent => mesh
   children(1)%boundingBox = (/0.0_SDK, 2.0_SDK, 0.0_SDK, 2.0_SDK/)
-  children(1)%vertices = two_pins_pin1_vertices 
+  children(1)%vertices = two_pins_pin1_vertices
   ALLOCATE(children(1)%cells(46))
   DO i = 1,46
     ALLOCATE(children(1)%cells(i)%vertex_list(7))
@@ -402,7 +399,7 @@ SUBROUTINE testRecomputeBoundingBox()
   ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
   ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
 
-  ! Move a vertex so that it changes the BB. 
+  ! Move a vertex so that it changes the BB.
   ! The old BB was (0,0,2,2). We are moving the corner vertex at (2,2)
   ! to (2.1, 2.2)
   pin1%vertices(1,4) = 2.1_SDK
@@ -456,7 +453,7 @@ SUBROUTINE testImportXDMFMesh()
   ! - Materials:    No
   ! - Cell sets:    No
   COMPONENT_TEST('test three level grid')
-  CALL test_import_three_level_grid() 
+  CALL test_import_three_level_grid()
   !
   ! Test case with three level grid but the mesh hierarchy is implied
   ! through cell sets instead of explicitly through XDMF XML
@@ -677,12 +674,12 @@ ENDSUBROUTINE test_import_three_level_grid_implicit_hierarchy
 SUBROUTINE testExportXDMFMesh()
   !
   ! ****************************************************************************
-  ! NOTE: 
+  ! NOTE:
   !   Since tests run sequentially within the file, to reach this subroutine
-  !   without error, import has to be working as intended. If errors occur 
-  !   within testImportXDMFMesh, those should be addressed first. 
+  !   without error, import has to be working as intended. If errors occur
+  !   within testImportXDMFMesh, those should be addressed first.
   !   Export is verified by importing the exported mesh. This is not
-  !   ideal unit test design, but manually setting up all of the meshes of 
+  !   ideal unit test design, but manually setting up all of the meshes of
   !   interest to test the export subroutine would take over a thousand lines
   !   easily.
   ! ****************************************************************************
@@ -720,7 +717,7 @@ SUBROUTINE testExportXDMFMesh()
   ! - Materials:    No
   ! - Cell sets:    No
   COMPONENT_TEST('test three level grid')
-  CALL test_export_three_level_grid() 
+  CALL test_export_three_level_grid()
   !
   ! Test case with three level grid but the mesh hierarchy is implied
   ! through cell sets instead of explicitly through XDMF XML
