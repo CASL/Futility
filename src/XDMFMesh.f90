@@ -105,6 +105,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::setupRectangularMap_XDMFMeshType
     !> @copydoc XDMFMeshType::setupRectangularMap_XDMFMeshType
     PROCEDURE,PASS :: setupRectangularMap => setupRectangularMap_XDMFMeshType
+    !> @copybrief XDMFMeshType::getNLeaves_XDMFMeshType
+    !> @copydoc XDMFMeshType::getNLeaves_XDMFMeshType
+    PROCEDURE,PASS :: getNLeaves => getNLeaves_XDMFMeshType
 ENDTYPE XDMFMeshType
 
 !> @brief Interface for assignment operator (=)
@@ -912,6 +915,25 @@ RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
     ENDDO
   ENDIF
 ENDSUBROUTINE setupRectangularMap_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the number of leaf nodes in this mesh
+!> @param thismesh the XDMF mesh object
+!> @returns n the number of leaf nodes
+!>
+RECURSIVE FUNCTION getNLeaves_XDMFMeshType(thismesh) RESULT(n)
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SNK) :: n, i
+  n = 0
+  IF(ASSOCIATED(thismesh%children))THEN
+    DO i=1,SIZE(thismesh%children)
+      n = n + thismesh%children(i)%getNLeaves() 
+    ENDDO
+  ELSE
+    ! If the mesh doesn't have children, it is a leaf
+    n = 1
+  ENDIF
+ENDFUNCTION getNLeaves_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Export the leaf nodes of the mesh hierarchy
