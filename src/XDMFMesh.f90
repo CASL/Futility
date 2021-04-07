@@ -882,6 +882,13 @@ RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
       IF(x > xmax) xmax = x
       IF(y > ymax) ymax = y
     ENDDO
+    ! Check that the product of the 2D dimensions equals the 1D dimension
+    IF((xmax - xmin + 1) * (ymax - ymin + 1) /= SIZE(thismesh%children)) &
+      CALL eXDMF%raiseError(modName//'::'//myName//' - the number of '// &
+      'entries in the map ('//CHAR((xmax - xmin + 1) * (ymax - ymin + 1))// & 
+      ') does not equal the number of children ('//CHAR(SIZE(thismesh%children))// &
+      '). Are the grid indices correct?')
+
     ALLOCATE(thismesh%map(xmax - xmin + 1, ymax - ymin + 1))
     thismesh%map = 0
     DO i = 1, SIZE(thismesh%children)
