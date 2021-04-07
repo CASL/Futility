@@ -29,6 +29,7 @@ PRIVATE
 #ifdef FUTILITY_HAVE_HDF5
 ! Public members
 PUBLIC :: XDMFMeshType
+PUBLIC :: XDMFMeshPtrArry
 PUBLIC :: XDMFTopologyList
 PUBLIC :: ImportXDMFMesh
 PUBLIC :: ExportXDMFMesh
@@ -108,7 +109,15 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::getNLeaves_XDMFMeshType
     !> @copydoc XDMFMeshType::getNLeaves_XDMFMeshType
     PROCEDURE,PASS :: getNLeaves => getNLeaves_XDMFMeshType
+    !> @copybrief XDMFMeshType::etLeaves_XDMFMeshType
+    !> @copydoc XDMFMeshType::getLeaves_XDMFMeshType
+    PROCEDURE,PASS :: getLeaves => getLeaves_XDMFMeshType
 ENDTYPE XDMFMeshType
+
+!> To allow an array of pointers to XDMF meshes
+TYPE :: XDMFMeshPtrArry
+  TYPE(XDMFMeshType), POINTER :: mesh => NULL()
+ENDTYPE
 
 !> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
@@ -934,6 +943,45 @@ RECURSIVE FUNCTION getNLeaves_XDMFMeshType(thismesh) RESULT(n)
     n = 1
   ENDIF
 ENDFUNCTION getNLeaves_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets an array of pointers to the leaf nodes in this mesh
+!> @param thismesh the XDMF mesh object
+!> @param leaves a pointer to an array of XDMF meshes (the leaves)
+!> @param idx the index of the operation, used only within the routine
+!> @returns a pointer array 
+!>
+RECURSIVE SUBROUTINE getLeaves_XDMFMeshType(thismesh, leaves, idx)
+  CLASS(XDMFMeshType), INTENT(INOUT), TARGET :: thismesh
+  TYPE(XDMFMeshPtrArry), INTENT(INOUT), POINTER :: leaves(:)
+  INTEGER(SIK), OPTIONAL, INTENT(INOUT) :: idx
+  INTEGER(SIK) :: n, i, iidx
+
+  ! If no idx, assumed to be top level
+  IF(.NOT.PRESENT(idx))THEN
+    IF(ASSOCIATED(leaves)) DEALLOCATE(leaves)
+    NULLIFY(leaves)
+    n = thismesh%getNLeaves()
+    ALLOCATE(leaves(n))
+    iidx = 1
+    IF(ASSOCIATED(thismesh%children))THEN
+      DO i=1,SIZE(thismesh%children)
+        CALL thismesh%children(i)%getLeaves(leaves, iidx) 
+      ENDDO
+    ELSE ! leaf
+      leaves(iidx)%mesh => thismesh
+    ENDIF
+  ELSE
+    IF(ASSOCIATED(thismesh%children))THEN
+      DO i=1,SIZE(thismesh%children)
+        CALL thismesh%children(i)%getLeaves(leaves, idx) 
+      ENDDO
+    ELSE ! leaf
+      leaves(idx)%mesh => thismesh
+      idx = idx + 1
+    ENDIF
+  ENDIF
+ENDSUBROUTINE getLeaves_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Export the leaf nodes of the mesh hierarchy

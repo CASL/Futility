@@ -203,6 +203,7 @@ REGISTER_SUBTEST('CLEAR', testClear)
 REGISTER_SUBTEST('ASSIGNMENT', testAssign)
 REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
 REGISTER_SUBTEST('GET N LEAVES', testGetNLeaves)
+REGISTER_SUBTEST('GET LEAVES', testGetLeaves)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
 REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
@@ -408,6 +409,42 @@ SUBROUTINE testGetNLeaves()
   CALL mesh%clear()
   NULLIFY(sub)
 ENDSUBROUTINE testGetNLeaves
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testGetLeaves()
+  TYPE(XDMFMeshType) :: mesh
+  TYPE(XDMFMeshType),POINTER :: sub => NULL()
+  TYPE(XDMFMeshPtrArry), POINTER :: leaves(:) => NULL()
+  INTEGER(SIK) :: i,j
+  TYPE(StringType) :: str
+
+
+  ! Create a mesh with three children
+  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
+  ! Total leaves = 6
+  ALLOCATE(mesh%children(3))
+  DO i = 1,3
+    sub => mesh%children(i) 
+    ALLOCATE(sub%children(i))
+    DO j = 1,i 
+      sub%children(j)%name = i
+    ENDDO
+  ENDDO
+
+  CALL mesh%getLeaves(leaves)
+  ASSERT(SIZE(leaves) == 6, "There should be 6 leaves!")
+  DO i = 1,3
+    sub => mesh%children(i) 
+    CALL sub%getLeaves(leaves)
+    ASSERT(SIZE(leaves) == i, "Wrong number of leaves!")
+    str = i
+    ASSERT(leaves(i)%mesh%name == str, "Wrong name")
+  ENDDO
+
+  CALL mesh%clear()
+  NULLIFY(sub)
+  DEALLOCATE(leaves)
+ENDSUBROUTINE testGetLeaves
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testRecomputeBoundingBox()
