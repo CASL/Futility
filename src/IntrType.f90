@@ -505,7 +505,6 @@ ELEMENTAL FUNCTION approxeq_rel_mixsd(a,b) RESULT(bool)
   REAL(SSK),INTENT(IN) :: a
   REAL(SDK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
-  REAL(SDK) :: eps
   bool=approxeq_rel_single(a, REAL(b,SSK))
 ENDFUNCTION approxeq_rel_mixsd
 !
@@ -525,7 +524,6 @@ ELEMENTAL FUNCTION approxeq_rel_mixds(a,b) RESULT(bool)
   REAL(SDK),INTENT(IN) :: a
   REAL(SSK),INTENT(IN) :: b
   LOGICAL(SBK) :: bool
-  REAL(SDK) :: eps
   bool=approxeq_rel_single(REAL(a,SSK),b)
 ENDFUNCTION approxeq_rel_mixds
 !
