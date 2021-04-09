@@ -3219,8 +3219,6 @@ SUBROUTINE regsopt(P, T, ireg)
   REAL(SRK), SAVE :: told = 0.0_SRK, pold = 0.0_SRK
   INTEGER(SIK), SAVE :: iregold = 0
 
-  IF (ireg /= 0 .AND. ireg /= 1 .AND. ireg /= 2 .AND. ireg /= 3 .AND. ireg /= 5 .AND. ireg /= 9) ireg = 0
-
   IF ((ABS(t - told) < tolerance) .AND. (ABS(p - pold) < tolerance)) THEN
     ireg = iregold
     RETURN
