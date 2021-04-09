@@ -3209,7 +3209,7 @@ ENDFUNCTION tph5n
 SUBROUTINE regsopt(P, T, ireg)
   REAL(SRK), INTENT(IN) :: P
   REAL(SRK), INTENT(IN) :: T
-  INTEGER(SIK), INTENT(INOUT) :: ireg
+  INTEGER(SIK), INTENT(OUT) :: ireg
 
   REAL(SRK), PARAMETER :: &
       rpsr = 5.E-4_SRK, &! relative tolerance value.  should not be lower than 2.E-4
@@ -3219,21 +3219,18 @@ SUBROUTINE regsopt(P, T, ireg)
   REAL(SRK), SAVE :: told = 0.0_SRK, pold = 0.0_SRK
   INTEGER(SIK), SAVE :: iregold = 0
 
-  IF (ireg /= 0 .AND. ireg /= 1 .AND. ireg /= 2 .AND. ireg /= 3 .AND. ireg /= 5 .AND. ireg /= 9) ireg = 0
-
   IF ((ABS(t - told) < tolerance) .AND. (ABS(p - pold) < tolerance)) THEN
     ireg = iregold
     RETURN
   ENDIF
 
+  ireg = 0
+
   ! (czd)
   ! change cut off for region 5 to 900 c to account for limit of transport properties
   IF ((t < 273.15_SRK) .OR. (t > 1173.15_SRK) .OR. (p > 100.0_SRK) .OR. (p < 5.0E-4_SRK)) THEN
-    ireg = 0
-    RETURN
+    RETURN !Leave ireg==0
   ENDIF
-
-  ireg = 0
 
   ! include a REAL(SRKative tolerance value (czd)
   ! this was included to better estimate if the t,p where in
