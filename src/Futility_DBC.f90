@@ -94,8 +94,10 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
   nproc=1
 #endif
   DBC_COUNTER=DBC_COUNTER+1
-  WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
-      mod_name//" on line",line,":  process",rank+1," of",nproc
+  IF(DBC_FAIL_VERBOSE) THEN
+    WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
+        mod_name//" on line",line,":  process",rank+1," of",nproc
+  ENDIF
 
 #ifdef __INTEL_COMPILER
   IF(DBC_STOP_ON_FAIL) CALL abort
