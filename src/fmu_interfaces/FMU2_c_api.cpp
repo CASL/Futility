@@ -11,6 +11,7 @@
 #include "FMU2.h"
 #include <iostream>
 #include <string.h>
+#include <stdlib.h>
 #include "FMU2_c_api.h"
 
 
@@ -79,6 +80,7 @@ void setBooleanFMU2_Base(C_FMU2Base fmu2_base, bool valueReference, bool val)
 void clearFMU2_Base(C_FMU2Base fmu2_base)
 {
   reinterpret_cast<fmikit::FMU2*>(fmu2_base)->~FMU2();
+  free(fmu2_base);
 }
 
 // Methods for Co-Simulation only
