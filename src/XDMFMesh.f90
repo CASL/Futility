@@ -36,7 +36,7 @@ PUBLIC :: ExportXDMFMesh
 PUBLIC :: ASSIGNMENT(=)
 
 !> The module name
-CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
+CHARACTER(LEN=*),PARAMETER :: modName='XDMFMesh'
 
 !> Exception handler for the module
 TYPE(ExceptionHandlerType),SAVE :: eXDMF
@@ -109,15 +109,18 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::getNLeaves_XDMFMeshType
     !> @copydoc XDMFMeshType::getNLeaves_XDMFMeshType
     PROCEDURE,PASS :: getNLeaves => getNLeaves_XDMFMeshType
-    !> @copybrief XDMFMeshType::etLeaves_XDMFMeshType
+    !> @copybrief XDMFMeshType::getLeaves_XDMFMeshType
     !> @copydoc XDMFMeshType::getLeaves_XDMFMeshType
     PROCEDURE,PASS :: getLeaves => getLeaves_XDMFMeshType
+    !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType
+    !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType
+    PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType
 ENDTYPE XDMFMeshType
 
 !> To allow an array of pointers to XDMF meshes
 TYPE :: XDMFMeshPtrArry
   TYPE(XDMFMeshType), POINTER :: mesh => NULL()
-ENDTYPE
+ENDTYPE XDMFMeshPtrArry
 
 !> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
@@ -1410,5 +1413,145 @@ SUBROUTINE exportXDMFMesh(strpath, mesh)
   CALL h5%fclose()
 
 ENDSUBROUTINE exportXDMFMesh
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the area of cell iCell.
+!> @param mesh the XMDF mesh
+!> @param iCell the index of the cell in mesh%cells
+!> @returns cell area
+!>
+ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
+  CLASS(XDMFMeshType), INTENT(IN) :: mesh
+  INTEGER(SLK), INTENT(IN) :: iCell
+  REAL(SRK) :: area
+  
+  REAL(SDK),PARAMETER :: pi = 3.141592653589793
+  REAL(SRK), ALLOCATABLE :: x(:), y(:), x_quad(:), y_quad(:), x_lin(:), y_lin(:)
+  REAL(SRK) :: main_area, correction, x_edge(3), y_edge(3), theta, rotation_mat(2,2), &
+    xy(2), a, b, quad_area
+  INTEGER(SLK) :: xid
+  INTEGER(SNK) nverts, i, j
+  
+  area = 0.0_SRK
+  xid = mesh%cells(iCell)%vertex_list(1)
+  nverts = SIZE(mesh%cells(iCell)%vertex_list) - 1
+  IF(xid == 4 .OR. xid == 5) THEN ! Linear edges
+    ! Shoelace formula may be used for linear edges
+    ! Assumes that vertices are in clockwise or counterclockwise order
+    ALLOCATE(x(nverts))
+    ALLOCATE(y(nverts))
+    ALLOCATE(x_lin(nverts))
+    ALLOCATE(y_lin(nverts))
+    x = mesh%vertices(1, mesh%cells(iCell)%vertex_list(2:nverts+1))
+    y = mesh%vertices(2, mesh%cells(iCell)%vertex_list(2:nverts+1))
+    x_lin = x - SUM(x)/nverts
+    y_lin = y - SUM(y)/nverts
+    ! Narrowing may occur here. This is intended.
+    correction = x_lin(nverts)*y_lin(1) - y_lin(nverts)*x_lin(1)
+    main_area = DOT_PRODUCT(x_lin(1:nverts-1), y_lin(2:nverts)) - DOT_PRODUCT(y_lin(1:nverts-1), x_lin(2:nverts))
+    area = 0.5*ABS(main_area + correction)
+  ELSE ! There are quadratic edges
+    ! Assumed vertices are in counterclockwise order
+    !
+    ! Overall, the process is to get the linear area and adjust for quadratic edges.
+    !
+    ! All quadratic vertices (middle of 3 vert edge) are in the second half of
+    ! the vertex_list
+    nverts = nverts/2
+    ALLOCATE(x(nverts))
+    ALLOCATE(y(nverts))
+    ALLOCATE(x_quad(nverts))
+    ALLOCATE(y_quad(nverts))
+    ALLOCATE(x_lin(nverts))
+    ALLOCATE(y_lin(nverts))
+    x = mesh%vertices(1, mesh%cells(iCell)%vertex_list(2:nverts+1))
+    y = mesh%vertices(2, mesh%cells(iCell)%vertex_list(2:nverts+1))
+    x_quad = mesh%vertices(1, mesh%cells(iCell)%vertex_list(nverts+2:))
+    y_quad = mesh%vertices(2, mesh%cells(iCell)%vertex_list(nverts+2:))
+    ! Get linear area using shoelace formula
+    x_lin = x - SUM(x)/nverts
+    y_lin = y - SUM(y)/nverts
+    ! Narrowing may occur here. This is intended.
+    correction = x_lin(nverts)*y_lin(1) - y_lin(nverts)*x_lin(1)
+    main_area = DOT_PRODUCT(x_lin(1:nverts-1), y_lin(2:nverts)) - DOT_PRODUCT(y_lin(1:nverts-1), x_lin(2:nverts))
+    area = 0.5*ABS(main_area + correction)
+
+    ! Assumed points are in counterclockwise order. Area for the linear
+    ! polygon is computed, then adjusted based on integrals for the quad edges.
+    ! If a quadratic vertex is to the left of the linear edge, the area is added.
+    ! Otherwise it is subtracted.
+    ! Consider the following quadratic triangle with one quad edge:
+    !        2                   2
+    !       /  \                /| \
+    !      /    \              / |  \
+    !     5      4            5  |   \
+    !      \      \            \ |    \
+    !       \      \            \|     \
+    !        0---3--1            0------1
+    !     Quad edge (2,5,0)     Linear edges
+    ! Since, point 5 is to the right of linear edge (2,0), the area of the polygon
+    ! constructed by edges {(2,5,0), (0,2)} is added to the total area.
+    ! 
+    ! For each edge, compute additional area using quadratic function
+    ! Shift point to origin, rotate so line is x-axis, find quadratic function
+    ! with 3 point fit, integrate, add or subtract based on right or left
+
+    !For each edge
+    DO i = 1, nverts
+      ! edge coords
+      IF(i == nverts)THEN
+        x_edge  = (/x(i), x(1), x_quad(i)/)
+        y_edge  = (/y(i), y(1), y_quad(i)/)
+      ELSE
+        x_edge  = (/x(i), x(i+1), x_quad(i)/)
+        y_edge  = (/y(i), y(i+1), y_quad(i)/)
+      ENDIF
+      ! shift first vertex to origin 
+      x_edge = x_edge - x_edge(1)
+      y_edge = y_edge - y_edge(1)
+      ! rotate linear edge to become the x-axis
+      IF( x_edge(2) .APPROXEQ. 0.0_SRK ) THEN
+        IF( y_edge(2) >= 0.0_SRK ) THEN
+          theta = pi/2.0_SDK 
+        ELSE
+          theta = -pi/2.0_SDK          
+        ENDIF
+      ELSE
+        theta = ATAN(y_edge(2)/x_edge(2))
+      ENDIF 
+
+      IF(x_edge(2) < 0.0) theta = theta + pi
+
+      rotation_mat(1,:) = (/COS(theta), SIN(theta)/)
+      rotation_mat(2,:) = (/-SIN(theta), COS(theta)/)
+      DO j = 1,3
+        xy(1) = x_edge(j)
+        xy(2) = y_edge(j)
+        xy = MATMUL(rotation_mat, xy)
+        x_edge(j) = xy(1)
+        y_edge(j) = xy(2)
+      ENDDO
+
+      ! Get quadratic coefficients
+      !   y = ax^2 + bx + c
+      ! Since x_edge(1) = 0, y_edge(1) = 0 due to the shift to the origin,
+      !   0 = 0 + 0 + c --> c = 0
+      ! Due to the rotation to make the linear edge the x-axis, y_edge(2) = 0
+      !   0 = ax_2^2 + bx_2 --> ax_2 + b = 0 --> b = -ax_2
+      ! Lastly, 
+      !   y_3 = ax_3^2 + bx_3
+      ! Using, b = -ax_2
+      !   y_3 = ax_3(x_3  - x_2) --> a = y_3/x_3 1/(x_3 - x_2)
+      ! Note if x_3 = 0 --> y_3 = 0 --> (x_1, y_1) = (x_3, y_3), which is invalid 
+      a = (y_edge(3)/x_edge(3))/(x_edge(3) - x_edge(2))
+      b = -a*x_edge(2)
+      ! Integrate from 0 to x_2
+      !  ax_2^3/3 + bx_2^2/2
+      quad_area = a*x_edge(2)**3/3.0_SRK + b*x_edge(2)**2/2.0_SRK 
+      ! quad_area will be opposite of correct sign
+      area = area - quad_area
+    ENDDO
+  ENDIF
+ENDFUNCTION
 #endif
 ENDMODULE XDMFMesh

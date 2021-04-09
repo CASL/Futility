@@ -204,6 +204,7 @@ REGISTER_SUBTEST('ASSIGNMENT', testAssign)
 REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
 REGISTER_SUBTEST('GET N LEAVES', testGetNLeaves)
 REGISTER_SUBTEST('GET LEAVES', testGetLeaves)
+REGISTER_SUBTEST('GET CELL AREA', testGetCellArea)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
 REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
@@ -445,6 +446,117 @@ SUBROUTINE testGetLeaves()
   NULLIFY(sub)
   DEALLOCATE(leaves)
 ENDSUBROUTINE testGetLeaves
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testGetCellArea()
+  TYPE(XDMFMeshType) :: mesh, mesh45
+  REAL(SRK) :: area, rotation_mat(2,2), pi, theta, xy(2), areas(4)
+  INTEGER(SIK) :: i
+
+  ! Setup roation matrix to test same shape rotated 45 degrees
+  pi = 3.141592653589793
+  theta = pi/4.0_SRK
+  rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
+  rotation_mat(2,:) = (/SIN(theta), COS(theta)/)
+
+  ! vertices
+  ALLOCATE(mesh%vertices(3,9))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/0.5_SDK, -0.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/1.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/0.5_SDK, 1.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/-0.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/0.5_SDK, 0.5_SDK, 0.0_SDK/)
+
+  ! Cells
+  ALLOCATE(mesh%cells(4))
+  ! Triangle
+  ALLOCATE(mesh%cells(1)%vertex_list(4))
+  mesh%cells(1)%vertex_list = (/4, 1, 2, 3/)
+  ! Quadrilateral
+  ALLOCATE(mesh%cells(2)%vertex_list(5))
+  mesh%cells(2)%vertex_list = (/5, 1, 2, 3, 4/)
+  ! Triangle6
+  ALLOCATE(mesh%cells(3)%vertex_list(7))
+  mesh%cells(3)%vertex_list = (/36, 1, 2, 3, 5, 6, 9/)
+  ! Quadrilateral8
+  ALLOCATE(mesh%cells(4)%vertex_list(9))
+  mesh%cells(4)%vertex_list = (/36, 1, 2, 3, 4, 5, 6, 7, 8/)
+
+  ! Same mesh, with vertices rotated 45 degrees about the origin
+  mesh45 = mesh
+  DO i = 1, 9
+    xy = mesh45%vertices(1:2, i)
+    xy = MATMUL(rotation_mat, xy) 
+    mesh45%vertices(1:2, i) = xy
+  ENDDO
+
+  COMPONENT_TEST('Triangle')
+  !          v3 (1,1)
+  !        /  |
+  !      /    |
+  !    /      |
+  !  /        |
+  ! v1-------v2 (1,0)
+  ! (0,0)
+  area = mesh%getCellArea(1_SLK)
+  ASSERT(ABS(area - 0.5_SRK) < 1.0E-6, "Area should be 1*1/2 = 0.5")
+  area = mesh45%getCellArea(1_SLK)
+  ASSERT(ABS(area - 0.5_SRK) < 1.0E-6, "Area should be 1*1/2 = 0.5")
+
+  COMPONENT_TEST('Quadrilateral')
+  ! (0,1) v4-------v3 (1,1)
+  !       |        |
+  !       |        |
+  !       |        |
+  !       |        |
+  !       v1-------v2 (1,0)
+  ! (0,0)                                                           
+  area = mesh%getCellArea(2_SLK)                                    
+  ASSERT(ABS(area - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
+  area = mesh45%getCellArea(2_SLK)                                    
+  ASSERT(ABS(area - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
+
+  COMPONENT_TEST('Triangle6')
+  !          v3 
+  !        /   \
+  !     v9      v6  This should look very close to a half circle, with the flat edge
+  !    /        /   at 45 degrees. Hard to make an ASCII diagram for this.
+  !  /         /   Area approc pi/4
+  ! v1        v2 
+  !    --v5--
+  area = mesh%getCellArea(3_SLK)
+  ASSERT(ABS(area - 0.77614233) < 1.0E-6, "Area should be 0.77614233")
+  area = mesh45%getCellArea(3_SLK)
+  ASSERT(ABS(area - 0.77614233) < 1.0E-6, "Area should be 0.77614233")
+
+
+  COMPONENT_TEST('Quad8')
+  !        --v7--
+  !   v4--       --v3
+  !  /               \
+  ! /                 \
+  !v8                 v6    Should look very close to a circle
+  ! \                 /     Area approx pi/2
+  !  \               /
+  !   v1--       --v2
+  !       -- v5--
+  area = mesh%getCellArea(4_SLK)
+  ASSERT(ABS(area - 2*0.77614233) < 1.0E-6, "Area should be 2*0.77614233")
+  area = mesh45%getCellArea(4_SLK)
+  ASSERT(ABS(area - 2*0.77614233) < 1.0E-6, "Area should be 2*0.77614233")
+
+  COMPONENT_TEST('Elemental')
+  areas = mesh%getCellArea((/1_SLK, 2_SLK, 3_SLK, 4_SLK/))
+  ASSERT(ABS(areas(1) - 0.5_SRK) < 1.0E-6, "Area should be 1*1/2 = 0.5")
+  ASSERT(ABS(areas(2) - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
+  ASSERT(ABS(areas(3) - 0.77614233) < 1.0E-6, "Area should be 0.77614233")
+  ASSERT(ABS(areas(4) - 2*0.77614233) < 1.0E-6, "Area should be 2*0.77614233")
+  CALL mesh%clear()
+ENDSUBROUTINE testGetCellArea
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testRecomputeBoundingBox()
