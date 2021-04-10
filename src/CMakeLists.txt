@@ -105,6 +105,7 @@ TRIBITS_ADD_LIBRARY(Utils
       FutilityComputingEnvironment.f90
       SchemaParser.f90
       SpeciesElements.f90
+      XDMFMesh.f90
     DEPLIBS
       CUtils
       TrilinosUtils

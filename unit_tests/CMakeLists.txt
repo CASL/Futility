@@ -113,6 +113,7 @@ IF(${PACKAGE_NAME}_ENABLE_HDF5)
         ${UNIT_TEST_NAMES}
         testHDF5FileType
         testTPLHDF5
+        testXDMFMesh
         )
 ENDIF()
 

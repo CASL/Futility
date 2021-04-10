@@ -89,6 +89,9 @@ TYPE :: XMLElementType
     !> @copybrief FileType_XML::getParent_XMLElementType
     !> @copydoc FileType_XML::getParent_XMLElementType
     PROCEDURE,PASS :: getParent => getParent_XMLElementType
+    !> @copybrief FileType_XML::setParent_XMLElementType
+    !> @copydoc FileType_XML::setParent_XMLElementType
+    PROCEDURE,PASS :: setParent => setParent_XMLElementType
     !> @copybrief FileType_XML::hasChildren_XMLElementType
     !> @copydoc FileType_XML::hasChildren_XMLElementType
     PROCEDURE,PASS :: hasChildren => hasChildren_XMLElementType
@@ -435,6 +438,18 @@ PURE SUBROUTINE getParent_XMLElementType(thisXMLE,parent)
   NULLIFY(parent)
   parent => thisXMLE%parent
 ENDSUBROUTINE getParent_XMLElementType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the XML element objects parent
+!> @param thisXMLE the XML element object
+!> @param parent the parent XML element object
+!>
+PURE SUBROUTINE setParent_XMLElementType(thisXMLE,parent)
+  CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
+  CLASS(XMLElementType),INTENT(INOUT),TARGET :: parent
+  NULLIFY(thisXMLE%parent)
+  thisXMLE%parent => parent
+ENDSUBROUTINE setParent_XMLElementType
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a logical of whether or not the XML element has child
