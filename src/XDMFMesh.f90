@@ -837,7 +837,6 @@ ENDSUBROUTINE assign_XDMFMeshType
 !> @param h5 the HDF5 file
 !>
 RECURSIVE SUBROUTINE export_leaf_XDMF(mesh, xmle, strpath, h5)
-  CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_XDMF'
   TYPE(XDMFMeshType),INTENT(IN)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(IN) :: strpath
@@ -1151,7 +1150,6 @@ ENDSUBROUTINE export_leaf_XDMF
 !> @param h5 the HDF5 file
 !>
 RECURSIVE SUBROUTINE create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
-  CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_XDMF'
   TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(INOUT) :: strpath
