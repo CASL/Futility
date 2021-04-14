@@ -97,6 +97,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::clear_XDMFMeshType
     !> @copydoc XDMFMeshType::clear_XDMFMeshType
     PROCEDURE,PASS :: clear => clear_XDMFMeshType
+    !> @copybrief XDMFMeshType::nonRecusriveClear_XDMFMeshType
+    !> @copydoc XDMFMeshType::nonRecursiveClear_XDMFMeshType
+    PROCEDURE,PASS :: nonRecursiveClear => nonRecursiveClear_XDMFMeshType
     !> @copybrief XDMFMeshType::distanceToLeaf_XDMFMeshType
     !> @copydoc XDMFMeshType::distanceToLeaf_XDMFMeshType
     PROCEDURE,PASS :: distanceToLeaf => distanceToLeaf_XDMFMeshType
@@ -743,6 +746,39 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
     DEALLOCATE(thismesh%cell_sets)
   ENDIF
 ENDSUBROUTINE clear_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the XDMF mesh, without recursing to children
+!> @param thismesh the XDMF mesh object
+!>
+RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SNK) :: i
+
+  CALL thismesh%name%clear()
+  thismesh%singleTopology = .FALSE.
+  thismesh%boundingBox = 0.0_SDK
+  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
+  IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
+  IF(ASSOCIATED(thismesh%children)) THEN
+    thismesh%children => NULL()
+  ENDIF
+  IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
+  IF( ALLOCATED(thismesh%cells) ) THEN
+    DO i=1, SIZE(thismesh%cells)
+      DEALLOCATE(thismesh%cells(i)%vertex_list)
+    ENDDO
+    DEALLOCATE(thismesh%cells)
+  ENDIF
+  IF( ALLOCATED(thismesh%material_ids) ) DEALLOCATE(thismesh%material_ids)
+  IF( ALLOCATED(thismesh%cell_sets) ) THEN
+    DO i=1, SIZE(thismesh%cell_sets)
+      CALL thismesh%cell_sets(i)%name%clear()
+      DEALLOCATE(thismesh%cell_sets(i)%cell_list)
+    ENDDO
+    DEALLOCATE(thismesh%cell_sets)
+  ENDIF
+ENDSUBROUTINE nonRecursiveClear_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the number of grid levels to a leaf node

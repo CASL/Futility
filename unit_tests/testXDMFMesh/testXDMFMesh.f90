@@ -200,6 +200,7 @@ INTEGER(SLK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
 
 CREATE_TEST('XDMF TYPE')
 REGISTER_SUBTEST('CLEAR', testClear)
+REGISTER_SUBTEST('NON-RECURSIVE CLEAR', testNonRecursiveClear)
 REGISTER_SUBTEST('ASSIGNMENT', testAssign)
 REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
 REGISTER_SUBTEST('GET N NODES AT DEPTH', testGetNNodesAtDepth)
@@ -253,8 +254,8 @@ ENDSUBROUTINE setup_pin1
 !-------------------------------------------------------------------------------
 SUBROUTINE testClear()
   TYPE(XDMFMeshType) :: mesh
-  TYPE(XDMFMeshType),POINTER :: pin1
-  INTEGER(SNK) :: i
+  TYPE(XDMFMeshType),POINTER :: pin1 => NULL()
+  INTEGER(SIK) :: i
 
   CALL setup_pin1(mesh)
   pin1 => mesh%children(1)
@@ -284,9 +285,77 @@ SUBROUTINE testClear()
   DO i = 1,4
     ASSERT(mesh%boundingBox(i) == 0.0_SDK, "BB not reset")
   ENDDO
-
   NULLIFY(pin1)
 ENDSUBROUTINE testClear
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testNonRecursiveClear()
+  TYPE(XDMFMeshType) :: mesh
+  TYPE(XDMFMeshType),POINTER :: pin1 => NULL()
+  INTEGER(SIK) :: i,j
+
+  CALL setup_pin1(mesh)
+  pin1 => mesh%children(1)
+
+  CALL mesh%nonRecursiveClear()
+  ! Check that pin1 is not modified
+  ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated.")
+  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
+  !     pin1 vertices
+  ASSERT(ALLOCATED(pin1%vertices), "Vertices not allocated")
+  ASSERT(SIZE(pin1%vertices)==109*3, "Wrong number of vertices")
+  ASSERT(SIZE(pin1%vertices, DIM=2)==109, "Wrong shape of vertices")
+  DO i=1,109
+    DO j=1,3
+      ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
+    ENDDO
+  ENDDO
+  !     pin1 cells
+  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
+  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
+    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  !     pin1 material_ids
+  ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
+  ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+  ENDDO
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
+  ! Check that the mesh was cleared
+  ASSERT(mesh%name == "", "mesh mesh name is incorrect")
+  ASSERT(mesh%singleTopology == .FALSE., "single topology did not reset")
+  ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
+  ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are associated")
+  ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are associated")
+  ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are associated")
+  ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are associated")
+  ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
+  ASSERT(.NOT.ASSOCIATED(mesh%parent), "Parent is associated")
+  DO i = 1,4
+    ASSERT(mesh%boundingBox(i) == 0.0_SDK, "BB not reset")
+  ENDDO
+  NULLIFY(pin1)
+  CALL mesh%clear()
+ENDSUBROUTINE testNonRecursiveClear
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testAssign()
