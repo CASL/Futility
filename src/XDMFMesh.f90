@@ -112,6 +112,12 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::getLeaves_XDMFMeshType
     !> @copydoc XDMFMeshType::getLeaves_XDMFMeshType
     PROCEDURE,PASS :: getLeaves => getLeaves_XDMFMeshType
+    !> @copybrief XDMFMeshType::getNNodesAtDepth_XDMFMeshType      
+    !> @copydoc XDMFMeshType::getNNodesAtDepth_XDMFMeshType
+    PROCEDURE,PASS :: getNNodesAtDepth => getNNodesAtDepth_XDMFMeshType
+    !> @copybrief XDMFMeshType::getNodesAtDepth_XDMFMeshType      
+    !> @copydoc XDMFMeshType::getNodesAtDepth_XDMFMeshType
+    PROCEDURE,PASS :: getNodesAtDepth => getNodesAtDepth_XDMFMeshType
     !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType
     !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType
     PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType
@@ -931,59 +937,93 @@ ENDSUBROUTINE setupRectangularMap_XDMFMeshType
 !-------------------------------------------------------------------------------
 !> @brief Gets the number of leaf nodes in this mesh
 !> @param thismesh the XDMF mesh object
+!> @param d the depth
+!> @returns n the number of nodes
+!
+RECURSIVE FUNCTION getNNodesAtDepth_XDMFMeshType(thismesh, d) RESULT(n)
+  CHARACTER(LEN=*),PARAMETER :: myName='getNNodesAtDepth_XDMFMeshType'
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK), INTENT(IN) :: d
+  INTEGER(SNK) :: n, i, d_relative
+  n = 0
+  IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
+    d_relative = d - 1
+    DO i=1,SIZE(thismesh%children)
+      n = n + thismesh%children(i)%getNNodesAtDepth(d_relative)
+    ENDDO
+  ELSE
+    IF(d > 0) CALL eXDMF%raiseError(modName//'::'//myName// &
+      ' - requested depth was greater than actual depth.')
+    ! If d = 0, it is the desired depth
+    n = 1
+  ENDIF
+ENDFUNCTION getNNodesAtDepth_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the number of leaf nodes in this mesh
+!> @param thismesh the XDMF mesh object
 !> @returns n the number of leaf nodes
 !>
 RECURSIVE FUNCTION getNLeaves_XDMFMeshType(thismesh) RESULT(n)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: n, i
-  n = 0
-  IF(ASSOCIATED(thismesh%children))THEN
-    DO i=1,SIZE(thismesh%children)
-      n = n + thismesh%children(i)%getNLeaves() 
-    ENDDO
-  ELSE
-    ! If the mesh doesn't have children, it is a leaf
-    n = 1
-  ENDIF
+  INTEGER(SNK) :: n, d
+  d = thismesh%distanceToLeaf()
+  n = thismesh%getNNodesAtDepth(d)
 ENDFUNCTION getNLeaves_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
-!> @brief Gets an array of pointers to the leaf nodes in this mesh
+!> @brief Gets an array of pointers to the nodes at depth d
 !> @param thismesh the XDMF mesh object
-!> @param leaves a pointer to an array of XDMF meshes (the leaves)
-!> @param idx the index of the operation, used only within the routine
+!> @param nodes a pointer to an array of XDMF meshes
+!> @param d the depth at which the nodes should be retieved
 !> @returns a pointer array 
 !>
-RECURSIVE SUBROUTINE getLeaves_XDMFMeshType(thismesh, leaves, idx)
+RECURSIVE SUBROUTINE getNodesAtDepth_XDMFMeshType(thismesh, nodes, d, idx)
   CLASS(XDMFMeshType), INTENT(INOUT), TARGET :: thismesh
-  TYPE(XDMFMeshPtrArry), INTENT(INOUT), POINTER :: leaves(:)
+  TYPE(XDMFMeshPtrArry), INTENT(INOUT), POINTER :: nodes(:)
+  INTEGER(SIK), INTENT(IN) :: d
   INTEGER(SIK), OPTIONAL, INTENT(INOUT) :: idx
   INTEGER(SIK) :: n, i, iidx
 
   ! If no idx, assumed to be top level
   IF(.NOT.PRESENT(idx))THEN
-    IF(ASSOCIATED(leaves)) DEALLOCATE(leaves)
-    NULLIFY(leaves)
-    n = thismesh%getNLeaves()
-    ALLOCATE(leaves(n))
+    IF(ASSOCIATED(nodes)) DEALLOCATE(nodes)
+    NULLIFY(nodes)
+    n = thismesh%getNNodesAtDepth(d)
+    ALLOCATE(nodes(n))
     iidx = 1
-    IF(ASSOCIATED(thismesh%children))THEN
+    IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
       DO i=1,SIZE(thismesh%children)
-        CALL thismesh%children(i)%getLeaves(leaves, iidx) 
+        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, iidx) 
       ENDDO
     ELSE ! leaf
-      leaves(iidx)%mesh => thismesh
+      nodes(iidx)%mesh => thismesh
     ENDIF
   ELSE
-    IF(ASSOCIATED(thismesh%children))THEN
+    IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
       DO i=1,SIZE(thismesh%children)
-        CALL thismesh%children(i)%getLeaves(leaves, idx) 
+        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, idx) 
       ENDDO
     ELSE ! leaf
-      leaves(idx)%mesh => thismesh
+      nodes(idx)%mesh => thismesh
       idx = idx + 1
     ENDIF
   ENDIF
+ENDSUBROUTINE getNodesAtDepth_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets an array of pointers to the leaf nodes in this mesh
+!> @param thismesh the XDMF mesh object
+!> @param leaves a pointer to an array of XDMF meshes (the leaves)
+!> @returns a pointer array 
+!>
+RECURSIVE SUBROUTINE getLeaves_XDMFMeshType(thismesh, leaves)
+  CLASS(XDMFMeshType), INTENT(INOUT), TARGET :: thismesh
+  TYPE(XDMFMeshPtrArry), INTENT(INOUT), POINTER :: leaves(:)
+  INTEGER(SIK) :: d
+
+  d = thismesh%distanceToLeaf()
+  CALL thismesh%getNodesAtDepth(leaves, d)
 ENDSUBROUTINE getLeaves_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
@@ -1493,8 +1533,8 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
     ! constructed by edges {(2,5,0), (0,2)} is added to the total area.
     ! 
     ! For each edge, compute additional area using quadratic function
-    ! Shift point to origin, rotate so line is x-axis, find quadratic function
-    ! with 3 point fit, integrate, add or subtract based on right or left
+    ! Shift point to origin, rotate so line is x-axis, find quadratic function,
+    ! integrate, add or subtract based on right or left
 
     !For each edge
     DO i = 1, nverts

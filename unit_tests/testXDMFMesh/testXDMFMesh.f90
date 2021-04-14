@@ -202,7 +202,9 @@ CREATE_TEST('XDMF TYPE')
 REGISTER_SUBTEST('CLEAR', testClear)
 REGISTER_SUBTEST('ASSIGNMENT', testAssign)
 REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
+REGISTER_SUBTEST('GET N NODES AT DEPTH', testGetNNodesAtDepth)
 REGISTER_SUBTEST('GET N LEAVES', testGetNLeaves)
+REGISTER_SUBTEST('GET NODES AT DEPTH', testGetNodesAtDepth)
 REGISTER_SUBTEST('GET LEAVES', testGetLeaves)
 REGISTER_SUBTEST('GET CELL AREA', testGetCellArea)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
@@ -382,6 +384,34 @@ SUBROUTINE testDistanceToLeaf()
 ENDSUBROUTINE testDistanceToLeaf
 !
 !-------------------------------------------------------------------------------
+SUBROUTINE testGetNNodesAtDepth
+  TYPE(XDMFMeshType) :: mesh
+  TYPE(XDMFMeshType),POINTER :: sub
+  INTEGER(SIK) :: i
+
+  ! Create a mesh with three children
+  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
+  ! Total leaves = 6
+  ALLOCATE(mesh%children(3))
+  sub => mesh%children(1) 
+  ALLOCATE(sub%children(1))
+  sub => mesh%children(2) 
+  ALLOCATE(sub%children(2))
+  sub => mesh%children(3) 
+  ALLOCATE(sub%children(3))
+
+  i = mesh%getNNodesAtDepth(0)
+  ASSERT(i == 1, "NNodes should be 1!")
+  i = mesh%getNNodesAtDepth(1)
+  ASSERT(i == 3, "NNodes should be 3!")
+  i = mesh%getNNodesAtDepth(2)
+  ASSERT(i == 6, "NNodes should be 6!")
+
+  CALL mesh%clear()
+  NULLIFY(sub)
+ENDSUBROUTINE testGetNNodesAtDepth
+!
+!-------------------------------------------------------------------------------
 SUBROUTINE testGetNLeaves()
   TYPE(XDMFMeshType) :: mesh
   TYPE(XDMFMeshType),POINTER :: sub
@@ -410,6 +440,57 @@ SUBROUTINE testGetNLeaves()
   CALL mesh%clear()
   NULLIFY(sub)
 ENDSUBROUTINE testGetNLeaves
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testGetNodesAtDepth()
+  TYPE(XDMFMeshType) :: mesh
+  TYPE(XDMFMeshType),POINTER :: sub => NULL()
+  TYPE(XDMFMeshPtrArry), POINTER :: nodes(:) => NULL()
+  INTEGER(SIK) :: i,j
+  TYPE(StringType) :: str
+
+
+  ! Create a mesh with three children
+  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
+  mesh%name = "L0"
+  ALLOCATE(mesh%children(3))
+  DO i = 1,3
+    sub => mesh%children(i) 
+    str = i
+    sub%name = "L1_"//str 
+    ALLOCATE(sub%children(i))
+    DO j = 1,i 
+      sub%children(j)%name = i
+    ENDDO
+  ENDDO
+
+  CALL mesh%getNodesAtDepth(nodes, 0)
+  ASSERT(SIZE(nodes) == 1, "There should be 1 node!")
+  ASSERT(nodes(1)%mesh%name == "L0", "Wrong name")
+  
+  CALL mesh%getNodesAtDepth(nodes, 1)
+  ASSERT(SIZE(nodes) == 3, "There should be 3 nodes!")
+  DO i = 1,3
+    str = i
+    ASSERT(nodes(i)%mesh%name == "L1_"//str, "Wrong name")
+  ENDDO
+
+  CALL mesh%getNodesAtDepth(nodes, 2)
+  ASSERT(SIZE(nodes) == 6, "There should be 6 nodes!")
+  str = 1
+  ASSERT(nodes(1)%mesh%name == str, "Wrong name") 
+  str = 2
+  ASSERT(nodes(2)%mesh%name == str, "Wrong name") 
+  ASSERT(nodes(3)%mesh%name == str, "Wrong name") 
+  str = 3
+  ASSERT(nodes(4)%mesh%name == str, "Wrong name") 
+  ASSERT(nodes(5)%mesh%name == str, "Wrong name") 
+  ASSERT(nodes(6)%mesh%name == str, "Wrong name") 
+
+  CALL mesh%clear()
+  NULLIFY(sub)
+  DEALLOCATE(nodes)
+ENDSUBROUTINE testGetNodesAtDepth
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testGetLeaves()
