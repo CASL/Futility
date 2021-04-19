@@ -49,6 +49,15 @@ TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
   !> XDMF ID, v1, v2, ..., v_n
   INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
+  !> Connectivity using the ID of the cell adjacent to
+  !> this one, and the sorted vertices of the edge.
+  !> For a triangle with vertices v1, v2, v3 and edges (v1, v2), (v2, v3), 
+  !> (v1, v3), connected to cells 2, 3, and 4 respectively,
+  !> Looks like: 
+  !>  2,  3,  4
+  !> v1, v2, v1
+  !> v2, v3, v3 
+!  INTEGER(SLK), ALLOCATABLE :: connectivity(:,:)
 ENDTYPE XDMFCell
 
 !> Type to hold a list of cell IDs that make up a named set.
@@ -73,6 +82,7 @@ TYPE :: XDMFMeshType
   !> x1, x2, x3, ..., xn
   !> y1, y2, y3, ..., yn
   !> z1, z2, z3, ..., zn
+  !> where (x1, x2, x3) = vertices(:, 1)
   !> Therefore vertices will be of shape (3, N)
   REAL(SDK), ALLOCATABLE :: vertices(:, :)
   !> The mesh cells
@@ -1501,7 +1511,7 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
   INTEGER(SLK), INTENT(IN) :: iCell
   REAL(SRK) :: area
   
-  REAL(SDK),PARAMETER :: pi = 3.141592653589793
+  REAL(SDK),PARAMETER :: pi = 3.14159265358979311599796346854
   REAL(SRK), ALLOCATABLE :: x(:), y(:), x_quad(:), y_quad(:), x_lin(:), y_lin(:)
   REAL(SRK) :: main_area, correction, x_edge(3), y_edge(3), theta, rotation_mat(2,2), &
     xy(2), a, b, quad_area
