@@ -16,6 +16,7 @@ USE Constants_Conversion
 USE Geom_Graph
 USE Geom_Points
 USE Geom_Line
+USE Geom_Quadratic
 USE Geom_Plane
 USE Geom_CircCyl
 USE Geom_Box
@@ -32,6 +33,7 @@ PUBLIC :: MAX_COORD_STR_LEN
 PUBLIC :: PointType
 PUBLIC :: LinkedListPointType
 PUBLIC :: LineType
+PUBLIC :: QuadraticType
 PUBLIC :: PlaneType
 PUBLIC :: CircleType
 PUBLIC :: CylinderType
