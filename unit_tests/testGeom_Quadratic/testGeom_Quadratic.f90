@@ -54,7 +54,7 @@ SUBROUTINE testInit()
   TYPE(QuadraticType) :: arc
   REAL(SDK), PARAMETER :: PI=3.14159265358979311599796346854
   REAL(SDK) :: theta, rotation_mat(2,2)
-  TYPE(PointType) :: p1, p2, p3, p1s, p2s, p3s
+  TYPE(PointType) :: p1, p2, p3, p1s, p2s, p3s, p11
   INTEGER(SIK) :: i
 
   COMPONENT_TEST("No rotation or shift needed")
@@ -76,18 +76,11 @@ SUBROUTINE testInit()
   DO i = 1,8
     p1s = p1; p2s = p2; p3s = p3;
     theta = i*PI/4
-    WRITE(*,*) i
-    WRITE(*,*) "theta: ", theta
     rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
     rotation_mat(2,:) = (/SIN(theta), COS(theta)/)
     p1s%coord = MATMUL(rotation_mat, p1s%coord)
     p2s%coord = MATMUL(rotation_mat, p2s%coord)
     p3s%coord = MATMUL(rotation_mat, p3s%coord)
-    WRITE(*,*) "point coords: "
-    WRITE(*,*) p1s%coord
-    WRITE(*,*) p2s%coord
-    WRITE(*,*) p3s%coord
-
     ! y = -x^2 + 2x, but rotated by i*pi/4
     CALL arc%set(p1s, p2s, p3s)
     ASSERT(ABS(arc%a        +  1.0_SRK) < 1.0E-6, "Wrong a")
@@ -104,6 +97,61 @@ SUBROUTINE testInit()
     ASSERT(arc%points(3) == p3s, "Point assigned incorrectly")
   ENDDO
 
+  COMPONENT_TEST("Rotate i*pi/4, i = 1,8 and shift 1,1")
+  CALL p11%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  DO i = 1,8
+    p1s = p1; p2s = p2; p3s = p3;
+    theta = i*PI/4
+    rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
+    rotation_mat(2,:) = (/SIN(theta), COS(theta)/)
+    p1s%coord = MATMUL(rotation_mat, p1s%coord)
+    p2s%coord = MATMUL(rotation_mat, p2s%coord)
+    p3s%coord = MATMUL(rotation_mat, p3s%coord)
+    p1s = p1s + p11; p2s = p2s + p11; p3s = p3s + p11;
 
+    ! y = -x^2 + 2x, but rotated by i*pi/4 and shifted 1,1
+    CALL arc%set(p1s, p2s, p3s)
+    ASSERT(ABS(arc%a        +  1.0_SRK) < 1.0E-6, "Wrong a")
+    ASSERT(ABS(arc%b        -  2.0_SRK) < 1.0E-6, "Wrong b")
+    IF( i < 6) THEN
+      ASSERT(ABS(arc%theta    -  i*PI/4 ) < 1.0E-6, "Wrong theta")
+    ELSE
+      ASSERT(ABS(arc%theta    -  (i-8)*PI/4 ) < 1.0E-6, "Wrong theta")
+    ENDIF
+    ASSERT(ABS(arc%shift_x  -  1.0_SRK) < 1.0E-6, "Wrong shift_x")
+    ASSERT(ABS(arc%shift_y  -  1.0_SRK) < 1.0E-6, "Wrong shift_y")
+    ASSERT(arc%points(1) == p1s, "Point assigned incorrectly")
+    ASSERT(arc%points(2) == p2s, "Point assigned incorrectly")
+    ASSERT(arc%points(3) == p3s, "Point assigned incorrectly")
+  ENDDO
+
+  COMPONENT_TEST("y=x^2 -2x with roatation and shift")
+  CALL p3%clear()
+  CALL p3%init(DIM=2, X=1.0_SRK, Y=-1.0_SRK)
+  DO i = 1,8
+    p1s = p1; p2s = p2; p3s = p3;
+    theta = i*PI/4
+    rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
+    rotation_mat(2,:) = (/SIN(theta), COS(theta)/)
+    p1s%coord = MATMUL(rotation_mat, p1s%coord)
+    p2s%coord = MATMUL(rotation_mat, p2s%coord)
+    p3s%coord = MATMUL(rotation_mat, p3s%coord)
+    p1s = p1s + p11; p2s = p2s + p11; p3s = p3s + p11;
+
+    ! y = x^2 - 2x, but rotated by i*pi/4 and shifted 1,1
+    CALL arc%set(p1s, p2s, p3s)
+    ASSERT(ABS(arc%a        -  1.0_SRK) < 1.0E-6, "Wrong a")
+    ASSERT(ABS(arc%b        +  2.0_SRK) < 1.0E-6, "Wrong b")
+    IF( i < 6) THEN
+      ASSERT(ABS(arc%theta    -  i*PI/4 ) < 1.0E-6, "Wrong theta")
+    ELSE
+      ASSERT(ABS(arc%theta    -  (i-8)*PI/4 ) < 1.0E-6, "Wrong theta")
+    ENDIF
+    ASSERT(ABS(arc%shift_x  -  1.0_SRK) < 1.0E-6, "Wrong shift_x")
+    ASSERT(ABS(arc%shift_y  -  1.0_SRK) < 1.0E-6, "Wrong shift_y")
+    ASSERT(arc%points(1) == p1s, "Point assigned incorrectly")
+    ASSERT(arc%points(2) == p2s, "Point assigned incorrectly")
+    ASSERT(arc%points(3) == p3s, "Point assigned incorrectly")
+  ENDDO
 ENDSUBROUTINE testInit
 ENDPROGRAM testGeom_Quadratic
