@@ -145,11 +145,120 @@ ENDFUNCTION area_QuadraticType
 !> @brief Finds the intersection between a line and the arc (if it exists)
 !> @param line line to test for intersection
 !> @returns points the points of intersection
-!> @note If the line and quadratic arc are collinear, throws an error
-PURE SUBROUTINE intersectLine_QuadraticType(arc, line, points)
+!> @note a return code is assigned to p%dim indicating the type of
+!> intersection.
+!>   -3: there is no intersection (disjoint)
+!>   -2: the line segment and arc overlap
+!>   -1: problem with dummy arguments passed to routine
+!>    1: success; an 1 intersection point was found
+!>    2: success; 2 intersection points were found
+SUBROUTINE intersectLine_QuadraticType(arc, line, points)
   CLASS(QuadraticType),INTENT(IN) :: arc
   TYPE(LineType),INTENT(IN) :: line
-  TYPE(PointType),ALLOCATABLE,INTENT(INOUT) :: points(:)
+  TYPE(PointType),INTENT(INOUT) :: points(2)
+  TYPE(LineType) :: line_s
+  TYPE(PointType) :: p0
+  REAL(SDK) :: A,B,C,m,d,rotation_mat(2,2), xdomain, x, disc, xmin, xmax
+  REAL(SDK), PARAMETER :: vertical = 1.0E11_SDK
 
+  IF(.NOT.ALLOCATED(points(1)%coord))THEN
+   CALL points(1)%init(DIM=2,X=-HUGE(0.0_SRK),Y=-HUGE(0.0_SRK))
+   CALL points(2)%init(DIM=2,X=-HUGE(0.0_SRK),Y=-HUGE(0.0_SRK))
+  ENDIF
+  points(:)%dim = -1
+  IF(line%p1%dim == line%p2%dim .AND. line%p1%dim == 2) THEN
+    ! Transform the line to the coordinates of the arc
+    ! Create a copy of the line.
+    line_s%p1 = line%p1
+    line_s%p2 = line%p2
+    ! Shift the line to the origin
+    CALL p0%init(DIM=2, X=arc%shift_x, Y=arc%shift_y)
+    line_s%p1 = line_s%p1 - p0
+    line_s%p2 = line_s%p2 - p0
+    ! Rotate the line
+    rotation_mat(1,:) = (/COS(arc%theta), SIN(arc%theta)/)
+    rotation_mat(2,:) = (/-SIN(arc%theta), COS(arc%theta)/)
+    line_s%p1%coord = MATMUL(rotation_mat, line_s%p1%coord)
+    line_s%p2%coord = MATMUL(rotation_mat, line_s%p2%coord)
+    ! Get the
+    ! line: y = mx + d
+    ! quad: y = ax^2 + bx
+    ! solve for the x which satisfies both conditions
+    ! mx + d = ax^2 + bx
+    ! ax^2 + (b-m)x - d
+    ! A = a, B = b-m, C = -d
+    ! x = (-B pm sqrt(B^2 - 4AC))/2A
+    ! If B^2 < 4AC, there is no real solution
+    ! If B^2 == 4AC, there is one solution
+    ! If B^2 > 4AC, there are two solutions
+    ! These are solutions for the line, not the line segment.
+    ! x_soln must be in [line%p1%x, lines%p2%x], assuming p1%x <= p2%x
+    !
+    ! This is numerical instability hell. There has to be a better way
+    m = (line_s%p2%coord(2) - line_s%p1%coord(2))/(line_s%p2%coord(1) - line_s%p1%coord(1))
+    d = line_s%p1%coord(2) - m*line_s%p1%coord(1)
+    A = arc%a
+    B = arc%b - m
+    C = -d
+
+    ! If B^2 < 4AC, there is no real solution
+    IF(B*B < 4*A*C)THEN
+      points(:)%dim = -3
+      RETURN
+    ENDIF
+
+    ! Valid x for the arc is from 0.0 to the distance from arc p1 to p2
+    xdomain = distance(arc%points(1), arc%points(2))
+    ! Valid x for the line is from the min to max x of the segment
+    xmin = MIN(line_s%p1%coord(1), line_s%p2%coord(1)) ! valid domain of the seg
+    xmax = MAX(line_s%p1%coord(1), line_s%p2%coord(1))
+    ! If vertical line, just check if the point x are within the valid domain.
+    ! If so, take the intersection there.
+    IF(ABS(m) > vertical) THEN
+      x = line_s%p1%coord(1)
+      IF( 0.0 <= x .AND. x <= xdomain)THEN
+        points(:)%dim = 1
+        points(1)%coord(1) = x
+        points(1)%coord(2) = arc%a*x**2 + arc%b*x
+      ELSE
+        points(:)%dim = -3
+      ENDIF
+    ELSE ! non-vertical
+      disc = SQRT(B*B - 4*A*C)
+      x = (-B + disc)/(2*A)
+      IF(0.0 <= x .AND. x <= xdomain .AND. xmin <= x .AND. x <= xmax) THEN
+        points(:)%dim = 1
+        points(1)%coord(1) = x
+        points(1)%coord(2) = arc%a*x**2 + arc%b*x
+      ELSE
+        points(:)%dim = -3
+      ENDIF
+      ! If the possibility of a second solution exists, check it
+      IF( ABS(B*B - 4*A*C) > 1.0E-6) THEN
+        x = (-B - disc)/(2*A)
+        IF(0.0 <= x .AND. x <= xdomain .AND. xmin <= x .AND. x <= xmax) THEN
+          IF(points(1)%dim == 1)THEN ! second intersection
+            points(:)%dim = 2
+            points(2)%coord(1) = x
+            points(2)%coord(2) = arc%a*x**2 + arc%b*x
+          ELSE
+            points(:)%dim = 1
+            points(1)%coord(1) = x
+            points(1)%coord(2) = arc%a*x**2 + arc%b*x
+          ENDIF
+        ENDIF
+      ENDIF
+    ENDIF
+
+    ! If intersection was found, transfrom back to original coords
+    IF(points(1)%dim > 0)THEN
+      rotation_mat(1,:) = (/COS(arc%theta), -SIN(arc%theta)/)
+      rotation_mat(2,:) = (/SIN(arc%theta), COS(arc%theta)/)
+      points(1)%coord(1) = points(1)%coord(1) + arc%shift_x
+      points(1)%coord(2) = points(1)%coord(2) + arc%shift_y
+      points(2)%coord(1) = points(2)%coord(1) + arc%shift_x
+      points(2)%coord(2) = points(2)%coord(2) + arc%shift_y
+    ENDIF
+  ENDIF
 ENDSUBROUTINE intersectLine_QuadraticType
 ENDMODULE Geom_Quadratic
