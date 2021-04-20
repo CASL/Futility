@@ -254,7 +254,7 @@ SUBROUTINE setup_pin1(mesh)
     children(1)%cells(i)%vertex_list(1) = two_pins_pin1_cells(1,i)
     children(1)%cells(i)%vertex_list(2:) = two_pins_pin1_cells(2:,i) + 1
     ALLOCATE(children(1)%cells(i)%edge_list(1))
-    children(1)%cells(i)%edge_list(1)%edge => children(1)%edges(1)
+    children(1)%cells(i)%edge_list(1) = 1
   ENDDO
   children(1)%material_ids = two_pins_pin1_material_ids + 1
   ALLOCATE(children(1)%cell_sets(1))
@@ -335,7 +335,7 @@ SUBROUTINE testNonRecursiveClear()
     ENDDO
   ENDDO
   !     pin1 edges
-  ASSERT(ALLOCATED(pin1%edges), "Cells not allocated")
+  ASSERT(ALLOCATED(pin1%edges), "Edges not allocated")
   !     pin1 cells
   ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
   ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
@@ -383,6 +383,10 @@ SUBROUTINE testAssign()
   TYPE(XDMFMeshType) :: mesh1, mesh2
   TYPE(XDMFMeshType),POINTER :: pin1
   INTEGER(SNK) :: i,j
+  TYPE(PointType) :: p1, p2, p3
+  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK) 
+  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK) 
+  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK) 
 
   CALL setup_pin1(mesh1)
   mesh2 = mesh1
@@ -418,6 +422,21 @@ SUBROUTINE testAssign()
       ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
     ENDDO
   ENDDO
+  !     pin1 edges
+  ASSERT(ALLOCATED(pin1%edges), "Edges not allocated")
+  ASSERT(SIZE(pin1%edges)==1, "Wrong number of edges")
+  ASSERT(.NOT.pin1%edges(1)%isLinear, "isLinear is wrong")
+  ASSERT(pin1%edges(1)%cells(1) == 14, "cells value is wrong")
+  ASSERT(pin1%edges(1)%cells(2) == 14, "cells value is wrong")
+  ASSERT(pin1%edges(1)%vertices(1) == 14, "vertex value is wrong")
+  ASSERT(pin1%edges(1)%vertices(2) == 14, "vertex value is wrong")
+  ASSERT(pin1%edges(1)%vertices(3) == 14, "vertex value is wrong")
+  ASSERT(pin1%edges(1)%quad%points(1) == p1, "point is wrong")
+  ASSERT(pin1%edges(1)%quad%points(2) == p2, "point is wrong")
+  ASSERT(pin1%edges(1)%quad%points(3) == p3, "point is wrong")
+  ASSERT(pin1%edges(1)%line%p1 == p1, "point is wrong")
+  ASSERT(pin1%edges(1)%line%p2 == p2, "point is wrong")
+
   !     pin1 cells
   ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
   ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")

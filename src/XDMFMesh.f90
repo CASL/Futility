@@ -59,18 +59,13 @@ TYPE :: XDMFEdge
   TYPE(LineType) :: line
 ENDTYPE XDMFEdge
 
-!> To allow an array of pointers to XDMF edges
-TYPE :: XDMFEdgePtrArry
-  TYPE(XDMFEdge), POINTER :: edge => NULL()
-ENDTYPE XDMFEdgePtrArry
-
 !> Type to hold the vertices that make up a mesh cell
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
   !> XDMF ID, v1, v2, ..., v_n
   INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
   !> Edges
-  TYPE(XDMFEdgePtrArry), ALLOCATABLE :: edge_list(:)
+  INTEGER(SLK), ALLOCATABLE :: edge_list(:)
 ENDTYPE XDMFCell
 
 !> Type to hold a list of cell IDs that make up a named set.
@@ -742,7 +737,7 @@ ENDSUBROUTINE importXDMFMesh
 !>
 RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i,j
+  INTEGER(SNK) :: i
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -766,12 +761,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   IF( ALLOCATED(thismesh%cells) ) THEN
     DO i=1, SIZE(thismesh%cells)
       DEALLOCATE(thismesh%cells(i)%vertex_list)
-      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) THEN
-        DO j = 1, SIZE(thismesh%cells(i)%edge_list)
-          NULLIFY(thismesh%cells(i)%edge_list(j)%edge)
-        ENDDO
-        DEALLOCATE(thismesh%cells(i)%edge_list)
-      ENDIF
+      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
     ENDDO
     DEALLOCATE(thismesh%cells)
   ENDIF
@@ -791,7 +781,7 @@ ENDSUBROUTINE clear_XDMFMeshType
 !>
 RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i,j
+  INTEGER(SNK) :: i
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -812,12 +802,7 @@ RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
   IF( ALLOCATED(thismesh%cells) ) THEN
     DO i=1, SIZE(thismesh%cells)
       DEALLOCATE(thismesh%cells(i)%vertex_list)
-      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) THEN
-        DO j = 1, SIZE(thismesh%cells(i)%edge_list)
-          NULLIFY(thismesh%cells(i)%edge_list(j)%edge)
-        ENDDO
-        DEALLOCATE(thismesh%cells(i)%edge_list)
-      ENDIF
+      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
     ENDDO
     DEALLOCATE(thismesh%cells)
   ENDIF
@@ -925,10 +910,27 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2)))
     thismesh%vertices = thatmesh%vertices
   ENDIF
+  IF( ALLOCATED(thatmesh%edges) ) THEN
+    IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
+    ALLOCATE(thismesh%edges(SIZE(thatmesh%edges)))
+    DO i = 1,SIZE(thatmesh%edges)
+      thismesh%edges(i)%isLinear = thatmesh%edges(i)%isLinear
+      thismesh%edges(i)%cells = thatmesh%edges(i)%cells
+      thismesh%edges(i)%vertices = thatmesh%edges(i)%vertices
+      IF(thatmesh%edges(i)%isLinear) THEN
+        CALL thismesh%edges(i)%line%set(thatmesh%edges(i)%line%p1, thatmesh%edges(i)%line%p2)
+      ELSE
+        CALL thismesh%edges(i)%quad%set(thatmesh%edges(i)%quad%points(1), &
+                                        thatmesh%edges(i)%quad%points(2), &
+                                        thatmesh%edges(i)%quad%points(3))
+      ENDIF
+    ENDDO
+  ENDIF
   IF( ALLOCATED(thatmesh%cells) ) THEN
     IF(ALLOCATED(thismesh%cells))THEN
       DO i=1, SIZE(thismesh%cells)
         DEALLOCATE(thismesh%cells(i)%vertex_list)
+        IF(ALLOCATED(thismesh%cells(i)%edge_list)) DEALLOCATE(thismesh%cells(i)%edge_list)
       ENDDO
       DEALLOCATE(thismesh%cells)
     ENDIF
@@ -936,6 +938,8 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     DO i = 1, SIZE(thatmesh%cells)
       ALLOCATE(thismesh%cells(i)%vertex_list(SIZE(thatmesh%cells(i)%vertex_list)))
       thismesh%cells(i)%vertex_list = thatmesh%cells(i)%vertex_list
+      IF(ALLOCATED(thatmesh%cells(i)%edge_list)) &
+        thismesh%cells(i)%edge_list = thatmesh%cells(i)%edge_list
     ENDDO
   ENDIF
   IF( ALLOCATED(thatmesh%material_ids) )THEN
