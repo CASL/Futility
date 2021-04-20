@@ -1036,10 +1036,21 @@ ENDSUBROUTINE setupRectangularMap_XDMFMeshType
 RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
   CHARACTER(LEN=*),PARAMETER :: myName='setupEdges_XDMFMeshType'
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SIK) :: i,j,k,xid, nEdges, maxEdges, nCells, iEdge
+  INTEGER(SIK) :: i,j,k,xid, maxEdges, nCells, iEdge, nEdge, icell, &
+    total_nEdges, cells_in_edges
   INTEGER(SIK) :: edge_verts(3)
   INTEGER(SIK), ALLOCATABLE :: all_edge_verts(:,:), all_edge_cells(:,:) 
   LOGICAL(SBK) :: duplicate_edge
+  TYPE(PointType) :: p1, p2, p3
+  !
+  !
+  ! NOTE: There is potential for an overflow issue if the ID of a vertex exceeds
+  !   the maximum value of a 32bit integer. The vertex_list of each cell
+  !   defaults to 64bit integers to account for very large meshes, but the
+  !   sorting routines only accept SIK. Therefore, if this becomes an issue,
+  !   just copy and past all the sorting routines, replace SIK with SLK, and add
+  !   an interface in Sorting.f90, or just compile with 64bit integers. 
+  !
 
   IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
   IF(ASSOCIATED(thismesh%children))THEN
@@ -1048,6 +1059,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
       CALL thismesh%children(i)%setupEdges()
     ENDDO
   ELSE
+    total_nEdges = 0
     ! Leaf, setup edges
     nCells = SIZE(thismesh%cells)
     ! Setup oversized arrays to hold all the edges and cells 
@@ -1056,11 +1068,18 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
     ALLOCATE(all_edge_cells(2,maxEdges*nCells))
     all_edge_verts = -1
     all_edge_cells = -1
-    iEdge = 1
+    iEdge = 0
     ! Loop over each cell to get all unique edges
     DO i = 1, SIZE(thismesh%cells)
       xid = thismesh%cells(i)%vertex_list(1)
+      WRITE(*,*) "Cell ", i, " is type ", xid
       IF(xid == 4_SLK .OR. xid == 5_SLK) THEN! linear edges
+        IF(xid == 4_SLK)THEN
+          nEdge = 3
+        ELSE
+          nEdge = 4
+        ENDIF
+        total_nEdges = total_nEdges + nEdge
         ! For each edge
         DO j = 2, SIZE(thismesh%cells(i)%vertex_list) - 1
           edge_verts = -1
@@ -1101,8 +1120,55 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
           all_edge_cells(1,iEdge + 1) = i
           iEdge = iEdge + 1
         ENDIF
-      ELSEIF(xid == 36_SLK .OR. xid == 7_SLK) THEN ! quad edges
-          WRITE(*,*) "Quad"
+      ELSEIF(xid == 36_SLK .OR. xid == 37_SLK) THEN ! quad edges
+        IF(xid == 36_SLK)THEN
+          nEdge = 3
+        ELSE
+          nEdge = 4
+        ENDIF
+        total_nEdges = total_nEdges + nEdge
+        ! For each edge
+        DO j = 2, (SIZE(thismesh%cells(i)%vertex_list) - 1)/2
+          edge_verts(1) = thismesh%cells(i)%vertex_list(j)
+          edge_verts(2) = thismesh%cells(i)%vertex_list(j+1)
+          edge_verts(3) = thismesh%cells(i)%vertex_list(j+nEdge)
+          CALL sort(edge_verts)
+          ! If this edge is unique, add it
+          duplicate_edge = .FALSE.
+          DO k = 1, iEdge
+            IF(ALL(edge_verts == all_edge_verts(:,k))) THEN
+              duplicate_edge = .TRUE.
+              ! add this cell to edge cell list
+              all_edge_cells(2,k) = i
+              EXIT
+            ENDIF
+          ENDDO
+          IF(.NOT.duplicate_edge) THEN
+            all_edge_verts(:,iEdge + 1) = edge_verts
+            all_edge_cells(1,iEdge + 1) = i
+            iEdge = iEdge + 1
+          ENDIF
+        ENDDO
+        ! Last edge
+        edge_verts(1) = thismesh%cells(i)%vertex_list(j)
+        edge_verts(2) = thismesh%cells(i)%vertex_list(2)
+        edge_verts(3) = thismesh%cells(i)%vertex_list(2*nEdge+1)
+        CALL sort(edge_verts)
+        ! If this edge is unique, add it
+        duplicate_edge = .FALSE.
+        DO k = 1, iEdge
+          IF(ALL(edge_verts == all_edge_verts(:,k))) THEN
+            duplicate_edge = .TRUE.
+            ! add this cell to edge cell list
+            all_edge_cells(2,k) = i
+            EXIT
+          ENDIF
+        ENDDO
+        IF(.NOT.duplicate_edge) THEN
+          all_edge_verts(:,iEdge + 1) = edge_verts
+          all_edge_cells(1,iEdge + 1) = i
+          iEdge = iEdge + 1
+        ENDIF
       ELSE
         CALL eXDMF%raiseError(modName//'::'//myName// &
           ' - Unsupported XDMF cell type.')
@@ -1116,15 +1182,65 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
       IF(all_edge_verts(1,i) == -1) THEN !Linear
         ! isLinear
         thismesh%edges(i)%isLinear = .TRUE.
-
+        ! Setup the line
+        CALL p1%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(2,i)), &
+                            Y=thismesh%vertices(2,all_edge_verts(2,i)))
+        CALL p2%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(3,i)), &
+                            Y=thismesh%vertices(2,all_edge_verts(3,i)))
+        CALL thismesh%edges(i)%line%set(p1, p2)
       ELSE ! quad
         ! isLinear
         thismesh%edges(i)%isLinear = .FALSE.
+        ! It is non-trivial to determine which point is the middle of the arc
+        ! when the arc can be rotated arbitrarily. So we simply examine one of the
+        ! cells it belongs to, to see which verts are linear. The XDMF cell
+        ! format lists linear then quadratic verts, so the last vertex we see
+        ! cycling through the vertex list is the quadratic vertex.
+        icell = all_edge_cells(1,i) ! The cell the edge belongs too
+        edge_verts = all_edge_verts(:,i)
+        ! Mark seen vert IDs as 0. The non-zero vertex is the midpoint
+        ! The order of the other two points doesn't matter.
+        DO j = 1,(SIZE(thismesh%cells(icell)%vertex_list) - 1)/2 ! just lin verts
+          DO k = 1,3
+            IF(edge_verts(k) == thismesh%cells(icell)%vertex_list(j+1)) edge_verts(k) = 0
+          ENDDO
+        ENDDO
+        DO k = 1,3
+          IF(edge_verts(k) /= 0) THEN
+            CALL p3%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(k,i)), &
+                                Y=thismesh%vertices(2,all_edge_verts(k,i)))
+          ELSE
+            IF(p1%dim == 2) THEN ! point 1 alrdy init, this is the 2nd point
+              CALL p2%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(k,i)), &
+                                  Y=thismesh%vertices(2,all_edge_verts(k,i)))
+            ELSE
+              CALL p1%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(k,i)), &
+                                  Y=thismesh%vertices(2,all_edge_verts(k,i)))
+            ENDIF
+          ENDIF
+        ENDDO
+        CALL thismesh%edges(i)%quad%set(p1, p2, p3)
       ENDIF
       ! vertices
       thismesh%edges(i)%vertices = all_edge_verts(:,i)
-
+      ! cells
+      thismesh%edges(i)%cells = all_edge_cells(:,i)
+      CALL p1%clear()
+      CALL p2%clear()
+      CALL p3%clear()
     ENDDO
+
+    ! Perform a check to make sure the total number of edges and the sum of the
+    ! cells associated with each edge is equal.
+    cells_in_edges = 0
+    DO i = 1, iEdge
+      DO j = 1, 2
+        IF(thismesh%edges(i)%cells(j) > 0) THEN
+          cells_in_edges = cells_in_edges + 1
+        ENDIF
+      ENDDO
+    ENDDO
+    ENSURE(total_nEdges == cells_in_edges)
   ENDIF
 ENDSUBROUTINE setupEdges_XDMFMeshType
 !

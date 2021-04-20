@@ -225,9 +225,9 @@ SUBROUTINE setup_pin1(mesh)
   TYPE(XDMFMeshType), POINTER :: children(:)
   INTEGER(SNK) :: i
   TYPE(PointType) :: p1, p2, p3
-  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK) 
-  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK) 
-  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK) 
+  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK)
 
   ! Setup a mesh equivalent to gridmesh_two_pins.xdmf, only containing pin1
   mesh%name = "mesh_domain"
@@ -385,9 +385,9 @@ SUBROUTINE testAssign()
   TYPE(XDMFMeshType),POINTER :: pin1
   INTEGER(SNK) :: i,j
   TYPE(PointType) :: p1, p2, p3
-  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK) 
-  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK) 
-  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK) 
+  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK)
 
   CALL setup_pin1(mesh1)
   mesh2 = mesh1
@@ -503,11 +503,11 @@ SUBROUTINE testGetNNodesAtDepth
   ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
   ! Total leaves = 6
   ALLOCATE(mesh%children(3))
-  sub => mesh%children(1) 
+  sub => mesh%children(1)
   ALLOCATE(sub%children(1))
-  sub => mesh%children(2) 
+  sub => mesh%children(2)
   ALLOCATE(sub%children(2))
-  sub => mesh%children(3) 
+  sub => mesh%children(3)
   ALLOCATE(sub%children(3))
 
   i = mesh%getNNodesAtDepth(0)
@@ -531,19 +531,19 @@ SUBROUTINE testGetNLeaves()
   ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
   ! Total leaves = 6
   ALLOCATE(mesh%children(3))
-  sub => mesh%children(1) 
+  sub => mesh%children(1)
   ALLOCATE(sub%children(1))
-  sub => mesh%children(2) 
+  sub => mesh%children(2)
   ALLOCATE(sub%children(2))
-  sub => mesh%children(3) 
+  sub => mesh%children(3)
   ALLOCATE(sub%children(3))
 
   i = mesh%getNLeaves()
   ASSERT(i == 6, "NLeaves should be 6!")
-  sub => mesh%children(1) 
+  sub => mesh%children(1)
   i = sub%getNLeaves()
   ASSERT(i == 1, "NLeaves should be 1!")
-  sub => mesh%children(3) 
+  sub => mesh%children(3)
   i = sub%getNLeaves()
   ASSERT(i == 3, "NLeaves should be 3!")
 
@@ -565,11 +565,11 @@ SUBROUTINE testGetNodesAtDepth()
   mesh%name = "L0"
   ALLOCATE(mesh%children(3))
   DO i = 1,3
-    sub => mesh%children(i) 
+    sub => mesh%children(i)
     str = i
-    sub%name = "L1_"//str 
+    sub%name = "L1_"//str
     ALLOCATE(sub%children(i))
-    DO j = 1,i 
+    DO j = 1,i
       sub%children(j)%name = i
     ENDDO
   ENDDO
@@ -577,7 +577,7 @@ SUBROUTINE testGetNodesAtDepth()
   CALL mesh%getNodesAtDepth(nodes, 0)
   ASSERT(SIZE(nodes) == 1, "There should be 1 node!")
   ASSERT(nodes(1)%mesh%name == "L0", "Wrong name")
-  
+
   CALL mesh%getNodesAtDepth(nodes, 1)
   ASSERT(SIZE(nodes) == 3, "There should be 3 nodes!")
   DO i = 1,3
@@ -588,14 +588,14 @@ SUBROUTINE testGetNodesAtDepth()
   CALL mesh%getNodesAtDepth(nodes, 2)
   ASSERT(SIZE(nodes) == 6, "There should be 6 nodes!")
   str = 1
-  ASSERT(nodes(1)%mesh%name == str, "Wrong name") 
+  ASSERT(nodes(1)%mesh%name == str, "Wrong name")
   str = 2
-  ASSERT(nodes(2)%mesh%name == str, "Wrong name") 
-  ASSERT(nodes(3)%mesh%name == str, "Wrong name") 
+  ASSERT(nodes(2)%mesh%name == str, "Wrong name")
+  ASSERT(nodes(3)%mesh%name == str, "Wrong name")
   str = 3
-  ASSERT(nodes(4)%mesh%name == str, "Wrong name") 
-  ASSERT(nodes(5)%mesh%name == str, "Wrong name") 
-  ASSERT(nodes(6)%mesh%name == str, "Wrong name") 
+  ASSERT(nodes(4)%mesh%name == str, "Wrong name")
+  ASSERT(nodes(5)%mesh%name == str, "Wrong name")
+  ASSERT(nodes(6)%mesh%name == str, "Wrong name")
 
   CALL mesh%clear()
   NULLIFY(sub)
@@ -616,9 +616,9 @@ SUBROUTINE testGetLeaves()
   ! Total leaves = 6
   ALLOCATE(mesh%children(3))
   DO i = 1,3
-    sub => mesh%children(i) 
+    sub => mesh%children(i)
     ALLOCATE(sub%children(i))
-    DO j = 1,i 
+    DO j = 1,i
       sub%children(j)%name = i
     ENDDO
   ENDDO
@@ -626,7 +626,7 @@ SUBROUTINE testGetLeaves()
   CALL mesh%getLeaves(leaves)
   ASSERT(SIZE(leaves) == 6, "There should be 6 leaves!")
   DO i = 1,3
-    sub => mesh%children(i) 
+    sub => mesh%children(i)
     CALL sub%getLeaves(leaves)
     ASSERT(SIZE(leaves) == i, "Wrong number of leaves!")
     str = i
@@ -681,7 +681,7 @@ SUBROUTINE testGetCellArea()
   mesh45 = mesh
   DO i = 1, 9
     xy = mesh45%vertices(1:2, i)
-    xy = MATMUL(rotation_mat, xy) 
+    xy = MATMUL(rotation_mat, xy)
     mesh45%vertices(1:2, i) = xy
   ENDDO
 
@@ -705,19 +705,19 @@ SUBROUTINE testGetCellArea()
   !       |        |
   !       |        |
   !       v1-------v2 (1,0)
-  ! (0,0)                                                           
-  area = mesh%getCellArea(2_SLK)                                    
+  ! (0,0)
+  area = mesh%getCellArea(2_SLK)
   ASSERT(ABS(area - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
-  area = mesh45%getCellArea(2_SLK)                                    
+  area = mesh45%getCellArea(2_SLK)
   ASSERT(ABS(area - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
 
   COMPONENT_TEST('Triangle6')
-  !          v3 
+  !          v3
   !        /   \
   !     v9      v6  This should look very close to a half circle, with the flat edge
   !    /        /   at 45 degrees. Hard to make an ASCII diagram for this.
   !  /         /   Area approc pi/4
-  ! v1        v2 
+  ! v1        v2
   !    --v5--
   area = mesh%getCellArea(3_SLK)
   ASSERT(ABS(area - 0.77614233) < 1.0E-6, "Area should be 0.77614233")
@@ -802,8 +802,8 @@ SUBROUTINE testSetupRectangularMap()
   TYPE(XDMFMeshType) :: mesh
 
   ALLOCATE(mesh%children(2))
-  mesh%children(1)%name = 'GRID_L1_1_1' 
-  mesh%children(2)%name = 'GRID_L1_2_1' 
+  mesh%children(1)%name = 'GRID_L1_1_1'
+  mesh%children(2)%name = 'GRID_L1_2_1'
 
   ! Check original map
   CALL mesh%setupRectangularMap()
@@ -829,12 +829,12 @@ SUBROUTINE testSetupRectangularMap()
   ! -------------
   DEALLOCATE(mesh%children)
   ALLOCATE(mesh%children(6))
-  mesh%children(1)%name = 'GRID_L1_1_1' 
-  mesh%children(2)%name = 'GRID_L1_2_2' 
-  mesh%children(3)%name = 'GRID_L1_1_2' 
-  mesh%children(4)%name = 'GRID_L1_2_1' 
-  mesh%children(5)%name = 'GRID_L1_3_1' 
-  mesh%children(6)%name = 'GRID_L1_3_2' 
+  mesh%children(1)%name = 'GRID_L1_1_1'
+  mesh%children(2)%name = 'GRID_L1_2_2'
+  mesh%children(3)%name = 'GRID_L1_1_2'
+  mesh%children(4)%name = 'GRID_L1_2_1'
+  mesh%children(5)%name = 'GRID_L1_3_1'
+  mesh%children(6)%name = 'GRID_L1_3_2'
   CALL mesh%setupRectangularMap()
   ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
   ASSERT(SIZE(mesh%map, DIM=1) == 3, "Map is wrong size")
@@ -852,8 +852,10 @@ ENDSUBROUTINE testSetupRectangularMap
 !-------------------------------------------------------------------------------
 SUBROUTINE testSetupEdges()
   TYPE(XDMFMeshType) :: mesh
+  INTEGER(SIK) :: i
 
-  ! A linear mesh with 7 cells (3 tro, 4 quad), 11 vertices, and 17 unique
+  COMPONENT_TEST("Linear Edges")
+  ! A linear mesh with 7 cells (3 tri, 4 quad), 11 vertices, and 17 unique
   ! edges.
   !
   ! (0,2) 8---------9---------10-----------------11 (4,2)
@@ -902,6 +904,105 @@ SUBROUTINE testSetupEdges()
 
   ! Setup the edges
   CALL mesh%setupEdges()
+
+  ASSERT(ALLOCATED(mesh%edges), "edges not allocated")
+  ASSERT(SIZE(mesh%edges) == 17, "wrong number of edges")
+  ASSERT(ALL(mesh%edges%isLinear), "Should be linear")
+  ! Spot check on 2 edges, since all 17 would be tedious
+  ! Edge 1 - 2
+  ASSERT(mesh%edges(1)%cells(1) == 1, "Wrong cell")
+  ASSERT(mesh%edges(1)%cells(2) == -1, "Wrong cell")
+  ASSERT(mesh%edges(1)%vertices(1) == -1, "Wrong vert")
+  ASSERT(mesh%edges(1)%vertices(2) == 1, "Wrong vert")
+  ASSERT(mesh%edges(1)%vertices(3) == 2, "Wrong vert")
+  ASSERT(mesh%edges(1)%line%p1%dim == 2, "Line not setup correctly")
+  ASSERT(mesh%edges(1)%line%p2%dim == 2, "Line not setup correctly")
+  ASSERT(mesh%edges(1)%line%p1%coord(1) == 0.0_SRK, "Line not setup correctly")
+  ASSERT(mesh%edges(1)%line%p1%coord(2) == 0.0_SRK, "Line not setup correctly")
+  ASSERT(mesh%edges(1)%line%p2%coord(1) == 1.0_SRK, "Line not setup correctly")
+  ASSERT(mesh%edges(1)%line%p2%coord(2) == 0.0_SRK, "Line not setup correctly")
+
+  ! Edge 7 - 11
+  ASSERT(mesh%edges(16)%cells(1) == 6, "Wrong cell")
+  ASSERT(mesh%edges(16)%cells(2) == 7, "Wrong cell")
+  ASSERT(mesh%edges(16)%vertices(1) == -1, "Wrong vert")
+  ASSERT(mesh%edges(16)%vertices(2) == 7, "Wrong vert")
+  ASSERT(mesh%edges(16)%vertices(3) == 11, "Wrong vert")
+  ASSERT(mesh%edges(16)%line%p1%dim == 2, "Line not setup correctly")
+  ASSERT(mesh%edges(16)%line%p2%dim == 2, "Line not setup correctly")
+  ASSERT(mesh%edges(16)%line%p1%coord(1) == 2.0_SRK, "Line not setup correctly")
+  ASSERT(mesh%edges(16)%line%p1%coord(2) == 1.0_SRK, "Line not setup correctly")
+  ASSERT(mesh%edges(16)%line%p2%coord(1) == 4.0_SRK, "Line not setup correctly")
+  ASSERT(mesh%edges(16)%line%p2%coord(2) == 2.0_SRK, "Line not setup correctly")
+
+  CALL mesh%clear()
+
+  COMPONENT_TEST("Quadratic Edges")
+  ! A quadratic triangle mesh with 2 cells, 9 vertices, and 5 unique
+  ! edges.
+  !
+  ! (0,2) 7---------8---------9
+  !       |                ---|
+  !       |    c2       ---   |
+  !       |          ---      |
+  ! (0,1) 4         5         6
+  !       |      ---          |
+  !       |   ---       c1    |
+  !       |---                |
+  !       1---------2---------3
+  !       (0,0)     (1,0)     (2,0)
+  !
+  ! vertices
+  ALLOCATE(mesh%vertices(3,9))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/2.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/2.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/0.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/1.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/2.0_SDK, 2.0_SDK, 0.0_SDK/)
+
+  ! Cells
+  ALLOCATE(mesh%cells(2))
+  ALLOCATE(mesh%cells(1)%vertex_list(7))
+  mesh%cells(1)%vertex_list = (/36, 1, 3, 9, 2, 6, 5/)
+  ALLOCATE(mesh%cells(2)%vertex_list(7))
+  mesh%cells(2)%vertex_list = (/36, 9, 7, 1, 8, 4, 5/)
+
+  ! Setup the edges
+  CALL mesh%setupEdges()
+
+  ASSERT(ALLOCATED(mesh%edges), "edges not allocated")
+  ASSERT(SIZE(mesh%edges) == 5, "wrong number of edges")
+  ASSERT(.NOT.ANY(mesh%edges%isLinear), "Should not be linear")
+!  ! Spot check on 2 edges, since all 17 would be tedious
+!  ! Edge 1 - 2
+!  ASSERT(mesh%edges(1)%cells(1) == 1, "Wrong cell")
+!  ASSERT(mesh%edges(1)%cells(2) == -1, "Wrong cell")
+!  ASSERT(mesh%edges(1)%vertices(1) == -1, "Wrong vert")
+!  ASSERT(mesh%edges(1)%vertices(2) == 1, "Wrong vert")
+!  ASSERT(mesh%edges(1)%vertices(3) == 2, "Wrong vert")
+!  ASSERT(mesh%edges(1)%line%p1%dim == 2, "Line not setup correctly")
+!  ASSERT(mesh%edges(1)%line%p2%dim == 2, "Line not setup correctly")
+!  ASSERT(mesh%edges(1)%line%p1%coord(1) == 0.0_SRK, "Line not setup correctly")
+!  ASSERT(mesh%edges(1)%line%p1%coord(2) == 0.0_SRK, "Line not setup correctly")
+!  ASSERT(mesh%edges(1)%line%p2%coord(1) == 1.0_SRK, "Line not setup correctly")
+!  ASSERT(mesh%edges(1)%line%p2%coord(2) == 0.0_SRK, "Line not setup correctly")
+!
+!  ! Edge 7 - 11
+!  ASSERT(mesh%edges(16)%cells(1) == 6, "Wrong cell")
+!  ASSERT(mesh%edges(16)%cells(2) == 7, "Wrong cell")
+!  ASSERT(mesh%edges(16)%vertices(1) == -1, "Wrong vert")
+!  ASSERT(mesh%edges(16)%vertices(2) == 7, "Wrong vert")
+!  ASSERT(mesh%edges(16)%vertices(3) == 11, "Wrong vert")
+!  ASSERT(mesh%edges(16)%line%p1%dim == 2, "Line not setup correctly")
+!  ASSERT(mesh%edges(16)%line%p2%dim == 2, "Line not setup correctly")
+!  ASSERT(mesh%edges(16)%line%p1%coord(1) == 2.0_SRK, "Line not setup correctly")
+!  ASSERT(mesh%edges(16)%line%p1%coord(2) == 1.0_SRK, "Line not setup correctly")
+!  ASSERT(mesh%edges(16)%line%p2%coord(1) == 4.0_SRK, "Line not setup correctly")
+!  ASSERT(mesh%edges(16)%line%p2%coord(2) == 2.0_SRK, "Line not setup correctly")
 
   CALL mesh%clear()
 ENDSUBROUTINE testSetupEdges
