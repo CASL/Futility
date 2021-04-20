@@ -22,6 +22,7 @@ USE Strings
 USE FileType_XML
 USE FileType_HDF5
 USE ParameterLists
+USE Geom
 
 IMPLICIT NONE
 PRIVATE
@@ -44,20 +45,32 @@ TYPE(ExceptionHandlerType),SAVE :: eXDMF
 !> Parameter list that holds XDMF topology names, ids, etc.
 TYPE(ParamType),SAVE :: XDMFTopologyList
 
+!> Type to hold an edge
+TYPE :: XDMFEdge
+  !> Is the edge linear or quadratic
+  LOGICAL(SBK) :: isLinear=.TRUE.
+  !> The cells which share the edge
+  INTEGER(SLK) :: cells(2) = -1
+  !> The vertices which make up the edge
+  INTEGER(SLK) :: vertices(3) = -1
+  !> The quadratic edge
+  TYPE(QuadraticType) :: quad
+  !> The linear edge
+  TYPE(LineType) :: line
+ENDTYPE XDMFEdge
+
+!> To allow an array of pointers to XDMF edges
+TYPE :: XDMFEdgePtrArry
+  TYPE(XDMFEdge), POINTER :: edge => NULL()
+ENDTYPE XDMFEdgePtrArry
+
 !> Type to hold the vertices that make up a mesh cell
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
   !> XDMF ID, v1, v2, ..., v_n
   INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
-  !> Connectivity using the ID of the cell adjacent to
-  !> this one, and the sorted vertices of the edge.
-  !> For a triangle with vertices v1, v2, v3 and edges (v1, v2), (v2, v3), 
-  !> (v1, v3), connected to cells 2, 3, and 4 respectively,
-  !> Looks like: 
-  !>  2,  3,  4
-  !> v1, v2, v1
-  !> v2, v3, v3 
-!  INTEGER(SLK), ALLOCATABLE :: connectivity(:,:)
+  !> Edges
+  TYPE(XDMFEdgePtrArry), ALLOCATABLE :: edge_list(:)
 ENDTYPE XDMFCell
 
 !> Type to hold a list of cell IDs that make up a named set.
@@ -85,6 +98,8 @@ TYPE :: XDMFMeshType
   !> where (x1, x2, x3) = vertices(:, 1)
   !> Therefore vertices will be of shape (3, N)
   REAL(SDK), ALLOCATABLE :: vertices(:, :)
+  !> Mesh cell edges
+  TYPE(XDMFEdge), ALLOCATABLE :: edges(:)
   !> The mesh cells
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
   !> Material for each mesh cell
@@ -727,7 +742,7 @@ ENDSUBROUTINE importXDMFMesh
 !>
 RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SNK) :: i,j
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -741,9 +756,22 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
     thismesh%children => NULL()
   ENDIF
   IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
+  IF( ALLOCATED(thismesh%edges)) THEN
+    DO i=1, SIZE(thismesh%edges)
+      CALL thismesh%edges(i)%quad%clear()
+      CALL thismesh%edges(i)%line%clear()      
+    ENDDO
+    DEALLOCATE(thismesh%edges)
+  ENDIF
   IF( ALLOCATED(thismesh%cells) ) THEN
     DO i=1, SIZE(thismesh%cells)
       DEALLOCATE(thismesh%cells(i)%vertex_list)
+      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) THEN
+        DO j = 1, SIZE(thismesh%cells(i)%edge_list)
+          NULLIFY(thismesh%cells(i)%edge_list(j)%edge)
+        ENDDO
+        DEALLOCATE(thismesh%cells(i)%edge_list)
+      ENDIF
     ENDDO
     DEALLOCATE(thismesh%cells)
   ENDIF
@@ -763,7 +791,7 @@ ENDSUBROUTINE clear_XDMFMeshType
 !>
 RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SNK) :: i,j
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -774,9 +802,22 @@ RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
     thismesh%children => NULL()
   ENDIF
   IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
+  IF( ALLOCATED(thismesh%edges)) THEN
+    DO i=1, SIZE(thismesh%edges)
+      CALL thismesh%edges(i)%quad%clear()
+      CALL thismesh%edges(i)%line%clear()      
+    ENDDO
+    DEALLOCATE(thismesh%edges)
+  ENDIF
   IF( ALLOCATED(thismesh%cells) ) THEN
     DO i=1, SIZE(thismesh%cells)
       DEALLOCATE(thismesh%cells(i)%vertex_list)
+      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) THEN
+        DO j = 1, SIZE(thismesh%cells(i)%edge_list)
+          NULLIFY(thismesh%cells(i)%edge_list(j)%edge)
+        ENDDO
+        DEALLOCATE(thismesh%cells(i)%edge_list)
+      ENDIF
     ENDDO
     DEALLOCATE(thismesh%cells)
   ENDIF
@@ -1536,7 +1577,7 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
     correction = x_lin(nverts)*y_lin(1) - y_lin(nverts)*x_lin(1)
     main_area = DOT_PRODUCT(x_lin(1:nverts-1), y_lin(2:nverts)) - DOT_PRODUCT(y_lin(1:nverts-1), x_lin(2:nverts))
     area = 0.5*ABS(main_area + correction)
-  ELSE ! There are quadratic edges
+  ELSEIF(xid == 36 .OR. xid == 37) THEN ! There are quadratic edges
     ! Assumed vertices are in counterclockwise order
     !
     ! Overall, the process is to get the linear area and adjust for quadratic edges.
@@ -1637,6 +1678,8 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
       ! quad_area will be opposite of correct sign
       area = area - quad_area
     ENDDO
+  ELSE ! invalid type. return number that is so wrong, you better realize.
+    area = -HUGE(1.0_SRK)
   ENDIF
 ENDFUNCTION
 #endif

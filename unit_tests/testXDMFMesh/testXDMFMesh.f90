@@ -13,6 +13,7 @@ USE UnitTest
 USE IntrType
 USE Strings
 USE XDMFMesh
+USE Geom
 IMPLICIT NONE
 
 REAL(SDK) :: two_pins_pin1_vertices(3,109) = RESHAPE( (/ &
@@ -222,6 +223,11 @@ SUBROUTINE setup_pin1(mesh)
   TYPE(XDMFMeshType), INTENT(INOUT), TARGET :: mesh
   TYPE(XDMFMeshType), POINTER :: children(:)
   INTEGER(SNK) :: i
+  TYPE(PointType) :: p1, p2, p3
+  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK) 
+  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK) 
+  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK) 
+
   ! Setup a mesh equivalent to gridmesh_two_pins.xdmf, only containing pin1
   mesh%name = "mesh_domain"
   mesh%boundingBox = (/0.0_SDK, 2.0_SDK, 0.0_SDK, 2.0_SDK/)
@@ -235,11 +241,20 @@ SUBROUTINE setup_pin1(mesh)
   children(1)%parent => mesh
   children(1)%boundingBox = (/0.0_SDK, 2.0_SDK, 0.0_SDK, 2.0_SDK/)
   children(1)%vertices = two_pins_pin1_vertices
+  ! Half-assing the edges, since we are only testing that they got cleared.
+  ALLOCATE(children(1)%edges(1))
+  children(1)%edges(1)%isLinear=.FALSE.
+  children(1)%edges(1)%cells = 14
+  children(1)%edges(1)%vertices = 14
+  CALL children(1)%edges(1)%quad%set(p1, p2, p3)
+  CALL children(1)%edges(1)%line%set(p1, p2)
   ALLOCATE(children(1)%cells(46))
   DO i = 1,46
     ALLOCATE(children(1)%cells(i)%vertex_list(7))
     children(1)%cells(i)%vertex_list(1) = two_pins_pin1_cells(1,i)
     children(1)%cells(i)%vertex_list(2:) = two_pins_pin1_cells(2:,i) + 1
+    ALLOCATE(children(1)%cells(i)%edge_list(1))
+    children(1)%cells(i)%edge_list(1)%edge => children(1)%edges(1)
   ENDDO
   children(1)%material_ids = two_pins_pin1_material_ids + 1
   ALLOCATE(children(1)%cell_sets(1))
@@ -248,6 +263,7 @@ SUBROUTINE setup_pin1(mesh)
   DO i = 1,46
     children(1)%cell_sets(1)%cell_list(i) = i
   ENDDO
+
   NULLIFY(children)
 ENDSUBROUTINE setup_pin1
 !
@@ -264,10 +280,11 @@ SUBROUTINE testClear()
   ASSERT(pin1%name == "", "pin1 mesh name is incorrect")
   ASSERT(pin1%singleTopology == .FALSE., "single topology did not reset")
   ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
-  ASSERT(.NOT.ALLOCATED(pin1%vertices), "Vertices are associated")
-  ASSERT(.NOT.ALLOCATED(pin1%cells), "Cells are associated")
-  ASSERT(.NOT.ALLOCATED(pin1%material_ids), "materials are associated")
-  ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%vertices), "Vertices are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%edges), "Edges are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%cells), "Cells are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%material_ids), "materials are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are allocated")
   ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
   ASSERT(.NOT.ASSOCIATED(pin1%parent), "Parent is associated")
   DO i = 1,4
@@ -276,10 +293,11 @@ SUBROUTINE testClear()
   ASSERT(mesh%name == "", "mesh mesh name is incorrect")
   ASSERT(mesh%singleTopology == .FALSE., "single topology did not reset")
   ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
-  ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are associated")
-  ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are associated")
-  ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are associated")
-  ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are associated")
+  ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are allocated")
+  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
+  ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are allocated")
+  ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are allocated")
+  ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are allocated")
   ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
   ASSERT(.NOT.ASSOCIATED(mesh%parent), "Parent is associated")
   DO i = 1,4
@@ -316,6 +334,8 @@ SUBROUTINE testNonRecursiveClear()
       ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
     ENDDO
   ENDDO
+  !     pin1 edges
+  ASSERT(ALLOCATED(pin1%edges), "Cells not allocated")
   !     pin1 cells
   ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
   ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
@@ -346,6 +366,7 @@ SUBROUTINE testNonRecursiveClear()
   ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
   ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are associated")
   ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are associated")
+  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
   ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are associated")
   ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are associated")
   ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
