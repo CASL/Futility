@@ -13,7 +13,10 @@ USE UnitTest
 USE IntrType
 USE Strings
 USE XDMFMesh
+<<<<<<< HEAD
 USE Geom
+=======
+>>>>>>> master
 IMPLICIT NONE
 
 REAL(SDK) :: two_pins_pin1_vertices(3,109) = RESHAPE( (/ &
@@ -201,6 +204,7 @@ INTEGER(SLK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
 
 CREATE_TEST('XDMF TYPE')
 REGISTER_SUBTEST('CLEAR', testClear)
+<<<<<<< HEAD
 REGISTER_SUBTEST('NON-RECURSIVE CLEAR', testNonRecursiveClear)
 REGISTER_SUBTEST('ASSIGNMENT', testAssign)
 REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
@@ -212,6 +216,11 @@ REGISTER_SUBTEST('GET CELL AREA', testGetCellArea)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
 REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 REGISTER_SUBTEST('SETUP EDGES', testSetupEdges)
+=======
+REGISTER_SUBTEST('ASSIGNMENT', testAssign)
+REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
+REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
+>>>>>>> master
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
 REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
 FINALIZE_TEST()
@@ -224,6 +233,7 @@ SUBROUTINE setup_pin1(mesh)
   TYPE(XDMFMeshType), INTENT(INOUT), TARGET :: mesh
   TYPE(XDMFMeshType), POINTER :: children(:)
   INTEGER(SNK) :: i
+<<<<<<< HEAD
   TYPE(PointType) :: p1, p2, p3
   CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
@@ -234,6 +244,11 @@ SUBROUTINE setup_pin1(mesh)
   mesh%boundingBox = (/0.0_SDK, 2.0_SDK, 0.0_SDK, 2.0_SDK/)
   ALLOCATE(mesh%map(1,1))
   mesh%map(1,1) = 1
+=======
+  ! Setup a mesh equivalent to gridmesh_two_pins.xdmf, only containing pin1
+  mesh%name = "mesh_domain"
+  mesh%boundingBox = (/0.0_SDK, 2.0_SDK, 0.0_SDK, 2.0_SDK/)
+>>>>>>> master
   ALLOCATE(mesh%children(1))
   children => mesh%children
   ! pin 1
@@ -242,6 +257,7 @@ SUBROUTINE setup_pin1(mesh)
   children(1)%parent => mesh
   children(1)%boundingBox = (/0.0_SDK, 2.0_SDK, 0.0_SDK, 2.0_SDK/)
   children(1)%vertices = two_pins_pin1_vertices
+<<<<<<< HEAD
   ! Half-assing the edges, since we are only testing that they got cleared.
   ALLOCATE(children(1)%edges(1))
   children(1)%edges(1)%isLinear=.FALSE.
@@ -249,13 +265,18 @@ SUBROUTINE setup_pin1(mesh)
   children(1)%edges(1)%vertices = 14
   CALL children(1)%edges(1)%quad%set(p1, p2, p3)
   CALL children(1)%edges(1)%line%set(p1, p2)
+=======
+>>>>>>> master
   ALLOCATE(children(1)%cells(46))
   DO i = 1,46
     ALLOCATE(children(1)%cells(i)%vertex_list(7))
     children(1)%cells(i)%vertex_list(1) = two_pins_pin1_cells(1,i)
     children(1)%cells(i)%vertex_list(2:) = two_pins_pin1_cells(2:,i) + 1
+<<<<<<< HEAD
     ALLOCATE(children(1)%cells(i)%edge_list(1))
     children(1)%cells(i)%edge_list(1) = 1
+=======
+>>>>>>> master
   ENDDO
   children(1)%material_ids = two_pins_pin1_material_ids + 1
   ALLOCATE(children(1)%cell_sets(1))
@@ -264,15 +285,23 @@ SUBROUTINE setup_pin1(mesh)
   DO i = 1,46
     children(1)%cell_sets(1)%cell_list(i) = i
   ENDDO
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
   NULLIFY(children)
 ENDSUBROUTINE setup_pin1
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testClear()
   TYPE(XDMFMeshType) :: mesh
+<<<<<<< HEAD
   TYPE(XDMFMeshType),POINTER :: pin1 => NULL()
   INTEGER(SIK) :: i
+=======
+  TYPE(XDMFMeshType),POINTER :: pin1
+  INTEGER(SNK) :: i
+>>>>>>> master
 
   CALL setup_pin1(mesh)
   pin1 => mesh%children(1)
@@ -280,12 +309,19 @@ SUBROUTINE testClear()
   CALL mesh%clear()
   ASSERT(pin1%name == "", "pin1 mesh name is incorrect")
   ASSERT(pin1%singleTopology == .FALSE., "single topology did not reset")
+<<<<<<< HEAD
   ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
   ASSERT(.NOT.ALLOCATED(pin1%vertices), "Vertices are allocated")
   ASSERT(.NOT.ALLOCATED(pin1%edges), "Edges are allocated")
   ASSERT(.NOT.ALLOCATED(pin1%cells), "Cells are allocated")
   ASSERT(.NOT.ALLOCATED(pin1%material_ids), "materials are allocated")
   ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are allocated")
+=======
+  ASSERT(.NOT.ALLOCATED(pin1%vertices), "Vertices are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%cells), "Cells are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%material_ids), "materials are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are associated")
+>>>>>>> master
   ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
   ASSERT(.NOT.ASSOCIATED(pin1%parent), "Parent is associated")
   DO i = 1,4
@@ -293,6 +329,7 @@ SUBROUTINE testClear()
   ENDDO
   ASSERT(mesh%name == "", "mesh mesh name is incorrect")
   ASSERT(mesh%singleTopology == .FALSE., "single topology did not reset")
+<<<<<<< HEAD
   ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
   ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are allocated")
   ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
@@ -368,6 +405,10 @@ SUBROUTINE testNonRecursiveClear()
   ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are associated")
   ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are associated")
   ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
+=======
+  ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are associated")
+  ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are associated")
+>>>>>>> master
   ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are associated")
   ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are associated")
   ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
@@ -375,19 +416,28 @@ SUBROUTINE testNonRecursiveClear()
   DO i = 1,4
     ASSERT(mesh%boundingBox(i) == 0.0_SDK, "BB not reset")
   ENDDO
+<<<<<<< HEAD
   NULLIFY(pin1)
   CALL mesh%clear()
 ENDSUBROUTINE testNonRecursiveClear
+=======
+
+  NULLIFY(pin1)
+ENDSUBROUTINE testClear
+>>>>>>> master
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testAssign()
   TYPE(XDMFMeshType) :: mesh1, mesh2
   TYPE(XDMFMeshType),POINTER :: pin1
   INTEGER(SNK) :: i,j
+<<<<<<< HEAD
   TYPE(PointType) :: p1, p2, p3
   CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
   CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK)
+=======
+>>>>>>> master
 
   CALL setup_pin1(mesh1)
   mesh2 = mesh1
@@ -396,8 +446,11 @@ SUBROUTINE testAssign()
   ASSERT(ASSOCIATED(mesh2%children), "Children not associated")
   ASSERT(SIZE(mesh2%children)==1, "Wrong number of children")
   ASSERT(mesh2%singleTopology == .FALSE., "mesh2 is single topology")
+<<<<<<< HEAD
   ASSERT(ALLOCATED(mesh2%map), "Map is not allocated.")
   ASSERT(SIZE(mesh2%map) == 1, "Map is wrong size.")
+=======
+>>>>>>> master
   ASSERT( (ABS(mesh2%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
   ASSERT( (ABS(mesh2%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
   ASSERT( (ABS(mesh2%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
@@ -406,7 +459,10 @@ SUBROUTINE testAssign()
   ! Check pin1
   ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
   ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+<<<<<<< HEAD
   ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated.")
+=======
+>>>>>>> master
   ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
   ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
   ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
@@ -423,6 +479,7 @@ SUBROUTINE testAssign()
       ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
     ENDDO
   ENDDO
+<<<<<<< HEAD
   !     pin1 edges
   ASSERT(ALLOCATED(pin1%edges), "Edges not allocated")
   ASSERT(SIZE(pin1%edges)==1, "Wrong number of edges")
@@ -438,6 +495,8 @@ SUBROUTINE testAssign()
   ASSERT(pin1%edges(1)%line%p1 == p1, "point is wrong")
   ASSERT(pin1%edges(1)%line%p2 == p2, "point is wrong")
 
+=======
+>>>>>>> master
   !     pin1 cells
   ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
   ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
@@ -494,6 +553,7 @@ SUBROUTINE testDistanceToLeaf()
 ENDSUBROUTINE testDistanceToLeaf
 !
 !-------------------------------------------------------------------------------
+<<<<<<< HEAD
 SUBROUTINE testGetNNodesAtDepth
   TYPE(XDMFMeshType) :: mesh
   TYPE(XDMFMeshType),POINTER :: sub
@@ -750,6 +810,8 @@ SUBROUTINE testGetCellArea()
 ENDSUBROUTINE testGetCellArea
 !
 !-------------------------------------------------------------------------------
+=======
+>>>>>>> master
 SUBROUTINE testRecomputeBoundingBox()
   TYPE(XDMFMeshType) :: mesh
   TYPE(XDMFMeshType),POINTER :: pin1
@@ -798,6 +860,7 @@ SUBROUTINE testRecomputeBoundingBox()
 ENDSUBROUTINE testRecomputeBoundingBox
 !
 !-------------------------------------------------------------------------------
+<<<<<<< HEAD
 SUBROUTINE testSetupRectangularMap()
   TYPE(XDMFMeshType) :: mesh
 
@@ -1008,6 +1071,8 @@ SUBROUTINE testSetupEdges()
 ENDSUBROUTINE testSetupEdges
 !
 !-------------------------------------------------------------------------------
+=======
+>>>>>>> master
 SUBROUTINE testImportXDMFMesh()
   ! Test the various major branches in import logic:
   ! - Levels:       1 vs 2 or more
@@ -1066,9 +1131,12 @@ SUBROUTINE test_import_two_pins()
   ASSERT(mesh%name == "mesh_domain", "Root mesh name is incorrect")
   ASSERT(ASSOCIATED(mesh%children), "Children not associated")
   ASSERT(SIZE(mesh%children)==2, "Wrong number of children")
+<<<<<<< HEAD
   ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
   ASSERT(SIZE(mesh%map, DIM=1) == 2, "Map is wrong size")
   ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
+=======
+>>>>>>> master
   ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
   ASSERT( (ABS(mesh%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
   ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
@@ -1080,7 +1148,10 @@ SUBROUTINE test_import_two_pins()
   ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
   ASSERT(pin1%parent%name == "mesh_domain", "pin1 parent name is incorrect")
   ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
+<<<<<<< HEAD
   ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
+=======
+>>>>>>> master
   ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
   ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
   ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
@@ -1135,9 +1206,12 @@ SUBROUTINE test_import_three_level_grid()
   ASSERT(mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
   ASSERT(ASSOCIATED(mesh%children), "Children not associated")
   ASSERT(SIZE(mesh%children)==1, "Wrong number of children")
+<<<<<<< HEAD
   ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
   ASSERT(SIZE(mesh%map, DIM=1) == 1, "Map is wrong size")
   ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
+=======
+>>>>>>> master
   i = mesh%distanceToLeaf()
   ASSERT(i == 3, "Wrong number of levels")
   ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
@@ -1151,9 +1225,12 @@ SUBROUTINE test_import_three_level_grid()
   ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
   ASSERT(L1%parent%name == "three_lvl_grid", "L1 parent name is incorrect")
   ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
+<<<<<<< HEAD
   ASSERT(ALLOCATED(L1%map), "Map is not allocated")
   ASSERT(SIZE(L1%map, DIM=1) == 2, "Map is wrong size")
   ASSERT(SIZE(L1%map, DIM=2) == 2, "Map is wrong size")
+=======
+>>>>>>> master
   i = L1%distanceToLeaf()
   ASSERT(i == 2, "Wrong number of levels")
   ASSERT( (ABS(L1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
@@ -1167,9 +1244,12 @@ SUBROUTINE test_import_three_level_grid()
   ASSERT(ASSOCIATED(L2%parent), "Parent not associated")
   ASSERT(L2%parent%name == "GRID_L1_1_1", "L2 parent name is incorrect")
   ASSERT(SIZE(L2%children) == 4, "Wrong number of children")
+<<<<<<< HEAD
   ASSERT(ALLOCATED(L2%map), "Map is not allocated")
   ASSERT(SIZE(L2%map, DIM=1) == 2, "Map is wrong size")
   ASSERT(SIZE(L2%map, DIM=2) == 2, "Map is wrong size")
+=======
+>>>>>>> master
   ASSERT( (ABS(L2%boundingBox(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
   ASSERT( (ABS(L2%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
   ASSERT( (ABS(L2%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
@@ -1221,7 +1301,10 @@ SUBROUTINE test_import_three_level_grid_implicit_hierarchy()
   ! Check correct number of children
   ASSERT(mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
   ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
+<<<<<<< HEAD
   ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
+=======
+>>>>>>> master
   ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
   ASSERT( (ABS(mesh%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
   ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")

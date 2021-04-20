@@ -22,8 +22,11 @@ USE Strings
 USE FileType_XML
 USE FileType_HDF5
 USE ParameterLists
+<<<<<<< HEAD
 USE Geom
 USE Sorting
+=======
+>>>>>>> master
 
 IMPLICIT NONE
 PRIVATE
@@ -31,14 +34,21 @@ PRIVATE
 #ifdef FUTILITY_HAVE_HDF5
 ! Public members
 PUBLIC :: XDMFMeshType
+<<<<<<< HEAD
 PUBLIC :: XDMFMeshPtrArry
+=======
+>>>>>>> master
 PUBLIC :: XDMFTopologyList
 PUBLIC :: ImportXDMFMesh
 PUBLIC :: ExportXDMFMesh
 PUBLIC :: ASSIGNMENT(=)
 
 !> The module name
+<<<<<<< HEAD
 CHARACTER(LEN=*),PARAMETER :: modName='XDMFMesh'
+=======
+CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
+>>>>>>> master
 
 !> Exception handler for the module
 TYPE(ExceptionHandlerType),SAVE :: eXDMF
@@ -46,6 +56,7 @@ TYPE(ExceptionHandlerType),SAVE :: eXDMF
 !> Parameter list that holds XDMF topology names, ids, etc.
 TYPE(ParamType),SAVE :: XDMFTopologyList
 
+<<<<<<< HEAD
 !> Type to hold an edge
 TYPE :: XDMFEdge
   !> Is the edge linear or quadratic
@@ -60,13 +71,18 @@ TYPE :: XDMFEdge
   TYPE(LineType) :: line
 ENDTYPE XDMFEdge
 
+=======
+>>>>>>> master
 !> Type to hold the vertices that make up a mesh cell
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
   !> XDMF ID, v1, v2, ..., v_n
   INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
+<<<<<<< HEAD
   !> Edges
   INTEGER(SLK), ALLOCATABLE :: edge_list(:)
+=======
+>>>>>>> master
 ENDTYPE XDMFCell
 
 !> Type to hold a list of cell IDs that make up a named set.
@@ -91,11 +107,16 @@ TYPE :: XDMFMeshType
   !> x1, x2, x3, ..., xn
   !> y1, y2, y3, ..., yn
   !> z1, z2, z3, ..., zn
+<<<<<<< HEAD
   !> where (x1, x2, x3) = vertices(:, 1)
   !> Therefore vertices will be of shape (3, N)
   REAL(SDK), ALLOCATABLE :: vertices(:, :)
   !> Mesh cell edges
   TYPE(XDMFEdge), ALLOCATABLE :: edges(:)
+=======
+  !> Therefore vertices will be of shape (3, N)
+  REAL(SDK), ALLOCATABLE :: vertices(:, :)
+>>>>>>> master
   !> The mesh cells
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
   !> Material for each mesh cell
@@ -106,6 +127,7 @@ TYPE :: XDMFMeshType
   TYPE(XDMFMeshType), POINTER :: parent => NULL()
   !> Child meshes
   TYPE(XDMFMeshType), POINTER :: children(:) => NULL()
+<<<<<<< HEAD
   !> Map of the children within the parent
   !> Indexing looks like this:
   !> y
@@ -114,19 +136,25 @@ TYPE :: XDMFMeshType
   !> | (1,1)  (2,1)  
   !> +------> x
   INTEGER(SNK),ALLOCATABLE :: map(:,:)
+=======
+>>>>>>> master
   CONTAINS
     !> @copybrief XDMFMeshType::clear_XDMFMeshType
     !> @copydoc XDMFMeshType::clear_XDMFMeshType
     PROCEDURE,PASS :: clear => clear_XDMFMeshType
+<<<<<<< HEAD
     !> @copybrief XDMFMeshType::nonRecusriveClear_XDMFMeshType
     !> @copydoc XDMFMeshType::nonRecursiveClear_XDMFMeshType
     PROCEDURE,PASS :: nonRecursiveClear => nonRecursiveClear_XDMFMeshType
+=======
+>>>>>>> master
     !> @copybrief XDMFMeshType::distanceToLeaf_XDMFMeshType
     !> @copydoc XDMFMeshType::distanceToLeaf_XDMFMeshType
     PROCEDURE,PASS :: distanceToLeaf => distanceToLeaf_XDMFMeshType
     !> @copybrief XDMFMeshType::recomputeBoundingBox_XDMFMeshType
     !> @copydoc XDMFMeshType::recomputeBoundingBox_XDMFMeshType
     PROCEDURE,PASS :: recomputeBoundingBox => recomputeBoundingBox_XDMFMeshType
+<<<<<<< HEAD
     !> @copybrief XDMFMeshType::setupRectangularMap_XDMFMeshType
     !> @copydoc XDMFMeshType::setupRectangularMap_XDMFMeshType
     PROCEDURE,PASS :: setupRectangularMap => setupRectangularMap_XDMFMeshType
@@ -155,6 +183,10 @@ TYPE :: XDMFMeshPtrArry
   TYPE(XDMFMeshType), POINTER :: mesh => NULL()
 ENDTYPE XDMFMeshPtrArry
 
+=======
+ENDTYPE XDMFMeshType
+
+>>>>>>> master
 !> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
   !> @copybrief FileType_XDMF::assign_XDMFMeshType
@@ -730,9 +762,12 @@ SUBROUTINE importXDMFMesh(strpath, mesh)
   ! Setup bounding boxes
   CALL mesh%recomputeBoundingBox()
 
+<<<<<<< HEAD
   ! Setup map
   CALL mesh%setupRectangularMap()
 
+=======
+>>>>>>> master
 ENDSUBROUTINE importXDMFMesh
 !
 !-------------------------------------------------------------------------------
@@ -746,7 +781,10 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
   thismesh%boundingBox = 0.0_SDK
+<<<<<<< HEAD
   IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
+=======
+>>>>>>> master
   IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
   IF(ASSOCIATED(thismesh%children)) THEN
     DO i=1,SIZE(thismesh%children)
@@ -755,6 +793,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
     thismesh%children => NULL()
   ENDIF
   IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
+<<<<<<< HEAD
   IF( ALLOCATED(thismesh%edges)) THEN
     DO i=1, SIZE(thismesh%edges)
       CALL thismesh%edges(i)%quad%clear()
@@ -766,6 +805,11 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
     DO i=1, SIZE(thismesh%cells)
       DEALLOCATE(thismesh%cells(i)%vertex_list)
       IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
+=======
+  IF( ALLOCATED(thismesh%cells) ) THEN
+    DO i=1, SIZE(thismesh%cells)
+      DEALLOCATE(thismesh%cells(i)%vertex_list)
+>>>>>>> master
     ENDDO
     DEALLOCATE(thismesh%cells)
   ENDIF
@@ -780,6 +824,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
 ENDSUBROUTINE clear_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
+<<<<<<< HEAD
 !> @brief Clears the XDMF mesh, without recursing to children
 !> @param thismesh the XDMF mesh object
 !>
@@ -821,6 +866,8 @@ RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
 ENDSUBROUTINE nonRecursiveClear_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
+=======
+>>>>>>> master
 !> @brief Gets the number of grid levels to a leaf node
 !> @param thismesh the XDMF mesh object
 !> @returns n the number of levels to a leaf node
@@ -888,11 +935,16 @@ ENDSUBROUTINE recomputeBoundingBox_XDMFMeshType
 RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   TYPE(XDMFMeshType), INTENT(INOUT) :: thismesh
   TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
+<<<<<<< HEAD
   INTEGER(SNK) :: i,j
+=======
+  INTEGER(SNK) :: i
+>>>>>>> master
 
   thismesh%name = thatmesh%name
   thismesh%singleTopology = thatmesh%singleTopology
   thismesh%boundingBox = thatmesh%boundingBox
+<<<<<<< HEAD
   IF(ALLOCATED(thatmesh%map))THEN
     i = SIZE(thatmesh%map, DIM=1)
     j = SIZE(thatmesh%map, DIM=2)
@@ -900,6 +952,8 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     ALLOCATE(thismesh%map(i,j))
     thismesh%map = thatmesh%map
   ENDIF
+=======
+>>>>>>> master
   IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
   ! NOTE: Children cannot be recursively cleared without risk of
   ! modify other mesh objects due to the pointer to other meshes.
@@ -914,6 +968,7 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2)))
     thismesh%vertices = thatmesh%vertices
   ENDIF
+<<<<<<< HEAD
   IF( ALLOCATED(thatmesh%edges) ) THEN
     IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
     ALLOCATE(thismesh%edges(SIZE(thatmesh%edges)))
@@ -930,11 +985,16 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
       ENDIF
     ENDDO
   ENDIF
+=======
+>>>>>>> master
   IF( ALLOCATED(thatmesh%cells) ) THEN
     IF(ALLOCATED(thismesh%cells))THEN
       DO i=1, SIZE(thismesh%cells)
         DEALLOCATE(thismesh%cells(i)%vertex_list)
+<<<<<<< HEAD
         IF(ALLOCATED(thismesh%cells(i)%edge_list)) DEALLOCATE(thismesh%cells(i)%edge_list)
+=======
+>>>>>>> master
       ENDDO
       DEALLOCATE(thismesh%cells)
     ENDIF
@@ -942,8 +1002,11 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     DO i = 1, SIZE(thatmesh%cells)
       ALLOCATE(thismesh%cells(i)%vertex_list(SIZE(thatmesh%cells(i)%vertex_list)))
       thismesh%cells(i)%vertex_list = thatmesh%cells(i)%vertex_list
+<<<<<<< HEAD
       IF(ALLOCATED(thatmesh%cells(i)%edge_list)) &
         thismesh%cells(i)%edge_list = thatmesh%cells(i)%edge_list
+=======
+>>>>>>> master
     ENDDO
   ENDIF
   IF( ALLOCATED(thatmesh%material_ids) )THEN
@@ -968,6 +1031,7 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
 ENDSUBROUTINE assign_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
+<<<<<<< HEAD
 !> @brief Setup a rectangular map for this mesh and all children.
 !> @param thismesh the XDMF mesh object
 !>
@@ -1337,6 +1401,8 @@ RECURSIVE SUBROUTINE getLeaves_XDMFMeshType(thismesh, leaves)
 ENDSUBROUTINE getLeaves_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
+=======
+>>>>>>> master
 !> @brief Export the leaf nodes of the mesh hierarchy
 !> @param mesh the mesh
 !> @param xmle the XML element
@@ -1344,7 +1410,10 @@ ENDSUBROUTINE getLeaves_XDMFMeshType
 !> @param h5 the HDF5 file
 !>
 RECURSIVE SUBROUTINE export_leaf_XDMF(mesh, xmle, strpath, h5)
+<<<<<<< HEAD
   CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_XDMF'
+=======
+>>>>>>> master
   TYPE(XDMFMeshType),INTENT(IN)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(IN) :: strpath
@@ -1658,7 +1727,10 @@ ENDSUBROUTINE export_leaf_XDMF
 !> @param h5 the HDF5 file
 !>
 RECURSIVE SUBROUTINE create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
+<<<<<<< HEAD
   CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_XDMF'
+=======
+>>>>>>> master
   TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
   TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
   TYPE(StringType),INTENT(INOUT) :: strpath
@@ -1763,6 +1835,7 @@ SUBROUTINE exportXDMFMesh(strpath, mesh)
   CALL h5%fclose()
 
 ENDSUBROUTINE exportXDMFMesh
+<<<<<<< HEAD
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns the area of cell iCell.
@@ -1905,5 +1978,7 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
     area = -HUGE(1.0_SRK)
   ENDIF
 ENDFUNCTION
+=======
+>>>>>>> master
 #endif
 ENDMODULE XDMFMesh
