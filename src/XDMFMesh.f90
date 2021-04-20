@@ -23,6 +23,7 @@ USE FileType_XML
 USE FileType_HDF5
 USE ParameterLists
 USE Geom
+USE Sorting
 
 IMPLICIT NONE
 PRIVATE
@@ -129,6 +130,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::setupRectangularMap_XDMFMeshType
     !> @copydoc XDMFMeshType::setupRectangularMap_XDMFMeshType
     PROCEDURE,PASS :: setupRectangularMap => setupRectangularMap_XDMFMeshType
+    !> @copybrief XDMFMeshType::setupEdges_XDMFMeshType
+    !> @copydoc XDMFMeshType::setupEdges_XDMFMeshType
+    PROCEDURE,PASS :: setupEdges => setupEdges_XDMFMeshType
     !> @copybrief XDMFMeshType::getNLeaves_XDMFMeshType
     !> @copydoc XDMFMeshType::getNLeaves_XDMFMeshType
     PROCEDURE,PASS :: getNLeaves => getNLeaves_XDMFMeshType
@@ -1024,6 +1028,105 @@ RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
     ENDDO
   ENDIF
 ENDSUBROUTINE setupRectangularMap_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Setup the edges for this mesh and all children.
+!> @param thismesh the XDMF mesh object
+!>
+RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
+  CHARACTER(LEN=*),PARAMETER :: myName='setupEdges_XDMFMeshType'
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK) :: i,j,k,xid, nEdges, maxEdges, nCells, iEdge
+  INTEGER(SIK) :: edge_verts(3)
+  INTEGER(SIK), ALLOCATABLE :: all_edge_verts(:,:), all_edge_cells(:,:) 
+  LOGICAL(SBK) :: duplicate_edge
+
+  IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
+  IF(ASSOCIATED(thismesh%children))THEN
+    ! Not a leaf, recurse
+    DO i = 1, SIZE(thismesh%children)
+      CALL thismesh%children(i)%setupEdges()
+    ENDDO
+  ELSE
+    ! Leaf, setup edges
+    nCells = SIZE(thismesh%cells)
+    ! Setup oversized arrays to hold all the edges and cells 
+    maxEdges = 4
+    ALLOCATE(all_edge_verts(3,maxEdges*nCells))
+    ALLOCATE(all_edge_cells(2,maxEdges*nCells))
+    all_edge_verts = -1
+    all_edge_cells = -1
+    iEdge = 1
+    ! Loop over each cell to get all unique edges
+    DO i = 1, SIZE(thismesh%cells)
+      xid = thismesh%cells(i)%vertex_list(1)
+      IF(xid == 4_SLK .OR. xid == 5_SLK) THEN! linear edges
+        ! For each edge
+        DO j = 2, SIZE(thismesh%cells(i)%vertex_list) - 1
+          edge_verts = -1
+          edge_verts(1) = thismesh%cells(i)%vertex_list(j)
+          edge_verts(2) = thismesh%cells(i)%vertex_list(j+1)
+          CALL sort(edge_verts)
+          ! If this edge is unique, add it
+          duplicate_edge = .FALSE.
+          DO k = 1, iEdge
+            IF(ALL(edge_verts == all_edge_verts(:,k))) THEN
+              duplicate_edge = .TRUE.
+              ! add this cell to edge cell list
+              all_edge_cells(2,k) = i
+              EXIT
+            ENDIF
+          ENDDO
+          IF(.NOT.duplicate_edge) THEN
+            all_edge_verts(:,iEdge + 1) = edge_verts
+            all_edge_cells(1,iEdge + 1) = i
+            iEdge = iEdge + 1
+          ENDIF
+        ENDDO
+        ! Final edge
+        edge_verts = -1
+        edge_verts(1) = thismesh%cells(i)%vertex_list(j)
+        edge_verts(2) = thismesh%cells(i)%vertex_list(2)
+        CALL sort(edge_verts)
+        duplicate_edge = .FALSE.
+        DO k = 1, iEdge
+          IF(ALL(edge_verts == all_edge_verts(:,k))) THEN
+            duplicate_edge = .TRUE.
+            all_edge_cells(2,k) = i
+            EXIT
+          ENDIF
+        ENDDO
+        IF(.NOT.duplicate_edge) THEN
+          all_edge_verts(:,iEdge + 1) = edge_verts
+          all_edge_cells(1,iEdge + 1) = i
+          iEdge = iEdge + 1
+        ENDIF
+      ELSEIF(xid == 36_SLK .OR. xid == 7_SLK) THEN ! quad edges
+          WRITE(*,*) "Quad"
+      ELSE
+        CALL eXDMF%raiseError(modName//'::'//myName// &
+          ' - Unsupported XDMF cell type.')
+      ENDIF
+    ENDDO
+
+    ! Allocate the mesh edges
+    ALLOCATE(thismesh%edges(iEdge))
+    ! Setup each edge
+    DO i = 1, iEdge
+      IF(all_edge_verts(1,i) == -1) THEN !Linear
+        ! isLinear
+        thismesh%edges(i)%isLinear = .TRUE.
+
+      ELSE ! quad
+        ! isLinear
+        thismesh%edges(i)%isLinear = .FALSE.
+      ENDIF
+      ! vertices
+      thismesh%edges(i)%vertices = all_edge_verts(:,i)
+
+    ENDDO
+  ENDIF
+ENDSUBROUTINE setupEdges_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the number of leaf nodes in this mesh

@@ -211,6 +211,7 @@ REGISTER_SUBTEST('GET LEAVES', testGetLeaves)
 REGISTER_SUBTEST('GET CELL AREA', testGetCellArea)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
 REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
+REGISTER_SUBTEST('SETUP EDGES', testSetupEdges)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
 REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
 FINALIZE_TEST()
@@ -847,6 +848,63 @@ SUBROUTINE testSetupRectangularMap()
 
   CALL mesh%clear()
 ENDSUBROUTINE testSetupRectangularMap
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testSetupEdges()
+  TYPE(XDMFMeshType) :: mesh
+
+  ! A linear mesh with 7 cells (3 tro, 4 quad), 11 vertices, and 17 unique
+  ! edges.
+  !
+  ! (0,2) 8---------9---------10-----------------11 (4,2)
+  !       |         |         |            ------ |
+  !       |    c3   |   c4    |  c7    ----       |
+  !       |         |         |    ----           |
+  ! (0,1) 5---------6---------7----         c6    |    <--- three triangles
+  !       |         |         |    ----           |
+  !       |    c1   |   c2    |  c5    ----       |
+  !       |         |         |            ------ |
+  !       1---------2---------3-------------------4
+  !       (0,0)     (1,0)     (2,0)               (4,0)
+  !
+  ! vertices
+  ALLOCATE(mesh%vertices(3,11))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/2.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/4.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/2.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/0.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/1.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,10) = (/2.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,11) = (/4.0_SDK, 2.0_SDK, 0.0_SDK/)
+
+  ! Cells
+  ALLOCATE(mesh%cells(7))
+  ! Quadrilaterals
+  ALLOCATE(mesh%cells(1)%vertex_list(5))
+  mesh%cells(1)%vertex_list = (/5, 1, 2, 6, 5/)
+  ALLOCATE(mesh%cells(2)%vertex_list(5))
+  mesh%cells(2)%vertex_list = (/5, 2, 3, 7, 6/)
+  ALLOCATE(mesh%cells(3)%vertex_list(5))
+  mesh%cells(3)%vertex_list = (/5, 5, 6, 9, 8/)
+  ALLOCATE(mesh%cells(4)%vertex_list(5))
+  mesh%cells(4)%vertex_list = (/5, 6, 7, 10, 9/)
+  ! Triangles
+  ALLOCATE(mesh%cells(5)%vertex_list(4))
+  mesh%cells(5)%vertex_list = (/4, 3, 4, 7/)
+  ALLOCATE(mesh%cells(6)%vertex_list(4))
+  mesh%cells(6)%vertex_list = (/4, 7, 4, 11/)
+  ALLOCATE(mesh%cells(7)%vertex_list(4))
+  mesh%cells(7)%vertex_list = (/4, 7, 11, 10/)
+
+  ! Setup the edges
+  CALL mesh%setupEdges()
+
+  CALL mesh%clear()
+ENDSUBROUTINE testSetupEdges
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testImportXDMFMesh()
