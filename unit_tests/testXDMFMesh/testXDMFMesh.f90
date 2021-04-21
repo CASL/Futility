@@ -851,7 +851,6 @@ ENDSUBROUTINE testSetupRectangularMap
 !-------------------------------------------------------------------------------
 SUBROUTINE testSetupEdges()
   TYPE(XDMFMeshType) :: mesh
-  INTEGER(SIK) :: i
 
   COMPONENT_TEST("Linear Edges")
   ! A linear mesh with 7 cells (3 tri, 4 quad), 11 vertices, and 17 unique
@@ -976,32 +975,38 @@ SUBROUTINE testSetupEdges()
   ASSERT(ALLOCATED(mesh%edges), "edges not allocated")
   ASSERT(SIZE(mesh%edges) == 5, "wrong number of edges")
   ASSERT(.NOT.ANY(mesh%edges%isLinear), "Should not be linear")
-!  ! Spot check on 2 edges, since all 17 would be tedious
-!  ! Edge 1 - 2
-!  ASSERT(mesh%edges(1)%cells(1) == 1, "Wrong cell")
-!  ASSERT(mesh%edges(1)%cells(2) == -1, "Wrong cell")
-!  ASSERT(mesh%edges(1)%vertices(1) == -1, "Wrong vert")
-!  ASSERT(mesh%edges(1)%vertices(2) == 1, "Wrong vert")
-!  ASSERT(mesh%edges(1)%vertices(3) == 2, "Wrong vert")
-!  ASSERT(mesh%edges(1)%line%p1%dim == 2, "Line not setup correctly")
-!  ASSERT(mesh%edges(1)%line%p2%dim == 2, "Line not setup correctly")
-!  ASSERT(mesh%edges(1)%line%p1%coord(1) == 0.0_SRK, "Line not setup correctly")
-!  ASSERT(mesh%edges(1)%line%p1%coord(2) == 0.0_SRK, "Line not setup correctly")
-!  ASSERT(mesh%edges(1)%line%p2%coord(1) == 1.0_SRK, "Line not setup correctly")
-!  ASSERT(mesh%edges(1)%line%p2%coord(2) == 0.0_SRK, "Line not setup correctly")
-!
-!  ! Edge 7 - 11
-!  ASSERT(mesh%edges(16)%cells(1) == 6, "Wrong cell")
-!  ASSERT(mesh%edges(16)%cells(2) == 7, "Wrong cell")
-!  ASSERT(mesh%edges(16)%vertices(1) == -1, "Wrong vert")
-!  ASSERT(mesh%edges(16)%vertices(2) == 7, "Wrong vert")
-!  ASSERT(mesh%edges(16)%vertices(3) == 11, "Wrong vert")
-!  ASSERT(mesh%edges(16)%line%p1%dim == 2, "Line not setup correctly")
-!  ASSERT(mesh%edges(16)%line%p2%dim == 2, "Line not setup correctly")
-!  ASSERT(mesh%edges(16)%line%p1%coord(1) == 2.0_SRK, "Line not setup correctly")
-!  ASSERT(mesh%edges(16)%line%p1%coord(2) == 1.0_SRK, "Line not setup correctly")
-!  ASSERT(mesh%edges(16)%line%p2%coord(1) == 4.0_SRK, "Line not setup correctly")
-!  ASSERT(mesh%edges(16)%line%p2%coord(2) == 2.0_SRK, "Line not setup correctly")
+  ! Spot check on 2 edges, since all would be tedious
+  ! Edge 1 - 2 - 3
+  ASSERT(mesh%edges(1)%cells(1) == 1, "Wrong cell")
+  ASSERT(mesh%edges(1)%cells(2) == -1, "Wrong cell")
+  ASSERT(mesh%edges(1)%vertices(1) == 1, "Wrong vert")
+  ASSERT(mesh%edges(1)%vertices(2) == 2, "Wrong vert")
+  ASSERT(mesh%edges(1)%vertices(3) == 3, "Wrong vert")
+  ASSERT(mesh%edges(1)%quad%points(1)%dim == 2, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(2)%dim == 2, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(3)%dim == 2, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(1)%coord(1) == 0.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(1)%coord(2) == 0.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(2)%coord(1) == 2.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(2)%coord(2) == 0.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(3)%coord(1) == 1.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(1)%quad%points(3)%coord(2) == 0.0_SRK, "Quad not setup correctly")
+
+  ! Edge 1 - 5 - 9
+  ASSERT(mesh%edges(3)%cells(1) == 1, "Wrong cell")
+  ASSERT(mesh%edges(3)%cells(2) == 2, "Wrong cell")
+  ASSERT(mesh%edges(3)%vertices(1) == 1, "Wrong vert")
+  ASSERT(mesh%edges(3)%vertices(2) == 5, "Wrong vert")
+  ASSERT(mesh%edges(3)%vertices(3) == 9, "Wrong vert")
+  ASSERT(mesh%edges(3)%quad%points(1)%dim == 2, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(2)%dim == 2, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(3)%dim == 2, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(1)%coord(1) == 0.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(1)%coord(2) == 0.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(2)%coord(1) == 2.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(2)%coord(2) == 2.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(3)%coord(1) == 1.0_SRK, "Quad not setup correctly")
+  ASSERT(mesh%edges(3)%quad%points(3)%coord(2) == 1.0_SRK, "Quad not setup correctly")
 
   CALL mesh%clear()
 ENDSUBROUTINE testSetupEdges
