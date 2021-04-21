@@ -133,6 +133,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::setupEdges_XDMFMeshType
     !> @copydoc XDMFMeshType::setupEdges_XDMFMeshType
     PROCEDURE,PASS :: setupEdges => setupEdges_XDMFMeshType
+    !> @copybrief XDMFMeshType::clearEdges_XDMFMeshType
+    !> @copydoc XDMFMeshType::clearEdges_XDMFMeshType
+    PROCEDURE,PASS :: clearEdges => clearEdges_XDMFMeshType
     !> @copybrief XDMFMeshType::getNLeaves_XDMFMeshType
     !> @copydoc XDMFMeshType::getNLeaves_XDMFMeshType
     PROCEDURE,PASS :: getNLeaves => getNLeaves_XDMFMeshType
@@ -1077,6 +1080,9 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
         ELSE
           nEdge = 4
         ENDIF
+        ! Setup this cell's edge_list
+        ALLOCATE(thismesh%cells(i)%edge_list(nEdge))
+        thismesh%cells(i)%edge_list = -1
         total_nEdges = total_nEdges + nEdge
         ! For each edge
         DO j = 2, SIZE(thismesh%cells(i)%vertex_list) - 1
@@ -1124,6 +1130,9 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
         ELSE
           nEdge = 4
         ENDIF
+        ! Setup this cell's edge_list
+        ALLOCATE(thismesh%cells(i)%edge_list(nEdge))
+        thismesh%cells(i)%edge_list = -1
         total_nEdges = total_nEdges + nEdge
         ! For each edge
         DO j = 2, (SIZE(thismesh%cells(i)%vertex_list) - 1)/2
@@ -1239,8 +1248,55 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
       ENDDO
     ENDDO
     ENSURE(total_nEdges == cells_in_edges)
+
+    ! For each edge, setup the cell's edge list
+    DO i = 1, iEdge
+      DO j = 1, 2
+        IF(thismesh%edges(i)%cells(j) /= -1) THEN
+          icell = thismesh%edges(i)%cells(j)
+          DO k = 1, SIZE(thismesh%cells(icell)%edge_list)
+            IF(thismesh%cells(icell)%edge_list(k) == -1) THEN
+              thismesh%cells(icell)%edge_list(k) = i
+              EXIT
+            ENDIF
+          ENDDO
+        ENDIF
+      ENDDO
+    ENDDO
+
+    ! Check that each cell's edge list was assigned.
+    DO i = 1,nCells
+      ENSURE(.NOT.ANY(thismesh%cells(i)%edge_list == -1))
+    ENDDO 
   ENDIF
 ENDSUBROUTINE setupEdges_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears the edges of the XDMF mesh
+!> @param thismesh the XDMF mesh object
+!>
+RECURSIVE SUBROUTINE clearEdges_XDMFMeshType(thismesh)
+  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SNK) :: i
+
+  IF(ASSOCIATED(thismesh%children)) THEN
+    DO i=1,SIZE(thismesh%children)
+      CALL thismesh%children(i)%clearEdges()
+    ENDDO
+  ENDIF
+  IF( ALLOCATED(thismesh%edges)) THEN
+    DO i=1, SIZE(thismesh%edges)
+      CALL thismesh%edges(i)%quad%clear()
+      CALL thismesh%edges(i)%line%clear()      
+    ENDDO
+    DEALLOCATE(thismesh%edges)
+  ENDIF
+  IF( ALLOCATED(thismesh%cells) ) THEN
+    DO i=1, SIZE(thismesh%cells)
+      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
+    ENDDO
+  ENDIF
+ENDSUBROUTINE clearEdges_XDMFMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Gets the number of leaf nodes in this mesh

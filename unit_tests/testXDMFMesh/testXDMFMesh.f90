@@ -212,6 +212,7 @@ REGISTER_SUBTEST('GET CELL AREA', testGetCellArea)
 REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
 REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 REGISTER_SUBTEST('SETUP EDGES', testSetupEdges)
+REGISTER_SUBTEST('CLEAR EDGES', testClearEdges)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
 REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
 FINALIZE_TEST()
@@ -851,6 +852,7 @@ ENDSUBROUTINE testSetupRectangularMap
 !-------------------------------------------------------------------------------
 SUBROUTINE testSetupEdges()
   TYPE(XDMFMeshType) :: mesh
+  INTEGER(SIK) :: i
 
   COMPONENT_TEST("Linear Edges")
   ! A linear mesh with 7 cells (3 tri, 4 quad), 11 vertices, and 17 unique
@@ -933,6 +935,20 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%edges(16)%line%p2%coord(1) == 4.0_SRK, "Line not setup correctly")
   ASSERT(mesh%edges(16)%line%p2%coord(2) == 2.0_SRK, "Line not setup correctly")
 
+  ! Check that cell's edge list is allocated.
+  DO i = 1, 7
+    ASSERT(ALLOCATED(mesh%cells(i)%edge_list), "cell's edge list not allocated!")
+  ENDDO
+
+  ! Spot check to make sure the list is correct
+  ! Cell 6
+  ! Edge: 4 - 7   ID: 14
+  ! Edge: 7 - 11  ID: 16 
+  ! Edge: 4 - 11  ID: 15
+  ASSERT(mesh%cells(6)%edge_list(1) == 14, "Wrong edge!")
+  ASSERT(mesh%cells(6)%edge_list(2) == 15, "Wrong edge!")
+  ASSERT(mesh%cells(6)%edge_list(3) == 16, "Wrong edge!")
+
   CALL mesh%clear()
 
   COMPONENT_TEST("Quadratic Edges")
@@ -1008,8 +1024,77 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%edges(3)%quad%points(3)%coord(1) == 1.0_SRK, "Quad not setup correctly")
   ASSERT(mesh%edges(3)%quad%points(3)%coord(2) == 1.0_SRK, "Quad not setup correctly")
 
+  ! Check that cell's edge list is allocated.
+  DO i = 1, 2
+    ASSERT(ALLOCATED(mesh%cells(i)%edge_list), "cell's edge list not allocated!")
+  ENDDO
+
+  ! Spot check to make sure the list is correct
+  ! Cell 1
+  ! Edge: 1 - 2 - 3  ID: 1
+  ! Edge: 3 - 6 - 9  ID: 2 
+  ! Edge: 1 - 5 - 9  ID: 3
+  ASSERT(mesh%cells(1)%edge_list(1) == 1, "Wrong edge!")
+  ASSERT(mesh%cells(1)%edge_list(2) == 2, "Wrong edge!")
+  ASSERT(mesh%cells(1)%edge_list(3) == 3, "Wrong edge!")
+
   CALL mesh%clear()
 ENDSUBROUTINE testSetupEdges
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testClearEdges()
+  TYPE(XDMFMeshType) :: mesh
+  INTEGER(SIK) :: i
+
+  ! vertices
+  ALLOCATE(mesh%vertices(3,11))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/2.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/4.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/2.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/0.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/1.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,10) = (/2.0_SDK, 2.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,11) = (/4.0_SDK, 2.0_SDK, 0.0_SDK/)
+
+  ! Cells
+  ALLOCATE(mesh%cells(7))
+  ! Quadrilaterals
+  ALLOCATE(mesh%cells(1)%vertex_list(5))
+  mesh%cells(1)%vertex_list = (/5, 1, 2, 6, 5/)
+  ALLOCATE(mesh%cells(2)%vertex_list(5))
+  mesh%cells(2)%vertex_list = (/5, 2, 3, 7, 6/)
+  ALLOCATE(mesh%cells(3)%vertex_list(5))
+  mesh%cells(3)%vertex_list = (/5, 5, 6, 9, 8/)
+  ALLOCATE(mesh%cells(4)%vertex_list(5))
+  mesh%cells(4)%vertex_list = (/5, 6, 7, 10, 9/)
+  ! Triangles
+  ALLOCATE(mesh%cells(5)%vertex_list(4))
+  mesh%cells(5)%vertex_list = (/4, 3, 4, 7/)
+  ALLOCATE(mesh%cells(6)%vertex_list(4))
+  mesh%cells(6)%vertex_list = (/4, 7, 4, 11/)
+  ALLOCATE(mesh%cells(7)%vertex_list(4))
+  mesh%cells(7)%vertex_list = (/4, 7, 11, 10/)
+
+  ! Setup the edges
+  CALL mesh%setupEdges()
+
+  ! clear edges
+  CALL mesh%clearEdges()
+
+  ! Check that edges are gone, but other info is intact
+  ASSERT(ALLOCATED(mesh%vertices), "Modified vertiecs.")
+  ASSERT(ALLOCATED(mesh%cells), "Modified vertiecs.")
+  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges still allocated.")
+  DO i = 1, 7
+    ASSERT(.NOT.ALLOCATED(mesh%cells(i)%edge_list), "Cell edge list not cleared")
+  ENDDO
+
+  CALL mesh%clear()
+ENDSUBROUTINE testClearEdges
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testImportXDMFMesh()
