@@ -42,6 +42,9 @@ TYPE :: QuadraticType
     !> @copybrief Geom_Quadratic::intersectLine_QuadraticType
     !> @copydetails Geom_Quadratic::intersectLine_QuadraticType
     PROCEDURE,PASS :: intersectLine => intersectLine_QuadraticType
+    !> @copybrief Geom_Quadratic::pointIsLeft_QuadraticType
+    !> @copydetails Geom_Quadratic::pointIsLeft_QuadraticType
+    PROCEDURE,PASS :: pointIsLeft => pointIsLeft_QuadraticType
 ENDTYPE QuadraticType
 
 !
@@ -261,4 +264,40 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
     ENDIF
   ENDIF
 ENDSUBROUTINE intersectLine_QuadraticType
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines whether a point is to the left of arc
+!> @param line the line object
+!> @param pt the point object
+!> @returns @c bool the boolean result of the operation
+!>
+ELEMENTAL FUNCTION pointIsLeft_QuadraticType(arc,pt) RESULT(bool)
+  CLASS(QuadraticType),INTENT(IN) :: arc
+  TYPE(PointType),INTENT(IN) :: pt
+  LOGICAL(SBK) :: bool
+  TYPE(PointType) :: p0, ps
+  REAL(SRK) :: d
+  REAL(SDK) :: rotation_mat(2,2)
+  bool=.FALSE.
+  ! Transform the point to the quadratic line's coordinate system
+  ! Create a copy of the point.
+  ps = pt
+  ! Shift the point
+  CALL p0%init(DIM=2, X=arc%shift_x, Y=arc%shift_y)
+  ps = ps - p0
+  ! Rotate the point
+  rotation_mat(1,:) = (/COS(arc%theta), SIN(arc%theta)/)
+  rotation_mat(2,:) = (/-SIN(arc%theta), COS(arc%theta)/)
+  ps%coord = MATMUL(rotation_mat, ps%coord)
+  ! If the y of the point is greater than that of the arc within the range of the segment,
+  ! It is left. If the point is outside the range of the segment, just return result as 
+  ! if the arc were a line (y > 0, is left).
+  d = distance(arc%points(1), arc%points(2))
+  IF((ps%coord(1) <= 0.0) .OR. d <= ps%coord(1)) THEN ! treat as line
+    IF(ps%coord(2) >= 0.0) bool = .TRUE.
+  ELSE ! In the segment range
+    ! y_p >= ax_p^2 + bx_p
+    IF(ps%coord(2) >= arc%a*ps%coord(1)**2 + arc%b*ps%coord(1)) bool = .TRUE.
+  ENDIF
+ENDFUNCTION pointIsLeft_QuadraticType
 ENDMODULE Geom_Quadratic

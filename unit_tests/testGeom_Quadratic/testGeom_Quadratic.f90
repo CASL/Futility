@@ -23,6 +23,7 @@ REGISTER_SUBTEST('CLEAR', testClear)
 REGISTER_SUBTEST('INIT', testInit)
 REGISTER_SUBTEST('AREA', testArea)
 REGISTER_SUBTEST('INTERSECT LINE', testIntersectLine)
+REGISTER_SUBTEST('POINT IS LEFT', testPointIsLeft)
 FINALIZE_TEST()
 !
 !===============================================================================
@@ -463,4 +464,45 @@ SUBROUTINE testIntersectLine()
   CALL p5%clear()
 
 ENDSUBROUTINE testIntersectLine
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testPointIsLeft()
+  TYPE(QuadraticType) :: arc
+  REAL(SDK), PARAMETER :: PI=3.14159265358979311599796346854
+  REAL(SDK) :: theta, rotation_mat(2,2)
+  TYPE(PointType) :: p1, p2, p3, ptest
+  INTEGER(SIK) :: i
+
+  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  ! y = -x^2 + 2x
+  CALL arc%set(p1, p2, p3)
+
+  COMPONENT_TEST("Within the segment range")
+  CALL ptest%init(DIM=2, X=1.0_SRK, Y=2.0_SRK)
+  ASSERT(arc%pointIsLeft(ptest), "But it is left!")
+  CALL ptest%clear()
+
+  CALL ptest%init(DIM=2, X=1.0_SRK, Y=-10.0_SRK)
+  ASSERT(.NOT.arc%pointIsLeft(ptest), "But it is right!")
+  CALL ptest%clear()
+
+  COMPONENT_TEST("Outside the segment range")
+  CALL ptest%init(DIM=2, X=-1.0_SRK, Y=2.0_SRK)
+  ASSERT(arc%pointIsLeft(ptest), "But it is left!")
+  CALL ptest%clear()
+
+  CALL ptest%init(DIM=2, X=-1.0_SRK, Y=-10.0_SRK)
+  ASSERT(.NOT.arc%pointIsLeft(ptest), "But it is right!")
+  CALL ptest%clear()
+
+  CALL ptest%init(DIM=2, X=100.0_SRK, Y=2.0_SRK)
+  ASSERT(arc%pointIsLeft(ptest), "But it is left!")
+  CALL ptest%clear()
+
+  CALL ptest%init(DIM=2, X=100.0_SRK, Y=-10.0_SRK)
+  ASSERT(.NOT.arc%pointIsLeft(ptest), "But it is right!")
+  CALL ptest%clear()
+ENDSUBROUTINE testPointIsLeft
 ENDPROGRAM testGeom_Quadratic
