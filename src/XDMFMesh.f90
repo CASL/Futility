@@ -55,6 +55,8 @@ TYPE :: XDMFEdge
   !> The vertices which make up the edge
   INTEGER(SLK) :: vertices(3) = -1
   !> The quadratic edge
+  !> Note, if the coefficient a > 0, the edge is convex. 
+  !> a < 0 is convex. a = 0, is a straight line 
   TYPE(QuadraticType) :: quad
   !> The linear edge
   TYPE(LineType) :: line
@@ -151,6 +153,9 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType
     !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType
     PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType
+    !> @copybrief XDMFMeshType::pointInsideCell_XDMFMeshType
+    !> @copydoc XDMFMeshType::pointInsideCell_XDMFMeshType
+    PROCEDURE,PASS :: pointInsideCell => pointInsideCell_XDMFMeshType
 ENDTYPE XDMFMeshType
 
 !> To allow an array of pointers to XDMF meshes
@@ -735,6 +740,9 @@ SUBROUTINE importXDMFMesh(strpath, mesh)
 
   ! Setup map
   CALL mesh%setupRectangularMap()
+
+  ! Setup edges
+  CALL mesh%setupEdges()
 ENDSUBROUTINE importXDMFMesh
 !
 !-------------------------------------------------------------------------------
@@ -1040,7 +1048,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
   INTEGER(SIK) :: i,j,k,xid, maxEdges, nCells, iEdge, nEdge, icell, &
     total_nEdges, cells_in_edges
-  INTEGER(SIK) :: edge_verts(3)
+  INTEGER(SIK) :: edge_verts(3),swap
   INTEGER(SIK), ALLOCATABLE :: all_edge_verts(:,:), all_edge_cells(:,:) 
   LOGICAL(SBK) :: duplicate_edge
   TYPE(PointType) :: p1, p2, p3
@@ -1203,7 +1211,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
         ! cells it belongs to, to see which verts are linear. The XDMF cell
         ! format lists linear then quadratic verts, so the last vertex we see
         ! cycling through the vertex list is the quadratic vertex.
-        icell = all_edge_cells(1,i) ! The cell the edge belongs too
+        icell = all_edge_cells(1,i) ! The cell the edge belongs to
         edge_verts = all_edge_verts(:,i)
         ! Mark seen vert IDs as 0. The non-zero vertex is the midpoint
         ! The order of the other two points doesn't matter.
@@ -1212,20 +1220,26 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
             IF(edge_verts(k) == thismesh%cells(icell)%vertex_list(j+1)) edge_verts(k) = 0
           ENDDO
         ENDDO
-        DO k = 1,3
-          IF(edge_verts(k) /= 0) THEN
-            CALL p3%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(k,i)), &
-                                Y=thismesh%vertices(2,all_edge_verts(k,i)))
-          ELSE
-            IF(p1%dim == 2) THEN ! point 1 alrdy init, this is the 2nd point
-              CALL p2%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(k,i)), &
-                                  Y=thismesh%vertices(2,all_edge_verts(k,i)))
-            ELSE
-              CALL p1%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(k,i)), &
-                                  Y=thismesh%vertices(2,all_edge_verts(k,i)))
+        ! Move the middle vert to the 3rd index of the array.
+        IF(edge_verts(3) == 0) THEN
+          DO k = 1,3
+            IF(edge_verts(k) /= 0) THEN
+              swap = edge_verts(k)
+              edge_verts(k) = 0
+              edge_verts(3) = swap
+              ! Change for the vertices as well
+              swap = all_edge_verts(k,i)
+              all_edge_verts(k,i) = all_edge_verts(3,i)
+              all_edge_verts(3,i) = swap
             ENDIF
-          ENDIF
-        ENDDO
+          ENDDO          
+        ENDIF
+        CALL p3%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(3,i)), &
+                            Y=thismesh%vertices(2,all_edge_verts(3,i)))
+        CALL p2%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(2,i)), &
+                            Y=thismesh%vertices(2,all_edge_verts(2,i)))
+        CALL p1%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(1,i)), &
+                            Y=thismesh%vertices(2,all_edge_verts(1,i)))
         CALL thismesh%edges(i)%quad%set(p1, p2, p3)
       ENDIF
       ! vertices
@@ -1959,5 +1973,80 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
     area = -HUGE(1.0_SRK)
   ENDIF
 ENDFUNCTION
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine determines whether a point lies within a 2D mesh cell
+!> @param thisCell The cell used in the query
+!> @param point The point type to check if it lies inside the cell
+!> @param bool The logical result of this operation.  TRUE if the point is inside.
+!>
+FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
+  CLASS(XDMFMeshType),INTENT(INOUT) :: thismesh
+  INTEGER(SLK),INTENT(IN) :: iCell
+  TYPE(PointType),INTENT(IN) :: point
+  LOGICAL(SBK) :: bool 
+
+  INTEGER(SIK) :: i,j, lastvert_idx
+  INTEGER(SLK) :: iEdge, iVert, p1ID, p2ID, iLastVert, ifirstVert
+  LOGICAL(SBK) :: isLeft
+
+  ! If the point isLeft of each edge, it must be interior, since the
+  ! vertices are in counter-clockwise order.
+  ! Orientation of the edges matters, so if the vertices of the edge are opposite 
+  ! of the way they are in the cell, flip the boolean.
+  bool = .TRUE.
+  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
+  DO i = 1, SIZE(thismesh%cells(iCell)%edge_list)
+    iEdge = thismesh%cells(iCell)%edge_list(i)
+    IF(thismesh%edges(iEdge)%isLinear)THEN
+      isLeft = thismesh%edges(iEdge)%line%pointIsLeft(point)
+      p1ID = thismesh%edges(iEdge)%vertices(2)
+      p2ID = thismesh%edges(iEdge)%vertices(3)
+    ELSE
+      isLeft = thismesh%edges(iEdge)%quad%pointIsLeft(point)
+      p1ID = thismesh%edges(iEdge)%vertices(1)
+      p2ID = thismesh%edges(iEdge)%vertices(2)
+    ENDIF
+    ! Loop through the vertices. If point 1 in encountered first, isLeft is
+    ! correct. If point 2 is encountered 1st, flip isLeft. Vertices are in
+    ! counter clockwise order, hence the orientation is known.
+    ! The exception is on the last edge, where the verts wrap around an p2
+    ! should be encountered first.
+    IF(thismesh%edges(iEdge)%isLinear)THEN
+      lastvert_idx = SIZE(thismesh%cells(iCell)%vertex_list)
+      iLastVert = thismesh%cells(iCell)%vertex_list(lastvert_idx)
+    ELSE
+      ! total list - 1 for the xid, /2 to only address linear elements + 1 to
+      ! skip xid
+      lastvert_idx = (SIZE(thismesh%cells(iCell)%vertex_list) - 1)/2 + 1
+      iLastVert = thismesh%cells(iCell)%vertex_list(lastvert_idx)
+    ENDIF
+    ifirstVert = thismesh%cells(iCell)%vertex_list(2)
+    ! Test for wrap around 1st.
+    IF(p1ID == ifirstVert .AND. p2ID == iLastVert) THEN
+      isLeft = .NOT.isLeft
+    ELSEIF(p1ID == iLastVert .AND. p2ID == ifirstVert) THEN
+      ! Correct. nothing to do
+    ELSE
+      DO j = 2, lastvert_idx ! skip xid
+        iVert = thismesh%cells(iCell)%vertex_list(j)
+        IF(iVert == p1ID) THEN
+          EXIT
+        ENDIF
+        IF(iVert == p2ID) THEN
+          isLeft = .NOT.isLeft
+          EXIT
+        ENDIF
+      ENDDO
+    ENDIF
+    ! If the point isLeft, keep going until all edges have been verified,
+    ! otherwise, stop. The point cannot be in this cell if it is right of any
+    ! edge.
+    IF(.NOT.isLeft) THEN
+      bool = .FALSE.
+      RETURN
+    ENDIF
+  ENDDO
+ENDFUNCTION pointInsideCell_XDMFMeshType
 #endif
 ENDMODULE XDMFMesh

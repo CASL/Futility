@@ -213,6 +213,7 @@ REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
 REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 REGISTER_SUBTEST('SETUP EDGES', testSetupEdges)
 REGISTER_SUBTEST('CLEAR EDGES', testClearEdges)
+REGISTER_SUBTEST('POINT INSIDE CELL', testPointInsideCell)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportXDMFMesh)
 REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
 FINALIZE_TEST()
@@ -675,7 +676,7 @@ SUBROUTINE testGetCellArea()
   mesh%cells(3)%vertex_list = (/36, 1, 2, 3, 5, 6, 9/)
   ! Quadrilateral8
   ALLOCATE(mesh%cells(4)%vertex_list(9))
-  mesh%cells(4)%vertex_list = (/36, 1, 2, 3, 4, 5, 6, 7, 8/)
+  mesh%cells(4)%vertex_list = (/37, 1, 2, 3, 4, 5, 6, 7, 8/)
 
   ! Same mesh, with vertices rotated 45 degrees about the origin
   mesh45 = mesh
@@ -996,8 +997,8 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%edges(1)%cells(1) == 1, "Wrong cell")
   ASSERT(mesh%edges(1)%cells(2) == -1, "Wrong cell")
   ASSERT(mesh%edges(1)%vertices(1) == 1, "Wrong vert")
-  ASSERT(mesh%edges(1)%vertices(2) == 2, "Wrong vert")
-  ASSERT(mesh%edges(1)%vertices(3) == 3, "Wrong vert")
+  ASSERT(mesh%edges(1)%vertices(2) == 3, "Wrong vert")
+  ASSERT(mesh%edges(1)%vertices(3) == 2, "Wrong vert")
   ASSERT(mesh%edges(1)%quad%points(1)%dim == 2, "Quad not setup correctly")
   ASSERT(mesh%edges(1)%quad%points(2)%dim == 2, "Quad not setup correctly")
   ASSERT(mesh%edges(1)%quad%points(3)%dim == 2, "Quad not setup correctly")
@@ -1012,8 +1013,8 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%edges(3)%cells(1) == 1, "Wrong cell")
   ASSERT(mesh%edges(3)%cells(2) == 2, "Wrong cell")
   ASSERT(mesh%edges(3)%vertices(1) == 1, "Wrong vert")
-  ASSERT(mesh%edges(3)%vertices(2) == 5, "Wrong vert")
-  ASSERT(mesh%edges(3)%vertices(3) == 9, "Wrong vert")
+  ASSERT(mesh%edges(3)%vertices(2) == 9, "Wrong vert")
+  ASSERT(mesh%edges(3)%vertices(3) == 5, "Wrong vert")
   ASSERT(mesh%edges(3)%quad%points(1)%dim == 2, "Quad not setup correctly")
   ASSERT(mesh%edges(3)%quad%points(2)%dim == 2, "Quad not setup correctly")
   ASSERT(mesh%edges(3)%quad%points(3)%dim == 2, "Quad not setup correctly")
@@ -1614,4 +1615,209 @@ SUBROUTINE test_export_three_level_grid_implicit_hierarchy()
   CALL mesh%clear()
   CALL emesh%clear()
 ENDSUBROUTINE test_export_three_level_grid_implicit_hierarchy
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testPointInsideCell()
+  TYPE(XDMFMeshType) :: mesh, mesh45
+  TYPE(PointType) :: p
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  COMPONENT_TEST('Triangle')
+  !          v3 (1,1)
+  !        /  |
+  !      /    |
+  !    /      |
+  !  /        |
+  ! v1-------v2 (1,0)
+  ! (0,0)
+  ! Triangle
+  ! vertices
+  ALLOCATE(mesh%vertices(3,9))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/0.5_SDK, -0.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/1.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/0.5_SDK, 1.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/-0.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/0.5_SDK, 0.5_SDK, 0.0_SDK/)
+
+  ALLOCATE(mesh%cells(1))
+  ALLOCATE(mesh%cells(1)%vertex_list(4))
+  mesh%cells(1)%vertex_list = (/4, 1, 2, 3/)
+
+  CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
+  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  CALL p%clear()
+
+  CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
+  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  CALL p%clear()
+  CALL mesh%clear()
+
+  COMPONENT_TEST('Quadrilateral')
+  ! (0,1) v4-------v3 (1,1)
+  !       |        |
+  !       |        |
+  !       |        |
+  !       |        |
+  !       v1-------v2 (1,0)
+  ! (0,0)
+  ! Quadrilateral
+  ALLOCATE(mesh%vertices(3,9))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/0.5_SDK, -0.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/1.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/0.5_SDK, 1.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/-0.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/0.5_SDK, 0.5_SDK, 0.0_SDK/)
+
+  ALLOCATE(mesh%cells(1))
+  ALLOCATE(mesh%cells(1)%vertex_list(5))
+  mesh%cells(1)%vertex_list = (/5, 1, 2, 3, 4/)
+
+  CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
+  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  CALL p%clear()
+
+  CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
+  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  CALL p%clear()
+  CALL mesh%clear()
+
+  COMPONENT_TEST('Triangle6')
+  !          v3
+  !        /   \
+  !     v9      v6  This should look very close to a half circle, with the flat edge
+  !    /        /   at 45 degrees. Hard to make an ASCII diagram for this.
+  !  /         /   Area approc pi/4
+  ! v1        v2
+  !    --v5--
+  ALLOCATE(mesh%vertices(3,9))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/0.5_SDK, -0.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/1.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/0.5_SDK, 1.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/-0.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/0.5_SDK, 0.5_SDK, 0.0_SDK/)
+
+  ALLOCATE(mesh%cells(1))
+  ALLOCATE(mesh%cells(1)%vertex_list(7))
+  mesh%cells(1)%vertex_list = (/36, 1, 2, 3, 5, 6, 9/)
+
+  CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
+  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  CALL p%clear()
+
+  CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
+  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  CALL p%clear()
+  CALL mesh%clear()
+
+  COMPONENT_TEST('Quad8')
+  !        --v7--
+  !   v4--       --v3
+  !  /               \
+  ! /                 \
+  !v8                 v6    Should look very close to a circle
+  ! \                 /     Area approx pi/2
+  !  \               /
+  !   v1--       --v2
+  !       -- v5--
+
+  ALLOCATE(mesh%vertices(3,9))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,5) = (/0.5_SDK, -0.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,6) = (/1.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,7) = (/0.5_SDK, 1.20710678118_SDK, 0.0_SDK/)
+  mesh%vertices(:,8) = (/-0.20710678118_SDK, 0.5_SDK, 0.0_SDK/)
+  mesh%vertices(:,9) = (/0.5_SDK, 0.5_SDK, 0.0_SDK/)
+
+  ALLOCATE(mesh%cells(1))
+  ALLOCATE(mesh%cells(1)%vertex_list(9))
+  mesh%cells(1)%vertex_list = (/37, 1, 2, 3, 4, 5, 6, 7, 8/)
+
+  CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
+  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  CALL p%clear()
+
+  CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
+  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  CALL p%clear()
+  CALL mesh%clear()
+
+  COMPONENT_TEST('Shared last edge triangles')
+  ! v4--------v3 (1,1)
+  ! |      /  |
+  ! |    /    |
+  ! |  /      |
+  ! |/        |
+  ! v1-------v2 (1,0)
+  ! (0,0)
+  ! Triangle
+  ! vertices
+  ALLOCATE(mesh%vertices(3,4))
+  mesh%vertices(:,1) = (/0.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,2) = (/1.0_SDK, 0.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,3) = (/1.0_SDK, 1.0_SDK, 0.0_SDK/)
+  mesh%vertices(:,4) = (/0.0_SDK, 1.0_SDK, 0.0_SDK/)
+
+  ALLOCATE(mesh%cells(2))
+  ALLOCATE(mesh%cells(1)%vertex_list(4))
+  mesh%cells(1)%vertex_list = (/4, 1, 2, 3/)
+  ALLOCATE(mesh%cells(2)%vertex_list(4))
+  mesh%cells(2)%vertex_list = (/4, 3, 4, 1/)
+
+  CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
+  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  WRITE(*,*)
+  ASSERT(.NOT.mesh%pointInsideCell(2_SLK, p), "Should not be in cell!")
+  WRITE(*,*)
+  CALL p%clear()
+
+  CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
+  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  WRITE(*,*)
+  ASSERT(.NOT.mesh%pointInsideCell(2_SLK, p), "Should not be in cell!")
+  WRITE(*,*)
+  CALL p%clear()
+  CALL mesh%clear()
+
+
+
+
+
+ENDSUBROUTINE testPointInsideCell
 ENDPROGRAM testXDMFMesh
