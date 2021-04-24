@@ -55,8 +55,8 @@ TYPE :: XDMFEdge
   !> The vertices which make up the edge
   INTEGER(SLK) :: vertices(3) = -1
   !> The quadratic edge
-  !> Note, if the coefficient a > 0, the edge is convex. 
-  !> a < 0 is convex. a = 0, is a straight line 
+  !> Note, if the coefficient a > 0, the edge is convex.
+  !> a < 0 is convex. a = 0, is a straight line
   TYPE(QuadraticType) :: quad
   !> The linear edge
   TYPE(LineType) :: line
@@ -113,7 +113,7 @@ TYPE :: XDMFMeshType
   !> y
   !> | (1,3)  (2,3)
   !> | (1,2)  (2,2)
-  !> | (1,1)  (2,1)  
+  !> | (1,1)  (2,1)
   !> +------> x
   INTEGER(SNK),ALLOCATABLE :: map(:,:)
   CONTAINS
@@ -144,10 +144,10 @@ TYPE :: XDMFMeshType
     !> @copybrief XDMFMeshType::getLeaves_XDMFMeshType
     !> @copydoc XDMFMeshType::getLeaves_XDMFMeshType
     PROCEDURE,PASS :: getLeaves => getLeaves_XDMFMeshType
-    !> @copybrief XDMFMeshType::getNNodesAtDepth_XDMFMeshType      
+    !> @copybrief XDMFMeshType::getNNodesAtDepth_XDMFMeshType
     !> @copydoc XDMFMeshType::getNNodesAtDepth_XDMFMeshType
     PROCEDURE,PASS :: getNNodesAtDepth => getNNodesAtDepth_XDMFMeshType
-    !> @copybrief XDMFMeshType::getNodesAtDepth_XDMFMeshType      
+    !> @copybrief XDMFMeshType::getNodesAtDepth_XDMFMeshType
     !> @copydoc XDMFMeshType::getNodesAtDepth_XDMFMeshType
     PROCEDURE,PASS :: getNodesAtDepth => getNodesAtDepth_XDMFMeshType
     !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType
@@ -768,7 +768,7 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   IF( ALLOCATED(thismesh%edges)) THEN
     DO i=1, SIZE(thismesh%edges)
       CALL thismesh%edges(i)%quad%clear()
-      CALL thismesh%edges(i)%line%clear()      
+      CALL thismesh%edges(i)%line%clear()
     ENDDO
     DEALLOCATE(thismesh%edges)
   ENDIF
@@ -809,7 +809,7 @@ RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
   IF( ALLOCATED(thismesh%edges)) THEN
     DO i=1, SIZE(thismesh%edges)
       CALL thismesh%edges(i)%quad%clear()
-      CALL thismesh%edges(i)%line%clear()      
+      CALL thismesh%edges(i)%line%clear()
     ENDDO
     DEALLOCATE(thismesh%edges)
   ENDIF
@@ -994,7 +994,7 @@ RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
   xmax = -HUGE(xmax)
   ymax = -HUGE(ymax)
   IF(ASSOCIATED(thismesh%children))THEN
-    ! Loop through all children names and find the bottom left child 
+    ! Loop through all children names and find the bottom left child
     ! and top right child (xmin, ymin) and (xmax, ymax)
     DO i = 1, SIZE(thismesh%children)
       meshname = thismesh%children(i)%name
@@ -1011,7 +1011,7 @@ RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
     ! Check that the product of the 2D dimensions equals the 1D dimension
     IF((xmax - xmin + 1) * (ymax - ymin + 1) /= SIZE(thismesh%children)) &
       CALL eXDMF%raiseError(modName//'::'//myName//' - the number of '// &
-      'entries in the map ('//CHAR((xmax - xmin + 1) * (ymax - ymin + 1))// & 
+      'entries in the map ('//CHAR((xmax - xmin + 1) * (ymax - ymin + 1))// &
       ') does not equal the number of children ('//CHAR(SIZE(thismesh%children))// &
       '). Are the grid indices correct?')
 
@@ -1049,7 +1049,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
   INTEGER(SIK) :: i,j,k,xid, maxEdges, nCells, iEdge, nEdge, icell, &
     total_nEdges, cells_in_edges
   INTEGER(SIK) :: edge_verts(3),swap
-  INTEGER(SIK), ALLOCATABLE :: all_edge_verts(:,:), all_edge_cells(:,:) 
+  INTEGER(SIK), ALLOCATABLE :: all_edge_verts(:,:), all_edge_cells(:,:)
   LOGICAL(SBK) :: duplicate_edge
   TYPE(PointType) :: p1, p2, p3
   !
@@ -1059,7 +1059,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
   !   defaults to 64bit integers to account for very large meshes, but the
   !   sorting routines only accept SIK. Therefore, if this becomes an issue,
   !   just copy and past all the sorting routines, replace SIK with SLK, and add
-  !   an interface in Sorting.f90, or just compile with 64bit integers. 
+  !   an interface in Sorting.f90, or just compile with 64bit integers.
   !
 
   IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
@@ -1072,7 +1072,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
     total_nEdges = 0
     ! Leaf, setup edges
     nCells = SIZE(thismesh%cells)
-    ! Setup oversized arrays to hold all the edges and cells 
+    ! Setup oversized arrays to hold all the edges and cells
     maxEdges = 4
     ALLOCATE(all_edge_verts(3,maxEdges*nCells))
     ALLOCATE(all_edge_cells(2,maxEdges*nCells))
@@ -1232,7 +1232,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
               all_edge_verts(k,i) = all_edge_verts(3,i)
               all_edge_verts(3,i) = swap
             ENDIF
-          ENDDO          
+          ENDDO
         ENDIF
         CALL p3%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(3,i)), &
                             Y=thismesh%vertices(2,all_edge_verts(3,i)))
@@ -1281,7 +1281,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
     ! Check that each cell's edge list was assigned.
     DO i = 1,nCells
       ENSURE(.NOT.ANY(thismesh%cells(i)%edge_list == -1))
-    ENDDO 
+    ENDDO
   ENDIF
 ENDSUBROUTINE setupEdges_XDMFMeshType
 !
@@ -1301,7 +1301,7 @@ RECURSIVE SUBROUTINE clearEdges_XDMFMeshType(thismesh)
   IF( ALLOCATED(thismesh%edges)) THEN
     DO i=1, SIZE(thismesh%edges)
       CALL thismesh%edges(i)%quad%clear()
-      CALL thismesh%edges(i)%line%clear()      
+      CALL thismesh%edges(i)%line%clear()
     ENDDO
     DEALLOCATE(thismesh%edges)
   ENDIF
@@ -1354,7 +1354,7 @@ ENDFUNCTION getNLeaves_XDMFMeshType
 !> @param thismesh the XDMF mesh object
 !> @param nodes a pointer to an array of XDMF meshes
 !> @param d the depth at which the nodes should be retieved
-!> @returns a pointer array 
+!> @returns a pointer array
 !>
 RECURSIVE SUBROUTINE getNodesAtDepth_XDMFMeshType(thismesh, nodes, d, idx)
   CLASS(XDMFMeshType), INTENT(INOUT), TARGET :: thismesh
@@ -1372,7 +1372,7 @@ RECURSIVE SUBROUTINE getNodesAtDepth_XDMFMeshType(thismesh, nodes, d, idx)
     iidx = 1
     IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
       DO i=1,SIZE(thismesh%children)
-        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, iidx) 
+        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, iidx)
       ENDDO
     ELSE ! leaf
       nodes(iidx)%mesh => thismesh
@@ -1380,7 +1380,7 @@ RECURSIVE SUBROUTINE getNodesAtDepth_XDMFMeshType(thismesh, nodes, d, idx)
   ELSE
     IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
       DO i=1,SIZE(thismesh%children)
-        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, idx) 
+        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, idx)
       ENDDO
     ELSE ! leaf
       nodes(idx)%mesh => thismesh
@@ -1393,7 +1393,7 @@ ENDSUBROUTINE getNodesAtDepth_XDMFMeshType
 !> @brief Gets an array of pointers to the leaf nodes in this mesh
 !> @param thismesh the XDMF mesh object
 !> @param leaves a pointer to an array of XDMF meshes (the leaves)
-!> @returns a pointer array 
+!> @returns a pointer array
 !>
 RECURSIVE SUBROUTINE getLeaves_XDMFMeshType(thismesh, leaves)
   CLASS(XDMFMeshType), INTENT(INOUT), TARGET :: thismesh
@@ -1842,14 +1842,14 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
   CLASS(XDMFMeshType), INTENT(IN) :: mesh
   INTEGER(SLK), INTENT(IN) :: iCell
   REAL(SRK) :: area
-  
+
   REAL(SDK),PARAMETER :: pi = 3.14159265358979311599796346854
   REAL(SRK), ALLOCATABLE :: x(:), y(:), x_quad(:), y_quad(:), x_lin(:), y_lin(:)
   REAL(SRK) :: main_area, correction, x_edge(3), y_edge(3), theta, rotation_mat(2,2), &
     xy(2), a, b, quad_area
   INTEGER(SLK) :: xid
   INTEGER(SNK) nverts, i, j
-  
+
   area = 0.0_SRK
   xid = mesh%cells(iCell)%vertex_list(1)
   nverts = SIZE(mesh%cells(iCell)%vertex_list) - 1
@@ -1909,7 +1909,7 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
     !     Quad edge (2,5,0)     Linear edges
     ! Since, point 5 is to the right of linear edge (2,0), the area of the polygon
     ! constructed by edges {(2,5,0), (0,2)} is added to the total area.
-    ! 
+    !
     ! For each edge, compute additional area using quadratic function
     ! Shift point to origin, rotate so line is x-axis, find quadratic function,
     ! integrate, add or subtract based on right or left
@@ -1924,19 +1924,19 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
         x_edge  = (/x(i), x(i+1), x_quad(i)/)
         y_edge  = (/y(i), y(i+1), y_quad(i)/)
       ENDIF
-      ! shift first vertex to origin 
+      ! shift first vertex to origin
       x_edge = x_edge - x_edge(1)
       y_edge = y_edge - y_edge(1)
       ! rotate linear edge to become the x-axis
       IF( x_edge(2) .APPROXEQ. 0.0_SRK ) THEN
         IF( y_edge(2) >= 0.0_SRK ) THEN
-          theta = pi/2.0_SDK 
+          theta = pi/2.0_SDK
         ELSE
-          theta = -pi/2.0_SDK          
+          theta = -pi/2.0_SDK
         ENDIF
       ELSE
         theta = ATAN(y_edge(2)/x_edge(2))
-      ENDIF 
+      ENDIF
 
       IF(x_edge(2) < 0.0) theta = theta + pi
 
@@ -1956,16 +1956,16 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
       !   0 = 0 + 0 + c --> c = 0
       ! Due to the rotation to make the linear edge the x-axis, y_edge(2) = 0
       !   0 = ax_2^2 + bx_2 --> ax_2 + b = 0 --> b = -ax_2
-      ! Lastly, 
+      ! Lastly,
       !   y_3 = ax_3^2 + bx_3
       ! Using, b = -ax_2
       !   y_3 = ax_3(x_3  - x_2) --> a = y_3/x_3 1/(x_3 - x_2)
-      ! Note if x_3 = 0 --> y_3 = 0 --> (x_1, y_1) = (x_3, y_3), which is invalid 
+      ! Note if x_3 = 0 --> y_3 = 0 --> (x_1, y_1) = (x_3, y_3), which is invalid
       a = (y_edge(3)/x_edge(3))/(x_edge(3) - x_edge(2))
       b = -a*x_edge(2)
       ! Integrate from 0 to x_2
       !  ax_2^3/3 + bx_2^2/2
-      quad_area = a*x_edge(2)**3/3.0_SRK + b*x_edge(2)**2/2.0_SRK 
+      quad_area = a*x_edge(2)**3/3.0_SRK + b*x_edge(2)**2/2.0_SRK
       ! quad_area will be opposite of correct sign
       area = area - quad_area
     ENDDO
@@ -1984,7 +1984,7 @@ FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
   CLASS(XDMFMeshType),INTENT(INOUT) :: thismesh
   INTEGER(SLK),INTENT(IN) :: iCell
   TYPE(PointType),INTENT(IN) :: point
-  LOGICAL(SBK) :: bool 
+  LOGICAL(SBK) :: bool
 
   INTEGER(SIK) :: i,j, lastvert_idx
   INTEGER(SLK) :: iEdge, iVert, p1ID, p2ID, iLastVert, ifirstVert
@@ -1992,7 +1992,7 @@ FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
 
   ! If the point isLeft of each edge, it must be interior, since the
   ! vertices are in counter-clockwise order.
-  ! Orientation of the edges matters, so if the vertices of the edge are opposite 
+  ! Orientation of the edges matters, so if the vertices of the edge are opposite
   ! of the way they are in the cell, flip the boolean.
   bool = .TRUE.
   IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()

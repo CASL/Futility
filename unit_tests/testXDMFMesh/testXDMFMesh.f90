@@ -944,7 +944,7 @@ SUBROUTINE testSetupEdges()
   ! Spot check to make sure the list is correct
   ! Cell 6
   ! Edge: 4 - 7   ID: 14
-  ! Edge: 7 - 11  ID: 16 
+  ! Edge: 7 - 11  ID: 16
   ! Edge: 4 - 11  ID: 15
   ASSERT(mesh%cells(6)%edge_list(1) == 14, "Wrong edge!")
   ASSERT(mesh%cells(6)%edge_list(2) == 15, "Wrong edge!")
@@ -1033,7 +1033,7 @@ SUBROUTINE testSetupEdges()
   ! Spot check to make sure the list is correct
   ! Cell 1
   ! Edge: 1 - 2 - 3  ID: 1
-  ! Edge: 3 - 6 - 9  ID: 2 
+  ! Edge: 3 - 6 - 9  ID: 2
   ! Edge: 1 - 5 - 9  ID: 3
   ASSERT(mesh%cells(1)%edge_list(1) == 1, "Wrong edge!")
   ASSERT(mesh%cells(1)%edge_list(2) == 2, "Wrong edge!")
@@ -1802,22 +1802,13 @@ SUBROUTINE testPointInsideCell()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
   ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
-  WRITE(*,*)
   ASSERT(.NOT.mesh%pointInsideCell(2_SLK, p), "Should not be in cell!")
-  WRITE(*,*)
   CALL p%clear()
 
   CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
   ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
-  WRITE(*,*)
   ASSERT(.NOT.mesh%pointInsideCell(2_SLK, p), "Should not be in cell!")
-  WRITE(*,*)
   CALL p%clear()
   CALL mesh%clear()
-
-
-
-
-
 ENDSUBROUTINE testPointInsideCell
 ENDPROGRAM testXDMFMesh
