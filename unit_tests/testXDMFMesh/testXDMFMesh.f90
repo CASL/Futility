@@ -1045,8 +1045,8 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%cells(1)%edge_list(3) == 3, "Wrong edge!")
   ASSERT(SIZE(mesh%cells(1)%edge_ptrs) == 3, "Wrong size!")
   ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(1) == 1, "Wrong vertex!")
-  ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(2) == 2, "Wrong vertex!")
-  ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(3) == 3, "Wrong vertex!")
+  ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(2) == 3, "Wrong vertex!")
+  ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(3) == 2, "Wrong vertex!")
 
   CALL mesh%clear()
 ENDSUBROUTINE testSetupEdges
