@@ -283,7 +283,7 @@ SUBROUTINE testClear()
   ASSERT(pin1%singleTopology == .FALSE., "single topology did not reset")
   ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
   ASSERT(.NOT.ALLOCATED(pin1%vertices), "Vertices are allocated")
-  ASSERT(.NOT.ASSOCIATED(pin1%edges), "Edges are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%edges), "Edges are allocated")
   ASSERT(.NOT.ALLOCATED(pin1%cells), "Cells are allocated")
   ASSERT(.NOT.ALLOCATED(pin1%material_ids), "materials are allocated")
   ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are allocated")
@@ -296,7 +296,7 @@ SUBROUTINE testClear()
   ASSERT(mesh%singleTopology == .FALSE., "single topology did not reset")
   ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
   ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are allocated")
-  ASSERT(.NOT.ASSOCIATED(mesh%edges), "Edges are allocated")
+  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
   ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are allocated")
   ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are allocated")
   ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are allocated")
@@ -337,7 +337,7 @@ SUBROUTINE testNonRecursiveClear()
     ENDDO
   ENDDO
   !     pin1 edges
-  ASSERT(ASSOCIATED(pin1%edges), "Edges not allocated")
+  ASSERT(ALLOCATED(pin1%edges), "Edges not allocated")
   !     pin1 cells
   ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
   ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
@@ -368,7 +368,7 @@ SUBROUTINE testNonRecursiveClear()
   ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
   ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are associated")
   ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are associated")
-  ASSERT(.NOT.ASSOCIATED(mesh%edges), "Edges are allocated")
+  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
   ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are associated")
   ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are associated")
   ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
@@ -425,7 +425,7 @@ SUBROUTINE testAssign()
     ENDDO
   ENDDO
   !     pin1 edges
-  ASSERT(ASSOCIATED(pin1%edges), "Edges not allocated")
+  ASSERT(ALLOCATED(pin1%edges), "Edges not allocated")
   ASSERT(SIZE(pin1%edges)==1, "Wrong number of edges")
   ASSERT(.NOT.pin1%edges(1)%isLinear, "isLinear is wrong")
   ASSERT(pin1%edges(1)%cells(1) == 14, "cells value is wrong")
@@ -906,7 +906,7 @@ SUBROUTINE testSetupEdges()
   ! Setup the edges
   CALL mesh%setupEdges()
 
-  ASSERT(ASSOCIATED(mesh%edges), "edges not associated")
+  ASSERT(ALLOCATED(mesh%edges), "edges not allocated")
   ASSERT(SIZE(mesh%edges) == 17, "wrong number of edges")
   ASSERT(ALL(mesh%edges%isLinear), "Should be linear")
   ! Spot check on 2 edges, since all 17 would be tedious
@@ -936,10 +936,9 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%edges(16)%line%p2%coord(1) == 4.0_SRK, "Line not setup correctly")
   ASSERT(mesh%edges(16)%line%p2%coord(2) == 2.0_SRK, "Line not setup correctly")
 
-  ! Check that cell's edge list and edges are allocated.
+  ! Check that cell's edge list is allocated.
   DO i = 1, 7
     ASSERT(ALLOCATED(mesh%cells(i)%edge_list), "cell's edge list not allocated!")
-    ASSERT(ALLOCATED(mesh%cells(i)%edge_ptrs), "cell's edges not allocated!")
   ENDDO
 
   ! Spot check to make sure the list is correct
@@ -950,9 +949,6 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%cells(6)%edge_list(1) == 14, "Wrong edge!")
   ASSERT(mesh%cells(6)%edge_list(2) == 15, "Wrong edge!")
   ASSERT(mesh%cells(6)%edge_list(3) == 16, "Wrong edge!")
-  ASSERT(SIZE(mesh%cells(6)%edge_ptrs) == 3, "Wrong size!")
-  ASSERT(mesh%cells(6)%edge_ptrs(1)%edge%vertices(2) == 4, "Wrong vertex!")
-  ASSERT(mesh%cells(6)%edge_ptrs(1)%edge%vertices(3) == 7, "Wrong vertex!")
 
   CALL mesh%clear()
 
@@ -993,7 +989,7 @@ SUBROUTINE testSetupEdges()
   ! Setup the edges
   CALL mesh%setupEdges()
 
-  ASSERT(ASSOCIATED(mesh%edges), "edges not allocated")
+  ASSERT(ALLOCATED(mesh%edges), "edges not allocated")
   ASSERT(SIZE(mesh%edges) == 5, "wrong number of edges")
   ASSERT(.NOT.ANY(mesh%edges%isLinear), "Should not be linear")
   ! Spot check on 2 edges, since all would be tedious
@@ -1029,10 +1025,9 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%edges(3)%quad%points(3)%coord(1) == 1.0_SRK, "Quad not setup correctly")
   ASSERT(mesh%edges(3)%quad%points(3)%coord(2) == 1.0_SRK, "Quad not setup correctly")
 
-  ! Check that cell's edge and ptr lists are allocated.
+  ! Check that cell's edge list is allocated.
   DO i = 1, 2
     ASSERT(ALLOCATED(mesh%cells(i)%edge_list), "cell's edge list not allocated!")
-    ASSERT(ALLOCATED(mesh%cells(i)%edge_ptrs), "cell's edge ptrs not allocated!")
   ENDDO
 
   ! Spot check to make sure the list is correct
@@ -1043,10 +1038,6 @@ SUBROUTINE testSetupEdges()
   ASSERT(mesh%cells(1)%edge_list(1) == 1, "Wrong edge!")
   ASSERT(mesh%cells(1)%edge_list(2) == 2, "Wrong edge!")
   ASSERT(mesh%cells(1)%edge_list(3) == 3, "Wrong edge!")
-  ASSERT(SIZE(mesh%cells(1)%edge_ptrs) == 3, "Wrong size!")
-  ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(1) == 1, "Wrong vertex!")
-  ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(2) == 3, "Wrong vertex!")
-  ASSERT(mesh%cells(1)%edge_ptrs(1)%edge%vertices(3) == 2, "Wrong vertex!")
 
   CALL mesh%clear()
 ENDSUBROUTINE testSetupEdges
@@ -1098,7 +1089,7 @@ SUBROUTINE testClearEdges()
   ! Check that edges are gone, but other info is intact
   ASSERT(ALLOCATED(mesh%vertices), "Modified vertiecs.")
   ASSERT(ALLOCATED(mesh%cells), "Modified vertiecs.")
-  ASSERT(.NOT.ASSOCIATED(mesh%edges), "Edges still assocaited.")
+  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges still allocated.")
   DO i = 1, 7
     ASSERT(.NOT.ALLOCATED(mesh%cells(i)%edge_list), "Cell edge list not cleared")
   ENDDO
@@ -1627,8 +1618,31 @@ ENDSUBROUTINE test_export_three_level_grid_implicit_hierarchy
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testPointInsideCell()
-  TYPE(XDMFMeshType) :: mesh
+  TYPE(XDMFMeshType) :: mesh, mesh45
   TYPE(PointType) :: p
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   COMPONENT_TEST('Triangle')
   !          v3 (1,1)
