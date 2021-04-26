@@ -1618,31 +1618,8 @@ ENDSUBROUTINE test_export_three_level_grid_implicit_hierarchy
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testPointInsideCell()
-  TYPE(XDMFMeshType) :: mesh, mesh45
+  TYPE(XDMFMeshType) :: mesh
   TYPE(PointType) :: p
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   COMPONENT_TEST('Triangle')
   !          v3 (1,1)
@@ -1668,6 +1645,8 @@ SUBROUTINE testPointInsideCell()
   ALLOCATE(mesh%cells(1))
   ALLOCATE(mesh%cells(1)%vertex_list(4))
   mesh%cells(1)%vertex_list = (/4, 1, 2, 3/)
+
+  CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
   ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
@@ -1702,6 +1681,8 @@ SUBROUTINE testPointInsideCell()
   ALLOCATE(mesh%cells(1)%vertex_list(5))
   mesh%cells(1)%vertex_list = (/5, 1, 2, 3, 4/)
 
+  CALL mesh%setupEdges()
+
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
   ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
   CALL p%clear()
@@ -1733,6 +1714,8 @@ SUBROUTINE testPointInsideCell()
   ALLOCATE(mesh%cells(1))
   ALLOCATE(mesh%cells(1)%vertex_list(7))
   mesh%cells(1)%vertex_list = (/36, 1, 2, 3, 5, 6, 9/)
+
+  CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
   ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
@@ -1769,6 +1752,8 @@ SUBROUTINE testPointInsideCell()
   ALLOCATE(mesh%cells(1)%vertex_list(9))
   mesh%cells(1)%vertex_list = (/37, 1, 2, 3, 4, 5, 6, 7, 8/)
 
+  CALL mesh%setupEdges()
+
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
   ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
   CALL p%clear()
@@ -1799,6 +1784,8 @@ SUBROUTINE testPointInsideCell()
   mesh%cells(1)%vertex_list = (/4, 1, 2, 3/)
   ALLOCATE(mesh%cells(2)%vertex_list(4))
   mesh%cells(2)%vertex_list = (/4, 3, 4, 1/)
+
+  CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
   ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")

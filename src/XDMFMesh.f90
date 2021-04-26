@@ -1981,7 +1981,7 @@ ENDFUNCTION
 !> @param bool The logical result of this operation.  TRUE if the point is inside.
 !>
 FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
-  CLASS(XDMFMeshType),INTENT(INOUT) :: thismesh
+  CLASS(XDMFMeshType),INTENT(IN) :: thismesh
   INTEGER(SLK),INTENT(IN) :: iCell
   TYPE(PointType),INTENT(IN) :: point
   LOGICAL(SBK) :: bool
@@ -1995,7 +1995,8 @@ FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
   ! Orientation of the edges matters, so if the vertices of the edge are opposite
   ! of the way they are in the cell, flip the boolean.
   bool = .TRUE.
-  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
+  REQUIRE(ALLOCATED(thismesh%edges))
+!  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
   DO i = 1, SIZE(thismesh%cells(iCell)%edge_list)
     iEdge = thismesh%cells(iCell)%edge_list(i)
     IF(thismesh%edges(iEdge)%isLinear)THEN
