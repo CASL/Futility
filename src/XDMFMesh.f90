@@ -62,6 +62,10 @@ TYPE :: XDMFEdge
   TYPE(LineType) :: line
 ENDTYPE XDMFEdge
 
+TYPE :: XDMFEdgePtrArry
+  TYPE(XDMFEdge), POINTER :: edge => NULL()
+ENDTYPE
+
 !> Type to hold the vertices that make up a mesh cell
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
@@ -69,6 +73,9 @@ TYPE :: XDMFCell
   INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
   !> Edges
   INTEGER(SLK), ALLOCATABLE :: edge_list(:)
+  !> Pointer to edges for use with findIreg, since INTENT must be IN, so the
+  !edges cannot be accessed on the mesh.
+  TYPE(XDMFEdgePtrArry), ALLOCATABLE :: edge_ptrs(:)
 ENDTYPE XDMFCell
 
 !> Type to hold a list of cell IDs that make up a named set.
@@ -97,7 +104,8 @@ TYPE :: XDMFMeshType
   !> Therefore vertices will be of shape (3, N)
   REAL(SDK), ALLOCATABLE :: vertices(:, :)
   !> Mesh cell edges
-  TYPE(XDMFEdge), ALLOCATABLE :: edges(:)
+  !> Cannot be allocatable and target, so it's a pointer
+  TYPE(XDMFEdge), POINTER :: edges(:) => NULL()
   !> The mesh cells
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
   !> Material for each mesh cell
@@ -751,7 +759,7 @@ ENDSUBROUTINE importXDMFMesh
 !>
 RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SNK) :: i,j
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -765,17 +773,24 @@ RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
     thismesh%children => NULL()
   ENDIF
   IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
-  IF( ALLOCATED(thismesh%edges)) THEN
+  IF( ASSOCIATED(thismesh%edges)) THEN
     DO i=1, SIZE(thismesh%edges)
       CALL thismesh%edges(i)%quad%clear()
       CALL thismesh%edges(i)%line%clear()
     ENDDO
     DEALLOCATE(thismesh%edges)
+    NULLIFY(thismesh%edges)
   ENDIF
   IF( ALLOCATED(thismesh%cells) ) THEN
     DO i=1, SIZE(thismesh%cells)
       DEALLOCATE(thismesh%cells(i)%vertex_list)
       IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
+      IF( ALLOCATED(thismesh%cells(i)%edge_ptrs) ) THEN
+        DO j = 1, SIZE(thismesh%cells(i)%edge_ptrs)
+          NULLIFY(thismesh%cells(i)%edge_ptrs(j)%edge)
+        ENDDO
+        DEALLOCATE(thismesh%cells(i)%edge_ptrs)
+      ENDIF
     ENDDO
     DEALLOCATE(thismesh%cells)
   ENDIF
@@ -795,7 +810,7 @@ ENDSUBROUTINE clear_XDMFMeshType
 !>
 RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SNK) :: i,j
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -806,17 +821,24 @@ RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
     thismesh%children => NULL()
   ENDIF
   IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
-  IF( ALLOCATED(thismesh%edges)) THEN
+  IF( ASSOCIATED(thismesh%edges)) THEN
     DO i=1, SIZE(thismesh%edges)
       CALL thismesh%edges(i)%quad%clear()
       CALL thismesh%edges(i)%line%clear()
     ENDDO
     DEALLOCATE(thismesh%edges)
+    NULLIFY(thismesh%edges)
   ENDIF
   IF( ALLOCATED(thismesh%cells) ) THEN
     DO i=1, SIZE(thismesh%cells)
       DEALLOCATE(thismesh%cells(i)%vertex_list)
       IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
+      IF( ALLOCATED(thismesh%cells(i)%edge_ptrs) ) THEN
+        DO j = 1, SIZE(thismesh%cells(i)%edge_ptrs)
+          NULLIFY(thismesh%cells(i)%edge_ptrs(j)%edge)
+        ENDDO
+        DEALLOCATE(thismesh%cells(i)%edge_ptrs)
+      ENDIF
     ENDDO
     DEALLOCATE(thismesh%cells)
   ENDIF
@@ -924,8 +946,8 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2)))
     thismesh%vertices = thatmesh%vertices
   ENDIF
-  IF( ALLOCATED(thatmesh%edges) ) THEN
-    IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
+  IF( ASSOCIATED(thatmesh%edges) ) THEN
+    CALL thismesh%clearEdges()
     ALLOCATE(thismesh%edges(SIZE(thatmesh%edges)))
     DO i = 1,SIZE(thatmesh%edges)
       thismesh%edges(i)%isLinear = thatmesh%edges(i)%isLinear
@@ -945,6 +967,12 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
       DO i=1, SIZE(thismesh%cells)
         DEALLOCATE(thismesh%cells(i)%vertex_list)
         IF(ALLOCATED(thismesh%cells(i)%edge_list)) DEALLOCATE(thismesh%cells(i)%edge_list)
+        IF( ALLOCATED(thismesh%cells(i)%edge_ptrs) ) THEN
+          DO j = 1, SIZE(thismesh%cells(i)%edge_ptrs)
+            NULLIFY(thismesh%cells(i)%edge_ptrs(j)%edge)
+          ENDDO
+          DEALLOCATE(thismesh%cells(i)%edge_ptrs)
+        ENDIF
       ENDDO
       DEALLOCATE(thismesh%cells)
     ENDIF
@@ -952,8 +980,16 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
     DO i = 1, SIZE(thatmesh%cells)
       ALLOCATE(thismesh%cells(i)%vertex_list(SIZE(thatmesh%cells(i)%vertex_list)))
       thismesh%cells(i)%vertex_list = thatmesh%cells(i)%vertex_list
-      IF(ALLOCATED(thatmesh%cells(i)%edge_list)) &
+      IF(ALLOCATED(thatmesh%cells(i)%edge_list)) THEN
+        ALLOCATE(thismesh%cells(i)%edge_list(SIZE(thatmesh%cells(i)%edge_list)))
         thismesh%cells(i)%edge_list = thatmesh%cells(i)%edge_list
+      ENDIF
+      IF(ALLOCATED(thatmesh%cells(i)%edge_ptrs))THEN
+        ALLOCATE(thismesh%cells(i)%edge_ptrs(SIZE(thatmesh%cells(i)%edge_ptrs)))
+        DO j = 1, SIZE(thatmesh%cells(i)%edge_list)
+          thismesh%cells(i)%edge_ptrs(j)%edge => thismesh%edges(thismesh%cells(i)%edge_list(j))
+        ENDDO
+      ENDIF
     ENDDO
   ENDIF
   IF( ALLOCATED(thatmesh%material_ids) )THEN
@@ -1062,7 +1098,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
   !   an interface in Sorting.f90, or just compile with 64bit integers.
   !
 
-  IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
+  IF(ASSOCIATED(thismesh%edges)) CALL thismesh%clearEdges()
   IF(ASSOCIATED(thismesh%children))THEN
     ! Not a leaf, recurse
     DO i = 1, SIZE(thismesh%children)
@@ -1090,6 +1126,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
         ENDIF
         ! Setup this cell's edge_list
         ALLOCATE(thismesh%cells(i)%edge_list(nEdge))
+        ALLOCATE(thismesh%cells(i)%edge_ptrs(nEdge))
         thismesh%cells(i)%edge_list = -1
         total_nEdges = total_nEdges + nEdge
         ! For each edge
@@ -1140,6 +1177,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
         ENDIF
         ! Setup this cell's edge_list
         ALLOCATE(thismesh%cells(i)%edge_list(nEdge))
+        ALLOCATE(thismesh%cells(i)%edge_ptrs(nEdge))
         thismesh%cells(i)%edge_list = -1
         total_nEdges = total_nEdges + nEdge
         ! For each edge
@@ -1282,6 +1320,13 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
     DO i = 1,nCells
       ENSURE(.NOT.ANY(thismesh%cells(i)%edge_list == -1))
     ENDDO
+
+    ! Setup the edge pointers on each cell
+    DO i = 1, nCells
+      DO j = 1, SIZE(thismesh%cells(i)%edge_list)
+        thismesh%cells(i)%edge_ptrs(j)%edge => thismesh%edges(thismesh%cells(i)%edge_list(j))
+      ENDDO
+    ENDDO
   ENDIF
 ENDSUBROUTINE setupEdges_XDMFMeshType
 !
@@ -1291,23 +1336,30 @@ ENDSUBROUTINE setupEdges_XDMFMeshType
 !>
 RECURSIVE SUBROUTINE clearEdges_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SNK) :: i,j
 
   IF(ASSOCIATED(thismesh%children)) THEN
     DO i=1,SIZE(thismesh%children)
       CALL thismesh%children(i)%clearEdges()
     ENDDO
   ENDIF
-  IF( ALLOCATED(thismesh%edges)) THEN
+  IF( ASSOCIATED(thismesh%edges)) THEN
     DO i=1, SIZE(thismesh%edges)
       CALL thismesh%edges(i)%quad%clear()
       CALL thismesh%edges(i)%line%clear()
     ENDDO
     DEALLOCATE(thismesh%edges)
+    NULLIFY(thismesh%edges)
   ENDIF
   IF( ALLOCATED(thismesh%cells) ) THEN
     DO i=1, SIZE(thismesh%cells)
       IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
+      IF( ALLOCATED(thismesh%cells(i)%edge_ptrs) ) THEN
+        DO j = 1, SIZE(thismesh%cells(i)%edge_ptrs)
+          NULLIFY(thismesh%cells(i)%edge_ptrs(j)%edge)
+        ENDDO
+        DEALLOCATE(thismesh%cells(i)%edge_ptrs)
+      ENDIF
     ENDDO
   ENDIF
 ENDSUBROUTINE clearEdges_XDMFMeshType
@@ -1995,7 +2047,7 @@ FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
   ! Orientation of the edges matters, so if the vertices of the edge are opposite
   ! of the way they are in the cell, flip the boolean.
   bool = .TRUE.
-  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
+  IF(.NOT.ASSOCIATED(thismesh%edges)) CALL thismesh%setupEdges()
   DO i = 1, SIZE(thismesh%cells(iCell)%edge_list)
     iEdge = thismesh%cells(iCell)%edge_list(i)
     IF(thismesh%edges(iEdge)%isLinear)THEN
