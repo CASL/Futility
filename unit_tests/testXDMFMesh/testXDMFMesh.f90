@@ -128,7 +128,7 @@ REAL(SDK) :: two_pins_pin1_vertices(3,109) = RESHAPE( (/ &
     1.4596903386044000_SDK,  0.47845261052367000_SDK,   0.0000000000000000_SDK &
 /), (/3, 109/))
 
-INTEGER(SLK) :: two_pins_pin1_cells(7,46) = RESHAPE( (/ &
+INTEGER(SIK) :: two_pins_pin1_cells(7,46) = RESHAPE( (/ &
 36,  33,  46,   4,  47,  48,  39,&
 36,  34,  46,  33,  49,  47,  40,&
 36,   4,  46,  38,  48,  50,  45,&
@@ -177,7 +177,7 @@ INTEGER(SLK) :: two_pins_pin1_cells(7,46) = RESHAPE( (/ &
 36,  57,  58,  33, 102, 107, 100 &
 /), (/7, 46/))
 
-INTEGER(SNK) :: two_pins_pin1_material_ids(46) = (/ &
+INTEGER(SIK) :: two_pins_pin1_material_ids(46) = (/ &
 0, 0, 0, 0, 0, 0, 0,          &
 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
@@ -193,7 +193,7 @@ REAL(SDK) :: three_level_grid_L3_vertices(3,5) = RESHAPE( (/ &
  3.0, 2.0, 0.0 &
 /), (/3, 5/))
 
-INTEGER(SLK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
+INTEGER(SIK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
 0, 2, 4, &
 1, 2, 0, &
 3, 0, 4  &
@@ -225,7 +225,7 @@ CONTAINS
 SUBROUTINE setup_pin1(mesh)
   TYPE(XDMFMeshType), INTENT(INOUT), TARGET :: mesh
   TYPE(XDMFMeshType), POINTER :: children(:)
-  INTEGER(SNK) :: i
+  INTEGER(SIK) :: i
   TYPE(PointType) :: p1, p2, p3
   CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
@@ -384,7 +384,7 @@ ENDSUBROUTINE testNonRecursiveClear
 SUBROUTINE testAssign()
   TYPE(XDMFMeshType) :: mesh1, mesh2
   TYPE(XDMFMeshType),POINTER :: pin1
-  INTEGER(SNK) :: i,j
+  INTEGER(SIK) :: i,j
   TYPE(PointType) :: p1, p2, p3
   CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
@@ -694,9 +694,9 @@ SUBROUTINE testGetCellArea()
   !  /        |
   ! v1-------v2 (1,0)
   ! (0,0)
-  area = mesh%getCellArea(1_SLK)
+  area = mesh%getCellArea(1_SIK)
   ASSERT(ABS(area - 0.5_SRK) < 1.0E-6, "Area should be 1*1/2 = 0.5")
-  area = mesh45%getCellArea(1_SLK)
+  area = mesh45%getCellArea(1_SIK)
   ASSERT(ABS(area - 0.5_SRK) < 1.0E-6, "Area should be 1*1/2 = 0.5")
 
   COMPONENT_TEST('Quadrilateral')
@@ -707,9 +707,9 @@ SUBROUTINE testGetCellArea()
   !       |        |
   !       v1-------v2 (1,0)
   ! (0,0)
-  area = mesh%getCellArea(2_SLK)
+  area = mesh%getCellArea(2_SIK)
   ASSERT(ABS(area - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
-  area = mesh45%getCellArea(2_SLK)
+  area = mesh45%getCellArea(2_SIK)
   ASSERT(ABS(area - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
 
   COMPONENT_TEST('Triangle6')
@@ -720,9 +720,9 @@ SUBROUTINE testGetCellArea()
   !  /         /   Area approc pi/4
   ! v1        v2
   !    --v5--
-  area = mesh%getCellArea(3_SLK)
+  area = mesh%getCellArea(3_SIK)
   ASSERT(ABS(area - 0.77614233) < 1.0E-6, "Area should be 0.77614233")
-  area = mesh45%getCellArea(3_SLK)
+  area = mesh45%getCellArea(3_SIK)
   ASSERT(ABS(area - 0.77614233) < 1.0E-6, "Area should be 0.77614233")
 
 
@@ -736,13 +736,13 @@ SUBROUTINE testGetCellArea()
   !  \               /
   !   v1--       --v2
   !       -- v5--
-  area = mesh%getCellArea(4_SLK)
+  area = mesh%getCellArea(4_SIK)
   ASSERT(ABS(area - 2*0.77614233) < 1.0E-6, "Area should be 2*0.77614233")
-  area = mesh45%getCellArea(4_SLK)
+  area = mesh45%getCellArea(4_SIK)
   ASSERT(ABS(area - 2*0.77614233) < 1.0E-6, "Area should be 2*0.77614233")
 
   COMPONENT_TEST('Elemental')
-  areas = mesh%getCellArea((/1_SLK, 2_SLK, 3_SLK, 4_SLK/))
+  areas = mesh%getCellArea((/1_SIK, 2_SIK, 3_SIK, 4_SIK/))
   ASSERT(ABS(areas(1) - 0.5_SRK) < 1.0E-6, "Area should be 1*1/2 = 0.5")
   ASSERT(ABS(areas(2) - 1.0_SRK) < 1.0E-6, "Area should be 1*1 = 1")
   ASSERT(ABS(areas(3) - 0.77614233) < 1.0E-6, "Area should be 0.77614233")
@@ -1304,7 +1304,7 @@ SUBROUTINE test_import_three_level_grid_implicit_hierarchy()
   TYPE(XDMFMeshType) :: mesh
   TYPE(StringType) :: fname
   INTEGER(SIK) :: i,j
-  INTEGER(SLK),ALLOCATABLE :: cells_ref(:)
+  INTEGER(SIK),ALLOCATABLE :: cells_ref(:)
 
   fname='three_level_grid.xdmf'
   CALL importXDMFMesh(fname, mesh)
@@ -1556,7 +1556,7 @@ SUBROUTINE test_export_three_level_grid_implicit_hierarchy()
   TYPE(XDMFMeshType) :: mesh,emesh
   TYPE(StringType) :: fname
   INTEGER(SIK) :: i,j
-  INTEGER(SLK),ALLOCATABLE :: cells_ref(:)
+  INTEGER(SIK),ALLOCATABLE :: cells_ref(:)
 
   fname='three_level_grid.xdmf'
   CALL importXDMFMesh(fname, mesh)
@@ -1649,11 +1649,11 @@ SUBROUTINE testPointInsideCell()
   CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
-  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  ASSERT(.NOT.mesh%pointInsideCell(1_SIK, p), "Should not be in cell!")
   CALL p%clear()
 
   CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
-  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  ASSERT(mesh%pointInsideCell(1_SIK, p), "Should be in cell!")
   CALL p%clear()
   CALL mesh%clear()
 
@@ -1684,11 +1684,11 @@ SUBROUTINE testPointInsideCell()
   CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
-  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  ASSERT(.NOT.mesh%pointInsideCell(1_SIK, p), "Should not be in cell!")
   CALL p%clear()
 
   CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
-  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  ASSERT(mesh%pointInsideCell(1_SIK, p), "Should be in cell!")
   CALL p%clear()
   CALL mesh%clear()
 
@@ -1718,11 +1718,11 @@ SUBROUTINE testPointInsideCell()
   CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
-  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  ASSERT(.NOT.mesh%pointInsideCell(1_SIK, p), "Should not be in cell!")
   CALL p%clear()
 
   CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
-  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  ASSERT(mesh%pointInsideCell(1_SIK, p), "Should be in cell!")
   CALL p%clear()
   CALL mesh%clear()
 
@@ -1755,11 +1755,11 @@ SUBROUTINE testPointInsideCell()
   CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
-  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
+  ASSERT(.NOT.mesh%pointInsideCell(1_SIK, p), "Should not be in cell!")
   CALL p%clear()
 
   CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
-  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
+  ASSERT(mesh%pointInsideCell(1_SIK, p), "Should be in cell!")
   CALL p%clear()
   CALL mesh%clear()
 
@@ -1788,13 +1788,13 @@ SUBROUTINE testPointInsideCell()
   CALL mesh%setupEdges()
 
   CALL p%init(DIM=2, X=3.0_SRK, Y=3.0_SRK)
-  ASSERT(.NOT.mesh%pointInsideCell(1_SLK, p), "Should not be in cell!")
-  ASSERT(.NOT.mesh%pointInsideCell(2_SLK, p), "Should not be in cell!")
+  ASSERT(.NOT.mesh%pointInsideCell(1_SIK, p), "Should not be in cell!")
+  ASSERT(.NOT.mesh%pointInsideCell(2_SIK, p), "Should not be in cell!")
   CALL p%clear()
 
   CALL p%init(DIM=2, X=0.9_SRK, Y=0.2_SRK)
-  ASSERT(mesh%pointInsideCell(1_SLK, p), "Should be in cell!")
-  ASSERT(.NOT.mesh%pointInsideCell(2_SLK, p), "Should not be in cell!")
+  ASSERT(mesh%pointInsideCell(1_SIK, p), "Should be in cell!")
+  ASSERT(.NOT.mesh%pointInsideCell(2_SIK, p), "Should not be in cell!")
   CALL p%clear()
   CALL mesh%clear()
 ENDSUBROUTINE testPointInsideCell

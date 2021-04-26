@@ -51,9 +51,9 @@ TYPE :: XDMFEdge
   !> Is the edge linear or quadratic
   LOGICAL(SBK) :: isLinear=.TRUE.
   !> The cells which share the edge
-  INTEGER(SLK) :: cells(2) = -1
+  INTEGER(SIK) :: cells(2) = -1
   !> The vertices which make up the edge
-  INTEGER(SLK) :: vertices(3) = -1
+  INTEGER(SIK) :: vertices(3) = -1
   !> The quadratic edge
   !> Note, if the coefficient a > 0, the edge is convex.
   !> a < 0 is convex. a = 0, is a straight line
@@ -66,9 +66,9 @@ ENDTYPE XDMFEdge
 TYPE :: XDMFCell
   !> The cell type id followed by the vertex ids
   !> XDMF ID, v1, v2, ..., v_n
-  INTEGER(SLK), ALLOCATABLE :: vertex_list(:)
+  INTEGER(SIK), ALLOCATABLE :: vertex_list(:)
   !> Edges
-  INTEGER(SLK), ALLOCATABLE :: edge_list(:)
+  INTEGER(SIK), ALLOCATABLE :: edge_list(:)
 ENDTYPE XDMFCell
 
 !> Type to hold a list of cell IDs that make up a named set.
@@ -76,7 +76,7 @@ TYPE :: XDMFCellSet
   !> The name of the set
   TYPE(StringType) :: name
   !> The cell IDs
-  INTEGER(SLK), ALLOCATABLE :: cell_list(:)
+  INTEGER(SIK), ALLOCATABLE :: cell_list(:)
 ENDTYPE XDMFCellSet
 
 !> Type to hold the XDMF mesh data
@@ -101,7 +101,7 @@ TYPE :: XDMFMeshType
   !> The mesh cells
   TYPE(XDMFCell), ALLOCATABLE :: cells(:)
   !> Material for each mesh cell
-  INTEGER(SNK), ALLOCATABLE :: material_ids(:)
+  INTEGER(SIK), ALLOCATABLE :: material_ids(:)
   !> Named sets within the mesh
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets(:)
   !> Parent mesh
@@ -115,7 +115,7 @@ TYPE :: XDMFMeshType
   !> | (1,2)  (2,2)
   !> | (1,1)  (2,1)
   !> +------> x
-  INTEGER(SNK),ALLOCATABLE :: map(:,:)
+  INTEGER(SIK),ALLOCATABLE :: map(:,:)
   CONTAINS
     !> @copybrief XDMFMeshType::clear_XDMFMeshType
     !> @copydoc XDMFMeshType::clear_XDMFMeshType
@@ -181,18 +181,18 @@ SUBROUTINE init_XDMFTopologyList()
   ! id is XDMF topology id,
   ! n is number of vertices,
   ! multiple valid names exist for the same topology, ex: Tri_6 == Triangle_6
-  CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4_SNK)
-  CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3_SNK)
-  CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36_SNK)
-  CALL XDMFTopologyList%add('Topology->Triangle_6->n'           , 6_SNK)
-  CALL XDMFTopologyList%add('Topology->Tri_6->id'               ,36_SNK)
-  CALL XDMFTopologyList%add('Topology->Tri_6->n'                , 6_SNK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral->id'       , 5_SNK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral->n'        , 4_SNK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->id'     ,37_SNK)
-  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8_SNK)
-  CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37_SNK)
-  CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8_SNK)
+  CALL XDMFTopologyList%add('Topology->Triangle->id'            , 4_SIK)
+  CALL XDMFTopologyList%add('Topology->Triangle->n'             , 3_SIK)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->id'          ,36_SIK)
+  CALL XDMFTopologyList%add('Topology->Triangle_6->n'           , 6_SIK)
+  CALL XDMFTopologyList%add('Topology->Tri_6->id'               ,36_SIK)
+  CALL XDMFTopologyList%add('Topology->Tri_6->n'                , 6_SIK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->id'       , 5_SIK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral->n'        , 4_SIK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->id'     ,37_SIK)
+  CALL XDMFTopologyList%add('Topology->Quadrilateral_8->n'      , 8_SIK)
+  CALL XDMFTopologyList%add('Topology->Quad_8->id'              ,37_SIK)
+  CALL XDMFTopologyList%add('Topology->Quad_8->n'               , 8_SIK)
   CALL XDMFTopologyList%add('XDMFID->4' ,'Triangle'       )
   CALL XDMFTopologyList%add('XDMFID->36','Triangle_6'     )
   CALL XDMFTopologyList%add('XDMFID->5' ,'Quadrilateral'  )
@@ -285,13 +285,13 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
   TYPE(StringType) :: elname, strIn, strOut, group, dtype, toponame, &
     xdmf_id_str
   TYPE(StringType),ALLOCATABLE :: strArray(:)
-  INTEGER(SLK) :: nverts, ncells,ivert,i,j
-  INTEGER(SNK) :: ncell_sets, xdmf_id, verts_per_cell
-  INTEGER(SNK),ALLOCATABLE :: dshape(:)
+  INTEGER(SIK) :: nverts, ncells,ivert,i,j
+  INTEGER(SIK) :: ncell_sets, xdmf_id, verts_per_cell
+  INTEGER(SIK),ALLOCATABLE :: dshape(:)
   REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
   REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
-  INTEGER(SNK),ALLOCATABLE :: ivals4_1d(:),ivals4_2d(:,:)
-  INTEGER(SLK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
+  INTEGER(SIK),ALLOCATABLE :: ivals4_1d(:),ivals4_2d(:,:)
+  INTEGER(SIK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
   TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets_temp(:)
 
   IF(.NOT.xmle%hasChildren())  CALL eXDMF%raiseError(modName//'::'//myName// &
@@ -390,14 +390,14 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         ENDIF
         ! Data type
         dtype=h5%getDataType(CHAR(group))
-        IF(dtype == 'SNK') THEN
+        IF(dtype == 'SIK') THEN
           CALL h5%fread(CHAR(group),ivals4_1d)
         ELSE
           CALL h5%fread(CHAR(group),ivals8_1d)
         ENDIF
         ALLOCATE(mesh%cells(ncells))
         ivert = 1
-        IF(dtype == 'SNK') THEN
+        IF(dtype == 'SIK') THEN
           DO j=1,ncells
             xdmf_id = ivals4_1d(ivert)
             xdmf_id_str = xdmf_id
@@ -474,13 +474,13 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         ENDIF
         ! Data type
         dtype=h5%getDataType(CHAR(group))
-        IF(dtype == 'SNK') THEN
+        IF(dtype == 'SIK') THEN
           CALL h5%fread(CHAR(group),ivals4_2d)
         ELSE
           CALL h5%fread(CHAR(group),ivals8_2d)
         ENDIF
         ALLOCATE(mesh%cells(ncells))
-        IF(dtype == 'SNK') THEN
+        IF(dtype == 'SIK') THEN
           DO j=1,ncells
             ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
             mesh%cells(j)%vertex_list(1) = xdmf_id
@@ -536,13 +536,13 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
         ENDIF
         ! Data type
         dtype=h5%getDataType(CHAR(group))
-        IF(dtype == 'SNK') THEN
+        IF(dtype == 'SIK') THEN
           CALL h5%fread(CHAR(group),ivals4_1d)
         ELSE
           CALL h5%fread(CHAR(group),ivals8_1d)
         ENDIF
         ALLOCATE(mesh%material_ids(ncells))
-        IF(dtype == 'SNK') THEN
+        IF(dtype == 'SIK') THEN
           ! Account for 0 based to 1 based index switch
           mesh%material_ids = ivals4_1d + 1
           DEALLOCATE(ivals4_1d)
@@ -602,7 +602,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
       ENDIF
       ! Data type
       dtype=h5%getDataType(CHAR(group))
-      IF(dtype == 'SNK') THEN
+      IF(dtype == 'SIK') THEN
         CALL h5%fread(CHAR(group),ivals4_1d)
       ELSE
         CALL h5%fread(CHAR(group),ivals8_1d)
@@ -637,7 +637,7 @@ SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
       ! Add the one new cell set
       mesh%cell_sets(ncell_sets + 1)%name = elname
       ALLOCATE(mesh%cell_sets(ncell_sets + 1)%cell_list(ncells))
-      IF(dtype == 'SNK') THEN
+      IF(dtype == 'SIK') THEN
         ! Account for 0 based to 1 based index switch
         mesh%cell_sets(ncell_sets + 1)%cell_list = ivals4_1d + 1
         DEALLOCATE(ivals4_1d)
@@ -751,7 +751,7 @@ ENDSUBROUTINE importXDMFMesh
 !>
 RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SIK) :: i
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -795,7 +795,7 @@ ENDSUBROUTINE clear_XDMFMeshType
 !>
 RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SIK) :: i
 
   CALL thismesh%name%clear()
   thismesh%singleTopology = .FALSE.
@@ -837,7 +837,7 @@ ENDSUBROUTINE nonRecursiveClear_XDMFMeshType
 !>
 RECURSIVE FUNCTION distanceToLeaf_XDMFMeshType(thismesh) RESULT(n)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: n
+  INTEGER(SIK) :: n
   ! It is assumed that all siblings have children if any sibling has children
   ! Hence it is sufficient to assess thismesh%children(1)'s depth recursively
   ! Ex:     Possible                Not Possible
@@ -860,7 +860,7 @@ ENDFUNCTION distanceToLeaf_XDMFMeshType
 RECURSIVE SUBROUTINE recomputeBoundingBox_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
   REAL(SDK) :: xmin, xmax, ymin, ymax
-  INTEGER(SLK) :: i
+  INTEGER(SIK) :: i
   xmin = HUGE(xmin)
   xmax = -HUGE(xmax)
   ymin = HUGE(ymin)
@@ -898,7 +898,7 @@ ENDSUBROUTINE recomputeBoundingBox_XDMFMeshType
 RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
   TYPE(XDMFMeshType), INTENT(INOUT) :: thismesh
   TYPE(XDMFMeshType), INTENT(IN) :: thatmesh
-  INTEGER(SNK) :: i,j
+  INTEGER(SIK) :: i,j
 
   thismesh%name = thatmesh%name
   thismesh%singleTopology = thatmesh%singleTopology
@@ -984,7 +984,7 @@ ENDSUBROUTINE assign_XDMFMeshType
 RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
   CHARACTER(LEN=*),PARAMETER :: myName='setupRectangularMap_XDMFMeshType'
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i, xmin, ymin, xmax, ymax, j, x, y
+  INTEGER(SIK) :: i, xmin, ymin, xmax, ymax, j, x, y
   TYPE(StringType) :: meshname, xstr, ystr
   TYPE(StringType), ALLOCATABLE :: segments(:)
 
@@ -1058,7 +1058,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
   !   the maximum value of a 32bit integer. The vertex_list of each cell
   !   defaults to 64bit integers to account for very large meshes, but the
   !   sorting routines only accept SIK. Therefore, if this becomes an issue,
-  !   just copy and past all the sorting routines, replace SIK with SLK, and add
+  !   just copy and past all the sorting routines, replace SIK with SIK, and add
   !   an interface in Sorting.f90, or just compile with 64bit integers.
   !
 
@@ -1082,8 +1082,8 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
     ! Loop over each cell to get all unique edges
     DO i = 1, SIZE(thismesh%cells)
       xid = thismesh%cells(i)%vertex_list(1)
-      IF(xid == 4_SLK .OR. xid == 5_SLK) THEN! linear edges
-        IF(xid == 4_SLK)THEN
+      IF(xid == 4_SIK .OR. xid == 5_SIK) THEN! linear edges
+        IF(xid == 4_SIK)THEN
           nEdge = 3
         ELSE
           nEdge = 4
@@ -1132,8 +1132,8 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
           all_edge_cells(1,iEdge + 1) = i
           iEdge = iEdge + 1
         ENDIF
-      ELSEIF(xid == 36_SLK .OR. xid == 37_SLK) THEN ! quad edges
-        IF(xid == 36_SLK)THEN
+      ELSEIF(xid == 36_SIK .OR. xid == 37_SIK) THEN ! quad edges
+        IF(xid == 36_SIK)THEN
           nEdge = 3
         ELSE
           nEdge = 4
@@ -1291,7 +1291,7 @@ ENDSUBROUTINE setupEdges_XDMFMeshType
 !>
 RECURSIVE SUBROUTINE clearEdges_XDMFMeshType(thismesh)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: i
+  INTEGER(SIK) :: i
 
   IF(ASSOCIATED(thismesh%children)) THEN
     DO i=1,SIZE(thismesh%children)
@@ -1322,7 +1322,7 @@ RECURSIVE FUNCTION getNNodesAtDepth_XDMFMeshType(thismesh, d) RESULT(n)
   CHARACTER(LEN=*),PARAMETER :: myName='getNNodesAtDepth_XDMFMeshType'
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
   INTEGER(SIK), INTENT(IN) :: d
-  INTEGER(SNK) :: n, i, d_relative
+  INTEGER(SIK) :: n, i, d_relative
   n = 0
   IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
     d_relative = d - 1
@@ -1344,7 +1344,7 @@ ENDFUNCTION getNNodesAtDepth_XDMFMeshType
 !>
 RECURSIVE FUNCTION getNLeaves_XDMFMeshType(thismesh) RESULT(n)
   CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-  INTEGER(SNK) :: n, d
+  INTEGER(SIK) :: n, d
   d = thismesh%distanceToLeaf()
   n = thismesh%getNNodesAtDepth(d)
 ENDFUNCTION getNLeaves_XDMFMeshType
@@ -1420,12 +1420,12 @@ RECURSIVE SUBROUTINE export_leaf_XDMF(mesh, xmle, strpath, h5)
   TYPE(XMLElementType),POINTER :: current_xml, child_xml, children(:), &
     children2(:)
   TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str
-  INTEGER(SNK) :: nchildren, ichild, verts_in_cell
-  INTEGER(SLK) :: xdmf_id, nverts, ncells, i, j, ivert
+  INTEGER(SIK) :: nchildren, ichild, verts_in_cell
+  INTEGER(SIK) :: xdmf_id, nverts, ncells, i, j, ivert
   CHARACTER(LEN=200) :: charpath
-  INTEGER(SLK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:), cell_list_1d(:)
-  INTEGER(SNK),PARAMETER :: GEOMETRY_IDX=1
-  INTEGER(SNK),PARAMETER :: TOPOLOGY_IDX=2
+  INTEGER(SIK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:), cell_list_1d(:)
+  INTEGER(SIK),PARAMETER :: GEOMETRY_IDX=1
+  INTEGER(SIK),PARAMETER :: TOPOLOGY_IDX=2
 
   REQUIRE(ALLOCATED(mesh%vertices) .AND. ALLOCATED(mesh%cells))
 
@@ -1732,7 +1732,7 @@ RECURSIVE SUBROUTINE create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
   TYPE(StringType),INTENT(INOUT) :: strpath
   TYPE(HDF5FileType), INTENT(INOUT) :: h5
   TYPE(XMLElementType), POINTER :: children(:)
-  INTEGER(SNK) :: i
+  INTEGER(SIK) :: i
   TYPE(StringType) :: str_name, str_value
 
   ! If this mesh has children
@@ -1776,7 +1776,7 @@ SUBROUTINE exportXDMFMesh(strpath, mesh)
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:), children2(:)
   TYPE(StringType) :: str_name, str_value
-  INTEGER(SNK) :: i
+  INTEGER(SIK) :: i
   CHARACTER(LEN=200) :: charpath
 
   ! Create HDF5 file
@@ -1840,15 +1840,15 @@ ENDSUBROUTINE exportXDMFMesh
 !>
 ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
   CLASS(XDMFMeshType), INTENT(IN) :: mesh
-  INTEGER(SLK), INTENT(IN) :: iCell
+  INTEGER(SIK), INTENT(IN) :: iCell
   REAL(SRK) :: area
 
   REAL(SDK),PARAMETER :: pi = 3.14159265358979311599796346854
   REAL(SRK), ALLOCATABLE :: x(:), y(:), x_quad(:), y_quad(:), x_lin(:), y_lin(:)
   REAL(SRK) :: main_area, correction, x_edge(3), y_edge(3), theta, rotation_mat(2,2), &
     xy(2), a, b, quad_area
-  INTEGER(SLK) :: xid
-  INTEGER(SNK) nverts, i, j
+  INTEGER(SIK) :: xid
+  INTEGER(SIK) nverts, i, j
 
   area = 0.0_SRK
   xid = mesh%cells(iCell)%vertex_list(1)
@@ -1982,12 +1982,12 @@ ENDFUNCTION
 !>
 FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
   CLASS(XDMFMeshType),INTENT(IN) :: thismesh
-  INTEGER(SLK),INTENT(IN) :: iCell
+  INTEGER(SIK),INTENT(IN) :: iCell
   TYPE(PointType),INTENT(IN) :: point
   LOGICAL(SBK) :: bool
 
   INTEGER(SIK) :: i,j, lastvert_idx
-  INTEGER(SLK) :: iEdge, iVert, p1ID, p2ID, iLastVert, ifirstVert
+  INTEGER(SIK) :: iEdge, iVert, p1ID, p2ID, iLastVert, ifirstVert
   LOGICAL(SBK) :: isLeft
 
   ! If the point isLeft of each edge, it must be interior, since the
