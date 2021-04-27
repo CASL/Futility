@@ -293,7 +293,7 @@ SUBROUTINE testClearAnasazi()
   ASSERT(testEVS%k==0.0_SRK,'%k')
   ASSERT(.NOT. ASSOCIATED(testEVS%A),'%A')
   ASSERT(.NOT. ASSOCIATED(testEVS%B),'%B')
-  ASSERT(.NOT. (testEVS%X%isInit) ,'%x')
+  ASSERT(.NOT. ASSOCIATED(testEVS%X) ,'%x')
   SELECTTYPE(testEVS); TYPE IS(EigenvalueSolverType_Anasazi)
 #ifdef FUTILITY_HAVE_Trilinos
     ASSERT(.NOT. testEVS%x_scale%isInit,'%x_scale')
