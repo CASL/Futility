@@ -16419,6 +16419,7 @@ SUBROUTINE char_to_string_array(sArr,c)
   numElts=countArrayElts(c)
   !Empty array case
   IF(numElts == 0) THEN
+    ALLOCATE(sArr(numElts))
     RETURN
   ENDIF
 
