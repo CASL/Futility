@@ -937,6 +937,15 @@ RECURSIVE SUBROUTINE assign_XDMFMeshType(thismesh, thatmesh)
         CALL thismesh%edges(i)%quad%set(thatmesh%edges(i)%quad%points(1), &
                                         thatmesh%edges(i)%quad%points(2), &
                                         thatmesh%edges(i)%quad%points(3))
+        IF(ALLOCATED(thatmesh%edges(i)%line%p1%coord))THEN
+          CALL thismesh%edges(i)%line%set(thatmesh%edges(i)%line%p1, thatmesh%edges(i)%line%p2)
+          ENSURE(thismesh%edges(i)%line%p1%dim == 2)
+          ENSURE(thismesh%edges(i)%line%p2%dim == 2)
+          ENSURE(ALLOCATED(thismesh%edges(i)%line%p1%coord))
+          ENSURE(ALLOCATED(thismesh%edges(i)%line%p2%coord))
+          ENSURE(SIZE(thismesh%edges(i)%line%p1%coord)==2)
+          ENSURE(SIZE(thismesh%edges(i)%line%p2%coord)==2)
+        ENDIF
       ENDIF
     ENDDO
   ENDIF
@@ -1062,7 +1071,8 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
   !   an interface in Sorting.f90, or just compile with 64bit integers.
   !
 
-  IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
+!)  IF(ALLOCATED(thismesh%edges)) CALL thismesh%clearEdges()
+  REQUIRE(.NOT.ALLOCATED(thismesh%edges))
   IF(ASSOCIATED(thismesh%children))THEN
     ! Not a leaf, recurse
     DO i = 1, SIZE(thismesh%children)
@@ -1241,6 +1251,26 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
         CALL p1%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(1,i)), &
                             Y=thismesh%vertices(2,all_edge_verts(1,i)))
         CALL thismesh%edges(i)%quad%set(p1, p2, p3)
+        ! If the a term for the quad is less than 1.0e-3, say it's linear.
+        ! Setup the line too.
+        IF(ABS(thismesh%edges(i)%quad%a) < 1.0e-3) THEN
+          CALL p1%clear()
+          CALL p2%clear()
+          CALL p2%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(2,i)), &
+                              Y=thismesh%vertices(2,all_edge_verts(2,i)))
+          CALL p1%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(1,i)), &
+                              Y=thismesh%vertices(2,all_edge_verts(1,i)))
+          CALL thismesh%edges(i)%line%set(p1, p2)
+          WRITE(*,*) "fake quad ", thismesh%edges(i)%quad%a
+          ENSURE(thismesh%edges(i)%line%p1%dim == 2)
+          ENSURE(thismesh%edges(i)%line%p2%dim == 2)
+          ENSURE(ALLOCATED(thismesh%edges(i)%line%p1%coord))
+          ENSURE(ALLOCATED(thismesh%edges(i)%line%p2%coord))
+          ENSURE(SIZE(thismesh%edges(i)%line%p1%coord)==2)
+          ENSURE(SIZE(thismesh%edges(i)%line%p2%coord)==2)
+        ELSE
+          WRITE(*,*) "real quad ", thismesh%edges(i)%quad%a
+        ENDIF
       ENDIF
       ! vertices
       thismesh%edges(i)%vertices = all_edge_verts(:,i)
@@ -1994,6 +2024,8 @@ FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
   ! vertices are in counter-clockwise order.
   ! Orientation of the edges matters, so if the vertices of the edge are opposite
   ! of the way they are in the cell, flip the boolean.
+!  WRITE(*,*) "pointInsideCell_XDMFMeshType cell", iCell
+!  WRITE(*,*) "  coords: ", point%coord(1:2)
   bool = .TRUE.
   REQUIRE(ALLOCATED(thismesh%edges))
 !  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
@@ -2004,7 +2036,11 @@ FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
       p1ID = thismesh%edges(iEdge)%vertices(2)
       p2ID = thismesh%edges(iEdge)%vertices(3)
     ELSE
-      isLeft = thismesh%edges(iEdge)%quad%pointIsLeft(point)
+      IF(ABS(thismesh%edges(iEdge)%quad%a) < 1.0E-3) THEN
+        isLeft = thismesh%edges(iEdge)%line%pointIsLeft(point)
+      ELSE
+        isLeft = thismesh%edges(iEdge)%quad%pointIsLeft(point)  
+      ENDIF
       p1ID = thismesh%edges(iEdge)%vertices(1)
       p2ID = thismesh%edges(iEdge)%vertices(2)
     ENDIF

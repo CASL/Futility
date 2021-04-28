@@ -164,6 +164,11 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
   REAL(SDK) :: A,B,C,m,d,rotation_mat(2,2), xdomain, x, disc, xmin, xmax
   REAL(SDK), PARAMETER :: vertical = 1.0E11_SDK
 
+!  WRITE(*,*) "intersectLine_QuadraticType"
+!  WRITE(*,*) "My points:"
+!  WRITE(*,*) arc%points(1)%coord
+!  WRITE(*,*) arc%points(2)%coord
+!  WRITE(*,*) arc%points(3)%coord
   IF(.NOT.ALLOCATED(points(1)%coord))THEN
    CALL points(1)%init(DIM=2,X=-HUGE(0.0_SRK),Y=-HUGE(0.0_SRK))
    CALL points(2)%init(DIM=2,X=-HUGE(0.0_SRK),Y=-HUGE(0.0_SRK))
@@ -174,6 +179,12 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
     ! Create a copy of the line.
     line_s%p1 = line%p1
     line_s%p2 = line%p2
+!    WRITE(*,*) "Line coords pre-transform: "
+!    WRITE(*,*) "  p1: ", line_s%p1%coord
+!    WRITE(*,*) "  p2: ", line_s%p2%coord
+!    WRITE(*,*) "shift: ", arc%shift_x, arc%shift_y
+!    WRITE(*,*) "theta/pi: ", arc%theta/PI 
+
     ! Shift the line to the origin
     CALL p0%init(DIM=2, X=arc%shift_x, Y=arc%shift_y)
     line_s%p1 = line_s%p1 - p0
@@ -183,6 +194,9 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
     rotation_mat(2,:) = (/-SIN(arc%theta), COS(arc%theta)/)
     line_s%p1%coord = MATMUL(rotation_mat, line_s%p1%coord)
     line_s%p2%coord = MATMUL(rotation_mat, line_s%p2%coord)
+!    WRITE(*,*) "Line coords transformed: "
+!    WRITE(*,*) "  p1: ", line_s%p1%coord
+!    WRITE(*,*) "  p2: ", line_s%p2%coord
     ! Get the
     ! line: y = mx + d
     ! quad: y = ax^2 + bx
@@ -199,10 +213,14 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
     !
     ! This is numerical instability hell. There has to be a better way
     m = (line_s%p2%coord(2) - line_s%p1%coord(2))/(line_s%p2%coord(1) - line_s%p1%coord(1))
+!    WRITE(*,*) "m: ", m
     d = line_s%p1%coord(2) - m*line_s%p1%coord(1)
+!    WRITE(*,*) "d: ", d
     A = arc%a
+!    WRITE(*,*) "a, b: ", arc%a, arc%b
     B = arc%b - m
     C = -d
+!    WRITE(*,*) " A B C", A, B, C
 
     ! If B^2 < 4AC, there is no real solution
     IF(B*B < 4*A*C)THEN
@@ -218,6 +236,7 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
     ! If vertical line, just check if the point x are within the valid domain.
     ! If so, take the intersection there.
     IF(ABS(m) > vertical) THEN
+!      WRITE(*,*) "vertical"
       x = line_s%p1%coord(1)
       IF( 0.0 <= x .AND. x <= xdomain)THEN
         points(:)%dim = 1
@@ -227,19 +246,25 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
         points(:)%dim = -3
       ENDIF
     ELSE ! non-vertical
+!      WRITE(*,*) "not vertical"
       disc = SQRT(B*B - 4*A*C)
       x = (-B + disc)/(2*A)
+!      WRITE(*,*) "x1: ", x
       IF(0.0 <= x .AND. x <= xdomain .AND. xmin <= x .AND. x <= xmax) THEN
+!        WRITE(*,*) "valid x1"
         points(:)%dim = 1
         points(1)%coord(1) = x
         points(1)%coord(2) = arc%a*x**2 + arc%b*x
       ELSE
+!        WRITE(*,*) "invalid x1"
         points(:)%dim = -3
       ENDIF
       ! If the possibility of a second solution exists, check it
       IF( ABS(B*B - 4*A*C) > 1.0E-6) THEN
         x = (-B - disc)/(2*A)
+!        WRITE(*,*) "x2: ", x
         IF(0.0 <= x .AND. x <= xdomain .AND. xmin <= x .AND. x <= xmax) THEN
+!          WRITE(*,*) "valid x2"
           IF(points(1)%dim == 1)THEN ! second intersection
             points(:)%dim = 2
             points(2)%coord(1) = x
@@ -255,12 +280,32 @@ SUBROUTINE intersectLine_QuadraticType(arc, line, points)
 
     ! If intersection was found, transfrom back to original coords
     IF(points(1)%dim > 0)THEN
+!      WRITE(*,*) "Intersection found"
+!      WRITE(*,*) "Number of intersections: ", points(1)%dim
+!      WRITE(*,*) "Coordinates prior to transform:"
+!      IF(points(1)%dim == 1) THEN
+!        WRITE(*,*) "x1, y1 ", points(1)%coord
+!      ELSE
+!        WRITE(*,*) "x1, y1 ", points(1)%coord
+!        WRITE(*,*) "x2, y2 ", points(2)%coord
+!      ENDIF
       rotation_mat(1,:) = (/COS(arc%theta), -SIN(arc%theta)/)
       rotation_mat(2,:) = (/SIN(arc%theta), COS(arc%theta)/)
+      IF(points(1)%dim == 2) THEN
+        points(2)%coord = MATMUL(rotation_mat, points(2)%coord)
+        points(2)%coord(1) = points(2)%coord(1) + arc%shift_x
+        points(2)%coord(2) = points(2)%coord(2) + arc%shift_y
+      ENDIF
+      points(1)%coord = MATMUL(rotation_mat, points(1)%coord)
       points(1)%coord(1) = points(1)%coord(1) + arc%shift_x
       points(1)%coord(2) = points(1)%coord(2) + arc%shift_y
-      points(2)%coord(1) = points(2)%coord(1) + arc%shift_x
-      points(2)%coord(2) = points(2)%coord(2) + arc%shift_y
+!      WRITE(*,*) "Coordinates post transform:"
+!      IF(points(1)%dim == 1) THEN
+!        WRITE(*,*) "x1, y1 ", points(1)%coord
+!      ELSE
+!        WRITE(*,*) "x1, y1 ", points(1)%coord
+!        WRITE(*,*) "x2, y2 ", points(2)%coord
+!      ENDIF
     ENDIF
   ENDIF
 ENDSUBROUTINE intersectLine_QuadraticType

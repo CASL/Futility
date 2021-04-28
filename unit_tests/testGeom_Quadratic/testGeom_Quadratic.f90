@@ -130,7 +130,7 @@ SUBROUTINE testInit()
     ASSERT(arc%points(3) == p3s, "Point assigned incorrectly")
   ENDDO
 
-  COMPONENT_TEST("y=x^2 -2x with roatation and shift")
+  COMPONENT_TEST("y=x^2 -2x with rotation and shift")
   CALL p3%clear()
   CALL p3%init(DIM=2, X=1.0_SRK, Y=-1.0_SRK)
   DO i = 1,8
@@ -194,7 +194,8 @@ SUBROUTINE testIntersectLine()
   TYPE(LineType) :: line
   REAL(SDK), PARAMETER :: PI=3.14159265358979311599796346854
   REAL(SDK) :: theta, rotation_mat(2,2)
-  TYPE(PointType) :: p11, p1, p2, p3, p4, p5, ipoints(2), p1s, p2s, p3s, p4s, p5s
+  TYPE(PointType) :: p11, p1, p2, p3, p4, p5, ipoints(2), p1s, p2s, p3s, p4s, &
+    p5s, p_soln, p_soln2
   INTEGER(SIK) :: i,j
   REAL(SRK) :: lines(4,8)
 
@@ -206,7 +207,7 @@ SUBROUTINE testIntersectLine()
   lines(:, 5) = (/3.0_SRK, 0.0_SRK, 3.0_SRK, 3.0_SRK/)    ! vertical, no intersection
   lines(:, 6) = (/1.0_SRK, 0.0_SRK, 1.0_SRK, 2.0_SRK/)    ! vertical, 1 intersection
   lines(:, 7) = (/0.0_SRK, 400.0_SRK, 1.0_SRK, 2.0_SRK/)  ! line intersects, segment does not
-  lines(:, 8) = (/-1.0_SRK, 1.0_SRK, 1.0_SRK, -1.0_SRK/)  ! vertex intersection
+  lines(:, 8) = (/2.0_SRK, -1.0_SRK, 2.0_SRK, 1.0_SRK/)  ! vertex intersection
 
   CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
@@ -219,6 +220,7 @@ SUBROUTINE testIntersectLine()
   CALL p4%init(DIM=2, X=lines(1,j), Y=lines(2,j))
   CALL p5%init(DIM=2, X=lines(3,j), Y=lines(4,j))
   DO i = 0,8
+    CALL p_soln%init(DIM=2, X=0.999683772234_SRK, Y=0.9999999_SRK)
     p1s = p1; p2s = p2; p3s = p3; p4s = p4; p5s = p5;
     theta = i*PI/4
     rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
@@ -228,28 +230,34 @@ SUBROUTINE testIntersectLine()
     p3s%coord = MATMUL(rotation_mat, p3s%coord)
     p4s%coord = MATMUL(rotation_mat, p4s%coord)
     p5s%coord = MATMUL(rotation_mat, p5s%coord)
+    p_soln%coord = MATMUL(rotation_mat, p_soln%coord)
     p1s = p1s + p11
     p2s = p2s + p11
     p3s = p3s + p11
     p4s = p4s + p11
     p5s = p5s + p11
+    p_soln = p_soln + p11
     ! y = -x^2 + 2x, but rotated by i*pi/4 and shifted 1,1
     CALL arc%set(p1s, p2s, p3s)
     ! y = 1 for x in [0, 2], but transformed as above
     CALL line%set(p4s, p5s)
     CALL arc%intersectLine(line, ipoints)
     ASSERT(ipoints(1)%dim == 1, "Should have found intersection")
-    ASSERT(ABS(ipoints(1)%coord(1) - (1+1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(1)%coord(2) - (1+1)) < 1.0E-3, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(1) - p_soln%coord(1)) < 1.0E-6, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(2) - p_soln%coord(2)) < 1.0E-6, "Wrong intersection")
+    CALL p_soln%clear()
   ENDDO
   CALL p4%clear()
   CALL p5%clear()
+  CALL p_soln%clear()
 
   COMPONENT_TEST("Two intersections")
   j=2
   CALL p4%init(DIM=2, X=lines(1,j), Y=lines(2,j))
   CALL p5%init(DIM=2, X=lines(3,j), Y=lines(4,j))
   DO i = 0,8
+    CALL p_soln%init(DIM=2, X=0.292893_SRK, Y=0.5_SRK)
+    CALL p_soln2%init(DIM=2, X=1.70711_SRK, Y=0.5_SRK)
     p1s = p1; p2s = p2; p3s = p3; p4s = p4; p5s = p5;
     theta = i*PI/4
     rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
@@ -259,21 +267,27 @@ SUBROUTINE testIntersectLine()
     p3s%coord = MATMUL(rotation_mat, p3s%coord)
     p4s%coord = MATMUL(rotation_mat, p4s%coord)
     p5s%coord = MATMUL(rotation_mat, p5s%coord)
+    p_soln%coord = MATMUL(rotation_mat, p_soln%coord)
+    p_soln2%coord = MATMUL(rotation_mat, p_soln2%coord)
     p1s = p1s + p11
     p2s = p2s + p11
     p3s = p3s + p11
     p4s = p4s + p11
     p5s = p5s + p11
+    p_soln = p_soln + p11
+    p_soln2 = p_soln2 + p11
     ! y = -x^2 + 2x, but rotated by i*pi/4 and shifted 1,1
     CALL arc%set(p1s, p2s, p3s)
     ! y = 1 for x in [0, 2], but transformed as above
     CALL line%set(p4s, p5s)
     CALL arc%intersectLine(line, ipoints)
     ASSERT(ipoints(1)%dim == 2, "Should have found intersection")
-    ASSERT(ABS(ipoints(1)%coord(1) - (1 - 1.0/SQRT(2.0)+ 1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(1)%coord(2) - (0.5 + 1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(2)%coord(1) - (1 + 1.0/SQRT(2.0) + 1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(2)%coord(2) - (0.5 + 1)) < 1.0E-3, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(1) - p_soln%coord(1)) < 1.0E-4, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(2) - p_soln%coord(2)) < 1.0E-4, "Wrong intersection")
+    ASSERT(ABS(ipoints(2)%coord(1) - p_soln2%coord(1)) < 1.0E-4, "Wrong intersection")
+    ASSERT(ABS(ipoints(2)%coord(2) - p_soln2%coord(2)) < 1.0E-4, "Wrong intersection")
+    CALL p_soln%clear()
+    CALL p_soln2%clear()
   ENDDO
   CALL p4%clear()
   CALL p5%clear()
@@ -283,6 +297,7 @@ SUBROUTINE testIntersectLine()
   CALL p4%init(DIM=2, X=lines(1,j), Y=lines(2,j))
   CALL p5%init(DIM=2, X=lines(3,j), Y=lines(4,j))
   DO i = 0,8
+    CALL p_soln%init(DIM=2, X=0.9975_SRK, Y=0.99999375_SRK)
     p1s = p1; p2s = p2; p3s = p3; p4s = p4; p5s = p5;
     theta = i*PI/4
     rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
@@ -292,23 +307,25 @@ SUBROUTINE testIntersectLine()
     p3s%coord = MATMUL(rotation_mat, p3s%coord)
     p4s%coord = MATMUL(rotation_mat, p4s%coord)
     p5s%coord = MATMUL(rotation_mat, p5s%coord)
+    p_soln%coord = MATMUL(rotation_mat, p_soln%coord)
     p1s = p1s + p11
     p2s = p2s + p11
     p3s = p3s + p11
     p4s = p4s + p11
     p5s = p5s + p11
+    p_soln = p_soln + p11
     ! y = -x^2 + 2x, but rotated by i*pi/4 and shifted 1,1
     CALL arc%set(p1s, p2s, p3s)
     ! y = 1 for x in [0, 2], but transformed as above
     CALL line%set(p4s, p5s)
     CALL arc%intersectLine(line, ipoints)
     ASSERT(ipoints(1)%dim == 1, "Should have found intersection")
-    ASSERT(ABS(ipoints(1)%coord(1) - (0.9975+ 1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(1)%coord(2) - (1 + 1)) < 1.0E-3, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(1) - p_soln%coord(1)) < 1.0E-4, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(2) - p_soln%coord(2)) < 1.0E-4, "Wrong intersection")
+    CALL p_soln%clear()
   ENDDO
   CALL p4%clear()
   CALL p5%clear()
-
 
   COMPONENT_TEST("No intersection")
   j=4
@@ -334,9 +351,7 @@ SUBROUTINE testIntersectLine()
     ! y = 1 for x in [0, 2], but transformed as above
     CALL line%set(p4s, p5s)
     CALL arc%intersectLine(line, ipoints)
-    ASSERT(ipoints(1)%dim == -3, "Should have found intersection")
-    ASSERT(ABS(ipoints(1)%coord(1) - (0.9975+ 1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(1)%coord(2) - (1 + 1)) < 1.0E-3, "Wrong intersection")
+    ASSERT(ipoints(1)%dim == -3, "Should not have found intersection")
   ENDDO
   CALL p4%clear()
   CALL p5%clear()
@@ -365,9 +380,7 @@ SUBROUTINE testIntersectLine()
     ! y = 1 for x in [0, 2], but transformed as above
     CALL line%set(p4s, p5s)
     CALL arc%intersectLine(line, ipoints)
-    ASSERT(ipoints(1)%dim == -3, "Should have found intersection")
-    ASSERT(ABS(ipoints(1)%coord(1) - (0.9975+ 1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(1)%coord(2) - (1 + 1)) < 1.0E-3, "Wrong intersection")
+    ASSERT(ipoints(1)%dim == -3, "Should not have found intersection")
   ENDDO
   CALL p4%clear()
   CALL p5%clear()
@@ -377,6 +390,7 @@ SUBROUTINE testIntersectLine()
   CALL p4%init(DIM=2, X=lines(1,j), Y=lines(2,j))
   CALL p5%init(DIM=2, X=lines(3,j), Y=lines(4,j))
   DO i = 0,8
+    CALL p_soln%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
     p1s = p1; p2s = p2; p3s = p3; p4s = p4; p5s = p5;
     theta = i*PI/4
     rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
@@ -386,19 +400,22 @@ SUBROUTINE testIntersectLine()
     p3s%coord = MATMUL(rotation_mat, p3s%coord)
     p4s%coord = MATMUL(rotation_mat, p4s%coord)
     p5s%coord = MATMUL(rotation_mat, p5s%coord)
+    p_soln%coord = MATMUL(rotation_mat, p_soln%coord)
     p1s = p1s + p11
     p2s = p2s + p11
     p3s = p3s + p11
     p4s = p4s + p11
     p5s = p5s + p11
+    p_soln = p_soln + p11
     ! y = -x^2 + 2x, but rotated by i*pi/4 and shifted 1,1
     CALL arc%set(p1s, p2s, p3s)
     ! y = 1 for x in [0, 2], but transformed as above
     CALL line%set(p4s, p5s)
     CALL arc%intersectLine(line, ipoints)
     ASSERT(ipoints(1)%dim == 1, "Should have found intersection")
-    ASSERT(ABS(ipoints(1)%coord(1) - (1 + 1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(1)%coord(2) - (1 + 1)) < 1.0E-3, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(1) - p_soln%coord(1)) < 1.0E-6, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(2) - p_soln%coord(2)) < 1.0E-6, "Wrong intersection")
+    CALL p_soln%clear()
   ENDDO
   CALL p4%clear()
   CALL p5%clear()
@@ -437,6 +454,7 @@ SUBROUTINE testIntersectLine()
   CALL p4%init(DIM=2, X=lines(1,j), Y=lines(2,j))
   CALL p5%init(DIM=2, X=lines(3,j), Y=lines(4,j))
   DO i = 0,8
+    CALL p_soln%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)   
     p1s = p1; p2s = p2; p3s = p3; p4s = p4; p5s = p5;
     theta = i*PI/4
     rotation_mat(1,:) = (/COS(theta), -SIN(theta)/)
@@ -446,32 +464,31 @@ SUBROUTINE testIntersectLine()
     p3s%coord = MATMUL(rotation_mat, p3s%coord)
     p4s%coord = MATMUL(rotation_mat, p4s%coord)
     p5s%coord = MATMUL(rotation_mat, p5s%coord)
+    p_soln%coord = MATMUL(rotation_mat, p_soln%coord)
     p1s = p1s + p11
     p2s = p2s + p11
     p3s = p3s + p11
     p4s = p4s + p11
     p5s = p5s + p11
+    p_soln = p_soln + p11
     ! y = -x^2 + 2x, but rotated by i*pi/4 and shifted 1,1
     CALL arc%set(p1s, p2s, p3s)
     ! y = 1 for x in [0, 2], but transformed as above
     CALL line%set(p4s, p5s)
     CALL arc%intersectLine(line, ipoints)
     ASSERT(ipoints(1)%dim == 1, "Should have found intersection")
-    ASSERT(ABS(ipoints(1)%coord(1) - (1)) < 1.0E-3, "Wrong intersection")
-    ASSERT(ABS(ipoints(1)%coord(2) - (1)) < 1.0E-3, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(1) - p_soln%coord(1)) < 1.0E-6, "Wrong intersection")
+    ASSERT(ABS(ipoints(1)%coord(2) - p_soln%coord(2)) < 1.0E-6, "Wrong intersection")
+    CALL p_soln%clear()
   ENDDO
   CALL p4%clear()
   CALL p5%clear()
-
 ENDSUBROUTINE testIntersectLine
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testPointIsLeft()
   TYPE(QuadraticType) :: arc
-  REAL(SDK), PARAMETER :: PI=3.14159265358979311599796346854
-  REAL(SDK) :: theta, rotation_mat(2,2)
   TYPE(PointType) :: p1, p2, p3, ptest
-  INTEGER(SIK) :: i
 
   CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
