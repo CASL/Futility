@@ -16345,6 +16345,7 @@ SUBROUTINE char_to_int_array(iArr,c)
   INTEGER(SIK) :: i,j,k
 
   numElts=countArrayElts(c)
+  ALLOCATE(iArr(numElts))
   !Empty array case
   IF(numElts == 0) THEN
     RETURN
@@ -16352,7 +16353,6 @@ SUBROUTINE char_to_int_array(iArr,c)
 
   j=0
   k=1 ! iArr index
-  ALLOCATE(iArr(numElts))
   DO i=2,LEN(c)
     IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
       j=j+1
@@ -16381,6 +16381,7 @@ SUBROUTINE char_to_double_array(dArr,c)
   INTEGER(SIK) :: i,j,k
 
   numElts=countArrayElts(c)
+  ALLOCATE(dArr(numElts))
   !Empty array case
   IF(numElts == 0) THEN
     RETURN
@@ -16388,7 +16389,6 @@ SUBROUTINE char_to_double_array(dArr,c)
 
   j=0
   k=1 ! dArr index
-  ALLOCATE(dArr(numElts))
   DO i=2,LEN(c)
     IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
       j=j+1
@@ -16417,15 +16417,14 @@ SUBROUTINE char_to_string_array(sArr,c)
   INTEGER(SIK) :: i,j,k
 
   numElts=countArrayElts(c)
+  ALLOCATE(sArr(numElts))
   !Empty array case
   IF(numElts == 0) THEN
-    ALLOCATE(sArr(numElts))
     RETURN
   ENDIF
 
   j=0
   k=1 ! sArr index
-  ALLOCATE(sArr(numElts))
   DO i=2,LEN(c)
     IF(c(i:i) /= ',' .AND. c(i:i) /= '}') THEN
       j=j+1
