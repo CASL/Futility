@@ -562,6 +562,7 @@ SUBROUTINE init_EigenvalueSolverType_Anasazi(solver,MPIEnv,Params)
     CALL tmpPL%add('VectorType->nlocal',nlocal)
     CALL solver%X%init(tmpPL)
     CALL solver%X_scale%init(tmpPL)
+    CALL tmpPL%clear()
     SELECTTYPE(x=>solver%X); TYPE IS(TrilinosVectorType)
       CALL Anasazi_SetX(solver%eig,x%b)
     ENDSELECT
@@ -798,8 +799,10 @@ SUBROUTINE clear_EigenvalueSolverType_Anasazi(solver)
   NULLIFY(solver%A)
   NULLIFY(solver%B)
   CALL solver%x_scale%clear()
-  IF(solver%X%isInit) CALL solver%X%clear()
-  CALL Preconditioner_Destroy(solver%pc)
+  IF(ASSOCIATED(solver%X)) THEN
+    IF(solver%X%isInit) CALL solver%X%clear()
+    DEALLOCATE(solver%X)
+  ENDIF
   CALL Anasazi_Destroy(solver%eig)
 #endif
   solver%isInit=.FALSE.
