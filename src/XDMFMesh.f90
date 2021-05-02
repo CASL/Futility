@@ -1261,15 +1261,7 @@ RECURSIVE SUBROUTINE setupEdges_XDMFMeshType(thismesh)
           CALL p1%init(DIM=2, X=thismesh%vertices(1,all_edge_verts(1,i)), &
                               Y=thismesh%vertices(2,all_edge_verts(1,i)))
           CALL thismesh%edges(i)%line%set(p1, p2)
-          WRITE(*,*) "fake quad ", thismesh%edges(i)%quad%a
-          ENSURE(thismesh%edges(i)%line%p1%dim == 2)
-          ENSURE(thismesh%edges(i)%line%p2%dim == 2)
-          ENSURE(ALLOCATED(thismesh%edges(i)%line%p1%coord))
-          ENSURE(ALLOCATED(thismesh%edges(i)%line%p2%coord))
-          ENSURE(SIZE(thismesh%edges(i)%line%p1%coord)==2)
-          ENSURE(SIZE(thismesh%edges(i)%line%p2%coord)==2)
         ELSE
-          WRITE(*,*) "real quad ", thismesh%edges(i)%quad%a
         ENDIF
       ENDIF
       ! vertices
