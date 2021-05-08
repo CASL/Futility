@@ -16,6 +16,7 @@ USE ExceptionHandler
 USE ParameterLists
 USE Allocs
 USE MatrixTypes_Base
+USE FileType_Fortran
 USE ParallelEnv
 USE Sorting
 
@@ -122,6 +123,9 @@ TYPE,EXTENDS(SquareMatrixType) :: TriDiagMatrixType
     !> @copybrief MatrixTypes::zeroentries_TriDiagMatrixType
     !> @copydetails MatrixTypes::zeroentries_TriDiagMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_TriDiagMatrixType
+    !> @copybrief MatrixTypes::writematrix_TriDiagMatrixType
+    !> @copydetails MatrixTypes::writematrix_TriDiagMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_TriDiagMatrixType
 ENDTYPE TriDiagMatrixType
 
 !> @brief Type used to hold the bands in the banded type
@@ -177,6 +181,9 @@ TYPE,EXTENDS(MatrixType) :: BandedMatrixType
     !> @copybrief MatrixTypes::zeroentries_BandedMatrixType
     !> @copydetails MatrixTypes::zeroentries_BandedMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_BandedMatrixType
+    !> @copybrief MatrixTypes::writematrix_BandedMatrixType
+    !> @copydetails MatrixTypes::writematrix_BandedMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_BandedMatrixType
     !> @copybrief MatrixTypes::binarySearch_BandedMatrixType
     !> @copydetails MatrixTypes::binarySearch_BandedMatrixType
     PROCEDURE,PASS,PRIVATE :: binarySearch => binarySearch_BandedMatrixType
@@ -225,6 +232,9 @@ TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
     !> @copybrief MatrixTypes::transpose_DistributedBandedMatrixType
     !> @copydetails MatrixTypes::transpose_DistributedBandedMatrixType
     PROCEDURE,PASS :: transpose => transpose_DistributedBandedMatrixType
+    !> @copybrief MatrixTypes::writematrix_DistributedBandedMatrixType
+    !> @copydetails MatrixTypes::writematrix_DistributedBandedMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_DistributedBandedMatrixType
     !> @copybrief MatrixTypes::zeroentries_DistributedBandedMatrixType
     !> @copydetails MatrixTypes::zeroentries_DistributedBandedMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBandedMatrixType
@@ -263,6 +273,9 @@ TYPE,EXTENDS(DistributedBandedMatrixType) :: DistributedBlockBandedMatrixType
     !> @copybrief MatrixTypes::zeroentries_DistributedBlockBandedMatrixType
     !> @copydetails MatrixTypes::zeroentries_DistributedBlockBandedMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_DistributedBlockBandedMatrixType
+    !> @copybrief MatrixTypes::writematrix_DistributedBlockBandedMatrixType
+    !> @copydetails MatrixTypes::writematrix_DistributedBlockBandedMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_DistributedBlockBandedMatrixType
     !> @copybrief MatrixTypes::setBlockMask_DistributedBlockBandedMatrixType
     !> @copydetails MatrixTypes::setBlockMask_DistributedBlockBandedMatrixType
     PROCEDURE,PASS :: setBlockMask => setBlockMask_DistributedBlockBandedMatrixType
@@ -312,6 +325,9 @@ TYPE,EXTENDS(MatrixType) :: SparseMatrixType
     !> @copybrief MatrixTypes::transpose_SparseMatrixType
     !> @copydetails MatrixTypes::transpose_SparseMatrixType
     PROCEDURE,PASS :: transpose => transpose_SparseMatrixType
+    !> @copybrief MatrixTypes::writematrix_SparseMatrixType
+    !> @copydetails MatrixTypes::writematrix_SparseMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_SparseMatrixType
     !> @copybrief MatrixTypes::zeroentries_SparseMatrixType
     !> @copydetails MatrixTypes::zeroentries_SparseMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_SparseMatrixType
@@ -1933,6 +1949,797 @@ SUBROUTINE  zeroentries_DenseRectMatrixType(matrix)
   REQUIRE(matrix%isInit)
   matrix%a=0.0_SRK
 ENDSUBROUTINE zeroentries_DenseRectMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE  writematrix_DenseSquareMatrixType(matrix,format_mode,file_mode,filename)
+  CHARACTER(LEN=*),PARAMETER :: myName='writematrix_DenseSquareMatrixType'
+  CLASS(DenseSquareMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  INTEGER(SIK) :: file_write_mode,funit
+  LOGICAL(SBK) :: lexist
+  TYPE(FortranFileType) :: matrix_file
+  INTEGER(SIK) :: i,j
+  INTEGER(SIK) :: file_format,matrix_type
+  REQUIRE(matrix%isInit)
+  CHARACTER(LEN=80) :: tmpfilename
+
+  file_format=ASCII_MATLAB
+  IF(PRESENT(format_mode)) THEN
+    file_format=format_mode
+  ENDIF
+  matrix_type=DENSESQUARE
+  SELECTCASE(file_format)
+  CASE(ASCII_MATLAB)
+    IF(PRESENT(file_mode)) THEN
+      file_write_mode=file_mode
+    ELSE
+      file_write_mode=FILE_WRITE
+    ENDIF
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DenseSquare.m"
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='REPLACE')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',POSITION='APPEND')
+    ENDIF
+    funit=matrix_file%getUnitNo()
+    CALL matrix_file%fopen()
+    ! The header of the file is the structure of the matrix
+    ! The size of the matrix, the number of nonzeros will be printed
+    WRITE(funit,'(A,i0)') '%Mat ',matrix_type
+    WRITE(funit,'(A)') '% type: DenseSquare'
+    WRITE(funit,'(A,2x,i0,2x,i0)') '% Size =',matrix%n,matrix%n
+    WRITE(funit,'(A,2x,i0)') '% Nonzeros =',matrix%n*matrix%n
+    WRITE(funit,'(A,i0,A,i0,A)') 'zzzz = zeros(',matrix%n,',',matrix%n,');'
+    DO i=1,matrix%n
+      DO j=1,matrix%n
+        WRITE(funit,'(A,i0,a,i0,A,e17.10,A)') 'zzzz(',i,',',j,') = ',matrix%A(i,j),';'
+      ENDDO
+    ENDDO
+    ! Todo: probably support the name of the matrix in the future
+    ! For now, the name of the matrix is A
+    WRITE(funit,'(A)') 'A = zzzz;'
+    CALL matrix_file%fclose()
+  CASE(BINARY)
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DenseSquare.bin"
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename), &
+        FORM='UNFORMATTED',STATUS='REPLACE',ACCESS='STREAM')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',&
+        FORM='UNFORMATTED',POSITION='APPEND',ACCESS='STREAM')
+    ENDIF
+    funit=matrix_file%getUnitNo()
+
+    CALL matrix_file%fopen()
+    ! Structure of the matrix
+    !    type of the matrix
+    !    size of the matrix(the number of Rows,the number of Columns)
+    !    matrix elemented
+    WRITE(funit) matrix_type
+    WRITE(funit) matrix%n
+    WRITE(funit) matrix%n
+    WRITE(funit) matrix%A
+    CALL matrix_file%fclose()
+  ENDSELECT
+ENDSUBROUTINE writematrix_DenseSquareMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE  writematrix_TriDiagMatrixType(matrix,format_mode,file_mode,filename)
+  CHARACTER(LEN=*),PARAMETER :: myName='writematrix_TriDiagMatrixType'
+  CLASS(TriDiagMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  INTEGER(SIK) :: file_write_mode,funit
+  LOGICAL(SBK) :: lexist
+  TYPE(FortranFileType) :: matrix_file
+  INTEGER(SIK) :: i,j
+  INTEGER(SIK) :: file_format,matrix_type
+  REAL(SRK) :: rvalue
+  CHARACTER(LEN=80):: tmpfilename
+  REQUIRE(matrix%isInit)
+
+  file_format=ASCII_MATLAB
+  matrix_type=TRIDIAG
+  IF(PRESENT(format_mode)) THEN
+    file_format=format_mode
+  ENDIF
+  IF(PRESENT(file_mode)) THEN
+    file_write_mode=file_mode
+  ELSE
+    file_write_mode=FILE_WRITE
+  ENDIF
+
+
+  SELECTCASE(file_format)
+  CASE(ASCII_MATLAB)
+
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="Tridiag.m"
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='REPLACE')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',POSITION='APPEND')
+    ENDIF
+
+    funit=matrix_file%getUnitNo()
+    CALL matrix_file%fopen()
+    ! Now it is assumed that the matrix size is not large
+    ! Therefore, the dense matrix is allocated for storing the triangular matrix
+    ! The header of the file is the structure of the matrix
+    ! The size of the matrix, the number of nonzeros will be printed
+    WRITE(funit,'(A,i0)') '%Mat ',matrix_type
+    WRITE(funit,'(A)') '% type: TriDiagMatrixType'
+    WRITE(funit,'(A,2x,i0,2x,i0)') '% Size =',matrix%n,matrix%n
+    WRITE(funit,'(A,2x,i0)') '% Nonzeros =',3*matrix%n-2
+    WRITE(funit,'(A,i0,A,i0,A)') 'zzzz = zeros(',matrix%n,',',matrix%n,');'
+    DO i=1,matrix%n
+      DO j=1,matrix%n
+         rvalue=0.0_SRK
+        IF(i==j) THEN
+          rvalue=matrix%A(2,i)
+        ELSEIF(j==(i-1)) THEN
+          rvalue=matrix%A(1,i)
+        ELSEIF(j==(i+1)) THEN
+          rvalue=matrix%A(3,i)
+        ENDIF
+        IF(ABS(i-j)<=1) THEN
+          WRITE(funit,'(A,i0,a,i0,A,e17.10,A)') 'zzzz(',i,',',j,') = ', &
+            rvalue,';'
+        ENDIF
+      ENDDO
+    ENDDO
+    WRITE(funit,'(A)') 'A = zzzz;'
+    CALL matrix_file%fclose()
+  CASE(BINARY)
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="Tridiag.bin"
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename), &
+        FORM='UNFORMATTED',STATUS='REPLACE',ACCESS='STREAM')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',&
+        FORM='UNFORMATTED',POSITION='APPEND',ACCESS='STREAM')
+    ENDIF
+    funit=matrix_file%getUnitNo()
+    CALL matrix_file%fopen()
+    ! Structure of the matrix
+    !    type of the matrix
+    !    size of the matrix(the number of Rows,the number of Columns)
+    !    matrix elemented
+    WRITE(funit) matrix_type
+    WRITE(funit) matrix%n
+    WRITE(funit) matrix%n
+    WRITE(funit) matrix%A
+    CALL matrix_file%fclose()
+  ENDSELECT
+ENDSUBROUTINE writematrix_TriDiagMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE  writematrix_DenseRectMatrixType(matrix,format_mode,file_mode,filename)
+  CHARACTER(LEN=*),PARAMETER :: myName='writematrix_DenseRectMatrixType'
+  CLASS(DenseRectMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  INTEGER(SIK) :: file_write_mode,funit
+  LOGICAL(SBK) :: lexist
+  TYPE(FortranFileType) :: matrix_file
+  INTEGER(SIK) :: i,j
+  INTEGER(SIK) :: file_format,matrix_type
+  CHARACTER(LEN=80):: tmpfilename
+  REQUIRE(matrix%isInit)
+
+  file_format=ASCII_MATLAB
+  matrix_type=DENSERECT
+  IF(PRESENT(format_mode)) THEN
+    file_format=format_mode
+  ENDIF
+  IF(PRESENT(file_mode)) THEN
+    file_write_mode=file_mode
+  ELSE
+    file_write_mode=FILE_WRITE
+  ENDIF
+  SELECTCASE(file_format)
+  CASE(ASCII_MATLAB)
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DenseRec.m"
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='REPLACE')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',POSITION='APPEND')
+    ENDIF
+    funit=matrix_file%getUnitNo()
+    CALL matrix_file%fopen()
+    ! The header of the file is the structure of the matrix
+    ! The size of the matrix, the number of nonzeros will be printed
+    WRITE(funit,'(A,i0)') '% Mat ',matrix_type
+    WRITE(funit,'(A)') '% type: DenseRect'
+    WRITE(funit,'(A,2x,i0,2x,i0)') '% Size =',matrix%n,matrix%m
+    WRITE(funit,'(A,2x,i0)') '% Nonzeros =',matrix%n*matrix%m
+    WRITE(funit,'(A,i0,A,i0,A)') 'zzzz = zeros(',matrix%n,',',matrix%m,');'
+    DO i=1,matrix%n
+      DO j=1,matrix%m
+        WRITE(funit,'(A,i0,a,i0,A,e17.10,A)') 'zzzz(',i,',',j,') = ',matrix%A(i,j),';'
+      ENDDO
+    ENDDO
+    WRITE(funit,'(A)') 'A = zzzz;'
+    CALL matrix_file%fclose()
+  CASE(BINARY)
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DenseRec.bin"
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename), &
+        FORM='UNFORMATTED',STATUS='REPLACE',ACCESS='STREAM')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',&
+        FORM='UNFORMATTED',POSITION='APPEND',ACCESS='STREAM')
+    ENDIF
+    funit=matrix_file%getUnitNo()
+    CALL matrix_file%fopen()
+    ! Structure of the matrix
+    !    type of the matrix
+    !    size of the matrix(the number of Rows,the number of Columns)
+    !    matrix elemented
+    WRITE(funit) matrix_type
+    WRITE(funit) matrix%n
+    WRITE(funit) matrix%m
+    WRITE(funit) matrix%A
+    CALL matrix_file%fclose()
+  ENDSELECT
+ENDSUBROUTINE writematrix_DenseRectMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE  writematrix_SparseMatrixType(matrix,format_mode,file_mode,filename)
+CHARACTER(LEN=*),PARAMETER :: myName='writematrix_SparseMatrixType'
+  CLASS(SparseMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
+      ' - routine is not implemented!')
+ENDSUBROUTINE writematrix_SparseMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE writematrix_DistributedBandedMatrixType(matrix,format_mode,file_mode,filename)
+  CHARACTER(LEN=*),PARAMETER :: myName='writematrix_DistributedBandedMatrixType'
+  CLASS(DistributedBandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  ! CALL eMatrixType%raiseFatalError(modName//'::'//myName// &
+  !     ' - routine is not implemented!')
+#ifdef HAVE_MPI
+
+  INTEGER(SIK) :: n,m,nnz,commID,rank,mpierr,nproc
+  INTEGER(SIK) :: indE,indc,i,j,icounter,reali,realj
+  INTEGER(SIK) :: filehdl,nLocal,nBatch,iBatch,funit
+  INTEGER(SIK),ALLOCATABLE :: tmpiarray(:),tmpjarray(:),writeoffset(:)
+  REAL(SRK),ALLOCATABLE :: tmpval(:)
+  REAL(SRK) :: realvalue
+  TYPE(FortranFileType) :: matrix_file
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
+  INTEGER(KIND=MPI_OFFSET_KIND) ::baseoffset
+  ! Note it is assume that the number of elements is smaller than 10^14
+  character(len=50), ALLOCATABLE :: text(:)
+  CHARACTER(LEN=80):: tmpfilename
+  INTEGER(SIK) :: file_format
+  REQUIRE(matrix%isInit)
+
+  file_format=ASCII_MATLAB
+  IF(PRESENT(format_mode)) THEN
+    file_format=format_mode
+  ENDIF
+  CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
+  CALL MPI_Comm_size(matrix%comm,nproc,mpierr)
+
+
+  IF(file_format==ASCII_MATLAB) THEN
+    REQUIRE(matrix%n<1E14)
+    REQUIRE(matrix%m<1E14)
+    ALLOCATE(writeoffset(nproc+1))
+    CALL MPI_AllGather(matrix%nLocal,1,MPI_INTEGER,writeoffset(2),1, &
+        MPI_INTEGER,matrix%comm,mpierr)
+    writeoffset(1)=0
+    DO i=2,nproc+1
+      writeoffset(i)=writeoffset(i)+writeoffset(i-1)
+    ENDDO
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DistributedBanded.m"
+    ENDIF
+    IF(rank==0) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='REPLACE')
+      funit=matrix_file%getUnitNo()
+      CALL matrix_file%fopen()
+    ! The header of the file is the structure of the matrix
+    ! The size of the matrix, the number of nonzeros will be printed
+      WRITE(funit,'(A,i0)') '% Mat ',DISTRIBUTED_BANDED
+      WRITE(funit,'(A)') '% type: DistributedBanded'
+      WRITE(funit,'(A,2x,i0,2x,i0)') '% Size =',matrix%n,matrix%m
+      WRITE(funit,'(A,2x,i0)') '% Nonzeros =',writeoffset(nproc+1)
+      WRITE(funit,'(A,i0,A)') 'zzzz = zeros(',writeoffset(nproc+1),',3);'
+      WRITE(funit,'(A)') 'zzzz = [ '
+      CALL matrix_file%fclose()
+    ENDIF
+
+    CALL MPI_File_open(MPI_COMM_WORLD, TRIM(tmpfilename),&
+      MPI_MODE_APPEND+MPI_MODE_WRONLY, MPI_INFO_NULL, filehdl,mpierr)
+    call MPI_FILE_GET_POSITION(filehdl,baseoffset,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    nBatch=MIN(10000,matrix%nLocal)
+    ALLOCATE(text(nBatch))
+    icounter=0
+    iBatch=0
+
+    !  Restore the array for the indexes of row and column
+    baseoffset=baseoffset+writeoffset(rank+1)*50
+    DO indc=1,nproc
+      IF(matrix%chunks(indc)%isInit) THEN
+        DO i=1,SIZE(matrix%chunks(indc)%bandIdx)
+          DO j=1,SIZE(matrix%chunks(indc)%bands(i)%jIdx)
+            icounter=icounter+1
+            realj=matrix%chunks(indc)%bands(i)%jIdx(j)
+            realvalue=matrix%chunks(indc)%bands(i)%elem(j)
+            reali=realj-matrix%chunks(indc)%bandIdx(i)+matrix%iOffsets(indc)
+            realj=realj+matrix%jOffsets(rank+1)
+            iBatch=iBatch+1
+            WRITE (text(iBatch),'(i0,2x,i0,2x,e17.10,A)') reali,realj,realvalue
+            WRITE (text(iBatch)(50:50),'(A)') NEW_LINE('a')
+            IF(MOD(iBatch,nBatch)==0) THEN
+              CALL MPI_File_write_at(filehdl, baseoffset,text, &
+                nBatch*50, MPI_CHAR, MPI_STATUS_IGNORE,mpierr)
+              baseoffset=baseoffset+50*iBatch
+              iBatch=0
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDDO
+    CALL MPI_File_write_at(filehdl, baseoffset,text, &
+      iBatch*50, MPI_CHAR, MPI_STATUS_IGNORE,mpierr)
+    IF(rank==0) THEN
+      baseoffset=baseoffset+50*(writeoffset(nproc+1)-writeoffset(rank+2))
+      WRITE (text(1),'(A)') ']; '
+      WRITE (text(1)(50:50),'(A)') NEW_LINE('a')
+      WRITE (text(2),'(A)') 'A=spconvert(zzzz); '
+      WRITE (text(2)(50:50),'(A)') NEW_LINE('a')
+      CALL MPI_File_write_at(filehdl, baseoffset,text, &
+        100, MPI_CHAR, MPI_STATUS_IGNORE,mpierr)
+    ENDIF
+    call MPI_FILE_CLOSE(filehdl, mpierr)
+  ELSE
+    ALLOCATE(tmpiarray(matrix%nLocal),tmpjarray(matrix%nLocal),tmpval(matrix%nLocal))
+    icounter=0
+
+    !  Restore the array for the indexes of row and column
+    DO indc=1,nproc
+      IF(matrix%chunks(indc)%isInit) THEN
+        DO i=1,SIZE(matrix%chunks(indc)%bandIdx)
+          DO j=1,SIZE(matrix%chunks(indc)%bands(i)%jIdx)
+            icounter=icounter+1
+            realj=matrix%chunks(indc)%bands(i)%jIdx(j)
+            realvalue=matrix%chunks(indc)%bands(i)%elem(j)
+            reali=realj-matrix%chunks(indc)%bandIdx(i)
+            tmpjarray(icounter)=realj+matrix%jOffsets(rank+1)
+            tmpiarray(icounter)=reali+matrix%iOffsets(indc)
+            tmpval(icounter)=realvalue
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDDO
+    nLocal=icounter
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DistributedBanded.bin"
+    ENDIF
+    CALL MPI_File_DELETE(TRIM(tmpfilename),MPI_INFO_NULL,mpierr)
+    CALL MPI_File_open(MPI_COMM_WORLD, TRIM(tmpfilename),&
+      MPI_MODE_CREATE+MPI_MODE_WRONLY, MPI_INFO_NULL, filehdl,mpierr)
+    CALL MPI_Allreduce(MPI_IN_PLACE,icounter,1,MPI_INTEGER,MPI_SUM,matrix%comm,mpierr)
+    ALLOCATE(writeoffset(nproc+1))
+    CALL MPI_AllGather(nLocal,1,MPI_INTEGER,writeoffset(2),1, &
+        MPI_INTEGER,matrix%comm,mpierr)
+    writeoffset(1)=0
+    DO i=2,nproc+1
+      writeoffset(i)=writeoffset(i)+writeoffset(i-1)
+    ENDDO
+
+    IF(rank==0) THEN
+      CALL MPI_File_write(filehdl, DISTRIBUTED_BANDED, 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+      CALL MPI_File_write(filehdl, matrix%n, 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+      CALL MPI_File_write(filehdl, matrix%m, 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+      CALL MPI_File_write(filehdl, writeoffset(nproc+1), 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+    ENDIF
+
+    !WRITE
+    CALL MPI_FILE_GET_POSITION(filehdl, baseoffset,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    baseoffset = baseoffset+writeoffset(rank+1) *  SIK
+    CALL MPI_File_write_at_all(filehdl,baseoffset, tmpiarray, nLocal, &
+      MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+    baseoffset=baseoffset+(writeoffset(nproc+1)-writeoffset(rank+1))*  SIK
+    baseoffset=baseoffset+writeoffset(rank+1) * SIK
+    CALL MPI_File_write_at_all(filehdl,baseoffset, tmpjarray, nLocal, &
+      MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+
+    baseoffset=baseoffset+(writeoffset(nproc+1)-writeoffset(rank+1))* SIK
+    baseoffset=baseoffset+writeoffset(rank+1)*SRK
+
+    CALL MPI_File_write_at_all(filehdl,baseoffset, tmpval, nLocal, &
+      MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE,mpierr)
+    call MPI_FILE_CLOSE(filehdl, mpierr)
+  ENDIF
+
+#endif
+ENDSUBROUTINE writematrix_DistributedBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE  writematrix_DistributedBlockBandedMatrixType(matrix,format_mode,file_mode,filename)
+  CHARACTER(LEN=*),PARAMETER :: myName='writematrix_DistributedBlockBandedMatrixType'
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  CLASS(DistributedBlockBandedMatrixType),INTENT(INOUT) :: matrix
+#ifdef HAVE_MPI
+
+  INTEGER(SIK) :: n,m,nnz,commID,rank,mpierr,nproc,ioffset
+  INTEGER(SIK) :: indE,indc,i,j,icounter,reali,realj
+  INTEGER(SIK) :: filehdl,nLocal,nBatch,iBatch,funit
+  INTEGER(SIK),ALLOCATABLE :: tmpiarray(:),tmpjarray(:),writeoffset(:)
+  REAL(SRK),ALLOCATABLE :: tmpval(:)
+  REAL(SRK) :: realvalue
+  TYPE(FortranFileType) :: matrix_file
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
+  INTEGER(KIND=MPI_OFFSET_KIND) ::baseoffset
+  ! Note it is assume that the number of elements is smaller than 10^14
+  character(len=50), ALLOCATABLE :: text(:)
+  CHARACTER(LEN=80):: tmpfilename
+  INTEGER(SIK) :: file_format
+  REQUIRE(matrix%isInit)
+
+  file_format=ASCII_MATLAB
+  IF(PRESENT(format_mode)) THEN
+    file_format=format_mode
+  ENDIF
+
+  CALL MPI_Comm_rank(matrix%comm,rank,mpierr)
+  CALL MPI_Comm_size(matrix%comm,nproc,mpierr)
+
+  ALLOCATE(writeoffset(nproc+1))
+  nLocal=matrix%nLocal
+  IF(.NOT. matrix%blockMask) THEN
+    nLocal=matrix%blockSize*matrix%blockSize*SIZE(matrix%blocks)+nLocal
+  ENDIF
+  CALL MPI_AllGather(nLocal,1,MPI_INTEGER,writeoffset(2),1, &
+      MPI_INTEGER,matrix%comm,mpierr)
+  writeoffset(1)=0
+  DO i=2,nproc+1
+    writeoffset(i)=writeoffset(i)+writeoffset(i-1)
+  ENDDO
+  IF(file_format==ASCII_MATLAB) THEN
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DistributedBlock.m"
+    ENDIF
+    IF(rank==0) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='REPLACE')
+      funit=matrix_file%getUnitNo()
+      CALL matrix_file%fopen()
+    ! The header of the file is the structure of the matrix
+    ! The size of the matrix, the number of nonzeros will be printed
+      WRITE(funit,'(A,i0)') '% Mat ',DISTR_BLOCKBANDED
+      WRITE(funit,'(A)') '% type: DISTR_BLOCKBANDED'
+      WRITE(funit,'(A,2x,i0,2x,i0)') '% Size =',matrix%n,matrix%m
+      WRITE(funit,'(A,2x,i0)') '% Nonzeros =',writeoffset(nproc+1)
+      WRITE(funit,'(A,i0,A)') 'zzzz = zeros(',writeoffset(nproc+1),',3);'
+      WRITE(funit,'(A)') 'zzzz = [ '
+      CALL matrix_file%fclose()
+    ENDIF
+
+    CALL MPI_File_open(MPI_COMM_WORLD, TRIM(tmpfilename),&
+      MPI_MODE_APPEND+MPI_MODE_WRONLY, MPI_INFO_NULL, filehdl,mpierr)
+    call MPI_FILE_GET_POSITION(filehdl,baseoffset,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    nBatch=MIN(10000,nLocal)
+    ALLOCATE(text(nBatch))
+    icounter=0
+    iBatch=0
+    !  Restore the array for the indexes of row and column
+    baseoffset=baseoffset+writeoffset(rank+1)*50
+    DO indc=1,nproc
+      IF(matrix%chunks(indc)%isInit) THEN
+        DO i=1,SIZE(matrix%chunks(indc)%bandIdx)
+          DO j=1,SIZE(matrix%chunks(indc)%bands(i)%jIdx)
+            icounter=icounter+1
+            realj=matrix%chunks(indc)%bands(i)%jIdx(j)
+            realvalue=matrix%chunks(indc)%bands(i)%elem(j)
+            reali=realj-matrix%chunks(indc)%bandIdx(i)+matrix%iOffsets(indc)
+            realj=realj+matrix%jOffsets(rank+1)
+            iBatch=iBatch+1
+            WRITE (text(iBatch),'(i0,2x,i0,2x,e17.10,A)') reali,realj,realvalue
+            WRITE (text(iBatch)(50:50),'(A)') NEW_LINE('a')
+            IF(MOD(iBatch,nBatch)==0) THEN
+              CALL MPI_File_write_at(filehdl, baseoffset,text, &
+                nBatch*50, MPI_CHAR, MPI_STATUS_IGNORE,mpierr)
+              baseoffset=baseoffset+50*iBatch
+              iBatch=0
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDDO
+    IF(.NOT. matrix%blockMask) THEN
+      DO indc=1,SIZE(matrix%blocks)
+        ioffset=(matrix%blockOffset+indc-1)*matrix%blockSize
+        DO i=1,matrix%blockSize
+          DO j=1,matrix%blockSize
+            icounter=icounter+1
+            realj=ioffset+j
+            reali=ioffset+i
+            realvalue=matrix%blocks(indc)%A(i,j)
+            iBatch=iBatch+1
+            WRITE (text(iBatch),'(i0,2x,i0,2x,e17.10,A)') reali,realj,realvalue
+            WRITE (text(iBatch)(50:50),'(A)') NEW_LINE('a')
+            IF(MOD(iBatch,nBatch)==0) THEN
+              CALL MPI_File_write_at(filehdl, baseoffset,text, &
+                nBatch*50, MPI_CHAR, MPI_STATUS_IGNORE,mpierr)
+              baseoffset=baseoffset+50*iBatch
+              iBatch=0
+            ENDIF
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+    CALL MPI_File_write_at(filehdl, baseoffset,text, &
+      iBatch*50, MPI_CHAR, MPI_STATUS_IGNORE,mpierr)
+    baseoffset=baseoffset+50*iBatch
+    IF(rank==0) THEN
+      baseoffset=baseoffset+50*(writeoffset(nproc+1)-writeoffset(rank+2))
+      WRITE (text(1),'(A)') ']; '
+      WRITE (text(1)(50:50),'(A)') NEW_LINE('a')
+      WRITE (text(2),'(A)') 'A=spconvert(zzzz); '
+      WRITE (text(2)(50:50),'(A)') NEW_LINE('a')
+      CALL MPI_File_write_at(filehdl, baseoffset,text, &
+        100, MPI_CHAR, MPI_STATUS_IGNORE,mpierr)
+    ENDIF
+    call MPI_FILE_CLOSE(filehdl, mpierr)
+  ELSE
+    ALLOCATE(tmpiarray(nLocal),tmpjarray(nLocal),tmpval(nLocal))
+    icounter=0
+    ! !  Restore the array for the indexes of row and column
+    DO indc=1,nproc
+      IF(matrix%chunks(indc)%isInit) THEN
+        DO i=1,SIZE(matrix%chunks(indc)%bandIdx)
+          DO j=1,SIZE(matrix%chunks(indc)%bands(i)%jIdx)
+            icounter=icounter+1
+            realj=matrix%chunks(indc)%bands(i)%jIdx(j)
+            realvalue=matrix%chunks(indc)%bands(i)%elem(j)
+            reali=realj-matrix%chunks(indc)%bandIdx(i)
+            tmpjarray(icounter)=realj+matrix%jOffsets(rank+1)
+            tmpiarray(icounter)=reali+matrix%iOffsets(indc)
+            tmpval(icounter)=realvalue
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDDO
+    IF(.NOT. matrix%blockMask) THEN
+      DO indc=1,SIZE(matrix%blocks)
+        ioffset=(matrix%blockOffset+indc-1)*matrix%blockSize
+        DO i=1,matrix%blockSize
+          DO j=1,matrix%blockSize
+            icounter=icounter+1
+            realj=ioffset+j
+            reali=ioffset+i
+            realvalue=matrix%blocks(indc)%A(i,j)
+            tmpjarray(icounter)=realj
+            tmpiarray(icounter)=reali
+            tmpval(icounter)=realvalue
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+    IF(PRESENT(filename)) THEN
+      tmpfilename=TRIM(filename)
+    ELSE
+      tmpfilename="DistributedBlock.bin"
+    ENDIF
+    CALL MPI_File_DELETE(TRIM(tmpfilename),MPI_INFO_NULL,mpierr)
+    CALL MPI_File_open(MPI_COMM_WORLD, TRIM(tmpfilename),&
+      MPI_MODE_CREATE+MPI_MODE_WRONLY, MPI_INFO_NULL, filehdl,mpierr)
+    IF(rank==0) THEN
+      CALL MPI_File_write(filehdl, DISTR_BLOCKBANDED, 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+      CALL MPI_File_write(filehdl, matrix%n, 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+      CALL MPI_File_write(filehdl, matrix%m, 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+      CALL MPI_File_write(filehdl, writeoffset(nproc+1), 1, MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+    ENDIF
+
+    ! !WRITE
+    CALL MPI_FILE_GET_POSITION(filehdl, baseoffset,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    baseoffset = baseoffset+writeoffset(rank+1) *  SIK
+    CALL MPI_File_write_at_all(filehdl,baseoffset, tmpiarray, nLocal, &
+      MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+    baseoffset=baseoffset+(writeoffset(nproc+1)-writeoffset(rank+1))*  SIK
+    baseoffset=baseoffset+writeoffset(rank+1) * SIK
+    CALL MPI_File_write_at_all(filehdl,baseoffset, tmpjarray, nLocal, &
+      MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
+    baseoffset=baseoffset+(writeoffset(nproc+1)-writeoffset(rank+1))* SIK
+    baseoffset=baseoffset+writeoffset(rank+1)*SRK
+    CALL MPI_File_write_at_all(filehdl,baseoffset, tmpval, nLocal, &
+      MPI_DOUBLE_PRECISION, MPI_STATUS_IGNORE,mpierr)
+    call MPI_FILE_CLOSE(filehdl, mpierr)
+  ENDIF
+
+#endif
+ENDSUBROUTINE writematrix_DistributedBlockBandedMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE  writematrix_BandedMatrixType(matrix,format_mode,file_mode,filename)
+  CHARACTER(LEN=*),PARAMETER :: myName='writematrix_BandedMatrixType'
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK) :: file_write_mode,funit
+  LOGICAL(SBK) :: lexist
+  TYPE(FortranFileType) :: matrix_file
+  INTEGER(SIK) :: i,j,reali,realj,icounter
+  INTEGER(SIK) :: file_format,matrix_type
+  REAL(SRK) :: realvalue
+  CHARACTER(LEN=80) :: tmpfilename,tmpstr
+  INTEGER(SIK),ALLOCATABLE :: tmpi(:),tmpj(:)
+  REAL(SRK),ALLOCATABLE :: tmpvalue(:)
+  REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isassembled)
+  file_format=ASCII_MATLAB
+  IF(PRESENT(format_mode)) THEN
+    file_format=format_mode
+  ENDIF
+  IF(PRESENT(file_mode)) THEN
+    file_write_mode=file_mode
+  ELSE
+    file_write_mode=FILE_WRITE
+  ENDIF
+  SELECTCASE(file_format)
+  CASE(ASCII_MATLAB)
+    IF(PRESENT(filename)) THEN
+      tmpfilename=filename
+    ELSE
+      tmpfilename='BandedMat.m'
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='REPLACE')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',POSITION='APPEND')
+    ENDIF
+    funit=matrix_file%getUnitNo()
+    CALL matrix_file%fopen()
+    WRITE(funit,'(A,I0)') '% Mat ',BANDED
+    WRITE(funit,'(A)') '% type: BandedMatrixType'
+    WRITE(funit,'(A,2x,i0,2x,i0)') '% Size =',matrix%n,matrix%m
+    WRITE(funit,'(A,2x,i0)') '% Nonzeros =',matrix%counter
+    WRITE(funit,'(A,i0,A)') 'zzzz = zeros(',matrix%counter,',3);'
+    WRITE(funit,'(A)') 'zzzz = [ '
+    DO i=1,SIZE(matrix%bandIdx)
+      DO j=1,SIZE(matrix%bands(i)%jIdx)
+        realj=matrix%bands(i)%jIdx(j)
+        realvalue=matrix%bands(i)%elem(j)
+        reali=realj-matrix%bandIdx(i)
+        WRITE(funit,'(i0,2x,i0,2x,e17.10)') reali,realj,realvalue
+      ENDDO
+    ENDDO
+    WRITE(funit,'(A)') ']; '
+    WRITE(funit,'(A)') 'A = spconvert(zzzz);'
+    CALL matrix_file%fclose()
+  CASE(BINARY)
+    IF(PRESENT(filename)) THEN
+      tmpfilename=filename
+    ELSE
+      tmpfilename='BandedMat.bin'
+    ENDIF
+    INQUIRE(FILE=TRIM(tmpfilename), EXIST=lexist)
+    IF(file_write_mode==FILE_WRITE .OR. (.NOT. lexist)) THEN
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename), &
+        FORM='UNFORMATTED',STATUS='REPLACE',ACCESS='STREAM')
+    ELSE
+      CALL matrix_file%initialize(FILE=TRIM(tmpfilename),STATUS='OLD',&
+        FORM='UNFORMATTED',POSITION='APPEND',ACCESS='STREAM')
+    ENDIF
+    icounter=0
+    funit=matrix_file%getUnitNo()
+    matrix_type=BANDED
+    CALL matrix_file%fopen()
+    ALLOCATE(tmpi(matrix%counter),tmpj(matrix%counter),tmpvalue(matrix%counter))
+    WRITE(funit) matrix_type,matrix%n,matrix%m,matrix%counter
+
+    DO i=1,SIZE(matrix%bandIdx)
+      DO j=1,SIZE(matrix%bands(i)%jIdx)
+        realj=matrix%bands(i)%jIdx(j)
+        realvalue=matrix%bands(i)%elem(j)
+        reali=realj-matrix%bandIdx(i)
+        icounter=icounter+1
+        tmpi(icounter)=reali
+        tmpj(icounter)=realj
+        tmpvalue(icounter)=realvalue
+      ENDDO
+    ENDDO
+    WRITE(funit) tmpi,tmpj,tmpvalue
+    CALL matrix_file%fclose()
+  CASE DEFAULT
+    CALL eMatrixType%raiseError('Incorrect input to '// &
+        modName//'::'//myName)
+  ENDSELECT
+ENDSUBROUTINE writematrix_BandedMatrixType
 !
 !-------------------------------------------------------------------------------
 !> @brief Set the block mask for distribed block-banded matrix

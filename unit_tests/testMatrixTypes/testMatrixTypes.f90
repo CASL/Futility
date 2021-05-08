@@ -829,6 +829,8 @@ SUBROUTINE testMatrix()
     CALL mat%set(4,3,4.0_SRK)
     CALL mat%set(4,4,4.0_SRK)
   ENDSELECT
+  CALL thisMatrix%writematrix()
+  CALL thisMatrix%writematrix(Format_Model=2)
   ! Test both the VectorType and native interfaces
   IF(ALLOCATED(dummyvec)) DEALLOCATE(dummyvec)
   ALLOCATE(dummyvec(4))
@@ -1229,6 +1231,8 @@ SUBROUTINE testMatrix()
            (dummyvec(9) == 6._SRK)
     ASSERT(bool, 'tridiag%get(...)') !column three check
   ENDSELECT
+  CALL thisMatrix%writematrix()
+  CALL thisMatrix%writematrix(Format_Model=2)
   !test with out of bounds i,j, make sure no crash.
   SELECT TYPE(thisMatrix)
   TYPE IS(TriDiagMatrixType)
@@ -1511,6 +1515,8 @@ SUBROUTINE testMatrix()
       ASSERT(bool, 'banded%matvec(...)')
     ENDDO
   ENDSELECT
+  CALL thisMatrix%writematrix()
+  CALL thisMatrix%writematrix(Format_Model=2)
   ! Check for non-trivial vector
   dummyvec=(/1._SRK,2._SRK,3._SRK,4._SRK/)
   SELECT TYPE(thisMatrix)
@@ -1621,7 +1627,8 @@ SUBROUTINE testMatrix()
       ASSERT(bool, 'denserect%set(...)')
     ENDDO
   ENDSELECT
-
+  CALL thisMatrix%writematrix()
+  CALL thisMatrix%writematrix(Format_Model=2)
   !Test BLAS_matvec
   COMPONENT_TEST("denseRect%matvec")
   x=1.0_SRK

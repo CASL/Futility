@@ -28,6 +28,8 @@ PUBLIC :: MatrixType_Paramsflag
 !> set enumeration scheme for matrix types
 INTEGER(SIK),PARAMETER,PUBLIC :: SPARSE=0,TRIDIAG=1,DENSESQUARE=2,DENSERECT=3, &
     BANDED=4,DISTRIBUTED_BANDED=5,DISTR_BLOCKBANDED=6
+INTEGER(SIK),PARAMETER,PUBLIC :: ASCII_MATLAB=1,BINARY=2
+INTEGER(SIK),PARAMETER,PUBLIC :: FILE_WRITE=1,FILE_APPEND=2
 PUBLIC :: SparseMatrixType_reqParams,SparseMatrixType_optParams
 PUBLIC :: TriDiagMatrixType_reqParams,TriDiagMatrixType_optParams
 PUBLIC :: BandedMatrixType_reqParams,BandedMatrixType_optParams
@@ -114,6 +116,16 @@ ABSTRACT INTERFACE
   ENDSUBROUTINE matrix_transpose_sub_absintfc
 ENDINTERFACE
 
+!> Explicitly defines the interface for the get routine of all matrix types
+ABSTRACT INTERFACE
+  SUBROUTINE matrix_write_absintfc(matrix,format_mode,FILE_MODE,filename)
+    IMPORT :: SIK,SRK,MatrixType
+    CLASS(MatrixType),INTENT(INOUT) :: matrix
+    INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+    INTEGER(SIK),INTENT(IN),OPTIONAL :: FILE_MODE
+    CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  ENDSUBROUTINE matrix_write_absintfc
+ENDINTERFACE
 !> @brief The extended type of matrices for square matrices
 TYPE,ABSTRACT,EXTENDS(MatrixType) :: SquareMatrixType
   !> Indicates whether or not the matrix is symmetric

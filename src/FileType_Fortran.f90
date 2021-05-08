@@ -96,6 +96,8 @@ TYPE,EXTENDS(BaseFileType) :: FortranFileType
   LOGICAL(SBK),PRIVATE :: formatstat=.FALSE.
   !> Whether or not the file is direct or sequential
   LOGICAL(SBK),PRIVATE :: accessstat=.FALSE.
+  !> Whether or not the file is stream
+  LOGICAL(SBK),PRIVATE :: accessstream=.FALSE.
   !> The 'new' status of a file
   LOGICAL(SBK) :: newstat=.FALSE.
   !> Whether or not to replace the file (implies new)
@@ -142,6 +144,9 @@ TYPE,EXTENDS(BaseFileType) :: FortranFileType
     !> @copybrief FileType_Fortran::isDirect_fortran_file
     !> @copydetails FileType_Fortran::isDirect_fortran_file
     PROCEDURE,PASS :: isDirect => isDirect_fortran_file
+    !> @copybrief FileType_Fortran::isStream_fortran_file
+    !> @copydetails FileType_Fortran::isStream_fortran_file
+    PROCEDURE,PASS :: isStream => isStream_fortran_file
     !> @copybrief FileType_Fortran::getRecLen_fortran_file
     !> @copydetails FileType_Fortran::getRecLen_fortran_file
     PROCEDURE,PASS :: getRecLen => getRecLen_fortran_file
@@ -383,7 +388,8 @@ SUBROUTINE init_fortran_file(fileobj,unit,file,status,access,form, &
     ENDIF
     fileobj%formatstat=(TRIM(formval) == 'FORMATTED')
     fileobj%padstat=(TRIM(padval) ==  'YES')
-    IF(TRIM(accessval) == 'DIRECT' .OR. TRIM(accessval) == 'STREAM') THEN
+    fileobj%accessstream=(TRIM(accessval)=='STREAM')
+    IF(TRIM(accessval) == 'DIRECT') THEN
       fileobj%accessstat=.TRUE.
       IF(fileobj%reclval < 1) CALL fileobj%e%raiseError(modName//'::'// &
           myName//' - Record length must be set to greater than 0 for '// &
@@ -502,6 +508,18 @@ PURE FUNCTION isDirect_fortran_file(file) RESULT(bool)
 ENDFUNCTION isDirect_fortran_file
 !
 !-------------------------------------------------------------------------------
+!> @brief Returns whether or not the FORTRAN file is stream
+!> access.
+!> @param file the fortran file type object
+!> @returns bool TRUE/FALSE if the file is stream access
+!>
+PURE FUNCTION isStream_fortran_file(file) RESULT(bool)
+  CLASS(FortranFileType),INTENT(IN) :: file
+  LOGICAL(SBK) :: bool
+  bool=file%accessstream
+ENDFUNCTION isStream_fortran_file
+!
+!-------------------------------------------------------------------------------
 !> @brief Returns the record length for a direct access file.
 !> @param file the fortran file type object
 !> @returns val the size of the records
@@ -592,7 +610,11 @@ SUBROUTINE open_fortran_file(file)
         accessvar='DIRECT'
         reclval=file%reclval
       ELSE
-        accessvar='SEQUENTIAL'
+        IF(file%isStream()) THEN
+          accessvar='STREAM'
+        ELSE
+          accessvar='SEQUENTIAL'
+        ENDIF
         reclval=0
       ENDIF
       !ACTION clause value

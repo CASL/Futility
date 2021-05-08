@@ -50,6 +50,7 @@ TYPE,EXTENDS(DistributedMatrixType) :: PETScMatrixType
 
   !> Number of columns for nonsquare matrices:
   INTEGER(SIK) :: m
+  INTEGER(SIK) :: mat_write_counter=0
 !
 !List of Type Bound Procedures
   CONTAINS
@@ -80,6 +81,9 @@ TYPE,EXTENDS(DistributedMatrixType) :: PETScMatrixType
     !> @copybrief MatrixTypes::zeroentries_PETScMatrixType
     !> @copydetails MatrixTypes::zeroentries_PETScMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_PETScMatrixType
+    !> @copybrief MatrixTypes::zeroentries_PETScMatrixType
+    !> @copydetails MatrixTypes::zeroentries_PETScMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_PETScMatrixType
 ENDTYPE PETScMatrixType
 
 !> Name of module
@@ -192,6 +196,7 @@ SUBROUTINE init_PETScMatrixParam(matrix,Params)
     CALL eMatrixType%raiseError('Incorrect call to '// &
         modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
+  matrix%mat_write_counter=0
 ENDSUBROUTINE init_PETScMatrixParam
 
 !
@@ -604,6 +609,86 @@ SUBROUTINE zeroentries_PETScMatrixType(matrix)
   REQUIRE(matrix%isInit)
   CALL MatZeroEntries(matrix%a,ierr)
 ENDSUBROUTINE zeroentries_PETScMatrixType
+!
+!-------------------------------------------------------------------------------
+!> @brief dump the matrix
+!> @param matrix declare the matrix type to act on
+!> @param format_mode the format of the file
+!> @param file_mode declare whether to refresh or append to the file
+!> @param filename the name of the file for the matrix
+SUBROUTINE writematrix_PETScMatrixType(matrix,format_mode,file_mode,filename)
+  CHARACTER(LEN=*),PARAMETER :: myName='writematrix_PETScMatrixType'
+  CLASS(PETScMatrixType),INTENT(INOUT) :: matrix
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: format_mode
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: file_mode
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: filename
+  CHARACTER(LEN=80):: matname
+  INTEGER(SIK) :: file_format
+  LOGICAL(SBK) :: lexist
+  PetscErrorCode  :: ierr
+  PetscViewerFormat :: vformat
+  PetscViewer ::viewer
+  PetscFileMode :: file_write_mode
+  REQUIRE(matrix%isInit)
+  IF (.NOT.(matrix%isAssembled)) CALL matrix%assemble()
+  file_format=ASCII_MATLAB
+  IF(PRESENT(format_mode)) THEN
+    file_format=format_mode
+  ENDIF
+  SELECTCASE(file_format)
+    CASE(ASCII_MATLAB)
+      vformat=PETSC_VIEWER_ASCII_MATLAB
+      CALL PetscViewerCreate(PETSC_COMM_WORLD,viewer, ierr)
+      CALL PetscViewerSetType(viewer,PETSCVIEWERASCII, ierr)
+      IF(PRESENT(file_mode)) THEN
+        file_write_mode=file_mode
+      ELSE
+        file_write_mode=FILE_MODE_WRITE
+      ENDIF
+      INQUIRE(FILE=TRIM(filename), EXIST=lexist)
+      IF(.NOT. lexist) file_write_mode=FILE_MODE_WRITE
+      CALL PetscViewerFileSetMode(viewer,file_write_mode,ierr)
+      IF(file_write_mode==FILE_MODE_APPEND) THEN
+        matrix%mat_write_counter=matrix%mat_write_counter+1
+        WRITE(matname,'(a,i0)') 'A',matrix%mat_write_counter
+      ELSE
+        matname='A'
+      ENDIF
+      CALL PetscObjectSetName(matrix%a,TRIM(matname),ierr)
+      IF(PRESENT(filename)) THEN
+        CALL PetscViewerFileSetName(viewer,TRIM(filename),ierr)
+      ELSE
+        ! CALL PetscViewerASCIIOpen(PETSC_COMM_WORLD, "Amat.m", viewer,ierr)
+        CALL PetscViewerFileSetName(viewer,"Amat.m",ierr)
+      ENDIF
+
+      CALL PetscViewerPushFormat(viewer, &
+        vformat,ierr)
+      call MatView(matrix%A,viewer,ierr)
+      call PetscViewerPopFormat(viewer,ierr)
+      call PetscViewerDestroy(viewer,ierr)
+    CASE(BINARY)
+      IF(PRESENT(file_mode)) THEN
+        file_write_mode=file_mode
+      ELSE
+        file_write_mode=FILE_MODE_WRITE
+      ENDIF
+      IF(PRESENT(filename)) THEN
+        INQUIRE(FILE=TRIM(filename), EXIST=lexist)
+        IF(.NOT. lexist) file_write_mode=FILE_MODE_WRITE
+        CALL PetscViewerBinaryOpen(PETSC_COMM_WORLD,TRIM(filename), &
+            file_write_mode,viewer,ierr)
+      ELSE
+        CALL PetscViewerBinaryOpen(PETSC_COMM_WORLD,"Amat.bin", &
+            file_write_mode,viewer,ierr)
+      ENDIF
+      call MatView(matrix%A,viewer,ierr)
+      call PetscViewerDestroy(viewer,ierr)
+    CASE DEFAULT
+      CALL eMatrixType%raiseError('Unsupported format for dumping matrix '// &
+        modName//'::'//myName//'!')
+  ENDSELECT
+ENDSUBROUTINE writematrix_PETScMatrixtype
 #endif
 
 ENDMODULE MatrixTypes_PETSc
