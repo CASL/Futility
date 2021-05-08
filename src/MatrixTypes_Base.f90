@@ -64,6 +64,8 @@ TYPE,ABSTRACT :: MatrixType
     PROCEDURE(matrix_get_sub_absintfc),DEFERRED,PASS :: get
     !> Deferred routine for getting a matrix value
     PROCEDURE(matrix_transpose_sub_absintfc),DEFERRED,PASS :: transpose
+    !> Deferred routine for writing a matrix
+    PROCEDURE(matrix_write_absintfc),DEFERRED,PASS :: writematrix
 ENDTYPE MatrixType
 !
 !List of Abstract Interfaces

@@ -68,6 +68,9 @@ TYPE,EXTENDS(SquareMatrixType) :: DenseSquareMatrixType
     !> @copybrief MatrixTypes::zeroentries_DenseSquareMatrixType
     !> @copydetails MatrixTypes::zeroentries_DenseSquareMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_DenseSquareMatrixType
+    !> @copybrief MatrixTypes::writematrix_DenseSquareMatrixType
+    !> @copydetails MatrixTypes::writematrix_DenseSquareMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_DenseSquareMatrixType
 ENDTYPE DenseSquareMatrixType
 
 !> @brief The extended type for dense rectangular matrices
@@ -95,6 +98,9 @@ TYPE,EXTENDS(RectMatrixType) :: DenseRectMatrixType
     !> @copybrief MatrixTypes::zeroentries_DenseRectMatrixType
     !> @copydetails MatrixTypes::zeroentries_DenseRectMatrixType
     PROCEDURE,PASS :: zeroentries => zeroentries_DenseRectMatrixType
+    !> @copybrief MatrixTypes::writematrix_DenseRectMatrixType
+    !> @copydetails MatrixTypes::writematrix_DenseRectMatrixType
+    PROCEDURE,PASS :: writematrix => writematrix_DenseRectMatrixType
 ENDTYPE DenseRectMatrixType
 
 !I think this may need to be revisited
