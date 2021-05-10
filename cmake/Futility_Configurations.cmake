@@ -6,7 +6,7 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-INCLUDE(CheckMPIF2008StandardCompiles)
+INCLUDE(${Futility_SOURCE_DIR}/cmake/CheckMPIF2008StandardCompiles.cmake)
 IF(${PROJECT_NAME}_VERBOSE_CONFIGURE)
     MESSAGE("Configuring Futility compiler options for:")
     PRINT_VAR(PACKAGE_NAME)
