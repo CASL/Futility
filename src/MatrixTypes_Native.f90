@@ -1973,9 +1973,9 @@ SUBROUTINE  writematrix_DenseSquareMatrixType(matrix,format_mode,file_mode,filen
   TYPE(FortranFileType) :: matrix_file
   INTEGER(SIK) :: i,j
   INTEGER(SIK) :: file_format,matrix_type
-  REQUIRE(matrix%isInit)
   CHARACTER(LEN=80) :: tmpfilename
 
+  REQUIRE(matrix%isInit)
   file_format=ASCII_MATLAB
   IF(PRESENT(format_mode)) THEN
     file_format=format_mode
@@ -2277,14 +2277,14 @@ SUBROUTINE writematrix_DistributedBandedMatrixType(matrix,format_mode,file_mode,
   REAL(SRK),ALLOCATABLE :: tmpval(:)
   REAL(SRK) :: realvalue
   TYPE(FortranFileType) :: matrix_file
-  REQUIRE(matrix%isInit)
-  REQUIRE(matrix%isAssembled)
+
   INTEGER(KIND=MPI_OFFSET_KIND) ::baseoffset
   ! Note it is assume that the number of elements is smaller than 10^14
   character(len=50), ALLOCATABLE :: text(:)
   CHARACTER(LEN=80):: tmpfilename
   INTEGER(SIK) :: file_format
   REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
 
   file_format=ASCII_MATLAB
   IF(PRESENT(format_mode)) THEN
@@ -2327,7 +2327,7 @@ SUBROUTINE writematrix_DistributedBandedMatrixType(matrix,format_mode,file_mode,
     CALL MPI_File_open(MPI_COMM_WORLD, TRIM(tmpfilename),&
       MPI_MODE_APPEND+MPI_MODE_WRONLY, MPI_INFO_NULL, filehdl,mpierr)
     call MPI_FILE_GET_POSITION(filehdl,baseoffset,mpierr)
-    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET, 0,matrix%comm,mpierr)
     nBatch=MIN(10000,matrix%nLocal)
     ALLOCATE(text(nBatch))
     icounter=0
@@ -2416,7 +2416,7 @@ SUBROUTINE writematrix_DistributedBandedMatrixType(matrix,format_mode,file_mode,
 
     !WRITE
     CALL MPI_FILE_GET_POSITION(filehdl, baseoffset,mpierr)
-    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET, 0,matrix%comm,mpierr)
     baseoffset = baseoffset+writeoffset(rank+1) *  SIK
     CALL MPI_File_write_at_all(filehdl,baseoffset, tmpiarray, nLocal, &
       MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
@@ -2457,14 +2457,13 @@ SUBROUTINE  writematrix_DistributedBlockBandedMatrixType(matrix,format_mode,file
   REAL(SRK),ALLOCATABLE :: tmpval(:)
   REAL(SRK) :: realvalue
   TYPE(FortranFileType) :: matrix_file
-  REQUIRE(matrix%isInit)
-  REQUIRE(matrix%isAssembled)
   INTEGER(KIND=MPI_OFFSET_KIND) ::baseoffset
   ! Note it is assume that the number of elements is smaller than 10^14
   character(len=50), ALLOCATABLE :: text(:)
   CHARACTER(LEN=80):: tmpfilename
   INTEGER(SIK) :: file_format
   REQUIRE(matrix%isInit)
+  REQUIRE(matrix%isAssembled)
 
   file_format=ASCII_MATLAB
   IF(PRESENT(format_mode)) THEN
@@ -2509,7 +2508,7 @@ SUBROUTINE  writematrix_DistributedBlockBandedMatrixType(matrix,format_mode,file
     CALL MPI_File_open(MPI_COMM_WORLD, TRIM(tmpfilename),&
       MPI_MODE_APPEND+MPI_MODE_WRONLY, MPI_INFO_NULL, filehdl,mpierr)
     call MPI_FILE_GET_POSITION(filehdl,baseoffset,mpierr)
-    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET, 0,matrix%comm,mpierr)
     nBatch=MIN(10000,nLocal)
     ALLOCATE(text(nBatch))
     icounter=0
@@ -2625,7 +2624,7 @@ SUBROUTINE  writematrix_DistributedBlockBandedMatrixType(matrix,format_mode,file
 
     ! !WRITE
     CALL MPI_FILE_GET_POSITION(filehdl, baseoffset,mpierr)
-    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET_KIND, 0,matrix%comm,mpierr)
+    CALL MPI_Bcast(baseoffset, 1, MPI_OFFSET, 0,matrix%comm,mpierr)
     baseoffset = baseoffset+writeoffset(rank+1) *  SIK
     CALL MPI_File_write_at_all(filehdl,baseoffset, tmpiarray, nLocal, &
       MPI_INTEGER, MPI_STATUS_IGNORE,mpierr)
