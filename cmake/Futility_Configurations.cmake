@@ -6,7 +6,7 @@
 # of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-INCLUDE(CheckMPIF2003StandardCompiles)
+INCLUDE(${Futility_SOURCE_DIR}/cmake/CheckMPIF2008StandardCompiles.cmake)
 IF(${PROJECT_NAME}_VERBOSE_CONFIGURE)
     MESSAGE("Configuring Futility compiler options for:")
     PRINT_VAR(PACKAGE_NAME)
@@ -110,14 +110,14 @@ ENDIF()
 
 # Check if MPI supports Fortran 2003 standard
 IF(${PROJECT_NAME}_BUILD_STANDARD)
-    CHECK_MPI_F2003_STANDARD_COMPILES()
-    IF(${PROJECT_NAME}_BUILD_STANDARD AND NOT MPI_F2003_STANDARD_COMPLIANT)
-        MESSAGE(STATUS "Disabling F2003 Standard since MPI install is not F2003 compliant")
-        GLOBAL_SET(${PROJECT_NAME}_BUILD_STANDARD ${MPI_F2003_STANDARD_COMPLIANT})
+    CHECK_MPI_F2008_STANDARD_COMPILES()
+    IF(${PROJECT_NAME}_BUILD_STANDARD AND NOT MPI_F2008_STANDARD_COMPLIANT)
+        MESSAGE(STATUS "Disabling F2008 Standard since MPI install is not F2008 compliant")
+        GLOBAL_SET(${PROJECT_NAME}_BUILD_STANDARD ${MPI_F2008_STANDARD_COMPLIANT})
     ENDIF()
 ELSE()
     IF(${PACKAGE_NAME} STREQUAL "Futility")
-        MESSAGE(STATUS "Project has disabled F2003 standard compilation")
+        MESSAGE(STATUS "Project has disabled F2008 standard compilation")
     ENDIF()
 ENDIF()
 
@@ -145,7 +145,7 @@ IF(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR
     IF(${PROJECT_NAME}_BUILD_STANDARD)
         SET(Fortran_FLAGS
             ${Fortran_FLAGS}
-            ${CSYM}stand${s}f03
+            ${CSYM}stand${s}f08
            )
     ENDIF()
 
@@ -242,7 +242,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     IF(${PROJECT_NAME}_BUILD_STANDARD)
         SET(Fortran_FLAGS
             ${Fortran_FLAGS}
-            ${CSYM}std=f2003
+            ${CSYM}std=f2008
            )
     ENDIF()
 
@@ -307,7 +307,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "PGI")
         ${CSYM}Mallocatable=03
         ${CSYM}pgf90libs
        )
-    ## TODO: Figure out what sets 2003 standard for PGI and add same if statement for Futility_BUILD_NOSTANDARD
+    ## TODO: Figure out what sets 2008 standard for PGI and add same if statement for Futility_BUILD_NOSTANDARD
     SET(Fortran_FLAGS_DEBUG
         ${CSYM}g
         ${CSYM}Mbounds
@@ -355,7 +355,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "NAG")
     IF(${PROJECT_NAME}_BUILD_STANDARD)
         SET(Fortran_FLAGS
             ${Fortran_FLAGS}
-            ${CSYM}f2003
+            ${CSYM}f2008
            )
     ENDIF()
 
