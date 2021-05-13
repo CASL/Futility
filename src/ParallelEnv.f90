@@ -184,12 +184,12 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
         send_REAL1_MPI_Env_type, &
         send_INT1_MPI_Env_type
 
-    !> @copybrief ParallelEnv::gather_SIK0_MPI_Env_type
-    !> @copydetails ParallelEnv::gather_SIK0_MPI_Env_type
-    PROCEDURE,PASS,PRIVATE :: gather_SIK0_MPI_Env_type
-    !> @copybrief ParallelEnv::gather_SIK1_MPI_Env_type
-    !> @copydetails ParallelEnv::gather_SIK1_MPI_Env_type
-    PROCEDURE,PASS,PRIVATE :: gather_SIK1_MPI_Env_type
+    !> @copybrief ParallelEnv::gather_SNK0_MPI_Env_type
+    !> @copydetails ParallelEnv::gather_SNK0_MPI_Env_type
+    PROCEDURE,PASS,PRIVATE :: gather_SNK0_MPI_Env_type
+    !> @copybrief ParallelEnv::gather_SNK1_MPI_Env_type
+    !> @copydetails ParallelEnv::gather_SNK1_MPI_Env_type
+    PROCEDURE,PASS,PRIVATE :: gather_SNK1_MPI_Env_type
     !> @copybrief ParallelEnv::gather_SLK0_MPI_Env_type
     !> @copydetails ParallelEnv::gather_SLK0_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: gather_SLK0_MPI_Env_type
@@ -203,13 +203,21 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copydetails ParallelEnv::gather_str2D_MPI_ENV_type
     PROCEDURE,PASS,PRIVATE :: gather_str2D_MPI_ENV_type
     !>
-    GENERIC :: gather => gather_SIK0_MPI_Env_type, &
+    GENERIC :: gather => gather_SNK0_MPI_Env_type, &
+        gather_SNK1_MPI_Env_type, &
         gather_SLK0_MPI_Env_type, &
         gather_SLK1_MPI_Env_type, &
-        gather_SIK1_MPI_Env_type, &
         gather_str1D_MPI_ENV_type, &
         gather_str2D_MPI_ENV_type
-
+    !> @copybrief ParallelEnv::gatherv_SSK1_MPI_Env_type
+    !> @copydetails ParallelEnv::gatherv_SSK1_MPI_Env_type
+    PROCEDURE,PASS,PRIVATE :: gatherv_SSK1_MPI_Env_type
+    !> @copybrief ParallelEnv::gatherv_SDK1_MPI_Env_type
+    !> @copydetails ParallelEnv::gatherv_SDK1_MPI_Env_type
+    PROCEDURE,PASS,PRIVATE :: gatherv_SDK1_MPI_Env_type
+    !> Generic interface for MPI_gatherv
+    GENERIC :: gatherv => gatherv_SSK1_MPI_Env_type, &
+        gatherv_SDK1_MPI_Env_type
     !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
     !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: scatter_SLK0_MPI_Env_type
@@ -997,10 +1005,10 @@ ENDSUBROUTINE recv_INT1_MPI_Env_type
 !> @param recvbuf the data which is to be sent
 !> @param root the rank of the root process
 !>
-SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+SUBROUTINE gather_SNK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SIK),INTENT(IN) :: sendbuf
-  INTEGER(SIK),INTENT(INOUT) :: recvbuf(:)
+  INTEGER(SNK),INTENT(IN) :: sendbuf
+  INTEGER(SNK),INTENT(INOUT) :: recvbuf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1014,7 +1022,157 @@ SUBROUTINE gather_SIK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
 #else
   recvbuf(1)=sendbuf
 #endif
-ENDSUBROUTINE gather_SIK0_MPI_Env_type
+ENDSUBROUTINE gather_SNK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Gather for an SNK array
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
+SUBROUTINE gather_SNK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  INTEGER(SNK),INTENT(IN) :: sendbuf(:)
+  INTEGER(SNK),INTENT(INOUT) :: recvbuf(:,:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+  INTEGER(SIK) :: rank,count
+#ifndef HAVE_MPI
+  INTEGER(SIK)::i,j,n
+#endif
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(0 <= rank)
+  REQUIRE(rank < myPE%nproc)
+  count=SIZE(sendbuf)
+  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+#ifdef HAVE_MPI
+  !32 Bit integer
+  CALL MPI_Gather(sendbuf,count,MPI_INTEGER,recvbuf,count, &
+      MPI_INTEGER,rank,myPE%comm,mpierr)
+#else
+  DO n=1,count
+    i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
+    j=(n-1)/SIZE(recvbuf,DIM=1)+1
+    recvbuf(i,j)=sendbuf(n)
+  ENDDO
+#endif
+ENDSUBROUTINE gather_SNK1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Gather
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
+SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  INTEGER(SLK),INTENT(IN) :: sendbuf
+  INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+  INTEGER(SIK) :: rank
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(0 <= rank)
+  REQUIRE(rank < myPE%nproc)
+  REQUIRE(SIZE(recvbuf) == myPE%nproc)
+#ifdef HAVE_MPI
+  CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
+      rank,myPE%comm,mpierr)
+#else
+  recvbuf(1)=sendbuf
+#endif
+ENDSUBROUTINE gather_SLK0_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine calls MPI_Gather
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param recvbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
+SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  INTEGER(SLK),INTENT(IN) :: sendbuf(:)
+  INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+  INTEGER(SIK) :: rank,count
+#ifndef HAVE_MPI
+  INTEGER(SIK)::i,j,n
+#endif
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(0 <= rank)
+  REQUIRE(rank < myPE%nproc)
+  count=SIZE(sendbuf)
+  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+#ifdef HAVE_MPI
+  CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
+      MPI_INTEGER8,rank,myPE%comm,mpierr)
+#else
+  DO n=1,count
+    i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
+    j=(n-1)/SIZE(recvbuf,DIM=1)+1
+    recvbuf(i,j)=sendbuf(n)
+  ENDDO
+#endif
+ENDSUBROUTINE gather_SLK1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper that emulates MPI_Gather for non-contiguous array of Strings
+!> @param myPE parallel environment where the communication originates
+!> @param sendbuf the data which is to be sent
+!> @param root the rank of the root process
+!>
+SUBROUTINE gather_str1D_MPI_ENV_type(myPE,sendbuf,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: myPE
+  TYPE(StringType),INTENT(INOUT) :: sendbuf(:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+
+#ifdef HAVE_MPI
+  INTEGER(SIK) :: rank,iEntry,maxChars
+  INTEGER(SIK),ALLOCATABLE :: charProc(:)
+  CHARACTER(LEN=:),ALLOCATABLE :: chars
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(0 <= rank)
+  REQUIRE(rank < myPE%nproc)
+  IF(myPE%nproc == 0) RETURN
+
+  ! Need to know the maximum length
+  maxChars = MAXVAL(LEN(sendbuf(:)))
+  CALL myPE%allReduceMaxI_scalar(maxChars)
+
+  !Need to know which process is responsible for which string
+  ALLOCATE(charProc(SIZE(sendbuf)))
+  charProc = -HUGE(rank)
+  DO iEntry=1,SIZE(sendbuf)
+    IF(LEN(sendbuf(iEntry)) > 0) charProc(iEntry) = myPE%rank
+  ENDDO
+  !Ensure we get an updated rank for each character if possible
+  !Where data is empty on all processes, a rank of -HUGE will be skipped
+  CALL myPE%allReduceMaxI(SIZE(charProc),charProc)
+
+  !Set-up individual send and receive for each string
+  IF(myPE%rank /= rank) THEN
+    DO iEntry=1,SIZE(sendbuf)
+      IF(charProc(iEntry) == myPE%rank) THEN
+        CALL myPE%send(CHAR(sendbuf(iEntry)),rank,iEntry)
+      ENDIF
+    ENDDO
+  ELSE
+    ALLOCATE(CHARACTER(maxChars) :: chars)
+    DO iEntry=1,SIZE(sendbuf)
+      IF(charProc(iEntry) /= rank .AND. charProc(iEntry) >= 0) THEN
+        chars = REPEAT(" ",maxChars)
+        CALL myPE%recv(chars,charProc(iEntry),iEntry)
+        sendbuf(iEntry) = TRIM(chars)
+      ENDIF
+    ENDDO
+  ENDIF
+#endif
+ENDSUBROUTINE gather_str1D_MPI_ENV_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper that emulates MPI_Gather for non-contiguous array of Strings
@@ -1084,160 +1242,98 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
 ENDSUBROUTINE gather_str2D_MPI_ENV_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper that emulates MPI_Gather for non-contiguous array of Strings
-!> @param myPE parallel environment where the communication originates
-!> @param sendbuf the data which is to be sent
-!> @param root the rank of the root process
+!> @brief Wrapper routine for MPI_gatherv for 1D array of SRK reals
+!> @param this the MPI environment
+!> @param sendbuf the data to be sent by this process
+!> @param recvbuf the data received on the root process
+!> @param recvcounts the counts of data received by the root process from other processes
+!> @param root the process to gather all the data to; optional, defaults to 0
 !>
-SUBROUTINE gather_str1D_MPI_ENV_type(myPE,sendbuf,root)
-  CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  TYPE(StringType),INTENT(INOUT) :: sendbuf(:)
+SUBROUTINE gatherv_SSK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: this
+  REAL(SSK),INTENT(IN) :: sendbuf(:)
+  REAL(SSK),INTENT(OUT),ALLOCATABLE :: recvbuf(:)
+  INTEGER(SIK),INTENT(OUT),ALLOCATABLE :: recvcounts(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+  !
+  INTEGER(SIK) :: rank,i
+  INTEGER(SIK),ALLOCATABLE :: displs(:)
 
-#ifdef HAVE_MPI
-  INTEGER(SIK) :: rank,iEntry,maxChars
-  INTEGER(SIK),ALLOCATABLE :: charProc(:)
-  CHARACTER(LEN=:),ALLOCATABLE :: chars
   rank=0
   IF(PRESENT(root)) rank=root
-  REQUIRE(0 <= rank)
-  REQUIRE(rank < myPE%nproc)
-  IF(myPE%nproc == 0) RETURN
+  REQUIRE(rank >= 0)
+  REQUIRE(rank < this%nproc)
 
-  ! Need to know the maximum length
-  maxChars = MAXVAL(LEN(sendbuf(:)))
-  CALL myPE%allReduceMaxI_scalar(maxChars)
-
-  !Need to know which process is responsible for which string
-  ALLOCATE(charProc(SIZE(sendbuf)))
-  charProc = -HUGE(rank)
-  DO iEntry=1,SIZE(sendbuf)
-    IF(LEN(sendbuf(iEntry)) > 0) charProc(iEntry) = myPE%rank
-  ENDDO
-  !Ensure we get an updated rank for each character if possible
-  !Where data is empty on all processes, a rank of -HUGE will be skipped
-  CALL myPE%allReduceMaxI(SIZE(charProc),charProc)
-
-  !Set-up individual send and receive for each string
-  IF(myPE%rank /= rank) THEN
-    DO iEntry=1,SIZE(sendbuf)
-      IF(charProc(iEntry) == myPE%rank) THEN
-        CALL myPE%send(CHAR(sendbuf(iEntry)),rank,iEntry)
-      ENDIF
-    ENDDO
-  ELSE
-    ALLOCATE(CHARACTER(maxChars) :: chars)
-    DO iEntry=1,SIZE(sendbuf)
-      IF(charProc(iEntry) /= rank .AND. charProc(iEntry) >= 0) THEN
-        chars = REPEAT(" ",maxChars)
-        CALL myPE%recv(chars,charProc(iEntry),iEntry)
-        sendbuf(iEntry) = TRIM(chars)
-      ENDIF
-    ENDDO
+  ALLOCATE(recvcounts(this%nproc))
+  CALL this%gather(SIZE(sendbuf),recvcounts,rank)
+  ALLOCATE(displs(this%nproc))
+  IF(this%rank == rank) THEN
+    displs(1)=0
+    DO i=2,this%nproc
+      displs(i)=displs(i-1)+recvcounts(i-1)
+    ENDDO !i
   ENDIF
+
+  ALLOCATE(recvbuf(SUM(recvcounts)))
+#ifdef HAVE_MPI
+  CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_REAL,recvbuf,recvcounts, &
+      displs,MPI_REAL,rank,this%comm,mpierr)
+#else
+  recvbuff=sendbuf
 #endif
-ENDSUBROUTINE gather_str1D_MPI_ENV_type
+  IF(this%rank /= rank) THEN
+    DEALLOCATE(recvbuf)
+    DEALLOCATE(recvcounts)
+  ENDIF
+
+ENDSUBROUTINE gatherv_SSK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
-!> @brief Wrapper routine calls MPI_Gather for an SIK array
-!> @param myPE parallel environment where the communication originates
-!> @param sendbuf the data which is to be sent
-!> @param recvbuf the data which is to be sent
-!> @param root the rank of the root process
+!> @brief Wrapper routine for MPI_gatherv for 1D array of SDK reals
+!> @param this the MPI environment
+!> @param sendbuf the data to be sent by this process
+!> @param recvbuf the data received on the root process
+!> @param recvcounts the counts of data received by the root process from other processes
+!> @param root the process to gather all the data to; optional, defaults to 0
 !>
-SUBROUTINE gather_SIK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-  CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SIK),INTENT(IN) :: sendbuf(:)
-  INTEGER(SIK),INTENT(INOUT) :: recvbuf(:,:)
+SUBROUTINE gatherv_SDK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: this
+  REAL(SDK),INTENT(IN) :: sendbuf(:)
+  REAL(SDK),INTENT(OUT),ALLOCATABLE :: recvbuf(:)
+  INTEGER(SIK),INTENT(OUT),ALLOCATABLE :: recvcounts(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
-  INTEGER(SIK) :: rank,count
-#ifndef HAVE_MPI
-  INTEGER(SIK)::i,j,n
-#endif
+  !
+  INTEGER(SIK) :: rank,i
+  INTEGER(SIK),ALLOCATABLE :: displs(:)
+
   rank=0
   IF(PRESENT(root)) rank=root
-  REQUIRE(0 <= rank)
-  REQUIRE(rank < myPE%nproc)
-  count=SIZE(sendbuf)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  REQUIRE(rank >= 0)
+  REQUIRE(rank < this%nproc)
+
+  ALLOCATE(recvcounts(this%nproc))
+  CALL this%gather(SIZE(sendbuf),recvcounts,rank)
+  ALLOCATE(displs(this%nproc))
+  IF(this%rank == rank) THEN
+    displs(1)=0
+    DO i=2,this%nproc
+      displs(i)=displs(i-1)+recvcounts(i-1)
+    ENDDO !i
+  ENDIF
+
+  ALLOCATE(recvbuf(SUM(recvcounts)))
 #ifdef HAVE_MPI
-#ifdef DBLINT
-  !64 Bit integer
-  CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-      MPI_INTEGER8,rank,myPE%comm,mpierr)
+  CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_REAL8,recvbuf,recvcounts, &
+      displs,MPI_REAL8,rank,this%comm,mpierr)
 #else
-  !32 Bit integer
-  CALL MPI_Gather(sendbuf,count,MPI_INTEGER,recvbuf,count, &
-      MPI_INTEGER,rank,myPE%comm,mpierr)
+  recvbuff=sendbuf
 #endif
-#else
-  DO n=1,count
-    i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
-    j=(n-1)/SIZE(recvbuf,DIM=1)+1
-    recvbuf(i,j)=sendbuf(n)
-  ENDDO
-#endif
-ENDSUBROUTINE gather_SIK1_MPI_Env_type
-!
-!-------------------------------------------------------------------------------
-!> @brief Wrapper routine calls MPI_Gather
-!> @param myPE parallel environment where the communication originates
-!> @param sendbuf the data which is to be sent
-!> @param recvbuf the data which is to be sent
-!> @param root the rank of the root process
-!>
-SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-  CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SLK),INTENT(IN) :: sendbuf
-  INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
-  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
-  INTEGER(SIK) :: rank
-  rank=0
-  IF(PRESENT(root)) rank=root
-  REQUIRE(0 <= rank)
-  REQUIRE(rank < myPE%nproc)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc)
-#ifdef HAVE_MPI
-  CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
-      rank,myPE%comm,mpierr)
-#else
-  recvbuf(1)=sendbuf
-#endif
-ENDSUBROUTINE gather_SLK0_MPI_Env_type
-!
-!-------------------------------------------------------------------------------
-!> @brief Wrapper routine calls MPI_Gather
-!> @param myPE parallel environment where the communication originates
-!> @param sendbuf the data which is to be sent
-!> @param recvbuf the data which is to be sent
-!> @param root the rank of the root process
-!>
-SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
-  CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SLK),INTENT(IN) :: sendbuf(:)
-  INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
-  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
-  INTEGER(SIK) :: rank,count
-#ifndef HAVE_MPI
-  INTEGER(SIK)::i,j,n
-#endif
-  rank=0
-  IF(PRESENT(root)) rank=root
-  REQUIRE(0 <= rank)
-  REQUIRE(rank < myPE%nproc)
-  count=SIZE(sendbuf)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
-#ifdef HAVE_MPI
-  CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
-      MPI_INTEGER8,rank,myPE%comm,mpierr)
-#else
-  DO n=1,count
-    i=MOD(n-1,SIZE(recvbuf,DIM=1))+1
-    j=(n-1)/SIZE(recvbuf,DIM=1)+1
-    recvbuf(i,j)=sendbuf(n)
-  ENDDO
-#endif
-ENDSUBROUTINE gather_SLK1_MPI_Env_type
+  IF(this%rank /= rank) THEN
+    DEALLOCATE(recvbuf)
+    DEALLOCATE(recvcounts)
+  ENDIF
+
+ENDSUBROUTINE gatherv_SDK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine calls MPI_Scatter
