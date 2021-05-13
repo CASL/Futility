@@ -1279,7 +1279,7 @@ SUBROUTINE gatherv_SSK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
   CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_REAL,recvbuf,recvcounts, &
       displs,MPI_REAL,rank,this%comm,mpierr)
 #else
-  recvbuff=sendbuf
+  recvbuf=sendbuf
 #endif
   IF(this%rank /= rank) THEN
     DEALLOCATE(recvbuf)
@@ -1326,7 +1326,7 @@ SUBROUTINE gatherv_SDK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
   CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_REAL8,recvbuf,recvcounts, &
       displs,MPI_REAL8,rank,this%comm,mpierr)
 #else
-  recvbuff=sendbuf
+  recvbuf=sendbuf
 #endif
   IF(this%rank /= rank) THEN
     DEALLOCATE(recvbuf)
