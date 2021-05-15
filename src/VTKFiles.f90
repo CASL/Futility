@@ -190,6 +190,9 @@ TYPE :: VTKMeshType
   REAL(SRK),ALLOCATABLE :: y(:)
   !> The z coordinates of the vertices in the mesh
   REAL(SRK),ALLOCATABLE :: z(:)
+  !> The field data to write to each file
+  !This is currently used for material IDs for VTU edits
+  INTEGER(SIK),ALLOCATABLE :: fieldData(:)
 !
 !List of type-bound procedures (methods) for the VTK Mesh type
   CONTAINS
@@ -395,6 +398,7 @@ CONTAINS
     IF(ALLOCATED(myVTKMesh%x)) DEALLOCATE(myVTKMesh%x)
     IF(ALLOCATED(myVTKMesh%y)) DEALLOCATE(myVTKMesh%y)
     IF(ALLOCATED(myVTKMesh%z)) DEALLOCATE(myVTKMesh%z)
+    IF(ALLOCATED(myVTKMesh%fieldData)) DEALLOCATE(myVTKMesh%fieldData)
   ENDSUBROUTINE clear_VTKMeshType
 !
 !-------------------------------------------------------------------------------
