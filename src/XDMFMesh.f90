@@ -2016,8 +2016,6 @@ FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
   ! vertices are in counter-clockwise order.
   ! Orientation of the edges matters, so if the vertices of the edge are opposite
   ! of the way they are in the cell, flip the boolean.
-!  WRITE(*,*) "pointInsideCell_XDMFMeshType cell", iCell
-!  WRITE(*,*) "  coords: ", point%coord(1:2)
   bool = .TRUE.
   REQUIRE(ALLOCATED(thismesh%edges))
 !  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
