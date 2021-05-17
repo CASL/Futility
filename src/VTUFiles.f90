@@ -199,6 +199,21 @@ SUBROUTINE writeMesh_VTUXMLFileType(myVTKFile,vtkMesh)
           sint=myVTKFile%mesh%numPoints
           aline=myVTKFile%mesh%numCells
           WRITE(funit,'(a)') '  <UnstructuredGrid>'
+          IF(ALLOCATED(myVTKFile%mesh%fieldData)) THEN
+            n=SIZE(myVTKFile%mesh%fieldData)
+            WRITE(funit,'(a)') '    <FieldData>'
+            WRITE(funit,'(a)') '      <DataArray type="Int32" Name="MaterialIds" NumberOfTuples="'// &
+                str(n)//'" format="ascii">'
+            i=0
+            DO WHILE(i < n)
+              i=i+1
+              IF(MOD(i,10) == 1) WRITE(funit,'(a)',ADVANCE='NO') '       '
+              WRITE(funit,'(a,i0)',ADVANCE='NO') " ",myVTKFile%mesh%fieldData(i)
+              IF(MOD(i,10) == 0 .OR. i == n) WRITE(funit,'(a)',ADVANCE='YES') ""
+            ENDDO
+            WRITE(funit,'(a)') '      </DataArray>'
+            WRITE(funit,'(a)') '    </FieldData>'
+          ENDIF
           WRITE(funit,'(a)') '    <Piece NumberOfPoints="'//TRIM(sint)// &
               '" NumberOfCells="'//TRIM(aline)//'">'
           WRITE(funit,'(a)') '      <Points>'
