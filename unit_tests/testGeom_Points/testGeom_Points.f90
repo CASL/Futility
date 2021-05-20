@@ -18,7 +18,7 @@ USE Geom
 
 IMPLICIT NONE
 
-TYPE(PointType) :: point,point2,point3
+TYPE(PointType) :: point,point2,point3,point4
 TYPE(PointType) :: points(2),points2(2),points3(2)
 TYPE(LinkedListPointType),POINTER :: firstPoint,thisPoint
 INTEGER(SIK) :: i
@@ -246,6 +246,17 @@ SUBROUTINE TestPoints
   CALL point2%clear()
   CALL point3%clear()
   d=Distance(point2,point3) !Test for empty points
+!
+!Test cross
+  COMPONENT_TEST('cross()')
+  CALL point2%init(DIM=3,X=2.0_SRK, Y=3.0_SRK, Z=4.0_SRK)
+  CALL point3%init(DIM=3,X=5.0_SRK, Y=6.0_SRK, Z=7.0_SRK)
+  point4 = cross(point2, point3)
+  ASSERT(point4%coord(1) .APPROXEQ. -3.0_SRK, "Incorrect x component")
+  CALL point2%clear()
+  CALL point3%clear()
+  CALL point4%clear()
+
 !
 !Test midpoint
   COMPONENT_TEST('midPoint()')
