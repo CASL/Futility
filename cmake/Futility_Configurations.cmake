@@ -67,6 +67,7 @@ IF("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
 ENDIF()
 
 IF(${PROJECT_NAME}_ENABLE_DBC)
+    MESSAGE(STATUS "Enabling Futility DBC")
     SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} FUTILITY_DBC)
 ENDIF()
 
@@ -100,6 +101,7 @@ ENDIF()
 
 # Preprocessor symbol for using memory profile
 IF(${PROJECT_NAME}_ENABLE_MEMPROF)
+    MESSAGE(STATUS "Enabling Futility memory profiling")
     SET(${PACKAGE_NAME}_DEFINES ${${PACKAGE_NAME}_DEFINES} FUTILITY_MEMPROF)
 ENDIF()
 
