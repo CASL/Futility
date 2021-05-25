@@ -18,3 +18,4 @@ fort.*
 /.egdist
 /.gitdist
 *.sublime-*
+.vscode
