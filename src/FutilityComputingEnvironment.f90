@@ -30,6 +30,7 @@ IMPLICIT NONE
 PRIVATE
 
 PUBLIC :: FutilityComputingEnvironment
+PUBLIC :: addExceptionHandlerSurrogates
 
 !> This type bundles together objects that are commonly needed throughout
 !> all parts of the calling code.  It is intended that each package would
@@ -380,5 +381,52 @@ RECURSIVE SUBROUTINE clearSubCompEnvs(this)
   this%nSubCompEnvs=0
 
 ENDSUBROUTINE clearSubCompEnvs
+!
+!-------------------------------------------------------------------------------
+!> @brief Adds exception handler as surrogate to all lower level Futility handlers
+!> @param ce the exception handler to use as a surrogate
+!>
+SUBROUTINE addExceptionHandlerSurrogates(ce)
+  USE Allocs, ONLY : eAllocs
+  USE EigenvalueSolverTypes, ONLY : eEigenvalueSolverType
+  USE ElementsIsotopes, ONLY : eElementsIsotopes
+  USE ExpTables, ONLY : eExpTable
+  USE FMU_Wrapper, ONLY : eFMU_Wrapper
+  USE WaterSatProperties, ONLY : eWaterProp
+  USE LinearSolverTypes, ONLY : eLinearSolverType
+  USE MatrixTypes, ONLY : eMatrixType
+  USE ODESolverTypes, ONLY : eODESolverType
+  USE ParameterLists, ONLY : eParams
+  USE PartitionGraph, ONLY : ePartitionGraph
+  USE PreconditionerTypes, ONLY : ePreCondType
+  USE SchemaParserModule, ONLY : eSchemaParser
+  USE StochasticSampling, ONLY : eStochasticSampler
+  USE VectorTypes, ONLY : eVectorType
+  USE VTKFiles, ONLY : eVTK
+  USE XDMFMesh, ONLY : eXDMF
+  USE MeshTransfer, ONLY : eMeshTransfer
+  TYPE(ExceptionHandlerType),TARGET,INTENT(IN) :: ce
+
+  CALL eMeshTransfer%addSurrogate(ce)
+  CALL eXDMF%addSurrogate(ce)
+  CALL eVTK%addSurrogate(ce)
+  CALL eVectorType%addSurrogate(ce)
+  CALL eStochasticSampler%addSurrogate(ce)
+  CALL eSchemaParser%addSurrogate(ce)
+  CALL ePreCondType%addSurrogate(ce)
+  CALL ePartitionGraph%addSurrogate(ce)
+  CALL eParams%addSurrogate(ce)
+  CALL eParEnv%addSurrogate(ce)
+  CALL eODESolverType%addSurrogate(ce)
+  CALL eMatrixType%addSurrogate(ce)
+  CALL eLinearSolverType%addSurrogate(ce)
+  CALL eWaterProp%addSurrogate(ce)
+  CALL eFMU_Wrapper%addSurrogate(ce)
+  CALL eExpTable%addSurrogate(ce)
+  CALL eElementsIsotopes%addSurrogate(ce)
+  CALL eEigenvalueSolverType%addSurrogate(ce)
+  CALL eAllocs%addSurrogate(ce)
+
+ENDSUBROUTINE addExceptionHandlerSurrogates
 !
 ENDMODULE FutilityComputingEnvironmentModule

@@ -14,7 +14,6 @@ USE IntrType
 USE Strings
 USE FileType_Fortran
 USE FileType_Log
-USE ExceptionHandler
 USE ParameterLists
 USE ParallelEnv
 

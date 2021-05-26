@@ -10,7 +10,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VectorTypes_Trilinos
 USE IntrType
-USE ExceptionHandler
 USE ParameterLists
 USE VectorTypes_Base
 USE trilinos_interfaces

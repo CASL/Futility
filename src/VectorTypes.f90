@@ -50,7 +50,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VectorTypes
 USE IntrType
-USE ExceptionHandler
 USE Allocs
 USE ParameterLists
 USE VectorTypes_Base
@@ -310,7 +309,7 @@ ENDSUBROUTINE VectorFactory
 !> this routine will attempt to adopt parameters from the source vector to initialize the dest vector.
 !> This is only done for required parameters that are not provided in the passed
 !> parameter list. Providing the parameters on the parameter list will override
-!> the corresponding parameters from the source matrix. This behavior will be 
+!> the corresponding parameters from the source matrix. This behavior will be
 !> consistent for all VectorResemble routines
 SUBROUTINE VectorResemble(dest, source, params)
   CHARACTER(LEN=*),PARAMETER :: myName="VectorResemble"
@@ -534,7 +533,7 @@ SUBROUTINE VectorResembleAllocArray(dest, source, nvec, inparams)
 
   IF(PRESENT(inparams)) CALL inparams%clear()
   CALL params%clear()
-  
+
 ENDSUBROUTINE VectorResembleAllocArray
 !
 !-------------------------------------------------------------------------------

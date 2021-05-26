@@ -10,7 +10,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE VectorTypes_Native
 USE IntrType
-USE ExceptionHandler
 #include "Futility_DBC.h"
 USE Futility_DBC
 USE ParameterLists
@@ -497,7 +496,7 @@ SUBROUTINE init_NativeDistributedVectorType(thisVector,Params)
     CALL eVectorType%raiseError('Incorrect call to '// &
         modName//'::'//myName//' - VectorType already initialized')
   ENDIF
-    
+
 ENDSUBROUTINE init_NativeDistributedVectorType
 !
 !-------------------------------------------------------------------------------

@@ -63,7 +63,6 @@
 MODULE FileType_DA32
 USE ISO_FORTRAN_ENV
 USE IntrType
-USE ExceptionHandler
 USE IO_Strings
 USE FileType_Fortran
 
