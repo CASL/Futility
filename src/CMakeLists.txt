@@ -76,6 +76,7 @@ TRIBITS_ADD_LIBRARY(Utils
       VTUFiles.f90
       IOutil.f90
       ParameterLists.f90
+      XDMFMesh.f90
       CommandLineProcessor.f90
       MatrixTypes_Base.f90
       MatrixTypes_Native.f90
@@ -101,7 +102,6 @@ TRIBITS_ADD_LIBRARY(Utils
       PartitionGraph.f90
       SchemaParser.f90
       SpeciesElements.f90
-      XDMFMesh.f90
       FutilityComputingEnvironment.f90
       NonLinearSolver.f90
       SolutionAcceleration.f90

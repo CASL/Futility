@@ -26,21 +26,22 @@ USE ParameterLists
 IMPLICIT NONE
 PRIVATE
 
-#ifdef FUTILITY_HAVE_HDF5
 ! Public members
 PUBLIC :: eXDMF
+#ifdef FUTILITY_HAVE_HDF5
 PUBLIC :: XDMFMeshType
 PUBLIC :: XDMFTopologyList
 PUBLIC :: ImportXDMFMesh
 PUBLIC :: ExportXDMFMesh
 PUBLIC :: ASSIGNMENT(=)
-
 !> The module name
 CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_XDMF'
+#endif
 
 !> Exception handler for the module
 TYPE(ExceptionHandlerType),SAVE :: eXDMF
 
+#ifdef FUTILITY_HAVE_HDF5
 !> Parameter list that holds XDMF topology names, ids, etc.
 TYPE(ParamType),SAVE :: XDMFTopologyList
 
