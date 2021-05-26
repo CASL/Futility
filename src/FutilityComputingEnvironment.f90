@@ -392,7 +392,7 @@ SUBROUTINE addExceptionHandlerSurrogates(ce)
   USE ElementsIsotopes, ONLY : eElementsIsotopes
   USE ExpTables, ONLY : eExpTable
   USE FMU_Wrapper, ONLY : eFMU_Wrapper
-  USE WaterSatProperties, ONLY : eWaterProp
+  USE IAPWSWaterPropertiesModule, ONLY : eWaterProp
   USE LinearSolverTypes, ONLY : eLinearSolverType
   USE MatrixTypes, ONLY : eMatrixType
   USE ODESolverTypes, ONLY : eODESolverType
@@ -407,25 +407,25 @@ SUBROUTINE addExceptionHandlerSurrogates(ce)
   USE MeshTransfer, ONLY : eMeshTransfer
   TYPE(ExceptionHandlerType),TARGET,INTENT(IN) :: ce
 
-  CALL eMeshTransfer%addSurrogate(ce)
-  CALL eXDMF%addSurrogate(ce)
-  CALL eVTK%addSurrogate(ce)
-  CALL eVectorType%addSurrogate(ce)
-  CALL eStochasticSampler%addSurrogate(ce)
-  CALL eSchemaParser%addSurrogate(ce)
-  CALL ePreCondType%addSurrogate(ce)
-  CALL ePartitionGraph%addSurrogate(ce)
-  CALL eParams%addSurrogate(ce)
-  CALL eParEnv%addSurrogate(ce)
-  CALL eODESolverType%addSurrogate(ce)
-  CALL eMatrixType%addSurrogate(ce)
-  CALL eLinearSolverType%addSurrogate(ce)
-  CALL eWaterProp%addSurrogate(ce)
-  CALL eFMU_Wrapper%addSurrogate(ce)
-  CALL eExpTable%addSurrogate(ce)
-  CALL eElementsIsotopes%addSurrogate(ce)
-  CALL eEigenvalueSolverType%addSurrogate(ce)
   CALL eAllocs%addSurrogate(ce)
+  CALL eEigenvalueSolverType%addSurrogate(ce)
+  CALL eElementsIsotopes%addSurrogate(ce)
+  CALL eMeshTransfer%addSurrogate(ce)
+  CALL eExpTable%addSurrogate(ce)
+  CALL eFMU_Wrapper%addSurrogate(ce)
+  CALL eWaterProp%addSurrogate(ce)
+  CALL eLinearSolverType%addSurrogate(ce)
+  CALL eMatrixType%addSurrogate(ce)
+  CALL eODESolverType%addSurrogate(ce)
+  CALL eParEnv%addSurrogate(ce)
+  CALL eParams%addSurrogate(ce)
+  CALL ePartitionGraph%addSurrogate(ce)
+  CALL ePreCondType%addSurrogate(ce)
+  CALL eSchemaParser%addSurrogate(ce)
+  CALL eStochasticSampler%addSurrogate(ce)
+  CALL eVectorType%addSurrogate(ce)
+  CALL eVTK%addSurrogate(ce)
+  CALL eXDMF%addSurrogate(ce)
 
 ENDSUBROUTINE addExceptionHandlerSurrogates
 !

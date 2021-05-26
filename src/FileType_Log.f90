@@ -52,6 +52,7 @@ MODULE FileType_Log
 
 USE ISO_FORTRAN_ENV
 USE IntrType
+USE ExceptionHandler
 USE Times
 USE IO_Strings
 USE FileType_Fortran

@@ -28,6 +28,7 @@ PRIVATE
 
 #ifdef FUTILITY_HAVE_HDF5
 ! Public members
+PUBLIC :: eXDMF
 PUBLIC :: XDMFMeshType
 PUBLIC :: XDMFTopologyList
 PUBLIC :: ImportXDMFMesh

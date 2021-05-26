@@ -34,6 +34,7 @@ USE HDF5
 #endif
 USE IntrType
 USE Strings
+USE ExceptionHandler
 USE IO_Strings
 USE ParameterLists
 USE ParallelEnv
