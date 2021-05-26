@@ -403,7 +403,9 @@ SUBROUTINE addExceptionHandlerSurrogates(ce)
   USE StochasticSampling, ONLY : eStochasticSampler
   USE VectorTypes, ONLY : eVectorType
   USE VTKFiles, ONLY : eVTK
+#ifdef FUTILITY_HAVE_HDF5
   USE XDMFMesh, ONLY : eXDMF
+#endif
   USE MeshTransfer, ONLY : eMeshTransfer
   TYPE(ExceptionHandlerType),TARGET,INTENT(IN) :: ce
 
@@ -425,7 +427,9 @@ SUBROUTINE addExceptionHandlerSurrogates(ce)
   CALL eStochasticSampler%addSurrogate(ce)
   CALL eVectorType%addSurrogate(ce)
   CALL eVTK%addSurrogate(ce)
+#ifdef FUTILITY_HAVE_HDF5
   CALL eXDMF%addSurrogate(ce)
+#endif
 
 ENDSUBROUTINE addExceptionHandlerSurrogates
 !
