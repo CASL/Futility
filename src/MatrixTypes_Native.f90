@@ -12,7 +12,6 @@ MODULE MatrixTypes_Native
 #include "Futility_DBC.h"
 USE Futility_DBC
 USE IntrType
-USE ExceptionHandler
 USE ParameterLists
 USE Allocs
 USE MatrixTypes_Base

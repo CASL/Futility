@@ -76,6 +76,7 @@ TRIBITS_ADD_LIBRARY(Utils
       VTUFiles.f90
       IOutil.f90
       ParameterLists.f90
+      XDMFMesh.f90
       CommandLineProcessor.f90
       MatrixTypes_Base.f90
       MatrixTypes_Native.f90
@@ -94,18 +95,17 @@ TRIBITS_ADD_LIBRARY(Utils
       MultigridMesh.f90
       EigenvalueSolverTypes.f90
       ODESolverTypes.f90
-      NonLinearSolver.f90
-      SolutionAcceleration.f90
-      AndersonAcceleration.f90
       StochasticSampling.f90
       Sorting.f90
       MeshTransfer.f90
       ArrayUtils.f90
       PartitionGraph.f90
-      FutilityComputingEnvironment.f90
       SchemaParser.f90
       SpeciesElements.f90
-      XDMFMesh.f90
+      FutilityComputingEnvironment.f90
+      NonLinearSolver.f90
+      SolutionAcceleration.f90
+      AndersonAcceleration.f90
     DEPLIBS
       CUtils
       TrilinosUtils

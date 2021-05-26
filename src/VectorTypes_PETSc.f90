@@ -12,7 +12,6 @@ MODULE VectorTypes_PETSc
 USE IntrType
 #include "Futility_DBC.h"
 USE Futility_DBC
-USE ExceptionHandler
 USE ParameterLists
 USE VectorTypes_Base
 
