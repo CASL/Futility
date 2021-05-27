@@ -12,7 +12,6 @@ MODULE MatrixTypes_PETSc
 #include "Futility_DBC.h"
 USE Futility_DBC
 USE IntrType
-USE ExceptionHandler
 USE ParameterLists
 USE MatrixTypes_Base
 USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec

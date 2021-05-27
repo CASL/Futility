@@ -68,7 +68,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE MatrixTypes
 USE IntrType
-USE ExceptionHandler
 USE Allocs
 USE BLAS2,           ONLY: BLAS2_matvec => BLAS_matvec
 USE BLAS3,           ONLY: BLAS3_matmult => BLAS_matmat
