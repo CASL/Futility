@@ -61,8 +61,8 @@ IMPLICIT NONE
 PRIVATE
 
 PUBLIC :: PartitionGraphType
-#ifdef UNIT_TEST
 PUBLIC :: ePartitionGraph
+#ifdef UNIT_TEST
 PUBLIC :: makeContiguousDomains
 #endif
 
