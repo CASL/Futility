@@ -27,8 +27,6 @@ PUBLIC :: PointType
 PUBLIC :: LinkedListPointType
 PUBLIC :: ClearLinkedListPointType
 PUBLIC :: Distance
-PUBLIC :: cross
-PUBLIC :: norm
 PUBLIC :: midPoint
 PUBLIC :: innerAngle
 PUBLIC :: outerAngle
@@ -120,25 +118,6 @@ INTERFACE Distance
   !> @copydetails GeomPoints::distance_2points
   MODULE PROCEDURE distance_2points
 ENDINTERFACE Distance
-
-!> @brief Generic interface for norm of a point as a vector
-!>
-!> Adds the listed module procedures to the global interface name for norm
-INTERFACE Norm
-  !> @copybrief GeomPoints::norm_point
-  !> @copydetails GeomPoints::norm_point
-  MODULE PROCEDURE norm_point
-ENDINTERFACE Norm
-
-
-!> @brief Generic interface for cross product
-!>
-!> Adds the listed module procedures to the global interface name for cross
-INTERFACE cross
-  !> @copybrief GeomPoints::cross_2points
-  !> @copydetails GeomPoints::cross_2points
-  MODULE PROCEDURE cross_2points
-ENDINTERFACE cross
 
 !> @brief Generic interface for addition operator (+)
 !>
@@ -485,38 +464,6 @@ ELEMENTAL FUNCTION distance_2points(p0,p1) RESULT(d)
     ENDSELECT
   ENDIF
 ENDFUNCTION distance_2points
-!
-!-------------------------------------------------------------------------------
-!> @brief Computes the cross product of two points
-!> @param p1 the first point
-!> @param p2 the second point
-!> @returns @c p3 the cross product of the two points
-!> @note @c p1 and @c p2 must be dimension 3
-!>
-!> Function is elemental so it can be used on an array of points.
-ELEMENTAL FUNCTION cross_2points(p1,p2) RESULT(p3)
-  CLASS(PointType),INTENT(IN) :: p1,p2
-  TYPE(PointType) :: p3
-  IF(p1%dim == p2%dim .AND. p1%dim == 3) THEN
-      CALL p3%init(DIM=3, X=(p1%coord(2)*p2%coord(3) - p2%coord(2)*p1%coord(3)), &
-                          Y=(p1%coord(3)*p2%coord(1) - p2%coord(3)*p1%coord(1)), &
-                          Z=(p1%coord(1)*p2%coord(2) - p2%coord(1)*p1%coord(2)))
-  ENDIF
-ENDFUNCTION cross_2points
-
-!
-!-------------------------------------------------------------------------------
-!> @brief Computes the norm of a point
-!> @param p the point
-!>
-!> Function is elemental so it can be used on an array of points.
-ELEMENTAL FUNCTION norm_point(p) RESULT(n)
-  CLASS(PointType),INTENT(IN) :: p
-  REAL(SRK) :: n
-  IF(p%dim == 3) THEN
-    n = SQRT(p%coord(1)**2 + p%coord(2)**2 + p%coord(3)**2)
-  ENDIF
-ENDFUNCTION norm_point
 !
 !-------------------------------------------------------------------------------
 !> @brief Computes the midpoint between two points in any dimension
