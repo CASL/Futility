@@ -13,7 +13,7 @@ SET(ADDITIONAL_FILES
 )
 
 
-Futility_CreateUnitTest(testGeom_Quadratic)
+Futility_CreateUnitTest(testGeom_QuadraticSegment)
 
 Futility_CopyFiles(ADDITIONAL_FILES)
 UNSET(ADDITIONAL_FILES)

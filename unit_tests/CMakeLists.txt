@@ -36,7 +36,7 @@ SET(UNIT_TEST_NAMES
     testGeom_Box
     testGeom_Graph
     testGeom_Poly
-    testGeom_Quadratic
+    testGeom_QuadraticSegment
     testGeom
     testSorting
     testMeshTransfer
