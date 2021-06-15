@@ -518,31 +518,35 @@ ENDSUBROUTINE testSOFTCompare
 !-------------------------------------------------------------------------------
 SUBROUTINE testisNAN()
   LOGICAL(SBK) :: bool
+  CHARACTER(LEN=3) :: nanChar = 'NaN'
+  REAL(SDK) :: nanDouble
+  REAL(SSK) :: nanSingle
   COMPONENT_TEST('isNAN (DOUBLE PRECISION)')
-  doublefloat=-1.0_SDK
-  bool=.NOT.(.NOT.(isNAN(REAL(SQRT(doublefloat),SDK))) .OR. &
-                  (isNAN(REAL(SQRT(1.0_SDK),SDK))))
-  ASSERT(bool, 'isNAN(...) (DOUBLE PRECISION)')
+  READ(nanChar,*) nanDouble
+  ASSERT(isNAN(nanDouble), 'isNAN(...) (DOUBLE PRECISION)')
+  ASSERT(.NOT.(isNAN(REAL(SQRT(1.0_SDK),SDK))), 'isNAN(...) (DOUBLE PRECISION)')
+
   COMPONENT_TEST('isNAN (SINGLE PRECISION)')
-  singlefloat=-1.0_SSK
-  bool=.NOT.(.NOT.(isNAN(REAL(SQRT(singlefloat),SSK))) .OR. &
-                  (isNAN(REAL(SQRT(1.0_SSK),SSK))))
-  ASSERT(bool, 'isNAN(...) (SINGLE PRECISION)')
+  READ(nanChar,*) nanSingle
+  ASSERT(isNAN(nanSingle), 'isNAN(...) (SINGLE PRECISION)')
+  ASSERT(.NOT.(isNAN(REAL(SQRT(1.0_SSK),SSK))), 'isNAN(...) (SINGLE PRECISION)')
 ENDSUBROUTINE testisNAN
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testisINF()
   LOGICAL(SBK) :: bool
+  CHARACTER(LEN=3) :: infChar = 'Inf'
+  REAL(SDK) :: infDouble
+  REAL(SSK) :: infSingle
   COMPONENT_TEST('isInf (DOUBLE PRECISION)')
-  doublefloat=0.0_SDK
-  bool=.NOT.(.NOT.(isINF(REAL(1.0_SDK/doublefloat,SDK))) .OR. &
-                  (isINF(REAL(1.0_SDK,SDK))))
-  ASSERT(bool, 'isINF(...) (DOUBLE PRECISION)')
+  READ(infChar,*) infDouble
+  ASSERT(isINF(infDouble), 'isINF(...) (DOUBLE PRECISION)')
+  ASSERT(.NOT.(isINF(REAL(1.0_SDK,SDK))), 'isINF(...) (DOUBLE PRECISION)')
+
   COMPONENT_TEST('isInf (SINGLE PRECISION)')
-  singlefloat=0.0_SDK
-  bool=.NOT.(.NOT.(isINF(REAL(1.0_SSK/singlefloat,SSK))) .OR. &
-                  (isINF(REAL(1.0_SSK,SSK))))
-  ASSERT(bool, 'isINF(...) (SINGLE PRECISION)')
+  READ(infChar,*) infSingle
+  ASSERT(isINF(infSingle), 'isINF(...) (SINGLE PRECISION)')
+  ASSERT(.NOT.(isINF(REAL(1.0_SSK,SSK))), 'isINF(...) (SINGLE PRECISION)')
 ENDSUBROUTINE testisInf
 !
 !-------------------------------------------------------------------------------

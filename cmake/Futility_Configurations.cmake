@@ -251,7 +251,7 @@ ELSEIF(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     IF(${PROJECT_NAME}_FPE_TRAP)
         SET(Fortran_FLAGS
             ${Fortran_FLAGS}
-            ${CSYM}ffpe-trap=invalid,zero,overflow,underflow,denormal
+            ${CSYM}ffpe-trap=invalid,zero#,overflow,underflow,denormal
            )
     ENDIF()
 
