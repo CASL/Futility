@@ -246,7 +246,31 @@ SUBROUTINE TestPoints
   CALL point2%clear()
   CALL point3%clear()
   d=Distance(point2,point3) !Test for empty points
+
 !
+!Test Distance
+  COMPONENT_TEST('DOT_PRODUCT()')
+  CALL point2%init(DIM=1,X=0.5_SRK)
+  CALL point3%init(DIM=1,X=1.0_SRK)
+  d=DOT_PRODUCT(point2, point3)
+  ASSERT(d .APPROXEQ. 0.5_SRK, 'DOT_PRODUCT 1D')
+  CALL point2%clear()
+  CALL point3%clear()
+
+  CALL point2%init(DIM=2,X=0.5_SRK, Y=1.0_SRK)
+  CALL point3%init(DIM=2,X=1.0_SRK, Y=1.0_SRK)
+  d=DOT_PRODUCT(point2, point3)
+  ASSERT(d .APPROXEQ. 1.5_SRK, 'DOT_PRODUCT 1D')
+  CALL point2%clear()
+  CALL point3%clear()
+
+  CALL point2%init(DIM=3,X=0.5_SRK, Y=1.0_SRK, Z=2.0_SRK)
+  CALL point3%init(DIM=3,X=1.0_SRK, Y=1.0_SRK, Z=2.0_SRK)
+  d=DOT_PRODUCT(point2, point3)
+  ASSERT(d .APPROXEQ. 5.5_SRK, 'DOT_PRODUCT 1D')
+  CALL point2%clear()
+  CALL point3%clear()
+
 !Test midpoint
   COMPONENT_TEST('midPoint()')
   CALL point2%init(DIM=1,X=0.5_SRK)

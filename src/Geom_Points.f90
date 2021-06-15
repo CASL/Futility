@@ -27,6 +27,7 @@ PUBLIC :: PointType
 PUBLIC :: LinkedListPointType
 PUBLIC :: ClearLinkedListPointType
 PUBLIC :: Distance
+PUBLIC :: DOT_PRODUCT
 PUBLIC :: midPoint
 PUBLIC :: innerAngle
 PUBLIC :: outerAngle
@@ -118,6 +119,15 @@ INTERFACE Distance
   !> @copydetails GeomPoints::distance_2points
   MODULE PROCEDURE distance_2points
 ENDINTERFACE Distance
+
+!> @brief Generic interface for computing distance
+!>
+!> Adds the listed module procedures to the global interface name for Distance
+INTERFACE DOT_PRODUCT
+  !> @copybrief GeomPoints::distance_2points
+  !> @copydetails GeomPoints::distance_2points
+  MODULE PROCEDURE DOT_PRODUCT_2points
+ENDINTERFACE DOT_PRODUCT
 
 !> @brief Generic interface for addition operator (+)
 !>
@@ -464,6 +474,29 @@ ELEMENTAL FUNCTION distance_2points(p0,p1) RESULT(d)
     ENDSELECT
   ENDIF
 ENDFUNCTION distance_2points
+!
+!-------------------------------------------------------------------------------
+!> @brief Computes the dot product of two points
+!> @param p1 the first point
+!> @param p2 the second point
+!> @returns @c v the dot product of @c p1 and @c p2
+!>
+!> Function is elemental so it can be used on an array of points.
+ELEMENTAL FUNCTION DOT_PRODUCT_2points(p1,p2) RESULT(v)
+  CLASS(PointType),INTENT(IN) :: p1,p2
+  REAL(SRK) :: v
+  INTEGER(SIK) :: i
+  IF(p1%dim == p2%dim) THEN
+    SELECTCASE(p1%dim)
+    CASE(1)
+      v = p1%coord(1)*p2%coord(1)
+    CASE(2)
+      v = p1%coord(1)*p2%coord(1) + p1%coord(2)*p2%coord(2)
+    CASE(3)
+      v = p1%coord(1)*p2%coord(1) + p1%coord(2)*p1%coord(2) + p1%coord(3)*p1%coord(3)
+    ENDSELECT
+  ENDIF
+ENDFUNCTION DOT_PRODUCT_2points
 !
 !-------------------------------------------------------------------------------
 !> @brief Computes the midpoint between two points in any dimension
