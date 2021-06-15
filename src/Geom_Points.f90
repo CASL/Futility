@@ -28,6 +28,7 @@ PUBLIC :: LinkedListPointType
 PUBLIC :: ClearLinkedListPointType
 PUBLIC :: Distance
 PUBLIC :: DOT_PRODUCT
+PUBLIC :: cross
 PUBLIC :: midPoint
 PUBLIC :: innerAngle
 PUBLIC :: outerAngle
@@ -120,14 +121,19 @@ INTERFACE Distance
   MODULE PROCEDURE distance_2points
 ENDINTERFACE Distance
 
-!> @brief Generic interface for computing distance
-!>
-!> Adds the listed module procedures to the global interface name for Distance
+!> @brief Generic interface for the dot product
 INTERFACE DOT_PRODUCT
-  !> @copybrief GeomPoints::distance_2points
-  !> @copydetails GeomPoints::distance_2points
+  !> @copybrief GeomPoints::DOT_PRODUCT_2points
+  !> @copydetails GeomPoints::DOT_PRODUCT_2points
   MODULE PROCEDURE DOT_PRODUCT_2points
 ENDINTERFACE DOT_PRODUCT
+
+!> @brief Generic interface for computing distance
+INTERFACE cross
+  !> @copybrief GeomPoints::cross_2points
+  !> @copydetails GeomPoints::cross_2points
+  MODULE PROCEDURE cross_2points
+ENDINTERFACE cross
 
 !> @brief Generic interface for addition operator (+)
 !>
@@ -497,6 +503,31 @@ ELEMENTAL FUNCTION DOT_PRODUCT_2points(p1,p2) RESULT(v)
     ENDSELECT
   ENDIF
 ENDFUNCTION DOT_PRODUCT_2points
+!
+!-------------------------------------------------------------------------------
+!> @brief Computes the cross product of two points
+!> @param p1 the first point
+!> @param p2 the second point
+!> @returns @c p the cross product of @c p1 and @c p2
+!>
+!> Function is elemental so it can be used on an array of points.
+ELEMENTAL FUNCTION cross_2points(p1,p2) RESULT(p)
+  CLASS(PointType),INTENT(IN) :: p1,p2
+  TYPE(PointType) :: p
+  INTEGER(SIK) :: i
+  IF(p1%dim == p2%dim) THEN
+    SELECTCASE(p1%dim)
+    CASE(2)
+      CALL p%init(DIM=3, X=0.0_SRK, &
+                         Y=0.0_SRK, & 
+                         Z=p1%coord(1)*p2%coord(2) - p2%coord(1)*p1%coord(2))
+    CASE(3)
+      CALL p%init(DIM=3, X=p1%coord(2)*p2%coord(3) - p2%coord(2)*p1%coord(3), &
+                         Y=p1%coord(3)*p2%coord(1) - p2%coord(3)*p1%coord(1), & 
+                         Z=p1%coord(1)*p2%coord(2) - p2%coord(1)*p1%coord(2))
+    ENDSELECT
+  ENDIF
+ENDFUNCTION cross_2points
 !
 !-------------------------------------------------------------------------------
 !> @brief Computes the midpoint between two points in any dimension

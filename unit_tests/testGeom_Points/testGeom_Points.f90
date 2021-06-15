@@ -248,7 +248,7 @@ SUBROUTINE TestPoints
   d=Distance(point2,point3) !Test for empty points
 
 !
-!Test Distance
+!Test DOT_PRODUCT
   COMPONENT_TEST('DOT_PRODUCT()')
   CALL point2%init(DIM=1,X=0.5_SRK)
   CALL point3%init(DIM=1,X=1.0_SRK)
@@ -260,14 +260,37 @@ SUBROUTINE TestPoints
   CALL point2%init(DIM=2,X=0.5_SRK, Y=1.0_SRK)
   CALL point3%init(DIM=2,X=1.0_SRK, Y=1.0_SRK)
   d=DOT_PRODUCT(point2, point3)
-  ASSERT(d .APPROXEQ. 1.5_SRK, 'DOT_PRODUCT 1D')
+  ASSERT(d .APPROXEQ. 1.5_SRK, 'DOT_PRODUCT 2D')
   CALL point2%clear()
   CALL point3%clear()
 
   CALL point2%init(DIM=3,X=0.5_SRK, Y=1.0_SRK, Z=2.0_SRK)
   CALL point3%init(DIM=3,X=1.0_SRK, Y=1.0_SRK, Z=2.0_SRK)
   d=DOT_PRODUCT(point2, point3)
-  ASSERT(d .APPROXEQ. 5.5_SRK, 'DOT_PRODUCT 1D')
+  ASSERT(d .APPROXEQ. 5.5_SRK, 'DOT_PRODUCT 3D')
+  CALL point2%clear()
+  CALL point3%clear()
+
+!
+!Test cross
+  COMPONENT_TEST('cross()')
+  CALL point2%init(DIM=2, X=2.0_SRK, Y=3.0_SRK)
+  CALL point3%init(DIM=2, X=5.0_SRK, Y=6.0_SRK)
+  point=cross(point2, point3)
+  ASSERT(point%coord(1) .APPROXEQ.  0.0_SRK, 'cross product 2D')
+  ASSERT(point%coord(2) .APPROXEQ.  0.0_SRK, 'cross product 2D')
+  ASSERT(point%coord(3) .APPROXEQ. -3.0_SRK, 'cross product 2D')
+  CALL point%clear()
+  CALL point2%clear()
+  CALL point3%clear()
+
+  CALL point2%init(DIM=3, X=2.0_SRK, Y=3.0_SRK, Z=4.0_SRK)
+  CALL point3%init(DIM=3, X=5.0_SRK, Y=6.0_SRK, Z=7.0_SRK)
+  point=cross(point2, point3)
+  ASSERT(point%coord(1) .APPROXEQ. -3.0_SRK, 'cross product 2D')
+  ASSERT(point%coord(2) .APPROXEQ.  6.0_SRK, 'cross product 2D')
+  ASSERT(point%coord(3) .APPROXEQ. -3.0_SRK, 'cross product 2D')
+  CALL point%clear()
   CALL point2%clear()
   CALL point3%clear()
 
