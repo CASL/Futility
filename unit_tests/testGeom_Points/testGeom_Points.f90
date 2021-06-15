@@ -293,6 +293,38 @@ SUBROUTINE TestPoints
   CALL point%clear()
   CALL point2%clear()
   CALL point3%clear()
+!
+!Test multiply
+  COMPONENT_TEST('multiply()')
+  CALL point2%init(DIM=2, X=2.0_SRK, Y=3.0_SRK)
+  point=2.0_SRK*point2
+  ASSERT(point%coord(1) .APPROXEQ.  4.0_SRK, 'multiply right')
+  ASSERT(point%coord(2) .APPROXEQ.  6.0_SRK, 'multiply right')
+  CALL point%clear()
+  CALL point2%clear()
+
+  CALL point2%init(DIM=3, X=2.0_SRK, Y=3.0_SRK, Z=4.0_SRK)
+  point=2.0_SRK*point2
+  ASSERT(point%coord(1) .APPROXEQ. 4.0_SRK, 'multiply right')
+  ASSERT(point%coord(2) .APPROXEQ. 6.0_SRK, 'multiply right')
+  ASSERT(point%coord(3) .APPROXEQ. 8.0_SRK, 'multiply right')
+  CALL point%clear()
+  CALL point2%clear()
+
+  CALL point2%init(DIM=2, X=2.0_SRK, Y=3.0_SRK)
+  point=point2*2.0_SRK
+  ASSERT(point%coord(1) .APPROXEQ.  4.0_SRK, 'multiply left')
+  ASSERT(point%coord(2) .APPROXEQ.  6.0_SRK, 'multiply left')
+  CALL point%clear()
+  CALL point2%clear()
+
+  CALL point2%init(DIM=3, X=2.0_SRK, Y=3.0_SRK, Z=4.0_SRK)
+  point=point2*2.0_SRK
+  ASSERT(point%coord(1) .APPROXEQ. 4.0_SRK, 'multiply left')
+  ASSERT(point%coord(2) .APPROXEQ. 6.0_SRK, 'multiply left')
+  ASSERT(point%coord(3) .APPROXEQ. 8.0_SRK, 'multiply left')
+  CALL point%clear()
+  CALL point2%clear()
 
 !Test midpoint
   COMPONENT_TEST('midPoint()')

@@ -34,6 +34,7 @@ PUBLIC :: innerAngle
 PUBLIC :: outerAngle
 PUBLIC :: OPERATOR(+)
 PUBLIC :: OPERATOR(-)
+PUBLIC :: OPERATOR(*)
 PUBLIC :: OPERATOR(==)
 PUBLIC :: OPERATOR(/=)
 PUBLIC :: OPERATOR(.APPROXEQA.)
@@ -152,6 +153,19 @@ INTERFACE OPERATOR(-)
   !> @copydetails GeomPoints::subtract_PointType
   MODULE PROCEDURE subtract_PointType
 ENDINTERFACE
+
+!> @brief Generic interface for multiplication operator (+)
+!>
+!> Adds addition capability for point types
+INTERFACE OPERATOR(*)
+  !> @copybrief GeomPoints::multiplyR_PointType
+  !> @copydetails GeomPoints::multiplyR_PointType
+  MODULE PROCEDURE multiplyR_PointType
+  !> @copybrief GeomPoints::multiplyL_PointType
+  !> @copydetails GeomPoints::multiplyL_PointType
+  MODULE PROCEDURE multiplyL_PointType
+ENDINTERFACE
+
 
 !> @brief Generic interface for 'is equal to' operator (==)
 !>
@@ -354,6 +368,59 @@ ELEMENTAL FUNCTION subtract_PointType(p0,p1) RESULT(p)
 ENDFUNCTION subtract_PointType
 !
 !-------------------------------------------------------------------------------
+!> @brief Defines the multiplication operation between a point and a real
+!> @param n the real
+!> @param p the point
+!> @returns @c q the return point value
+!>
+!> Function is elemental so it can be used on an array of points.
+ELEMENTAL FUNCTION multiplyR_PointType(n, p) RESULT(q)
+  TYPE(PointType),INTENT(IN) :: p
+  REAL(SRK),INTENT(IN) :: n
+  TYPE(PointType) :: q
+  q%dim=p%dim
+  ALLOCATE(q%coord(p%dim))
+  SELECTCASE(p%dim) 
+  CASE(1)
+    q%coord(1)=n*p%coord(1)
+  CASE(2)
+    q%coord(1)=n*p%coord(1)
+    q%coord(2)=n*p%coord(2)
+  CASE(3)
+    q%coord(1)=n*p%coord(1)
+    q%coord(2)=n*p%coord(2)
+    q%coord(3)=n*p%coord(3)
+  ENDSELECT
+ENDFUNCTION multiplyR_PointType 
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the multiplication operation between a point and a real
+!> @param p the point
+!> @param n the real
+!> @returns @c q the return point value
+!>
+!> Function is elemental so it can be used on an array of points.
+ELEMENTAL FUNCTION multiplyL_PointType(p, n) RESULT(q)
+  TYPE(PointType),INTENT(IN) :: p
+  REAL(SRK),INTENT(IN) :: n
+  TYPE(PointType) :: q
+  q%dim=p%dim
+  ALLOCATE(q%coord(p%dim))
+  SELECTCASE(p%dim) 
+  CASE(1)
+    q%coord(1)=n*p%coord(1)
+  CASE(2)
+    q%coord(1)=n*p%coord(1)
+    q%coord(2)=n*p%coord(2)
+  CASE(3)
+    q%coord(1)=n*p%coord(1)
+    q%coord(2)=n*p%coord(2)
+    q%coord(3)=n*p%coord(3)
+  ENDSELECT
+ENDFUNCTION multiplyL_PointType 
+
+!
+!-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two points e.g. @c p0==p1
 !> @param p0 the first point
 !> @param p1 the second point
@@ -491,7 +558,6 @@ ENDFUNCTION distance_2points
 ELEMENTAL FUNCTION DOT_PRODUCT_2points(p1,p2) RESULT(v)
   CLASS(PointType),INTENT(IN) :: p1,p2
   REAL(SRK) :: v
-  INTEGER(SIK) :: i
   IF(p1%dim == p2%dim) THEN
     SELECTCASE(p1%dim)
     CASE(1)
@@ -514,7 +580,6 @@ ENDFUNCTION DOT_PRODUCT_2points
 ELEMENTAL FUNCTION cross_2points(p1,p2) RESULT(p)
   CLASS(PointType),INTENT(IN) :: p1,p2
   TYPE(PointType) :: p
-  INTEGER(SIK) :: i
   IF(p1%dim == p2%dim) THEN
     SELECTCASE(p1%dim)
     CASE(2)

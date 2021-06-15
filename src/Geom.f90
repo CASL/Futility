@@ -42,6 +42,7 @@ PUBLIC :: ABBoxType
 PUBLIC :: PolygonType
 PUBLIC :: Distance
 PUBLIC :: midPoint
+PUBLIC :: interpolate
 PUBLIC :: ClearLinkedListPointType
 PUBLIC :: Polygonize
 PUBLIC :: OPERATOR(+)

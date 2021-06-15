@@ -21,6 +21,7 @@ IMPLICIT NONE
 CREATE_TEST('QUADRATIC TYPE')
 REGISTER_SUBTEST('CLEAR', testClear)
 REGISTER_SUBTEST('INIT', testInit)
+REGISTER_SUBTEST('INTERPOLATE', testInterpolate)
 !REGISTER_SUBTEST('INTERSECT LINE', testIntersectLine)
 FINALIZE_TEST()
 !
@@ -55,6 +56,19 @@ SUBROUTINE testInit()
   ASSERT(quad%points(2) == p2, "Point assigned incorrectly")
   ASSERT(quad%points(3) == p3, "Point assigned incorrectly")
 ENDSUBROUTINE testInit
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testInterpolate()
+  TYPE(QuadraticSegment_2D) :: q
+  TYPE(PointType) :: p1, p2, p3, p
+
+  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL q%set(p1, p2, p3)
+  p = interpolate(q, 0.0_SRK, 0.0_SRK)
+  ASSERT( p == p1, "Wrong point")
+ENDSUBROUTINE testInterpolate
 !
 !-------------------------------------------------------------------------------
 !SUBROUTINE testIntersectLine()

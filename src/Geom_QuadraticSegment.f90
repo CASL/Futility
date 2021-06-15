@@ -19,6 +19,7 @@ PRIVATE
 !
 ! List of Public items
 PUBLIC :: QuadraticSegment_2D
+PUBLIC :: interpolate
 
 TYPE :: QuadraticSegment_2D
   TYPE(PointType) :: points(3)
@@ -36,6 +37,13 @@ TYPE :: QuadraticSegment_2D
 !    PROCEDURE,PASS :: intersectLine => intersectLine_QuadraticSegment_2D
 ENDTYPE QuadraticSegment_2D
 
+INTERFACE interpolate
+  MODULE PROCEDURE interpolate_QuadraticSegment_2D
+ENDINTERFACE interpolate
+
+
+
+
 !
 !===============================================================================
 CONTAINS
@@ -46,7 +54,7 @@ CONTAINS
 !> @param p2 End point of the quad
 !> @param p3 An additional point on the quad
 !>
-SUBROUTINE init_QuadraticSegment_2D(quad,p1,p2,p3)
+ELEMENTAL SUBROUTINE init_QuadraticSegment_2D(quad,p1,p2,p3)
   CLASS(QuadraticSegment_2D),INTENT(INOUT) :: quad
   TYPE(PointType),INTENT(IN) :: p1,p2,p3
   CALL quad%clear()
@@ -62,11 +70,35 @@ ENDSUBROUTINE init_QuadraticSegment_2D
 !> @param quad the quad
 ELEMENTAL SUBROUTINE clear_QuadraticSegment_2D(quad)
   CLASS(QuadraticSegment_2D),INTENT(INOUT) :: quad
-  INTEGER(SIK) :: i
   CALL quad%points(1)%clear()
   CALL quad%points(2)%clear()
   CALL quad%points(3)%clear()
 ENDSUBROUTINE clear_QuadraticSegment_2D
+
+ELEMENTAL FUNCTION interpolate_QuadraticSegment_2D(q, r, s) RESULT(p)
+  CLASS(QuadraticSegment_2D),INTENT(IN) :: q
+  REAL(SRK), INTENT(IN) :: r,s
+  TYPE(PointType) :: p
+  p = (4*r - 3)*q%points(1) + (4*r - 1)*q%points(2) + (4 - 8*r)*q%points(3)
+ENDFUNCTION interpolate_QuadraticSegment_2D
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 !!-------------------------------------------------------------------------------
 !!> @brief Finds the intersection between a line and the quad (if it exists)
 !!> @param line line to test for intersection
