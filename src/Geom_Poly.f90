@@ -413,6 +413,8 @@ SUBROUTINE calcCentroid(this)
   CALL this%centroid%clear()
   IF(this%area > 0.0_SRK) THEN
     CALL this%centroid%init(DIM=2,X=xcent/this%area,Y=ycent/this%area)
+  ELSEIF(this%area .APPROXEQ. 0.0_SRK) THEN
+    CALL this%centroid%init(DIM=2,X=xcent,Y=ycent)
   ENDIF
 
 ENDSUBROUTINE calcCentroid
