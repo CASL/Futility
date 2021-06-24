@@ -19,6 +19,8 @@ PRIVATE
 !
 ! List of Public items
 PUBLIC :: QuadraticSegment_2D
+PUBLIC :: arc_length
+PUBLIC :: derivative
 PUBLIC :: interpolate
 PUBLIC :: intersect
 
@@ -35,7 +37,6 @@ TYPE :: QuadraticSegment_2D
     PROCEDURE,PASS :: clear => clear_QuadraticSegment_2D
     !> @copybrief Geom_QuadraticSegment::intersectLine_QuadraticSegment_2D
     !> @copydetails Geom_QuadraticSegment::intersectLine_QuadraticSegment_2D
-!    PROCEDURE,PASS :: intersectLine => intersectLine_QuadraticSegment_2D
 ENDTYPE QuadraticSegment_2D
 
 INTERFACE interpolate
@@ -46,6 +47,13 @@ INTERFACE intersect
   MODULE PROCEDURE intersectLine_QuadraticSegment_2D
 ENDINTERFACE intersect
 
+INTERFACE derivative
+  MODULE PROCEDURE derivative_QuadraticSegment_2D
+ENDINTERFACE derivative
+
+INTERFACE arc_length
+  MODULE PROCEDURE arc_length_QuadraticSegment_2D
+ENDINTERFACE arc_length
 !
 !===============================================================================
 CONTAINS
@@ -85,6 +93,60 @@ ELEMENTAL FUNCTION interpolate_QuadraticSegment_2D(q, r) RESULT(p)
                   r*(2.0_SRK*r - 1.0_SRK)*q%points(2) + &
                   4.0_SRK*r*(1.0_SRK - r)*q%points(3)
 ENDFUNCTION interpolate_QuadraticSegment_2D
+
+ELEMENTAL FUNCTION derivative_QuadraticSegment_2D(q, r) RESULT(p)
+  CLASS(QuadraticSegment_2D),INTENT(IN) :: q
+  REAL(SRK), INTENT(IN) :: r
+  TYPE(PointType) :: p
+  p = (4.0_SRK*r - 3.0_SRK)*q%points(1) + &
+      (4.0_SRK*r - 1.0_SRK)*q%points(2) + &
+      (4.0_SRK - 8.0_SRK*r)*q%points(3)
+ENDFUNCTION derivative_QuadraticSegment_2D
+
+ELEMENTAL FUNCTION arc_length_QuadraticSegment_2D(q) RESULT(a)
+  CLASS(QuadraticSegment_2D),INTENT(IN) :: q
+  INTEGER(SIK) :: i
+  TYPE(PointType) :: p
+  REAL(SRK) :: a
+  REAL(SRK) :: w(15), r(15) 
+  w = (/ &
+       0.015376620998058315,&
+       0.03518302374405407,&
+       0.053579610233586,&
+       0.06978533896307715,&
+       0.083134602908497,&
+       0.0930805000077811,&
+       0.0992157426635558,&
+       0.10128912096278064,&
+       0.0992157426635558,&
+       0.0930805000077811,&
+       0.083134602908497,&
+       0.06978533896307715,&
+       0.053579610233586,&
+       0.03518302374405407,&
+       0.015376620998058315/)
+  r = (/&
+       0.006003740989757311,&
+       0.031363303799647024,&
+       0.0758967082947864,&
+       0.13779113431991497,&
+       0.21451391369573058,&
+       0.3029243264612183,&
+       0.39940295300128276,&
+       0.5,&
+       0.6005970469987172,&
+       0.6970756735387817,&
+       0.7854860863042694,&
+       0.862208865680085,&
+       0.9241032917052137,&
+       0.968636696200353,&
+       0.9939962590102427/)
+  a = 0.0_SRK
+  DO i = 1,15
+    p = derivative(q, r(i))
+    a = a + w(i)*norm(p)
+  ENDDO
+ENDFUNCTION arc_length_QuadraticSegment_2D
 
 !-------------------------------------------------------------------------------
 !> @brief Finds the intersections between a line and the quadratic segment (if it exists)

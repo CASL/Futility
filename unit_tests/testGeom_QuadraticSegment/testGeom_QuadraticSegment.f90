@@ -22,6 +22,8 @@ CREATE_TEST('QUADRATIC TYPE')
 REGISTER_SUBTEST('CLEAR', testClear)
 REGISTER_SUBTEST('INIT', testInit)
 REGISTER_SUBTEST('INTERPOLATE', testInterpolate)
+REGISTER_SUBTEST('DERIVATIVE', testDerivative)
+REGISTER_SUBTEST('ARC LENGTH', testArcLength)
 REGISTER_SUBTEST('INTERSECT LINE', testIntersectLine)
 FINALIZE_TEST()
 !
@@ -78,10 +80,49 @@ SUBROUTINE testInterpolate()
 ENDSUBROUTINE testInterpolate
 !
 !-------------------------------------------------------------------------------
+SUBROUTINE testDerivative()
+  TYPE(QuadraticSegment_2D) :: q
+  TYPE(PointType) :: p1, p2, p3, p, m
+
+  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL q%set(p1, p2, p3)
+  p = derivative(q, 0.0_SRK)
+  m = (-3.0_SRK)*q%points(1) + & 
+      (-1.0_SRK)*q%points(2) + & 
+         4.0_SRK*q%points(3)
+  ASSERT( p .APPROXEQA. m, "Wrong point")
+  p = derivative(q, 0.25_SRK)
+  m = (-2.0_SRK)*q%points(1) + & 
+         2.0_SRK*q%points(3)
+  ASSERT( p .APPROXEQA. m, "Wrong point")
+ENDSUBROUTINE testDerivative
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testArcLength()
+  TYPE(QuadraticSegment_2D) :: q
+  TYPE(PointType) :: p1, p2, p3
+  REAL(SRK) :: a
+
+  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL q%set(p1, p2, p3)
+  a = arc_length(q)
+  ASSERT( ABS(a - 2.0_SRK) < 1.0E-6_SRK, "arc_length")
+  CALL p3%clear()
+
+  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL q%set(p1, p2, p3)
+  a = arc_length(q)
+  ASSERT( a .APPROXEQA. 2.9578857151786138, "arc_length")
+ENDSUBROUTINE testArcLength
+!
+!-------------------------------------------------------------------------------
 SUBROUTINE testIntersectLine()
   TYPE(QuadraticSegment_2D) :: q
   TYPE(LineType) :: l
-!  REAL(SDK) :: theta, rotation_mat(2,2)
   TYPE(PointType) :: p1, p2, p3, p4, p5, ipoint1, ipoint2
   LOGICAL(SBK) :: intersects
   INTEGER(SIK) :: npoints
