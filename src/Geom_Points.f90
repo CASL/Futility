@@ -32,6 +32,7 @@ PUBLIC :: cross
 PUBLIC :: midPoint
 PUBLIC :: innerAngle
 PUBLIC :: outerAngle
+PUBLIC :: norm
 PUBLIC :: OPERATOR(+)
 PUBLIC :: OPERATOR(-)
 PUBLIC :: OPERATOR(*)
@@ -156,7 +157,7 @@ ENDINTERFACE
 
 !> @brief Generic interface for multiplication operator (+)
 !>
-!> Adds addition capability for point types
+!> Adds multiplication capability for point types
 INTERFACE OPERATOR(*)
   !> @copybrief GeomPoints::multiplyR_PointType
   !> @copydetails GeomPoints::multiplyR_PointType
@@ -166,6 +167,12 @@ INTERFACE OPERATOR(*)
   MODULE PROCEDURE multiplyL_PointType
 ENDINTERFACE
 
+!> @brief Generic interface for the norm function
+INTERFACE norm
+  !> @copybrief GeomPoints::norm_PointType
+  !> @copydetails GeomPoints::norm_PointType
+  MODULE PROCEDURE norm_PointType
+ENDINTERFACE
 
 !> @brief Generic interface for 'is equal to' operator (==)
 !>
@@ -418,7 +425,25 @@ ELEMENTAL FUNCTION multiplyL_PointType(p, n) RESULT(q)
     q%coord(3)=n*p%coord(3)
   ENDSELECT
 ENDFUNCTION multiplyL_PointType 
-
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the 2-norm of a point
+!> @param p the point
+!> @returns @c n the 2-norm
+!>
+!> Function is elemental so it can be used on an array of points.
+ELEMENTAL FUNCTION norm_PointType(p) RESULT(n)
+  TYPE(PointType),INTENT(IN) :: p
+  REAL(SRK) :: n
+  SELECTCASE(p%dim) 
+  CASE(1)
+    n=ABS(p%coord(1))
+  CASE(2)
+    n=SQRT(p%coord(1)**2 + p%coord(2)**2)
+  CASE(3)
+    n=SQRT(p%coord(1)**2 + p%coord(2)**2 + p%coord(3)**2)
+  ENDSELECT
+ENDFUNCTION norm_PointType 
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the 'is equal to' operation between two points e.g. @c p0==p1

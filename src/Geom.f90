@@ -43,6 +43,7 @@ PUBLIC :: PolygonType
 PUBLIC :: Distance
 PUBLIC :: midPoint
 PUBLIC :: interpolate
+PUBLIC :: intersect
 PUBLIC :: ClearLinkedListPointType
 PUBLIC :: Polygonize
 PUBLIC :: OPERATOR(+)

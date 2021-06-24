@@ -326,6 +326,19 @@ SUBROUTINE TestPoints
   CALL point%clear()
   CALL point2%clear()
 
+!Test norm
+  COMPONENT_TEST('norm()')
+  CALL point2%init(DIM=1, X=-2.0_SRK)
+  ASSERT(norm(point2) .APPROXEQ.  2.0_SRK, 'norm 1D')
+  CALL point2%clear()
+  CALL point2%init(DIM=2, X=-3.0_SRK, Y=4.0_SRK)
+  ASSERT(norm(point2) .APPROXEQ.  5.0_SRK, 'norm 2D')
+  CALL point2%clear()
+  CALL point2%init(DIM=3, X=-2.0_SRK, Y=4.0_SRK, Z=4.0_SRK)
+  ASSERT(norm(point2) .APPROXEQ.  6.0_SRK, 'norm 3D')
+  CALL point2%clear()
+
+
 !Test midpoint
   COMPONENT_TEST('midPoint()')
   CALL point2%init(DIM=1,X=0.5_SRK)

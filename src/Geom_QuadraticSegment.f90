@@ -20,6 +20,7 @@ PRIVATE
 ! List of Public items
 PUBLIC :: QuadraticSegment_2D
 PUBLIC :: interpolate
+PUBLIC :: intersect
 
 TYPE :: QuadraticSegment_2D
   TYPE(PointType) :: points(3)
@@ -41,8 +42,9 @@ INTERFACE interpolate
   MODULE PROCEDURE interpolate_QuadraticSegment_2D
 ENDINTERFACE interpolate
 
-
-
+INTERFACE intersect
+  MODULE PROCEDURE intersectLine_QuadraticSegment_2D
+ENDINTERFACE intersect
 
 !
 !===============================================================================
@@ -75,193 +77,103 @@ ELEMENTAL SUBROUTINE clear_QuadraticSegment_2D(quad)
   CALL quad%points(3)%clear()
 ENDSUBROUTINE clear_QuadraticSegment_2D
 
-ELEMENTAL FUNCTION interpolate_QuadraticSegment_2D(q, r, s) RESULT(p)
+ELEMENTAL FUNCTION interpolate_QuadraticSegment_2D(q, r) RESULT(p)
   CLASS(QuadraticSegment_2D),INTENT(IN) :: q
-  REAL(SRK), INTENT(IN) :: r,s
+  REAL(SRK), INTENT(IN) :: r
   TYPE(PointType) :: p
-  p = (4*r - 3)*q%points(1) + (4*r - 1)*q%points(2) + (4 - 8*r)*q%points(3)
+  p = (2.0_SRK*r - 1.0_SRK)*(r - 1.0_SRK)*q%points(1) + &
+                  r*(2.0_SRK*r - 1.0_SRK)*q%points(2) + &
+                  4.0_SRK*r*(1.0_SRK - r)*q%points(3)
 ENDFUNCTION interpolate_QuadraticSegment_2D
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-!!-------------------------------------------------------------------------------
-!!> @brief Finds the intersection between a line and the quad (if it exists)
-!!> @param line line to test for intersection
-!!> @returns points the points of intersection
-!!> @note a return code is assigned to p%dim indicating the type of
-!!> intersection.
-!!>   -3: there is no intersection (disjoint)
-!!>   -2: the line segment and quad overlap
-!!>   -1: problem with dummy arguments passed to routine
-!!>    1: success; an 1 intersection point was found
-!!>    2: success; 2 intersection points were found
-!SUBROUTINE intersectLine_QuadraticSegment_2D(quad, line, points)
-!  CLASS(QuadraticSegment_2D),INTENT(IN) :: quad
-!  TYPE(LineType),INTENT(IN) :: line
-!  TYPE(PointType),INTENT(INOUT) :: points(2)
-!  TYPE(LineType) :: line_s
-!  TYPE(PointType) :: p0
-!  REAL(SDK) :: A,B,C,m,d,rotation_mat(2,2), xdomain, x, disc, xmin, xmax
-!  REAL(SDK), PARAMETER :: vertical = 1.0E11_SDK
+!-------------------------------------------------------------------------------
+!> @brief Finds the intersections between a line and the quadratic segment (if it exists)
+!> @param line line to test for intersection
 !
-!!  WRITE(*,*) "intersectLine_QuadraticSegment_2D"
-!!  WRITE(*,*) "My points:"
-!!  WRITE(*,*) quad%points(1)%coord
-!!  WRITE(*,*) quad%points(2)%coord
-!!  WRITE(*,*) quad%points(3)%coord
-!  IF(.NOT.ALLOCATED(points(1)%coord))THEN
-!   CALL points(1)%init(DIM=2,X=-HUGE(0.0_SRK),Y=-HUGE(0.0_SRK))
-!   CALL points(2)%init(DIM=2,X=-HUGE(0.0_SRK),Y=-HUGE(0.0_SRK))
-!  ENDIF
-!  points(:)%dim = -1
-!  IF(line%p1%dim == line%p2%dim .AND. line%p1%dim == 2) THEN
-!    ! Transform the line to the coordinates of the quad
-!    ! Create a copy of the line.
-!    line_s%p1 = line%p1
-!    line_s%p2 = line%p2
-!!    WRITE(*,*) "Line coords pre-transform: "
-!!    WRITE(*,*) "  p1: ", line_s%p1%coord
-!!    WRITE(*,*) "  p2: ", line_s%p2%coord
-!!    WRITE(*,*) "shift: ", quad%shift_x, quad%shift_y
-!!    WRITE(*,*) "theta/pi: ", quad%theta/PI 
+! ELEMENTAL
 !
-!    ! Shift the line to the origin
-!    CALL p0%init(DIM=2, X=quad%shift_x, Y=quad%shift_y)
-!    line_s%p1 = line_s%p1 - p0
-!    line_s%p2 = line_s%p2 - p0
-!    ! Rotate the line
-!    rotation_mat(1,:) = (/COS(quad%theta), SIN(quad%theta)/)
-!    rotation_mat(2,:) = (/-SIN(quad%theta), COS(quad%theta)/)
-!    line_s%p1%coord = MATMUL(rotation_mat, line_s%p1%coord)
-!    line_s%p2%coord = MATMUL(rotation_mat, line_s%p2%coord)
-!!    WRITE(*,*) "Line coords transformed: "
-!!    WRITE(*,*) "  p1: ", line_s%p1%coord
-!!    WRITE(*,*) "  p2: ", line_s%p2%coord
-!    ! Get the
-!    ! line: y = mx + d
-!    ! quad: y = ax^2 + bx
-!    ! solve for the x which satisfies both conditions
-!    ! mx + d = ax^2 + bx
-!    ! ax^2 + (b-m)x - d
-!    ! A = a, B = b-m, C = -d
-!    ! x = (-B pm sqrt(B^2 - 4AC))/2A
-!    ! If B^2 < 4AC, there is no real solution
-!    ! If B^2 == 4AC, there is one solution
-!    ! If B^2 > 4AC, there are two solutions
-!    ! These are solutions for the line, not the line segment.
-!    ! x_soln must be in [line%p1%x, lines%p2%x], assuming p1%x <= p2%x
-!    !
-!    ! This is numerical instability hell. There has to be a better way
-!    m = (line_s%p2%coord(2) - line_s%p1%coord(2))/(line_s%p2%coord(1) - line_s%p1%coord(1))
-!!    WRITE(*,*) "m: ", m
-!    d = line_s%p1%coord(2) - m*line_s%p1%coord(1)
-!!    WRITE(*,*) "d: ", d
-!    A = quad%a
-!!    WRITE(*,*) "a, b: ", quad%a, quad%b
-!    B = quad%b - m
-!    C = -d
-!!    WRITE(*,*) " A B C", A, B, C
-!
-!    ! If B^2 < 4AC, there is no real solution
-!    IF(B*B < 4*A*C)THEN
-!      points(:)%dim = -3
-!      RETURN
-!    ENDIF
-!
-!    ! Valid x for the quad is from 0.0 to the distance from quad p1 to p2
-!    xdomain = distance(quad%points(1), quad%points(2))
-!    ! Valid x for the line is from the min to max x of the segment
-!    xmin = MIN(line_s%p1%coord(1), line_s%p2%coord(1)) ! valid domain of the seg
-!    xmax = MAX(line_s%p1%coord(1), line_s%p2%coord(1))
-!    ! If vertical line, just check if the point x are within the valid domain.
-!    ! If so, take the intersection there.
-!    IF(ABS(m) > vertical) THEN
-!!      WRITE(*,*) "vertical"
-!      x = line_s%p1%coord(1)
-!      IF( 0.0 <= x .AND. x <= xdomain)THEN
-!        points(:)%dim = 1
-!        points(1)%coord(1) = x
-!        points(1)%coord(2) = quad%a*x**2 + quad%b*x
-!      ELSE
-!        points(:)%dim = -3
-!      ENDIF
-!    ELSE ! non-vertical
-!!      WRITE(*,*) "not vertical"
-!      disc = SQRT(B*B - 4*A*C)
-!      x = (-B + disc)/(2*A)
-!!      WRITE(*,*) "x1: ", x
-!      IF(0.0 <= x .AND. x <= xdomain .AND. xmin <= x .AND. x <= xmax) THEN
-!!        WRITE(*,*) "valid x1"
-!        points(:)%dim = 1
-!        points(1)%coord(1) = x
-!        points(1)%coord(2) = quad%a*x**2 + quad%b*x
-!      ELSE
-!!        WRITE(*,*) "invalid x1"
-!        points(:)%dim = -3
-!      ENDIF
-!      ! If the possibility of a second solution exists, check it
-!      IF( ABS(B*B - 4*A*C) > 1.0E-6) THEN
-!        x = (-B - disc)/(2*A)
-!!        WRITE(*,*) "x2: ", x
-!        IF(0.0 <= x .AND. x <= xdomain .AND. xmin <= x .AND. x <= xmax) THEN
-!!          WRITE(*,*) "valid x2"
-!          IF(points(1)%dim == 1)THEN ! second intersection
-!            points(:)%dim = 2
-!            points(2)%coord(1) = x
-!            points(2)%coord(2) = quad%a*x**2 + quad%b*x
-!          ELSE
-!            points(:)%dim = 1
-!            points(1)%coord(1) = x
-!            points(1)%coord(2) = quad%a*x**2 + quad%b*x
-!          ENDIF
-!        ENDIF
-!      ENDIF
-!    ENDIF
-!
-!    ! If intersection was found, transfrom back to original coords
-!    IF(points(1)%dim > 0)THEN
-!!      WRITE(*,*) "Intersection found"
-!!      WRITE(*,*) "Number of intersections: ", points(1)%dim
-!!      WRITE(*,*) "Coordinates prior to transform:"
-!!      IF(points(1)%dim == 1) THEN
-!!        WRITE(*,*) "x1, y1 ", points(1)%coord
-!!      ELSE
-!!        WRITE(*,*) "x1, y1 ", points(1)%coord
-!!        WRITE(*,*) "x2, y2 ", points(2)%coord
-!!      ENDIF
-!      rotation_mat(1,:) = (/COS(quad%theta), -SIN(quad%theta)/)
-!      rotation_mat(2,:) = (/SIN(quad%theta), COS(quad%theta)/)
-!      IF(points(1)%dim == 2) THEN
-!        points(2)%coord = MATMUL(rotation_mat, points(2)%coord)
-!        points(2)%coord(1) = points(2)%coord(1) + quad%shift_x
-!        points(2)%coord(2) = points(2)%coord(2) + quad%shift_y
-!      ENDIF
-!      points(1)%coord = MATMUL(rotation_mat, points(1)%coord)
-!      points(1)%coord(1) = points(1)%coord(1) + quad%shift_x
-!      points(1)%coord(2) = points(1)%coord(2) + quad%shift_y
-!!      WRITE(*,*) "Coordinates post transform:"
-!!      IF(points(1)%dim == 1) THEN
-!!        WRITE(*,*) "x1, y1 ", points(1)%coord
-!!      ELSE
-!!        WRITE(*,*) "x1, y1 ", points(1)%coord
-!!        WRITE(*,*) "x2, y2 ", points(2)%coord
-!!      ENDIF
-!    ENDIF
-!  ENDIF
-!ENDSUBROUTINE intersectLine_QuadraticSegment_2D
+SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, intersects, npoints, point1, point2)
+  CLASS(QuadraticSegment_2D),INTENT(IN) :: q
+  TYPE(LineType),INTENT(IN) :: l
+  LOGICAL(SBK),INTENT(OUT) :: intersects
+  INTEGER(SIK),INTENT(OUT) :: npoints
+  TYPE(PointType),INTENT(OUT) :: point1, point2
+  REAL(SRK) :: A, B, C, r, s, r1, r2, s1, s2
+  TYPE(PointType) :: A_vec, B_vec, C_vec, D_vec, E_vec, w_vec, l_s1, l_s2
+  ! q(r) = (2r-1)(r-1)x⃗₁ + r(2r-1)x⃗₂ + 4r(1-r)x⃗₃
+  ! q(r) = 2r²(x⃗₁ + x⃗₂ - 2x⃗₃) + r(-3x⃗₁ - x⃗₂ + 4x⃗₃) + x⃗₁
+  ! Let D⃗ = 2(x⃗₁ + x⃗₂ - 2x⃗₃), E⃗ = (-3x⃗₁ - x⃗₂ + 4x⃗₃), F⃗ = x₁
+  ! q(r) = r²D⃗ + rE⃗ + F⃗
+  ! l(s) = x⃗₄ + sw⃗
+  ! If D⃗ × w⃗ ≠ 0
+  !   x⃗₄ + sw⃗ = r²D⃗ + rE⃗ + F⃗
+  !   sw⃗ = r²D⃗ + rE⃗ + (F⃗ - x⃗₄)
+  !   0 = r²(D⃗ × w⃗) + r(E⃗ × w⃗) + (F⃗ - x⃗₄) × w⃗
+  !   Let A = (D⃗ × w⃗), B = (E⃗ × w⃗), C = (F⃗ - x⃗₄) × w⃗
+  !   0 = Ar² + Br + C
+  !   r = (-B - √(B²-4AC))/2A, -B + √(B²-4AC))/2A)
+  !   s = ((q(r) - p₄)⋅w⃗/(w⃗ ⋅ w⃗)
+  !   r is invalid if:
+  !     1) A = 0
+  !     2) B² < 4AC
+  !     3) r < 0 or 1 < r   (Curve intersects, segment doesn't)
+  !   s is invalid if:
+  !     1) s < 0 or 1 < s   (Line intersects, segment doesn't)
+  ! If D⃗ × w⃗ = 0, we need to use line intersection instead.
+  npoints = 0
+  intersects = .FALSE.
+  CALL point1%clear()
+  CALL point2%clear()
+  CALL point1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL point2%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  D_vec = 2.0_SRK*(q%points(1) + q%points(2) - 2.0_SRK*q%points(3))
+  E_vec = 4.0_SRK*q%points(3) - 3.0_SRK*q%points(1) - q%points(2)
+  w_vec = l%p2 - l%p1
+  A_vec = cross(D_vec, w_vec)
+  B_vec = cross(E_vec, w_vec)
+  C_vec = cross((q%points(1) - l%p1), w_vec)
+  A = A_vec%coord(3)
+  B = B_vec%coord(3)
+  C = C_vec%coord(3)
+  IF (A < 1.0E-6_SRK) THEN
+    r = -C/B
+    point1 = interpolate(q,r)
+    s = (DOT_PRODUCT((point1 - l%p1), w_vec))/DOT_PRODUCT(w_vec, w_vec)
+    IF (0.0_SRK <= s .AND. s <= 1.0_SRK .AND. 0.0_SRK <= r .AND. r <= 1.0_SRK) THEN
+      npoints = 1
+    ENDIF
+  ELSE
+    r1 = (-B - SQRT(B**2 - 4*A*C))/(2*A)
+    r2 = (-B + SQRT(B**2 - 4*A*C))/(2*A)
+    point1 = interpolate(q,r1)
+    point2 = interpolate(q,r2)
+    s1 = (DOT_PRODUCT((point1 - l%p1), w_vec))/DOT_PRODUCT(w_vec, w_vec)
+    s2 = (DOT_PRODUCT((point2 - l%p1), w_vec))/DOT_PRODUCT(w_vec, w_vec)
+    l_s1 = (l%p2 - l%p1)*s1 + l%p1
+    l_s2 = (l%p2 - l%p1)*s2 + l%p1
+    ! Check points to see if they are valid intersections
+    IF (0.0_SRK <= s1 .AND. s1 <= 1.0_SRK .AND. &
+        0.0_SRK <= r1 .AND. r1 <= 1.0_SRK .AND. &
+        (point1 .APPROXEQA. l_s1)) THEN
+      npoints = 1
+    ENDIF
+    IF (0.0_SRK <= s2 .AND. s2 <= 1.0_SRK .AND. &
+        0.0_SRK <= r2 .AND. r2 <= 1.0_SRK .AND. &
+        (point2 .APPROXEQA. l_s2)) THEN
+      npoints = npoints + 1
+      IF (npoints == 1) THEN
+        point1 = point2
+      ENDIF
+    ENDIF
+  ENDIF
+  intersects = npoints > 0
+  CALL A_vec%clear()
+  CALL B_vec%clear()
+  CALL C_vec%clear()
+  CALL D_vec%clear()
+  CALL E_vec%clear()
+  CALL w_vec%clear()
+  CALL l_s1%clear()
+  CALL l_s2%clear()
+ENDSUBROUTINE intersectLine_QuadraticSegment_2D
 ENDMODULE Geom_QuadraticSegment
