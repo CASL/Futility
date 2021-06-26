@@ -497,7 +497,7 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
   CALL validParams%get('MatrixType->nnz',nnz_int)
   CALL validParams%get('MatrixType->blockSize',blockSize)
   CALL validParams%get('MatrixType->nlocal',nlocal)
-  nnz=INT(nnz_int,KIND=8)
+  nnz=INT(nnz_int,KIND=SLK)
   IF(nnz_int <= 1) THEN
     IF (validParams%has("MatrixType->dnnz") .AND. validParams%has("MatrixType->onnz")) THEN
       nnz=0_SLK
@@ -507,7 +507,7 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
         nnz=nnz+INT(onnz(i),KIND=SLK)
         nnz=nnz+INT(dnnz(i),KIND=SLK)
       ENDDO
-      CALL MPI_AllReduce(nnz,MPI_IN_PLACE,1,MPI_LONG,MPI_SUM,commID,mpierr)
+      CALL MPI_AllReduce(MPI_IN_PLACE,nnz,1,MPI_LONG,MPI_SUM,commID,mpierr)
     ENDIF
   ENDIF
 
