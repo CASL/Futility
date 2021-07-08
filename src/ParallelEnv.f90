@@ -209,6 +209,12 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
         gather_SLK1_MPI_Env_type, &
         gather_str1D_MPI_ENV_type, &
         gather_str2D_MPI_ENV_type
+    !> @copybrief ParallelEnv::gatherv_SNK1_MPI_Env_type
+    !> @copydetails ParallelEnv::gatherv_SNK1_MPI_Env_type
+    PROCEDURE,PASS,PRIVATE :: gatherv_SNK1_MPI_Env_type
+    !> @copybrief ParallelEnv::gatherv_SLK1_MPI_Env_type
+    !> @copydetails ParallelEnv::gatherv_SLK1_MPI_Env_type
+    PROCEDURE,PASS,PRIVATE :: gatherv_SLK1_MPI_Env_type
     !> @copybrief ParallelEnv::gatherv_SSK1_MPI_Env_type
     !> @copydetails ParallelEnv::gatherv_SSK1_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: gatherv_SSK1_MPI_Env_type
@@ -216,7 +222,8 @@ TYPE,EXTENDS(ParEnvType) :: MPI_EnvType
     !> @copydetails ParallelEnv::gatherv_SDK1_MPI_Env_type
     PROCEDURE,PASS,PRIVATE :: gatherv_SDK1_MPI_Env_type
     !> Generic interface for MPI_gatherv
-    GENERIC :: gatherv => gatherv_SSK1_MPI_Env_type, &
+    GENERIC :: gatherv => gatherv_SNK1_MPI_Env_type, &
+        gatherv_SLK1_MPI_Env_type,gatherv_SSK1_MPI_Env_type, &
         gatherv_SDK1_MPI_Env_type
     !> @copybrief ParallelEnv::scatter_SLK0_MPI_Env_type
     !> @copydetails ParallelEnv::scatter_SLK0_MPI_Env_type
@@ -1240,6 +1247,100 @@ SUBROUTINE gather_str2D_MPI_ENV_type(myPE,sendbuf,root)
   ENDIF
 #endif
 ENDSUBROUTINE gather_str2D_MPI_ENV_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine for MPI_gatherv for 1D array of SNK integers
+!> @param this the MPI environment
+!> @param sendbuf the data to be sent by this process
+!> @param recvbuf the data received on the root process
+!> @param recvcounts the counts of data received by the root process from other processes
+!> @param root the process to gather all the data to; optional, defaults to 0
+!>
+SUBROUTINE gatherv_SNK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: this
+  INTEGER(SNK),INTENT(IN) :: sendbuf(:)
+  INTEGER(SNK),INTENT(OUT),ALLOCATABLE :: recvbuf(:)
+  INTEGER(SIK),INTENT(OUT),ALLOCATABLE :: recvcounts(:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+  !
+  INTEGER(SIK) :: rank,i
+  INTEGER(SIK),ALLOCATABLE :: displs(:)
+
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(rank >= 0)
+  REQUIRE(rank < this%nproc)
+
+  ALLOCATE(recvcounts(this%nproc))
+  CALL this%gather(SIZE(sendbuf),recvcounts,rank)
+  ALLOCATE(displs(this%nproc))
+  IF(this%rank == rank) THEN
+    displs(1)=0
+    DO i=2,this%nproc
+      displs(i)=displs(i-1)+recvcounts(i-1)
+    ENDDO !i
+  ENDIF
+
+  ALLOCATE(recvbuf(SUM(recvcounts)))
+#ifdef HAVE_MPI
+  CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_INTEGER4,recvbuf,recvcounts, &
+      displs,MPI_INTEGER4,rank,this%comm,mpierr)
+#else
+  recvbuf=sendbuf
+#endif
+  IF(this%rank /= rank) THEN
+    DEALLOCATE(recvbuf)
+    DEALLOCATE(recvcounts)
+  ENDIF
+
+ENDSUBROUTINE gatherv_SNK1_MPI_Env_type
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper routine for MPI_gatherv for 1D array of SLK integers
+!> @param this the MPI environment
+!> @param sendbuf the data to be sent by this process
+!> @param recvbuf the data received on the root process
+!> @param recvcounts the counts of data received by the root process from other processes
+!> @param root the process to gather all the data to; optional, defaults to 0
+!>
+SUBROUTINE gatherv_SLK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
+  CLASS(MPI_EnvType),INTENT(IN) :: this
+  INTEGER(SLK),INTENT(IN) :: sendbuf(:)
+  INTEGER(SLK),INTENT(OUT),ALLOCATABLE :: recvbuf(:)
+  INTEGER(SIK),INTENT(OUT),ALLOCATABLE :: recvcounts(:)
+  INTEGER(SIK),INTENT(IN),OPTIONAL :: root
+  !
+  INTEGER(SIK) :: rank,i
+  INTEGER(SIK),ALLOCATABLE :: displs(:)
+
+  rank=0
+  IF(PRESENT(root)) rank=root
+  REQUIRE(rank >= 0)
+  REQUIRE(rank < this%nproc)
+
+  ALLOCATE(recvcounts(this%nproc))
+  CALL this%gather(SIZE(sendbuf),recvcounts,rank)
+  ALLOCATE(displs(this%nproc))
+  IF(this%rank == rank) THEN
+    displs(1)=0
+    DO i=2,this%nproc
+      displs(i)=displs(i-1)+recvcounts(i-1)
+    ENDDO !i
+  ENDIF
+
+  ALLOCATE(recvbuf(SUM(recvcounts)))
+#ifdef HAVE_MPI
+  CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_INTEGER8,recvbuf,recvcounts, &
+      displs,MPI_INTEGER8,rank,this%comm,mpierr)
+#else
+  recvbuf=sendbuf
+#endif
+  IF(this%rank /= rank) THEN
+    DEALLOCATE(recvbuf)
+    DEALLOCATE(recvcounts)
+  ENDIF
+
+ENDSUBROUTINE gatherv_SLK1_MPI_Env_type
 !
 !-------------------------------------------------------------------------------
 !> @brief Wrapper routine for MPI_gatherv for 1D array of SRK reals
