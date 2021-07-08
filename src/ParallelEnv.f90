@@ -1506,7 +1506,7 @@ ENDSUBROUTINE scatter_SLK1_MPI_Env_type
 !>
 SUBROUTINE bcast_SNK0_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SNK),INTENT(IN) :: buf
+  INTEGER(SNK),INTENT(INOUT) :: buf
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1528,7 +1528,7 @@ ENDSUBROUTINE bcast_SNK0_MPI_Env_type
 !>
 SUBROUTINE bcast_SNK1_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SNK),INTENT(IN) :: buf(:)
+  INTEGER(SNK),INTENT(INOUT) :: buf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1550,7 +1550,7 @@ ENDSUBROUTINE bcast_SNK1_MPI_Env_type
 !>
 SUBROUTINE bcast_SLK0_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SLK),INTENT(IN) :: buf
+  INTEGER(SLK),INTENT(INOUT) :: buf
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1572,7 +1572,7 @@ ENDSUBROUTINE bcast_SLK0_MPI_Env_type
 !>
 SUBROUTINE bcast_SLK1_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  INTEGER(SLK),INTENT(IN) :: buf(:)
+  INTEGER(SLK),INTENT(INOUT) :: buf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1594,7 +1594,7 @@ ENDSUBROUTINE bcast_SLK1_MPI_Env_type
 !>
 SUBROUTINE bcast_SSK0_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SSK),INTENT(IN) :: buf
+  REAL(SSK),INTENT(INOUT) :: buf
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1616,7 +1616,7 @@ ENDSUBROUTINE bcast_SSK0_MPI_Env_type
 !>
 SUBROUTINE bcast_SSK1_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SSK),INTENT(IN) :: buf(:)
+  REAL(SSK),INTENT(INOUT) :: buf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1638,7 +1638,7 @@ ENDSUBROUTINE bcast_SSK1_MPI_Env_type
 !>
 SUBROUTINE bcast_SSK2_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SSK),INTENT(IN) :: buf(:,:)
+  REAL(SSK),INTENT(INOUT) :: buf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1660,7 +1660,7 @@ ENDSUBROUTINE bcast_SSK2_MPI_Env_type
 !>
 SUBROUTINE bcast_SDK0_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SDK),INTENT(IN) :: buf
+  REAL(SDK),INTENT(INOUT) :: buf
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1682,7 +1682,7 @@ ENDSUBROUTINE bcast_SDK0_MPI_Env_type
 !>
 SUBROUTINE bcast_SDK1_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SDK),INTENT(IN) :: buf(:)
+  REAL(SDK),INTENT(INOUT) :: buf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1704,7 +1704,7 @@ ENDSUBROUTINE bcast_SDK1_MPI_Env_type
 !>
 SUBROUTINE bcast_SDK2_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SDK),INTENT(IN) :: buf(:,:)
+  REAL(SDK),INTENT(INOUT) :: buf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1726,7 +1726,7 @@ ENDSUBROUTINE bcast_SDK2_MPI_Env_type
 !>
 SUBROUTINE bcast_SSK3_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SSK),INTENT(IN) :: buf(:,:,:)
+  REAL(SSK),INTENT(INOUT) :: buf(:,:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1748,7 +1748,7 @@ ENDSUBROUTINE bcast_SSK3_MPI_Env_type
 !>
 SUBROUTINE bcast_SDK3_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SDK),INTENT(IN) :: buf(:,:,:)
+  REAL(SDK),INTENT(INOUT) :: buf(:,:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1770,7 +1770,7 @@ ENDSUBROUTINE bcast_SDK3_MPI_Env_type
 !>
 SUBROUTINE bcast_SSK4_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SSK),INTENT(IN) :: buf(:,:,:,:)
+  REAL(SSK),INTENT(INOUT) :: buf(:,:,:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1792,7 +1792,7 @@ ENDSUBROUTINE bcast_SSK4_MPI_Env_type
 !>
 SUBROUTINE bcast_SDK4_MPI_Env_type(myPE,buf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
-  REAL(SDK),INTENT(IN) :: buf(:,:,:,:)
+  REAL(SDK),INTENT(INOUT) :: buf(:,:,:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
