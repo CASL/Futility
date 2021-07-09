@@ -72,6 +72,7 @@ PUBLIC :: SOFTGT
 PUBLIC :: isNAN
 PUBLIC :: isINF
 PUBLIC :: isNumeric
+PUBLIC :: isBetween
 !
 ! Variables
 !> @name Private Variables
@@ -368,6 +369,21 @@ INTERFACE ASSIGNMENT(=)
   !> @copybrief IntrType::assign_char_to_double
   !> @copydetails IntrType::assign_char_to_double
   MODULE PROCEDURE assign_char_to_double
+ENDINTERFACE
+
+INTERFACE isBetween
+  !> @copybrief IntrType::isBetween_SNK
+  !> @copydetails IntrType::isBetween_SNK
+  MODULE PROCEDURE isBetween_SNK
+  !> @copybrief IntrType::isBetween_SLK
+  !> @copydetails IntrType::isBetween_SLK
+  MODULE PROCEDURE isBetween_SLK
+  !> @copybrief IntrType::isBetween_SSK
+  !> @copydetails IntrType::isBetween_SSK
+  MODULE PROCEDURE isBetween_SSK
+  !> @copybrief IntrType::isBetween_SDK
+  !> @copydetails IntrType::isBetween_SDK
+  MODULE PROCEDURE isBetween_SDK
 ENDINTERFACE
 !
 !===============================================================================
@@ -1030,6 +1046,88 @@ FUNCTION isNumeric(char_str) RESULT(bool)
   bool = .TRUE.
 
 ENDFUNCTION isNumeric
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the lower bound to check against
+!> @param val the value to compare
+!> @param b the upper bound to compare against
+!> @returns between the result of the comparison
+!>
+ELEMENTAL FUNCTION isBetween_SNK(a,val,b) RESULT(between)
+  INTEGER(SNK),INTENT(IN) :: a
+  INTEGER(SNK),INTENT(IN) :: val
+  INTEGER(SNK),INTENT(IN) :: b
+  LOGICAL(SBK) :: between
 
+  between = ((a < val) .AND. (val < b))
+
+ENDFUNCTION isBetween_SNK
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the lower bound to check against
+!> @param val the value to compare
+!> @param b the upper bound to compare against
+!> @returns between the result of the comparison
+!>
+ELEMENTAL FUNCTION isBetween_SLK(a,val,b) RESULT(between)
+  INTEGER(SLK),INTENT(IN) :: a
+  INTEGER(SLK),INTENT(IN) :: val
+  INTEGER(SLK),INTENT(IN) :: b
+  LOGICAL(SBK) :: between
+
+  between = ((a < val) .AND. (val < b))
+
+ENDFUNCTION isBetween_SLK
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the lower bound to check against
+!> @param val the value to compare
+!> @param b the upper bound to compare against
+!> @param tolerance an optional tolerance to use for the comparison
+!> @returns between the result of the comparison
+!>
+ELEMENTAL FUNCTION isBetween_SSK(a,val,b,tolerance) RESULT(between)
+  REAL(SSK),INTENT(IN) :: a
+  REAL(SSK),INTENT(IN) :: val
+  REAL(SSK),INTENT(IN) :: b
+  REAL(SSK),INTENT(IN),OPTIONAL :: tolerance
+  LOGICAL(SBK) :: between
+  !
+  REAL(SSK) :: tol
+
+  tol=0.0_SSK
+  IF(PRESENT(tolerance)) tol=tolerance
+
+  between = ((a+tol < val) .AND. (val < b-tol))
+
+ENDFUNCTION isBetween_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the lower bound to check against
+!> @param val the value to compare
+!> @param b the upper bound to compare against
+!> @param tolerance an optional tolerance to use for the comparison
+!> @returns between the result of the comparison
+!>
+ELEMENTAL FUNCTION isBetween_SDK(a,val,b,tolerance) RESULT(between)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: val
+  REAL(SDK),INTENT(IN) :: b
+  REAL(SDK),INTENT(IN),OPTIONAL :: tolerance
+  LOGICAL(SBK) :: between
+  !
+  REAL(SDK) :: tol
+
+  tol=0.0_SDK
+  IF(PRESENT(tolerance)) tol=tolerance
+
+  between = ((a+tol < val) .AND. (val < b-tol))
+
+ENDFUNCTION isBetween_SDK
+!
 ENDMODULE IntrType
 
