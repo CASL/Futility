@@ -264,6 +264,9 @@ SUBROUTINE MatrixTypes_Declare_ValidParams()
   CALL BandedMatrixType_reqParams%add('MatrixType->n',n)
   CALL BandedMatrixType_reqParams%add('MatrixType->m',m)
   CALL BandedMatrixType_reqParams%add('MatrixType->nnz',nnz)
+  ! Banded Matrix Type - Optional
+  CALL BandedMatrixType_optParams%add('MatrixType->dnnz',dnnz)
+  CALL BandedMatrixType_optParams%add('MatrixType->onnz',onnz)
   !Dense Rectangular Matrix Type - Required
   CALL DenseRectMatrixType_reqParams%add('MatrixType->n',n)
   CALL DenseRectMatrixType_reqParams%add('MatrixType->m',m)
@@ -316,6 +319,7 @@ SUBROUTINE MatrixTypes_Clear_ValidParams()
   CALL TriDiagMatrixType_reqParams%clear()
   !Banded Matrix Type
   CALL BandedMatrixType_reqParams%clear()
+  CALL BandedMatrixType_optParams%clear()
   !Dense Rectangular Matrix Type
   CALL DenseRectMatrixType_reqParams%clear()
   !Dense Square Matrix Type

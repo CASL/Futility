@@ -422,6 +422,7 @@ SUBROUTINE init_BandedMatrixParam(matrix,Params)
   CLASS(BandedMatrixType),INTENT(INOUT) :: matrix
   CLASS(ParamType),INTENT(IN) :: Params
   TYPE(ParamType) :: validParams
+  INTEGER(SIK),ALLOCATABLE :: nnzTmp(:)
   INTEGER(SIK) :: n,m,nnz
 
   !Check to set up required and optional param lists.
@@ -429,38 +430,48 @@ SUBROUTINE init_BandedMatrixParam(matrix,Params)
 
   !Validate against the reqParams and OptParams
   validParams=Params
-  CALL validParams%validate(BandedMatrixType_reqParams)
-
+  CALL validParams%validate(BandedMatrixType_reqParams,BandedMatrixType_optParams)
   ! Pull Data From Parameter List
   CALL validParams%get('MatrixType->n',n)
   m=n
   IF (validParams%has('MatrixType->m')) CALL validParams%get('MatrixType->m',m)
   CALL validParams%get('MatrixType->nnz',nnz)
-  CALL validParams%clear()
 
   IF(.NOT. matrix%isInit) THEN
     IF(n <= 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Number of rows (n) must be greater than 1!')
-    ELSEIF(m <= 1) THEN
+    ENDIF
+    IF(m <= 1) THEN
       CALL eMatrixType%raiseError('Incorrect input to '//modName//'::'//myName// &
           ' - Number of columns (m) must be greater than 1!')
-    ELSEIF(nnz < 1) THEN
-      CALL eMatrixType%raiseError('Incorrect input to '//modName//'::'//myName// &
-          ' - Number of nonzero elements (nnz) must be greater than 0!')
-    ELSE
-      ALLOCATE(matrix%iTmp(nnz))
-      ALLOCATE(matrix%jTmp(nnz))
-      ALLOCATE(matrix%elemTmp(nnz))
-
-      matrix%isInit=.TRUE.
-      matrix%isAssembled=.FaLSE.
-      matrix%isReversed=.FALSE.
-      matrix%counter=0_SRK
-      matrix%n=n
-      matrix%m=m
-      matrix%nnz=nnz
     ENDIF
+    IF(nnz < 1) THEN
+      IF (validParams%has("MatrixType->dnnz") .AND. validParams%has("MatrixType->onnz")) THEN
+        CALL validParams%get("MatrixType->dnnz",nnzTmp)
+        nnz = SUM(nnzTmp)
+        DEALLOCATE(nnzTmp)
+        CALL validParams%get("MatrixType->onnz",nnzTmp)
+        nnz = nnz + SUM(nnzTmp)
+        DEALLOCATE(nnzTmp)
+      ELSE
+        CALL eMatrixType%raiseError('Incorrect input to '//modName//'::'//myName// &
+            ' - Number of nonzero elements (nnz) must be greater than 0!')
+      ENDIF
+    ENDIF
+    CALL validParams%clear()
+
+    ALLOCATE(matrix%iTmp(nnz))
+    ALLOCATE(matrix%jTmp(nnz))
+    ALLOCATE(matrix%elemTmp(nnz))
+
+    matrix%isInit=.TRUE.
+    matrix%isAssembled=.FaLSE.
+    matrix%isReversed=.FALSE.
+    matrix%counter=0_SRK
+    matrix%n=n
+    matrix%m=m
+    matrix%nnz=nnz
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
         modName//'::'//myName//' - MatrixType already initialized')
