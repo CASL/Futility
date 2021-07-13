@@ -129,9 +129,14 @@ TYPE :: StringType
     !> copybrief Strings::clear_str
     !> copydetails Strings::clear_str
     PROCEDURE,PASS :: clear => clear_str
-    !> copybrief Strings::clean_str
-    !> copydetails Strings::clean_str
-    !FINAL :: clean_str
+    PROCEDURE :: read_formatted_StringType
+    GENERIC :: READ(FORMATTED) => read_formatted_StringType
+    PROCEDURE :: read_unformatted_StringType
+    GENERIC :: READ(UNFORMATTED) => read_unformatted_StringType
+    PROCEDURE :: write_formatted_StringType
+    GENERIC :: WRITE(FORMATTED) => write_formatted_StringType
+    PROCEDURE :: write_unformatted_StringType
+    GENERIC :: WRITE(UNFORMATTED) => write_unformatted_StringType
 ENDTYPE StringType
 
 INTERFACE StringType
@@ -317,15 +322,6 @@ ENDINTERFACE
 !
 !===============================================================================
 CONTAINS
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief cleans up string objects
-!!> @param this the StringType being garbaged collected
-!!>
-!ELEMENTAL SUBROUTINE clean_str(this)
-!  TYPE(StringType),INTENT(INOUT) :: this
-!  IF(ALLOCATED(this%s)) DEALLOCATE(this%s)
-!ENDSUBROUTINE clean_str
 !
 !-------------------------------------------------------------------------------
 !> @brief cleans up string objects
@@ -1380,5 +1376,90 @@ ELEMENTAL FUNCTION charToStringType(char) RESULT(string)
   TYPE(StringType) :: string
   string=char
 ENDFUNCTION charToStringType
+!
+!-------------------------------------------------------------------------------
+!> @brief overrides @c READ(FORMATTED) for @c StringType
+!> @param dtv the string to read
+!> @param iotype the type of IO being done
+!> @param v_list intrinsic read interface parameter defined by fortran
+!> @param iostat the status after attempting the read
+!> @param iomsg the error message associated with @c iostat
+!>
+SUBROUTINE read_formatted_StringType(dtv,unit,iotype,v_list,iostat,iomsg)
+  CLASS(StringType),INTENT(INOUT) :: dtv
+  INTEGER,INTENT(IN) :: unit
+  CHARACTER(LEN=*),INTENT(IN) :: iotype
+  INTEGER,INTENT(IN) :: v_list(:)
+  INTEGER,INTENT(OUT) :: iostat
+  CHARACTER(LEN=*),INTENT(INOUT) :: iomsg
+  !
+  CHARACTER(LEN=256) :: buffer
+
+  CALL dtv%clear()
+  buffer=''
+  READ(unit,FMT='(a)',IOSTAT=iostat,IOMSG=iomsg) buffer
+  dtv=TRIM(ADJUSTL(buffer))
+
+ENDSUBROUTINE read_formatted_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief overrides @c READ(UNFORMATTED) for @c StringType
+!> @param dtv the string to read
+!> @param iostat the status after attempting the read
+!> @param iomsg the error message associated with @c iostat
+!>
+!> This routine is not yet implemented and should not be used.
+!>
+SUBROUTINE read_unformatted_StringType(dtv,unit,iostat,iomsg)
+  CLASS(StringType),INTENT(INOUT) :: dtv
+  INTEGER,INTENT(IN) :: unit
+  INTEGER,INTENT(OUT) :: iostat
+  CHARACTER(LEN=*),INTENT(INOUT) :: iomsg
+
+  STOP "Unformatted StringType reads are not supported"
+
+ENDSUBROUTINE read_unformatted_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief overrides @c WRITE(FORMATTED) for @c StringType
+!> @param dtv the string to write
+!> @param iotype the type of IO being done
+!> @param v_list intrinsic read interface parameter defined by fortran
+!> @param iostat the status after attempting the write
+!> @param iomsg the error message associated with @c iostat
+!>
+SUBROUTINE write_formatted_StringType(dtv,unit,iotype,v_list,iostat,iomsg)
+  CLASS(StringType),INTENT(IN) :: dtv
+  INTEGER,INTENT(IN) :: unit
+  CHARACTER(LEN=*),INTENT(IN) :: iotype
+  INTEGER,INTENT(IN) :: v_list(:)
+  INTEGER,INTENT(OUT) :: iostat
+  CHARACTER(LEN=*),INTENT(INOUT) :: iomsg
+
+  IF(ALLOCATED(dtv%s)) THEN
+    WRITE(unit,FMT=*,IOSTAT=iostat,IOMSG=iomsg) dtv%s
+  ELSE
+    WRITE(unit,FMT=*,IOSTAT=iostat,IOMSG=iomsg) ''
+  ENDIF
+
+ENDSUBROUTINE write_formatted_StringType
+!
+!-------------------------------------------------------------------------------
+!> @brief overrides @c WRITE(UNFORMATTED) for @c StringType
+!> @param dtv the string to write
+!> @param iostat the status after attempting the write
+!> @param iomsg the error message associated with @c iostat
+!>
+!> This routine is not yet implemented and should not be used.
+!>
+SUBROUTINE write_unformatted_StringType(dtv,unit,iostat,iomsg)
+  CLASS(StringType),INTENT(IN) :: dtv
+  INTEGER,INTENT(IN) :: unit
+  INTEGER,INTENT(OUT) :: iostat
+  CHARACTER(LEN=*),INTENT(INOUT) :: iomsg
+
+  STOP "Unformatted StringType writes are not supported"
+
+ENDSUBROUTINE write_unformatted_StringType
 !
 ENDMODULE Strings

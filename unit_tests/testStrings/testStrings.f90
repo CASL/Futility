@@ -24,6 +24,7 @@ REGISTER_SUBTEST('Operator Overloading',testOperators)
 REGISTER_SUBTEST('Intrinsics',testIntrinsic)
 REGISTER_SUBTEST('string_functs',testStrFunct)
 REGISTER_SUBTEST('constructor',testConstructor)
+REGISTER_SUBTEST('IO',testIO)
 FINALIZE_TEST()
 !
 !-------------------------------------------------------------------------------
@@ -939,7 +940,128 @@ SUBROUTINE testConstructor
   ASSERT_EQ(CHAR(test1(1)),'test 1','array(1)')
   ASSERT_EQ(CHAR(test1(2)),'test 2','array(2)')
   ASSERT_EQ(CHAR(test1(3)),'test 3','array(3)')
-  
+
 ENDSUBROUTINE testConstructor
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testIO()
+  CHARACTER(LEN=*),PARAMETER :: testFileName='testFormattedIO.txt'
+  LOGICAL(SBK) :: lexists
+  TYPE(StringType) :: string,string2,string3
+
+  !Generate the test file
+  INQUIRE(FILE=testFileName,EXIST=lexists)
+  IF(lexists) THEN
+    OPEN(UNIT=999,FILE=testFileName,STATUS='OLD')
+    CLOSE(999,STATUS='DELETE')
+  ENDIF
+  OPEN(UNIT=999,FILE=testFileName,STATUS='NEW')
+  WRITE(999,*) ''
+  WRITE(999,*) 'ABCD'
+  WRITE(999,*) 'E F G H'
+  CLOSE(999)
+
+  !Test various reads
+  COMPONENT_TEST('Formatted Read, from file, *')
+  OPEN(UNIT=999,FILE=testFileName,STATUS='OLD')
+  string='E F G H'
+  READ(999,*) string
+  ASSERT_EQ(LEN(string),4,'length "ABCD"')
+  ASSERT_EQ(CHAR(string),'ABCD','ABCD')
+  READ(999,*) string
+  ASSERT_EQ(string,'E F G H','E F G H')
+  WRITE(*,*) string
+  CLOSE(999)
+
+  COMPONENT_TEST('Formatted Read, from file, ''(dt)''')
+  OPEN(UNIT=999,FILE=testFileName,STATUS='OLD')
+  string='E F G H'
+  READ(999,'(dt)',ADVANCE='NO') string
+  READ(999,'(dt)',ADVANCE='NO') string
+  ASSERT_EQ(LEN(string),4,'length "ABCD"')
+  ASSERT_EQ(CHAR(string),'ABCD','ABCD')
+  READ(999,'(dt)',ADVANCE='NO') string
+  ASSERT_EQ(string,'E F G H','E F G H')
+  CLOSE(999)
+
+  !Test various writes
+  COMPONENT_TEST('Formatted Write, to stdout')
+  string=''
+  WRITE(*,*) string
+  string='ABCD'
+  WRITE(*,*) string
+  string='E F G H'
+  WRITE(*,*) string
+  string='E F'
+  string2='G'
+  string3='H'
+  WRITE(*,*) string,string2,string3
+
+  string=''
+  WRITE(*,'(dt)') string
+  string='ABCD'
+  WRITE(*,'(dt)') string
+  string='E F G H'
+  WRITE(*,'(dt)') string
+  string='E F'
+  string2='G'
+  string3='H'
+  WRITE(*,'(3dt)') string,string2,string3
+
+  COMPONENT_TEST('Formatted Write, to file, ''(dt)''')
+  INQUIRE(FILE=testFileName,EXIST=lexists)
+  IF(lexists) THEN
+    OPEN(UNIT=999,FILE=testFileName,STATUS='OLD')
+    CLOSE(999,STATUS='DELETE')
+  ENDIF
+  OPEN(UNIT=999,FILE=testFileName,STATUS='NEW')
+  string=''
+  WRITE(999,'(dt)') string
+  string='ABCD'
+  WRITE(999,'(dt)') string
+  string='E F'
+  string2='G'
+  string3='H'
+  WRITE(999,'(3dt)') string,string2,string3
+  CLOSE(999)
+
+  OPEN(UNIT=999,FILE=testFileName,STATUS='OLD')
+  string='E F G H'
+  READ(999,'(dt)',ADVANCE='NO') string
+  READ(999,'(dt)',ADVANCE='NO') string
+  ASSERT_EQ(LEN(string),4,'length "ABCD"')
+  ASSERT_EQ(CHAR(string),'ABCD','ABCD')
+  READ(999,'(dt)',ADVANCE='NO') string
+  ASSERT_EQ(string,'E F G H','E F G H')
+  CLOSE(999)
+
+  COMPONENT_TEST('Formatted Write, to file, *')
+  INQUIRE(FILE=testFileName,EXIST=lexists)
+  IF(lexists) THEN
+    OPEN(UNIT=999,FILE=testFileName,STATUS='OLD')
+    CLOSE(999,STATUS='DELETE')
+  ENDIF
+  OPEN(UNIT=999,FILE=testFileName,STATUS='NEW')
+  string=''
+  WRITE(999,*) string
+  string='ABCD'
+  WRITE(999,*) string
+  string='E F'
+  string2='G'
+  string3='H'
+  WRITE(999,*) string,string2,string3
+  CLOSE(999)
+
+  OPEN(UNIT=999,FILE=testFileName,STATUS='OLD')
+  string='E F G H'
+  READ(999,'(dt)',ADVANCE='NO') string
+  READ(999,'(dt)',ADVANCE='NO') string
+  ASSERT_EQ(LEN(string),4,'length "ABCD"')
+  ASSERT_EQ(CHAR(string),'ABCD','ABCD')
+  READ(999,'(dt)',ADVANCE='NO') string
+  ASSERT_EQ(string,'E F  G  H','E F G H')
+  CLOSE(999)
+
+ENDSUBROUTINE testIO
 !
 ENDPROGRAM testStrings
