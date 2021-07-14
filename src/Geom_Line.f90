@@ -359,7 +359,7 @@ ELEMENTAL FUNCTION distance_LineType_to_PointType(line,p) RESULT(d2)
   CLASS(LineType),INTENT(IN) :: line
   TYPE(PointType),INTENT(IN) :: p
   REAL(SRK) :: d2
-  d2=-1._SRK
+  d2=-HUGE(d2)
   IF(line%p1%dim == line%p2%dim .AND. line%p1%dim == p%dim) THEN
     SELECTCASE(p%dim)
     CASE(1)

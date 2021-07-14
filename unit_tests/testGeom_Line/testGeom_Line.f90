@@ -268,7 +268,7 @@ SUBROUTINE TestLine
   CALL line1%p1%init(COORD=(/0.0_SRK,0.0_SRK/))
   CALL line1%p2%init(COORD=(/1.0_SRK,1.0_SRK/))
   CALL point%init(COORD=(/-0.5_SRK/))
-  ASSERT(line1%distance2Point(point) == -1.0_SRK, '2-D line1%distance2Point(...)')
+  ASSERT(line1%distance2Point(point) == -HUGE(1.0_SRK), '2-D line1%distance2Point(...)')
   CALL point%clear()
   CALL point%init(COORD=(/0.5_SRK,0.5_SRK/))
   ASSERT(line1%distance2Point(point) .APPROXEQ. 0.0_SRK, '2-D line1%distance2Point(...)')

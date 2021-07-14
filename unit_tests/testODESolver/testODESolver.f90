@@ -561,10 +561,12 @@ SUBROUTINE testOrderConv(exp_order,tol,ref,tag)
 
   DO i=1,3 ! reduction order
     DO j=1,3 ! solution index
-      bool=(ABS(exp_order-LOG10(tmp(j,i)/tmp(j,i+1)))<=tol .OR. ABS(tmp(j,i))<=1.0E-8)
-      ASSERT(bool,'Order Convergence: '//TRIM(tag))
-      FINFO() tmp(j,:)
-      FINFO() i,j,exp_order,LOG10(tmp(j,i)/tmp(j,i+1)),ABS(exp_order-LOG(tmp(j,i)/tmp(j,i+1)))
+      IF(.NOT.(tmp(j,i+1) .APPROXEQ. 0.0_SRK)) THEN
+        bool=(ABS(exp_order-LOG10(ABS(tmp(j,i)/tmp(j,i+1))))<=tol .OR. ABS(tmp(j,i))<=1.0E-8)
+        ASSERT(bool,'Order Convergence: '//TRIM(tag))
+        FINFO() tmp(j,:)
+        FINFO() i,j,exp_order,LOG10(tmp(j,i)/tmp(j,i+1)),ABS(exp_order-LOG(tmp(j,i)/tmp(j,i+1)))
+      ENDIF
     ENDDO
   ENDDO
 
