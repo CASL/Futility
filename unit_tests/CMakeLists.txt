@@ -17,7 +17,7 @@ ADD_SUBDIRECTORY(trilinos_interfaces)
 SET(UNIT_TEST_NAMES
     testDBC
     testUnitTest
-    testSelectedKinds
+    testIntrType
     testIAPWSWaterProperties
     testWaterSatProperties
     testArrayUtils
