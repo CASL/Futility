@@ -7,4 +7,4 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
-Futility_CreateUnitTest(testSelectedKinds)
+Futility_CreateUnitTest(testIntrType)

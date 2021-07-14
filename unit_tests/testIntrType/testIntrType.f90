@@ -6,7 +6,7 @@
 ! of Michigan and Oak Ridge National Laboratory.  The copyright and license    !
 ! can be found in LICENSE.txt in the head directory of this repository.        !
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-PROGRAM testSelectedKinds
+PROGRAM testIntrType
 #include "UnitTest.h"
 USE UnitTest
 USE IntrType
@@ -37,9 +37,7 @@ REGISTER_SUBTEST('CharToInt', testCharToInt)
 REGISTER_SUBTEST('CharToSingle', testCharToSingle)
 REGISTER_SUBTEST('CharToDouble', testCharToDouble)
 REGISTER_SUBTEST('CharToBool', testCharToBool)
-!REGISTER_SUBTEST('CharToIntArray', testCharToIntArray)
-!REGISTER_SUBTEST('CharToDoubleArray', testCharToDoubleArray)
-!REGISTER_SUBTEST('CharToStrArray', testCharToStrArray)
+REGISTER_SUBTEST('isBetween',testIsBetween)
 
 FINALIZE_TEST()
 !
@@ -655,65 +653,225 @@ SUBROUTINE testCharToBool()
 ENDSUBROUTINE testCharToBool
 !
 !-------------------------------------------------------------------------------
-!SUBROUTINE testCharToIntArray()
-!  INTEGER(SIK),ALLOCATABLE :: intArray(:)
-!  CHARACTER(LEN=*),PARAMETER :: ia1='{1,2,3,4,5,6,2394}'
-!  CHARACTER(LEN=*),PARAMETER :: ia2='{10}'
-!  CHARACTER(LEN=*),PARAMETER :: ia3='{}'
-!  CHARACTER(LEN=*),PARAMETER :: ia4='{2147483647,-2147483647,0,-0, -1352}'
-!  LOGICAL(SBK) :: bool
-!  COMPONENT_TEST('Char to Int Array assignment')
+SUBROUTINE testIsBetween()
 
-!  CALL char_to_int_array(intArray,ia1)
-!  bool=ALL(intArray == (/1,2,3,4,5,6,2394/))
-!  ASSERT(bool, 'Basic char to int array assignment')
-!  CALL char_to_int_array(intArray,ia2)
-!  bool=ALL(intArray == (/10/))
-!  ASSERT(bool, 'Char to int array assignment, one value')
-!  CALL char_to_int_array(intArray,ia3)
-!  ASSERT(.NOT.(ALLOCATED(intArray)), 'Char to int array, empty')
-!  CALL char_to_int_array(intArray,ia4)
-!  bool=ALL(intArray == (/2147483647,-2147483647,0,0/))
-!  ASSERT(bool, 'Char to int array assignment, various values, negatives')
+  COMPONENT_TEST('SNK')
+  ASSERT(.NOT.isBetween(1_SNK,0_SNK,2_SNK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1_SNK,1_SNK,2_SNK),'1 < 1 < 2')
+  ASSERT(.NOT.isBetween(1_SNK,2_SNK,2_SNK),'1 < 2 < 2')
+  ASSERT(isBetween(1_SNK,2_SNK,3_SNK),'1 < 2 < 3')
+  ASSERT(.NOT.isBetween(1_SNK,3_SNK,2_SNK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1_SNK,1_SNK,1_SNK),'1 < 1 < 1')
 
-!ENDSUBROUTINE testCharToIntArray
-!
-!---!----------------------------------------------------------------------------
-!SUBROUTINE testCharToDoubleArray()
-!  REAL(SDK),ALLOCATABLE :: doubleArray(:)
-!  CHARACTER(LEN=*),PARAMETER :: da1='{1.0,2.1,3.2,4.5,235.235}'
-!  CHARACTER(LEN=*),PARAMETER :: da2='{-734723741.000033,2147483647.2147483647}'
-!  CHARACTER(LEN=*),PARAMETER :: da3='{1e5,1e-5,1.351632e12,-4.324E-2}'
-!  CHARACTER(LEN=*),PARAMETER :: da4='{8.2085e+05,1.1109e+05,5.5308e+03,&
-!    1.8644e+02,3.7612e+01,3.5379e+01,2.7697e+01,2.1684e+01,2.0397e+01,&
-!      1.5968e+01,7.1500e+00,6.7000e+00,6.3000e+00,1.0970e+00,1.0450e+00,&
-!      9.5000e-01,3.5000e-01,2.0600e-01,1.0700e-01,5.8000e-02,2.5000e-02,&
-!      1.0000e-02,1.0000e-05}'
-!  LOGICAL(SBK) :: bool
-!  COMPONENT_TEST('Char to Double Array assignment')
+  ASSERT(.NOT.isBetween(2_SNK,0_SNK,1_SNK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2_SNK,1_SNK,1_SNK),'2 > 1 > 1')
+  ASSERT(.NOT.isBetween(2_SNK,2_SNK,1_SNK),'2 > 2 > 1')
+  ASSERT(isBetween(3_SNK,2_SNK,1_SNK),'3 > 2 > 1')
+  ASSERT(.NOT.isBetween(2_SNK,3_SNK,1_SNK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1_SNK,1_SNK,1_SNK),'1 > 1 > 1')
 
-!  CALL char_to_double_array(doubleArray,da1)
-!  bool=ALL(doubleArray .APPROXEQF. (/1.0_SDK,2.1_SDK,3.2_SDK,4.5_SDK,235.235_SDK/))
-!  ASSERT(bool, 'Char to double array assignment')
-!  CALL char_to_double_array(doubleArray,da2)
-!  bool=ALL(doubleArray .APPROXEQF. (/-734723741.000033_SDK,2147483647.2147483647_SDK/))
-!  ASSERT(bool, 'Char to double array assignment, big numbers')
-!  CALL char_to_double_array(doubleArray,da3)
-!  bool=ALL(doubleArray .APPROXEQF. (/1e5_SDK,1e-5_SDK,1.351632e12_SDK,-4.324E-2_SDK/))
-!  ASSERT(bool, 'Char to double array assignment, scientific notation')
-!  CALL char_to_double_array(doubleArray,da4)
-!  bool=ALL(doubleArray .APPROXEQF. (/8.2085e+05_SDK,1.1109e+05_SDK,5.5308e+03_SDK,&
-!    1.8644e+02_SDK,3.7612e+01_SDK,3.5379e+01_SDK,2.7697e+01_SDK,2.1684e+01_SDK,2.0397e+01_SDK,&
-!      1.5968e+01_SDK,7.1500e+00_SDK,6.7000e+00_SDK,6.3000e+00_SDK,1.0970e+00_SDK,1.0450e+00_SDK,&
-!      9.5000e-01_SDK,3.5000e-01_SDK,2.0600e-01_SDK,1.0700e-01_SDK,5.8000e-02_SDK,2.5000e-02_SDK,&
-!      1.0000e-02_SDK,1.0000e-05_SDK/))
-!  ASSERT(bool, 'Char to double array, large array')
-!ENDSUBROUTINE testCharToDoubleArray
+  COMPONENT_TEST('SNK, tol')
+  ASSERT(.NOT.isBetween(1_SNK,0_SNK,2_SNK,1_SNK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1_SNK,1_SNK,2_SNK,1_SNK),'1 < 1 < 2')
+  ASSERT(.NOT.isBetween(1_SNK,2_SNK,2_SNK,1_SNK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1_SNK,2_SNK,3_SNK,1_SNK),'1 < 2 < 3')
+  ASSERT(.NOT.isBetween(1_SNK,3_SNK,2_SNK,1_SNK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1_SNK,1_SNK,1_SNK,1_SNK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2_SNK,0_SNK,1_SNK,1_SNK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2_SNK,1_SNK,1_SNK,1_SNK),'2 > 1 > 1')
+  ASSERT(.NOT.isBetween(2_SNK,2_SNK,1_SNK,1_SNK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(3_SNK,2_SNK,1_SNK,1_SNK),'3 > 2 > 1')
+  ASSERT(.NOT.isBetween(2_SNK,3_SNK,1_SNK,1_SNK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1_SNK,1_SNK,1_SNK,1_SNK),'1 > 1 > 1')
+
+  ASSERT(.NOT.isBetween(1_SNK,0_SNK,2_SNK,-1_SNK),'1 < 0 < 2')
+  ASSERT(isBetween(1_SNK,1_SNK,2_SNK,-1_SNK),'1 < 1 < 2')
+  ASSERT(isBetween(1_SNK,2_SNK,2_SNK,-1_SNK),'1 < 2 < 2')
+  ASSERT(isBetween(1_SNK,2_SNK,3_SNK,-1_SNK),'1 < 2 < 3')
+  ASSERT(.NOT.isBetween(1_SNK,3_SNK,2_SNK,-1_SNK),'1 < 3 < 2')
+  ASSERT(isBetween(1_SNK,1_SNK,1_SNK,-1_SNK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2_SNK,0_SNK,1_SNK,-1_SNK),'2 > 0 > 1')
+  ASSERT(isBetween(2_SNK,1_SNK,1_SNK,-1_SNK),'2 > 1 > 1')
+  ASSERT(isBetween(2_SNK,2_SNK,1_SNK,-1_SNK),'2 > 2 > 1')
+  ASSERT(isBetween(3_SNK,2_SNK,1_SNK,-1_SNK),'3 > 2 > 1')
+  ASSERT(.NOT.isBetween(2_SNK,3_SNK,1_SNK,-1_SNK),'2 > 3 > 1')
+  ASSERT(isBetween(1_SNK,1_SNK,1_SNK,-1_SNK),'1 > 1 > 1')
+
+  COMPONENT_TEST('SLK')
+  ASSERT(.NOT.isBetween(1_SLK,0_SLK,2_SLK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1_SLK,1_SLK,2_SLK),'1 < 1 < 2')
+  ASSERT(.NOT.isBetween(1_SLK,2_SLK,2_SLK),'1 < 2 < 2')
+  ASSERT(isBetween(1_SLK,2_SLK,3_SLK),'1 < 2 < 3')
+  ASSERT(.NOT.isBetween(1_SLK,3_SLK,2_SLK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1_SLK,1_SLK,1_SLK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2_SLK,0_SLK,1_SLK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2_SLK,1_SLK,1_SLK),'2 > 1 > 1')
+  ASSERT(.NOT.isBetween(2_SLK,2_SLK,1_SLK),'2 > 2 > 1')
+  ASSERT(isBetween(3_SLK,2_SLK,1_SLK),'3 > 2 > 1')
+  ASSERT(.NOT.isBetween(2_SLK,3_SLK,1_SLK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1_SLK,1_SLK,1_SLK),'1 > 1 > 1')
+
+  COMPONENT_TEST('SLK, tol')
+  ASSERT(.NOT.isBetween(1_SLK,0_SLK,2_SLK,1_SLK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1_SLK,1_SLK,2_SLK,1_SLK),'1 < 1 < 2')
+  ASSERT(.NOT.isBetween(1_SLK,2_SLK,2_SLK,1_SLK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1_SLK,2_SLK,3_SLK,1_SLK),'1 < 2 < 3')
+  ASSERT(.NOT.isBetween(1_SLK,3_SLK,2_SLK,1_SLK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1_SLK,1_SLK,1_SLK,1_SLK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2_SLK,0_SLK,1_SLK,1_SLK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2_SLK,1_SLK,1_SLK,1_SLK),'2 > 1 > 1')
+  ASSERT(.NOT.isBetween(2_SLK,2_SLK,1_SLK,1_SLK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(3_SLK,2_SLK,1_SLK,1_SLK),'3 > 2 > 1')
+  ASSERT(.NOT.isBetween(2_SLK,3_SLK,1_SLK,1_SLK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1_SLK,1_SLK,1_SLK,1_SLK),'1 > 1 > 1')
+
+  ASSERT(.NOT.isBetween(1_SLK,0_SLK,2_SLK,-1_SLK),'1 < 0 < 2')
+  ASSERT(isBetween(1_SLK,1_SLK,2_SLK,-1_SLK),'1 < 1 < 2')
+  ASSERT(isBetween(1_SLK,2_SLK,2_SLK,-1_SLK),'1 < 2 < 2')
+  ASSERT(isBetween(1_SLK,2_SLK,3_SLK,-1_SLK),'1 < 2 < 3')
+  ASSERT(.NOT.isBetween(1_SLK,3_SLK,2_SLK,-1_SLK),'1 < 3 < 2')
+  ASSERT(isBetween(1_SLK,1_SLK,1_SLK,-1_SLK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2_SLK,0_SLK,1_SLK,-1_SLK),'2 > 0 > 1')
+  ASSERT(isBetween(2_SLK,1_SLK,1_SLK,-1_SLK),'2 > 1 > 1')
+  ASSERT(isBetween(2_SLK,2_SLK,1_SLK,-1_SLK),'2 > 2 > 1')
+  ASSERT(isBetween(3_SLK,2_SLK,1_SLK,-1_SLK),'3 > 2 > 1')
+  ASSERT(.NOT.isBetween(2_SLK,3_SLK,1_SLK,-1_SLK),'2 > 3 > 1')
+
+  COMPONENT_TEST('SSK')
+  ASSERT(.NOT.isBetween(1.0_SSK,0.0_SSK,2.0_SSK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,2.0_SSK),'1 < 1 < 2')
+  ASSERT(isBetween(1.0_SSK,1.5_SSK,2.0_SSK),'1 < 1.5 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,2.0_SSK,2.0_SSK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,3.0_SSK,2.0_SSK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,2.0_SSK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2.0_SSK,0.0_SSK,1.0_SSK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,1.0_SSK,1.0_SSK),'2 > 1 > 1')
+  ASSERT(isBetween(2.0_SSK,1.5_SSK,1.0_SSK),'2 > 1.5 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,2.0_SSK,1.0_SSK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,3.0_SSK,1.0_SSK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,1.0_SSK,1.0_SSK),'1 > 1 > 1')
+
+  COMPONENT_TEST('SSK, tol')
+  ASSERT(.NOT.isBetween(1.0_SSK,0.0_SSK,2.0_SSK,0.00001_SSK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,2.0_SSK,0.00001_SSK),'1 < 1 < 2')
+  ASSERT(isBetween(1.0_SSK,1.5_SSK,2.0_SSK,0.00001_SSK),'1 < 1.5 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,2.0_SSK,2.0_SSK,0.00001_SSK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,3.0_SSK,2.0_SSK,0.00001_SSK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,1.0_SSK,0.00001_SSK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(1.0_SSK,0.0_SSK,2.0_SSK,1.00001_SSK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,2.0_SSK,1.00001_SSK),'1 < 1 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.5_SSK,2.0_SSK,1.00001_SSK),'1 < 1.5 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,2.0_SSK,2.0_SSK,1.00001_SSK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,3.0_SSK,2.0_SSK,1.00001_SSK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,1.0_SSK,1.00001_SSK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(1.0_SSK,0.0_SSK,2.0_SSK,-0.00001_SSK),'1 < 0 < 2')
+  ASSERT(isBetween(1.0_SSK,1.0_SSK,2.0_SSK,-0.00001_SSK),'1 < 1 < 2')
+  ASSERT(isBetween(1.0_SSK,1.5_SSK,2.0_SSK,-0.00001_SSK),'1 < 1.5 < 2')
+  ASSERT(isBetween(1.0_SSK,2.0_SSK,2.0_SSK,-0.00001_SSK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1.0_SSK,3.0_SSK,2.0_SSK,-0.00001_SSK),'1 < 3 < 2')
+  ASSERT(isBetween(1.0_SSK,1.0_SSK,1.0_SSK,-0.00001_SSK),'1 < 1 < 1')
+
+  ASSERT(isBetween(1.0_SSK,0.0_SSK,2.0_SSK,-1.00001_SSK),'1 < 0 < 2')
+  ASSERT(isBetween(1.0_SSK,1.0_SSK,2.0_SSK,-1.00001_SSK),'1 < 1 < 2')
+  ASSERT(isBetween(1.0_SSK,1.5_SSK,2.0_SSK,-1.00001_SSK),'1 < 1.5 < 2')
+  ASSERT(isBetween(1.0_SSK,2.0_SSK,2.0_SSK,-1.00001_SSK),'1 < 2 < 2')
+  ASSERT(isBetween(1.0_SSK,3.0_SSK,2.0_SSK,-1.00001_SSK),'1 < 3 < 2')
+  ASSERT(isBetween(1.0_SSK,1.0_SSK,1.0_SSK,-1.00001_SSK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2.0_SSK,0.0_SSK,1.0_SSK,0.00001_SSK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,1.0_SSK,1.0_SSK,0.00001_SSK),'2 > 1 > 1')
+  ASSERT(isBetween(2.0_SSK,1.5_SSK,1.0_SSK,0.00001_SSK),'2 > 1.5 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,2.0_SSK,1.0_SSK,0.00001_SSK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,3.0_SSK,1.0_SSK,0.00001_SSK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,1.0_SSK,0.00001_SSK),'1 > 1 > 1')
+
+  ASSERT(.NOT.isBetween(2.0_SSK,0.0_SSK,1.0_SSK,1.00001_SSK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,1.0_SSK,1.0_SSK,1.00001_SSK),'2 > 1 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,1.5_SSK,1.0_SSK,1.00001_SSK),'2 > 1.5 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,2.0_SSK,1.0_SSK,1.00001_SSK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,3.0_SSK,1.0_SSK,1.00001_SSK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1.0_SSK,1.0_SSK,1.0_SSK,1.00001_SSK),'1 > 1 > 1')
+
+  ASSERT(.NOT.isBetween(2.0_SSK,0.0_SSK,1.0_SSK,-0.00001_SSK),'2 > 0 > 1')
+  ASSERT(isBetween(2.0_SSK,1.0_SSK,1.0_SSK,-0.00001_SSK),'2 > 1 > 1')
+  ASSERT(isBetween(2.0_SSK,1.5_SSK,1.0_SSK,-0.00001_SSK),'2 > 1.5 > 1')
+  ASSERT(isBetween(2.0_SSK,2.0_SSK,1.0_SSK,-0.00001_SSK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(2.0_SSK,3.0_SSK,1.0_SSK,-0.00001_SSK),'2 > 3 > 1')
+  ASSERT(isBetween(1.0_SSK,1.0_SSK,1.0_SSK,-0.00001_SSK),'1 > 1 > 1')
+
+  ASSERT(isBetween(2.0_SSK,0.0_SSK,1.0_SSK,-1.00001_SSK),'2 > 0 > 1')
+  ASSERT(isBetween(2.0_SSK,1.0_SSK,1.0_SSK,-1.00001_SSK),'2 > 1 > 1')
+  ASSERT(isBetween(2.0_SSK,1.5_SSK,1.0_SSK,-1.00001_SSK),'2 > 1.5 > 1')
+  ASSERT(isBetween(2.0_SSK,2.0_SSK,1.0_SSK,-1.00001_SSK),'2 > 2 > 1')
+  ASSERT(isBetween(2.0_SSK,3.0_SSK,1.0_SSK,-1.00001_SSK),'2 > 3 > 1')
+  ASSERT(isBetween(1.0_SSK,1.0_SSK,1.0_SSK,-1.00001_SSK),'1 > 1 > 1')
+
+  COMPONENT_TEST('SDK, tol')
+  ASSERT(.NOT.isBetween(1.0_SDK,0.0_SDK,2.0_SDK,0.00001_SDK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,1.0_SDK,2.0_SDK,0.00001_SDK),'1 < 1 < 2')
+  ASSERT(isBetween(1.0_SDK,1.5_SDK,2.0_SDK,0.00001_SDK),'1 < 1.5 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,2.0_SDK,2.0_SDK,0.00001_SDK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,3.0_SDK,2.0_SDK,0.00001_SDK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,1.0_SDK,1.0_SDK,0.00001_SDK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(1.0_SDK,0.0_SDK,2.0_SDK,1.00001_SDK),'1 < 0 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,1.0_SDK,2.0_SDK,1.00001_SDK),'1 < 1 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,1.5_SDK,2.0_SDK,1.00001_SDK),'1 < 1.5 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,2.0_SDK,2.0_SDK,1.00001_SDK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,3.0_SDK,2.0_SDK,1.00001_SDK),'1 < 3 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,1.0_SDK,1.0_SDK,1.00001_SDK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(1.0_SDK,0.0_SDK,2.0_SDK,-0.00001_SDK),'1 < 0 < 2')
+  ASSERT(isBetween(1.0_SDK,1.0_SDK,2.0_SDK,-0.00001_SDK),'1 < 1 < 2')
+  ASSERT(isBetween(1.0_SDK,1.5_SDK,2.0_SDK,-0.00001_SDK),'1 < 1.5 < 2')
+  ASSERT(isBetween(1.0_SDK,2.0_SDK,2.0_SDK,-0.00001_SDK),'1 < 2 < 2')
+  ASSERT(.NOT.isBetween(1.0_SDK,3.0_SDK,2.0_SDK,-0.00001_SDK),'1 < 3 < 2')
+  ASSERT(isBetween(1.0_SDK,1.0_SDK,1.0_SDK,-0.00001_SDK),'1 < 1 < 1')
+
+  ASSERT(isBetween(1.0_SDK,0.0_SDK,2.0_SDK,-1.00001_SDK),'1 < 0 < 2')
+  ASSERT(isBetween(1.0_SDK,1.0_SDK,2.0_SDK,-1.00001_SDK),'1 < 1 < 2')
+  ASSERT(isBetween(1.0_SDK,1.5_SDK,2.0_SDK,-1.00001_SDK),'1 < 1.5 < 2')
+  ASSERT(isBetween(1.0_SDK,2.0_SDK,2.0_SDK,-1.00001_SDK),'1 < 2 < 2')
+  ASSERT(isBetween(1.0_SDK,3.0_SDK,2.0_SDK,-1.00001_SDK),'1 < 3 < 2')
+  ASSERT(isBetween(1.0_SDK,1.0_SDK,1.0_SDK,-1.00001_SDK),'1 < 1 < 1')
+
+  ASSERT(.NOT.isBetween(2.0_SDK,0.0_SDK,1.0_SDK,0.00001_SDK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,1.0_SDK,1.0_SDK,0.00001_SDK),'2 > 1 > 1')
+  ASSERT(isBetween(2.0_SDK,1.5_SDK,1.0_SDK,0.00001_SDK),'2 > 1.5 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,2.0_SDK,1.0_SDK,0.00001_SDK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,3.0_SDK,1.0_SDK,0.00001_SDK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1.0_SDK,1.0_SDK,1.0_SDK,0.00001_SDK),'1 > 1 > 1')
+
+  ASSERT(.NOT.isBetween(2.0_SDK,0.0_SDK,1.0_SDK,1.00001_SDK),'2 > 0 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,1.0_SDK,1.0_SDK,1.00001_SDK),'2 > 1 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,1.5_SDK,1.0_SDK,1.00001_SDK),'2 > 1.5 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,2.0_SDK,1.0_SDK,1.00001_SDK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,3.0_SDK,1.0_SDK,1.00001_SDK),'2 > 3 > 1')
+  ASSERT(.NOT.isBetween(1.0_SDK,1.0_SDK,1.0_SDK,1.00001_SDK),'1 > 1 > 1')
+
+  ASSERT(.NOT.isBetween(2.0_SDK,0.0_SDK,1.0_SDK,-0.00001_SDK),'2 > 0 > 1')
+  ASSERT(isBetween(2.0_SDK,1.0_SDK,1.0_SDK,-0.00001_SDK),'2 > 1 > 1')
+  ASSERT(isBetween(2.0_SDK,1.5_SDK,1.0_SDK,-0.00001_SDK),'2 > 1.5 > 1')
+  ASSERT(isBetween(2.0_SDK,2.0_SDK,1.0_SDK,-0.00001_SDK),'2 > 2 > 1')
+  ASSERT(.NOT.isBetween(2.0_SDK,3.0_SDK,1.0_SDK,-0.00001_SDK),'2 > 3 > 1')
+  ASSERT(isBetween(1.0_SDK,1.0_SDK,1.0_SDK,-0.00001_SDK),'1 > 1 > 1')
+
+  ASSERT(isBetween(2.0_SDK,0.0_SDK,1.0_SDK,-1.00001_SDK),'2 > 0 > 1')
+  ASSERT(isBetween(2.0_SDK,1.0_SDK,1.0_SDK,-1.00001_SDK),'2 > 1 > 1')
+  ASSERT(isBetween(2.0_SDK,1.5_SDK,1.0_SDK,-1.00001_SDK),'2 > 1.5 > 1')
+  ASSERT(isBetween(2.0_SDK,2.0_SDK,1.0_SDK,-1.00001_SDK),'2 > 2 > 1')
+  ASSERT(isBetween(2.0_SDK,3.0_SDK,1.0_SDK,-1.00001_SDK),'2 > 3 > 1')
+  ASSERT(isBetween(1.0_SDK,1.0_SDK,1.0_SDK,-1.00001_SDK),'1 > 1 > 1')
+
+ENDSUBROUTINE testIsBetween
 !
-!-------------------------------------------------------------------------------
-!SUBROUTINE testCharToStrArray()
-!  COMPONENT_TEST('Char to String Array assignment')
-!ENDSUBROUTINE testCharToStrArray
-!
-ENDPROGRAM testSelectedKinds
+ENDPROGRAM testIntrType
 
