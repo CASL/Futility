@@ -1,4 +1,6 @@
-# Futility  [![Build Status](https://travis-ci.org/CASL/Futility.svg?branch=master)](https://travis-ci.org/CASL/Futility)
+**IMPORTANT: Futility has moved!**  All contributions will be accepted only through [the new host server](https://code.ornl.gov/futility/Futility) as of 07/14/2021.
+
+# Futility
 ---
 Futility Development Group
 
