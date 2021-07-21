@@ -515,7 +515,6 @@ ENDSUBROUTINE testSOFTCompare
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testisNAN()
-  LOGICAL(SBK) :: bool
   CHARACTER(LEN=3) :: nanChar = 'NaN'
   REAL(SDK) :: nanDouble
   REAL(SSK) :: nanSingle
@@ -532,7 +531,6 @@ ENDSUBROUTINE testisNAN
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testisINF()
-  LOGICAL(SBK) :: bool
   CHARACTER(LEN=3) :: infChar = 'Inf'
   REAL(SDK) :: infDouble
   REAL(SSK) :: infSingle
