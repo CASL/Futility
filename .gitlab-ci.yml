@@ -1,0 +1,35 @@
+before_script:
+  - if [[ -f "/data/test_gcc/gcc-8.3.0/load_dev_env.sh" ]]; then BASE_DIR="/data/gitlab-runner"; . /data/test_gcc/gcc-8.3.0/load_dev_env.sh; ENV_BASE=/data/test_gcc/gcc-8.3.0; else BASE_DIR="/localhome/gitlab-runner"; . /projects/vera/gcc-8.3.0/load_dev_env.sh; ENV_BASE=/projects/vera/gcc-8.3.0; fi
+  - which gcc
+  - echo $ENV_BASE
+  - echo $BASE_DIR
+
+release:
+  type: test
+  tags:
+    - linux
+  variables:
+    BLD_NAME: "gnu_release_debug"
+    BLD_DIR: "/tmp/$BLD_NAME"
+  artifacts:
+    paths:
+      - LastTestsFailed.log
+      - LastTest.log
+      - CTestCostData.txt
+    expire_in: 1 week
+    when: always
+  script:
+    - which gcc
+    - SRC_DIR=`pwd`
+    - mkdir -p $BLD_DIR
+    - cd $BLD_DIR
+    - rm -rf *
+    - cmake -DFutility_ENABLE_DBC:BOOL=ON -DCMAKE_Fortran_COMPILER=`which gfortran` -DCMAKE_C_COMPILER=`which gcc` -DCMAKE_CXX_COMPILER=`which g++` $SRC_DIR    
+    - make -j28
+    - ctest -j28
+  after_script:
+    - SRC_DIR=`pwd`
+    - chmod -R a=u $BLD_DIR
+    - cd $BLD_DIR
+    - cp $BLD_DIR/Testing/Temporary/* $SRC_DIR/
+
