@@ -5792,18 +5792,25 @@ ENDSUBROUTINE clear_ParamType_List
 !> @param paramlist the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a parameter list then an error is produced.
 !>
-SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description)
+SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_List'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   TYPE(ParamType),INTENT(IN) :: paramlist(:)
   CHARACTER(LEN=*),INTENT(IN) :: name
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   INTEGER(SIK) :: np,i
+  LOGICAL(SBK) :: lAddMissing
   CLASS(ParamType),POINTER :: tmpParam
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_List)
@@ -5856,6 +5863,8 @@ SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be TYPE(ParamType_List)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,paramlist,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -6097,19 +6106,26 @@ ENDSUBROUTINE clear_ParamType_SSK
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK)
     IF(thisParam%name == TRIM(name)) THEN
@@ -6134,6 +6150,8 @@ SUBROUTINE set_ParamType_SSK(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -6353,19 +6371,26 @@ ENDSUBROUTINE clear_ParamType_SDK
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK)
     IF(thisParam%name == TRIM(name)) THEN
@@ -6390,6 +6415,8 @@ SUBROUTINE set_ParamType_SDK(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -6609,19 +6636,26 @@ ENDSUBROUTINE clear_ParamType_SNK
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK)
     IF(thisParam%name == TRIM(name)) THEN
@@ -6646,6 +6680,8 @@ SUBROUTINE set_ParamType_SNK(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -6861,19 +6897,26 @@ ENDSUBROUTINE clear_ParamType_SLK
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK)
     IF(thisParam%name == TRIM(name)) THEN
@@ -6898,6 +6941,8 @@ SUBROUTINE set_ParamType_SLK(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -7113,19 +7158,26 @@ ENDSUBROUTINE clear_ParamType_SBK
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a scalar logical valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SBK(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SBK(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SBK'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   LOGICAL(SBK),INTENT(IN) :: param
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SBK)
     IF(thisParam%name == TRIM(name)) THEN
@@ -7150,6 +7202,8 @@ SUBROUTINE set_ParamType_SBK(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be LOGICAL(SBK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -7358,19 +7412,26 @@ ENDSUBROUTINE clear_ParamType_STR
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_STR(thisParam,name,param,description)
+SUBROUTINE set_ParamType_STR(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_STR'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),INTENT(IN) :: param
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR)
     IF(thisParam%name == TRIM(name)) THEN
@@ -7395,6 +7456,8 @@ SUBROUTINE set_ParamType_STR(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be TYPE(StringType)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -7532,21 +7595,20 @@ ENDSUBROUTINE init_ParamType_CHAR
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
-SUBROUTINE set_ParamType_CHAR(thisParam,name,param,description)
+SUBROUTINE set_ParamType_CHAR(thisParam,name,param,description,addMissing)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   CHARACTER(LEN=*),INTENT(IN) :: param
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   TYPE(StringType) :: s
 
   s=param
-  IF(PRESENT(description)) THEN
-    CALL set_ParamType_STR(thisParam,name,s,description)
-  ELSE
-    CALL set_ParamType_STR(thisParam,name,s)
-  ENDIF
-  s=''
+  CALL set_ParamType_STR(thisParam,name,s,description,addMissing)
+
 ENDSUBROUTINE set_ParamType_CHAR
 !
 !-------------------------------------------------------------------------------
@@ -7724,19 +7786,26 @@ ENDSUBROUTINE clear_ParamType_SSK_a1
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a1'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param(:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a1)
     IF(thisParam%name == TRIM(name)) THEN
@@ -7761,6 +7830,8 @@ SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -7998,19 +8069,26 @@ ENDSUBROUTINE clear_ParamType_SDK_a1
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a1'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param(:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a1)
     IF(thisParam%name == TRIM(name)) THEN
@@ -8035,6 +8113,8 @@ SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -8270,19 +8350,26 @@ ENDSUBROUTINE clear_ParamType_SNK_a1
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a1'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param(:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a1)
     IF(thisParam%name == TRIM(name)) THEN
@@ -8307,6 +8394,8 @@ SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -8543,19 +8632,26 @@ ENDSUBROUTINE clear_ParamType_SLK_a1
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a1'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param(:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a1)
     IF(thisParam%name == TRIM(name)) THEN
@@ -8580,6 +8676,8 @@ SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -8813,19 +8911,26 @@ ENDSUBROUTINE clear_ParamType_SBK_a1
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a one dimensional array of logical valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SBK_a1'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   LOGICAL(SBK),INTENT(IN) :: param(:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SBK_a1)
     IF(thisParam%name == TRIM(name)) THEN
@@ -8850,6 +8955,8 @@ SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9088,19 +9195,26 @@ ENDSUBROUTINE clear_ParamType_STR_a1
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description)
+SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_STR_a1'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),INTENT(IN) :: param(:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a1)
     IF(thisParam%name == TRIM(name)) THEN
@@ -9125,6 +9239,8 @@ SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9355,19 +9471,26 @@ ENDSUBROUTINE clear_ParamType_SSK_a2
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a2'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param(:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a2)
     IF(thisParam%name == TRIM(name)) THEN
@@ -9392,6 +9515,8 @@ SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9617,19 +9742,26 @@ ENDSUBROUTINE clear_ParamType_SDK_a2
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a2'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param(:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a2)
     IF(thisParam%name == TRIM(name)) THEN
@@ -9654,6 +9786,8 @@ SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9879,19 +10013,26 @@ ENDSUBROUTINE clear_ParamType_SNK_a2
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a2'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param(:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a2)
     IF(thisParam%name == TRIM(name)) THEN
@@ -9916,6 +10057,8 @@ SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -10141,19 +10284,26 @@ ENDSUBROUTINE clear_ParamType_SLK_a2
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a two dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a2'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param(:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a2)
     IF(thisParam%name == TRIM(name)) THEN
@@ -10178,6 +10328,8 @@ SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -10406,19 +10558,26 @@ ENDSUBROUTINE clear_ParamType_STR_a2
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description)
+SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_STR_a2'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),INTENT(IN) :: param(:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a2)
     IF(thisParam%name == TRIM(name)) THEN
@@ -10443,6 +10602,8 @@ SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -10674,19 +10835,26 @@ ENDSUBROUTINE clear_ParamType_SSK_a3
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a3'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param(:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a3)
     IF(thisParam%name == TRIM(name)) THEN
@@ -10711,6 +10879,8 @@ SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -10937,19 +11107,26 @@ ENDSUBROUTINE clear_ParamType_SDK_a3
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a3'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param(:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a3)
     IF(thisParam%name == TRIM(name)) THEN
@@ -10974,6 +11151,8 @@ SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11200,19 +11379,26 @@ ENDSUBROUTINE clear_ParamType_SNK_a3
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a3'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param(:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a3)
     IF(thisParam%name == TRIM(name)) THEN
@@ -11237,6 +11423,8 @@ SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11463,19 +11651,26 @@ ENDSUBROUTINE clear_ParamType_SLK_a3
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a three dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a3'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param(:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a3)
     IF(thisParam%name == TRIM(name)) THEN
@@ -11500,6 +11695,8 @@ SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11734,19 +11931,26 @@ ENDSUBROUTINE clear_ParamType_SSK_a4
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a four dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK_a4(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK_a4(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a4'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param(:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a4)
     IF(thisParam%name == TRIM(name)) THEN
@@ -11771,6 +11975,8 @@ SUBROUTINE set_ParamType_SSK_a4(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 4-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11999,19 +12205,26 @@ ENDSUBROUTINE clear_ParamType_SDK_a4
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a four dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK_a4(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK_a4(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a4'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param(:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a4)
     IF(thisParam%name == TRIM(name)) THEN
@@ -12036,6 +12249,8 @@ SUBROUTINE set_ParamType_SDK_a4(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 4-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -12264,19 +12479,26 @@ ENDSUBROUTINE clear_ParamType_SNK_a4
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a four dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK_a4(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK_a4(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a4'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param(:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a4)
     IF(thisParam%name == TRIM(name)) THEN
@@ -12301,6 +12523,8 @@ SUBROUTINE set_ParamType_SNK_a4(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 4-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -12529,19 +12753,26 @@ ENDSUBROUTINE clear_ParamType_SLK_a4
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a four dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK_a4(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK_a4(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a4'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param(:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a4)
     IF(thisParam%name == TRIM(name)) THEN
@@ -12566,6 +12797,8 @@ SUBROUTINE set_ParamType_SLK_a4(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 4-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -12802,19 +13035,26 @@ ENDSUBROUTINE clear_ParamType_SSK_a5
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a five dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a5'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param(:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a5)
     IF(thisParam%name == TRIM(name)) THEN
@@ -12839,6 +13079,8 @@ SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 5-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -13069,19 +13311,26 @@ ENDSUBROUTINE clear_ParamType_SDK_a5
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a five dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a5'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param(:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a5)
     IF(thisParam%name == TRIM(name)) THEN
@@ -13106,6 +13355,8 @@ SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 5-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -13336,19 +13587,26 @@ ENDSUBROUTINE clear_ParamType_SNK_a5
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a five dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a5'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a5)
     IF(thisParam%name == TRIM(name)) THEN
@@ -13373,6 +13631,8 @@ SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -13603,19 +13863,26 @@ ENDSUBROUTINE clear_ParamType_SLK_a5
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a five dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a5'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a5)
     IF(thisParam%name == TRIM(name)) THEN
@@ -13640,6 +13907,8 @@ SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -13879,19 +14148,26 @@ ENDSUBROUTINE clear_ParamType_SSK_a6
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a six dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a6'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a6)
     IF(thisParam%name == TRIM(name)) THEN
@@ -13916,6 +14192,8 @@ SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 6-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14149,19 +14427,26 @@ ENDSUBROUTINE clear_ParamType_SDK_a6
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a six dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a6'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a6)
     IF(thisParam%name == TRIM(name)) THEN
@@ -14186,6 +14471,8 @@ SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 6-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14419,19 +14706,26 @@ ENDSUBROUTINE clear_ParamType_SNK_a6
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a six dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a6'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a6)
     IF(thisParam%name == TRIM(name)) THEN
@@ -14456,6 +14750,8 @@ SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14689,19 +14985,26 @@ ENDSUBROUTINE clear_ParamType_SLK_a6
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a six dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a6'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a6)
     IF(thisParam%name == TRIM(name)) THEN
@@ -14726,6 +15029,8 @@ SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14967,19 +15272,26 @@ ENDSUBROUTINE clear_ParamType_SSK_a7
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a seven dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SSK_a7'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(IN) :: param(:,:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a7)
     IF(thisParam%name == TRIM(name)) THEN
@@ -15004,6 +15316,8 @@ SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 7-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -15239,19 +15553,26 @@ ENDSUBROUTINE clear_ParamType_SDK_a7
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a seven dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SDK_a7'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(IN) :: param(:,:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a7)
     IF(thisParam%name == TRIM(name)) THEN
@@ -15276,6 +15597,8 @@ SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 7-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -15511,19 +15834,26 @@ ENDSUBROUTINE clear_ParamType_SNK_a7
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a seven dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SNK_a7'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(IN) :: param(:,:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a7)
     IF(thisParam%name == TRIM(name)) THEN
@@ -15548,6 +15878,8 @@ SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -15783,19 +16115,26 @@ ENDSUBROUTINE clear_ParamType_SLK_a7
 !> @param param the new value to set for the parameter
 !> @param description an optional new description for the parameter identified
 !>        by @c name
+!> @param addMissing indicates if %add should be called if $c name is
+!>        not present; optional, defaults to false
 !>
 !> If a parameter with @c name is not found an error is produced. If the
 !> parameter with @c name is not a seven dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description)
+SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description,addMissing)
   CHARACTER(LEN=*),PARAMETER :: myName='set_ParamType_SLK_a7'
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(IN) :: param(:,:,:,:,:,:,:)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
+  LOGICAL(SBK) :: lAddMissing
 
+
+  lAddMissing=.FALSE.
+  IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a7)
     IF(thisParam%name == TRIM(name)) THEN
@@ -15820,6 +16159,8 @@ SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(lAddMissing) THEN
+      CALL thisParam%add(name,param,description)
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &

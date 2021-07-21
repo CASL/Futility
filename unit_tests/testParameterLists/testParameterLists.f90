@@ -241,6 +241,10 @@ SUBROUTINE testSBK()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSBK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSBK',.TRUE.,addMissing=.TRUE.)
+  CALL testParam2%get('testSBK',valsbk)
+  ASSERT(valsbk,'valsbk')
+  CALL testParam2%remove('testSBK')
   CALL testParam2%set('testSBK',.TRUE.) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK -'// &
@@ -370,6 +374,10 @@ SUBROUTINE testSNK()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNK',valsnk,addMissing=.TRUE.)
+  CALL testParam2%get('testSNK',valsnk)
+  ASSERT(valsnk == 3,'valsnk')
+  CALL testParam2%remove('testSNK')
   CALL testParam2%set('testSNK',valsnk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK -'// &
@@ -500,6 +508,10 @@ SUBROUTINE testSLK()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLK',valslk,addMissing=.TRUE.)
+  CALL testParam2%get('testSLK',valslk)
+  ASSERT(valslk == 3_SLK,'valslk')
+  CALL testParam2%remove('testSLK')
   CALL testParam2%set('testSLK',valslk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK -'// &
@@ -630,6 +642,10 @@ SUBROUTINE testSSK()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSK',valssk,addMissing=.TRUE.)
+  CALL testParam2%get('testSSK',valssk)
+  ASSERT(valssk == 3_SSK,'valssk')
+  CALL testParam2%remove('testSSK')
   CALL testParam2%set('testSSK',valssk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK -'// &
@@ -760,6 +776,10 @@ SUBROUTINE testSDK()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDK"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDK',valsdk,addMissing=.TRUE.)
+  CALL testParam2%get('testSDK',valsdk)
+  ASSERT(valsdk == 3_SDK,'valsdk')
+  CALL testParam2%remove('testSDK')
   CALL testParam2%set('testSDK',valsdk) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK -'// &
@@ -890,6 +910,11 @@ SUBROUTINE testCHAR()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testCHAR"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  valchar='more tests2'
+  CALL testParam2%set('testCHAR',TRIM(valchar),addMissing=.TRUE.)
+  CALL testParam2%get('testCHAR',valchar1)
+  ASSERT_EQ(TRIM(valchar1),'more tests2','valchar')
+  CALL testParam2%remove('testCHAR')
   CALL testParam2%set('testCHAR',TRIM(valchar)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
@@ -1021,6 +1046,10 @@ SUBROUTINE testSTR()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSTR"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSTR',TRIM(valstr),addMissing=.TRUE.)
+  CALL testParam2%get('testSTR',valstr)
+  ASSERT(TRIM(valstr) == 'more tests','valstr')
+  CALL testParam2%remove('testSTR')
   CALL testParam2%set('testSTR',TRIM(valstr)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR -'// &
@@ -1185,6 +1214,10 @@ SUBROUTINE testSBKa1()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSBKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSBKa1',(/.TRUE./),addMissing=.TRUE.)
+  CALL testParam2%get('testSBKa1',valsbka1)
+  ASSERT(valsbka1(1),'testParam valsbka1 2')
+  CALL testParam2%remove('testSBKa1')
   CALL testParam2%set('testSBKa1',(/.TRUE./)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SBK_a1 -'// &
@@ -1348,6 +1381,10 @@ SUBROUTINE testSNKa1()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa1',(/-1/),addMissing=.TRUE.)
+  CALL testParam2%get('testSNKa1',valsnka1)
+  ASSERT(valsnka1(1) == -1,'testParam valsnka1 2')
+  CALL testParam2%remove('testSNKa1')
   CALL testParam2%set('testSNKa1',(/-1/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a1 -'// &
@@ -1511,6 +1548,10 @@ SUBROUTINE testSLKa1()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa1',(/-1_SLK/),addMissing=.TRUE.)
+  CALL testParam2%get('testSLKa1',valslka1)
+  ASSERT(valslka1(1) == -1_SLK,'testParam valslka1 2')
+  CALL testParam2%remove('testSLKa1')
   CALL testParam2%set('testSLKa1',(/-1_SLK/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a1 -'// &
@@ -1682,6 +1723,11 @@ SUBROUTINE testSSKa1()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa1',(/-1.0_SSK/),addMissing=.TRUE.)
+  CALL testParam2%get('testSSKa1',valsska1)
+  bool=ALL(valsska1 .APPROXEQA. (/-1.0_SSK/))
+  ASSERT(bool,'testParam valsska1 2')
+  CALL testParam2%remove('testSSKa1')
   CALL testParam2%set('testSSKa1',(/-1.0_SSK/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a1 -'// &
@@ -1853,6 +1899,11 @@ SUBROUTINE testSDKa1()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDKa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa1',(/-1.0_SDK/),addMissing=.TRUE.)
+  CALL testParam2%get('testSDKa1',valsdka1)
+  bool=ALL(valsdka1 .APPROXEQA. (/-1.0_SDK/))
+  ASSERT(bool,'testParam valsdka1 2')
+  CALL testParam2%remove('testSDKa1')
   CALL testParam2%set('testSDKa1',(/-1.0_SDK/)) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a1 -'// &
@@ -2049,6 +2100,11 @@ SUBROUTINE testSTRa1()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSTRa1"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSTRa1',valstra1,addMissing=.TRUE.)
+  CALL testParam2%get('testSTRa1',valstra1)
+  bool=valstra1(1) == 'a different size test'
+  ASSERT(bool,'testParam valstra1 2')
+  CALL testParam2%remove('testSTRa1')
   CALL testParam2%set('testSTRa1',valstra1) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a1 -'// &
@@ -2234,6 +2290,11 @@ SUBROUTINE testSNKa2()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa2',RESHAPE((/-1/),(/1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSNKa2',valsnka2)
+  bool=valsnka2(1,1) == -1_SNK
+  ASSERT(bool,'testParam valsnka2 2')
+  CALL testParam2%remove('testSNKa2')
   CALL testParam2%set('testSNKa2',RESHAPE((/-1/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a2 -'// &
@@ -2423,6 +2484,11 @@ SUBROUTINE testSLKa2()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSLKa2',valslka2)
+  bool=valslka2(1,1) == -1_SLK
+  ASSERT(bool,'testParam valslka2 2')
+  CALL testParam2%remove('testSLKa2')
   CALL testParam2%set('testSLKa2',RESHAPE((/-1_SLK/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a2 -'// &
@@ -2612,6 +2678,11 @@ SUBROUTINE testSSKa2()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSSKa2',valsska2)
+  bool=valsska2(1,1) == -1.0_SSK
+  ASSERT(bool,'testParam valsska2 2')
+  CALL testParam2%remove('testSSKa2')
   CALL testParam2%set('testSSKa2',RESHAPE((/-1.0_SSK/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a2 -'// &
@@ -2801,6 +2872,11 @@ SUBROUTINE testSDKa2()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDKa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSDKa2',valsdka2)
+  bool=valsdka2(1,1) == -1.0_SDK
+  ASSERT(bool,'testParam valsdka2 2')
+  CALL testParam2%remove('testSDKa2')
   CALL testParam2%set('testSDKa2',RESHAPE((/-1.0_SDK/),(/1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a2 -'// &
@@ -3006,6 +3082,11 @@ SUBROUTINE testSTRa2()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSTRa2"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSTRa2',valstra2,addMissing=.TRUE.)
+  CALL testParam2%get('testSTRa2',valstra2)
+  bool=valstra2(1,1) == 'test error'
+  ASSERT(bool,'testParam valstra2 2')
+  CALL testParam2%remove('testSTRa2')
   CALL testParam2%set('testSTRa2',valstra2) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a2 -'// &
@@ -3200,6 +3281,11 @@ SUBROUTINE testSNKa3()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa3',RESHAPE((/-1/),(/1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSNKa3',valsnka3)
+  bool=valsnka3(1,1,1) == -1_SNK
+  ASSERT(bool,'testParam valsnka3 2')
+  CALL testParam2%remove('testSNKa3')
   CALL testParam2%set('testSNKa3',RESHAPE((/-1/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a3 -'// &
@@ -3390,6 +3476,11 @@ SUBROUTINE testSLKa3()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSLKa3',valslka3)
+  bool=valslka3(1,1,1) == -1_SLK
+  ASSERT(bool,'testParam valslka3 2')
+  CALL testParam2%remove('testSLKa3')
   CALL testParam2%set('testSLKa3',RESHAPE((/-1_SLK/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a3 -'// &
@@ -3580,6 +3671,11 @@ SUBROUTINE testSSKa3()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSSKa3',valsska3)
+  bool=valsska3(1,1,1) == -1.0_SSK
+  ASSERT(bool,'testParam valsska3 2')
+  CALL testParam2%remove('testSSKa3')
   CALL testParam2%set('testSSKa3',RESHAPE((/-1.0_SSK/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a3 -'// &
@@ -3770,6 +3866,11 @@ SUBROUTINE testSDKa3()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDKa3"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSDKa3',valsdka3)
+  bool=valsdka3(1,1,1) == -1.0_SDK
+  ASSERT(bool,'testParam valsdka3 2')
+  CALL testParam2%remove('testSDKa3')
   CALL testParam2%set('testSDKa3',RESHAPE((/-1.0_SDK/),(/1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a3 -'// &
@@ -3990,6 +4091,11 @@ SUBROUTINE testSNKa4()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNKa4"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa4',RESHAPE((/-1/),(/1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSNKa4',valsnka4)
+  bool=valsnka4(1,1,1,1) == -1_SNK
+  ASSERT(bool,'testParam valsnka4 2')
+  CALL testParam2%remove('testSNKa4')
   CALL testParam2%set('testSNKa4',RESHAPE((/-1/),(/1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a4 -'// &
@@ -4210,6 +4316,11 @@ SUBROUTINE testSLKa4()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLKa4"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa4',RESHAPE((/-1_SLK/),(/1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSLKa4',valslka4)
+  bool=valslka4(1,1,1,1) == -1_SLK
+  ASSERT(bool,'testParam valslka4 2')
+  CALL testParam2%remove('testSLKa4')
   CALL testParam2%set('testSLKa4',RESHAPE((/-1_SLK/),(/1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a4 -'// &
@@ -4430,6 +4541,11 @@ SUBROUTINE testSSKa4()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSKa4"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa4',RESHAPE((/-1.0_SSK/),(/1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSSKa4',valsska4)
+  bool=valsska4(1,1,1,1) == -1.0_SSK
+  ASSERT(bool,'testParam valsska4 2')
+  CALL testParam2%remove('testSSKa4')
   CALL testParam2%set('testSSKa4',RESHAPE((/-1.0_SSK/),(/1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a4 -'// &
@@ -4650,6 +4766,11 @@ SUBROUTINE testSDKa4()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDKa4"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa4',RESHAPE((/-1.0_SDK/),(/1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSDKa4',valsdka4)
+  bool=valsdka4(1,1,1,1) == -1.0_SDK
+  ASSERT(bool,'testParam valsdka4 2')
+  CALL testParam2%remove('testSDKa4')
   CALL testParam2%set('testSDKa4',RESHAPE((/-1.0_SDK/),(/1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a4 -'// &
@@ -4879,6 +5000,11 @@ SUBROUTINE testSNKa5()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNKa5"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa5',RESHAPE((/-1/),(/1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSNKa5',valsnka5)
+  bool=valsnka5(1,1,1,1,1) == -1_SNK
+  ASSERT(bool,'testParam valsnka5 2')
+  CALL testParam2%remove('testSNKa5')
   CALL testParam2%set('testSNKa5',RESHAPE((/-1/),(/1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a5 -'// &
@@ -5108,6 +5234,11 @@ SUBROUTINE testSLKa5()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLKa5"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa5',RESHAPE((/-1_SLK/),(/1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSLKa5',valslka5)
+  bool=valslka5(1,1,1,1,1) == -1_SLK
+  ASSERT(bool,'testParam valslka5 2')
+  CALL testParam2%remove('testSLKa5')
   CALL testParam2%set('testSLKa5',RESHAPE((/-1_SLK/),(/1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a5 -'// &
@@ -5337,6 +5468,11 @@ SUBROUTINE testSSKa5()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSKa5"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa5',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSSKa5',valsska5)
+  bool=valsska5(1,1,1,1,1) == -1.0_SSK
+  ASSERT(bool,'testParam valsska5 2')
+  CALL testParam2%remove('testSSKa5')
   CALL testParam2%set('testSSKa5',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a5 -'// &
@@ -5566,6 +5702,11 @@ SUBROUTINE testSDKa5()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDKa5"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa5',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSDKa5',valsdka5)
+  bool=valsdka5(1,1,1,1,1) == -1.0_SDK
+  ASSERT(bool,'testParam valsdka5 2')
+  CALL testParam2%remove('testSDKa5')
   CALL testParam2%set('testSDKa5',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a5 -'// &
@@ -5795,6 +5936,11 @@ SUBROUTINE testSNKa6()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNKa6"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa6',RESHAPE((/-1/),(/1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSNKa6',valsnka6)
+  bool=valsnka6(1,1,1,1,1,1) == -1_SNK
+  ASSERT(bool,'testParam valsnka6 2')
+  CALL testParam2%remove('testSNKa6')
   CALL testParam2%set('testSNKa6',RESHAPE((/-1/),(/1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a6 -'// &
@@ -6024,6 +6170,11 @@ SUBROUTINE testSLKa6()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLKa6"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa6',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSLKa6',valslka6)
+  bool=valslka6(1,1,1,1,1,1) == -1_SLK
+  ASSERT(bool,'testParam valslka6 2')
+  CALL testParam2%remove('testSLKa6')
   CALL testParam2%set('testSLKa6',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a6 -'// &
@@ -6253,6 +6404,11 @@ SUBROUTINE testSSKa6()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSKa6"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa6',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSSKa6',valsska6)
+  bool=valsska6(1,1,1,1,1,1) == -1.0_SSK
+  ASSERT(bool,'testParam valsska6 2')
+  CALL testParam2%remove('testSSKa6')
   CALL testParam2%set('testSSKa6',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a6 -'// &
@@ -6482,6 +6638,11 @@ SUBROUTINE testSDKa6()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDKa6"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa6',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSDKa6',valsdka6)
+  bool=valsdka6(1,1,1,1,1,1) == -1.0_SDK
+  ASSERT(bool,'testParam valsdka6 2')
+  CALL testParam2%remove('testSDKa6')
   CALL testParam2%set('testSDKa6',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a6 -'// &
@@ -6720,6 +6881,11 @@ SUBROUTINE testSNKa7()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSNKa7"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSNKa7',RESHAPE((/-1/),(/1,1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSNKa7',valsnka7)
+  bool=valsnka7(1,1,1,1,1,1,1) == -1_SNK
+  ASSERT(bool,'testParam valsnka7 2')
+  CALL testParam2%remove('testSNKa7')
   CALL testParam2%set('testSNKa7',RESHAPE((/-1/),(/1,1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SNK_a7 -'// &
@@ -6958,6 +7124,11 @@ SUBROUTINE testSLKa7()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSLKa7"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSLKa7',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSLKa7',valslka7)
+  bool=valslka7(1,1,1,1,1,1,1) == -1_SLK
+  ASSERT(bool,'testParam valslka7 2')
+  CALL testParam2%remove('testSLKa7')
   CALL testParam2%set('testSLKa7',RESHAPE((/-1_SLK/),(/1,1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SLK_a7 -'// &
@@ -7196,6 +7367,11 @@ SUBROUTINE testSSKa7()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSSKa7"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSSKa7',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSSKa7',valsska7)
+  bool=valsska7(1,1,1,1,1,1,1) == -1.0_SSK
+  ASSERT(bool,'testParam valsska7 2')
+  CALL testParam2%remove('testSSKa7')
   CALL testParam2%set('testSSKa7',RESHAPE((/-1.0_SSK/),(/1,1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SSK_a7 -'// &
@@ -7434,6 +7610,11 @@ SUBROUTINE testSDKa7()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testSDKa7"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSDKa7',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1,1/)),addMissing=.TRUE.)
+  CALL testParam2%get('testSDKa7',valsdka7)
+  bool=valsdka7(1,1,1,1,1,1,1) == -1.0_SDK
+  ASSERT(bool,'testParam valsdka7 2')
+  CALL testParam2%remove('testSDKa7')
   CALL testParam2%set('testSDKa7',RESHAPE((/-1.0_SDK/),(/1,1,1,1,1,1,1/))) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_SDK_a7 -'// &
@@ -7592,6 +7773,11 @@ SUBROUTINE testParamListType()
       ' parameter name mismatch! Tried to set "testError" but name is'// &
       ' "testPL"!'
   ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testPL',testList2,addMissing=.TRUE.)
+  CALL testParam2%get('testPL',testList2)
+  bool=testList(1) == testList2(1) .AND. testList(1) == testList2(2)
+  ASSERT(bool,'param list')
+  CALL testParam2%remove('testPL')
   CALL testParam2%set('testPL',testList2) !Name not found
   msg=eParams%getLastMessage()
   refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_List -'// &
