@@ -132,6 +132,9 @@ TYPE :: PolygonType
     !> @copybrief Geom_Poly::rotateClockwise
     !> @copydetails Geom_Poly::rotateClockwise
     PROCEDURE,PASS :: rotateClockwise
+    !> @copybrief Geom_Poly::averageVertexDistance
+    !> @copydetails Geom_Poly::averageVertexDistance
+    PROCEDURE,PASS :: averageVertexDistance
 ENDTYPE PolygonType
 
 INTERFACE Polygonize
@@ -447,7 +450,7 @@ ENDSUBROUTINE clear_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief This function checks if a polygon has any associated polygon
-!>        subregions.  If it does not have any, they polygon type is simple 
+!>        subregions.  If it does not have any, they polygon type is simple
 !>        (e.g. a circle, square, triangle, etc...).  An example of a non-simple
 !>        polygon would be concentric circles, where the smaller circle is the
 !>        subregion of the larger one.
@@ -1531,7 +1534,7 @@ ENDSUBROUTINE intersectLine_PolygonType
 !
 !-------------------------------------------------------------------------------
 !> @brief This subroutine calculates the points where a given polygon intersects
-!>        with another given polygon.  If there is no intersection, points is 
+!>        with another given polygon.  If there is no intersection, points is
 !>        returned unallocated.
 !> @param thisPoly The polygon type to be intersected.
 !> @param thatPoly The polygon type to intersect with the polygon.
@@ -2187,5 +2190,33 @@ FUNCTION rotateClockwise(this,nrotations) RESULT(new)
   CALL new%calcCentroid()
 
 ENDFUNCTION rotateClockwise
+!
+!-------------------------------------------------------------------------------
+!> @brief Calculates the average distance of all vertexes from a point
+!> @param this the polygon
+!> @param point the point to calculate distance from; optional, defaults to [0.0, 0.0]
+!> @returns avearge_distance the average distance
+!>
+FUNCTION averageVertexDistance(this,point) RESULT(average_distance)
+  CLASS(PolygonType),INTENT(IN) :: this
+  TYPE(PointType),INTENT(IN),OPTIONAL :: point
+  REAL(SRK) :: average_distance
+  !
+  TYPE(PointType) :: origin
+
+  IF(PRESENT(point)) THEN
+    REQUIRE(point%dim >= 2)
+    REQUIRE(ALLOCATED(point%coord))
+    CALL origin%init(COORD=point%coord(1:2))
+  ELSE
+    CALL origin%init(COORD=[0.0_SRK,0.0_SRK])
+  ENDIF
+
+  average_distance=0.0_SRK
+  IF(this%nVert <= 0) RETURN
+
+  average_distance = SUM(Distance(this%vert,origin)) / this%nVert
+
+ENDFUNCTION averageVertexDistance
 !
 ENDMODULE Geom_Poly
