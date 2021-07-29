@@ -50,6 +50,7 @@ REGISTER_SUBTEST('%subtractSubVolume',testSubtractSubVol)
 REGISTER_SUBTEST('Operator(==)',testEquivalence)
 REGISTER_SUBTEST('Assignment(=)',testAssignment)
 REGISTER_SUBTEST('RotateClockwise',testRotateClockwise)
+REGISTER_SUBTEST('averageVertexDistance',testAverageVertexDistance)
 
 FINALIZE_TEST()
 !
@@ -3078,5 +3079,25 @@ SUBROUTINE testRotateClockwise()
   CALL new%clear()
 
 ENDSUBROUTINE testRotateClockwise
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testAverageVertexDistance()
+  TYPE(PointType) :: testPoint
+  TYPE(PolygonType) :: testPoly
+
+  COMPONENT_TEST('Default Origin')
+  testPoly%nVert=4
+  ALLOCATE(testPoly%vert(4))
+  CALL testPoly%vert(1)%init(DIM=2,COORD=[SQRT(0.5_SRK),SQRT(0.5_SRK)])
+  CALL testPoly%vert(2)%init(DIM=2,COORD=2.0_SRK*[SQRT(0.5_SRK),SQRT(0.5_SRK)])
+  CALL testPoly%vert(3)%init(DIM=2,COORD=3.0_SRK*[SQRT(0.5_SRK),SQRT(0.5_SRK)])
+  CALL testPoly%vert(4)%init(DIM=2,COORD=4.0_SRK*[SQRT(0.5_SRK),SQRT(0.5_SRK)])
+  ASSERT_APPROXEQA(testPoly%averageVertexDistance(),2.5_SRK,'distance')
+
+  COMPONENT_TEST('Provided Origin')
+  CALL testPoint%init(DIM=2,COORD=[SQRT(2.0_SRK),SQRT(2.0_SRK)])
+  ASSERT_APPROXEQA(testPoly%averageVertexDistance(testPoint),1.0_SRK,'distance')
+
+ENDSUBROUTINE testAverageVertexDistance
 !
 ENDPROGRAM testGeom_Poly
