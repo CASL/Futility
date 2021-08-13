@@ -54,11 +54,6 @@ SUBROUTINE testFortranFileType()
 
   !Called for coverage/error checking
   COMPONENT_TEST('%initialize()')
-  CALL testFile%fopen()
-  CALL testFile%fclose()
-  CALL testFile%fdelete()
-  CALL testFile%frewind()
-  CALL testFile%fbackspace()
   CALL testFile%initialize(UNIT=OUTPUT_UNIT,FILE='./testFile.txt',STATUS='OOPS',&
       ACCESS='OOPS',FORM='OOPS',POSITION='OOPS',ACTION='OOPS',PAD='OOPS',RECL=-1)
   CALL testFile%initialize(UNIT=ERROR_UNIT,FILE='./testFile.txt',STATUS='OLD',&
@@ -97,34 +92,21 @@ SUBROUTINE testFortranFileType()
   ASSERT(testFile%isOpen(),'testFile%fopen()')
 
   !Coverage/Error checking
-  CALL testFile%fopen()
   CALL testFile2%initialize(UNIT=12,FILE='./testFile.txt')
-  CALL testFile%setStatus('NEW')
 
-  CALL e%setStopOnError(.TRUE.)
-  CALL testFile%fbackspace()
-  CALL testFile%frewind()
-  CALL e%setStopOnError(.FALSE.)
   CALL testFile%fclose()
   ASSERT(.NOT.(testFile%isOpen()),'%fclose()')
   CALL testFile%fdelete()
   INQUIRE(FILE='./testFile.txt',EXIST=lexist)
   ASSERT(.NOT.lexist,'%fdelete()')
+  CALL testFile%clear()
 
   !Coverage/Error checking
-  CALL testFile%fclose()
-  CALL testFile%fbackspace()
-  CALL testFile%frewind()
-  CALL testFile%setOpenStat(.TRUE.)
-  CALL testFile%fbackspace()
-  CALL testFile%frewind()
-  CALL testFile%initialize(UNIT=12,FILE='./testFile.txt')
   CALL testFile2%initialize(UNIT=13,FILE='./testFile2',ACCESS='DIRECT', &
       STATUS='NEW',FORM='UNFORMATTED',RECL=100*NUMERIC_STORAGE_SIZE, &
       ACTION='WRITE')
   CALL testFile2%fopen()
   CALL testFile2%fdelete()
-  CALL testFile%clear()
   CALL testFile%e%addSurrogate(e)
   CALL testFile%initialize(UNIT=12,FILE='./testFile.txt',STATUS='OLD', &
       ACCESS='DIRECT',ACTION='READ',RECL=100,FORM='FORMATTED')
