@@ -373,7 +373,7 @@ MODULE CommandLineProcessor
             ENDDO
           ENDIF
         ELSE
-        CALL GET_COMMAND(cmdline,cmdlinelength,ierr)
+          CALL GET_COMMAND(cmdline,cmdlinelength,ierr)
           IF(ierr /= 0) CALL clp%e%raiseError(modName//'::'//myName// &
               ' - problem getting command line.')
           clp%narg=nFields(cmdline)-1

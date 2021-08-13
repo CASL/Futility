@@ -57,9 +57,6 @@ ENDSUBROUTINE SetupError
 !-------------------------------------------------------------------------------
 SUBROUTINE testClear()
   !Test clear
-  CALL testVTUFile%fopen()
-  testVTUFile%hasMesh=.TRUE.
-  !
   CALL testVTUFile%clear()
   ASSERT(.NOT.testVTUFile%isInit(),'isInit()')
   ASSERT(.NOT.testVTUFile%isOpen(),'isOpen()')
