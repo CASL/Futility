@@ -68,8 +68,6 @@ PUBLIC :: InputFileType
 
 !> Module name for error messages
 CHARACTER(LEN=*),PARAMETER :: modName='FILETYPE_INPUT'
-!> Scratch variable for IOSTAT values
-INTEGER(SIK) :: ioerr
 
 !> @brief Derived type object for an input file, it is an extension of the
 !> @ref FileType_Fortran "FortranFileType" object.
@@ -85,12 +83,6 @@ TYPE,EXTENDS(FortranFileType) :: InputFileType
   LOGICAL(SBK),PRIVATE :: echostat=.FALSE.
   !> Unit number for the file to echo result of fgetl to.
   INTEGER(SIK),PRIVATE :: echounit=-1
-  !> The first character of oneline
-  CHARACTER(LEN=1),PRIVATE :: probe=''
-  !> The first character of the line before the line that was just read
-  CHARACTER(LEN=1),PRIVATE :: lastprobe=''
-!
-!List of type bound procedures (methods) for the Input File type
   CONTAINS
     !> @copybrief FileType_Input::init_inp_file
     !> @copydetails FileType_Input::init_inp_file
@@ -113,15 +105,6 @@ TYPE,EXTENDS(FortranFileType) :: InputFileType
     !> @copybrief FileType_Input::getEchoUnit_inp_file
     !> @copydetails FileType_Input::getEchoUnit_inp_file
     PROCEDURE,PASS :: getEchoUnit => getEchoUnit_inp_file
-    !> @copybrief FileType_Input::getProbe_inp_file
-    !> @copydetails FileType_Input::getProbe_inp_file
-    PROCEDURE,PASS :: getProbe => getProbe_inp_file
-    !> @copybrief FileType_Input::rewind_inp_file
-    !> @copydetails FileType_Input::rewind_inp_file
-    PROCEDURE,PASS :: frewind => rewind_inp_file
-    !> @copybrief FileType_Input::backspace_inp_file
-    !> @copydetails FileType_Input::backspace_inp_file
-    PROCEDURE,PASS :: fbackspace => backspace_inp_file
 ENDTYPE InputFileType
 
 !
@@ -176,31 +159,6 @@ SUBROUTINE init_inp_file(fileobj,unit,file,status,access,form, &
 ENDSUBROUTINE init_inp_file
 !
 !-------------------------------------------------------------------------------
-!> @brief Rewinds an Input file
-!> @param file input file object.
-!>
-!> This is needed to reset probe.
-!>
-SUBROUTINE rewind_inp_file(file)
-  CLASS(InputFileType),INTENT(INOUT) :: file
-  file%probe=''
-  file%lastprobe=''
-  CALL rewind_fortran_file(file)
-ENDSUBROUTINE rewind_inp_file
-!
-!-------------------------------------------------------------------------------
-!> @brief Backspaces an Input file
-!> @param file input file object.
-!>
-!> This is needed to maintain the correct value for probe.
-!>
-SUBROUTINE backspace_inp_file(file)
-  CLASS(InputFileType),INTENT(INOUT) :: file
-  CALL backspace_fortran_file(file)
-  file%probe=file%lastprobe
-ENDSUBROUTINE backspace_inp_file
-!
-!-------------------------------------------------------------------------------
 !> @brief Clears the log file object and resets its state to the unitialized
 !> state.
 !> @param file input file object.
@@ -211,8 +169,6 @@ SUBROUTINE clear_inp_file(file,ldel)
   LOGICAL(SBK) :: bool
   file%echounit=-1
   file%echostat=.FALSE.
-  file%probe=''
-  file%lastprobe=''
   bool=.FALSE.
   IF(PRESENT(ldel)) bool=ldel
   CALL clear_fortran_file(file,bool)
@@ -227,9 +183,10 @@ SUBROUTINE read_oneline_inp_file(file,oneline)
   CHARACTER(LEN=*),PARAMETER :: myName='READ_ONELINE_INP_FILE'
   CLASS(InputFileType),INTENT(INOUT) :: file
   TYPE(StringType),INTENT(OUT) :: oneline
+  !
   CHARACTER(LEN=256) :: buffer
   CHARACTER(LEN=4) :: sioerr,sunit
-  INTEGER(SIK) :: buffer_size,eioerr
+  INTEGER(SIK) :: buffer_size,eioerr,ioerr
 
   ioerr=0
   IF(file%isOpen() .AND. .NOT.file%isEOF()) THEN
@@ -243,7 +200,6 @@ SUBROUTINE read_oneline_inp_file(file,oneline)
       ELSEIF(ioerr == IOSTAT_EOR) THEN
         !Done reading line. Append last buffer to oneline.
         oneline=oneline//TRIM(buffer)
-        file%lastprobe=file%probe
         IF(file%echostat) THEN
           WRITE(UNIT=file%echounit,FMT='(a)',IOSTAT=eioerr) TRIM(oneline)
           IF(eioerr /= 0) THEN
@@ -267,10 +223,7 @@ SUBROUTINE read_oneline_inp_file(file,oneline)
       ENDIF
     ENDDO
   ENDIF
-  IF(LEN(oneline) > 0) THEN
-    file%probe=oneline%at(1)
-  ELSE
-    file%probe=''
+  IF(.NOT.(LEN(oneline) > 0)) THEN
     oneline=' '
   ENDIF
 ENDSUBROUTINE read_oneline_inp_file
@@ -310,7 +263,7 @@ SUBROUTINE setEchoUnit_inp_file(file,iunit)
   CHARACTER(LEN=*),PARAMETER :: myName='SETECHOUNIT_INP_FILE'
   CLASS(InputFileType),INTENT(INOUT) :: file
   INTEGER(SIK),INTENT(IN) :: iunit
-  IF(0 < iunit .AND. iunit /= OUTPUT_UNIT .AND. iunit /= ERROR_UNIT) THEN
+  IF(0 < iunit .AND. ANY(iunit /= [OUTPUT_UNIT,ERROR_UNIT,INPUT_UNIT])) THEN
     file%echounit=iunit
   ELSE
     CALL file%e%raiseError('Incorrect input to '//modName//'::'// &
@@ -329,19 +282,5 @@ PURE FUNCTION getEchoUnit_inp_file(file) RESULT(iunit)
   INTEGER(SIK) :: iunit
   iunit=file%echounit
 ENDFUNCTION getEchoUnit_inp_file
-!
-!-------------------------------------------------------------------------------
-!> @brief Returns the value of the PROBE attribute of the input file type
-!> object.
-!> @param file the input file object
-!> @returns c the value of file%probe
-!>
-PURE FUNCTION getProbe_inp_file(file) RESULT(c)
-  CLASS(InputFileType),INTENT(IN) :: file
-  CHARACTER(LEN=1) :: c
-
-  c=file%probe
-
-ENDFUNCTION getProbe_inp_file
 !
 ENDMODULE FileType_Input
