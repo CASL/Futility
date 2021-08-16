@@ -44,6 +44,7 @@ REAL(SSK),ALLOCATABLE :: valsska3(:,:,:)
 REAL(SDK),ALLOCATABLE :: valsdka3(:,:,:)
 INTEGER(SNK),ALLOCATABLE :: valsnka3(:,:,:)
 INTEGER(SLK),ALLOCATABLE :: valslka3(:,:,:)
+TYPE(StringType),ALLOCATABLE :: valstra3(:,:,:)
 REAL(SSK),ALLOCATABLE :: valsska4(:,:,:,:)
 REAL(SDK),ALLOCATABLE :: valsdka4(:,:,:,:)
 INTEGER(SNK),ALLOCATABLE :: valsnka4(:,:,:,:)
@@ -94,6 +95,7 @@ REGISTER_SUBTEST('3-D SNK',testSNKa3)
 REGISTER_SUBTEST('3-D SLK',testSLKa3)
 REGISTER_SUBTEST('3-D SSK',testSSKa3)
 REGISTER_SUBTEST('3-D SDK',testSDKa3)
+REGISTER_SUBTEST('3-D STR',testSTRa3)
 REGISTER_SUBTEST('4-D SNK',testSNKa4)
 REGISTER_SUBTEST('4-D SLK',testSLKa4)
 REGISTER_SUBTEST('4-D SSK',testSSKa4)
@@ -3896,6 +3898,234 @@ SUBROUTINE testSDKa3()
   ASSERT(testParam2 == testParam,'OPERATOR(==)')
   CALL clear_test_vars()
 ENDSUBROUTINE testSDKa3
+!
+!-------------------------------------------------------------------------------
+!Test 2-D array StringType support
+SUBROUTINE testSTRa3()
+  LOGICAL(SBK) :: bool
+  CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: msg,refmsg
+  ALLOCATE(valstra3(2,2,2))
+  valstra3(1,1,1)='testing 1'
+  valstra3(2,1,1)='testing 2'
+  valstra3(1,2,1)='testing 3'
+  valstra3(2,2,1)='testing 4'
+  valstra3(1,1,2)='testing 5'
+  valstra3(2,1,2)='testing 6'
+  valstra3(1,2,2)='testing 7'
+  valstra3(2,2,2)='testing 8'
+  !test init
+
+  COMPONENT_TEST('%init(...)')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 1')
+  ASSERT(LEN(testParam%name) == 0,'%name 1')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 1')
+  ASSERT(LEN(testParam%description) == 0,'%description 1')
+  CALL testParam%init('testError->testSTRa3',valstra3,'The values testing 1, 2, 3, 4, 5, 6, 7, 8')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat 2')
+  ASSERT(LEN(testParam%name) == 0,'%name 2')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 2')
+  ASSERT(LEN(testParam%description) == 0,'%description 2')
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a3'// &
+      ' - "->" symbol is not allowed in name!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'init bad symbol error')
+  CALL testParam%init('testSTRa3',valstra3,'The values testing 1, 2, 3, 4, 5, 6, 7, 8')
+  ASSERT(LEN(testParam%name) == 0,'%name 3')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype 3')
+  ASSERT(LEN(testParam%description) == 0,'%description 3')
+  ASSERT(ASSOCIATED(testParam%pdat),'%pdat 3')
+  ASSERT(testParam%pdat%name == 'testSTRa3','%pdat%name')
+  ASSERT(testParam%pdat%datatype == '3-D ARRAY TYPE(StringType)','%pdat%datatype')
+  ASSERT(testParam%pdat%description == 'The values testing 1, 2, 3, 4, 5, 6, 7, 8','%pdat%description')
+  CALL testParam%init('testError',valstra3)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::init_ParamType_STR_a3'// &
+      ' - parameter is already initialized! Use set method!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'double init error')
+
+  !Test clear
+  COMPONENT_TEST('%clear()')
+  CALL testParam%clear()
+  ASSERT(LEN(testParam%name) == 0,'%name')
+  ASSERT(LEN(testParam%datatype) == 0,'%datatype')
+  ASSERT(LEN(testParam%description) == 0,'%description')
+  ASSERT(.NOT.ASSOCIATED(testParam%pdat),'%pdat')
+
+  COMPONENT_TEST('%edit(...)')
+  CALL testParam%init('testSTRa3',valstra3,'The values testing 1, 2, 3, 4, 5, 6, 7, 8')
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%init('testSTRa3',valstra3)
+  CALL testParam%edit(OUTPUT_UNIT,0)
+  CALL testParam%clear()
+  CALL testParam%edit(OUTPUT_UNIT,0)
+
+  COMPONENT_TEST('%get(...)')
+  CALL testParam%init('testSTRa3',valstra3,'The values testing 1, 2, 3, 4, 5, 6, 7, 8')
+  CALL testParam%get('testSTRa3',someParam)
+  ASSERT(ASSOCIATED(someParam,testParam%pdat),'someParam')
+  CALL someParam%get('testSTRa3',valstra3)
+  bool=SIZE(valstra3,DIM=1) == 2 .AND. SIZE(valstra3,DIM=2) == 2 .AND. SIZE(valstra3,DIM=3) == 2
+  ASSERT(bool,'someParam valstra3 size 1')
+  bool=valstra3(1,1,1) == 'testing 1' .AND. valstra3(2,1,1) == 'testing 2' .AND. &
+      valstra3(1,2,1) == 'testing 3' .AND. valstra3(2,2,1) == 'testing 4' .AND. &
+      valstra3(1,1,2) == 'testing 5' .AND. valstra3(2,1,2) == 'testing 6' .AND. &
+      valstra3(1,2,2) == 'testing 7' .AND. valstra3(2,2,2) == 'testing 8'
+  ASSERT(bool,'someParam valstra3 1')
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(1,1,1))
+  CALL someParam%get('testSTRa3',valstra3)
+  bool=SIZE(valstra3,DIM=1) == 2 .AND. SIZE(valstra3,DIM=2) == 2 .AND. SIZE(valstra3,DIM=3) == 2
+  ASSERT(bool,'someParam valstra3 different size')
+  bool=valstra3(1,1,1) == 'testing 1' .AND. valstra3(2,1,1) == 'testing 2' .AND. &
+      valstra3(1,2,1) == 'testing 3' .AND. valstra3(2,2,1) == 'testing 4' .AND. &
+      valstra3(1,1,2) == 'testing 5' .AND. valstra3(2,1,2) == 'testing 6' .AND. &
+      valstra3(1,2,2) == 'testing 7' .AND. valstra3(2,2,2) == 'testing 8'
+  ASSERT(bool,'someParam valstra3 2')
+  DEALLOCATE(valstra3)
+  CALL someParam%get('testSTRa3',valstra3)
+  bool=SIZE(valstra3,DIM=1) == 2 .AND. SIZE(valstra3,DIM=2) == 2 .AND. SIZE(valstra3,DIM=3) == 2
+  ASSERT(bool,'someParam valstra3 unallocated')
+  bool=valstra3(1,1,1) == 'testing 1' .AND. valstra3(2,1,1) == 'testing 2' .AND. &
+      valstra3(1,2,1) == 'testing 3' .AND. valstra3(2,2,1) == 'testing 4' .AND. &
+      valstra3(1,1,2) == 'testing 5' .AND. valstra3(2,1,2) == 'testing 6' .AND. &
+      valstra3(1,2,2) == 'testing 7' .AND. valstra3(2,2,2) == 'testing 8'
+  ASSERT(bool,'someParam valstra3 3')
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(2,1,1))
+  CALL testParam%get('testSTRa3',valstra3)
+  bool=SIZE(valstra3,DIM=1) == 2 .AND. SIZE(valstra3,DIM=2) == 2 .AND. SIZE(valstra3,DIM=3) == 2
+  ASSERT(bool,'testParam valstra3 size 1')
+  bool=valstra3(1,1,1) == 'testing 1' .AND. valstra3(2,1,1) == 'testing 2' .AND. &
+      valstra3(1,2,1) == 'testing 3' .AND. valstra3(2,2,1) == 'testing 4' .AND. &
+      valstra3(1,1,2) == 'testing 5' .AND. valstra3(2,1,2) == 'testing 6' .AND. &
+      valstra3(1,2,2) == 'testing 7' .AND. valstra3(2,2,2) == 'testing 8'
+  ASSERT(bool,'testParam valstra3 1')
+  DEALLOCATE(valstra3)
+  CALL testParam%get('testSTRa3',valstra3)
+  bool=SIZE(valstra3,DIM=1) == 2 .AND. SIZE(valstra3,DIM=2) == 2 .AND. SIZE(valstra3,DIM=3) == 2
+  ASSERT(bool,'testParam valstra3 unallocated')
+  bool=valstra3(1,1,1) == 'testing 1' .AND. valstra3(2,1,1) == 'testing 2' .AND. &
+      valstra3(1,2,1) == 'testing 3' .AND. valstra3(2,2,1) == 'testing 4' .AND. &
+      valstra3(1,1,2) == 'testing 5' .AND. valstra3(2,1,2) == 'testing 6' .AND. &
+      valstra3(1,2,2) == 'testing 7' .AND. valstra3(2,2,2) == 'testing 8'
+  ASSERT(bool,'testParam valstra3 2')
+  CALL testParam%get('testError',valstra3)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a3'// &
+      ' - unable to locate parameter "testError" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'not found error')
+  CALL someParam%get('testError',valstra3)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a3'// &
+      ' - parameter name mismatch "testError" in "testSTRa3"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'name mismatch error')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSTRa3'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%get('testSTRa3',valstra3)
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::get_ParamType_STR_a3'// &
+      ' - parameter data type mismatch! Parameter testSTRa3 type is test_type and'// &
+      ' must be 3-D ARRAY TYPE(StringType)!'
+  ASSERT_EQ(TRIM(msg), TRIM(refmsg),'type mismatch error')
+  CALL testParam2%clear()
+
+  !test set
+  COMPONENT_TEST('%set(...)')
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(1,1,1))
+  valstra3(1,1,1)='another test'
+  CALL testParam%set('testSTRa3',valstra3,'The value another test')
+  CALL testParam%get('testSTRa3',valstra3)
+  ASSERT(testParam%pdat%name == 'testSTRa3','%name')
+  ASSERT(testParam%pdat%datatype == '3-D ARRAY TYPE(StringType)','testParam%datatype')
+  ASSERT(testParam%pdat%description == 'The value another test','%description')
+  bool=SIZE(valstra3,DIM=1) == 1 .AND. SIZE(valstra3,DIM=2) == 1 .AND. SIZE(valstra3,DIM=3) == 1
+  ASSERT(bool,'testParam valstra3 size 1')
+  bool=valstra3(1,1,1) == 'another test'
+  ASSERT(bool,'testParam valstra3 1')
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(2,1,1))
+  valstra3(1,1,1)='test 1'
+  valstra3(2,1,1)='test 2'
+  CALL testParam%set('testSTRa3',valstra3,'The values test 1 & test 2')
+  CALL testParam%get('testSTRa3',valstra3)
+  bool=SIZE(valstra3,DIM=1) == 2 .AND. SIZE(valstra3,DIM=2) == 1 .AND. SIZE(valstra3,DIM=3) == 1
+  ASSERT(bool,'testParam valstra3 size 2')
+  bool=valstra3(1,1,1) == 'test 1' .AND. valstra3(2,1,1) == 'test 2'
+  ASSERT(bool,'testParam valstra3 2')
+  ASSERT(testParam%pdat%description == 'The values test 1 & test 2','%description')
+  !
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(1,1,1))
+  valstra3(1,1,1)='yet another test'
+  CALL someParam%set('testSTRa3',valstra3,'The value yet another test')
+  CALL someParam%get('testSTRa3',valstra3)
+  ASSERT(someParam%name == 'testSTRa3','someParam%name')
+  ASSERT(someParam%datatype == '3-D ARRAY TYPE(StringType)','someParam%datatype')
+  ASSERT(someParam%description == 'The value yet another test','someParam%description')
+  bool=SIZE(valstra3,DIM=1) == 1 .AND. SIZE(valstra3,DIM=2) == 1 .AND. SIZE(valstra3,DIM=3) == 1
+  ASSERT(bool,'someParam valstra3 size 1')
+  bool=valstra3(1,1,1) == 'yet another test'
+  ASSERT(bool,'someParam valstra3 1')
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(1,2,1))
+  valstra3(1,1,1)='final test 1'
+  valstra3(1,2,1)='final test 2'
+  CALL someParam%set('testSTRa3',valstra3,'The values final test 1 & final test 2')
+  CALL someParam%get('testSTRa3',valstra3)
+  ASSERT(someParam%name == 'testSTRa3','someParam%name')
+  ASSERT(someParam%datatype == '3-D ARRAY TYPE(StringType)','someParam%datatype')
+  ASSERT(someParam%description == 'The values final test 1 & final test 2','someParam%description')
+  bool=SIZE(valstra3,DIM=1) == 1 .AND. SIZE(valstra3,DIM=2) == 2 .AND. SIZE(valstra3,DIM=3) == 1
+  ASSERT(bool,'someParam valstr3 size 2')
+  bool=valstra3(1,1,1) == 'final test 1' .AND. valstra3(1,2,1) == 'final test 2'
+  ASSERT(bool,'testParam valstra3 2')
+  !
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(1,1,1))
+  valstra3(1,1,1)='test error'
+  CALL someParam%set('testError',valstra3) !Name mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a3 -'// &
+      ' parameter name mismatch! Tried to set "testError" but name is'// &
+      ' "testSTRa3"!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name mismatch error')
+  CALL testParam2%set('testSTRa3',valstra3,addMissing=.TRUE.)
+  CALL testParam2%get('testSTRa3',valstra3)
+  bool=valstra3(1,1,1) == 'test error'
+  ASSERT(bool,'testParam valstra3 2')
+  CALL testParam2%remove('testSTRa3')
+  CALL testParam2%set('testSTRa3',valstra3) !Name not found
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a3 -'// &
+      ' unable to locate parameter "testSTRa3" in ""!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Name not found error!')
+  ALLOCATE(testParam2%pdat)
+  testParam2%pdat%name='testSTRa3'
+  testParam2%pdat%datatype='test_type'
+  CALL testParam2%set('testSTRa3',valstra3) !Type mismatch
+  msg=eParams%getLastMessage()
+  refmsg='#### EXCEPTION_ERROR #### - PARAMETERLISTS::set_ParamType_STR_a3 -'// &
+      ' parameter data type mismatch! Parameter testSTRa3 type is test_type'// &
+      ' and must be 3-D ARRAY TYPE(StringType)!'
+  ASSERT(TRIM(msg) == TRIM(refmsg),'Type mismatch error')
+  CALL testParam2%clear()
+
+  COMPONENT_TEST('Operators')
+  DEALLOCATE(valstra3)
+  ALLOCATE(valstra3(1,1,1))
+  valstra3(1,1,1)='test operator'
+  CALL testParam%init('testSTRa3',valstra3)
+  testParam2=testParam
+  ASSERT(ASSOCIATED(testParam2%pdat),'ASSOCIATED %pdat')
+  ASSERT(testParam2%pdat%name == 'testSTRa3','%name')
+  ASSERT(testParam2%pdat%datatype == '3-D ARRAY TYPE(StringType)','%datatype')
+  ASSERT(testParam2 == testParam,'OPERATOR(==)')
+  DEALLOCATE(valstra3)
+  CALL clear_test_vars()
+ENDSUBROUTINE testSTRa3
 !
 !-------------------------------------------------------------------------------
 !Test 4-D Array SNK support

@@ -3723,6 +3723,7 @@ SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in,first_dir)
   INTEGER(SLK),ALLOCATABLE :: id3(:,:,:)
   REAL(SSK),ALLOCATABLE :: rs3(:,:,:)
   REAL(SDK),ALLOCATABLE :: rd3(:,:,:)
+  TYPE(StringType),ALLOCATABLE :: st3(:,:,:)
   INTEGER(SNK),ALLOCATABLE :: is4(:,:,:,:)
   INTEGER(SLK),ALLOCATABLE :: id4(:,:,:,:)
   REAL(SSK),ALLOCATABLE :: rs4(:,:,:,:)
@@ -3830,6 +3831,9 @@ SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in,first_dir)
       CASE('3-D ARRAY INTEGER(SLK)')
         CALL vals%get(CHAR(address),id3)
         CALL thisHDF5File%write_l3(CHAR(path),id3)
+      CASE('3-D ARRAY TYPE(StringType)')
+        CALL vals%get(CHAR(address),st3)
+        CALL thisHDF5File%write_st3_helper(CHAR(path),st3)
       CASE('4-D ARRAY REAL(SSK)')
         CALL vals%get(CHAR(address),rs4)
         CALL thisHDF5File%write_s4(CHAR(path),rs4)
@@ -6462,10 +6466,7 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
             'added to Parameter List.')
         !CALL vals%add(CHAR(plpath),l3)
       ELSE
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ' - Unsupported Parameter Type 3-D String Array will not be '// &
-            'added to Parameter List.')
-        !CALL vals%add(CHAR(plpath),st3)
+        CALL vals%add(CHAR(plpath),st3)
       ENDIF
     CASE DEFAULT
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
