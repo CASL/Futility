@@ -2371,6 +2371,18 @@ SUBROUTINE testHDF5FileTypeRead()
       ASSERT_EQ(CHAR(testST2(i,j)),CHAR(refST2(i,j)),'ST2 read PL Failure')
      ENDDO
    ENDDO
+   CALL tmpPL%get('groupST->memST3',testST3)
+   testB0=(SIZE(testST3,DIM=1) == SIZE(refST3,DIM=1)) .AND. &
+       (SIZE(testST3,DIM=2) == SIZE(refST3,DIM=2)) .AND. &
+       (SIZE(testST3,DIM=3) == SIZE(refST3,DIM=3))
+   ASSERTFAIL(testB0,'ST3 Sizes')
+   DO k=1,SIZE(testST3,DIM=3)
+    DO j=1,SIZE(testST2,DIM=2)
+      DO i=1,SIZE(testST2,DIM=1)
+        ASSERT_EQ(CHAR(testST3(i,j,k)),CHAR(refST3(i,j,k)),'ST3 read PL Failure')
+      ENDDO
+    ENDDO
+  ENDDO
   !Character array, read in as a 1-D string array
   CALL tmpPL%get('groupST->memCA0',testST1)
   ASSERTFAIL(SIZE(testST1) == SIZE(refST0CA),'ST1 Sizes')
