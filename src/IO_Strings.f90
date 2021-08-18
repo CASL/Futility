@@ -109,6 +109,8 @@ PUBLIC :: isChar
 PUBLIC :: isCharCap
 PUBLIC :: isCharLow
 PUBLIC :: removeDuplicates
+PUBLIC :: concatenate
+PUBLIC :: expandRepeatedSymbol
 
 !> Character representing a space symbol
 CHARACTER(LEN=*),PARAMETER :: BLANK=" "
@@ -1801,5 +1803,68 @@ SUBROUTINE removeDuplicates(list)
   DEALLOCATE(old_list)
 
 ENDSUBROUTINE removeDuplicates
+!
+!-------------------------------------------------------------------------------
+!> @brief Concatenates an array of StringType objects into a single StringType
+!> @param array the array of strings
+!> @returns string the concatenated string
+!>
+FUNCTION concatenate(array) RESULT(string)
+  TYPE(StringType),INTENT(IN) :: array(:)
+  TYPE(StringType) :: string
+  !
+  INTEGER(SIK) :: i
+
+  DO i=1,SIZE(array)
+    string=string//array(i)
+  ENDDO !i
+
+ENDFUNCTION concatenate
+!
+!-------------------------------------------------------------------------------
+!> @brief Expands symbols repeated in a string using a repeater symbol
+!> @param string the original string
+!> @returns expandedString the expanded string
+!>
+!> The string is assumed to be whitespace-delimited.  With this assumption, each
+!> field is checked for a repeater symbol.  For example, if "*" is the delimiter,
+!> the string "test 4*test2 2*1 5**test2" would expand to
+!> "test test2 test2 test2 test2 1 1 5**test2". By default, @c delimiter will be "*".
+!> Supplying a whitespace symbol as a delimiter will result in no modificaiton of
+!> the string since it will be split on whitespace before checking for repeaters.
+!>
+FUNCTION expandRepeatedSymbol(string,delimiter) RESULT(expandedString)
+  TYPE(StringType),INTENT(IN) :: string
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: delimiter
+  TYPE(StringType) :: expandedString
+  !
+  INTEGER(SIK) :: i,n
+  TYPE(StringType) :: delim,nextComponent
+  TYPE(StringType),ALLOCATABLE :: fields(:),repeater(:)
+
+  delim='*'
+  IF(PRESENT(delimiter)) delim=delimiter
+
+  fields=string%split()
+  DO i=1,SIZE(fields)
+    repeater=fields(i)%split(CHAR(delim))
+    IF(SIZE(repeater) == 2) THEN
+      IF(repeater(1)%isInteger()) THEN
+        n=repeater(1)%stoi()
+        nextComponent=REPEAT(repeater(2)//' ',n-1)
+        nextComponent=nextComponent//repeater(2)
+      ELSE
+        nextComponent=fields(i)
+      ENDIF
+    ELSE
+      nextComponent=fields(i)
+    ENDIF
+    IF(i > 1) THEN
+      expandedString=expandedString//' '
+    ENDIF
+    expandedString=expandedString//nextComponent
+  ENDDO !i
+
+ENDFUNCTION expandRepeatedSymbol
 !
 ENDMODULE IO_Strings
