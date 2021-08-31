@@ -12,7 +12,6 @@ MODULE MatrixTypes_Native
 #include "Futility_DBC.h"
 USE Futility_DBC
 USE IntrType
-USE ExceptionHandler
 USE ParameterLists
 USE Allocs
 USE MatrixTypes_Base
@@ -132,11 +131,6 @@ TYPE Band
   REAL(SRK), ALLOCATABLE :: elem(:)
 ENDTYPE Band
 
-!> @brief Integer array used for 'ragged' storage of band contents
-TYPE IntPtr
-  INTEGER(SIK),ALLOCATABLE :: p(:)
-ENDTYPE IntPtr
-
 !> @brief The basic banded matrix type
 TYPE,EXTENDS(MatrixType) :: BandedMatrixType
   !> Map of band indices stored (-m to n)
@@ -194,13 +188,15 @@ TYPE,EXTENDS(DistributedMatrixType) :: DistributedBandedMatrixType
   !> The column of banded matrix 'chunks' stored locally
   TYPE(BandedMatrixType),ALLOCATABLE :: chunks(:)
   !> Number of nonzero elements
-  INTEGER(SIK) :: nnz
+  INTEGER(SLK) :: nnz
   !> Number of columns
   INTEGER(SIK) :: m
   !> Block size (smallest indivisble unit)
   INTEGER(SIK) :: blockSize
   !> Array of band sizes used to determine optimal communication
-  TYPE(IntPtr), ALLOCATABLE :: bandSizes(:)
+  INTEGER(SIK), ALLOCATABLE :: incIdxMap(:)
+  INTEGER(SIK), ALLOCATABLE :: incIdxStt(:)
+  INTEGER(SIK), ALLOCATABLE :: incIdxStp(:)
   !> Temporary containers used before (and deallocated after) assembly
   INTEGER(SIK), ALLOCATABLE :: iTmp(:),jTmp(:)
   REAL(SRK),ALLOCATABLE :: elemTmp(:)
@@ -482,7 +478,9 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
 #ifdef HAVE_MPI
   CHARACTER(LEN=*),PARAMETER :: myName='init_DistributedBandedMatrixParam'
   TYPE(ParamType) :: validParams
-  INTEGER(SIK) :: n,m,nnz,commID,rank,mpierr,nproc,i,blocksize,nlocal
+  INTEGER(SIK),ALLOCATABLE :: onnz(:),dnnz(:)
+  INTEGER(SIK) :: n,m,commID,rank,mpierr,nproc,i,blocksize,nlocal,nnz_int
+  INTEGER(SLK) :: nnz
 
   !Check to set up required and optional param lists.
   IF(.NOT.MatrixType_Paramsflag) CALL MatrixTypes_Declare_ValidParams()
@@ -496,10 +494,22 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
   CALL validParams%get('MatrixType->n',n)
   CALL validParams%get('MatrixType->m',m)
   CALL validParams%get('MatrixType->MPI_Comm_ID',commID)
-  CALL validParams%get('MatrixType->nnz',nnz)
+  CALL validParams%get('MatrixType->nnz',nnz_int)
   CALL validParams%get('MatrixType->blockSize',blockSize)
   CALL validParams%get('MatrixType->nlocal',nlocal)
-  CALL validParams%clear()
+  nnz=INT(nnz_int,KIND=SLK)
+  IF(nnz_int <= 1) THEN
+    IF (validParams%has("MatrixType->dnnz") .AND. validParams%has("MatrixType->onnz")) THEN
+      nnz=0_SLK
+      CALL validParams%get("MatrixType->onnz",onnz)
+      CALL validParams%get("MatrixType->dnnz",dnnz)
+      DO i=1,SIZE(onnz)
+        nnz=nnz+INT(onnz(i),KIND=SLK)
+        nnz=nnz+INT(dnnz(i),KIND=SLK)
+      ENDDO
+      CALL MPI_AllReduce(MPI_IN_PLACE,nnz,1,MPI_LONG,MPI_SUM,commID,mpierr)
+    ENDIF
+  ENDIF
 
   IF(.NOT. matrix%isInit) THEN
     IF(n <= 1) THEN
@@ -575,12 +585,12 @@ SUBROUTINE init_DistributedBandedMatrixParam(matrix,Params)
       matrix%nnz=nnz
       matrix%blockSize = blockSize
       matrix%comm=commID
-      ALLOCATE(matrix%bandSizes(nProc))
     ENDIF
   ELSE
     CALL eMatrixType%raiseError('Incorrect call to '// &
         modName//'::'//myName//' - MatrixType already initialized')
   ENDIF
+  CALL validParams%clear()
 #endif
 ENDSUBROUTINE init_DistributedBandedMatrixParam
 
@@ -690,10 +700,10 @@ SUBROUTINE assemble_BandedMatrixType(thisMatrix)
   ALLOCATE(idxOrig(thisMatrix%counter))
   IF (thisMatrix%isAssembled) RETURN
   DO i=1,thisMatrix%counter
-    iLong=INT(thisMatrix%iTmp(i),kind=SLK)
-    jLong=INT(thisMatrix%jTmp(i),kind=SLK)
-    nLong=INT(thisMatrix%n,kind=SLK)
-    mLong=INT(thisMatrix%m,kind=SLK)
+    iLong=INT(thisMatrix%iTmp(i),KIND=SLK)
+    jLong=INT(thisMatrix%jTmp(i),KIND=SLK)
+    nLong=INT(thisMatrix%n,KIND=SLK)
+    mLong=INT(thisMatrix%m,KIND=SLK)
     idxOrig(i)=i
     ! The diagonal rank counts upwards as one moves southeast in the matrix,
     ! starting at a large negative number in the bottom left, and reaching
@@ -764,14 +774,14 @@ SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix,ierr)
   INTEGER(SIK),INTENT(OUT),OPTIONAL :: ierr
 #ifdef HAVE_MPI
   TYPE(ParamType) :: bandedPList
-  INTEGER(SIK) :: mpierr, rank, nproc, i, j, nBandLocal
-  INTEGER(SIK),ALLOCATABLE :: nnzPerChunk(:),nband(:),bandSizeTmp(:)
+  INTEGER(SIK) :: mpierr,rank,nproc,i,j,nTransmit,stt,stp
+  INTEGER(SIK),ALLOCATABLE :: nnzPerChunk(:),nRecv(:),idxMapTmp(:)
 
   REQUIRE(thisMatrix%isInit)
   CALL MPI_Comm_rank(thisMatrix%comm,rank,mpierr)
   CALL MPI_Comm_size(thisMatrix%comm,nproc,mpierr)
   ALLOCATE(nnzPerChunk(nProc))
-  ALLOCATE(nBand(nProc))
+  ALLOCATE(nRecv(nProc))
   nnzPerChunk=0
   DO i=1,thisMatrix%nLocal
     DO j=1,nproc
@@ -804,45 +814,77 @@ SUBROUTINE assemble_DistributedBandedMatrixType(thisMatrix,ierr)
       CALL thisMatrix%chunks(i)%assemble()
       CALL bandedPList%clear()
     ENDIF
-    ! Set nbandlocal (to be gathered into nband
-    IF(thisMatrix%chunks(i)%isInit) THEN
-      IF(2*thisMatrix%chunks(i)%nnz/3 < thisMatrix%chunks(i)%n) THEN
-        nBandLocal=SIZE(thisMatrix%chunks(i)%bandIdx)
-      ELSE
-        nBandLocal=-1
-      ENDIF
-    ELSE
-      nBandLocal=0
-    ENDIF
 
-    ! Gather to rank i-1 into nBand(:)
-    CALL MPI_Gather(nBandLocal,1,MPI_INTEGER,nband(1),1,MPI_INTEGER,i-1, &
+    ! Decide the sending method to use. 'Full' chunks will send their whole
+    ! contents while 'sparse' chunks will send band products.
+    ! Set nTransmit to the number of REAL's to be sent from that processor to
+    ! this one.
+    !  >0: This many
+    !   0: None (chunk empty)
+    !  -1: All
+    nTransmit=0
+    IF(thisMatrix%chunks(i)%isInit) THEN
+      IF(thisMatrix%chunks(i)%nnz < thisMatrix%chunks(i)%n) THEN
+        DO j=1,SIZE(thisMatrix%chunks(i)%bandIdx)
+          nTransmit=nTransmit+SIZE(thisMatrix%chunks(i)%bands(j)%jIdx)
+        ENDDO
+      ELSE
+        nTransmit=-1
+      ENDIF
+    ENDIF
+    ! This info must be disseminated through all procs
+
+    ! Gather to rank i-1 into nRecv(:)
+    CALL MPI_Gather(nTransmit,1,MPI_INTEGER,nRecv,1,MPI_INTEGER,i-1, &
         thisMatrix%comm,mpierr)
     ! Have rank i-1 allocate
     IF(rank == i-1) THEN
+      nRecv(i)=0
+      nTransmit=0
+      DO j=1,SIZE(nRecv)
+        IF (nRecv(j) > 0) THEN
+          nTransmit=nTransmit+nRecv(j)
+        ENDIF
+      ENDDO
+      ALLOCATE(thisMatrix%incIdxMap(nTransmit))
+      ALLOCATE(thisMatrix%incIdxStt(nProc))
+      ALLOCATE(thisMatrix%incIdxStp(nProc))
+      thisMatrix%incIdxStt=0
+      thisMatrix%incIdxStp=0
+      ! Use nTransmit as counter
+      nTransmit=1
       DO j=1,nProc
-        IF(j /= i) THEN
-          IF(nBand(j) > 0) THEN
-            ALLOCATE(thisMatrix%bandSizes(j)%p(nBand(j)))
-            CALL MPI_Recv(thisMatrix%bandSizes(j)%p(1),nBand(j),MPI_INTEGER, &
-                j-1, 0, thisMatrix%comm,MPI_STATUS_IGNORE, mpierr)
-          ELSE
-            IF(nBand(j) /= 0) THEN
-              ALLOCATE(thisMatrix%bandSizes(j)%p(1))
-              thisMatrix%bandSizes(j)%p(1)=-1
-            ENDIF
+        IF(j == i) THEN
+          thisMatrix%incIdxStt(j)=0
+          thisMatrix%incIdxStp(j)=0
+        ELSE
+          IF(nRecv(j) > 0) THEN
+            thisMatrix%incIdxStt(j)=nTransmit
+            thisMatrix%incIdxStp(j)=nTransmit+nRecv(j)-1
+            ! We receive data (and don't want to bother sending idx's at mvmult
+            ! time)
+            CALL MPI_Recv(thisMatrix%incIdxMap(nTransmit:nTransmit+nRecv(j)-1), &
+                nRecv(j),MPI_INTEGER,j-1,0,thisMatrix%comm,MPI_STATUS_IGNORE, mpierr)
+            nTransmit=nTransmit+nRecv(j)
+          ELSE IF (nRecv(j) == -1) THEN
+            thisMatrix%incIdxStt(j)=-1
+            thisMatrix%incIdxStp(j)=-1
           ENDIF
         ENDIF
       ENDDO
     ELSE
-      IF(nBandLocal > 0) THEN
-        ALLOCATE(bandSizeTmp(nBandLocal))
-        DO j=1,nBandLocal
-          bandSizeTmp(j)=SIZE(thisMatrix%chunks(i)%bands(j)%elem)
+      ! Build the index map
+      IF(nTransmit > 0) THEN
+        ALLOCATE(idxMapTmp(nTransmit))
+        stt=1
+        DO j=1,SIZE(thisMatrix%chunks(i)%bandIdx)
+          stp=stt+SIZE(thisMatrix%chunks(i)%bands(j)%jIdx)-1
+          idxMapTmp(stt:stp)=thisMatrix%chunks(i)%bands(j)%jIdx-thisMatrix%chunks(i)%bandIdx(j)
+          stt=stp+1
         ENDDO
-        CALL MPI_Send(bandSizeTmp(:),nBandLocal,MPI_INTEGER,i-1,0, &
+        CALL MPI_Send(idxMapTmp,nTransmit,MPI_INTEGER,i-1,0, &
             thisMatrix%comm,mpierr)
-        DEALLOCATE(bandSizeTmp)
+        DEALLOCATE(idxMapTmp)
       ENDIF
     ENDIF
   ENDDO
@@ -1039,12 +1081,9 @@ SUBROUTINE clear_DistributedBandedMatrixType(matrix)
     ENDDO
     DEALLOCATE(matrix%chunks)
   ENDIF
-  IF(ALLOCATED(matrix%bandSizes)) THEN
-    DO i=1,SIZE(matrix%bandSizes)
-      IF(ALLOCATED(matrix%bandSizes(i)%p)) DEALLOCATE(matrix%bandSizes(i)%p)
-    ENDDO
-    DEALLOCATE(matrix%bandSizes)
-  ENDIF
+  IF(ALLOCATED(matrix%incIdxMap)) DEALLOCATE(matrix%incIdxMap)
+  IF(ALLOCATED(matrix%incIdxStt)) DEALLOCATE(matrix%incIdxStt)
+  IF(ALLOCATED(matrix%incIdxStp)) DEALLOCATE(matrix%incIdxStp)
   IF(ALLOCATED(matrix%iOffsets)) DEALLOCATE(matrix%iOffsets)
   IF(ALLOCATED(matrix%jOffsets)) DEALLOCATE(matrix%jOffsets)
   IF(ALLOCATED(matrix%iTmp)) DEALLOCATE(matrix%iTmp)

@@ -866,17 +866,18 @@ PURE FUNCTION findIndex_1DReal(r,pos,delta,incl,tol) RESULT(ind)
   ENDIF
 
   !If there is a tolerance specified, assign it
-  l_tol=EPSREAL
+  l_tol=EPSREAL*10.0_SRK
   IF(PRESENT(tol)) THEN
     !Give tolerance a range of say 1000*EPSREAL
     IF((0.0_SRK < tol)) l_tol=tol
   ENDIF
 
   !Below the array
-  IF(pos < tmp(1)) THEN
+  ind=-4
+  IF(pos < tmp(1)-l_tol) THEN
     ind=-1
   !Above the array
-  ELSEIF(tmp(n) < pos) THEN
+  ELSEIF(tmp(n)+l_tol < pos) THEN
     ind=-2
   !Inbetween, error if on mesh
   ELSEIF(l_incl == 0) THEN
@@ -891,10 +892,9 @@ PURE FUNCTION findIndex_1DReal(r,pos,delta,incl,tol) RESULT(ind)
     ENDIF
   !Inbetween, don't error on mesh
   ELSEIF(l_incl > 0) THEN
-    IF((tmp(1) .APPROXLE. pos) .AND. (pos .APPROXLE. tmp(n))) THEN
+    IF(SOFTLE(tmp(1),pos,l_tol) .AND. SOFTLE(pos,tmp(n),l_tol)) THEN
       ind=1
       DO WHILE(SOFTGE(pos,tmp(ind),l_tol))
-      !DO WHILE(pos .APPROXGE. tmp(ind))
         ind=ind+1
         IF(ind > n) EXIT
       ENDDO

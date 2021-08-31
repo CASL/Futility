@@ -41,6 +41,7 @@ PRIVATE
 ! List of Public items
 PUBLIC :: DBC_FAIL
 PUBLIC :: DBC_STOP_ON_FAIL
+PUBLIC :: DBC_FAIL_VERBOSE
 PUBLIC :: DBC_COUNTER
 
 ! These variables are created to be used in unit testing DBC
@@ -49,6 +50,8 @@ PUBLIC :: DBC_COUNTER
 !  as soon as possible to ensure DBC is working properly where intended
 !  This logical should ONLY be changed in unit test code and NEVER in a routine.
 LOGICAL :: DBC_STOP_ON_FAIL=.TRUE.
+!This controls if DBC backtraces are printed
+LOGICAL :: DBC_FAIL_VERBOSE=.TRUE.
 !This integer counts the total number of DBC_FAIL statements called
 INTEGER :: DBC_COUNTER=0
 !
@@ -91,13 +94,15 @@ SUBROUTINE DBC_FAIL(test_char,mod_name,line)
   nproc=1
 #endif
   DBC_COUNTER=DBC_COUNTER+1
-  WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
-      mod_name//" on line",line,":  process",rank+1," of",nproc
+  IF(DBC_FAIL_VERBOSE) THEN
+    WRITE(ERROR_UNIT,'(a,i5,a,i5,a,i5)') "DBC Failure: "//test_char//" in "// &
+        mod_name//" on line",line,":  process",rank+1," of",nproc
+  ENDIF
 
 #ifdef __INTEL_COMPILER
   IF(DBC_STOP_ON_FAIL) CALL abort
 #else
-  CALL backtrace()
+  IF(DBC_FAIL_VERBOSE) CALL backtrace()
   IF(DBC_STOP_ON_FAIL) STOP 2
 #endif
 ENDSUBROUTINE DBC_FAIL

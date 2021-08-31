@@ -408,15 +408,15 @@ SUBROUTINE countOccurrences_SchElm(this,inputFile,firstLine,lastLine,firstField,
   REQUIRE(fstLine >= 0 .AND. fstLine <= lstLine)
   REQUIRE(fstField >= 0 .AND. fstField <= lstField)
 
-  iline=0
+  iline=1
   this%nOccurrences=0
-  DO WHILE(.NOT.atEndOfFile(inputFile))
-    CALL inputfile%fgetl(line)
+  CALL inputfile%fgetl(line)
+  DO WHILE(.NOT.(inputFile%isEOF() .OR. line%at(1) == DOT))
     CALL stripComment(line)
     iline=iline+1
     IF(iline > lstLine) EXIT
     IF(iline >= fstLine) THEN
-      IF(atContentLine(inputFile)) THEN
+      IF(line%at(1) /= BANG .AND. line%at(1) /= DOT) THEN
         sttField=1;             IF(iline == fstLine) sttField=MAX(fstField,sttField)
         stpField=nFields(line); IF(iline == lstLine) stpField=MIN(lstField,stpField)
         DO ifield=sttField,stpField
@@ -425,6 +425,7 @@ SUBROUTINE countOccurrences_SchElm(this,inputFile,firstLine,lastLine,firstField,
         ENDDO
       ENDIF
     ENDIF
+    CALL inputfile%fgetl(line)
   ENDDO
   CALL inputfile%frewind()
 ENDSUBROUTINE countOccurrences_SchElm
@@ -471,15 +472,15 @@ SUBROUTINE determineExtentsWithinTextFile_SchElm(this,inputFile,validElements,fi
   IF(ALLOCATED(this%lastField))  DEALLOCATE(this%lastField);  ALLOCATE(this%lastField(this%nOccurrences))
 
   ioccur=0
-  iline=0
+  iline=1
   readingThisElement=.FALSE.
-  DO WHILE(.NOT.atEndOfFile(inputFile))
-    CALL inputfile%fgetl(line)
+  CALL inputfile%fgetl(line)
+  DO WHILE(.NOT.(inputFile%isEOF() .OR. line%at(1) == DOT))
     CALL stripComment(line)
     iline=iline+1
     IF(iline > lstLine) EXIT
     IF(iline >= fstLine) THEN
-      IF(atContentLine(inputFile)) THEN
+      IF(line%at(1) /= BANG .AND. line%at(1) /= DOT) THEN
         sttField=1;             IF(iline == fstLine) sttField=MAX(fstField,sttField)
         stpField=nFields(line); IF(iline == lstLine) stpField=MIN(lstField,stpField)
         DO ifield=sttField,stpField
@@ -499,6 +500,7 @@ SUBROUTINE determineExtentsWithinTextFile_SchElm(this,inputFile,validElements,fi
       ENDIF
     ENDIF
     IF(readingThisElement) this%lastLine(ioccur)=iline
+    CALL inputfile%fgetl(line)
   ENDDO
   CALL inputfile%frewind()
 ENDSUBROUTINE determineExtentsWithinTextFile_SchElm
@@ -682,16 +684,17 @@ SUBROUTINE parse_SchPar(this,inputFile,paramList)
   REQUIRE(inputFile%isOpen())
 
   !Ensure no line in the input file exceeds the max line limit
-  DO WHILE(.NOT.atEndOfFile(inputFile))
-    CALL inputfile%fgetl(line)
+  CALL inputfile%fgetl(line)
+  DO WHILE(.NOT.(inputFile%isEOF() .OR. line%at(1) == DOT))
     CALL stripComment(line)
-    IF(atContentLine(inputFile)) THEN
+    IF(line%at(1) /= BANG .AND. line%at(1) /= DOT) THEN
       IF(LEN(line)>MAX_LINE_LEN) THEN
         CALL eSchemaParser%raiseError(modName//'::'//myName// &
             ' - "A content line exceeds the max line limit of '//str(MAX_LINE_LEN)//' characters')
         RETURN
       ENDIF
     ENDIF
+    CALL inputfile%fgetl(line)
   ENDDO
   CALL inputfile%frewind()
 
@@ -889,15 +892,15 @@ SUBROUTINE parse_SchCrd(this,inputFile,paramList,ioccurCrd,pListPathBlk)
   nEntries=SIZE(this%entry)
   ALLOCATE(entryStr(nEntries))
   entryStr=''
-  iline=0
+  iline=1
   ientry=1
-  DO WHILE(.NOT.atEndOfFile(inputFile))
-    CALL inputfile%fgetl(line)
+  CALL inputfile%fgetl(line)
+  DO WHILE(.NOT.(inputFile%isEOF() .OR. line%at(1) == DOT))
     CALL stripComment(line)
     iline=iline+1
     IF(iline > lstLine) EXIT
     IF(iline >= fstLine) THEN
-      IF(atContentLine(inputFile)) THEN
+      IF(line%at(1) /= BANG .AND. line%at(1) /= DOT) THEN
         sttField=1;             IF(iline == fstLine) sttField=MAX(fstField+1,sttField)
         stpField=nFields(line); IF(iline == lstLine) stpField=MIN(lstField,stpField)
         DO ifield=sttField,stpField
@@ -910,6 +913,7 @@ SUBROUTINE parse_SchCrd(this,inputFile,paramList,ioccurCrd,pListPathBlk)
         ENDDO
       ENDIF
     ENDIF
+    CALL inputfile%fgetl(line)
   ENDDO
   CALL inputfile%frewind()
 
@@ -1316,32 +1320,6 @@ FUNCTION findElementByName(elements,name) RESULT(index)
     ENDIF
   ENDDO
 ENDFUNCTION findElementByName
-!
-!-------------------------------------------------------------------------------
-!> @brief Determines if the input text file line is currently at End of the File
-!> @param file   the file currently being read
-!> @param isEOF  logical determining whether or not the file is at End of File
-!>
-FUNCTION atEndOfFile(file) RESULT(isEOF)
-  TYPE(InputFileType),INTENT(IN) :: file
-  LOGICAL(SBK) :: isEOF
-
-  REQUIRE(file%isOpen())
-  isEOF=file%isEOF() .OR. file%getProbe() == DOT
-ENDFUNCTION atEndOfFile
-!
-!-------------------------------------------------------------------------------
-!> @brief Determines if the input text file line contains readable content
-!> @param file        the file currently being read
-!> @param hasContent  logical determining whether or not the file has content
-!>
-FUNCTION atContentLine(file) RESULT(hasContent)
-  TYPE(InputFileType),INTENT(IN) :: file
-  LOGICAL(SBK) :: hasContent
-
-  REQUIRE(file%isOpen())
-  hasContent=file%getProbe() /= BANG .AND. file%getProbe() /= DOT
-ENDFUNCTION atContentLine
 !
 !-------------------------------------------------------------------------------
 !> @brief Checks to see if entry string is empty

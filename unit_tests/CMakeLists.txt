@@ -17,7 +17,8 @@ ADD_SUBDIRECTORY(trilinos_interfaces)
 SET(UNIT_TEST_NAMES
     testDBC
     testUnitTest
-    testSelectedKinds
+    testIntrType
+    testIAPWSWaterProperties
     testWaterSatProperties
     testArrayUtils
     testConversions
@@ -45,6 +46,7 @@ SET(UNIT_TEST_NAMES
     testAllocs
     testParameterLists
     testFileType_XML
+    testFMU_Wrapper
     testIOutil
     testFileType_Base
     testFileType_Fortran
@@ -111,6 +113,7 @@ IF(${PACKAGE_NAME}_ENABLE_HDF5)
         ${UNIT_TEST_NAMES}
         testHDF5FileType
         testTPLHDF5
+        testXDMFMesh
         )
 ENDIF()
 

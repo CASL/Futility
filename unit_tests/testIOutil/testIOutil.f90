@@ -54,7 +54,7 @@ SUBROUTINE testIO_Strings()
   INTEGER :: stat, tmpint
   INTEGER,ALLOCATABLE :: tmpint2(:)
   REAL(SRK) :: tmpreal
-  CHARACTER(LEN=32) :: char
+  CHARACTER(LEN=32) :: tmpchar
   CHARACTER(LEN=52) :: test_phrase
   CHARACTER(LEN=256) :: filepath,path,fname,ext
   TYPE(StringType) :: tmpStr,tmpStr2,tmpStrArray(10)
@@ -66,8 +66,8 @@ SUBROUTINE testIO_Strings()
 
   COMPONENT_TEST('strarraymatch')
   DO stat=1,10
-    WRITE(char,'(i32)') stat-1; char=ADJUSTL(char)
-    tmpStrArray(stat)='test'//TRIM(char)
+    WRITE(tmpchar,'(i32)') stat-1; tmpchar=ADJUSTL(tmpchar)
+    tmpStrArray(stat)='test'//TRIM(tmpchar)
   ENDDO
   !have value 10 be the same as 9 for a duplicate/reverse test
   tmpStrArray(10)='test8'
@@ -634,6 +634,43 @@ SUBROUTINE testIO_Strings()
   tmpStr='+----------------+------------------+--------+--------------+'
   ASSERT_EQ(TRIM(tmpStr),TRIM(lines(17)),'line 17')
   DEALLOCATE(tablevals,lines)
+
+  COMPONENT_TEST('concatenate')
+  tmpStrArray(1)='string 1'
+  tmpStrArray(2)='string 2'
+  tmpStrArray(3)='string 3'
+  tmpStrArray(4)='string 4'
+  tmpStrArray(5)='string 5'
+  tmpStrArray(6)='string 6'
+  tmpStrArray(7)='string 7'
+  tmpStrArray(8)='string 8'
+  tmpStrArray(9)='string 9'
+  tmpStrArray(10)='string 10'
+  tmpStr=concatenate(tmpStrArray)
+  ASSERT_EQ(CHAR(tmpStr),\
+      'string 1string 2string 3string 4string 5string 6string 7string 8string 9string 10','concatenate')
+  tmpStrArray=''
+  tmpStr=concatenate(tmpStrArray)
+  ASSERT_EQ(CHAR(tmpStr),'','conatenate empty')
+  tmpStrArray(3)='test'
+  tmpStr=concatenate(tmpStrArray)
+  ASSERT_EQ(CHAR(tmpStr),'test','conatenate mostly empty')
+
+  COMPONENT_TEST('expandRepeatedSymbol')
+  tmpStr='test 4*test2 2*1 5**test2'
+  tmpStr2=expandRepeatedSymbol(tmpStr)
+  ASSERT_EQ(CHAR(tmpStr2),'test test2 test2 test2 test2 1 1 5**test2','basic expand')
+  tmpStr2=expandRepeatedSymbol(tmpStr,'**')
+  ASSERT_EQ(CHAR(tmpStr2),'test 4*test2 2*1 test2 test2 test2 test2 test2','expand **')
+  tmpStr='1 11 1111 111111'
+  tmpStr2=expandRepeatedSymbol(tmpStr)
+  ASSERT_EQ(CHAR(tmpStr2),CHAR(tmpStr),'no delim')
+  tmpStr2=expandRepeatedSymbol(tmpStr,' ')
+  ASSERT_EQ(CHAR(tmpStr2),CHAR(tmpStr),'whitespace delim')
+  tmpStr2=expandRepeatedSymbol(tmpStr,'1')
+  ASSERT_EQ(CHAR(tmpStr2),CHAR(tmpStr),'"1" delim')
+  tmpStr2=expandRepeatedSymbol(tmpStr,'1111')
+  ASSERT_EQ(CHAR(tmpStr2),CHAR(tmpStr),'"1111" delim')
 
 ENDSUBROUTINE testIO_Strings
 !

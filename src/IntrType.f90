@@ -72,6 +72,7 @@ PUBLIC :: SOFTGT
 PUBLIC :: isNAN
 PUBLIC :: isINF
 PUBLIC :: isNumeric
+PUBLIC :: isBetween
 !
 ! Variables
 !> @name Private Variables
@@ -178,6 +179,10 @@ INTERFACE OPERATOR(.APPROXEQ.)
   MODULE PROCEDURE approxeq_abs_single
   !> @copybrief IntrType::approxeq_abs_double
   MODULE PROCEDURE approxeq_abs_double
+  !> @copybrief IntrType::approxeq_abs_mixsd
+  MODULE PROCEDURE approxeq_abs_mixsd
+  !> @copybrief IntrType::approxeq_abs_mixds
+  MODULE PROCEDURE approxeq_abs_mixds
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -187,6 +192,10 @@ INTERFACE OPERATOR(.APPROXEQA.)
   MODULE PROCEDURE approxeq_abs_single
   !> @copybrief IntrType::approxeq_abs_double
   MODULE PROCEDURE approxeq_abs_double
+  !> @copybrief IntrType::approxeq_abs_mixsd
+  MODULE PROCEDURE approxeq_abs_mixsd
+  !> @copybrief IntrType::approxeq_abs_mixds
+  MODULE PROCEDURE approxeq_abs_mixds
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -196,6 +205,10 @@ INTERFACE OPERATOR(.APPROXEQR.)
   MODULE PROCEDURE approxeq_rel_single
   !> @copybrief IntrType::approxeq_rel_double
   MODULE PROCEDURE approxeq_rel_double
+  !> @copybrief IntrType::approxeq_rel_mixsd
+  MODULE PROCEDURE approxeq_rel_mixsd
+  !> @copybrief IntrType::approxeq_rel_mixds
+  MODULE PROCEDURE approxeq_rel_mixds
 ENDINTERFACE
 
 !> @brief Interface for the operator for "approximately equals" for intrinsic
@@ -357,6 +370,21 @@ INTERFACE ASSIGNMENT(=)
   !> @copydetails IntrType::assign_char_to_double
   MODULE PROCEDURE assign_char_to_double
 ENDINTERFACE
+
+INTERFACE isBetween
+  !> @copybrief IntrType::isBetween_SNK
+  !> @copydetails IntrType::isBetween_SNK
+  MODULE PROCEDURE isBetween_SNK
+  !> @copybrief IntrType::isBetween_SLK
+  !> @copydetails IntrType::isBetween_SLK
+  MODULE PROCEDURE isBetween_SLK
+  !> @copybrief IntrType::isBetween_SSK
+  !> @copydetails IntrType::isBetween_SSK
+  MODULE PROCEDURE isBetween_SSK
+  !> @copybrief IntrType::isBetween_SDK
+  !> @copydetails IntrType::isBetween_SDK
+  MODULE PROCEDURE isBetween_SDK
+ENDINTERFACE
 !
 !===============================================================================
 CONTAINS
@@ -396,6 +424,44 @@ ELEMENTAL FUNCTION approxeq_abs_double(a,b) RESULT(bool)
   LOGICAL(SBK) :: bool
   bool=(ABS(a-b) <= EPSD)
 ENDFUNCTION approxeq_abs_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an absolute comparison of one
+!> single-precision and one double-precision reals with .APPROXEQA.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This routine just does a simple absolute comparison using an epsilon that is
+!> a compile time constant. It should be used whenever possible because it has
+!> the least overhead. However, it is not appropriate to use when @c a and @c b
+!> are either very large or very small.
+!>
+ELEMENTAL FUNCTION approxeq_abs_mixsd(a,b) RESULT(bool)
+  REAL(SSK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  bool=approxeq_abs_single(a, REAL(b,SSK))
+ENDFUNCTION approxeq_abs_mixsd
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing an absolute comparison of one
+!> double-precision and one single-precision reals with .APPROXEQA.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This routine just does a simple absolute comparison using an epsilon that is
+!> a compile time constant. It should be used whenever possible because it has
+!> the least overhead. However, it is not appropriate to use when @c a and @c b
+!> are either very large or very small.
+!>
+ELEMENTAL FUNCTION approxeq_abs_mixds(a,b) RESULT(bool)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SSK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  bool=approxeq_abs_single(REAL(a,SSK),b)
+ENDFUNCTION approxeq_abs_mixds
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing a relative comparison of two
@@ -438,6 +504,44 @@ ELEMENTAL FUNCTION approxeq_rel_double(a,b) RESULT(bool)
   IF(a == 0.0_SDK .OR. b == 0.0_SDK) eps=EPSD
   bool=(ABS(a-b) <= eps)
 ENDFUNCTION approxeq_rel_double
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a relative comparison of one
+!> single-precision and one double-precision reals with .APPROXEQR.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a relative comparison by scaling the default epsilon value to
+!> the size of the larger of the two. It should be used when @c and @b are of
+!> the same magnitude and very large or very small. If either @c a or @c b is
+!> zero (exactly) then this routine is equivalent to an absolute comparison.
+!>
+ELEMENTAL FUNCTION approxeq_rel_mixsd(a,b) RESULT(bool)
+  REAL(SSK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  bool=approxeq_rel_single(a, REAL(b,SSK))
+ENDFUNCTION approxeq_rel_mixsd
+!
+!-------------------------------------------------------------------------------
+!> @brief Defines the operation for performing a relative comparison of one
+!> double-precision and one single-precision reals with .APPROXEQR.
+!> @param a
+!> @param b
+!> @returns bool logical indicating if a and b are approximately equal
+!>
+!> This performs a relative comparison by scaling the default epsilon value to
+!> the size of the larger of the two. It should be used when @c and @b are of
+!> the same magnitude and very large or very small. If either @c a or @c b is
+!> zero (exactly) then this routine is equivalent to an absolute comparison.
+!>
+ELEMENTAL FUNCTION approxeq_rel_mixds(a,b) RESULT(bool)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SSK),INTENT(IN) :: b
+  LOGICAL(SBK) :: bool
+  bool=approxeq_rel_single(REAL(a,SSK),b)
+ENDFUNCTION approxeq_rel_mixds
 !
 !-------------------------------------------------------------------------------
 !> @brief Defines the operation for performing a comparison of two single
@@ -942,6 +1046,110 @@ FUNCTION isNumeric(char_str) RESULT(bool)
   bool = .TRUE.
 
 ENDFUNCTION isNumeric
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the first bound to check against
+!> @param val the value to compare
+!> @param b the second bound to compare against
+!> @param tolerance an optional tolerance to use for the comparison
+!> @returns between the result of the comparison
+!>
+!> A positive tolerance narrows the range, while a negative tolerance increases it
+!>
+ELEMENTAL FUNCTION isBetween_SNK(a,val,b,tolerance) RESULT(between)
+  INTEGER(SNK),INTENT(IN) :: a
+  INTEGER(SNK),INTENT(IN) :: val
+  INTEGER(SNK),INTENT(IN) :: b
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: tolerance
+  LOGICAL(SBK) :: between
+  !
+  INTEGER(SNK) :: tol
 
+  tol=0
+  IF(PRESENT(tolerance)) tol=tolerance
+
+  between = ((a+tol < val) .AND. (val < b-tol)) .OR. ((b+tol < val) .AND. (val < a-tol))
+
+ENDFUNCTION isBetween_SNK
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the first bound to check against
+!> @param val the value to compare
+!> @param b the second bound to compare against
+!> @param tolerance an optional tolerance to use for the comparison
+!> @returns between the result of the comparison
+!>
+!> A positive tolerance narrows the range, while a negative tolerance increases it
+!>
+ELEMENTAL FUNCTION isBetween_SLK(a,val,b,tolerance) RESULT(between)
+  INTEGER(SLK),INTENT(IN) :: a
+  INTEGER(SLK),INTENT(IN) :: val
+  INTEGER(SLK),INTENT(IN) :: b
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: tolerance
+  LOGICAL(SBK) :: between
+  !
+  INTEGER(SLK) :: tol
+
+  tol=0
+  IF(PRESENT(tolerance)) tol=tolerance
+
+  between = ((a+tol < val) .AND. (val < b-tol)) .OR. ((b+tol < val) .AND. (val < a-tol))
+
+ENDFUNCTION isBetween_SLK
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the first bound to check against
+!> @param val the value to compare
+!> @param b the second bound to compare against
+!> @param tolerance an optional tolerance to use for the comparison
+!> @returns between the result of the comparison
+!>
+!> A positive tolerance narrows the range, while a negative tolerance increases it
+!>
+ELEMENTAL FUNCTION isBetween_SSK(a,val,b,tolerance) RESULT(between)
+  REAL(SSK),INTENT(IN) :: a
+  REAL(SSK),INTENT(IN) :: val
+  REAL(SSK),INTENT(IN) :: b
+  REAL(SSK),INTENT(IN),OPTIONAL :: tolerance
+  LOGICAL(SBK) :: between
+  !
+  REAL(SSK) :: tol
+
+  tol=0.0_SSK
+  IF(PRESENT(tolerance)) tol=tolerance
+
+  between = ((a+tol < val) .AND. (val < b-tol)) .OR. ((b+tol < val) .AND. (val < a-tol))
+
+ENDFUNCTION isBetween_SSK
+!
+!-------------------------------------------------------------------------------
+!> @brief Determines if a value is between 2 others
+!> @param a the first bound to check against
+!> @param val the value to compare
+!> @param b the second bound to compare against
+!> @param tolerance an optional tolerance to use for the comparison
+!> @returns between the result of the comparison
+!>
+!> A positive tolerance narrows the range, while a negative tolerance increases it
+!>
+ELEMENTAL FUNCTION isBetween_SDK(a,val,b,tolerance) RESULT(between)
+  REAL(SDK),INTENT(IN) :: a
+  REAL(SDK),INTENT(IN) :: val
+  REAL(SDK),INTENT(IN) :: b
+  REAL(SDK),INTENT(IN),OPTIONAL :: tolerance
+  LOGICAL(SBK) :: between
+  !
+  REAL(SDK) :: tol
+
+  tol=0.0_SDK
+  IF(PRESENT(tolerance)) tol=tolerance
+
+  between = ((a+tol < val) .AND. (val < b-tol)) .OR. ((b+tol < val) .AND. (val < a-tol))
+
+ENDFUNCTION isBetween_SDK
+!
 ENDMODULE IntrType
 

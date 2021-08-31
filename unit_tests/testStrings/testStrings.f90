@@ -136,9 +136,6 @@ SUBROUTINE testAssign_nums()
   testSSK=1.01_SSK
   testString=testSSK
   ASSERT_EQ(CHAR(testString),'1.01000E+00','testSSK : 1')
-  testSSK=-testSSK
-  testString=SQRT(testSSK)
-  ASSERT_EQ(CHAR(testString),'NaN','testSSK : NaN')
   testString=-HUGE(testSSK)
   ASSERT_EQ(CHAR(testString),'-3.40282E+38','testSSK : lowest')
   testString=HUGE(testSSK)
@@ -157,9 +154,6 @@ SUBROUTINE testAssign_nums()
   testSDK=1.01_SDK
   testString=testSDK
   ASSERT_EQ(CHAR(testString),'1.010000000000000E+00','testSDK : 1.01')
-  testSDK=-testSDK
-  testString=SQRT(testSDK)
-  ASSERT_EQ(CHAR(testString),'NaN','testString=testSDK : NaN')
   !Since HUGE produces a triple digit exponent, it seems the 'E' disappears when
   !writing.
   testString=-HUGE(testSDK)

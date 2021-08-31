@@ -34,7 +34,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE LinearSolverTypes_Multigrid
 USE IntrType
-USE ExceptionHandler
 USE ParameterLists
 USE VectorTypes
 USE MatrixTypes

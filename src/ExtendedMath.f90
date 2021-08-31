@@ -21,6 +21,7 @@ PUBLIC :: Rational_Fraction
 PUBLIC :: GreatestCommonDivisor
 PUBLIC :: LeastCommonMultiple
 PUBLIC :: ATAN2PI
+PUBLIC :: RotateQtrClockwise
 
 INTERFACE LeastCommonMultiple
   MODULE PROCEDURE LeastCommonMultiple_scalar
@@ -242,5 +243,40 @@ ELEMENTAL FUNCTION ATAN2PI(x,y) RESULT(theta)
   theta=ATAN2(yy,xx)
   IF(.NOT.(theta .APPROXGE. 0.0_SRK)) theta=TWOPI+theta
 ENDFUNCTION ATAN2PI
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine will rotate the input x and y coordinates @nrot number of 
+!>        clockwise quarter rotations.
+!> @param x the x-coordinate
+!> @param y the y-coordinate
+!> @param nrot the number of clockwise quarter rotations
+!>
+!> @note: Values from [-3,-1] will be handled as well, even though they
+!>        represent counter clockwise rotations. If nrot == 0, no rotations are
+!>        performed. The results of these three rotations were taken from the 
+!>        rotation matrix:
+!>   [cos(theta)  -sin(theta)  *  [x
+!>    sin(theta)   cos(theta)]     y] where theta is degrees, CW.
+!>
+ELEMENTAL SUBROUTINE RotateQtrClockwise(x,y,nrot)
+  REAL(SRK),INTENT(INOUT) :: x
+  REAL(SRK),INTENT(INOUT) :: y
+  INTEGER(SIK),INTENT(IN) :: nrot
+  REAL(SRK) :: tmp
+
+  SELECTCASE(MOD(nrot,4))
+  CASE(1,-3) !90  CW/270 CCW
+    tmp=y
+    y=-x
+    x=tmp
+  CASE(2,-2) !180 CW/180 CCW
+    x=-x
+    y=-y
+  CASE(3,-1) !270 CW/90  CCW
+    tmp=x
+    x=-y
+    y=tmp
+  ENDSELECT
+ENDSUBROUTINE RotateQtrClockwise
 !
 ENDMODULE ExtendedMath

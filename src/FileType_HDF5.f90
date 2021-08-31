@@ -567,12 +567,9 @@ SUBROUTINE init_HDF5FileType(thisHDF5File,filename,mode,zlibOpt)
   TYPE(StringType) :: fpath,fname,fext,mode_in
   INTEGER(SIK) :: unitno
   LOGICAL(SBK) :: ostat,exists
-  IF(thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - HDF5file '//thisHDF5File%getFileName()// &
-        ' is already initialized!')
-    RETURN
-  ENDIF
+
+  REQUIRE(.NOT.thisHDF5File%isInit)
+
   CALL getFileParts(filename,fpath,fname,fext,thisHDF5File%e)
   CALL thisHDF5File%setFilePath(CHAR(fpath))
   CALL thisHDF5File%setFileName(CHAR(fname))
@@ -723,43 +720,44 @@ SUBROUTINE open_HDF5FileType(file)
   INTEGER :: acc
   INTEGER(HID_T) :: plist_id
 
-  IF(file%isinit) THEN
-    CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
-    CALL h5pset_fclose_degree_f(plist_id,H5F_CLOSE_SEMI_F,error)
+  REQUIRE(file%isinit)
 
-    IF (error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
-        ' - Unable to create property list for open operation.')
+  CALL h5pcreate_f(H5P_FILE_ACCESS_F,plist_id,error)
+  CALL h5pset_fclose_degree_f(plist_id,H5F_CLOSE_SEMI_F,error)
 
-    ! Decide what access type to use
-    IF(file%isNew()) THEN
-      acc=H5F_ACC_TRUNC_F
-      CALL h5fcreate_f(CHAR(file%fullname),acc,file%file_id,error, &
-          access_prp=plist_id)
-      ! If the file is NEW, change the mode to WRITE after
-      ! Creating it so we don't keep truncating it repeatedly.
-      CALL file%setNewStat(.FALSE.)
-    ELSEIF(file%isWrite()) THEN
-      acc=H5F_ACC_RDWR_F
-      CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
-          access_prp=plist_id)
-    ELSEIF(file%isRead()) THEN
-      acc=H5F_ACC_RDONLY_F
-      CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
-          access_prp=plist_id)
-    ELSE
-      CALL file%e%raiseError(modName//'::'//myName// &
-          ' - Unrecognized access mode! The file is not'// &
-          ' set as either new, read, or write!')
-    ENDIF
+  IF (error /= 0) CALL file%e%raiseError(modName//'::'//myName// &
+      ' - Unable to create property list for open operation.')
 
-    CALL h5pclose_f(plist_id,error)
-    IF(error /= 0) THEN
-      CALL file%e%raiseError(modName//'::'//myName// &
-          ' - Unable to destroy property list.')
-    ELSE
-      CALL file%setOpenStat(.TRUE.)
-    ENDIF
+  ! Decide what access type to use
+  IF(file%isNew()) THEN
+    acc=H5F_ACC_TRUNC_F
+    CALL h5fcreate_f(CHAR(file%fullname),acc,file%file_id,error, &
+        access_prp=plist_id)
+    ! If the file is NEW, change the mode to WRITE after
+    ! Creating it so we don't keep truncating it repeatedly.
+    CALL file%setNewStat(.FALSE.)
+  ELSEIF(file%isWrite()) THEN
+    acc=H5F_ACC_RDWR_F
+    CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
+        access_prp=plist_id)
+  ELSEIF(file%isRead()) THEN
+    acc=H5F_ACC_RDONLY_F
+    CALL h5fopen_f(CHAR(file%fullname),acc,file%file_id,error, &
+        access_prp=plist_id)
+  ELSE
+    CALL file%e%raiseError(modName//'::'//myName// &
+        ' - Unrecognized access mode! The file is not'// &
+        ' set as either new, read, or write!')
   ENDIF
+
+  CALL h5pclose_f(plist_id,error)
+  IF(error /= 0) THEN
+    CALL file%e%raiseError(modName//'::'//myName// &
+        ' - Unable to destroy property list.')
+  ELSE
+    CALL file%setOpenStat(.TRUE.)
+  ENDIF
+
 #endif
 ENDSUBROUTINE open_HDF5FileType
 !
@@ -774,26 +772,26 @@ SUBROUTINE close_HDF5FileType(file)
 #ifdef FUTILITY_HAVE_HDF5
   CHARACTER(LEN=*),PARAMETER :: myName='close_HDF5FileType'
   LOGICAL(SBK) :: lastStopOnError
+
+  REQUIRE(file%isinit)
+
   lastStopOnError=file%e%isStopOnError()
   CALL file%e%setStopOnError(.FALSE.)
-  !Check init status
-  IF(.NOT.file%isinit) THEN
-    CALL file%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-  ELSE
-    !Check open status.
-    IF(file%isopen()) THEN
-      CALL h5fclose_f(file%file_id,error)
-      file%file_id=0
-      IF(error /= 0) THEN
-        CALL file%e%raiseError(modName//'::'//myName// &
-            ' - Unable to close HDF5 file.')
-      ELSE
-        CALL file%setOpenStat(.FALSE.)
-      ENDIF
+
+  !Check open status.
+  IF(file%isopen()) THEN
+    CALL h5fclose_f(file%file_id,error)
+    file%file_id=0
+    IF(error /= 0) THEN
+      CALL file%e%raiseError(modName//'::'//myName// &
+          ' - Unable to close HDF5 file.')
+    ELSE
+      CALL file%setOpenStat(.FALSE.)
     ENDIF
   ENDIF
+
   CALL file%e%setStopOnError(lastStopOnError)
+
 #endif
 ENDSUBROUTINE close_HDF5FileType
 !
@@ -813,26 +811,26 @@ SUBROUTINE delete_HDF5FileType(file)
   CHARACTER(LEN=*),PARAMETER :: myName='delete_HDF5FileType'
   CHARACTER(LEN=EXCEPTION_MAX_MESG_LENGTH) :: emesg
 
-  IF(file%isinit) THEN
-    !So, HDF5 is special in that the unitno assigned isn't used in the
-    !fopen() operation.  So, regardless of the %isOpen() status, it needs
-    !to be opened.
-    OPEN(UNIT=file%unitno,FILE=TRIM(file%getFilePath())// &
-        TRIM(file%getFileName())//TRIM(file%getFileExt()), &
-        IOSTAT=error)
-    IF(error /= 0) THEN
-      WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
-          file%unitno,') IOSTAT=',error
-      CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
-    ENDIF
-    CLOSE(UNIT=file%unitno,STATUS='DELETE',IOSTAT=error)
-    IF(error /= 0) THEN
-      WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
-          file%unitno,') IOSTAT=',error
-      CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
-    ELSE
-      CALL file%setOpenStat(.FALSE.)
-    ENDIF
+  REQUIRE(file%isInit)
+
+  !So, HDF5 is special in that the unitno assigned isn't used in the
+  !fopen() operation.  So, regardless of the %isOpen() status, it needs
+  !to be opened.
+  OPEN(UNIT=file%unitno,FILE=TRIM(file%getFilePath())// &
+      TRIM(file%getFileName())//TRIM(file%getFileExt()), &
+      IOSTAT=error)
+  IF(error /= 0) THEN
+    WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
+        file%unitno,') IOSTAT=',error
+    CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
+  ENDIF
+  CLOSE(UNIT=file%unitno,STATUS='DELETE',IOSTAT=error)
+  IF(error /= 0) THEN
+    WRITE(emesg,'(a,i4,a,i4)') 'Error deleting file (UNIT=', &
+        file%unitno,') IOSTAT=',error
+    CALL file%e%raiseError(modName//'::'//myName//' - '//emesg)
+  ELSE
+    CALL file%setOpenStat(.FALSE.)
   ENDIF
 #else
   ! We dont have HDF5, so we can't initialize
@@ -899,45 +897,36 @@ SUBROUTINE ls_HDF5FileType(thisHDF5File,path,objs)
   INTEGER(HID_T) :: grp_id
   INTEGER :: store_type,nlinks,max_corder
 
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-  ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - HDF5file '//thisHDF5File%getFileName()// &
-        ' is not opened!')
-  ELSE
-    IF(ALLOCATED(objs)) THEN
-      !objs=''
-      DEALLOCATE(objs)
-    ENDIF
-    IF(isgrp_HDF5FileType(thisHDF5File,path)) THEN
-      path2=convertPath(path)
-      CALL h5gopen_f(thisHDF5File%file_id,CHAR(path2),grp_id,error)
+  REQUIRE(thisHDF5File%isinit)
+
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  IF(ALLOCATED(objs)) THEN
+    !objs=''
+    DEALLOCATE(objs)
+  ENDIF
+  IF(isgrp_HDF5FileType(thisHDF5File,path)) THEN
+    path2=convertPath(path)
+    CALL h5gopen_f(thisHDF5File%file_id,CHAR(path2),grp_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Unable to open file.')
+
+    CALL h5gget_info_f(grp_id,store_type,nlinks,max_corder,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Unable to get group information.')
+
+    ALLOCATE(objs(nlinks))
+
+    DO i=0,nlinks-1
+      CALL h5lget_name_by_idx_f(thisHDF5File%file_id,CHAR(path2), &
+          H5_INDEX_NAME_F,H5_ITER_INC_F,i,tmpchar,error)
+      objs(i+1)=TRIM(tmpchar)
       IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to open file.')
+          ' - Unable to get object name.')
+    ENDDO
 
-      CALL h5gget_info_f(grp_id,store_type,nlinks,max_corder,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to get group information.')
-
-      ALLOCATE(objs(nlinks))
-
-      DO i=0,nlinks-1
-        CALL h5lget_name_by_idx_f(thisHDF5File%file_id,CHAR(path2), &
-            H5_INDEX_NAME_F,H5_ITER_INC_F,i,tmpchar,error)
-        objs(i+1)=TRIM(tmpchar)
-        IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - Unable to get object name.')
-      ENDDO
-
-      CALL h5gclose_f(grp_id, error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unable to close group.')
-    ENDIF
+    CALL h5gclose_f(grp_id, error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Unable to close group.')
   ENDIF
 #endif
 ENDSUBROUTINE ls_HDF5FileType
@@ -960,52 +949,40 @@ RECURSIVE SUBROUTINE mkdir_HDF5FileType(thisHDF5File,path)
   LOGICAL :: dset_exists
   INTEGER(SIK) :: lastslash
 
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-  ! Ensure that we have write permissions to the file
-  ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
-    CALL thisHDF5File%e%raiseError(modName &
-        //'::'//myName//' - Can not create group in read-only file.')
-  ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - HDF5file '//thisHDF5File%getFileName()// &
-        ' is already not opened!')
-  ELSE
-    ! Convert the path to use slashes
-    path2=convertPath(path)
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isWrite())
 
-    lastslash=INDEX(path2,'/',.TRUE.)
-    IF(lastslash > 1) THEN
-      path3=path2%substr(1,lastslash-1)
-      IF(.NOT.thisHDF5File%pathExists(CHAR(path3))) THEN
-        CALL thisHDF5File%mkdir(CHAR(path3))
-      ENDIF
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  ! Convert the path to use slashes
+  path2=convertPath(path)
+
+  lastslash=INDEX(path2,'/',.TRUE.)
+  IF(lastslash > 1) THEN
+    path3=path2%substr(1,lastslash-1)
+    IF(.NOT.thisHDF5File%pathExists(CHAR(path3))) THEN
+      CALL thisHDF5File%mkdir(CHAR(path3))
     ENDIF
-    CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - invalid group path: '//path)
+  ENDIF
+  CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),dset_exists,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - invalid group path: '//path)
 
-    IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
-      ! If group exists, do nothing, but only if overwrites are allowed
-      CONTINUE
+  IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
+    ! If group exists, do nothing, but only if overwrites are allowed
+    CONTINUE
+  ELSE
+
+    ! Create the group
+    CALL h5gcreate_f(thisHDF5File%file_id,CHAR(path2),group_id,error)
+
+    IF(error == 0) THEN
+      ! Close the group
+      CALL h5gclose_f(group_id,error)
+      IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+          myName//' - Failed to close HDF group')
     ELSE
-
-      ! Create the group
-      CALL h5gcreate_f(thisHDF5File%file_id,CHAR(path2),group_id,error)
-
-      IF(error == 0) THEN
-        ! Close the group
-        CALL h5gclose_f(group_id,error)
-        IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
-            myName//' - Failed to close HDF group')
-      ELSE
-        CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-            ' - Failed to create HDF5 group.')
-      ENDIF
+      CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+          ' - Failed to create HDF5 group.')
     ENDIF
   ENDIF
 #endif
@@ -1029,47 +1006,35 @@ SUBROUTINE mkalldir_HDF5FileType(thisHDF5File,path)
   TYPE(StringType) :: path2,tmppath
   INTEGER(HID_T) :: group_id
 
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-  ! Ensure that we have write permissions to the file
-  ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
-    CALL thisHDF5File%e%raiseError(modName &
-        //'::'//myName//' - Can not create group in read-only file.')
-  ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - HDF5file '//thisHDF5File%getFileName()// &
-        ' is already not opened!')
-  ELSE
-    error=0
-    ! Convert the path to use slashes
-    path2=convertPath(TRIM(path))
-    CALL strfind(TRIM(CHAR(path2)),FSLASH,slashloc)
-    nslash=SIZE(slashloc)
-    DO i=1,nslash-1
-      tmppath = path2%substr(1,slashloc(i+1)-1)
-      IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(tmppath)))) THEN
-        CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(tmppath)),group_id,error)
-        CALL h5gclose_f(group_id,error)
-      ENDIF
-    ENDDO
-    DEALLOCATE(slashloc)
-    ! Create the group
-    IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(path2)))) &
-        CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(path2)),group_id,error)
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isWrite())
 
-    IF(error == 0) THEN
-      ! Close the group
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  error=0
+  ! Convert the path to use slashes
+  path2=convertPath(TRIM(path))
+  CALL strfind(TRIM(CHAR(path2)),FSLASH,slashloc)
+  nslash=SIZE(slashloc)
+  DO i=1,nslash-1
+    tmppath = path2%substr(1,slashloc(i+1)-1)
+    IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(tmppath)))) THEN
+      CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(tmppath)),group_id,error)
       CALL h5gclose_f(group_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
-          myName//' - Failed to close HDF group')
-    ELSE
-      CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
-          ' - Failed to create HDF5 group.')
     ENDIF
+  ENDDO
+  DEALLOCATE(slashloc)
+  ! Create the group
+  IF(.NOT.pathexists_HDF5FileType(thisHDF5File,TRIM(CHAR(path2)))) &
+      CALL h5gcreate_f(thisHDF5File%file_id,TRIM(CHAR(path2)),group_id,error)
+
+  IF(error == 0) THEN
+    ! Close the group
+    CALL h5gclose_f(group_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+        myName//' - Failed to close HDF group')
+  ELSE
+    CALL thisHDF5File%e%raiseDebug(modName//'::'//myName// &
+        ' - Failed to create HDF5 group.')
   ENDIF
 #endif
 ENDSUBROUTINE mkalldir_HDF5FileType
@@ -1091,35 +1056,25 @@ FUNCTION ngrp_HDF5FileType(thisHDF5File,path) RESULT(ngrp)
   INTEGER(HID_T) :: grp_id
   INTEGER :: store_type,nlinks,max_corder
 
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-  ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - HDF5file '//thisHDF5File%getFileName()// &
-        ' is already not opened!')
-  ELSE
+  REQUIRE(thisHDF5File%isinit)
 
-    path2=convertPath(path)
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  path2=convertPath(path)
 
-    CALL h5gopen_f(thisHDF5File%file_id,CHAR(path2),grp_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not open group in HDF5 file.')
+  CALL h5gopen_f(thisHDF5File%file_id,CHAR(path2),grp_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not open group in HDF5 file.')
 
-    CALL h5gget_info_f(grp_id, store_type,nlinks,max_corder,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not get group info in HDF5 file.')
+  CALL h5gget_info_f(grp_id, store_type,nlinks,max_corder,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not get group info in HDF5 file.')
 
-    ! Close the group
-    CALL h5gclose_f(grp_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
-        myName//' - Failed to close HDF group')
+  ! Close the group
+  CALL h5gclose_f(grp_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+      myName//' - Failed to close HDF group')
 
-    ngrp=nlinks
-  ENDIF
+  ngrp=nlinks
 #else
   ngrp=0
 #endif
@@ -1144,25 +1099,26 @@ FUNCTION isgrp_HDF5FileType(thisHDF5File,path) RESULT(bool)
   INTEGER(HID_T) :: obj_id
   INTEGER(SIK) :: type
 
+  REQUIRE(thisHDF5File%isinit)
+
   ! Make sure the object is initialized, and opened
   bool=.FALSE.
-  IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
-    bool=thisHDF5File%pathExists(path)
-    IF(bool) THEN
-      path2=convertPath(path)
-      !Need to get the object ID from the path...
-      CALL h5oopen_f(thisHDF5File%file_id,CHAR(path2),obj_id,error)
-      IF(error == -1) THEN
-        bool=.FALSE.
-      ELSE
-        CALL h5iget_type_f(obj_id,type,error)
-        bool=(type == H5I_GROUP_F)
-      ENDIF
-      ! Close the object
-      CALL h5oclose_f(obj_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
-          myName//' - Failed to close HDF object!')
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  bool=thisHDF5File%pathExists(path)
+  IF(bool) THEN
+    path2=convertPath(path)
+    !Need to get the object ID from the path...
+    CALL h5oopen_f(thisHDF5File%file_id,CHAR(path2),obj_id,error)
+    IF(error == -1) THEN
+      bool=.FALSE.
+    ELSE
+      CALL h5iget_type_f(obj_id,type,error)
+      bool=(type == H5I_GROUP_F)
     ENDIF
+    ! Close the object
+    CALL h5oclose_f(obj_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseDebug(modName//'::'// &
+        myName//' - Failed to close HDF object!')
   ENDIF
 #else
   bool=.FALSE.
@@ -1187,19 +1143,20 @@ FUNCTION pathexists_HDF5FileType(thisHDF5File,path) RESULT(bool)
   TYPE(StringType) :: strpath,path2
   TYPE(StringType),ALLOCATABLE :: segments(:)
 
+  REQUIRE(thisHDF5File%isinit)
+
   ! Make sure the object is initialized, and opened
   bool=.FALSE.
-  IF(thisHDF5File%isinit .AND. thisHDF5File%isOpen()) THEN
-    strpath=convertPath(path)
-    segments=strpath%split('/')
-    bool=.TRUE.
-    path2=''
-    DO iseg=2,SIZE(segments)
-      path2=path2//'/'//segments(iseg)
-      CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),bool,error)
-      IF(.NOT.bool) EXIT
-    ENDDO !iseg
-  ENDIF
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  strpath=convertPath(path)
+  segments=strpath%split('/')
+  bool=.TRUE.
+  path2=''
+  DO iseg=2,SIZE(segments)
+    path2=path2//'/'//segments(iseg)
+    CALL h5lexists_f(thisHDF5File%file_id,CHAR(path2),bool,error)
+    IF(.NOT.bool) EXIT
+  ENDDO !iseg
 #else
   bool=.FALSE.
 #endif
@@ -1315,10 +1272,10 @@ SUBROUTINE getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
 ENDSUBROUTINE getChunkSize_HDF5FileType
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Creates a hard link between 2 datasets
 !> @param thisHDF5File the HDF5FileType object to interrogate
 !> @param source_path the path in the file to create a link to
-!> @param link_path
+!> @param link_path the path of the link
 !>
 !>
 SUBROUTINE createHardLink_HDF5FileType(thisHDF5File,source_path,link_path)
@@ -3766,6 +3723,23 @@ SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in,first_dir)
   INTEGER(SLK),ALLOCATABLE :: id3(:,:,:)
   REAL(SSK),ALLOCATABLE :: rs3(:,:,:)
   REAL(SDK),ALLOCATABLE :: rd3(:,:,:)
+  TYPE(StringType),ALLOCATABLE :: st3(:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: is4(:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: id4(:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: rs4(:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: rd4(:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: is5(:,:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: id5(:,:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: rs5(:,:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: rd5(:,:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: is6(:,:,:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: id6(:,:,:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: rs6(:,:,:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: rd6(:,:,:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: is7(:,:,:,:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: id7(:,:,:,:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: rs7(:,:,:,:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: rd7(:,:,:,:,:,:,:)
   INTEGER(SIK) :: i
 
 
@@ -3857,6 +3831,57 @@ SUBROUTINE write_pList(thisHDF5File,dsetname,vals,gdims_in,first_dir)
       CASE('3-D ARRAY INTEGER(SLK)')
         CALL vals%get(CHAR(address),id3)
         CALL thisHDF5File%write_l3(CHAR(path),id3)
+      CASE('3-D ARRAY TYPE(StringType)')
+        CALL vals%get(CHAR(address),st3)
+        CALL thisHDF5File%write_st3_helper(CHAR(path),st3)
+      CASE('4-D ARRAY REAL(SSK)')
+        CALL vals%get(CHAR(address),rs4)
+        CALL thisHDF5File%write_s4(CHAR(path),rs4)
+      CASE('4-D ARRAY REAL(SDK)')
+        CALL vals%get(CHAR(address),rd4)
+        CALL thisHDF5File%write_d4(CHAR(path),rd4)
+      CASE('4-D ARRAY INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is4)
+        CALL thisHDF5File%write_n4(CHAR(path),is4)
+      CASE('4-D ARRAY INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id4)
+        CALL thisHDF5File%write_l4(CHAR(path),id4)
+      CASE('5-D ARRAY REAL(SSK)')
+        CALL vals%get(CHAR(address),rs5)
+        CALL thisHDF5File%write_s5(CHAR(path),rs5)
+      CASE('5-D ARRAY REAL(SDK)')
+        CALL vals%get(CHAR(address),rd5)
+        CALL thisHDF5File%write_d5(CHAR(path),rd5)
+      CASE('5-D ARRAY INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is5)
+        CALL thisHDF5File%write_n5(CHAR(path),is5)
+      CASE('5-D ARRAY INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id5)
+        CALL thisHDF5File%write_l5(CHAR(path),id5)
+      CASE('6-D ARRAY REAL(SSK)')
+        CALL vals%get(CHAR(address),rs6)
+        CALL thisHDF5File%write_s6(CHAR(path),rs6)
+      CASE('6-D ARRAY REAL(SDK)')
+        CALL vals%get(CHAR(address),rd6)
+        CALL thisHDF5File%write_d6(CHAR(path),rd6)
+      CASE('6-D ARRAY INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is6)
+        CALL thisHDF5File%write_n6(CHAR(path),is6)
+      CASE('6-D ARRAY INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id6)
+        CALL thisHDF5File%write_l6(CHAR(path),id6)
+      CASE('7-D ARRAY REAL(SSK)')
+        CALL vals%get(CHAR(address),rs7)
+        CALL thisHDF5File%write_s7(CHAR(path),rs7)
+      CASE('7-D ARRAY REAL(SDK)')
+        CALL vals%get(CHAR(address),rd7)
+        CALL thisHDF5File%write_d7(CHAR(path),rd7)
+      CASE('7-D ARRAY INTEGER(SNK)')
+        CALL vals%get(CHAR(address),is7)
+        CALL thisHDF5File%write_n7(CHAR(path),is7)
+      CASE('7-D ARRAY INTEGER(SLK)')
+        CALL vals%get(CHAR(address),id7)
+        CALL thisHDF5File%write_l7(CHAR(path),id7)
       CASE DEFAULT
         CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
             ' - Unrecognized Parameter Type '//CHAR(nextParam%dataType)//'.')
@@ -6187,12 +6212,16 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
   LOGICAL(SBK),ALLOCATABLE :: l1(:),l2(:,:),l3(:,:,:)
   INTEGER(SNK) :: is0
   INTEGER(SNK),ALLOCATABLE :: is1(:),is2(:,:),is3(:,:,:),is4(:,:,:,:)
+  INTEGER(SNK),ALLOCATABLE :: is5(:,:,:,:,:),is6(:,:,:,:,:,:),is7(:,:,:,:,:,:,:)
   INTEGER(SLK) :: id0
   INTEGER(SLK),ALLOCATABLE :: id1(:),id2(:,:),id3(:,:,:),id4(:,:,:,:)
+  INTEGER(SLK),ALLOCATABLE :: id5(:,:,:,:,:),id6(:,:,:,:,:,:),id7(:,:,:,:,:,:,:)
   REAL(SSK) :: rs0
   REAL(SSK),ALLOCATABLE :: rs1(:),rs2(:,:),rs3(:,:,:),rs4(:,:,:,:)
+  REAL(SSK),ALLOCATABLE :: rs5(:,:,:,:,:),rs6(:,:,:,:,:,:),rs7(:,:,:,:,:,:,:)
   REAL(SDK) :: rd0
   REAL(SDK),ALLOCATABLE :: rd1(:),rd2(:,:),rd3(:,:,:),rd4(:,:,:,:)
+  REAL(SDK),ALLOCATABLE :: rd5(:,:,:,:,:),rd6(:,:,:,:,:,:),rd7(:,:,:,:,:,:,:)
   TYPE(StringType) :: st0
   TYPE(StringType),ALLOCATABLE :: st1(:),st2(:,:),st3(:,:,:)
 
@@ -6233,6 +6262,15 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(4)
         CALL read_l4(thisHDF5File,CHAR(plpath),id4)
         CALL vals%add(CHAR(plpath),id4)
+      CASE(5)
+        CALL read_l5(thisHDF5File,CHAR(plpath),id5)
+        CALL vals%add(CHAR(plpath),id5)
+      CASE(6)
+        CALL read_l6(thisHDF5File,CHAR(plpath),id6)
+        CALL vals%add(CHAR(plpath),id6)
+      CASE(7)
+        CALL read_l7(thisHDF5File,CHAR(plpath),id7)
+        CALL vals%add(CHAR(plpath),id7)
       CASE DEFAULT
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
             ' - Unsupported INTEGER(SLK) dimension '//str(ndims)//'!')
@@ -6256,6 +6294,15 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(4)
         CALL read_n4(thisHDF5File,CHAR(plpath),is4)
         CALL vals%add(CHAR(plpath),is4)
+      CASE(5)
+        CALL read_n5(thisHDF5File,CHAR(plpath),is5)
+        CALL vals%add(CHAR(plpath),is5)
+      CASE(6)
+        CALL read_n6(thisHDF5File,CHAR(plpath),is6)
+        CALL vals%add(CHAR(plpath),is6)
+      CASE(7)
+        CALL read_n7(thisHDF5File,CHAR(plpath),is7)
+        CALL vals%add(CHAR(plpath),is7)
       CASE DEFAULT
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
             ' - Unsupported INTEGER(SNK) dimension '//str(ndims)//'!')
@@ -6282,6 +6329,15 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(4)
         CALL read_d4(thisHDF5File,CHAR(plpath),rd4)
         CALL vals%add(CHAR(plpath),rd4)
+      CASE(5)
+        CALL read_d5(thisHDF5File,CHAR(plpath),rd5)
+        CALL vals%add(CHAR(plpath),rd5)
+      CASE(6)
+        CALL read_d6(thisHDF5File,CHAR(plpath),rd6)
+        CALL vals%add(CHAR(plpath),rd6)
+      CASE(7)
+        CALL read_d7(thisHDF5File,CHAR(plpath),rd7)
+        CALL vals%add(CHAR(plpath),rd7)
       CASE DEFAULT
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
             ' - Unsupported REAL(SDK) dimension '//str(ndims)//'!')
@@ -6305,6 +6361,15 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
       CASE(4)
         CALL read_s4(thisHDF5File,CHAR(plpath),rs4)
         CALL vals%add(CHAR(plpath),rs4)
+      CASE(5)
+        CALL read_s5(thisHDF5File,CHAR(plpath),rs5)
+        CALL vals%add(CHAR(plpath),rs5)
+      CASE(6)
+        CALL read_s6(thisHDF5File,CHAR(plpath),rs6)
+        CALL vals%add(CHAR(plpath),rs6)
+      CASE(7)
+        CALL read_s7(thisHDF5File,CHAR(plpath),rs7)
+        CALL vals%add(CHAR(plpath),rs7)
       CASE DEFAULT
         CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
             ' - Unsupported REAL(SSK) dimension '//str(ndims)//'!')
@@ -6401,10 +6466,7 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
             'added to Parameter List.')
         !CALL vals%add(CHAR(plpath),l3)
       ELSE
-        CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
-            ' - Unsupported Parameter Type 3-D String Array will not be '// &
-            'added to Parameter List.')
-        !CALL vals%add(CHAR(plpath),st3)
+        CALL vals%add(CHAR(plpath),st3)
       ENDIF
     CASE DEFAULT
       CALL thisHDF5File%e%raiseWarning(modName//'::'//myName// &
@@ -6456,7 +6518,20 @@ ENDFUNCTION convertPath
 #ifdef FUTILITY_HAVE_HDF5
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Prepares to write an object to an HDF5 file
+!> @param thisHDF5File the file object to write to
+!> @param rank the rank of the array to write to a dataset
+!> @param gdims the global dimensions of the data
+!> @param ldims the local dimensions of the data
+!> @param path the path to which to write the data
+!> @param mem the HDF5 type of data to write
+!> @param dset_id the HDF5 ID for this dataset
+!> @param dpsace_id the HDF5 ID for the dataspace
+!> @param gspace_id the HDF5 ID for the global space
+!> @param plist_id the HDF5 parameter list ID
+!> @param error the error code for preparing the file; 0 indicates no error
+!> @param cnt a count used for hyperslab stuff
+!> @param offset an offset used for hyperslab stuff
 !>
 SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
     gspace_id,plist_id,error,cnt,offset)
@@ -6482,29 +6557,16 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
   INTEGER(SIK) :: lastslash
   TYPE(StringType) :: path2
 
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isWrite())
+
   error=0
   dset_id=-1
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-    error=-1
-  ! Check that the file is writable. Best to catch this before HDF5 does.
-  ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - File is readonly!')
-    error=-2
-  ! Check that the file is Open.
-  ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - File is not Open!')
-    error=-3
-  ELSE
-    file_id=thisHDF5File%file_id
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  file_id=thisHDF5File%file_id
 
-    !> Convert path here, further reducing code
-    path=convertPath(path)
+  !> Convert path here, further reducing code
+  path=convertPath(path)
 
 
 !        parwrite=.FALSE.
@@ -6514,110 +6576,110 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
 !          IF(thisHDF5File%pe%isinit()) parwrite=.TRUE.
 !        ENDIF
 !#endif
-    !Create an HDF5 parameter list for the dataset creation.
-    CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+  !Create an HDF5 parameter list for the dataset creation.
+  CALL h5pcreate_f(H5P_DATASET_CREATE_F,plist_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not create parameter list.')
+
+  IF(rank == 0) THEN
+    CALL h5screate_f(H5S_SCALAR_F,gspace_id,error)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not create parameter list.')
+        ' - Could not create scalar dataspace.')
+    CALL h5screate_f(H5S_SCALAR_F,dspace_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Could not create scalar dataspace.')
+  ELSE
+    ! Create the dataspace
+    ! Global dataspace
+    CALL h5screate_simple_f(rank,gdims,gspace_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Could not create dataspace.')
 
-    IF(rank == 0) THEN
-      CALL h5screate_f(H5S_SCALAR_F,gspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create scalar dataspace.')
-      CALL h5screate_f(H5S_SCALAR_F,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create scalar dataspace.')
-    ELSE
-      ! Create the dataspace
-      ! Global dataspace
-      CALL h5screate_simple_f(rank,gdims,gspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataspace.')
+    ! Local dataspace
+    CALL h5screate_simple_f(rank,ldims,dspace_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Could not create dataspace.')
 
-      ! Local dataspace
-      CALL h5screate_simple_f(rank,ldims,dspace_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataspace.')
+    ! Setup the DSpace creation property list to use ZLIB compression
+    ! (requires chunking).
+    !
+    ! Do not compress on scalar data sets.
+    IF(thisHDF5File%hasCompression .AND. &
+        .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
 
-      ! Setup the DSpace creation property list to use ZLIB compression
-      ! (requires chunking).
-      !
-      ! Do not compress on scalar data sets.
-      IF(thisHDF5File%hasCompression .AND. &
-          .NOT.(rank == 1 .AND. gdims(1) == 1)) THEN
+      !Compute optimal chunk size and specify in property list.
+      CALL compute_chunk_size(mem,gdims,cdims)
+      !Logic is equivalent to "compress anything > 1MB"
+      IF(.NOT.ALL(gdims == cdims)) THEN
+        CALL h5pset_chunk_f(plist_id,rank,cdims,error)
 
-        !Compute optimal chunk size and specify in property list.
-        CALL compute_chunk_size(mem,gdims,cdims)
-        !Logic is equivalent to "compress anything > 1MB"
-        IF(.NOT.ALL(gdims == cdims)) THEN
-          CALL h5pset_chunk_f(plist_id,rank,cdims,error)
-
-          !Do not presently support user defined compression levels, just level 5
-          !5 seems like a good trade-off of speed vs. compression ratio.
-          CALL h5pset_deflate_f(plist_id,thisHDF5File%zlibOpt,error)
-        ENDIF
+        !Do not presently support user defined compression levels, just level 5
+        !5 seems like a good trade-off of speed vs. compression ratio.
+        CALL h5pset_deflate_f(plist_id,thisHDF5File%zlibOpt,error)
       ENDIF
     ENDIF
+  ENDIF
 
-    !Create the path if it doesn't exist
-    lastslash=INDEX(path,'/',.TRUE.)
-    IF(lastslash > 1) THEN
-      path2=path(1:lastslash-1)
-      IF(.NOT.thisHDF5File%pathExists(CHAR(path2))) THEN
-        CALL thisHDF5File%mkdir(CHAR(path2))
-      ENDIF
+  !Create the path if it doesn't exist
+  lastslash=INDEX(path,'/',.TRUE.)
+  IF(lastslash > 1) THEN
+    path2=path(1:lastslash-1)
+    IF(.NOT.thisHDF5File%pathExists(CHAR(path2))) THEN
+      CALL thisHDF5File%mkdir(CHAR(path2))
     ENDIF
+  ENDIF
 
-    ! Create the dataset, if necessary
-    CALL h5lexists_f(file_id,path,dset_exists,error)
-    IF(error /= 0) THEN
+  ! Create the dataset, if necessary
+  CALL h5lexists_f(file_id,path,dset_exists,error)
+  IF(error /= 0) THEN
+    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - invalid group path:'//path)
+  ENDIF
+
+  IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
+    ! Open group for overwrite if it already exists and the file has overwrite status
+    CALL h5dopen_f(file_id,path,dset_id,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Could not open dataset:'//path)
+
+    ! Get the old and new data type sizes
+    CALL h5dget_type_f(dset_id,oldmem,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Could not retrieve data type:'//path)
+    CALL h5tget_size_f(oldmem,oldsize,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Could not retrieve old data type size:'//path)
+    CALL h5tget_size_f(mem,newsize,error)
+    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Could not retrieve new data type size:'//path)
+
+    ! Check that the size of the data type is equal to or less than the data type size
+    ! in the dataset since there is currently no way to resize the dataset
+    IF(oldsize < newsize) THEN
       CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - invalid group path:'//path)
+          ' - Size of new data is greater than size of pre-existing data type:'//path)
     ENDIF
 
-    IF(thisHDF5File%overwriteStat .AND. dset_exists) THEN
-      ! Open group for overwrite if it already exists and the file has overwrite status
-      CALL h5dopen_f(file_id,path,dset_id,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not open dataset:'//path)
-
-      ! Get the old and new data type sizes
-      CALL h5dget_type_f(dset_id,oldmem,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not retrieve data type:'//path)
-      CALL h5tget_size_f(oldmem,oldsize,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not retrieve old data type size:'//path)
-      CALL h5tget_size_f(mem,newsize,error)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not retrieve new data type size:'//path)
-
-      ! Check that the size of the data type is equal to or less than the data type size
-      ! in the dataset since there is currently no way to resize the dataset
-      IF(oldsize < newsize) THEN
-        CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-            ' - Size of new data is greater than size of pre-existing data type:'//path)
-      ENDIF
-
-      ! For non-scalar data, check that the size of the array equal to or less than the
-      ! array size in the dataset since there is currently no way to resize the dataset
-      CALL h5dget_storage_size_f(dset_id,oldsize,error)
-      IF(oldsize < newsize*PRODUCT(gdims)) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Storage size of the pre-existing dataset is too small:'//path)
-    ELSE
-      CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
-      IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Could not create dataset:'//path)
-    ENDIF
-
-    ! Destroy the property list
-    CALL h5pclose_f(plist_id,error)
+    ! For non-scalar data, check that the size of the array equal to or less than the
+    ! array size in the dataset since there is currently no way to resize the dataset
+    CALL h5dget_storage_size_f(dset_id,oldsize,error)
+    IF(oldsize < newsize*PRODUCT(gdims)) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Storage size of the pre-existing dataset is too small:'//path)
+  ELSE
+    CALL h5dcreate_f(file_id,path,mem,gspace_id,dset_id,error,dcpl_id=plist_id)
     IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not close parameter list.')
+        ' - Could not create dataset:'//path)
+  ENDIF
 
-    ! Select the global dataspace for the dataset
-    CALL h5dget_space_f(dset_id,gspace_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not select global dataspace for the dataset.')
+  ! Destroy the property list
+  CALL h5pclose_f(plist_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not close parameter list.')
+
+  ! Select the global dataspace for the dataset
+  CALL h5dget_space_f(dset_id,gspace_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not select global dataspace for the dataset.')
 
 !#ifdef HAVE_MPI
 !        ! Select a hyperslab subset of the global data space
@@ -6627,10 +6689,10 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
 !            ' - Could not select a hyperslab.')
 !        ENDIF
 !#endif
-    ! Create a property list for the write operation
-    CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not create property list for write operation.')
+  ! Create a property list for the write operation
+  CALL h5pcreate_f(H5P_DATASET_XFER_F,plist_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not create property list for write operation.')
 !#ifdef HAVE_MPI
 !!We need checks here for PAR_HDF5, or something, because it won't work with serial!
 !!(facepalm)
@@ -6640,11 +6702,16 @@ SUBROUTINE preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
 !            ' - Could not set property list for collective mpi write.')
 !        ENDIF
 !#endif
-  ENDIF
 ENDSUBROUTINE preWrite
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Completes the writing of an object to an HDF5 file
+!> @param thisHDF5File the file object to write to
+!> @param error the error code for preparing the file; 0 indicates no error
+!> @param dset_id the HDF5 ID for this dataset
+!> @param dpsace_id the HDF5 ID for the dataspace
+!> @param gspace_id the HDF5 ID for the global space
+!> @param plist_id the HDF5 parameter list ID
 !>
 SUBROUTINE postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   CHARACTER(LEN=*),PARAMETER :: myName='postWrite'
@@ -6655,41 +6722,37 @@ SUBROUTINE postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   INTEGER(HID_T),INTENT(INOUT) :: gspace_id
   INTEGER(HID_T),INTENT(INOUT) :: plist_id
 
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-  ! Check that the file is writable. Best to catch this before HDF5 does.
-  ELSEIF(.NOT.thisHDF5File%isWrite()) THEN
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - File is not Writable!')
-  ! Check that the file is Open.
-  ELSEIF(.NOT.thisHDF5File%isOpen()) THEN
-    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - File is not Open!')
-  ELSE
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not write to the dataset.')
-    ! Close the dataset
-    CALL h5dclose_f(dset_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not close the dataset.')
-    ! Close the dataspace
-    CALL h5sclose_f(dspace_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not close the dataspace.')
-    CALL h5sclose_f(gspace_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not close the dataspace.')
-    CALL h5pclose_f(plist_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Could not close the parameter list.')
-  ENDIF
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isWrite())
+
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not write to the dataset.')
+  ! Close the dataset
+  CALL h5dclose_f(dset_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not close the dataset.')
+  ! Close the dataspace
+  CALL h5sclose_f(dspace_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not close the dataspace.')
+  CALL h5sclose_f(gspace_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not close the dataspace.')
+  CALL h5pclose_f(plist_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Could not close the parameter list.')
 ENDSUBROUTINE postWrite
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Prepares to read a dataset from an HDF5 file
+!> @param thisHDF5File the file object to write to
+!> @param path the path of the data to read
+!> @param rank the rank of the data to read
+!> @param dset_id the HDF5 ID for this dataset
+!> @param dpsace_id the HDF5 ID for the dataspace
+!> @param dims the dimensions of the data to read
+!> @param error the error code for preparing the file; 0 indicates no error
 !>
 SUBROUTINE preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
   CHARACTER(LEN=*),PARAMETER :: myName='preRead'
@@ -6704,42 +6767,32 @@ SUBROUTINE preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
   INTEGER :: ndims
   INTEGER(HSIZE_T) :: maxdims(rank)
 
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isRead())
+
   error=0
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-    error=-1
-  ELSEIF(.NOT.thisHDF5File%isRead()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File is not Readable!')
-    error=-2
+  ! Open the dataset
+  CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to open dataset.')
+
+  ! Get dataset dimensions for allocation
+  CALL h5dget_space_f(dset_id,dspace_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to obtain the dataspace.')
+
+  ! Make sure the rank is right
+  IF(rank > 0) THEN
+    CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+    IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrieve number of dataspace dimensions.')
+    IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Using wrong read function for rank.')
+    CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+    IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Failed to retrieve dataspace dimensions.')
   ELSE
-    ! Open the dataset
-    CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-    ! Get dataset dimensions for allocation
-    CALL h5dget_space_f(dset_id,dspace_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
-
-    ! Make sure the rank is right
-    IF(rank > 0) THEN
-      CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to retrieve number of dataspace dimensions.')
-      IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Using wrong read function for rank.')
-      CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-      IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Failed to retrieve dataspace dimensions.')
-    ELSE
-      dims=1
-    ENDIF
+    dims=1
   ENDIF
 ENDSUBROUTINE preRead
 #endif
@@ -6767,48 +6820,36 @@ FUNCTION getDataShape(thisHDF5File,dsetname) RESULT(dataShape)
   INTEGER(HID_T) :: dspace_id
   INTEGER(HSIZE_T),ALLOCATABLE :: dims(:),maxdims(:)
 
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isRead())
+
   error=0
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-    error=-1
-  ELSEIF(.NOT.thisHDF5File%isRead()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File is not Readable!')
-    error=-2
-  ELSE
-    IF(.NOT.thisHDF5File%isOpen()) THEN
-        CALL thisHDF5File%fopen()
-    ENDIF
-    path=convertPath(dsetname)
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  path=convertPath(dsetname)
 
-    ! Open the dataset
-    CALL h5dopen_f(thisHDF5File%file_id, TRIM(path), dset_id, error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-    CALL h5dget_space_f(dset_id,dspace_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to obtain the dataspace.')
+  ! Open the dataset
+  CALL h5dopen_f(thisHDF5File%file_id, TRIM(path), dset_id, error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to open dataset.')
+  CALL h5dget_space_f(dset_id,dspace_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to obtain the dataspace.')
 
-    ! Get the number of dimensions
-    CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
-    IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
+  ! Get the number of dimensions
+  CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
+  IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to retrieve number of dataspace dimensions.')
 
-    ! Get the dimensions
-    ALLOCATE(dims(ndims))
-    ALLOCATE(maxdims(ndims))
-    CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
-    IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+  ! Get the dimensions
+  ALLOCATE(dims(ndims))
+  ALLOCATE(maxdims(ndims))
+  CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
+  IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to retrieve dataspace dimensions.')
 
-    ! Copy to the Futility integer type
-    ALLOCATE(dataShape(SIZE(dims)))
-    dataShape(:)=dims(:)
-  ENDIF
+  ! Copy to the Futility integer type
+  ALLOCATE(dataShape(SIZE(dims)))
+  dataShape(:)=dims(:)
 #endif
 ENDFUNCTION getDataShape
 !
@@ -6834,66 +6875,59 @@ FUNCTION getDataType(thisHDF5File,dsetname) RESULT(dataType)
   INTEGER(HID_T) :: dset_id,dtype
   INTEGER(HSIZE_T) :: dtype_prec
 
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isRead())
+
   error=0
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-    error=-1
-  ELSEIF(.NOT.thisHDF5File%isRead()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File is not Readable!')
-    error=-2
+  IF(.NOT.thisHDF5File%isOpen()) CALL thisHDF5File%fopen()
+  path=convertPath(dsetname)
+
+  ! Open the dataset
+  CALL h5dopen_f(thisHDF5File%file_id, TRIM(path), dset_id, error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to open dataset.')
+
+  ! Get the dataset type
+  CALL h5dget_type_f(dset_id,dtype,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to retrive dataset type identifier.')
+  CALL h5tget_class_f(dtype,class_type,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to retrive dataset class.')
+  CALL h5tget_precision_f(dtype,dtype_prec,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to retrive dataset precision.')
+
+  dataType='N/A'
+  IF(class_type == H5T_FLOAT_F) THEN
+    IF(dtype_prec == 64) THEN
+      dataType='SDK'
+    ELSEIF(dtype_prec == 32) THEN
+      dataType='SSK'
+    ENDIF
+  ELSEIF(class_type == H5T_INTEGER_F) THEN
+    IF(dtype_prec == 64) THEN
+      dataType='SLK'
+    ELSEIF(dtype_prec == 32) THEN
+      dataType='SNK'
+    ENDIF
+  ELSEIF(class_type == H5T_STRING_F) THEN
+    dataType='STR'
   ELSE
-    IF(.NOT.thisHDF5File%isOpen()) THEN
-        CALL thisHDF5File%fopen()
-    ENDIF
-    path=convertPath(dsetname)
-
-    ! Open the dataset
-    CALL h5dopen_f(thisHDF5File%file_id, TRIM(path), dset_id, error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open dataset.')
-
-    ! Get the dataset type
-    CALL h5dget_type_f(dset_id,dtype,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrive dataset type identifier.')
-    CALL h5tget_class_f(dtype,class_type,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrive dataset class.')
-    CALL h5tget_precision_f(dtype,dtype_prec,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrive dataset precision.')
-
-    dataType='N/A'
-    IF(class_type == H5T_FLOAT_F) THEN
-      IF(dtype_prec == 64) THEN
-        dataType='SDK'
-      ELSEIF(dtype_prec == 32) THEN
-        dataType='SSK'
-      ENDIF
-    ELSEIF(class_type == H5T_INTEGER_F) THEN
-      IF(dtype_prec == 64) THEN
-        dataType='SLK'
-      ELSEIF(dtype_prec == 32) THEN
-        dataType='SNK'
-      ENDIF
-    ELSEIF(class_type == H5T_STRING_F) THEN
-      dataType='STR'
-    ELSE
-      CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          ' - Unsupported data type '//str(class_type)//' returned!  Only types '// &
-          str(H5T_FLOAT_F)//', '//str(H5T_INTEGER_F)//', '//str(H5T_STRING_F)//' are supported.')
-    ENDIF
+    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        ' - Unsupported data type '//str(class_type)//' returned!  Only types '// &
+        str(H5T_FLOAT_F)//', '//str(H5T_INTEGER_F)//', '//str(H5T_STRING_F)//' are supported.')
   ENDIF
 #endif
 ENDFUNCTION getDataType
 !
 !-------------------------------------------------------------------------------
-!> @brief
+!> @brief Completes the reading of a dataset from an HDF5 file
+!> @param thisHDF5File the file object to write to
+!> @param path the path of the data to read
+!> @param dset_id the HDF5 ID for this dataset
+!> @param dpsace_id the HDF5 ID for the dataspace
+!> @param error the error code for preparing the file; 0 indicates no error
 !>
 #ifdef FUTILITY_HAVE_HDF5
 SUBROUTINE postRead(thisHDF5File,path,dset_id,dspace_id,error)
@@ -6906,42 +6940,34 @@ SUBROUTINE postRead(thisHDF5File,path,dset_id,dspace_id,error)
 
   INTEGER(HSIZE_T),ALLOCATABLE :: cdims(:)
 
-  ! Make sure the object is initialized
-  IF(.NOT.thisHDF5File%isinit) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File object not initialized.')
-  ELSEIF(.NOT.thisHDF5File%isRead()) THEN
-    CALL thisHDF5File%e%setStopOnError(.FALSE.)
-    CALL thisHDF5File%e%raiseError(modName// &
-        '::'//myName//' - File is not Readable!')
-  ELSE
-    IF(error /= 0) THEN
-      !See if failed read was due to OOM on decompress
-      IF(isCompressed_HDF5FileType(thisHDF5File,path)) THEN
-        CALL getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
-        IF(MAXVAL(cdims) > 16777216_HSIZE_T) THEN !This is 64/128MB
-          CALL thisHDF5File%e%raiseWarning( &      !depending on dataset type.
-              modName//'::'//myName//' - Potentially high memory usage'// &
-              'when reading decompressed dataset "'//TRIM(path)//'".'// &
-              CHAR(10)//CHAR(10)//'Try decompressing file before rerunning:'// &
-              CHAR(10)//'$ h5repack -f NONE "'// &
-              TRIM(thisHDF5File%fullname)//'" "'// &
-              TRIM(thisHDF5File%fullname)//'.uncompressed"')
-        ENDIF
+  REQUIRE(thisHDF5File%isinit)
+  REQUIRE(thisHDF5File%isRead())
+
+  IF(error /= 0) THEN
+    !See if failed read was due to OOM on decompress
+    IF(isCompressed_HDF5FileType(thisHDF5File,path)) THEN
+      CALL getChunkSize_HDF5FileType(thisHDF5File,path,cdims)
+      IF(MAXVAL(cdims) > 16777216_HSIZE_T) THEN !This is 64/128MB
+        CALL thisHDF5File%e%raiseWarning( &      !depending on dataset type.
+            modName//'::'//myName//' - Potentially high memory usage'// &
+            'when reading decompressed dataset "'//TRIM(path)//'".'// &
+            CHAR(10)//CHAR(10)//'Try decompressing file before rerunning:'// &
+            CHAR(10)//'$ h5repack -f NONE "'// &
+            TRIM(thisHDF5File%fullname)//'" "'// &
+            TRIM(thisHDF5File%fullname)//'.uncompressed"')
       ENDIF
-      CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-          '- Failed to read data from dataset"'//TRIM(path)//'".')
     ENDIF
-    ! Close the dataset
-    CALL h5dclose_f(dset_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataset "'//TRIM(path)//'".')
-    ! Close the dataspace
-    CALL h5sclose_f(dspace_id,error)
-    IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close dataspace for "'//TRIM(path)//'".')
+    CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+        '- Failed to read data from dataset"'//TRIM(path)//'".')
   ENDIF
+  ! Close the dataset
+  CALL h5dclose_f(dset_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to close dataset "'//TRIM(path)//'".')
+  ! Close the dataspace
+  CALL h5sclose_f(dspace_id,error)
+  IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
+      ' - Failed to close dataspace for "'//TRIM(path)//'".')
 ENDSUBROUTINE postRead
 !
 !------------------------------------------------------------------------------
@@ -6995,29 +7021,35 @@ ENDSUBROUTINE compute_chunk_size
 !
 !-------------------------------------------------------------------------------
 !> @brief Use to create an attribute
+!> @param this the HDF5 file object
+!> @param attr_name the name of the attribute
+!> @param atype_id the HDF5 attribute type ID
+!> @param dspace_id the dataspace ID
+!> @param attr_id the attribute ID
+!>
 #ifdef FUTILITY_HAVE_HDF5
 SUBROUTINE createAttribute(this,obj_id,attr_name,atype_id,dspace_id,attr_id)
-   CHARACTER(LEN=*),PARAMETER :: myName='createAttribute'
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: attr_name
-   INTEGER(HID_T), INTENT(IN) :: atype_id, dspace_id, obj_id
-   INTEGER(HID_T), INTENT(OUT) :: attr_id
-   LOGICAL :: attr_exists
+  CHARACTER(LEN=*),PARAMETER :: myName='createAttribute'
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: attr_name
+  INTEGER(HID_T), INTENT(IN) :: atype_id, dspace_id, obj_id
+  INTEGER(HID_T), INTENT(OUT) :: attr_id
+  LOGICAL :: attr_exists
 
-   CALL h5aexists_f(obj_id,attr_name,attr_exists,error)
-   !Create and write to the attribute within the dataspce
-   IF(this%overwriteStat.AND.attr_exists) THEN
-     ! Open the attribute
-     CALL h5aopen_f(obj_id,attr_name,attr_id,error)
-     IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Unable to open attribute.')
-   ELSE
-     ! Create the attribute
-     CALL h5acreate_f(obj_id,attr_name,atype_id,dspace_id,attr_id,error)
-     IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Unable to create attribute.')
-   ENDIF
-END SUBROUTINE createAttribute
+  CALL h5aexists_f(obj_id,attr_name,attr_exists,error)
+  !Create and write to the attribute within the dataspce
+  IF(this%overwriteStat.AND.attr_exists) THEN
+    ! Open the attribute
+    CALL h5aopen_f(obj_id,attr_name,attr_id,error)
+    IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Unable to open attribute.')
+  ELSE
+    ! Create the attribute
+    CALL h5acreate_f(obj_id,attr_name,atype_id,dspace_id,attr_id,error)
+    IF(error /= 0) CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Unable to create attribute.')
+  ENDIF
+ENDSUBROUTINE createAttribute
 #endif
 !
 !-------------------------------------------------------------------------------
@@ -7028,42 +7060,42 @@ END SUBROUTINE createAttribute
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE write_attribute_st0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   TYPE(StringType) :: attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  TYPE(StringType) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-   INTEGER :: num_dims
-   INTEGER(HID_T) :: atype_id, attr_id, dspace_id, obj_id
-   INTEGER(HSIZE_T),DIMENSION(1) :: dims
-   INTEGER(SIZE_T) :: attr_len
-   CHARACTER(LEN=:,KIND=C_CHAR),ALLOCATABLE :: valss
-   num_dims=1
-   dims(1)=1
-   attr_val=TRIM(attr_val)
-   valss=CHAR(attr_val)
-   attr_len=INT(LEN(attr_val),SDK)
+  INTEGER :: num_dims
+  INTEGER(HID_T) :: atype_id, attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  INTEGER(SIZE_T) :: attr_len
+  CHARACTER(LEN=:,KIND=C_CHAR),ALLOCATABLE :: valss
+  num_dims=1
+  dims(1)=1
+  attr_val=TRIM(attr_val)
+  valss=CHAR(attr_val)
+  attr_len=INT(LEN(attr_val),SDK)
 
-   !Prepare the File and object for the attribute
-   CALL open_object(this,obj_name,obj_id)
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
 
-   !Create the data space for memory type and size
-   CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
-   CALL h5tcopy_f(H5T_NATIVE_CHARACTER,atype_id,error)
-   CALL h5tset_size_f(atype_id,attr_len,error)
+  !Create the data space for memory type and size
+  CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
+  CALL h5tcopy_f(H5T_NATIVE_CHARACTER,atype_id,error)
+  CALL h5tset_size_f(atype_id,attr_len,error)
 
-   CALL createAttribute(this,obj_id,attr_name,atype_id,dspace_id,attr_id)
-   CALL h5awrite_f(attr_id,atype_id,TRIM(valss),dims,error)
+  CALL createAttribute(this,obj_id,attr_name,atype_id,dspace_id,attr_id)
+  CALL h5awrite_f(attr_id,atype_id,TRIM(valss),dims,error)
 
-   !Close datatype opened by h5tcopy_f
-   CALL h5tclose_f(atype_id,error)
+  !Close datatype opened by h5tcopy_f
+  CALL h5tclose_f(atype_id,error)
 
-   !Close dataspace, attribute and object
-   CALL h5sclose_f(dspace_id,error)
-   CALL close_attribute(this,attr_id)
-   CALL close_object(this,obj_id)
+  !Close dataspace, attribute and object
+  CALL h5sclose_f(dspace_id,error)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
 #endif
-END SUBROUTINE write_attribute_st0
+ENDSUBROUTINE write_attribute_st0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and string value to a known dataset
@@ -7073,14 +7105,14 @@ END SUBROUTINE write_attribute_st0
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE write_attribute_c0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   CHARACTER(LEN=*) :: attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  CHARACTER(LEN=*) :: attr_val
 
-   TYPE(StringType) :: str_val
+  TYPE(StringType) :: str_val
 
-   str_val=TRIM(attr_val)
-   CALL this%write_attribute(obj_name,attr_name,str_val)
+  str_val=TRIM(attr_val)
+  CALL this%write_attribute(obj_name,attr_name,str_val)
 
 END SUBROUTINE write_attribute_c0
 !
@@ -7092,34 +7124,34 @@ END SUBROUTINE write_attribute_c0
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE write_attribute_i0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   INTEGER(SNK),INTENT(IN) :: attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(IN) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-   INTEGER :: num_dims
-   INTEGER(HID_T) :: attr_id, dspace_id, obj_id
-   INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  INTEGER :: num_dims
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
 
-   num_dims=1
-   dims(1)=1
+  num_dims=1
+  dims(1)=1
 
-   !Prepare the File and object for the attribute
-   CALL open_object(this,obj_name,obj_id)
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
 
-   !Create the data space for memory type and size
-   CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
+  !Create the data space for memory type and size
+  CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
 
-   !Create and write to the attribute within the dataspce
-   CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_INTEGER,&
-       dspace_id,attr_id)
-   CALL h5awrite_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
+  !Create and write to the attribute within the dataspce
+  CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_INTEGER,&
+      dspace_id,attr_id)
+  CALL h5awrite_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
 
-   CALL h5sclose_f(dspace_id,error)
-   CALL close_attribute(this,attr_id)
-   CALL close_object(this,obj_id)
+  CALL h5sclose_f(dspace_id,error)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
 #endif
-END SUBROUTINE write_attribute_i0
+ENDSUBROUTINE write_attribute_i0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and real value to a known dataset
@@ -7129,34 +7161,34 @@ END SUBROUTINE write_attribute_i0
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE write_attribute_d0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   REAL(SDK),INTENT(IN) :: attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(IN) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-   INTEGER :: num_dims
-   INTEGER(HID_T) :: attr_id, dspace_id, obj_id
-   INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  INTEGER :: num_dims
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
 
-   num_dims=1
-   dims(1)=1
+  num_dims=1
+  dims(1)=1
 
-   !Prepare the File and object for the attribute
-   CALL open_object(this,obj_name,obj_id)
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
 
-   !Create the data space for memory type and size
-   CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
+  !Create the data space for memory type and size
+  CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
 
-   !Create and write to the attribute within the dataspce
-   CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_DOUBLE,&
-       dspace_id,attr_id)
-   CALL h5awrite_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
+  !Create and write to the attribute within the dataspce
+  CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_DOUBLE,&
+      dspace_id,attr_id)
+  CALL h5awrite_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
 
-   CALL h5sclose_f(dspace_id,error)
-   CALL close_attribute(this,attr_id)
-   CALL close_object(this,obj_id)
+  CALL h5sclose_f(dspace_id,error)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
 #endif
-END SUBROUTINE write_attribute_d0
+ENDSUBROUTINE write_attribute_d0
 !
 !-------------------------------------------------------------------------------
 !> @brief Set-up to read  a string value attribute from a known dataset
@@ -7166,25 +7198,25 @@ END SUBROUTINE write_attribute_d0
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE read_attribute_st0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   TYPE(StringType),INTENT(INOUT)::attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  TYPE(StringType),INTENT(INOUT)::attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-   INTEGER(HID_T) :: attr_id, obj_id
-   INTEGER(SIZE_T):: max_size
+  INTEGER(HID_T) :: attr_id, obj_id
+  INTEGER(SIZE_T):: max_size
 
-   !Prepare the File and object for the attribute
-   CALL open_object(this,obj_name,obj_id)
-   CALL open_attribute(this,obj_id,attr_name,attr_id)
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+  CALL open_attribute(this,obj_id,attr_name,attr_id)
 
-   CALL h5aget_storage_size_f(attr_id,max_size,error)
-   CALL read_attribute_st0_helper(attr_id,max_size,attr_val)
+  CALL h5aget_storage_size_f(attr_id,max_size,error)
+  CALL read_attribute_st0_helper(attr_id,max_size,attr_val)
 
-   CALL close_attribute(this,attr_id)
-   CALL close_object(this,obj_id)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
 #endif
-End SUBROUTINE read_attribute_st0
+ENDSUBROUTINE read_attribute_st0
 !
 !-------------------------------------------------------------------------------
 !> @brief Set-up to read  a string value attribute from a known dataset
@@ -7194,16 +7226,16 @@ End SUBROUTINE read_attribute_st0
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE read_attribute_c0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   CHARACTER(LEN=*),INTENT(INOUT)::attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  CHARACTER(LEN=*),INTENT(INOUT)::attr_val
 
-   TYPE(StringType) :: str_val
+  TYPE(StringType) :: str_val
 
-   CALL this%read_attribute(obj_name,attr_name,str_val)
+  CALL this%read_attribute(obj_name,attr_name,str_val)
 
-   attr_val=CHAR(str_val)
-End SUBROUTINE read_attribute_c0
+  attr_val=CHAR(str_val)
+ENDSUBROUTINE read_attribute_c0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a string value attribute from a known dataset
@@ -7214,19 +7246,19 @@ End SUBROUTINE read_attribute_c0
 !>
 #ifdef FUTILITY_HAVE_HDF5
 SUBROUTINE read_attribute_st0_helper(attr_id,length_max,attr_val)
-   TYPE(StringType),INTENT(INOUT)::attr_val
-   INTEGER(SDK),INTENT(IN) :: length_max
+  TYPE(StringType),INTENT(INOUT)::attr_val
+  INTEGER(SDK),INTENT(IN) :: length_max
 
-   INTEGER(HID_T),INTENT(IN) :: attr_id
-   INTEGER(HID_T)::atype_id
-   INTEGER(HSIZE_T),DIMENSION(1) :: dims
-   CHARACTER(LEN=length_max,KIND=C_CHAR),TARGET :: buf
+  INTEGER(HID_T),INTENT(IN) :: attr_id
+  INTEGER(HID_T)::atype_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  CHARACTER(LEN=length_max,KIND=C_CHAR),TARGET :: buf
 
-   dims(1)=1
-   CALL h5aget_type_f(attr_id,atype_id,error)
-   CALL h5aread_f(attr_id,atype_id,buf,dims,error)
-   attr_val=buf
-END SUBROUTINE read_attribute_st0_helper
+  dims(1)=1
+  CALL h5aget_type_f(attr_id,atype_id,error)
+  CALL h5aread_f(attr_id,atype_id,buf,dims,error)
+  attr_val=buf
+ENDSUBROUTINE read_attribute_st0_helper
 #endif
 !
 !-------------------------------------------------------------------------------
@@ -7237,30 +7269,30 @@ END SUBROUTINE read_attribute_st0_helper
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE read_attribute_i0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   INTEGER(SNK),INTENT(INOUT) :: attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(INOUT) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-   CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_i0_HDF5FileType'
-   INTEGER(HID_T) :: attr_id, obj_id
-   INTEGER(HSIZE_T),DIMENSION(1) :: dims
-   dims(1)=1
+  CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_i0_HDF5FileType'
+  INTEGER(HID_T) :: attr_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  dims(1)=1
 
-   !Prepare the File and object for the attribute
-   CALL open_object(this,obj_name,obj_id)
-   CALL open_attribute(this,obj_id,attr_name,attr_id)
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+  CALL open_attribute(this,obj_id,attr_name,attr_id)
 
-   CALL h5aread_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
-   IF(error /= 0) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Failed to read attribute.')
-     RETURN
-   ENDIF
-   CALL close_attribute(this,attr_id)
-   CALL close_object(this,obj_id)
+  CALL h5aread_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
+  IF(error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to read attribute.')
+    RETURN
+  ENDIF
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
 #endif
-END SUBROUTINE read_attribute_i0
+ENDSUBROUTINE read_attribute_i0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a double value attribute from a known dataset
@@ -7270,31 +7302,31 @@ END SUBROUTINE read_attribute_i0
 !> @param attr_value the desired value of the attrbute
 !>
 SUBROUTINE read_attribute_d0(this,obj_name,attr_name,attr_val)
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-   REAL(SDK),INTENT(INOUT) :: attr_val
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(INOUT) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-   CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_d0_HDF5FileType'
-   INTEGER(HID_T) :: attr_id, obj_id
-   INTEGER(HSIZE_T),DIMENSION(1) :: dims
-   dims(1)=1
+  CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_d0_HDF5FileType'
+  INTEGER(HID_T) :: attr_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  dims(1)=1
 
-   !Prepare the File and object for the attribute
-   CALL open_object(this,obj_name,obj_id)
-   CALL open_attribute(this,obj_id,attr_name,attr_id)
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+  CALL open_attribute(this,obj_id,attr_name,attr_id)
 
-   CALL h5aread_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
-   IF(error /= 0) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Failed to read attribute.')
-     RETURN
-   ENDIF
+  CALL h5aread_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
+  IF(error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to read attribute.')
+    RETURN
+  ENDIF
 
-   CALL close_attribute(this,attr_id)
-   CALL close_object(this,obj_id)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
 #endif
-END SUBROUTINE read_attribute_d0
+ENDSUBROUTINE read_attribute_d0
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets up all attribute operations by checking links and opening object`
@@ -7304,33 +7336,33 @@ END SUBROUTINE read_attribute_d0
 !>
 #ifdef FUTILITY_HAVE_HDF5
 SUBROUTINE open_object(this,obj_name,obj_id)
-   CHARACTER(LEN=*),PARAMETER :: myName='open_object_HDF5FileType'
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: obj_name
+  CHARACTER(LEN=*),PARAMETER :: myName='open_object_HDF5FileType'
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name
 
-   INTEGER(HID_T),INTENT(OUT) :: obj_id
-   CHARACTER(LEN=LEN(obj_name)+1) :: path
-   LOGICAL(SBK) :: dset_exists
+  INTEGER(HID_T),INTENT(OUT) :: obj_id
+  CHARACTER(LEN=LEN(obj_name)+1) :: path
+  LOGICAL(SBK) :: dset_exists
 
-   !Convert filepath separator from "->" into HDF5 standard "/"
-   path=convertPath(obj_name)
+  !Convert filepath separator from "->" into HDF5 standard "/"
+  path=convertPath(obj_name)
 
-   !Check for expected links between object, and File
-   CALL h5lexists_f(this%file_id,path,dset_exists,error)
-   IF(.NOT. dset_exists) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Incorrect path to object.')
-     RETURN
-   ENDIF
+  !Check for expected links between object, and File
+  CALL h5lexists_f(this%file_id,path,dset_exists,error)
+  IF(.NOT. dset_exists) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Incorrect path to object.')
+    RETURN
+  ENDIF
 
-   !Open the object
-   CALL h5Oopen_f(this%file_id,path,obj_id,error)
-   IF(error /= 0) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Failed to open object.')
-     RETURN
-   ENDIF
-END SUBROUTINE open_object
+  !Open the object
+  CALL h5Oopen_f(this%file_id,path,obj_id,error)
+  IF(error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to open object.')
+    RETURN
+  ENDIF
+ENDSUBROUTINE open_object
 !
 !-------------------------------------------------------------------------------
 !> @brief closes all attribute operations by closing attribute
@@ -7339,17 +7371,17 @@ END SUBROUTINE open_object
 !> @param obj_id the HDF5 system id for the working object
 !>
 SUBROUTINE close_attribute(this,attr_id)
-   CHARACTER(LEN=*),PARAMETER :: myName='close_attribute_rHDF5FileType'
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   INTEGER(HID_T),INTENT(IN) :: attr_id
+  CHARACTER(LEN=*),PARAMETER :: myName='close_attribute_rHDF5FileType'
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  INTEGER(HID_T),INTENT(IN) :: attr_id
 
-   CALL h5aclose_f(attr_id,error)
-   IF (error /= 0) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Failed to close objectt.')
-     RETURN
-   ENDIF
-END SUBROUTINE close_attribute
+  CALL h5aclose_f(attr_id,error)
+  IF (error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to close objectt.')
+    RETURN
+  ENDIF
+ENDSUBROUTINE close_attribute
 !
 !-------------------------------------------------------------------------------
 !> @brief closes all group, dataset, datatype objects
@@ -7362,13 +7394,13 @@ SUBROUTINE close_object(this,obj_id)
   CLASS(HDF5FileType),INTENT(INOUT) :: this
   INTEGER(HID_T),INTENT(IN) :: obj_id
 
-   CALL h5Oclose_f(obj_id,error)
-   IF (error /= 0) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Failed to close objectt.')
-     RETURN
-   ENDIF
-END SUBROUTINE close_object
+  CALL h5Oclose_f(obj_id,error)
+  IF (error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to close objectt.')
+    RETURN
+  ENDIF
+ENDSUBROUTINE close_object
 !
 !-------------------------------------------------------------------------------
 !> @brief sets up the attribute wrting general operation by checking existance
@@ -7379,29 +7411,29 @@ END SUBROUTINE close_object
 !> @param obj_id the HDF5 system id for the working object
 !>
 SUBROUTINE open_attribute(this,obj_id,attr_name,attr_id)
-   CHARACTER(LEN=*),PARAMETER :: myName='open_attribute_rHDF5FileType'
-   CLASS(HDF5FileType),INTENT(INOUT) :: this
-   CHARACTER(LEN=*),INTENT(IN) :: attr_name
+  CHARACTER(LEN=*),PARAMETER :: myName='open_attribute_rHDF5FileType'
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: attr_name
 
-   INTEGER(HID_T),INTENT(IN) :: obj_id
-   INTEGER(HID_T),INTENT(OUT) :: attr_id
-   LOGICAL(SBK):: attr_exists
+  INTEGER(HID_T),INTENT(IN) :: obj_id
+  INTEGER(HID_T),INTENT(OUT) :: attr_id
+  LOGICAL(SBK):: attr_exists
 
-   !Check that the named attribute exists
-   CALL h5aexists_f(obj_id,attr_name,attr_exists,error)
-   IF (.NOT. attr_exists) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Attribute does not exist for object.')
-     RETURN
-   ENDIF
+  !Check that the named attribute exists
+  CALL h5aexists_f(obj_id,attr_name,attr_exists,error)
+  IF (.NOT. attr_exists) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Attribute does not exist for object.')
+    RETURN
+  ENDIF
 
-   !Open the Attribute
-   CALL h5aopen_f(obj_id,attr_name,attr_id,error)
-   IF(error /= 0) THEN
-     CALL this%e%raiseError(modName//'::'//myName// &
-         ' - Failed to open attribute.')
-     RETURN
-   ENDIF
-END SUBROUTINE open_attribute
+  !Open the Attribute
+  CALL h5aopen_f(obj_id,attr_name,attr_id,error)
+  IF(error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to open attribute.')
+    RETURN
+  ENDIF
+ENDSUBROUTINE open_attribute
 #endif
 ENDMODULE FileType_HDF5

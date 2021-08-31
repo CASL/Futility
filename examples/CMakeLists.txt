@@ -7,3 +7,4 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 ADD_SUBDIRECTORY(exampleTAU_Stubs)
+ADD_SUBDIRECTORY(exampleFMU)

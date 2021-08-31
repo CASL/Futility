@@ -115,9 +115,12 @@ SUBROUTINE testMPIEnv()
   INTEGER(SLK) :: sbuf(2)
   INTEGER(SIK) :: sbuf_SIK(2),sbuf0_SIK
   REAL(SRK) :: sbuf_SRK(2),sbuf0_SRK
+  REAL(SSK),ALLOCATABLE :: sendSSK1(:),recvSSK1(:)
+  REAL(SDK),ALLOCATABLE :: sendSDK1(:),recvSDK1(:)
   INTEGER(SIK),ALLOCATABLE :: ranks_SIK(:),ranks2_SIK(:,:)
-  INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:)
-  INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:)
+  INTEGER(SIK),ALLOCATABLE :: testIDX(:),testWGT(:),recvcounts(:)
+  INTEGER(SNK),ALLOCATABLE :: sendSNK1(:),recvSNK1(:)
+  INTEGER(SLK),ALLOCATABLE :: ranks(:),ranks2(:,:),sendSLK1(:),recvSLK1(:)
   LOGICAL(SBK) :: bool,bool1d(10),bool2d(2,5),bool3d(2,5,2),bool4d(2,5,2,5)
   TYPE(MPI_EnvType) :: testMPI,testMPI2
   CHARACTER(LEN=8) :: tmpChar
@@ -293,6 +296,214 @@ SUBROUTINE testMPIEnv()
       ASSERT(ALL(ranks2_SIK == -1),'non-ip ranks2_SIK')
     ENDIF
   ENDDO
+
+  COMPONENT_TEST('%gatherv')
+  IF(testMPI%nproc > 1) THEN
+    IF(testMPI%rank == 0) THEN
+      sendSSK1 = [1.0_SSK, 2.0_SSK, 3.0_SSK]
+    ELSE
+      sendSSK1 = [4.0_SSK, 5.0_SSK]
+    ENDIF
+    CALL testMPI%gatherv(sendSSK1,recvSSK1,recvcounts)
+    IF(testMPI%rank == 0) THEN
+      ASSERT_EQ(SIZE(recvSSK1),5,'SIZE receive')
+      ASSERT_APPROXEQ(recvSSK1(1),1.0_SSK,'receive(1)')
+      ASSERT_APPROXEQ(recvSSK1(2),2.0_SSK,'receive(2)')
+      ASSERT_APPROXEQ(recvSSK1(3),3.0_SSK,'receive(3)')
+      ASSERT_APPROXEQ(recvSSK1(4),4.0_SSK,'receive(4)')
+      ASSERT_APPROXEQ(recvSSK1(5),5.0_SSK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSSK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSSK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+    CALL testMPI%gatherv(sendSSK1,recvSSK1,recvcounts,1)
+    IF(testMPI%rank == 1) THEN
+      ASSERT_EQ(SIZE(recvSSK1),5,'SIZE receive')
+      ASSERT_APPROXEQ(recvSSK1(1),1.0_SSK,'receive(1)')
+      ASSERT_APPROXEQ(recvSSK1(2),2.0_SSK,'receive(2)')
+      ASSERT_APPROXEQ(recvSSK1(3),3.0_SSK,'receive(3)')
+      ASSERT_APPROXEQ(recvSSK1(4),4.0_SSK,'receive(4)')
+      ASSERT_APPROXEQ(recvSSK1(5),5.0_SSK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSSK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSSK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+  ELSE
+    sendSSK1 = [1.0_SSK, 2.0_SSK, 3.0_SSK, 4.0_SSK, 5.0_SSK]
+    CALL testMPI%gatherv(sendSSK1,recvSSK1,recvcounts)
+    ASSERT_EQ(SIZE(recvSSK1),5,'SIZE receive')
+    ASSERT_APPROXEQ(recvSSK1(1),1.0_SSK,'receive(1)')
+    ASSERT_APPROXEQ(recvSSK1(2),2.0_SSK,'receive(2)')
+    ASSERT_APPROXEQ(recvSSK1(3),3.0_SSK,'receive(3)')
+    ASSERT_APPROXEQ(recvSSK1(4),4.0_SSK,'receive(4)')
+    ASSERT_APPROXEQ(recvSSK1(5),5.0_SSK,'receive(5)')
+    ASSERT_EQ(recvcounts(1),5,'recvcounts(1)')
+    DEALLOCATE(recvSSK1)
+    DEALLOCATE(recvcounts)
+  ENDIF
+
+  IF(testMPI%nproc > 1) THEN
+    IF(testMPI%rank == 0) THEN
+      sendSLK1 = [1_SLK, 2_SLK, 3_SLK]
+    ELSE
+      sendSLK1 = [4_SLK, 5_SLK]
+    ENDIF
+    CALL testMPI%gatherv(sendSLK1,recvSLK1,recvcounts)
+    IF(testMPI%rank == 0) THEN
+      ASSERT_EQ(SIZE(recvSLK1),5,'SIZE receive')
+      ASSERT_EQ(recvSLK1(1),1_SLK,'receive(1)')
+      ASSERT_EQ(recvSLK1(2),2_SLK,'receive(2)')
+      ASSERT_EQ(recvSLK1(3),3_SLK,'receive(3)')
+      ASSERT_EQ(recvSLK1(4),4_SLK,'receive(4)')
+      ASSERT_EQ(recvSLK1(5),5_SLK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSLK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSLK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+    CALL testMPI%gatherv(sendSLK1,recvSLK1,recvcounts,1)
+    IF(testMPI%rank == 1) THEN
+      ASSERT_EQ(SIZE(recvSLK1),5,'SIZE receive')
+      ASSERT_EQ(recvSLK1(1),1_SLK,'receive(1)')
+      ASSERT_EQ(recvSLK1(2),2_SLK,'receive(2)')
+      ASSERT_EQ(recvSLK1(3),3_SLK,'receive(3)')
+      ASSERT_EQ(recvSLK1(4),4_SLK,'receive(4)')
+      ASSERT_EQ(recvSLK1(5),5_SLK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSLK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSLK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+  ELSE
+    sendSLK1 = [1_SLK, 2_SLK, 3_SLK, 4_SLK, 5_SLK]
+    CALL testMPI%gatherv(sendSLK1,recvSLK1,recvcounts)
+    ASSERT_EQ(SIZE(recvSLK1),5,'SIZE receive')
+    ASSERT_EQ(recvSLK1(1),1_SLK,'receive(1)')
+    ASSERT_EQ(recvSLK1(2),2_SLK,'receive(2)')
+    ASSERT_EQ(recvSLK1(3),3_SLK,'receive(3)')
+    ASSERT_EQ(recvSLK1(4),4_SLK,'receive(4)')
+    ASSERT_EQ(recvSLK1(5),5_SLK,'receive(5)')
+    ASSERT_EQ(recvcounts(1),5,'recvcounts(1)')
+    DEALLOCATE(recvSLK1)
+    DEALLOCATE(recvcounts)
+  ENDIF
+  IF(testMPI%nproc > 1) THEN
+    IF(testMPI%rank == 0) THEN
+      sendSNK1 = [1_SNK, 2_SNK, 3_SNK]
+    ELSE
+      sendSNK1 = [4_SNK, 5_SNK]
+    ENDIF
+    CALL testMPI%gatherv(sendSNK1,recvSNK1,recvcounts)
+    IF(testMPI%rank == 0) THEN
+      ASSERT_EQ(SIZE(recvSNK1),5,'SIZE receive')
+      ASSERT_EQ(recvSNK1(1),1_SNK,'receive(1)')
+      ASSERT_EQ(recvSNK1(2),2_SNK,'receive(2)')
+      ASSERT_EQ(recvSNK1(3),3_SNK,'receive(3)')
+      ASSERT_EQ(recvSNK1(4),4_SNK,'receive(4)')
+      ASSERT_EQ(recvSNK1(5),5_SNK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSNK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSNK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+    CALL testMPI%gatherv(sendSNK1,recvSNK1,recvcounts,1)
+    IF(testMPI%rank == 1) THEN
+      ASSERT_EQ(SIZE(recvSNK1),5,'SIZE receive')
+      ASSERT_EQ(recvSNK1(1),1_SNK,'receive(1)')
+      ASSERT_EQ(recvSNK1(2),2_SNK,'receive(2)')
+      ASSERT_EQ(recvSNK1(3),3_SNK,'receive(3)')
+      ASSERT_EQ(recvSNK1(4),4_SNK,'receive(4)')
+      ASSERT_EQ(recvSNK1(5),5_SNK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSNK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSNK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+  ELSE
+    sendSNK1 = [1_SNK, 2_SNK, 3_SNK, 4_SNK, 5_SNK]
+    CALL testMPI%gatherv(sendSNK1,recvSNK1,recvcounts)
+    ASSERT_EQ(SIZE(recvSNK1),5,'SIZE receive')
+    ASSERT_EQ(recvSNK1(1),1_SNK,'receive(1)')
+    ASSERT_EQ(recvSNK1(2),2_SNK,'receive(2)')
+    ASSERT_EQ(recvSNK1(3),3_SNK,'receive(3)')
+    ASSERT_EQ(recvSNK1(4),4_SNK,'receive(4)')
+    ASSERT_EQ(recvSNK1(5),5_SNK,'receive(5)')
+    ASSERT_EQ(recvcounts(1),5,'recvcounts(1)')
+    DEALLOCATE(recvSNK1)
+    DEALLOCATE(recvcounts)
+  ENDIF
+
+  IF(testMPI%nproc > 1) THEN
+    IF(testMPI%rank == 0) THEN
+      sendSDK1 = [1.0_SDK, 2.0_SDK, 3.0_SDK]
+    ELSE
+      sendSDK1 = [4.0_SDK, 5.0_SDK]
+    ENDIF
+    CALL testMPI%gatherv(sendSDK1,recvSDK1,recvcounts)
+    IF(testMPI%rank == 0) THEN
+      ASSERT_EQ(SIZE(recvSDK1),5,'SIZE receive')
+      ASSERT_APPROXEQ(recvSDK1(1),1.0_SDK,'receive(1)')
+      ASSERT_APPROXEQ(recvSDK1(2),2.0_SDK,'receive(2)')
+      ASSERT_APPROXEQ(recvSDK1(3),3.0_SDK,'receive(3)')
+      ASSERT_APPROXEQ(recvSDK1(4),4.0_SDK,'receive(4)')
+      ASSERT_APPROXEQ(recvSDK1(5),5.0_SDK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSDK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSDK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+    CALL testMPI%gatherv(sendSDK1,recvSDK1,recvcounts,1)
+    IF(testMPI%rank == 1) THEN
+      ASSERT_EQ(SIZE(recvSDK1),5,'SIZE receive')
+      ASSERT_APPROXEQ(recvSDK1(1),1.0_SDK,'receive(1)')
+      ASSERT_APPROXEQ(recvSDK1(2),2.0_SDK,'receive(2)')
+      ASSERT_APPROXEQ(recvSDK1(3),3.0_SDK,'receive(3)')
+      ASSERT_APPROXEQ(recvSDK1(4),4.0_SDK,'receive(4)')
+      ASSERT_APPROXEQ(recvSDK1(5),5.0_SDK,'receive(5)')
+      ASSERT_EQ(recvcounts(1),3,'recvcounts(1)')
+      ASSERT_EQ(recvcounts(2),2,'recvcounts(2)')
+      DEALLOCATE(recvSDK1)
+      DEALLOCATE(recvcounts)
+    ELSE
+      ASSERT(.NOT.ALLOCATED(recvSDK1),'non-root receive')
+      ASSERT(.NOT.ALLOCATED(recvcounts),'non-root recvcounts')
+    ENDIF
+  ELSE
+    sendSDK1 = [1.0_SDK, 2.0_SDK, 3.0_SDK, 4.0_SDK, 5.0_SDK]
+    CALL testMPI%gatherv(sendSDK1,recvSDK1,recvcounts)
+    ASSERT_EQ(SIZE(recvSDK1),5,'SIZE receive')
+    ASSERT_APPROXEQ(recvSDK1(1),1.0_SDK,'receive(1)')
+    ASSERT_APPROXEQ(recvSDK1(2),2.0_SDK,'receive(2)')
+    ASSERT_APPROXEQ(recvSDK1(3),3.0_SDK,'receive(3)')
+    ASSERT_APPROXEQ(recvSDK1(4),4.0_SDK,'receive(4)')
+    ASSERT_APPROXEQ(recvSDK1(5),5.0_SDK,'receive(5)')
+    ASSERT_EQ(recvcounts(1),5,'recvcounts(1)')
+    DEALLOCATE(recvSDK1)
+    DEALLOCATE(recvcounts)
+  ENDIF
 
   COMPONENT_TEST('%send/%recv')
   sbuf_SIK = 0

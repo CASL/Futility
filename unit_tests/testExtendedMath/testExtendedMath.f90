@@ -22,6 +22,7 @@ REGISTER_SUBTEST('Rational Fraction',testRatFrac)
 REGISTER_SUBTEST('GCD',testGCD)
 REGISTER_SUBTEST('GCD',testLCM)
 REGISTER_SUBTEST('ATAN2PI',testATAN2PI)
+REGISTER_SUBTEST('RotateQtrClockwise',testRotateQtrClockwise)
 
 FINALIZE_TEST()
 !
@@ -142,6 +143,101 @@ SUBROUTINE testATAN2PI()
   ASSERT_APPROXEQ(ATAN2PI(EPSREAL,-EPSREAL) , 0.0_SRK,'(+EPS,-EPS)')
   ASSERT_APPROXEQ(ATAN2PI(-EPSREAL,-EPSREAL) , 0.0_SRK,'(-EPS,-EPS)')
 ENDSUBROUTINE testATAN2PI
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testRotateQtrClockwise()
+  REAL(SRK) :: x,y
+
+  !Null point, no rotation
+  x=0.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,0)
+  ASSERT_APPROXEQ(x, 0.0_SRK,'x=0.0 rot 0')
+  ASSERT_APPROXEQ(y, 0.0_SRK,'y=0.0 rot 0')
+
+  !No rotation
+  x=1.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,0)
+  ASSERT_APPROXEQ(x, 1.0_SRK,'x=1.0 rot 0')
+  ASSERT_APPROXEQ(y, 0.0_SRK,'y=0.0 rot 0')
+
+  !Rotate 90 degrees CW
+  x=1.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,1)
+  ASSERT_APPROXEQ(x, 0.0_SRK,'x=0.0 rot 1')
+  ASSERT_APPROXEQ(y, -1.0_SRK,'y=-1.0 rot 1')
+
+  !Rotate 270 degrees CCW
+  x=1.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,-3)
+  ASSERT_APPROXEQ(x, 0.0_SRK,'x=0.0 rot -3')
+  ASSERT_APPROXEQ(y, -1.0_SRK,'y=-1.0 rot -3')
+
+  !Rotate 180 degrees CW
+  x=1.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,2)
+  ASSERT_APPROXEQ(x, -1.0_SRK,'x=-1.0 rot 2')
+  ASSERT_APPROXEQ(y, 0.0_SRK,'y=0.0 rot 2')
+
+  !Rotate 180 degrees CCW
+  x=1.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,-2)
+  ASSERT_APPROXEQ(x, -1.0_SRK,'x=-1.0 rot -2')
+  ASSERT_APPROXEQ(y, 0.0_SRK,'y=0.0 rot -2')
+
+  !Rotate 270 degrees CW
+  x=1.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,3)
+  ASSERT_APPROXEQ(x, 0.0_SRK,'x=0.0 rot 3')
+  ASSERT_APPROXEQ(y, 1.0_SRK,'y=1.0 rot 3')
+
+  !Rotate 90 degrees CCW
+  x=1.0_SRK; y=0.0_SRK
+  CALL RotateQtrClockwise(x,y,-1)
+  ASSERT_APPROXEQ(x, 0.0_SRK,'x=0.0 rot -1')
+  ASSERT_APPROXEQ(y, 1.0_SRK,'y=1.0 rot -1')
+
+  !No rotation
+  x=1.0_SRK; y=1.0_SRK
+  CALL RotateQtrClockwise(x,y,0)
+  ASSERT_APPROXEQ(x, 1.0_SRK,'x=1.0 rot 0')
+  ASSERT_APPROXEQ(y, 1.0_SRK,'y=1.0 rot 0')
+
+  !Rotate 90 degrees CW
+  x=1.0_SRK; y=1.0_SRK
+  CALL RotateQtrClockwise(x,y,1)
+  ASSERT_APPROXEQ(x, 1.0_SRK,'x=1.0 rot 1')
+  ASSERT_APPROXEQ(y, -1.0_SRK,'y=-1.0 rot 1')
+
+  !Rotate 270 degrees CCW
+  x=1.0_SRK; y=1.0_SRK
+  CALL RotateQtrClockwise(x,y,-3)
+  ASSERT_APPROXEQ(x, 1.0_SRK,'x=1.0 rot -3')
+  ASSERT_APPROXEQ(y, -1.0_SRK,'y=-1.0 rot -3')
+
+  !Rotate 180 degrees CW
+  x=1.0_SRK; y=1.0_SRK
+  CALL RotateQtrClockwise(x,y,2)
+  ASSERT_APPROXEQ(x, -1.0_SRK,'x=-1.0 rot 2')
+  ASSERT_APPROXEQ(y, -1.0_SRK,'y=-1.0 rot 2')
+
+  !Rotate 180 degrees CCW
+  x=1.0_SRK; y=1.0_SRK
+  CALL RotateQtrClockwise(x,y,-2)
+  ASSERT_APPROXEQ(x, -1.0_SRK,'x=-1.0 rot -2')
+  ASSERT_APPROXEQ(y, -1.0_SRK,'y=-1.0 rot -2')
+
+  !Rotate 270 degrees CW
+  x=1.0_SRK; y=1.0_SRK
+  CALL RotateQtrClockwise(x,y,3)
+  ASSERT_APPROXEQ(x, -1.0_SRK,'x=-1.0 rot 3')
+  ASSERT_APPROXEQ(y, 1.0_SRK,'y=1.0 rot 3')
+
+  !Rotate 90 degrees CCW
+  x=1.0_SRK; y=1.0_SRK
+  CALL RotateQtrClockwise(x,y,-1)
+  ASSERT_APPROXEQ(x, -1.0_SRK,'x=-1.0 rot -1')
+  ASSERT_APPROXEQ(y, 1.0_SRK,'y=1.0 rot -1')
+ENDSUBROUTINE testRotateQtrClockwise
 !
 !-------------------------------------------------------------------------------
 FUNCTION oldATAN2PI(x,y) RESULT(theta)

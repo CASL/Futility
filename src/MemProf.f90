@@ -14,7 +14,6 @@ USE IntrType
 USE Strings
 USE FileType_Fortran
 USE FileType_Log
-USE ExceptionHandler
 USE ParameterLists
 USE ParallelEnv
 
@@ -74,11 +73,12 @@ CHARACTER(LEN=*),PARAMETER :: modName='MEMORYPROFILER'
 CONTAINS
 !
 !-------------------------------------------------------------------------------
-!> @brief the procudere to
+!> @brief the procedure to intialize a memory profiler object
 !> @param thisMP the memory profiler
-!> @param params
+!> @param pe the parallel environment
+!> @param myLog the log file; optional
+!> @param params the input parameter list; optional
 !>
-!TODO  Need to get control rod movement passed in
 SUBROUTINE init_MemProf(thisMP,pe,mylog,params)
   CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
   TYPE(ParallelEnvType),TARGET,INTENT(IN) :: pe

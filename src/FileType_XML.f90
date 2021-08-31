@@ -89,6 +89,9 @@ TYPE :: XMLElementType
     !> @copybrief FileType_XML::getParent_XMLElementType
     !> @copydoc FileType_XML::getParent_XMLElementType
     PROCEDURE,PASS :: getParent => getParent_XMLElementType
+    !> @copybrief FileType_XML::setParent_XMLElementType
+    !> @copydoc FileType_XML::setParent_XMLElementType
+    PROCEDURE,PASS :: setParent => setParent_XMLElementType
     !> @copybrief FileType_XML::hasChildren_XMLElementType
     !> @copydoc FileType_XML::hasChildren_XMLElementType
     PROCEDURE,PASS :: hasChildren => hasChildren_XMLElementType
@@ -435,6 +438,18 @@ PURE SUBROUTINE getParent_XMLElementType(thisXMLE,parent)
   NULLIFY(parent)
   parent => thisXMLE%parent
 ENDSUBROUTINE getParent_XMLElementType
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the XML element objects parent
+!> @param thisXMLE the XML element object
+!> @param parent the parent XML element object
+!>
+PURE SUBROUTINE setParent_XMLElementType(thisXMLE,parent)
+  CLASS(XMLElementType),INTENT(INOUT) :: thisXMLE
+  CLASS(XMLElementType),INTENT(INOUT),TARGET :: parent
+  NULLIFY(thisXMLE%parent)
+  thisXMLE%parent => parent
+ENDSUBROUTINE setParent_XMLElementType
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns a logical of whether or not the XML element has child
@@ -1260,8 +1275,9 @@ SUBROUTINE processTagAttributes(elStartTag,nattr,anames,avalues,ierr)
 
   CHARACTER(LEN=1) :: quote
   CHARACTER(LEN=LEN(elStartTag)) :: startTag
-  INTEGER(SIK) :: ic,i,nchars,namestt,valstt,valstp
+  INTEGER(SIK) :: ic,i,nchars,namestt,valstt,valstp,bs_i
   INTEGER(SIK),ALLOCATABLE :: anchorLoc(:)
+  LOGICAL(SBK) :: word_encountered
 
   !Initialize return arguments
   ierr=0
@@ -1308,11 +1324,27 @@ SUBROUTINE processTagAttributes(elStartTag,nattr,anames,avalues,ierr)
         ENDDO
       ENDIF
 
-      !Get the names (names precede the '=' character with no whitespace)
+      !Get the names (names precede the '=' character with possible whitespace preceeding '=')
       !attribute names cannot contain whitespace, must be unique and preceded
       !by whitespace
       DO i=1,nattr
-        namestt=SCAN(startTag(1:anchorLoc(i)),' '//CHAR(9)//CHAR(10)//CHAR(13),.TRUE.)
+        ! March backwards from anchorLoc(i) through char array if whitespace preceeds the '='
+        IF(startTag(anchorLoc(i)-1:anchorLoc(i)-1) == ' ') THEN
+          ! march through word string backwards until whitespace is encountered
+          word_encountered=.FALSE.
+          DO bs_i=anchorLoc(i)-2,1,-1
+            IF(startTag(bs_i:bs_i) /= ' ' .AND. .NOT. word_encountered) word_encountered=.TRUE.
+            IF(startTag(bs_i:bs_i) == ' ' .AND. word_encountered) THEN
+              namestt=bs_i
+              EXIT
+            ENDIF
+            IF(bs_i==1) ierr=-3
+          ENDDO
+        ELSE
+          ! CHAR(9) == TAB, CHAR(10) == Newline, CHAR(13) == Carriage return
+          ! SCAN(...,TRUE) returns rightmost position
+          namestt=SCAN(startTag(1:anchorLoc(i)),' '//CHAR(9)//CHAR(10)//CHAR(13),.TRUE.)
+        ENDIF
         IF(0 < namestt .AND. namestt < anchorLoc(i)) THEN
           anames(i)=startTag(namestt+1:anchorLoc(i)-1)
         ELSE
@@ -1323,6 +1355,17 @@ SUBROUTINE processTagAttributes(elStartTag,nattr,anames,avalues,ierr)
       !Get the values
       DO i=1,nattr
         valstt=anchorLoc(i)+1
+        ! In case of whitespace following '='
+        IF(startTag(valstt:valstt)==' ') THEN
+          ! march forward until quote is encountered
+          DO bs_i=anchorLoc(i)+1,nchars
+            IF(startTag(bs_i:bs_i) == '"') THEN
+              valstt=bs_i
+              EXIT
+            ENDIF
+            IF(bs_i==nchars) ierr=-4
+          ENDDO
+        ENDIF
         quote=startTag(valstt:valstt)
         valstp=INDEX(startTag(valstt+1:nchars),quote)+valstt
         IF(valstt < valstp) THEN
