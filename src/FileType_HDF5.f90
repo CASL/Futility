@@ -6399,10 +6399,14 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         st1(i) = st1(i)%replace(C_NULL_CHAR,'')
       ENDDO
       isbool=.TRUE.
-      DO i=1,SIZE(st1)
-        isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      IF(SIZE(st1) == 0 .OR. ANY(LEN(st1) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO i=1,SIZE(st1)
+          isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
+          IF(.NOT.isbool) EXIT
+        ENDDO
+      ENDIF
       IF(isbool) THEN
         CALL read_b1(thisHDF5File,CHAR(plpath),l1)
         CALL vals%add(CHAR(plpath),l1)
@@ -6419,13 +6423,17 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         ENDDO
       ENDDO
       isbool=.TRUE.
-      DO j=1,SIZE(st2,DIM=2)
-        DO i=1,SIZE(st2,DIM=1)
-          isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
+      IF(ANY(LEN(st2) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO j=1,SIZE(st2,DIM=2)
+          DO i=1,SIZE(st2,DIM=1)
+            isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
+            IF(.NOT.isbool) EXIT
+          ENDDO
           IF(.NOT.isbool) EXIT
         ENDDO
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      ENDIF
       IF(isbool) THEN
         !Disabled until PL support is added.
         CALL read_b2(thisHDF5File,CHAR(plpath),l2)
@@ -6448,16 +6456,20 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         ENDDO
       ENDDO
       isbool=.TRUE.
-      DO k=1,SIZE(st3,DIM=3)
-        DO j=1,SIZE(st3,DIM=2)
-          DO i=1,SIZE(st3,DIM=1)
-            isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+      IF(ANY(LEN(st3) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO k=1,SIZE(st3,DIM=3)
+          DO j=1,SIZE(st3,DIM=2)
+            DO i=1,SIZE(st3,DIM=1)
+              isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+              IF(.NOT.isbool) EXIT
+            ENDDO
             IF(.NOT.isbool) EXIT
           ENDDO
           IF(.NOT.isbool) EXIT
         ENDDO
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      ENDIF
       !Disabled until PL support is added.
       IF(isbool) THEN
         CALL read_b3(thisHDF5File,CHAR(plpath),l3)
