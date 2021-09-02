@@ -9222,7 +9222,9 @@ SUBROUTINE edit_ParamType_STR_a1(thisParam,funit,indent,prefix,paddtw)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
 
   sval=''
-  IF(LEN_TRIM(thisParam%val(1)) > 0) sval=thisParam%val(1)
+  IF(SIZE(thisParam%val) > 0) THEN
+    IF(LEN_TRIM(thisParam%val(1)) > 0) sval=thisParam%val(1)
+  ENDIF
   sdesc=''
   IF(LEN_TRIM(thisParam%description) > 0) sdesc=' !'//thisParam%description
   WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
