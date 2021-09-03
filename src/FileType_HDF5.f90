@@ -3300,17 +3300,23 @@ SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=LEN_TRIM(vals)) :: valss
   CHARACTER(LEN=LEN(dsetname)+1) :: path
+  INTEGER(HSIZE_T) :: write_size
   INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
   INTEGER,PARAMETER :: rank=0
+  TYPE(StringType) :: write_vals
 
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
   path=dsetname
-  ! Fill character array
-  valss=TRIM(vals)
+  IF(LEN_TRIM(vals) == 0) THEN
+    write_size=1
+    write_vals=C_NULL_CHAR
+  ELSE
+    write_size=LEN_TRIM(vals)
+    write_vals=TRIM(vals)
+  ENDIF
 
   ! stash offset
   offset(1)=0
@@ -3330,11 +3336,12 @@ SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   CALL h5tcopy_f(H5T_NATIVE_CHARACTER,mem,error)
   CALL h5tset_strpad_f(mem,0,error)
-  CALL h5tset_size_f(mem,INT(LEN_TRIM(vals),SDK),error)
+  CALL h5tset_size_f(mem,write_size,error)
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
       gspace_id,plist_id,error,cnt,offset)
-  IF(error == 0) &
-      CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
+  IF(error == 0) THEN
+    CALL h5dwrite_f(dset_id,mem,CHAR(write_vals),gdims,error,dspace_id,gspace_id,plist_id)
+  ENDIF
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   CALL h5tclose_f(mem,error)
 #endif
@@ -3360,7 +3367,7 @@ SUBROUTINE write_st1_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
   INTEGER(SIK) :: local_gdims(1)
 
-  length_max=0
+  length_max=1
   DO i=1,SIZE(vals)
     length_max=MAX(LEN_TRIM(vals(i)),length_max)
   ENDDO
@@ -3399,10 +3406,16 @@ SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
+  REQUIRE(length_max > 0)
+
   path=dsetname
   ! Fill character array
   DO j=1,SIZE(vals,DIM=1)
-    valss(j)=TRIM(vals(j))
+    IF(LEN_TRIM(vals(j)) == 0) THEN
+      valss(j)=C_NULL_CHAR
+    ELSE
+      valss(j)=TRIM(vals(j))
+    ENDIF
   ENDDO
 
   ! stash offset
@@ -3452,7 +3465,7 @@ SUBROUTINE write_st2_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in
   INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: offset_in
 
-  length_max=0
+  length_max=1
   DO j=1,SIZE(vals,1)
     DO i=1,SIZE(vals,2)
       length_max=MAX(LEN_TRIM(vals(j,i)),length_max)
@@ -3496,10 +3509,16 @@ SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
+  REQUIRE(length_max > 0)
+
   path=dsetname
   DO k=1,SIZE(vals,2)
     DO j=1,SIZE(vals,1)
-      valss(j,k)=TRIM(vals(j,k))
+      IF(LEN_TRIM(vals(j,k)) == 0) THEN
+        valss(j,k)=C_NULL_CHAR
+      ELSE
+        valss(j,k)=TRIM(vals(j,k))
+      ENDIF
     ENDDO
   ENDDO
 
@@ -3551,7 +3570,7 @@ SUBROUTINE write_st3_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in
   INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: offset_in
 
-  length_max=0
+  length_max=1
   DO k=1,SIZE(vals,3)
     DO j=1,SIZE(vals,1)
       DO i=1,SIZE(vals,2)
@@ -3597,11 +3616,17 @@ SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
+  REQUIRE(length_max > 0)
+
   path=dsetname
   DO l=1,SIZE(vals,3)
     DO k=1,SIZE(vals,2)
       DO j=1,SIZE(vals,1)
-        valss(j,k,l)=TRIM(vals(j,k,l))
+        IF(LEN_TRIM(vals(j,k,l)) == 0) THEN
+          valss(j,k,l)=C_NULL_CHAR
+        ELSE
+          valss(j,k,l)=TRIM(vals(j,k,l))
+        ENDIF
       ENDDO
     ENDDO
   ENDDO
