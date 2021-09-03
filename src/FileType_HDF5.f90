@@ -454,9 +454,12 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     !> @copybrief FileType_HDF5::write_attribute_d0
     !> @copydoc FileType_HDF5_write_attribute_d0
     PROCEDURE,PASS,PRIVATE :: write_attribute_d0
+    !> @copybrief FileType_HDF5::write_attribute_b0
+    !> @copydoc FileType_HDF5_write_attribute_b0
+    PROCEDURE,PASS,PRIVATE :: write_attribute_b0
     !> Generic typebound interface for all @c attribute writes
     GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
-        write_attribute_i0, write_attribute_d0
+        write_attribute_i0, write_attribute_d0,write_attribute_b0
     !> @copybrief FileType_HDF5::read_str_attribure_help
     !> @copydoc FileType_HDF5_read_str_attribure_help
     PROCEDURE,PASS,PRIVATE :: read_attribute_st0
@@ -469,9 +472,12 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     !> @copybrief FileType_HDF5::read_attribute_d0
     !> @copydoc FileType_HDF5_read_attribute_d0
     PROCEDURE,PASS,PRIVATE :: read_attribute_d0
+    !> @copybrief FileType_HDF5::read_attribute_b0
+    !> @copydoc FileType_HDF5_read_attribute_b0
+    PROCEDURE,PASS,PRIVATE :: read_attribute_b0
     !> Generic typebound interface for all @c attribute writes
     GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
-        read_attribute_i0, read_attribute_d0
+        read_attribute_i0, read_attribute_d0,read_attribute_b0
     !> @copybrief FileType_HDF5::getDataShape
     !> @copydoc FileType_HDF5::getDataShape
     PROCEDURE,PASS :: getDataShape
@@ -6399,10 +6405,14 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         st1(i) = st1(i)%replace(C_NULL_CHAR,'')
       ENDDO
       isbool=.TRUE.
-      DO i=1,SIZE(st1)
-        isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      IF(SIZE(st1) == 0 .OR. ANY(LEN(st1) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO i=1,SIZE(st1)
+          isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
+          IF(.NOT.isbool) EXIT
+        ENDDO
+      ENDIF
       IF(isbool) THEN
         CALL read_b1(thisHDF5File,CHAR(plpath),l1)
         CALL vals%add(CHAR(plpath),l1)
@@ -6419,13 +6429,17 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         ENDDO
       ENDDO
       isbool=.TRUE.
-      DO j=1,SIZE(st2,DIM=2)
-        DO i=1,SIZE(st2,DIM=1)
-          isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
+      IF(ANY(LEN(st2) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO j=1,SIZE(st2,DIM=2)
+          DO i=1,SIZE(st2,DIM=1)
+            isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
+            IF(.NOT.isbool) EXIT
+          ENDDO
           IF(.NOT.isbool) EXIT
         ENDDO
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      ENDIF
       IF(isbool) THEN
         !Disabled until PL support is added.
         CALL read_b2(thisHDF5File,CHAR(plpath),l2)
@@ -6448,16 +6462,20 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         ENDDO
       ENDDO
       isbool=.TRUE.
-      DO k=1,SIZE(st3,DIM=3)
-        DO j=1,SIZE(st3,DIM=2)
-          DO i=1,SIZE(st3,DIM=1)
-            isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+      IF(ANY(LEN(st3) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO k=1,SIZE(st3,DIM=3)
+          DO j=1,SIZE(st3,DIM=2)
+            DO i=1,SIZE(st3,DIM=1)
+              isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+              IF(.NOT.isbool) EXIT
+            ENDDO
             IF(.NOT.isbool) EXIT
           ENDDO
           IF(.NOT.isbool) EXIT
         ENDDO
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      ENDIF
       !Disabled until PL support is added.
       IF(isbool) THEN
         CALL read_b3(thisHDF5File,CHAR(plpath),l3)
@@ -7191,6 +7209,45 @@ SUBROUTINE write_attribute_d0(this,obj_name,attr_name,attr_val)
 ENDSUBROUTINE write_attribute_d0
 !
 !-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and logical value to a known dataset
+!>
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_b0(this,obj_name,attr_name,attr_val)
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  LOGICAL(SBK),INTENT(IN) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  CHARACTER :: char_attr_val
+  INTEGER :: num_dims
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+
+  num_dims=1
+  dims(1)=1
+
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+
+  !Create the data space for memory type and size
+  CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
+
+  !Create and write to the attribute within the dataspce
+char_attr_val = MERGE('T','F',attr_val)
+  CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_CHARACTER,&
+      dspace_id,attr_id)
+  CALL h5awrite_f(attr_id,H5T_NATIVE_CHARACTER,char_attr_val,dims,error)
+
+  CALL h5sclose_f(dspace_id,error)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
+#endif
+ENDSUBROUTINE write_attribute_b0
+!
+!-------------------------------------------------------------------------------
 !> @brief Set-up to read  a string value attribute from a known dataset
 !>
 !> @param obj_name the relative path to the dataset
@@ -7327,6 +7384,49 @@ SUBROUTINE read_attribute_d0(this,obj_name,attr_name,attr_val)
   CALL close_object(this,obj_id)
 #endif
 ENDSUBROUTINE read_attribute_d0
+!
+!-------------------------------------------------------------------------------
+!> @brief Reads a logical value attribute from a known dataset
+!>
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE read_attribute_b0(this,obj_name,attr_name,attr_val)
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  LOGICAL(SBK),INTENT(INOUT) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  CHARACTER :: char_attr_val
+  CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_b0'
+  INTEGER(HID_T) :: attr_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  dims(1)=1
+
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+  CALL open_attribute(this,obj_id,attr_name,attr_id)
+
+  CALL h5aread_f(attr_id,H5T_NATIVE_CHARACTER,char_attr_val,dims,error)
+  IF(error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to read attribute.')
+    RETURN
+  ENDIF
+  IF(char_attr_val == 'T') THEN
+    attr_val=.TRUE.
+  ELSEIF(char_attr_val == 'F') THEN
+    attr_val=.FALSE.
+  ELSE
+    CALL this%e%raiseError(modName//'::'//myName//' - Character "'// &
+        char_attr_val//'" is being read as a logical, which is not supported!')
+  ENDIF
+
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
+#endif
+ENDSUBROUTINE read_attribute_b0
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets up all attribute operations by checking links and opening object`
