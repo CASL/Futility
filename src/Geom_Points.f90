@@ -590,7 +590,7 @@ ELEMENTAL FUNCTION DOT_PRODUCT_2points(p1,p2) RESULT(v)
     CASE(2)
       v = p1%coord(1)*p2%coord(1) + p1%coord(2)*p2%coord(2)
     CASE(3)
-      v = p1%coord(1)*p2%coord(1) + p1%coord(2)*p1%coord(2) + p1%coord(3)*p1%coord(3)
+      v = p1%coord(1)*p2%coord(1) + p1%coord(2)*p2%coord(2) + p1%coord(3)*p2%coord(3)
     ENDSELECT
   ENDIF
 ENDFUNCTION DOT_PRODUCT_2points

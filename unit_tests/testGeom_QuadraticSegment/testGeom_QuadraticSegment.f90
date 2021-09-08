@@ -124,7 +124,6 @@ SUBROUTINE testIntersectLine()
   TYPE(QuadraticSegment_2D) :: q
   TYPE(LineType) :: l
   TYPE(PointType) :: p1, p2, p3, p4, p5, ipoint1, ipoint2
-  LOGICAL(SBK) :: intersects
   INTEGER(SIK) :: npoints
   CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
@@ -135,8 +134,8 @@ SUBROUTINE testIntersectLine()
   ! 1 intersection
   CALL q%set(p1, p2, p3)
   CALL l%set(p4, p5)
-  CALL intersect(q, l, intersects, npoints, ipoint1, ipoint2)
-  ASSERT(intersects, "Intersects")
+  CALL intersect(q, l, npoints, ipoint1, ipoint2)
+  ASSERT(npoints == 1, "Intersects")
   ASSERT(ipoint1%coord(1) .APPROXEQ. 1.0_SRK, "intersection 1")
   ASSERT(ipoint1%coord(2) .APPROXEQ. 1.0_SRK, "intersection 1")
 
@@ -146,8 +145,8 @@ SUBROUTINE testIntersectLine()
   CALL p4%init(DIM=2, X=0.0_SRK, Y=0.75_SRK)
   CALL p5%init(DIM=2, X=2.0_SRK, Y=0.75_SRK)
   CALL l%set(p4, p5)
-  CALL intersect(q, l, intersects, npoints, ipoint1, ipoint2)
-  ASSERT(intersects, "Intersects")
+  CALL intersect(q, l, npoints, ipoint1, ipoint2)
+  ASSERT(npoints == 2, "Intersects")
   ASSERT(ipoint1%coord(1) .APPROXEQ. 0.5_SRK,  "intersection 1")
   ASSERT(ipoint1%coord(2) .APPROXEQ. 0.75_SRK, "intersection 1")
   ASSERT(ipoint2%coord(1) .APPROXEQ. 1.5_SRK,  "intersection 2")
@@ -159,8 +158,8 @@ SUBROUTINE testIntersectLine()
   CALL p4%init(DIM=2, X=0.0_SRK, Y=3.0_SRK)
   CALL p5%init(DIM=2, X=2.0_SRK, Y=3.0_SRK)
   CALL l%set(p4, p5)
-  CALL intersect(q, l, intersects, npoints, ipoint1, ipoint2)
-  ASSERT(.NOT. intersects, "Intersects")
+  CALL intersect(q, l, npoints, ipoint1, ipoint2)
+  ASSERT(npoints == 0, "Intersects")
 
   CALL q%clear()
   CALL l%clear()

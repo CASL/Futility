@@ -17,6 +17,7 @@ USE Geom_Graph
 USE Geom_Points
 USE Geom_Line
 USE Geom_QuadraticSegment
+USE Geom_Triangle
 USE Geom_Plane
 USE Geom_CircCyl
 USE Geom_Box
@@ -34,6 +35,7 @@ PUBLIC :: PointType
 PUBLIC :: LinkedListPointType
 PUBLIC :: LineType
 PUBLIC :: QuadraticSegment_2D
+PUBLIC :: Triangle_2D
 PUBLIC :: PlaneType
 PUBLIC :: CircleType
 PUBLIC :: CylinderType

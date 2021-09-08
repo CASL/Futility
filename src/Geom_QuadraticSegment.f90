@@ -35,8 +35,6 @@ TYPE :: QuadraticSegment_2D
     !> @copybrief Geom_QuadraticSegment::clear_QuadraticSegment_2D
     !> @copydetails Geom_QuadraticSegment::clear_QuadraticSegment_2D
     PROCEDURE,PASS :: clear => clear_QuadraticSegment_2D
-    !> @copybrief Geom_QuadraticSegment::intersectLine_QuadraticSegment_2D
-    !> @copydetails Geom_QuadraticSegment::intersectLine_QuadraticSegment_2D
 ENDTYPE QuadraticSegment_2D
 
 INTERFACE interpolate
@@ -154,10 +152,9 @@ ENDFUNCTION arc_length_QuadraticSegment_2D
 !
 ! ELEMENTAL
 !
-SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, intersects, npoints, point1, point2)
+SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, npoints, point1, point2)
   CLASS(QuadraticSegment_2D),INTENT(IN) :: q
   TYPE(LineType),INTENT(IN) :: l
-  LOGICAL(SBK),INTENT(OUT) :: intersects
   INTEGER(SIK),INTENT(OUT) :: npoints
   TYPE(PointType),INTENT(OUT) :: point1, point2
   REAL(SRK) :: A, B, C, r, s, r1, r2, s1, s2
@@ -183,7 +180,6 @@ SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, intersects, npoints, point1, 
   !     1) s < 0 or 1 < s   (Line intersects, segment doesn't)
   ! If D⃗ × w⃗ = 0, we need to use line intersection instead.
   npoints = 0
-  intersects = .FALSE.
   CALL point1%clear()
   CALL point2%clear()
   CALL point1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
@@ -228,7 +224,6 @@ SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, intersects, npoints, point1, 
       ENDIF
     ENDIF
   ENDIF
-  intersects = npoints > 0
   CALL A_vec%clear()
   CALL B_vec%clear()
   CALL C_vec%clear()
