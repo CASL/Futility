@@ -22,7 +22,7 @@ PUBLIC :: Triangle_2D
 PUBLIC :: area
 PUBLIC :: interpolate
 PUBLIC :: pointInside
-!PUBLIC :: intersect
+PUBLIC :: intersect
 
 TYPE :: Triangle_2D
   TYPE(PointType) :: points(3)
@@ -50,9 +50,9 @@ INTERFACE pointInside
 ENDINTERFACE pointInside
 
 
-!INTERFACE intersect
-!  MODULE PROCEDURE intersectLine_Triangle_2D
-!ENDINTERFACE intersect
+INTERFACE intersect
+  MODULE PROCEDURE intersectLine_Triangle_2D
+ENDINTERFACE intersect
 
 !
 !===============================================================================
@@ -127,70 +127,46 @@ ELEMENTAL FUNCTION pointInside_Triangle_2D(tri, p) RESULT(bool)
 ENDFUNCTION pointInside_Triangle_2D
 
 !-------------------------------------------------------------------------------
-!> @brief Finds the intersections between a line and the triratic segment (if it exists)
+!> @brief Finds the intersections between a line and the triangle (if it exists)
 !> @param line line to test for intersection
 !
 ! ELEMENTAL
 !
-!SUBROUTINE intersectLine_Triangle_2D(q, l, npoints, point1, point2)
-!  CLASS(Triangle_2D),INTENT(IN) :: q
-!  TYPE(LineType),INTENT(IN) :: l
-!  INTEGER(SIK),INTENT(OUT) :: npoints
-!  TYPE(PointType),INTENT(OUT) :: point1, point2
-!  REAL(SRK) :: A, B, C, r, s, r1, r2, s1, s2
-!  TYPE(PointType) :: A_vec, B_vec, C_vec, D_vec, E_vec, w_vec, l_s1, l_s2
-!  npoints = 0
-!  CALL point1%clear()
-!  CALL point2%clear()
-!  CALL point1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-!  CALL point2%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-!  D_vec = 2.0_SRK*(q%points(1) + q%points(2) - 2.0_SRK*q%points(3))
-!  E_vec = 4.0_SRK*q%points(3) - 3.0_SRK*q%points(1) - q%points(2)
-!  w_vec = l%p2 - l%p1
-!  A_vec = cross(D_vec, w_vec)
-!  B_vec = cross(E_vec, w_vec)
-!  C_vec = cross((q%points(1) - l%p1), w_vec)
-!  A = A_vec%coord(3)
-!  B = B_vec%coord(3)
-!  C = C_vec%coord(3)
-!  IF (A < 1.0E-6_SRK) THEN
-!    r = -C/B
-!    point1 = interpolate(q,r)
-!    s = (DOT_PRODUCT((point1 - l%p1), w_vec))/DOT_PRODUCT(w_vec, w_vec)
-!    IF (0.0_SRK <= s .AND. s <= 1.0_SRK .AND. 0.0_SRK <= r .AND. r <= 1.0_SRK) THEN
-!      npoints = 1
-!    ENDIF
-!  ELSE
-!    r1 = (-B - SQRT(B**2 - 4*A*C))/(2*A)
-!    r2 = (-B + SQRT(B**2 - 4*A*C))/(2*A)
-!    point1 = interpolate(q,r1)
-!    point2 = interpolate(q,r2)
-!    s1 = (DOT_PRODUCT((point1 - l%p1), w_vec))/DOT_PRODUCT(w_vec, w_vec)
-!    s2 = (DOT_PRODUCT((point2 - l%p1), w_vec))/DOT_PRODUCT(w_vec, w_vec)
-!    l_s1 = (l%p2 - l%p1)*s1 + l%p1
-!    l_s2 = (l%p2 - l%p1)*s2 + l%p1
-!    ! Check points to see if they are valid intersections
-!    IF (0.0_SRK <= s1 .AND. s1 <= 1.0_SRK .AND. &
-!        0.0_SRK <= r1 .AND. r1 <= 1.0_SRK .AND. &
-!        (point1 .APPROXEQA. l_s1)) THEN
-!      npoints = 1
-!    ENDIF
-!    IF (0.0_SRK <= s2 .AND. s2 <= 1.0_SRK .AND. &
-!        0.0_SRK <= r2 .AND. r2 <= 1.0_SRK .AND. &
-!        (point2 .APPROXEQA. l_s2)) THEN
-!      npoints = npoints + 1
-!      IF (npoints == 1) THEN
-!        point1 = point2
-!      ENDIF
-!    ENDIF
-!  ENDIF
-!  CALL A_vec%clear()
-!  CALL B_vec%clear()
-!  CALL C_vec%clear()
-!  CALL D_vec%clear()
-!  CALL E_vec%clear()
-!  CALL w_vec%clear()
-!  CALL l_s1%clear()
-!  CALL l_s2%clear()
-!ENDSUBROUTINE intersectLine_Triangle_2D
+SUBROUTINE intersectLine_Triangle_2D(tri, l, npoints, point1, point2)
+  CLASS(Triangle_2D),INTENT(IN) :: tri
+  TYPE(LineType),INTENT(IN) :: l
+  INTEGER(SIK),INTENT(OUT) :: npoints
+  TYPE(PointType),INTENT(OUT) :: point1, point2
+  TYPE(PointType) :: points(3), p_intersect
+  Type(LineType) :: lines(3)
+  INTEGER(SIK) :: i, intersections
+  LOGICAL(SBK) :: have_p1, have_p2
+  ! Intersect all the edges
+  CALL lines(1)%set(tri%points(1), tri%points(2)) 
+  CALL lines(2)%set(tri%points(2), tri%points(3)) 
+  CALL lines(3)%set(tri%points(3), tri%points(1)) 
+  intersections = 0
+  npoints = 0
+  DO i = 1,3
+    p_intersect = l%intersect(lines(i))
+    IF( p_intersect%dim == 0 ) THEN
+      points(intersections + 1) = p_intersect
+      points(intersections + 1)%dim = 2
+      intersections = intersections + 1
+    ENDIF 
+  ENDDO
+  have_p1 = .FALSE.
+  have_p2 = .FALSE.
+  DO i = 1,intersections
+    IF(.NOT. have_p1) THEN
+      point1 = points(i)
+      have_p1 = .TRUE.
+      npoints = 1
+    ELSEIF((.NOT. have_p2) .AND. (.NOT.(point1 .APPROXEQA. points(i)))) THEN 
+      point2 = points(i)
+      have_p2 = .TRUE.
+      npoints = 2
+    ENDIF
+  ENDDO
+ENDSUBROUTINE intersectLine_Triangle_2D
 ENDMODULE Geom_Triangle

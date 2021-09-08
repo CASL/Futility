@@ -150,9 +150,7 @@ ENDFUNCTION arc_length_QuadraticSegment_2D
 !> @brief Finds the intersections between a line and the quadratic segment (if it exists)
 !> @param line line to test for intersection
 !
-! ELEMENTAL
-!
-SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, npoints, point1, point2)
+ELEMENTAL SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, npoints, point1, point2)
   CLASS(QuadraticSegment_2D),INTENT(IN) :: q
   TYPE(LineType),INTENT(IN) :: l
   INTEGER(SIK),INTENT(OUT) :: npoints
