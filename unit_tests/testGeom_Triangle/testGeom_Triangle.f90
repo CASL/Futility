@@ -120,49 +120,50 @@ SUBROUTINE testPointInside()
 ENDSUBROUTINE testPointInside
 !
 !-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!SUBROUTINE testIntersectLine()
-!  TYPE(Triangle_2D) :: q
-!  TYPE(LineType) :: l
-!  TYPE(PointType) :: p1, p2, p3, p4, p5, ipoint1, ipoint2
-!  INTEGER(SIK) :: npoints
-!  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-!  CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
-!  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-!  CALL p4%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-!  CALL p5%init(DIM=2, X=1.0_SRK, Y=2.0_SRK)
-!
-!  ! 1 intersection
-!  CALL q%set(p1, p2, p3)
-!  CALL l%set(p4, p5)
-!  CALL intersect(q, l, npoints, ipoint1, ipoint2)
-!  ASSERT(npoints == 1, "Intersects")
-!  ASSERT(ipoint1%coord(1) .APPROXEQ. 1.0_SRK, "intersection 1")
-!  ASSERT(ipoint1%coord(2) .APPROXEQ. 1.0_SRK, "intersection 1")
-!
-!  ! 2 intersections
-!  CALL p4%clear()
-!  CALL p5%clear()
-!  CALL p4%init(DIM=2, X=0.0_SRK, Y=0.75_SRK)
-!  CALL p5%init(DIM=2, X=2.0_SRK, Y=0.75_SRK)
-!  CALL l%set(p4, p5)
-!  CALL intersect(q, l, npoints, ipoint1, ipoint2)
-!  ASSERT(npoints == 2, "Intersects")
-!  ASSERT(ipoint1%coord(1) .APPROXEQ. 0.5_SRK,  "intersection 1")
-!  ASSERT(ipoint1%coord(2) .APPROXEQ. 0.75_SRK, "intersection 1")
-!  ASSERT(ipoint2%coord(1) .APPROXEQ. 1.5_SRK,  "intersection 2")
-!  ASSERT(ipoint2%coord(2) .APPROXEQ. 0.75_SRK, "intersection 2")
-!
-!  ! 0 intersections
-!  CALL p4%clear()
-!  CALL p5%clear()
-!  CALL p4%init(DIM=2, X=0.0_SRK, Y=3.0_SRK)
-!  CALL p5%init(DIM=2, X=2.0_SRK, Y=3.0_SRK)
-!  CALL l%set(p4, p5)
-!  CALL intersect(q, l, npoints, ipoint1, ipoint2)
-!  ASSERT(npoints == 0, "Intersects")
-!
-!  CALL q%clear()
-!  CALL l%clear()
-!ENDSUBROUTINE testIntersectLine
+SUBROUTINE testIntersectLine()
+  TYPE(Triangle_2D) :: tri
+  TYPE(LineType) :: l
+  TYPE(PointType) :: p1, p2, p3, p4, p5, ipoint1, ipoint2
+  INTEGER(SIK) :: npoints
+  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL p4%init(DIM=2, X=2.0_SRK, Y=1.0_SRK)
+  CALL p5%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+
+  ! 2 intersection
+  CALL tri%set(p1, p2, p3)
+  CALL l%set(p4, p5)
+  npoints = -1
+  CALL intersect(tri, l, npoints, ipoint1, ipoint2)
+  ASSERT(npoints == 2, "Intersects")
+  ASSERT(ipoint1%coord(1) .APPROXEQA. 0.0_SRK, "intersection 1")
+  ASSERT(ipoint1%coord(2) .APPROXEQA. 0.0_SRK, "intersection 1")
+  ASSERT(ipoint2%coord(1) .APPROXEQA. 1.0_SRK, "intersection 2")
+  ASSERT(ipoint2%coord(2) .APPROXEQA. 0.5_SRK, "intersection 2")
+
+  ! 1 intersection
+  CALL l%clear() 
+  CALL p4%clear()
+  CALL p5%clear()
+  CALL p4%init(DIM=2, X=-1.0_SRK, Y=1.0_SRK)
+  CALL p5%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL l%set(p4, p5)
+  npoints = -1
+  CALL intersect(tri, l, npoints, ipoint1, ipoint2)
+  ASSERT(npoints == 1, "Intersects")
+  ASSERT(ipoint1%coord(1) .APPROXEQ. 0.0_SRK, "intersection 1")
+  ASSERT(ipoint1%coord(2) .APPROXEQ. 0.0_SRK, "intersection 1")
+
+  ! 0 intersection
+  CALL l%clear() 
+  CALL p4%clear()
+  CALL p5%clear()
+  CALL p4%init(DIM=2, X=1.0_SRK, Y=-1.0_SRK)
+  CALL p5%init(DIM=2, X=0.0_SRK, Y=-1.0_SRK)
+  CALL l%set(p4, p5)
+  npoints = -1
+  CALL intersect(tri, l, npoints, ipoint1, ipoint2)
+  ASSERT(npoints == 0, "Intersects")
+ENDSUBROUTINE testIntersectLine
 ENDPROGRAM testGeom_Triangle
