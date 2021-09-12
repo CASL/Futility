@@ -130,9 +130,7 @@ ENDFUNCTION pointInside_Triangle_2D
 !> @brief Finds the intersections between a line and the triangle (if it exists)
 !> @param line line to test for intersection
 !
-! ELEMENTAL
-!
-SUBROUTINE intersectLine_Triangle_2D(tri, l, npoints, point1, point2)
+ELEMENTAL SUBROUTINE intersectLine_Triangle_2D(tri, l, npoints, point1, point2)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   TYPE(LineType),INTENT(IN) :: l
   INTEGER(SIK),INTENT(OUT) :: npoints
@@ -149,9 +147,8 @@ SUBROUTINE intersectLine_Triangle_2D(tri, l, npoints, point1, point2)
   npoints = 0
   DO i = 1,3
     p_intersect = l%intersect(lines(i))
-    IF( p_intersect%dim == 0 ) THEN
+    IF( p_intersect%dim == 2 ) THEN
       points(intersections + 1) = p_intersect
-      points(intersections + 1)%dim = 2
       intersections = intersections + 1
     ENDIF 
   ENDDO

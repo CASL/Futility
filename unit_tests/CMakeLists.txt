@@ -38,6 +38,7 @@ SET(UNIT_TEST_NAMES
     testGeom_Poly
     testGeom_QuadraticSegment
     testGeom_Triangle
+    testGeom_Quadrilateral
     testGeom
     testSorting
     testMeshTransfer
