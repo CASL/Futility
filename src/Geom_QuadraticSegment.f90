@@ -92,19 +92,19 @@ ELEMENTAL FUNCTION interpolate_QuadraticSegment_2D(q, r) RESULT(p)
                   4.0_SRK*r*(1.0_SRK - r)*q%points(3)
 ENDFUNCTION interpolate_QuadraticSegment_2D
 
-ELEMENTAL FUNCTION derivative_QuadraticSegment_2D(q, r) RESULT(p)
+ELEMENTAL SUBROUTINE derivative_QuadraticSegment_2D(q, r, dr)
   CLASS(QuadraticSegment_2D),INTENT(IN) :: q
   REAL(SRK), INTENT(IN) :: r
-  TYPE(PointType) :: p
-  p = (4.0_SRK*r - 3.0_SRK)*q%points(1) + &
-      (4.0_SRK*r - 1.0_SRK)*q%points(2) + &
-      (4.0_SRK - 8.0_SRK*r)*q%points(3)
-ENDFUNCTION derivative_QuadraticSegment_2D
+  TYPE(PointType), INTENT(INOUT) :: dr
+  dr = (4.0_SRK*r - 3.0_SRK)*q%points(1) + &
+       (4.0_SRK*r - 1.0_SRK)*q%points(2) + &
+       (4.0_SRK - 8.0_SRK*r)*q%points(3)
+ENDSUBROUTINE derivative_QuadraticSegment_2D
 
 ELEMENTAL FUNCTION arc_length_QuadraticSegment_2D(q) RESULT(a)
   CLASS(QuadraticSegment_2D),INTENT(IN) :: q
   INTEGER(SIK) :: i
-  TYPE(PointType) :: p
+  TYPE(PointType) :: dr
   REAL(SRK) :: a
   REAL(SRK) :: w(15), r(15) 
   w = (/ &
@@ -141,8 +141,8 @@ ELEMENTAL FUNCTION arc_length_QuadraticSegment_2D(q) RESULT(a)
        0.9939962590102427/)
   a = 0.0_SRK
   DO i = 1,15
-    p = derivative(q, r(i))
-    a = a + w(i)*norm(p)
+    CALL derivative(q, r(i), dr)
+    a = a + w(i)*norm(dr)
   ENDDO
 ENDFUNCTION arc_length_QuadraticSegment_2D
 

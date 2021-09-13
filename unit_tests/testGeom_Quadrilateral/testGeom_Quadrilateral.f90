@@ -24,7 +24,7 @@ REGISTER_SUBTEST('INIT', testInit)
 REGISTER_SUBTEST('INTERPOLATE', testInterpolate)
 REGISTER_SUBTEST('AREA', testArea)
 REGISTER_SUBTEST('POINT INSIDE', testPointInside)
-!REGISTER_SUBTEST('INTERSECT LINE', testIntersectLine)
+REGISTER_SUBTEST('INTERSECT LINE', testIntersectLine)
 FINALIZE_TEST()
 !
 !===============================================================================

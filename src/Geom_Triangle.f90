@@ -19,8 +19,8 @@ PRIVATE
 !
 ! List of Public items
 PUBLIC :: Triangle_2D
-PUBLIC :: area
 PUBLIC :: interpolate
+PUBLIC :: area
 PUBLIC :: pointInside
 PUBLIC :: intersect
 

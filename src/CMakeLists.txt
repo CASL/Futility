@@ -60,6 +60,7 @@ TRIBITS_ADD_LIBRARY(Utils
       Geom_Poly.f90
       Geom_QuadraticSegment.f90
       Geom_Triangle.f90
+      Geom_Triangle6.f90
       Geom_Quadrilateral.f90
       Geom.f90
       ExceptionHandler.f90

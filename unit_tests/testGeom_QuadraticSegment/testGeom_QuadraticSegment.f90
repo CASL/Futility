@@ -82,21 +82,19 @@ ENDSUBROUTINE testInterpolate
 !-------------------------------------------------------------------------------
 SUBROUTINE testDerivative()
   TYPE(QuadraticSegment_2D) :: q
-  TYPE(PointType) :: p1, p2, p3, p, m
+  TYPE(PointType) :: p1, p2, p3, dr, p_r
 
   CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
   CALL p2%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
   CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
   CALL q%set(p1, p2, p3)
-  p = derivative(q, 0.0_SRK)
-  m = (-3.0_SRK)*q%points(1) + & 
-      (-1.0_SRK)*q%points(2) + & 
-         4.0_SRK*q%points(3)
-  ASSERT( p .APPROXEQA. m, "Wrong point")
-  p = derivative(q, 0.25_SRK)
-  m = (-2.0_SRK)*q%points(1) + & 
-         2.0_SRK*q%points(3)
-  ASSERT( p .APPROXEQA. m, "Wrong point")
+  CALL derivative(q, 0.0_SRK, dr)
+  CALL p_r%init(DIM=2, X=2.0_SRK, Y=4.0_SRK)
+  ASSERT( p_r .APPROXEQA. dr, "Wrong point")
+  CALL p_r%clear()
+  CALL derivative(q, 0.25_SRK, dr)
+  CALL p_r%init(DIM=2, X=2.0_SRK, Y=2.0_SRK)
+  ASSERT( p_r .APPROXEQA. dr, "Wrong point")
 ENDSUBROUTINE testDerivative
 !
 !-------------------------------------------------------------------------------
