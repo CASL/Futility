@@ -255,7 +255,6 @@ ELEMENTAL FUNCTION pointInside_Triangle6_2D(tri, p) RESULT(bool)
   REAL(SRK) :: eps
   LOGICAL(SBK) :: bool
   ! Determine if the point is in the triangle using the Newton-Raphson method
-  ! N is the max number of iterations of the method.
   p_rs = real_to_parametric(tri, p)
   eps = 1E-6_SRK
   ! Check that the r coordinate and s coordinate are in [-ϵ,  1 + ϵ] and

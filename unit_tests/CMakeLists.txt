@@ -40,6 +40,7 @@ SET(UNIT_TEST_NAMES
     testGeom_Triangle
     testGeom_Triangle6
     testGeom_Quadrilateral
+    testGeom_Quadrilateral8
     testGeom
     testSorting
     testMeshTransfer
