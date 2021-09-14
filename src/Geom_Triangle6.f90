@@ -13,6 +13,7 @@
 MODULE Geom_Triangle6
 USE IntrType
 USE Geom_Points
+USE Geom_Line
 USE Geom_QuadraticSegment
 
 IMPLICIT NONE
@@ -23,8 +24,9 @@ PUBLIC :: Triangle6_2D
 PUBLIC :: interpolate
 PUBLIC :: derivative
 PUBLIC :: area
-!PUBLIC :: pointInside
-!PUBLIC :: intersect
+PUBLIC :: real_to_parametric
+PUBLIC :: pointInside
+PUBLIC :: intersect
 
 TYPE :: Triangle6_2D
   ! The points are assumed to be ordered as follows
@@ -58,14 +60,17 @@ INTERFACE area
   MODULE PROCEDURE area_Triangle6_2D
 ENDINTERFACE area
 
-!INTERFACE pointInside
-!  MODULE PROCEDURE pointInside_Triangle6_2D
-!ENDINTERFACE pointInside
-!
-!
-!INTERFACE intersect
-!  MODULE PROCEDURE intersectLine_Triangle6_2D
-!ENDINTERFACE intersect
+INTERFACE real_to_parametric
+  MODULE PROCEDURE real_to_parametric_Triangle6_2D
+ENDINTERFACE real_to_parametric
+
+INTERFACE pointInside
+  MODULE PROCEDURE pointInside_Triangle6_2D
+ENDINTERFACE pointInside
+
+INTERFACE intersect
+  MODULE PROCEDURE intersectLine_Triangle6_2D
+ENDINTERFACE intersect
 
 !
 !===============================================================================
@@ -213,61 +218,108 @@ ELEMENTAL FUNCTION area_Triangle6_2D(tri) RESULT(a)
   ENDDO
 ENDFUNCTION area_Triangle6_2D
 
-!ELEMENTAL FUNCTION pointInside_Triangle6_2D(tri, p) RESULT(bool)
-!  CLASS(Triangle6_2D),INTENT(IN) :: tri
-!  TYPE(PointType),INTENT(IN) :: p
-!  REAL(SRK) :: A1, A2, A3, A
-!  LOGICAL(SBK) :: bool
-!  ! If the point is within the plane of the triangle, then the point is only within the triangle
-!  ! if the areas of the triangles formed by the point and each pair of two vertices sum to the 
-!  ! area of the triangle. Division by 2 is dropped, since it cancels
-!  ! If the vertices are A, B, and C, and the point is P, 
-!  ! P is inside ΔABC iff area(ΔABC) = area(ΔABP) + area(ΔBCP) + area(ΔACP)
-!  A1 = norm(cross((tri%points(1) - p), (tri%points(2) - p)))
-!  A2 = norm(cross((tri%points(2) - p), (tri%points(3) - p)))
-!  A3 = norm(cross((tri%points(3) - p), (tri%points(1) - p)))
-!  A  = norm(cross((tri%points(2) - tri%points(1)), (tri%points(3) - tri%points(1))))
-!  bool = (A1 + A2 + A3 .APPROXEQA. A)
-!ENDFUNCTION pointInside_Triangle6_2D
+ELEMENTAL FUNCTION real_to_parametric_Triangle6_2D(tri, p) RESULT(p_out)
+  CLASS(Triangle6_2D),INTENT(IN) :: tri
+  TYPE(PointType),INTENT(IN) :: p
+  TYPE(PointType) :: p_out, err1, err2, dr, ds
+  REAL(SRK) :: r,s,detinv,J_inv(2,2),delta_rs(2)
+  INTEGER(SIK) :: i, max_iters
+  max_iters = 30
+  r = 1.0_SRK/3.0_SRK
+  s = 1.0_SRK/3.0_SRK
+  err1 = p - interpolate(tri, r, s)
+  DO i = 1, max_iters
+    CALL derivative(tri, r, s, dr, ds)
+    detinv = 1.0_SRK/(dr%coord(1)*ds%coord(2) - ds%coord(1)*dr%coord(2))
+    J_inv(1,1) = +detinv * ds%coord(2)
+    J_inv(2,1) = -detinv * dr%coord(2)
+    J_inv(1,2) = -detinv * ds%coord(1)
+    J_inv(2,2) = +detinv * dr%coord(1)
+    delta_rs = MATMUL(J_inv, err1%coord)
+    r = r + delta_rs(1)
+    s = s + delta_rs(2)
+    err2 = p - interpolate(tri, r, s)
+    IF( norm(err2 - err1) < 1.0E-6_SRK ) THEN
+      EXIT
+    ENDIF
+    err1 = err2
+  ENDDO
+  CALL p_out%init(DIM=2, X=r, Y=s)
+ENDFUNCTION real_to_parametric_Triangle6_2D
+
+
+ELEMENTAL FUNCTION pointInside_Triangle6_2D(tri, p) RESULT(bool)
+  CLASS(Triangle6_2D),INTENT(IN) :: tri
+  TYPE(PointType),INTENT(IN) :: p
+  TYPE(PointType) :: p_rs
+  REAL(SRK) :: eps
+  LOGICAL(SBK) :: bool
+  ! Determine if the point is in the triangle using the Newton-Raphson method
+  ! N is the max number of iterations of the method.
+  p_rs = real_to_parametric(tri, p)
+  eps = 1E-6_SRK
+  ! Check that the r coordinate and s coordinate are in [-ϵ,  1 + ϵ] and
+  ! r + s ≤ 1 + ϵ
+  ! These are the conditions for a valid point in the triangle ± some ϵ
+  ! Also check that the point is close to what the interpolation function produces
+  IF((-eps <= p_rs%coord(1)) .AND. (p_rs%coord(1) <= 1 + eps) .AND. &
+     (-eps <= p_rs%coord(2)) .AND. (p_rs%coord(2) <= 1 + eps) .AND. &
+     (p_rs%coord(1) + p_rs%coord(2) <= 1 + eps) .AND. &  
+     (norm(p - interpolate(tri, p_rs%coord(1), p_rs%coord(2))) < 1.0E-4_SRK)) THEN 
+    bool = .TRUE.
+  ELSE
+    bool = .FALSE.
+  ENDIF
+ENDFUNCTION pointInside_Triangle6_2D
+
+!-------------------------------------------------------------------------------
+!> @brief Finds the intersections between a line and the quadratic triangle (if it exists)
+!> @param line line to test for intersection
 !
-!!-------------------------------------------------------------------------------
-!!> @brief Finds the intersections between a line and the triangle (if it exists)
-!!> @param line line to test for intersection
-!!
-!ELEMENTAL SUBROUTINE intersectLine_Triangle6_2D(tri, l, npoints, point1, point2)
-!  CLASS(Triangle6_2D),INTENT(IN) :: tri
-!  TYPE(LineType),INTENT(IN) :: l
-!  INTEGER(SIK),INTENT(OUT) :: npoints
-!  TYPE(PointType),INTENT(OUT) :: point1, point2
-!  TYPE(PointType) :: points(3), p_intersect
-!  Type(LineType) :: lines(3)
-!  INTEGER(SIK) :: i, intersections
-!  LOGICAL(SBK) :: have_p1, have_p2
-!  ! Intersect all the edges
-!  CALL lines(1)%set(tri%points(1), tri%points(2)) 
-!  CALL lines(2)%set(tri%points(2), tri%points(3)) 
-!  CALL lines(3)%set(tri%points(3), tri%points(1)) 
-!  intersections = 0
-!  npoints = 0
-!  DO i = 1,3
-!    p_intersect = l%intersect(lines(i))
-!    IF( p_intersect%dim == 2 ) THEN
-!      points(intersections + 1) = p_intersect
-!      intersections = intersections + 1
-!    ENDIF 
-!  ENDDO
-!  have_p1 = .FALSE.
-!  have_p2 = .FALSE.
-!  DO i = 1,intersections
-!    IF(.NOT. have_p1) THEN
-!      point1 = points(i)
-!      have_p1 = .TRUE.
-!      npoints = 1
-!    ELSEIF((.NOT. have_p2) .AND. (.NOT.(point1 .APPROXEQA. points(i)))) THEN 
-!      point2 = points(i)
-!      have_p2 = .TRUE.
-!      npoints = 2
-!    ENDIF
-!  ENDDO
-!ENDSUBROUTINE intersectLine_Triangle6_2D
+SUBROUTINE intersectLine_Triangle6_2D(tri, l, npoints, points)
+  CLASS(Triangle6_2D),INTENT(IN) :: tri
+  TYPE(LineType),INTENT(IN) :: l
+  INTEGER(SIK),INTENT(OUT) :: npoints
+  TYPE(PointType),INTENT(OUT) :: points(4)
+  TYPE(PointType) :: intersection_points(8), ipoint1, ipoint2
+  TYPE(QuadraticSegment_2D) :: edges(3)
+  INTEGER(SIK) :: i, j, intersections, ipoints
+  LOGICAL(SBK) :: duplicate
+  ! Intersect all the edges
+  CALL edges(1)%set(tri%points(1), tri%points(2), tri%points(4)) 
+  CALL edges(2)%set(tri%points(2), tri%points(3), tri%points(5)) 
+  CALL edges(3)%set(tri%points(3), tri%points(1), tri%points(6)) 
+  intersections = 0
+  npoints = 0
+  DO i = 1,3
+    CALL intersect(edges(i), l, ipoints, ipoint1, ipoint2)
+    IF( ipoints == 1) THEN
+      intersection_points(intersections + 1) = ipoint1
+      intersections = intersections + 1
+    ELSEIF( ipoints == 2) THEN
+      intersection_points(intersections + 1) = ipoint1
+      intersections = intersections + 1
+      intersection_points(intersections + 1) = ipoint2
+      intersections = intersections + 1
+    ENDIF 
+  ENDDO
+  DO i = 1, intersections
+    IF ( npoints == 0) THEN
+      points(1) = intersection_points(1)
+      npoints = 1
+    ELSE
+      duplicate = .FALSE.
+      DO j = 1, npoints
+        IF( intersection_points(i) .APPROXEQA. points(j) ) THEN
+          duplicate = .TRUE. 
+          EXIT
+        ENDIF
+      ENDDO
+      IF( .NOT. duplicate) THEN
+        npoints = npoints + 1
+        points(npoints) = intersection_points(i)
+      ENDIF
+    ENDIF
+  ENDDO
+ENDSUBROUTINE intersectLine_Triangle6_2D
 ENDMODULE Geom_Triangle6
