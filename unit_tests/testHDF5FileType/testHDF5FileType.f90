@@ -2266,6 +2266,17 @@ SUBROUTINE testHDF5FileTypeRead()
   CALL h5%fread('groupC->memC1',testC1)
   ASSERT_EQ(testC1,refC1,'C1 Read Failure')
 
+  !Test for attribute existence
+  COMPONENT_TEST('%has_attribute')
+  ASSERT(h5%has_attribute('groupB->memB0',integer_name),'integer existence fail')
+  ASSERT(h5%has_attribute('groupB->memB1',string_name),'string existence fail')
+  ASSERT(h5%has_attribute('groupB->memB1',char_name),'char existence fail')
+  ASSERT(h5%has_attribute('groupB->memB2',real_name),'real existence fail')
+  ASSERT(.NOT.h5%has_attribute('groupB->memB0',integer_name//' test'),'integer existence fail')
+  ASSERT(.NOT.h5%has_attribute('groupB->memB1',string_name//' test'),'string existence fail')
+  ASSERT(.NOT.h5%has_attribute('groupB->memB1',char_name//' test'),'char existence fail')
+  ASSERT(.NOT.h5%has_attribute('groupB->memB2',real_name//' test'),'real existence fail')
+
   !Read test attributes
   COMPONENT_TEST('%read_attributes')
   !READ ATTRIBUTES
@@ -2274,9 +2285,9 @@ SUBROUTINE testHDF5FileTypeRead()
   CALL h5%read_attribute('groupB->memB1',string_name,testST0)
   ASSERT_EQ(CHAR(refST0),CHAR(testST0),'string read fail')
   CALL h5%read_attribute('groupB->memB1',char_name,testC1)
-  ASSERT_EQ(refC1,testC1,'string read fail')
+  ASSERT_EQ(refC1,testC1,'char read fail')
   CALL h5%read_attribute('groupB->memB2',real_name,testD0)
-  ASSERT_EQ(refD0,testD0,'real_read fail')
+  ASSERT_EQ(refD0,testD0,'real read fail')
 
   COMPONENT_TEST('%fread to parameter list')
   CALL h5%fread('groupC',tmpPL)
