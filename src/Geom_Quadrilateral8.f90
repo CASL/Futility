@@ -283,7 +283,7 @@ SUBROUTINE intersectLine_Quadrilateral8_2D(quad, l, npoints, points)
   INTEGER(SIK),INTENT(OUT) :: npoints
   TYPE(PointType),INTENT(OUT) :: points(4)
   TYPE(PointType) :: intersection_points(8), ipoint1, ipoint2
-  TYPE(QuadraticSegment_2D) :: edges(3)
+  TYPE(QuadraticSegment_2D) :: edges(4)
   INTEGER(SIK) :: i, j, intersections, ipoints
   LOGICAL(SBK) :: duplicate
   ! Intersect all the edges

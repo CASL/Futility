@@ -150,13 +150,14 @@ ENDFUNCTION arc_length_QuadraticSegment_2D
 !> @brief Finds the intersections between a line and the quadratic segment (if it exists)
 !> @param line line to test for intersection
 !
-ELEMENTAL SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, npoints, point1, point2)
+!ELEMENTAL 
+SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, npoints, point1, point2)
   CLASS(QuadraticSegment_2D),INTENT(IN) :: q
   TYPE(LineType),INTENT(IN) :: l
   INTEGER(SIK),INTENT(OUT) :: npoints
   TYPE(PointType),INTENT(OUT) :: point1, point2
   REAL(SRK) :: A, B, C, r, s, r1, r2, s1, s2
-  TYPE(PointType) :: A_vec, B_vec, C_vec, D_vec, E_vec, w_vec, l_s1, l_s2
+  TYPE(PointType) :: A_vec, B_vec, C_vec, D_vec, E_vec, F_vec, w_vec, l_s1, l_s2
   ! q(r) = (2r-1)(r-1)x⃗₁ + r(2r-1)x⃗₂ + 4r(1-r)x⃗₃
   ! q(r) = 2r²(x⃗₁ + x⃗₂ - 2x⃗₃) + r(-3x⃗₁ - x⃗₂ + 4x⃗₃) + x⃗₁
   ! Let D⃗ = 2(x⃗₁ + x⃗₂ - 2x⃗₃), E⃗ = (-3x⃗₁ - x⃗₂ + 4x⃗₃), F⃗ = x₁
@@ -187,11 +188,12 @@ ELEMENTAL SUBROUTINE intersectLine_QuadraticSegment_2D(q, l, npoints, point1, po
   w_vec = l%p2 - l%p1
   A_vec = cross(D_vec, w_vec)
   B_vec = cross(E_vec, w_vec)
+  F_vec = q%points(1) - l%p1
   C_vec = cross((q%points(1) - l%p1), w_vec)
   A = A_vec%coord(3)
   B = B_vec%coord(3)
   C = C_vec%coord(3)
-  IF (A < 5.0E-6_SRK) THEN
+  IF (ABS(A) < 5.0E-6_SRK) THEN
     r = -C/B
     point1 = interpolate(q,r)
     s = (DOT_PRODUCT((point1 - l%p1), w_vec))/DOT_PRODUCT(w_vec, w_vec)
