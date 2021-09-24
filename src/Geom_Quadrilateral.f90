@@ -66,24 +66,24 @@ CONTAINS
 !-------------------------------------------------------------------------------
 !> @brief Constructor for Quadrilateral_2D
 !>
-ELEMENTAL SUBROUTINE init_Quadrilateral_2D(quad,p1,p2,p3,p4)
+PURE SUBROUTINE init_Quadrilateral_2D(quad,points)
   CLASS(Quadrilateral_2D),INTENT(INOUT) :: quad
-  TYPE(PointType),INTENT(IN) :: p1,p2,p3,p4
+  TYPE(PointType),INTENT(IN) :: points(4)
   CALL quad%clear()
-  IF(p1%dim == p2%dim .AND. &
-     p2%dim == p3%dim .AND. &
-     p3%dim == p4%dim .AND. p1%dim == 2) THEN
-    quad%points(1) = p1
-    quad%points(2) = p2
-    quad%points(3) = p3
-    quad%points(4) = p4
+  IF(points(1)%dim == points(2)%dim .AND. &
+     points(2)%dim == points(3)%dim .AND. &
+     points(3)%dim == points(4)%dim .AND. points(1)%dim == 2) THEN
+    quad%points(1) = points(1)
+    quad%points(2) = points(2)
+    quad%points(3) = points(3)
+    quad%points(4) = points(4)
   ENDIF
 ENDSUBROUTINE init_Quadrilateral_2D
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears and resets all values of the quad
 !> @param quad the quad
-ELEMENTAL SUBROUTINE clear_Quadrilateral_2D(quad)
+PURE SUBROUTINE clear_Quadrilateral_2D(quad)
   CLASS(Quadrilateral_2D),INTENT(INOUT) :: quad
   CALL quad%points(1)%clear()
   CALL quad%points(2)%clear()
@@ -91,7 +91,7 @@ ELEMENTAL SUBROUTINE clear_Quadrilateral_2D(quad)
   CALL quad%points(4)%clear()
 ENDSUBROUTINE clear_Quadrilateral_2D
 
-ELEMENTAL FUNCTION interpolate_Quadrilateral_2D(quad, r, s) RESULT(p)
+PURE FUNCTION interpolate_Quadrilateral_2D(quad, r, s) RESULT(p)
   CLASS(Quadrilateral_2D),INTENT(IN) :: quad
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType) :: p
@@ -101,23 +101,23 @@ ELEMENTAL FUNCTION interpolate_Quadrilateral_2D(quad, r, s) RESULT(p)
                   (1.0_SRK - r)*s*quad%points(4)
 ENDFUNCTION interpolate_Quadrilateral_2D
 
-FUNCTION area_Quadrilateral_2D(quad) RESULT(a)
+PURE FUNCTION area_Quadrilateral_2D(quad) RESULT(a)
   CLASS(Quadrilateral_2D),INTENT(IN) :: quad
   TYPE(Triangle_2D) ::t1, t2 
   REAL(SRK) :: a
-  CALL t1%set(quad%points(1), quad%points(2), quad%points(3))
-  CALL t2%set(quad%points(3), quad%points(4), quad%points(1))
+  CALL t1%set(quad%points(1:3))
+  CALL t2%set(quad%points((/3, 4, 1/)))
   a = area(t1)
   a = a + area(t2)
 ENDFUNCTION area_Quadrilateral_2D
 
-ELEMENTAL FUNCTION pointInside_Quadrilateral_2D(quad, p) RESULT(bool)
+PURE FUNCTION pointInside_Quadrilateral_2D(quad, p) RESULT(bool)
   CLASS(Quadrilateral_2D),INTENT(IN) :: quad
   TYPE(PointType),INTENT(IN) :: p
   TYPE(Triangle_2D) ::t1, t2 
   LOGICAL(SBK) :: bool, b1, b2
-  CALL t1%set(quad%points(1), quad%points(2), quad%points(3))
-  CALL t2%set(quad%points(3), quad%points(4), quad%points(1))
+  CALL t1%set(quad%points(1:3))
+  CALL t2%set(quad%points((/3,4,1/)))
   b1 = pointInside(t1, p)
   b2 = pointInside(t2, p)
   bool = (b1 .OR. b2)
@@ -127,11 +127,11 @@ ENDFUNCTION pointInside_Quadrilateral_2D
 !> @brief Finds the intersections between a line and the quadrilateral (if it exists)
 !> @param line line to test for intersection
 !
-ELEMENTAL SUBROUTINE intersectLine_Quadrilateral_2D(quad, l, npoints, point1, point2)
+PURE SUBROUTINE intersectLine_Quadrilateral_2D(quad, l, npoints, ipoints)
   CLASS(Quadrilateral_2D),INTENT(IN) :: quad
   TYPE(LineType),INTENT(IN) :: l
   INTEGER(SIK),INTENT(OUT) :: npoints
-  TYPE(PointType),INTENT(OUT) :: point1, point2
+  TYPE(PointType),INTENT(OUT) :: ipoints(2)
   TYPE(PointType) :: points(4), p_intersect
   Type(LineType) :: lines(4)
   INTEGER(SIK) :: i, intersections
@@ -154,11 +154,11 @@ ELEMENTAL SUBROUTINE intersectLine_Quadrilateral_2D(quad, l, npoints, point1, po
   have_p2 = .FALSE.
   DO i = 1,intersections
     IF(.NOT. have_p1) THEN
-      point1 = points(i)
+      ipoints(1) = points(i)
       have_p1 = .TRUE.
       npoints = 1
-    ELSEIF((.NOT. have_p2) .AND. (.NOT.(point1 .APPROXEQA. points(i)))) THEN 
-      point2 = points(i)
+    ELSEIF((.NOT. have_p2) .AND. (.NOT.(ipoints(1) .APPROXEQA. points(i)))) THEN 
+      ipoints(2) = points(i)
       have_p2 = .TRUE.
       npoints = 2
     ENDIF

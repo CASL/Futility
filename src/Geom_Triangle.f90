@@ -64,28 +64,29 @@ CONTAINS
 !> @param p2 End point of the tri
 !> @param p3 An additional point on the tri
 !>
-ELEMENTAL SUBROUTINE init_Triangle_2D(tri,p1,p2,p3)
+PURE SUBROUTINE init_Triangle_2D(tri, points)
   CLASS(Triangle_2D),INTENT(INOUT) :: tri
-  TYPE(PointType),INTENT(IN) :: p1,p2,p3
+  TYPE(PointType),INTENT(IN) :: points(3)
   CALL tri%clear()
-  IF(p1%dim == p2%dim .AND. p2%dim == p3%dim .AND.  p1%dim == 2) THEN
-    tri%points(1) = p1
-    tri%points(2) = p2
-    tri%points(3) = p3
+  IF(points(1)%dim == points(2)%dim .AND. &
+     points(2)%dim == points(3)%dim .AND.  points(1)%dim == 2) THEN
+    tri%points(1) = points(1)
+    tri%points(2) = points(2)
+    tri%points(3) = points(3)
   ENDIF
 ENDSUBROUTINE init_Triangle_2D
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears and resets all values of the tri
 !> @param tri the tri
-ELEMENTAL SUBROUTINE clear_Triangle_2D(tri)
+PURE SUBROUTINE clear_Triangle_2D(tri)
   CLASS(Triangle_2D),INTENT(INOUT) :: tri
   CALL tri%points(1)%clear()
   CALL tri%points(2)%clear()
   CALL tri%points(3)%clear()
 ENDSUBROUTINE clear_Triangle_2D
 
-ELEMENTAL FUNCTION interpolate_Triangle_2D(tri, r, s) RESULT(p)
+PURE FUNCTION interpolate_Triangle_2D(tri, r, s) RESULT(p)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType) :: p
@@ -94,7 +95,7 @@ ELEMENTAL FUNCTION interpolate_Triangle_2D(tri, r, s) RESULT(p)
                       s*tri%points(3)
 ENDFUNCTION interpolate_Triangle_2D
 
-ELEMENTAL FUNCTION area_Triangle_2D(tri) RESULT(a)
+PURE FUNCTION area_Triangle_2D(tri) RESULT(a)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   TYPE(PointType) :: u,v
   REAL(SRK) :: a
@@ -109,7 +110,7 @@ ELEMENTAL FUNCTION area_Triangle_2D(tri) RESULT(a)
   a = norm(cross(u, v))/2.0_SRK
 ENDFUNCTION area_Triangle_2D
 
-ELEMENTAL FUNCTION pointInside_Triangle_2D(tri, p) RESULT(bool)
+PURE FUNCTION pointInside_Triangle_2D(tri, p) RESULT(bool)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   TYPE(PointType),INTENT(IN) :: p
   REAL(SRK) :: A1, A2, A3, A
@@ -130,11 +131,11 @@ ENDFUNCTION pointInside_Triangle_2D
 !> @brief Finds the intersections between a line and the triangle (if it exists)
 !> @param line line to test for intersection
 !
-ELEMENTAL SUBROUTINE intersectLine_Triangle_2D(tri, l, npoints, point1, point2)
+PURE SUBROUTINE intersectLine_Triangle_2D(tri, l, npoints, ipoints)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   TYPE(LineType),INTENT(IN) :: l
   INTEGER(SIK),INTENT(OUT) :: npoints
-  TYPE(PointType),INTENT(OUT) :: point1, point2
+  TYPE(PointType),INTENT(OUT) :: ipoints(2)
   TYPE(PointType) :: points(3), p_intersect
   Type(LineType) :: lines(3)
   INTEGER(SIK) :: i, intersections
@@ -156,11 +157,11 @@ ELEMENTAL SUBROUTINE intersectLine_Triangle_2D(tri, l, npoints, point1, point2)
   have_p2 = .FALSE.
   DO i = 1,intersections
     IF(.NOT. have_p1) THEN
-      point1 = points(i)
+      ipoints(1) = points(i)
       have_p1 = .TRUE.
       npoints = 1
-    ELSEIF((.NOT. have_p2) .AND. (.NOT.(point1 .APPROXEQA. points(i)))) THEN 
-      point2 = points(i)
+    ELSEIF((.NOT. have_p2) .AND. (.NOT.(ipoints(1) .APPROXEQA. points(i)))) THEN 
+      ipoints(2) = points(i)
       have_p2 = .TRUE.
       npoints = 2
     ENDIF

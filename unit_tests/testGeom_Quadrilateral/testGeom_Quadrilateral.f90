@@ -48,37 +48,37 @@ ENDSUBROUTINE testClear
 !-------------------------------------------------------------------------------
 SUBROUTINE testInit()
   TYPE(Quadrilateral_2D) :: quad
-  TYPE(PointType) :: p1, p2, p3, p4
+  TYPE(PointType) :: points(4)
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL p4%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
-  CALL quad%set(p1, p2, p3, p4)
-  ASSERT(quad%points(1) == p1, "Point assigned incorrectly")
-  ASSERT(quad%points(2) == p2, "Point assigned incorrectly")
-  ASSERT(quad%points(3) == p3, "Point assigned incorrectly")
-  ASSERT(quad%points(4) == p4, "Point assigned incorrectly")
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL points(4)%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
+  CALL quad%set(points)
+  ASSERT(quad%points(1) == points(1), "Point assigned incorrectly")
+  ASSERT(quad%points(2) == points(2), "Point assigned incorrectly")
+  ASSERT(quad%points(3) == points(3), "Point assigned incorrectly")
+  ASSERT(quad%points(4) == points(4), "Point assigned incorrectly")
 ENDSUBROUTINE testInit
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testInterpolate()
   TYPE(Quadrilateral_2D) :: quad
-  TYPE(PointType) :: p1, p2, p3, p4, p
+  TYPE(PointType) :: points(4), p
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL p4%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
-  CALL quad%set(p1, p2, p3, p4)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL points(4)%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
+  CALL quad%set(points)
   p = interpolate(quad, 0.0_SRK, 0.0_SRK)
-  ASSERT( p == p1, "Wrong point")
+  ASSERT( p == points(1), "Wrong point")
   p = interpolate(quad, 1.0_SRK, 0.0_SRK)
-  ASSERT( p == p2, "Wrong point")
+  ASSERT( p == points(2), "Wrong point")
   p = interpolate(quad, 1.0_SRK, 1.0_SRK)
-  ASSERT( p == p3, "Wrong point")
+  ASSERT( p == points(3), "Wrong point")
   p = interpolate(quad, 0.0_SRK, 1.0_SRK)
-  ASSERT( p == p4, "Wrong point")
+  ASSERT( p == points(4), "Wrong point")
   p = interpolate(quad, 0.5_SRK, 0.5_SRK)
   ASSERT( p%coord(1) .APPROXEQA. 0.5_SRK, "Wrong point")
   ASSERT( p%coord(2) .APPROXEQA. 0.5_SRK, "Wrong point")
@@ -87,14 +87,14 @@ ENDSUBROUTINE testInterpolate
 !-------------------------------------------------------------------------------
 SUBROUTINE testArea()
   TYPE(Quadrilateral_2D) :: quad
-  TYPE(PointType) :: p1, p2, p3, p4
+  TYPE(PointType) :: points(4)
   REAL(SRK) :: a
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL p4%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
-  CALL quad%set(p1, p2, p3, p4)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL points(4)%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
+  CALL quad%set(points)
   a = area(quad)
   ASSERT( a .APPROXEQA. 1.0_SRK, "Wrong area")
 ENDSUBROUTINE testArea
@@ -102,14 +102,14 @@ ENDSUBROUTINE testArea
 !-------------------------------------------------------------------------------
 SUBROUTINE testPointInside()
   TYPE(Quadrilateral_2D) :: quad
-  TYPE(PointType) :: p1, p2, p3, p4, p
+  TYPE(PointType) :: points(4), p
   LOGICAL(SBK) :: bool
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL p4%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
-  CALL quad%set(p1, p2, p3, p4)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL points(4)%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
+  CALL quad%set(points)
 
   CALL p%init(DIM=2, X=0.5_SRK, Y=0.1_SRK)
   bool = pointInside(quad, p)
@@ -131,25 +131,25 @@ ENDSUBROUTINE testPointInside
 SUBROUTINE testIntersectLine()
   TYPE(Quadrilateral_2D) :: quad
   TYPE(LineType) :: l
-  TYPE(PointType) :: p1, p2, p3, p4, p5, p6, ipoint1, ipoint2
+  TYPE(PointType) :: points(4), p5, p6, ipoints(2)
   INTEGER(SIK) :: npoints
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL p4%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL points(4)%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
   CALL p5%init(DIM=2, X=2.0_SRK, Y=1.0_SRK)
   CALL p6%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
 
   ! 2 intersection
-  CALL quad%set(p1, p2, p3, p4)
-  CALL l%set(p1, p3)
+  CALL quad%set(points)
+  CALL l%set(points(1), points(3))
   npoints = -1
-  CALL intersect(quad, l, npoints, ipoint1, ipoint2)
+  CALL intersect(quad, l, npoints, ipoints)
   ASSERT(npoints == 2, "Intersects")
-  ASSERT(ipoint1%coord(1) .APPROXEQA. 0.0_SRK, "intersection 1")
-  ASSERT(ipoint1%coord(2) .APPROXEQA. 0.0_SRK, "intersection 1")
-  ASSERT(ipoint2%coord(1) .APPROXEQA. 1.0_SRK, "intersection 2")
-  ASSERT(ipoint2%coord(2) .APPROXEQA. 1.0_SRK, "intersection 2")
+  ASSERT(ipoints(1)%coord(1) .APPROXEQA. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(1)%coord(2) .APPROXEQA. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(2)%coord(1) .APPROXEQA. 1.0_SRK, "intersection 2")
+  ASSERT(ipoints(2)%coord(2) .APPROXEQA. 1.0_SRK, "intersection 2")
 
   ! 1 intersection
   CALL l%clear() 
@@ -159,10 +159,10 @@ SUBROUTINE testIntersectLine()
   CALL p6%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
   CALL l%set(p5, p6)
   npoints = -1
-  CALL intersect(quad, l, npoints, ipoint1, ipoint2)
+  CALL intersect(quad, l, npoints, ipoints)
   ASSERT(npoints == 1, "Intersects")
-  ASSERT(ipoint1%coord(1) .APPROXEQ. 0.0_SRK, "intersection 1")
-  ASSERT(ipoint1%coord(2) .APPROXEQ. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(1)%coord(1) .APPROXEQ. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(1)%coord(2) .APPROXEQ. 0.0_SRK, "intersection 1")
 
   ! 0 intersection
   CALL l%clear() 
@@ -172,7 +172,7 @@ SUBROUTINE testIntersectLine()
   CALL p6%init(DIM=2, X=0.0_SRK, Y=-1.0_SRK)
   CALL l%set(p5, p6)
   npoints = -1
-  CALL intersect(quad, l, npoints, ipoint1, ipoint2)
+  CALL intersect(quad, l, npoints, ipoints)
   ASSERT(npoints == 0, "Intersects")
 ENDSUBROUTINE testIntersectLine
 ENDPROGRAM testGeom_Quadrilateral

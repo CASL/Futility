@@ -96,7 +96,7 @@ TYPE :: XDMFMeshType_2D
     PROCEDURE,PASS :: clear => clear_XDMFMeshType_2D
     !> @copybrief XDMFMeshType::getPoints_XDMFMeshType_2D
     !> @copydoc XDMFMeshType::getPoints_XDMFMeshType_2D
-    PROCEDURE,PASS :: getPoints => getPoints_XDMFMeshType_2D
+!    PROCEDURE,PASS :: getPoints => getPoints_XDMFMeshType_2D
 !    !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType_2D
 !    !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType_2D
 !    PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType_2D

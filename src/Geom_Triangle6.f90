@@ -82,30 +82,30 @@ CONTAINS
 !> @param p2 End point of the tri
 !> @param p3 An additional point on the tri
 !>
-ELEMENTAL SUBROUTINE init_Triangle6_2D(tri,p1,p2,p3,p4,p5,p6)
+PURE SUBROUTINE init_Triangle6_2D(tri,points)
   CLASS(Triangle6_2D),INTENT(INOUT) :: tri
-  TYPE(PointType),INTENT(IN) :: p1,p2,p3,p4,p5,p6
+  TYPE(PointType),INTENT(IN) :: points(6)
   CALL tri%clear()
-  IF(p1%dim == p2%dim .AND. & 
-     p2%dim == p3%dim .AND. & 
-     p3%dim == p4%dim .AND. & 
-     p4%dim == p5%dim .AND. & 
-     p5%dim == p6%dim .AND. & 
-     p6%dim == p1%dim .AND. & 
-     p1%dim == 2) THEN
-    tri%points(1) = p1
-    tri%points(2) = p2
-    tri%points(3) = p3
-    tri%points(4) = p4
-    tri%points(5) = p5
-    tri%points(6) = p6
+  IF(points(1)%dim == points(2)%dim .AND. & 
+     points(2)%dim == points(3)%dim .AND. & 
+     points(3)%dim == points(4)%dim .AND. & 
+     points(4)%dim == points(5)%dim .AND. & 
+     points(5)%dim == points(6)%dim .AND. & 
+     points(6)%dim == points(1)%dim .AND. & 
+     points(1)%dim == 2) THEN
+    tri%points(1) = points(1) 
+    tri%points(2) = points(2)
+    tri%points(3) = points(3)
+    tri%points(4) = points(4)
+    tri%points(5) = points(5)
+    tri%points(6) = points(6)
   ENDIF
 ENDSUBROUTINE init_Triangle6_2D
 !
 !-------------------------------------------------------------------------------
 !> @brief Clears and resets all values of the tri
 !> @param tri the tri
-ELEMENTAL SUBROUTINE clear_Triangle6_2D(tri)
+PURE SUBROUTINE clear_Triangle6_2D(tri)
   CLASS(Triangle6_2D),INTENT(INOUT) :: tri
   CALL tri%points(1)%clear()
   CALL tri%points(2)%clear()
@@ -115,7 +115,7 @@ ELEMENTAL SUBROUTINE clear_Triangle6_2D(tri)
   CALL tri%points(6)%clear()
 ENDSUBROUTINE clear_Triangle6_2D
 
-ELEMENTAL FUNCTION interpolate_Triangle6_2D(tri, r, s) RESULT(p)
+PURE FUNCTION interpolate_Triangle6_2D(tri, r, s) RESULT(p)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType) :: p
@@ -128,7 +128,7 @@ ELEMENTAL FUNCTION interpolate_Triangle6_2D(tri, r, s) RESULT(p)
 
 ENDFUNCTION interpolate_Triangle6_2D
 
-ELEMENTAL SUBROUTINE derivative_Triangle6_2D(tri, r, s, dr, ds)
+PURE SUBROUTINE derivative_Triangle6_2D(tri, r, s, dr, ds)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType), INTENT(INOUT) :: dr, ds
@@ -158,7 +158,7 @@ ELEMENTAL SUBROUTINE derivative_Triangle6_2D(tri, r, s, dr, ds)
 ENDSUBROUTINE derivative_Triangle6_2D
 
 
-ELEMENTAL FUNCTION area_Triangle6_2D(tri) RESULT(a)
+PURE FUNCTION area_Triangle6_2D(tri) RESULT(a)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   TYPE(PointType) :: dr, ds
   REAL(SRK) :: a
@@ -218,7 +218,7 @@ ELEMENTAL FUNCTION area_Triangle6_2D(tri) RESULT(a)
   ENDDO
 ENDFUNCTION area_Triangle6_2D
 
-ELEMENTAL FUNCTION real_to_parametric_Triangle6_2D(tri, p) RESULT(p_out)
+PURE FUNCTION real_to_parametric_Triangle6_2D(tri, p) RESULT(p_out)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   TYPE(PointType),INTENT(IN) :: p
   TYPE(PointType) :: p_out, err1, err2, dr, ds
@@ -248,7 +248,7 @@ ELEMENTAL FUNCTION real_to_parametric_Triangle6_2D(tri, p) RESULT(p_out)
 ENDFUNCTION real_to_parametric_Triangle6_2D
 
 
-ELEMENTAL FUNCTION pointInside_Triangle6_2D(tri, p) RESULT(bool)
+PURE FUNCTION pointInside_Triangle6_2D(tri, p) RESULT(bool)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   TYPE(PointType),INTENT(IN) :: p
   TYPE(PointType) :: p_rs
@@ -275,7 +275,7 @@ ENDFUNCTION pointInside_Triangle6_2D
 !> @brief Finds the intersections between a line and the quadratic triangle (if it exists)
 !> @param line line to test for intersection
 !
-SUBROUTINE intersectLine_Triangle6_2D(tri, l, npoints, points)
+PURE SUBROUTINE intersectLine_Triangle6_2D(tri, l, npoints, points)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   TYPE(LineType),INTENT(IN) :: l
   INTEGER(SIK),INTENT(OUT) :: npoints

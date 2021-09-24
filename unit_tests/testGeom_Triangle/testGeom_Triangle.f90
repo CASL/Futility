@@ -48,32 +48,32 @@ ENDSUBROUTINE testClear
 !-------------------------------------------------------------------------------
 SUBROUTINE testInit()
   TYPE(Triangle_2D) :: tri
-  TYPE(PointType) :: p1, p2, p3
+  TYPE(PointType) :: points(3)
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
-  CALL tri%set(p1, p2, p3)
-  ASSERT(tri%points(1) == p1, "Point assigned incorrectly")
-  ASSERT(tri%points(2) == p2, "Point assigned incorrectly")
-  ASSERT(tri%points(3) == p3, "Point assigned incorrectly")
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=0.0_SRK, Y=1.0_SRK)
+  CALL tri%set(points)
+  ASSERT(tri%points(1) == points(1), "Point assigned incorrectly")
+  ASSERT(tri%points(2) == points(2), "Point assigned incorrectly")
+  ASSERT(tri%points(3) == points(3), "Point assigned incorrectly")
 ENDSUBROUTINE testInit
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testInterpolate()
   TYPE(Triangle_2D) :: tri
-  TYPE(PointType) :: p1, p2, p3, p
+  TYPE(PointType) :: points(3), p
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL tri%set(p1, p2, p3)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL tri%set(points)
   p = interpolate(tri, 0.0_SRK, 0.0_SRK)
-  ASSERT( p == p1, "Wrong point")
+  ASSERT( p == points(1), "Wrong point")
   p = interpolate(tri, 1.0_SRK, 0.0_SRK)
-  ASSERT( p == p2, "Wrong point")
+  ASSERT( p == points(2), "Wrong point")
   p = interpolate(tri, 0.0_SRK, 1.0_SRK)
-  ASSERT( p == p3, "Wrong point")
+  ASSERT( p == points(3), "Wrong point")
   p = interpolate(tri, 0.5_SRK, 0.5_SRK)
   ASSERT( p%coord(1) .APPROXEQA. 1.0_SRK, "Wrong point")
   ASSERT( p%coord(2) .APPROXEQA. 0.5_SRK, "Wrong point")
@@ -82,13 +82,13 @@ ENDSUBROUTINE testInterpolate
 !-------------------------------------------------------------------------------
 SUBROUTINE testArea()
   TYPE(Triangle_2D) :: tri
-  TYPE(PointType) :: p1, p2, p3
+  TYPE(PointType) :: points(3)
   REAL(SRK) :: a
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL tri%set(p1, p2, p3)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL tri%set(points)
   a = area(tri)
   ASSERT( a .APPROXEQA. 0.5_SRK, "Wrong area")
 ENDSUBROUTINE testArea
@@ -96,13 +96,13 @@ ENDSUBROUTINE testArea
 !-------------------------------------------------------------------------------
 SUBROUTINE testPointInside()
   TYPE(Triangle_2D) :: tri
-  TYPE(PointType) :: p1, p2, p3, p
+  TYPE(PointType) :: points(3), p
   LOGICAL(SBK) :: bool
 
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
-  CALL tri%set(p1, p2, p3)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL tri%set(points)
 
   CALL p%init(DIM=2, X=0.5_SRK, Y=0.1_SRK)
   bool = pointInside(tri, p)
@@ -124,24 +124,24 @@ ENDSUBROUTINE testPointInside
 SUBROUTINE testIntersectLine()
   TYPE(Triangle_2D) :: tri
   TYPE(LineType) :: l
-  TYPE(PointType) :: p1, p2, p3, p4, p5, ipoint1, ipoint2
+  TYPE(PointType) :: points(3), p4, p5, ipoints(2)
   INTEGER(SIK) :: npoints
-  CALL p1%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
-  CALL p2%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
-  CALL p3%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
+  CALL points(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
+  CALL points(2)%init(DIM=2, X=1.0_SRK, Y=0.0_SRK)
+  CALL points(3)%init(DIM=2, X=1.0_SRK, Y=1.0_SRK)
   CALL p4%init(DIM=2, X=2.0_SRK, Y=1.0_SRK)
   CALL p5%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
 
   ! 2 intersection
-  CALL tri%set(p1, p2, p3)
+  CALL tri%set(points)
   CALL l%set(p4, p5)
   npoints = -1
-  CALL intersect(tri, l, npoints, ipoint1, ipoint2)
+  CALL intersect(tri, l, npoints, ipoints)
   ASSERT(npoints == 2, "Intersects")
-  ASSERT(ipoint1%coord(1) .APPROXEQA. 0.0_SRK, "intersection 1")
-  ASSERT(ipoint1%coord(2) .APPROXEQA. 0.0_SRK, "intersection 1")
-  ASSERT(ipoint2%coord(1) .APPROXEQA. 1.0_SRK, "intersection 2")
-  ASSERT(ipoint2%coord(2) .APPROXEQA. 0.5_SRK, "intersection 2")
+  ASSERT(ipoints(1)%coord(1) .APPROXEQA. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(1)%coord(2) .APPROXEQA. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(2)%coord(1) .APPROXEQA. 1.0_SRK, "intersection 2")
+  ASSERT(ipoints(2)%coord(2) .APPROXEQA. 0.5_SRK, "intersection 2")
 
   ! 1 intersection
   CALL l%clear() 
@@ -151,10 +151,10 @@ SUBROUTINE testIntersectLine()
   CALL p5%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
   CALL l%set(p4, p5)
   npoints = -1
-  CALL intersect(tri, l, npoints, ipoint1, ipoint2)
+  CALL intersect(tri, l, npoints, ipoints)
   ASSERT(npoints == 1, "Intersects")
-  ASSERT(ipoint1%coord(1) .APPROXEQ. 0.0_SRK, "intersection 1")
-  ASSERT(ipoint1%coord(2) .APPROXEQ. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(1)%coord(1) .APPROXEQ. 0.0_SRK, "intersection 1")
+  ASSERT(ipoints(1)%coord(2) .APPROXEQ. 0.0_SRK, "intersection 1")
 
   ! 0 intersection
   CALL l%clear() 
@@ -164,7 +164,7 @@ SUBROUTINE testIntersectLine()
   CALL p5%init(DIM=2, X=0.0_SRK, Y=-1.0_SRK)
   CALL l%set(p4, p5)
   npoints = -1
-  CALL intersect(tri, l, npoints, ipoint1, ipoint2)
+  CALL intersect(tri, l, npoints, ipoints)
   ASSERT(npoints == 0, "Intersects")
 ENDSUBROUTINE testIntersectLine
 ENDPROGRAM testGeom_Triangle
