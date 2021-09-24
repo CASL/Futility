@@ -55,6 +55,7 @@ PUBLIC :: intersect
 PUBLIC :: ClearLinkedListPointType
 PUBLIC :: Polygonize
 PUBLIC :: area
+PUBLIC :: pointInside
 PUBLIC :: OPERATOR(+)
 PUBLIC :: OPERATOR(-)
 PUBLIC :: OPERATOR(==)

@@ -100,9 +100,9 @@ TYPE :: XDMFMeshType_2D
     !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType_2D
     !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType_2D
     PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType_2D
-!    !> @copybrief XDMFMeshType::pointInsideCell_XDMFMeshType
-!    !> @copydoc XDMFMeshType::pointInsideCell_XDMFMeshType
-!    PROCEDURE,PASS :: pointInsideCell => pointInsideCell_XDMFMeshType
+    !> @copybrief XDMFMeshType::pointInsideCell_XDMFMeshType
+    !> @copydoc XDMFMeshType::pointInsideCell_XDMFMeshType
+    PROCEDURE,PASS :: pointInsideCell => pointInsideCell_XDMFMeshType_2D
 ENDTYPE XDMFMeshType_2D
 !
 !!> To allow an array of pointers to XDMF meshes
@@ -275,85 +275,49 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType_2D(mesh, id) RESULT(a)
     a = -HUGE(1.0_SRK)
   ENDSELECT
 ENDFUNCTION
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief This routine determines whether a point lies within a 2D mesh cell
-!!> @param thisCell The cell used in the query
-!!> @param point The point type to check if it lies inside the cell
-!!> @param bool The logical result of this operation.  TRUE if the point is inside.
-!!>
-!FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
-!  CLASS(XDMFMeshType),INTENT(IN) :: thismesh
-!  INTEGER(SIK),INTENT(IN) :: iCell
-!  TYPE(PointType),INTENT(IN) :: point
-!  LOGICAL(SBK) :: bool
 !
-!  INTEGER(SIK) :: i,j, lastvert_idx
-!  INTEGER(SIK) :: iEdge, iVert, p1ID, p2ID, iLastVert, ifirstVert
-!  LOGICAL(SBK) :: isLeft
-!
-!  ! If the point isLeft of each edge, it must be interior, since the
-!  ! vertices are in counter-clockwise order.
-!  ! Orientation of the edges matters, so if the vertices of the edge are opposite
-!  ! of the way they are in the cell, flip the boolean.
-!  bool = .TRUE.
-!  REQUIRE(ALLOCATED(thismesh%edges))
-!!  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
-!  DO i = 1, SIZE(thismesh%cells(iCell)%edge_list)
-!    iEdge = thismesh%cells(iCell)%edge_list(i)
-!    IF(thismesh%edges(iEdge)%isLinear)THEN
-!      isLeft = thismesh%edges(iEdge)%line%pointIsLeft(point)
-!      p1ID = thismesh%edges(iEdge)%vertices(2)
-!      p2ID = thismesh%edges(iEdge)%vertices(3)
-!    ELSE
-!      IF(ABS(thismesh%edges(iEdge)%quad%a) < 1.0E-3) THEN
-!        isLeft = thismesh%edges(iEdge)%line%pointIsLeft(point)
-!      ELSE
-!        isLeft = thismesh%edges(iEdge)%quad%pointIsLeft(point)  
-!      ENDIF
-!      p1ID = thismesh%edges(iEdge)%vertices(1)
-!      p2ID = thismesh%edges(iEdge)%vertices(2)
-!    ENDIF
-!    ! Loop through the vertices. If point 1 in encountered first, isLeft is
-!    ! correct. If point 2 is encountered 1st, flip isLeft. Vertices are in
-!    ! counter clockwise order, hence the orientation is known.
-!    ! The exception is on the last edge, where the verts wrap around an p2
-!    ! should be encountered first.
-!    IF(thismesh%edges(iEdge)%isLinear)THEN
-!      lastvert_idx = SIZE(thismesh%cells(iCell)%point_list)
-!      iLastVert = thismesh%cells(iCell)%point_list(lastvert_idx)
-!    ELSE
-!      ! total list - 1 for the xid, /2 to only address linear elements + 1 to
-!      ! skip xid
-!      lastvert_idx = (SIZE(thismesh%cells(iCell)%point_list) - 1)/2 + 1
-!      iLastVert = thismesh%cells(iCell)%point_list(lastvert_idx)
-!    ENDIF
-!    ifirstVert = thismesh%cells(iCell)%point_list(2)
-!    ! Test for wrap around 1st.
-!    IF(p1ID == ifirstVert .AND. p2ID == iLastVert) THEN
-!      isLeft = .NOT.isLeft
-!    ELSEIF(p1ID == iLastVert .AND. p2ID == ifirstVert) THEN
-!      ! Correct. nothing to do
-!    ELSE
-!      DO j = 2, lastvert_idx ! skip xid
-!        iVert = thismesh%cells(iCell)%point_list(j)
-!        IF(iVert == p1ID) THEN
-!          EXIT
-!        ENDIF
-!        IF(iVert == p2ID) THEN
-!          isLeft = .NOT.isLeft
-!          EXIT
-!        ENDIF
-!      ENDDO
-!    ENDIF
-!    ! If the point isLeft, keep going until all edges have been verified,
-!    ! otherwise, stop. The point cannot be in this cell if it is right of any
-!    ! edge.
-!    IF(.NOT.isLeft) THEN
-!      bool = .FALSE.
-!      RETURN
-!    ENDIF
-!  ENDDO
-!ENDFUNCTION pointInsideCell_XDMFMeshType
+!-------------------------------------------------------------------------------
+!> @brief This routine determines whether a point lies within a 2D mesh cell
+!> @param id The cell id used in the query
+!> @param point The point type to check if it lies inside the cell
+!> @param bool The logical result of this operation.  TRUE if the point is inside.
+!>
+ELEMENTAL FUNCTION pointInsideCell_XDMFMeshType_2D(mesh,id,point) RESULT(bool)
+  CLASS(XDMFMeshType_2D),INTENT(IN) :: mesh
+  INTEGER(SIK),INTENT(IN) :: id
+  TYPE(PointType),INTENT(IN) :: point
+  LOGICAL(SBK) :: bool
+  INTEGER(SIK) :: xdmfid, npoints
+  TYPE(PointType), ALLOCATABLE :: points(:)
+  TYPE(Triangle_2D) :: tri
+  TYPE(Triangle6_2D) :: tri6
+  TYPE(Quadrilateral_2D) :: quad
+  TYPE(Quadrilateral8_2D) :: quad8
+
+  xdmfid = mesh%cells(id)%point_list(1)
+  npoints = SIZE(mesh%cells(id)%point_list) - 1
+  ALLOCATE(points(npoints))
+  points = mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1))
+  SELECT CASE (xdmfid)
+  CASE(4)! Triangle 
+    CALL tri%set(points)
+    bool = pointInside(tri, point)
+    CALL tri%clear()
+  CASE(5)! Quadrilateral 
+    CALL quad%set(points)
+    bool = pointInside(quad, point)
+    CALL quad%clear()
+  CASE(36)! Triangle6 
+    CALL tri6%set(points)
+    bool = pointInside(tri6, point)
+    CALL tri6%clear()
+  CASE(37)! Quadrilateral8
+    CALL quad8%set(points)
+    bool = pointInside(quad8, point)
+    CALL quad8%clear()
+  CASE DEFAULT ! invalid type. return number that is so wrong, you better realize.
+    bool = .FALSE.
+  ENDSELECT
+ENDFUNCTION pointInsideCell_XDMFMeshType_2D
 #endif
 ENDMODULE XDMFMesh
