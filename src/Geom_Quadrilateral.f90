@@ -83,7 +83,7 @@ ENDSUBROUTINE init_Quadrilateral_2D
 !-------------------------------------------------------------------------------
 !> @brief Clears and resets all values of the quad
 !> @param quad the quad
-PURE SUBROUTINE clear_Quadrilateral_2D(quad)
+ELEMENTAL SUBROUTINE clear_Quadrilateral_2D(quad)
   CLASS(Quadrilateral_2D),INTENT(INOUT) :: quad
   CALL quad%points(1)%clear()
   CALL quad%points(2)%clear()
@@ -91,7 +91,7 @@ PURE SUBROUTINE clear_Quadrilateral_2D(quad)
   CALL quad%points(4)%clear()
 ENDSUBROUTINE clear_Quadrilateral_2D
 
-PURE FUNCTION interpolate_Quadrilateral_2D(quad, r, s) RESULT(p)
+ELEMENTAL FUNCTION interpolate_Quadrilateral_2D(quad, r, s) RESULT(p)
   CLASS(Quadrilateral_2D),INTENT(IN) :: quad
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType) :: p
@@ -101,7 +101,7 @@ PURE FUNCTION interpolate_Quadrilateral_2D(quad, r, s) RESULT(p)
                   (1.0_SRK - r)*s*quad%points(4)
 ENDFUNCTION interpolate_Quadrilateral_2D
 
-PURE FUNCTION area_Quadrilateral_2D(quad) RESULT(a)
+ELEMENTAL FUNCTION area_Quadrilateral_2D(quad) RESULT(a)
   CLASS(Quadrilateral_2D),INTENT(IN) :: quad
   TYPE(Triangle_2D) ::t1, t2 
   REAL(SRK) :: a
@@ -111,7 +111,7 @@ PURE FUNCTION area_Quadrilateral_2D(quad) RESULT(a)
   a = a + area(t2)
 ENDFUNCTION area_Quadrilateral_2D
 
-PURE FUNCTION pointInside_Quadrilateral_2D(quad, p) RESULT(bool)
+ELEMENTAL FUNCTION pointInside_Quadrilateral_2D(quad, p) RESULT(bool)
   CLASS(Quadrilateral_2D),INTENT(IN) :: quad
   TYPE(PointType),INTENT(IN) :: p
   TYPE(Triangle_2D) ::t1, t2 

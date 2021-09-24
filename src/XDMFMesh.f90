@@ -96,10 +96,10 @@ TYPE :: XDMFMeshType_2D
     PROCEDURE,PASS :: clear => clear_XDMFMeshType_2D
     !> @copybrief XDMFMeshType::getPoints_XDMFMeshType_2D
     !> @copydoc XDMFMeshType::getPoints_XDMFMeshType_2D
-!    PROCEDURE,PASS :: getPoints => getPoints_XDMFMeshType_2D
-!    !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType_2D
-!    !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType_2D
-!    PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType_2D
+    PROCEDURE,PASS :: getPoints => getPoints_XDMFMeshType_2D
+    !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType_2D
+    !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType_2D
+    PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType_2D
 !    !> @copybrief XDMFMeshType::pointInsideCell_XDMFMeshType
 !    !> @copydoc XDMFMeshType::pointInsideCell_XDMFMeshType
 !    PROCEDURE,PASS :: pointInsideCell => pointInsideCell_XDMFMeshType
@@ -217,31 +217,64 @@ SUBROUTINE assign_XDMFMeshType_2D(thismesh, thatmesh)
 ENDSUBROUTINE assign_XDMFMeshType_2D
 !
 !-------------------------------------------------------------------------------
-!> @brief Returns the area of cell iCell.
+!> @brief Returns the points associated with an array of IDs.
 !> @param mesh the XMDF mesh
-!> @param iCell the index of the cell in mesh%cells
+!> @param ids the index of the point in mesh%points
 !> @returns cell area
 !>
-! ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
-!   CLASS(XDMFMeshType), INTENT(IN) :: mesh
-!   INTEGER(SIK), INTENT(IN) :: iCell
-!   REAL(SRK) :: area
-!   INTEGER(SIK) :: xid, nverts
-!   TYPE(Triangle_2D) :: tri
-!   TYPE(Triangle6_2D) :: tri6
-!   TYPE(Quadrilateral_2D) :: quad
-!   TYPE(Quadrilateral8_2D) :: quad8
-! 
-!   a = 0.0_SRK
-!   xid = mesh%cells(iCell)%point_list(1)
-!   nverts = SIZE(mesh%cells(iCell)%point_list) - 1
-!   IF(xid == 4) THEN ! Triangle 
-!     CALL tri%set(
-!     a = area(
-!   ELSE ! invalid type. return number that is so wrong, you better realize.
-!     area = -HUGE(1.0_SRK)
-!   ENDIF
-! ENDFUNCTION
+PURE FUNCTION getPoints_XDMFMeshType_2D(mesh, ids) RESULT(points)
+  CLASS(XDMFMeshType_2D), INTENT(IN) :: mesh
+  INTEGER(SIK), INTENT(IN) :: ids(:)
+  TYPE(PointType), ALLOCATABLE :: points(:)
+  INTEGER(SIK) :: i
+  
+  ALLOCATE(points(SIZE(ids)))
+  FORALL (i=1:SIZE(ids)) points(i) = mesh%points(ids(i))
+ENDFUNCTION
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the area of cell id.
+!> @param mesh the XMDF mesh
+!> @param id the index of the cell in mesh%cells
+!> @returns cell area
+!>
+ELEMENTAL FUNCTION getCellArea_XDMFMeshType_2D(mesh, id) RESULT(a)
+  CLASS(XDMFMeshType_2D), INTENT(IN) :: mesh
+  INTEGER(SIK), INTENT(IN) :: id
+  REAL(SRK) :: a
+  INTEGER(SIK) :: xdmfid, npoints
+  TYPE(PointType), ALLOCATABLE :: points(:)
+  TYPE(Triangle_2D) :: tri
+  TYPE(Triangle6_2D) :: tri6
+  TYPE(Quadrilateral_2D) :: quad
+  TYPE(Quadrilateral8_2D) :: quad8
+
+  a = 0.0_SRK
+  xdmfid = mesh%cells(id)%point_list(1)
+  npoints = SIZE(mesh%cells(id)%point_list) - 1
+  ALLOCATE(points(npoints))
+  points = mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1))
+  SELECT CASE (xdmfid)
+  CASE(4)! Triangle 
+    CALL tri%set(points)
+    a = area(tri)
+    CALL tri%clear()
+  CASE(5)! Quadrilateral 
+    CALL quad%set(points)
+    a = area(quad)
+    CALL quad%clear()
+  CASE(36)! Triangle6 
+    CALL tri6%set(points)
+    a = area(tri6)
+    CALL tri6%clear()
+  CASE(37)! Quadrilateral8
+    CALL quad8%set(points)
+    a = area(quad8)
+    CALL quad8%clear()
+  CASE DEFAULT ! invalid type. return number that is so wrong, you better realize.
+    a = -HUGE(1.0_SRK)
+  ENDSELECT
+ENDFUNCTION
 !!
 !!-------------------------------------------------------------------------------
 !!> @brief This routine determines whether a point lies within a 2D mesh cell

@@ -105,7 +105,7 @@ ENDSUBROUTINE init_Triangle6_2D
 !-------------------------------------------------------------------------------
 !> @brief Clears and resets all values of the tri
 !> @param tri the tri
-PURE SUBROUTINE clear_Triangle6_2D(tri)
+ELEMENTAL SUBROUTINE clear_Triangle6_2D(tri)
   CLASS(Triangle6_2D),INTENT(INOUT) :: tri
   CALL tri%points(1)%clear()
   CALL tri%points(2)%clear()
@@ -115,7 +115,7 @@ PURE SUBROUTINE clear_Triangle6_2D(tri)
   CALL tri%points(6)%clear()
 ENDSUBROUTINE clear_Triangle6_2D
 
-PURE FUNCTION interpolate_Triangle6_2D(tri, r, s) RESULT(p)
+ELEMENTAL FUNCTION interpolate_Triangle6_2D(tri, r, s) RESULT(p)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType) :: p
@@ -128,7 +128,7 @@ PURE FUNCTION interpolate_Triangle6_2D(tri, r, s) RESULT(p)
 
 ENDFUNCTION interpolate_Triangle6_2D
 
-PURE SUBROUTINE derivative_Triangle6_2D(tri, r, s, dr, ds)
+ELEMENTAL SUBROUTINE derivative_Triangle6_2D(tri, r, s, dr, ds)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType), INTENT(INOUT) :: dr, ds
@@ -158,7 +158,7 @@ PURE SUBROUTINE derivative_Triangle6_2D(tri, r, s, dr, ds)
 ENDSUBROUTINE derivative_Triangle6_2D
 
 
-PURE FUNCTION area_Triangle6_2D(tri) RESULT(a)
+ELEMENTAL FUNCTION area_Triangle6_2D(tri) RESULT(a)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   TYPE(PointType) :: dr, ds
   REAL(SRK) :: a
@@ -218,7 +218,7 @@ PURE FUNCTION area_Triangle6_2D(tri) RESULT(a)
   ENDDO
 ENDFUNCTION area_Triangle6_2D
 
-PURE FUNCTION real_to_parametric_Triangle6_2D(tri, p) RESULT(p_out)
+ELEMENTAL FUNCTION real_to_parametric_Triangle6_2D(tri, p) RESULT(p_out)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   TYPE(PointType),INTENT(IN) :: p
   TYPE(PointType) :: p_out, err1, err2, dr, ds
@@ -248,7 +248,7 @@ PURE FUNCTION real_to_parametric_Triangle6_2D(tri, p) RESULT(p_out)
 ENDFUNCTION real_to_parametric_Triangle6_2D
 
 
-PURE FUNCTION pointInside_Triangle6_2D(tri, p) RESULT(bool)
+ELEMENTAL FUNCTION pointInside_Triangle6_2D(tri, p) RESULT(bool)
   CLASS(Triangle6_2D),INTENT(IN) :: tri
   TYPE(PointType),INTENT(IN) :: p
   TYPE(PointType) :: p_rs

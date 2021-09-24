@@ -79,14 +79,14 @@ ENDSUBROUTINE init_Triangle_2D
 !-------------------------------------------------------------------------------
 !> @brief Clears and resets all values of the tri
 !> @param tri the tri
-PURE SUBROUTINE clear_Triangle_2D(tri)
+ELEMENTAL SUBROUTINE clear_Triangle_2D(tri)
   CLASS(Triangle_2D),INTENT(INOUT) :: tri
   CALL tri%points(1)%clear()
   CALL tri%points(2)%clear()
   CALL tri%points(3)%clear()
 ENDSUBROUTINE clear_Triangle_2D
 
-PURE FUNCTION interpolate_Triangle_2D(tri, r, s) RESULT(p)
+ELEMENTAL FUNCTION interpolate_Triangle_2D(tri, r, s) RESULT(p)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType) :: p
@@ -95,7 +95,7 @@ PURE FUNCTION interpolate_Triangle_2D(tri, r, s) RESULT(p)
                       s*tri%points(3)
 ENDFUNCTION interpolate_Triangle_2D
 
-PURE FUNCTION area_Triangle_2D(tri) RESULT(a)
+ELEMENTAL FUNCTION area_Triangle_2D(tri) RESULT(a)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   TYPE(PointType) :: u,v
   REAL(SRK) :: a
@@ -110,7 +110,7 @@ PURE FUNCTION area_Triangle_2D(tri) RESULT(a)
   a = norm(cross(u, v))/2.0_SRK
 ENDFUNCTION area_Triangle_2D
 
-PURE FUNCTION pointInside_Triangle_2D(tri, p) RESULT(bool)
+ELEMENTAL FUNCTION pointInside_Triangle_2D(tri, p) RESULT(bool)
   CLASS(Triangle_2D),INTENT(IN) :: tri
   TYPE(PointType),INTENT(IN) :: p
   REAL(SRK) :: A1, A2, A3, A

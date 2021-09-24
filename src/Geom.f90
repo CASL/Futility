@@ -20,6 +20,7 @@ USE Geom_QuadraticSegment
 USE Geom_Triangle
 USE Geom_Quadrilateral
 USE Geom_Triangle6
+USE Geom_Quadrilateral8
 USE Geom_Plane
 USE Geom_CircCyl
 USE Geom_Box
@@ -40,6 +41,7 @@ PUBLIC :: QuadraticSegment_2D
 PUBLIC :: Triangle_2D
 PUBLIC :: Quadrilateral_2D
 PUBLIC :: Triangle6_2D
+PUBLIC :: Quadrilateral8_2D
 PUBLIC :: PlaneType
 PUBLIC :: CircleType
 PUBLIC :: CylinderType
@@ -52,6 +54,7 @@ PUBLIC :: interpolate
 PUBLIC :: intersect
 PUBLIC :: ClearLinkedListPointType
 PUBLIC :: Polygonize
+PUBLIC :: area
 PUBLIC :: OPERATOR(+)
 PUBLIC :: OPERATOR(-)
 PUBLIC :: OPERATOR(==)

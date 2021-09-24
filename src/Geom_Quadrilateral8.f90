@@ -107,7 +107,7 @@ ENDSUBROUTINE init_Quadrilateral8_2D
 !-------------------------------------------------------------------------------
 !> @brief Clears and resets all values of the quad
 !> @param quad the quad
-PURE SUBROUTINE clear_Quadrilateral8_2D(quad)
+ELEMENTAL SUBROUTINE clear_Quadrilateral8_2D(quad)
   CLASS(Quadrilateral8_2D),INTENT(INOUT) :: quad
   INTEGER(SIK) :: i
   DO i = 1,8
@@ -115,7 +115,7 @@ PURE SUBROUTINE clear_Quadrilateral8_2D(quad)
   ENDDO
 ENDSUBROUTINE clear_Quadrilateral8_2D
 
-PURE FUNCTION interpolate_Quadrilateral8_2D(quad, r, s) RESULT(p)
+ELEMENTAL FUNCTION interpolate_Quadrilateral8_2D(quad, r, s) RESULT(p)
   CLASS(Quadrilateral8_2D),INTENT(IN) :: quad
   REAL(SRK), INTENT(IN) :: r,s
   REAL(SRK) :: u, v
@@ -134,7 +134,7 @@ PURE FUNCTION interpolate_Quadrilateral8_2D(quad, r, s) RESULT(p)
                         ((1.0_SRK - v**2)*(1.0_SRK - u)/2.0_SRK)*quad%points(8)
 ENDFUNCTION interpolate_Quadrilateral8_2D
 
-PURE SUBROUTINE derivative_Quadrilateral8_2D(quad, r, s, dr, ds)
+ELEMENTAL SUBROUTINE derivative_Quadrilateral8_2D(quad, r, s, dr, ds)
   CLASS(Quadrilateral8_2D),INTENT(IN) :: quad
   REAL(SRK), INTENT(IN) :: r,s
   TYPE(PointType), INTENT(INOUT) :: dr, ds
@@ -187,7 +187,7 @@ PURE SUBROUTINE derivative_Quadrilateral8_2D(quad, r, s, dr, ds)
   ds = 2.0_SRK*ds
 ENDSUBROUTINE derivative_Quadrilateral8_2D
 
-PURE FUNCTION area_Quadrilateral8_2D(quad) RESULT(a)
+ELEMENTAL FUNCTION area_Quadrilateral8_2D(quad) RESULT(a)
   CLASS(Quadrilateral8_2D),INTENT(IN) :: quad
   TYPE(PointType) :: dr, ds
   REAL(SRK) :: a
@@ -220,7 +220,7 @@ PURE FUNCTION area_Quadrilateral8_2D(quad) RESULT(a)
   ENDDO
 ENDFUNCTION area_Quadrilateral8_2D
 
-PURE FUNCTION real_to_parametric_Quadrilateral8_2D(quad, p) RESULT(p_out)
+ELEMENTAL FUNCTION real_to_parametric_Quadrilateral8_2D(quad, p) RESULT(p_out)
   CLASS(Quadrilateral8_2D),INTENT(IN) :: quad
   TYPE(PointType),INTENT(IN) :: p
   TYPE(PointType) :: p_out, err1, err2, dr, ds
@@ -250,7 +250,7 @@ PURE FUNCTION real_to_parametric_Quadrilateral8_2D(quad, p) RESULT(p_out)
 ENDFUNCTION real_to_parametric_Quadrilateral8_2D
 
 
-PURE FUNCTION pointInside_Quadrilateral8_2D(quad, p) RESULT(bool)
+ELEMENTAL FUNCTION pointInside_Quadrilateral8_2D(quad, p) RESULT(bool)
   CLASS(Quadrilateral8_2D),INTENT(IN) :: quad
   TYPE(PointType),INTENT(IN) :: p
   TYPE(PointType) :: p_rs
