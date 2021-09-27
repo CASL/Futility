@@ -106,11 +106,6 @@ TYPE :: XDMFMeshType_2D
     PROCEDURE,PASS :: pointInsideCell => pointInsideCell_XDMFMeshType_2D
 ENDTYPE XDMFMeshType_2D
 !
-!!> To allow an array of pointers to XDMF meshes
-!TYPE :: XDMFMeshPtrArry
-!  TYPE(XDMFMeshType), POINTER :: mesh => NULL()
-!ENDTYPE XDMFMeshPtrArry
-!
 !> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
   !> @copybrief XDMFMeshType::assign_XDMFMeshType_2D

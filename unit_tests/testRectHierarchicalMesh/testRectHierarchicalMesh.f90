@@ -201,12 +201,12 @@ INTEGER(SIK) :: two_pins_pin1_material_ids(46) = (/ &
 !
 CREATE_TEST('RECTANGULAR HIERARCHICAL MESH')
 REGISTER_SUBTEST('CLEAR', testClear)
-!REGISTER_SUBTEST('NON-RECURSIVE CLEAR', testNonRecursiveClear)
-!REGISTER_SUBTEST('ASSIGNMENT', testAssign)
-!REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
-!REGISTER_SUBTEST('GET N NODES AT DEPTH', testGetNNodesAtDepth)
-!REGISTER_SUBTEST('GET N LEAVES', testGetNLeaves)
-!REGISTER_SUBTEST('GET NODES AT DEPTH', testGetNodesAtDepth)
+REGISTER_SUBTEST('NON-RECURSIVE CLEAR', testNonRecursiveClear)
+REGISTER_SUBTEST('ASSIGNMENT', testAssign)
+REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
+REGISTER_SUBTEST('GET N NODES AT DEPTH', testGetNNodesAtDepth)
+REGISTER_SUBTEST('GET N LEAVES', testGetNLeaves)
+REGISTER_SUBTEST('GET NODES AT DEPTH', testGetNodesAtDepth)
 !REGISTER_SUBTEST('GET LEAVES', testGetLeaves)
 !REGISTER_SUBTEST('GET CELL AREA', testGetCellArea)
 !REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
@@ -297,301 +297,265 @@ SUBROUTINE testClear()
   ENDDO
   NULLIFY(pin1)
 ENDSUBROUTINE testClear
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testNonRecursiveClear()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: pin1 => NULL()
-!  INTEGER(SIK) :: i,j
 !
-!  CALL setup_pin1(mesh)
-!  pin1 => mesh%children(1)
+!-------------------------------------------------------------------------------
+SUBROUTINE testNonRecursiveClear()
+  TYPE(RectHierarchicalMeshType) :: RHM
+  TYPE(RectHierarchicalMeshType),POINTER :: pin1 => NULL()
+  INTEGER(SIK) :: i,j
+
+  CALL setup_pin1(RHM)
+  pin1 => RHM%children(1)
+
+  CALL RHM%nonRecursiveClear()
+  ASSERT(RHM%mesh%name == "", "RHM mesh name is incorrect")
+  ASSERT(pin1%mesh%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
+  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  !     pin1 vertices
+  ASSERT(ALLOCATED(pin1%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(pin1%mesh%points)==109, "Wrong number of vertices")
+  DO i=1,109
+    DO j=1,2
+      ASSERT( (ABS(pin1%mesh%points(i)%coord(j) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal points")
+    ENDDO
+  ENDDO
+  !     pin1 cells
+  ASSERT(ALLOCATED(pin1%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(pin1%mesh%cells)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT(SIZE(pin1%mesh%cells(i)%point_list)==7, "Wrong size for vertex list")
+    ASSERT( pin1%mesh%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%mesh%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  !     pin1 material_ids
+  ASSERT(ALLOCATED(pin1%mesh%material_ids), "material_ids not allocated")
+  ASSERT(SIZE(pin1%mesh%material_ids)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT( pin1%mesh%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+  ENDDO
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%mesh%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%mesh%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%mesh%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%mesh%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%mesh%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
+  NULLIFY(pin1)
+  CALL RHM%clear()
+ENDSUBROUTINE testNonRecursiveClear
 !
-!  CALL mesh%nonRecursiveClear()
-!  ! Check that pin1 is not modified
-!  ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
-!  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
-!  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated.")
-!  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
-!  !     pin1 vertices
-!  ASSERT(ALLOCATED(pin1%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(pin1%vertices)==109*3, "Wrong number of vertices")
-!  ASSERT(SIZE(pin1%vertices, DIM=2)==109, "Wrong shape of vertices")
-!  DO i=1,109
-!    DO j=1,3
-!      ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
-!    ENDDO
-!  ENDDO
-!  !     pin1 edges
-!  ASSERT(ALLOCATED(pin1%edges), "Edges not allocated")
-!  !     pin1 cells
-!  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
-!  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT(SIZE(pin1%cells(i)%point_list)==7, "Wrong size for vertex list")
-!    ASSERT( pin1%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
-!    DO j=2,7
-!      ASSERT( pin1%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
-!    ENDDO
-!  ENDDO
-!  !     pin1 material_ids
-!  ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
-!  ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
-!  ENDDO
-!  !     pin1 cell_sets
-!  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
-!  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
-!  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
-!  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
-!  DO i=1,46
-!    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
-!  ENDDO
-!  ! Check that the mesh was cleared
-!  ASSERT(mesh%name == "", "mesh mesh name is incorrect")
-!  ASSERT(mesh%singleTopology == .FALSE., "single topology did not reset")
-!  ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
-!  ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are associated")
-!  ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are associated")
-!  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
-!  ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are associated")
-!  ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are associated")
-!  ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
-!  ASSERT(.NOT.ASSOCIATED(mesh%parent), "Parent is associated")
-!  DO i = 1,4
-!    ASSERT(mesh%boundingBox(i) == 0.0_SDK, "BB not reset")
-!  ENDDO
-!  NULLIFY(pin1)
-!  CALL mesh%clear()
-!ENDSUBROUTINE testNonRecursiveClear
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testAssign()
-!  TYPE(XDMFMeshType) :: mesh1, mesh2
-!  TYPE(XDMFMeshType),POINTER :: pin1
-!  INTEGER(SIK) :: i,j
-!  TYPE(PointType) :: p1, p2, p3
-!  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
-!  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
-!  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK)
+!-------------------------------------------------------------------------------
+SUBROUTINE testAssign()
+  TYPE(RectHierarchicalMeshType) :: mesh1, mesh2
+  TYPE(RectHierarchicalMeshType),POINTER :: pin1
+  INTEGER(SIK) :: i,j
+  TYPE(PointType) :: p1, p2, p3
+  CALL p1%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
+  CALL p2%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
+  CALL p3%init(DIM = 2, X=1.0_SRK, Y=1.0_SRK)
+
+  CALL setup_pin1(mesh1)
+  mesh2 = mesh1
+  pin1 => mesh2%children(1)
+  ASSERT(mesh2%mesh%name == "mesh_domain", "Root mesh name is incorrect")
+  ASSERT(ASSOCIATED(mesh2%children), "Children not associated")
+  ASSERT(SIZE(mesh2%children)==1, "Wrong number of children")
+  ASSERT(ALLOCATED(mesh2%map), "Map is not allocated.")
+  ASSERT(SIZE(mesh2%map) == 1, "Map is wrong size.")
+  ASSERT( (ABS(mesh2%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(mesh2%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(mesh2%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(mesh2%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+
+  ! Check pin1
+  ASSERT(pin1%mesh%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated.")
+  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ASSERT(pin1%parent%mesh%name == "mesh_domain", "pin1 parent name is incorrect")
+  ASSERT(ALLOCATED(pin1%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(pin1%mesh%points)==109, "Wrong number of vertices")
+  DO i=1,109
+    DO j=1,2
+      ASSERT( (ABS(pin1%mesh%points(i)%coord(j) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal points")
+    ENDDO
+  ENDDO
+  !     pin1 cells
+  ASSERT(ALLOCATED(pin1%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(pin1%mesh%cells)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT(SIZE(pin1%mesh%cells(i)%point_list)==7, "Wrong size for vertex list")
+    ASSERT( pin1%mesh%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%mesh%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  !     pin1 material_ids
+  ASSERT(ALLOCATED(pin1%mesh%material_ids), "material_ids not allocated")
+  ASSERT(SIZE(pin1%mesh%material_ids)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT( pin1%mesh%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+  ENDDO
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%mesh%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%mesh%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%mesh%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%mesh%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%mesh%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
+
+  NULLIFY(pin1)
+  CALL mesh1%clear()
+  CALL mesh2%clear()
+ENDSUBROUTINE testAssign
 !
-!  CALL setup_pin1(mesh1)
-!  mesh2 = mesh1
-!  pin1 => mesh2%children(1)
-!  ASSERT(mesh2%name == "mesh_domain", "Root mesh name is incorrect")
-!  ASSERT(ASSOCIATED(mesh2%children), "Children not associated")
-!  ASSERT(SIZE(mesh2%children)==1, "Wrong number of children")
-!  ASSERT(mesh2%singleTopology == .FALSE., "mesh2 is single topology")
-!  ASSERT(ALLOCATED(mesh2%map), "Map is not allocated.")
-!  ASSERT(SIZE(mesh2%map) == 1, "Map is wrong size.")
-!  ASSERT( (ABS(mesh2%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(mesh2%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(mesh2%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(mesh2%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+!-------------------------------------------------------------------------------
+SUBROUTINE testDistanceToLeaf()
+  TYPE(RectHierarchicalMeshType) :: mesh
+  TYPE(RectHierarchicalMeshType),POINTER :: pin1
+  INTEGER(SIK) :: i
+
+  CALL setup_pin1(mesh)
+  pin1 => mesh%children(1)
+
+  i = mesh%distanceToLeaf()
+  ASSERT(i == 1, "Distance to leaf is incorrect")
+  i = pin1%distanceToLeaf()
+  ASSERT(i == 0, "Distance to leaf is incorrect")
+
+  ! Give the leaf a child, making distance to leaf greater by 1
+  ALLOCATE(pin1%children(1))
+  i = mesh%distanceToLeaf()
+  ASSERT(i == 2, "Distance to leaf is incorrect")
+  i = pin1%distanceToLeaf()
+  ASSERT(i == 1, "Distance to leaf is incorrect")
+
+  CALL mesh%clear()
+  NULLIFY(pin1)
+ENDSUBROUTINE testDistanceToLeaf
 !
-!  ! Check pin1
-!  ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
-!  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
-!  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated.")
-!  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
-!  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ASSERT(pin1%parent%name == "mesh_domain", "pin1 parent name is incorrect")
-!  ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
-!  !     pin1 vertices
-!  ASSERT(ALLOCATED(pin1%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(pin1%vertices)==109*3, "Wrong number of vertices")
-!  ASSERT(SIZE(pin1%vertices, DIM=2)==109, "Wrong shape of vertices")
-!  DO i=1,109
-!    DO j=1,3
-!      ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
-!    ENDDO
-!  ENDDO
-!  !     pin1 edges
-!  ASSERT(ALLOCATED(pin1%edges), "Edges not allocated")
-!  ASSERT(SIZE(pin1%edges)==1, "Wrong number of edges")
-!  ASSERT(.NOT.pin1%edges(1)%isLinear, "isLinear is wrong")
-!  ASSERT(pin1%edges(1)%cells(1) == 14, "cells value is wrong")
-!  ASSERT(pin1%edges(1)%cells(2) == 14, "cells value is wrong")
-!  ASSERT(pin1%edges(1)%vertices(1) == 14, "vertex value is wrong")
-!  ASSERT(pin1%edges(1)%vertices(2) == 14, "vertex value is wrong")
-!  ASSERT(pin1%edges(1)%vertices(3) == 14, "vertex value is wrong")
-!  ASSERT(pin1%edges(1)%quad%points(1) == p1, "point is wrong")
-!  ASSERT(pin1%edges(1)%quad%points(2) == p2, "point is wrong")
-!  ASSERT(pin1%edges(1)%quad%points(3) == p3, "point is wrong")
-!  ASSERT(pin1%edges(1)%line%p1 == p1, "point is wrong")
-!  ASSERT(pin1%edges(1)%line%p2 == p2, "point is wrong")
+!-------------------------------------------------------------------------------
+SUBROUTINE testGetNNodesAtDepth
+  TYPE(RectHierarchicalMeshType) :: mesh
+  TYPE(RectHierarchicalMeshType),POINTER :: sub
+  INTEGER(SIK) :: i
+
+  ! Create a mesh with three children
+  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
+  ! Total leaves = 6
+  ALLOCATE(mesh%children(3))
+  sub => mesh%children(1)
+  ALLOCATE(sub%children(1))
+  sub => mesh%children(2)
+  ALLOCATE(sub%children(2))
+  sub => mesh%children(3)
+  ALLOCATE(sub%children(3))
+
+  i = mesh%getNNodesAtDepth(0)
+  ASSERT(i == 1, "NNodes should be 1!")
+  i = mesh%getNNodesAtDepth(1)
+  ASSERT(i == 3, "NNodes should be 3!")
+  i = mesh%getNNodesAtDepth(2)
+  ASSERT(i == 6, "NNodes should be 6!")
+
+  CALL mesh%clear()
+  NULLIFY(sub)
+ENDSUBROUTINE testGetNNodesAtDepth
 !
-!  !     pin1 cells
-!  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
-!  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT(SIZE(pin1%cells(i)%point_list)==7, "Wrong size for vertex list")
-!    ASSERT( pin1%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
-!    DO j=2,7
-!      ASSERT( pin1%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
-!    ENDDO
-!  ENDDO
-!  !     pin1 material_ids
-!  ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
-!  ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
-!  ENDDO
-!  !     pin1 cell_sets
-!  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
-!  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
-!  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
-!  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
-!  DO i=1,46
-!    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
-!  ENDDO
+!-------------------------------------------------------------------------------
+SUBROUTINE testGetNLeaves()
+  TYPE(RectHierarchicalMeshType) :: mesh
+  TYPE(RectHierarchicalMeshType),POINTER :: sub
+  INTEGER(SIK) :: i
+
+  ! Create a mesh with three children
+  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
+  ! Total leaves = 6
+  ALLOCATE(mesh%children(3))
+  sub => mesh%children(1)
+  ALLOCATE(sub%children(1))
+  sub => mesh%children(2)
+  ALLOCATE(sub%children(2))
+  sub => mesh%children(3)
+  ALLOCATE(sub%children(3))
+
+  i = mesh%getNLeaves()
+  ASSERT(i == 6, "NLeaves should be 6!")
+  sub => mesh%children(1)
+  i = sub%getNLeaves()
+  ASSERT(i == 1, "NLeaves should be 1!")
+  sub => mesh%children(3)
+  i = sub%getNLeaves()
+  ASSERT(i == 3, "NLeaves should be 3!")
+
+  CALL mesh%clear()
+  NULLIFY(sub)
+ENDSUBROUTINE testGetNLeaves
 !
-!  NULLIFY(pin1)
-!  CALL mesh1%clear()
-!  CALL mesh2%clear()
-!ENDSUBROUTINE testAssign
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testDistanceToLeaf()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: pin1
-!  INTEGER(SIK) :: i
-!
-!  CALL setup_pin1(mesh)
-!  pin1 => mesh%children(1)
-!
-!  i = mesh%distanceToLeaf()
-!  ASSERT(i == 1, "Distance to leaf is incorrect")
-!  i = pin1%distanceToLeaf()
-!  ASSERT(i == 0, "Distance to leaf is incorrect")
-!
-!  ! Give the leaf a child, making distance to leaf greater by 1
-!  ALLOCATE(pin1%children(1))
-!  i = mesh%distanceToLeaf()
-!  ASSERT(i == 2, "Distance to leaf is incorrect")
-!  i = pin1%distanceToLeaf()
-!  ASSERT(i == 1, "Distance to leaf is incorrect")
-!
-!  CALL mesh%clear()
-!  NULLIFY(pin1)
-!ENDSUBROUTINE testDistanceToLeaf
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testGetNNodesAtDepth
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: sub
-!  INTEGER(SIK) :: i
-!
-!  ! Create a mesh with three children
-!  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
-!  ! Total leaves = 6
-!  ALLOCATE(mesh%children(3))
-!  sub => mesh%children(1)
-!  ALLOCATE(sub%children(1))
-!  sub => mesh%children(2)
-!  ALLOCATE(sub%children(2))
-!  sub => mesh%children(3)
-!  ALLOCATE(sub%children(3))
-!
-!  i = mesh%getNNodesAtDepth(0)
-!  ASSERT(i == 1, "NNodes should be 1!")
-!  i = mesh%getNNodesAtDepth(1)
-!  ASSERT(i == 3, "NNodes should be 3!")
-!  i = mesh%getNNodesAtDepth(2)
-!  ASSERT(i == 6, "NNodes should be 6!")
-!
-!  CALL mesh%clear()
-!  NULLIFY(sub)
-!ENDSUBROUTINE testGetNNodesAtDepth
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testGetNLeaves()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: sub
-!  INTEGER(SIK) :: i
-!
-!  ! Create a mesh with three children
-!  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
-!  ! Total leaves = 6
-!  ALLOCATE(mesh%children(3))
-!  sub => mesh%children(1)
-!  ALLOCATE(sub%children(1))
-!  sub => mesh%children(2)
-!  ALLOCATE(sub%children(2))
-!  sub => mesh%children(3)
-!  ALLOCATE(sub%children(3))
-!
-!  i = mesh%getNLeaves()
-!  ASSERT(i == 6, "NLeaves should be 6!")
-!  sub => mesh%children(1)
-!  i = sub%getNLeaves()
-!  ASSERT(i == 1, "NLeaves should be 1!")
-!  sub => mesh%children(3)
-!  i = sub%getNLeaves()
-!  ASSERT(i == 3, "NLeaves should be 3!")
-!
-!  CALL mesh%clear()
-!  NULLIFY(sub)
-!ENDSUBROUTINE testGetNLeaves
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testGetNodesAtDepth()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: sub => NULL()
-!  TYPE(XDMFMeshPtrArry), POINTER :: nodes(:) => NULL()
-!  INTEGER(SIK) :: i,j
-!  TYPE(StringType) :: str
-!
-!
-!  ! Create a mesh with three children
-!  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
-!  mesh%name = "L0"
-!  ALLOCATE(mesh%children(3))
-!  DO i = 1,3
-!    sub => mesh%children(i)
-!    str = i
-!    sub%name = "L1_"//str
-!    ALLOCATE(sub%children(i))
-!    DO j = 1,i
-!      sub%children(j)%name = i
-!    ENDDO
-!  ENDDO
-!
-!  CALL mesh%getNodesAtDepth(nodes, 0)
-!  ASSERT(SIZE(nodes) == 1, "There should be 1 node!")
-!  ASSERT(nodes(1)%mesh%name == "L0", "Wrong name")
-!
-!  CALL mesh%getNodesAtDepth(nodes, 1)
-!  ASSERT(SIZE(nodes) == 3, "There should be 3 nodes!")
-!  DO i = 1,3
-!    str = i
-!    ASSERT(nodes(i)%mesh%name == "L1_"//str, "Wrong name")
-!  ENDDO
-!
-!  CALL mesh%getNodesAtDepth(nodes, 2)
-!  ASSERT(SIZE(nodes) == 6, "There should be 6 nodes!")
-!  str = 1
-!  ASSERT(nodes(1)%mesh%name == str, "Wrong name")
-!  str = 2
-!  ASSERT(nodes(2)%mesh%name == str, "Wrong name")
-!  ASSERT(nodes(3)%mesh%name == str, "Wrong name")
-!  str = 3
-!  ASSERT(nodes(4)%mesh%name == str, "Wrong name")
-!  ASSERT(nodes(5)%mesh%name == str, "Wrong name")
-!  ASSERT(nodes(6)%mesh%name == str, "Wrong name")
-!
-!  CALL mesh%clear()
-!  NULLIFY(sub)
-!  DEALLOCATE(nodes)
-!ENDSUBROUTINE testGetNodesAtDepth
+!-------------------------------------------------------------------------------
+SUBROUTINE testGetNodesAtDepth()
+  TYPE(RectHierarchicalMeshType) :: RHM
+  TYPE(RectHierarchicalMeshType),POINTER :: sub => NULL()
+  TYPE(RectHierarchicalMeshTypePtrArry), POINTER :: nodes(:) => NULL()
+  INTEGER(SIK) :: i,j
+  TYPE(StringType) :: str
+
+
+  ! Create a mesh with three children
+  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
+  RHM%mesh%name = "L0"
+  ALLOCATE(RHM%children(3))
+  DO i = 1,3
+    sub => RHM%children(i)
+    str = i
+    sub%mesh%name = "L1_"//str
+    ALLOCATE(sub%children(i))
+    DO j = 1,i
+      sub%children(j)%mesh%name = i
+    ENDDO
+  ENDDO
+
+  CALL RHM%getNodesAtDepth(nodes, 0)
+  ASSERT(SIZE(nodes) == 1, "There should be 1 node!")
+  ASSERT(nodes(1)%RHM%mesh%name == "L0", "Wrong name")
+
+  CALL RHM%getNodesAtDepth(nodes, 1)
+  ASSERT(SIZE(nodes) == 3, "There should be 3 nodes!")
+  DO i = 1,3
+    str = i
+    ASSERT(nodes(i)%RHM%mesh%name == "L1_"//str, "Wrong name")
+  ENDDO
+
+  CALL RHM%getNodesAtDepth(nodes, 2)
+  ASSERT(SIZE(nodes) == 6, "There should be 6 nodes!")
+  str = 1
+  ASSERT(nodes(1)%RHM%mesh%name == str, "Wrong name")
+  str = 2
+  ASSERT(nodes(2)%RHM%mesh%name == str, "Wrong name")
+  ASSERT(nodes(3)%RHM%mesh%name == str, "Wrong name")
+  str = 3
+  ASSERT(nodes(4)%RHM%mesh%name == str, "Wrong name")
+  ASSERT(nodes(5)%RHM%mesh%name == str, "Wrong name")
+  ASSERT(nodes(6)%RHM%mesh%name == str, "Wrong name")
+
+  CALL RHM%clear()
+  NULLIFY(sub)
+  DEALLOCATE(nodes)
+ENDSUBROUTINE testGetNodesAtDepth
 !!
 !!-------------------------------------------------------------------------------
 !SUBROUTINE testGetLeaves()
@@ -1146,9 +1110,9 @@ SUBROUTINE test_import_two_pins()
   ASSERT(RHM%mesh%name == "mesh_domain", "Root mesh name is incorrect")
   ASSERT(ASSOCIATED(RHM%children), "Children not associated")
   ASSERT(SIZE(RHM%children)==2, "Wrong number of children")
-!  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
-!  ASSERT(SIZE(mesh%map, DIM=1) == 2, "Map is wrong size")
-!  ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
+  ASSERT(ALLOCATED(RHM%map), "Map is not allocated")
+  ASSERT(SIZE(RHM%map, DIM=1) == 2, "Map is wrong size")
+  ASSERT(SIZE(RHM%map, DIM=2) == 1, "Map is wrong size")
   ASSERT( (ABS(RHM%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
   ASSERT( (ABS(RHM%bb%points(3)%coord(1) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
   ASSERT( (ABS(RHM%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")

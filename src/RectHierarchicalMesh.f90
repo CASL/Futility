@@ -33,6 +33,7 @@ PRIVATE
 #ifdef FUTILITY_HAVE_HDF5
 ! Public members
 PUBLIC :: RectHierarchicalMeshType
+PUBLIC :: RectHierarchicalMeshTypePtrArry
 PUBLIC :: ImportRectXDMFMesh
 !PUBLIC :: ExportXDMFMesh
 PUBLIC :: ASSIGNMENT(=)
@@ -65,44 +66,52 @@ TYPE :: RectHierarchicalMeshType
     !> @copybrief RectHierarchicalMeshType::clear_RectHierarchicalMeshType
     !> @copydoc RectHierarchicalMeshType::clear_RectHierarchicalMeshType
     PROCEDURE,PASS :: clear => clear_RectHierarchicalMeshType
-!    !> @copybrief XDMFMeshType::nonRecusriveClear_XDMFMeshType
-!    !> @copydoc XDMFMeshType::nonRecursiveClear_XDMFMeshType
-!    PROCEDURE,PASS :: nonRecursiveClear => nonRecursiveClear_XDMFMeshType
-!    !> @copybrief XDMFMeshType::distanceToLeaf_XDMFMeshType
-!    !> @copydoc XDMFMeshType::distanceToLeaf_XDMFMeshType
-!    PROCEDURE,PASS :: distanceToLeaf => distanceToLeaf_XDMFMeshType
-    !> @copybrief XDMFMeshType::recomputeBoundingBox_RectHierarchicalMeshType
-    !> @copydoc XDMFMeshType::recomputeBoundingBox_RectHierarchicalMeshType
+    !> @copybrief RectHierarchicalMeshType::nonRecusriveClear_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::nonRecursiveClear_RectHierarchicalMeshType
+    PROCEDURE,PASS :: nonRecursiveClear => &
+    nonRecursiveClear_RectHierarchicalMeshType
+    !> @copybrief RectHierarchicalMeshType::distanceToLeaf_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::distanceToLeaf_RectHierarchicalMeshType
+    PROCEDURE,PASS :: distanceToLeaf => distanceToLeaf_RectHierarchicalMeshType
+    !> @copybrief RectHierarchicalMeshType::recomputeBoundingBox_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::recomputeBoundingBox_RectHierarchicalMeshType
     PROCEDURE,PASS :: recomputeBoundingBox => &
     recomputeBoundingBox_RectHierarchicalMeshType
-!    !> @copybrief XDMFMeshType::setupRectangularMap_XDMFMeshType
-!    !> @copydoc XDMFMeshType::setupRectangularMap_XDMFMeshType
-!    PROCEDURE,PASS :: setupRectangularMap => setupRectangularMap_XDMFMeshType
-!    !> @copybrief XDMFMeshType::setupEdges_XDMFMeshType
-!    !> @copydoc XDMFMeshType::setupEdges_XDMFMeshType
-!    PROCEDURE,PASS :: setupEdges => setupEdges_XDMFMeshType
-!    !> @copybrief XDMFMeshType::clearEdges_XDMFMeshType
-!    !> @copydoc XDMFMeshType::clearEdges_XDMFMeshType
-!    PROCEDURE,PASS :: clearEdges => clearEdges_XDMFMeshType
-!    !> @copybrief XDMFMeshType::getNLeaves_XDMFMeshType
-!    !> @copydoc XDMFMeshType::getNLeaves_XDMFMeshType
-!    PROCEDURE,PASS :: getNLeaves => getNLeaves_XDMFMeshType
-!    !> @copybrief XDMFMeshType::getLeaves_XDMFMeshType
-!    !> @copydoc XDMFMeshType::getLeaves_XDMFMeshType
-!    PROCEDURE,PASS :: getLeaves => getLeaves_XDMFMeshType
-!    !> @copybrief XDMFMeshType::getNNodesAtDepth_XDMFMeshType
-!    !> @copydoc XDMFMeshType::getNNodesAtDepth_XDMFMeshType
-!    PROCEDURE,PASS :: getNNodesAtDepth => getNNodesAtDepth_XDMFMeshType
-!    !> @copybrief XDMFMeshType::getNodesAtDepth_XDMFMeshType
-!    !> @copydoc XDMFMeshType::getNodesAtDepth_XDMFMeshType
-!    PROCEDURE,PASS :: getNodesAtDepth => getNodesAtDepth_XDMFMeshType
-!    !> @copybrief XDMFMeshType::getCellArea_XDMFMeshType
-!    !> @copydoc XDMFMeshType::getCellArea_XDMFMeshType
-!    PROCEDURE,PASS :: getCellArea => getCellArea_XDMFMeshType
-!    !> @copybrief XDMFMeshType::pointInsideCell_XDMFMeshType
-!    !> @copydoc XDMFMeshType::pointInsideCell_XDMFMeshType
-!    PROCEDURE,PASS :: pointInsideCell => pointInsideCell_XDMFMeshType
+    !> @copybrief RectHierarchicalMeshType::setupRectangularMap_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::setupRectangularMap_RectHierarchicalMeshType
+    PROCEDURE,PASS :: setupRectangularMap => &
+    setupRectangularMap_RectHierarchicalMeshType
+!    !> @copybrief RectHierarchicalMeshType::setupEdges_RectHierarchicalMeshType
+!    !> @copydoc RectHierarchicalMeshType::setupEdges_RectHierarchicalMeshType
+!    PROCEDURE,PASS :: setupEdges => setupEdges_RectHierarchicalMeshType
+!    !> @copybrief RectHierarchicalMeshType::clearEdges_RectHierarchicalMeshType
+!    !> @copydoc RectHierarchicalMeshType::clearEdges_RectHierarchicalMeshType
+!    PROCEDURE,PASS :: clearEdges => clearEdges_RectHierarchicalMeshType
+    !> @copybrief RectHierarchicalMeshType::getNLeaves_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::getNLeaves_RectHierarchicalMeshType
+    PROCEDURE,PASS :: getNLeaves => getNLeaves_RectHierarchicalMeshType
+!    !> @copybrief RectHierarchicalMeshType::getLeaves_RectHierarchicalMeshType
+!    !> @copydoc RectHierarchicalMeshType::getLeaves_RectHierarchicalMeshType
+!    PROCEDURE,PASS :: getLeaves => getLeaves_RectHierarchicalMeshType
+    !> @copybrief RectHierarchicalMeshType::getNNodesAtDepth_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::getNNodesAtDepth_RectHierarchicalMeshType
+    PROCEDURE,PASS :: getNNodesAtDepth => &
+    getNNodesAtDepth_RectHierarchicalMeshType
+    !> @copybrief RectHierarchicalMeshType::getNodesAtDepth_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::getNodesAtDepth_RectHierarchicalMeshType
+    PROCEDURE,PASS :: getNodesAtDepth => getNodesAtDepth_RectHierarchicalMeshType
+!    !> @copybrief RectHierarchicalMeshType::getCellArea_RectHierarchicalMeshType
+!    !> @copydoc RectHierarchicalMeshType::getCellArea_RectHierarchicalMeshType
+!    PROCEDURE,PASS :: getCellArea => getCellArea_RectHierarchicalMeshType
+!    !> @copybrief RectHierarchicalMeshType::pointInsideCell_RectHierarchicalMeshType
+!    !> @copydoc RectHierarchicalMeshType::pointInsideCell_RectHierarchicalMeshType
+!    PROCEDURE,PASS :: pointInsideCell => pointInsideCell_RectHierarchicalMeshType
 ENDTYPE RectHierarchicalMeshType
+
+!> To allow an array of pointers to XDMF meshes
+TYPE :: RectHierarchicalMeshTypePtrArry
+  TYPE(RectHierarchicalMeshType), POINTER :: RHM => NULL()
+ENDTYPE RectHierarchicalMeshTypePtrArry
 
 !> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
@@ -656,9 +665,9 @@ SUBROUTINE importRectXDMFMesh(strpath, RHM)
 
   ! Setup bounding boxes
   CALL RHM%recomputeBoundingBox()
-!
-!  ! Setup map
-!  CALL mesh%setupRectangularMap()
+
+  ! Setup map
+  CALL RHM%setupRectangularMap()
 !
 !  ! Setup edges
 !  CALL mesh%setupEdges()
@@ -685,70 +694,48 @@ RECURSIVE SUBROUTINE clear_RectHierarchicalMeshType(thismesh)
     thismesh%children => NULL()
   ENDIF
 ENDSUBROUTINE clear_RectHierarchicalMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Clears the XDMF mesh, without recursing to children
-!!> @param thismesh the XDMF mesh object
-!!>
-!RECURSIVE SUBROUTINE nonRecursiveClear_XDMFMeshType(thismesh)
-!  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-!  INTEGER(SIK) :: i
 !
-!  CALL thismesh%name%clear()
-!  thismesh%singleTopology = .FALSE.
-!  thismesh%boundingBox = 0.0_SDK
-!  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
-!  IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
-!  IF(ASSOCIATED(thismesh%children)) THEN
-!    thismesh%children => NULL()
-!  ENDIF
-!  IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
-!  IF( ALLOCATED(thismesh%edges)) THEN
-!    DO i=1, SIZE(thismesh%edges)
-!      CALL thismesh%edges(i)%quad%clear()
-!      CALL thismesh%edges(i)%line%clear()
-!    ENDDO
-!    DEALLOCATE(thismesh%edges)
-!  ENDIF
-!  IF( ALLOCATED(thismesh%cells) ) THEN
-!    DO i=1, SIZE(thismesh%cells)
-!      DEALLOCATE(thismesh%cells(i)%point_list)
-!      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
-!    ENDDO
-!    DEALLOCATE(thismesh%cells)
-!  ENDIF
-!  IF( ALLOCATED(thismesh%material_ids) ) DEALLOCATE(thismesh%material_ids)
-!  IF( ALLOCATED(thismesh%cell_sets) ) THEN
-!    DO i=1, SIZE(thismesh%cell_sets)
-!      CALL thismesh%cell_sets(i)%name%clear()
-!      DEALLOCATE(thismesh%cell_sets(i)%cell_list)
-!    ENDDO
-!    DEALLOCATE(thismesh%cell_sets)
-!  ENDIF
-!ENDSUBROUTINE nonRecursiveClear_XDMFMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets the number of grid levels to a leaf node
-!!> @param thismesh the XDMF mesh object
-!!> @returns n the number of levels to a leaf node
-!!>
-!RECURSIVE FUNCTION distanceToLeaf_XDMFMeshType(thismesh) RESULT(n)
-!  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-!  INTEGER(SIK) :: n
-!  ! It is assumed that all siblings have children if any sibling has children
-!  ! Hence it is sufficient to assess thismesh%children(1)'s depth recursively
-!  ! Ex:     Possible                Not Possible
-!  !           L1                        L1
-!  !          /  \                      /  \
-!  !      L2_1   L2_2               L2_1   L2_2 <-- Should have children.
-!  !     /  \     |                /  \
-!  ! L3_1  L3_2  L3_3           L3_1  L3_2
-!  IF(ASSOCIATED(thismesh%children))THEN
-!    n = thismesh%children(1)%distanceToLeaf() + 1
-!  ELSE
-!    n = 0
-!  ENDIF
-!ENDFUNCTION distanceToLeaf_XDMFMeshType
+!-------------------------------------------------------------------------------
+!> @brief Clears the RHM, without recursing to children
+!> @param thismesh the RHM object
+!>
+RECURSIVE SUBROUTINE nonRecursiveClear_RectHierarchicalMeshType(thismesh)
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK) :: i
+
+  CALL thismesh%mesh%clear()
+  DO i = 1, 4                          
+    CALL thismesh%bb%points(i)%clear()
+  ENDDO
+  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
+  IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
+  IF(ASSOCIATED(thismesh%children)) THEN
+    thismesh%children => NULL()
+  ENDIF
+ENDSUBROUTINE nonRecursiveClear_RectHierarchicalMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the number of grid levels to a leaf node
+!> @param thismesh the RHM object
+!> @returns n the number of levels to a leaf node
+!>
+RECURSIVE FUNCTION distanceToLeaf_RectHierarchicalMeshType(thismesh) RESULT(n)
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK) :: n
+  ! It is assumed that all siblings have children if any sibling has children
+  ! Hence it is sufficient to assess thismesh%children(1)'s depth recursively
+  ! Ex:     Possible                Not Possible
+  !           L1                        L1
+  !          /  \                      /  \
+  !      L2_1   L2_2               L2_1   L2_2 <-- Should have children.
+  !     /  \     |                /  \
+  ! L3_1  L3_2  L3_3           L3_1  L3_2
+  IF(ASSOCIATED(thismesh%children))THEN
+    n = thismesh%children(1)%distanceToLeaf() + 1
+  ELSE
+    n = 0
+  ENDIF
+ENDFUNCTION distanceToLeaf_RectHierarchicalMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Recompute the bounding box for this mesh and all children.
@@ -824,68 +811,69 @@ RECURSIVE SUBROUTINE assign_RectHierarchicalMeshType(thismesh, thatmesh)
     thismesh%children => thatmesh%children
   ENDIF
 ENDSUBROUTINE assign_RectHierarchicalMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Setup a rectangular map for this mesh and all children.
-!!> @param thismesh the XDMF mesh object
-!!>
-!RECURSIVE SUBROUTINE setupRectangularMap_XDMFMeshType(thismesh)
-!  CHARACTER(LEN=*),PARAMETER :: myName='setupRectangularMap_XDMFMeshType'
-!  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-!  INTEGER(SIK) :: i, xmin, ymin, xmax, ymax, j, x, y
-!  TYPE(StringType) :: meshname, xstr, ystr
-!  TYPE(StringType), ALLOCATABLE :: segments(:)
 !
-!  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
-!  xmin = HUGE(xmin)
-!  ymin = HUGE(ymin)
-!  xmax = -HUGE(xmax)
-!  ymax = -HUGE(ymax)
-!  IF(ASSOCIATED(thismesh%children))THEN
-!    ! Loop through all children names and find the bottom left child
-!    ! and top right child (xmin, ymin) and (xmax, ymax)
-!    DO i = 1, SIZE(thismesh%children)
-!      meshname = thismesh%children(i)%name
-!      segments = meshname%split('_')
-!      xstr = segments(SIZE(segments) - 1)
-!      ystr = segments(SIZE(segments))
-!      x = xstr%stoi()
-!      y = ystr%stoi()
-!      IF(x < xmin) xmin = x
-!      IF(y < ymin) ymin = y
-!      IF(x > xmax) xmax = x
-!      IF(y > ymax) ymax = y
-!    ENDDO
-!    ! Check that the product of the 2D dimensions equals the 1D dimension
-!    IF((xmax - xmin + 1) * (ymax - ymin + 1) /= SIZE(thismesh%children)) &
-!      CALL eRHM%raiseError(modName//'::'//myName//' - the number of '// &
-!      'entries in the map ('//CHAR((xmax - xmin + 1) * (ymax - ymin + 1))// &
-!      ') does not equal the number of children ('//CHAR(SIZE(thismesh%children))// &
-!      '). Are the grid indices correct?')
-!
-!    ALLOCATE(thismesh%map(xmax - xmin + 1, ymax - ymin + 1))
-!    thismesh%map = 0
-!    DO i = 1, SIZE(thismesh%children)
-!      meshname = thismesh%children(i)%name
-!      segments = meshname%split('_')
-!      xstr = segments(SIZE(segments) - 1)
-!      ystr = segments(SIZE(segments))
-!      x = xstr%stoi()
-!      y = ystr%stoi()
-!      thismesh%map(x - xmin + 1, y - ymin + 1) = i
-!    ENDDO
-!    ! Check that all entries are non-zero
-!    DO i = 1, xmax - xmin + 1
-!      DO j = 1, ymax - ymin + 1
-!        IF(thismesh%map(i,j) == 0) CALL eRHM%raiseError(modName//'::'//myName// &
-!          ' - An entry in the map was not assigned! Are grid indices continuous?')
-!      ENDDO
-!    ENDDO
-!    DO i = 1, SIZE(thismesh%children)
-!      CALL thismesh%children(i)%setupRectangularMap()
-!    ENDDO
-!  ENDIF
-!ENDSUBROUTINE setupRectangularMap_XDMFMeshType
+!-------------------------------------------------------------------------------
+!> @brief Setup a rectangular map for this mesh and all children.
+!> @param thismesh the RHM object
+!>
+RECURSIVE SUBROUTINE setupRectangularMap_RectHierarchicalMeshType(thismesh)
+  CHARACTER(LEN=*),PARAMETER :: &
+  myName='setupRectangularMap_RectHierarchicalMeshType'
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK) :: i, xmin, ymin, xmax, ymax, j, x, y
+  TYPE(StringType) :: meshname, xstr, ystr
+  TYPE(StringType), ALLOCATABLE :: segments(:)
+
+  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
+  xmin = HUGE(xmin)
+  ymin = HUGE(ymin)
+  xmax = -HUGE(xmax)
+  ymax = -HUGE(ymax)
+  IF(ASSOCIATED(thismesh%children))THEN
+    ! Loop through all children names and find the bottom left child
+    ! and top right child (xmin, ymin) and (xmax, ymax)
+    DO i = 1, SIZE(thismesh%children)
+      meshname = thismesh%children(i)%mesh%name
+      segments = meshname%split('_')
+      xstr = segments(SIZE(segments) - 1)
+      ystr = segments(SIZE(segments))
+      x = xstr%stoi()
+      y = ystr%stoi()
+      IF(x < xmin) xmin = x
+      IF(y < ymin) ymin = y
+      IF(x > xmax) xmax = x
+      IF(y > ymax) ymax = y
+    ENDDO
+    ! Check that the product of the 2D dimensions equals the 1D dimension
+    IF((xmax - xmin + 1) * (ymax - ymin + 1) /= SIZE(thismesh%children)) &
+      CALL eRHM%raiseError(modName//'::'//myName//' - the number of '// &
+      'entries in the map ('//CHAR((xmax - xmin + 1) * (ymax - ymin + 1))// &
+      ') does not equal the number of children ('//CHAR(SIZE(thismesh%children))// &
+      '). Are the grid indices correct?')
+
+    ALLOCATE(thismesh%map(xmax - xmin + 1, ymax - ymin + 1))
+    thismesh%map = 0
+    DO i = 1, SIZE(thismesh%children)
+      meshname = thismesh%children(i)%mesh%name
+      segments = meshname%split('_')
+      xstr = segments(SIZE(segments) - 1)
+      ystr = segments(SIZE(segments))
+      x = xstr%stoi()
+      y = ystr%stoi()
+      thismesh%map(x - xmin + 1, y - ymin + 1) = i
+    ENDDO
+    ! Check that all entries are non-zero
+    DO i = 1, xmax - xmin + 1
+      DO j = 1, ymax - ymin + 1
+        IF(thismesh%map(i,j) == 0) CALL eRHM%raiseError(modName//'::'//myName// &
+          ' - An entry in the map was not assigned! Are grid indices continuous?')
+      ENDDO
+    ENDDO
+    DO i = 1, SIZE(thismesh%children)
+      CALL thismesh%children(i)%setupRectangularMap()
+    ENDDO
+  ENDIF
+ENDSUBROUTINE setupRectangularMap_RectHierarchicalMeshType 
 !!
 !!-------------------------------------------------------------------------------
 !!> @brief Setup the edges for this mesh and all children.
@@ -1172,83 +1160,83 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    ENDDO
 !  ENDIF
 !ENDSUBROUTINE clearEdges_XDMFMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets the number of leaf nodes in this mesh
-!!> @param thismesh the XDMF mesh object
-!!> @param d the depth
-!!> @returns n the number of nodes
-!!
-!RECURSIVE FUNCTION getNNodesAtDepth_XDMFMeshType(thismesh, d) RESULT(n)
-!  CHARACTER(LEN=*),PARAMETER :: myName='getNNodesAtDepth_XDMFMeshType'
-!  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-!  INTEGER(SIK), INTENT(IN) :: d
-!  INTEGER(SIK) :: n, i, d_relative
-!  n = 0
-!  IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
-!    d_relative = d - 1
-!    DO i=1,SIZE(thismesh%children)
-!      n = n + thismesh%children(i)%getNNodesAtDepth(d_relative)
-!    ENDDO
-!  ELSE
-!    IF(d > 0) CALL eRHM%raiseError(modName//'::'//myName// &
-!      ' - requested depth was greater than actual depth.')
-!    ! If d = 0, it is the desired depth
-!    n = 1
-!  ENDIF
-!ENDFUNCTION getNNodesAtDepth_XDMFMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets the number of leaf nodes in this mesh
-!!> @param thismesh the XDMF mesh object
-!!> @returns n the number of leaf nodes
-!!>
-!RECURSIVE FUNCTION getNLeaves_XDMFMeshType(thismesh) RESULT(n)
-!  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-!  INTEGER(SIK) :: n, d
-!  d = thismesh%distanceToLeaf()
-!  n = thismesh%getNNodesAtDepth(d)
-!ENDFUNCTION getNLeaves_XDMFMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets an array of pointers to the nodes at depth d
-!!> @param thismesh the XDMF mesh object
-!!> @param nodes a pointer to an array of XDMF meshes
-!!> @param d the depth at which the nodes should be retieved
-!!> @returns a pointer array
-!!>
-!RECURSIVE SUBROUTINE getNodesAtDepth_XDMFMeshType(thismesh, nodes, d, idx)
-!  CLASS(XDMFMeshType), INTENT(INOUT), TARGET :: thismesh
-!  TYPE(XDMFMeshPtrArry), INTENT(INOUT), POINTER :: nodes(:)
-!  INTEGER(SIK), INTENT(IN) :: d
-!  INTEGER(SIK), OPTIONAL, INTENT(INOUT) :: idx
-!  INTEGER(SIK) :: n, i, iidx
 !
-!  ! If no idx, assumed to be top level
-!  IF(.NOT.PRESENT(idx))THEN
-!    IF(ASSOCIATED(nodes)) DEALLOCATE(nodes)
-!    NULLIFY(nodes)
-!    n = thismesh%getNNodesAtDepth(d)
-!    ALLOCATE(nodes(n))
-!    iidx = 1
-!    IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
-!      DO i=1,SIZE(thismesh%children)
-!        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, iidx)
-!      ENDDO
-!    ELSE ! leaf
-!      nodes(iidx)%mesh => thismesh
-!    ENDIF
-!  ELSE
-!    IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
-!      DO i=1,SIZE(thismesh%children)
-!        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, idx)
-!      ENDDO
-!    ELSE ! leaf
-!      nodes(idx)%mesh => thismesh
-!      idx = idx + 1
-!    ENDIF
-!  ENDIF
-!ENDSUBROUTINE getNodesAtDepth_XDMFMeshType
+!-------------------------------------------------------------------------------
+!> @brief Gets the number of leaf nodes in this mesh
+!> @param thismesh the XDMF mesh object
+!> @param d the depth
+!> @returns n the number of nodes
+!
+RECURSIVE FUNCTION getNNodesAtDepth_RectHierarchicalMeshType(thismesh, d) RESULT(n)
+  CHARACTER(LEN=*),PARAMETER :: myName='getNNodesAtDepth_RectHierarchicalMeshType'
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK), INTENT(IN) :: d
+  INTEGER(SIK) :: n, i, d_relative
+  n = 0
+  IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
+    d_relative = d - 1
+    DO i=1,SIZE(thismesh%children)
+      n = n + thismesh%children(i)%getNNodesAtDepth(d_relative)
+    ENDDO
+  ELSE
+    IF(d > 0) CALL eRHM%raiseError(modName//'::'//myName// &
+      ' - requested depth was greater than actual depth.')
+    ! If d = 0, it is the desired depth
+    n = 1
+  ENDIF
+ENDFUNCTION getNNodesAtDepth_RectHierarchicalMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets the number of leaf nodes in this mesh
+!> @param thismesh the RHM object
+!> @returns n the number of leaf nodes
+!>
+RECURSIVE FUNCTION getNLeaves_RectHierarchicalMeshType(thismesh) RESULT(n)
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK) :: n, d
+  d = thismesh%distanceToLeaf()
+  n = thismesh%getNNodesAtDepth(d)
+ENDFUNCTION getNLeaves_RectHierarchicalMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Gets an array of pointers to the nodes at depth d
+!> @param thismesh the RHM object
+!> @param nodes a pointer to an array of RHM meshes
+!> @param d the depth at which the nodes should be retieved
+!> @returns a pointer array
+!>
+RECURSIVE SUBROUTINE getNodesAtDepth_RectHierarchicalMeshType(thismesh, nodes, d, idx)
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT), TARGET :: thismesh
+  TYPE(RectHierarchicalMeshTypePtrArry), INTENT(INOUT), POINTER :: nodes(:)
+  INTEGER(SIK), INTENT(IN) :: d
+  INTEGER(SIK), OPTIONAL, INTENT(INOUT) :: idx
+  INTEGER(SIK) :: n, i, iidx
+
+  ! If no idx, assumed to be top level
+  IF(.NOT.PRESENT(idx))THEN
+    IF(ASSOCIATED(nodes)) DEALLOCATE(nodes)
+    NULLIFY(nodes)
+    n = thismesh%getNNodesAtDepth(d)
+    ALLOCATE(nodes(n))
+    iidx = 1
+    IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
+      DO i=1,SIZE(thismesh%children)
+        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, iidx)
+      ENDDO
+    ELSE ! leaf
+      nodes(iidx)%RHM => thismesh
+    ENDIF
+  ELSE
+    IF(ASSOCIATED(thismesh%children) .AND. d > 0)THEN
+      DO i=1,SIZE(thismesh%children)
+        CALL thismesh%children(i)%getNodesAtDepth(nodes, d-1, idx)
+      ENDDO
+    ELSE ! leaf
+      nodes(idx)%RHM => thismesh
+      idx = idx + 1
+    ENDIF
+  ENDIF
+ENDSUBROUTINE getNodesAtDepth_RectHierarchicalMeshType
 !!
 !!-------------------------------------------------------------------------------
 !!> @brief Gets an array of pointers to the leaf nodes in this mesh
