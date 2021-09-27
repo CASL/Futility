@@ -71,9 +71,10 @@ TYPE :: RectHierarchicalMeshType
 !    !> @copybrief XDMFMeshType::distanceToLeaf_XDMFMeshType
 !    !> @copydoc XDMFMeshType::distanceToLeaf_XDMFMeshType
 !    PROCEDURE,PASS :: distanceToLeaf => distanceToLeaf_XDMFMeshType
-!    !> @copybrief XDMFMeshType::recomputeBoundingBox_XDMFMeshType
-!    !> @copydoc XDMFMeshType::recomputeBoundingBox_XDMFMeshType
-!    PROCEDURE,PASS :: recomputeBoundingBox => recomputeBoundingBox_XDMFMeshType
+    !> @copybrief XDMFMeshType::recomputeBoundingBox_RectHierarchicalMeshType
+    !> @copydoc XDMFMeshType::recomputeBoundingBox_RectHierarchicalMeshType
+    PROCEDURE,PASS :: recomputeBoundingBox => &
+    recomputeBoundingBox_RectHierarchicalMeshType
 !    !> @copybrief XDMFMeshType::setupRectangularMap_XDMFMeshType
 !    !> @copydoc XDMFMeshType::setupRectangularMap_XDMFMeshType
 !    PROCEDURE,PASS :: setupRectangularMap => setupRectangularMap_XDMFMeshType
@@ -419,152 +420,151 @@ SUBROUTINE setup_leaf_RHM_from_file(RHM, xmle, h5)
         ENDIF
       ENDIF
     CASE("ATTRIBUTE")
-!      strIn='Name'
-!      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-!      IF(strOut%upper() == 'MATERIALID') THEN
-!        ! Format
-!        CALL xmle_children(i)%getChildren(ele_children)
-!        IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - Expected Attribute to have only one child.')
-!        strIn='Format'
-!        CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!        IF(strOut /= 'HDF') THEN
-!          CALL eRHM%raiseWarning(modName//'::'//myName// &
-!            ' - only supports HDF5 material data right now.')
-!        ENDIF
-!        ! Material Data
-!        strIn='Dimensions'
-!        CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!        ncells=strOut%stoi()
-!        IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells == SIZE(mesh%cells))) THEN
-!          CALL eRHM%raiseError(modName//'::'//myName//&
-!            ' - material data is before topology data, or is the wrong size.')
-!        ENDIF
-!        group=getH5GroupFromXMLContent(ele_children(1))
-!        ! Make sure the h5 path exists
-!        IF(.NOT.h5%pathExists(CHAR(group)))THEN
-!          CALL eRHM%raiseError(modName//'::'//myName//&
-!            ' - HDF5 group containing material data does not exist in h5 file.')
-!        ENDIF
-!        group = group%replace("/", "->")
-!        ! Data shape
-!        dshape=h5%getDataShape(CHAR(group))
-!        IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
-!          CALL eRHM%raiseError(modName//'::'//myName//&
-!            ' - material data in h5 file is the wrong size or shape.')
-!        ENDIF
-!        ! Data type
-!        dtype=h5%getDataType(CHAR(group))
-!        IF(dtype == 'SIK') THEN
-!          CALL h5%fread(CHAR(group),ivals4_1d)
-!        ELSE
-!          CALL h5%fread(CHAR(group),ivals8_1d)
-!        ENDIF
-!        ALLOCATE(mesh%material_ids(ncells))
-!        IF(dtype == 'SIK') THEN
-!          ! Account for 0 based to 1 based index switch
-!          mesh%material_ids = ivals4_1d + 1
-!          DEALLOCATE(ivals4_1d)
-!        ELSE
-!          ! Account for 0 based to 1 based index switch
-!          ! material ids will not exceed MAX(INTEGER(4)),
-!          ! so narrowing will not occur.
-!          mesh%material_ids = ivals8_1d + 1
-!          DEALLOCATE(ivals8_1d)
-!        ENDIF
-!      ELSE
-!        CALL eRHM%raiseWarning(modName//'::'//myName//' - mesh attribute '//&
-!          TRIM(strOut)//' not supported')
-!      ENDIF
+      strIn='Name'
+      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+      IF(strOut%upper() == 'MATERIALID') THEN
+        ! Format
+        CALL xmle_children(i)%getChildren(ele_children)
+        IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - Expected Attribute to have only one child.')
+        strIn='Format'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        IF(strOut /= 'HDF') THEN
+          CALL eRHM%raiseWarning(modName//'::'//myName// &
+            ' - only supports HDF5 material data right now.')
+        ENDIF
+        ! Material Data
+        strIn='Dimensions'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        ncells=strOut%stoi()
+        IF(.NOT.(ALLOCATED(RHM%mesh%cells) .AND. ncells == SIZE(RHM%mesh%cells))) THEN
+          CALL eRHM%raiseError(modName//'::'//myName//&
+            ' - material data is before topology data, or is the wrong size.')
+        ENDIF
+        group=getH5GroupFromXMLContent(ele_children(1))
+        ! Make sure the h5 path exists
+        IF(.NOT.h5%pathExists(CHAR(group)))THEN
+          CALL eRHM%raiseError(modName//'::'//myName//&
+            ' - HDF5 group containing material data does not exist in h5 file.')
+        ENDIF
+        group = group%replace("/", "->")
+        ! Data shape
+        dshape=h5%getDataShape(CHAR(group))
+        IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
+          CALL eRHM%raiseError(modName//'::'//myName//&
+            ' - material data in h5 file is the wrong size or shape.')
+        ENDIF
+        ! Data type
+        dtype=h5%getDataType(CHAR(group))
+        IF(dtype == 'SIK') THEN
+          CALL h5%fread(CHAR(group),ivals4_1d)
+        ELSE
+          CALL h5%fread(CHAR(group),ivals8_1d)
+        ENDIF
+        ALLOCATE(RHM%mesh%material_ids(ncells))
+        IF(dtype == 'SIK') THEN
+          ! Account for 0 based to 1 based index switch
+          RHM%mesh%material_ids = ivals4_1d + 1
+          DEALLOCATE(ivals4_1d)
+        ELSE
+          ! Account for 0 based to 1 based index switch
+          ! material ids will not exceed MAX(INTEGER(4)),
+          ! so narrowing will not occur.
+          RHM%mesh%material_ids = ivals8_1d + 1
+          DEALLOCATE(ivals8_1d)
+        ENDIF
+      ELSE
+        CALL eRHM%raiseWarning(modName//'::'//myName//' - mesh attribute '//&
+          TRIM(strOut)//' not supported')
+      ENDIF
     CASE("SET")
-!      ! SetType
-!      strIn='SetType'
-!      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-!      IF(strOut /= 'Cell') THEN
-!        CALL eRHM%raiseWarning(modName//'::'//myName// &
-!          ' - only supports SetType="Cell" right now.')
-!      ENDIF
-!      ! SetName
-!      strIn='Name'
-!      CALL xmle_children(i)%getAttributeValue(strIn,elname)
-!      ! Format
-!      CALL xmle_children(i)%getChildren(ele_children)
-!      IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
-!        ' - Expected Set to have only one child.')
-!      strIn='Format'
-!      strIn='Format'
-!      CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!      IF(strOut /= 'HDF') THEN
-!        CALL eRHM%raiseWarning(modName//'::'//myName// &
-!          ' - only supports HDF5 cell set data right now.')
-!      ENDIF
-!      ! Cell Set Data
-!      strIn='Dimensions'
-!      CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!      ncells=strOut%stoi()
-!      IF(.NOT.(ALLOCATED(mesh%cells) .AND. ncells <= SIZE(mesh%cells))) THEN
-!        CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - material data is before topology data, or is too big.')
-!      ENDIF
-!      group=getH5GroupFromXMLContent(ele_children(1))
-!      ! Make sure the h5 path exists
-!      IF(.NOT.h5%pathExists(CHAR(group)))THEN
-!        CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - HDF5 group containing set data does not exist in h5 file.')
-!      ENDIF
-!      group = group%replace("/", "->")
-!      ! Data shape
-!      dshape=h5%getDataShape(CHAR(group))
-!      IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
-!        CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - set data in h5 file is the wrong size or shape.')
-!      ENDIF
-!      ! Data type
-!      dtype=h5%getDataType(CHAR(group))
-!      IF(dtype == 'SIK') THEN
-!        CALL h5%fread(CHAR(group),ivals4_1d)
-!      ELSE
-!        CALL h5%fread(CHAR(group),ivals8_1d)
-!      ENDIF
-!      ! Resize cell sets if needed
-!      ! This is expected to happen infrequently
-!      IF(ALLOCATED(mesh%cell_sets)) THEN
-!        ! Copy current sets to temp, deallocate current sets
-!        ncell_sets = SIZE(mesh%cell_sets)
-!        ALLOCATE(cell_sets_temp(ncell_sets))
-!        DO j=1, ncell_sets
-!          ALLOCATE(cell_sets_temp(j)%cell_list(SIZE(mesh%cell_sets(j)%cell_list)))
-!          cell_sets_temp(j)%cell_list = mesh%cell_sets(j)%cell_list
-!          cell_sets_temp(j)%name = mesh%cell_sets(j)%name
-!          DEALLOCATE(mesh%cell_sets(j)%cell_list)
-!        ENDDO
-!        DEALLOCATE(mesh%cell_sets)
-!        ! Reallocate cell sets to be on bigger and copy all old sets over
-!        ALLOCATE(mesh%cell_sets(ncell_sets+1))
-!        DO j=1, ncell_sets
-!          ALLOCATE(mesh%cell_sets(j)%cell_list(SIZE(cell_sets_temp(j)%cell_list)))
-!          mesh%cell_sets(j)%cell_list = cell_sets_temp(j)%cell_list
-!          mesh%cell_sets(j)%name = cell_sets_temp(j)%name
-!          DEALLOCATE(cell_sets_temp(j)%cell_list)
-!          CALL cell_sets_temp(j)%name%clear()
-!        ENDDO
-!        DEALLOCATE(cell_sets_temp)
-!      ELSE
-!        ncell_sets = 0
-!        ALLOCATE(mesh%cell_sets(1))
-!      ENDIF
-!      ! Add the one new cell set
-!      mesh%cell_sets(ncell_sets + 1)%name = elname
-!      ALLOCATE(mesh%cell_sets(ncell_sets + 1)%cell_list(ncells))
-!      IF(dtype == 'SIK') THEN
-!        ! Account for 0 based to 1 based index switch
-!        mesh%cell_sets(ncell_sets + 1)%cell_list = ivals4_1d + 1
-!        DEALLOCATE(ivals4_1d)
-!      ELSE
-!        mesh%cell_sets(ncell_sets + 1)%cell_list = ivals8_1d + 1
-!        DEALLOCATE(ivals8_1d)
-!      ENDIF
-!
+      ! SetType
+      strIn='SetType'
+      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'Cell') THEN
+        CALL eRHM%raiseWarning(modName//'::'//myName// &
+          ' - only supports SetType="Cell" right now.')
+      ENDIF
+      ! SetName
+      strIn='Name'
+      CALL xmle_children(i)%getAttributeValue(strIn,elname)
+      ! Format
+      CALL xmle_children(i)%getChildren(ele_children)
+      IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
+        ' - Expected Set to have only one child.')
+      strIn='Format'
+      strIn='Format'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'HDF') THEN
+        CALL eRHM%raiseWarning(modName//'::'//myName// &
+          ' - only supports HDF5 cell set data right now.')
+      ENDIF
+      ! Cell Set Data
+      strIn='Dimensions'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      ncells=strOut%stoi()
+      IF(.NOT.(ALLOCATED(RHM%mesh%cells) .AND. ncells <= SIZE(RHM%mesh%cells))) THEN
+        CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - material data is before topology data, or is too big.')
+      ENDIF
+      group=getH5GroupFromXMLContent(ele_children(1))
+      ! Make sure the h5 path exists
+      IF(.NOT.h5%pathExists(CHAR(group)))THEN
+        CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - HDF5 group containing set data does not exist in h5 file.')
+      ENDIF
+      group = group%replace("/", "->")
+      ! Data shape
+      dshape=h5%getDataShape(CHAR(group))
+      IF(.NOT.(SIZE(dshape) == 1 .AND. dshape(1) == ncells)) THEN
+        CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - set data in h5 file is the wrong size or shape.')
+      ENDIF
+      ! Data type
+      dtype=h5%getDataType(CHAR(group))
+      IF(dtype == 'SIK') THEN
+        CALL h5%fread(CHAR(group),ivals4_1d)
+      ELSE
+        CALL h5%fread(CHAR(group),ivals8_1d)
+      ENDIF
+      ! Resize cell sets if needed
+      ! This is expected to happen infrequently
+      IF(ALLOCATED(RHM%mesh%cell_sets)) THEN
+        ! Copy current sets to temp, deallocate current sets
+        ncell_sets = SIZE(RHM%mesh%cell_sets)
+        ALLOCATE(cell_sets_temp(ncell_sets))
+        DO j=1, ncell_sets
+          ALLOCATE(cell_sets_temp(j)%cell_list(SIZE(RHM%mesh%cell_sets(j)%cell_list)))
+          cell_sets_temp(j)%cell_list = RHM%mesh%cell_sets(j)%cell_list
+          cell_sets_temp(j)%name = RHM%mesh%cell_sets(j)%name
+          DEALLOCATE(RHM%mesh%cell_sets(j)%cell_list)
+        ENDDO
+        DEALLOCATE(RHM%mesh%cell_sets)
+        ! Reallocate cell sets to be on bigger and copy all old sets over
+        ALLOCATE(RHM%mesh%cell_sets(ncell_sets+1))
+        DO j=1, ncell_sets
+          ALLOCATE(RHM%mesh%cell_sets(j)%cell_list(SIZE(cell_sets_temp(j)%cell_list)))
+          RHM%mesh%cell_sets(j)%cell_list = cell_sets_temp(j)%cell_list
+          RHM%mesh%cell_sets(j)%name = cell_sets_temp(j)%name
+          DEALLOCATE(cell_sets_temp(j)%cell_list)
+          CALL cell_sets_temp(j)%name%clear()
+        ENDDO
+        DEALLOCATE(cell_sets_temp)
+      ELSE
+        ncell_sets = 0
+        ALLOCATE(RHM%mesh%cell_sets(1))
+      ENDIF
+      ! Add the one new cell set
+      RHM%mesh%cell_sets(ncell_sets + 1)%name = elname
+      ALLOCATE(RHM%mesh%cell_sets(ncell_sets + 1)%cell_list(ncells))
+      IF(dtype == 'SIK') THEN
+        ! Account for 0 based to 1 based index switch
+        RHM%mesh%cell_sets(ncell_sets + 1)%cell_list = ivals4_1d + 1
+        DEALLOCATE(ivals4_1d)
+      ELSE
+        RHM%mesh%cell_sets(ncell_sets + 1)%cell_list = ivals8_1d + 1
+        DEALLOCATE(ivals8_1d)
+      ENDIF
     CASE DEFAULT
       CALL eRHM%raiseWarning(modName//'::'//myName// &
         ' - Unsupported data in XDMF file '//CHAR(elname))
@@ -653,9 +653,9 @@ SUBROUTINE importRectXDMFMesh(strpath, RHM)
 
   ! Create grids
   CALL create_RHM_from_file(RHM, children(gridIdx), h5)
-!
-!  ! Setup bounding boxes
-!  CALL mesh%recomputeBoundingBox()
+
+  ! Setup bounding boxes
+  CALL RHM%recomputeBoundingBox()
 !
 !  ! Setup map
 !  CALL mesh%setupRectangularMap()
@@ -749,43 +749,49 @@ ENDSUBROUTINE clear_RectHierarchicalMeshType
 !    n = 0
 !  ENDIF
 !ENDFUNCTION distanceToLeaf_XDMFMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Recompute the bounding box for this mesh and all children.
-!!> @param thismesh the XDMF mesh object
-!!>
-!RECURSIVE SUBROUTINE recomputeBoundingBox_XDMFMeshType(thismesh)
-!  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-!  REAL(SDK) :: xmin, xmax, ymin, ymax
-!  INTEGER(SIK) :: i
-!  xmin = HUGE(xmin)
-!  xmax = -HUGE(xmax)
-!  ymin = HUGE(ymin)
-!  ymax = -HUGE(ymax)
-!  IF(ASSOCIATED(thismesh%children))THEN
-!    DO i = 1, SIZE(thismesh%children)
-!      CALL thismesh%children(i)%recomputeBoundingBox()
-!    ENDDO
-!    DO i = 1, SIZE(thismesh%children)
-!      IF(thismesh%children(i)%boundingBox(1) < xmin) &
-!        xmin = thismesh%children(i)%boundingBox(1)
-!      IF(thismesh%children(i)%boundingBox(2) > xmax) &
-!        xmax = thismesh%children(i)%boundingBox(2)
-!      IF(thismesh%children(i)%boundingBox(3) < ymin) &
-!        ymin = thismesh%children(i)%boundingBox(3)
-!      IF(thismesh%children(i)%boundingBox(4) > ymax) &
-!        ymax = thismesh%children(i)%boundingBox(4)
-!    ENDDO
-!  ELSE
-!    DO i = 1, SIZE(thismesh%vertices, DIM=2)
-!      IF(thismesh%vertices(1,i) < xmin) xmin = thismesh%vertices(1,i)
-!      IF(thismesh%vertices(1,i) > xmax) xmax = thismesh%vertices(1,i)
-!      IF(thismesh%vertices(2,i) < ymin) ymin = thismesh%vertices(2,i)
-!      IF(thismesh%vertices(2,i) > ymax) ymax = thismesh%vertices(2,i)
-!    ENDDO
-!  ENDIF
-!  thismesh%boundingBox = (/xmin, xmax, ymin, ymax/)
-!ENDSUBROUTINE recomputeBoundingBox_XDMFMeshType
+!
+!-------------------------------------------------------------------------------
+!> @brief Recompute the bounding box for this mesh and all children.
+!> @param thismesh the RHM object
+!>
+RECURSIVE SUBROUTINE recomputeBoundingBox_RectHierarchicalMeshType(thismesh)
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT) :: thismesh
+  REAL(SDK) :: xmin, xmax, ymin, ymax
+  INTEGER(SIK) :: i
+  xmin = HUGE(xmin)
+  xmax = -HUGE(xmax)
+  ymin = HUGE(ymin)
+  ymax = -HUGE(ymax)
+  IF(ASSOCIATED(thismesh%children))THEN
+    DO i = 1, SIZE(thismesh%children)
+      CALL thismesh%children(i)%recomputeBoundingBox()
+    ENDDO
+    DO i = 1, SIZE(thismesh%children)
+      IF(thismesh%children(i)%bb%points(1)%coord(1) < xmin) &
+        xmin = thismesh%children(i)%bb%points(1)%coord(1)
+      IF(thismesh%children(i)%bb%points(3)%coord(1) > xmax) &
+        xmax = thismesh%children(i)%bb%points(3)%coord(1)
+      IF(thismesh%children(i)%bb%points(1)%coord(2) < ymin) &
+        ymin = thismesh%children(i)%bb%points(1)%coord(2)
+      IF(thismesh%children(i)%bb%points(3)%coord(2) > ymax) &
+        ymax = thismesh%children(i)%bb%points(3)%coord(2)
+    ENDDO
+  ELSE
+    DO i = 1, SIZE(thismesh%mesh%points)
+      IF(thismesh%mesh%points(i)%coord(1) < xmin) xmin = thismesh%mesh%points(i)%coord(1)
+      IF(thismesh%mesh%points(i)%coord(1) > xmax) xmax = thismesh%mesh%points(i)%coord(1)
+      IF(thismesh%mesh%points(i)%coord(2) < ymin) ymin = thismesh%mesh%points(i)%coord(2)
+      IF(thismesh%mesh%points(i)%coord(2) > ymax) ymax = thismesh%mesh%points(i)%coord(2)
+    ENDDO
+  ENDIF
+  DO i = 1, 4
+    CALL thismesh%bb%points(i)%clear()
+  ENDDO
+  CALL thismesh%bb%points(1)%init(DIM=2, X=xmin, Y=ymin)
+  CALL thismesh%bb%points(2)%init(DIM=2, X=xmax, Y=ymin)
+  CALL thismesh%bb%points(3)%init(DIM=2, X=xmax, Y=ymax)
+  CALL thismesh%bb%points(4)%init(DIM=2, X=xmin, Y=ymax)
+ENDSUBROUTINE recomputeBoundingBox_RectHierarchicalMeshType
 !
 !-------------------------------------------------------------------------------
 !> @brief Assigns an RHM type to another

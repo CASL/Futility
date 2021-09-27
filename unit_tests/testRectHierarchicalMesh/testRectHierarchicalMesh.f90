@@ -1149,10 +1149,10 @@ SUBROUTINE test_import_two_pins()
 !  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
 !  ASSERT(SIZE(mesh%map, DIM=1) == 2, "Map is wrong size")
 !  ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
-!  ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(mesh%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(mesh%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(1) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
   ! Check pin1
   pin1 = RHM%children(1)
   ASSERT(pin1%mesh%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
@@ -1160,10 +1160,10 @@ SUBROUTINE test_import_two_pins()
   ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
   ASSERT(pin1%parent%mesh%name == "mesh_domain", "pin1 parent name is incorrect")
   ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
-!  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
   !     pin1 vertices
   ASSERT(ALLOCATED(pin1%mesh%points), "Vertices not allocated")
   ASSERT(SIZE(pin1%mesh%points)==109, "Wrong number of vertices")
@@ -1182,20 +1182,20 @@ SUBROUTINE test_import_two_pins()
       ASSERT( pin1%mesh%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
     ENDDO
   ENDDO
-!  !     pin1 material_ids
-!  ASSERT(ALLOCATED(pin1%mesh%material_ids), "material_ids not allocated")
-!  ASSERT(SIZE(pin1%mesh%material_ids)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT( pin1%mesh%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
-!  ENDDO
-!  !     pin1 cell_sets
-!  ASSERT(ALLOCATED(pin1%mesh%cell_sets), "cell_sets not allocated")
-!  ASSERT(SIZE(pin1%mesh%cell_sets)==1, "Wrong number of cell sets")
-!  ASSERT(SIZE(pin1%mesh%cell_sets(1)%cell_list)==46, "Wrong number of cells")
-!  ASSERT(pin1%mesh%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
-!  DO i=1,46
-!    ASSERT( pin1%mesh%cell_sets(1)%cell_list(i) == i, "Wrong cells")
-!  ENDDO
+  !     pin1 material_ids
+  ASSERT(ALLOCATED(pin1%mesh%material_ids), "material_ids not allocated")
+  ASSERT(SIZE(pin1%mesh%material_ids)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT( pin1%mesh%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+  ENDDO
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%mesh%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%mesh%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%mesh%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%mesh%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%mesh%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
 
   CALL RHM%clear()
   CALL pin1%clear()
