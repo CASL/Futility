@@ -111,6 +111,7 @@ TRIBITS_ADD_LIBRARY(Utils
       SchemaParser.f90
       SpeciesElements.f90
       XDMFMesh.f90
+      RectHierarchicalMesh.f90
     DEPLIBS
       CUtils
       TrilinosUtils

@@ -119,6 +119,7 @@ IF(${PACKAGE_NAME}_ENABLE_HDF5)
         testHDF5FileType
         testTPLHDF5
         testXDMFMesh
+        testRectHierarchicalMesh
         )
 ENDIF()
 

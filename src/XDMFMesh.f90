@@ -32,7 +32,7 @@ PRIVATE
 PUBLIC :: XDMFMeshType_2D
 !PUBLIC :: XDMFMeshPtrArry
 PUBLIC :: XDMFTopologyList
-!PUBLIC :: ImportXDMFMesh
+PUBLIC :: init_XDMFTopologyList
 !PUBLIC :: ExportXDMFMesh
 PUBLIC :: ASSIGNMENT(=)
 
@@ -110,10 +110,10 @@ ENDTYPE XDMFMeshType_2D
 !  TYPE(XDMFMeshType), POINTER :: mesh => NULL()
 !ENDTYPE XDMFMeshPtrArry
 !
-!!> @brief Interface for assignment operator (=)
+!> @brief Interface for assignment operator (=)
 INTERFACE ASSIGNMENT(=)
-  !> @copybrief FileType_XDMF::assign_XDMFMeshType_2D
-  !> @copydoc FileType_XDMF::assign_XDMFMeshType_2D
+  !> @copybrief XDMFMeshType::assign_XDMFMeshType_2D
+  !> @copydoc XDMFMeshType::assign_XDMFMeshType_2D
   MODULE PROCEDURE assign_XDMFMeshType_2D
 ENDINTERFACE
 !

@@ -184,20 +184,6 @@ INTEGER(SIK) :: two_pins_pin1_material_ids(46) = (/ &
 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
 1, 1, 1, 1, 1, 1, 1, 1, 1     &
 /)
-!
-!REAL(SDK) :: three_level_grid_L3_vertices(3,5) = RESHAPE( (/ &
-! 2.0, 1.5, 0.0,&
-! 2.0, 1.0, 0.0,&
-! 3.0, 1.0, 0.0,&
-! 2.0, 2.0, 0.0,&
-! 3.0, 2.0, 0.0 &
-!/), (/3, 5/))
-!
-!INTEGER(SIK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
-!0, 2, 4, &
-!1, 2, 0, &
-!3, 0, 4  &
-!/), (/3, 3/))
 
 CREATE_TEST('XDMF TYPE')
 REGISTER_SUBTEST('CLEAR', testClear)
