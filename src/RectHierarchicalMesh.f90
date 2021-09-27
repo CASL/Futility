@@ -61,10 +61,10 @@ TYPE :: RectHierarchicalMeshType
   !> | (1,1)  (2,1)
   !> +------> x
   INTEGER(SIK),ALLOCATABLE :: map(:,:)
-!  CONTAINS
-    !> @copybrief XDMFMeshType::clear_XDMFMeshType
-    !> @copydoc XDMFMeshType::clear_XDMFMeshType
-!    PROCEDURE,PASS :: clear => clear_XDMFMeshType
+  CONTAINS
+    !> @copybrief RectHierarchicalMeshType::clear_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::clear_RectHierarchicalMeshType
+    PROCEDURE,PASS :: clear => clear_RectHierarchicalMeshType
 !    !> @copybrief XDMFMeshType::nonRecusriveClear_XDMFMeshType
 !    !> @copydoc XDMFMeshType::nonRecursiveClear_XDMFMeshType
 !    PROCEDURE,PASS :: nonRecursiveClear => nonRecursiveClear_XDMFMeshType
@@ -112,26 +112,26 @@ ENDINTERFACE
 !
 !===============================================================================
 CONTAINS
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Returns the hdf5 group where heavy data is stored
-!!> @param xmle XML element storing the file path and group to the heavy data
-!!> @returns group The hdf5 group where the heavy data is stored
-!!>
-!FUNCTION getH5GroupFromXMLContent(xmle) RESULT(group)
-!  TYPE(XMLElementType),INTENT(IN) :: xmle
-!  TYPE(StringType) :: content, group
-!  TYPE(StringType), ALLOCATABLE :: segments(:)
-!  ! Content of xmle should be the h5 filename with the
-!  ! path to the data
-!  content=xmle%getContent()
-!  ! Split file from group data
-!  segments=content%split(':')
-!  ! Just grab the group data
-!  group=segments(2)%substr(2,LEN(segments(2)))
-!  ! Replace newline char
-!  group = group%replace(NEW_LINE("A"),"")
-!ENDFUNCTION getH5GroupFromXMLContent
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the hdf5 group where heavy data is stored
+!> @param xmle XML element storing the file path and group to the heavy data
+!> @returns group The hdf5 group where the heavy data is stored
+!>
+FUNCTION getH5GroupFromXMLContent(xmle) RESULT(group)
+  TYPE(XMLElementType),INTENT(IN) :: xmle
+  TYPE(StringType) :: content, group
+  TYPE(StringType), ALLOCATABLE :: segments(:)
+  ! Content of xmle should be the h5 filename with the
+  ! path to the data
+  content=xmle%getContent()
+  ! Split file from group data
+  segments=content%split(':')
+  ! Just grab the group data
+  group=segments(2)%substr(2,LEN(segments(2)))
+  ! Replace newline char
+  group = group%replace(NEW_LINE("A"),"")
+ENDFUNCTION getH5GroupFromXMLContent
 !
 !-------------------------------------------------------------------------------
 !> @brief Create the RHM object
@@ -176,244 +176,249 @@ RECURSIVE SUBROUTINE create_RHM_from_file(RHM, xmle, h5)
     ! If this mesh does not have grid children it is a leaf on the tree.
     ! Add vertices, cells, etc.
     ELSE
-!      CALL setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
+      CALL setup_leaf_RHM_from_file(RHM, xmle, h5)
     ENDIF
   ELSE
     CALL eRHM%raiseError(modName//'::'//myName// &
       ' - Expected the XML element '//RHM%mesh%name//' to have children.')
   ENDIF
 ENDSUBROUTINE create_RHM_from_file
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Setup the leaf mesh objects which contain vertices, cells, etc.
-!!> @param mesh the parent mesh
-!!> @param xmle the child XML element
-!!> @param h5 the HDF5 file containing mesh data
-!!>
-!SUBROUTINE setup_leaf_XDMFMesh_from_file(mesh, xmle, h5)
-!  CHARACTER(LEN=*),PARAMETER :: myName='setup_leaf_XDMFMesh_from_file'
-!  TYPE(XDMFMeshType),INTENT(INOUT),TARGET  :: mesh
-!  TYPE(XMLElementType), INTENT(INOUT) :: xmle
-!  TYPE(HDF5FileType), INTENT(INOUT) :: h5
-!  TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
-!  TYPE(StringType) :: elname, strIn, strOut, group, dtype, toponame, &
-!    xdmf_id_str
-!  TYPE(StringType),ALLOCATABLE :: strArray(:)
-!  INTEGER(SIK) :: nverts, ncells,ivert,i,j
-!  INTEGER(SIK) :: ncell_sets, xdmf_id, verts_per_cell
-!  INTEGER(SIK),ALLOCATABLE :: dshape(:)
-!  REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
-!  REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
-!  INTEGER(SIK),ALLOCATABLE :: ivals4_1d(:),ivals4_2d(:,:)
-!  INTEGER(SIK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
-!  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets_temp(:)
 !
-!  IF(.NOT.xmle%hasChildren())  CALL eRHM%raiseError(modName//'::'//myName// &
-!    ' - XML element for '//CHAR(mesh%name)//' should have children.')
-!  CALL xmle%getChildren(xmle_children)
-!  ! Each XML element has a type of information.
-!  ! Handle each with a CASE
-!  DO i=1,SIZE(xmle_children)
-!    elname=xmle_children(i)%name%upper()
-!    SELECTCASE(ADJUSTL(elname))
-!    CASE("GEOMETRY")
-!      ! GeometryType
-!      strIn='GeometryType'
-!      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-!      IF(strOut /= 'XYZ') THEN
-!        CALL eRHM%raiseError(modName//'::'//myName// &
-!          ' - GeometryType only supports XYZ right now.')
-!      ENDIF
-!      ! Format
-!      CALL xmle_children(i)%getChildren(ele_children)
-!      IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
-!        ' - Expected Geometry to have only one child.')
-!      strIn='Format'
-!      CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!      IF(strOut /= 'HDF') THEN
-!        CALL eRHM%raiseError(modName//'::'//myName// &
-!          ' - only supports HDF5 geometry data right now.')
-!      ENDIF
-!      ! Vertex Data
-!      strIn='Dimensions'
-!      CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!      strArray=strOut%split()
-!      IF(strArray(2) /= '3') CALL eRHM%raiseError(modName//'::'//myName//&
-!        ' - Expected vertex data to be 3 dimensional.')
-!      nverts=strArray(1)%stoi()
-!      group=getH5GroupFromXMLContent(ele_children(1))
-!      ! Make sure the h5 path exists
-!      IF(.NOT.h5%pathExists(CHAR(group)))THEN
-!        CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - HDF5 group containing vertex data does not exist in h5 file.')
-!      ENDIF
-!      group = group%replace("/", "->")
-!      ! Data shape
-!      dshape=h5%getDataShape(CHAR(group))
-!      IF(.NOT.(dshape(1) == 3 .AND. dshape(2) == nverts))THEN
-!        CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - HDF5 vertex data shape does not match XDMF vertex data shape.')
-!      ENDIF
-!      ! Data type
-!      dtype=h5%getDataType(CHAR(group))
-!      IF(dtype == 'SSK') THEN
-!        CALL h5%fread(CHAR(group),vals4_2d)
-!      ELSE
-!        CALL h5%fread(CHAR(group),vals8_2d)
-!      ENDIF
-!      ALLOCATE(mesh%vertices(3,nverts))
-!      IF(dtype == 'SSK') THEN
-!        mesh%vertices=vals4_2d
-!        DEALLOCATE(vals4_2d)
-!      ELSE
-!        mesh%vertices=vals8_2d
-!        DEALLOCATE(vals8_2d)
-!      ENDIF
-!    CASE("TOPOLOGY")
-!      ! TopologyType
-!      strIn='TopologyType'
-!      CALL xmle_children(i)%getAttributeValue(strIn,toponame)
-!      IF(toponame%upper() == 'MIXED') THEN
-!        ! Mixed topology
-!        ! Format
-!        CALL xmle_children(i)%getChildren(ele_children)
-!        IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - Expected Topology to have only one child.')
-!        strIn='Format'
-!        CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!        IF(strOut /= 'HDF') THEN
-!          CALL eRHM%raiseWarning(modName//'::'//myName// &
-!            ' - only supports HDF5 topology data right now.')
-!        ENDIF
-!        ! Topology Data
-!        strIn='NumberOfElements'
-!        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-!        ncells=strOut%stoi()
-!        group=getH5GroupFromXMLContent(ele_children(1))
-!        ! Make sure the h5 path exists
-!        IF(.NOT.h5%pathExists(CHAR(group)))THEN
-!          CALL eRHM%raiseError(modName//'::'//myName//&
-!            ' - HDF5 group containing topology data does not exist in h5 file.')
-!        ENDIF
-!        group = group%replace("/", "->")
-!        ! Data shape
-!        dshape=h5%getDataShape(CHAR(group))
-!        IF(SIZE(dshape) /= 1)THEN
-!          CALL eRHM%raiseError(modName//'::'//myName//&
-!            ' - HDF5 mixed topology data shape does not match XDMF data shape.')
-!        ENDIF
-!        ! Data type
-!        dtype=h5%getDataType(CHAR(group))
-!        IF(dtype == 'SIK') THEN
-!          CALL h5%fread(CHAR(group),ivals4_1d)
-!        ELSE
-!          CALL h5%fread(CHAR(group),ivals8_1d)
-!        ENDIF
-!        ALLOCATE(mesh%cells(ncells))
-!        ivert = 1
-!        IF(dtype == 'SIK') THEN
-!          DO j=1,ncells
-!            xdmf_id = ivals4_1d(ivert)
-!            xdmf_id_str = xdmf_id
-!            IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
-!              CALL eRHM%raiseError(modName//'::'//myName//&
-!                ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
-!            ELSE
-!              CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
-!              CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
-!            ENDIF
-!            ALLOCATE(mesh%cells(j)%vertex_list(nverts+1))
-!            mesh%cells(j)%vertex_list(1) = xdmf_id
-!            mesh%cells(j)%vertex_list(2:nverts+1) = ivals4_1d(ivert:ivert+nverts) + 1
-!            ivert = ivert + nverts
-!          ENDDO
-!          DEALLOCATE(ivals4_1d)
-!        ELSE
-!          DO j=1,ncells
-!            ! This number should be well below HUGE(ivals8_1d), so narrowing
-!            ! is not a concern
-!            xdmf_id = ivals8_1d(ivert)
-!            xdmf_id_str = xdmf_id
-!            IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
-!              CALL eRHM%raiseError(modName//'::'//myName//&
-!                ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
-!            ELSE
-!              CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
-!              CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', &
-!                verts_per_cell)
-!            ENDIF
-!            ALLOCATE(mesh%cells(j)%vertex_list(verts_per_cell+1))
-!            mesh%cells(j)%vertex_list(1) = xdmf_id
-!            mesh%cells(j)%vertex_list(2:verts_per_cell+1) = &
-!              ivals8_1d(ivert+1:ivert+verts_per_cell) + 1
-!            ivert = ivert + verts_per_cell + 1
-!          ENDDO
-!          DEALLOCATE(ivals8_1d)
-!        ENDIF
-!      ELSE
-!        ! Single topology
-!        IF(.NOT.XDMFTopologyList%has(CHAR(toponame))) CALL eRHM%raiseError(modName// &
-!          '::'//myName//' - Topology type '//TRIM(strOut)//' not supported')
-!        ! XDMF ID
-!        CALL XDMFTopologyList%get(CHAR(toponame)//'->id', xdmf_id)
-!        ! Format
-!        CALL xmle_children(i)%getChildren(ele_children)
-!        IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
-!          ' - Expected Topology to have only one child.')
-!        strIn='Format'
-!        CALL ele_children(1)%getAttributeValue(strIn,strOut)
-!        IF(strOut /= 'HDF') THEN
-!          CALL eRHM%raiseWarning(modName//'::'//myName// &
-!            ' - only supports HDF5 topology data right now.')
-!        ENDIF
-!        ! Topology Data
-!        strIn='NumberOfElements'
-!        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-!        ncells=strOut%stoi()
-!        strIn='NodesPerElement'
-!        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
-!        nverts=strOut%stoi()
-!        group=getH5GroupFromXMLContent(ele_children(1))
-!        ! Make sure the h5 path exists
-!        IF(.NOT.h5%pathExists(CHAR(group)))THEN
-!          CALL eRHM%raiseError(modName//'::'//myName//&
-!            ' - HDF5 group containing topology data does not exist in h5 file.')
-!        ENDIF
-!        group = group%replace("/", "->")
-!        ! Data shape
-!        dshape=h5%getDataShape(CHAR(group))
-!        IF(.NOT.(dshape(1) == nverts .AND. dshape(2) == ncells))THEN
-!          CALL eRHM%raiseError(modName//'::'//myName//&
-!            ' - HDF5 mixed topology data shape does not match XDMF data shape.')
-!        ENDIF
-!        ! Data type
-!        dtype=h5%getDataType(CHAR(group))
-!        IF(dtype == 'SIK') THEN
-!          CALL h5%fread(CHAR(group),ivals4_2d)
-!        ELSE
-!          CALL h5%fread(CHAR(group),ivals8_2d)
-!        ENDIF
-!        ALLOCATE(mesh%cells(ncells))
-!        IF(dtype == 'SIK') THEN
-!          DO j=1,ncells
-!            ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
-!            mesh%cells(j)%vertex_list(1) = xdmf_id
-!            ! Account for 0 based to 1 based index switch
-!            mesh%cells(j)%vertex_list(2:) = ivals4_2d(:, j) + 1
-!          ENDDO
-!          DEALLOCATE(ivals4_2d)
-!        ELSE
-!          DO j=1,ncells
-!            ALLOCATE(mesh%cells(j)%vertex_list(nverts + 1))
-!            mesh%cells(j)%vertex_list(1) = xdmf_id
-!            ! Account for 0 based to 1 based index switch
-!            mesh%cells(j)%vertex_list(2:) = ivals8_2d(:, j) + 1
-!          ENDDO
-!          DEALLOCATE(ivals8_2d)
-!        ENDIF
-!        mesh%singleTopology = .TRUE.
-!      ENDIF
-!    CASE("ATTRIBUTE")
+!-------------------------------------------------------------------------------
+!> @brief Setup the leaf RHM objects which contain vertices, cells, etc.
+!> @param RHM the parent mesh
+!> @param xmle the child XML element
+!> @param h5 the HDF5 file containing mesh data
+!>
+SUBROUTINE setup_leaf_RHM_from_file(RHM, xmle, h5)
+  CHARACTER(LEN=*),PARAMETER :: myName='setup_leaf_RHM_from_file'
+  TYPE(RectHierarchicalMeshType),INTENT(INOUT),TARGET  :: RHM
+  TYPE(XMLElementType), INTENT(INOUT) :: xmle
+  TYPE(HDF5FileType), INTENT(INOUT) :: h5
+  TYPE(XMLElementType), POINTER :: xmle_children(:), ele_children(:)
+  TYPE(StringType) :: elname, strIn, strOut, group, dtype, toponame, &
+    xdmf_id_str
+  TYPE(StringType),ALLOCATABLE :: strArray(:)
+  INTEGER(SIK) :: nverts, ncells,ivert,i,j
+  INTEGER(SIK) :: ncell_sets, xdmf_id, verts_per_cell
+  INTEGER(SIK),ALLOCATABLE :: dshape(:)
+  REAL(SSK),ALLOCATABLE :: vals4_2d(:,:)
+  REAl(SDK),ALLOCATABLE :: vals8_2d(:,:)
+  INTEGER(SIK),ALLOCATABLE :: ivals4_1d(:),ivals4_2d(:,:)
+  INTEGER(SIK),ALLOCATABLE :: ivals8_1d(:),ivals8_2d(:,:)
+  TYPE(XDMFCellSet), ALLOCATABLE :: cell_sets_temp(:)
+
+  IF(.NOT.xmle%hasChildren())  CALL eRHM%raiseError(modName//'::'//myName// &
+    ' - XML element for '//CHAR(RHM%mesh%name)//' should have children.')
+  CALL xmle%getChildren(xmle_children)
+  ! Each XML element has a type of information.
+  ! Handle each with a CASE
+  DO i=1,SIZE(xmle_children)
+    elname=xmle_children(i)%name%upper()
+    SELECTCASE(ADJUSTL(elname))
+    CASE("GEOMETRY")
+      ! GeometryType
+      strIn='GeometryType'
+      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'XYZ') THEN
+        CALL eRHM%raiseError(modName//'::'//myName// &
+          ' - GeometryType only supports XYZ right now.')
+      ENDIF
+      ! Format
+      CALL xmle_children(i)%getChildren(ele_children)
+      IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
+        ' - Expected Geometry to have only one child.')
+      strIn='Format'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      IF(strOut /= 'HDF') THEN
+        CALL eRHM%raiseError(modName//'::'//myName// &
+          ' - only supports HDF5 geometry data right now.')
+      ENDIF
+      ! Vertex Data
+      strIn='Dimensions'
+      CALL ele_children(1)%getAttributeValue(strIn,strOut)
+      strArray=strOut%split()
+      IF(strArray(2) /= '3') CALL eRHM%raiseError(modName//'::'//myName//&
+        ' - Expected vertex data to be 3 dimensional.')
+      nverts=strArray(1)%stoi()
+      group=getH5GroupFromXMLContent(ele_children(1))
+      ! Make sure the h5 path exists
+      IF(.NOT.h5%pathExists(CHAR(group)))THEN
+        CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - HDF5 group containing vertex data does not exist in h5 file.')
+      ENDIF
+      group = group%replace("/", "->")
+      ! Data shape
+      dshape=h5%getDataShape(CHAR(group))
+      IF(.NOT.(dshape(1) == 3 .AND. dshape(2) == nverts))THEN
+        CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - HDF5 vertex data shape does not match XDMF vertex data shape.')
+      ENDIF
+      ! Data type
+      dtype=h5%getDataType(CHAR(group))
+      IF(dtype == 'SSK') THEN
+        CALL h5%fread(CHAR(group),vals4_2d)
+      ELSE
+        CALL h5%fread(CHAR(group),vals8_2d)
+      ENDIF
+      ALLOCATE(RHM%mesh%points(nverts))
+      IF(dtype == 'SSK') THEN
+        DO j = 1, nverts
+          CALL RHM%mesh%points(j)%init(DIM=2, X=DBLE(vals4_2d(1, j)), &
+                                              Y=DBLE(vals4_2d(2, j)))
+        ENDDO
+        DEALLOCATE(vals4_2d)
+      ELSE
+        DO j = 1, nverts
+          CALL RHM%mesh%points(j)%init(DIM=2, X=vals8_2d(1, j), &
+                                              Y=vals8_2d(2, j))
+        ENDDO
+        DEALLOCATE(vals8_2d)
+      ENDIF
+    CASE("TOPOLOGY")
+      ! TopologyType
+      strIn='TopologyType'
+      CALL xmle_children(i)%getAttributeValue(strIn,toponame)
+      IF(toponame%upper() == 'MIXED') THEN
+        ! Mixed topology
+        ! Format
+        CALL xmle_children(i)%getChildren(ele_children)
+        IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - Expected Topology to have only one child.')
+        strIn='Format'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        IF(strOut /= 'HDF') THEN
+          CALL eRHM%raiseWarning(modName//'::'//myName// &
+            ' - only supports HDF5 topology data right now.')
+        ENDIF
+        ! Topology Data
+        strIn='NumberOfElements'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+        ncells=strOut%stoi()
+        group=getH5GroupFromXMLContent(ele_children(1))
+        ! Make sure the h5 path exists
+        IF(.NOT.h5%pathExists(CHAR(group)))THEN
+          CALL eRHM%raiseError(modName//'::'//myName//&
+            ' - HDF5 group containing topology data does not exist in h5 file.')
+        ENDIF
+        group = group%replace("/", "->")
+        ! Data shape
+        dshape=h5%getDataShape(CHAR(group))
+        IF(SIZE(dshape) /= 1)THEN
+          CALL eRHM%raiseError(modName//'::'//myName//&
+            ' - HDF5 mixed topology data shape does not match XDMF data shape.')
+        ENDIF
+        ! Data type
+        dtype=h5%getDataType(CHAR(group))
+        IF(dtype == 'SIK') THEN
+          CALL h5%fread(CHAR(group),ivals4_1d)
+        ELSE
+          CALL h5%fread(CHAR(group),ivals8_1d)
+        ENDIF
+        ALLOCATE(RHM%mesh%cells(ncells))
+        ivert = 1
+        IF(dtype == 'SIK') THEN
+          DO j=1,ncells
+            xdmf_id = ivals4_1d(ivert)
+            xdmf_id_str = xdmf_id
+            IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
+              CALL eRHM%raiseError(modName//'::'//myName//&
+                ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
+            ELSE
+              CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
+              CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', nverts)
+            ENDIF
+            ALLOCATE(RHM%mesh%cells(j)%point_list(nverts+1))
+            RHM%mesh%cells(j)%point_list(1) = xdmf_id
+            RHM%mesh%cells(j)%point_list(2:nverts+1) = ivals4_1d(ivert:ivert+nverts) + 1
+            ivert = ivert + nverts
+          ENDDO
+          DEALLOCATE(ivals4_1d)
+        ELSE
+          DO j=1,ncells
+            ! This number should be well below HUGE(ivals8_1d), so narrowing
+            ! is not a concern
+            xdmf_id = ivals8_1d(ivert)
+            xdmf_id_str = xdmf_id
+            IF(.NOT.XDMFTopologyList%has('XDMFID->'//ADJUSTL(xdmf_id_str))) THEN
+              CALL eRHM%raiseError(modName//'::'//myName//&
+                ' - Topology type '//TRIM(xdmf_id_str)//' not supported')
+            ELSE
+              CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
+              CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', &
+                verts_per_cell)
+            ENDIF
+            ALLOCATE(RHM%mesh%cells(j)%point_list(verts_per_cell+1))
+            RHM%mesh%cells(j)%point_list(1) = xdmf_id
+            RHM%mesh%cells(j)%point_list(2:verts_per_cell+1) = &
+              ivals8_1d(ivert+1:ivert+verts_per_cell) + 1
+            ivert = ivert + verts_per_cell + 1
+          ENDDO
+          DEALLOCATE(ivals8_1d)
+        ENDIF
+      ELSE
+        ! Single topology
+        IF(.NOT.XDMFTopologyList%has(CHAR(toponame))) CALL eRHM%raiseError(modName// &
+          '::'//myName//' - Topology type '//TRIM(strOut)//' not supported')
+        ! XDMF ID
+        CALL XDMFTopologyList%get(CHAR(toponame)//'->id', xdmf_id)
+        ! Format
+        CALL xmle_children(i)%getChildren(ele_children)
+        IF(SIZE(ele_children) /= 1) CALL eRHM%raiseError(modName//'::'//myName//&
+          ' - Expected Topology to have only one child.')
+        strIn='Format'
+        CALL ele_children(1)%getAttributeValue(strIn,strOut)
+        IF(strOut /= 'HDF') THEN
+          CALL eRHM%raiseWarning(modName//'::'//myName// &
+            ' - only supports HDF5 topology data right now.')
+        ENDIF
+        ! Topology Data
+        strIn='NumberOfElements'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+        ncells=strOut%stoi()
+        strIn='NodesPerElement'
+        CALL xmle_children(i)%getAttributeValue(strIn,strOut)
+        nverts=strOut%stoi()
+        group=getH5GroupFromXMLContent(ele_children(1))
+        ! Make sure the h5 path exists
+        IF(.NOT.h5%pathExists(CHAR(group)))THEN
+          CALL eRHM%raiseError(modName//'::'//myName//&
+            ' - HDF5 group containing topology data does not exist in h5 file.')
+        ENDIF
+        group = group%replace("/", "->")
+        ! Data shape
+        dshape=h5%getDataShape(CHAR(group))
+        IF(.NOT.(dshape(1) == nverts .AND. dshape(2) == ncells))THEN
+          CALL eRHM%raiseError(modName//'::'//myName//&
+            ' - HDF5 mixed topology data shape does not match XDMF data shape.')
+        ENDIF
+        ! Data type
+        dtype=h5%getDataType(CHAR(group))
+        IF(dtype == 'SIK') THEN
+          CALL h5%fread(CHAR(group),ivals4_2d)
+        ELSE
+          CALL h5%fread(CHAR(group),ivals8_2d)
+        ENDIF
+        ALLOCATE(RHM%mesh%cells(ncells))
+        IF(dtype == 'SIK') THEN
+          DO j=1,ncells
+            ALLOCATE(RHM%mesh%cells(j)%point_list(nverts + 1))
+            RHM%mesh%cells(j)%point_list(1) = xdmf_id
+            ! Account for 0 based to 1 based index switch
+            RHM%mesh%cells(j)%point_list(2:) = ivals4_2d(:, j) + 1
+          ENDDO
+          DEALLOCATE(ivals4_2d)
+        ELSE
+          DO j=1,ncells
+            ALLOCATE(RHM%mesh%cells(j)%point_list(nverts + 1))
+            RHM%mesh%cells(j)%point_list(1) = xdmf_id
+            ! Account for 0 based to 1 based index switch
+            RHM%mesh%cells(j)%point_list(2:) = ivals8_2d(:, j) + 1
+          ENDDO
+          DEALLOCATE(ivals8_2d)
+        ENDIF
+      ENDIF
+    CASE("ATTRIBUTE")
 !      strIn='Name'
 !      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
 !      IF(strOut%upper() == 'MATERIALID') THEN
@@ -471,7 +476,7 @@ ENDSUBROUTINE create_RHM_from_file
 !        CALL eRHM%raiseWarning(modName//'::'//myName//' - mesh attribute '//&
 !          TRIM(strOut)//' not supported')
 !      ENDIF
-!    CASE("SET")
+    CASE("SET")
 !      ! SetType
 !      strIn='SetType'
 !      CALL xmle_children(i)%getAttributeValue(strIn,strOut)
@@ -560,12 +565,12 @@ ENDSUBROUTINE create_RHM_from_file
 !        DEALLOCATE(ivals8_1d)
 !      ENDIF
 !
-!    CASE DEFAULT
-!      CALL eRHM%raiseWarning(modName//'::'//myName// &
-!        ' - Unsupported data in XDMF file '//CHAR(elname))
-!    ENDSELECT
-!  ENDDO
-!ENDSUBROUTINE setup_leaf_XDMFMesh_from_file
+    CASE DEFAULT
+      CALL eRHM%raiseWarning(modName//'::'//myName// &
+        ' - Unsupported data in XDMF file '//CHAR(elname))
+    ENDSELECT
+  ENDDO
+ENDSUBROUTINE setup_leaf_RHM_from_file
 !
 !-------------------------------------------------------------------------------
 !> @brief Imports the mesh data in the file to a RHM object.
@@ -658,50 +663,28 @@ SUBROUTINE importRectXDMFMesh(strpath, RHM)
 !  ! Setup edges
 !  CALL mesh%setupEdges()
 ENDSUBROUTINE importRectXDMFMesh
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Clears the XDMF mesh
-!!> @param thismesh the XDMF mesh object
-!!>
-!RECURSIVE SUBROUTINE clear_XDMFMeshType(thismesh)
-!  CLASS(XDMFMeshType), INTENT(INOUT) :: thismesh
-!  INTEGER(SIK) :: i
 !
-!  CALL thismesh%name%clear()
-!  thismesh%singleTopology = .FALSE.
-!  thismesh%boundingBox = 0.0_SDK
-!  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
-!  IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
-!  IF(ASSOCIATED(thismesh%children)) THEN
-!    DO i=1,SIZE(thismesh%children)
-!      CALL thismesh%children(i)%clear()
-!    ENDDO
-!    thismesh%children => NULL()
-!  ENDIF
-!  IF( ALLOCATED(thismesh%vertices) ) DEALLOCATE(thismesh%vertices)
-!  IF( ALLOCATED(thismesh%edges)) THEN
-!    DO i=1, SIZE(thismesh%edges)
-!      CALL thismesh%edges(i)%quad%clear()
-!      CALL thismesh%edges(i)%line%clear()
-!    ENDDO
-!    DEALLOCATE(thismesh%edges)
-!  ENDIF
-!  IF( ALLOCATED(thismesh%cells) ) THEN
-!    DO i=1, SIZE(thismesh%cells)
-!      DEALLOCATE(thismesh%cells(i)%vertex_list)
-!      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
-!    ENDDO
-!    DEALLOCATE(thismesh%cells)
-!  ENDIF
-!  IF( ALLOCATED(thismesh%material_ids) ) DEALLOCATE(thismesh%material_ids)
-!  IF( ALLOCATED(thismesh%cell_sets) ) THEN
-!    DO i=1, SIZE(thismesh%cell_sets)
-!      CALL thismesh%cell_sets(i)%name%clear()
-!      DEALLOCATE(thismesh%cell_sets(i)%cell_list)
-!    ENDDO
-!    DEALLOCATE(thismesh%cell_sets)
-!  ENDIF
-!ENDSUBROUTINE clear_XDMFMeshType
+!-------------------------------------------------------------------------------
+!> @brief Clears the RHM
+!> @param thismesh the RHM
+!>
+RECURSIVE SUBROUTINE clear_RectHierarchicalMeshType(thismesh)
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT) :: thismesh
+  INTEGER(SIK) :: i
+
+  CALL thismesh%mesh%clear()
+  DO i = 1, 4
+    CALL thismesh%bb%points(i)%clear()
+  ENDDO
+  IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
+  IF(ASSOCIATED(thismesh%parent)) thismesh%parent => NULL()
+  IF(ASSOCIATED(thismesh%children)) THEN
+    DO i=1,SIZE(thismesh%children)
+      CALL thismesh%children(i)%clear()
+    ENDDO
+    thismesh%children => NULL()
+  ENDIF
+ENDSUBROUTINE clear_RectHierarchicalMeshType
 !!
 !!-------------------------------------------------------------------------------
 !!> @brief Clears the XDMF mesh, without recursing to children
@@ -729,7 +712,7 @@ ENDSUBROUTINE importRectXDMFMesh
 !  ENDIF
 !  IF( ALLOCATED(thismesh%cells) ) THEN
 !    DO i=1, SIZE(thismesh%cells)
-!      DEALLOCATE(thismesh%cells(i)%vertex_list)
+!      DEALLOCATE(thismesh%cells(i)%point_list)
 !      IF( ALLOCATED(thismesh%cells(i)%edge_list) ) DEALLOCATE(thismesh%cells(i)%edge_list)
 !    ENDDO
 !    DEALLOCATE(thismesh%cells)
@@ -818,87 +801,22 @@ RECURSIVE SUBROUTINE assign_RectHierarchicalMeshType(thismesh, thatmesh)
   DO i = 1, 4
     thismesh%bb%points(i) = thatmesh%bb%points(i)
   ENDDO
-!  IF(ALLOCATED(thatmesh%map))THEN
-!    i = SIZE(thatmesh%map, DIM=1)
-!    j = SIZE(thatmesh%map, DIM=2)
-!    IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
-!    ALLOCATE(thismesh%map(i,j))
-!    thismesh%map = thatmesh%map
-!  ENDIF
-!  IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
-!  ! NOTE: Children cannot be recursively cleared without risk of
-!  ! modify other mesh objects due to the pointer to other meshes.
-!  ! Therefore, it is assumed that one will manually clear a mesh
-!  ! if the children are to be deleted.
-!  IF(ASSOCIATED(thatmesh%children)) THEN
-!    ALLOCATE(thismesh%children(SIZE(thatmesh%children)))
-!    thismesh%children => thatmesh%children
-!  ENDIF
-!  IF( ALLOCATED(thatmesh%vertices) ) THEN
-!    IF(ALLOCATED(thismesh%vertices)) DEALLOCATE(thismesh%vertices)
-!    ALLOCATE(thismesh%vertices(3, SIZE(thatmesh%vertices, DIM=2)))
-!    thismesh%vertices = thatmesh%vertices
-!  ENDIF
-!  IF( ALLOCATED(thatmesh%edges) ) THEN
-!    IF(ALLOCATED(thismesh%edges)) DEALLOCATE(thismesh%edges)
-!    ALLOCATE(thismesh%edges(SIZE(thatmesh%edges)))
-!    DO i = 1,SIZE(thatmesh%edges)
-!      thismesh%edges(i)%isLinear = thatmesh%edges(i)%isLinear
-!      thismesh%edges(i)%cells = thatmesh%edges(i)%cells
-!      thismesh%edges(i)%vertices = thatmesh%edges(i)%vertices
-!      IF(thatmesh%edges(i)%isLinear) THEN
-!        CALL thismesh%edges(i)%line%set(thatmesh%edges(i)%line%p1, thatmesh%edges(i)%line%p2)
-!      ELSE
-!        CALL thismesh%edges(i)%quad%set(thatmesh%edges(i)%quad%points(1), &
-!                                        thatmesh%edges(i)%quad%points(2), &
-!                                        thatmesh%edges(i)%quad%points(3))
-!        IF(ALLOCATED(thatmesh%edges(i)%line%p1%coord))THEN
-!          CALL thismesh%edges(i)%line%set(thatmesh%edges(i)%line%p1, thatmesh%edges(i)%line%p2)
-!          ENSURE(thismesh%edges(i)%line%p1%dim == 2)
-!          ENSURE(thismesh%edges(i)%line%p2%dim == 2)
-!          ENSURE(ALLOCATED(thismesh%edges(i)%line%p1%coord))
-!          ENSURE(ALLOCATED(thismesh%edges(i)%line%p2%coord))
-!          ENSURE(SIZE(thismesh%edges(i)%line%p1%coord)==2)
-!          ENSURE(SIZE(thismesh%edges(i)%line%p2%coord)==2)
-!        ENDIF
-!      ENDIF
-!    ENDDO
-!  ENDIF
-!  IF( ALLOCATED(thatmesh%cells) ) THEN
-!    IF(ALLOCATED(thismesh%cells))THEN
-!      DO i=1, SIZE(thismesh%cells)
-!        DEALLOCATE(thismesh%cells(i)%vertex_list)
-!        IF(ALLOCATED(thismesh%cells(i)%edge_list)) DEALLOCATE(thismesh%cells(i)%edge_list)
-!      ENDDO
-!      DEALLOCATE(thismesh%cells)
-!    ENDIF
-!    ALLOCATE(thismesh%cells(SIZE(thatmesh%cells)))
-!    DO i = 1, SIZE(thatmesh%cells)
-!      ALLOCATE(thismesh%cells(i)%vertex_list(SIZE(thatmesh%cells(i)%vertex_list)))
-!      thismesh%cells(i)%vertex_list = thatmesh%cells(i)%vertex_list
-!      IF(ALLOCATED(thatmesh%cells(i)%edge_list)) &
-!        thismesh%cells(i)%edge_list = thatmesh%cells(i)%edge_list
-!    ENDDO
-!  ENDIF
-!  IF( ALLOCATED(thatmesh%material_ids) )THEN
-!    IF(ALLOCATED(thismesh%material_ids)) DEALLOCATE(thismesh%material_ids)
-!    ALLOCATE(thismesh%material_ids(SIZE(thatmesh%material_ids)))
-!    thismesh%material_ids = thatmesh%material_ids
-!  ENDIF
-!  IF( ALLOCATED(thatmesh%cell_sets) ) THEN
-!    IF(ALLOCATED(thismesh%cell_sets))THEN
-!      DO i=1, SIZE(thismesh%cell_sets)
-!        DEALLOCATE(thismesh%cell_sets(i)%cell_list)
-!      ENDDO
-!      DEALLOCATE(thismesh%cell_sets)
-!    ENDIF
-!    ALLOCATE(thismesh%cell_sets(SIZE(thatmesh%cell_sets)))
-!    DO i = 1, SIZE(thatmesh%cell_sets)
-!      ALLOCATE(thismesh%cell_sets(i)%cell_list(SIZE(thatmesh%cell_sets(i)%cell_list)))
-!      thismesh%cell_sets(i)%cell_list = thatmesh%cell_sets(i)%cell_list
-!      thismesh%cell_sets(i)%name = thatmesh%cell_sets(i)%name
-!    ENDDO
-!  ENDIF
+  IF(ALLOCATED(thatmesh%map))THEN
+    i = SIZE(thatmesh%map, DIM=1)
+    j = SIZE(thatmesh%map, DIM=2)
+    IF(ALLOCATED(thismesh%map)) DEALLOCATE(thismesh%map)
+    ALLOCATE(thismesh%map(i,j))
+    thismesh%map = thatmesh%map
+  ENDIF
+  IF(ASSOCIATED(thatmesh%parent)) thismesh%parent => thatmesh%parent
+  ! NOTE: Children cannot be recursively cleared without risk of
+  ! modifying other mesh objects due to the pointer to other meshes.
+  ! Therefore, it is assumed that one will manually clear a mesh
+  ! if the children are to be deleted.
+  IF(ASSOCIATED(thatmesh%children)) THEN
+    ALLOCATE(thismesh%children(SIZE(thatmesh%children)))
+    thismesh%children => thatmesh%children
+  ENDIF
 ENDSUBROUTINE assign_RectHierarchicalMeshType
 !!
 !!-------------------------------------------------------------------------------
@@ -979,7 +897,7 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !  !
 !  !
 !  ! NOTE: There is potential for an overflow issue if the ID of a vertex exceeds
-!  !   the maximum value of a 32bit integer. The vertex_list of each cell
+!  !   the maximum value of a 32bit integer. The point_list of each cell
 !  !   defaults to 64bit integers to account for very large meshes, but the
 !  !   sorting routines only accept SIK. Therefore, if this becomes an issue,
 !  !   just copy and past all the sorting routines, replace SIK with SIK, and add
@@ -1006,7 +924,7 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    iEdge = 0
 !    ! Loop over each cell to get all unique edges
 !    DO i = 1, SIZE(thismesh%cells)
-!      xid = thismesh%cells(i)%vertex_list(1)
+!      xid = thismesh%cells(i)%point_list(1)
 !      IF(xid == 4_SIK .OR. xid == 5_SIK) THEN! linear edges
 !        IF(xid == 4_SIK)THEN
 !          nEdge = 3
@@ -1018,10 +936,10 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !        thismesh%cells(i)%edge_list = -1
 !        total_nEdges = total_nEdges + nEdge
 !        ! For each edge
-!        DO j = 2, SIZE(thismesh%cells(i)%vertex_list) - 1
+!        DO j = 2, SIZE(thismesh%cells(i)%point_list) - 1
 !          edge_verts = -1
-!          edge_verts(1) = thismesh%cells(i)%vertex_list(j)
-!          edge_verts(2) = thismesh%cells(i)%vertex_list(j+1)
+!          edge_verts(1) = thismesh%cells(i)%point_list(j)
+!          edge_verts(2) = thismesh%cells(i)%point_list(j+1)
 !          CALL sort(edge_verts)
 !          ! If this edge is unique, add it
 !          duplicate_edge = .FALSE.
@@ -1041,8 +959,8 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !        ENDDO
 !        ! Final edge
 !        edge_verts = -1
-!        edge_verts(1) = thismesh%cells(i)%vertex_list(j)
-!        edge_verts(2) = thismesh%cells(i)%vertex_list(2)
+!        edge_verts(1) = thismesh%cells(i)%point_list(j)
+!        edge_verts(2) = thismesh%cells(i)%point_list(2)
 !        CALL sort(edge_verts)
 !        duplicate_edge = .FALSE.
 !        DO k = 1, iEdge
@@ -1068,10 +986,10 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !        thismesh%cells(i)%edge_list = -1
 !        total_nEdges = total_nEdges + nEdge
 !        ! For each edge
-!        DO j = 2, (SIZE(thismesh%cells(i)%vertex_list) - 1)/2
-!          edge_verts(1) = thismesh%cells(i)%vertex_list(j)
-!          edge_verts(2) = thismesh%cells(i)%vertex_list(j+1)
-!          edge_verts(3) = thismesh%cells(i)%vertex_list(j+nEdge)
+!        DO j = 2, (SIZE(thismesh%cells(i)%point_list) - 1)/2
+!          edge_verts(1) = thismesh%cells(i)%point_list(j)
+!          edge_verts(2) = thismesh%cells(i)%point_list(j+1)
+!          edge_verts(3) = thismesh%cells(i)%point_list(j+nEdge)
 !          CALL sort(edge_verts)
 !          ! If this edge is unique, add it
 !          duplicate_edge = .FALSE.
@@ -1090,9 +1008,9 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !          ENDIF
 !        ENDDO
 !        ! Last edge
-!        edge_verts(1) = thismesh%cells(i)%vertex_list(j)
-!        edge_verts(2) = thismesh%cells(i)%vertex_list(2)
-!        edge_verts(3) = thismesh%cells(i)%vertex_list(2*nEdge+1)
+!        edge_verts(1) = thismesh%cells(i)%point_list(j)
+!        edge_verts(2) = thismesh%cells(i)%point_list(2)
+!        edge_verts(3) = thismesh%cells(i)%point_list(2*nEdge+1)
 !        CALL sort(edge_verts)
 !        ! If this edge is unique, add it
 !        duplicate_edge = .FALSE.
@@ -1140,9 +1058,9 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !        edge_verts = all_edge_verts(:,i)
 !        ! Mark seen vert IDs as 0. The non-zero vertex is the midpoint
 !        ! The order of the other two points doesn't matter.
-!        DO j = 1,(SIZE(thismesh%cells(icell)%vertex_list) - 1)/2 ! just lin verts
+!        DO j = 1,(SIZE(thismesh%cells(icell)%point_list) - 1)/2 ! just lin verts
 !          DO k = 1,3
-!            IF(edge_verts(k) == thismesh%cells(icell)%vertex_list(j+1)) edge_verts(k) = 0
+!            IF(edge_verts(k) == thismesh%cells(icell)%point_list(j+1)) edge_verts(k) = 0
 !          ENDDO
 !        ENDDO
 !        ! Move the middle vert to the 3rd index of the array.
@@ -1360,7 +1278,7 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !  INTEGER(SIK) :: nchildren, ichild, verts_in_cell
 !  INTEGER(SIK) :: xdmf_id, nverts, ncells, i, j, ivert
 !  CHARACTER(LEN=200) :: charpath
-!  INTEGER(SIK), ALLOCATABLE :: vertex_list_2d(:, :), vertex_list_1d(:), cell_list_1d(:)
+!  INTEGER(SIK), ALLOCATABLE :: point_list_2d(:, :), point_list_1d(:), cell_list_1d(:)
 !  INTEGER(SIK),PARAMETER :: GEOMETRY_IDX=1
 !  INTEGER(SIK),PARAMETER :: TOPOLOGY_IDX=2
 !
@@ -1433,7 +1351,7 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !  ! Single topology
 !  IF(mesh%singleTopology)THEN
 !    str_name= "TopologyType"
-!    xdmf_id = mesh%cells(1)%vertex_list(1)
+!    xdmf_id = mesh%cells(1)%point_list(1)
 !    xdmf_id_str = xdmf_id
 !    CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
 !    CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', verts_in_cell)
@@ -1480,13 +1398,13 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    charpath = CHAR(strpath)
 !    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/cells"
 !
-!    ALLOCATE(vertex_list_2d(verts_in_cell, ncells))
+!    ALLOCATE(point_list_2d(verts_in_cell, ncells))
 !    DO i = 1, ncells
 !      ! Convert 1 based to 0 based index
-!      vertex_list_2d(:,i) = mesh%cells(i)%vertex_list(2:) - 1
+!      point_list_2d(:,i) = mesh%cells(i)%point_list(2:) - 1
 !    ENDDO
-!    CALL h5%fwrite(CHAR(mesh%name)//'->cells',vertex_list_2d)
-!    DEALLOCATE(vertex_list_2d)
+!    CALL h5%fwrite(CHAR(mesh%name)//'->cells',point_list_2d)
+!    DEALLOCATE(point_list_2d)
 !  ! Mixed topology
 !  ELSE
 !    str_name= "TopologyType"
@@ -1512,7 +1430,7 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !
 !    nverts = 0
 !    DO i = 1, ncells
-!      nverts = nverts + SIZE(mesh%cells(i)%vertex_list)
+!      nverts = nverts + SIZE(mesh%cells(i)%point_list)
 !    ENDDO
 !    str_name="Dimensions"
 !    str_value = nverts
@@ -1530,17 +1448,17 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    charpath = CHAR(strpath)
 !    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/cells"
 !
-!    ALLOCATE(vertex_list_1d(nverts))
+!    ALLOCATE(point_list_1d(nverts))
 !    ivert = 1
 !    DO i = 1, ncells
-!      nverts = SIZE(mesh%cells(i)%vertex_list)
+!      nverts = SIZE(mesh%cells(i)%point_list)
 !      ! Convert 1 based to 0 based index
-!      vertex_list_1d(ivert) = mesh%cells(i)%vertex_list(1)
-!      vertex_list_1d(ivert + 1 : ivert + nverts - 1) = mesh%cells(i)%vertex_list(2:) - 1
+!      point_list_1d(ivert) = mesh%cells(i)%point_list(1)
+!      point_list_1d(ivert + 1 : ivert + nverts - 1) = mesh%cells(i)%point_list(2:) - 1
 !      ivert = ivert + nverts
 !    ENDDO
-!    CALL h5%fwrite(CHAR(mesh%name)//'->cells',vertex_list_1d)
-!    DEALLOCATE(vertex_list_1d)
+!    CALL h5%fwrite(CHAR(mesh%name)//'->cells',point_list_1d)
+!    DEALLOCATE(point_list_1d)
 !  ENDIF
 !
 !  ichild = 3
@@ -1592,11 +1510,11 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    charpath = CHAR(strpath)
 !    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/material_id"
 !
-!    ALLOCATE(vertex_list_1d(ncells))
+!    ALLOCATE(point_list_1d(ncells))
 !    ! Convert 1 based to 0 based index
-!    vertex_list_1d = mesh%material_ids - 1
-!    CALL h5%fwrite(CHAR(mesh%name)//'->material_id',vertex_list_1d)
-!    DEALLOCATE(vertex_list_1d)
+!    point_list_1d = mesh%material_ids - 1
+!    CALL h5%fwrite(CHAR(mesh%name)//'->material_id',point_list_1d)
+!    DEALLOCATE(point_list_1d)
 !    ichild = ichild + 1
 !  ENDIF
 !
@@ -1788,8 +1706,8 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !  INTEGER(SIK) nverts, i, j
 !
 !  area = 0.0_SRK
-!  xid = mesh%cells(iCell)%vertex_list(1)
-!  nverts = SIZE(mesh%cells(iCell)%vertex_list) - 1
+!  xid = mesh%cells(iCell)%point_list(1)
+!  nverts = SIZE(mesh%cells(iCell)%point_list) - 1
 !  IF(xid == 4 .OR. xid == 5) THEN ! Linear edges
 !    ! Shoelace formula may be used for linear edges
 !    ! Assumes that vertices are in clockwise or counterclockwise order
@@ -1797,8 +1715,8 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    ALLOCATE(y(nverts))
 !    ALLOCATE(x_lin(nverts))
 !    ALLOCATE(y_lin(nverts))
-!    x = mesh%vertices(1, mesh%cells(iCell)%vertex_list(2:nverts+1))
-!    y = mesh%vertices(2, mesh%cells(iCell)%vertex_list(2:nverts+1))
+!    x = mesh%vertices(1, mesh%cells(iCell)%point_list(2:nverts+1))
+!    y = mesh%vertices(2, mesh%cells(iCell)%point_list(2:nverts+1))
 !    x_lin = x - SUM(x)/nverts
 !    y_lin = y - SUM(y)/nverts
 !    ! Narrowing may occur here. This is intended.
@@ -1811,7 +1729,7 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    ! Overall, the process is to get the linear area and adjust for quadratic edges.
 !    !
 !    ! All quadratic vertices (middle of 3 vert edge) are in the second half of
-!    ! the vertex_list
+!    ! the point_list
 !    nverts = nverts/2
 !    ALLOCATE(x(nverts))
 !    ALLOCATE(y(nverts))
@@ -1819,10 +1737,10 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    ALLOCATE(y_quad(nverts))
 !    ALLOCATE(x_lin(nverts))
 !    ALLOCATE(y_lin(nverts))
-!    x = mesh%vertices(1, mesh%cells(iCell)%vertex_list(2:nverts+1))
-!    y = mesh%vertices(2, mesh%cells(iCell)%vertex_list(2:nverts+1))
-!    x_quad = mesh%vertices(1, mesh%cells(iCell)%vertex_list(nverts+2:))
-!    y_quad = mesh%vertices(2, mesh%cells(iCell)%vertex_list(nverts+2:))
+!    x = mesh%vertices(1, mesh%cells(iCell)%point_list(2:nverts+1))
+!    y = mesh%vertices(2, mesh%cells(iCell)%point_list(2:nverts+1))
+!    x_quad = mesh%vertices(1, mesh%cells(iCell)%point_list(nverts+2:))
+!    y_quad = mesh%vertices(2, mesh%cells(iCell)%point_list(nverts+2:))
 !    ! Get linear area using shoelace formula
 !    x_lin = x - SUM(x)/nverts
 !    y_lin = y - SUM(y)/nverts
@@ -1955,15 +1873,15 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !    ! The exception is on the last edge, where the verts wrap around an p2
 !    ! should be encountered first.
 !    IF(thismesh%edges(iEdge)%isLinear)THEN
-!      lastvert_idx = SIZE(thismesh%cells(iCell)%vertex_list)
-!      iLastVert = thismesh%cells(iCell)%vertex_list(lastvert_idx)
+!      lastvert_idx = SIZE(thismesh%cells(iCell)%point_list)
+!      iLastVert = thismesh%cells(iCell)%point_list(lastvert_idx)
 !    ELSE
 !      ! total list - 1 for the xid, /2 to only address linear elements + 1 to
 !      ! skip xid
-!      lastvert_idx = (SIZE(thismesh%cells(iCell)%vertex_list) - 1)/2 + 1
-!      iLastVert = thismesh%cells(iCell)%vertex_list(lastvert_idx)
+!      lastvert_idx = (SIZE(thismesh%cells(iCell)%point_list) - 1)/2 + 1
+!      iLastVert = thismesh%cells(iCell)%point_list(lastvert_idx)
 !    ENDIF
-!    ifirstVert = thismesh%cells(iCell)%vertex_list(2)
+!    ifirstVert = thismesh%cells(iCell)%point_list(2)
 !    ! Test for wrap around 1st.
 !    IF(p1ID == ifirstVert .AND. p2ID == iLastVert) THEN
 !      isLeft = .NOT.isLeft
@@ -1971,7 +1889,7 @@ ENDSUBROUTINE assign_RectHierarchicalMeshType
 !      ! Correct. nothing to do
 !    ELSE
 !      DO j = 2, lastvert_idx ! skip xid
-!        iVert = thismesh%cells(iCell)%vertex_list(j)
+!        iVert = thismesh%cells(iCell)%point_list(j)
 !        IF(iVert == p1ID) THEN
 !          EXIT
 !        ENDIF

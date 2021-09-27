@@ -16,6 +16,175 @@ USE XDMFMesh
 USE Geom
 USE RectHierarchicalMesh
 IMPLICIT NONE
+REAL(SDK) :: two_pins_pin1_vertices(3,109) = RESHAPE( (/ &
+    0.0000000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.5000000000000000_SDK,   1.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.50000000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.0000000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.5000000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.25000000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.75000000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.2500000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.7500000000000000_SDK,   0.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,   1.5000000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,   1.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,  0.50000000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,   1.7500000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,   1.2500000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,  0.75000000000000000_SDK,   0.0000000000000000_SDK,&
+    0.0000000000000000_SDK,  0.25000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,  0.50000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,   1.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,   1.5000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,  0.25000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,  0.75000000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,   1.2500000000000000_SDK,   0.0000000000000000_SDK,&
+    2.0000000000000000_SDK,   1.7500000000000000_SDK,   0.0000000000000000_SDK,&
+    1.5000000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.0000000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.50000000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.7500000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.2500000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.75000000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.25000000000000000_SDK,   2.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.3117449009294000_SDK,   1.3909157412340001_SDK,   0.0000000000000000_SDK,&
+   0.88873953302183994_SDK,   1.4874639560909000_SDK,   0.0000000000000000_SDK,&
+   0.54951556604879004_SDK,   1.2169418695587999_SDK,   0.0000000000000000_SDK,&
+   0.54951556604879004_SDK,  0.78305813044121997_SDK,   0.0000000000000000_SDK,&
+   0.88873953302183994_SDK,  0.51253604390909002_SDK,   0.0000000000000000_SDK,&
+    1.3117449009294000_SDK,  0.60908425876599004_SDK,   0.0000000000000000_SDK,&
+    1.4504844339512000_SDK,   1.2169418695587999_SDK,   0.0000000000000000_SDK,&
+    1.1112604669782000_SDK,   1.4874639560909000_SDK,   0.0000000000000000_SDK,&
+   0.68825509907062998_SDK,   1.3909157412340001_SDK,   0.0000000000000000_SDK,&
+   0.50000000000000000_SDK,   1.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.68825509907062998_SDK,  0.60908425876599004_SDK,   0.0000000000000000_SDK,&
+    1.1112604669782000_SDK,  0.51253604390909002_SDK,   0.0000000000000000_SDK,&
+    1.4504844339512000_SDK,  0.78305813044121997_SDK,   0.0000000000000000_SDK,&
+    1.0000000000000000_SDK,   1.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.1558724504647000_SDK,   1.1954578706170000_SDK,   0.0000000000000000_SDK,&
+    1.2500000000000000_SDK,   1.0000000000000000_SDK,   0.0000000000000000_SDK,&
+   0.94436976651091997_SDK,   1.2437319780455001_SDK,   0.0000000000000000_SDK,&
+    1.1558724504647000_SDK,  0.80454212938298997_SDK,   0.0000000000000000_SDK,&
+   0.77475778302440002_SDK,   1.1084709347794000_SDK,   0.0000000000000000_SDK,&
+   0.77475778302440002_SDK,  0.89152906522061004_SDK,   0.0000000000000000_SDK,&
+   0.94436976651091997_SDK,  0.75626802195454002_SDK,   0.0000000000000000_SDK,&
+   0.39945256244833000_SDK,   1.6005474375516999_SDK,   0.0000000000000000_SDK,&
+   0.39945256244833000_SDK,  0.39945256244833000_SDK,   0.0000000000000000_SDK,&
+    1.6749575669735000_SDK,  0.67495756697348996_SDK,   0.0000000000000000_SDK,&
+    1.6749575669735000_SDK,   1.3250424330265000_SDK,   0.0000000000000000_SDK,&
+    1.6076357762794000_SDK,   1.6521790377186001_SDK,   0.0000000000000000_SDK,&
+    1.6076357762794000_SDK,  0.34782096228136000_SDK,   0.0000000000000000_SDK,&
+    1.2323349413967000_SDK,   1.7035415484495000_SDK,   0.0000000000000000_SDK,&
+    1.2323349413967000_SDK,  0.29645845155054001_SDK,   0.0000000000000000_SDK,&
+   0.27475778302440002_SDK,  0.89152906522061004_SDK,   0.0000000000000000_SDK,&
+   0.27475778302440002_SDK,   1.1084709347794000_SDK,   0.0000000000000000_SDK,&
+   0.27475778302440002_SDK,  0.64152906522061004_SDK,   0.0000000000000000_SDK,&
+   0.27475778302440002_SDK,   1.3584709347794000_SDK,   0.0000000000000000_SDK,&
+   0.94436976651091997_SDK,  0.25626802195454002_SDK,   0.0000000000000000_SDK,&
+   0.69436976651091997_SDK,  0.25626802195454002_SDK,   0.0000000000000000_SDK,&
+   0.69436976651091997_SDK,   1.7437319780455001_SDK,   0.0000000000000000_SDK,&
+   0.94436976651091997_SDK,   1.7437319780455001_SDK,   0.0000000000000000_SDK,&
+   0.44972628122415997_SDK,   1.8002737187758000_SDK,   0.0000000000000000_SDK,&
+   0.64409604773508999_SDK,   1.5440056968213001_SDK,   0.0000000000000000_SDK,&
+   0.64409604773508999_SDK,  0.45599430317870998_SDK,   0.0000000000000000_SDK,&
+   0.44972628122415997_SDK,  0.19972628122416000_SDK,   0.0000000000000000_SDK,&
+   0.47448406424855999_SDK,   1.4087446535552000_SDK,   0.0000000000000000_SDK,&
+   0.19972628122416000_SDK,   1.5502737187758000_SDK,   0.0000000000000000_SDK,&
+   0.19972628122416000_SDK,  0.44972628122415997_SDK,   0.0000000000000000_SDK,&
+   0.47448406424855999_SDK,  0.59125534644476996_SDK,   0.0000000000000000_SDK,&
+    1.8038178881397000_SDK,  0.42391048114067997_SDK,   0.0000000000000000_SDK,&
+    1.8038178881397000_SDK,  0.17391048114068000_SDK,   0.0000000000000000_SDK,&
+    1.8038178881397000_SDK,   1.8260895188593000_SDK,   0.0000000000000000_SDK,&
+    1.8038178881397000_SDK,   1.5760895188593000_SDK,   0.0000000000000000_SDK,&
+   0.19972628122416000_SDK,  0.19972628122416000_SDK,   0.0000000000000000_SDK,&
+   0.19972628122416000_SDK,   1.8002737187758000_SDK,   0.0000000000000000_SDK,&
+    1.5538178881397000_SDK,  0.17391048114068000_SDK,   0.0000000000000000_SDK,&
+    1.5538178881397000_SDK,   1.8260895188593000_SDK,   0.0000000000000000_SDK,&
+    1.1161674706983999_SDK,  0.14822922577527001_SDK,   0.0000000000000000_SDK,&
+    1.0605372372093000_SDK,  0.40449724772981999_SDK,   0.0000000000000000_SDK,&
+    1.0605372372093000_SDK,   1.5955027522702001_SDK,   0.0000000000000000_SDK,&
+    1.1161674706983999_SDK,   1.8517707742247000_SDK,   0.0000000000000000_SDK,&
+    1.5874787834866999_SDK,  0.83747878348673999_SDK,   0.0000000000000000_SDK,&
+    1.8374787834866999_SDK,  0.83747878348673999_SDK,   0.0000000000000000_SDK,&
+    1.7500000000000000_SDK,   1.0000000000000000_SDK,   0.0000000000000000_SDK,&
+    1.8374787834866999_SDK,   1.1625212165133001_SDK,   0.0000000000000000_SDK,&
+    1.5874787834866999_SDK,   1.1625212165133001_SDK,   0.0000000000000000_SDK,&
+    1.8374787834866999_SDK,   1.4125212165133001_SDK,   0.0000000000000000_SDK,&
+    1.8374787834866999_SDK,  0.58747878348673999_SDK,   0.0000000000000000_SDK,&
+    1.3661674706983999_SDK,  0.14822922577527001_SDK,   0.0000000000000000_SDK,&
+    1.3661674706983999_SDK,   1.8517707742247000_SDK,   0.0000000000000000_SDK,&
+    1.4933512339513999_SDK,  0.64202091286973995_SDK,   0.0000000000000000_SDK,&
+    1.4933512339513999_SDK,   1.3579790871302999_SDK,   0.0000000000000000_SDK,&
+    1.6412966716263999_SDK,  0.51138926462741996_SDK,   0.0000000000000000_SDK,&
+    1.6412966716263999_SDK,   1.4886107353725999_SDK,   0.0000000000000000_SDK,&
+    1.2720399211630999_SDK,  0.45277135515826000_SDK,   0.0000000000000000_SDK,&
+    1.2720399211630999_SDK,   1.5472286448417001_SDK,   0.0000000000000000_SDK,&
+    1.4199853588381000_SDK,   1.6778602930840001_SDK,   0.0000000000000000_SDK,&
+    1.4199853588381000_SDK,  0.32213970691595001_SDK,   0.0000000000000000_SDK,&
+    1.4596903386044000_SDK,   1.5215473894763001_SDK,   0.0000000000000000_SDK,&
+    1.4596903386044000_SDK,  0.47845261052367000_SDK,   0.0000000000000000_SDK &
+/), (/3, 109/))
+
+INTEGER(SIK) :: two_pins_pin1_cells(7,46) = RESHAPE( (/ &
+36,  33,  46,   4,  47,  48,  39,&
+36,  34,  46,  33,  49,  47,  40,&
+36,   4,  46,  38,  48,  50,  45,&
+36,  35,  46,  34,  51,  49,  41,&
+36,  36,  46,  35,  52,  51,  42,&
+36,  38,  46,  37,  50,  53,  44,&
+36,  37,  46,  36,  53,  52,  43,&
+36,  13,  36,  35,  62,  42,  63,&
+36,  14,  36,  13,  64,  62,  17,&
+36,  12,  13,  35,  16,  63,  65,&
+36,   5,   6,  37,   9,  66,  67,&
+36,  28,  34,  27,  68,  69,  31,&
+36,  28,  54,  34,  70,  71,  68,&
+36,  37,  55,   5,  72,  73,  67,&
+36,  35,  54,  12,  74,  75,  65,&
+36,  14,  55,  36,  76,  77,  64,&
+36,  19,  59,   1,  78,  79,  22,&
+36,   3,  58,  21,  80,  81,  25,&
+36,   5,  55,   0,  73,  82,   8,&
+36,   0,  55,  14,  82,  76,  18,&
+36,  12,  54,   2,  75,  83,  15,&
+36,   2,  54,  28,  83,  70,  32,&
+36,  34,  54,  35,  71,  74,  41,&
+36,  36,  55,  37,  77,  72,  43,&
+36,   1,  59,   7,  79,  84,  11,&
+36,  26,  58,   3,  85,  80,  29,&
+36,   6,  61,  37,  86,  87,  66,&
+36,  34,  60,  27,  88,  89,  69,&
+36,   4,  56,  20,  90,  91,  92,&
+36,  20,  57,   4,  93,  94,  92,&
+36,  21,  57,  20,  95,  93,  24,&
+36,  20,  56,  19,  91,  96,  23,&
+36,   7,  61,   6,  97,  86,  10,&
+36,  27,  60,  26,  89,  98,  30,&
+36,  38,  56,   4,  99,  90,  45,&
+36,   4,  57,  33,  94, 100,  39,&
+36,  56,  59,  19, 101,  78,  96,&
+36,  21,  58,  57,  81, 102,  95,&
+36,  37,  61,  38,  87, 103,  44,&
+36,  33,  60,  34, 104,  88,  40,&
+36,  26,  60,  58,  98, 105,  85,&
+36,  59,  61,   7, 106,  97,  84,&
+36,  58,  60,  33, 105, 104, 107,&
+36,  38,  61,  59, 103, 106, 108,&
+36,  38,  59,  56, 108, 101,  99,&
+36,  57,  58,  33, 102, 107, 100 &
+/), (/7, 46/))
+
+INTEGER(SIK) :: two_pins_pin1_material_ids(46) = (/ &
+0, 0, 0, 0, 0, 0, 0,          &
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+1, 1, 1, 1, 1, 1, 1, 1, 1     &
+/)
+
 !REAL(SDK) :: three_level_grid_L3_vertices(3,5) = RESHAPE( (/ &
 ! 2.0, 1.5, 0.0,&
 ! 2.0, 1.0, 0.0,&
@@ -31,7 +200,7 @@ IMPLICIT NONE
 !/), (/3, 3/))
 !
 CREATE_TEST('RECTANGULAR HIERARCHICAL MESH')
-!REGISTER_SUBTEST('CLEAR', testClear)
+REGISTER_SUBTEST('CLEAR', testClear)
 !REGISTER_SUBTEST('NON-RECURSIVE CLEAR', testNonRecursiveClear)
 !REGISTER_SUBTEST('ASSIGNMENT', testAssign)
 !REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
@@ -51,45 +220,83 @@ FINALIZE_TEST()
 !
 !===============================================================================
 CONTAINS
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testClear()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: pin1 => NULL()
-!  INTEGER(SIK) :: i
+SUBROUTINE setup_pin1(RHM)
+  TYPE(RectHierarchicalMeshType), INTENT(INOUT), TARGET :: RHM
+  TYPE(RectHierarchicalMeshType), POINTER :: children(:)
+  INTEGER(SIK) :: i
+
+  ! Setup a mesh equivalent to gridmesh_two_pins.xdmf, only containing pin1
+  RHM%mesh%name = "mesh_domain"
+  CALL RHM%bb%points(1)%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
+  CALL RHM%bb%points(2)%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
+  CALL RHM%bb%points(3)%init(DIM = 2, X=2.0_SRK, Y=2.0_SRK)
+  CALL RHM%bb%points(4)%init(DIM = 2, X=0.0_SRK, Y=2.0_SRK)
+  ALLOCATE(RHM%map(1,1))
+  RHM%map(1,1) = 1
+  ALLOCATE(RHM%children(1))
+  children => RHM%children
+  ! pin 1
+  children(1)%mesh%name = "GRID_L1_1_1"
+  children(1)%parent => RHM
+  CALL children(1)%bb%points(1)%init(DIM = 2, X=0.0_SRK, Y=0.0_SRK)
+  CALL children(1)%bb%points(2)%init(DIM = 2, X=2.0_SRK, Y=0.0_SRK)
+  CALL children(1)%bb%points(3)%init(DIM = 2, X=2.0_SRK, Y=2.0_SRK)
+  CALL children(1)%bb%points(4)%init(DIM = 2, X=0.0_SRK, Y=2.0_SRK)
+  ALLOCATE(children(1)%mesh%points(109))
+  DO i = 1, 109
+    CALL children(1)%mesh%points(i)%init(DIM=2, X=two_pins_pin1_vertices(1,i), &
+                                    Y=two_pins_pin1_vertices(2,i))
+  ENDDO
+  ALLOCATE(children(1)%mesh%cells(46))
+  DO i = 1,46
+    ALLOCATE(children(1)%mesh%cells(i)%point_list(7))
+    children(1)%mesh%cells(i)%point_list(1) = two_pins_pin1_cells(1,i)
+    children(1)%mesh%cells(i)%point_list(2:) = two_pins_pin1_cells(2:,i) + 1
+  ENDDO
+  children(1)%mesh%material_ids = two_pins_pin1_material_ids + 1
+  ALLOCATE(children(1)%mesh%cell_sets(1))
+  ALLOCATE(children(1)%mesh%cell_sets(1)%cell_list(46))
+  children(1)%mesh%cell_sets(1)%name = "Pin_1"
+  DO i = 1,46
+    children(1)%mesh%cell_sets(1)%cell_list(i) = i
+  ENDDO
+  NULLIFY(children)
+ENDSUBROUTINE setup_pin1
 !
-!  CALL setup_pin1(mesh)
-!  pin1 => mesh%children(1)
-!
-!  CALL mesh%clear()
-!  ASSERT(pin1%name == "", "pin1 mesh name is incorrect")
-!  ASSERT(pin1%singleTopology == .FALSE., "single topology did not reset")
-!  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
-!  ASSERT(.NOT.ALLOCATED(pin1%vertices), "Vertices are allocated")
-!  ASSERT(.NOT.ALLOCATED(pin1%edges), "Edges are allocated")
-!  ASSERT(.NOT.ALLOCATED(pin1%cells), "Cells are allocated")
-!  ASSERT(.NOT.ALLOCATED(pin1%material_ids), "materials are allocated")
-!  ASSERT(.NOT.ALLOCATED(pin1%cell_sets), "Cell sets are allocated")
-!  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
-!  ASSERT(.NOT.ASSOCIATED(pin1%parent), "Parent is associated")
-!  DO i = 1,4
-!    ASSERT(pin1%boundingBox(i) == 0.0_SDK, "BB not reset")
-!  ENDDO
-!  ASSERT(mesh%name == "", "mesh mesh name is incorrect")
-!  ASSERT(mesh%singleTopology == .FALSE., "single topology did not reset")
-!  ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
-!  ASSERT(.NOT.ALLOCATED(mesh%vertices), "Vertices are allocated")
-!  ASSERT(.NOT.ALLOCATED(mesh%edges), "Edges are allocated")
-!  ASSERT(.NOT.ALLOCATED(mesh%cells), "Cells are allocated")
-!  ASSERT(.NOT.ALLOCATED(mesh%material_ids), "materials are allocated")
-!  ASSERT(.NOT.ALLOCATED(mesh%cell_sets), "Cell sets are allocated")
-!  ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
-!  ASSERT(.NOT.ASSOCIATED(mesh%parent), "Parent is associated")
-!  DO i = 1,4
-!    ASSERT(mesh%boundingBox(i) == 0.0_SDK, "BB not reset")
-!  ENDDO
-!  NULLIFY(pin1)
-!ENDSUBROUTINE testClear
+!-------------------------------------------------------------------------------
+SUBROUTINE testClear()
+  TYPE(RectHierarchicalMeshType) :: RHM
+  TYPE(RectHierarchicalMeshType),POINTER :: pin1 => NULL()
+  INTEGER(SIK) :: i
+
+  CALL setup_pin1(RHM)
+  pin1 => RHM%children(1)
+
+  CALL RHM%clear()
+  ASSERT(pin1%mesh%name == "", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%mesh%points), "Vertices are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%mesh%cells), "Cells are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%mesh%material_ids), "materials are allocated")
+  ASSERT(.NOT.ALLOCATED(pin1%mesh%cell_sets), "Cell sets are allocated")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(.NOT.ASSOCIATED(pin1%parent), "Parent is associated")
+  DO i = 1,4
+    ASSERT(.NOT.ALLOCATED(pin1%bb%points(i)%coord), "BB not reset")
+  ENDDO
+  ASSERT(RHM%mesh%name == "", "mesh name is incorrect")
+  ASSERT(.NOT.ALLOCATED(RHM%map), "Map is allocated")
+  ASSERT(.NOT.ALLOCATED(RHM%mesh%points), "Vertices are allocated")
+  ASSERT(.NOT.ALLOCATED(RHM%mesh%cells), "Cells are allocated")
+  ASSERT(.NOT.ALLOCATED(RHM%mesh%material_ids), "materials are allocated")
+  ASSERT(.NOT.ALLOCATED(RHM%mesh%cell_sets), "Cell sets are allocated")
+  ASSERT(.NOT.ASSOCIATED(RHM%children), "Children are associated")
+  ASSERT(.NOT.ASSOCIATED(RHM%parent), "Parent is associated")
+  DO i = 1,4
+    ASSERT(.NOT.ALLOCATED(RHM%bb%points(i)%coord), "BB not reset")
+  ENDDO
+  NULLIFY(pin1)
+ENDSUBROUTINE testClear
 !!
 !!-------------------------------------------------------------------------------
 !SUBROUTINE testNonRecursiveClear()
@@ -125,10 +332,10 @@ CONTAINS
 !  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
 !  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
 !  DO i=1,46
-!    ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
-!    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+!    ASSERT(SIZE(pin1%cells(i)%point_list)==7, "Wrong size for vertex list")
+!    ASSERT( pin1%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
 !    DO j=2,7
-!      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+!      ASSERT( pin1%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
 !    ENDDO
 !  ENDDO
 !  !     pin1 material_ids
@@ -226,10 +433,10 @@ CONTAINS
 !  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
 !  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
 !  DO i=1,46
-!    ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
-!    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+!    ASSERT(SIZE(pin1%cells(i)%point_list)==7, "Wrong size for vertex list")
+!    ASSERT( pin1%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
 !    DO j=2,7
-!      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+!      ASSERT( pin1%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
 !    ENDDO
 !  ENDDO
 !  !     pin1 material_ids
@@ -449,17 +656,17 @@ CONTAINS
 !  ! Cells
 !  ALLOCATE(mesh%cells(4))
 !  ! Triangle
-!  ALLOCATE(mesh%cells(1)%vertex_list(4))
-!  mesh%cells(1)%vertex_list = (/4, 1, 2, 3/)
+!  ALLOCATE(mesh%cells(1)%point_list(4))
+!  mesh%cells(1)%point_list = (/4, 1, 2, 3/)
 !  ! Quadrilateral
-!  ALLOCATE(mesh%cells(2)%vertex_list(5))
-!  mesh%cells(2)%vertex_list = (/5, 1, 2, 3, 4/)
+!  ALLOCATE(mesh%cells(2)%point_list(5))
+!  mesh%cells(2)%point_list = (/5, 1, 2, 3, 4/)
 !  ! Triangle6
-!  ALLOCATE(mesh%cells(3)%vertex_list(7))
-!  mesh%cells(3)%vertex_list = (/36, 1, 2, 3, 5, 6, 9/)
+!  ALLOCATE(mesh%cells(3)%point_list(7))
+!  mesh%cells(3)%point_list = (/36, 1, 2, 3, 5, 6, 9/)
 !  ! Quadrilateral8
-!  ALLOCATE(mesh%cells(4)%vertex_list(9))
-!  mesh%cells(4)%vertex_list = (/37, 1, 2, 3, 4, 5, 6, 7, 8/)
+!  ALLOCATE(mesh%cells(4)%point_list(9))
+!  mesh%cells(4)%point_list = (/37, 1, 2, 3, 4, 5, 6, 7, 8/)
 !
 !  ! Same mesh, with vertices rotated 45 degrees about the origin
 !  mesh45 = mesh
@@ -670,21 +877,21 @@ CONTAINS
 !  ! Cells
 !  ALLOCATE(mesh%cells(7))
 !  ! Quadrilaterals
-!  ALLOCATE(mesh%cells(1)%vertex_list(5))
-!  mesh%cells(1)%vertex_list = (/5, 1, 2, 6, 5/)
-!  ALLOCATE(mesh%cells(2)%vertex_list(5))
-!  mesh%cells(2)%vertex_list = (/5, 2, 3, 7, 6/)
-!  ALLOCATE(mesh%cells(3)%vertex_list(5))
-!  mesh%cells(3)%vertex_list = (/5, 5, 6, 9, 8/)
-!  ALLOCATE(mesh%cells(4)%vertex_list(5))
-!  mesh%cells(4)%vertex_list = (/5, 6, 7, 10, 9/)
+!  ALLOCATE(mesh%cells(1)%point_list(5))
+!  mesh%cells(1)%point_list = (/5, 1, 2, 6, 5/)
+!  ALLOCATE(mesh%cells(2)%point_list(5))
+!  mesh%cells(2)%point_list = (/5, 2, 3, 7, 6/)
+!  ALLOCATE(mesh%cells(3)%point_list(5))
+!  mesh%cells(3)%point_list = (/5, 5, 6, 9, 8/)
+!  ALLOCATE(mesh%cells(4)%point_list(5))
+!  mesh%cells(4)%point_list = (/5, 6, 7, 10, 9/)
 !  ! Triangles
-!  ALLOCATE(mesh%cells(5)%vertex_list(4))
-!  mesh%cells(5)%vertex_list = (/4, 3, 4, 7/)
-!  ALLOCATE(mesh%cells(6)%vertex_list(4))
-!  mesh%cells(6)%vertex_list = (/4, 7, 4, 11/)
-!  ALLOCATE(mesh%cells(7)%vertex_list(4))
-!  mesh%cells(7)%vertex_list = (/4, 7, 11, 10/)
+!  ALLOCATE(mesh%cells(5)%point_list(4))
+!  mesh%cells(5)%point_list = (/4, 3, 4, 7/)
+!  ALLOCATE(mesh%cells(6)%point_list(4))
+!  mesh%cells(6)%point_list = (/4, 7, 4, 11/)
+!  ALLOCATE(mesh%cells(7)%point_list(4))
+!  mesh%cells(7)%point_list = (/4, 7, 11, 10/)
 !
 !  ! Setup the edges
 !  CALL mesh%setupEdges()
@@ -764,10 +971,10 @@ CONTAINS
 !
 !  ! Cells
 !  ALLOCATE(mesh%cells(2))
-!  ALLOCATE(mesh%cells(1)%vertex_list(7))
-!  mesh%cells(1)%vertex_list = (/36, 1, 3, 9, 2, 6, 5/)
-!  ALLOCATE(mesh%cells(2)%vertex_list(7))
-!  mesh%cells(2)%vertex_list = (/36, 9, 7, 1, 8, 4, 5/)
+!  ALLOCATE(mesh%cells(1)%point_list(7))
+!  mesh%cells(1)%point_list = (/36, 1, 3, 9, 2, 6, 5/)
+!  ALLOCATE(mesh%cells(2)%point_list(7))
+!  mesh%cells(2)%point_list = (/36, 9, 7, 1, 8, 4, 5/)
 !
 !  ! Setup the edges
 !  CALL mesh%setupEdges()
@@ -847,21 +1054,21 @@ CONTAINS
 !  ! Cells
 !  ALLOCATE(mesh%cells(7))
 !  ! Quadrilaterals
-!  ALLOCATE(mesh%cells(1)%vertex_list(5))
-!  mesh%cells(1)%vertex_list = (/5, 1, 2, 6, 5/)
-!  ALLOCATE(mesh%cells(2)%vertex_list(5))
-!  mesh%cells(2)%vertex_list = (/5, 2, 3, 7, 6/)
-!  ALLOCATE(mesh%cells(3)%vertex_list(5))
-!  mesh%cells(3)%vertex_list = (/5, 5, 6, 9, 8/)
-!  ALLOCATE(mesh%cells(4)%vertex_list(5))
-!  mesh%cells(4)%vertex_list = (/5, 6, 7, 10, 9/)
+!  ALLOCATE(mesh%cells(1)%point_list(5))
+!  mesh%cells(1)%point_list = (/5, 1, 2, 6, 5/)
+!  ALLOCATE(mesh%cells(2)%point_list(5))
+!  mesh%cells(2)%point_list = (/5, 2, 3, 7, 6/)
+!  ALLOCATE(mesh%cells(3)%point_list(5))
+!  mesh%cells(3)%point_list = (/5, 5, 6, 9, 8/)
+!  ALLOCATE(mesh%cells(4)%point_list(5))
+!  mesh%cells(4)%point_list = (/5, 6, 7, 10, 9/)
 !  ! Triangles
-!  ALLOCATE(mesh%cells(5)%vertex_list(4))
-!  mesh%cells(5)%vertex_list = (/4, 3, 4, 7/)
-!  ALLOCATE(mesh%cells(6)%vertex_list(4))
-!  mesh%cells(6)%vertex_list = (/4, 7, 4, 11/)
-!  ALLOCATE(mesh%cells(7)%vertex_list(4))
-!  mesh%cells(7)%vertex_list = (/4, 7, 11, 10/)
+!  ALLOCATE(mesh%cells(5)%point_list(4))
+!  mesh%cells(5)%point_list = (/4, 3, 4, 7/)
+!  ALLOCATE(mesh%cells(6)%point_list(4))
+!  mesh%cells(6)%point_list = (/4, 7, 4, 11/)
+!  ALLOCATE(mesh%cells(7)%point_list(4))
+!  mesh%cells(7)%point_list = (/4, 7, 11, 10/)
 !
 !  ! Setup the edges
 !  CALL mesh%setupEdges()
@@ -946,54 +1153,52 @@ SUBROUTINE test_import_two_pins()
 !  ASSERT( (ABS(mesh%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
 !  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
 !  ASSERT( (ABS(mesh%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ! Check pin1
-!  pin1 = mesh%children(1)
-!  ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
-!  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
-!  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
-!  ASSERT(pin1%parent%name == "mesh_domain", "pin1 parent name is incorrect")
-!  ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
-!  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
+  ! Check pin1
+  pin1 = RHM%children(1)
+  ASSERT(pin1%mesh%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
+  ASSERT(pin1%parent%mesh%name == "mesh_domain", "pin1 parent name is incorrect")
+  ASSERT(.NOT.ALLOCATED(pin1%map), "Map is allocated")
 !  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
 !  ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
 !  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
 !  ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  !     pin1 vertices
-!  ASSERT(ALLOCATED(pin1%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(pin1%vertices)==109*3, "Wrong number of vertices")
-!  ASSERT(SIZE(pin1%vertices, DIM=2)==109, "Wrong shape of vertices")
-!  DO i=1,109
-!    DO j=1,3
-!      ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
-!    ENDDO
-!  ENDDO
-!  !     pin1 cells
-!  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
-!  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
-!    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
-!    DO j=2,7
-!      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
-!    ENDDO
-!  ENDDO
+  !     pin1 vertices
+  ASSERT(ALLOCATED(pin1%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(pin1%mesh%points)==109, "Wrong number of vertices")
+  DO i=1,109
+    DO j=1,2
+      ASSERT( (ABS(pin1%mesh%points(i)%coord(j) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal points")
+    ENDDO
+  ENDDO
+  !     pin1 cells
+  ASSERT(ALLOCATED(pin1%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(pin1%mesh%cells)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT(SIZE(pin1%mesh%cells(i)%point_list)==7, "Wrong size for vertex list")
+    ASSERT( pin1%mesh%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%mesh%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
 !  !     pin1 material_ids
-!  ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
-!  ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
+!  ASSERT(ALLOCATED(pin1%mesh%material_ids), "material_ids not allocated")
+!  ASSERT(SIZE(pin1%mesh%material_ids)==46, "Wrong number of cells")
 !  DO i=1,46
-!    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+!    ASSERT( pin1%mesh%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
 !  ENDDO
 !  !     pin1 cell_sets
-!  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
-!  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
-!  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
-!  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+!  ASSERT(ALLOCATED(pin1%mesh%cell_sets), "cell_sets not allocated")
+!  ASSERT(SIZE(pin1%mesh%cell_sets)==1, "Wrong number of cell sets")
+!  ASSERT(SIZE(pin1%mesh%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+!  ASSERT(pin1%mesh%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
 !  DO i=1,46
-!    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+!    ASSERT( pin1%mesh%cell_sets(1)%cell_list(i) == i, "Wrong cells")
 !  ENDDO
-!
-!  CALL mesh%clear()
-!  CALL pin1%clear()
+
+  CALL RHM%clear()
+  CALL pin1%clear()
 ENDSUBROUTINE test_import_two_pins
 !!
 !!-------------------------------------------------------------------------------
@@ -1067,10 +1272,10 @@ ENDSUBROUTINE test_import_two_pins
 !  ASSERT(SIZE(L3%cells)==3, "Wrong number of cells")
 !  ASSERT(L3%singleTopology == .TRUE., "L3 is not single topology")
 !  DO i=1,3
-!    ASSERT(SIZE(L3%cells(i)%vertex_list)==4, "Wrong size for vertex list")
-!    ASSERT( L3%cells(i)%vertex_list(1) == 4, "Wrong cell type, should be triangle=4")
+!    ASSERT(SIZE(L3%cells(i)%point_list)==4, "Wrong size for vertex list")
+!    ASSERT( L3%cells(i)%point_list(1) == 4, "Wrong cell type, should be triangle=4")
 !    DO j=2,4
-!      ASSERT( L3%cells(i)%vertex_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
+!      ASSERT( L3%cells(i)%point_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
 !    ENDDO
 !  ENDDO
 !  ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
@@ -1112,25 +1317,25 @@ ENDSUBROUTINE test_import_two_pins
 !  j=1
 !  ALLOCATE(cells_ref(5))
 !  cells_ref = (/5, 26, 2, 27, 38/)
-!  ASSERT(SIZE(mesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+!  ASSERT(SIZE(mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
 !  DO i=1,5
-!    ASSERT( mesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+!    ASSERT( mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
 !  ENDDO
 !  ! Cell 4, quad
 !  j=4
 !  cells_ref = (/5, 4, 29, 38, 28/)
-!  ASSERT(SIZE(mesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+!  ASSERT(SIZE(mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
 !  DO i=1,5
-!    ASSERT( mesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+!    ASSERT( mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
 !  ENDDO
 !  DEALLOCATE(cells_ref)
 !  ! Cell 18, tri
 !  j=18
 !  ALLOCATE(cells_ref(4))
 !  cells_ref = (/4, 6, 40, 8/)
-!  ASSERT(SIZE(mesh%cells(j)%vertex_list)==4, "Wrong size for vertex list")
+!  ASSERT(SIZE(mesh%cells(j)%point_list)==4, "Wrong size for vertex list")
 !  DO i=1,4
-!    ASSERT( mesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+!    ASSERT( mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
 !  ENDDO
 !  DEALLOCATE(cells_ref)
 !  ASSERT(.NOT. ALLOCATED(mesh%material_ids), "Material IDS are allocated")
@@ -1241,10 +1446,10 @@ ENDSUBROUTINE test_import_two_pins
 !  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
 !  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
 !  DO i=1,46
-!    ASSERT(SIZE(pin1%cells(i)%vertex_list)==7, "Wrong size for vertex list")
-!    ASSERT( pin1%cells(i)%vertex_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+!    ASSERT(SIZE(pin1%cells(i)%point_list)==7, "Wrong size for vertex list")
+!    ASSERT( pin1%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
 !    DO j=2,7
-!      ASSERT( pin1%cells(i)%vertex_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+!      ASSERT( pin1%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
 !    ENDDO
 !  ENDDO
 !  !     pin1 material_ids
@@ -1318,10 +1523,10 @@ ENDSUBROUTINE test_import_two_pins
 !  ASSERT(SIZE(L3%cells)==3, "Wrong number of cells")
 !  ASSERT(L3%singleTopology == .TRUE., "L3 is not single topology")
 !  DO i=1,3
-!    ASSERT(SIZE(L3%cells(i)%vertex_list)==4, "Wrong size for vertex list")
-!    ASSERT( L3%cells(i)%vertex_list(1) == 4, "Wrong cell type, should be triangle=4")
+!    ASSERT(SIZE(L3%cells(i)%point_list)==4, "Wrong size for vertex list")
+!    ASSERT( L3%cells(i)%point_list(1) == 4, "Wrong cell type, should be triangle=4")
 !    DO j=2,4
-!      ASSERT( L3%cells(i)%vertex_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
+!      ASSERT( L3%cells(i)%point_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
 !    ENDDO
 !  ENDDO
 !  ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
@@ -1364,25 +1569,25 @@ ENDSUBROUTINE test_import_two_pins
 !  j=1
 !  ALLOCATE(cells_ref(5))
 !  cells_ref = (/5, 26, 2, 27, 38/)
-!  ASSERT(SIZE(emesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+!  ASSERT(SIZE(emesh%cells(j)%point_list)==5, "Wrong size for vertex list")
 !  DO i=1,5
-!    ASSERT( emesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+!    ASSERT( emesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
 !  ENDDO
 !  ! Cell 4, quad
 !  j=4
 !  cells_ref = (/5, 4, 29, 38, 28/)
-!  ASSERT(SIZE(emesh%cells(j)%vertex_list)==5, "Wrong size for vertex list")
+!  ASSERT(SIZE(emesh%cells(j)%point_list)==5, "Wrong size for vertex list")
 !  DO i=1,5
-!    ASSERT( emesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+!    ASSERT( emesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
 !  ENDDO
 !  DEALLOCATE(cells_ref)
 !  ! Cell 18, tri
 !  j=18
 !  ALLOCATE(cells_ref(4))
 !  cells_ref = (/4, 6, 40, 8/)
-!  ASSERT(SIZE(emesh%cells(j)%vertex_list)==4, "Wrong size for vertex list")
+!  ASSERT(SIZE(emesh%cells(j)%point_list)==4, "Wrong size for vertex list")
 !  DO i=1,4
-!    ASSERT( emesh%cells(j)%vertex_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
+!    ASSERT( emesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
 !  ENDDO
 !  DEALLOCATE(cells_ref)
 !  ASSERT(.NOT. ALLOCATED(emesh%material_ids), "Material IDS are allocated")

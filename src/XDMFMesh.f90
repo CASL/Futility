@@ -30,6 +30,7 @@ PRIVATE
 #ifdef FUTILITY_HAVE_HDF5
 ! Public members
 PUBLIC :: XDMFMeshType_2D
+PUBLIC :: XDMFCellSet
 !PUBLIC :: XDMFMeshPtrArry
 PUBLIC :: XDMFTopologyList
 PUBLIC :: init_XDMFTopologyList
