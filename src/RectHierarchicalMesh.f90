@@ -35,7 +35,7 @@ PRIVATE
 PUBLIC :: RectHierarchicalMeshType
 PUBLIC :: RectHierarchicalMeshTypePtrArry
 PUBLIC :: ImportRectXDMFMesh
-!PUBLIC :: ExportXDMFMesh
+PUBLIC :: ExportRectXDMFMesh
 PUBLIC :: ASSIGNMENT(=)
 
 !> The module name
@@ -100,12 +100,6 @@ TYPE :: RectHierarchicalMeshType
     !> @copybrief RectHierarchicalMeshType::getNodesAtDepth_RectHierarchicalMeshType
     !> @copydoc RectHierarchicalMeshType::getNodesAtDepth_RectHierarchicalMeshType
     PROCEDURE,PASS :: getNodesAtDepth => getNodesAtDepth_RectHierarchicalMeshType
-!    !> @copybrief RectHierarchicalMeshType::getCellArea_RectHierarchicalMeshType
-!    !> @copydoc RectHierarchicalMeshType::getCellArea_RectHierarchicalMeshType
-!    PROCEDURE,PASS :: getCellArea => getCellArea_RectHierarchicalMeshType
-!    !> @copybrief RectHierarchicalMeshType::pointInsideCell_RectHierarchicalMeshType
-!    !> @copydoc RectHierarchicalMeshType::pointInsideCell_RectHierarchicalMeshType
-!    PROCEDURE,PASS :: pointInsideCell => pointInsideCell_RectHierarchicalMeshType
 ENDTYPE RectHierarchicalMeshType
 
 !> To allow an array of pointers to XDMF meshes
@@ -1252,655 +1246,446 @@ RECURSIVE SUBROUTINE getLeaves_RectHierarchicalMeshType(thismesh, leaves)
   d = thismesh%distanceToLeaf()
   CALL thismesh%getNodesAtDepth(leaves, d)
 ENDSUBROUTINE getLeaves_RectHierarchicalMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Export the leaf nodes of the mesh hierarchy
-!!> @param mesh the mesh
-!!> @param xmle the XML element
-!!> @param strpath the string holding the path to the XDMF file
-!!> @param h5 the HDF5 file
-!!>
-!RECURSIVE SUBROUTINE export_leaf_XDMF(mesh, xmle, strpath, h5)
-!  CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_XDMF'
-!  TYPE(XDMFMeshType),INTENT(IN)  :: mesh
-!  TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
-!  TYPE(StringType),INTENT(IN) :: strpath
-!  TYPE(HDF5FileType), INTENT(INOUT) :: h5
-!  TYPE(XMLElementType),POINTER :: current_xml, child_xml, children(:), &
-!    children2(:)
-!  TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str
-!  INTEGER(SIK) :: nchildren, ichild, verts_in_cell
-!  INTEGER(SIK) :: xdmf_id, nverts, ncells, i, j, ivert
-!  CHARACTER(LEN=200) :: charpath
-!  INTEGER(SIK), ALLOCATABLE :: point_list_2d(:, :), point_list_1d(:), cell_list_1d(:)
-!  INTEGER(SIK),PARAMETER :: GEOMETRY_IDX=1
-!  INTEGER(SIK),PARAMETER :: TOPOLOGY_IDX=2
 !
-!  REQUIRE(ALLOCATED(mesh%vertices) .AND. ALLOCATED(mesh%cells))
-!
-!  ! Create HDF5 group
-!  CALL h5%mkdir(CHAR(mesh%name))
-!
-!  ! Determine number of xmle children
-!  ! Geometry, Topology, Material, Cell sets
-!  ! Assumes mesh has geometry and topology
-!  nchildren = 2
-!  IF(ALLOCATED(mesh%material_ids)) nchildren = nchildren + 1
-!  IF(ALLOCATED(mesh%cell_sets)) nchildren = nchildren + SIZE(mesh%cell_sets)
-!  ALLOCATE(children(nchildren))
-!  CALL xmle%setChildren(children)
-!
-!  ! GEOMETRY
-!  current_xml => children(GEOMETRY_IDX)
-!  str_name="Geometry"
-!  CALL current_xml%setName(str_name)
-!  CALL current_xml%setParent(xmle)
-!
-!  str_name= "GeometryType"
-!  str_value = "XYZ"
-!  CALL current_xml%setAttribute(str_name, str_value)
-!
-!  children => NULL()
-!  ALLOCATE(children(1))
-!  CALL current_xml%setChildren(children)
-!  child_xml => children(1)
-!  str_name="DataItem"
-!  CALL child_xml%setName(str_name)
-!  CALL child_xml%setParent(current_xml)
-!
-!  str_name= "DataType"
-!  str_value = "Float"
-!  CALL child_xml%setAttribute(str_name, str_value)
-!
-!  nverts=SIZE(mesh%vertices, DIM=2)
-!  str_name="Dimensions"
-!  str1 = nverts
-!  str2 = "3"
-!  str_value = str1//" "//str2
-!  CALL child_xml%setAttribute(str_name, str_value)
-!
-!  str_name= "Format"
-!  str_value = "HDF"
-!  CALL child_xml%setAttribute(str_name, str_value)
-!
-!  str_name= "Precision"
-!  str_value = "8"
-!  CALL child_xml%setAttribute(str_name, str_value)
-!
-!  i = LEN_TRIM(strpath)
-!  charpath = CHAR(strpath)
-!  child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/vertices"
-!
-!  CALL h5%fwrite(CHAR(mesh%name)//'->vertices',mesh%vertices)
-!
-!  children => NULL()
-!
-!  ! TOPOLOGY
-!  CALL xmle%getChildren(children)
-!  current_xml => children(TOPOLOGY_IDX)
-!  str_name="Topology"
-!  CALL current_xml%setName(str_name)
-!  CALL current_xml%setParent(xmle)
-!
-!  ! Single topology
-!  IF(mesh%singleTopology)THEN
-!    str_name= "TopologyType"
-!    xdmf_id = mesh%cells(1)%point_list(1)
-!    xdmf_id_str = xdmf_id
-!    CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
-!    CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', verts_in_cell)
-!    str_value = toponame
-!    CALL current_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "NumberOfElements"
-!    ncells = SIZE(mesh%cells)
-!    str_value = ncells
-!    CALL current_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "NodesPerElement"
-!    str_value = verts_in_cell
-!    CALL current_xml%setAttribute(str_name, str_value)
-!
-!    children => NULL()
-!    ALLOCATE(children(1))
-!
-!    CALL current_xml%setChildren(children)
-!    child_xml => children(1)
-!    str_name="DataItem"
-!    CALL child_xml%setName(str_name)
-!    CALL child_xml%setParent(current_xml)
-!
-!    str_name= "DataType"
-!    str_value = "Int"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name="Dimensions"
-!    str1 = ncells
-!    str2 = verts_in_cell
-!    str_value = str1//" "//str2
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "Format"
-!    str_value = "HDF"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "Precision"
-!    str_value = "8"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    i = LEN_TRIM(strpath)
-!    charpath = CHAR(strpath)
-!    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/cells"
-!
-!    ALLOCATE(point_list_2d(verts_in_cell, ncells))
-!    DO i = 1, ncells
-!      ! Convert 1 based to 0 based index
-!      point_list_2d(:,i) = mesh%cells(i)%point_list(2:) - 1
-!    ENDDO
-!    CALL h5%fwrite(CHAR(mesh%name)//'->cells',point_list_2d)
-!    DEALLOCATE(point_list_2d)
-!  ! Mixed topology
-!  ELSE
-!    str_name= "TopologyType"
-!    str_value = "Mixed"
-!    CALL current_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "NumberOfElements"
-!    ncells = SIZE(mesh%cells)
-!    str_value = ncells
-!    CALL current_xml%setAttribute(str_name, str_value)
-!
-!    children => NULL()
-!    ALLOCATE(children(1))
-!    CALL current_xml%setChildren(children)
-!    child_xml => children(1)
-!    str_name="DataItem"
-!    CALL child_xml%setName(str_name)
-!    CALL child_xml%setParent(current_xml)
-!
-!    str_name= "DataType"
-!    str_value = "Int"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    nverts = 0
-!    DO i = 1, ncells
-!      nverts = nverts + SIZE(mesh%cells(i)%point_list)
-!    ENDDO
-!    str_name="Dimensions"
-!    str_value = nverts
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "Format"
-!    str_value = "HDF"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "Precision"
-!    str_value = "8"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    i = LEN_TRIM(strpath)
-!    charpath = CHAR(strpath)
-!    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/cells"
-!
-!    ALLOCATE(point_list_1d(nverts))
-!    ivert = 1
-!    DO i = 1, ncells
-!      nverts = SIZE(mesh%cells(i)%point_list)
-!      ! Convert 1 based to 0 based index
-!      point_list_1d(ivert) = mesh%cells(i)%point_list(1)
-!      point_list_1d(ivert + 1 : ivert + nverts - 1) = mesh%cells(i)%point_list(2:) - 1
-!      ivert = ivert + nverts
-!    ENDDO
-!    CALL h5%fwrite(CHAR(mesh%name)//'->cells',point_list_1d)
-!    DEALLOCATE(point_list_1d)
-!  ENDIF
-!
-!  ichild = 3
-!
-!  ! MATERIAL ID
-!  IF(ALLOCATED(mesh%material_ids))THEN
-!    children => NULL()
-!    CALL xmle%getChildren(children)
-!    current_xml => children(ichild)
-!    str_name="Attribute"
-!    CALL current_xml%setName(str_name)
-!    CALL current_xml%setParent(xmle)
-!
-!    str_name= "Center"
-!    str_value = "Cell"
-!    CALL current_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "Name"
-!    str_value = "MaterialID"
-!    CALL current_xml%setAttribute(str_name, str_value)
-!
-!    children => NULL()
-!    ALLOCATE(children(1))
-!    CALL current_xml%setChildren(children)
-!    child_xml => children(1)
-!
-!    str_name="DataItem"
-!    CALL child_xml%setName(str_name)
-!    CALL child_xml%setParent(current_xml)
-!
-!    str_name= "DataType"
-!    str_value = "Int"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name="Dimensions"
-!    ncells = SIZE(mesh%cells)
-!    str_value = ncells
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "Format"
-!    str_value = "HDF"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    str_name= "Precision"
-!    str_value = "4"
-!    CALL child_xml%setAttribute(str_name, str_value)
-!
-!    i = LEN_TRIM(strpath)
-!    charpath = CHAR(strpath)
-!    child_xml%content = charpath(1:i-4)//"h5:/"//mesh%name//"/material_id"
-!
-!    ALLOCATE(point_list_1d(ncells))
-!    ! Convert 1 based to 0 based index
-!    point_list_1d = mesh%material_ids - 1
-!    CALL h5%fwrite(CHAR(mesh%name)//'->material_id',point_list_1d)
-!    DEALLOCATE(point_list_1d)
-!    ichild = ichild + 1
-!  ENDIF
-!
-!  ! CELL SETS
-!  IF(ALLOCATED(mesh%cell_sets))THEN
-!    children => NULL()
-!    CALL xmle%getChildren(children)
-!    DO i=ichild, nchildren
-!      current_xml => children(i)
-!      str_name="Set"
-!      CALL current_xml%setName(str_name)
-!      CALL current_xml%setParent(xmle)
-!
-!      str_name= "Name"
-!      str_value = mesh%cell_sets(i - ichild + 1)%name
-!      CALL current_xml%setAttribute(str_name, str_value)
-!
-!      str_name= "SetType"
-!      str_value = "Cell"
-!      CALL current_xml%setAttribute(str_name, str_value)
-!
-!      ALLOCATE(children2(1))
-!      CALL current_xml%setChildren(children2)
-!      child_xml => children2(1)
-!      str_name="DataItem"
-!      CALL child_xml%setName(str_name)
-!      CALL child_xml%setParent(current_xml)
-!
-!      str_name= "DataType"
-!      str_value = "Int"
-!      CALL child_xml%setAttribute(str_name, str_value)
-!
-!      str_name="Dimensions"
-!      ncells = SIZE(mesh%cell_sets(i-ichild+1)%cell_list)
-!      str_value = ncells
-!      CALL child_xml%setAttribute(str_name, str_value)
-!
-!      str_name= "Format"
-!      str_value = "HDF"
-!      CALL child_xml%setAttribute(str_name, str_value)
-!
-!      str_name= "Precision"
-!      str_value = "8"
-!      CALL child_xml%setAttribute(str_name, str_value)
-!
-!      j = LEN_TRIM(strpath)
-!      charpath = CHAR(strpath)
-!      child_xml%content = charpath(1:j-4)//"h5:/"//mesh%name//"/"//mesh%cell_sets(i-ichild+1)%name
-!
-!      ALLOCATE(cell_list_1d(ncells))
-!      ! Convert 1 based to 0 based index
-!      cell_list_1d = mesh%cell_sets(i-ichild+1)%cell_list - 1
-!      CALL h5%fwrite(CHAR(mesh%name)//'->'//CHAR(mesh%cell_sets(i-ichild+1)%name),cell_list_1d)
-!      DEALLOCATE(cell_list_1d)
-!    ENDDO
-!  ENDIF
-!ENDSUBROUTINE export_leaf_XDMF
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Create the xml hierarchy for the mesh
-!!> @param mesh the mesh
-!!> @param xmle the XML element
-!!> @param strpath the string holding the path to the XDMF file
-!!> @param h5 the HDF5 file
-!!>
-!RECURSIVE SUBROUTINE create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
-!  CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_XDMF'
-!  TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
-!  TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
-!  TYPE(StringType),INTENT(INOUT) :: strpath
-!  TYPE(HDF5FileType), INTENT(INOUT) :: h5
-!  TYPE(XMLElementType), POINTER :: children(:)
-!  INTEGER(SIK) :: i
-!  TYPE(StringType) :: str_name, str_value
-!
-!  ! If this mesh has children
-!  IF(ASSOCIATED(mesh%children)) THEN
-!    ! Add XML element children
-!    ALLOCATE(children(SIZE(mesh%children)))
-!    CALL xmle%setChildren(children)
-!    DO i=1,SIZE(mesh%children)
-!      ! Set attributes then recurse
-!      str_name="Grid"
-!      CALL children(i)%setName(str_name)
-!      CALL children(i)%setParent(xmle)
-!      str_name='Name'
-!      str_value = mesh%children(i)%name
-!      CALL children(i)%setAttribute(str_name, str_value)
-!      str_name='GridType'
-!      IF(ASSOCIATED(mesh%children(i)%children))THEN
-!        str_value = 'Tree'
-!      ELSE
-!        str_value = 'Uniform'
-!      ENDIF
-!      CALL children(i)%setAttribute(str_name, str_value)
-!
-!      CALL create_xml_hierarchy_XDMF(mesh%children(i), children(i), strpath, h5)
-!    ENDDO
-!  ELSE
-!    CALL export_leaf_XDMF(mesh, xmle, strpath, h5)
-!  ENDIF
-!ENDSUBROUTINE create_xml_hierarchy_XDMF
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Exports mesh data to an XDMF file.
-!!> @param strpath the string holding the path to the XDMF file
-!!> @param mesh the XDMF mesh object
-!!>
-!SUBROUTINE exportXDMFMesh(strpath, mesh)
-!  CHARACTER(LEN=*),PARAMETER :: myName='exportXDMFMesh'
-!  TYPE(StringType),INTENT(INOUT) :: strpath
-!  TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
-!  TYPE(XMLFileType) :: xml
-!  TYPE(HDF5FileType) :: h5
-!  TYPE(XMLElementType),POINTER :: xmle, children(:), children2(:)
-!  TYPE(StringType) :: str_name, str_value
-!  INTEGER(SIK) :: i
-!  CHARACTER(LEN=200) :: charpath
-!
-!  ! Create HDF5 file
-!  i = LEN_TRIM(strpath)
-!  charpath = CHAR(strpath)
-!  CALL h5%init(charpath(1:i-4)//"h5",'NEW')
-!  CALL h5%fopen()
-!
-!  ! Create XML file
-!  CALL xml%init(ADJUSTL(strpath),.FALSE.)
-!  xmle => xml%root
-!  IF(.NOT.ASSOCIATED(xmle)) CALL eRHM%raiseError(modName//'::'//myName// &
-!    ' - XML data init encountered an error. Pointer to root not associated.')
-!  !   Set Xdmf
-!  str_name='Xdmf'
-!  CALL xmle%setName(str_name)
-!  str_name='Version'
-!  str_value = '3.0'
-!  CALL xmle%setAttribute(str_name, str_value)
-!  !   Set Domain
-!  ALLOCATE(children(1))
-!  CALL xmle%setChildren(children)
-!  str_name='Domain'
-!  CALL children(1)%setName(str_name)
-!  CALL children(1)%setParent(xml%root)
-!  ! Setup the grid that contains everything
-!  xmle => children(1)
-!
-!  ALLOCATE(children2(1))
-!  CALL xmle%setChildren(children2)
-!  str_name="Grid"
-!  CALL children2(1)%setName(str_name)
-!  CALL children2(1)%setParent(xmle)
-!  str_name='Name'
-!  str_value = mesh%name
-!  CALL children2(1)%setAttribute(str_name, str_value)
-!  str_name='GridType'
-!  IF(.NOT.ASSOCIATED(mesh%children))THEN
-!    str_value = 'Uniform'
-!  ELSE
-!    str_value = 'Tree'
-!  ENDIF
-!  CALL children2(1)%setAttribute(str_name, str_value)
-!
-!  ! Recursively add xml elements for each grid. Only the leaves have vertices,
-!  ! so only the leaves have HDF5 groups/data.
-!  xmle => children2(1)
-!  CALL create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
-!
-!  ! Finish up
-!  CALL xml%exportToDisk(CHAR(strpath))
-!  CALL h5%fclose()
-!
-!ENDSUBROUTINE exportXDMFMesh
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Returns the area of cell iCell.
-!!> @param mesh the XMDF mesh
-!!> @param iCell the index of the cell in mesh%cells
-!!> @returns cell area
-!!>
-!ELEMENTAL FUNCTION getCellArea_XDMFMeshType(mesh, iCell) RESULT(area)
-!  CLASS(XDMFMeshType), INTENT(IN) :: mesh
-!  INTEGER(SIK), INTENT(IN) :: iCell
-!  REAL(SRK) :: area
-!
-!  REAL(SDK),PARAMETER :: pi = 3.14159265358979311599796346854
-!  REAL(SRK), ALLOCATABLE :: x(:), y(:), x_quad(:), y_quad(:), x_lin(:), y_lin(:)
-!  REAL(SRK) :: main_area, correction, x_edge(3), y_edge(3), theta, rotation_mat(2,2), &
-!    xy(2), a, b, quad_area
-!  INTEGER(SIK) :: xid
-!  INTEGER(SIK) nverts, i, j
-!
-!  area = 0.0_SRK
-!  xid = mesh%cells(iCell)%point_list(1)
-!  nverts = SIZE(mesh%cells(iCell)%point_list) - 1
-!  IF(xid == 4 .OR. xid == 5) THEN ! Linear edges
-!    ! Shoelace formula may be used for linear edges
-!    ! Assumes that vertices are in clockwise or counterclockwise order
-!    ALLOCATE(x(nverts))
-!    ALLOCATE(y(nverts))
-!    ALLOCATE(x_lin(nverts))
-!    ALLOCATE(y_lin(nverts))
-!    x = mesh%vertices(1, mesh%cells(iCell)%point_list(2:nverts+1))
-!    y = mesh%vertices(2, mesh%cells(iCell)%point_list(2:nverts+1))
-!    x_lin = x - SUM(x)/nverts
-!    y_lin = y - SUM(y)/nverts
-!    ! Narrowing may occur here. This is intended.
-!    correction = x_lin(nverts)*y_lin(1) - y_lin(nverts)*x_lin(1)
-!    main_area = DOT_PRODUCT(x_lin(1:nverts-1), y_lin(2:nverts)) - DOT_PRODUCT(y_lin(1:nverts-1), x_lin(2:nverts))
-!    area = 0.5*ABS(main_area + correction)
-!  ELSEIF(xid == 36 .OR. xid == 37) THEN ! There are quadratic edges
-!    ! Assumed vertices are in counterclockwise order
-!    !
-!    ! Overall, the process is to get the linear area and adjust for quadratic edges.
-!    !
-!    ! All quadratic vertices (middle of 3 vert edge) are in the second half of
-!    ! the point_list
-!    nverts = nverts/2
-!    ALLOCATE(x(nverts))
-!    ALLOCATE(y(nverts))
-!    ALLOCATE(x_quad(nverts))
-!    ALLOCATE(y_quad(nverts))
-!    ALLOCATE(x_lin(nverts))
-!    ALLOCATE(y_lin(nverts))
-!    x = mesh%vertices(1, mesh%cells(iCell)%point_list(2:nverts+1))
-!    y = mesh%vertices(2, mesh%cells(iCell)%point_list(2:nverts+1))
-!    x_quad = mesh%vertices(1, mesh%cells(iCell)%point_list(nverts+2:))
-!    y_quad = mesh%vertices(2, mesh%cells(iCell)%point_list(nverts+2:))
-!    ! Get linear area using shoelace formula
-!    x_lin = x - SUM(x)/nverts
-!    y_lin = y - SUM(y)/nverts
-!    ! Narrowing may occur here. This is intended.
-!    correction = x_lin(nverts)*y_lin(1) - y_lin(nverts)*x_lin(1)
-!    main_area = DOT_PRODUCT(x_lin(1:nverts-1), y_lin(2:nverts)) - DOT_PRODUCT(y_lin(1:nverts-1), x_lin(2:nverts))
-!    area = 0.5*ABS(main_area + correction)
-!
-!    ! Assumed points are in counterclockwise order. Area for the linear
-!    ! polygon is computed, then adjusted based on integrals for the quad edges.
-!    ! If a quadratic vertex is to the left of the linear edge, the area is added.
-!    ! Otherwise it is subtracted.
-!    ! Consider the following quadratic triangle with one quad edge:
-!    !        2                   2
-!    !       /  \                /| \
-!    !      /    \              / |  \
-!    !     5      4            5  |   \
-!    !      \      \            \ |    \
-!    !       \      \            \|     \
-!    !        0---3--1            0------1
-!    !     Quad edge (2,5,0)     Linear edges
-!    ! Since, point 5 is to the right of linear edge (2,0), the area of the polygon
-!    ! constructed by edges {(2,5,0), (0,2)} is added to the total area.
-!    !
-!    ! For each edge, compute additional area using quadratic function
-!    ! Shift point to origin, rotate so line is x-axis, find quadratic function,
-!    ! integrate, add or subtract based on right or left
-!
-!    !For each edge
-!    DO i = 1, nverts
-!      ! edge coords
-!      IF(i == nverts)THEN
-!        x_edge  = (/x(i), x(1), x_quad(i)/)
-!        y_edge  = (/y(i), y(1), y_quad(i)/)
-!      ELSE
-!        x_edge  = (/x(i), x(i+1), x_quad(i)/)
-!        y_edge  = (/y(i), y(i+1), y_quad(i)/)
-!      ENDIF
-!      ! shift first vertex to origin
-!      x_edge = x_edge - x_edge(1)
-!      y_edge = y_edge - y_edge(1)
-!      ! rotate linear edge to become the x-axis
-!      IF( x_edge(2) .APPROXEQ. 0.0_SRK ) THEN
-!        IF( y_edge(2) >= 0.0_SRK ) THEN
-!          theta = pi/2.0_SDK
-!        ELSE
-!          theta = -pi/2.0_SDK
-!        ENDIF
-!      ELSE
-!        theta = ATAN(y_edge(2)/x_edge(2))
-!      ENDIF
-!
-!      IF(x_edge(2) < 0.0) theta = theta + pi
-!
-!      rotation_mat(1,:) = (/COS(theta), SIN(theta)/)
-!      rotation_mat(2,:) = (/-SIN(theta), COS(theta)/)
-!      DO j = 1,3
-!        xy(1) = x_edge(j)
-!        xy(2) = y_edge(j)
-!        xy = MATMUL(rotation_mat, xy)
-!        x_edge(j) = xy(1)
-!        y_edge(j) = xy(2)
-!      ENDDO
-!
-!      ! Get quadratic coefficients
-!      !   y = ax^2 + bx + c
-!      ! Since x_edge(1) = 0, y_edge(1) = 0 due to the shift to the origin,
-!      !   0 = 0 + 0 + c --> c = 0
-!      ! Due to the rotation to make the linear edge the x-axis, y_edge(2) = 0
-!      !   0 = ax_2^2 + bx_2 --> ax_2 + b = 0 --> b = -ax_2
-!      ! Lastly,
-!      !   y_3 = ax_3^2 + bx_3
-!      ! Using, b = -ax_2
-!      !   y_3 = ax_3(x_3  - x_2) --> a = y_3/x_3 1/(x_3 - x_2)
-!      ! Note if x_3 = 0 --> y_3 = 0 --> (x_1, y_1) = (x_3, y_3), which is invalid
-!      a = (y_edge(3)/x_edge(3))/(x_edge(3) - x_edge(2))
-!      b = -a*x_edge(2)
-!      ! Integrate from 0 to x_2
-!      !  ax_2^3/3 + bx_2^2/2
-!      quad_area = a*x_edge(2)**3/3.0_SRK + b*x_edge(2)**2/2.0_SRK
-!      ! quad_area will be opposite of correct sign
-!      area = area - quad_area
-!    ENDDO
-!  ELSE ! invalid type. return number that is so wrong, you better realize.
-!    area = -HUGE(1.0_SRK)
-!  ENDIF
-!ENDFUNCTION
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief This routine determines whether a point lies within a 2D mesh cell
-!!> @param thisCell The cell used in the query
-!!> @param point The point type to check if it lies inside the cell
-!!> @param bool The logical result of this operation.  TRUE if the point is inside.
-!!>
-!FUNCTION pointInsideCell_XDMFMeshType(thismesh,iCell,point) RESULT(bool)
-!  CLASS(XDMFMeshType),INTENT(IN) :: thismesh
-!  INTEGER(SIK),INTENT(IN) :: iCell
-!  TYPE(PointType),INTENT(IN) :: point
-!  LOGICAL(SBK) :: bool
-!
-!  INTEGER(SIK) :: i,j, lastvert_idx
-!  INTEGER(SIK) :: iEdge, iVert, p1ID, p2ID, iLastVert, ifirstVert
-!  LOGICAL(SBK) :: isLeft
-!
-!  ! If the point isLeft of each edge, it must be interior, since the
-!  ! vertices are in counter-clockwise order.
-!  ! Orientation of the edges matters, so if the vertices of the edge are opposite
-!  ! of the way they are in the cell, flip the boolean.
-!  bool = .TRUE.
-!  REQUIRE(ALLOCATED(thismesh%edges))
-!!  IF(.NOT.ALLOCATED(thismesh%edges)) CALL thismesh%setupEdges()
-!  DO i = 1, SIZE(thismesh%cells(iCell)%edge_list)
-!    iEdge = thismesh%cells(iCell)%edge_list(i)
-!    IF(thismesh%edges(iEdge)%isLinear)THEN
-!      isLeft = thismesh%edges(iEdge)%line%pointIsLeft(point)
-!      p1ID = thismesh%edges(iEdge)%vertices(2)
-!      p2ID = thismesh%edges(iEdge)%vertices(3)
-!    ELSE
-!      IF(ABS(thismesh%edges(iEdge)%quad%a) < 1.0E-3) THEN
-!        isLeft = thismesh%edges(iEdge)%line%pointIsLeft(point)
-!      ELSE
-!        isLeft = thismesh%edges(iEdge)%quad%pointIsLeft(point)  
-!      ENDIF
-!      p1ID = thismesh%edges(iEdge)%vertices(1)
-!      p2ID = thismesh%edges(iEdge)%vertices(2)
-!    ENDIF
-!    ! Loop through the vertices. If point 1 in encountered first, isLeft is
-!    ! correct. If point 2 is encountered 1st, flip isLeft. Vertices are in
-!    ! counter clockwise order, hence the orientation is known.
-!    ! The exception is on the last edge, where the verts wrap around an p2
-!    ! should be encountered first.
-!    IF(thismesh%edges(iEdge)%isLinear)THEN
-!      lastvert_idx = SIZE(thismesh%cells(iCell)%point_list)
-!      iLastVert = thismesh%cells(iCell)%point_list(lastvert_idx)
-!    ELSE
-!      ! total list - 1 for the xid, /2 to only address linear elements + 1 to
-!      ! skip xid
-!      lastvert_idx = (SIZE(thismesh%cells(iCell)%point_list) - 1)/2 + 1
-!      iLastVert = thismesh%cells(iCell)%point_list(lastvert_idx)
-!    ENDIF
-!    ifirstVert = thismesh%cells(iCell)%point_list(2)
-!    ! Test for wrap around 1st.
-!    IF(p1ID == ifirstVert .AND. p2ID == iLastVert) THEN
-!      isLeft = .NOT.isLeft
-!    ELSEIF(p1ID == iLastVert .AND. p2ID == ifirstVert) THEN
-!      ! Correct. nothing to do
-!    ELSE
-!      DO j = 2, lastvert_idx ! skip xid
-!        iVert = thismesh%cells(iCell)%point_list(j)
-!        IF(iVert == p1ID) THEN
-!          EXIT
-!        ENDIF
-!        IF(iVert == p2ID) THEN
-!          isLeft = .NOT.isLeft
-!          EXIT
-!        ENDIF
-!      ENDDO
-!    ENDIF
-!    ! If the point isLeft, keep going until all edges have been verified,
-!    ! otherwise, stop. The point cannot be in this cell if it is right of any
-!    ! edge.
-!    IF(.NOT.isLeft) THEN
-!      bool = .FALSE.
-!      RETURN
-!    ENDIF
-!  ENDDO
-!ENDFUNCTION pointInsideCell_XDMFMeshType
+!-------------------------------------------------------------------------------
+!> @brief Export the leaf nodes of the rect mesh hierarchy
+!> @param RHM the RHM
+!> @param xmle the XML element
+!> @param strpath the string holding the path to the XDMF file
+!> @param h5 the HDF5 file
+!>
+RECURSIVE SUBROUTINE export_leaf_RectXDMF(RHM, xmle, strpath, h5)
+  CHARACTER(LEN=*),PARAMETER :: myName='export_leaf_RectXDMF'
+  TYPE(RectHierarchicalMeshType),INTENT(IN)  :: RHM
+  TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
+  TYPE(StringType),INTENT(IN) :: strpath
+  TYPE(HDF5FileType), INTENT(INOUT) :: h5
+  TYPE(XMLElementType),POINTER :: current_xml, child_xml, children(:), &
+    children2(:)
+  TYPE(StringType) :: str_name, str_value, str1, str2, toponame, xdmf_id_str
+  INTEGER(SIK) :: nchildren, ichild, verts_in_cell
+  INTEGER(SIK) :: xdmf_id, nverts, ncells, i, j, ivert
+  CHARACTER(LEN=200) :: charpath
+  INTEGER(SIK), ALLOCATABLE :: point_list_2d(:, :), point_list_1d(:), cell_list_1d(:)
+  INTEGER(SIK),PARAMETER :: GEOMETRY_IDX=1
+  INTEGER(SIK),PARAMETER :: TOPOLOGY_IDX=2
+  REAL(SDK), ALLOCATABLE :: vertices(:,:)
+  LOGICAL(SBK) :: singleTopology
+
+  REQUIRE(ALLOCATED(RHM%mesh%points) .AND. ALLOCATED(RHM%mesh%cells))
+
+  ! Create HDF5 group
+  CALL h5%mkdir(CHAR(RHM%mesh%name))
+
+  ! Determine number of xmle children
+  ! Geometry, Topology, Material, Cell sets
+  ! Assumes RHM has geometry and topology
+  nchildren = 2
+  IF(ALLOCATED(RHM%mesh%material_ids)) nchildren = nchildren + 1
+  IF(ALLOCATED(RHM%mesh%cell_sets)) nchildren = nchildren + SIZE(RHM%mesh%cell_sets)
+  ALLOCATE(children(nchildren))
+  CALL xmle%setChildren(children)
+
+  ! GEOMETRY
+  current_xml => children(GEOMETRY_IDX)
+  str_name="Geometry"
+  CALL current_xml%setName(str_name)
+  CALL current_xml%setParent(xmle)
+
+  str_name= "GeometryType"
+  str_value = "XYZ"
+  CALL current_xml%setAttribute(str_name, str_value)
+
+  children => NULL()
+  ALLOCATE(children(1))
+  CALL current_xml%setChildren(children)
+  child_xml => children(1)
+  str_name="DataItem"
+  CALL child_xml%setName(str_name)
+  CALL child_xml%setParent(current_xml)
+
+  str_name= "DataType"
+  str_value = "Float"
+  CALL child_xml%setAttribute(str_name, str_value)
+
+  nverts=SIZE(RHM%mesh%points)
+  str_name="Dimensions"
+  str1 = nverts
+  str2 = "3"
+  str_value = str1//" "//str2
+  CALL child_xml%setAttribute(str_name, str_value)
+
+  str_name= "Format"
+  str_value = "HDF"
+  CALL child_xml%setAttribute(str_name, str_value)
+
+  str_name= "Precision"
+  str_value = "8"
+  CALL child_xml%setAttribute(str_name, str_value)
+
+  i = LEN_TRIM(strpath)
+  charpath = CHAR(strpath)
+  child_xml%content = charpath(1:i-4)//"h5:/"//RHM%mesh%name//"/points"
+  
+  ALLOCATE(vertices(3,nverts)) 
+  vertices = 0.0_SDK
+  DO i = 1, nverts
+    vertices(1, i) = rhm%mesh%points(i)%coord(1)
+    vertices(2, i) = rhm%mesh%points(i)%coord(2)
+  ENDDO
+
+  CALL h5%fwrite(CHAR(RHM%mesh%name)//'->points',vertices)
+
+  children => NULL()
+
+  ! TOPOLOGY
+  CALL xmle%getChildren(children)
+  current_xml => children(TOPOLOGY_IDX)
+  str_name="Topology"
+  CALL current_xml%setName(str_name)
+  CALL current_xml%setParent(xmle)
+    
+  ncells = SIZE(RHM%mesh%cells)
+  singleTopology = .TRUE.
+  DO i = 1, ncells - 1
+    IF( RHM%mesh%cells(i)%point_list(1) /= RHM%mesh%cells(i+1)%point_list(1) ) THEN
+      singleTopology = .FALSE.
+    ENDIF
+  ENDDO
+  ! Single topology
+  IF(singleTopology)THEN
+    str_name= "TopologyType"
+    xdmf_id = RHM%mesh%cells(1)%point_list(1)
+    xdmf_id_str = xdmf_id
+    CALL XDMFTopologyList%get('XDMFID->'//ADJUSTL(xdmf_id_str), toponame)
+    CALL XDMFTopologyList%get(ADJUSTL(toponame)//'->n', verts_in_cell)
+    str_value = toponame
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    str_name= "NumberOfElements"
+    str_value = ncells
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    str_name= "NodesPerElement"
+    str_value = verts_in_cell
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    children => NULL()
+    ALLOCATE(children(1))
+
+    CALL current_xml%setChildren(children)
+    child_xml => children(1)
+    str_name="DataItem"
+    CALL child_xml%setName(str_name)
+    CALL child_xml%setParent(current_xml)
+
+    str_name= "DataType"
+    str_value = "Int"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name="Dimensions"
+    str1 = ncells
+    str2 = verts_in_cell
+    str_value = str1//" "//str2
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Format"
+    str_value = "HDF"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Precision"
+    str_value = "8"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    i = LEN_TRIM(strpath)
+    charpath = CHAR(strpath)
+    child_xml%content = charpath(1:i-4)//"h5:/"//RHM%mesh%name//"/cells"
+
+    ALLOCATE(point_list_2d(verts_in_cell, ncells))
+    DO i = 1, ncells
+      ! Convert 1 based to 0 based index
+      point_list_2d(:,i) = RHM%mesh%cells(i)%point_list(2:) - 1
+    ENDDO
+    CALL h5%fwrite(CHAR(RHM%mesh%name)//'->cells',point_list_2d)
+    DEALLOCATE(point_list_2d)
+  ! Mixed topology
+  ELSE
+    str_name= "TopologyType"
+    str_value = "Mixed"
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    str_name= "NumberOfElements"
+    str_value = ncells
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    children => NULL()
+    ALLOCATE(children(1))
+    CALL current_xml%setChildren(children)
+    child_xml => children(1)
+    str_name="DataItem"
+    CALL child_xml%setName(str_name)
+    CALL child_xml%setParent(current_xml)
+
+    str_name= "DataType"
+    str_value = "Int"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    nverts = 0
+    DO i = 1, ncells
+      nverts = nverts + SIZE(RHM%mesh%cells(i)%point_list)
+    ENDDO
+    str_name="Dimensions"
+    str_value = nverts
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Format"
+    str_value = "HDF"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Precision"
+    str_value = "8"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    i = LEN_TRIM(strpath)
+    charpath = CHAR(strpath)
+    child_xml%content = charpath(1:i-4)//"h5:/"//RHM%mesh%name//"/cells"
+
+    ALLOCATE(point_list_1d(nverts))
+    ivert = 1
+    DO i = 1, ncells
+      nverts = SIZE(RHM%mesh%cells(i)%point_list)
+      ! Convert 1 based to 0 based index
+      point_list_1d(ivert) = RHM%mesh%cells(i)%point_list(1)
+      point_list_1d(ivert + 1 : ivert + nverts - 1) = RHM%mesh%cells(i)%point_list(2:) - 1
+      ivert = ivert + nverts
+    ENDDO
+    CALL h5%fwrite(CHAR(RHM%mesh%name)//'->cells',point_list_1d)
+    DEALLOCATE(point_list_1d)
+  ENDIF
+
+  ichild = 3
+
+  ! MATERIAL ID
+  IF(ALLOCATED(RHM%mesh%material_ids))THEN
+    children => NULL()
+    CALL xmle%getChildren(children)
+    current_xml => children(ichild)
+    str_name="Attribute"
+    CALL current_xml%setName(str_name)
+    CALL current_xml%setParent(xmle)
+
+    str_name= "Center"
+    str_value = "Cell"
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    str_name= "Name"
+    str_value = "MaterialID"
+    CALL current_xml%setAttribute(str_name, str_value)
+
+    children => NULL()
+    ALLOCATE(children(1))
+    CALL current_xml%setChildren(children)
+    child_xml => children(1)
+
+    str_name="DataItem"
+    CALL child_xml%setName(str_name)
+    CALL child_xml%setParent(current_xml)
+
+    str_name= "DataType"
+    str_value = "Int"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name="Dimensions"
+    str_value = ncells
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Format"
+    str_value = "HDF"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    str_name= "Precision"
+    str_value = "4"
+    CALL child_xml%setAttribute(str_name, str_value)
+
+    i = LEN_TRIM(strpath)
+    charpath = CHAR(strpath)
+    child_xml%content = charpath(1:i-4)//"h5:/"//RHM%mesh%name//"/material_id"
+
+    ALLOCATE(point_list_1d(ncells))
+    ! Convert 1 based to 0 based index
+    point_list_1d = RHM%mesh%material_ids - 1
+    CALL h5%fwrite(CHAR(RHM%mesh%name)//'->material_id',point_list_1d)
+    DEALLOCATE(point_list_1d)
+    ichild = ichild + 1
+  ENDIF
+
+  ! CELL SETS
+  IF(ALLOCATED(RHM%mesh%cell_sets))THEN
+    children => NULL()
+    CALL xmle%getChildren(children)
+    DO i=ichild, nchildren
+      current_xml => children(i)
+      str_name="Set"
+      CALL current_xml%setName(str_name)
+      CALL current_xml%setParent(xmle)
+
+      str_name= "Name"
+      str_value = RHM%mesh%cell_sets(i - ichild + 1)%name
+      CALL current_xml%setAttribute(str_name, str_value)
+
+      str_name= "SetType"
+      str_value = "Cell"
+      CALL current_xml%setAttribute(str_name, str_value)
+
+      ALLOCATE(children2(1))
+      CALL current_xml%setChildren(children2)
+      child_xml => children2(1)
+      str_name="DataItem"
+      CALL child_xml%setName(str_name)
+      CALL child_xml%setParent(current_xml)
+
+      str_name= "DataType"
+      str_value = "Int"
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      str_name="Dimensions"
+      ncells = SIZE(RHM%mesh%cell_sets(i-ichild+1)%cell_list)
+      str_value = ncells
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      str_name= "Format"
+      str_value = "HDF"
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      str_name= "Precision"
+      str_value = "8"
+      CALL child_xml%setAttribute(str_name, str_value)
+
+      j = LEN_TRIM(strpath)
+      charpath = CHAR(strpath)
+      child_xml%content = charpath(1:j-4)//"h5:/"//RHM%mesh%name//"/"//RHM%mesh%cell_sets(i-ichild+1)%name
+
+      ALLOCATE(cell_list_1d(ncells))
+      ! Convert 1 based to 0 based index
+      cell_list_1d = RHM%mesh%cell_sets(i-ichild+1)%cell_list - 1
+      CALL h5%fwrite(CHAR(RHM%mesh%name)//'->'//CHAR(RHM%mesh%cell_sets(i-ichild+1)%name),cell_list_1d)
+      DEALLOCATE(cell_list_1d)
+    ENDDO
+  ENDIF
+ENDSUBROUTINE export_leaf_RectXDMF
+!
+!-------------------------------------------------------------------------------
+!> @brief Create the xml hierarchy for the mesh
+!> @param RHM the RHM
+!> @param xmle the XML element
+!> @param strpath the string holding the path to the XDMF file
+!> @param h5 the HDF5 file
+!>
+RECURSIVE SUBROUTINE create_xml_hierarchy_RectXDMF(RHM, xmle, strpath, h5)
+  CHARACTER(LEN=*),PARAMETER :: myName='create_xml_hierarchy_RectXDMF'
+  TYPE(RectHierarchicalMeshType),INTENT(INOUT)  :: RHM
+  TYPE(XMLElementType),TARGET,INTENT(INOUT) :: xmle
+  TYPE(StringType),INTENT(INOUT) :: strpath
+  TYPE(HDF5FileType), INTENT(INOUT) :: h5
+  TYPE(XMLElementType), POINTER :: children(:)
+  INTEGER(SIK) :: i
+  TYPE(StringType) :: str_name, str_value
+
+  ! If this RHM has children
+  IF(ASSOCIATED(RHM%children)) THEN
+    ! Add XML element children
+    ALLOCATE(children(SIZE(RHM%children)))
+    CALL xmle%setChildren(children)
+    DO i=1,SIZE(RHM%children)
+      ! Set attributes then recurse
+      str_name="Grid"
+      CALL children(i)%setName(str_name)
+      CALL children(i)%setParent(xmle)
+      str_name='Name'
+      str_value = RHM%children(i)%mesh%name
+      CALL children(i)%setAttribute(str_name, str_value)
+      str_name='GridType'
+      IF(ASSOCIATED(RHM%children(i)%children))THEN
+        str_value = 'Tree'
+      ELSE
+        str_value = 'Uniform'
+      ENDIF
+      CALL children(i)%setAttribute(str_name, str_value)
+
+      CALL create_xml_hierarchy_RectXDMF(RHM%children(i), children(i), strpath, h5)
+    ENDDO
+  ELSE
+    CALL export_leaf_RectXDMF(RHM, xmle, strpath, h5)
+  ENDIF
+ENDSUBROUTINE create_xml_hierarchy_RectXDMF
+!
+!-------------------------------------------------------------------------------
+!> @brief Exports RHM data to an XDMF file.
+!> @param strpath the string holding the path to the XDMF file
+!> @param RHM the RHM object
+!>
+SUBROUTINE exportRectXDMFmesh(strpath, RHM)
+  CHARACTER(LEN=*),PARAMETER :: myName='exportRectXDMFmesh'
+  TYPE(StringType),INTENT(INOUT) :: strpath
+  TYPE(RectHierarchicalMeshType),INTENT(INOUT)  :: RHM
+  TYPE(XMLFileType) :: xml
+  TYPE(HDF5FileType) :: h5
+  TYPE(XMLElementType),POINTER :: xmle, children(:), children2(:)
+  TYPE(StringType) :: str_name, str_value
+  INTEGER(SIK) :: i
+  CHARACTER(LEN=200) :: charpath
+
+  ! Create HDF5 file
+  i = LEN_TRIM(strpath)
+  charpath = CHAR(strpath)
+  CALL h5%init(charpath(1:i-4)//"h5",'NEW')
+  CALL h5%fopen()
+
+  ! Create XML file
+  CALL xml%init(ADJUSTL(strpath),.FALSE.)
+  xmle => xml%root
+  IF(.NOT.ASSOCIATED(xmle)) CALL eRHM%raiseError(modName//'::'//myName// &
+    ' - XML data init encountered an error. Pointer to root not associated.')
+  !   Set Xdmf
+  str_name='Xdmf'
+  CALL xmle%setName(str_name)
+  str_name='Version'
+  str_value = '3.0'
+  CALL xmle%setAttribute(str_name, str_value)
+  !   Set Domain
+  ALLOCATE(children(1))
+  CALL xmle%setChildren(children)
+  str_name='Domain'
+  CALL children(1)%setName(str_name)
+  CALL children(1)%setParent(xml%root)
+  ! Setup the grid that contains everything
+  xmle => children(1)
+
+  ALLOCATE(children2(1))
+  CALL xmle%setChildren(children2)
+  str_name="Grid"
+  CALL children2(1)%setName(str_name)
+  CALL children2(1)%setParent(xmle)
+  str_name='Name'
+  str_value = RHM%mesh%name
+  CALL children2(1)%setAttribute(str_name, str_value)
+  str_name='GridType'
+  IF(.NOT.ASSOCIATED(RHM%children))THEN
+    str_value = 'Uniform'
+  ELSE
+    str_value = 'Tree'
+  ENDIF
+  CALL children2(1)%setAttribute(str_name, str_value)
+
+  ! Recursively add xml elements for each grid. Only the leaves have vertices,
+  ! so only the leaves have HDF5 groups/data.
+  xmle => children2(1)
+  CALL create_xml_hierarchy_RectXDMF(RHM, xmle, strpath, h5)
+
+  ! Finish up
+  CALL xml%exportToDisk(CHAR(strpath))
+  CALL h5%fclose()
+
+ENDSUBROUTINE exportRectXDMFMesh
 #endif
 ENDMODULE RectHierarchicalMesh

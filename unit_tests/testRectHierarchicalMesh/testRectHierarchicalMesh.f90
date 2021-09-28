@@ -214,7 +214,7 @@ REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 !REGISTER_SUBTEST('CLEAR EDGES', testClearEdges)
 !REGISTER_SUBTEST('POINT INSIDE CELL', testPointInsideCell)
 REGISTER_SUBTEST('IMPORT XDMF MESH', testImportRectXDMFMesh)
-!REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
+REGISTER_SUBTEST('EXPORT XDMF MESH', testExportXDMFMesh)
 FINALIZE_TEST()
 !
 !===============================================================================
@@ -1309,55 +1309,55 @@ SUBROUTINE test_import_three_level_grid_implicit_hierarchy()
 
   CALL RHM%clear()
 ENDSUBROUTINE test_import_three_level_grid_implicit_hierarchy
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testExportXDMFMesh()
-!  !
-!  ! ****************************************************************************
-!  ! NOTE:
-!  !   Since tests run sequentially within the file, to reach this subroutine
-!  !   without error, import has to be working as intended. If errors occur
-!  !   within testImportXDMFMesh, those should be addressed first.
-!  !   Export is verified by importing the exported mesh. This is not
-!  !   ideal unit test design, but manually setting up all of the meshes of
-!  !   interest to test the export subroutine would take over a thousand lines
-!  !   easily.
-!  ! ****************************************************************************
-!  !
-!  ! Test the various major branches in export logic:
-!  ! - Levels:       1 vs 2 or more
-!  ! - Topology:     Mixed vs Single
-!  ! - Materials:    Yes vs No
-!  ! - Cell sets:    Yes vs No
-!  ! -----------------------------------------------------------------------------
-!  ! | Component   | Variation            | Tested by                           |
-!  ! ----------------------------------------------------------------------------
-!  ! | Levels      | 1                    | three_level_grid_IH                 |
-!  ! | Levels      | 2 or more            | two_pins, three_level_grid          |
-!  ! | Topology    | Mixed                | three_level_grid_IH                 |
-!  ! | Topology    | Single               | two_pins, three_level_grid          |
-!  ! | Materials   | Yes                  | two_pins                            |
-!  ! | Materials   | No                   | both three_level_grids              |
-!  ! | Cell sets   | Yes                  | two_pins, three_level_grid_IH       |
-!  ! | Cell sets   | No                   | three_level_grid                    |
-!  ! ----------------------------------------------------------------------------
-!  !
-!  ! Test case with two pins
-!  ! - Levels:       2
-!  ! - Topology:     Single, Triangle_6
-!  ! - Materials:    Yes
-!  ! - Cell sets:    Yes
-!  COMPONENT_TEST('test two pins')
-!  CALL test_export_two_pins()
-!  !
-!  ! Test case with three level grid, explicit hierarchy
-!  ! Note: the GRID has 3 levels, therefore the mesh has 4 levels
-!  ! - Levels:       4
-!  ! - Topology:     Single, Triangle or Quad in each leaf
-!  ! - Materials:    No
-!  ! - Cell sets:    No
-!  COMPONENT_TEST('test three level grid')
-!  CALL test_export_three_level_grid()
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE testExportXDMFMesh()
+  !
+  ! ****************************************************************************
+  ! NOTE:
+  !   Since tests run sequentially within the file, to reach this subroutine
+  !   without error, import has to be working as intended. If errors occur
+  !   within testImportXDMFMesh, those should be addressed first.
+  !   Export is verified by importing the exported mesh. This is not
+  !   ideal unit test design, but manually setting up all of the meshes of
+  !   interest to test the export subroutine would take over a thousand lines
+  !   easily.
+  ! ****************************************************************************
+  !
+  ! Test the various major branches in export logic:
+  ! - Levels:       1 vs 2 or more
+  ! - Topology:     Mixed vs Single
+  ! - Materials:    Yes vs No
+  ! - Cell sets:    Yes vs No
+  ! -----------------------------------------------------------------------------
+  ! | Component   | Variation            | Tested by                           |
+  ! ----------------------------------------------------------------------------
+  ! | Levels      | 1                    | three_level_grid_IH                 |
+  ! | Levels      | 2 or more            | two_pins, three_level_grid          |
+  ! | Topology    | Mixed                | three_level_grid_IH                 |
+  ! | Topology    | Single               | two_pins, three_level_grid          |
+  ! | Materials   | Yes                  | two_pins                            |
+  ! | Materials   | No                   | both three_level_grids              |
+  ! | Cell sets   | Yes                  | two_pins, three_level_grid_IH       |
+  ! | Cell sets   | No                   | three_level_grid                    |
+  ! ----------------------------------------------------------------------------
+  !
+  ! Test case with two pins
+  ! - Levels:       2
+  ! - Topology:     Single, Triangle_6
+  ! - Materials:    Yes
+  ! - Cell sets:    Yes
+  COMPONENT_TEST('test two pins')
+  CALL test_export_two_pins()
+  !
+  ! Test case with three level grid, explicit hierarchy
+  ! Note: the GRID has 3 levels, therefore the mesh has 4 levels
+  ! - Levels:       4
+  ! - Topology:     Single, Triangle or Quad in each leaf
+  ! - Materials:    No
+  ! - Cell sets:    No
+  COMPONENT_TEST('test three level grid')
+  CALL test_export_three_level_grid()
 !  !
 !  ! Test case with three level grid but the mesh hierarchy is implied
 !  ! through cell sets instead of explicitly through XDMF XML
@@ -1367,136 +1367,132 @@ ENDSUBROUTINE test_import_three_level_grid_implicit_hierarchy
 !  ! - Cell sets:    Yes
 !  COMPONENT_TEST('test three level grid w/ implicit hierarchy')
 !  CALL test_export_three_level_grid_implicit_hierarchy()
-!ENDSUBROUTINE testExportXDMFMesh
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE test_export_two_pins()
-!  TYPE(XDMFMeshType) :: mesh, pin1, emesh
-!  TYPE(StringType) :: fname
-!  INTEGER(SIK) :: i,j
+ENDSUBROUTINE testExportXDMFMesh
 !
-!  fname='gridmesh_two_pins.xdmf'
-!  CALL importXDMFMesh(fname, mesh)
+!-------------------------------------------------------------------------------
+SUBROUTINE test_export_two_pins()
+  TYPE(RectHierarchicalMeshType) :: RHM, pin1, eRHM
+  TYPE(StringType) :: fname
+  INTEGER(SIK) :: i,j
+
+  fname='gridmesh_two_pins.xdmf'
+  CALL importRectXDMFmesh(fname, RHM)
+
+  ! Export
+  fname='write_two_pins.xdmf'
+  CALL exportRectXDMFmesh(fname, RHM)
+  CALL importRectXDMFmesh(fname, eRHM)
+  ASSERT(eRHM%mesh%name == "mesh_domain", "Root mesh name is incorrect")
+  ASSERT(ASSOCIATED(eRHM%children), "Children not associated")
+  ASSERT(SIZE(eRHM%children)==2, "Wrong number of children")
+  ! Check pin1
+  pin1 = eRHM%children(1)
+  ASSERT(pin1%mesh%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
+  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
+  ASSERT(pin1%parent%mesh%name == "mesh_domain", "pin1 parent name is incorrect")
+  !     pin1 vertices
+  ASSERT(ALLOCATED(pin1%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(pin1%mesh%points)==109, "Wrong number of vertices")
+  DO i=1,109
+    DO j=1,2
+      ASSERT( (ABS(pin1%mesh%points(i)%coord(j) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
+    ENDDO
+  ENDDO
+  !     pin1 cells
+  ASSERT(ALLOCATED(pin1%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(pin1%mesh%cells)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT(SIZE(pin1%mesh%cells(i)%point_list)==7, "Wrong size for vertex list")
+    ASSERT( pin1%mesh%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
+    DO j=2,7
+      ASSERT( pin1%mesh%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  !     pin1 material_ids
+  ASSERT(ALLOCATED(pin1%mesh%material_ids), "material_ids not allocated")
+  ASSERT(SIZE(pin1%mesh%material_ids)==46, "Wrong number of cells")
+  DO i=1,46
+    ASSERT( pin1%mesh%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
+  ENDDO
+  !     pin1 cell_sets
+  ASSERT(ALLOCATED(pin1%mesh%cell_sets), "cell_sets not allocated")
+  ASSERT(SIZE(pin1%mesh%cell_sets)==1, "Wrong number of cell sets")
+  ASSERT(SIZE(pin1%mesh%cell_sets(1)%cell_list)==46, "Wrong number of cells")
+  ASSERT(pin1%mesh%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
+  DO i=1,46
+    ASSERT( pin1%mesh%cell_sets(1)%cell_list(i) == i, "Wrong cells")
+  ENDDO
+
+  CALL RHM%clear()
+  CALL pin1%clear()
+  CALL eRHM%clear()
+ENDSUBROUTINE test_export_two_pins
 !
-!  ! Export
-!  fname='write_two_pins.xdmf'
-!  CALL exportXDMFMesh(fname, mesh)
-!  CALL importXDMFMesh(fname, emesh)
-!  ASSERT(emesh%name == "mesh_domain", "Root mesh name is incorrect")
-!  ASSERT(ASSOCIATED(emesh%children), "Children not associated")
-!  ASSERT(SIZE(emesh%children)==2, "Wrong number of children")
-!  ! Check pin1
-!  pin1 = emesh%children(1)
-!  ASSERT(pin1%name == "GRID_L1_1_1", "pin1 mesh name is incorrect")
-!  ASSERT(.NOT.ASSOCIATED(pin1%children), "Children are associated")
-!  ASSERT(ASSOCIATED(pin1%parent), "Parent not associated")
-!  ASSERT(pin1%parent%name == "mesh_domain", "pin1 parent name is incorrect")
-!  ASSERT(pin1%singleTopology == .TRUE., "pin1 is not single topology")
-!  !     pin1 vertices
-!  ASSERT(ALLOCATED(pin1%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(pin1%vertices)==109*3, "Wrong number of vertices")
-!  ASSERT(SIZE(pin1%vertices, DIM=2)==109, "Wrong shape of vertices")
-!  DO i=1,109
-!    DO j=1,3
-!      ASSERT( (ABS(pin1%vertices(j, i) - two_pins_pin1_vertices(j,i)) < 1.0E-9), "Unequal vertices")
-!    ENDDO
-!  ENDDO
-!  !     pin1 cells
-!  ASSERT(ALLOCATED(pin1%cells), "Cells not allocated")
-!  ASSERT(SIZE(pin1%cells)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT(SIZE(pin1%cells(i)%point_list)==7, "Wrong size for vertex list")
-!    ASSERT( pin1%cells(i)%point_list(1) == two_pins_pin1_cells(1, i), "Wrong cell type")
-!    DO j=2,7
-!      ASSERT( pin1%cells(i)%point_list(j) == two_pins_pin1_cells(j, i) + 1, "Wrong vertex id")
-!    ENDDO
-!  ENDDO
-!  !     pin1 material_ids
-!  ASSERT(ALLOCATED(pin1%material_ids), "material_ids not allocated")
-!  ASSERT(SIZE(pin1%material_ids)==46, "Wrong number of cells")
-!  DO i=1,46
-!    ASSERT( pin1%material_ids(i) == two_pins_pin1_material_ids(i) + 1, "Unequal material_id")
-!  ENDDO
-!  !     pin1 cell_sets
-!  ASSERT(ALLOCATED(pin1%cell_sets), "cell_sets not allocated")
-!  ASSERT(SIZE(pin1%cell_sets)==1, "Wrong number of cell sets")
-!  ASSERT(SIZE(pin1%cell_sets(1)%cell_list)==46, "Wrong number of cells")
-!  ASSERT(pin1%cell_sets(1)%name=="Pin_1", "Wrong cell_set name")
-!  DO i=1,46
-!    ASSERT( pin1%cell_sets(1)%cell_list(i) == i, "Wrong cells")
-!  ENDDO
-!
-!  CALL mesh%clear()
-!  CALL pin1%clear()
-!  CALL emesh%clear()
-!ENDSUBROUTINE test_export_two_pins
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE test_export_three_level_grid()
-!  TYPE(XDMFMeshType) :: mesh, L1, L2, L3, emesh
-!  TYPE(StringType) :: fname
-!  INTEGER(SIK) :: i,j
-!
-!  fname='gridmesh_three_level_grid.xdmf'
-!  CALL importXDMFMesh(fname, mesh)
-!
-!  ! Export
-!  fname='write_three_level_grid.xdmf'
-!  CALL exportXDMFMesh(fname, mesh)
-!  CALL importXDMFMesh(fname, emesh)
-!  ! Check correct number of children
-!  ASSERT(emesh%name == "three_lvl_grid", "Root mesh name is incorrect")
-!  ASSERT(ASSOCIATED(emesh%children), "Children not associated")
-!  ASSERT(SIZE(emesh%children)==1, "Wrong number of children")
-!  ! Check L1
-!  L1 = emesh%children(1)
-!  ASSERT(L1%name == "GRID_L1_1_1", "L1 mesh name is incorrect")
-!  ASSERT(ASSOCIATED(L1%children), "Children are not associated")
-!  ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
-!  ASSERT(L1%parent%name == "three_lvl_grid", "L1 parent name is incorrect")
-!  ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
-!  ! Check L2_2_1
-!  L2 = L1%children(2)
-!  ASSERT(L2%name == "GRID_L2_2_1", "L2 mesh name is incorrect")
-!  ASSERT(ASSOCIATED(L2%children), "Children are not associated")
-!  ASSERT(ASSOCIATED(L2%parent), "Parent not associated")
-!  ASSERT(L2%parent%name == "GRID_L1_1_1", "L2 parent name is incorrect")
-!  ASSERT(SIZE(L2%children) == 4, "Wrong number of children")
-!  ! Check L3_3_2
-!  L3 = L2%children(3)
-!  ASSERT(L3%name == "GRID_L3_3_2", "L3 mesh name is incorrect")
-!  ASSERT(.NOT. ASSOCIATED(L3%children), "Children are associated")
-!  ASSERT(ASSOCIATED(L3%parent), "Parent not associated")
-!  ASSERT(L3%parent%name == "GRID_L2_2_1", "L3 parent name is incorrect")
-!  !     L3_3_2 vertices
-!  ASSERT(ALLOCATED(L3%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(L3%vertices)==5*3, "Wrong number of vertices")
-!  ASSERT(SIZE(L3%vertices, DIM=2)==5, "Wrong shape of vertices")
-!  DO i=1,5
-!    DO j=1,3
-!      ASSERT( (ABS(L3%vertices(j, i) - three_level_grid_L3_vertices(j,i)) < 1.0E-9), "Unequal vertices")
-!    ENDDO
-!  ENDDO
-!  !     L3_3_2 cells
-!  ASSERT(ALLOCATED(L3%cells), "Cells not allocated")
-!  ASSERT(SIZE(L3%cells)==3, "Wrong number of cells")
-!  ASSERT(L3%singleTopology == .TRUE., "L3 is not single topology")
-!  DO i=1,3
-!    ASSERT(SIZE(L3%cells(i)%point_list)==4, "Wrong size for vertex list")
-!    ASSERT( L3%cells(i)%point_list(1) == 4, "Wrong cell type, should be triangle=4")
-!    DO j=2,4
-!      ASSERT( L3%cells(i)%point_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
-!    ENDDO
-!  ENDDO
-!  ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
-!  ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated")
-!
-!  CALL mesh%clear()
-!  CALL L1%clear()
-!  CALL L2%clear()
-!  CALL L3%clear()
-!  CALL emesh%clear()
-!ENDSUBROUTINE test_export_three_level_grid
+!-------------------------------------------------------------------------------
+SUBROUTINE test_export_three_level_grid()
+  TYPE(RectHierarchicalMeshType) :: RHM, L1, L2, L3, eRHM
+  TYPE(StringType) :: fname
+  INTEGER(SIK) :: i,j
+
+  fname='gridmesh_three_level_grid.xdmf'
+  CALL importRectXDMFmesh(fname, RHM)
+
+  ! Export
+  fname='write_three_level_grid.xdmf'
+  CALL exportRectXDMFmesh(fname, RHM)
+  CALL importRectXDMFmesh(fname, eRHM)
+  ! Check correct number of children
+  ASSERT(eRHM%mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
+  ASSERT(ASSOCIATED(eRHM%children), "Children not associated")
+  ASSERT(SIZE(eRHM%children)==1, "Wrong number of children")
+  ! Check L1
+  L1 = eRHM%children(1)
+  ASSERT(L1%mesh%name == "GRID_L1_1_1", "L1 mesh name is incorrect")
+  ASSERT(ASSOCIATED(L1%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
+  ASSERT(L1%parent%mesh%name == "three_lvl_grid", "L1 parent name is incorrect")
+  ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
+  ! Check L2_2_1
+  L2 = L1%children(2)
+  ASSERT(L2%mesh%name == "GRID_L2_2_1", "L2 mesh name is incorrect")
+  ASSERT(ASSOCIATED(L2%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L2%parent), "Parent not associated")
+  ASSERT(L2%parent%mesh%name == "GRID_L1_1_1", "L2 parent name is incorrect")
+  ASSERT(SIZE(L2%children) == 4, "Wrong number of children")
+  ! Check L3_3_2
+  L3 = L2%children(3)
+  ASSERT(L3%mesh%name == "GRID_L3_3_2", "L3 mesh name is incorrect")
+  ASSERT(.NOT. ASSOCIATED(L3%children), "Children are associated")
+  ASSERT(ASSOCIATED(L3%parent), "Parent not associated")
+  ASSERT(L3%parent%mesh%name == "GRID_L2_2_1", "L3 parent name is incorrect")
+  !     L3_3_2 vertices
+  ASSERT(ALLOCATED(L3%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(L3%mesh%points)==5, "Wrong number of vertices")
+  DO i=1,5
+    DO j=1,2
+      ASSERT( (ABS(L3%mesh%points(i)%coord(j) - three_level_grid_L3_vertices(j,i)) < 1.0E-9), "Unequal vertices")
+    ENDDO
+  ENDDO
+  !     L3_3_2 cells
+  ASSERT(ALLOCATED(L3%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(L3%mesh%cells)==3, "Wrong number of cells")
+  DO i=1,3
+    ASSERT(SIZE(L3%mesh%cells(i)%point_list)==4, "Wrong size for vertex list")
+    ASSERT( L3%mesh%cells(i)%point_list(1) == 4, "Wrong cell type, should be triangle=4")
+    DO j=2,4
+      ASSERT( L3%mesh%cells(i)%point_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  ASSERT(.NOT. ALLOCATED(L3%mesh%material_ids), "Material IDS are allocated")
+  ASSERT(.NOT. ALLOCATED(L3%mesh%cell_sets), "Cell sets are allocated")
+
+  CALL RHM%clear()
+  CALL L1%clear()
+  CALL L2%clear()
+  CALL L3%clear()
+  CALL eRHM%clear()
+ENDSUBROUTINE test_export_three_level_grid
 !!
 !!-------------------------------------------------------------------------------
 !SUBROUTINE test_export_three_level_grid_implicit_hierarchy()
