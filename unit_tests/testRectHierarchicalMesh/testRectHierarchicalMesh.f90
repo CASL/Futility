@@ -1358,15 +1358,15 @@ SUBROUTINE testExportXDMFMesh()
   ! - Cell sets:    No
   COMPONENT_TEST('test three level grid')
   CALL test_export_three_level_grid()
-!  !
-!  ! Test case with three level grid but the mesh hierarchy is implied
-!  ! through cell sets instead of explicitly through XDMF XML
-!  ! - Levels:       1
-!  ! - Topology:     Mixed, Triangle and Quad
-!  ! - Materials:    No
-!  ! - Cell sets:    Yes
-!  COMPONENT_TEST('test three level grid w/ implicit hierarchy')
-!  CALL test_export_three_level_grid_implicit_hierarchy()
+  !
+  ! Test case with three level grid but the mesh hierarchy is implied
+  ! through cell sets instead of explicitly through XDMF XML
+  ! - Levels:       1
+  ! - Topology:     Mixed, Triangle and Quad
+  ! - Materials:    No
+  ! - Cell sets:    Yes
+  COMPONENT_TEST('test three level grid w/ implicit hierarchy')
+  CALL test_export_three_level_grid_implicit_hierarchy()
 ENDSUBROUTINE testExportXDMFMesh
 !
 !-------------------------------------------------------------------------------
@@ -1493,69 +1493,67 @@ SUBROUTINE test_export_three_level_grid()
   CALL L3%clear()
   CALL eRHM%clear()
 ENDSUBROUTINE test_export_three_level_grid
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE test_export_three_level_grid_implicit_hierarchy()
-!  TYPE(XDMFMeshType) :: mesh,emesh
-!  TYPE(StringType) :: fname
-!  INTEGER(SIK) :: i,j
-!  INTEGER(SIK),ALLOCATABLE :: cells_ref(:)
 !
-!  fname='three_level_grid.xdmf'
-!  CALL importXDMFMesh(fname, mesh)
-!
-!  ! Export
-!  fname='write_three_level_grid_IH.xdmf'
-!  CALL exportXDMFMesh(fname, mesh)
-!  CALL importXDMFMesh(fname, emesh)
-!  ! Check correct number of children
-!  ASSERT(emesh%name == "three_lvl_grid", "Root mesh name is incorrect")
-!  ASSERT(.NOT.ASSOCIATED(emesh%children), "Children are associated")
-!  ! vertices
-!  ASSERT(ALLOCATED(emesh%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(emesh%vertices)==42*3, "Wrong number of vertices")
-!  ASSERT(SIZE(emesh%vertices, DIM=2)==42, "Wrong shape of vertices")
-!  ! cells
-!  ASSERT(ALLOCATED(emesh%cells), "Cells not allocated")
-!  ASSERT(SIZE(emesh%cells)==46, "Wrong number of cells")
-!  ASSERT(emesh%singleTopology == .FALSE., "Mesh is single topology")
-!  ! Spot check cells
-!  ! Cell 1, quad
-!  j=1
-!  ALLOCATE(cells_ref(5))
-!  cells_ref = (/5, 26, 2, 27, 38/)
-!  ASSERT(SIZE(emesh%cells(j)%point_list)==5, "Wrong size for vertex list")
-!  DO i=1,5
-!    ASSERT( emesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
-!  ENDDO
-!  ! Cell 4, quad
-!  j=4
-!  cells_ref = (/5, 4, 29, 38, 28/)
-!  ASSERT(SIZE(emesh%cells(j)%point_list)==5, "Wrong size for vertex list")
-!  DO i=1,5
-!    ASSERT( emesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
-!  ENDDO
-!  DEALLOCATE(cells_ref)
-!  ! Cell 18, tri
-!  j=18
-!  ALLOCATE(cells_ref(4))
-!  cells_ref = (/4, 6, 40, 8/)
-!  ASSERT(SIZE(emesh%cells(j)%point_list)==4, "Wrong size for vertex list")
-!  DO i=1,4
-!    ASSERT( emesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
-!  ENDDO
-!  DEALLOCATE(cells_ref)
-!  ASSERT(.NOT. ALLOCATED(emesh%material_ids), "Material IDS are allocated")
-!  ! Check cell sets
-!  ASSERT(ALLOCATED(emesh%cell_sets), "Cell sets are allocated")
-!  ASSERT(SIZE(emesh%cell_sets)==21, "Wrong number of cell sets")
-!  ASSERT(emesh%cell_sets(6)%name=="GRID_L3_1_1", "Wrong set name")
-!  ASSERT(SIZE(emesh%cell_sets(6)%cell_list)==4, "Wrong set size")
-!  DO i =1,4
-!    ASSERT(emesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
-!  ENDDO
-!
-!  CALL mesh%clear()
-!  CALL emesh%clear()
-!ENDSUBROUTINE test_export_three_level_grid_implicit_hierarchy
+!-------------------------------------------------------------------------------
+SUBROUTINE test_export_three_level_grid_implicit_hierarchy()
+  TYPE(RectHierarchicalMeshType) :: RHM,eRHM
+  TYPE(StringType) :: fname
+  INTEGER(SIK) :: i,j
+  INTEGER(SIK),ALLOCATABLE :: cells_ref(:)
+
+  fname='three_level_grid.xdmf'
+  CALL importRectXDMFmesh(fname, RHM)
+
+  ! Export
+  fname='write_three_level_grid_IH.xdmf'
+  CALL exportRectXDMFmesh(fname, RHM)
+  CALL importRectXDMFmesh(fname, eRHM)
+  ! Check correct number of children
+  ASSERT(eRHM%mesh%name == "three_lvl_grid", "Root RHM name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(eRHM%children), "Children are associated")
+  ! vertices
+  ASSERT(ALLOCATED(eRHM%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(eRHM%mesh%points)==42, "Wrong number of vertices")
+  ! cells
+  ASSERT(ALLOCATED(eRHM%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(eRHM%mesh%cells)==46, "Wrong number of cells")
+  ! Spot check cells
+  ! Cell 1, quad
+  j=1
+  ALLOCATE(cells_ref(5))
+  cells_ref = (/5, 26, 2, 27, 38/)
+  ASSERT(SIZE(eRHM%mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( eRHM%mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or RHM id")
+  ENDDO
+  ! Cell 4, quad
+  j=4
+  cells_ref = (/5, 4, 29, 38, 28/)
+  ASSERT(SIZE(eRHM%mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( eRHM%mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or RHM id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ! Cell 18, tri
+  j=18
+  ALLOCATE(cells_ref(4))
+  cells_ref = (/4, 6, 40, 8/)
+  ASSERT(SIZE(eRHM%mesh%cells(j)%point_list)==4, "Wrong size for vertex list")
+  DO i=1,4
+    ASSERT( eRHM%mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or RHM id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ASSERT(.NOT. ALLOCATED(eRHM%mesh%material_ids), "Material IDS are allocated")
+  ! Check cell sets
+  ASSERT(ALLOCATED(eRHM%mesh%cell_sets), "Cell sets are allocated")
+  ASSERT(SIZE(eRHM%mesh%cell_sets)==21, "Wrong number of cell sets")
+  ASSERT(eRHM%mesh%cell_sets(6)%name=="GRID_L3_1_1", "Wrong set name")
+  ASSERT(SIZE(eRHM%mesh%cell_sets(6)%cell_list)==4, "Wrong set size")
+  DO i =1,4
+    ASSERT(eRHM%mesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
+  ENDDO
+
+  CALL RHM%clear()
+  CALL eRHM%clear()
+ENDSUBROUTINE test_export_three_level_grid_implicit_hierarchy
 ENDPROGRAM testRectHierarchicalMesh
