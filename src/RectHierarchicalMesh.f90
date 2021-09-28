@@ -90,9 +90,9 @@ TYPE :: RectHierarchicalMeshType
     !> @copybrief RectHierarchicalMeshType::getNLeaves_RectHierarchicalMeshType
     !> @copydoc RectHierarchicalMeshType::getNLeaves_RectHierarchicalMeshType
     PROCEDURE,PASS :: getNLeaves => getNLeaves_RectHierarchicalMeshType
-!    !> @copybrief RectHierarchicalMeshType::getLeaves_RectHierarchicalMeshType
-!    !> @copydoc RectHierarchicalMeshType::getLeaves_RectHierarchicalMeshType
-!    PROCEDURE,PASS :: getLeaves => getLeaves_RectHierarchicalMeshType
+    !> @copybrief RectHierarchicalMeshType::getLeaves_RectHierarchicalMeshType
+    !> @copydoc RectHierarchicalMeshType::getLeaves_RectHierarchicalMeshType
+    PROCEDURE,PASS :: getLeaves => getLeaves_RectHierarchicalMeshType
     !> @copybrief RectHierarchicalMeshType::getNNodesAtDepth_RectHierarchicalMeshType
     !> @copydoc RectHierarchicalMeshType::getNNodesAtDepth_RectHierarchicalMeshType
     PROCEDURE,PASS :: getNNodesAtDepth => &
@@ -1237,21 +1237,21 @@ RECURSIVE SUBROUTINE getNodesAtDepth_RectHierarchicalMeshType(thismesh, nodes, d
     ENDIF
   ENDIF
 ENDSUBROUTINE getNodesAtDepth_RectHierarchicalMeshType
-!!
-!!-------------------------------------------------------------------------------
-!!> @brief Gets an array of pointers to the leaf nodes in this mesh
-!!> @param thismesh the XDMF mesh object
-!!> @param leaves a pointer to an array of XDMF meshes (the leaves)
-!!> @returns a pointer array
-!!>
-!RECURSIVE SUBROUTINE getLeaves_XDMFMeshType(thismesh, leaves)
-!  CLASS(XDMFMeshType), INTENT(INOUT), TARGET :: thismesh
-!  TYPE(XDMFMeshPtrArry), INTENT(INOUT), POINTER :: leaves(:)
-!  INTEGER(SIK) :: d
 !
-!  d = thismesh%distanceToLeaf()
-!  CALL thismesh%getNodesAtDepth(leaves, d)
-!ENDSUBROUTINE getLeaves_XDMFMeshType
+!-------------------------------------------------------------------------------
+!> @brief Gets an array of pointers to the leaf nodes in this mesh
+!> @param thismesh the RHM object
+!> @param leaves a pointer to an array of RHM's (the leaves)
+!> @returns a pointer array
+!>
+RECURSIVE SUBROUTINE getLeaves_RectHierarchicalMeshType(thismesh, leaves)
+  CLASS(RectHierarchicalMeshType), INTENT(INOUT), TARGET :: thismesh
+  TYPE(RectHierarchicalMeshTypePtrArry), INTENT(INOUT), POINTER :: leaves(:)
+  INTEGER(SIK) :: d
+
+  d = thismesh%distanceToLeaf()
+  CALL thismesh%getNodesAtDepth(leaves, d)
+ENDSUBROUTINE getLeaves_RectHierarchicalMeshType
 !!
 !!-------------------------------------------------------------------------------
 !!> @brief Export the leaf nodes of the mesh hierarchy

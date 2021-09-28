@@ -185,20 +185,20 @@ INTEGER(SIK) :: two_pins_pin1_material_ids(46) = (/ &
 1, 1, 1, 1, 1, 1, 1, 1, 1     &
 /)
 
-!REAL(SDK) :: three_level_grid_L3_vertices(3,5) = RESHAPE( (/ &
-! 2.0, 1.5, 0.0,&
-! 2.0, 1.0, 0.0,&
-! 3.0, 1.0, 0.0,&
-! 2.0, 2.0, 0.0,&
-! 3.0, 2.0, 0.0 &
-!/), (/3, 5/))
-!
-!INTEGER(SIK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
-!0, 2, 4, &
-!1, 2, 0, &
-!3, 0, 4  &
-!/), (/3, 3/))
-!
+REAL(SDK) :: three_level_grid_L3_vertices(3,5) = RESHAPE( (/ &
+ 2.0, 1.5, 0.0,&
+ 2.0, 1.0, 0.0,&
+ 3.0, 1.0, 0.0,&
+ 2.0, 2.0, 0.0,&
+ 3.0, 2.0, 0.0 &
+/), (/3, 5/))
+
+INTEGER(SIK) :: three_level_grid_L3_cells(3,3) = RESHAPE( (/ &
+0, 2, 4, &
+1, 2, 0, &
+3, 0, 4  &
+/), (/3, 3/))
+
 CREATE_TEST('RECTANGULAR HIERARCHICAL MESH')
 REGISTER_SUBTEST('CLEAR', testClear)
 REGISTER_SUBTEST('NON-RECURSIVE CLEAR', testNonRecursiveClear)
@@ -207,10 +207,9 @@ REGISTER_SUBTEST('DISTANCE TO LEAF', testDistanceToLeaf)
 REGISTER_SUBTEST('GET N NODES AT DEPTH', testGetNNodesAtDepth)
 REGISTER_SUBTEST('GET N LEAVES', testGetNLeaves)
 REGISTER_SUBTEST('GET NODES AT DEPTH', testGetNodesAtDepth)
-!REGISTER_SUBTEST('GET LEAVES', testGetLeaves)
-!REGISTER_SUBTEST('GET CELL AREA', testGetCellArea)
-!REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
-!REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
+REGISTER_SUBTEST('GET LEAVES', testGetLeaves)
+REGISTER_SUBTEST('RECOMPUTE BOUNDING BOX', testRecomputeBoundingBox)
+REGISTER_SUBTEST('SETUP RECTANGULAR MAP', testSetupRectangularMap)
 !REGISTER_SUBTEST('SETUP EDGES', testSetupEdges)
 !REGISTER_SUBTEST('CLEAR EDGES', testClearEdges)
 !REGISTER_SUBTEST('POINT INSIDE CELL', testPointInsideCell)
@@ -556,42 +555,42 @@ SUBROUTINE testGetNodesAtDepth()
   NULLIFY(sub)
   DEALLOCATE(nodes)
 ENDSUBROUTINE testGetNodesAtDepth
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testGetLeaves()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: sub => NULL()
-!  TYPE(XDMFMeshPtrArry), POINTER :: leaves(:) => NULL()
-!  INTEGER(SIK) :: i,j
-!  TYPE(StringType) :: str
 !
-!
-!  ! Create a mesh with three children
-!  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
-!  ! Total leaves = 6
-!  ALLOCATE(mesh%children(3))
-!  DO i = 1,3
-!    sub => mesh%children(i)
-!    ALLOCATE(sub%children(i))
-!    DO j = 1,i
-!      sub%children(j)%name = i
-!    ENDDO
-!  ENDDO
-!
-!  CALL mesh%getLeaves(leaves)
-!  ASSERT(SIZE(leaves) == 6, "There should be 6 leaves!")
-!  DO i = 1,3
-!    sub => mesh%children(i)
-!    CALL sub%getLeaves(leaves)
-!    ASSERT(SIZE(leaves) == i, "Wrong number of leaves!")
-!    str = i
-!    ASSERT(leaves(i)%mesh%name == str, "Wrong name")
-!  ENDDO
-!
-!  CALL mesh%clear()
-!  NULLIFY(sub)
-!  DEALLOCATE(leaves)
-!ENDSUBROUTINE testGetLeaves
+!-------------------------------------------------------------------------------
+SUBROUTINE testGetLeaves()
+  TYPE(RectHierarchicalMeshType) :: mesh
+  TYPE(RectHierarchicalMeshType),POINTER :: sub => NULL()
+  TYPE(RectHierarchicalMeshTypePtrArry), POINTER :: leaves(:) => NULL()
+  INTEGER(SIK) :: i,j
+  TYPE(StringType) :: str
+
+
+  ! Create a mesh with three children
+  ! Child 1 has 1 child, child 2 has 2 children, child 3 has 3 children.
+  ! Total leaves = 6
+  ALLOCATE(mesh%children(3))
+  DO i = 1,3
+    sub => mesh%children(i)
+    ALLOCATE(sub%children(i))
+    DO j = 1,i
+      sub%children(j)%mesh%name = i
+    ENDDO
+  ENDDO
+
+  CALL mesh%getLeaves(leaves)
+  ASSERT(SIZE(leaves) == 6, "There should be 6 leaves!")
+  DO i = 1,3
+    sub => mesh%children(i)
+    CALL sub%getLeaves(leaves)
+    ASSERT(SIZE(leaves) == i, "Wrong number of leaves!")
+    str = i
+    ASSERT(leaves(i)%RHM%mesh%name == str, "Wrong name")
+  ENDDO
+
+  CALL mesh%clear()
+  NULLIFY(sub)
+  DEALLOCATE(leaves)
+ENDSUBROUTINE testGetLeaves
 !!
 !!-------------------------------------------------------------------------------
 !SUBROUTINE testGetCellArea()
@@ -703,106 +702,106 @@ ENDSUBROUTINE testGetNodesAtDepth
 !  ASSERT(ABS(areas(4) - 2*0.77614233) < 1.0E-6, "Area should be 2*0.77614233")
 !  CALL mesh%clear()
 !ENDSUBROUTINE testGetCellArea
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testRecomputeBoundingBox()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(XDMFMeshType),POINTER :: pin1
 !
-!  CALL setup_pin1(mesh)
-!  pin1 => mesh%children(1)
+!-------------------------------------------------------------------------------
+SUBROUTINE testRecomputeBoundingBox()
+  TYPE(RectHierarchicalMeshType) :: RHM 
+  TYPE(RectHierarchicalMeshType),POINTER :: pin1
+
+  CALL setup_pin1(RHM)
+  pin1 => RHM%children(1)
+
+  ! Check original bounding box
+  ASSERT( (ABS(RHM%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+
+  ! Check that nothing changes when recomputing
+  CALL RHM%recomputeBoundingBox()
+  ASSERT( (ABS(RHM%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+
+  ! Move a vertex so that it changes the BB.
+  ! The old BB was (0,0,2,2). We are moving the corner vertex at (2,2)
+  ! to (2.1, 2.2)
+  pin1%mesh%points(1)%coord(1) = 2.1_SDK
+  pin1%mesh%points(2)%coord(2) = 2.2_SDK
+  CALL RHM%recomputeBoundingBox()
+  ASSERT( (ABS(RHM%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(1) - 2.1_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(2) - 2.2_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(1) - 2.1_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(pin1%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(pin1%bb%points(3)%coord(2) - 2.2_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+
+  CALL RHM%clear()
+  NULLIFY(pin1)
+ENDSUBROUTINE testRecomputeBoundingBox
 !
-!  ! Check original bounding box
-!  ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(mesh%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(mesh%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!
-!  ! Check that nothing changes when recomputing
-!  CALL mesh%recomputeBoundingBox()
-!  ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(mesh%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(mesh%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(pin1%boundingBox(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(pin1%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!
-!  ! Move a vertex so that it changes the BB.
-!  ! The old BB was (0,0,2,2). We are moving the corner vertex at (2,2)
-!  ! to (2.1, 2.2)
-!  pin1%vertices(1,4) = 2.1_SDK
-!  pin1%vertices(2,4) = 2.2_SDK
-!  CALL mesh%recomputeBoundingBox()
-!  ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(mesh%boundingBox(2) - 2.1_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(mesh%boundingBox(4) - 2.2_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ASSERT( (ABS(pin1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(pin1%boundingBox(2) - 2.1_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(pin1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(pin1%boundingBox(4) - 2.2_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!
-!  CALL mesh%clear()
-!  NULLIFY(pin1)
-!ENDSUBROUTINE testRecomputeBoundingBox
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE testSetupRectangularMap()
-!  TYPE(XDMFMeshType) :: mesh
-!
-!  ALLOCATE(mesh%children(2))
-!  mesh%children(1)%name = 'GRID_L1_1_1'
-!  mesh%children(2)%name = 'GRID_L1_2_1'
-!
-!  ! Check original map
-!  CALL mesh%setupRectangularMap()
-!  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
-!  ASSERT(SIZE(mesh%map, DIM=1) == 2, "Map is wrong size")
-!  ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
-!  ASSERT(mesh%map(1,1) == 1, "Wrong child!")
-!  ASSERT(mesh%map(2,1) == 2, "Wrong child!")
-!
-!  ! Check that nothing changes when rerun
-!  CALL mesh%setupRectangularMap()
-!  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
-!  ASSERT(SIZE(mesh%map, DIM=1) == 2, "Map is wrong size")
-!  ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
-!  ASSERT(mesh%map(1,1) == 1, "Wrong child!")
-!  ASSERT(mesh%map(2,1) == 2, "Wrong child!")
-!
-!  ! Make a 2 by 3 grid, labeled as such
-!  ! -------------
-!  ! | 3 | 2 | 6 |
-!  ! -------------
-!  ! | 1 | 4 | 5 |
-!  ! -------------
-!  DEALLOCATE(mesh%children)
-!  ALLOCATE(mesh%children(6))
-!  mesh%children(1)%name = 'GRID_L1_1_1'
-!  mesh%children(2)%name = 'GRID_L1_2_2'
-!  mesh%children(3)%name = 'GRID_L1_1_2'
-!  mesh%children(4)%name = 'GRID_L1_2_1'
-!  mesh%children(5)%name = 'GRID_L1_3_1'
-!  mesh%children(6)%name = 'GRID_L1_3_2'
-!  CALL mesh%setupRectangularMap()
-!  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
-!  ASSERT(SIZE(mesh%map, DIM=1) == 3, "Map is wrong size")
-!  ASSERT(SIZE(mesh%map, DIM=2) == 2, "Map is wrong size")
-!  ASSERT(mesh%map(1,1) == 1, "Wrong child!")
-!  ASSERT(mesh%map(2,1) == 4, "Wrong child!")
-!  ASSERT(mesh%map(3,1) == 5, "Wrong child!")
-!  ASSERT(mesh%map(1,2) == 3, "Wrong child!")
-!  ASSERT(mesh%map(2,2) == 2, "Wrong child!")
-!  ASSERT(mesh%map(3,2) == 6, "Wrong child!")
-!
-!  CALL mesh%clear()
-!ENDSUBROUTINE testSetupRectangularMap
+!-------------------------------------------------------------------------------
+SUBROUTINE testSetupRectangularMap()
+  TYPE(RectHierarchicalMeshType) :: RHM
+
+  ALLOCATE(RHM%children(2))
+  RHM%children(1)%mesh%name = 'GRID_L1_1_1'
+  RHM%children(2)%mesh%name = 'GRID_L1_2_1'
+
+  ! Check original map
+  CALL RHM%setupRectangularMap()
+  ASSERT(ALLOCATED(RHM%map), "Map is not allocated")
+  ASSERT(SIZE(RHM%map, DIM=1) == 2, "Map is wrong size")
+  ASSERT(SIZE(RHM%map, DIM=2) == 1, "Map is wrong size")
+  ASSERT(RHM%map(1,1) == 1, "Wrong child!")
+  ASSERT(RHM%map(2,1) == 2, "Wrong child!")
+
+  ! Check that nothing changes when rerun
+  CALL RHM%setupRectangularMap()
+  ASSERT(ALLOCATED(RHM%map), "Map is not allocated")
+  ASSERT(SIZE(RHM%map, DIM=1) == 2, "Map is wrong size")
+  ASSERT(SIZE(RHM%map, DIM=2) == 1, "Map is wrong size")
+  ASSERT(RHM%map(1,1) == 1, "Wrong child!")
+  ASSERT(RHM%map(2,1) == 2, "Wrong child!")
+
+  ! Make a 2 by 3 grid, labeled as such
+  ! -------------
+  ! | 3 | 2 | 6 |
+  ! -------------
+  ! | 1 | 4 | 5 |
+  ! -------------
+  DEALLOCATE(RHM%children)
+  ALLOCATE(RHM%children(6))
+  RHM%children(1)%mesh%name = 'GRID_L1_1_1'
+  RHM%children(2)%mesh%name = 'GRID_L1_2_2'
+  RHM%children(3)%mesh%name = 'GRID_L1_1_2'
+  RHM%children(4)%mesh%name = 'GRID_L1_2_1'
+  RHM%children(5)%mesh%name = 'GRID_L1_3_1'
+  RHM%children(6)%mesh%name = 'GRID_L1_3_2'
+  CALL RHM%setupRectangularMap()
+  ASSERT(ALLOCATED(RHM%map), "Map is not allocated")
+  ASSERT(SIZE(RHM%map, DIM=1) == 3, "Map is wrong size")
+  ASSERT(SIZE(RHM%map, DIM=2) == 2, "Map is wrong size")
+  ASSERT(RHM%map(1,1) == 1, "Wrong child!")
+  ASSERT(RHM%map(2,1) == 4, "Wrong child!")
+  ASSERT(RHM%map(3,1) == 5, "Wrong child!")
+  ASSERT(RHM%map(1,2) == 3, "Wrong child!")
+  ASSERT(RHM%map(2,2) == 2, "Wrong child!")
+  ASSERT(RHM%map(3,2) == 6, "Wrong child!")
+
+  CALL RHM%clear()
+ENDSUBROUTINE testSetupRectangularMap
 !!
 !!-------------------------------------------------------------------------------
 !SUBROUTINE testSetupEdges()
@@ -1078,24 +1077,24 @@ SUBROUTINE testImportRectXDMFMesh()
   ! - Cell sets:    Yes
   COMPONENT_TEST('test two pins')
   CALL test_import_two_pins()
-!  !
-!  ! Test case with three level grid, explicit hierarchy
-!  ! Note: the GRID has 3 levels, therefore the mesh has 4 levels
-!  ! - Levels:       4
-!  ! - Topology:     Single, Triangle or Quad in each leaf
-!  ! - Materials:    No
-!  ! - Cell sets:    No
-!  COMPONENT_TEST('test three level grid')
-!  CALL test_import_three_level_grid()
-!  !
-!  ! Test case with three level grid but the mesh hierarchy is implied
-!  ! through cell sets instead of explicitly through XDMF XML
-!  ! - Levels:       1
-!  ! - Topology:     Mixed, Triangle and Quad
-!  ! - Materials:    No
-!  ! - Cell sets:    Yes
-!  COMPONENT_TEST('test three level grid w/ implicit hierarchy')
-!  CALL test_import_three_level_grid_implicit_hierarchy()
+  !
+  ! Test case with three level grid, explicit hierarchy
+  ! Note: the GRID has 3 levels, therefore the mesh has 4 levels
+  ! - Levels:       4
+  ! - Topology:     Single, Triangle or Quad in each leaf
+  ! - Materials:    No
+  ! - Cell sets:    No
+  COMPONENT_TEST('test three level grid')
+  CALL test_import_three_level_grid()
+  !
+  ! Test case with three level grid but the mesh hierarchy is implied
+  ! through cell sets instead of explicitly through XDMF XML
+  ! - Levels:       1
+  ! - Topology:     Mixed, Triangle and Quad
+  ! - Materials:    No
+  ! - Cell sets:    Yes
+  COMPONENT_TEST('test three level grid w/ implicit hierarchy')
+  CALL test_import_three_level_grid_implicit_hierarchy()
 ENDSUBROUTINE testImportRectXDMFMesh
 !
 !-------------------------------------------------------------------------------
@@ -1164,156 +1163,152 @@ SUBROUTINE test_import_two_pins()
   CALL RHM%clear()
   CALL pin1%clear()
 ENDSUBROUTINE test_import_two_pins
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE test_import_three_level_grid()
-!  TYPE(XDMFMeshType) :: mesh, L1, L2, L3
-!  TYPE(StringType) :: fname
-!  INTEGER(SIK) :: i,j
 !
-!  fname='gridmesh_three_level_grid.xdmf'
-!  CALL importXDMFMesh(fname, mesh)
+!-------------------------------------------------------------------------------
+SUBROUTINE test_import_three_level_grid()
+  TYPE(RectHierarchicalMeshType) :: RHM, L1, L2, L3
+  TYPE(StringType) :: fname
+  INTEGER(SIK) :: i,j
+
+  fname='gridmesh_three_level_grid.xdmf'
+  CALL importRectXDMFmesh(fname, RHM)
+
+  ASSERT(RHM%mesh%name == "three_lvl_grid", "Root RHM name is incorrect")
+  ASSERT(ASSOCIATED(RHM%children), "Children not associated")
+  ASSERT(SIZE(RHM%children)==1, "Wrong number of children")
+  ASSERT(ALLOCATED(RHM%map), "Map is not allocated")
+  ASSERT(SIZE(RHM%map, DIM=1) == 1, "Map is wrong size")
+  ASSERT(SIZE(RHM%map, DIM=2) == 1, "Map is wrong size")
+  i = RHM%distanceToLeaf()
+  ASSERT(i == 3, "Wrong number of levels")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(1) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ! Check L1
+  L1 = RHM%children(1)
+  ASSERT(L1%mesh%name == "GRID_L1_1_1", "L1 RHM name is incorrect")
+  ASSERT(ASSOCIATED(L1%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
+  ASSERT(L1%parent%mesh%name == "three_lvl_grid", "L1 parent name is incorrect")
+  ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
+  ASSERT(ALLOCATED(L1%map), "Map is not allocated")
+  ASSERT(SIZE(L1%map, DIM=1) == 2, "Map is wrong size")
+  ASSERT(SIZE(L1%map, DIM=2) == 2, "Map is wrong size")
+  i = L1%distanceToLeaf()
+  ASSERT(i == 2, "Wrong number of levels")
+  ASSERT( (ABS(L1%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(L1%bb%points(3)%coord(1) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(L1%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(L1%bb%points(3)%coord(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ! Check L2_2_1
+  L2 = L1%children(2)
+  ASSERT(L2%mesh%name == "GRID_L2_2_1", "L2 RHM name is incorrect")
+  ASSERT(ASSOCIATED(L2%children), "Children are not associated")
+  ASSERT(ASSOCIATED(L2%parent), "Parent not associated")
+  ASSERT(L2%parent%mesh%name == "GRID_L1_1_1", "L2 parent name is incorrect")
+  ASSERT(SIZE(L2%children) == 4, "Wrong number of children")
+  ASSERT(ALLOCATED(L2%map), "Map is not allocated")
+  ASSERT(SIZE(L2%map, DIM=1) == 2, "Map is wrong size")
+  ASSERT(SIZE(L2%map, DIM=2) == 2, "Map is wrong size")
+  ASSERT( (ABS(L2%bb%points(1)%coord(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(L2%bb%points(3)%coord(1) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(L2%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(L2%bb%points(3)%coord(2) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ! Check L3_3_2
+  L3 = L2%children(3)
+  ASSERT(L3%mesh%name == "GRID_L3_3_2", "L3 RHM name is incorrect")
+  ASSERT(.NOT. ASSOCIATED(L3%children), "Children are associated")
+  ASSERT(ASSOCIATED(L3%parent), "Parent not associated")
+  ASSERT(L3%parent%mesh%name == "GRID_L2_2_1", "L3 parent name is incorrect")
+  !     L3_3_2 vertices
+  ASSERT(ALLOCATED(L3%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(L3%mesh%points)==5, "Wrong number of vertices")
+  DO i=1,5
+    DO j=1,2
+      ASSERT( (ABS(L3%mesh%points(i)%coord(j) - three_level_grid_L3_vertices(j,i)) < 1.0E-9), "Unequal vertices")
+    ENDDO
+  ENDDO
+  !     L3_3_2 cells
+  ASSERT(ALLOCATED(L3%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(L3%mesh%cells)==3, "Wrong number of cells")
+  DO i=1,3
+    ASSERT(SIZE(L3%mesh%cells(i)%point_list)==4, "Wrong size for vertex list")
+    ASSERT( L3%mesh%cells(i)%point_list(1) == 4, "Wrong cell type, should be triangle=4")
+    DO j=2,4
+      ASSERT( L3%mesh%cells(i)%point_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
+    ENDDO
+  ENDDO
+  ASSERT(.NOT. ALLOCATED(L3%mesh%material_ids), "Material IDS are allocated")
+  ASSERT(.NOT. ALLOCATED(L3%mesh%cell_sets), "Cell sets are allocated")
+
+  CALL RHM%clear()
+  CALL L1%clear()
+  CALL L2%clear()
+  CALL L3%clear()
+ENDSUBROUTINE test_import_three_level_grid
 !
-!  ASSERT(mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
-!  ASSERT(ASSOCIATED(mesh%children), "Children not associated")
-!  ASSERT(SIZE(mesh%children)==1, "Wrong number of children")
-!  ASSERT(ALLOCATED(mesh%map), "Map is not allocated")
-!  ASSERT(SIZE(mesh%map, DIM=1) == 1, "Map is wrong size")
-!  ASSERT(SIZE(mesh%map, DIM=2) == 1, "Map is wrong size")
-!  i = mesh%distanceToLeaf()
-!  ASSERT(i == 3, "Wrong number of levels")
-!  ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(mesh%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(mesh%boundingBox(4) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ! Check L1
-!  L1 = mesh%children(1)
-!  ASSERT(L1%name == "GRID_L1_1_1", "L1 mesh name is incorrect")
-!  ASSERT(ASSOCIATED(L1%children), "Children are not associated")
-!  ASSERT(ASSOCIATED(L1%parent), "Parent not associated")
-!  ASSERT(L1%parent%name == "three_lvl_grid", "L1 parent name is incorrect")
-!  ASSERT(SIZE(L1%children) == 4, "Wrong number of children")
-!  ASSERT(ALLOCATED(L1%map), "Map is not allocated")
-!  ASSERT(SIZE(L1%map, DIM=1) == 2, "Map is wrong size")
-!  ASSERT(SIZE(L1%map, DIM=2) == 2, "Map is wrong size")
-!  i = L1%distanceToLeaf()
-!  ASSERT(i == 2, "Wrong number of levels")
-!  ASSERT( (ABS(L1%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(L1%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(L1%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(L1%boundingBox(4) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ! Check L2_2_1
-!  L2 = L1%children(2)
-!  ASSERT(L2%name == "GRID_L2_2_1", "L2 mesh name is incorrect")
-!  ASSERT(ASSOCIATED(L2%children), "Children are not associated")
-!  ASSERT(ASSOCIATED(L2%parent), "Parent not associated")
-!  ASSERT(L2%parent%name == "GRID_L1_1_1", "L2 parent name is incorrect")
-!  ASSERT(SIZE(L2%children) == 4, "Wrong number of children")
-!  ASSERT(ALLOCATED(L2%map), "Map is not allocated")
-!  ASSERT(SIZE(L2%map, DIM=1) == 2, "Map is wrong size")
-!  ASSERT(SIZE(L2%map, DIM=2) == 2, "Map is wrong size")
-!  ASSERT( (ABS(L2%boundingBox(1) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(L2%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(L2%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(L2%boundingBox(4) - 2.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ! Check L3_3_2
-!  L3 = L2%children(3)
-!  ASSERT(L3%name == "GRID_L3_3_2", "L3 mesh name is incorrect")
-!  ASSERT(.NOT. ASSOCIATED(L3%children), "Children are associated")
-!  ASSERT(ASSOCIATED(L3%parent), "Parent not associated")
-!  ASSERT(L3%parent%name == "GRID_L2_2_1", "L3 parent name is incorrect")
-!  !     L3_3_2 vertices
-!  ASSERT(ALLOCATED(L3%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(L3%vertices)==5*3, "Wrong number of vertices")
-!  ASSERT(SIZE(L3%vertices, DIM=2)==5, "Wrong shape of vertices")
-!  DO i=1,5
-!    DO j=1,3
-!      ASSERT( (ABS(L3%vertices(j, i) - three_level_grid_L3_vertices(j,i)) < 1.0E-9), "Unequal vertices")
-!    ENDDO
-!  ENDDO
-!  !     L3_3_2 cells
-!  ASSERT(ALLOCATED(L3%cells), "Cells not allocated")
-!  ASSERT(SIZE(L3%cells)==3, "Wrong number of cells")
-!  ASSERT(L3%singleTopology == .TRUE., "L3 is not single topology")
-!  DO i=1,3
-!    ASSERT(SIZE(L3%cells(i)%point_list)==4, "Wrong size for vertex list")
-!    ASSERT( L3%cells(i)%point_list(1) == 4, "Wrong cell type, should be triangle=4")
-!    DO j=2,4
-!      ASSERT( L3%cells(i)%point_list(j) == three_level_grid_L3_cells(j-1, i) + 1, "Wrong vertex id")
-!    ENDDO
-!  ENDDO
-!  ASSERT(.NOT. ALLOCATED(L3%material_ids), "Material IDS are allocated")
-!  ASSERT(.NOT. ALLOCATED(L3%cell_sets), "Cell sets are allocated")
-!
-!  CALL mesh%clear()
-!  CALL L1%clear()
-!  CALL L2%clear()
-!  CALL L3%clear()
-!ENDSUBROUTINE test_import_three_level_grid
-!!
-!!-------------------------------------------------------------------------------
-!SUBROUTINE test_import_three_level_grid_implicit_hierarchy()
-!  TYPE(XDMFMeshType) :: mesh
-!  TYPE(StringType) :: fname
-!  INTEGER(SIK) :: i,j
-!  INTEGER(SIK),ALLOCATABLE :: cells_ref(:)
-!
-!  fname='three_level_grid.xdmf'
-!  CALL importXDMFMesh(fname, mesh)
-!  ! Check correct number of children
-!  ASSERT(mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
-!  ASSERT(.NOT.ASSOCIATED(mesh%children), "Children are associated")
-!  ASSERT(.NOT.ALLOCATED(mesh%map), "Map is allocated")
-!  ASSERT( (ABS(mesh%boundingBox(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
-!  ASSERT( (ABS(mesh%boundingBox(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
-!  ASSERT( (ABS(mesh%boundingBox(3) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
-!  ASSERT( (ABS(mesh%boundingBox(4) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
-!  ! vertices
-!  ASSERT(ALLOCATED(mesh%vertices), "Vertices not allocated")
-!  ASSERT(SIZE(mesh%vertices)==42*3, "Wrong number of vertices")
-!  ASSERT(SIZE(mesh%vertices, DIM=2)==42, "Wrong shape of vertices")
-!  ! cells
-!  ASSERT(ALLOCATED(mesh%cells), "Cells not allocated")
-!  ASSERT(SIZE(mesh%cells)==46, "Wrong number of cells")
-!  ASSERT(mesh%singleTopology == .FALSE., "Mesh is single topology")
-!  ! Spot check cells
-!  ! Cell 1, quad
-!  j=1
-!  ALLOCATE(cells_ref(5))
-!  cells_ref = (/5, 26, 2, 27, 38/)
-!  ASSERT(SIZE(mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
-!  DO i=1,5
-!    ASSERT( mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
-!  ENDDO
-!  ! Cell 4, quad
-!  j=4
-!  cells_ref = (/5, 4, 29, 38, 28/)
-!  ASSERT(SIZE(mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
-!  DO i=1,5
-!    ASSERT( mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
-!  ENDDO
-!  DEALLOCATE(cells_ref)
-!  ! Cell 18, tri
-!  j=18
-!  ALLOCATE(cells_ref(4))
-!  cells_ref = (/4, 6, 40, 8/)
-!  ASSERT(SIZE(mesh%cells(j)%point_list)==4, "Wrong size for vertex list")
-!  DO i=1,4
-!    ASSERT( mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or mesh id")
-!  ENDDO
-!  DEALLOCATE(cells_ref)
-!  ASSERT(.NOT. ALLOCATED(mesh%material_ids), "Material IDS are allocated")
-!  ! Check cell sets
-!  ASSERT(ALLOCATED(mesh%cell_sets), "Cell sets are allocated")
-!  ASSERT(SIZE(mesh%cell_sets)==21, "Wrong number of cell sets")
-!  ASSERT(mesh%cell_sets(6)%name=="GRID_L3_1_1", "Wrong set name")
-!  ASSERT(SIZE(mesh%cell_sets(6)%cell_list)==4, "Wrong set size")
-!  DO i =1,4
-!    ASSERT(mesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
-!  ENDDO
-!
-!  CALL mesh%clear()
-!ENDSUBROUTINE test_import_three_level_grid_implicit_hierarchy
+!-------------------------------------------------------------------------------
+SUBROUTINE test_import_three_level_grid_implicit_hierarchy()
+  TYPE(RectHierarchicalMeshType) :: RHM
+  TYPE(StringType) :: fname
+  INTEGER(SIK) :: i,j
+  INTEGER(SIK),ALLOCATABLE :: cells_ref(:)
+
+  fname='three_level_grid.xdmf'
+  CALL importRectXDMFmesh(fname, RHM)
+  ! Check correct number of children
+  ASSERT(RHM%mesh%name == "three_lvl_grid", "Root mesh name is incorrect")
+  ASSERT(.NOT.ASSOCIATED(RHM%children), "Children are associated")
+  ASSERT(.NOT.ALLOCATED(RHM%map), "Map is allocated")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(1) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect x_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(1) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect x_max")
+  ASSERT( (ABS(RHM%bb%points(1)%coord(2) - 0.0_SDK) < 1.0E-9_SDK), "Incorrect y_min")
+  ASSERT( (ABS(RHM%bb%points(3)%coord(2) - 4.0_SDK) < 1.0E-9_SDK), "Incorrect y_max")
+  ! vertices
+  ASSERT(ALLOCATED(RHM%mesh%points), "Vertices not allocated")
+  ASSERT(SIZE(RHM%mesh%points)==42, "Wrong number of vertices")
+  ! cells
+  ASSERT(ALLOCATED(RHM%mesh%cells), "Cells not allocated")
+  ASSERT(SIZE(RHM%mesh%cells)==46, "Wrong number of cells")
+  ! Spot check cells
+  ! Cell 1, quad
+  j=1
+  ALLOCATE(cells_ref(5))
+  cells_ref = (/5, 26, 2, 27, 38/)
+  ASSERT(SIZE(RHM%mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( RHM%mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or RHM id")
+  ENDDO
+  ! Cell 4, quad
+  j=4
+  cells_ref = (/5, 4, 29, 38, 28/)
+  ASSERT(SIZE(RHM%mesh%cells(j)%point_list)==5, "Wrong size for vertex list")
+  DO i=1,5
+    ASSERT( RHM%mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or RHM id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ! Cell 18, tri
+  j=18
+  ALLOCATE(cells_ref(4))
+  cells_ref = (/4, 6, 40, 8/)
+  ASSERT(SIZE(RHM%mesh%cells(j)%point_list)==4, "Wrong size for vertex list")
+  DO i=1,4
+    ASSERT( RHM%mesh%cells(j)%point_list(i) == cells_ref(i), "Wrong vertex id or RHM id")
+  ENDDO
+  DEALLOCATE(cells_ref)
+  ASSERT(.NOT. ALLOCATED(RHM%mesh%material_ids), "Material IDS are allocated")
+  ! Check cell sets
+  ASSERT(ALLOCATED(RHM%mesh%cell_sets), "Cell sets are allocated")
+  ASSERT(SIZE(RHM%mesh%cell_sets)==21, "Wrong number of cell sets")
+  ASSERT(RHM%mesh%cell_sets(6)%name=="GRID_L3_1_1", "Wrong set name")
+  ASSERT(SIZE(RHM%mesh%cell_sets(6)%cell_list)==4, "Wrong set size")
+  DO i =1,4
+    ASSERT(RHM%mesh%cell_sets(6)%cell_list(i) == i, "Wrong cell id")
+  ENDDO
+
+  CALL RHM%clear()
+ENDSUBROUTINE test_import_three_level_grid_implicit_hierarchy
 !!
 !!-------------------------------------------------------------------------------
 !SUBROUTINE testExportXDMFMesh()
