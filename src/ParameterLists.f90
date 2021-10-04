@@ -2729,37 +2729,61 @@ SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
       string=param%val
     TYPE IS(ParamType_SSK_a1)
       WRITE(tmpchar,TRIM(sskfmtDef)) param%val(1)
-      string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
         string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ENDDO
     TYPE IS(ParamType_SDK_a1)
       WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(1)
-      string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
         string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ENDDO
     TYPE IS(ParamType_SNK_a1)
-      string=delim//str(param%val(1))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//str(param%val(1))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         string=string//delim//str(param%val(i))//delim//' '
       ENDDO
     TYPE IS(ParamType_SLK_a1)
-      string=delim//str(param%val(1))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//str(param%val(1))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         string=string//delim//str(param%val(i))//delim//' '
       ENDDO
     TYPE IS(ParamType_SBK_a1)
       WRITE(tmpchar,'(L1)') param%val(1)
-      string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         WRITE(tmpchar,'(L1)') param%val(i)
         string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ENDDO
     TYPE IS(ParamType_STR_a1)
-      string=delim//param%val(1)//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//param%val(1)//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         string=string//delim//param%val(i)//delim//' '
       ENDDO
