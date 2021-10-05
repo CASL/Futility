@@ -576,7 +576,11 @@ FUNCTION replace_pattern(this,oldPat,newPat) RESULT(retStr)
   IF(SIZE(tokens) > 1) THEN
     retStr = ''
   ELSE
-    retStr = char(tokens(1))
+    IF(this == oldPat) THEN
+      retStr=newPat
+    ELSE
+      retStr = char(tokens(1))
+    ENDIF
     RETURN
   ENDIF
 
