@@ -302,12 +302,12 @@ SUBROUTINE testGetPoints()
   DO i = 1, 3
     ASSERT(points(i)%dim == 2, "Wrong dim")
   ENDDO
-  ASSERT(points(1)%coord(1) == 0.0_SRK, "Wrong coord")
-  ASSERT(points(1)%coord(2) == 0.0_SRK, "Wrong coord")
-  ASSERT(points(2)%coord(1) == 2.0_SRK, "Wrong coord")
-  ASSERT(points(2)%coord(2) == 0.0_SRK, "Wrong coord")
-  ASSERT(points(3)%coord(1) == 0.0_SRK, "Wrong coord")
-  ASSERT(points(3)%coord(2) == 2.0_SRK, "Wrong coord")
+  ASSERT(points(1)%coord(1) .APPROXEQ. 0.0_SRK, "Wrong coord")
+  ASSERT(points(1)%coord(2) .APPROXEQ. 0.0_SRK, "Wrong coord")
+  ASSERT(points(2)%coord(1) .APPROXEQ. 2.0_SRK, "Wrong coord")
+  ASSERT(points(2)%coord(2) .APPROXEQ. 0.0_SRK, "Wrong coord")
+  ASSERT(points(3)%coord(1) .APPROXEQ. 0.0_SRK, "Wrong coord")
+  ASSERT(points(3)%coord(2) .APPROXEQ. 2.0_SRK, "Wrong coord")
 
   CALL mesh%clear()
   CALL points%clear()

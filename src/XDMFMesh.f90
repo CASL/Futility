@@ -13,7 +13,6 @@
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE XDMFMesh
 #include "Futility_DBC.h"
-USE ExceptionHandler
 USE Futility_DBC
 USE ISO_FORTRAN_ENV
 USE IntrType
@@ -39,9 +38,6 @@ PUBLIC :: ASSIGNMENT(=)
 
 !> The module name
 CHARACTER(LEN=*),PARAMETER :: modName='XDMFMesh'
-
-!> Exception handler for the module
-TYPE(ExceptionHandlerType),SAVE :: eXDMF
 
 !> Parameter list that holds XDMF topology names, ids, etc.
 TYPE(ParamType),SAVE :: XDMFTopologyList
@@ -239,7 +235,6 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType_2D(mesh, id) RESULT(a)
   INTEGER(SIK), INTENT(IN) :: id
   REAL(SRK) :: a
   INTEGER(SIK) :: xdmfid, npoints
-  TYPE(PointType), ALLOCATABLE :: points(:)
   TYPE(Triangle_2D) :: tri
   TYPE(Triangle6_2D) :: tri6
   TYPE(Quadrilateral_2D) :: quad
@@ -248,23 +243,21 @@ ELEMENTAL FUNCTION getCellArea_XDMFMeshType_2D(mesh, id) RESULT(a)
   a = 0.0_SRK
   xdmfid = mesh%cells(id)%point_list(1)
   npoints = SIZE(mesh%cells(id)%point_list) - 1
-  ALLOCATE(points(npoints))
-  points = mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1))
   SELECT CASE (xdmfid)
   CASE(4)! Triangle 
-    CALL tri%set(points)
+    CALL tri%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     a = area(tri)
     CALL tri%clear()
   CASE(5)! Quadrilateral 
-    CALL quad%set(points)
+    CALL quad%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     a = area(quad)
     CALL quad%clear()
   CASE(36)! Triangle6 
-    CALL tri6%set(points)
+    CALL tri6%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     a = area(tri6)
     CALL tri6%clear()
   CASE(37)! Quadrilateral8
-    CALL quad8%set(points)
+    CALL quad8%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     a = area(quad8)
     CALL quad8%clear()
   CASE DEFAULT ! invalid type. return number that is so wrong, you better realize.
@@ -284,7 +277,6 @@ ELEMENTAL FUNCTION pointInsideCell_XDMFMeshType_2D(mesh,id,point) RESULT(bool)
   TYPE(PointType),INTENT(IN) :: point
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: xdmfid, npoints
-  TYPE(PointType), ALLOCATABLE :: points(:)
   TYPE(Triangle_2D) :: tri
   TYPE(Triangle6_2D) :: tri6
   TYPE(Quadrilateral_2D) :: quad
@@ -292,23 +284,21 @@ ELEMENTAL FUNCTION pointInsideCell_XDMFMeshType_2D(mesh,id,point) RESULT(bool)
 
   xdmfid = mesh%cells(id)%point_list(1)
   npoints = SIZE(mesh%cells(id)%point_list) - 1
-  ALLOCATE(points(npoints))
-  points = mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1))
   SELECT CASE (xdmfid)
   CASE(4)! Triangle 
-    CALL tri%set(points)
+    CALL tri%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     bool = pointInside(tri, point)
     CALL tri%clear()
   CASE(5)! Quadrilateral 
-    CALL quad%set(points)
+    CALL quad%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     bool = pointInside(quad, point)
     CALL quad%clear()
   CASE(36)! Triangle6 
-    CALL tri6%set(points)
+    CALL tri6%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     bool = pointInside(tri6, point)
     CALL tri6%clear()
   CASE(37)! Quadrilateral8
-    CALL quad8%set(points)
+    CALL quad8%set(mesh%getPoints(mesh%cells(id)%point_list(2:npoints+1)))
     bool = pointInside(quad8, point)
     CALL quad8%clear()
   CASE DEFAULT ! invalid type. return number that is so wrong, you better realize.
