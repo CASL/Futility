@@ -50,8 +50,7 @@ SUBROUTINE testLogFileType()
   CALL testFile%initialize(UNIT=66,FILE='./test.log',STATUS='OLD',ACTION='READ')
   CALL testFile%fopen()
   READ(66,'(a)') string
-  bool=(TRIM(string(12:LEN(string))) == ' Passed: CALL testLogFile%message(...)')
-  ASSERT(bool,'%message(...)')
+  ASSERT_EQ(TRIM(string(12:LEN(string))),'Passed: CALL testLogFile%message(...)','%message(...)')
   CALL testFile%clear(.TRUE.)
 ENDSUBROUTINE testLogFileType
 !
