@@ -34,6 +34,9 @@ TYPE(FutilityComputingEnvironment) :: testCompEnv
 
 CREATE_TEST('FutilityComputingEnvironment')
 
+testCompEnv%exceptHandler => exceptHandler
+CALL exceptHandler%setStopOnError(.FALSE.)
+
 REGISTER_SUBTEST('Timers',testTimers)
 REGISTER_SUBTEST('Sub-environments',testSubEnvs)
 REGISTER_SUBTEST('clear',testClear)
@@ -46,7 +49,7 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testTimers()
-  CLASS(TimerType),POINTER :: timer
+  CLASS(TimerType),POINTER :: timer,timer2
 
   COMPONENT_TEST('addTimer')
   ASSERT_EQ(testCompEnv%nTimers,0,'%nTimers')
@@ -59,6 +62,28 @@ SUBROUTINE testTimers()
   timer => testCompEnv%addTimer('timer3')
   ASSERT_EQ(testCompEnv%nTimers,3,'%nTimers')
   ASSERT(ASSOCIATED(timer),'%addTimer')
+  timer => testCompEnv%addTimer('timer4 -> subtimer')
+  ASSERT_EQ(testCompEnv%nTimers,4,'%nTimers')
+  ASSERT(ASSOCIATED(timer),'%addTimer')
+  SELECTTYPE(timer)
+  TYPE IS(TimerType)
+    ASSERT(.TRUE.,'timer type')
+    ASSERT_EQ(timer%getTimerName(),'subtimer','timer name')
+  CLASS DEFAULT
+    ASSERT(.FALSE.,'timer type')
+  ENDSELECT
+  timer => testCompEnv%addTimer('timer4 -> subtimer2 -> subsubtimer')
+  ASSERT_EQ(testcompEnv%nTimers,4,'%nTimers')
+  ASSERT(ASSOCIATED(timer),'%addTimer')
+  SELECTTYPE(timer)
+  TYPE IS(TimerType)
+    ASSERT(.TRUE.,'timer type')
+    ASSERT_EQ(timer%getTimerName(),'subsubtimer','timer name')
+  CLASS DEFAULT
+    ASSERT(.FALSE.,'timer type')
+  ENDSELECT
+  timer => testCompEnv%addTimer('timer1 -> subtimer')
+  ASSERT(.NOT.ASSOCIATED(timer),'bad %addTimer')
 
   COMPONENT_TEST('getTimer')
   timer => testCompEnv%getTimer('timer1')
@@ -67,12 +92,54 @@ SUBROUTINE testTimers()
   ASSERT(ASSOCIATED(timer),'%getTimer')
   timer => testCompEnv%getTimer('timer3')
   ASSERT(ASSOCIATED(timer),'%getTimer')
+  timer => testCompEnv%getTimer('timer4')
+  ASSERT(ASSOCIATED(timer),'%getTimer')
+  SELECTTYPE(timer)
+  TYPE IS(ParentTimerType)
+    ASSERT(.TRUE.,'parent timer type')
+    timer2 => timer%getTimer('subtimer')
+    ASSERT(ASSOCIATED(timer2),'getting subtimer')
+  CLASS DEFAULT
+    ASSERT(.FALSE.,'parent timer type')
+  ENDSELECT
+  timer => testCompEnv%getTimer('timer4 -> subtimer')
+  ASSERT(ASSOCIATED(timer),'%getTimer')
+  SELECTTYPE(timer)
+  TYPE IS(TimerType)
+    ASSERT(.TRUE.,'timer type')
+    ASSERT_EQ(timer%getTimerName(),'subtimer','timer name')
+  CLASS DEFAULT
+    ASSERT(.FALSE.,'timer type')
+  ENDSELECT
+  timer => testCompEnv%getTimer('timer4 -> subtimer2 -> subsubtimer')
+  ASSERT(ASSOCIATED(timer),'%getTimer')
+  SELECTTYPE(timer)
+  TYPE IS(TimerType)
+    ASSERT(.TRUE.,'timer type')
+    ASSERT_EQ(timer%getTimerName(),'subsubtimer','timer name')
+  CLASS DEFAULT
+    ASSERT(.FALSE.,'timer type')
+  ENDSELECT
+  timer => testCompEnv%getTimer('timer1 -> subtimer')
+  ASSERT(.NOT.ASSOCIATED(timer),'%getTimer')
+  timer => testCompEnv%getTimer('timer5')
+  ASSERT(.NOT.ASSOCIATED(timer),'%getTimer')
 
   COMPONENT_TEST('removeTimer')
   CALL testCompEnv%removeTimer('timer2')
-  ASSERT_EQ(testCompEnv%nTimers,2,'%nTimers')
+  ASSERT_EQ(testCompEnv%nTimers,3,'%nTimers')
   timer => testCompEnv%getTimer('timer2')
   ASSERT(.NOT.ASSOCIATED(timer),'%removeTimer')
+  CALL testCompEnv%removeTimer('timer4 -> subtimer')
+  ASSERT_EQ(testCompEnv%nTimers,3,'%nTimers')
+  timer => testCompEnv%getTimer('timer4 -> subtimer')
+  ASSERT(ASSOCIATED(timer),'ASSOCIATED subtimer')
+  CALL testCompEnv%removeTimer('timer4')
+  ASSERT_EQ(testCompEnv%nTimers,2,'%nTimers')
+  timer => testCompEnv%getTimer('timer4 -> subtimer')
+  ASSERT(.NOT.ASSOCIATED(timer),'ASSOCIATED subtimer')
+  timer => testCompEnv%getTimer('timer4')
+  ASSERT(.NOT.ASSOCIATED(timer),'ASSOCIATED subtimer')
 
   COMPONENT_TEST('clearTimers')
   CALL testCompEnv%clearTimers()
