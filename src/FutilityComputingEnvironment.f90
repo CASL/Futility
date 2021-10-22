@@ -95,6 +95,8 @@ TYPE :: FutilityComputingEnvironment
     PROCEDURE,PASS :: clearSubCompEnvs
 ENDTYPE FutilityComputingEnvironment
 
+CHARACTER(LEN=*),PARAMETER :: modName='FutilityComputingEnvironmentModule'
+
 !===============================================================================
 CONTAINS
 !
@@ -135,13 +137,22 @@ FUNCTION addTimer(this,name) RESULT(timer)
   CHARACTER(LEN=*),INTENT(IN) :: name
   CLASS(TimerType),POINTER :: timer
   !
+  CHARACTER(LEN=*),PARAMETER :: myName='addTimer'
   INTEGER(SIK) :: iTimer
+  TYPE(StringType) :: timername
+  TYPE(StringType),ALLOCATABLE :: timernames(:)
   TYPE(TimerPtrArray),ALLOCATABLE :: oldTimers(:)
 
   REQUIRE(LEN_TRIM(name) > 0)
 
+  timername=name
+  timernames=timername%split('->')
+  DO iTimer=1,SIZE(timernames)
+    timernames(iTimer)=TRIM(ADJUSTL(timernames(iTimer)))
+  ENDDO
+
   !Check to see if a timer of this name already exists.  If so, return it
-  timer => this%getTimer(name)
+  timer => this%getTimer(CHAR(timernames(1)))
 
   !If no timer was found, create it and return a pointer
   IF(.NOT.ASSOCIATED(timer)) THEN
@@ -162,13 +173,31 @@ FUNCTION addTimer(this,name) RESULT(timer)
 
     !Now add the new timer
     this%nTimers=this%nTimers+1
-    ALLOCATE(this%timers(this%nTimers)%t)
-    CALL this%timers(this%nTimers)%t%setTimerHiResMode(.TRUE.)
-    CALL this%timers(this%nTimers)%t%setTimerName(TRIM(name))
-    timer => this%timers(this%nTimers)%t
+    IF(SIZE(timernames) > 1) THEN
+      ALLOCATE(ParentTimerType :: this%timers(this%nTimers)%t)
+      CALL this%timers(this%nTimers)%t%setTimerHiResMode(.TRUE.)
+      CALL this%timers(this%nTimers)%t%setTimerName(TRIM(timernames(1)))
+      SELECTTYPE(t => this%timers(this%nTimers)%t); TYPE IS(ParentTimerType)
+        CALL t%addTimer(TRIM(ADJUSTL(timername%substr(INDEX(timername,'->')+2))))
+        timer => t%getTimer(TRIM(ADJUSTL(timername%substr(INDEX(timername,'->')+2))))
+      ENDSELECT
+    ELSE
+      ALLOCATE(this%timers(this%nTimers)%t)
+      CALL this%timers(this%nTimers)%t%setTimerHiResMode(.TRUE.)
+      CALL this%timers(this%nTimers)%t%setTimerName(TRIM(timernames(1)))
+      timer => this%timers(this%nTimers)%t
+    ENDIF
+  ELSEIF(SIZE(timernames) > 1) THEN
+    SELECTTYPE(t => timer)
+    TYPE IS(ParentTimerType)
+      CALL t%addTimer(TRIM(ADJUSTL(timername%substr(INDEX(timername,'->')+2))))
+      timer => t%getTimer(TRIM(ADJUSTL(timername%substr(INDEX(timername,'->')+2))))
+    TYPE IS(TimerType)
+      CALL this%exceptHandler%raiseError(modName//'::'//myName// &
+          ' - Timer "'//timernames(1)//'" is not a parent timer so "'//name//'" cannot be added!')
+      timer => NULL()
+    ENDSELECT
   ENDIF
-
-  ENSURE(ASSOCIATED(timer))
 
 ENDFUNCTION addTimer
 !
@@ -185,10 +214,17 @@ SUBROUTINE removeTimer(this,name)
   CLASS(FutilityComputingEnvironment),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: name
   !
+  CHARACTER(LEN=*),PARAMETER :: myName='removeTimer'
   INTEGER(SIK) :: iTimer
   CLASS(TimerType),POINTER :: timer
   TYPE(TimerPtrArray),ALLOCATABLE :: oldTimers(:)
 
+  IF(INDEX(name,'->') > 0) THEN
+    CALL this%exceptHandler%raiseError(modName//'::'//myName// &
+        ' - Cannot remove individual subtimers!  Remove the parent timer '// &
+        'instead of removing "'//name//'"!')
+    RETURN
+  ENDIF
   timer => this%getTimer(name)
 
   IF(ASSOCIATED(timer)) THEN
@@ -227,12 +263,31 @@ FUNCTION getTimer(this,name) RESULT(timer)
   CHARACTER(LEN=*),INTENT(IN) :: name
   CLASS(TimerType),POINTER :: timer
   !
+  CHARACTER(LEN=*),PARAMETER :: myName='getTimer'
   INTEGER(SIK) :: iTimer
+  TYPE(StringType) :: timername
+  TYPE(StringType),ALLOCATABLE :: timernames(:)
+
+  timername=name
+  timernames=timername%split('->')
+  DO iTimer=1,SIZE(timernames)
+    timernames(iTimer)=TRIM(ADJUSTL(timernames(iTimer)))
+  ENDDO !iTimer
 
   timer => NULL()
   DO iTimer=1,this%nTimers
-    IF(TRIM(name) == this%timers(iTimer)%t%getTimerName()) THEN
+    IF(TRIM(timernames(1)) == this%timers(iTimer)%t%getTimerName()) THEN
       timer => this%timers(iTimer)%t
+      IF(SIZE(timernames) > 1) THEN
+        SELECTTYPE(t => timer)
+        TYPE IS(TimerType)
+          CALL this%exceptHandler%raiseError(modName//'::'//myName// &
+              ' - cannot retrieve subtimer "'//name//'" from timer "'//timer%getTimerName()//'"!')
+          timer => NULL()
+        TYPE IS(ParentTimerType)
+          timer => t%getTimer(TRIM(ADJUSTL(timername%substr(INDEX(timername,'->')+2))))
+        ENDSELECT
+      ENDIF
       EXIT
     ENDIF
   ENDDO !iTimer
