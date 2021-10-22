@@ -35,7 +35,6 @@ CONTAINS
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testLogFileType()
-  LOGICAL :: bool
   CALL testLogFile%e%addSurrogate(e)
   ASSERT(.NOT.(testLogFile%isEcho()),'%isEcho()')
   CALL testLogFile%setEcho(.TRUE.)
