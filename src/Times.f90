@@ -56,6 +56,7 @@
 MODULE Times
 #include "Futility_DBC.h"
 USE Futility_DBC
+USE ISO_FORTRAN_ENV
 USE IntrType
 USE Strings
 USE IO_Strings
@@ -1012,7 +1013,8 @@ RECURSIVE FUNCTION getTimer(this,name) RESULT(timer)
         TYPE IS(ParentTimerType)
           timer => timerptr%getTimer(ADJUSTL(timername%substr(INDEX(timername,'->')+2)))
         TYPE IS(TimerType)
-          STOP "Timer "//timernames(1)//" is not a parent timer and cannot match "//name
+          WRITE(ERROR_UNIT, *) "Timer "//timernames(1)//" is not a parent timer and cannot match "//name
+          STOP
         ENDSELECT
       ELSE
         timer => this%timers(i)%t
@@ -1056,7 +1058,8 @@ RECURSIVE SUBROUTINE addTimer(this,name)
         TYPE IS(ParentTimerType)
           CALL timer%addTimer(ADJUSTL(timername%substr(INDEX(timername,'->')+2)))
         TYPE IS(TimerType)
-          STOP "Cannot add sub-timer "//name//" to non-parent timer "//timernames(1)
+          WRITE(ERROR_UNIT, *) "Cannot add sub-timer "//name//" to non-parent timer "//timernames(1)
+          STOP
         ENDSELECT
       ELSE
         CONTINUE !Just do nothing for now if the timer already exists
