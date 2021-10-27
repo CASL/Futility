@@ -281,7 +281,7 @@ PURE SUBROUTINE intersectLine_Quadrilateral8_2D(quad, l, npoints, points)
   CLASS(Quadrilateral8_2D),INTENT(IN) :: quad
   TYPE(LineType),INTENT(IN) :: l
   INTEGER(SIK),INTENT(OUT) :: npoints
-  TYPE(PointType),INTENT(OUT) :: points(4)
+  TYPE(PointType),INTENT(OUT) :: points(6)
   TYPE(PointType) :: intersection_points(8), ipoint1, ipoint2
   TYPE(QuadraticSegment_2D) :: edges(4)
   INTEGER(SIK) :: i, j, intersections, ipoints

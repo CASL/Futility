@@ -199,7 +199,7 @@ ENDSUBROUTINE testPointInside
 SUBROUTINE testIntersectLine()
   TYPE(Triangle6_2D) :: tri
   TYPE(LineType) :: l
-  TYPE(PointType) :: tpoints(6), p7, p8, points(4)
+  TYPE(PointType) :: tpoints(6), p7, p8, points(6)
   INTEGER(SIK) :: npoints
   CALL tpoints(1)%init(DIM=2, X=0.0_SRK, Y=0.0_SRK)
   CALL tpoints(2)%init(DIM=2, X=2.0_SRK, Y=0.0_SRK)
