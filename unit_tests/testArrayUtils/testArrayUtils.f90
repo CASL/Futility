@@ -777,7 +777,7 @@ SUBROUTINE testReplaceEntry()
   ASSERT_EQ(CHAR(strlist(4)),'test string 1','strlist(4)')
   ASSERT_EQ(CHAR(strlist(5)),'test string 1','strlist(5)')
   ASSERT_EQ(CHAR(strlist(6)),'test string  2','strlist(6)')
-  
+
 ENDSUBROUTINE testReplaceEntry
 !
 !-------------------------------------------------------------------------------
@@ -818,8 +818,78 @@ ENDSUBROUTINE testPopEntry
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testInsertEntry()
+  INTEGER(SNK) :: snk0
+  INTEGER(SNK),ALLOCATABLE :: snk1(:),snklist(:)
+  INTEGER(SLK) :: slk0
+  INTEGER(SLK),ALLOCATABLE :: slk1(:),slklist(:)
   TYPE(StringType) :: str0
   TYPE(StringType),ALLOCATABLE :: str1(:),strlist(:)
+
+  COMPONENT_TEST('1D SNK, 0D SNK')
+  snk0=1
+  ALLOCATE(snklist(0))
+  CALL insertEntry(snklist,snk0,1)
+  ASSERT_EQ(SIZE(snklist),1,'SIZE list')
+  ASSERT_EQ(snklist(1),1,'list(1)')
+  snk0=2
+  CALL insertEntry(snklist,snk0,1)
+  ASSERT_EQ(SIZE(snklist),2,'SIZE list')
+  ASSERT_EQ(snklist(1),2,'list(1)')
+  snk0=3
+  CALL insertEntry(snklist,snk0,1)
+  ASSERT_EQ(SIZE(snklist),3,'SIZE list')
+  ASSERT_EQ(snklist(1),3,'list(1)')
+  snk0=4
+  CALL insertEntry(snklist,snk0,4)
+  ASSERT_EQ(SIZE(snklist),4,'SIZE list')
+  ASSERT_EQ(snklist(4),4,'list(4)')
+  snk0=5
+  CALL insertEntry(snklist,snk0,4)
+  ASSERT_EQ(SIZE(snklist),5,'SIZE list')
+  ASSERT_EQ(snklist(4),5,'list(4)')
+  snk0=6
+  CALL insertEntry(snklist,snk0,2)
+  ASSERT_EQ(SIZE(snklist),6,'SIZE list')
+  ASSERT_EQ(snklist(1),3,'list(1)')
+  ASSERT_EQ(snklist(2),6,'list(2)')
+  ASSERT_EQ(snklist(3),2,'list(3)')
+  ASSERT_EQ(snklist(4),1,'list(4)')
+  ASSERT_EQ(snklist(5),5,'list(5)')
+  ASSERT_EQ(snklist(6),4,'list(6)')
+  DEALLOCATE(snklist)
+
+  COMPONENT_TEST('1D SLK, 0D SLK')
+  slk0=1
+  ALLOCATE(slklist(0))
+  CALL insertEntry(slklist,slk0,1)
+  ASSERT_EQ(SIZE(slklist),1,'SIZE list')
+  ASSERT_EQ(slklist(1),1,'list(1)')
+  slk0=2
+  CALL insertEntry(slklist,slk0,1)
+  ASSERT_EQ(SIZE(slklist),2,'SIZE list')
+  ASSERT_EQ(slklist(1),2,'list(1)')
+  slk0=3
+  CALL insertEntry(slklist,slk0,1)
+  ASSERT_EQ(SIZE(slklist),3,'SIZE list')
+  ASSERT_EQ(slklist(1),3,'list(1)')
+  slk0=4
+  CALL insertEntry(slklist,slk0,4)
+  ASSERT_EQ(SIZE(slklist),4,'SIZE list')
+  ASSERT_EQ(slklist(4),4,'list(4)')
+  slk0=5
+  CALL insertEntry(slklist,slk0,4)
+  ASSERT_EQ(SIZE(slklist),5,'SIZE list')
+  ASSERT_EQ(slklist(4),5,'list(4)')
+  slk0=6
+  CALL insertEntry(slklist,slk0,2)
+  ASSERT_EQ(SIZE(slklist),6,'SIZE list')
+  ASSERT_EQ(slklist(1),3,'list(1)')
+  ASSERT_EQ(slklist(2),6,'list(2)')
+  ASSERT_EQ(slklist(3),2,'list(3)')
+  ASSERT_EQ(slklist(4),1,'list(4)')
+  ASSERT_EQ(slklist(5),5,'list(5)')
+  ASSERT_EQ(slklist(6),4,'list(6)')
+  DEALLOCATE(slklist)
 
   COMPONENT_TEST('1D String, 0D String')
   str0='inserted'
