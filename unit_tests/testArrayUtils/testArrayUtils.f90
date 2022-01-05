@@ -819,9 +819,9 @@ ENDSUBROUTINE testPopEntry
 !-------------------------------------------------------------------------------
 SUBROUTINE testInsertEntry()
   INTEGER(SNK) :: snk0
-  INTEGER(SNK),ALLOCATABLE :: snk1(:),snklist(:)
+  INTEGER(SNK),ALLOCATABLE :: snklist(:)
   INTEGER(SLK) :: slk0
-  INTEGER(SLK),ALLOCATABLE :: slk1(:),slklist(:)
+  INTEGER(SLK),ALLOCATABLE :: slklist(:)
   TYPE(StringType) :: str0
   TYPE(StringType),ALLOCATABLE :: str1(:),strlist(:)
 
