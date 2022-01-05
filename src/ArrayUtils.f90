@@ -199,9 +199,15 @@ ENDINTERFACE
 !> @brief Interface to insert an entry of a list from the list
 !>
 INTERFACE insertEntry
-!> @copybrief ArrayUtils::insertEntry_1DString_0Dentry
-!> @copydetails ArrayUtils::insertEntry_1DString_0Dentry
-MODULE PROCEDURE insertEntry_1DString_0Dentry
+  !> @copybrief ArrayUtils::insertEntry_1DSNK_0Dentry
+  !> @copydetails ArrayUtils::insertEntry_1DSNK_0Dentry
+  MODULE PROCEDURE insertEntry_1DSNK_0Dentry
+  !> @copybrief ArrayUtils::insertEntry_1DSLK_0Dentry
+  !> @copydetails ArrayUtils::insertEntry_1DSLK_0Dentry
+  MODULE PROCEDURE insertEntry_1DSLK_0Dentry
+  !> @copybrief ArrayUtils::insertEntry_1DString_0Dentry
+  !> @copydetails ArrayUtils::insertEntry_1DString_0Dentry
+  MODULE PROCEDURE insertEntry_1DString_0Dentry
   !> @copybrief ArrayUtils::insertEntry_1DString_1Dentry
   !> @copydetails ArrayUtils::insertEntry_1DString_1Dentry
   MODULE PROCEDURE insertEntry_1DString_1Dentry
@@ -1433,6 +1439,66 @@ FUNCTION popEntry_1DString(list,entry) RESULT(popped)
   popped=tmplist(entry)
 
 ENDFUNCTION popEntry_1DString
+!
+!-------------------------------------------------------------------------------
+!> @brief Inserts an SNK Integer into a list of integers
+!> @param list the original list
+!> @param insert the new SNK integer to insert
+!> @param entry the index to insert the new SNK integer at
+!>
+!> After insertion, the @c entry-th index of the list will be @c insert, with
+!> the original values at @c entry and later being moved back by one.  If
+!> @c entry is given a value of @c SIZE(list)+1, then @c insert is added to the
+!> back of the list
+!>
+SUBROUTINE insertEntry_1DSNK_0Dentry(list,insert,entry)
+  INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: list(:)
+  INTEGER(SNK),INTENT(IN) :: insert
+  INTEGER(SIK),INTENT(IN) :: entry
+  !
+  INTEGER(SNK),ALLOCATABLE :: oldlist(:)
+
+  REQUIRE(ALLOCATED(list))
+  REQUIRE(entry > 0)
+  REQUIRE(entry <= SIZE(list)+1)
+
+  CALL MOVE_ALLOC(list,oldlist)
+  ALLOCATE(list(SIZE(oldlist)+1))
+  list(1:entry-1)=oldlist(1:entry-1)
+  list(entry)=insert
+  list(entry+1:SIZE(list))=oldlist(entry:SIZE(oldlist))
+
+ENDSUBROUTINE insertEntry_1DSNK_0Dentry
+!
+!-------------------------------------------------------------------------------
+!> @brief Inserts an SLK Integer into a list of integers
+!> @param list the original list
+!> @param insert the new SLK integer to insert
+!> @param entry the index to insert the new SLK integer at
+!>
+!> After insertion, the @c entry-th index of the list will be @c insert, with
+!> the original values at @c entry and later being moved back by one.  If
+!> @c entry is given a value of @c SIZE(list)+1, then @c insert is added to the
+!> back of the list
+!>
+SUBROUTINE insertEntry_1DSLK_0Dentry(list,insert,entry)
+  INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: list(:)
+  INTEGER(SLK),INTENT(IN) :: insert
+  INTEGER(SIK),INTENT(IN) :: entry
+  !
+  INTEGER(SLK),ALLOCATABLE :: oldlist(:)
+
+  REQUIRE(ALLOCATED(list))
+  REQUIRE(entry > 0)
+  REQUIRE(entry <= SIZE(list)+1)
+
+  CALL MOVE_ALLOC(list,oldlist)
+  ALLOCATE(list(SIZE(oldlist)+1))
+  list(1:entry-1)=oldlist(1:entry-1)
+  list(entry)=insert
+  list(entry+1:SIZE(list))=oldlist(entry:SIZE(oldlist))
+
+ENDSUBROUTINE insertEntry_1DSLK_0Dentry
 !
 !-------------------------------------------------------------------------------
 !> @brief Inserts a string into a list of strings
