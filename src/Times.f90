@@ -442,8 +442,17 @@ ENDFUNCTION getTimeChar
 !> @brief Function returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a string in HHMMSS format.
 !> @param this input argument, a @ref Times::TimerType "TimerType" variable
+!> @param tsec the time to format; optional, defaults to @c this%elapsedtime
+!> @param force_hour logical to force writing hours even if @c tsec is less than 1 hour
 !> @returns hh_mm_ss, the elapsed time as a string (hhh:mm:ss or mmm:ss.ss)
-FUNCTION getTimeHHMMSS(this,tsec,force_hour) RESULT(hh_mm_ss)
+!>
+!> For times under 1 hour, the string will be formatted MM:SS.dd if @c force_hour is
+!> false, or HH:MM:SS.dd if it is true.  For times greater than or equal to one hour
+!> but less than 100 hours, the time will be formatted HH:MM:SS.dd.  For times greater
+!> than or equal to 100 hours, the time will be formatted HHH:MM:SS.d.  Times of
+!> 1000 hours and greater are not supported.
+!>
+IMPURE ELEMENTAL FUNCTION getTimeHHMMSS(this,tsec,force_hour) RESULT(hh_mm_ss)
   CLASS(TimerType),INTENT(IN) :: this
   REAL(SRK),INTENT(IN),OPTIONAL :: tsec
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: force_hour
@@ -464,8 +473,22 @@ FUNCTION getTimeHHMMSS(this,tsec,force_hour) RESULT(hh_mm_ss)
   hrs=it/3600_SIK                   ! Total number of hours
   mins=(it-hrs*3600_SIK)/60_SIK     ! Total number of minutes
   secs=t-REAL(hrs*3600+mins*60_SIK,SRK)
+  IF(secs > 59.995_SRK) THEN
+    mins=mins+1_SIK
+    secs=0.000_SRK
+  ENDIF
+  IF(mins == 60_SIK) THEN
+    hrs=hrs+1_SIK
+    mins=0_SIK
+  ENDIF
 
-  IF(hrs > 0_SIK .OR. force_hours) THEN
+  IF(hrs >= 100_SIK) THEN
+    IF(secs < 9.95_SRK) THEN
+      WRITE(hh_mm_ss,'(a,":",a,":0",f3.1)') str(hrs,3),str(mins,2),secs
+    ELSE
+      WRITE(hh_mm_ss,'(a,":",a,":",f4.1)') str(hrs,3),str(mins,2),secs
+    ENDIF
+  ELSEIF(hrs > 0_SIK .OR. force_hours) THEN
     IF(secs < 9.995_SRK) THEN
       WRITE(hh_mm_ss,'(a,":",a,":0",f4.2)') str(hrs,2),str(mins,2),secs
     ELSE
@@ -911,9 +934,18 @@ ENDFUNCTION getTimeReal_Parent
 !-------------------------------------------------------------------------------
 !> @brief Function returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a string in HHMMSS format.
-!> @param this input argument, a @ref Times::TimerType "TimerType" variable
-!> @returns hh_mm_ss, the elapsed time as a string (hhh:mm:ss or mmm:ss.ss)
-FUNCTION getTimeHHMMSS_Parent(this,tsec,force_hour) RESULT(hh_mm_ss)
+!> @param this input argument, a @ref Times::ParentTimerType "ParentTimerType" variable
+!> @param tsec the time to format; optional, defaults to @c this%elapsedtime
+!> @param force_hour logical to force writing hours even if @c tsec is less than 1 hour
+!> @returns hh_mm_ss, the elapsed time as a string
+!>
+!> For times under 1 hour, the string will be formatted MM:SS.dd if @c force_hour is
+!> false, or HH:MM:SS.dd if it is true.  For times greater than or equal to one hour
+!> but less than 100 hours, the time will be formatted HH:MM:SS.dd.  For times greater
+!> than or equal to 100 hours, the time will be formatted HHH:MM:SS.d.  Times of
+!> 1000 hours and greater are not supported.
+!>
+IMPURE ELEMENTAL FUNCTION getTimeHHMMSS_Parent(this,tsec,force_hour) RESULT(hh_mm_ss)
   CLASS(ParentTimerType),INTENT(IN) :: this
   REAL(SRK),INTENT(IN),OPTIONAL :: tsec
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: force_hour
