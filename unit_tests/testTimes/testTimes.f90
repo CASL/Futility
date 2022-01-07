@@ -160,15 +160,6 @@ SUBROUTINE testTimers()
   ASSERT_LT(totalElapsed,60.0_SRK,'tic/toc too slow')
   ASSERT(testTimer%getTimerHiResMode(),'%getTimerHiResMode()')
 
-  !Issue occurred after 09:12:22.91 for Bob, so start at 09:12:22.25
-  !Jordan also hit issue after 09:19:03.63
-  testTimer%elapsedtime=33142.25_SRK
-  DO idum1=1,40000000
-    WRITE(900,*) idum1,testTimer%elapsedtime
-    WRITE(900,*) testTimer%getTimeHHMMSS(FORCE_HOUR=.TRUE.)
-    testTimer%elapsedtime=testTimer%elapsedtime+0.0001_SRK
-  ENDDO !i
-
   COMPONENT_TEST('LO-RES TIMER')
   CALL testTimer%setTimerHiResMode(.FALSE.)
   ASSERT(.NOT.testTimer%getTimerHiResMode(),'%getTimerHiResMode()')
