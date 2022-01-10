@@ -1034,7 +1034,9 @@ SUBROUTINE gather_SNK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   IF(PRESENT(root)) rank=root
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  ENDIF
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,1,MPI_INTEGER,recvbuf,1,MPI_INTEGER, &
       rank,myPE%comm,mpierr)
@@ -1064,7 +1066,9 @@ SUBROUTINE gather_SNK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
   count=SIZE(sendbuf)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  ENDIF
 #ifdef HAVE_MPI
   !32 Bit integer
   CALL MPI_Gather(sendbuf,count,MPI_INTEGER,recvbuf,count, &
@@ -1095,7 +1099,9 @@ SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   IF(PRESENT(root)) rank=root
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  ENDIF
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,1,MPI_INTEGER8,recvbuf,1,MPI_INTEGER8, &
       rank,myPE%comm,mpierr)
@@ -1125,7 +1131,9 @@ SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
   count=SIZE(sendbuf)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  ENDIF
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,count,MPI_INTEGER8,recvbuf,count, &
       MPI_INTEGER8,rank,myPE%comm,mpierr)
@@ -1155,7 +1163,9 @@ SUBROUTINE gather_SSK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   IF(PRESENT(root)) rank=root
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  ENDIF
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,1,MPI_REAL,recvbuf,1,MPI_REAL, &
       rank,myPE%comm,mpierr)
@@ -1185,7 +1195,9 @@ SUBROUTINE gather_SSK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
   count=SIZE(sendbuf)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  ENDIF
 #ifdef HAVE_MPI
   !32 Bit integer
   CALL MPI_Gather(sendbuf,count,MPI_REAL,recvbuf,count, &
@@ -1216,7 +1228,9 @@ SUBROUTINE gather_SDK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   IF(PRESENT(root)) rank=root
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc)
+  ENDIF
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,1,MPI_DOUBLE_PRECISION,recvbuf,1,MPI_DOUBLE_PRECISION, &
       rank,myPE%comm,mpierr)
@@ -1246,7 +1260,9 @@ SUBROUTINE gather_SDK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   REQUIRE(0 <= rank)
   REQUIRE(rank < myPE%nproc)
   count=SIZE(sendbuf)
-  REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  IF(rank == myPE%rank) THEN
+    REQUIRE(SIZE(recvbuf) == myPE%nproc*count)
+  ENDIF
 #ifdef HAVE_MPI
   CALL MPI_Gather(sendbuf,count,MPI_DOUBLE_PRECISION,recvbuf,count, &
       MPI_DOUBLE_PRECISION,rank,myPE%comm,mpierr)
