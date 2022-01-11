@@ -120,6 +120,24 @@ SUBROUTINE testTimers()
   ASSERT_EQ(testTimer%getTimeHHMMSS(),'27:46:40.60','%getTimeHHMMSS() (hr)')
   testTimer%elapsedtime=3719.6_SRK
   ASSERT_EQ(testTimer%getTimeHHMMSS(),'01:01:59.60','%getTimeHHMMSS() (round)')
+  testTimer%elapsedtime=33179.995099046479
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'09:13:00.00','%getTimeHHMMSS() (round)')
+  testTimer%elapsedtime=360000.0_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:00.0','%getTimeHHMMSS() (long)')
+  testTimer%elapsedtime=360000.94_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:00.9','%getTimeHHMMSS() (long)')
+  testTimer%elapsedtime=360000.96_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:01.0','%getTimeHHMMSS() (long)')
+  testTimer%elapsedtime=360009.4_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:09.4','%getTimeHHMMSS() (long)')
+  testTimer%elapsedtime=360009.94_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:09.9','%getTimeHHMMSS() (long)')
+  testTimer%elapsedtime=360009.96_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:10.0','%getTimeHHMMSS() (long)')
+  testTimer%elapsedtime=360069.96_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:01:10.0','%getTimeHHMMSS() (long)')
+  testTimer%elapsedtime=363669.96_SRK
+  ASSERT_EQ(testTimer%getTimeHHMMSS(),'101:01:10.0','%getTimeHHMMSS() (long)')
   CALL testTimer%ResetTimer()
   ASSERT_EQ(LEN_TRIM(testTimer%getTimername()),0,'name')
   ASSERT_EQ(testTimer%elapsedtime,0._SRK,'elapsedtime')
