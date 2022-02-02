@@ -63,9 +63,15 @@ FUNCTION Interp_1D(labels,table,point) RESULT(Interpolant)
 
   !Get interpolated value
   Interpolant=0.0_SRK
-  DO i=MAX(i_p-1,1),MIN(i_p,N_i)
-    Interpolant=Interpolant+f(i-i_p+2)*table(i)
-  ENDDO
+  IF(i_p > 1 .AND. i_p <= N_i) THEN !interpolate
+    DO i=MAX(i_p-1,1),MIN(i_p,N_i)
+      Interpolant=Interpolant+f(i-i_p+2)*table(i)
+    ENDDO
+  ELSE !extrapolate
+    DO i=1,N_i
+      Interpolant=Interpolant+f(N_i-i+1)*table(i)
+    ENDDO
+  ENDIF
 
 ENDFUNCTION Interp_1D
 !
