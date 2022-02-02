@@ -442,36 +442,45 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
         read_n6, read_n7, read_c1, read_pList
     !> Generic typebound interface for pointer-based read operations
     GENERIC :: freadp => read_dp4
+    !> @copybrief FileType_HDF5::has_attribute
+    !> @copydoc FileType_HDF5::has_attribute
+    PROCEDURE,PASS :: has_attribute
     !> @copybrief FileType_HDF5::write_attribute_st0
-    !> @copydoc FileType_HDF5_write_attribute_st0
+    !> @copydoc FileType_HDF5::write_attribute_st0
     PROCEDURE,PASS,PRIVATE :: write_attribute_st0
     !> @copybrief FileType_HDF5::write_attribute_c0
-    !> @copydoc FileType_HDF5_write_attribute_c0
+    !> @copydoc FileType_HDF5::write_attribute_c0
     PROCEDURE,PASS,PRIVATE :: write_attribute_c0
     !> @copybrief FileType_HDF5::write_attribute_i0
-    !> @copydoc FileType_HDF5_write_attribute_i0
+    !> @copydoc FileType_HDF5::write_attribute_i0
     PROCEDURE,PASS,PRIVATE :: write_attribute_i0
     !> @copybrief FileType_HDF5::write_attribute_d0
-    !> @copydoc FileType_HDF5_write_attribute_d0
+    !> @copydoc FileType_HDF5::write_attribute_d0
     PROCEDURE,PASS,PRIVATE :: write_attribute_d0
+    !> @copybrief FileType_HDF5::write_attribute_b0
+    !> @copydoc FileType_HDF5::write_attribute_b0
+    PROCEDURE,PASS,PRIVATE :: write_attribute_b0
     !> Generic typebound interface for all @c attribute writes
     GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
-        write_attribute_i0, write_attribute_d0
+        write_attribute_i0, write_attribute_d0,write_attribute_b0
     !> @copybrief FileType_HDF5::read_str_attribure_help
-    !> @copydoc FileType_HDF5_read_str_attribure_help
+    !> @copydoc FileType_HDF5::read_str_attribure_help
     PROCEDURE,PASS,PRIVATE :: read_attribute_st0
     !> @copybrief FileType_HDF5::read_attribute_c0
-    !> @copydoc FileType_HDF5_read_attribute_c0
+    !> @copydoc FileType_HDF5::read_attribute_c0
     PROCEDURE,PASS,PRIVATE :: read_attribute_c0
     !> @copybrief FileType_HDF5::read_attribute_i0
-    !> @copydoc FileType_HDF5_read_attribute_i0
+    !> @copydoc FileType_HDF5::read_attribute_i0
     PROCEDURE,PASS,PRIVATE :: read_attribute_i0
     !> @copybrief FileType_HDF5::read_attribute_d0
-    !> @copydoc FileType_HDF5_read_attribute_d0
+    !> @copydoc FileType_HDF5::read_attribute_d0
     PROCEDURE,PASS,PRIVATE :: read_attribute_d0
+    !> @copybrief FileType_HDF5::read_attribute_b0
+    !> @copydoc FileType_HDF5::read_attribute_b0
+    PROCEDURE,PASS,PRIVATE :: read_attribute_b0
     !> Generic typebound interface for all @c attribute writes
     GENERIC :: read_attribute => read_attribute_st0, read_attribute_c0,&
-        read_attribute_i0, read_attribute_d0
+        read_attribute_i0, read_attribute_d0,read_attribute_b0
     !> @copybrief FileType_HDF5::getDataShape
     !> @copydoc FileType_HDF5::getDataShape
     PROCEDURE,PASS :: getDataShape
@@ -3294,17 +3303,23 @@ SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=LEN_TRIM(vals)) :: valss
   CHARACTER(LEN=LEN(dsetname)+1) :: path
+  INTEGER(HSIZE_T) :: write_size
   INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
   INTEGER,PARAMETER :: rank=0
+  TYPE(StringType) :: write_vals
 
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
   path=dsetname
-  ! Fill character array
-  valss=TRIM(vals)
+  IF(LEN_TRIM(vals) == 0) THEN
+    write_size=1
+    write_vals=C_NULL_CHAR
+  ELSE
+    write_size=LEN_TRIM(vals)
+    write_vals=TRIM(vals)
+  ENDIF
 
   ! stash offset
   offset(1)=0
@@ -3324,11 +3339,12 @@ SUBROUTINE write_st0(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in)
 
   CALL h5tcopy_f(H5T_NATIVE_CHARACTER,mem,error)
   CALL h5tset_strpad_f(mem,0,error)
-  CALL h5tset_size_f(mem,INT(LEN_TRIM(vals),SDK),error)
+  CALL h5tset_size_f(mem,write_size,error)
   CALL preWrite(thisHDF5File,rank,gdims,ldims,path,mem,dset_id,dspace_id, &
       gspace_id,plist_id,error,cnt,offset)
-  IF(error == 0) &
-      CALL h5dwrite_f(dset_id,mem,valss,gdims,error,dspace_id,gspace_id,plist_id)
+  IF(error == 0) THEN
+    CALL h5dwrite_f(dset_id,mem,CHAR(write_vals),gdims,error,dspace_id,gspace_id,plist_id)
+  ENDIF
   CALL postWrite(thisHDF5File,error,dset_id,dspace_id,gspace_id,plist_id)
   CALL h5tclose_f(mem,error)
 #endif
@@ -3354,7 +3370,7 @@ SUBROUTINE write_st1_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
   INTEGER(SIK) :: local_gdims(1)
 
-  length_max=0
+  length_max=1
   DO i=1,SIZE(vals)
     length_max=MAX(LEN_TRIM(vals(i)),length_max)
   ENDDO
@@ -3393,10 +3409,16 @@ SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
+  REQUIRE(length_max > 0)
+
   path=dsetname
   ! Fill character array
   DO j=1,SIZE(vals,DIM=1)
-    valss(j)=TRIM(vals(j))
+    IF(LEN_TRIM(vals(j)) == 0) THEN
+      valss(j)=C_NULL_CHAR
+    ELSE
+      valss(j)=TRIM(vals(j))
+    ENDIF
   ENDDO
 
   ! stash offset
@@ -3446,7 +3468,7 @@ SUBROUTINE write_st2_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in
   INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: offset_in
 
-  length_max=0
+  length_max=1
   DO j=1,SIZE(vals,1)
     DO i=1,SIZE(vals,2)
       length_max=MAX(LEN_TRIM(vals(j,i)),length_max)
@@ -3490,10 +3512,16 @@ SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
+  REQUIRE(length_max > 0)
+
   path=dsetname
   DO k=1,SIZE(vals,2)
     DO j=1,SIZE(vals,1)
-      valss(j,k)=TRIM(vals(j,k))
+      IF(LEN_TRIM(vals(j,k)) == 0) THEN
+        valss(j,k)=C_NULL_CHAR
+      ELSE
+        valss(j,k)=TRIM(vals(j,k))
+      ENDIF
     ENDDO
   ENDDO
 
@@ -3545,7 +3573,7 @@ SUBROUTINE write_st3_helper(thisHDF5File,dsetname,vals,gdims_in,cnt_in,offset_in
   INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: offset_in
 
-  length_max=0
+  length_max=1
   DO k=1,SIZE(vals,3)
     DO j=1,SIZE(vals,1)
       DO i=1,SIZE(vals,2)
@@ -3591,11 +3619,17 @@ SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER :: error
   INTEGER(HID_T) :: mem,dspace_id,dset_id,gspace_id,plist_id
 
+  REQUIRE(length_max > 0)
+
   path=dsetname
   DO l=1,SIZE(vals,3)
     DO k=1,SIZE(vals,2)
       DO j=1,SIZE(vals,1)
-        valss(j,k,l)=TRIM(vals(j,k,l))
+        IF(LEN_TRIM(vals(j,k,l)) == 0) THEN
+          valss(j,k,l)=C_NULL_CHAR
+        ELSE
+          valss(j,k,l)=TRIM(vals(j,k,l))
+        ENDIF
       ENDDO
     ENDDO
   ENDDO
@@ -6399,10 +6433,14 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         st1(i) = st1(i)%replace(C_NULL_CHAR,'')
       ENDDO
       isbool=.TRUE.
-      DO i=1,SIZE(st1)
-        isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      IF(SIZE(st1) == 0 .OR. ANY(LEN(st1) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO i=1,SIZE(st1)
+          isbool=(st1(i) == 'T') .OR. (st1(i) == 'F')
+          IF(.NOT.isbool) EXIT
+        ENDDO
+      ENDIF
       IF(isbool) THEN
         CALL read_b1(thisHDF5File,CHAR(plpath),l1)
         CALL vals%add(CHAR(plpath),l1)
@@ -6419,13 +6457,17 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         ENDDO
       ENDDO
       isbool=.TRUE.
-      DO j=1,SIZE(st2,DIM=2)
-        DO i=1,SIZE(st2,DIM=1)
-          isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
+      IF(ANY(LEN(st2) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO j=1,SIZE(st2,DIM=2)
+          DO i=1,SIZE(st2,DIM=1)
+            isbool=(st2(i,j) == 'T') .OR. (st2(i,j) == 'F')
+            IF(.NOT.isbool) EXIT
+          ENDDO
           IF(.NOT.isbool) EXIT
         ENDDO
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      ENDIF
       IF(isbool) THEN
         !Disabled until PL support is added.
         CALL read_b2(thisHDF5File,CHAR(plpath),l2)
@@ -6448,16 +6490,20 @@ SUBROUTINE read_parameter(thisHDF5File,h5path,vals)
         ENDDO
       ENDDO
       isbool=.TRUE.
-      DO k=1,SIZE(st3,DIM=3)
-        DO j=1,SIZE(st3,DIM=2)
-          DO i=1,SIZE(st3,DIM=1)
-            isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+      IF(ANY(LEN(st3) /= 1)) THEN
+        isbool=.FALSE.
+      ELSE
+        DO k=1,SIZE(st3,DIM=3)
+          DO j=1,SIZE(st3,DIM=2)
+            DO i=1,SIZE(st3,DIM=1)
+              isbool=(st3(i,j,k) == 'T') .OR. (st3(i,j,k) == 'F')
+              IF(.NOT.isbool) EXIT
+            ENDDO
             IF(.NOT.isbool) EXIT
           ENDDO
           IF(.NOT.isbool) EXIT
         ENDDO
-        IF(.NOT.isbool) EXIT
-      ENDDO
+      ENDIF
       !Disabled until PL support is added.
       IF(isbool) THEN
         CALL read_b3(thisHDF5File,CHAR(plpath),l3)
@@ -6774,23 +6820,23 @@ SUBROUTINE preRead(thisHDF5File,path,rank,dset_id,dspace_id,dims,error)
   ! Open the dataset
   CALL h5dopen_f(thisHDF5File%file_id, path, dset_id, error)
   IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Failed to open dataset.')
+      ' - Failed to open dataset "'//path//'".')
 
   ! Get dataset dimensions for allocation
   CALL h5dget_space_f(dset_id,dspace_id,error)
   IF(error /= 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-      ' - Failed to obtain the dataspace.')
+      ' - Failed to obtain the dataspace for dataset "'//path//'".')
 
   ! Make sure the rank is right
   IF(rank > 0) THEN
     CALL h5sget_simple_extent_ndims_f(dspace_id,ndims,error)
     IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve number of dataspace dimensions.')
+        ' - Failed to retrieve number of dataspace dimensions for dataset "'//path//'".')
     IF(ndims /= rank) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Using wrong read function for rank.')
+        ' - Using wrong read function for rank for dataset "'//path//'".')
     CALL h5sget_simple_extent_dims_f(dspace_id,dims,maxdims,error)
     IF(error < 0) CALL thisHDF5File%e%raiseError(modName//'::'//myName// &
-        ' - Failed to retrieve dataspace dimensions.')
+        ' - Failed to retrieve dataspace dimensions for dataset "'//path//'".')
   ELSE
     dims=1
   ENDIF
@@ -7053,8 +7099,44 @@ ENDSUBROUTINE createAttribute
 #endif
 !
 !-------------------------------------------------------------------------------
-!> @brief Writes an attribute name and string value to a known dataset
+!> @brief Checks if a dataset has a named attribute
+!> @param this the file to search
+!> @param obj_name the relative path of the dataset
+!> @param attr_name the name of the attribute to search for
+!> @returns hasAttribute the result of the search
 !>
+FUNCTION has_attribute(this,obj_name,attr_name) RESULT(hasAttribute)
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name
+  CHARACTER(LEN=*),INTENT(IN) :: attr_name
+  LOGICAL(SBK) :: hasAttribute
+#ifdef FUTILITY_HAVE_HDF5
+  CHARACTER(LEN=*),PARAMETER :: myname='has_attribute'
+  INTEGER(HID_T) :: obj_id,attr_id
+
+  REQUIRE(this%isInit)
+
+  hasAttribute=.FALSE.
+  CALL open_object(this,obj_name,obj_id,error)
+  IF(error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName//' - dataset "'//obj_name// &
+        '" could not be found while searching for attribute "'//attr_name//'"!')
+    RETURN
+  ENDIF
+  CALL open_attribute(this,obj_id,attr_name,attr_id,error)
+  hasAttribute = (error == 0)
+
+  IF(hasAttribute) THEN
+    CALL close_attribute(this,attr_id)
+  ENDIF
+  CALL close_object(this,obj_id)
+#endif
+
+ENDFUNCTION has_attribute
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and string value to a known dataset
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7099,7 +7181,7 @@ ENDSUBROUTINE write_attribute_st0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and string value to a known dataset
-!>
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7118,7 +7200,7 @@ END SUBROUTINE write_attribute_c0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and integer  value to a known dataset
-!>
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7155,7 +7237,7 @@ ENDSUBROUTINE write_attribute_i0
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and real value to a known dataset
-!>
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7191,8 +7273,47 @@ SUBROUTINE write_attribute_d0(this,obj_name,attr_name,attr_val)
 ENDSUBROUTINE write_attribute_d0
 !
 !-------------------------------------------------------------------------------
-!> @brief Set-up to read  a string value attribute from a known dataset
+!> @brief Writes an attribute name and logical value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
 !>
+SUBROUTINE write_attribute_b0(this,obj_name,attr_name,attr_val)
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  LOGICAL(SBK),INTENT(IN) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  CHARACTER :: char_attr_val
+  INTEGER :: num_dims
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+
+  num_dims=1
+  dims(1)=1
+
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+
+  !Create the data space for memory type and size
+  CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
+
+  !Create and write to the attribute within the dataspce
+  char_attr_val = MERGE('T','F',attr_val)
+  CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_CHARACTER,&
+      dspace_id,attr_id)
+  CALL h5awrite_f(attr_id,H5T_NATIVE_CHARACTER,char_attr_val,dims,error)
+
+  CALL h5sclose_f(dspace_id,error)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
+#endif
+ENDSUBROUTINE write_attribute_b0
+!
+!-------------------------------------------------------------------------------
+!> @brief Set-up to read  a string value attribute from a known dataset
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7220,7 +7341,7 @@ ENDSUBROUTINE read_attribute_st0
 !
 !-------------------------------------------------------------------------------
 !> @brief Set-up to read  a string value attribute from a known dataset
-!>
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7239,7 +7360,7 @@ ENDSUBROUTINE read_attribute_c0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a string value attribute from a known dataset
-!>
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7263,7 +7384,7 @@ ENDSUBROUTINE read_attribute_st0_helper
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a integer value attribute from a known dataset
-!>
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7296,7 +7417,7 @@ ENDSUBROUTINE read_attribute_i0
 !
 !-------------------------------------------------------------------------------
 !> @brief Reads a double value attribute from a known dataset
-!>
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
@@ -7329,16 +7450,66 @@ SUBROUTINE read_attribute_d0(this,obj_name,attr_name,attr_val)
 ENDSUBROUTINE read_attribute_d0
 !
 !-------------------------------------------------------------------------------
-!> @brief Sets up all attribute operations by checking links and opening object`
+!> @brief Reads a logical value attribute from a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
 !>
+SUBROUTINE read_attribute_b0(this,obj_name,attr_name,attr_val)
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
+  LOGICAL(SBK),INTENT(INOUT) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  CHARACTER :: char_attr_val
+  CHARACTER(LEN=*),PARAMETER :: myName='read_attribute_b0'
+  INTEGER(HID_T) :: attr_id, obj_id
+  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  dims(1)=1
+
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+  CALL open_attribute(this,obj_id,attr_name,attr_id)
+
+  CALL h5aread_f(attr_id,H5T_NATIVE_CHARACTER,char_attr_val,dims,error)
+  IF(error /= 0) THEN
+    CALL this%e%raiseError(modName//'::'//myName// &
+        ' - Failed to read attribute.')
+    RETURN
+  ENDIF
+  IF(char_attr_val == 'T') THEN
+    attr_val=.TRUE.
+  ELSEIF(char_attr_val == 'F') THEN
+    attr_val=.FALSE.
+  ELSE
+    CALL this%e%raiseError(modName//'::'//myName//' - Character "'// &
+        char_attr_val//'" is being read as a logical, which is not supported!')
+  ENDIF
+
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
+#endif
+ENDSUBROUTINE read_attribute_b0
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets up all attribute operations by checking links and opening object`
+!> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param obj_id the HDF5 system id for the working dataset
+!> @param ioerror optional error flag to return
+!>
+!> If an error is encountered and @c ioerror is present, a non-zero value will
+!> be set to it and returned.  If an error is encountered and @c ioerror is not
+!> present, the code will error out.  If no error is encountered, @c ioerror
+!> will be set to 0 if present.
 !>
 #ifdef FUTILITY_HAVE_HDF5
-SUBROUTINE open_object(this,obj_name,obj_id)
+SUBROUTINE open_object(this,obj_name,obj_id,ioerror)
   CHARACTER(LEN=*),PARAMETER :: myName='open_object_HDF5FileType'
   CLASS(HDF5FileType),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: obj_name
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: ioerror
 
   INTEGER(HID_T),INTENT(OUT) :: obj_id
   CHARACTER(LEN=LEN(obj_name)+1) :: path
@@ -7350,23 +7521,29 @@ SUBROUTINE open_object(this,obj_name,obj_id)
   !Check for expected links between object, and File
   CALL h5lexists_f(this%file_id,path,dset_exists,error)
   IF(.NOT. dset_exists) THEN
-    CALL this%e%raiseError(modName//'::'//myName// &
-        ' - Incorrect path to object.')
+    IF(PRESENT(ioerror)) THEN
+      ioerror=-1
+    ELSE
+      CALL this%e%raiseError(modName//'::'//myName//' - Incorrect path to object.')
+    ENDIF
     RETURN
   ENDIF
 
   !Open the object
   CALL h5Oopen_f(this%file_id,path,obj_id,error)
   IF(error /= 0) THEN
-    CALL this%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open object.')
+    IF(PRESENT(ioerror)) THEN
+      ioerror=error
+    ELSE
+      CALL this%e%raiseError(modName//'::'//myName//' - Failed to open object.')
+    ENDIF
     RETURN
   ENDIF
 ENDSUBROUTINE open_object
 !
 !-------------------------------------------------------------------------------
 !> @brief closes all attribute operations by closing attribute
-!>
+!> @param this the file to read
 !> @param attr_id the HDF5 system id for the working attribute
 !> @param obj_id the HDF5 system id for the working object
 !>
@@ -7378,14 +7555,14 @@ SUBROUTINE close_attribute(this,attr_id)
   CALL h5aclose_f(attr_id,error)
   IF (error /= 0) THEN
     CALL this%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close objectt.')
+        ' - Failed to close attribute.')
     RETURN
   ENDIF
 ENDSUBROUTINE close_attribute
 !
 !-------------------------------------------------------------------------------
 !> @brief closes all group, dataset, datatype objects
-!>
+!> @param this the file to read
 !> @param attr_id the HDF5 system id for the working attribute
 !> @param obj_id the HDF5 system id for the working object
 !>
@@ -7397,7 +7574,7 @@ SUBROUTINE close_object(this,obj_id)
   CALL h5Oclose_f(obj_id,error)
   IF (error /= 0) THEN
     CALL this%e%raiseError(modName//'::'//myName// &
-        ' - Failed to close objectt.')
+        ' - Failed to close object.')
     RETURN
   ENDIF
 ENDSUBROUTINE close_object
@@ -7405,15 +7582,22 @@ ENDSUBROUTINE close_object
 !-------------------------------------------------------------------------------
 !> @brief sets up the attribute wrting general operation by checking existance
 !>          and opening the attribute
-!>
+!> @param this the file to read
 !> @param attr_id the HDF5 system id for the working attribute
 !> @param attr_name the desired name of the attribute
 !> @param obj_id the HDF5 system id for the working object
+!> @param ioerror optional error flag to return
 !>
-SUBROUTINE open_attribute(this,obj_id,attr_name,attr_id)
+!> If an error is encountered and @c ioerror is present, a non-zero value will
+!> be set to it and returned.  If an error is encountered and @c ioerror is not
+!> present, the code will error out.  If no error is encountered, @c ioerror
+!> will be set to 0 if present.
+!>
+SUBROUTINE open_attribute(this,obj_id,attr_name,attr_id,ioerror)
   CHARACTER(LEN=*),PARAMETER :: myName='open_attribute_rHDF5FileType'
   CLASS(HDF5FileType),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: attr_name
+  INTEGER(SIK),INTENT(OUT),OPTIONAL :: ioerror
 
   INTEGER(HID_T),INTENT(IN) :: obj_id
   INTEGER(HID_T),INTENT(OUT) :: attr_id
@@ -7422,16 +7606,22 @@ SUBROUTINE open_attribute(this,obj_id,attr_name,attr_id)
   !Check that the named attribute exists
   CALL h5aexists_f(obj_id,attr_name,attr_exists,error)
   IF (.NOT. attr_exists) THEN
-    CALL this%e%raiseError(modName//'::'//myName// &
-        ' - Attribute does not exist for object.')
+    IF(PRESENT(ioerror)) THEN
+      ioerror=-1
+    ELSE
+      CALL this%e%raiseError(modName//'::'//myName//' - Attribute does not exist for object.')
+    ENDIF
     RETURN
   ENDIF
 
   !Open the Attribute
   CALL h5aopen_f(obj_id,attr_name,attr_id,error)
   IF(error /= 0) THEN
-    CALL this%e%raiseError(modName//'::'//myName// &
-        ' - Failed to open attribute.')
+    IF(PRESENT(ioerror)) THEN
+      ioerror=error
+    ELSE
+      CALL this%e%raiseError(modName//'::'//myName//' - Failed to open attribute.')
+    ENDIF
     RETURN
   ENDIF
 ENDSUBROUTINE open_attribute

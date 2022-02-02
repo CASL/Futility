@@ -1057,7 +1057,7 @@ ENDFUNCTION isNumeric
 !>
 !> A positive tolerance narrows the range, while a negative tolerance increases it
 !>
-ELEMENTAL FUNCTION isBetween_SNK(a,val,b,tolerance) RESULT(between)
+IMPURE ELEMENTAL FUNCTION isBetween_SNK(a,val,b,tolerance) RESULT(between)
   INTEGER(SNK),INTENT(IN) :: a
   INTEGER(SNK),INTENT(IN) :: val
   INTEGER(SNK),INTENT(IN) :: b

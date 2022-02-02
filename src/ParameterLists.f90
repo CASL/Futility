@@ -2729,37 +2729,61 @@ SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
       string=param%val
     TYPE IS(ParamType_SSK_a1)
       WRITE(tmpchar,TRIM(sskfmtDef)) param%val(1)
-      string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         WRITE(tmpchar,TRIM(sskfmtDef)) param%val(i)
         string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ENDDO
     TYPE IS(ParamType_SDK_a1)
       WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(1)
-      string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(i)
         string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ENDDO
     TYPE IS(ParamType_SNK_a1)
-      string=delim//str(param%val(1))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//str(param%val(1))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         string=string//delim//str(param%val(i))//delim//' '
       ENDDO
     TYPE IS(ParamType_SLK_a1)
-      string=delim//str(param%val(1))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//str(param%val(1))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         string=string//delim//str(param%val(i))//delim//' '
       ENDDO
     TYPE IS(ParamType_SBK_a1)
       WRITE(tmpchar,'(L1)') param%val(1)
-      string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         WRITE(tmpchar,'(L1)') param%val(i)
         string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ENDDO
     TYPE IS(ParamType_STR_a1)
-      string=delim//param%val(1)//delim//' '
+      IF(SIZE(param%val) > 0) THEN
+        string=delim//param%val(1)//delim//' '
+      ELSE
+        string=delim//' '
+      ENDIF
       DO i=2,SIZE(param%val)
         string=string//delim//param%val(i)//delim//' '
       ENDDO
@@ -5941,7 +5965,7 @@ SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be TYPE(ParamType_List)!')
+            p%dataType//' and must be TYPE(ParamType_List)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,paramlist,description)
@@ -6014,7 +6038,7 @@ SUBROUTINE get_ParamType_List(thisParam,name,paramlist)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be TYPE(ParamType_List)!')
+            p%dataType//' and must be TYPE(ParamType_List)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6228,7 +6252,7 @@ SUBROUTINE set_ParamType_SSK(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be REAL(SSK)!')
+            p%dataType//' and must be REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -6278,7 +6302,7 @@ SUBROUTINE get_ParamType_SSK(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be REAL(SSK)!')
+            p%dataType//' and must be REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6493,7 +6517,7 @@ SUBROUTINE set_ParamType_SDK(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be REAL(SDK)!')
+            p%dataType//' and must be REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -6543,7 +6567,7 @@ SUBROUTINE get_ParamType_SDK(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be REAL(SDK)!')
+            p%dataType//' and must be REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6758,7 +6782,7 @@ SUBROUTINE set_ParamType_SNK(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be INTEGER(SNK)!')
+            p%dataType//' and must be INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -6808,7 +6832,7 @@ SUBROUTINE get_ParamType_SNK(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be INTEGER(SNK)!')
+            p%dataType//' and must be INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7019,7 +7043,7 @@ SUBROUTINE set_ParamType_SLK(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be INTEGER(SLK)!')
+            p%dataType//' and must be INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -7069,7 +7093,7 @@ SUBROUTINE get_ParamType_SLK(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be INTEGER(SLK)!')
+            p%dataType//' and must be INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7280,7 +7304,7 @@ SUBROUTINE set_ParamType_SBK(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be LOGICAL(SBK)!')
+            p%dataType//' and must be LOGICAL(SBK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -7330,7 +7354,7 @@ SUBROUTINE get_ParamType_SBK(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be LOGICAL(SBK)!')
+            p%dataType//' and must be LOGICAL(SBK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7534,7 +7558,7 @@ SUBROUTINE set_ParamType_STR(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be TYPE(StringType)!')
+            p%dataType//' and must be TYPE(StringType)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -7584,7 +7608,7 @@ SUBROUTINE get_ParamType_STR(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be TYPE(StringType)!')
+            p%dataType//' and must be TYPE(StringType)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7908,7 +7932,7 @@ SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 1-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -7958,7 +7982,7 @@ SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 1-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8191,7 +8215,7 @@ SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 1-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -8241,7 +8265,7 @@ SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 1-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8472,7 +8496,7 @@ SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -8522,7 +8546,7 @@ SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8754,7 +8778,7 @@ SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -8804,7 +8828,7 @@ SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9033,7 +9057,7 @@ SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
+            p%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -9083,7 +9107,7 @@ SUBROUTINE get_ParamType_SBK_a1(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
+            p%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9222,7 +9246,9 @@ SUBROUTINE edit_ParamType_STR_a1(thisParam,funit,indent,prefix,paddtw)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
 
   sval=''
-  IF(LEN_TRIM(thisParam%val(1)) > 0) sval=thisParam%val(1)
+  IF(SIZE(thisParam%val) > 0) THEN
+    IF(LEN_TRIM(thisParam%val(1)) > 0) sval=thisParam%val(1)
+  ENDIF
   sdesc=''
   IF(LEN_TRIM(thisParam%description) > 0) sdesc=' !'//thisParam%description
   WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
@@ -9317,7 +9343,7 @@ SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
+            p%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -9367,7 +9393,7 @@ SUBROUTINE get_ParamType_STR_a1(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
+            p%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9593,7 +9619,7 @@ SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 2-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -9643,7 +9669,7 @@ SUBROUTINE get_ParamType_SSK_a2(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 2-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9864,7 +9890,7 @@ SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 2-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -9914,7 +9940,7 @@ SUBROUTINE get_ParamType_SDK_a2(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 2-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -10135,7 +10161,7 @@ SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -10185,7 +10211,7 @@ SUBROUTINE get_ParamType_SNK_a2(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -10406,7 +10432,7 @@ SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -10456,7 +10482,7 @@ SUBROUTINE get_ParamType_SLK_a2(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -10680,7 +10706,7 @@ SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
+            p%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -10730,7 +10756,7 @@ SUBROUTINE get_ParamType_STR_a2(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
+            p%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -10957,7 +10983,7 @@ SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 3-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -11007,7 +11033,7 @@ SUBROUTINE get_ParamType_SSK_a3(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 3-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -11229,7 +11255,7 @@ SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 3-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -11279,7 +11305,7 @@ SUBROUTINE get_ParamType_SDK_a3(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 3-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -11501,7 +11527,7 @@ SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -11551,7 +11577,7 @@ SUBROUTINE get_ParamType_SNK_a3(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -11773,7 +11799,7 @@ SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -11823,7 +11849,7 @@ SUBROUTINE get_ParamType_SLK_a3(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12051,7 +12077,7 @@ SUBROUTINE set_ParamType_STR_a3(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY TYPE(StringType)!')
+            p%dataType//' and must be 3-D ARRAY TYPE(StringType)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -12101,7 +12127,7 @@ SUBROUTINE get_ParamType_STR_a3(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 3-D ARRAY TYPE(StringType)!')
+            p%dataType//' and must be 3-D ARRAY TYPE(StringType)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12330,7 +12356,7 @@ SUBROUTINE set_ParamType_SSK_a4(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 4-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -12380,7 +12406,7 @@ SUBROUTINE get_ParamType_SSK_a4(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 4-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12604,7 +12630,7 @@ SUBROUTINE set_ParamType_SDK_a4(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 4-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -12654,7 +12680,7 @@ SUBROUTINE get_ParamType_SDK_a4(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 4-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12878,7 +12904,7 @@ SUBROUTINE set_ParamType_SNK_a4(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 4-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -12928,7 +12954,7 @@ SUBROUTINE get_ParamType_SNK_a4(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 4-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -13152,7 +13178,7 @@ SUBROUTINE set_ParamType_SLK_a4(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 4-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -13202,7 +13228,7 @@ SUBROUTINE get_ParamType_SLK_a4(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 4-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 4-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -13434,7 +13460,7 @@ SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 5-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -13484,7 +13510,7 @@ SUBROUTINE get_ParamType_SSK_a5(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 5-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -13710,7 +13736,7 @@ SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 5-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -13760,7 +13786,7 @@ SUBROUTINE get_ParamType_SDK_a5(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 5-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -13986,7 +14012,7 @@ SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -14036,7 +14062,7 @@ SUBROUTINE get_ParamType_SNK_a5(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -14262,7 +14288,7 @@ SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -14312,7 +14338,7 @@ SUBROUTINE get_ParamType_SLK_a5(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -14547,7 +14573,7 @@ SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 6-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -14597,7 +14623,7 @@ SUBROUTINE get_ParamType_SSK_a6(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 6-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -14826,7 +14852,7 @@ SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 6-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -14876,7 +14902,7 @@ SUBROUTINE get_ParamType_SDK_a6(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 6-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -15105,7 +15131,7 @@ SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -15155,7 +15181,7 @@ SUBROUTINE get_ParamType_SNK_a6(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -15384,7 +15410,7 @@ SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -15434,7 +15460,7 @@ SUBROUTINE get_ParamType_SLK_a6(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -15671,7 +15697,7 @@ SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 7-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -15721,7 +15747,7 @@ SUBROUTINE get_ParamType_SSK_a7(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY REAL(SSK)!')
+            p%dataType//' and must be 7-D ARRAY REAL(SSK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -15952,7 +15978,7 @@ SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 7-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -16002,7 +16028,7 @@ SUBROUTINE get_ParamType_SDK_a7(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY REAL(SDK)!')
+            p%dataType//' and must be 7-D ARRAY REAL(SDK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -16233,7 +16259,7 @@ SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -16283,7 +16309,7 @@ SUBROUTINE get_ParamType_SNK_a7(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
+            p%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -16514,7 +16540,7 @@ SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description,addMissing)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSEIF(lAddMissing) THEN
       CALL thisParam%add(name,param,description)
@@ -16564,7 +16590,7 @@ SUBROUTINE get_ParamType_SLK_a7(thisParam,name,val)
       CLASS DEFAULT
         CALL eParams%raiseError(modName//'::'//myName// &
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
-            tmpParam%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
+            p%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
       ENDSELECT
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &

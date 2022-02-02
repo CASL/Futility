@@ -54,6 +54,9 @@
 !> @endcode
 !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 MODULE Times
+#include "Futility_DBC.h"
+USE Futility_DBC
+USE ISO_FORTRAN_ENV
 USE IntrType
 USE Strings
 USE IO_Strings
@@ -62,6 +65,7 @@ PRIVATE !Default private for module contents
 !
 ! List of Public items
 PUBLIC :: TimerType
+PUBLIC :: ParentTimerType
 PUBLIC :: TimerPtrArray
 PUBLIC :: getDate
 PUBLIC :: getClockTime
@@ -69,15 +73,22 @@ PUBLIC :: getTimeFromDate
 PUBLIC :: MAXLEN_TIME_STRING
 PUBLIC :: MAXLEN_DATE_STRING
 PUBLIC :: MAXLEN_CLOCK_STRING
+PUBLIC :: runTestTimes
+INTERFACE
+  MODULE SUBROUTINE runTestTimes()
+  ENDSUBROUTINE runTestTimes
+ENDINTERFACE
 
 !> Maximum length of character string for the reported time
-INTEGER(SIK),PARAMETER :: MAXLEN_TIME_STRING=18
+INTEGER(SIK),PARAMETER :: MAXLEN_TIME_STRING=20
 !> Maximum length of character string for the reported date
 INTEGER(SIK),PARAMETER :: MAXLEN_DATE_STRING=13
 !> Maximum length of character string for the elapsed time (private)
-INTEGER(SIK),PARAMETER :: MAXLEN_ETIME=9
+INTEGER(SIK),PARAMETER :: MAXLEN_ETIME=11
 !> Maximum length of character string for the reported clock time
 INTEGER(SIK),PARAMETER :: MAXLEN_CLOCK_STRING=8
+!> Maximum length of the time unit string
+INTEGER(SIK),PARAMETER :: MAXLEN_TIME_UNITS=9
 
 !> @brief Derived Datatype for the Timer data object
 !>
@@ -86,32 +97,29 @@ INTEGER(SIK),PARAMETER :: MAXLEN_CLOCK_STRING=8
 !> data type is also public so the programmer can create their own timers
 !> if they wish for use elsewhere in the code.
 TYPE :: TimerType
-  !> @brief Descriptive name for the timer
+  !> Descriptive name for the timer
   TYPE(StringType),PRIVATE :: name
-  !> @brief Clock cycle count value for start of the timer (set by
+  !> Clock cycle count value for start of the timer (set by
   !> @ref Times::tic "tic")
   INTEGER(SLK),PRIVATE :: count=0_SDK
-  !> @brief The elapsed time recorded for this timer in seconds.
+  !> The elapsed time recorded for this timer in seconds.
   REAL(SDK) :: elapsedtime=0_SDK
-  !> @brief The time recorded by this timer given as a string.
-  CHARACTER(LEN=9),PRIVATE :: time=''
-  !> @brief The units for the time given in @ref Times::TimerType::time
+  !> The time recorded by this timer given as a string.
+  CHARACTER(LEN=MAXLEN_ETIME),PRIVATE :: time=''
+  !> The units for the time given in @ref Times::TimerType::time
   !> "%time", also a string.
-  CHARACTER(LEN=9),PRIVATE :: unit=''
-  !> @brief indicates if the timer is high resolution
+  CHARACTER(LEN=MAXLEN_TIME_UNITS),PRIVATE :: unit=''
+  !> indicates if the timer is high resolution
   LOGICAL(SBK),PRIVATE :: HiResTimer=.TRUE.
-  !> @brief Convert the processor clock count value to a time in seconds.
+  !> Convert the processor clock count value to a time in seconds.
   REAL(SDK),PRIVATE :: count2sec=-1._SDK
-  !> @brief The last count value taken from SYSTEM_CLOCK
-  !>
+  !> The last count value taken from SYSTEM_CLOCK
   !> Needed to determine if the clock counter rolled over
   INTEGER(SLK),PRIVATE :: lastcount=0_SLK
-  !> @brief The number of counts to shift due to clock cycle rollover.
-  !>
+  !> The number of counts to shift due to clock cycle rollover.
   !> Add count_max each time the clock rolls over.
   INTEGER(SLK),PRIVATE :: clockcycleshift=0_SLK
-!
-!List of type bound procedures (methods) for the object
+  !
   CONTAINS
     !> @copybrief Times::getDate
     !> @copydetails Times::getDate
@@ -162,6 +170,47 @@ TYPE :: TimerPtrArray
   !> Pointer to the timer
   CLASS(TimerType),POINTER :: t => NULL()
 ENDTYPE TimerPtrArray
+
+!> @brief defines a parent timer which owns sub-timers
+TYPE,EXTENDS(TimerType) :: ParentTimerType
+  !> The sub-timers owned by this timer
+  TYPE(TimerPtrArray),ALLOCATABLE :: timers(:)
+  CONTAINS
+    !> @copybrief Times::addTimer
+    !> @copydetails Times::addTimer
+    PROCEDURE,PASS :: addTimer
+    !> @copybrief Times::getTimer
+    !> @copydetails Times::getTimer
+    PROCEDURE,PASS :: getTimer
+    !> @copybrief Times::clearParentTimer
+    !> @copydetails Times::clearParentTimer
+    PROCEDURE,PASS :: clear => clearParentTimer
+    !> @copybrief Times::getTimerResolution_Parent
+    !> @copydetails Times::getTimerResolution_Parent
+    PROCEDURE,PASS :: getTimerResolution => getTimerResolution_Parent
+    !> @copybrief Times::getRemainingTime_Parent
+    !> @copydetails Times::getRemainingTime_Parent
+    PROCEDURE,PASS :: getRemainingTime => getRemainingTime_Parent
+    !> @copybrief Times::ResetTimer_Parent
+    !> @copydetails Times::ResetTimer_Parent
+    PROCEDURE,PASS :: ResetTimer => ResetTimer_Parent
+    !> @copybrief Times::setTimerHiResMode_Parent
+    !> @copydetails Times::setTimerHiResMode_Parent
+    PROCEDURE,PASS :: setTimerHiResMode => setTimerHiResMode_Parent
+    !> @copybrief Times::tic_Parent
+    !> @copydetails Times::tic_Parent
+    PROCEDURE,PASS :: tic => tic_Parent
+    !> @copybrief Times::toc_Parent
+    !> @copydetails Times::toc_Parent
+    PROCEDURE,PASS :: toc => toc_Parent
+    !> @copybrief Times::getTimeHHMMSS_Parent
+    !> @copydetails Times::getTimeHHMMSS_Parent
+    PROCEDURE,PASS :: getTimeHHMMSS => getTimeHHMMSS_Parent
+    !> @copybrief Times::getTimeReal_Parent
+    !> @copydetails Times::getTimeReal_Parent
+    PROCEDURE,PASS :: getTimeReal => getTimeReal_Parent
+    FINAL :: finalize_parentTimertype
+ENDTYPE ParentTimerType
 
 !> @brief The current value of the processor clock (for HI-RES timer)
 !>
@@ -284,17 +333,17 @@ ENDFUNCTION getDate
 !>
 !> The timer resolution is given in units of microseconds as a double precision
 !> real value.
-FUNCTION getTimerResolution(t) RESULT(tres)
-  CLASS(TimerType),INTENT(INOUT) :: t
+FUNCTION getTimerResolution(this) RESULT(tres)
+  CLASS(TimerType),INTENT(INOUT) :: this
   REAL(SDK) :: tres
 
-  IF(t%HiResTimer) THEN
+  IF(this%HiResTimer) THEN
     CALL SYSTEM_CLOCK(count_hi,rate_hi,count_max_hi)
-    t%lastcount=count_hi
+    this%lastcount=count_hi
     tres=1000000._SDK/REAL(rate_hi,SDK)
   ELSE
     CALL SYSTEM_CLOCK(count_lo,rate_lo,count_max_lo)
-    t%lastcount=count_lo
+    this%lastcount=count_lo
     tres=1000000._SDK/REAL(rate_lo,SDK)
   ENDIF
 ENDFUNCTION getTimerResolution
@@ -304,147 +353,164 @@ ENDFUNCTION getTimerResolution
 !> over.
 !>
 !> The result is returned as a double precision real.
-FUNCTION getRemainingTime(t) RESULT(tremain)
-  CLASS(TimerType),INTENT(INOUT) :: t
+FUNCTION getRemainingTime(this) RESULT(tremain)
+  CLASS(TimerType),INTENT(INOUT) :: this
   REAL(SDK) :: tremain
 
-  IF(t%HiResTimer) THEN
+  IF(this%HiResTimer) THEN
     CALL SYSTEM_CLOCK(count_hi,rate_hi,count_max_hi)
-    t%lastcount=count_hi
+    this%lastcount=count_hi
     tremain=REAL((count_max_hi-count_hi),SDK)/REAL(rate_hi,SDK)
   ELSE
     CALL SYSTEM_CLOCK(count_lo,rate_lo,count_max_lo)
-    t%lastcount=count_lo
+    this%lastcount=count_lo
     tremain=REAL((count_max_lo-count_lo),SDK)/REAL(rate_lo,SDK)
   ENDIF
 ENDFUNCTION getRemainingTime
 
 !
 !-------------------------------------------------------------------------------
-!> @brief Set the name of a timer @e myTimer
-!> @param myTimer dummy argument of timer to modify the name of
+!> @brief Set the name of a timer @e this
+!> @param this dummy argument of timer to modify the name of
 !> @param name input argument, name to assign to the timer
 !>
 !> Names must be 20 characters or less.
-SUBROUTINE setTimerName(myTimer,name)
-  CLASS(TimerType),INTENT(INOUT) :: myTimer
+SUBROUTINE setTimerName(this,name)
+  CLASS(TimerType),INTENT(INOUT) :: this
   CHARACTER(LEN=*),INTENT(IN) :: name
-  myTimer%name=TRIM(name)
+  this%name=TRIM(name)
 ENDSUBROUTINE setTimerName
 !
 !-------------------------------------------------------------------------------
-!> @brief Get the name of a timer @e myTimer
-!> @param myTimer dummy argument of timer to return the name of
+!> @brief Get the name of a timer @e this
+!> @param this dummy argument of timer to return the name of
 !> @returns name input argument, name output from timer
 !>
 !> Names are 20 characters or less.
-FUNCTION getTimerName(myTimer) RESULT(name)
-  CLASS(TimerType),INTENT(IN) :: myTimer
+FUNCTION getTimerName(this) RESULT(name)
+  CLASS(TimerType),INTENT(IN) :: this
   CHARACTER(LEN=:),ALLOCATABLE :: name
-  name=CHAR(myTimer%name)
+  name=CHAR(this%name)
 ENDFUNCTION getTimerName
 !
 !-------------------------------------------------------------------------------
-!> @brief Set the mode of resolution of a timer @e myTimer
-!> @param myTimer dummy argument of timer to modify the name of
+!> @brief Set the mode of resolution of a timer @e this
+!> @param this dummy argument of timer to modify the name of
 !> @param resMode the timer resolution mode TRUE=HI-RES, FALSE=LO-RES
-SUBROUTINE setTimerHiResMode(myTimer,resMode)
-  CLASS(TimerType),INTENT(INOUT) :: myTimer
+SUBROUTINE setTimerHiResMode(this,resMode)
+  CLASS(TimerType),INTENT(INOUT) :: this
   LOGICAL(SBK),INTENT(IN) :: resMode
-  myTimer%HiResTimer=resMode
-  CALL ResetTimer(myTimer)
+  this%HiResTimer=resMode
+  CALL this%ResetTimer()
 ENDSUBROUTINE setTimerHiResMode
 !
 !-------------------------------------------------------------------------------
-!> @brief Get the mode of resolution of a timer @e myTimer
-!> @param myTimer dummy argument of timer to return the name of
+!> @brief Get the mode of resolution of a timer @e this
+!> @param this dummy argument of timer to return the name of
 !> @returns tmode the timer resolution mode TRUE=HI-RES, FALSE=LO-RES
-FUNCTION getTimerHiResMode(myTimer) RESULT(tmode)
-  CLASS(TimerType),INTENT(IN) :: myTimer
+FUNCTION getTimerHiResMode(this) RESULT(tmode)
+  CLASS(TimerType),INTENT(IN) :: this
   LOGICAL(SBK) :: tmode
-  tmode=myTimer%HiResTimer
+  tmode=this%HiResTimer
 ENDFUNCTION getTimerHiResMode
 !
 !-------------------------------------------------------------------------------
 !> @brief Function returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a real type.
-!> @param myTimer input argument, a @ref Times::TimerType "TimerType" variable
+!> @param this input argument, a @ref Times::TimerType "TimerType" variable
 !> @returns time, the elapsed time (REAL type) unit is seconds
-FUNCTION getTimeReal(myTimer) RESULT(time)
-  CLASS(TimerType),INTENT(IN) :: myTimer
+FUNCTION getTimeReal(this) RESULT(time)
+  CLASS(TimerType),INTENT(IN) :: this
   REAL(SRK) :: time
-  time=myTimer%elapsedtime
+  time=this%elapsedtime
 ENDFUNCTION getTimeReal
 !
 !-------------------------------------------------------------------------------
 !> @brief Subroutine returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a string with units.
-!> @param myTimer input argument, a @ref Times::TimerType "TimerType" variable
+!> @param this input argument, a @ref Times::TimerType "TimerType" variable
 !> @returns time output argument, the elapsed time as a string
-FUNCTION getTimeChar(myTimer) RESULT(time)
-  CLASS(TimerType),INTENT(INOUT) :: myTimer
+FUNCTION getTimeChar(this) RESULT(time)
+  CLASS(TimerType),INTENT(INOUT) :: this
   CHARACTER(LEN=MAXLEN_TIME_STRING) :: time
 
-  CALL SetTimeAndUnits(myTimer)
-  time=TRIM(myTimer%time)//TRIM(myTimer%unit)
+  CALL SetTimeAndUnits(this)
+  time=TRIM(this%time)//TRIM(this%unit)
 ENDFUNCTION getTimeChar
 !
 !-------------------------------------------------------------------------------
 !> @brief Function returns the value of @ref Times::TimerType::elapsedtime
 !> "%elapsedtime" as a string in HHMMSS format.
-!> @param myTimer input argument, a @ref Times::TimerType "TimerType" variable
+!> @param this input argument, a @ref Times::TimerType "TimerType" variable
+!> @param tsec the time to format; optional, defaults to @c this%elapsedtime
+!> @param force_hour logical to force writing hours even if @c tsec is less than 1 hour
 !> @returns hh_mm_ss, the elapsed time as a string (hhh:mm:ss or mmm:ss.ss)
-FUNCTION getTimeHHMMSS(myTimer,tsec) RESULT(hh_mm_ss)
-  REAL(SDK),PARAMETER :: half=0.5_SDK
-  CLASS(TimerType),INTENT(IN) :: myTimer
+!>
+!> For times under 1 hour, the string will be formatted MM:SS.dd if @c force_hour is
+!> false, or HH:MM:SS.dd if it is true.  For times greater than or equal to one hour
+!> but less than 100 hours, the time will be formatted HH:MM:SS.dd.  For times greater
+!> than or equal to 100 hours, the time will be formatted HHH:MM:SS.d.  Times of
+!> 1000 hours and greater are not supported.
+!>
+IMPURE ELEMENTAL FUNCTION getTimeHHMMSS(this,tsec,force_hour) RESULT(hh_mm_ss)
+  CLASS(TimerType),INTENT(IN) :: this
   REAL(SRK),INTENT(IN),OPTIONAL :: tsec
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: force_hour
   CHARACTER(LEN=MAXLEN_ETIME) :: hh_mm_ss
-  INTEGER(SIK) :: it,hrs,hr1,hr2,mins,min1,min2,secs,sec1,sec2
-  REAL(SRK) :: t,sfrac
-!
-!hhmmss='mmm:ss.ss'
-!hhmmss='hhh:mm:ss'
+  LOGICAL(SBK) :: force_hours
+  INTEGER(SIK) :: it,hrs,mins
+  REAL(SRK) :: t,secs
+
   IF(PRESENT(tsec)) THEN
     t=tsec
   ELSE
-    t=myTimer%elapsedtime
+    t=this%elapsedtime
   ENDIF
+  force_hours=.FALSE.
+  IF(PRESENT(force_hour)) force_hours=force_hour
 
   it=INT(t,SIK)
   hrs=it/3600_SIK                   ! Total number of hours
-  hr1=hrs/10_SIK                    ! 10's digit of hours
-  hr2=MOD(hrs,10_SIK)               ! 1's digit of hours
-
   mins=(it-hrs*3600_SIK)/60_SIK     ! Total number of minutes
-  min1=mins/10_SIK                  ! 10's digit of minutes
-  min2=MOD(mins,10_SIK)             ! 1's digit of minutes
+  secs=t-REAL(hrs*3600+mins*60_SIK,SRK)
+  IF(secs > 59.995_SRK) THEN
+    mins=mins+1_SIK
+    secs=0.000_SRK
+  ENDIF
+  IF(mins == 60_SIK) THEN
+    hrs=hrs+1_SIK
+    mins=0_SIK
+  ENDIF
 
-  secs=it-hrs*3600_SIK-mins*60_SIK  ! Total number of seconds
-  sec1=secs/10_SIK                  ! 10's digit of seconds
-  sec2=MOD(secs,10_SIK)             ! 1's digit of seconds
-
-  sfrac=t-it
-  ! fraction of whole seconds
-  IF(sfrac > 0.99_SRK) sfrac=0.99_SRK
-
-  IF(hrs > 0_SIK) THEN
-    ! round up to next whole second
-    !IF(sfrac >= half) sec2=sec2+1_SIK
-    IF(sfrac >= half .AND. sec2 < 9) sec2=sec2+1_SIK
-    WRITE(hh_mm_ss,'(i2,i1.1,2(":",2i1.1))') hr1,hr2,min1,min2,sec1,sec2
+  IF(hrs >= 100_SIK) THEN
+    IF(secs < 9.95_SRK) THEN
+      WRITE(hh_mm_ss,'(a,":",a,":0",f3.1)') str(hrs,3),str(mins,2),secs
+    ELSE
+      WRITE(hh_mm_ss,'(a,":",a,":",f4.1)') str(hrs,3),str(mins,2),secs
+    ENDIF
+  ELSEIF(hrs > 0_SIK .OR. force_hours) THEN
+    IF(secs < 9.995_SRK) THEN
+      WRITE(hh_mm_ss,'(a,":",a,":0",f4.2)') str(hrs,2),str(mins,2),secs
+    ELSE
+      WRITE(hh_mm_ss,'(a,":",a,":",f5.2)') str(hrs,2),str(mins,2),secs
+    ENDIF
   ELSE
-    WRITE(hh_mm_ss,'(i2,i1.1,":",2i1.1,f3.2)') min1,min2,sec1,sec2,sfrac
+    IF(secs < 9.995_SRK) THEN
+      WRITE(hh_mm_ss,'(a,":0",f4.2)') str(mins,2),secs
+    ELSE
+      WRITE(hh_mm_ss,'(a,":",f5.2)') str(mins,2),secs
+    ENDIF
   ENDIF
 ENDFUNCTION getTimeHHMMSS
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the %count attribute of a timer
-!> @param myTimer dummy argument of timer to start counting on.
-SUBROUTINE tic(myTimer)
-  CLASS(TimerType),INTENT(INOUT) :: myTimer
+!> @param this dummy argument of timer to start counting on.
+SUBROUTINE tic(this)
+  CLASS(TimerType),INTENT(INOUT) :: this
   INTEGER(SLK) :: count,rate,count_max
 
-  IF(myTimer%HiResTimer) THEN
+  IF(this%HiResTimer) THEN
     CALL SYSTEM_CLOCK(count_hi,rate_hi,count_max_hi)
     count=count_hi
     rate=rate_hi
@@ -455,27 +521,27 @@ SUBROUTINE tic(myTimer)
     rate=rate_lo
     count_max=count_max_lo
   ENDIF
-  IF(myTimer%count2sec < 0.0_SDK) myTimer%count2sec=1._SDK/REAL(rate,SDK)
-  IF(count < myTimer%lastcount) THEN
-    myTimer%clockcycleshift=myTimer%clockcycleshift+count_max
+  IF(this%count2sec < 0.0_SDK) this%count2sec=1._SDK/REAL(rate,SDK)
+  IF(count < this%lastcount) THEN
+    this%clockcycleshift=this%clockcycleshift+count_max
   ENDIF
-  myTimer%lastcount=count
-  myTimer%count=count+myTimer%clockcycleshift
+  this%lastcount=count
+  this%count=count+this%clockcycleshift
 ENDSUBROUTINE tic
 !
 !-------------------------------------------------------------------------------
 !> @brief Stops counting on a specified timer
 !> this time to the total elapsed time of the counter.
-!> @param myTimer dummy argument of timer to stop counting on.
+!> @param this dummy argument of timer to stop counting on.
 !>
 !> This routine must be called after @ref Times::tic "tic" or @ref
 !> Times::ResetTimer "ResetTimer". If it is not, nothing is done.
-SUBROUTINE toc(myTimer)
-  CLASS(TimerType),INTENT(INOUT) :: myTimer
+SUBROUTINE toc(this)
+  CLASS(TimerType),INTENT(INOUT) :: this
   INTEGER(SLK) :: count,rate,count_max
 
-  IF(myTimer%count2sec > 0.0_SDK) THEN
-    IF(myTimer%HiResTimer) THEN
+  IF(this%count2sec > 0.0_SDK) THEN
+    IF(this%HiResTimer) THEN
       CALL SYSTEM_CLOCK(count_hi,rate_hi,count_max_hi)
       count=count_hi
       rate=rate_hi
@@ -486,49 +552,49 @@ SUBROUTINE toc(myTimer)
       rate=rate_lo
       count_max=count_max_lo
     ENDIF
-    IF(count < myTimer%lastcount) THEN
-      myTimer%clockcycleshift=myTimer%clockcycleshift+count_max
+    IF(count < this%lastcount) THEN
+      this%clockcycleshift=this%clockcycleshift+count_max
     ENDIF
-    myTimer%lastcount=count
-    count=count+myTimer%clockcycleshift
-    myTimer%elapsedtime=myTimer%elapsedtime+ &
-        REAL((count-myTimer%count),SDK)*myTimer%count2sec
+    this%lastcount=count
+    count=count+this%clockcycleshift
+    this%elapsedtime=this%elapsedtime+ &
+        REAL((count-this%count),SDK)*this%count2sec
   ENDIF
 ENDSUBROUTINE toc
 !
 !-------------------------------------------------------------------------------
 !> @brief Resets the attributes of a timer.
-!> @param myTimer dummy argument of timer to be reset
+!> @param this dummy argument of timer to be reset
 !>
 !> @ref Times::TimerType::name "%name" is cleared, @ref Times::TimerType::count
 !> "%count" is reset and @ref Times::TimerType::elapsedtime "%elapsedtime" is
 !> set to 0. @ref Times::TimerType::time "%time" and @ref
 !> Times::TimerType::unit "%unit" are set based on %elapsedtime=0
-SUBROUTINE ResetTimer(myTimer)
-  CLASS(TimerType),INTENT(INOUT) :: myTimer
+SUBROUTINE ResetTimer(this)
+  CLASS(TimerType),INTENT(INOUT) :: this
 
-  myTimer%name=''
-  myTimer%elapsedtime=0_SDK
-  myTimer%count2sec=-1_SDK
-  CALL tic(myTimer)
-  CALL SetTimeAndUnits(myTimer)
+  this%name=''
+  this%elapsedtime=0_SDK
+  this%count2sec=-1_SDK
+  CALL tic(this)
+  CALL SetTimeAndUnits(this)
 ENDSUBROUTINE ResetTimer
 !
 !-------------------------------------------------------------------------------
 !> @brief Sets the @ref Times::TimerType::time "%time" and @ref
-!> Times::TimerType::unit "%unit" of timer, @e myTimer
-!> @param myTimer dummy argument of the timer
+!> Times::TimerType::unit "%unit" of timer, @e this
+!> @param this dummy argument of the timer
 !>
 !> This a private routine and is not accessible outisde of the module.
-SUBROUTINE SetTimeAndUnits(myTimer)
+SUBROUTINE SetTimeAndUnits(this)
   REAL(SRK),PARAMETER :: sec2micsec=1.e-6_SRK
   REAL(SRK),PARAMETER :: sec2msec=1.e-3_SRK
-  CLASS(TimerType),INTENT(INOUT) :: myTimer
+  CLASS(TimerType),INTENT(INOUT) :: this
   REAL(SRK) :: t
-  CHARACTER(LEN=9) :: tstring
-  CHARACTER(LEN=9) :: tunit
+  CHARACTER(LEN=MAXLEN_ETIME) :: tstring
+  CHARACTER(LEN=MAXLEN_TIME_UNITS) :: tunit
 
-  t=myTimer%elapsedtime
+  t=this%elapsedtime
   IF(0._SRK <= t .AND. t < sec2msec) THEN
     tunit=' microsec'
     WRITE(tstring,'(f9.3)') t/sec2micsec
@@ -540,10 +606,10 @@ SUBROUTINE SetTimeAndUnits(myTimer)
     WRITE(tstring,'(f9.3)') t
   ELSEIF(100000._SRK <= t) THEN
     tunit=' hh:mm:ss'
-    tstring=getTimeHHMMSS(myTimer)
+    tstring=getTimeHHMMSS(this)
   ENDIF
-  myTimer%time=tstring
-  myTimer%unit=tunit
+  this%time=tstring
+  this%unit=tunit
 ENDSUBROUTINE SetTimeAndUnits
 !
 !-------------------------------------------------------------------------------
@@ -750,5 +816,309 @@ FUNCTION countleapyears(yearstt,monthstt,daystt,yearstp,monthstp,daystp) RESULT(
     ENDIF
   ENDDO
 ENDFUNCTION countleapyears
+!
+!-------------------------------------------------------------------------------
+!> @brief Function returns the timer resolution of the system_clock on the
+!> current machine.
+!>
+!> The timer resolution is given in units of microseconds as a double precision
+!> real value.
+FUNCTION getTimerResolution_Parent(this) RESULT(tres)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  REAL(SDK) :: tres
+  !
+  INTEGER(SIK) :: i
+
+  REQUIRE(ALLOCATED(this%timers))
+  REQUIRE(SIZE(this%timers) > 0)
+
+  DO i=1,SIZE(this%timers)
+    IF(.NOT.this%timers(i)%t%HiResTimer .OR. i == SIZE(this%timers)) THEN
+      tres=this%timers(i)%t%getTimerResolution()
+      EXIT
+    ENDIF
+  ENDDO !i
+
+ENDFUNCTION getTimerResolution_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Function returns the time remaining before the clock counter rolls
+!> over.
+!>
+!> The result is returned as a double precision real.
+FUNCTION getRemainingTime_Parent(this) RESULT(tremain)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  REAL(SDK) :: tremain
+  !
+  CHARACTER(LEN=*),PARAMETER :: myName='getRemainingTime_Parent'
+
+  tremain=0.0_SRK
+  STOP "Function"//myName//" should not be called on a parent timer!"
+
+ENDFUNCTION getRemainingTime_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Set the mode of resolution of a timer @e this
+!> @param this dummy argument of timer to modify the name of
+!> @param resMode the timer resolution mode TRUE=HI-RES, FALSE=LO-RES
+SUBROUTINE setTimerHiResMode_Parent(this,resMode)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  LOGICAL(SBK),INTENT(IN) :: resMode
+  !
+  INTEGER(SIK) :: i
+
+  IF(ALLOCATED(this%timers)) THEN
+    DO i=1,SIZE(this%timers)
+      CALL this%timers(i)%t%setTimerHiResMode(resMode)
+    ENDDO !i
+  ENDIF
+  CALL this%TimerType%setTimerHiResMode(resMode)
+
+ENDSUBROUTINE setTimerHiResMode_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Sets the %count attribute of a timer
+!> @param this dummy argument of timer to start counting on.
+SUBROUTINE tic_Parent(this)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  !
+  CHARACTER(LEN=*),PARAMETER :: myName='tic_Parent'
+
+  STOP "Function "//myName//" should not be called on a parent timer!"
+
+ENDSUBROUTINE tic_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Stops counting on a specified timer
+!> this time to the total elapsed time of the counter.
+!> @param this dummy argument of timer to stop counting on.
+!>
+!> This routine must be called after @ref Times::tic "tic" or @ref
+!> Times::ResetTimer "ResetTimer". If it is not, nothing is done.
+SUBROUTINE toc_Parent(this)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  !
+  INTEGER(SLK) :: i
+
+  REQUIRE(ALLOCATED(this%timers))
+  REQUIRE(SIZE(this%timers) > 0)
+
+  DO i=1,SIZE(this%timers)
+    CALL this%timers(i)%t%toc()
+  ENDDO !i
+  this%elapsedtime=this%getTimeReal()
+
+ENDSUBROUTINE toc_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Function returns the value of @ref Times::TimerType::elapsedtime
+!> "%elapsedtime" as a real type.
+!> @param this input argument, a @ref Times::TimerType "TimerType" variable
+!> @returns time, the elapsed time (REAL type) unit is seconds
+FUNCTION getTimeReal_Parent(this) RESULT(time)
+  CLASS(ParentTimerType),INTENT(IN) :: this
+  REAL(SRK) :: time
+  !
+  INTEGER(SIK) :: i
+
+  REQUIRE(ALLOCATED(this%timers))
+  REQUIRE(SIZE(this%timers) > 0)
+
+  time=0.0_SRK
+  DO i=1,SIZE(this%timers)
+    time=time+this%timers(i)%t%getTimeReal()
+  ENDDO !i
+
+ENDFUNCTION getTimeReal_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Function returns the value of @ref Times::TimerType::elapsedtime
+!> "%elapsedtime" as a string in HHMMSS format.
+!> @param this input argument, a @ref Times::ParentTimerType "ParentTimerType" variable
+!> @param tsec the time to format; optional, defaults to @c this%elapsedtime
+!> @param force_hour logical to force writing hours even if @c tsec is less than 1 hour
+!> @returns hh_mm_ss, the elapsed time as a string
+!>
+!> For times under 1 hour, the string will be formatted MM:SS.dd if @c force_hour is
+!> false, or HH:MM:SS.dd if it is true.  For times greater than or equal to one hour
+!> but less than 100 hours, the time will be formatted HH:MM:SS.dd.  For times greater
+!> than or equal to 100 hours, the time will be formatted HHH:MM:SS.d.  Times of
+!> 1000 hours and greater are not supported.
+!>
+IMPURE ELEMENTAL FUNCTION getTimeHHMMSS_Parent(this,tsec,force_hour) RESULT(hh_mm_ss)
+  CLASS(ParentTimerType),INTENT(IN) :: this
+  REAL(SRK),INTENT(IN),OPTIONAL :: tsec
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: force_hour
+  CHARACTER(LEN=MAXLEN_ETIME) :: hh_mm_ss
+
+  REQUIRE(ALLOCATED(this%timers))
+  REQUIRE(SIZE(this%timers) > 0)
+
+  IF(PRESENT(tsec)) THEN
+    hh_mm_ss=this%TimerType%getTimeHHMMSS(tsec,force_hour)
+  ELSE
+    hh_mm_ss=this%TimerType%getTimeHHMMSS(this%getTimeReal(),force_hour)
+  ENDIF
+
+ENDFUNCTION getTimeHHMMSS_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Resets the attributes of a timer.
+!> @param this dummy argument of timer to be reset
+!>
+!> @ref Times::TimerType::name "%name" is cleared, @ref Times::TimerType::count
+!> "%count" is reset and @ref Times::TimerType::elapsedtime "%elapsedtime" is
+!> set to 0. @ref Times::TimerType::time "%time" and @ref
+!> Times::TimerType::unit "%unit" are set based on %elapsedtime=0
+SUBROUTINE ResetTimer_Parent(this)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  !
+  INTEGER(SIK) :: i
+
+  IF(ALLOCATED(this%timers)) THEN
+    DO i=1,SIZE(this%timers)
+      CALL this%timers(i)%t%resetTimer()
+    ENDDO !i
+  ENDIF
+  CALL this%TimerType%resetTimer()
+
+ENDSUBROUTINE ResetTimer_Parent
+!
+!-------------------------------------------------------------------------------
+!> @brief Clears a @c ParentTimerType object
+!> @param this the object to clear
+!>
+RECURSIVE SUBROUTINE clearParentTimer(this)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  !
+  INTEGER(SIK) :: i
+
+  IF(ALLOCATED(this%timers)) THEN
+    DO i=1,SIZE(this%timers)
+      CALL this%timers(i)%t%ResetTimer()
+      DEALLOCATE(this%timers(i)%t)
+    ENDDO
+    DEALLOCATE(this%timers)
+  ENDIF
+  CALL this%ResetTimer()
+
+ENDSUBROUTINE clearParentTimer
+!
+!-------------------------------------------------------------------------------
+!> @brief Finalization routine to clear a @c ParentTimerType when it goes out of scope
+!> @param this the object to finalize
+RECURSIVE IMPURE SUBROUTINE finalize_parentTimerType(this)
+  TYPE(ParentTimerType),INTENT(INOUT) :: this
+
+  CALL this%clear()
+
+ENDSUBROUTINE finalize_parentTimerType
+!
+!-------------------------------------------------------------------------------
+!> @brief Function to get a sub-timer from a @c ParentTimerType object
+!> @param this the object to query
+!> @param name the name of the sub-timer to retrieve
+!> @returns timer the pointer to the sub-timers
+!>
+!> If there are multiple levels of parent timers, "->" is used as a delimiter.
+!>
+RECURSIVE FUNCTION getTimer(this,name) RESULT(timer)
+  CLASS(ParentTimerType),INTENT(IN) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CLASS(Timertype),POINTER :: timer
+  !
+  INTEGER(SIK) :: i
+  TYPE(StringType) :: timername
+  TYPE(StringType),ALLOCATABLE :: timernames(:)
+
+  timername=name
+  timernames=timername%split('->')
+  DO i=1,SIZE(timernames)
+    timernames(i)=TRIM(ADJUSTL(timernames(i)))
+  ENDDO !i
+
+  timer => NULL()
+  DO i=1,SIZE(this%timers)
+    IF(this%timers(i)%t%getTimerName() == timernames(1)) THEN
+      IF(SIZE(timernames) > 1) THEN
+        SELECTTYPE(timerptr => this%timers(i)%t)
+        TYPE IS(ParentTimerType)
+          timer => timerptr%getTimer(ADJUSTL(timername%substr(INDEX(timername,'->')+2)))
+        TYPE IS(TimerType)
+          WRITE(ERROR_UNIT, *) "Timer "//timernames(1)//" is not a parent timer and cannot match "//name
+          STOP
+        ENDSELECT
+      ELSE
+        timer => this%timers(i)%t
+      ENDIF
+    ENDIF
+  ENDDO !i
+
+ENDFUNCTION getTimer
+!
+!-------------------------------------------------------------------------------
+!> @brief Function to add a sub-timer to a @c ParentTimerType object
+!> @param this the object to add to
+!> @param name the name of the sub-timer to add
+!>
+!> If there are multiple levels of parent timers, "->" is used as a delimiter.
+!>
+RECURSIVE SUBROUTINE addTimer(this,name)
+  CLASS(ParentTimerType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  !
+  INTEGER(SIK) :: i
+  TYPE(StringType) :: timername
+  TYPE(StringType),ALLOCATABLE :: timernames(:)
+  TYPE(TimerPtrArray),ALLOCATABLE :: oldtimers(:)
+
+  IF(.NOT.ALLOCATED(this%timers)) THEN
+    ALLOCATE(this%timers(0))
+  ENDIF
+
+  !See if the timer name matches a parent timer
+  timername=name
+  timernames=timername%split('->')
+  DO i=1,SIZE(timernames)
+    timernames(i)=TRIM(ADJUSTL(timernames(i)))
+  ENDDO !i
+
+  DO i=1,SIZE(this%timers)
+    IF(this%timers(i)%t%getTimerName() == timernames(1)) THEN
+      IF(SIZE(timernames) > 1) THEN
+        SELECTTYPE(timer => this%timers(i)%t)
+        TYPE IS(ParentTimerType)
+          CALL timer%addTimer(ADJUSTL(timername%substr(INDEX(timername,'->')+2)))
+        TYPE IS(TimerType)
+          WRITE(ERROR_UNIT, *) "Cannot add sub-timer "//name//" to non-parent timer "//timernames(1)
+          STOP
+        ENDSELECT
+      ELSE
+        CONTINUE !Just do nothing for now if the timer already exists
+      ENDIF
+      RETURN
+    ENDIF
+  ENDDO !i
+
+  !Set the new timer
+  CALL MOVE_ALLOC(this%timers,oldtimers)
+  ALLOCATE(this%timers(SIZE(oldtimers)+1))
+  DO i=1,SIZE(oldtimers)
+    this%timers(i)%t => oldtimers(i)%t
+  ENDDO
+  IF(SIZE(timernames) > 1) THEN
+    ALLOCATE(ParentTimerType :: this%timers(i)%t)
+    CALL this%timers(i)%t%setTimerHiResMode(this%getTimerHiResMode())
+    SELECTTYPE(timer => this%timers(i)%t); TYPE IS(ParentTimerType)
+      CALL timer%addTimer(ADJUSTL(timername%substr(INDEX(timername,'->')+2)))
+    ENDSELECT
+  ELSE
+    ALLOCATE(this%timers(i)%t)
+    CALL this%timers(i)%t%setTimerHiResMode(this%getTimerHiResMode())
+  ENDIF
+  CALL this%timers(i)%t%setTimerName(CHAR(timernames(1)))
+  DEALLOCATE(oldtimers)
+
+ENDSUBROUTINE addTimer
 !
 ENDMODULE Times

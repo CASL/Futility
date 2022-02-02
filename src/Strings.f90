@@ -349,7 +349,7 @@ PURE FUNCTION partition(this,sep) RESULT(tokens)
   TYPE(StringType) :: tokens(3)
   INTEGER(SIK) :: sepPos
   IF(ALLOCATED(this%s)) THEN
-    sepPos = MERGE(0,INDEX(this%s,sep),sep == '')
+    sepPos = MERGE(0,INDEX(this%s,sep),LEN(sep) == 0_SIK)
     IF(sepPos > 0) THEN
       tokens(1) = this%s(1:sepPos-1)
       tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
@@ -378,7 +378,7 @@ PURE FUNCTION rPartition(this,sep) RESULT(tokens)
   TYPE(StringType) :: tokens(3)
   INTEGER(SIK) :: sepPos
   IF(ALLOCATED(this%s)) THEN
-    sepPos = MERGE(0,INDEX(this%s,sep,.TRUE.),sep == '')
+    sepPos = MERGE(0,INDEX(this%s,sep,.TRUE.),LEN(sep) == 0_SIK)
     IF(sepPos > 0) THEN
       tokens(1) = this%s(1:sepPos-1)
       tokens(3) = this%s(sepPos+LEN(SEP):LEN(this%s))
@@ -576,7 +576,11 @@ FUNCTION replace_pattern(this,oldPat,newPat) RESULT(retStr)
   IF(SIZE(tokens) > 1) THEN
     retStr = ''
   ELSE
-    retStr = char(tokens(1))
+    IF(this == oldPat) THEN
+      retStr=newPat
+    ELSE
+      retStr = char(tokens(1))
+    ENDIF
     RETURN
   ENDIF
 

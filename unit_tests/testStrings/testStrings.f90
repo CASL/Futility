@@ -917,7 +917,20 @@ SUBROUTINE testStrFunct()
   ASSERT_EQ(CHAR(str_list(2)),'---','string with multiple delimter found')
   ASSERT_EQ(CHAR(str_list(3)),'','string with multiple delimter found')
 
+  str = 'abc def ghi'
+  str_list = str%partition(' ')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),' ','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'def ghi','string with multiple delimter found')
+  str_list = str%rPartition(' ')
+  ASSERT_EQ(SIZE(str_list),3,'string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(1)),'abc def','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(2)),' ','string with multiple delimter found')
+  ASSERT_EQ(CHAR(str_list(3)),'ghi','string with multiple delimter found')
+
 ENDSUBROUTINE testStrFunct
+!
 SUBROUTINE testConstructor
   TYPE(StringType) :: test0
   TYPE(StringType),ALLOCATABLE :: test1(:)
