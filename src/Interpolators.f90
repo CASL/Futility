@@ -68,9 +68,15 @@ FUNCTION Interp_1D(labels,table,point) RESULT(Interpolant)
       Interpolant=Interpolant+f(i-i_p+2)*table(i)
     ENDDO
   ELSE !extrapolate
-    DO i=1,N_i
-      Interpolant=Interpolant+f(N_i-i+1)*table(i)
-    ENDDO
+    IF(i_p == 1) THEN
+      DO i=MAX(i_p-1,1),MIN(i_p+1,N_i)
+        Interpolant=Interpolant+f(i_p-i+2)*table(i)
+      ENDDO
+    ELSEIF(i_p == N_i+1) THEN
+      DO i=MAX(i_p-2,1),MIN(i_p,N_i)
+        Interpolant=Interpolant+f(i_p-i)*table(i)
+      ENDDO
+    ENDIF
   ENDIF
 
 ENDFUNCTION Interp_1D
@@ -185,8 +191,11 @@ SUBROUTINE Get_points_and_weights(labels,point,f,i_p,N_i)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
       f(1)=(labels(i_p)-point)/(labels(i_p)-labels(i_p-1))
       f(2)=1.0_SRK-f(1)
-    ELSE
-      f(1)=(point-labels(N_i))/(labels(N_i)-labels(N_i-1))
+    ELSEIF(i_p == 1) THEN
+      f(1)=(point-labels(1))/(labels(2)-labels(1))
+      f(2)=1.0_SRK-f(1)
+    ELSEIF(i_p == N_i+1) THEN
+      f(1)=(point-labels(N_i-1))/(labels(N_i)-labels(N_i-1))
       f(2)=1.0_SRK-f(1)
     ENDIF
   ELSE
@@ -195,8 +204,11 @@ SUBROUTINE Get_points_and_weights(labels,point,f,i_p,N_i)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
       f(1)=(point-labels(i_p))/(labels(i_p-1)-labels(i_p))
       f(2)=1.0_SRK-f(1)
-    ELSE
-      f(1)=(labels(N_i)-point)/(labels(N_i-1)-labels(N_i))
+    ELSEIF(i_p == 1) THEN
+      f(1)=(point-labels(1))/(labels(2)-labels(1))
+      f(2)=1.0_SRK-f(1)
+    ELSEIF(i_p == N_i+1) THEN
+      f(1)=(point-labels(N_i-1))/(labels(N_i)-labels(N_i-1))
       f(2)=1.0_SRK-f(1)
     ENDIF
   ENDIF
