@@ -22,6 +22,7 @@ PUBLIC :: GreatestCommonDivisor
 PUBLIC :: LeastCommonMultiple
 PUBLIC :: ATAN2PI
 PUBLIC :: RotateQtrClockwise
+PUBLIC :: ThirdOrderBickley
 
 INTERFACE LeastCommonMultiple
   MODULE PROCEDURE LeastCommonMultiple_scalar
@@ -245,7 +246,7 @@ ELEMENTAL FUNCTION ATAN2PI(x,y) RESULT(theta)
 ENDFUNCTION ATAN2PI
 !
 !-------------------------------------------------------------------------------
-!> @brief This routine will rotate the input x and y coordinates @nrot number of 
+!> @brief This routine will rotate the input x and y coordinates @nrot number of
 !>        clockwise quarter rotations.
 !> @param x the x-coordinate
 !> @param y the y-coordinate
@@ -253,7 +254,7 @@ ENDFUNCTION ATAN2PI
 !>
 !> @note: Values from [-3,-1] will be handled as well, even though they
 !>        represent counter clockwise rotations. If nrot == 0, no rotations are
-!>        performed. The results of these three rotations were taken from the 
+!>        performed. The results of these three rotations were taken from the
 !>        rotation matrix:
 !>   [cos(theta)  -sin(theta)  *  [x
 !>    sin(theta)   cos(theta)]     y] where theta is degrees, CW.
@@ -278,5 +279,84 @@ ELEMENTAL SUBROUTINE RotateQtrClockwise(x,y,nrot)
     y=tmp
   ENDSELECT
 ENDSUBROUTINE RotateQtrClockwise
+!
+!-------------------------------------------------------------------------------
+!> @brief It calculates third order Bickley function
+!> @param x The argument of the third order Bickley function
+!> @returns y The result of the third order Bickley function
+!>
+PURE FUNCTION ThirdOrderBickley(x) RESULT(y)
+  REAL(SRK),INTENT(IN) :: x
+  REAL(SRK) :: y
+
+  !local variables
+  REAL(SRK) :: xx
+
+  xx=ABS(x)
+  IF(xx < 0.05_SRK) THEN !Most common case
+    y=(0.7266088_SRK*xx-0.9990226_SRK)*xx+0.7853961_SRK
+  ELSEIF(xx > 9.0_SRK) THEN !Second most common case
+    y=0.0_SRK
+  ELSEIF(xx < 0.10_SRK) THEN
+    y=(0.6466375_SRK*xx-0.9912340_SRK)*xx+0.7852024_SRK
+  ELSEIF(xx < 0.15_SRK) THEN
+    y=(0.5856605_SRK*xx-0.9791293_SRK)*xx+0.7845986_SRK
+  ELSEIF(xx < 0.20_SRK) THEN
+    y=(0.5346648_SRK*xx-0.9638914_SRK)*xx+0.7834577_SRK
+  ELSEIF(xx < 0.25_SRK) THEN
+    y=(0.4907827_SRK*xx-0.9463843_SRK)*xx+0.7817094_SRK
+  ELSEIF(xx < 0.30_SRK) THEN
+    y=(0.4521752_SRK*xx-0.9271152_SRK)*xx+0.7793031_SRK
+  ELSEIF(xx < 0.35_SRK) THEN
+    y=(0.4177388_SRK*xx-0.9064822_SRK)*xx+0.7762107_SRK
+  ELSEIF(xx < 0.40_SRK) THEN
+    y=(0.3869945_SRK*xx-0.8849865_SRK)*xx+0.7724519_SRK
+  ELSEIF(xx < 0.45_SRK) THEN
+    y=(0.3590753_SRK*xx-0.8626685_SRK)*xx+0.7679903_SRK
+  ELSEIF(xx < 0.50_SRK) THEN
+    y=(0.3338676_SRK*xx-0.8400133_SRK)*xx+0.7628988_SRK
+  ELSEIF(xx < 0.60_SRK) THEN
+    y=(0.2998569_SRK*xx-0.8054172_SRK)*xx+0.7540982_SRK
+  ELSEIF(xx < 0.70_SRK) THEN
+    y=(0.2609154_SRK*xx-0.7587821_SRK)*xx+0.7401279_SRK
+  ELSEIF(xx < 0.80_SRK) THEN
+    y=(0.2278226_SRK*xx-0.7125290_SRK)*xx+0.7239594_SRK
+  ELSEIF(xx < 0.90_SRK) THEN
+    y=(0.1994999_SRK*xx-0.6672761_SRK)*xx+0.7058777_SRK
+  ELSEIF(xx < 1.00_SRK) THEN
+    y=(0.1751248_SRK*xx-0.6234536_SRK)*xx+0.6861762_SRK
+  ELSEIF(xx < 1.40_SRK) THEN
+    y=((-0.05337485_SRK*xx+0.3203223_SRK)*xx-0.7538355_SRK)*xx+0.7247294_SRK
+  ELSEIF(xx < 1.80_SRK) THEN
+    y=((-0.03146833_SRK*xx+0.2295280_SRK)*xx-0.6279752_SRK)*xx+0.6663720_SRK
+  ELSEIF(xx < 2.20_SRK) THEN
+    y=((-0.01906198_SRK*xx+0.1631667_SRK)*xx-0.5094124_SRK)*xx+0.5956163_SRK
+  ELSEIF(xx < 2.60_SRK) THEN
+    y=((-0.01174752_SRK*xx+0.1152418_SRK)*xx-0.4046007_SRK)*xx+0.5191031_SRK
+  ELSEIF(xx < 3.0_SRK) THEN
+    y=((-0.007328415_SRK*xx+0.08097913_SRK)*xx-0.3159648_SRK)*xx+0.4425954_SRK
+  ELSEIF(xx < 3.40_SRK) THEN
+    y=((-0.004617254_SRK*xx+0.05669960_SRK)*xx-0.2434341_SRK)*xx+0.3703178_SRK
+  ELSEIF(xx < 3.80_SRK) THEN
+    y=(0.007923547_SRK*xx-0.07158569_SRK)*xx+0.1684022_SRK
+  ELSEIF(xx < 4.20_SRK) THEN
+    y=(0.005095111_SRK*xx-0.05016344_SRK)*xx+0.1278307_SRK
+  ELSEIF(xx < 4.60_SRK) THEN
+    y=(0.003286040_SRK*xx-0.03501524_SRK)*xx+0.09611422_SRK
+  ELSEIF(xx < 5.00_SRK) THEN
+    y=(0.002126242_SRK*xx-0.02437465_SRK)*xx+0.07170491_SRK
+  ELSEIF(xx < 5.80_SRK) THEN
+    y=(0.001123687_SRK*xx-0.01425519_SRK)*xx+0.04616317_SRK
+  ELSEIF(xx < 6.60_SRK) THEN
+    y=(4.762937e-4_SRK*xx-6.810124e-3_SRK)*xx+0.02475115_SRK
+  ELSEIF(xx < 7.40_SRK) THEN
+    y=(2.031843e-4_SRK*xx-3.232035e-3_SRK)*xx+0.01302864_SRK
+  ELSEIF(xx < 8.20_SRK) THEN
+    y=(8.701440e-5_SRK*xx-1.524126e-3_SRK)*xx+6.749972e-3_SRK
+  ELSE !Range 8.2 <= xx <= 9.0, but the > 9.0 portion was already handled
+    y=(3.742673e-5_SRK*xx-7.157367e-4_SRK)*xx+3.454768e-3_SRK
+  ENDIF
+
+ENDFUNCTION ThirdOrderBickley
 !
 ENDMODULE ExtendedMath
