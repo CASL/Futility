@@ -103,6 +103,7 @@ TRIBITS_ADD_LIBRARY(Utils
       SchemaParser.f90
       SpeciesElements.f90
       FutilityComputingEnvironment.f90
+      FunctionTableGenerator.f90
       NonLinearSolver.f90
       SolutionAcceleration.f90
       AndersonAcceleration.f90
