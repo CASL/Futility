@@ -20,8 +20,8 @@ INTEGER :: idum1,idum2,idum3,ioerr
 CHARACTER(LEN=1) :: adum1,adum2
 CHARACTER(LEN=5) :: adum3
 CHARACTER(LEN=2) :: adum4
-CHARACTER(LEN=MAXLEN_DATE_STRING) :: adate
-CHARACTER(LEN=MAXLEN_CLOCK_STRING) :: aclock
+TYPE(StringType) :: adate
+TYPE(StringType) :: aclock
 REAL(SRK) :: totalElapsed
 !
 !===============================================================================
@@ -41,35 +41,34 @@ ENDSUBROUTINE runTestTimes
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testTimers()
+  TYPE(StringType),ALLOCATABLE :: tokens(:)
 
   COMPONENT_TEST('getDate()')
   !
   !Test getDate()
   adate=getDate()
-  idum1=0
-  idum2=0
-  idum3=0
-  READ(adate,'(i2,a1,i2,a1,i4)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-  ASSERT_EQ(ioerr,0,'ioerr')
+  tokens=adate%split('/')
+  idum1=tokens(1)%stoi()
+  idum2=tokens(2)%stoi()
+  idum3=tokens(3)%stoi()
   ASSERT_GT(idum1,0,'month')
   ASSERT_LT(idum1,13,'month')
   ASSERT_GT(idum2,0,'day')
   ASSERT_LT(idum2,32,'day')
   ASSERT_GT(idum3,0,'year')
-  ASSERT_EQ(adum1,adum2,'adum')
-  ASSERT_EQ(adum1,'/','adum1')
   INFO(0) 'getDate() = '//getDate()
   ASSERT_EQ(getDate(),getDate(1),'getDate(1)')
 
   idum1=0
   idum2=0
   adate=getDate(2)
-  READ(adate,'(a5,i2,a2,i4)',iostat=ioerr) adum3,idum1,adum4,idum2
-  ASSERT_EQ(ioerr,0,'ioerr')
+  tokens=adate%split(' ')
+  idum1=tokens(2)%stoi(1,2)
+  idum2=tokens(3)%stoi()
   ASSERT_GT(idum1,0,'day')
   ASSERT_LT(idum1,32,'day')
   ASSERT_GT(idum2,0,'year')
-  ASSERT_EQ(adum4(1:1),',','month')
+  ASSERT_EQ(tokens(1)%substr(LEN(tokens(1))),'.','month')
 
   !Test getTimeFromDate
   COMPONENT_TEST('getTimeFromDate')
@@ -90,16 +89,16 @@ SUBROUTINE testTimers()
   idum2=0
   idum3=0
   aclock=getClockTime()
-  READ(aclock,'(i2,a1,i2,a1,i2)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-  ASSERT_EQ(ioerr,0,'ioerr')
+  tokens=aclock%split(':')
+  idum1=tokens(1)%stoi()
+  idum2=tokens(2)%stoi()
+  idum3=tokens(3)%stoi()
   ASSERT_GT(idum1,-1,'hour')
   ASSERT_LT(idum1,24,'hour')
   ASSERT_GT(idum2,-1,'minute')
   ASSERT_LT(idum2,60,'minute')
   ASSERT_GT(idum3,-1,'minute')
   ASSERT_LT(idum3,60,'minute')
-  ASSERT_EQ(adum1,':',':')
-  ASSERT_EQ(adum1,adum2,':')
 
   COMPONENT_TEST('HI-RES TIMER')
   ASSERT_EQ(LEN_TRIM(testTimer%getTimerName()),0,'%getTimerName()')
@@ -107,41 +106,41 @@ SUBROUTINE testTimers()
   ASSERT_EQ(TRIM(testTimer%getTimerName()),'myName','%setTimerName()')
   testTimer%elapsedtime=0.0001_SRK
   ASSERT_EQ(testTimer%getTimeReal(),0.0001_SRK,'%getTimeReal()')
-  ASSERT_EQ(testTimer%getTimeChar(),'  100.000 microsec','%getTimeChar() (us)')
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'00:00.00   ','%getTimeHHMMSS() (us)')
+  ASSERT_EQ(testTimer%getTimeChar(),'100.000 microsec','%getTimeChar() (us)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'00:00.00','%getTimeHHMMSS() (us)')
   testTimer%elapsedtime=0.999_SRK
-  ASSERT_EQ(testTimer%getTimeChar(),'  999.000 ms      ','%getTimeChar() (ms)')
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'00:01.00   ','%getTimeHHMMSS() (ms)')
+  ASSERT_EQ(testTimer%getTimeChar(),'999.000 ms','%getTimeChar() (ms)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'00:01.00   ','%getTimeHHMMSS() (ms)')
   testTimer%elapsedtime=100.637_SRK
-  ASSERT_EQ(testTimer%getTimeChar(),'  100.637 s       ','%getTimeChar() (s)')
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'01:40.64   ','%getTimeHHMMSS() (s)')
+  ASSERT_EQ(testTimer%getTimeChar(),'100.637 s','%getTimeChar() (s)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'01:40.64','%getTimeHHMMSS() (s)')
   testTimer%elapsedtime=100000.6_SRK
   ASSERT_EQ(testTimer%getTimeChar(),'27:46:40.60 hh:mm:ss','%getTimeChar() (hr)')
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'27:46:40.60','%getTimeHHMMSS() (hr)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'27:46:40.60','%getTimeHHMMSS() (hr)')
   testTimer%elapsedtime=3719.6_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'01:01:59.60','%getTimeHHMMSS() (round)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'01:01:59.60','%getTimeHHMMSS() (round)')
   testTimer%elapsedtime=33179.995099046479
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'09:13:00.00','%getTimeHHMMSS() (round)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'09:13:00.00','%getTimeHHMMSS() (round)')
   testTimer%elapsedtime=360000.0_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:00.0','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'100:00:00.00','%getTimeHHMMSS() (long)')
   testTimer%elapsedtime=360000.94_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:00.9','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'100:00:00.94','%getTimeHHMMSS() (long)')
   testTimer%elapsedtime=360000.96_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:01.0','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'100:00:00.96','%getTimeHHMMSS() (long)')
   testTimer%elapsedtime=360009.4_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:09.4','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'100:00:09.40','%getTimeHHMMSS() (long)')
   testTimer%elapsedtime=360009.94_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:09.9','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'100:00:09.94','%getTimeHHMMSS() (long)')
   testTimer%elapsedtime=360009.96_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:00:10.0','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'100:00:09.96','%getTimeHHMMSS() (long)')
   testTimer%elapsedtime=360069.96_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'100:01:10.0','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'100:01:09.96','%getTimeHHMMSS() (long)')
   testTimer%elapsedtime=363669.96_SRK
-  ASSERT_EQ(testTimer%getTimeHHMMSS(),'101:01:10.0','%getTimeHHMMSS() (long)')
+  ASSERT_EQ(CHAR(testTimer%getTimeHHMMSS()),'101:01:09.96','%getTimeHHMMSS() (long)')
   CALL testTimer%ResetTimer()
   ASSERT_EQ(LEN_TRIM(testTimer%getTimername()),0,'name')
   ASSERT_EQ(testTimer%elapsedtime,0._SRK,'elapsedtime')
-  ASSERT_EQ(testTimer%getTimeChar(),'    0.000 microsec','time char')
+  ASSERT_EQ(testTimer%getTimeChar(),'0.000 microsec','time char')
   CALL testTimer%tic()
   CALL sleep(1)
   CALL testTimer%toc()
@@ -164,42 +163,39 @@ SUBROUTINE testTimers()
   CALL testTimer%setTimerHiResMode(.FALSE.)
   ASSERT(.NOT.testTimer%getTimerHiResMode(),'%getTimerHiResMode()')
   adate=testTimer%getDate()
-  idum1=0
-  idum2=0
-  idum3=0
-  READ(adate,'(i2,a1,i2,a1,i4)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-  ASSERT_EQ(ioerr,0,'ioerr')
+  tokens=adate%split('/')
+  idum1=tokens(1)%stoi()
+  idum2=tokens(2)%stoi()
+  idum3=tokens(3)%stoi()
   ASSERT_GT(idum1,0,'month')
   ASSERT_LT(idum1,13,'month')
   ASSERT_GT(idum2,0,'day')
   ASSERT_LT(idum2,32,'day')
   ASSERT_GT(idum3,0,'year')
-  ASSERT_EQ(adum1,adum2,'adum')
-  ASSERT_EQ(adum1,'/','adum1')
   ASSERT_EQ(testTimer%getDate(),testTimer%getDate(1),'%getDate(1)')
   idum1=0
   idum2=0
-  adate=testTimer%getDate(2)
-  READ(adate,'(a5,i2,a2,i4)',iostat=ioerr) adum3,idum1,adum4,idum2
-  ASSERT_EQ(ioerr,0,'ioerr')
+  tokens=adate%split('/')
+  idum1=tokens(1)%stoi()
+  idum2=tokens(2)%stoi()
+  idum3=tokens(3)%stoi()
   ASSERT_GT(idum1,0,'day')
   ASSERT_LT(idum1,32,'day')
   ASSERT(idum2 > 0,'year')
-  ASSERT_EQ(adum4(1:1),',','month')
   idum1=0
   idum2=0
   idum3=0
   aclock=testTimer%getClockTime()
-  READ(aclock,'(i2,a1,i2,a1,i2)',iostat=ioerr) idum1,adum1,idum2,adum2,idum3
-  ASSERT_EQ(ioerr,0,'ioerr')
+  tokens=aclock%split(':')
+  idum1=tokens(1)%stoi()
+  idum2=tokens(2)%stoi()
+  idum3=tokens(3)%stoi()
   ASSERT_GT(idum1,-1,'hour')
   ASSERT_LT(idum1,24,'hour')
   ASSERT_GT(idum2,-1,'minute')
   ASSERT_LT(idum2,60,'minute')
   ASSERT_GT(idum3,-1,'minute')
   ASSERT_LT(idum3,60,'minute')
-  ASSERT_EQ(adum1,':',':')
-  ASSERT_EQ(adum1,adum2,':')
   testTimer%elapsedtime=0.0001_SRK
 
   COMPONENT_TEST('testTimer%getRemainingTime')
