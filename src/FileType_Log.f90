@@ -54,6 +54,7 @@ USE ISO_FORTRAN_ENV
 USE IntrType
 USE ExceptionHandler
 USE Times
+USE Strings
 USE IO_Strings
 USE FileType_Fortran
 IMPLICIT NONE
