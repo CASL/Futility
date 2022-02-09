@@ -70,25 +70,11 @@ PUBLIC :: TimerPtrArray
 PUBLIC :: getDate
 PUBLIC :: getClockTime
 PUBLIC :: getTimeFromDate
-PUBLIC :: MAXLEN_TIME_STRING
-PUBLIC :: MAXLEN_DATE_STRING
-PUBLIC :: MAXLEN_CLOCK_STRING
 PUBLIC :: runTestTimes
 INTERFACE
   MODULE SUBROUTINE runTestTimes()
   ENDSUBROUTINE runTestTimes
 ENDINTERFACE
-
-!> Maximum length of character string for the reported time
-INTEGER(SIK),PARAMETER :: MAXLEN_TIME_STRING=20
-!> Maximum length of character string for the reported date
-INTEGER(SIK),PARAMETER :: MAXLEN_DATE_STRING=13
-!> Maximum length of character string for the elapsed time (private)
-INTEGER(SIK),PARAMETER :: MAXLEN_ETIME=11
-!> Maximum length of character string for the reported clock time
-INTEGER(SIK),PARAMETER :: MAXLEN_CLOCK_STRING=8
-!> Maximum length of the time unit string
-INTEGER(SIK),PARAMETER :: MAXLEN_TIME_UNITS=9
 
 !> @brief Derived Datatype for the Timer data object
 !>
@@ -105,10 +91,10 @@ TYPE :: TimerType
   !> The elapsed time recorded for this timer in seconds.
   REAL(SDK) :: elapsedtime=0_SDK
   !> The time recorded by this timer given as a string.
-  CHARACTER(LEN=MAXLEN_ETIME),PRIVATE :: time=''
+  TYPE(StringType),PRIVATE :: time
   !> The units for the time given in @ref Times::TimerType::time
   !> "%time", also a string.
-  CHARACTER(LEN=MAXLEN_TIME_UNITS),PRIVATE :: unit=''
+  TYPE(StringType),PRIVATE :: unit
   !> indicates if the timer is high resolution
   LOGICAL(SBK),PRIVATE :: HiResTimer=.TRUE.
   !> Convert the processor clock count value to a time in seconds.
@@ -432,9 +418,10 @@ ENDFUNCTION getTimeReal
 !> @returns time output argument, the elapsed time as a string
 FUNCTION getTimeChar(this) RESULT(time)
   CLASS(TimerType),INTENT(INOUT) :: this
-  CHARACTER(LEN=MAXLEN_TIME_STRING) :: time
+  CHARACTER(LEN=:),ALLOCATABLE :: time
 
   CALL SetTimeAndUnits(this)
+  ALLOCATE(CHARACTER(LEN=LEN_TRIM(this%time)+LEN_TRIM(this%unit)) :: time)
   time=TRIM(this%time)//TRIM(this%unit)
 ENDFUNCTION getTimeChar
 !
@@ -452,11 +439,13 @@ ENDFUNCTION getTimeChar
 !> than or equal to 100 hours, the time will be formatted HHH:MM:SS.d.  Times of
 !> 1000 hours and greater are not supported.
 !>
-IMPURE ELEMENTAL FUNCTION getTimeHHMMSS(this,tsec,force_hour) RESULT(hh_mm_ss)
+FUNCTION getTimeHHMMSS(this,tsec,force_hour) RESULT(hh_mm_ss)
   CLASS(TimerType),INTENT(IN) :: this
   REAL(SRK),INTENT(IN),OPTIONAL :: tsec
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: force_hour
-  CHARACTER(LEN=MAXLEN_ETIME) :: hh_mm_ss
+  TYPE(StringType) :: hh_mm_ss
+  !
+  CHARACTER(LEN=8) :: componentTimeString
   LOGICAL(SBK) :: force_hours
   INTEGER(SIK) :: it,hrs,mins
   REAL(SRK) :: t,secs
@@ -482,25 +471,30 @@ IMPURE ELEMENTAL FUNCTION getTimeHHMMSS(this,tsec,force_hour) RESULT(hh_mm_ss)
     mins=0_SIK
   ENDIF
 
-  IF(hrs >= 100_SIK) THEN
-    IF(secs < 9.95_SRK) THEN
-      WRITE(hh_mm_ss,'(a,":",a,":0",f3.1)') str(hrs,3),str(mins,2),secs
-    ELSE
-      WRITE(hh_mm_ss,'(a,":",a,":",f4.1)') str(hrs,3),str(mins,2),secs
-    ENDIF
-  ELSEIF(hrs > 0_SIK .OR. force_hours) THEN
-    IF(secs < 9.995_SRK) THEN
-      WRITE(hh_mm_ss,'(a,":",a,":0",f4.2)') str(hrs,2),str(mins,2),secs
-    ELSE
-      WRITE(hh_mm_ss,'(a,":",a,":",f5.2)') str(hrs,2),str(mins,2),secs
-    ENDIF
+  !Write seconds
+  WRITE(componentTimeString,'(f8.2)') secs; componentTimeString=ADJUSTL(componentTimeString)
+  IF(LEN_TRIM(componentTimeString) == 4) THEN
+    hh_mm_ss='0'//TRIM(componentTimeString)
   ELSE
-    IF(secs < 9.995_SRK) THEN
-      WRITE(hh_mm_ss,'(a,":0",f4.2)') str(mins,2),secs
+    hh_mm_ss=TRIM(componentTimeString)
+  ENDIF
+  !Write minutes
+  WRITE(componentTimeString,'(i8)') mins; componentTimeString=ADJUSTL(componentTimeString)
+  IF(LEN_TRIM(componentTimeString) == 1) THEN
+    hh_mm_ss='0'//TRIM(componentTimeString)//':'//hh_mm_ss
+  ELSE
+    hh_mm_ss=''//TRIM(componentTimeString)//':'//hh_mm_ss
+  ENDIF
+  !Write hours
+  IF(hrs > 0) THEN
+    WRITE(componentTimeString,'(i8)') hrs; componentTimeString=ADJUSTL(componentTimeString)
+    IF(LEN_TRIM(componentTimeString) == 1) THEN
+      hh_mm_ss='0'//TRIM(componentTimeString)//':'//hh_mm_ss
     ELSE
-      WRITE(hh_mm_ss,'(a,":",f5.2)') str(mins,2),secs
+      hh_mm_ss=TRIM(componentTimeString)//':'//hh_mm_ss
     ENDIF
   ENDIF
+
 ENDFUNCTION getTimeHHMMSS
 !
 !-------------------------------------------------------------------------------
@@ -591,25 +585,23 @@ SUBROUTINE SetTimeAndUnits(this)
   REAL(SRK),PARAMETER :: sec2msec=1.e-3_SRK
   CLASS(TimerType),INTENT(INOUT) :: this
   REAL(SRK) :: t
-  CHARACTER(LEN=MAXLEN_ETIME) :: tstring
-  CHARACTER(LEN=MAXLEN_TIME_UNITS) :: tunit
+  CHARACTER(LEN=16) :: tstring
 
   t=this%elapsedtime
   IF(0._SRK <= t .AND. t < sec2msec) THEN
-    tunit=' microsec'
+    this%unit=' microsec'
     WRITE(tstring,'(f9.3)') t/sec2micsec
   ELSEIF(sec2msec <= t .AND. t < 1._SRK) THEN
-    tunit=' ms      '
+    this%unit=' ms      '
     WRITE(tstring,'(f9.3)') t/sec2msec
   ELSEIF(1._SRK <= t .AND. t < 100000._SRK) THEN
-    tunit=' s       '
+    this%unit=' s       '
     WRITE(tstring,'(f9.3)') t
   ELSEIF(100000._SRK <= t) THEN
-    tunit=' hh:mm:ss'
-    tstring=getTimeHHMMSS(this)
+    this%unit=' hh:mm:ss'
+    tstring=CHAR(getTimeHHMMSS(this))
   ENDIF
-  this%time=tstring
-  this%unit=tunit
+  this%time=ADJUSTL(TRIM(tstring))
 ENDSUBROUTINE SetTimeAndUnits
 !
 !-------------------------------------------------------------------------------
@@ -945,11 +937,11 @@ ENDFUNCTION getTimeReal_Parent
 !> than or equal to 100 hours, the time will be formatted HHH:MM:SS.d.  Times of
 !> 1000 hours and greater are not supported.
 !>
-IMPURE ELEMENTAL FUNCTION getTimeHHMMSS_Parent(this,tsec,force_hour) RESULT(hh_mm_ss)
+FUNCTION getTimeHHMMSS_Parent(this,tsec,force_hour) RESULT(hh_mm_ss)
   CLASS(ParentTimerType),INTENT(IN) :: this
   REAL(SRK),INTENT(IN),OPTIONAL :: tsec
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: force_hour
-  CHARACTER(LEN=MAXLEN_ETIME) :: hh_mm_ss
+  TYPE(StringType) :: hh_mm_ss
 
   REQUIRE(ALLOCATED(this%timers))
   REQUIRE(SIZE(this%timers) > 0)
