@@ -20,14 +20,39 @@ MODULE ElementsIsotopes
 USE Futility_DBC
 USE IntrType
 USE ExceptionHandler
+USE Strings
 USE IO_Strings
 IMPLICIT NONE
 PRIVATE
 !
 ! List of public members
-PUBLIC :: eElementsIsotopes
-PUBLIC :: ElementsIsotopesType
 PUBLIC :: getDecayType
+PUBLIC :: isValidIsoName
+PUBLIC :: isValidElemName
+PUBLIC :: isValidIsoMass
+PUBLIC :: getZAID
+PUBLIC :: getZZZAAAI
+PUBLIC :: getIsoName
+PUBLIC :: getElementName
+PUBLIC :: getAtomicNumber
+PUBLIC :: getMassNumber
+PUBLIC :: isMetastable
+PUBLIC :: removeMetastable
+
+INTERFACE getElementName
+  MODULE PROCEDURE :: getElementName_ZAID_Z
+  MODULE PROCEDURE :: getElementName_IsoStr
+ENDINTERFACE getElementName
+
+INTERFACE getAtomicNumber
+  MODULE PROCEDURE :: getAtomicNumber_ZAID
+  MODULE PROCEDURE :: getAtomicNumber_IsoStr_ElemStr
+ENDINTERFACE getAtomicNumber
+
+INTERFACE getMassNumber
+  MODULE PROCEDURE :: getMassNumber_ZAID
+  MODULE PROCEDURE :: getMassNumber_IsoStr
+ENDINTERFACE getMassNumber
 
 INTERFACE getDecayType
   !> @copybrief ElementsIsotopes::getDecayType_ZAID
@@ -37,13 +62,8 @@ INTERFACE getDecayType
 ENDINTERFACE getDecayType
 
 ! List of element names for string matching
-CHARACTER(LEN=2) :: elementlist(99)=(/' H','HE','LI','BE',' B',' C',' N', &
-    ' O',' F','NE','NA','MG','AL','SI',' P',' S','CL','AR',' K','CA','SC','TI', &
-    ' V','CR','MN','FE','CO','NI','CU','ZN','GA','GE','AS','SE','BR','KR','RB', &
-    'SR',' Y','ZR','NB','MO','TC','RU','RH','PD','AG','CD','IN','SN','SB','TE', &
-    ' I','XE','CS','BA','LA','CE','PR','ND','PM','SM','EU','GD','TB','DY','HO', &
-    'ER','TM','YB','LU','HF','TA',' W','RE','OS','IR','PT','AU','HG','TL','PB', &
-    'BI','PO','AT','RN','FR','RA','AC','TH','PA',' U','NP','PU','AM','CM','BK','CF','ES'/)
+TYPE(StringType),ALLOCATABLE :: elementList(:)
+LOGICAL(SBK) :: listIsAlloc=.FALSE.
 
 !> Invalid decay enumeration
 INTEGER(SIK),PARAMETER,PUBLIC :: DECAY_NULL=0
@@ -72,70 +92,34 @@ INTEGER(SIK),PARAMETER,PUBLIC :: VALID_DECAY(N_VALID_DECAY)=(/ &
     DECAY_BETAMINUS_GROUND/)
 
 !> Name of module
-CHARACTER(LEN=*),PARAMETER :: modName='ELEMENTS_ISOTOPES'
+CHARACTER(LEN=*),PARAMETER :: modName='ElementsIsotopes'
 
-!> Type that contains converstion methods between elements and isotopes
-TYPE :: ElementsIsotopesType
-  !> Initialization status (not really needed)
-  LOGICAL(SBK) :: isInit=.FALSE.
-!
-!List of type bound procedures
-  CONTAINS
-    !> @copybrief ElementsIsotopes::init_ElemIso
-    !> @copydetails ElementsIsotopes::init_ElemIso
-    PROCEDURE,PASS :: init => init_ElemIso
-    !> @copybrief ElementsIsotopes::clear_ElemIso
-    !> @copydetails ElementsIsotopes::clear_ElemIso
-    PROCEDURE,PASS :: clear => clear_ElemIso
-    !> @copybrief ElementsIsotopes::isValidIsoName_ElemIso
-    !> @copydetails ElementsIsotopes::isValidIsoName_ElemIso
-    PROCEDURE,PASS :: isValidIsoName => isValidIsoName_ElemIso
-    !> @copybrief ElementsIsotopes::isValidElemName_ElemIso
-    !> @copydetails ElementsIsotopes::isValidElemName_ElemIso
-    PROCEDURE,PASS :: isValidElemName => isValidElemName_ElemIso
-    !> @copybrief ElementsIsotopes::getZAID_ElemIso
-    !> @copydetails ElementsIsotopes::getZAID_ElemIso
-    PROCEDURE,PASS :: getZAID => getZAID_ElemIso
-    !> @copybrief ElementsIsotopes::getZZZAAAI_ElemIso
-    !> @copydetails ElementsIsotopes::getZZZAAAI_ElemIso
-    PROCEDURE,PASS :: getZZZAAAI => getZZZAAAI_ElemIso
-    !> @copybrief ElementsIsotopes::getIsoName_ElemIso
-    !> @copydetails ElementsIsotopes::getIsoName_ElemIso
-    PROCEDURE,PASS :: getIsoName => getIsoName_ElemIso
-    !> @copybrief ElementsIsotopes::getElementName_ZAID_Z
-    !> @copydetails ElementsIsotopes::getElementName_ZAID_Z
-    PROCEDURE,PASS,PRIVATE :: getElementName_ZAID_Z
-    !> @copybrief ElementsIsotopes::getElementName_IsoStr
-    !> @copydetails ElementsIsotopes::getElementName_IsoStr
-    PROCEDURE,PASS,PRIVATE :: getElementName_IsoStr
-    !> Generic method to capture both getElementName methods
-    GENERIC :: getElementName => getElementName_ZAID_Z,getElementName_IsoStr
-    !> @copybrief ElementsIsotopes::getAtomicNumber_ZAID
-    !> @copydetails ElementsIsotopes::getAtomicNumber_ZAID
-    PROCEDURE,PASS,PRIVATE :: getAtomicNumber_ZAID
-    !> @copybrief ElementsIsotopes::getAtomicNumber_IsoStr_ElemStr
-    !> @copydetails ElementsIsotopes::getAtomicNumber_IsoStr_ElemStr
-    PROCEDURE,PASS,PRIVATE :: getAtomicNumber_IsoStr_ElemStr
-    !> Generic method to capture both getAtomicNumber methods
-    GENERIC :: getAtomicNumber => getAtomicNumber_ZAID,getAtomicNumber_IsoStr_ElemStr
-    !> @copybrief ElementsIsotopes::getMassNumber_ZAID
-    !> @copydetails ElementsIsotopes::getMassNumber_ZAID
-    PROCEDURE,PASS,PRIVATE :: getMassNumber_ZAID
-    !> @copybrief ElementsIsotopes::getMassNumber_IsoStr
-    !> @copydetails ElementsIsotopes::getMassNumber_IsoStr
-    PROCEDURE,PASS,PRIVATE :: getMassNumber_IsoStr
-    !> Generic method to capture both getMassNumber methods
-    GENERIC :: getMassNumber => getMassNumber_ZAID,getMassNumber_IsoStr
-    !> @copybrief ElementsIsotopes::isMetastable_ElemIso
-    !> @copydetails ElementsIsotopes::isMetastable_ElemIso
-    PROCEDURE,PASS :: isMetastable => isMetastable_ElemIso
-ENDTYPE ElementsIsotopesType
-
-!> Exception Handler for use in ElementsIsotopes
-TYPE(ExceptionHandlerType),SAVE :: eElementsIsotopes
 !
 !===============================================================================
 CONTAINS
+!
+!-------------------------------------------------------------------------------
+!> @brief Performs allocation of internal list of elements
+!>
+SUBROUTINE setupElementString()
+  INTEGER(SIK) :: i
+
+  IF(.NOT.ALLOCATED(elementList)) THEN
+    ALLOCATE(elementList(99))
+    elementList = [' H','He','Li','Be',' B',' C',' N', &
+        ' O',' F','Ne','Na','Mg','Al','Si',' P',' S','Cl','Ar',' K','Ca','Sc','Ti', &
+        ' V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb', &
+        'Sr',' Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te', &
+        ' I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho', &
+        'Er','Tm','Yb','Lu','Hf','Ta',' W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb', &
+        'Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa',' U','Np','Pu','Am','Cm','Bk','Cf','Es']
+    DO i=1,99
+      elementList(i)=TRIM(ADJUSTL(elementList(i)))
+    ENDDO !i
+    listIsAlloc=.TRUE.
+  ENDIF
+
+ENDSUBROUTINE setupElementString
 !
 !-------------------------------------------------------------------------------
 !> @brief Calculates the type of radioactive decay from one isotope to another
@@ -156,13 +140,11 @@ FUNCTION getDecayType_ZAID(source,product,source_metastable,product_metastable) 
   !
   LOGICAL(SBK) :: lmetasource,lmetaproduct
   INTEGER(SIK) :: sourceZZ,productZZ,sourceAAA,productAAA
-  TYPE(ElementsIsotopesType) :: elemIso
 
   REQUIRE(source > 1000)
   REQUIRE(product > 1000)
 
   reaction=DECAY_NULL
-  CALL elemIso%init()
 
   lmetasource=.FALSE.
   lmetaproduct=.FALSE.
@@ -176,10 +158,10 @@ FUNCTION getDecayType_ZAID(source,product,source_metastable,product_metastable) 
   ENDIF
 
   !Decompose ZAIDs to check for other reaction types
-  sourceZZ=elemIso%getAtomicNumber(source)
-  sourceAAA=elemIso%getMassNumber(source)
-  productZZ=elemIso%getAtomicNumber(product)
-  productAAA=elemIso%getMassNumber(product)
+  sourceZZ=getAtomicNumber(source)
+  sourceAAA=getMassNumber(source)
+  productZZ=getAtomicNumber(product)
+  productAAA=getMassNumber(product)
 
   !Beta+ - Same mass, one less proton
   IF(sourceZZ-1 == productZZ .AND. sourceAAA == productAAA) THEN
@@ -205,284 +187,224 @@ FUNCTION getDecayType_ZAID(source,product,source_metastable,product_metastable) 
 ENDFUNCTION getDecayType_ZAID
 !
 !-------------------------------------------------------------------------------
-!> @brief Constructor for the element and isotope converter
-!> @param this the variable to initialize
-!>
-!> The constructor for the element and isotope converter
-!>
-SUBROUTINE init_ElemIso(this)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
-
-  this%isInit=.TRUE.
-ENDSUBROUTINE init_ElemIso
-!
-!-------------------------------------------------------------------------------
-!> @brief Routine clears the data in ElemIso type variable
-!> @param this the type variable to clear
-!>
-SUBROUTINE clear_ElemIso(this)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
-
-  this%isInit=.FALSE.
-ENDSUBROUTINE clear_ElemIso
-!
-!-------------------------------------------------------------------------------
 !> @brief Routine returns a bool corresponding whether or not the provided
 !>        isoName is a valid isotope name
-!> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!> @returns isValid indicates if the isotope name is valid
 !>
-FUNCTION isValidIsoName_ElemIso(this,isoName) RESULT(isValid)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION isValidIsoName(isoName) RESULT(isValid)
   CHARACTER(LEN=*),INTENT(IN) :: isoName
   LOGICAL(SBK) :: isValid
-  !
-  CHARACTER(LEN=6) :: tmpChar
-  INTEGER(SIK) :: dashloc,Z,A,ioerr
 
+  isValid = (isValidElemName(isoName) .AND. isValidIsoMass(isoName))
 
-  isValid=.FALSE.
-  tmpChar=TRIM(ADJUSTL(isoName))
-  CALL toUpper(tmpChar)
-  IF(this%isMetastable(tmpChar)) tmpChar=tmpChar(1:LEN_TRIM(tmpChar)-1)
-  dashloc=INDEX(tmpChar,"-")
-  IF(dashloc>1) THEN
-    IF(dashloc==2) THEN
-      Z=strarraymatchind(elementlist," "//tmpChar(1:1))
-    ELSE
-      Z=strarraymatchind(elementlist,tmpChar(dashloc-2:dashloc-1))
-    ENDIF
-    IF(Z>0) THEN
-      IF(INDEX(tmpChar(dashloc+1:LEN(tmpChar)),"NAT")>0) THEN
-        isValid=.TRUE.
-      ELSE
-        READ(tmpChar(dashloc+1:LEN(tmpChar)),*,IOSTAT=ioerr) A
-        IF(ioerr == 0) isValid=.TRUE.
-      ENDIF
-    ENDIF
-  ENDIF
-
-ENDFUNCTION isValidIsoName_ElemIso
+ENDFUNCTION isValidIsoName
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns a bool corresponding whether or not the provided
 !>        elemName is a valid element name
-!> @param this the object
 !> @param elemName the name of the element such as "U" or "am"
+!> @returns isValid indicates if the element name is valid
 !>
-FUNCTION isValidElemName_ElemIso(this,elemName) RESULT(isValid)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION isValidElemName(elemName) RESULT(isValid)
   CHARACTER(LEN=*),INTENT(IN) :: elemName
   LOGICAL(SBK) :: isValid
-  !
-  CHARACTER(LEN=2) :: tmpChar
-  INTEGER(SIK) :: Z
 
-  isValid=.FALSE.
-  tmpChar=TRIM(ADJUSTL(elemName))
-  CALL toUpper(tmpChar)
-  Z=strarraymatchind(elementlist,ADJUSTR(tmpChar))
-  IF(Z > 0) THEN
+  IF(.NOT.listIsAlloc) CALL setupElementString()
+
+  isValid=(getAtomicNumber(elemName) > 0)
+
+ENDFUNCTION isValidElemName
+!
+!-------------------------------------------------------------------------------
+!> @brief Indicates if the isotope name has a valid mass number
+!> @param isoName the isotope name
+!>
+!> Searches for `-###` or `-NAT` to see if the mass number is valid
+!>
+FUNCTION isValidIsoMass(isoName) RESULT(isValid)
+  CHARACTER(LEN=*),INTENT(IN) :: isoName
+  LOGICAL(SBK) :: isValid
+  !
+  INTEGER(SIK) :: A,i
+  TYPE(StringType) :: tmpStr
+
+  isValid = .FALSE.
+  A = getMassNumber(isoName)
+  IF(A == 0) THEN
+    tmpStr=TRIM(ADJUSTL(removeMetastable(isoName)))
+    i=INDEX(tmpStr%upper(),'-NAT')
+    IF((i == 2 .OR. i == 3) .AND. i == LEN(tmpStr)-3) isValid=.TRUE.
+  ELSE
     isValid=.TRUE.
   ENDIF
 
-ENDFUNCTION isValidElemName_ElemIso
+ENDFUNCTION isValidIsoMass
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the ZAID based on a specified isotope name
-!> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!> @returns zaid the ZAID of the isotope
 !>
-FUNCTION getZAID_ElemIso(this,isoName) RESULT(zaid)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getZAID(isoName) RESULT(zaid)
   CHARACTER(LEN=*),INTENT(IN) :: isoName
   INTEGER(SIK) :: zaid
   !
-  CHARACTER(LEN=6) :: tmpChar
-  INTEGER(SIK) :: dashloc,Z,A
+  TYPE(Stringtype) :: tmpStr
 
-  REQUIRE(this%isInit)
-  REQUIRE(this%isValidIsoName(isoName))
+  REQUIRE(isValidIsoName(isoName))
+  IF(.NOT.listIsAlloc) CALL setupElementString()
 
-  tmpChar=TRIM(ADJUSTL(isoName))
-  CALL toUpper(tmpChar)
-  IF(this%isMetastable(tmpChar)) tmpChar=tmpChar(1:LEN_TRIM(tmpChar)-1)
-  dashloc=INDEX(tmpChar,"-")
-  IF(dashloc==2) THEN
-    Z=strarraymatchind(elementlist," "//tmpChar(1:1))
-  ELSE
-    Z=strarraymatchind(elementlist,tmpChar(dashloc-2:dashloc-1))
-  ENDIF
-  IF(INDEX(tmpChar(dashloc+1:LEN(tmpChar)),"NAT")>0) THEN
-    A=0
-  ELSE
-    READ(tmpChar(dashloc+1:LEN(tmpChar)),*) A
-  ENDIF
+  tmpStr=TRIM(ADJUSTL(removeMetastable(isoName)))
 
-  zaid=Z*1000+A
-ENDFUNCTION getZAID_ElemIso
+  zaid=getAtomicNumber(isoName)*1000+getMassNumber(isoName)
+ENDFUNCTION getZAID
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the ZZZAAAI based on a specified isotope name
-!> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!> @returns ZZZAAAI the modified ZAID, with I being 1 for metastable, 0 otherwise
 !>
-FUNCTION getZZZAAAI_ElemIso(this,isoName) RESULT(ZZZAAAI)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getZZZAAAI(isoName) RESULT(ZZZAAAI)
   CHARACTER(LEN=*),INTENT(IN) :: isoName
   INTEGER(SIK) :: ZZZAAAI
-  !
-  CHARACTER(LEN=6) :: tmpChar
-  INTEGER(SIK) :: dashloc,Z,A,i
 
-  REQUIRE(this%isInit)
-  REQUIRE(this%isValidIsoName(isoName))
+  REQUIRE(isValidIsoName(isoName))
+  IF(.NOT.listIsAlloc) CALL setupElementString()
 
-  tmpChar=TRIM(ADJUSTL(isoName))
-  CALL toUpper(tmpChar)
-  IF(this%isMetastable(tmpChar)) THEN
-    i=1
-    tmpChar=tmpChar(1:LEN_TRIM(tmpChar)-1)
-  ELSE
-    i=0
-  ENDIF
-  dashloc=INDEX(tmpChar,"-")
-  IF(dashloc==2) THEN
-    Z=strarraymatchind(elementlist," "//tmpChar(1:1))
-  ELSE
-    Z=strarraymatchind(elementlist,tmpChar(dashloc-2:dashloc-1))
-  ENDIF
-  IF(INDEX(tmpChar(dashloc+1:LEN(tmpChar)),"NAT")>0) THEN
-    A=0
-  ELSE
-    READ(tmpChar(dashloc+1:LEN(tmpChar)),*) A
-  ENDIF
+  ZZZAAAI=getZAID(isoName)*10+MERGE(1,0,isMetastable(isoName))
 
-  ZZZAAAI=Z*10000+A*10+i
-ENDFUNCTION getZZZAAAI_ElemIso
+ENDFUNCTION getZZZAAAI
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the isotope name based on user specified ZAID
-!> @param this the object
 !> @param zaid the integer representation of the atomic number and mass number: Z*1000+A
+!> @returns isoName the isotope name
 !>
-FUNCTION getIsoName_ElemIso(this,zaid) RESULT(isoName)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getIsoName(zaid) RESULT(isoName)
   INTEGER(SIK),INTENT(IN) :: zaid
   CHARACTER(LEN=6) :: isoName
   !
-  CHARACTER(LEN=3) :: massName
   INTEGER(SIK) :: Z,A
+  TYPE(StringType) :: massName
 
-  REQUIRE(this%isInit)
   REQUIRE(zaid>=1000)
+  IF(.NOT.listIsAlloc) CALL setupElementString()
 
-  Z=this%getAtomicNumber(zaid)
-  A=this%getMassNumber(zaid)
+  Z=getAtomicNumber(zaid)
+  A=getMassNumber(zaid)
   IF(A==0) THEN
     massName="NAT"
   ELSE
-    WRITE(massName,"(i3)") A
+    massName=str(A)
   ENDIF
-  IF(Z > SIZE(elementlist)) THEN
-    isoName=TRIM(ADJUSTL(str(Z)//'-'//ADJUSTL(massName)))
+  IF(Z > SIZE(elementList)) THEN
+    isoName=str(Z)//'-'//massName
   ELSE
-    isoName=TRIM(ADJUSTL(elementlist(Z)//"-"//ADJUSTL(massName)))
+    isoName=elementList(Z)//"-"//massName
   ENDIF
-ENDFUNCTION getIsoName_ElemIso
+
+ENDFUNCTION getIsoName
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the element name based on specified atomic number or ZAID
-!> @param this the object
 !> @param id the zaid or the atomic number
+!> @returns elemName the element name
 !>
-FUNCTION getElementName_ZAID_Z(this,id) RESULT(elemName)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getElementName_ZAID_Z(id) RESULT(elemName)
   INTEGER(SIK),INTENT(IN) :: id
   CHARACTER(LEN=2) :: elemName
 
-  REQUIRE(this%isInit)
   REQUIRE(id>0)
+  IF(.NOT.listIsAlloc) CALL setupElementString()
 
-  IF(id>SIZE(elementlist)) THEN
-    elemName=TRIM(ADJUSTL(elementlist(this%getAtomicNumber(id))))
+  IF(id>SIZE(elementList)) THEN
+    elemName=CHAR(elementList(getAtomicNumber(id)))
   ELSE
-    elemName=TRIM(ADJUSTL(elementlist(id)))
+    elemName=CHAR(elementList(id))
   ENDIF
+
 ENDFUNCTION getElementName_ZAID_Z
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the element name based on specified isotope name
-!> @param this the object
 !> @param name the name of the element or isotope such as "U" or "am-242m"
+!> @returns elemName the element name
 !>
-FUNCTION getElementName_IsoStr(this,name) RESULT(elemName)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getElementName_IsoStr(name) RESULT(elemName)
   CHARACTER(LEN=*),INTENT(IN) :: name
-  CHARACTER(LEN=2) :: elemName
+  CHARACTER(LEN=:),ALLOCATABLE :: elemName
   !
   INTEGER(SIK) :: dashloc
+  TYPE(StringType) :: tmpStr,tmpStr2
 
-  REQUIRE(this%isInit)
-  REQUIRE(this%isValidIsoName(name) .OR. this%isValidElemName(name))
+  REQUIRE(isValidIsoName(name) .OR. isValidElemName(name))
 
   dashloc=INDEX(name,'-')
   IF(dashloc==0) dashloc=LEN(name)+1
-  elemName=TRIM(ADJUSTL(name(1:dashloc-1)))
-  CALL toUpper(elemName)
+  tmpStr=TRIM(ADJUSTL(name(1:dashloc-1)))
+  tmpStr=tmpStr%upper()
+  ALLOCATE(CHARACTER(LEN=LEN(tmpSTr)) :: elemName)
+  IF(LEN(tmpStr) == 2) THEN
+    tmpStr2=tmpStr%substr(2,2)
+    tmpStr=tmpStr%subStr(1,1)//tmpStr2%lower()
+  ENDIF
+  elemName=CHAR(tmpStr)
 ENDFUNCTION getElementName_IsoStr
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns atomic number based on ZAID
-!> @param this the object
 !> @param zaid the integer representation of the atomic number and mass number: Z*1000+A
+!> @returns Z the atomic number
 !>
-FUNCTION getAtomicNumber_ZAID(this,zaid) RESULT(Z)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getAtomicNumber_ZAID(zaid) RESULT(Z)
   INTEGER(SIK),INTENT(IN) :: zaid
   INTEGER(SIK) :: Z
 
-  REQUIRE(this%isInit)
   REQUIRE(zaid>=1000)
 
   Z=ZAID/1000
+
 ENDFUNCTION getAtomicNumber_ZAID
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the atomic number based on element or isotope name
-!> @param this the object
 !> @param name the name of the element or isotope such as "Xe" or "U-235"
+!> @returns Z the atomic number
 !>
-FUNCTION getAtomicNumber_IsoStr_ElemStr(this,name) RESULT(Z)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getAtomicNumber_IsoStr_ElemStr(name) RESULT(Z)
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SIK) :: Z
   !
-  CHARACTER(LEN=2) ::Elem
+  INTEGER(SIK) :: i
+  TYPE(StringType) :: elem
 
-  REQUIRE(this%isInit)
+  IF(.NOT.listIsAlloc) CALL setupElementString()
 
-  IF(INDEX(name,'-')>0) THEN
-    Z=this%getAtomicNumber(this%getZAID(name))
-  ELSE
-    Elem=name
-    CALL toUpper(Elem)
-    IF(LEN_TRIM(Elem) == 1) Elem=" "//TRIM(Elem)
-    Z=strarraymatchind(elementlist,Elem)
+  elem=TRIM(ADJUSTL(name))
+  i=INDEX(elem,'-')
+  IF(i > 0) THEN
+    elem=elem%substr(1,i-1)
   ENDIF
+  Z=-1
+  DO i=1,SIZE(elementList)
+    IF(elem%upper() == elementList(i)%upper()) THEN
+      Z=i
+      EXIT
+    ENDIF
+  ENDDO !i
+
 ENDFUNCTION getAtomicNumber_IsoStr_ElemStr
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the mass number based on ZAID
-!> @param this the object
 !> @param zaid the integer representation of the atomic number and mass number: Z*1000+A
+!> @returns A the mass number
 !>
-FUNCTION getMassNumber_ZAID(this,zaid) RESULT(A)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getMassNumber_ZAID(zaid) RESULT(A)
   INTEGER(SIK),INTENT(IN) :: zaid
   INTEGER(SIK) :: A
 
-  REQUIRE(this%isInit)
   REQUIRE(zaid>=1000)
 
   A=MOD(zaid,1000)
@@ -490,38 +412,65 @@ ENDFUNCTION getMassNumber_ZAID
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns the mass number based on element or isotope name
-!> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!> @returns A the mass number
 !>
-FUNCTION getMassNumber_IsoStr(this,isoName) RESULT(A)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION getMassNumber_IsoStr(isoName) RESULT(A)
   CHARACTER(LEN=*),INTENT(IN) :: isoName
   INTEGER(SIK) :: A
+  !
+  INTEGER(SIK) :: i
+  TYPE(StringType) :: elem
 
-  REQUIRE(this%isInit)
 
-  A=this%getMassNumber(this%getZAID(isoName))
+  A=0
+  elem=TRIM(ADJUSTL(removeMetastable(isoName)))
+  i=INDEX(elem,'-')
+  IF(i > 0) THEN
+    elem=elem%substr(i+1)
+    IF(elem%isInteger()) THEN
+      A=elem%stoi()
+    ENDIF
+  ENDIF
+
 ENDFUNCTION getMassNumber_IsoStr
 !
 !-------------------------------------------------------------------------------
 !> @brief Routine returns logical if specified isotope name is for a metastable isotope
-!> @param this the object
 !> @param isoName the name of the isotope such as "U-235" or "am-242m"
+!> @param isMeta logical indicating if the isotope is metastable or not
 !>
-FUNCTION isMetastable_ElemIso(this,isoName) RESULT(isMeta)
-  CLASS(ElementsIsotopesType),INTENT(INOUT) :: this
+FUNCTION isMetastable(isoName) RESULT(isMeta)
   CHARACTER(LEN=*),INTENT(IN) :: isoName
   LOGICAL(SBK) :: isMeta
   !
-  CHARACTER(LEN=7) :: tmpchar
+  TYPE(StringType) :: tmpStr
 
-  REQUIRE(this%isInit)
 
-  tmpchar=TRIM(isoName)
-  CALL toUpper(tmpchar)
+  tmpStr=TRIM(ADJUSTL(isoName))
+  tmpStr=tmpStr%upper()
 
-  isMeta=(tmpchar(LEN_TRIM(tmpchar):LEN_TRIM(tmpchar))=='M')
+  isMeta=(INDEX(tmpStr,'-') > 0 .AND. tmpStr%substr(LEN(tmpStr)) == 'M')
 
-ENDFUNCTION isMetastable_ElemIso
+ENDFUNCTION isMetastable
+!
+!-------------------------------------------------------------------------------
+!> @brief Removes the "m" from a metastable isotope's string
+!> @param isoName the isotope name to modify
+!> @returns newName the modified isotope name
+!>
+!> If the isotope is not a metastable isotope, nothing is done
+!>
+FUNCTION removeMetastable(isoName) RESULT(newName)
+  CHARACTER(LEN=*),INTENT(IN) :: isoName
+  CHARACTER(LEN=:),ALLOCATABLE :: newName
+
+  IF(isMetastable(isoname)) THEN
+    newName=isoName(1:LEN_TRIM(isoName)-1)
+  ELSE
+    newName=isoName
+  ENDIF
+
+ENDFUNCTION removeMetastable
 !
 ENDMODULE ElementsIsotopes

@@ -41,9 +41,7 @@ FUNCTION SpeciesElements_getElementArray(formula) RESULT(eleArray)
   REAL(SRK) :: coeff
   CHARACTER(LEN=1) :: letter, nextLetter
   CHARACTER(LEN=2) :: element
-  TYPE(ElementsIsotopesType) :: myEI
 
-  CALL myEI%init()
   eleArray = 0.0
 
   DO i=1, LEN(formula)
@@ -72,7 +70,7 @@ FUNCTION SpeciesElements_getElementArray(formula) RESULT(eleArray)
         coeff = letter
      END IF
      ! Gets the atomic number
-     Z = myEI%getAtomicNumber(element)
+     Z = getAtomicNumber(element)
      ! Sets the coeff in the array
      eleArray(Z) = coeff
   END DO

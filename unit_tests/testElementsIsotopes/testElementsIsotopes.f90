@@ -11,15 +11,13 @@ PROGRAM testElementsIsotopes
 USE ISO_FORTRAN_ENV
 USE UnitTest
 USE IntrType
+USE Strings
 USE ElementsIsotopes
 
 IMPLICIT NONE
 
-TYPE(ElementsIsotopesType) :: myEI
-
 CREATE_TEST("ElementsIsotopes")
 
-REGISTER_SUBTEST('Initialize',testInit)
 REGISTER_SUBTEST('isValidIsoName',testIsValidIsoName)
 REGISTER_SUBTEST('isValidElemName',testIsValidElemName)
 REGISTER_SUBTEST('getZAID',testGetZAID)
@@ -28,7 +26,6 @@ REGISTER_SUBTEST('getElementName',testGetElementName)
 REGISTER_SUBTEST('getAtomicNumber',testGetAtomicNumber)
 REGISTER_SUBTEST('getMassNumber',testGetMassNumber)
 REGISTER_SUBTEST('isMetastable',testisMetastable)
-REGISTER_SUBTEST('Clear',testClear)
 
 REGISTER_SUBTEST('getDecayType_ZAID',testGetDecayType_ZAID)
 
@@ -79,104 +76,90 @@ SUBROUTINE testGetDecayType_ZAID()
 ENDSUBROUTINE testGetDecayType_ZAID
 !
 !-------------------------------------------------------------------------------
-SUBROUTINE testInit()
-
-  CALL myEI%init()
-  ASSERT(myEI%isInit,'isInit')
-ENDSUBROUTINE testInit
-!
-!-------------------------------------------------------------------------------
-SUBROUTINE testClear()
-
-  CALL myEI%clear()
-  ASSERT(.NOT. myEI%isInit,'isInit')
-ENDSUBROUTINE testClear
-!
-!-------------------------------------------------------------------------------
 SUBROUTINE testIsValidIsoName()
-  ASSERT(myEI%isValidIsoName('H-2'),'H-2')
-  ASSERT(myEI%isValidIsoName(' H-2'),' H-2')
-  ASSERT(myEI%isValidIsoName('AG-110m'),'AG-110m')
-  ASSERT(myEI%isValidIsoName('f-18m'),'f-18m')
-  ASSERT(myEI%isValidIsoName(' f-18m'),' f-18m')
-  ASSERT(myEI%isValidIsoName('B-NAT'),'B-NAT')
-  ASSERT(.NOT. myEI%isValidIsoName('BadName'),'Bad Name')
-  ASSERT(.NOT. myEI%isValidIsoName('H2'),'Missing Hyphen')
-  ASSERT(.NOT. myEI%isValidIsoName('-H2'),'Wrong Hyphen')
-  ASSERT(.NOT. myEI%isValidIsoName('ZZ-42'),'Bad Element')
-  ASSERT(.NOT. myEI%isValidIsoName('B-EN'),'Bad Mass Number')
+  ASSERT(isValidIsoName('H-2'),'H-2')
+  ASSERT(isValidIsoName(' H-2'),' H-2')
+  ASSERT(isValidIsoName('AG-110m'),'AG-110m')
+  ASSERT(isValidIsoName('f-18m'),'f-18m')
+  ASSERT(isValidIsoName(' f-18m'),' f-18m')
+  ASSERT(isValidIsoName('B-NAT'),'B-NAT')
+  ASSERT(.NOT. isValidIsoName('BadName'),'Bad Name')
+  ASSERT(.NOT. isValidIsoName('H2'),'Missing Hyphen')
+  ASSERT(.NOT. isValidIsoName('-H2'),'Wrong Hyphen')
+  ASSERT(.NOT. isValidIsoName('ZZ-42'),'Bad Element')
+  ASSERT(.NOT. isValidIsoName('B-EN'),'Bad Mass Number')
 ENDSUBROUTINE testIsValidIsoName
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testIsValidElemName()
-  ASSERT(myEI%isValidElemName('H'),'H')
-  ASSERT(myEI%isValidElemName(' H'),' H')
-  ASSERT(myEI%isValidElemName(' H '),' H ')
-  ASSERT(myEI%isValidElemName('H '),'H ')
-  ASSERT(myEI%isValidElemName('He'),'He')
-  ASSERT(myEI%isValidElemName(' He'),' He')
-  ASSERT(myEI%isValidElemName(' He '),' He ')
-  ASSERT(myEI%isValidElemName('He '),'He ')
-  ASSERT(.NOT.myEI%isValidElemName('Z'),'Bad Name')
-  ASSERT(.NOT.myEI%isValidElemName('Z-12'),'Isotope, not element')
+  ASSERT(isValidElemName('H'),'H')
+  ASSERT(isValidElemName(' H'),' H')
+  ASSERT(isValidElemName(' H '),' H ')
+  ASSERT(isValidElemName('H '),'H ')
+  ASSERT(isValidElemName('He'),'He')
+  ASSERT(isValidElemName(' He'),' He')
+  ASSERT(isValidElemName(' He '),' He ')
+  ASSERT(isValidElemName('He '),'He ')
+  ASSERT(.NOT.isValidElemName('Z'),'Bad Name')
+  ASSERT(.NOT.isValidElemName('Z-12'),'Isotope, not element')
 ENDSUBROUTINE testIsValidElemName
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testGetZAID()
-  ASSERT_EQ(myEI%getZAID('H-2'),1002,'H-2')
-  ASSERT_EQ(myEI%getZAID(' H-2'),1002,' H-2')
-  ASSERT_EQ(myEI%getZAID('AG-110m'),47110,'AG-110m')
-  ASSERT_EQ(myEI%getZAID('f-18m'),9018,'f-18m')
-  ASSERT_EQ(myEI%getZAID(' f-18m'),9018,' f-18m')
-  ASSERT_EQ(myEI%getZAID('B-NAT'),5000,'B-NAT')
+  ASSERT_EQ(getZAID('H-2'),1002,'H-2')
+  ASSERT_EQ(getZAID(' H-2'),1002,' H-2')
+  ASSERT_EQ(getZAID('AG-110m'),47110,'AG-110m')
+  ASSERT_EQ(getZAID('f-18m'),9018,'f-18m')
+  ASSERT_EQ(getZAID(' f-18m'),9018,' f-18m')
+  ASSERT_EQ(getZAID('B-NAT'),5000,'B-NAT')
 ENDSUBROUTINE testGetZAID
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testGetIsotopeName()
-  ASSERT_EQ(myEI%getIsoName(1002),'H-2','1002')
-  ASSERT_EQ(myEI%getIsoName(47710),'AG-710','47710')
-  ASSERT_EQ(myEI%getIsoName(5000),'B-NAT','5000')
+  ASSERT_EQ(getIsoName(1002),'H-2','1002')
+  ASSERT_EQ(getIsoName(47710),'Ag-710','47710')
+  ASSERT_EQ(getIsoName(5000),'B-NAT','5000')
 ENDSUBROUTINE testGetIsotopeName
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testGetElementName()
-  ASSERT_EQ(myEI%getElementName(1002),'H','1002')
-  ASSERT_EQ(myEI%getElementName(47710),'AG','47710')
+  ASSERT_EQ(getElementName(1002),'H','1002')
+  ASSERT_EQ(getElementName(47710),'Ag','47710')
 
-  ASSERT_EQ(myEI%getElementName(1),'H','1')
-  ASSERT_EQ(myEI%getElementName(47),'AG','47')
+  ASSERT_EQ(getElementName(1),'H','1')
+  ASSERT_EQ(getElementName(47),'Ag','47')
 
-  ASSERT_EQ(myEI%getElementName('U-235'),'U','U-235')
-  ASSERT_EQ(myEI%getElementName('xe-135m'),'XE','xe-135m')
+  ASSERT_EQ(getElementName('U-235'),'U','U-235')
+  ASSERT_EQ(getElementName('xe-135m'),'Xe','xe-135m')
 ENDSUBROUTINE testGetElementName
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testGetAtomicNumber()
-  ASSERT_EQ(myEI%getAtomicNumber(1002),1,'1002')
-  ASSERT_EQ(myEI%getAtomicNumber(47710),47,'47710')
+  ASSERT_EQ(getAtomicNumber(1002),1,'1002')
+  ASSERT_EQ(getAtomicNumber(47710),47,'47710')
 
-  ASSERT_EQ(myEI%getAtomicNumber('U  '),92,'U')
-  ASSERT_EQ(myEI%getAtomicNumber('pu'),94,'pu')
+  ASSERT_EQ(getAtomicNumber('U  '),92,'U')
+  ASSERT_EQ(getAtomicNumber('pu'),94,'pu')
 
-  ASSERT_EQ(myEI%getAtomicNumber('U-235'),92,'U-235')
-  ASSERT_EQ(myEI%getAtomicNumber('F-18m'),9,'F-18m')
+  ASSERT_EQ(getAtomicNumber('U-235'),92,'U-235')
+  ASSERT_EQ(getAtomicNumber('F-18m'),9,'F-18m')
 ENDSUBROUTINE testGetAtomicNumber
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testGetMassNumber()
-  ASSERT_EQ(myEI%getMassNumber(1002),2,'1002')
-  ASSERT_EQ(myEI%getMassNumber(47710),710,'47710')
+  ASSERT_EQ(getMassNumber(1002),2,'1002')
+  ASSERT_EQ(getMassNumber(47710),710,'47710')
 
-  ASSERT_EQ(myEI%getMassNumber('U-235'),235,'U-235')
-  ASSERT_EQ(myEI%getMassNumber('F-18m'),18,'F-18m')
+  ASSERT_EQ(getMassNumber('U-235'),235,'U-235')
+  ASSERT_EQ(getMassNumber('F-18m'),18,'F-18m')
 ENDSUBROUTINE testGetMassNumber
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testisMetastable()
-  ASSERT(.NOT. myEI%isMetastable('U-235'),'U-235')
-  ASSERT(myEI%isMetastable('Am-242m'),'Am-242m')
-  ASSERT(myEI%isMetastable('Am-242M'),'Am-242M')
-  ASSERT(myEI%isMetastable('f-18m'),'f-18m')
+  ASSERT(.NOT. isMetastable('U-235'),'U-235')
+  ASSERT(isMetastable('Am-242m'),'Am-242m')
+  ASSERT(isMetastable('Am-242M'),'Am-242M')
+  ASSERT(isMetastable('f-18m'),'f-18m')
 ENDSUBROUTINE testisMetastable
 !
 ENDPROGRAM testElementsIsotopes
