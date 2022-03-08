@@ -47,25 +47,27 @@ CONTAINS
 !> @param table contains data to be interpolated between defined at points
 !>        given in labels
 !> @param point point at which interpolation needs to be done to return a value
+!> @param lextrap logical indicating if extrapolation should be performed if called for
 !> @returns Interpolant interpolated data found through linear interpolation to the point point
-FUNCTION Interp_1D(labels,table,point) RESULT(Interpolant)
+FUNCTION Interp_1D(labels,table,point,lextrap) RESULT(Interpolant)
   REAL(SRK),INTENT(IN) :: labels(:)
   REAL(SRK),INTENT(IN) :: table(:)
   REAL(SRK),INTENT(IN) :: point
-  REAL(SRK) :: Interpolant,f(2)
-  INTEGER(SIK) :: i,N_i,i_p
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: lextrap
+  REAL(SRK) :: Interpolant,f(2),t(2)
+  LOGICAL(SBK) :: canExtrapolate
 
   REQUIRE(SIZE(labels) > 1)
   REQUIRE(SIZE(labels) == SIZE(table))
   REQUIRE(isStrictlyIncDec(labels))
 
-  CALL Get_points_and_weights(labels,point,f,i_p,N_i)
-
-  !Get interpolated value
-  Interpolant=0.0_SRK
-  DO i=MAX(i_p-1,1),MIN(i_p,N_i)
-    Interpolant=Interpolant+f(i-i_p+2)*table(i)
-  ENDDO
+  canExtrapolate=.FALSE.
+  IF(PRESENT(lextrap)) THEN
+    canExtrapolate=lextrap
+  ENDIF
+  
+  CALL Get_points_and_weights(labels,table,point,f,t,canExtrapolate)
+  Interpolant=f(1)*t(1)+f(2)*t(2)
 
 ENDFUNCTION Interp_1D
 !
@@ -77,14 +79,17 @@ ENDFUNCTION Interp_1D
 !> @param table contains data to be interpolated between defined at points
 !>        given in labels1 and labels2
 !> @param point point at which interpolation needs to be done to return a value
+!> @param lextrap logical indicating if extrapolation should be performed if called for
 !> @returns Interpolant interpolated data found through linear interpolation to the point point
-FUNCTION Interp_2D(labels1,labels2,table,point) RESULT(Interpolant)
+FUNCTION Interp_2D(labels1,labels2,table,point,lextrap) RESULT(Interpolant)
   REAL(SRK),INTENT(IN) :: labels1(:)
   REAL(SRK),INTENT(IN) :: labels2(:)
   REAL(SRK),INTENT(IN) :: table(:,:)
   REAL(SRK),INTENT(IN) :: point(:)
-  REAL(SRK) :: Interpolant,f1(2),f2(2)
-  INTEGER(SIK) :: i,j,N_i,N_j,i_p,j_p
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: lextrap
+  REAL(SRK) :: Interpolant,f(2),t(2),Interp1D(2)
+  INTEGER(SIK) :: j,i_p(2),j_p(2)
+  LOGICAL(SBK) :: canExtrapolate
 
   REQUIRE(SIZE(labels1) > 1)
   REQUIRE(SIZE(labels2) > 1)
@@ -93,16 +98,21 @@ FUNCTION Interp_2D(labels1,labels2,table,point) RESULT(Interpolant)
   REQUIRE(isStrictlyIncDec(labels1))
   REQUIRE(isStrictlyIncDec(labels2))
 
-  CALL Get_points_and_weights(labels1,point(1),f1,i_p,N_i)
-  CALL Get_points_and_weights(labels2,point(2),f2,j_p,N_j)
-
-  !Get interpolated value
-  Interpolant=0.0_SRK
-  DO j=MAX(j_p-1,1),MIN(j_p,N_j)
-    DO i=MAX(i_p-1,1),MIN(i_p,N_i)
-      Interpolant=Interpolant+f1(i-i_p+2)*f2(j-j_p+2)*table(i,j)
-    ENDDO
+  canExtrapolate=.FALSE.
+  IF(PRESENT(lextrap)) THEN
+    canExtrapolate=lextrap
+  ENDIF
+  !Get interval in labels around the point
+  CALL Get_interval(labels1,point(1),i_p)
+  CALL Get_interval(labels2,point(2),j_p)
+  !Interpolate w.r.t labels 1
+  DO j=1,2
+    CALL Get_points_and_weights(labels1,table(:,j_p(j)),point(1),f,t,canExtrapolate)
+    Interp1D(j)=f(1)*t(1)+f(2)*t(2)
   ENDDO
+  !Interpolate w.r.t labels 2
+  CALL Get_points_and_weights(labels2(j_p(1):j_p(2)),Interp1D,point(2),f,t,canExtrapolate)
+  Interpolant=f(1)*t(1)+f(2)*t(2)
 
 ENDFUNCTION Interp_2D
 !
@@ -115,16 +125,19 @@ ENDFUNCTION Interp_2D
 !> @param table contains data to be interpolated between defined at points
 !>        given in labels1, labels2, and labels 3
 !> @param point point at which interpolation needs to be done to return a value
+!> @param lextrap logical indicating if extrapolation should be performed if called for
 !> @returns Interpolant interpolated data found through linear interpolation to the point point
 !>
-FUNCTION Interp_3D(labels1,labels2,labels3,table,point) RESULT(Interpolant)
+FUNCTION Interp_3D(labels1,labels2,labels3,table,point,lextrap) RESULT(Interpolant)
   REAL(SRK),INTENT(IN) :: labels1(:)
   REAL(SRK),INTENT(IN) :: labels2(:)
   REAL(SRK),INTENT(IN) :: labels3(:)
   REAL(SRK),INTENT(IN) :: table(:,:,:)
   REAL(SRK),INTENT(IN) :: point(:)
-  REAL(SRK) :: Interpolant,f1(2),f2(2),f3(2)
-  INTEGER(SIK) :: i,j,k,N_i,N_j,N_k,i_p,j_p,k_p
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: lextrap
+  REAL(SRK) :: Interpolant,f(2),t(2),Interp2D(2,2),Interp1D(2)
+  INTEGER(SIK) :: j,k,i_p(2),j_p(2),k_p(2)
+  LOGICAL(SBK) :: canExtrapolate
 
   REQUIRE(SIZE(labels1) > 1)
   REQUIRE(SIZE(labels2) > 1)
@@ -136,40 +149,57 @@ FUNCTION Interp_3D(labels1,labels2,labels3,table,point) RESULT(Interpolant)
   REQUIRE(isStrictlyIncDec(labels2))
   REQUIRE(isStrictlyIncDec(labels3))
 
-  CALL Get_points_and_weights(labels1,point(1),f1,i_p,N_i)
-  CALL Get_points_and_weights(labels2,point(2),f2,j_p,N_j)
-  CALL Get_points_and_weights(labels3,point(3),f3,k_p,N_k)
-
-  !Get interpolated value
-  Interpolant=0.0_SRK
-  DO k=MAX(k_p-1,1),MIN(k_p,N_k)
-    DO j=MAX(j_p-1,1),MIN(j_p,N_j)
-      DO i=MAX(i_p-1,1),MIN(i_p,N_i)
-        Interpolant=Interpolant+f1(i-i_p+2)*f2(j-j_p+2)*f3(k-k_p+2)*table(i,j,k)
-      ENDDO
+  canExtrapolate=.FALSE.
+  IF(PRESENT(lextrap)) THEN
+    canExtrapolate=lextrap
+  ENDIF
+  !Get interval in labels around the point
+  CALL Get_interval(labels1,point(1),i_p)
+  CALL Get_interval(labels2,point(2),j_p)
+  CALL Get_interval(labels3,point(3),k_p)
+  !Interpolate w.r.t labels 1
+  DO k=1,2
+    DO j=1,2
+      CALL Get_points_and_weights(labels1,table(:,j_p(j),k_p(k)),point(1),f,t,canExtrapolate)
+      Interp2D(j,k)=f(1)*t(1)+f(2)*t(2)
     ENDDO
   ENDDO
+  !Interpolate w.r.t labels 2
+  DO k=1,2
+    CALL Get_points_and_weights(labels2(j_p(1):j_p(2)),Interp2D(:,k),point(2),f,t,canExtrapolate)
+    Interp1D(k)=f(1)*t(1)+f(2)*t(2)
+  ENDDO
+  !Interpolate w.r.t labels 3
+  CALL Get_points_and_weights(labels3(k_p(1):k_p(2)),Interp1D,point(3),f,t,canExtrapolate)
+  Interpolant=f(1)*t(1)+f(2)*t(2)
 
 ENDFUNCTION Interp_3D
 !
 !-------------------------------------------------------------------------------
 !> @brief This routine takes a 1D array of table labels (the points along a single
 !>        dimension at which table entries are defined) and the interpolation point
-!>        coordinate along that dimension and returns the index of the label entry
-!>        directly ahead of that point along with the weights of that point and the
-!>        preceeding point.
+!>        coordinate along that dimension and returns the weights and table
+!>        values for linear interpolation
 !> @param labels axis labels at which data points in table are defined
+!> @param table  the 1-D table that contains values associated with labels
 !> @param point point at which interpolation needs to be done to return a value
 !> @param f weights associated with the points on either side of point
-!> @param i_p index of data point directly ahead of the interpolation point in labels
-!> @param N_i number of entries of labels
+!> @param t table associated with the table values on either side of point
+!> @param lextrap logical to perform extrapolation if neccessary
 !>
-SUBROUTINE Get_points_and_weights(labels,point,f,i_p,N_i)
-  REAL(SRK),INTENT(IN) :: labels(:)
+SUBROUTINE Get_points_and_weights(labels,table,point,f,t,lextrap)
+  REAL(SRK),INTENT(IN) :: labels(:),table(:)
   REAL(SRK),INTENT(IN) :: point
-  REAL(SRK),INTENT(OUT) :: f(2)
-  INTEGER(SIK),INTENT(OUT) :: i_p,N_i
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: lextrap
+  REAL(SRK),INTENT(OUT) :: f(2),t(2)
+  INTEGER(SIK) :: i_p,N_i
+  LOGICAL(SBK) :: canExtrapolate
   N_i=SIZE(labels)
+
+  canExtrapolate=.FALSE.
+  IF(PRESENT(lextrap)) THEN
+    canExtrapolate=lextrap
+  ENDIF
 
   !Determine labels index(s) and weights
   f(:)=1.0_SRK
@@ -178,16 +208,62 @@ SUBROUTINE Get_points_and_weights(labels,point,f,i_p,N_i)
     i_p=getFirstGreater(labels,point)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
       f(1)=(labels(i_p)-point)/(labels(i_p)-labels(i_p-1))
-      f(2)=1.0_SRK-f(1)
+      t(1)=table(i_p-1)
+      t(2)=table(i_p)
+    ELSEIF(i_p == 1) THEN
+      t(1)=table(1)
+      t(2)=table(2)
+      IF(canExtrapolate) f(1)=(labels(2)-point)/(labels(2)-labels(1))
+    ELSEIF(i_p == N_i+1) THEN
+      t(1)=table(N_i)
+      t(2)=table(N_i-1)
+      IF(canExtrapolate) f(1)=(point-labels(N_i-1))/(labels(N_i)-labels(N_i-1))
     ENDIF
+    f(2)=1.0_SRK-f(1)
   ELSE
     !Descending order
     i_p=getFirstGreaterEqual(labels,point)
     IF(i_p > 1 .AND. i_p < N_i+1) THEN
-      f(1)=(point-labels(i_p))/(labels(i_p-1)-labels(i_p))
-      f(2)=1.0_SRK-f(1)
+      t(1)=table(i_p-1)
+      t(2)=table(i_p)
+      f(2)=(labels(i_p-1)-point)/(labels(i_p-1)-labels(i_p))
+    ELSEIF(i_p == 1) THEN
+      t(1)=table(2)
+      t(2)=table(1)
+      IF(canExtrapolate) f(2)=(labels(2)-point)/(labels(2)-labels(1))
+    ELSEIF(i_p == N_i+1) THEN
+      t(1)=table(N_i-1)
+      t(2)=table(N_i)
+      IF(canExtrapolate) f(2)=(point-labels(N_i-1))/(labels(N_i)-labels(N_i-1))
     ENDIF
+    f(1)=1.0_SRK-f(2)
   ENDIF
 ENDSUBROUTINE Get_points_and_weights
+!
+!-------------------------------------------------------------------------------
+!> @brief This routine gets the interval in labels that contains point.
+!>        If the point lays outside of labels then the closest interval
+!>        in labels is returned.
+!> @param labels axis labels at which data points in table are defined
+!> @param point point at which interpolation needs to be done to return a value
+!> @param i_p index of the interval around point in labels
+!>
+SUBROUTINE  Get_interval(labels,point,i_p)
+  REAL(SRK),INTENT(IN) :: labels(:)
+  REAL(SRK),INTENT(IN) :: point
+  INTEGER(SIK),INTENT(OUT) :: i_p(2)
+
+  IF(labels(1) < labels(2)) THEN
+    !Ascending order
+    i_p(2)=getFirstGreater(labels,point)
+  ELSE
+    !Descending order
+    i_p(2)=getFirstGreaterEqual(labels,point)
+  ENDIF
+  IF(i_p(2) == 1) i_p(2)=i_p(2)+1
+  IF(i_p(2) > SIZE(labels)) i_p(2)=i_p(2)-1
+  i_p(1)=i_p(2)-1
+ 
+ENDSUBROUTINE Get_interval
 !
 ENDMODULE InterpolatorsModule

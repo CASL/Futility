@@ -47,6 +47,13 @@ SUBROUTINE test1DInterp()
   Interpolant=Interp(label1,table_1D,3.6_SRK)
   ASSERT_SOFTEQ(Interpolant,75.0_SRK,1e-14_SRK,'Incorrect Interpolant')
 
+  COMPONENT_TEST('1D Asc. Extrapolate')
+  Interpolant=Interp(label1,table_1D,0.4_SRK,.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,34.0_SRK,1e-14_SRK,'Incorrect Low Extrapolant')
+  Interpolant=Interp(label1,table_1D,3.6_SRK,.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,90.0_SRK,1e-14_SRK,'Incorrect High Extrapolant')
+
+
   COMPONENT_TEST('Asc. Bullseye')
   Interpolant=Interp(label1,table_1D,2.0_SRK)
   ASSERT_SOFTEQ(Interpolant,50.0_SRK,1e-14_SRK,'Incorrect Interpolant')
@@ -66,6 +73,12 @@ SUBROUTINE test1DInterp()
   ASSERT_SOFTEQ(Interpolant,40.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,table_1D,3.6_SRK)
   ASSERT_SOFTEQ(Interpolant,75.0_SRK,1e-14_SRK,'Incorrect Interpolant')
+
+  COMPONENT_TEST('1D Des. Extrapolate')
+  Interpolant=Interp(label1,table_1D,0.4_SRK,.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,34.0_SRK,1e-14_SRK,'Incorrect Low Extrapolant')
+  Interpolant=Interp(label1,table_1D,3.6_SRK,.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,90.0_SRK,1e-14_SRK,'Incorrect High Extrapolant')
 
   COMPONENT_TEST('Des. Bullseye')
   Interpolant=Interp(label1,table_1D,2.0_SRK)
@@ -104,6 +117,20 @@ SUBROUTINE test2DInterp()
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,3.5_SRK])
   ASSERT_SOFTEQ(Interpolant,106.0_SRK,1e-14_SRK,'Incorrect Interpolant')
 
+  COMPONENT_TEST('2D Asc. Extrapolation')
+  Interpolant=Interp(label1,label2,table_2D,[0.5_SRK,2.4_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,68.0_SRK,1e-13_SRK,'Incorrect Low i Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[3.5_SRK,2.4_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,107.0_SRK,1e-14_SRK,'Incorrect High i Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,0.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,33.0_SRK,1e-14_SRK,'Incorrect Low j Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,3.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,123.0_SRK,1e-14_SRK,'Incorrect High j Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[0.5_SRK,0.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,27.5_SRK,1e-14_SRK,'Incorrect Low i Low j Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[3.5_SRK,3.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,140.0_SRK,1e-14_SRK,'Incorrect High i High j Extrapolant')
+
   COMPONENT_TEST('2D Des. In Range')
   label1(1)=3.0_SRK
   label1(2)=2.0_SRK
@@ -132,6 +159,20 @@ SUBROUTINE test2DInterp()
   ASSERT_SOFTEQ(Interpolant,46.0_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,3.5_SRK])
   ASSERT_SOFTEQ(Interpolant,106.0_SRK,1e-14_SRK,'Incorrect Interpolant')
+
+  COMPONENT_TEST('2D Des. Extrapolation')
+  Interpolant=Interp(label1,label2,table_2D,[0.5_SRK,2.4_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,68.0_SRK,1e-13_SRK,'Incorrect Low i Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[3.5_SRK,2.4_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,107.0_SRK,1e-14_SRK,'Incorrect High i Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,0.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,33.0_SRK,1e-14_SRK,'Incorrect Low j Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[1.6_SRK,3.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,123.0_SRK,1e-14_SRK,'Incorrect High j Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[0.5_SRK,0.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,27.5_SRK,1e-14_SRK,'Incorrect Low i Low j Extrapolant')
+  Interpolant=Interp(label1,label2,table_2D,[3.5_SRK,3.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,140.0_SRK,1e-14_SRK,'Incorrect High i High j Extrapolant')
 
 ENDSUBROUTINE test2DInterp
 
@@ -191,6 +232,12 @@ SUBROUTINE test3DInterp()
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,3.5_SRK])
   ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
 
+  COMPONENT_TEST('3D Asc. Extrapolate')
+  Interpolant=Interp(label1,label2,label3,table_3D,[0.5_SRK,0.5_SRK,0.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,27.5_SRK,1e-14_SRK,'Incorrect Low i Low j Low k Extrapolant')
+  Interpolant=Interp(label1,label2,label3,table_3D,[3.5_SRK,3.5_SRK,3.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,140.0_SRK,1e-14_SRK,'Incorrect High i High j High k Extrapolant')
+
   COMPONENT_TEST('3D Des. In Range')
   label1(1)=3.0_SRK
   label1(2)=2.0_SRK
@@ -244,6 +291,12 @@ SUBROUTINE test3DInterp()
   ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
   Interpolant=Interp(label1,label2,label3,table_3D,[1.6_SRK,2.4_SRK,3.5_SRK])
   ASSERT_SOFTEQ(Interpolant,85.6_SRK,1e-14_SRK,'Incorrect Interpolant')
+
+  COMPONENT_TEST('3D Des. Extrapolate')
+  Interpolant=Interp(label1,label2,label3,table_3D,[0.5_SRK,0.5_SRK,0.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,27.5_SRK,1e-14_SRK,'Incorrect Low i Low j Low k Extrapolant')
+  Interpolant=Interp(label1,label2,label3,table_3D,[3.5_SRK,3.5_SRK,3.5_SRK],.TRUE.)
+  ASSERT_SOFTEQ(Interpolant,140.0_SRK,1e-14_SRK,'Incorrect High i High j High k Extrapolant')
 
 ENDSUBROUTINE test3DInterp
 

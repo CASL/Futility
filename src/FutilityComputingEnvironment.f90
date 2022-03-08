@@ -444,7 +444,6 @@ ENDSUBROUTINE clearSubCompEnvs
 SUBROUTINE addExceptionHandlerSurrogates(ce)
   USE Allocs, ONLY : eAllocs
   USE EigenvalueSolverTypes, ONLY : eEigenvalueSolverType
-  USE ElementsIsotopes, ONLY : eElementsIsotopes
   USE ExpTables, ONLY : eExpTable
   USE FMU_Wrapper, ONLY : eFMU_Wrapper
   USE IAPWSWaterPropertiesModule, ONLY : eWaterProp
@@ -464,7 +463,6 @@ SUBROUTINE addExceptionHandlerSurrogates(ce)
 
   CALL eAllocs%addSurrogate(ce)
   CALL eEigenvalueSolverType%addSurrogate(ce)
-  CALL eElementsIsotopes%addSurrogate(ce)
   CALL eMeshTransfer%addSurrogate(ce)
   CALL eExpTable%addSurrogate(ce)
   CALL eFMU_Wrapper%addSurrogate(ce)
