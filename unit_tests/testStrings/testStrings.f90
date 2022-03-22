@@ -946,7 +946,7 @@ SUBROUTINE testConstructor
   ASSERT_EQ(CHAR(test1(1)),'test 1','array(1)')
   ASSERT_EQ(CHAR(test1(2)),'test 2','array(2)')
   ASSERT_EQ(CHAR(test1(3)),'test 3','array(3)')
-  
+
 ENDSUBROUTINE testConstructor
 !
 ENDPROGRAM testStrings
