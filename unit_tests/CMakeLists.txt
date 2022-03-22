@@ -18,6 +18,7 @@ SET(UNIT_TEST_NAMES
     testDBC
     testUnitTest
     testIntrType
+    testHash
     testIAPWSWaterProperties
     testWaterSatProperties
     testArrayUtils

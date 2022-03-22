@@ -44,7 +44,6 @@ REGISTER_SUBTEST('%getMCB',testGetMCB)
 REGISTER_SUBTEST('%combineGraph',testCombine)
 REGISTER_SUBTEST('%TriangulateVerts',testTriangulate)
 REGISTER_SUBTEST('OPERATOR(==)',testIsEqual)
-!REGISTER_SUBTEST('OPERATOR(+)',testAddition)
 FINALIZE_TEST()
 
 CREATE_TEST('TEST Directed Acyclic Graph')
@@ -2659,55 +2658,6 @@ SUBROUTINE symEdgeCheck()
     ENDDO
   ENDDO
 ENDSUBROUTINE symEdgeCheck
-!!
-!!-------------------------------------------------------------------------------
-!    SUBROUTINE testAddition()
-!      LOGICAL(SBK) :: bool
-!      INTEGER(SIK) :: i
-!      REAL(SRK) :: testCoord(2,9),c0(2),r
-!      TYPE(GraphType) :: testGraph2,testGraph3,testGraph4
-!
-!      !Test graph1
-!      testCoord(:,1)=(/0.0_SRK,0.0_SRK/)
-!      testCoord(:,2)=(/0.0_SRK,1.0_SRK/)
-!      testCoord(:,3)=(/1.0_SRK,0.0_SRK/)
-!      testCoord(:,4)=(/1.0_SRK,1.0_SRK/)
-!      testCoord(:,5)=(/2.0_SRK,0.0_SRK/)
-!      testCoord(:,6)=(/2.0_SRK,1.0_SRK/)
-!      testCoord(:,7)=(/2.0_SRK,2.0_SRK/)
-!      DO i=1,4
-!        CALL testGraph%insertVertex(testCoord(:,i))
-!      ENDDO
-!      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,2))
-!      CALL testGraph%defineEdge(testCoord(:,1),testCoord(:,3))
-!      CALL testGraph%defineEdge(testCoord(:,3),testCoord(:,4))
-!      CALL testGraph%defineEdge(testCoord(:,4),testCoord(:,2))
-!      !test graph2
-!      CALL testGraph2%insertVertex(testCoord(:,1))
-!      CALL testGraph2%insertVertex(testCoord(:,5))
-!      CALL testGraph2%insertVertex(testCoord(:,6))
-!      CALL testGraph2%insertVertex(testCoord(:,7))
-!      CALL testGraph2%defineEdge(testCoord(:,7),testCoord(:,8))
-!      CALL testGraph2%defineEdge(testCoord(:,5),testCoord(:,6))
-!      CALL testGraph2%defineEdge(testCoord(:,6),testCoord(:,7))
-!      !Test graph4
-!      DO i=1,4
-!        CALL testGraph4%insertVertex(testCoord(:,i))
-!      ENDDO
-!      CALL testGraph4%insertVertex(testCoord(:,5))
-!      CALL testGraph4%insertVertex(testCoord(:,6))
-!      CALL testGraph4%insertVertex(testCoord(:,7))
-!      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,2))
-!      CALL testGraph4%defineEdge(testCoord(:,1),testCoord(:,3))
-!      CALL testGraph4%defineEdge(testCoord(:,3),testCoord(:,4))
-!      CALL testGraph4%defineEdge(testCoord(:,4),testCoord(:,2))
-!      CALL testGraph4%defineEdge(testCoord(:,7),testCoord(:,1))
-!      CALL testGraph4%defineEdge(testCoord(:,5),testCoord(:,6))
-!      CALL testGraph4%defineEdge(testCoord(:,6),testCoord(:,7))
-!
-!      testGraph3=testGraph+testGraph2
-!      ASSERT(testGraph3 == testGraph4,'addition')
-!    ENDSUBROUTINE testAddition
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testDAGUninit()
@@ -2730,17 +2680,15 @@ SUBROUTINE testDAGInit()
   INTEGER(SIK),ALLOCATABLE :: nodes(:)
 
   CALL testDAGraph%init(0,nodes)
-  CALL testDAGUninit()
-
-  CALL testDAGraph%init(5,nodes)
-  CALL testDAGUninit()
+  ASSERT_EQ(testDAGraph%n,0,'%n')
+  ASSERT(ALLOCATED(testDAGraph%nodes),'%nodes')
+  ASSERT_EQ(SIZE(testDAGraph%nodes),0,'SIZE %nodes')
+  ASSERT(ALLOCATED(testDAGraph%edgeMatrix),'%edgeMatrix')
+  ASSERT_EQ(SIZE(testDAGraph%edgeMatrix),0,'SIZE %edgeMatrix')
+  CALL testDAGraph%clear()
 
   ALLOCATE(nodes(5))
   nodes(1)=2; nodes(2)=3; nodes(3)=4; nodes(4)=5; nodes(5)=6
-
-  CALL testDAGraph%init(4,nodes)
-  CALL testDAGUninit()
-
   CALL testDAGraph%init(5,nodes)
 
   ASSERT_EQ(testDAGraph%n,5,'%n')
@@ -2923,12 +2871,16 @@ ENDSUBROUTINE testDAGgetNextStartNode
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testDAGKATS()
+  INTEGER(SIK) :: i
   INTEGER(SIK),ALLOCATABLE :: nodes(:)
 
+  CALL testDAGraph%clear()
+  CALL testDAGraph%init(0,nodes)
   ALLOCATE(nodes(8))
   nodes=(/10,9,2,8,11,3,5,7/)
-  CALL testDAGraph%clear()
-  CALL testDAGraph%init(8,nodes)
+  DO i=1,8
+    CALL testDAGraph%insertNode(nodes(i),i)
+  ENDDO !i
   CALL testDAGraph%defineEdge(3,8)
   CALL testDAGraph%defineEdge(3,10)
   CALL testDAGraph%defineEdge(5,11)
@@ -2941,6 +2893,7 @@ SUBROUTINE testDAGKATS()
 
   CALL testDAGraph%KATS()
   ASSERT(ALL(testDAGraph%nodes == (/2,9,10,11,8,7,5,3/)),'%sorted')
+  FINFO() testDAGraph%nodes
   DEALLOCATE(nodes)
 
 ENDSUBROUTINE testDAGKATS
