@@ -128,7 +128,7 @@ TYPE :: ParamType
   !> Set through input arguments
   TYPE(StringType),PRIVATE :: name
   !> The hash of the uppercase version of @c %name
-  INTEGER(SIK) :: upperNameHash=0_SIK
+  INTEGER(SLK) :: upperNameHash=0_SLK
   !> @brief The data type for the parameter
   !>
   !> Set internally.
@@ -2146,7 +2146,7 @@ SUBROUTINE getSubParam_List(thisParam,addr,param)
   CLASS(ParamType),POINTER,INTENT(INOUT) :: param
 
   INTEGER(SIK) :: i,istt
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: aParam,nextParam,tmpPtr
 
   CALL get_hash_list(CHAR(addr),hashes)
@@ -2283,7 +2283,7 @@ ENDSUBROUTINE getSubParams
 !>
 SUBROUTINE get_hash_list(name,hashes)
   CHARACTER(LEN=*),INTENT(IN) :: name
-  INTEGER(SIK),ALLOCATABLE,INTENT(OUT) :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE,INTENT(OUT) :: hashes(:)
   !
   INTEGER(SIK) :: i
   TYPE(StringType) :: strname
@@ -2327,7 +2327,7 @@ SUBROUTINE get_ParamType(thisParam,name,val)
   CHARACTER(LEN=*),INTENT(IN) :: name
   CLASS(ParamType),POINTER,INTENT(INOUT) :: val
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
   CALL thisParam%getParam_hash(hashes,val)
@@ -2357,7 +2357,7 @@ ENDSUBROUTINE get_ParamType
 RECURSIVE SUBROUTINE get_ParamType_hash(thisParam,hashes,param)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_hash'
   CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
-  INTEGER(SIK),INTENT(IN) :: hashes(:)
+  INTEGER(SLK),INTENT(IN) :: hashes(:)
   CLASS(ParamType),POINTER,INTENT(INOUT) :: param
   !
   INTEGER(SIK) :: i
@@ -2457,7 +2457,8 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
   !
   LOGICAL(SBK),SAVE :: lsubListSearch=.TRUE.
   TYPE(StringType) :: thisname,nextname,listName
-  INTEGER(SIK) :: ipos,i,np,hash,listhash
+  INTEGER(SIK) :: ipos,i,np
+  INTEGER(SLK) :: hash,listhash
   TYPE(ParamType),ALLOCATABLE :: tmpList(:)
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -2521,8 +2522,11 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
           !...just this list
           DO i=1,np
             listName=''
-            IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                listhash=thisParam%pList(i)%pdat%upperNameHash
+            IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+              listhash=thisParam%pList(i)%pdat%upperNameHash
+            ELSE
+              listhash=0_SLK
+            ENDIF
             IF(listhash == hash) THEN
               tmpParam => thisParam%pList(i)%pdat
               EXIT
@@ -2576,8 +2580,11 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
         NULLIFY(tmpParam)
         DO i=1,np
           listName=''
-          IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-              listhash=thisParam%pList(i)%pdat%upperNameHash
+          IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+            listhash=thisParam%pList(i)%pdat%upperNameHash
+          ELSE
+            listhash=0_SLK
+          ENDIF
           IF(hash == listhash) THEN
             tmpParam => thisParam%pList(i)%pdat
             EXIT
@@ -2635,7 +2642,8 @@ RECURSIVE SUBROUTINE remove_ParamType(thisParam,name)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   CHARACTER(LEN=LEN(name)) :: thisname,nextname
-  INTEGER(SIK) :: i,ipos,np,npnew,hash
+  INTEGER(SIK) :: i,ipos,np,npnew
+  INTEGER(SLK) :: hash
   TYPE(ParamType),ALLOCATABLE :: tmpList(:)
 
   ipos=INDEX(name,'->')
@@ -3445,7 +3453,7 @@ FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
   CHARACTER(LEN=*),INTENT(IN) :: name
   LOGICAL(SBK) :: hasname
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: listContainer
   CLASS(ParamType),POINTER :: tmpParam => NULL()
 
@@ -6019,7 +6027,7 @@ SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description,addMissing)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   INTEGER(SIK) :: np,i
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   LOGICAL(SBK) :: lAddMissing
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -6108,7 +6116,7 @@ SUBROUTINE get_ParamType_List(thisParam,name,paramlist)
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(ParamType),INTENT(INOUT) :: paramlist(:)
   INTEGER(SIK) :: i,np
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -6187,7 +6195,7 @@ SUBROUTINE add_ParamType_List(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -6340,7 +6348,7 @@ SUBROUTINE set_ParamType_SSK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -6398,7 +6406,7 @@ SUBROUTINE get_ParamType_SSK(thisParam,name,val,default)
   REAL(SSK),INTENT(INOUT) :: val
   REAL(SRK),INTENT(IN),OPTIONAL :: default
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -6460,7 +6468,7 @@ SUBROUTINE add_ParamType_SSK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -6613,7 +6621,7 @@ SUBROUTINE set_ParamType_SDK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -6671,7 +6679,7 @@ SUBROUTINE get_ParamType_SDK(thisParam,name,val,default)
   REAL(SDK),INTENT(INOUT) :: val
   REAL(SDK),INTENT(IN),OPTIONAL :: default
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -6733,7 +6741,7 @@ SUBROUTINE add_ParamType_SDK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -6885,7 +6893,7 @@ SUBROUTINE set_ParamType_SNK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -6943,7 +6951,7 @@ SUBROUTINE get_ParamType_SNK(thisParam,name,val,default)
   INTEGER(SNK),INTENT(INOUT) :: val
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -7005,7 +7013,7 @@ SUBROUTINE add_ParamType_SNK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -7154,7 +7162,7 @@ SUBROUTINE set_ParamType_SLK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -7212,7 +7220,7 @@ SUBROUTINE get_ParamType_SLK(thisParam,name,val,default)
   INTEGER(SLK),INTENT(INOUT) :: val
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -7274,7 +7282,7 @@ SUBROUTINE add_ParamType_SLK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -7423,7 +7431,7 @@ SUBROUTINE set_ParamType_SBK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -7481,7 +7489,7 @@ SUBROUTINE get_ParamType_SBK(thisParam,name,val,default)
   LOGICAL(SBK),INTENT(INOUT) :: val
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: default
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -7543,7 +7551,7 @@ SUBROUTINE add_ParamType_SBK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -7685,7 +7693,7 @@ SUBROUTINE set_ParamType_STR(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -7743,7 +7751,7 @@ SUBROUTINE get_ParamType_STR(thisParam,name,val,default)
   TYPE(StringType),INTENT(INOUT) :: val
   TYPE(StringType),INTENT(IN),OPTIONAL :: default
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -7822,7 +7830,7 @@ SUBROUTINE add_ParamType_STR(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -8091,7 +8099,7 @@ SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -8149,7 +8157,7 @@ SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val,default)
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:)
   REAL(SRK),INTENT(IN),OPTIONAL :: default(:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -8211,7 +8219,7 @@ SUBROUTINE add_ParamType_SSK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -8382,7 +8390,7 @@ SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -8440,7 +8448,7 @@ SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val,default)
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:)
   REAL(SDK),INTENT(IN),OPTIONAL :: default(:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -8502,7 +8510,7 @@ SUBROUTINE add_ParamType_SDK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -8671,7 +8679,7 @@ SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -8729,7 +8737,7 @@ SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val,default)
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:)
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -8791,7 +8799,7 @@ SUBROUTINE add_ParamType_SNK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -8961,7 +8969,7 @@ SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -9019,7 +9027,7 @@ SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val,default)
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:)
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -9081,7 +9089,7 @@ SUBROUTINE add_ParamType_SLK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -9248,7 +9256,7 @@ SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -9306,7 +9314,7 @@ SUBROUTINE get_ParamType_SBK_a1(thisParam,name,val,default)
   LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: val(:)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: default(:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -9368,7 +9376,7 @@ SUBROUTINE add_ParamType_SBK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -9542,7 +9550,7 @@ SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -9600,7 +9608,7 @@ SUBROUTINE get_ParamType_STR_a1(thisParam,name,val,default)
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:)
   TYPE(StringType),INTENT(IN),OPTIONAL :: default(:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -9661,7 +9669,7 @@ SUBROUTINE add_ParamType_STR_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -9826,7 +9834,7 @@ SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -9884,7 +9892,7 @@ SUBROUTINE get_ParamType_SSK_a2(thisParam,name,val,default)
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
   REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -9946,7 +9954,7 @@ SUBROUTINE add_ParamType_SSK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -10105,7 +10113,7 @@ SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -10163,7 +10171,7 @@ SUBROUTINE get_ParamType_SDK_a2(thisParam,name,val,default)
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
   REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -10225,7 +10233,7 @@ SUBROUTINE add_ParamType_SDK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -10385,7 +10393,7 @@ SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -10443,7 +10451,7 @@ SUBROUTINE get_ParamType_SNK_a2(thisParam,name,val,default)
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -10505,7 +10513,7 @@ SUBROUTINE add_ParamType_SNK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -10664,7 +10672,7 @@ SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -10722,7 +10730,7 @@ SUBROUTINE get_ParamType_SLK_a2(thisParam,name,val,default)
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -10784,7 +10792,7 @@ SUBROUTINE add_ParamType_SLK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -10946,7 +10954,7 @@ SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -11004,7 +11012,7 @@ SUBROUTINE get_ParamType_STR_a2(thisParam,name,val,default)
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
   TYPE(StringType),INTENT(IN),OPTIONAL :: default(:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -11065,7 +11073,7 @@ SUBROUTINE add_ParamType_STR_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -11231,7 +11239,7 @@ SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -11289,7 +11297,7 @@ SUBROUTINE get_ParamType_SSK_a3(thisParam,name,val,default)
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
   REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -11351,7 +11359,7 @@ SUBROUTINE add_ParamType_SSK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -11511,7 +11519,7 @@ SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -11569,7 +11577,7 @@ SUBROUTINE get_ParamType_SDK_a3(thisParam,name,val,default)
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
   REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -11631,7 +11639,7 @@ SUBROUTINE add_ParamType_SDK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -11791,7 +11799,7 @@ SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -11849,7 +11857,7 @@ SUBROUTINE get_ParamType_SNK_a3(thisParam,name,val,default)
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -11911,7 +11919,7 @@ SUBROUTINE add_ParamType_SNK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -12071,7 +12079,7 @@ SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -12129,7 +12137,7 @@ SUBROUTINE get_ParamType_SLK_a3(thisParam,name,val,default)
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -12191,7 +12199,7 @@ SUBROUTINE add_ParamType_SLK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -12357,7 +12365,7 @@ SUBROUTINE set_ParamType_STR_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -12415,7 +12423,7 @@ SUBROUTINE get_ParamType_STR_a3(thisParam,name,val,default)
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
   TYPE(StringType),INTENT(IN),OPTIONAL :: default(:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -12476,7 +12484,7 @@ SUBROUTINE add_ParamType_STR_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -12644,7 +12652,7 @@ SUBROUTINE set_ParamType_SSK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -12702,7 +12710,7 @@ SUBROUTINE get_ParamType_SSK_a4(thisParam,name,val,default)
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
   REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -12764,7 +12772,7 @@ SUBROUTINE add_ParamType_SSK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -12926,7 +12934,7 @@ SUBROUTINE set_ParamType_SDK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -12984,7 +12992,7 @@ SUBROUTINE get_ParamType_SDK_a4(thisParam,name,val,default)
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
   REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -13046,7 +13054,7 @@ SUBROUTINE add_ParamType_SDK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -13208,7 +13216,7 @@ SUBROUTINE set_ParamType_SNK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -13266,7 +13274,7 @@ SUBROUTINE get_ParamType_SNK_a4(thisParam,name,val,default)
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -13328,7 +13336,7 @@ SUBROUTINE add_ParamType_SNK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -13490,7 +13498,7 @@ SUBROUTINE set_ParamType_SLK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -13548,7 +13556,7 @@ SUBROUTINE get_ParamType_SLK_a4(thisParam,name,val,default)
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -13610,7 +13618,7 @@ SUBROUTINE add_ParamType_SLK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -13780,7 +13788,7 @@ SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -13838,7 +13846,7 @@ SUBROUTINE get_ParamType_SSK_a5(thisParam,name,val,default)
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
   REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -13900,7 +13908,7 @@ SUBROUTINE add_ParamType_SSK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -14064,7 +14072,7 @@ SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -14122,7 +14130,7 @@ SUBROUTINE get_ParamType_SDK_a5(thisParam,name,val,default)
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
   REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -14184,7 +14192,7 @@ SUBROUTINE add_ParamType_SDK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -14348,7 +14356,7 @@ SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -14406,7 +14414,7 @@ SUBROUTINE get_ParamType_SNK_a5(thisParam,name,val,default)
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -14468,7 +14476,7 @@ SUBROUTINE add_ParamType_SNK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -14632,7 +14640,7 @@ SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -14690,7 +14698,7 @@ SUBROUTINE get_ParamType_SLK_a5(thisParam,name,val,default)
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -14752,7 +14760,7 @@ SUBROUTINE add_ParamType_SLK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -14925,7 +14933,7 @@ SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -14983,7 +14991,7 @@ SUBROUTINE get_ParamType_SSK_a6(thisParam,name,val,default)
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
   REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -15045,7 +15053,7 @@ SUBROUTINE add_ParamType_SSK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -15212,7 +15220,7 @@ SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -15270,7 +15278,7 @@ SUBROUTINE get_ParamType_SDK_a6(thisParam,name,val,default)
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
   REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -15332,7 +15340,7 @@ SUBROUTINE add_ParamType_SDK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -15499,7 +15507,7 @@ SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -15557,7 +15565,7 @@ SUBROUTINE get_ParamType_SNK_a6(thisParam,name,val,default)
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -15619,7 +15627,7 @@ SUBROUTINE add_ParamType_SNK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -15786,7 +15794,7 @@ SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -15844,7 +15852,7 @@ SUBROUTINE get_ParamType_SLK_a6(thisParam,name,val,default)
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -15906,7 +15914,7 @@ SUBROUTINE add_ParamType_SLK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -16081,7 +16089,7 @@ SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -16139,7 +16147,7 @@ SUBROUTINE get_ParamType_SSK_a7(thisParam,name,val,default)
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
   REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -16201,7 +16209,7 @@ SUBROUTINE add_ParamType_SSK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -16370,7 +16378,7 @@ SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -16428,7 +16436,7 @@ SUBROUTINE get_ParamType_SDK_a7(thisParam,name,val,default)
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
   REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -16490,7 +16498,7 @@ SUBROUTINE add_ParamType_SDK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -16659,7 +16667,7 @@ SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -16717,7 +16725,7 @@ SUBROUTINE get_ParamType_SNK_a7(thisParam,name,val,default)
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
   INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -16779,7 +16787,7 @@ SUBROUTINE add_ParamType_SNK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -16948,7 +16956,7 @@ SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
   CALL get_hash_list(name,hashes)
 
@@ -17006,7 +17014,7 @@ SUBROUTINE get_ParamType_SLK_a7(thisParam,name,val,default)
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
   INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
   !
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
 
   CALL get_hash_list(name,hashes)
@@ -17068,7 +17076,7 @@ SUBROUTINE add_ParamType_SLK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
-  INTEGER(SIK),ALLOCATABLE :: hashes(:)
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
