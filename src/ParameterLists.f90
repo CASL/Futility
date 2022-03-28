@@ -17155,10 +17155,10 @@ RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
         intVal=CHAR(attrVal)
         CALL thisParam%add(CHAR(tmpPath),intVal)
       CASE('FLOAT')
-        singleVal=CHAR(attrVal)
+        singleVal=attrVal%stof()
         CALL thisParam%add(CHAR(tmpPath),singleVal,'XML_IN_VAL='//attrval)
       CASE('DOUBLE')
-        doubleVal=CHAR(attrVal)
+        doubleVal=attrVal%stof()
         CALL thisParam%add(CHAR(tmpPath),doubleVal,'XML_IN_VAL='//attrval)
       CASE('STRING')
         CALL thisParam%add(CHAR(tmpPath),attrVal)
@@ -17392,7 +17392,7 @@ RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
       IF(idx > 0) THEN
         idx=idx+11
         oVal = param%description%substr(idx,LEN_TRIM(param%description))
-        oSingleVal=CHAR(oVal)
+        oSingleVal=oVal%stof()
         CALL param%get(TRIM(param%name),singleVal)
 
         IF(singleVal == oSingleVal) THEN
@@ -17410,7 +17410,7 @@ RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
       IF(idx > 0) THEN
         idx=idx+11
         oVal = param%description%substr(idx,LEN_TRIM(param%description))
-        oDoubleVal=CHAR(oVal)
+        oDoubleVal=oVal%stof()
         CALL param%get(TRIM(param%name),doubleVal)
 
         IF(doubleVal == oDoubleVal) THEN
