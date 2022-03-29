@@ -3457,6 +3457,7 @@ FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
   TYPE(ParamType) :: listContainer
   CLASS(ParamType),POINTER :: tmpParam => NULL()
 
+  hasname=.FALSE.
   CALL get_hash_list(name,hashes)
   IF(ANY(hashes == 0)) THEN
     CALL eParams%raiseError(modName//'::'//myName//' - cannot search for a blank name!')
