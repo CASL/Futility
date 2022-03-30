@@ -32,6 +32,7 @@ TRIBITS_ADD_LIBRARY(Utils
       Futility_DBC.f90
       UnitTest.f90
       IntrType.f90
+      Hash.f90
       Search.f90
       Constants_Conversion.f90
       ExtendedMath.f90

@@ -1252,7 +1252,7 @@ ENDFUNCTION greaterthanequal_StringType_StringType
 !> @param stp end of conversion
 !> @returns i the integer that will be output
 !>
-FUNCTION str_to_sik(this,stt,stp) RESULT(i)
+ELEMENTAL FUNCTION str_to_sik(this,stt,stp) RESULT(i)
   CLASS(StringType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stt
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
@@ -1291,7 +1291,7 @@ ENDFUNCTION str_to_sik
 !> @param stp end of conversion
 !> @returns r the float that will be output
 !>
-FUNCTION str_to_srk(this,stt,stp) RESULT(r)
+ELEMENTAL FUNCTION str_to_srk(this,stt,stp) RESULT(r)
   CLASS(StringType),INTENT(IN) :: this
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stt
   INTEGER(SIK),INTENT(IN),OPTIONAL :: stp
