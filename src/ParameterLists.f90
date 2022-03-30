@@ -72,6 +72,7 @@
 MODULE ParameterLists
 #include "UnitTest.h"
 USE ISO_FORTRAN_ENV
+USE HashModule
 USE UnitTest
 USE IntrType
 USE Strings
@@ -105,6 +106,10 @@ INTEGER(SIK),PARAMETER :: VALIDTYPE_VALIDATE=0
 INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYTEST=1
 INTEGER(SIK),PARAMETER :: VALIDTYPE_VERIFYLIST=2
 
+!> Hashing parameters
+INTEGER(SLK),PARAMETER,PRIVATE :: PL_HASH_POLYNOMIAL_BASE=97_SIK
+INTEGER(SLK),PARAMETER,PRIVATE :: PL_HASH_MODULUS=1000000009_SIK
+
 !> Exception handler for the module
 TYPE(ExceptionHandlerType),SAVE :: eParams
 
@@ -121,7 +126,9 @@ TYPE :: ParamType
   !> @brief The name of the parameter
   !>
   !> Set through input arguments
-  TYPE(StringType) :: name
+  TYPE(StringType),PRIVATE :: name
+  !> The hash of the uppercase version of @c %name
+  INTEGER(SLK) :: upperNameHash=0_SLK
   !> @brief The data type for the parameter
   !>
   !> Set internally.
@@ -137,6 +144,15 @@ TYPE :: ParamType
 !
 !List of type bound procedures
   CONTAINS
+    !> @copybrief ParameterLists::init_ParamType_Base
+    !> @copydoc ParameterLists::init_ParamType_Base
+    PROCEDURE,PASS,PRIVATE :: initBase => init_ParamType_Base
+    !> @copybrief ParameterLists::rename_ParamType
+    !> @copydoc ParameterLists::rename_ParamType
+    PROCEDURE,PASS :: rename => rename_ParamType
+    !> @copybrief ParameterLists::getName_ParamType
+    !> @copydoc ParameterLists::getName_ParamType
+    PROCEDURE,PASS :: getName => getName_ParamType
     !> @copybrief ParameterLists::init_ParamType_List
     !> @copydoc ParameterLists::init_ParamType_List
     PROCEDURE,PASS,PRIVATE :: initParamList => init_ParamType_List
@@ -418,6 +434,9 @@ TYPE :: ParamType
     !> @copybrief ParameterLists::get_ParamType_STR
     !> @copydoc ParameterLists::get_ParamType_STR
     PROCEDURE,PASS,PRIVATE :: getSTR => get_ParamType_STR
+    !> @copybrief ParameterLists::get_ParamType_STR_CHAR
+    !> @copydoc ParameterLists::get_ParamType_STR_CHAR
+    PROCEDURE,PASS,PRIVATE :: getSTRCHAR => get_ParamType_STR_CHAR
     !> @copybrief ParameterLists::get_ParamType_CHAR
     !> @copydoc ParameterLists::get_ParamType_CHAR
     PROCEDURE,PASS,PRIVATE :: getCHAR => get_ParamType_CHAR
@@ -524,7 +543,10 @@ TYPE :: ParamType
         getSLKa2,getSTRa2,getSSKa3,getSDKa3,getSNKa3,getSLKa3, &
         getSTRa3,getSSKa4,getSDKa4,getSNKa4,getSLKa4,getSSKa5, &
         getSDKa5,getSNKa5,getSLKa5,getSSKa6,getSDKa6,getSNKa6, &
-        getSLKa6,getSSKa7,getSDKa7,getSNKa7,getSLKa7
+        getSLKa6,getSSKa7,getSDKa7,getSNKa7,getSLKa7,getSTRCHAR
+    !> @copybrief ParameterLists::get_ParamType_hash
+    !> @copydoc ParameterLists::get_ParamType_hash
+    PROCEDURE,PASS,PRIVATE :: getParam_hash => get_ParamType_hash
     !> @copybrief ParameterLists::add_ParamType
     !> @copydoc ParameterLists::add_ParamType
     PROCEDURE,PASS,PRIVATE :: addParam => add_ParamType
@@ -706,6 +728,9 @@ TYPE :: ParamType
     !> @copybrief ParameterLists::clear_ParamType
     !> @copydoc ParameterLists::clear_ParamType
     PROCEDURE,PASS :: clear => clear_ParamType
+    !> @copybrief ParameterLists::clear_ParamType
+    !> @copydoc ParameterLists::clear_ParamType
+    PROCEDURE,PASS :: clearBase => clear_ParamType
 #ifdef FUTILITY_HAVE_Trilinos
     PROCEDURE,PASS :: toTeuchosPlist
 #endif
@@ -1574,6 +1599,7 @@ RECURSIVE SUBROUTINE assign_ParamType(thisParam,param)
         ALLOCATE(ParamType_List :: thisParam%pdat)
         thisParam%pdat%dataType='TYPE(ParamType_List)'
         thisParam%pdat%name=p%name
+        thisParam%pdat%upperNameHash=p%upperNameHash
         thisParam%pdat%description=p%description
       ENDIF
     ENDSELECT
@@ -1595,7 +1621,7 @@ RECURSIVE PURE FUNCTION isEqual_ParamType(p1,p2) RESULT(bool)
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i,dims1(7),dims2(7)
   bool=.FALSE.
-  IF(p1%name == p2%name) THEN
+  IF(p1%upperNameHash == p2%upperNameHash) THEN
     IF(SAME_TYPE_AS(p1,p2)) THEN
       dims1=0
       dims2=0
@@ -2120,11 +2146,14 @@ SUBROUTINE getSubParam_List(thisParam,addr,param)
   CLASS(ParamType),POINTER,INTENT(INOUT) :: param
 
   INTEGER(SIK) :: i,istt
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: aParam,nextParam,tmpPtr
 
+  CALL get_hash_list(CHAR(addr),hashes)
+
   nextParam => NULL()
-  IF(LEN_TRIM(addr) > 0) THEN
-    CALL get_ParamType(thisParam,CHAR(addr),aParam)
+  IF(ANY(hashes /= 0)) THEN
+    CALL thisParam%getParam_hash(hashes,aParam)
     IF(ASSOCIATED(aParam)) THEN
       SELECTTYPE(aParam); TYPE IS(ParamType_List)
         !Sublists only exist for lists
@@ -2246,6 +2275,66 @@ SUBROUTINE getSubParams(thisParam,addr,param)
 ENDSUBROUTINE getSubParams
 !
 !-------------------------------------------------------------------------------
+!> @brief Generates a list of hashes for a parameter list path
+!> @param name the path to the parameter list
+!> @param hashes the returned list of hashed values
+!>
+!> The size of @c hashes will be one greater than the number of @c '->' in the path
+!>
+SUBROUTINE get_hash_list(name,hashes)
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),ALLOCATABLE,INTENT(OUT) :: hashes(:)
+  !
+  INTEGER(SIK) :: i
+  TYPE(StringType) :: strname
+  TYPE(StringType),ALLOCATABLE :: tokens(:)
+
+  strname=TRIM(ADJUSTL(name))
+  tokens=strname%split('->')
+  IF(strname%substr(LEN(strname)-1) == '->') THEN
+    ALLOCATE(hashes(SIZE(tokens)+1))
+  ELSE
+    ALLOCATE(hashes(SIZE(tokens)))
+  ENDIF
+  hashes=0
+  DO i=1,SIZE(tokens)
+    hashes(i)=stringHash(TRIM(ADJUSTL(tokens(i)%upper())),PL_HASH_POLYNOMIAL_BASE,PL_HASH_MODULUS)
+  ENDDO !i
+
+ENDSUBROUTINE get_hash_list
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns a pointer to a parameter whose name matches the given input
+!>        name.
+!> @param thisParam the parameter object to search for @c name
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+!> If the name cannot be matched then @c param is returned as null. The search
+!> name can be any full or partial path to a parameter object name. If it is
+!> a partial path then the first occurence of this name is returned.
+!>
+!> To indicate accessing a parameter in a sublist the symbol "->" is used. For
+!> example "Some list -> some parameter". Name matching is @b not case sensitive
+!> and names can have spaces and leading or trailing whitespace. Input names to
+!> this procedure cannot be blank or "->somename" or
+!> "firstname -> -> secondname".
+!>
+!> This routine is primarily used by all @c set and @c get routines of the
+!> extended types.
+SUBROUTINE get_ParamType(thisParam,name,val)
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CLASS(ParamType),POINTER,INTENT(INOUT) :: val
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
+
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,val)
+
+ENDSUBROUTINE get_ParamType
+!
+!-------------------------------------------------------------------------------
 !> @brief Returns a pointer to a parameter whose name matches the given input
 !>        name.
 !> @param thisParam the parameter object to search for @c name
@@ -2265,74 +2354,57 @@ ENDSUBROUTINE getSubParams
 !> This routine is primarily used by all @c set and @c get routines of the
 !> extended types.
 !>
-RECURSIVE SUBROUTINE get_ParamType(thisParam,name,param)
-  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType'
+RECURSIVE SUBROUTINE get_ParamType_hash(thisParam,hashes,param)
+  CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_hash'
   CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
-  CHARACTER(LEN=*),INTENT(IN) :: name
+  INTEGER(SLK),INTENT(IN) :: hashes(:)
   CLASS(ParamType),POINTER,INTENT(INOUT) :: param
-  CHARACTER(LEN=LEN(name)) :: thisname,nextname
-  CHARACTER(LEN=:),ALLOCATABLE :: pname
-  INTEGER(SIK) :: ipos,i
+  !
+  INTEGER(SIK) :: i
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK),SAVE :: partial_match=.TRUE.
 
-  ipos=INDEX(name,'->')
-  thisname=name
-  nextname=''
-  IF(ipos > 0) THEN
-    thisname=ADJUSTL(name(1:ipos-1))
-    nextname=ADJUSTL(name(ipos+2:LEN(name)))
-  ENDIF
-
   param => NULL()
-  IF(LEN_TRIM(thisname) > 0) THEN
+  IF(hashes(1) /= 0) THEN
     SELECTTYPE(thisParam)
     TYPE IS(ParamType_List)
-      CALL toUPPER(thisname)
-      IF(LEN_TRIM(nextname) > 0) THEN
-        !Set names to upper case for matching
-        pname=CHAR(thisParam%name%upper())
+      IF(SIZE(hashes) > 1) THEN
         !Search the list for nextname (thisname must match parameter name)
-        IF(TRIM(pname) == TRIM(thisname) .AND. &
-            ALLOCATED(thisParam%pList)) THEN
+        IF(hashes(1) == thisParam%upperNameHash .AND. ALLOCATED(thisParam%pList)) THEN
           DO i=1,SIZE(thisParam%pList)
-            !CALL thisParam%pList(i)%getParam(TRIM(nextname),param)
-            IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                CALL get_ParamType(thisParam%pList(i)%pdat, &
-                TRIM(nextname),param)
+            IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+              CALL thisParam%pList(i)%pdat%getParam_hash(hashes(2:),param)
+            ENDIF
             IF(ASSOCIATED(param)) EXIT !Found it, stop searching
           ENDDO
         ENDIF
       ELSE
         !End of search list, check search name against list name
-        pname=CHAR(thisParam%name%upper())
-        IF(TRIM(pname) == TRIM(thisname)) THEN
+        IF(hashes(1) == thisParam%upperNameHash) THEN
           !Search name is thisParam's name
           param => thisParam
         ELSE
           !Search for thisname within the list
           IF(ALLOCATED(thisParam%pList) .AND. partial_match) THEN
             DO i=1,SIZE(thisParam%pList)
-              IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                  CALL get_ParamType(thisParam%pList(i)%pdat, &
-                  TRIM(thisname),param)
+              IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+                CALL thisParam%pList(i)%pdat%getParam_hash(hashes(1:1),param)
+              ENDIF
               IF(ASSOCIATED(param)) EXIT !Found it, stop searching
-            ENDDO
+            ENDDO !i
           ENDIF
         ENDIF
       ENDIF
     CLASS DEFAULT
-      CALL toUPPER(thisname)
       IF(ASSOCIATED(thisParam%pdat)) THEN
         !Set names to upper case for matching
-        pname=CHAR(thisParam%pdat%name%upper())
-        IF(TRIM(pname) == TRIM(thisname)) THEN
+        IF(hashes(1) == thisParam%pdat%upperNameHash) THEN
           !Found the match
           tmpParam => thisParam%pdat
-          IF(LEN_TRIM(nextname) > 0) THEN
+          IF(SIZE(hashes) > 1) THEN
             !Set partial matching to off
             partial_match=.FALSE.
-            CALL get_ParamType(tmpParam,name,param)
+            CALL tmpParam%getParam_hash(hashes,param)
             partial_match=.TRUE.
           ELSE
             param => tmpParam
@@ -2340,24 +2412,24 @@ RECURSIVE SUBROUTINE get_ParamType(thisParam,name,param)
           ENDIF
         ELSE
           !Search 1-level down
-          CALL thisParam%pdat%getParam(thisname,param)
-          IF(ASSOCIATED(param) .AND. LEN_TRIM(nextname) > 0) THEN
+          CALL thisParam%pdat%getParam_hash(hashes(1:1),param)
+          IF(ASSOCIATED(param) .AND. SIZE(hashes) > 1) THEN
             tmpParam => param
             param => NULL()
-            CALL get_ParamType(tmpParam,name,param)
+            CALL tmpParam%getParam_hash(hashes,param)
           ENDIF
         ENDIF
-      ELSE
-        pname=CHAR(thisParam%name%upper())
-        IF(TRIM(pname) == TRIM(thisname) .AND. LEN_TRIM(nextName) == 0) &
+      ELSEIF(SIZE(hashes) == 1) THEN
+        IF(hashes(1) == thisParam%upperNameHash) THEN
             param => thisParam
+        ENDIF
       ENDIF
     ENDSELECT
   ELSE
     CALL eParams%raiseError(modName//'::'//myName// &
         ' - cannot search for a blank name!')
   ENDIF
-ENDSUBROUTINE get_ParamType
+ENDSUBROUTINE get_ParamType_hash
 !
 !-------------------------------------------------------------------------------
 !> @brief Adds a new parameter to a parameter object
@@ -2382,9 +2454,11 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   CLASS(ParamType),INTENT(IN) :: newParam
+  !
   LOGICAL(SBK),SAVE :: lsubListSearch=.TRUE.
-  TYPE(StringType) :: thisname,nextname,pname,listName
+  TYPE(StringType) :: thisname,nextname,listName
   INTEGER(SIK) :: ipos,i,np
+  INTEGER(SLK) :: hash,listhash
   TYPE(ParamType),ALLOCATABLE :: tmpList(:)
   CLASS(ParamType),POINTER :: tmpParam
 
@@ -2408,6 +2482,7 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
           thisParam%pdat%name=TRIM(ADJUSTL(name))
           nextname=''
         ENDIF
+        thisParam%pdat%upperNameHash=stringHash(TRIM(thisParam%pdat%name%upper()),PL_HASH_POLYNOMIAL_BASE,PL_HASH_MODULUS)
         CALL add_ParamType(thisParam%pdat,TRIM(nextname),newParam)
       ELSE
         !assign newParam to thisParam
@@ -2428,9 +2503,9 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
         nextname=''
       ENDIF
 
-      pname=thisParam%name%upper()
       thisname = thisname%upper()
-      IF(TRIM(pname) == TRIM(thisname)) THEN
+      hash = stringHash(TRIM(thisName),PL_HASH_POLYNOMIAL_BASE,PL_HASH_MODULUS)
+      IF(hash == thisParam%upperNameHash) THEN
         !only search if it's not the last name in the
         !full address. last name is guaranteed not to exist
         !and this prevents accidental partial matching in sublists.
@@ -2442,14 +2517,17 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
         NULLIFY(tmpParam)
         IF(lsubListSearch) THEN
           !...all sub-entries.
-          CALL get_ParamType(thisParam,TRIM(thisname),tmpParam)
+          CALL thisParam%getParam_hash([hash],tmpParam)
         ELSE
           !...just this list
           DO i=1,np
             listName=''
-            IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-                listName=TRIM(thisParam%pList(i)%pdat%name%upper())
-            IF(TRIM(listName) == TRIM(thisName)) THEN
+            IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+              listhash=thisParam%pList(i)%pdat%upperNameHash
+            ELSE
+              listhash=0_SLK
+            ENDIF
+            IF(listhash == hash) THEN
               tmpParam => thisParam%pList(i)%pdat
               EXIT
             ENDIF
@@ -2498,12 +2576,16 @@ RECURSIVE SUBROUTINE add_ParamType(thisParam,name,newParam)
         ELSE
           thisname=newParam%name%upper()
         ENDIF
+        hash = stringHash(TRIM(thisName),PL_HASH_POLYNOMIAL_BASE,PL_HASH_MODULUS)
         NULLIFY(tmpParam)
         DO i=1,np
           listName=''
-          IF(ASSOCIATED(thisParam%pList(i)%pdat)) &
-              listName=TRIM(thisParam%pList(i)%pdat%name%upper())
-          IF(TRIM(listName) == TRIM(thisName)) THEN
+          IF(ASSOCIATED(thisParam%pList(i)%pdat)) THEN
+            listhash=thisParam%pList(i)%pdat%upperNameHash
+          ELSE
+            listhash=0_SLK
+          ENDIF
+          IF(hash == listhash) THEN
             tmpParam => thisParam%pList(i)%pdat
             EXIT
           ENDIF
@@ -2560,8 +2642,8 @@ RECURSIVE SUBROUTINE remove_ParamType(thisParam,name)
   CLASS(ParamType),INTENT(INOUT) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   CHARACTER(LEN=LEN(name)) :: thisname,nextname
-  CHARACTER(LEN=:),ALLOCATABLE :: pname
   INTEGER(SIK) :: i,ipos,np,npnew
+  INTEGER(SLK) :: hash
   TYPE(ParamType),ALLOCATABLE :: tmpList(:)
 
   ipos=INDEX(name,'->')
@@ -2577,11 +2659,11 @@ RECURSIVE SUBROUTINE remove_ParamType(thisParam,name)
     TYPE IS(ParamType_List)
       IF(LEN_TRIM(nextname) > 0) THEN
         !Set names to upper case for matching
-        pname=CHAR(thisParam%name%upper())
         CALL toUPPER(thisname)
+        hash = stringHash(TRIM(thisName),PL_HASH_POLYNOMIAL_BASE,PL_HASH_MODULUS)
 
         !Search the list for nextname (thisname must match parameter name)
-        IF(TRIM(pname) == TRIM(thisname)) THEN
+        IF(hash == thisParam%upperNameHash) THEN
           IF(ALLOCATED(thisParam%pList)) THEN
             DO i=1,SIZE(thisParam%pList)
               !Try to remove the next name
@@ -2652,9 +2734,9 @@ RECURSIVE SUBROUTINE remove_ParamType(thisParam,name)
     CLASS DEFAULT
       IF(ASSOCIATED(thisParam%pdat)) THEN
         !Set names to upper case for matching
-        pname=CHAR(thisParam%pdat%name%upper())
         CALL toUPPER(thisname)
-        IF(TRIM(pname) == TRIM(thisname)) THEN
+        hash = stringHash(TRIM(thisName),PL_HASH_POLYNOMIAL_BASE,PL_HASH_MODULUS)
+        IF(hash == thisParam%pdat%upperNameHash) THEN
           IF(LEN_TRIM(nextname) > 0) THEN
             CALL remove_ParamType(thisParam%pdat,name)
           ELSE
@@ -3370,31 +3452,24 @@ FUNCTION has_ParamType(thisParam,name) RESULT(hasname)
   CLASS(ParamType),TARGET,INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   LOGICAL(SBK) :: hasname
-  CHARACTER(LEN=LEN(name)) :: tmpname
-  INTEGER(SIK) :: ipos
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: listContainer
   CLASS(ParamType),POINTER :: tmpParam => NULL()
 
   hasname=.FALSE.
-  tmpname=name
-  ipos=INDEX(tmpname,'->')
-  DO WHILE (ipos > 0)
-    IF((ipos == 1) .OR. (ipos == LEN_TRIM(tmpname)-1)) THEN
-      CALL eParams%raiseError(modName//'::'//myName// &
-          ' - cannot search for a blank name!')
-      RETURN
-    ENDIF
-    tmpname=ADJUSTL(tmpname(ipos+2:LEN(tmpname)))
-    ipos=INDEX(tmpname,'->')
-  ENDDO
+  CALL get_hash_list(name,hashes)
+  IF(ANY(hashes == 0)) THEN
+    CALL eParams%raiseError(modName//'::'//myName//' - cannot search for a blank name!')
+    RETURN
+  ENDIF
 
-  !Search for the parameter name
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_List)
     listContainer%pdat => thisParam
-    CALL get_ParamType(listContainer,name,tmpParam)
+    CALL listContainer%getParam_hash(hashes,tmpParam)
   CLASS DEFAULT
-    CALL get_ParamType(thisParam,name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
   ENDSELECT
   hasname=ASSOCIATED(tmpParam)
 
@@ -3569,6 +3644,7 @@ RECURSIVE SUBROUTINE clear_ParamType(thisParam)
     DEALLOCATE(thisParam%pdat)
   ENDIF
   thisParam%name=''
+  thisParam%upperNameHash=-1
   thisParam%dataType=''
   thisParam%description=''
 ENDSUBROUTINE clear_ParamType
@@ -5773,6 +5849,52 @@ FUNCTION matchList_ParamType(thisParam,thatParam,prefix,e) RESULT(bool)
 ENDFUNCTION matchList_ParamType
 !
 !-------------------------------------------------------------------------------
+!> @brief Initializes the base components of a ParamType object
+!> @param this the parameter to initialize
+!> @param name the name of the parameter
+!> @param description an optional description for this parameter
+!>
+SUBROUTINE init_ParamType_Base(this,name,description)
+  CLASS(ParamType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
+
+  CALL this%pdat%rename(TRIM(ADJUSTL(name)))
+  IF(PRESENT(description)) this%pdat%description = TRIM(description)
+
+ENDSUBROUTINE init_ParamType_Base
+!
+!-------------------------------------------------------------------------------
+!> @brief Renames the paramType
+!> @param this the parameter to rename
+!> @param name the new name of the parameter
+!>
+!> It's really not recommended to use this, but there are certain use cases
+!> that benefit from this and @c this%name needs to be a private value
+!>
+SUBROUTINE rename_ParamType(this,name)
+  CLASS(ParamType),INTENT(INOUT) :: this
+  CHARACTER(LEN=*),INTENT(IN) :: name
+
+  this%name= TRIM(ADJUSTL(name))
+  this%upperNameHash = stringHash(TRIM(this%name%upper()),PL_HASH_POLYNOMIAL_BASE,PL_HASH_MODULUS)
+
+ENDSUBROUTINE rename_ParamType
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the name of the paramType
+!> @param this the parameter to query
+!> @parameter name the name of the parameter
+!>
+FUNCTION getName_ParamType(this) RESULT(name)
+  CLASS(ParamType),INTENT(IN) :: this
+  CHARACTER(LEN=:),ALLOCATABLE :: name
+
+  name=CHAR(this%name)
+
+ENDFUNCTION getName_ParamType
+!
+!-------------------------------------------------------------------------------
 !> @brief Initializes a ParamType object as a parameter list
 !> @param thisParam the parameter to initialize
 !> @param name the name of the parameter
@@ -5796,9 +5918,8 @@ RECURSIVE SUBROUTINE init_ParamType_List(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_List :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='TYPE(ParamType_List)'
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
       SELECTTYPE(p=>thisParam%pdat); TYPE IS(ParamType_List)
         ALLOCATE(p%pList(SIZE(param)))
         DO i=1,SIZE(param)
@@ -5836,7 +5957,6 @@ RECURSIVE SUBROUTINE edit_ParamType_List(thisParam,funit,indent,prefix,paddtw)
   CHARACTER(LEN=:),ALLOCATABLE :: dtype
   INTEGER(SIK) :: i,j
   TYPE(StringType) :: sprefix,sdtype
-
 
   IF(LEN_TRIM(thisParam%name) > 0) THEN
     IF(PRESENT(prefix)) sprefix=prefix
@@ -5877,9 +5997,7 @@ ENDSUBROUTINE edit_ParamType_List
 RECURSIVE SUBROUTINE clear_ParamType_List(thisParam)
   CLASS(ParamType_List),INTENT(INOUT) :: thisParam
   INTEGER(SIK) :: i
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
   IF(ALLOCATED(thisParam%pList)) THEN
     DO i=1,SIZE(thisParam%pList)
       CALL thisParam%pList(i)%clear()
@@ -5910,15 +6028,18 @@ SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description,addMissing)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   INTEGER(SIK) :: np,i
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   LOGICAL(SBK) :: lAddMissing
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_List)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       IF(PRESENT(description)) thisParam%description=TRIM(description)
 
       IF(ALLOCATED(thisParam%pList)) THEN
@@ -5942,7 +6063,7 @@ SUBROUTINE set_ParamType_List(thisParam,name,paramlist,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -5996,11 +6117,14 @@ SUBROUTINE get_ParamType_List(thisParam,name,paramlist)
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(ParamType),INTENT(INOUT) :: paramlist(:)
   INTEGER(SIK) :: i,np
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_List)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       np=SIZE(thisParam%pList)
       IF(SIZE(paramlist) < np) THEN
         !List lengths are unequal so choose the lesser
@@ -6019,7 +6143,7 @@ SUBROUTINE get_ParamType_List(thisParam,name,paramlist)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -6072,11 +6196,13 @@ SUBROUTINE add_ParamType_List(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -6128,8 +6254,7 @@ SUBROUTINE init_ParamType_SSK(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK); p%val=param
@@ -6196,9 +6321,7 @@ ENDSUBROUTINE edit_ParamType_SSK
 SUBROUTINE clear_ParamType_SSK(thisParam)
   CLASS(ParamType_SSK),INTENT(INOUT) :: thisParam
   thisParam%val=0.0_SSK
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK
 !
 !-------------------------------------------------------------------------------
@@ -6226,13 +6349,15 @@ SUBROUTINE set_ParamType_SSK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -6242,7 +6367,7 @@ SUBROUTINE set_ParamType_SSK(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -6275,16 +6400,21 @@ ENDSUBROUTINE set_ParamType_SSK
 !> parameter with @c name is not a scalar single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),INTENT(INOUT) :: val
+  REAL(SRK),INTENT(IN),OPTIONAL :: default
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6293,7 +6423,7 @@ SUBROUTINE get_ParamType_SSK(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -6304,6 +6434,8 @@ SUBROUTINE get_ParamType_SSK(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -6337,11 +6469,13 @@ SUBROUTINE add_ParamType_SSK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -6393,8 +6527,7 @@ SUBROUTINE init_ParamType_SDK(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK); p%val=param
@@ -6461,9 +6594,7 @@ ENDSUBROUTINE edit_ParamType_SDK
 SUBROUTINE clear_ParamType_SDK(thisParam)
   CLASS(ParamType_SDK),INTENT(INOUT) :: thisParam
   thisParam%val=0.0_SDK
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK
 !
 !-------------------------------------------------------------------------------
@@ -6491,13 +6622,15 @@ SUBROUTINE set_ParamType_SDK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -6507,7 +6640,7 @@ SUBROUTINE set_ParamType_SDK(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -6540,16 +6673,21 @@ ENDSUBROUTINE set_ParamType_SDK
 !> parameter with @c name is not a scalar double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),INTENT(INOUT) :: val
+  REAL(SDK),INTENT(IN),OPTIONAL :: default
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6558,7 +6696,7 @@ SUBROUTINE get_ParamType_SDK(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -6569,6 +6707,8 @@ SUBROUTINE get_ParamType_SDK(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -6602,12 +6742,13 @@ SUBROUTINE add_ParamType_SDK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
-
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
     thisname=ADJUSTL(name)
@@ -6658,8 +6799,7 @@ SUBROUTINE init_ParamType_SNK(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK); p%val=param
@@ -6726,9 +6866,7 @@ ENDSUBROUTINE edit_ParamType_SNK
 SUBROUTINE clear_ParamType_SNK(thisParam)
   CLASS(ParamType_SNK),INTENT(INOUT) :: thisParam
   thisParam%val=0_SNK
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK
 !
 !-------------------------------------------------------------------------------
@@ -6756,13 +6894,15 @@ SUBROUTINE set_ParamType_SNK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -6772,7 +6912,7 @@ SUBROUTINE set_ParamType_SNK(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -6805,16 +6945,21 @@ ENDSUBROUTINE set_ParamType_SNK
 !> parameter with @c name is not a scalar 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),INTENT(INOUT) :: val
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -6823,7 +6968,7 @@ SUBROUTINE get_ParamType_SNK(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -6834,6 +6979,8 @@ SUBROUTINE get_ParamType_SNK(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -6867,11 +7014,13 @@ SUBROUTINE add_ParamType_SNK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -6919,8 +7068,7 @@ SUBROUTINE init_ParamType_SLK(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK); p%val=param
@@ -6987,9 +7135,7 @@ ENDSUBROUTINE edit_ParamType_SLK
 SUBROUTINE clear_ParamType_SLK(thisParam)
   CLASS(ParamType_SLK),INTENT(INOUT) :: thisParam
   thisParam%val=0_SLK
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK
 !
 !-------------------------------------------------------------------------------
@@ -7017,13 +7163,15 @@ SUBROUTINE set_ParamType_SLK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -7033,7 +7181,7 @@ SUBROUTINE set_ParamType_SLK(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7066,16 +7214,21 @@ ENDSUBROUTINE set_ParamType_SLK
 !> parameter with @c name is not a scalar 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),INTENT(INOUT) :: val
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7084,7 +7237,7 @@ SUBROUTINE get_ParamType_SLK(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7095,6 +7248,8 @@ SUBROUTINE get_ParamType_SLK(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -7128,11 +7283,13 @@ SUBROUTINE add_ParamType_SLK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -7180,8 +7337,7 @@ SUBROUTINE init_ParamType_SBK(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SBK :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='LOGICAL(SBK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SBK); p%val=param
@@ -7248,9 +7404,7 @@ ENDSUBROUTINE edit_ParamType_SBK
 SUBROUTINE clear_ParamType_SBK(thisParam)
   CLASS(ParamType_SBK),INTENT(INOUT) :: thisParam
   thisParam%val=.FALSE.
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SBK
 !
 !-------------------------------------------------------------------------------
@@ -7278,13 +7432,15 @@ SUBROUTINE set_ParamType_SBK(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SBK)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -7294,7 +7450,7 @@ SUBROUTINE set_ParamType_SBK(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7327,16 +7483,21 @@ ENDSUBROUTINE set_ParamType_SBK
 !> parameter with @c name is not a scalar logical valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SBK(thisParam,name,val)
+SUBROUTINE get_ParamType_SBK(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SBK'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   LOGICAL(SBK),INTENT(INOUT) :: val
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: default
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SBK)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7345,7 +7506,7 @@ SUBROUTINE get_ParamType_SBK(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7356,6 +7517,8 @@ SUBROUTINE get_ParamType_SBK(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be LOGICAL(SBK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -7389,11 +7552,13 @@ SUBROUTINE add_ParamType_SBK(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -7441,8 +7606,7 @@ SUBROUTINE init_ParamType_STR(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_STR :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='TYPE(StringType)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_STR); p%val=param
@@ -7503,9 +7667,7 @@ ENDSUBROUTINE edit_ParamType_STR
 SUBROUTINE clear_ParamType_STR(thisParam)
   CLASS(ParamType_STR),INTENT(INOUT) :: thisParam
   thisParam%val=''         !Not sure how to clear this since it doesn't have a clear routine!
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_STR
 !
 !-------------------------------------------------------------------------------
@@ -7532,13 +7694,15 @@ SUBROUTINE set_ParamType_STR(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -7548,7 +7712,7 @@ SUBROUTINE set_ParamType_STR(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7581,16 +7745,21 @@ ENDSUBROUTINE set_ParamType_STR
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_STR(thisParam,name,val)
+SUBROUTINE get_ParamType_STR(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),INTENT(INOUT) :: val
+  TYPE(StringType),INTENT(IN),OPTIONAL :: default
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7599,7 +7768,7 @@ SUBROUTINE get_ParamType_STR(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7610,6 +7779,8 @@ SUBROUTINE get_ParamType_STR(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be TYPE(StringType)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -7617,6 +7788,24 @@ SUBROUTINE get_ParamType_STR(thisParam,name,val)
     ENDIF
   ENDSELECT
 ENDSUBROUTINE get_ParamType_STR
+!
+!-------------------------------------------------------------------------------
+!> @brief Wrapper for get_ParamType_STR to pass a character string instead of
+!> a string type
+!> @param thisParam the parameter in which an existing parameter with name
+!>        matching @c name will have it's value returned
+!> @param name the name of the parameter to return the value of
+!> @param val the current value of the parameter with @c name
+!>
+SUBROUTINE get_ParamType_STR_CHAR(thisParam,name,val,default)
+  CLASS(ParamType),INTENT(IN) :: thisParam
+  CHARACTER(LEN=*),INTENT(IN) :: name
+  TYPE(StringType),INTENT(INOUT) :: val
+  CHARACTER(LEN=*),INTENT(IN) :: default
+
+  CALL get_ParamType_STR(thisParam,name,val,StringType(default))
+
+ENDSUBROUTINE get_ParamType_STR_CHAR
 !
 !-------------------------------------------------------------------------------
 !> @brief Adds a string derived type parameter to a set of parameters
@@ -7642,11 +7831,13 @@ SUBROUTINE add_ParamType_STR(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -7747,13 +7938,19 @@ ENDSUBROUTINE add_ParamType_CHAR
 !> @param name the name of the parameter to return the value of
 !> @param val the current value of the parameter with @c name
 !>
-SUBROUTINE get_ParamType_CHAR(thisParam,name,val)
+SUBROUTINE get_ParamType_CHAR(thisParam,name,val,default)
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   CHARACTER(LEN=:),ALLOCATABLE,INTENT(INOUT) :: val
-  TYPE(StringType) :: s
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: default
+  TYPE(StringType) :: s,d
 
-  CALL get_ParamType_STR(thisParam,name,s)
+  IF(PRESENT(default)) THEN
+    d=default
+    CALL get_ParamType_STR(thisParam,name,s,d)
+  ELSE
+    CALL get_ParamType_STR(thisParam,name,s)
+  ENDIF
   val=CHAR(s)
   s=''
 ENDSUBROUTINE get_ParamType_CHAR
@@ -7786,8 +7983,7 @@ SUBROUTINE init_ParamType_SSK_a1(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK_a1 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='1-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK_a1)
@@ -7876,9 +8072,7 @@ ENDSUBROUTINE edit_ParamType_SSK_a1
 SUBROUTINE clear_ParamType_SSK_a1(thisParam)
   CLASS(ParamType_SSK_a1),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK_a1
 !
 !-------------------------------------------------------------------------------
@@ -7906,13 +8100,15 @@ SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -7922,7 +8118,7 @@ SUBROUTINE set_ParamType_SSK_a1(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7955,16 +8151,21 @@ ENDSUBROUTINE set_ParamType_SSK_a1
 !> parameter with @c name is not a one dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a1'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:)
+  REAL(SRK),INTENT(IN),OPTIONAL :: default(:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -7973,7 +8174,7 @@ SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -7984,6 +8185,8 @@ SUBROUTINE get_ParamType_SSK_a1(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 1-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -8017,11 +8220,13 @@ SUBROUTINE add_ParamType_SSK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -8069,8 +8274,7 @@ SUBROUTINE init_ParamType_SDK_a1(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK_a1 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='1-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK_a1)
@@ -8159,9 +8363,7 @@ ENDSUBROUTINE edit_ParamType_SDK_a1
 SUBROUTINE clear_ParamType_SDK_a1(thisParam)
   CLASS(ParamType_SDK_a1),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK_a1
 !
 !-------------------------------------------------------------------------------
@@ -8189,13 +8391,15 @@ SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -8205,7 +8409,7 @@ SUBROUTINE set_ParamType_SDK_a1(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -8238,16 +8442,21 @@ ENDSUBROUTINE set_ParamType_SDK_a1
 !> parameter with @c name is not a one dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a1'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:)
+  REAL(SDK),INTENT(IN),OPTIONAL :: default(:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8256,7 +8465,7 @@ SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -8267,6 +8476,8 @@ SUBROUTINE get_ParamType_SDK_a1(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 1-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -8300,11 +8511,13 @@ SUBROUTINE add_ParamType_SDK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -8352,8 +8565,7 @@ SUBROUTINE init_ParamType_SNK_a1(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK_a1 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='1-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK_a1)
@@ -8440,9 +8652,7 @@ ENDSUBROUTINE edit_ParamType_SNK_a1
 SUBROUTINE clear_ParamType_SNK_a1(thisParam)
   CLASS(ParamType_SNK_a1),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK_a1
 !
 !-------------------------------------------------------------------------------
@@ -8470,13 +8680,15 @@ SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -8486,7 +8698,7 @@ SUBROUTINE set_ParamType_SNK_a1(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -8519,16 +8731,21 @@ ENDSUBROUTINE set_ParamType_SNK_a1
 !> parameter with @c name is not a one dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a1'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:)
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8537,7 +8754,7 @@ SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -8548,6 +8765,8 @@ SUBROUTINE get_ParamType_SNK_a1(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 1-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -8581,11 +8800,13 @@ SUBROUTINE add_ParamType_SNK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -8633,8 +8854,7 @@ SUBROUTINE init_ParamType_SLK_a1(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK_a1 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='1-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK_a1)
@@ -8722,9 +8942,7 @@ ENDSUBROUTINE edit_ParamType_SLK_a1
 SUBROUTINE clear_ParamType_SLK_a1(thisParam)
   CLASS(ParamType_SLK_a1),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK_a1
 !
 !-------------------------------------------------------------------------------
@@ -8752,13 +8970,15 @@ SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -8768,7 +8988,7 @@ SUBROUTINE set_ParamType_SLK_a1(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -8801,16 +9021,21 @@ ENDSUBROUTINE set_ParamType_SLK_a1
 !> parameter with @c name is not a one dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a1'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:)
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -8819,7 +9044,7 @@ SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -8830,6 +9055,8 @@ SUBROUTINE get_ParamType_SLK_a1(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 1-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -8863,11 +9090,13 @@ SUBROUTINE add_ParamType_SLK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -8915,8 +9144,7 @@ SUBROUTINE init_ParamType_SBK_a1(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SBK_a1 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='1-D ARRAY LOGICAL(SBK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SBK_a1)
@@ -9001,9 +9229,7 @@ ENDSUBROUTINE edit_ParamType_SBK_a1
 SUBROUTINE clear_ParamType_SBK_a1(thisParam)
   CLASS(ParamType_SBK_a1),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SBK_a1
 !
 !-------------------------------------------------------------------------------
@@ -9031,13 +9257,15 @@ SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SBK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -9047,7 +9275,7 @@ SUBROUTINE set_ParamType_SBK_a1(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9080,16 +9308,21 @@ ENDSUBROUTINE set_ParamType_SBK_a1
 !> parameter with @c name is not a one dimensional array of logical valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SBK_a1(thisParam,name,val)
+SUBROUTINE get_ParamType_SBK_a1(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SBK_a1'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   LOGICAL(SBK),ALLOCATABLE,INTENT(INOUT) :: val(:)
+  LOGICAL(SBK),INTENT(IN),OPTIONAL :: default(:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SBK_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9098,7 +9331,7 @@ SUBROUTINE get_ParamType_SBK_a1(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9109,6 +9342,8 @@ SUBROUTINE get_ParamType_SBK_a1(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 1-D ARRAY LOGICAL(SBK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9142,11 +9377,13 @@ SUBROUTINE add_ParamType_SBK_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -9194,8 +9431,7 @@ SUBROUTINE init_ParamType_STR_a1(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_STR_a1 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='1-D ARRAY TYPE(StringType)'
       SELECTTYPE(p => thisParam%pdat); TYPE IS(ParamType_STR_a1)
         ALLOCATE(p%val(SIZE(param)))
@@ -9288,9 +9524,7 @@ SUBROUTINE clear_ParamType_STR_a1(thisParam)
   IF(ALLOCATED(thisParam%val)) THEN
     DEALLOCATE(thisParam%val)
   ENDIF
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_STR_a1
 !
 !-------------------------------------------------------------------------------
@@ -9317,13 +9551,15 @@ SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -9333,7 +9569,7 @@ SUBROUTINE set_ParamType_STR_a1(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9366,16 +9602,21 @@ ENDSUBROUTINE set_ParamType_STR_a1
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_STR_a1(thisParam,name,val)
+SUBROUTINE get_ParamType_STR_a1(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR_a1'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:)
+  TYPE(StringType),INTENT(IN),OPTIONAL :: default(:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a1)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9384,7 +9625,7 @@ SUBROUTINE get_ParamType_STR_a1(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9395,6 +9636,8 @@ SUBROUTINE get_ParamType_STR_a1(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 1-D ARRAY TYPE(StringType)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9427,11 +9670,13 @@ SUBROUTINE add_ParamType_STR_a1(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -9484,8 +9729,7 @@ SUBROUTINE init_ParamType_SSK_a2(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK_a2 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='2-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK_a2)
@@ -9563,9 +9807,7 @@ ENDSUBROUTINE edit_ParamType_SSK_a2
 SUBROUTINE clear_ParamType_SSK_a2(thisParam)
   CLASS(ParamType_SSK_a2),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK_a2
 !
 !-------------------------------------------------------------------------------
@@ -9593,13 +9835,15 @@ SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -9609,7 +9853,7 @@ SUBROUTINE set_ParamType_SSK_a2(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9642,16 +9886,21 @@ ENDSUBROUTINE set_ParamType_SSK_a2
 !> parameter with @c name is not a two dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK_a2(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK_a2(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a2'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
+  REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9660,7 +9909,7 @@ SUBROUTINE get_ParamType_SSK_a2(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9671,6 +9920,8 @@ SUBROUTINE get_ParamType_SSK_a2(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 2-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9704,11 +9955,13 @@ SUBROUTINE add_ParamType_SSK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -9756,8 +10009,7 @@ SUBROUTINE init_ParamType_SDK_a2(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK_a2 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='2-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK_a2)
@@ -9834,9 +10086,7 @@ ENDSUBROUTINE edit_ParamType_SDK_a2
 SUBROUTINE clear_ParamType_SDK_a2(thisParam)
   CLASS(ParamType_SDK_a2),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK_a2
 !
 !-------------------------------------------------------------------------------
@@ -9864,13 +10114,15 @@ SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -9880,7 +10132,7 @@ SUBROUTINE set_ParamType_SDK_a2(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9913,16 +10165,21 @@ ENDSUBROUTINE set_ParamType_SDK_a2
 !> parameter with @c name is not a two dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK_a2(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK_a2(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a2'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
+  REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -9931,7 +10188,7 @@ SUBROUTINE get_ParamType_SDK_a2(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -9942,6 +10199,8 @@ SUBROUTINE get_ParamType_SDK_a2(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 2-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -9975,10 +10234,13 @@ SUBROUTINE add_ParamType_SDK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
   CALL get_ParamType(thisParam,name,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
@@ -10027,8 +10289,7 @@ SUBROUTINE init_ParamType_SNK_a2(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK_a2 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='2-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK_a2)
@@ -10105,9 +10366,7 @@ ENDSUBROUTINE edit_ParamType_SNK_a2
 SUBROUTINE clear_ParamType_SNK_a2(thisParam)
   CLASS(ParamType_SNK_a2),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK_a2
 !
 !-------------------------------------------------------------------------------
@@ -10135,13 +10394,15 @@ SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -10151,7 +10412,7 @@ SUBROUTINE set_ParamType_SNK_a2(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -10184,16 +10445,21 @@ ENDSUBROUTINE set_ParamType_SNK_a2
 !> parameter with @c name is not a two dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK_a2(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK_a2(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a2'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -10202,7 +10468,7 @@ SUBROUTINE get_ParamType_SNK_a2(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -10213,6 +10479,8 @@ SUBROUTINE get_ParamType_SNK_a2(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 2-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -10246,11 +10514,13 @@ SUBROUTINE add_ParamType_SNK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -10298,8 +10568,7 @@ SUBROUTINE init_ParamType_SLK_a2(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK_a2 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='2-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK_a2)
@@ -10376,9 +10645,7 @@ ENDSUBROUTINE edit_ParamType_SLK_a2
 SUBROUTINE clear_ParamType_SLK_a2(thisParam)
   CLASS(ParamType_SLK_a2),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK_a2
 !
 !-------------------------------------------------------------------------------
@@ -10406,13 +10673,15 @@ SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -10422,7 +10691,7 @@ SUBROUTINE set_ParamType_SLK_a2(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -10455,16 +10724,21 @@ ENDSUBROUTINE set_ParamType_SLK_a2
 !> parameter with @c name is not a two dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK_a2(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK_a2(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a2'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -10473,7 +10747,7 @@ SUBROUTINE get_ParamType_SLK_a2(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -10484,6 +10758,8 @@ SUBROUTINE get_ParamType_SLK_a2(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 2-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -10517,11 +10793,13 @@ SUBROUTINE add_ParamType_SLK_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -10569,8 +10847,7 @@ SUBROUTINE init_ParamType_STR_a2(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_STR_a2 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='2-D ARRAY TYPE(StringType)'
       SELECTTYPE(p => thisParam%pdat); TYPE IS(ParamType_STR_a2)
         ALLOCATE(p%val(SIZE(param,1),SIZE(param,2)))
@@ -10651,9 +10928,7 @@ SUBROUTINE clear_ParamType_STR_a2(thisParam)
     ENDDO
   ENDDO
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_STR_a2
 !
 !-------------------------------------------------------------------------------
@@ -10680,13 +10955,15 @@ SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -10696,7 +10973,7 @@ SUBROUTINE set_ParamType_STR_a2(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -10729,16 +11006,21 @@ ENDSUBROUTINE set_ParamType_STR_a2
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_STR_a2(thisParam,name,val)
+SUBROUTINE get_ParamType_STR_a2(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR_a2'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:,:)
+  TYPE(StringType),INTENT(IN),OPTIONAL :: default(:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a2)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -10747,7 +11029,7 @@ SUBROUTINE get_ParamType_STR_a2(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -10758,6 +11040,8 @@ SUBROUTINE get_ParamType_STR_a2(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 2-D ARRAY TYPE(StringType)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -10790,11 +11074,13 @@ SUBROUTINE add_ParamType_STR_a2(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -10847,8 +11133,7 @@ SUBROUTINE init_ParamType_SSK_a3(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK_a3 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='3-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK_a3)
@@ -10927,9 +11212,7 @@ ENDSUBROUTINE edit_ParamType_SSK_a3
 SUBROUTINE clear_ParamType_SSK_a3(thisParam)
   CLASS(ParamType_SSK_a3),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK_a3
 !
 !-------------------------------------------------------------------------------
@@ -10957,13 +11240,15 @@ SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -10973,7 +11258,7 @@ SUBROUTINE set_ParamType_SSK_a3(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11006,16 +11291,21 @@ ENDSUBROUTINE set_ParamType_SSK_a3
 !> parameter with @c name is not a three dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK_a3(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK_a3(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a3'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
+  REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -11024,7 +11314,7 @@ SUBROUTINE get_ParamType_SSK_a3(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11035,6 +11325,8 @@ SUBROUTINE get_ParamType_SSK_a3(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 3-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11068,11 +11360,13 @@ SUBROUTINE add_ParamType_SSK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -11120,8 +11414,7 @@ SUBROUTINE init_ParamType_SDK_a3(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK_a3 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='3-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK_a3)
@@ -11199,9 +11492,7 @@ ENDSUBROUTINE edit_ParamType_SDK_a3
 SUBROUTINE clear_ParamType_SDK_a3(thisParam)
   CLASS(ParamType_SDK_a3),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK_a3
 !
 !-------------------------------------------------------------------------------
@@ -11229,13 +11520,15 @@ SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -11245,7 +11538,7 @@ SUBROUTINE set_ParamType_SDK_a3(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11278,16 +11571,21 @@ ENDSUBROUTINE set_ParamType_SDK_a3
 !> parameter with @c name is not a three dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK_a3(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK_a3(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a3'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
+  REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -11296,7 +11594,7 @@ SUBROUTINE get_ParamType_SDK_a3(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11307,6 +11605,8 @@ SUBROUTINE get_ParamType_SDK_a3(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 3-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11340,11 +11640,13 @@ SUBROUTINE add_ParamType_SDK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -11392,8 +11694,7 @@ SUBROUTINE init_ParamType_SNK_a3(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK_a3 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='3-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK_a3)
@@ -11471,9 +11772,7 @@ ENDSUBROUTINE edit_ParamType_SNK_a3
 SUBROUTINE clear_ParamType_SNK_a3(thisParam)
   CLASS(ParamType_SNK_a3),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK_a3
 !
 !-------------------------------------------------------------------------------
@@ -11501,13 +11800,15 @@ SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -11517,7 +11818,7 @@ SUBROUTINE set_ParamType_SNK_a3(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11550,16 +11851,21 @@ ENDSUBROUTINE set_ParamType_SNK_a3
 !> parameter with @c name is not a three dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK_a3(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK_a3(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a3'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -11568,7 +11874,7 @@ SUBROUTINE get_ParamType_SNK_a3(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11579,6 +11885,8 @@ SUBROUTINE get_ParamType_SNK_a3(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 3-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11612,11 +11920,13 @@ SUBROUTINE add_ParamType_SNK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -11664,8 +11974,7 @@ SUBROUTINE init_ParamType_SLK_a3(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK_a3 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='3-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK_a3)
@@ -11743,9 +12052,7 @@ ENDSUBROUTINE edit_ParamType_SLK_a3
 SUBROUTINE clear_ParamType_SLK_a3(thisParam)
   CLASS(ParamType_SLK_a3),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK_a3
 !
 !-------------------------------------------------------------------------------
@@ -11773,13 +12080,15 @@ SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -11789,7 +12098,7 @@ SUBROUTINE set_ParamType_SLK_a3(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11822,16 +12131,21 @@ ENDSUBROUTINE set_ParamType_SLK_a3
 !> parameter with @c name is not a three dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK_a3(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK_a3(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a3'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -11840,7 +12154,7 @@ SUBROUTINE get_ParamType_SLK_a3(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -11851,6 +12165,8 @@ SUBROUTINE get_ParamType_SLK_a3(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 3-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -11884,11 +12200,13 @@ SUBROUTINE add_ParamType_SLK_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -11936,8 +12254,7 @@ SUBROUTINE init_ParamType_STR_a3(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_STR_a3 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='3-D ARRAY TYPE(StringType)'
       SELECTTYPE(p => thisParam%pdat); TYPE IS(ParamType_STR_a3)
         ALLOCATE(p%val(SIZE(param,1),SIZE(param,2),SIZE(param,3)))
@@ -12022,9 +12339,7 @@ SUBROUTINE clear_ParamType_STR_a3(thisParam)
     ENDDO !j
   ENDDO !k
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_STR_a3
 !
 !-------------------------------------------------------------------------------
@@ -12051,13 +12366,15 @@ SUBROUTINE set_ParamType_STR_a3(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -12067,7 +12384,7 @@ SUBROUTINE set_ParamType_STR_a3(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12100,16 +12417,21 @@ ENDSUBROUTINE set_ParamType_STR_a3
 !> parameter with @c name is not a string derived type parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_STR_a3(thisParam,name,val)
+SUBROUTINE get_ParamType_STR_a3(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_STR_a3'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   TYPE(StringType),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:)
+  TYPE(StringType),INTENT(IN),OPTIONAL :: default(:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_STR_a3)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12118,7 +12440,7 @@ SUBROUTINE get_ParamType_STR_a3(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12129,6 +12451,8 @@ SUBROUTINE get_ParamType_STR_a3(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 3-D ARRAY TYPE(StringType)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -12161,11 +12485,13 @@ SUBROUTINE add_ParamType_STR_a3(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -12218,8 +12544,7 @@ SUBROUTINE init_ParamType_SSK_a4(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK_a4 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='4-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK_a4)
@@ -12300,9 +12625,7 @@ ENDSUBROUTINE edit_ParamType_SSK_a4
 SUBROUTINE clear_ParamType_SSK_a4(thisParam)
   CLASS(ParamType_SSK_a4),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK_a4
 !
 !-------------------------------------------------------------------------------
@@ -12330,13 +12653,15 @@ SUBROUTINE set_ParamType_SSK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -12346,7 +12671,7 @@ SUBROUTINE set_ParamType_SSK_a4(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12379,16 +12704,21 @@ ENDSUBROUTINE set_ParamType_SSK_a4
 !> parameter with @c name is not a four dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK_a4(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK_a4(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a4'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
+  REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12397,7 +12727,7 @@ SUBROUTINE get_ParamType_SSK_a4(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12408,6 +12738,8 @@ SUBROUTINE get_ParamType_SSK_a4(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 4-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -12441,11 +12773,13 @@ SUBROUTINE add_ParamType_SSK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -12493,8 +12827,7 @@ SUBROUTINE init_ParamType_SDK_a4(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK_a4 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='4-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK_a4)
@@ -12574,9 +12907,7 @@ ENDSUBROUTINE edit_ParamType_SDK_a4
 SUBROUTINE clear_ParamType_SDK_a4(thisParam)
   CLASS(ParamType_SDK_a4),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK_a4
 !
 !-------------------------------------------------------------------------------
@@ -12604,13 +12935,15 @@ SUBROUTINE set_ParamType_SDK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -12620,7 +12953,7 @@ SUBROUTINE set_ParamType_SDK_a4(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12653,16 +12986,21 @@ ENDSUBROUTINE set_ParamType_SDK_a4
 !> parameter with @c name is not a four dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK_a4(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK_a4(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a4'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
+  REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+  IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12671,7 +13009,7 @@ SUBROUTINE get_ParamType_SDK_a4(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12682,6 +13020,8 @@ SUBROUTINE get_ParamType_SDK_a4(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 4-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -12715,11 +13055,13 @@ SUBROUTINE add_ParamType_SDK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -12767,8 +13109,7 @@ SUBROUTINE init_ParamType_SNK_a4(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK_a4 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='4-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK_a4)
@@ -12848,9 +13189,7 @@ ENDSUBROUTINE edit_ParamType_SNK_a4
 SUBROUTINE clear_ParamType_SNK_a4(thisParam)
   CLASS(ParamType_SNK_a4),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK_a4
 !
 !-------------------------------------------------------------------------------
@@ -12878,13 +13217,15 @@ SUBROUTINE set_ParamType_SNK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -12894,7 +13235,7 @@ SUBROUTINE set_ParamType_SNK_a4(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12927,16 +13268,21 @@ ENDSUBROUTINE set_ParamType_SNK_a4
 !> parameter with @c name is not a four dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK_a4(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK_a4(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a4'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -12945,7 +13291,7 @@ SUBROUTINE get_ParamType_SNK_a4(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -12956,6 +13302,8 @@ SUBROUTINE get_ParamType_SNK_a4(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 4-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -12989,11 +13337,13 @@ SUBROUTINE add_ParamType_SNK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -13041,8 +13391,7 @@ SUBROUTINE init_ParamType_SLK_a4(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK_a4 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='4-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK_a4)
@@ -13122,9 +13471,7 @@ ENDSUBROUTINE edit_ParamType_SLK_a4
 SUBROUTINE clear_ParamType_SLK_a4(thisParam)
   CLASS(ParamType_SLK_a4),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK_a4
 !
 !-------------------------------------------------------------------------------
@@ -13152,13 +13499,15 @@ SUBROUTINE set_ParamType_SLK_a4(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -13168,7 +13517,7 @@ SUBROUTINE set_ParamType_SLK_a4(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -13201,16 +13550,21 @@ ENDSUBROUTINE set_ParamType_SLK_a4
 !> parameter with @c name is not a four dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK_a4(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK_a4(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a4'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:)
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a4)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -13219,7 +13573,7 @@ SUBROUTINE get_ParamType_SLK_a4(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -13230,6 +13584,8 @@ SUBROUTINE get_ParamType_SLK_a4(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 4-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -13263,11 +13619,13 @@ SUBROUTINE add_ParamType_SLK_a4(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -13320,8 +13678,7 @@ SUBROUTINE init_ParamType_SSK_a5(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK_a5 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='5-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK_a5)
@@ -13404,9 +13761,7 @@ ENDSUBROUTINE edit_ParamType_SSK_a5
 SUBROUTINE clear_ParamType_SSK_a5(thisParam)
   CLASS(ParamType_SSK_a5),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK_a5
 !
 !-------------------------------------------------------------------------------
@@ -13434,13 +13789,15 @@ SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -13450,7 +13807,7 @@ SUBROUTINE set_ParamType_SSK_a5(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -13483,16 +13840,21 @@ ENDSUBROUTINE set_ParamType_SSK_a5
 !> parameter with @c name is not a five dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK_a5(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK_a5(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a5'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -13501,7 +13863,7 @@ SUBROUTINE get_ParamType_SSK_a5(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -13512,6 +13874,8 @@ SUBROUTINE get_ParamType_SSK_a5(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 5-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -13545,11 +13909,13 @@ SUBROUTINE add_ParamType_SSK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -13597,8 +13963,7 @@ SUBROUTINE init_ParamType_SDK_a5(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK_a5 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='5-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK_a5)
@@ -13680,9 +14045,7 @@ ENDSUBROUTINE edit_ParamType_SDK_a5
 SUBROUTINE clear_ParamType_SDK_a5(thisParam)
   CLASS(ParamType_SDK_a5),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK_a5
 !
 !-------------------------------------------------------------------------------
@@ -13710,13 +14073,15 @@ SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -13726,7 +14091,7 @@ SUBROUTINE set_ParamType_SDK_a5(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -13759,16 +14124,21 @@ ENDSUBROUTINE set_ParamType_SDK_a5
 !> parameter with @c name is not a five dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK_a5(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK_a5(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a5'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -13777,7 +14147,7 @@ SUBROUTINE get_ParamType_SDK_a5(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -13788,6 +14158,8 @@ SUBROUTINE get_ParamType_SDK_a5(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 5-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -13821,11 +14193,13 @@ SUBROUTINE add_ParamType_SDK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -13873,8 +14247,7 @@ SUBROUTINE init_ParamType_SNK_a5(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK_a5 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='5-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK_a5)
@@ -13956,9 +14329,7 @@ ENDSUBROUTINE edit_ParamType_SNK_a5
 SUBROUTINE clear_ParamType_SNK_a5(thisParam)
   CLASS(ParamType_SNK_a5),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK_a5
 !
 !-------------------------------------------------------------------------------
@@ -13986,13 +14357,15 @@ SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -14002,7 +14375,7 @@ SUBROUTINE set_ParamType_SNK_a5(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14035,16 +14408,21 @@ ENDSUBROUTINE set_ParamType_SNK_a5
 !> parameter with @c name is not a five dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK_a5(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK_a5(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a5'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -14053,7 +14431,7 @@ SUBROUTINE get_ParamType_SNK_a5(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14064,6 +14442,8 @@ SUBROUTINE get_ParamType_SNK_a5(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 5-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14097,11 +14477,13 @@ SUBROUTINE add_ParamType_SNK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -14149,8 +14531,7 @@ SUBROUTINE init_ParamType_SLK_a5(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK_a5 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='5-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK_a5)
@@ -14232,9 +14613,7 @@ ENDSUBROUTINE edit_ParamType_SLK_a5
 SUBROUTINE clear_ParamType_SLK_a5(thisParam)
   CLASS(ParamType_SLK_a5),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK_a5
 !
 !-------------------------------------------------------------------------------
@@ -14262,13 +14641,15 @@ SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -14278,7 +14659,7 @@ SUBROUTINE set_ParamType_SLK_a5(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14311,16 +14692,21 @@ ENDSUBROUTINE set_ParamType_SLK_a5
 !> parameter with @c name is not a five dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK_a5(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK_a5(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a5'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:)
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a5)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -14329,7 +14715,7 @@ SUBROUTINE get_ParamType_SLK_a5(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14340,6 +14726,8 @@ SUBROUTINE get_ParamType_SLK_a5(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 5-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14373,11 +14761,13 @@ SUBROUTINE add_ParamType_SLK_a5(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -14430,8 +14820,7 @@ SUBROUTINE init_ParamType_SSK_a6(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK_a6 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='6-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK_a6)
@@ -14517,9 +14906,7 @@ ENDSUBROUTINE edit_ParamType_SSK_a6
 SUBROUTINE clear_ParamType_SSK_a6(thisParam)
   CLASS(ParamType_SSK_a6),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK_a6
 !
 !-------------------------------------------------------------------------------
@@ -14547,13 +14934,15 @@ SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -14563,7 +14952,7 @@ SUBROUTINE set_ParamType_SSK_a6(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14596,16 +14985,21 @@ ENDSUBROUTINE set_ParamType_SSK_a6
 !> parameter with @c name is not a six dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK_a6(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK_a6(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a6'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -14614,7 +15008,7 @@ SUBROUTINE get_ParamType_SSK_a6(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14625,6 +15019,8 @@ SUBROUTINE get_ParamType_SSK_a6(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 6-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14658,11 +15054,13 @@ SUBROUTINE add_ParamType_SSK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -14710,8 +15108,7 @@ SUBROUTINE init_ParamType_SDK_a6(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK_a6 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='6-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK_a6)
@@ -14796,9 +15193,7 @@ ENDSUBROUTINE edit_ParamType_SDK_a6
 SUBROUTINE clear_ParamType_SDK_a6(thisParam)
   CLASS(ParamType_SDK_a6),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK_a6
 !
 !-------------------------------------------------------------------------------
@@ -14826,13 +15221,15 @@ SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -14842,7 +15239,7 @@ SUBROUTINE set_ParamType_SDK_a6(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14875,16 +15272,21 @@ ENDSUBROUTINE set_ParamType_SDK_a6
 !> parameter with @c name is not a six dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK_a6(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK_a6(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a6'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -14893,7 +15295,7 @@ SUBROUTINE get_ParamType_SDK_a6(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -14904,6 +15306,8 @@ SUBROUTINE get_ParamType_SDK_a6(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 6-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -14937,11 +15341,13 @@ SUBROUTINE add_ParamType_SDK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -14989,8 +15395,7 @@ SUBROUTINE init_ParamType_SNK_a6(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK_a6 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='6-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK_a6)
@@ -15075,9 +15480,7 @@ ENDSUBROUTINE edit_ParamType_SNK_a6
 SUBROUTINE clear_ParamType_SNK_a6(thisParam)
   CLASS(ParamType_SNK_a6),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK_a6
 !
 !-------------------------------------------------------------------------------
@@ -15105,13 +15508,15 @@ SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -15121,7 +15526,7 @@ SUBROUTINE set_ParamType_SNK_a6(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -15154,16 +15559,21 @@ ENDSUBROUTINE set_ParamType_SNK_a6
 !> parameter with @c name is not a six dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK_a6(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK_a6(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a6'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -15172,7 +15582,7 @@ SUBROUTINE get_ParamType_SNK_a6(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -15183,6 +15593,8 @@ SUBROUTINE get_ParamType_SNK_a6(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 6-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -15216,11 +15628,13 @@ SUBROUTINE add_ParamType_SNK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -15268,8 +15682,7 @@ SUBROUTINE init_ParamType_SLK_a6(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK_a6 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='6-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK_a6)
@@ -15354,9 +15767,7 @@ ENDSUBROUTINE edit_ParamType_SLK_a6
 SUBROUTINE clear_ParamType_SLK_a6(thisParam)
   CLASS(ParamType_SLK_a6),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK_a6
 !
 !-------------------------------------------------------------------------------
@@ -15384,13 +15795,15 @@ SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -15400,7 +15813,7 @@ SUBROUTINE set_ParamType_SLK_a6(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -15433,16 +15846,21 @@ ENDSUBROUTINE set_ParamType_SLK_a6
 !> parameter with @c name is not a six dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK_a6(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK_a6(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a6'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:)
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a6)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -15451,7 +15869,7 @@ SUBROUTINE get_ParamType_SLK_a6(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -15462,6 +15880,8 @@ SUBROUTINE get_ParamType_SLK_a6(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 6-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -15495,11 +15915,13 @@ SUBROUTINE add_ParamType_SLK_a6(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -15552,8 +15974,7 @@ SUBROUTINE init_ParamType_SSK_a7(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SSK_a7 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='7-D ARRAY REAL(SSK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SSK_a7)
@@ -15641,9 +16062,7 @@ ENDSUBROUTINE edit_ParamType_SSK_a7
 SUBROUTINE clear_ParamType_SSK_a7(thisParam)
   CLASS(ParamType_SSK_a7),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SSK_a7
 !
 !-------------------------------------------------------------------------------
@@ -15671,13 +16090,15 @@ SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -15687,7 +16108,7 @@ SUBROUTINE set_ParamType_SSK_a7(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -15720,16 +16141,21 @@ ENDSUBROUTINE set_ParamType_SSK_a7
 !> parameter with @c name is not a seven dimensional array of single precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SSK_a7(thisParam,name,val)
+SUBROUTINE get_ParamType_SSK_a7(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SSK_a7'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SSK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  REAL(SRK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SSK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -15738,7 +16164,7 @@ SUBROUTINE get_ParamType_SSK_a7(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -15749,6 +16175,8 @@ SUBROUTINE get_ParamType_SSK_a7(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 7-D ARRAY REAL(SSK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -15782,11 +16210,13 @@ SUBROUTINE add_ParamType_SSK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -15834,8 +16264,7 @@ SUBROUTINE init_ParamType_SDK_a7(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SDK_a7 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='7-D ARRAY REAL(SDK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SDK_a7)
@@ -15922,9 +16351,7 @@ ENDSUBROUTINE edit_ParamType_SDK_a7
 SUBROUTINE clear_ParamType_SDK_a7(thisParam)
   CLASS(ParamType_SDK_a7),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SDK_a7
 !
 !-------------------------------------------------------------------------------
@@ -15952,13 +16379,15 @@ SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -15968,7 +16397,7 @@ SUBROUTINE set_ParamType_SDK_a7(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -16001,16 +16430,21 @@ ENDSUBROUTINE set_ParamType_SDK_a7
 !> parameter with @c name is not a seven dimensional array of double precision real valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SDK_a7(thisParam,name,val)
+SUBROUTINE get_ParamType_SDK_a7(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SDK_a7'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   REAL(SDK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  REAL(SDK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SDK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -16019,7 +16453,7 @@ SUBROUTINE get_ParamType_SDK_a7(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -16030,6 +16464,8 @@ SUBROUTINE get_ParamType_SDK_a7(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 7-D ARRAY REAL(SDK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -16063,11 +16499,13 @@ SUBROUTINE add_ParamType_SDK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -16115,8 +16553,7 @@ SUBROUTINE init_ParamType_SNK_a7(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SNK_a7 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='7-D ARRAY INTEGER(SNK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SNK_a7)
@@ -16203,9 +16640,7 @@ ENDSUBROUTINE edit_ParamType_SNK_a7
 SUBROUTINE clear_ParamType_SNK_a7(thisParam)
   CLASS(ParamType_SNK_a7),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SNK_a7
 !
 !-------------------------------------------------------------------------------
@@ -16233,13 +16668,15 @@ SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -16249,7 +16686,7 @@ SUBROUTINE set_ParamType_SNK_a7(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -16282,16 +16719,21 @@ ENDSUBROUTINE set_ParamType_SNK_a7
 !> parameter with @c name is not a seven dimensional array of 32-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SNK_a7(thisParam,name,val)
+SUBROUTINE get_ParamType_SNK_a7(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SNK_a7'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SNK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  INTEGER(SNK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SNK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -16300,7 +16742,7 @@ SUBROUTINE get_ParamType_SNK_a7(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -16311,6 +16753,8 @@ SUBROUTINE get_ParamType_SNK_a7(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 7-D ARRAY INTEGER(SNK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -16344,11 +16788,13 @@ SUBROUTINE add_ParamType_SNK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -16396,8 +16842,7 @@ SUBROUTINE init_ParamType_SLK_a7(thisParam,name,param,description)
     ipos=INDEX(name,'->')
     IF(ipos == 0) THEN
       ALLOCATE(ParamType_SLK_a7 :: thisParam%pdat)
-      thisParam%pdat%name=TRIM(name)
-      IF(PRESENT(description)) thisParam%pdat%description=TRIM(description)
+      CALL thisParam%initBase(name,description)
       thisParam%pdat%dataType='7-D ARRAY INTEGER(SLK)'
       SELECTTYPE(p=>thisParam%pdat)
       TYPE IS(ParamType_SLK_a7)
@@ -16484,9 +16929,7 @@ ENDSUBROUTINE edit_ParamType_SLK_a7
 SUBROUTINE clear_ParamType_SLK_a7(thisParam)
   CLASS(ParamType_SLK_a7),INTENT(INOUT) :: thisParam
   DEALLOCATE(thisParam%val)
-  thisParam%name=''
-  thisParam%dataType=''
-  thisParam%description=''
+  CALL thisParam%clearBase()
 ENDSUBROUTINE clear_ParamType_SLK_a7
 !
 !-------------------------------------------------------------------------------
@@ -16514,13 +16957,15 @@ SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description,addMissing)
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: addMissing
   CLASS(ParamType),POINTER :: tmpParam
   LOGICAL(SBK) :: lAddMissing
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
 
+  CALL get_hash_list(name,hashes)
 
   lAddMissing=.FALSE.
   IF(PRESENT(addMissing)) lAddMissing=addMissing
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       thisParam%val=param
       IF(PRESENT(description)) thisParam%description=TRIM(description)
     ELSE
@@ -16530,7 +16975,7 @@ SUBROUTINE set_ParamType_SLK_a7(thisParam,name,param,description,addMissing)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -16563,16 +17008,21 @@ ENDSUBROUTINE set_ParamType_SLK_a7
 !> parameter with @c name is not a seven dimensional array of 64-bit integer valued parameter
 !> then an error is produced.
 !>
-SUBROUTINE get_ParamType_SLK_a7(thisParam,name,val)
+SUBROUTINE get_ParamType_SLK_a7(thisParam,name,val,default)
   CHARACTER(LEN=*),PARAMETER :: myName='get_ParamType_SLK_a7'
   CLASS(ParamType),INTENT(IN) :: thisParam
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SLK),ALLOCATABLE,INTENT(INOUT) :: val(:,:,:,:,:,:,:)
+  INTEGER(SLK),INTENT(IN),OPTIONAL :: default(:,:,:,:,:,:,:)
+  !
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   CLASS(ParamType),POINTER :: tmpParam
+
+  CALL get_hash_list(name,hashes)
 
   SELECTTYPE(thisParam)
   TYPE IS(ParamType_SLK_a7)
-    IF(thisParam%name == TRIM(name)) THEN
+    IF(thisParam%upperNameHash == hashes(1)) THEN
       val=thisParam%val
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
@@ -16581,7 +17031,7 @@ SUBROUTINE get_ParamType_SLK_a7(thisParam,name,val)
     ENDIF
   CLASS DEFAULT
     !Search for the parameter name
-    CALL thisParam%getParam(name,tmpParam)
+    CALL thisParam%getParam_hash(hashes,tmpParam)
     IF(ASSOCIATED(tmpParam)) THEN
       !Parameter was found
       SELECTTYPE(p=>tmpParam)
@@ -16592,6 +17042,8 @@ SUBROUTINE get_ParamType_SLK_a7(thisParam,name,val)
             ' - parameter data type mismatch! Parameter '//TRIM(name)//' type is '// &
             p%dataType//' and must be 7-D ARRAY INTEGER(SLK)!')
       ENDSELECT
+    ELSEIF(PRESENT(default)) THEN
+      val=default
     ELSE
       CALL eParams%raiseError(modName//'::'//myName// &
           ' - unable to locate parameter "'//TRIM(name)//'" in "'// &
@@ -16625,11 +17077,13 @@ SUBROUTINE add_ParamType_SLK_a7(thisParam,name,param,description)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: description
   CHARACTER(LEN=LEN(name)) :: prevname,thisname
   INTEGER(SIK) :: ipos
+  INTEGER(SLK),ALLOCATABLE :: hashes(:)
   TYPE(ParamType) :: newParam
   CLASS(ParamType),POINTER :: tmpParam
 
   !Search for the name to make sure it does not exist
-  CALL get_ParamType(thisParam,name,tmpParam)
+  CALL get_hash_list(name,hashes)
+  CALL thisParam%getParam_hash(hashes,tmpParam)
 
   IF(.NOT.ASSOCIATED(tmpParam)) THEN
     prevname=''
@@ -16702,10 +17156,10 @@ RECURSIVE SUBROUTINE procXMLTree(thisParam,parent,currentPath)
         intVal=CHAR(attrVal)
         CALL thisParam%add(CHAR(tmpPath),intVal)
       CASE('FLOAT')
-        singleVal=CHAR(attrVal)
+        singleVal=attrVal%stof()
         CALL thisParam%add(CHAR(tmpPath),singleVal,'XML_IN_VAL='//attrval)
       CASE('DOUBLE')
-        doubleVal=CHAR(attrVal)
+        doubleVal=attrVal%stof()
         CALL thisParam%add(CHAR(tmpPath),doubleVal,'XML_IN_VAL='//attrval)
       CASE('STRING')
         CALL thisParam%add(CHAR(tmpPath),attrVal)
@@ -16879,7 +17333,6 @@ RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
   TYPE(StringType),INTENT(IN) :: currPath
   TYPE(XMLElementType),POINTER,INTENT(INOUT) :: currElem
 
-
   LOGICAL(SBK) :: bool0
   INTEGER(SIK) :: i,idx,nChildren
   REAL(SRK) :: doubleVal,oDoubleVal,singleVal,oSingleVal
@@ -16940,7 +17393,7 @@ RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
       IF(idx > 0) THEN
         idx=idx+11
         oVal = param%description%substr(idx,LEN_TRIM(param%description))
-        oSingleVal=CHAR(oVal)
+        oSingleVal=oVal%stof()
         CALL param%get(TRIM(param%name),singleVal)
 
         IF(singleVal == oSingleVal) THEN
@@ -16958,7 +17411,7 @@ RECURSIVE SUBROUTINE paramToXML(param,currPath,currElem)
       IF(idx > 0) THEN
         idx=idx+11
         oVal = param%description%substr(idx,LEN_TRIM(param%description))
-        oDoubleVal=CHAR(oVal)
+        oDoubleVal=oVal%stof()
         CALL param%get(TRIM(param%name),doubleVal)
 
         IF(doubleVal == oDoubleVal) THEN

@@ -27,6 +27,7 @@ PRIVATE
 PUBLIC :: GraphType
 PUBLIC :: DAGraphType
 PUBLIC :: OPERATOR(==)
+PUBLIC :: ASSIGNMENT(=)
 !PUBLIC :: OPERATOR(+)
 
 INTEGER(SIK),PARAMETER :: GRAPH_NULL_EDGE=0
@@ -35,6 +36,8 @@ INTEGER(SIK),PARAMETER :: GRAPH_QUADRATIC_EDGE=-1
 
 !> @brief a Directed Acyclic Graph Type
 TYPE :: DAGraphType
+  !> Logical indicating if the graph is sorted by ascending node value
+  LOGICAL(SBK) :: sorted=.FALSE.
   !> The number of nodes on the graph
   INTEGER(SIK) :: n=0
   !> Nodes (Size n)
@@ -50,9 +53,13 @@ TYPE :: DAGraphType
     !> @copybrief Geom_Graph::clear_DAGraphType
     !> @copydetails Geom_Graph::clear_DAGraphType
     PROCEDURE,PASS :: clear => clear_DAGraphType
-    !> @copybrief Geom_Graph::defineEdge_DAGraphType
-    !> @copydetails Geom_Graph::defineEdge_DAGraphType
-    PROCEDURE,PASS :: insertNode=> insertNode_DAGraphType
+    !> @copybrief Geom_Graph::insertNodeSorted_DAGraphType
+    !> @copydetails Geom_Graph::insertNodeSorted_DAGraphType
+    PROCEDURE,PASS,PRIVATE :: insertNodeSorted => insertNodeSorted_DAGraphType
+    !> @copybrief Geom_Graph::insertNodeAtIndex_DAGraphType
+    !> @copydetails Geom_Graph::insertNodeAtIndex_DAGraphType
+    PROCEDURE,PASS,PRIVATE :: insertNodeAtIndex => insertNodeAtIndex_DAGraphType
+    GENERIC :: insertNode => insertNodeSorted,insertNodeAtIndex
     !> @copybrief Geom_Graph::removeNode_DAGraphType
     !> @copydetails Geom_Graph::removeNode_DAGraphType
     PROCEDURE,PASS :: removeNode=> removeNode_DAGraphType
@@ -223,6 +230,12 @@ INTERFACE OPERATOR(==)
   !> @copybrief Geom_Graph::isequal_graphType
   !> @copydetails Geom_Graph::isequal_graphType
   MODULE PROCEDURE isequal_graphType
+ENDINTERFACE
+
+INTERFACE ASSIGNMENT(=)
+  !> @copybrief Geom_Graph::assign_DAGraphType
+  !> @copydetails Geom_Graph::assign_DAGraphType
+  MODULE PROCEDURE assign_DAGraphType
 ENDINTERFACE
 
 !INTERFACE OPERATOR(+)
@@ -2209,19 +2222,21 @@ ENDFUNCTION isequal_GraphType
 SUBROUTINE init_DAGraphType(this,n,nodes)
   CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: n
-  INTEGER(SIK),ALLOCATABLE,INTENT(IN) :: nodes(:)
+  INTEGER(SIK),INTENT(IN) :: nodes(:)
 
-  IF(.NOT. ALLOCATED(this%nodes) .AND. ALLOCATED(nodes)) THEN
-    IF(n > 0) THEN
-      IF(SIZE(nodes) == n) THEN
-        this%n=n
-        ALLOCATE(this%nodes(n))
-        ALLOCATE(this%edgeMatrix(n,n))
-        this%nodes=nodes
-        this%edgeMatrix=0
-      ENDIF
-    ENDIF
+  REQUIRE(.NOT.ALLOCATED(this%nodes))
+  REQUIRE(SIZE(nodes) == n .OR. n == 0)
+
+  this%n=n
+  ALLOCATE(this%nodes(n))
+  ALLOCATE(this%edgeMatrix(n,n))
+  IF(n > 0) THEN
+    this%nodes=nodes
+    CALL sort(this%nodes)
+    this%sorted=.TRUE.
   ENDIF
+  this%edgeMatrix=0
+
 ENDSUBROUTINE init_DAGraphType
 !
 !-------------------------------------------------------------------------------
@@ -2234,54 +2249,117 @@ SUBROUTINE clear_DAGraphType(this)
   this%n=0
   IF(ALLOCATED(this%nodes)) DEALLOCATE(this%nodes)
   IF(ALLOCATED(this%edgeMatrix)) DEALLOCATE(this%edgeMatrix)
+  this%sorted=.FALSE.
+
 ENDSUBROUTINE clear_DAGraphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
 !> @param
 !>
-SUBROUTINE insertNode_DAGraphType(this,ID,ind)
+SUBROUTINE insertNodeSorted_DAGraphType(this,ID)
   CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: ID
-  INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
-  INTEGER(SIK) :: index
+  INTEGER(SIK) :: index,a,b
   INTEGER(SIK),ALLOCATABLE :: tmpNodes(:),tmpEdges(:,:)
 
-  index=1
-  IF(PRESENT(ind)) index=ind
-  IF(ALLOCATED(this%edgeMatrix)) THEN
-    IF(ALL(this%nodes /= ID)) THEN
-      !Store values temporarily
-      ALLOCATE(tmpNodes(this%n))
-      ALLOCATE(tmpEdges(this%n,this%n))
-      tmpNodes=this%nodes
-      tmpEdges=this%edgeMatrix
-      !Resize arrays on graph type
-      DEALLOCATE(this%nodes)
-      DEALLOCATE(this%edgeMatrix)
-      this%n=this%n+1
-      ALLOCATE(this%nodes(this%n))
-      ALLOCATE(this%edgeMatrix(this%n,this%n))
-      this%edgeMatrix=0
-      !reassign old data and assign new node
-      this%nodes(1:index-1)=tmpNodes(1:index-1)
-      this%nodes(index)=ID
-      this%nodes(index+1:this%n)=tmpNodes(index:)
-      this%edgeMatrix(1:index-1,1:index-1)=tmpEdges(1:index-1,1:index-1)
-      this%edgeMatrix(index+1:,1:index-1)=tmpEdges(index:,1:index-1)
-      this%edgeMatrix(1:index-1,index+1:)=tmpEdges(1:index-1,index:)
-      this%edgeMatrix(index+1:,index+1:)=tmpEdges(index:,index:)
-      DEALLOCATE(tmpNodes)
-      DEALLOCATE(tmpEdges)
-    ENDIF
-  ELSE
-    ALLOCATE(this%edgeMatrix(1,1))
-    ALLOCATE(this%nodes(1))
+  REQUIRE(ALLOCATED(this%edgeMatrix))
+
+  IF(ALL(this%nodes /= ID)) THEN
+    !Store values temporarily
+    CALL MOVE_ALLOC(this%nodes,tmpNodes)
+    CALL MOVE_ALLOC(this%edgeMatrix,tmpEdges)
+    !Resize arrays on graph type
+    this%n=this%n+1
+    ALLOCATE(this%nodes(this%n))
+    ALLOCATE(this%edgeMatrix(this%n,this%n))
     this%edgeMatrix=0
-    this%nodes=ID
-    this%n=1
+    !Find the location for this index.  If the graph is sorted, then we'll insert
+    !the value at the location that maintains the sorting.  Otherwise, we'll just
+    !stick it at the beginning
+    !Also handle some special cases up front to simplify the binary search for sorted insertion
+    IF(this%n == 0) THEN
+      index = 1
+    ELSEIF(this%sorted) THEN
+      a = 1
+      b = this%n
+      IF(ID < this%nodes(a)) THEN
+        index = 1
+      ELSEIF(ID > this%nodes(b)) THEN
+        index = this%n
+      ELSE
+        index = (a + b)/2
+        DO WHILE(.TRUE.)
+          IF(ID < this%nodes(index-1)) THEN
+            b = index
+          ELSEIF(ID > this%nodes(index)) THEN
+            a = index
+          ELSE
+            EXIT
+          ENDIF
+          index = (a + b)/2
+        ENDDO
+      ENDIF
+    ELSE
+      index = 1
+    ENDIF
+    !reassign old data and assign new node
+    this%nodes(1:index-1)=tmpNodes(1:index-1)
+    this%nodes(index)=ID
+    this%nodes(index+1:this%n)=tmpNodes(index:)
+    this%edgeMatrix(1:index-1,1:index-1)=tmpEdges(1:index-1,1:index-1)
+    this%edgeMatrix(index+1:,1:index-1)=tmpEdges(index:,1:index-1)
+    this%edgeMatrix(1:index-1,index+1:)=tmpEdges(1:index-1,index:)
+    this%edgeMatrix(index+1:,index+1:)=tmpEdges(index:,index:)
   ENDIF
-ENDSUBROUTINE insertNode_DAGraphType
+
+ENDSUBROUTINE insertNodeSorted_DAGraphType
+!
+!-------------------------------------------------------------------------------
+!> @brief
+!> @param
+!>
+SUBROUTINE insertNodeAtIndex_DAGraphType(this,ID,index)
+  CLASS(DAGraphType),INTENT(INOUT) :: this
+  INTEGER(SIK),INTENT(IN) :: ID
+  INTEGER(SIK),INTENT(IN) :: index
+  INTEGER(SIK),ALLOCATABLE :: tmpNodes(:),tmpEdges(:,:)
+
+  REQUIRE(ALLOCATED(this%edgeMatrix))
+
+  IF(ALL(this%nodes /= ID)) THEN
+    !Store values temporarily
+    CALL MOVE_ALLOC(this%nodes,tmpNodes)
+    CALL MOVE_ALLOC(this%edgeMatrix,tmpEdges)
+    !Resize arrays on graph type
+    this%n=this%n+1
+    ALLOCATE(this%nodes(this%n))
+    ALLOCATE(this%edgeMatrix(this%n,this%n))
+    this%edgeMatrix=0
+    !reassign old data and assign new node
+    this%nodes(1:index-1)=tmpNodes(1:index-1)
+    this%nodes(index)=ID
+    this%nodes(index+1:this%n)=tmpNodes(index:)
+    this%edgeMatrix(1:index-1,1:index-1)=tmpEdges(1:index-1,1:index-1)
+    this%edgeMatrix(index+1:,1:index-1)=tmpEdges(index:,1:index-1)
+    this%edgeMatrix(1:index-1,index+1:)=tmpEdges(1:index-1,index:)
+    this%edgeMatrix(index+1:,index+1:)=tmpEdges(index:,index:)
+    !Update the sorted status
+    IF(this%sorted) THEN
+      IF(index > 1) THEN
+        IF(this%nodes(index) <= this%nodes(index-1)) THEN
+          this%sorted=.FALSE.
+        ENDIF
+      ENDIF
+      IF(index < this%n) THEN
+        IF(this%nodes(index) >= this%nodes(index+1)) THEN
+          this%sorted=.FALSE.
+        ENDIF
+      ENDIF
+    ENDIF
+  ENDIF
+
+ENDSUBROUTINE insertNodeAtIndex_DAGraphType
 !
 !-------------------------------------------------------------------------------
 !> @brief
@@ -2291,17 +2369,11 @@ SUBROUTINE removeNode_DAGraphType(this,ID,ind)
   CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN),OPTIONAL :: ID
   INTEGER(SIK),INTENT(IN),OPTIONAL :: ind
-  INTEGER(SIK) :: i,index
+  INTEGER(SIK) :: index
 
   index=0
   IF(PRESENT(ID)) THEN
-    !Find the index to remove
-    DO i=1,this%n
-      IF(ID == this%nodes(i)) THEN
-        index=i
-        EXIT
-      ENDIF
-    ENDDO
+    index = this%getIndex(ID)
     !If the ID was found, remove the index.
     IF(index > 0) CALL removeNodeByIndex_DAGraphType(this,index)
   ELSEIF(PRESENT(ind)) THEN
@@ -2316,39 +2388,32 @@ ENDSUBROUTINE removeNode_DAGraphType
 SUBROUTINE removeNodeByIndex_DAGraphType(this,ind)
   CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: ind
-  INTEGER(SIK) :: i
   INTEGER(SIK),ALLOCATABLE :: tmpN(:),tmpEdge(:,:)
 
-  IF(ALLOCATED(this%edgeMatrix)) THEN
-    IF((1 <= ind) .AND. (ind <= this%n)) THEN
-      !Store values temporarily
-      i=this%n
-      ALLOCATE(tmpN(i))
-      ALLOCATE(tmpEdge(i,i))
-      tmpN=this%nodes
-      tmpEdge=this%edgeMatrix
-      !Resize arrays on graph type
-      DEALLOCATE(this%nodes)
-      DEALLOCATE(this%edgeMatrix)
-      this%n=this%n-1
-      IF(this%n > 0) THEN
-        ALLOCATE(this%nodes(this%n))
-        ALLOCATE(this%edgeMatrix(this%n,this%n))
-        this%edgeMatrix=0
-        !reassign old data and assign new node
-        this%nodes(1:ind-1)=tmpN(1:ind-1)
-        this%edgeMatrix(1:ind-1,1:ind-1)=tmpEdge(1:ind-1,1:ind-1)
-        IF(ind <= this%n) THEN
-          this%nodes(ind:this%n)=tmpN(ind+1:)
-          this%edgeMatrix(ind:,1:ind-1)=tmpEdge(ind+1:,1:ind-1)
-          this%edgeMatrix(1:ind-1,ind:)=tmpEdge(1:ind-1,ind+1:)
-          this%edgeMatrix(ind:,ind:)=tmpEdge(ind+1:,ind+1:)
-        ENDIF
-      ENDIF
-      !CALL demalloc(tmpint)
-      DEALLOCATE(tmpEdge)
+  REQUIRE(ALLOCATED(this%edgeMatrix))
+  REQUIRE(1 <= ind)
+  REQUIRE(ind <= this%n)
+
+  !Store values temporarily
+  CALL MOVE_ALLOC(this%nodes,tmpN)
+  CALL MOVE_ALLOC(this%edgeMatrix,tmpEdge)
+  !Resize arrays on graph type
+  this%n=this%n-1
+  ALLOCATE(this%nodes(this%n))
+  ALLOCATE(this%edgeMatrix(this%n,this%n))
+  IF(this%n > 0) THEN
+    this%edgeMatrix=0
+    !reassign old data and assign new node
+    this%nodes(1:ind-1)=tmpN(1:ind-1)
+    this%edgeMatrix(1:ind-1,1:ind-1)=tmpEdge(1:ind-1,1:ind-1)
+    IF(ind <= this%n) THEN
+      this%nodes(ind:this%n)=tmpN(ind+1:)
+      this%edgeMatrix(ind:,1:ind-1)=tmpEdge(ind+1:,1:ind-1)
+      this%edgeMatrix(1:ind-1,ind:)=tmpEdge(1:ind-1,ind+1:)
+      this%edgeMatrix(ind:,ind:)=tmpEdge(ind+1:,ind+1:)
     ENDIF
   ENDIF
+
 ENDSUBROUTINE removeNodeByIndex_DAGraphType
 !
 !-------------------------------------------------------------------------------
@@ -2365,9 +2430,9 @@ FUNCTION isStartNode_DAGraphType(this,ID,ind) RESULT(bool)
   bool=.FALSE.
   IF(PRESENT(ID)) THEN
     index=this%getIndex(ID)
-    IF(ALL(this%edgeMatrix(:,index) == 0)) bool=.TRUE.
+    bool = (ALL(this%edgeMatrix(:,index) == 0))
   ELSEIF(PRESENT(ind)) THEN
-    IF(ALL(this%edgeMatrix(:,ind) == 0)) bool=.TRUE.
+    bool = (ALL(this%edgeMatrix(:,ind) == 0))
   ENDIF
 ENDFUNCTION isStartNode_DAGraphType
 !
@@ -2383,10 +2448,12 @@ SUBROUTINE getNextStartNode_DAGraphType(this,old,ID)
 
   ID=0
   DO i=1,this%n
-    IF(this%isStartNode(IND=i) .AND. ALL(this%nodes(i) /= old)) THEN
-      ID=this%nodes(i)
-      old(i)=ID
-      EXIT
+    IF(this%isStartNode(IND=i)) THEN
+      IF(ALL(this%nodes(i) /= old)) THEN
+        ID=this%nodes(i)
+        old(i)=ID
+        EXIT
+      ENDIF
     ENDIF
   ENDDO
 ENDSUBROUTINE getNextStartNode_DAGraphType
@@ -2401,11 +2468,12 @@ SUBROUTINE defineEdge_DAGraphType(this,fromID,toID)
   INTEGER(SIK),INTENT(IN) :: toID
   INTEGER(SIK) :: fromInd,toInd
 
-  IF(ALLOCATED(this%edgeMatrix)) THEN
-    fromInd=this%getIndex(fromID)
-    toInd=this%getIndex(toID)
-    IF((fromInd > 0) .AND. (toInd > 0)) this%edgeMatrix(fromInd,toInd)=1
-  ENDIF
+  REQUIRE(ALLOCATED(this%edgeMatrix))
+
+  fromInd=this%getIndex(fromID)
+  toInd=this%getIndex(toID)
+  IF((fromInd > 0) .AND. (toInd > 0)) this%edgeMatrix(fromInd,toInd)=1
+
 ENDSUBROUTINE defineEdge_DAGraphType
 !
 !-------------------------------------------------------------------------------
@@ -2418,31 +2486,67 @@ SUBROUTINE removeEdge_DAGraphType(this,fromID,toID)
   INTEGER(SIK),INTENT(IN) :: toID
   INTEGER(SIK) :: fromInd,toInd
 
-  IF(ALLOCATED(this%edgeMatrix)) THEN
-    fromInd=this%getIndex(fromID)
-    toInd=this%getIndex(toID)
-    IF((fromInd > 0) .AND. (toInd > 0)) this%edgeMatrix(fromInd,toInd)=0
-  ENDIF
+  REQUIRE(ALLOCATED(this%edgeMatrix))
+
+  fromInd=this%getIndex(fromID)
+  toInd=this%getIndex(toID)
+  IF((fromInd > 0) .AND. (toInd > 0)) this%edgeMatrix(fromInd,toInd)=0
+
 ENDSUBROUTINE removeEdge_DAGraphType
 !
 !-------------------------------------------------------------------------------
-!> @brief
-!> @param
+!> @brief retrieves the index of a node in a @c DAGraphType
+!> @param this the graph object
+!> @param ID the node ID to search for
+!> @returns ind the index of node @c ID
+!>
+!> Returns 0 if the ID could not be found.  If the graph is sorted, a binary
+!> search is used.  Otherwise, a linear search is used.
 !>
 FUNCTION getIndex_DAGraphType(this,ID) RESULT(ind)
   CLASS(DAGraphType),INTENT(INOUT) :: this
   INTEGER(SIK),INTENT(IN) :: ID
-  INTEGER(SIK) :: i,ind
+  INTEGER(SIK) :: ind
+  !
+  INTEGER(SIK) :: a,b
+
+  REQUIRE(ALLOCATED(this%nodes))
 
   ind=0
-  IF(ALLOCATED(this%edgeMatrix)) THEN
-    DO i=1,this%n
-      IF(this%nodes(i) == ID) THEN
-        ind=i
+  IF(this%sorted) THEN
+    a = 1
+    b = this%n
+    IF(ID == this%nodes(a)) THEN
+      ind = 1
+    ELSEIF(ID == this%nodes(b)) THEN
+      ind = this%n
+    ELSE
+      ind = (a + b)/2
+      DO WHILE(.TRUE.)
+        IF(ID < this%nodes(ind)) THEN
+          b = ind
+        ELSEIF(ID > this%nodes(ind)) THEN
+          a = ind
+        ELSE
+          EXIT
+        ENDIF
+        IF(a == b) EXIT
+        ind = (a + b)/2
+      ENDDO
+      IF(this%nodes(ind) /= ID) THEN
+        ind = 0
+      ENDIF
+    ENDIF
+  ELSE
+    DO a=1,this%n
+      IF(this%nodes(a) == ID) THEN
+        ind=a
         EXIT
       ENDIF
     ENDDO
+    IF(a > this%n) ind=0
   ENDIF
+
 ENDFUNCTION getIndex_DAGraphType
 !
 !-------------------------------------------------------------------------------
@@ -2459,18 +2563,22 @@ SUBROUTINE KATS_DAGraphType(this)
   ALLOCATE(oldIDs(this%n))
   oldIDs=0
   CALL this%getNextStartNode(oldIDs,ID)
+  sortedGraph%n=0
+  ALLOCATE(sortedGraph%nodes(sortedGraph%n))
+  ALLOCATE(sortedGraph%edgeMatrix(sortedGraph%n,sortedGraph%n))
 
   DO WHILE(ID /= 0)
+    !Add the node to the sorted graph
     CALL sortedGraph%insertNode(ID,1)
+    !Remove all edges from that node
     DO i=1,this%n
       CALL this%removeEdge(ID,this%nodes(i))
     ENDDO
+    !Get the next "start node
     CALL this%getNextStartNode(oldIDs,ID)
   ENDDO
   IF(ALL(this%edgeMatrix == 0)) THEN
-    SELECTTYPE(this); TYPE IS(DAGraphtype)
-      this=sortedGraph
-    ENDSELECT
+    this=sortedGraph
   ENDIF
   DEALLOCATE(oldIDs)
 ENDSUBROUTINE KATS_DAGraphType
@@ -2482,13 +2590,13 @@ ENDSUBROUTINE KATS_DAGraphType
 SUBROUTINE assign_DAGraphType(g0,g1)
   CLASS(DAGraphType),INTENT(INOUT) :: g0
   CLASS(DAGraphType),INTENT(IN) :: g1
-  CALL clear_DAGraphType(g0)
+  CALL g0%clear()
+  g0%n=g1%n
+  ALLOCATE(g0%nodes(g1%n))
+  ALLOCATE(g0%edgeMatrix(g1%n,g1%n))
   IF(g1%n > 0) THEN
-    g0%n=g1%n
-    ALLOCATE(g0%nodes(g1%n))
-    ALLOCATE(g0%edgeMatrix(g1%n,g1%n))
-    g0%nodes=g1%nodes
-    g0%edgeMatrix=g1%edgeMatrix
+    g0%nodes(:)=g1%nodes
+    g0%edgeMatrix(:,:)=g1%edgeMatrix
   ENDIF
 ENDSUBROUTINE assign_DAGraphType
 !
