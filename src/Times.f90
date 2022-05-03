@@ -288,7 +288,7 @@ FUNCTION getDate(opt) RESULT(strdate)
       mon=(/'Jan.','Feb.','Mar.','Apr.','May ','June', &
             'July','Aug.','Sep.','Oct.','Nov.','Dec.'/)
   INTEGER(SIK),OPTIONAL,INTENT(IN) :: opt
-  CHARACTER(LEN=13) :: strdate
+  TYPE(StringType) :: strdate
   CHARACTER(LEN=8) :: adate
   CHARACTER(LEN=4) :: yy
   CHARACTER(LEN=2) :: dd,mm
@@ -305,11 +305,11 @@ FUNCTION getDate(opt) RESULT(strdate)
   yy=adate(1:4)
   mm=adate(5:6)
   dd=adate(7:8)
-  READ(mm,'(i2)') imon
-  IF(fmt == 1_SIK .AND. LEN(strdate) >= 8_SIK) THEN
+  IF(fmt == 1_SIK) THEN
     strdate=mm//'/'//dd//'/'//yy
-  ELSEIF(fmt == 2_SIK .AND. LEN(strdate) >= 13_SIK) THEN
-    strdate=mon(imon)//' '//dd//', '//yy
+  ELSEIF(fmt == 2_SIK) THEN
+    READ(mm,'(i2)') imon
+    strdate=TRIM(mon(imon))//' '//dd//', '//yy
   ENDIF
 ENDFUNCTION getDate
 !
