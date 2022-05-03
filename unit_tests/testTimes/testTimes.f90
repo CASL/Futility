@@ -20,7 +20,7 @@ INTEGER :: idum1,idum2,idum3,ioerr
 CHARACTER(LEN=1) :: adum1,adum2
 CHARACTER(LEN=5) :: adum3
 CHARACTER(LEN=2) :: adum4
-TYPE(StringType) :: adate
+TYPE(StringType) :: adate,adate2
 TYPE(StringType) :: aclock
 REAL(SRK) :: totalElapsed
 !
@@ -56,8 +56,8 @@ SUBROUTINE testTimers()
   ASSERT_GT(idum2,0,'day')
   ASSERT_LT(idum2,32,'day')
   ASSERT_GT(idum3,0,'year')
-  INFO(0) 'getDate() = '//getDate()
-  ASSERT_EQ(getDate(),getDate(1),'getDate(1)')
+  adate2=getDate(1)
+  ASSERT_EQ(CHAR(adate),CHAR(adate2),'getDate(1)')
 
   idum1=0
   idum2=0
@@ -68,7 +68,12 @@ SUBROUTINE testTimers()
   ASSERT_GT(idum1,0,'day')
   ASSERT_LT(idum1,32,'day')
   ASSERT_GT(idum2,0,'year')
-  ASSERT_EQ(tokens(1)%substr(LEN(tokens(1))),'.','month')
+  SELECTCASE(CHAR(tokens(1)))
+  CASE('Jan.','Feb.','Mar.','Apr.','May','June','July','Aug.','Sep.','Oct.','Nov.','Dec.')
+    ASSERT(.TRUE.,'month')
+  CASE DEFAULT
+    ASSERT(.FALSE.,'month = "'//tokens(1)//'"')
+  ENDSELECT
 
   !Test getTimeFromDate
   COMPONENT_TEST('getTimeFromDate')
@@ -172,7 +177,7 @@ SUBROUTINE testTimers()
   ASSERT_GT(idum2,0,'day')
   ASSERT_LT(idum2,32,'day')
   ASSERT_GT(idum3,0,'year')
-  ASSERT_EQ(testTimer%getDate(),testTimer%getDate(1),'%getDate(1)')
+  ASSERT_EQ(CHAR(testTimer%getDate()),CHAR(testTimer%getDate(1)),'%getDate(1)')
   idum1=0
   idum2=0
   tokens=adate%split('/')
