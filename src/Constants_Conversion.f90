@@ -69,6 +69,9 @@ REAL(SRK),PUBLIC,PARAMETER :: NA=6.022140857E+23_SRK
 !> Gravity (m/s^2); source: https://en.wikipedia.org/wiki/Gravity_of_Earth
 REAL(SRK),PUBLIC,PARAMETER :: GRAV=9.80665_SRK
 
+!> Atomic mass unit
+REAL(SRK),PUBLIC,PARAMETER :: amu=1.66053892173E-24_SRK
+
 ! Area conversion
 !> Conversion factor from barns to cm**2
 REAL(SRK),PUBLIC,PARAMETER :: barn2cm=1.0E-24_SRK
