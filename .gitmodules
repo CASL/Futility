@@ -1,0 +1,3 @@
+[submodule "extern/UM2"]
+	path = extern/UM2
+	url = https://github.com/KyleVaughn/MOCNeutronTransport.git

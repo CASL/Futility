@@ -46,6 +46,15 @@ IF(${PROJECT_NAME}_ENABLE_DOCS AND "${DOXYGEN_FOUND}" STREQUAL "YES")
     ADD_SUBDIRECTORY(doc)
 ENDIF()
 
+
+# Add UM2 package
+MESSAGE(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
+IF(${PROJECT_NAME}_ENABLE_UM2)
+    MESSAGE(STATUS "${PROJECT_NAME}: Configuring UM2 Julia Library...")
+    find_package(Julia)
+    #ADD_SUBDIRECTORY(extern/UM2)
+ENDIF()
+
 # Add validation test subdirectory
 MESSAGE(STATUS "${PROJECT_NAME}: Configuring validation tests...")
 MESSAGE("    ${${PROJECT_NAME}_TEST_CATEGORIES} test categories are enabled.")
