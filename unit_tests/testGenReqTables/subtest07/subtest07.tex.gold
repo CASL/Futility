@@ -20,7 +20,7 @@
 \endlastfoot
 
 \multirow{4}{*}{1} & \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able
-   to parse a multiline   description} \\\cline{2-2}
+   to parse a multiline   description.} \\\cline{2-2}
                    & \cellcolor{caslcolor1} \\\cline{2-2}
                    & \cellcolor{caslcolor2}testA.inp \\\cline{2-2}
                    & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5690}{\# 5690} \\\hline
