@@ -57,7 +57,7 @@ class Requirement:
 
     Args:
        ID (int): Numeric identifier for this requirement
-       testName (str): The name of the test that shows up in the test report. This is 
+       testName (str): The name of the test that shows up in the test report. This is
                        nominally the test name created by CMake that appears on CDash.
        testFile (str): The name of the file where this requirement was found
        rawReqBlock (list): See above documentation for a detailed description.  Passing None means this
@@ -185,7 +185,7 @@ class File_RequirementParser:
             if self._re_begin.search(fline):
                 reqBlock = []
                 reqBlock.append(fline)
-                endmatch = False 
+                endmatch = False
                 while fline:
                     fline = fobject.readline()
                     reqBlock.append(fline)
@@ -347,10 +347,15 @@ def ConvertToLatex(df):
     #Data
     i=0
     for index, row in df.iterrows():
-      #Trim the last entry, which looks like a return.  Escape %, &, and escape _.
-      reqdesc = str(row['Requirement Description'])[:-1].replace('%',r'\%')
-      reqdesc = reqdesc.replace('_',r'\_')
-      reqdesc = reqdesc.replace('&',r'\&')
+      if row['Requirement Description'] is None:
+        reqdesc = "None"
+      else:
+        # Strip off line feed character and empty space
+        reqdesc = str(row['Requirement Description'].rstrip())
+        # Escape %, &, and escape _.
+        reqdesc = reqdesc.replace('%',r'\%')
+        reqdesc = reqdesc.replace('_',r'\_')
+        reqdesc = reqdesc.replace('&',r'\&')
 
       #Escape % and escape _.
       testfile = row['Test File'].replace('%',r'\%')
@@ -404,7 +409,7 @@ def GenerateInputList(path='', ext=[]):
                 for e in ext:
                     if file.endswith(e):
                         inputs.append(os.path.join(root, file))
-    inputs.sort()           
+    inputs.sort()
     return inputs
 
 
