@@ -2,29 +2,37 @@
 \caption{Requirements}\label{tab:req}\\
 
 \hline
-\multirow{4}{*}{\textbf{Req. ID}} & \cellcolor{caslheader}\textcolor{white}{\textit{Requirement Description}} \\\cline{2-2}
-                   & \cellcolor{caslcolor1} \textit{Test Name} \\\cline{2-2}
-                   & \cellcolor{caslcolor2} \textit{Test Input} \\\cline{2-2}
-                   & \cellcolor{caslcolor1} \textit{Additional Info} \\\hline
+\textbf{Req. ID} & \hspace{-0.2cm}\begin{tabular}{|p{14cm}}
+    \cellcolor{caslheader}\textcolor{white}{\textit{Requirement Description}} \\\hline
+    \cellcolor{caslcolor1} \textit{Test Name} \\\hline
+    \cellcolor{caslcolor2} \textit{Test Input} \\\hline
+    \cellcolor{caslcolor1} \textit{Additional Info} \\
+    \end{tabular}\\\hline
 \endfirsthead
 
 \hline
-\multirow{4}{*}{\textbf{Req. ID}} & \cellcolor{caslheader}\textcolor{white}{\textit{Requirement Description}} \\\cline{2-2}
-                   & \cellcolor{caslcolor1} \textit{Test Name} \\\cline{2-2}
-                   & \cellcolor{caslcolor2} \textit{Test Input} \\\cline{2-2}
-                   & \cellcolor{caslcolor1} \textit{Additional Info} \\\hline
+\textbf{Req. ID} & \hspace{-0.2cm}\begin{tabular}{|p{14cm}}
+    \cellcolor{caslheader}\textcolor{white}{\textit{Requirement Description}} \\\hline
+    \cellcolor{caslcolor1} \textit{Test Name} \\\hline
+    \cellcolor{caslcolor2} \textit{Test Input} \\\hline
+    \cellcolor{caslcolor1} \textit{Additional Info} \\
+    \end{tabular}\\\hline
 \endhead
 \hline
 \endfoot
 \hline
 \endlastfoot
 
-\multirow{4}{*}{1} & \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse requirement descriptions from multiple files with two different extentions (.inp).} \\\cline{2-2}
-                   & \cellcolor{caslcolor1} \\\cline{2-2}
-                   & \cellcolor{caslcolor2}testA.inp \\\cline{2-2}
-                   & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5690}{\# 5690} \\\hline
-\multirow{4}{*}{2} & \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse requirement descriptions from multiple files with two different extentions (.f90).} \\\cline{2-2}
-                   & \cellcolor{caslcolor1} \\\cline{2-2}
-                   & \cellcolor{caslcolor2}testC.f90 \\\cline{2-2}
-                   & \cellcolor{caslcolor1}\href{https://vminfo.casl.gov/trac/casl\_phi\_kanban/ticket/5690}{\# 5690} \\\hline
+1 & \hspace{-0.2cm}\begin{tabular}{|p{14cm}}
+    \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse requirement descriptions from multiple files with two different extentions (.inp).} \\\hline
+    \cellcolor{caslcolor1}  \\\hline
+    \cellcolor{caslcolor2} testA.inp \\\hline
+    \cellcolor{caslcolor1} \href{https://code.ornl.gov/vera/vera-dev/-/issues/5690}{\# 5690} \\
+    \end{tabular}\\\hline
+2 & \hspace{-0.2cm}\begin{tabular}{|p{14cm}}
+    \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse requirement descriptions from multiple files with two different extentions (.f90).} \\\hline
+    \cellcolor{caslcolor1}  \\\hline
+    \cellcolor{caslcolor2} testC.f90 \\\hline
+    \cellcolor{caslcolor1} \href{https://code.ornl.gov/vera/vera-dev/-/issues/5690}{\# 5690} \\
+    \end{tabular}\\\hline
 \end{longtable}
