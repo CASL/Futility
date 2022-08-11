@@ -119,7 +119,7 @@ class Requirement:
                     if self._re_int.match(tix):
                         self.tix = ''
                         for t in self._re_int.findall(tix):
-                            self.tix += 'https://vminfo.casl.gov/trac/casl_phi_kanban/ticket/'+t+'\n'
+                            self.tix += 'https://code.ornl.gov/vera/vera-dev/-/issues/'+t+'\n'
                         self.tix = self.tix.rstrip()
                     else:
                         self.tix = tix
@@ -171,7 +171,7 @@ class File_RequirementParser:
                 while fline:
                     cdash_test_input = fline.split(" ")[1]
                     cdash_test_input = cdash_test_input.rstrip("\n")
-                    if cdash_test_input in testFile:
+                    if cdash_test_input.endswith(testFile.split("/")[-1].split(".")[0]):
                        cdash_test_name = fline.split(" ")[0]
                        break
                     fline = f_tnames.readline()
@@ -299,6 +299,21 @@ def ConvertToHTML(df):
                   .render())
     return html_table
 
+def buildTableRow(id, req, name, input, info):
+    ws = '    '
+    return id + ' & \hspace{-0.2cm}\\begin{tabular}{|p{14cm}}\n' +\
+                  ws + '\\cellcolor{caslheader}\\textcolor{white}{' + req + '} \\\\\\hline\n' + \
+                  ws + '\\cellcolor{caslcolor1} ' + name + ' \\\\\\hline\n' + \
+                  ws + '\\cellcolor{caslcolor2} ' + input + ' \\\\\\hline\n' + \
+                  ws + '\\cellcolor{caslcolor1} ' + info + ' \\\\\n' + \
+                  ws + '\\end{tabular}\\\\\\hline\n'
+
+def getFirstHeader():
+    return buildTableRow('\\textbf{Req. ID}', '\\textit{Requirement Description}', '\\textit{Test Name}', '\\textit{Test Input}', '\\textit{Additional Info}')
+
+def getOtherHeaders():
+    return getFirstHeader()
+
 def ConvertToLatex(df):
     """ Convert a Pandas DataFrame to a pretty LaTeX table
 
@@ -319,21 +334,13 @@ def ConvertToLatex(df):
     #latex_table = df.to_latex(multicolumn=False,multirow=True,column_format='ll')
 
     #Header
-    ws = '                   '
-
     latex_table = '\\begin{longtable}[!ht]{|p{1.4cm}|p{14cm}|}\n' + \
                   '\\caption{Requirements}\\label{tab:req}\\\\\n' + \
                   '\n\\hline\n' + \
-                  '\\multirow{4}{*}{\\textbf{Req. ID}} & \\cellcolor{caslheader}\\textcolor{white}{\\textit{Requirement Description}} \\\\\\cline{2-2}\n' + \
-                  ws + '& \cellcolor{caslcolor1} \\textit{Test Name} \\\\\\cline{2-2}\n' + \
-                  ws + '& \cellcolor{caslcolor2} \\textit{Test Input} \\\\\\cline{2-2}\n' + \
-                  ws + '& \cellcolor{caslcolor1} \\textit{Additional Info} \\\\\\hline\n' + \
+                  getFirstHeader() + \
                   '\\endfirsthead\n\n' + \
                   '\\hline\n' + \
-                  '\\multirow{4}{*}{\\textbf{Req. ID}} & \\cellcolor{caslheader}\\textcolor{white}{\\textit{Requirement Description}} \\\\\\cline{2-2}\n' + \
-                  ws + '& \cellcolor{caslcolor1} \\textit{Test Name} \\\\\\cline{2-2}\n' + \
-                  ws + '& \cellcolor{caslcolor2} \\textit{Test Input} \\\\\\cline{2-2}\n' + \
-                  ws + '& \cellcolor{caslcolor1} \\textit{Additional Info} \\\\\\hline\n' + \
+                  getOtherHeaders() + \
                   '\\endhead\n' + \
                   '\\hline\n' + \
                   '\\endfoot\n' + \
@@ -356,6 +363,7 @@ def ConvertToLatex(df):
         reqdesc = reqdesc.replace('%',r'\%')
         reqdesc = reqdesc.replace('_',r'\_')
         reqdesc = reqdesc.replace('&',r'\&')
+        reqdesc = reqdesc.replace('\n',' ')
 
       #Escape % and escape _.
       testfile = row['Test File'].replace('%',r'\%')
@@ -371,16 +379,13 @@ def ConvertToLatex(df):
       addinfo = addinfo.rstrip()
       if (len(addinfo) > 0) and ('/' in addinfo):
         addinfo = "\href{" + addinfo + "}{\# " + addinfo[addinfo.rfind('/')+1:] + "}"
+      else:
+        addinfo = addinfo.replace('#',r'\#')
       rowid = ''
       if (not math.isnan(row['Requirement ID'])):
         rowid = str(int(row['Requirement ID']))
-      latex_table += mr + rowid + '} & \\cellcolor{caslheader}\\textcolor{white}{' + reqdesc + r"} \\\cline{2-2}" + '\n'
-      latex_table += ws + '& \\cellcolor{caslcolor1}' + cdashname + r" \\\cline{2-2}" +'\n'
-      latex_table += ws + '& \\cellcolor{caslcolor2}' + testfile + r" \\\cline{2-2}" +'\n'
-      latex_table += ws + '& \\cellcolor{caslcolor1}' + addinfo + r" \\\hline" + '\n'
+        latex_table += buildTableRow(rowid, reqdesc, cdashname, testfile, addinfo)
       i += 1
-      if (i % 6 == 5):
-        latex_table += '\\newpage'
 
     #Footer
     latex_table = latex_table + '\\end{longtable}\n'

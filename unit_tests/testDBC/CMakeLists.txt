@@ -7,7 +7,6 @@
 # can be found in LICENSE.txt in the head directory of this repository.        !
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 INCLUDE(Futility_CreateUnitTest)
-INCLUDE(SetTestLabels)
 TRIBITS_ADD_EXECUTABLE(testDBC
      SOURCES testDBC.f90
      NOEXEPREFIX
@@ -19,6 +18,7 @@ IF(Futility_ENABLE_DBC)
   TRIBITS_ADD_ADVANCED_TEST(testDBC
     TIMEOUT ${DART_TESTING_TIMEOUT_IN}
     CATEGORIES BASIC
+    ADDED_TEST_NAME_OUT TESTNAME_OUT
     TEST_0
         NOEXEPREFIX
         EXEC testDBC
@@ -49,12 +49,12 @@ IF(Futility_ENABLE_DBC)
         NUM_MPI_PROCS 1
         ARGS 5
         ALWAYS_FAIL_ON_NONZERO_RETURN
-    ADDED_TEST_NAME_OUT TESTNAME_OUT
   )
 ELSE()
   TRIBITS_ADD_ADVANCED_TEST(testDBC
     TIMEOUT ${DART_TESTING_TIMEOUT_IN}
     CATEGORIES BASIC
+    ADDED_TEST_NAME_OUT TESTNAME_OUT
     TEST_0
         NOEXEPREFIX
         EXEC testDBC
@@ -79,7 +79,6 @@ ELSE()
         NUM_MPI_PROCS 1
         ARGS 4
         ALWAYS_FAIL_ON_NONZERO_RETURN
-    ADDED_TEST_NAME_OUT TESTNAME_OUT
   )
 ENDIF()
-SetTestLabels(${TESTNAME_OUT} "BASIC")
+FUTILITY_POST_ADD_TEST("testDBC" ${TESTNAME_OUT} "BASIC")
