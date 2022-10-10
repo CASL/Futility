@@ -3400,7 +3400,7 @@ SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(1),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=length_max) :: valss(SIZE(vals))
+  CHARACTER(LEN=length_max), ALLOCATABLE :: valss(:)
   CHARACTER(LEN=LEN(dsetname)+1) :: path
   INTEGER(SIK) :: j
   INTEGER(HSIZE_T),DIMENSION(1) :: ldims,gdims,offset,cnt
@@ -3413,6 +3413,7 @@ SUBROUTINE write_st1(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
 
   path=dsetname
   ! Fill character array
+  ALLOCATE(valss(SIZE(vals)))
   DO j=1,SIZE(vals,DIM=1)
     IF(LEN_TRIM(vals(j)) == 0) THEN
       valss(j)=C_NULL_CHAR
@@ -3503,7 +3504,7 @@ SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(2),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=length_max) :: valss(SIZE(vals,1),SIZE(vals,2))
+  CHARACTER(LEN=length_max), ALLOCATABLE :: valss(:,:)
   CHARACTER(LEN=LEN(dsetname)+1) :: path
   INTEGER(SIK) :: j,k
   INTEGER(HSIZE_T),DIMENSION(2) :: gdims,ldims,offset,cnt
@@ -3515,6 +3516,7 @@ SUBROUTINE write_st2(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   REQUIRE(length_max > 0)
 
   path=dsetname
+  ALLOCATE(valss(SIZE(vals,1),SIZE(vals,2)))
   DO k=1,SIZE(vals,2)
     DO j=1,SIZE(vals,1)
       IF(LEN_TRIM(vals(j,k)) == 0) THEN
@@ -3610,7 +3612,7 @@ SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: cnt_in
   INTEGER(SIK),DIMENSION(3),INTENT(IN),OPTIONAL :: offset_in
 #ifdef FUTILITY_HAVE_HDF5
-  CHARACTER(LEN=length_max) :: valss(SIZE(vals,1),SIZE(vals,2),SIZE(vals,3))
+  CHARACTER(LEN=length_max), ALLOCATABLE :: valss(:,:,:)
   CHARACTER(LEN=LEN(dsetname)+1) :: path
   INTEGER(SIK) :: j,k,l
   INTEGER(HSIZE_T),DIMENSION(3) :: gdims,ldims,offset,cnt
@@ -3622,6 +3624,7 @@ SUBROUTINE write_st3(thisHDF5File,dsetname,vals,length_max,gdims_in,cnt_in,offse
   REQUIRE(length_max > 0)
 
   path=dsetname
+  ALLOCATE(valss(SIZE(vals,1),SIZE(vals,2),SIZE(vals,3)))
   DO l=1,SIZE(vals,3)
     DO k=1,SIZE(vals,2)
       DO j=1,SIZE(vals,1)
