@@ -2810,10 +2810,11 @@ SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
     TYPE IS(ParamType_STR)
       string=param%val
     TYPE IS(ParamType_SSK_a1)
-      WRITE(tmpchar,TRIM(sskfmtDef)) param%val(1)
       IF(SIZE(param%val) > 0) THEN
+        WRITE(tmpchar,TRIM(sskfmtDef)) param%val(1)
         string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ELSE
+        tmpchar=''
         string=delim//' '
       ENDIF
       DO i=2,SIZE(param%val)
@@ -2821,10 +2822,11 @@ SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
         string=string//delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ENDDO
     TYPE IS(ParamType_SDK_a1)
-      WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(1)
       IF(SIZE(param%val) > 0) THEN
+        WRITE(tmpchar,TRIM(sdkfmtDef)) param%val(1)
         string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ELSE
+        tmpchar=''
         string=delim//' '
       ENDIF
       DO i=2,SIZE(param%val)
@@ -2850,10 +2852,11 @@ SUBROUTINE getString_ParamType_scalar(thisParam,name,string,sskfmt,sdkfmt)
         string=string//delim//str(param%val(i))//delim//' '
       ENDDO
     TYPE IS(ParamType_SBK_a1)
-      WRITE(tmpchar,'(L1)') param%val(1)
       IF(SIZE(param%val) > 0) THEN
+        WRITE(tmpchar,'(L1)') param%val(1)
         string=delim//TRIM(ADJUSTL(tmpchar))//delim//' '
       ELSE
+        tmpchar=''
         string=delim//' '
       ENDIF
       DO i=2,SIZE(param%val)
