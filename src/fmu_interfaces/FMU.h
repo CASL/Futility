@@ -13,6 +13,7 @@ typedef void *HMODULE;
 #endif
 
 #include <fstream>
+#include <cstdarg>
 
 #ifdef _WIN32
 #define ASSERT_NO_ERROR(F, M) __try { assertNoError(F, M); } __except (EXCEPTION_EXECUTE_HANDLER) { error("%s. The FMU crashed (exception code: %s).", M, exceptionCodeToString(GetExceptionCode())); }

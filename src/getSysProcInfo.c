@@ -102,7 +102,7 @@ void getPWD_c(char* pwdpath, int* pathlen, int* status)
 }
 
 
-#elif defined __linux__
+#elif defined __linux__ || defined __CYGWIN__
 
 #include <sys/sysinfo.h>
 #include <sys/resource.h>
