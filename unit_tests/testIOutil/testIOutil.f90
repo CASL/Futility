@@ -148,6 +148,8 @@ SUBROUTINE testIO_Strings()
   ASSERT_EQ(nFields(string),7,'card')
   string='     cardname 200*3.1 15*0.2'
   ASSERT_EQ(nFields(string),216,'card multi-arg')
+  string='2*1'
+  ASSERT_EQ(nFields(string),2,'starting multiple')
 
   COMPONENT_TEST('nFields (string)')
   tmpStr=''
@@ -170,6 +172,9 @@ SUBROUTINE testIO_Strings()
   ASSERT_EQ(nFields(tmpStr),7,'card')
   tmpStr='     cardname 200*3.1 15*0.2'
   ASSERT_EQ(nFields(tmpStr),216,'card multi-arg')
+  tmpStr='2*1'
+  ASSERT_EQ(nFields(tmpStr),2,'starting multiple')
+
 
   COMPONENT_TEST('getField (char,char)')
   string='     cardname 200*3.1 15*0.2'
