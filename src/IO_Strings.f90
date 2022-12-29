@@ -572,7 +572,7 @@ ENDSUBROUTINE toLower_char
 !> @note A continuous set of non-blank characters is one entry a continous set
 !>       of blank space characters is one blank.
 !>
-PURE FUNCTION nFields_char(aline)  RESULT(nfields)
+FUNCTION nFields_char(aline)  RESULT(nfields)
   INTEGER(SIK) :: nfields
   CHARACTER(LEN=*),INTENT(IN) :: aline
   INTEGER(SIK) :: i,multidcol,n,ncol,nmult,ioerr
@@ -628,20 +628,29 @@ PURE FUNCTION nFields_char(aline)  RESULT(nfields)
           (nonblankd .AND. .NOT.nonblank)) THEN
         n=n+1
       ENDIF
-      IF(multidata .AND. (nonblankd .AND. .NOT.nonblank)) THEN
-        !ioerr will be non-zero if the sub-string is not an integer
-        READ(aline(i+1:multidcol-1),*,IOSTAT=ioerr) nmult
-        IF(ioerr /= 0) nmult=1
-        n=n+(nmult-1)*2
-
-        !If we are multiplying a quoted string need to subtract 1.
-        IF(multidcol < ncol) THEN
-          IF(aline(multidcol+1:multidcol+1) == '"' .OR. &
-              aline(multidcol+1:multidcol+1) == "'") &
-              n=n-1
+      IF(multidata) THEN
+        nmult=0
+        IF(nonblankd .AND. .NOT.nonblank) THEN
+          !ioerr will be non-zero if the sub-string is not an integer
+          READ(aline(i+1:multidcol-1),*,IOSTAT=ioerr) nmult
+          IF(ioerr /= 0) nmult=1
+        ELSEIF(i==1) THEN
+          READ(aline(1:multidcol-1),*,IOSTAT=ioerr) nmult
+          IF(ioerr /= 0) nmult=1
         ENDIF
 
-        multidata=.FALSE.
+        IF(nmult>0) THEN
+          n=n+(nmult-1)*2
+
+          !If we are multiplying a quoted string need to subtract 1.
+          IF(multidcol < ncol) THEN
+            IF(aline(multidcol+1:multidcol+1) == '"' .OR. &
+                aline(multidcol+1:multidcol+1) == "'") &
+                n=n-1
+          ENDIF
+
+          multidata=.FALSE.
+        ENDIF
       ENDIF
       nonblankd=nonblank
     ENDIF
@@ -662,7 +671,7 @@ ENDFUNCTION nFields_char
 !> @note A continuous set of non-blank characters is one entry a continous set
 !>       of blank space characters is one blank.
 !>
-PURE FUNCTION nFields_string(aline) RESULT(nfields)
+FUNCTION nFields_string(aline) RESULT(nfields)
   INTEGER(SIK) :: nfields
   TYPE(StringType),INTENT(IN) :: aline
   nfields=nFields_char(CHAR(aline))
@@ -681,7 +690,7 @@ ENDFUNCTION nFields_string
 !> value. An optional return argument was added to be able to return this
 !> error value.
 !>
-PURE SUBROUTINE getField_char_string(i,string,field,ierrout)
+SUBROUTINE getField_char_string(i,string,field,ierrout)
   INTEGER(SIK),INTENT(IN) :: i
   CHARACTER(LEN=*),INTENT(IN) :: string
   TYPE(StringType),INTENT(OUT) :: field
@@ -723,7 +732,7 @@ ENDSUBROUTINE getField_char_string
 !>
 !> See getField_char_string.
 !>
-PURE SUBROUTINE getField_char_char(i,string,field,ierrout)
+SUBROUTINE getField_char_char(i,string,field,ierrout)
   INTEGER(SIK),INTENT(IN) :: i
   CHARACTER(LEN=*),INTENT(IN) :: string
   CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: field
@@ -748,7 +757,7 @@ ENDSUBROUTINE getField_char_char
 !>
 !> See getField_char_string.
 !>
-PURE SUBROUTINE getField_string_string(i,string,field,ierrout)
+SUBROUTINE getField_string_string(i,string,field,ierrout)
   INTEGER(SIK),INTENT(IN) :: i
   TYPE(StringType),INTENT(IN) :: string
   TYPE(StringType),INTENT(OUT) :: field
@@ -768,7 +777,7 @@ ENDSUBROUTINE getField_string_string
 !>
 !> See getField_char_string.
 !>
-PURE SUBROUTINE getField_string_char(i,string,field,ierrout)
+SUBROUTINE getField_string_char(i,string,field,ierrout)
   INTEGER(SIK),INTENT(IN) :: i
   TYPE(StringType),INTENT(IN) :: string
   CHARACTER(LEN=:),ALLOCATABLE,INTENT(OUT) :: field
@@ -788,7 +797,7 @@ ENDSUBROUTINE getField_string_char
 !>
 !> See getField_char_string.
 !>
-PURE SUBROUTINE getField_string_int(i,string,field,ierrout)
+SUBROUTINE getField_string_int(i,string,field,ierrout)
   INTEGER(SIK),INTENT(IN) :: i
   TYPE(StringType),INTENT(IN) :: string
   INTEGER(SIK),INTENT(OUT) :: field
@@ -811,7 +820,7 @@ ENDSUBROUTINE getField_string_int
 !>
 !> See getField_char_string.
 !>
-PURE SUBROUTINE getField_string_real(i,string,field,ierrout)
+SUBROUTINE getField_string_real(i,string,field,ierrout)
   INTEGER(SIK),INTENT(IN) :: i
   TYPE(StringType),INTENT(IN) :: string
   REAL(SRK),INTENT(OUT) :: field
