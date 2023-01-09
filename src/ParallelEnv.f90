@@ -36,6 +36,7 @@ IMPLICIT NONE
 PRIVATE
 
 #ifdef HAVE_MPI
+
 #ifdef FUTILITY_HAVE_PETSC
 #if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
 #include <petsc/finclude/petsc.h>
@@ -49,6 +50,17 @@ INCLUDE 'mpif.h'
 #else
 INCLUDE 'mpif.h'
 #endif
+
+#else
+
+#ifdef FUTILITY_HAVE_PETSC
+#if (((PETSC_VERSION_MAJOR>=3) && (PETSC_VERSION_MINOR>=6)) || (PETSC_VERSION_MAJOR>=4))
+#include <petsc/finclude/petsc.h>
+#else
+#include <finclude/petsc.h>
+#endif
+#endif
+
 #endif
 
 #ifdef FUTILITY_HAVE_PETSC
@@ -697,6 +709,7 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
   !check if PETSC has been initialized as well
   CALL PetscInitialized(petsc_isinit,ierr)
 
+#ifdef HAVE_MPI
   !Insure that PETSc is or is not initialized on all the processes
   !in this communicator
   IF(myPE%nproc > 1) THEN
@@ -713,6 +726,7 @@ SUBROUTINE init_MPI_Env_type(myPE,PEparam)
     ENDIF
     DEALLOCATE(allpetsc2)
   ENDIF
+#endif
   !Call PETSc Initialize
 #ifdef FUTILITY_HAVE_SLEPC
   IF(.NOT.petsc_isinit) CALL SlepcInitialize(PETSC_NULL_CHARACTER,ierr)

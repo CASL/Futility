@@ -147,8 +147,6 @@ INTEGER(SIK) :: nerrors1,nerrors2
 #ifdef HAVE_MPI
 INTEGER :: mpierr
 CALL MPI_Init(mpierr)
-#elif defined FUTILITY_HAVE_PETSC
-INTEGER :: MPI_COMM_WORLD=0
 #endif
 !Configure exception handler for test
 CALL e%setStopOnError(.FALSE.)

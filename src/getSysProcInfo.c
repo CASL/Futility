@@ -201,6 +201,15 @@ void getSysMemInfo(long long *totalPhysMem, long long *totalSwap, long long *tot
 //   *totalFreeMem *= memInfo.mem_unit;
 }
 
+int parseLine(char * line)
+{
+  int i = strlen(line);
+  while (*line < '0' || *line > '9') line++;
+  line[i-3] = '\0';
+  i = atoi(line);
+  return i;
+}
+
 void getProcMemInfo(long long *curUsage, long long *peakUsage)
 {
   struct rusage usage;
@@ -224,14 +233,6 @@ void getProcMemInfo(long long *curUsage, long long *peakUsage)
   *peakUsage *= 1024;
 }
 
-int parseLine(char * line)
-{
-  int i = strlen(line);
-  while (*line < '0' || *line > '9') line++;
-  line[i-3] = '\0';
-  i = atoi(line);
-  return i;
-}
 
 void getPWD_c(char* pwdpath, int* pathlen, int* status)
 {
