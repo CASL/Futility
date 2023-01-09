@@ -85,6 +85,7 @@ SUBROUTINE init_MemProf(thisMP,pe,mylog,params)
   TYPE(LogFileType),POINTER,INTENT(INOUT) :: myLog
   TYPE(ParamType),INTENT(IN),OPTIONAL :: params
 
+#ifdef FUTILITY_MEMPROF
   INTEGER(C_LONG_LONG) :: tmpL1, tmpL2
   CHARACTER(LEN=16) :: filename
 
@@ -110,6 +111,7 @@ SUBROUTINE init_MemProf(thisMP,pe,mylog,params)
     WRITE(thisMP%verbose_output%getUnitNo(),'(46x,"Used [GB] Change [MB]")')
     FLUSH(thisMP%verbose_output%getUnitNo())
   ENDIF
+#endif
 ENDSUBROUTINE init_MemProf
 !
 !-------------------------------------------------------------------------------
@@ -118,6 +120,7 @@ ENDSUBROUTINE init_MemProf
 !>
 SUBROUTINE clear_MemProf(thisMP)
   CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
+#ifdef FUTILITY_MEMPROF
   thisMP%isInit=.FALSE.
   thisMP%mem_current=0.0_SRK
   thisMP%mem_old=0.0_SRK
@@ -128,6 +131,7 @@ SUBROUTINE clear_MemProf(thisMP)
     CALL thisMP%verbose_output%clear()
   ENDIF
   thisMP%verbose=.FALSE.
+#endif
 ENDSUBROUTINE clear_MemProf
 !
 !-------------------------------------------------------------------------------
@@ -204,7 +208,9 @@ ENDSUBROUTINE enableEdits_MemProf
 !>
 SUBROUTINE disableEdits_MemProf(thisMP)
   CLASS(Memory_Profiler),INTENT(INOUT) :: thisMP
+#ifndef FUTILITY_MEMPROF
   thisMP%mem_edit=.FALSE.
+#endif
 ENDSUBROUTINE disableEdits_MemProf
 !
 ENDMODULE MemProf
