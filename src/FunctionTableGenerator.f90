@@ -92,6 +92,8 @@ TYPE :: FunctionTable
   REAL(SRK),ALLOCATABLE :: funcCoordinates(:)
   !> The list of function values calculated from @c funcCoordinates and used for interpolation
   REAL(SRK),ALLOCATABLE :: funcValues(:)
+  !> The list of slopes (1,1:nPoints-1) and intercepts(1,1:nPoints-1) in each interval
+  REAL(SRK),ALLOCATABLE :: slopeIntercept(:,:)
   !> Pointer to the function used for tabulation
   PROCEDURE(tabulatedFunction1D),NOPASS,POINTER :: func => NULL()
   !> Pointer to the computing environment
@@ -107,6 +109,9 @@ TYPE :: FunctionTable
     !> @copybrief FunctionTableGeneratorModule::evaluateFunctionTable1D
     !> @copydetails FunctionTableGeneratorModule::evaluateFunctionTable1D
     PROCEDURE,PASS :: evaluate => evaluateFunctionTable1D
+    !> @copybrief FunctionTableGeneratorModule::getTableValues
+    !> @copydetails FunctionTableGeneratorModule::getTableValues
+    PROCEDURE,PASS :: getTableValues
 ENDTYPE FunctionTable
 
 CHARACTER(LEN=*),PARAMETER :: modName='FunctionTableGenerator'
@@ -161,6 +166,8 @@ FUNCTION generateFunctionTable1D(ce,params,func) RESULT(table)
       CALL evaluateTableQuality(table,maxRelErrorData,maxAbsErrorData)
     ENDDO
   ENDIF
+  DEALLOCATE(table%funcCoordinates)
+  DEALLOCATE(table%funcValues)
 
 ENDFUNCTION generateFunctionTable1D
 !
@@ -228,6 +235,7 @@ SUBROUTINE clearFunctionTable1D(this)
   this%inverseSpacing = -HUGE(ZERO)
   IF(ALLOCATED(this%funcCoordinates)) DEALLOCATE(this%funcCoordinates)
   IF(ALLOCATED(this%funcValues)) DEALLOCATE(this%funcValues)
+  IF(ALLOCATED(this%slopeIntercept)) DEALLOCATE(this%slopeIntercept)
   this%func => NULL()
   this%ce => NULL()
 
@@ -239,23 +247,20 @@ ENDSUBROUTINE clearFunctionTable1D
 !> @param x the input value for the function
 !> @returns y the approximate function values at @c x
 !>
-FUNCTION evaluateFunctionTable1D(this,x) RESULT(y)
+IMPURE ELEMENTAL FUNCTION evaluateFunctionTable1D(this,x) RESULT(y)
   CLASS(FunctionTable),INTENT(IN) :: this
   REAL(SRK),INTENT(IN) :: x
   REAL(SRK) :: y
   !
   CHARACTER(LEN=*),PARAMETER :: myName='evaluateFunctionTable1D'
   INTEGER :: tableIndex
-  REAL(SRK) :: interval, fraction
 
   REQUIRE(this%isInit)
   REQUIRE(this%hasData)
   REQUIRE(this%inverseSpacing > ZERO)
-  REQUIRE(ALLOCATED(this%funcCoordinates))
-  REQUIRE(ALLOCATED(this%funcValues))
+  REQUIRE(ALLOCATED(this%slopeIntercept))
 
-  interval = x - this%minRange
-  tableIndex = FLOOR(interval * this%inverseSpacing) + 1
+  tableIndex = FLOOR((x - this%minRange) * this%inverseSpacing) + 1
   IF(tableIndex < 1) THEN
     IF(this%boundsErrorLow) THEN
       CALL this%ce%exceptHandler%raiseError(modName//'::'//myName// &
@@ -271,8 +276,7 @@ FUNCTION evaluateFunctionTable1D(this,x) RESULT(y)
       y = this%highDefaultValue
     ENDIF
   ELSE
-    fraction = (x - this%funcCoordinates(tableIndex)) * this%inverseSpacing
-    y = (ONE - fraction) * this%funcValues(tableIndex) + fraction * this%funcValues(tableIndex+1)
+    y = this%slopeIntercept(1,tableIndex) * x + this%slopeIntercept(2,tableIndex)
   ENDIF
 
 ENDFUNCTION evaluateFunctionTable1D
@@ -311,6 +315,7 @@ SUBROUTINE generateTableData(table)
       DEALLOCATE(table%funcCoordinates)
       stride = 1
     ENDIF
+    DEALLOCATE(table%slopeIntercept)
   ELSE
     stride = 1
   ENDIF
@@ -332,6 +337,12 @@ SUBROUTINE generateTableData(table)
     x = table%minRange + REAL(i-1,SRK)*table%spacing
     table%funcCoordinates(i) = x
     table%funcValues(i) = table%func(x)
+  ENDDO !i
+
+  ALLOCATE(table%slopeIntercept(2,table%nPoints-1))
+  DO i = 1,table%nPoints-1
+    table%slopeIntercept(1,i) = (table%funcValues(i+1) - table%funcValues(i)) * table%inverseSpacing
+    table%slopeIntercept(2,i) = table%funcValues(i) - table%slopeIntercept(1,i) * table%funcCoordinates(i)
   ENDDO !i
 
   table%hasData=.TRUE.
@@ -356,7 +367,7 @@ SUBROUTINE evaluateTableQuality(table,maxRelError,maxAbsError)
   INTEGER(SIK) :: i
   REAL(SRK) :: x,yTab,yRef
 
-  REQUIRE(ALLOCATED(table%funcValues))
+  REQUIRE(ALLOCATED(table%slopeIntercept))
   REQUIRE(ASSOCIATED(table%func))
   REQUIRE(table%maxRange > -HUGE(table%maxRange))
   REQUIRE(table%minRange < HUGE(table%minRange))
@@ -377,5 +388,29 @@ SUBROUTINE evaluateTableQuality(table,maxRelError,maxAbsError)
   ENDDO
 
 ENDSUBROUTINE evaluateTableQuality
+!
+!-------------------------------------------------------------------------------
+!> @brief Returns the table minimum range, spacing, and slope-intercept values
+!> @param this the function table
+!> @param min the minimum table value
+!> @param mmaxin the maximum table value
+!> @param spacing the table spacing
+!> @param values the table values
+!>
+SUBROUTINE getTableValues(this,min,max,spacing,values)
+  CLASS(FunctionTable),INTENT(IN) :: this
+  REAL(SRK),INTENT(OUT) :: min
+  REAL(SRK),INTENT(OUT) :: max
+  REAL(SRK),INTENT(OUT) :: spacing
+  REAL(SRK),ALLOCATABLE,INTENT(OUT) :: values(:,:)
+
+  REQUIRE(ALLOCATED(this%slopeIntercept))
+
+  ALLOCATE(values,SOURCE=this%slopeIntercept)
+  min = this%minRange
+  max = this%maxRange
+  spacing = this%spacing
+
+ENDSUBROUTINE getTableValues
 !
 ENDMODULE FunctionTableGeneratorModule

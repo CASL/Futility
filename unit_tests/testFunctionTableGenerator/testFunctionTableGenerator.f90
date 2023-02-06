@@ -112,11 +112,10 @@ SUBROUTINE testFunctionTable()
   testTable%inverseSpacing = 10.0_SRK
   testTable%nPoints = 301
   CALL testParams%clear()
-  ALLOCATE(testTable%funcCoordinates(testTable%nPoints))
-  ALLOCATE(testTable%funcValues(testTable%nPoints))
-  DO i=1,testTable%nPoints
-    testTable%funcCoordinates(i)=-10.0_SRK+REAL(i-1,SRK)*0.1_SRK
-    testTable%funcValues(i)=100.0_SRK + REAL(i-1,SRK)*1.0_SRK
+  ALLOCATE(testTable%slopeIntercept(2,testTable%nPoints-1))
+  DO i=1,testTable%nPoints-1
+    testTable%slopeIntercept(1,i) = 10.0_SRK
+    testTable%slopeIntercept(2,i) = 200.0_SRK
   ENDDO !i
   testTable%hasData = .TRUE.
   DO i=1,testTable%nPoints-1
@@ -145,7 +144,7 @@ ENDSUBROUTINE testFunctionTable
 !
 !-------------------------------------------------------------------------------
 SUBROUTINE testGenerator()
-  REAL(SRK) :: x,y1,y2
+  REAL(SRK) :: x1,x2,y1,y2
   TYPE(ParamType) :: testParams
   CLASS(FunctionTable),POINTER :: testTable
 
@@ -171,14 +170,17 @@ SUBROUTINE testGenerator()
   ASSERT(testTable%hasData,'%hasData')
   ASSERT_APPROXEQA(testTable%spacing,0.1_SRK,'%spacing')
   ASSERT_APPROXEQA(testTable%inverseSpacing,ONE/testTable%spacing,'%inverseSpacing')
-  ASSERT(ALLOCATED(testTable%funcCoordinates),'ALLOCATED %funcCoordinates')
-  ASSERT_EQ(SIZE(testTable%funcCoordinates),301,'SIZE %funcCoordinates')
-  ASSERT(ALLOCATED(testTable%funcValues),'ALLOCATED %funcValues')
-  ASSERT_EQ(SIZE(testTable%funcValues),301,'SIZE %funcValues')
-  DO i=1,301
-    x=-10.0_SRK+REAL(i-1,SRK)*testTable%spacing
-    ASSERT_SOFTEQ(testTable%funcCoordinates(i),x,1.0E-13_SRK,'%funcCoordinates('//str(i)//')')
-    ASSERT_SOFTEQ(testTable%funcValues(i),x*x,1.0E-11_SRK,'%funcValues('//str(i)//')')
+  ASSERT(ALLOCATED(testTable%slopeIntercept),'ALLOCATED %slopeIntercept')
+  ASSERT_EQ(SIZE(testTable%slopeIntercept,DIM=1),2,'SIZE %slopeIntercept')
+  ASSERT_EQ(SIZE(testTable%slopeIntercept,DIM=2),300,'SIZE %slopeIntercept')
+  x1 = -10.0_SRK
+  DO i=1,300
+    x2= x1 + testTable%spacing
+    y1 = x1*x1
+    y2 = x2*x2
+    ASSERT_SOFTEQ(testTable%slopeIntercept(1,i),(y2-y1)/(x2-x1),1.0E-10_SRK,'%slopeIntercept(1,'//str(i)//')')
+    ASSERT_SOFTEQ(testTable%slopeIntercept(2,i),y1-testTable%slopeIntercept(1,i)*x1,1.0E-10_SRK,'%slopeIntercept(2,'//str(i)//')')
+    x1 = x2
   ENDDO !i
   CALL testTable%clear()
   DEALLOCATE(testTable)
@@ -205,17 +207,15 @@ SUBROUTINE testGenerator()
   ASSERT(testTable%hasData,'%hasData')
   ASSERT_APPROXEQA(testTable%spacing,1.875E-3_SRK,'%spacing')
   ASSERT_APPROXEQA(testTable%inverseSpacing,ONE/testTable%spacing,'%inverseSpacing')
-  ASSERT(ALLOCATED(testTable%funcCoordinates),'ALLOCATED %funcCoordinates')
-  ASSERT_EQ(SIZE(testTable%funcCoordinates),16001,'SIZE %funcCoordinates')
-  ASSERT(ALLOCATED(testTable%funcValues),'ALLOCATED %funcValues')
-  ASSERT_EQ(SIZE(testTable%funcValues),16001,'SIZE %funcValues')
-  x = -10.0_SRK + testTable%spacing*HALF
+  ASSERT(ALLOCATED(testTable%slopeIntercept),'ALLOCATED %slopeIntercept')
+  ASSERT_EQ(SIZE(testTable%slopeIntercept,DIM=2),16000,'SIZE %slopeIntercept')
+  x1 = -10.0_SRK + testTable%spacing*HALF
   DO i=1,16000
-    y1 = ApproximateQuadraticTest(x)
-    y2 = testTable%evaluate(x)
+    y1 = ApproximateQuadraticTest(x1)
+    y2 = testTable%evaluate(x1)
     ASSERT((y2-y1)/y1 < 0.1_SRK,'relative error')
     FINFO() i,y1,y2
-    x=x+testTable%spacing
+    x1=x1+testTable%spacing
   ENDDO !i
   CALL testTable%clear()
   DEALLOCATE(testTable)
@@ -242,17 +242,15 @@ SUBROUTINE testGenerator()
   ASSERT(testTable%hasData,'%hasData')
   ASSERT_APPROXEQA(testTable%spacing,4.6875E-4_SRK,'%spacing')
   ASSERT_APPROXEQA(testTable%inverseSpacing,ONE/testTable%spacing,'%inverseSpacing')
-  ASSERT(ALLOCATED(testTable%funcCoordinates),'ALLOCATED %funcCoordinates')
-  ASSERT_EQ(SIZE(testTable%funcCoordinates),64001,'SIZE %funcCoordinates')
-  ASSERT(ALLOCATED(testTable%funcValues),'ALLOCATED %funcValues')
-  ASSERT_EQ(SIZE(testTable%funcValues),64001,'SIZE %funcValues')
-  x = -10.0_SRK + testTable%spacing*HALF
+  ASSERT(ALLOCATED(testTable%slopeIntercept),'ALLOCATED %slopeIntercept')
+  ASSERT_EQ(SIZE(testTable%slopeIntercept,DIM=2),64000,'SIZE %slopeIntercept')
+  x1 = -10.0_SRK + testTable%spacing*HALF
   DO i=1,64000
-    y1 = ApproximateQuadraticTest(x)
-    y2 = testTable%evaluate(x)
+    y1 = ApproximateQuadraticTest(x1)
+    y2 = testTable%evaluate(x1)
     ASSERT((y2-y1)/y1 < 0.01_SRK,'relative error')
     FINFO() i,y1,y2
-    x=x+testTable%spacing
+    x1=x1+testTable%spacing
   ENDDO !i
   CALL testTable%clear()
   DEALLOCATE(testTable)
@@ -280,17 +278,15 @@ SUBROUTINE testGenerator()
   ASSERT(testTable%hasData,'%hasData')
   ASSERT_APPROXEQA(testTable%spacing,4.6875E-4_SRK,'%spacing')
   ASSERT_APPROXEQA(testTable%inverseSpacing,ONE/testTable%spacing,'%inverseSpacing')
-  ASSERT(ALLOCATED(testTable%funcCoordinates),'ALLOCATED %funcCoordinates')
-  ASSERT_EQ(SIZE(testTable%funcCoordinates),64001,'SIZE %funcCoordinates')
-  ASSERT(ALLOCATED(testTable%funcValues),'ALLOCATED %funcValues')
-  ASSERT_EQ(SIZE(testTable%funcValues),64001,'SIZE %funcValues')
-  x = -10.0_SRK + testTable%spacing*HALF
+  ASSERT(ALLOCATED(testTable%slopeIntercept),'ALLOCATED %slopeIntercept')
+  ASSERT_EQ(SIZE(testTable%slopeIntercept,DIM=2),64000,'SIZE %slopeIntercept')
+  x1 = -10.0_SRK + testTable%spacing*HALF
   DO i=1,64000
-    y1 = ApproximateQuadraticTest(x)
-    y2 = testTable%evaluate(x)
+    y1 = ApproximateQuadraticTest(x1)
+    y2 = testTable%evaluate(x1)
     ASSERT((y2-y1)/y1 < 0.01_SRK,'relative error')
     FINFO() i,y1,y2
-    x=x+testTable%spacing
+    x1=x1+testTable%spacing
   ENDDO !i
   CALL testTable%clear()
   DEALLOCATE(testTable)

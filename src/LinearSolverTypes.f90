@@ -337,7 +337,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
   !Pull LS data from the parameter list
   TPLType=-1
   solverMethod=-1
-  comm=-1
+  comm=PE_COMM_NULL
   numberOMP=-1
   matType=-1
   matEngine=-1
@@ -405,7 +405,7 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
   CALL validParams%clear()
 
   !Initialize parallel environments based on input
-  IF(comm /= -1) CALL solver%MPIparallelEnv%init(comm)
+  IF(comm /= PE_COMM_NULL) CALL solver%MPIparallelEnv%init(comm)
   IF(numberOMP > 0) CALL solver%OMPparallelEnv%init(numberOMP)
 
   IF(.NOT.solver%isInit) THEN
