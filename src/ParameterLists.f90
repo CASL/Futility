@@ -716,8 +716,8 @@ TYPE :: ParamType
     !> @copybrief ParameterLists::verifyTest_ParamType
     !> @copydoc ParameterLists::verifyTest_ParamType
     PROCEDURE,PASS :: verify => verifyTest_ParamType
-    !> @copybrief ParameterLists::verifyTest_ParamType
-    !> @copydoc ParameterLists::verifyTest_ParamType
+    !> @copybrief ParameterLists::verifyList_ParamType
+    !> @copydoc ParameterLists::verifyList_ParamType
     PROCEDURE,PASS :: verifyList => verifyList_ParamType
     !> @copybrief ParameterLists::edit_ParamType
     !> @copydoc ParameterLists::edit_ParamType
@@ -8041,8 +8041,9 @@ SUBROUTINE edit_ParamType_SSK_a1(thisParam,funit,indent,prefix,paddtw)
   ENDIF
   j=j+LEN(sprefix)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') sprefix// &
-      sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
+      sdtype//' :: '//thisParam%name//'='
+  IF(SIZE(thisParam%val) > 0) WRITE(UNIT=funit,FMT='(g13.7)',ADVANCE='NO') thisParam%val(1)
   j=j+LEN(sdtype)+LEN(thisParam%name)
   WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
   IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
@@ -8331,8 +8332,12 @@ SUBROUTINE edit_ParamType_SDK_a1(thisParam,funit,indent,prefix,paddtw)
   ENDIF
   j=j+LEN(sprefix)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') sprefix// &
-      sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
+      sdtype//' :: '//thisParam%name//'='
+  IF(SIZE(thisParam%val) > 0) THEN
+    WRITE(UNIT=funit,FMT='(g20.14)',ADVANCE='NO') thisParam%val(1)
+  ENDIF
+  IF(SIZE(thisParam%val) > 0) WRITE(UNIT=funit,FMT='(g20.14)',ADVANCE='NO') thisParam%val(1)
   j=j+LEN(sdtype)+LEN(thisParam%name)
   WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
   IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
@@ -8623,7 +8628,8 @@ SUBROUTINE edit_ParamType_SNK_a1(thisParam,funit,indent,prefix,paddtw)
   j=j+LEN(sprefix)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
   WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g13.7)',ADVANCE='NO') sprefix// &
-      sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+      sdtype//' :: '//thisParam%name//'='
+  IF(SIZE(thisParam%val) > 0) WRITE(UNIT=funit,FMT='(g13.7)',ADVANCE='NO') thisParam%val(1)
   j=j+LEN(sdtype)+LEN(thisParam%name)
   WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
   IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
@@ -8911,8 +8917,9 @@ SUBROUTINE edit_ParamType_SLK_a1(thisParam,funit,indent,prefix,paddtw)
   ENDIF
   j=j+LEN(sprefix)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,g20.14)',ADVANCE='NO') sprefix// &
-      sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
+      sdtype//' :: '//thisParam%name//'='
+  IF(SIZE(thisParam%val) > 0) WRITE(UNIT=funit,FMT='(g20.14)',ADVANCE='NO') thisParam%val(1)
   j=j+LEN(sdtype)+LEN(thisParam%name)
   WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
   IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
@@ -9197,8 +9204,9 @@ SUBROUTINE edit_ParamType_SBK_a1(thisParam,funit,indent,prefix,paddtw)
   ENDIF
   j=j+LEN(sprefix)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
-  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a,l3)',ADVANCE='NO') sprefix// &
-      sdtype//' :: '//thisParam%name//'=',thisParam%val(1)
+  WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
+      sdtype//' :: '//thisParam%name//'='
+  IF(SIZE(thisParam%val) > 0) WRITE(UNIT=funit,FMT='(l3)',ADVANCE='NO') thisParam%val(1)
   j=j+LEN(sdtype)+LEN(thisParam%name)
   WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
   IF(SIZE(thisParam%val)>MAX_1D_LEN) THEN
