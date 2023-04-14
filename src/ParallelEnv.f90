@@ -22,6 +22,7 @@ USE ExceptionHandler
 USE BLAS
 USE trilinos_interfaces
 USE Strings
+USE IO_Strings
 USE Allocs
 !$ USE OMP_LIB
 
@@ -1041,7 +1042,7 @@ ENDSUBROUTINE recv_INT1_MPI_Env_type
 SUBROUTINE gather_SNK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SNK),INTENT(IN) :: sendbuf
-  INTEGER(SNK),INTENT(INOUT) :: recvbuf(:)
+  INTEGER(SNK),INTENT(OUT) :: recvbuf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1069,7 +1070,7 @@ ENDSUBROUTINE gather_SNK0_MPI_Env_type
 SUBROUTINE gather_SNK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SNK),INTENT(IN) :: sendbuf(:)
-  INTEGER(SNK),INTENT(INOUT) :: recvbuf(:,:)
+  INTEGER(SNK),INTENT(OUT) :: recvbuf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank,count
 #ifndef HAVE_MPI
@@ -1106,7 +1107,7 @@ ENDSUBROUTINE gather_SNK1_MPI_Env_type
 SUBROUTINE gather_SLK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SLK),INTENT(IN) :: sendbuf
-  INTEGER(SLK),INTENT(INOUT) :: recvbuf(:)
+  INTEGER(SLK),INTENT(OUT) :: recvbuf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1134,7 +1135,7 @@ ENDSUBROUTINE gather_SLK0_MPI_Env_type
 SUBROUTINE gather_SLK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   INTEGER(SLK),INTENT(IN) :: sendbuf(:)
-  INTEGER(SLK),INTENT(INOUT) :: recvbuf(:,:)
+  INTEGER(SLK),INTENT(OUT) :: recvbuf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank,count
 #ifndef HAVE_MPI
@@ -1170,7 +1171,7 @@ ENDSUBROUTINE gather_SLK1_MPI_Env_type
 SUBROUTINE gather_SSK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SSK),INTENT(IN) :: sendbuf
-  REAL(SSK),INTENT(INOUT) :: recvbuf(:)
+  REAL(SSK),INTENT(OUT) :: recvbuf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1198,7 +1199,7 @@ ENDSUBROUTINE gather_SSK0_MPI_Env_type
 SUBROUTINE gather_SSK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SSK),INTENT(IN) :: sendbuf(:)
-  REAL(SSK),INTENT(INOUT) :: recvbuf(:,:)
+  REAL(SSK),INTENT(OUT) :: recvbuf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank,count
 #ifndef HAVE_MPI
@@ -1235,7 +1236,7 @@ ENDSUBROUTINE gather_SSK1_MPI_Env_type
 SUBROUTINE gather_SDK0_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SDK),INTENT(IN) :: sendbuf
-  REAL(SDK),INTENT(INOUT) :: recvbuf(:)
+  REAL(SDK),INTENT(OUT) :: recvbuf(:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank
   rank=0
@@ -1263,7 +1264,7 @@ ENDSUBROUTINE gather_SDK0_MPI_Env_type
 SUBROUTINE gather_SDK1_MPI_Env_type(myPE,sendbuf,recvbuf,root)
   CLASS(MPI_EnvType),INTENT(IN) :: myPE
   REAL(SDK),INTENT(IN) :: sendbuf(:)
-  REAL(SDK),INTENT(INOUT) :: recvbuf(:,:)
+  REAL(SDK),INTENT(OUT) :: recvbuf(:,:)
   INTEGER(SIK),INTENT(IN),OPTIONAL :: root
   INTEGER(SIK) :: rank,count
 #ifndef HAVE_MPI
@@ -1434,25 +1435,31 @@ SUBROUTINE gatherv_SNK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
   REQUIRE(rank >= 0)
   REQUIRE(rank < this%nproc)
 
-  ALLOCATE(recvcounts(this%nproc))
+  IF(rank == this%rank) THEN
+    ALLOCATE(recvcounts(this%nproc))
+  ELSE
+    ALLOCATE(recvcounts(0))
+  ENDIF
   CALL this%gather(SIZE(sendbuf),recvcounts,rank)
-  ALLOCATE(displs(this%nproc))
-  IF(this%rank == rank) THEN
-    displs(1)=0
-    DO i=2,this%nproc
-      displs(i)=displs(i-1)+recvcounts(i-1)
-    ENDDO !i
+  IF(rank == this%rank) THEN
+    ALLOCATE(displs(this%nproc))
+    IF(this%rank == rank) THEN
+      displs(1)=0
+      DO i=2,this%nproc
+        displs(i)=displs(i-1)+recvcounts(i-1)
+      ENDDO !i
+    ENDIF
+    ALLOCATE(recvbuf(SUM(recvcounts)))
   ENDIF
 
-  ALLOCATE(recvbuf(SUM(recvcounts)))
 #ifdef HAVE_MPI
   CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_INTEGER4,recvbuf,recvcounts, &
       displs,MPI_INTEGER4,rank,this%comm,mpierr)
 #else
   recvbuf=sendbuf
 #endif
-  IF(this%rank /= rank) THEN
-    DEALLOCATE(recvbuf)
+
+  IF(rank /= this%rank) THEN
     DEALLOCATE(recvcounts)
   ENDIF
 
@@ -1481,25 +1488,29 @@ SUBROUTINE gatherv_SLK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
   REQUIRE(rank >= 0)
   REQUIRE(rank < this%nproc)
 
-  ALLOCATE(recvcounts(this%nproc))
-  CALL this%gather(SIZE(sendbuf),recvcounts,rank)
-  ALLOCATE(displs(this%nproc))
   IF(this%rank == rank) THEN
+    ALLOCATE(recvcounts(this%nproc))
+  ELSE
+    ALLOCATE(recvcounts(0))
+  ENDIF
+  CALL this%gather(SIZE(sendbuf),recvcounts,rank)
+  IF(this%rank == rank) THEN
+    ALLOCATE(displs(this%nproc))
     displs(1)=0
     DO i=2,this%nproc
       displs(i)=displs(i-1)+recvcounts(i-1)
     ENDDO !i
+    ALLOCATE(recvbuf(SUM(recvcounts)))
   ENDIF
 
-  ALLOCATE(recvbuf(SUM(recvcounts)))
 #ifdef HAVE_MPI
   CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_INTEGER8,recvbuf,recvcounts, &
       displs,MPI_INTEGER8,rank,this%comm,mpierr)
 #else
   recvbuf=sendbuf
 #endif
-  IF(this%rank /= rank) THEN
-    DEALLOCATE(recvbuf)
+
+  IF(rank /= this%rank) THEN
     DEALLOCATE(recvcounts)
   ENDIF
 
@@ -1528,25 +1539,31 @@ SUBROUTINE gatherv_SSK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
   REQUIRE(rank >= 0)
   REQUIRE(rank < this%nproc)
 
-  ALLOCATE(recvcounts(this%nproc))
+  IF(rank == this%rank) THEN
+    ALLOCATE(recvcounts(this%nproc))
+  ELSE
+    ALLOCATE(recvcounts(0))
+  ENDIF
   CALL this%gather(SIZE(sendbuf),recvcounts,rank)
-  ALLOCATE(displs(this%nproc))
-  IF(this%rank == rank) THEN
-    displs(1)=0
-    DO i=2,this%nproc
-      displs(i)=displs(i-1)+recvcounts(i-1)
-    ENDDO !i
+  IF(rank == this%rank) THEN
+    ALLOCATE(displs(this%nproc))
+    IF(this%rank == rank) THEN
+      displs(1)=0
+      DO i=2,this%nproc
+        displs(i)=displs(i-1)+recvcounts(i-1)
+      ENDDO !i
+    ENDIF
+    ALLOCATE(recvbuf(SUM(recvcounts)))
   ENDIF
 
-  ALLOCATE(recvbuf(SUM(recvcounts)))
 #ifdef HAVE_MPI
   CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_REAL,recvbuf,recvcounts, &
       displs,MPI_REAL,rank,this%comm,mpierr)
 #else
   recvbuf=sendbuf
 #endif
-  IF(this%rank /= rank) THEN
-    DEALLOCATE(recvbuf)
+
+  IF(rank /= this%rank) THEN
     DEALLOCATE(recvcounts)
   ENDIF
 
@@ -1575,25 +1592,31 @@ SUBROUTINE gatherv_SDK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
   REQUIRE(rank >= 0)
   REQUIRE(rank < this%nproc)
 
-  ALLOCATE(recvcounts(this%nproc))
+  IF(rank == this%rank) THEN
+    ALLOCATE(recvcounts(this%nproc))
+  ELSE
+    ALLOCATE(recvcounts(0))
+  ENDIF
   CALL this%gather(SIZE(sendbuf),recvcounts,rank)
-  ALLOCATE(displs(this%nproc))
-  IF(this%rank == rank) THEN
-    displs(1)=0
-    DO i=2,this%nproc
-      displs(i)=displs(i-1)+recvcounts(i-1)
-    ENDDO !i
+  IF(rank == this%rank) THEN
+    ALLOCATE(displs(this%nproc))
+    IF(this%rank == rank) THEN
+      displs(1)=0
+      DO i=2,this%nproc
+        displs(i)=displs(i-1)+recvcounts(i-1)
+      ENDDO !i
+    ENDIF
+    ALLOCATE(recvbuf(SUM(recvcounts)))
   ENDIF
 
-  ALLOCATE(recvbuf(SUM(recvcounts)))
 #ifdef HAVE_MPI
   CALL MPI_gatherV(sendbuf,SIZE(sendbuf),MPI_REAL8,recvbuf,recvcounts, &
       displs,MPI_REAL8,rank,this%comm,mpierr)
 #else
   recvbuf=sendbuf
 #endif
-  IF(this%rank /= rank) THEN
-    DEALLOCATE(recvbuf)
+
+  IF(rank /= this%rank) THEN
     DEALLOCATE(recvcounts)
   ENDIF
 
@@ -2043,6 +2066,8 @@ SUBROUTINE allReduceMaxR_scalar_MPI_Env_type(myPE,x)
   REAL(SRK),INTENT(INOUT) :: x
 #ifdef HAVE_MPI
   CHARACTER(LEN=*),PARAMETER :: myName='allReduceMaxR_scalar_MPI_Env_type'
+  CHARACTER(LEN=512) :: mpierr_msg
+  INTEGER(SIK) :: mpierr_err,mpierr_len
   REAL(SRK) :: rbuf
   REQUIRE(myPE%initstat)
 #ifdef DBL
@@ -2051,8 +2076,10 @@ SUBROUTINE allReduceMaxR_scalar_MPI_Env_type(myPE,x)
   CALL MPI_Allreduce(x,rbuf,n,MPI_SINGLE_PRECISION,MPI_MAX,myPE%comm,mpierr)
 #endif
   IF(mpierr /= MPI_SUCCESS) THEN
+    CALL MPI_ERROR_STRING(mpierr,mpierr_msg,mpierr_len,mpierr_err)
     CALL eParEnv%raiseError(modName//'::'// &
-        myName//' - call to MPI_AllreduceMax returned an error!')
+        myName//' - call to MPI_AllreduceMax returned an error message of length '// &
+            str(mpierr_len)//': "'//ADJUSTL(TRIM(mpierr_msg))//'"!')
   ELSE
     x=rbuf
   ENDIF

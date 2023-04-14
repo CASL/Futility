@@ -1,5 +1,7 @@
 before_script:
-  - if [[ -f "/data/test_gcc/gcc-8.3.0/load_dev_env.sh" ]]; then BASE_DIR="/data/gitlab-runner"; . /data/test_gcc/gcc-8.3.0/load_dev_env.sh; ENV_BASE=/data/test_gcc/gcc-8.3.0; else BASE_DIR="/localhome/gitlab-runner"; . /projects/vera/gcc-8.3.0/load_dev_env.sh; ENV_BASE=/projects/vera/gcc-8.3.0; fi
+  - source /opt/casl-tools/gcc-8.3.0/load_dev_env.sh
+  - BASE_DIR=/localhome/gitlab-runner
+  - ENV_BASE=/opt/casl-tools/gcc-8.3.0
   - which gcc
   - echo $ENV_BASE
   - echo $BASE_DIR
