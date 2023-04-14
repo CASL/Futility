@@ -451,18 +451,115 @@ TYPE,EXTENDS(BaseFileType) :: HDF5FileType
     !> @copybrief FileType_HDF5::write_attribute_c0
     !> @copydoc FileType_HDF5::write_attribute_c0
     PROCEDURE,PASS,PRIVATE :: write_attribute_c0
-    !> @copybrief FileType_HDF5::write_attribute_i0
-    !> @copydoc FileType_HDF5::write_attribute_i0
-    PROCEDURE,PASS,PRIVATE :: write_attribute_i0
-    !> @copybrief FileType_HDF5::write_attribute_d0
-    !> @copydoc FileType_HDF5::write_attribute_d0
-    PROCEDURE,PASS,PRIVATE :: write_attribute_d0
     !> @copybrief FileType_HDF5::write_attribute_b0
     !> @copydoc FileType_HDF5::write_attribute_b0
     PROCEDURE,PASS,PRIVATE :: write_attribute_b0
+    !> @copybrief FileType_HDF5::write_attribute_i0
+    !> @copydoc FileType_HDF5::write_attribute_i0
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i0
+    !> @copybrief FileType_HDF5::write_attribute_i1
+    !> @copydoc FileType_HDF5::write_attribute_i1
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i1
+    !> @copybrief FileType_HDF5::write_attribute_i2
+    !> @copydoc FileType_HDF5::write_attribute_i2
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i2
+    !> @copybrief FileType_HDF5::write_attribute_i3
+    !> @copydoc FileType_HDF5::write_attribute_i3
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i3
+    !> @copybrief FileType_HDF5::write_attribute_i4
+    !> @copydoc FileType_HDF5::write_attribute_i4
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i4
+    !> @copybrief FileType_HDF5::write_attribute_i5
+    !> @copydoc FileType_HDF5::write_attribute_i5
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i5
+    !> @copybrief FileType_HDF5::write_attribute_i6
+    !> @copydoc FileType_HDF5::write_attribute_i6
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i6
+    !> @copybrief FileType_HDF5::write_attribute_i7
+    !> @copydoc FileType_HDF5::write_attribute_i7
+    PROCEDURE,PASS,PRIVATE :: write_attribute_i7
+    !> @copybrief FileType_HDF5::write_attribute_l0
+    !> @copydoc FileType_HDF5::write_attribute_l0
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l0
+    !> @copybrief FileType_HDF5::write_attribute_l1
+    !> @copydoc FileType_HDF5::write_attribute_l1
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l1
+    !> @copybrief FileType_HDF5::write_attribute_l2
+    !> @copydoc FileType_HDF5::write_attribute_l2
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l2
+    !> @copybrief FileType_HDF5::write_attribute_l3
+    !> @copydoc FileType_HDF5::write_attribute_l3
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l3
+    !> @copybrief FileType_HDF5::write_attribute_l4
+    !> @copydoc FileType_HDF5::write_attribute_l4
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l4
+    !> @copybrief FileType_HDF5::write_attribute_l5
+    !> @copydoc FileType_HDF5::write_attribute_l5
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l5
+    !> @copybrief FileType_HDF5::write_attribute_l6
+    !> @copydoc FileType_HDF5::write_attribute_l6
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l6
+    !> @copybrief FileType_HDF5::write_attribute_l7
+    !> @copydoc FileType_HDF5::write_attribute_l7
+    PROCEDURE,PASS,PRIVATE :: write_attribute_l7
+    !> @copybrief FileType_HDF5::write_attribute_s0
+    !> @copydoc FileType_HDF5::write_attribute_s0
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s0
+    !> @copybrief FileType_HDF5::write_attribute_s1
+    !> @copydoc FileType_HDF5::write_attribute_s1
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s1
+    !> @copybrief FileType_HDF5::write_attribute_s2
+    !> @copydoc FileType_HDF5::write_attribute_s2
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s2
+    !> @copybrief FileType_HDF5::write_attribute_s3
+    !> @copydoc FileType_HDF5::write_attribute_s3
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s3
+    !> @copybrief FileType_HDF5::write_attribute_s4
+    !> @copydoc FileType_HDF5::write_attribute_s4
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s4
+    !> @copybrief FileType_HDF5::write_attribute_s5
+    !> @copydoc FileType_HDF5::write_attribute_s5
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s5
+    !> @copybrief FileType_HDF5::write_attribute_s6
+    !> @copydoc FileType_HDF5::write_attribute_s6
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s6
+    !> @copybrief FileType_HDF5::write_attribute_s7
+    !> @copydoc FileType_HDF5::write_attribute_s7
+    PROCEDURE,PASS,PRIVATE :: write_attribute_s7
+    !> @copybrief FileType_HDF5::write_attribute_d0
+    !> @copydoc FileType_HDF5::write_attribute_d0
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d0
+    !> @copybrief FileType_HDF5::write_attribute_d1
+    !> @copydoc FileType_HDF5::write_attribute_d1
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d1
+    !> @copybrief FileType_HDF5::write_attribute_d2
+    !> @copydoc FileType_HDF5::write_attribute_d2
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d2
+    !> @copybrief FileType_HDF5::write_attribute_d3
+    !> @copydoc FileType_HDF5::write_attribute_d3
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d3
+    !> @copybrief FileType_HDF5::write_attribute_d4
+    !> @copydoc FileType_HDF5::write_attribute_d4
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d4
+    !> @copybrief FileType_HDF5::write_attribute_d5
+    !> @copydoc FileType_HDF5::write_attribute_d5
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d5
+    !> @copybrief FileType_HDF5::write_attribute_d6
+    !> @copydoc FileType_HDF5::write_attribute_d6
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d6
+    !> @copybrief FileType_HDF5::write_attribute_d7
+    !> @copydoc FileType_HDF5::write_attribute_d7
+    PROCEDURE,PASS,PRIVATE :: write_attribute_d7
     !> Generic typebound interface for all @c attribute writes
-    GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0,&
-        write_attribute_i0, write_attribute_d0,write_attribute_b0
+    GENERIC ::  write_attribute => write_attribute_st0, write_attribute_c0, write_attribute_b0, &
+        write_attribute_i0,write_attribute_i1,write_attribute_i2,write_attribute_i3, &
+        write_attribute_i4,write_attribute_i5,write_attribute_i6,write_attribute_i7, &
+        write_attribute_l0,write_attribute_l1,write_attribute_l2,write_attribute_l3, &
+        write_attribute_l4,write_attribute_l5,write_attribute_l6,write_attribute_l7, &
+        write_attribute_s0,write_attribute_s1,write_attribute_s2,write_attribute_s3, &
+        write_attribute_s4,write_attribute_s5,write_attribute_s6,write_attribute_s7, &
+        write_attribute_d0,write_attribute_d1,write_attribute_d2,write_attribute_d3, &
+        write_attribute_d4,write_attribute_d5,write_attribute_d6,write_attribute_d7
     !> @copybrief FileType_HDF5::read_str_attribure_help
     !> @copydoc FileType_HDF5::read_str_attribure_help
     PROCEDURE,PASS,PRIVATE :: read_attribute_st0
@@ -7138,6 +7235,44 @@ FUNCTION has_attribute(this,obj_name,attr_name) RESULT(hasAttribute)
 ENDFUNCTION has_attribute
 !
 !-------------------------------------------------------------------------------
+#ifdef FUTILITY_HAVE_HDF5
+SUBROUTINE preWrite_attribute(this,dims,obj_name,attr_name,obj_type,obj_id,dspace_id,attr_id)
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  INTEGER(HSIZE_T),INTENT(IN) :: dims(:)
+  CHARACTER(LEN=*),INTENT(IN) :: obj_name
+  CHARACTER(LEN=*),INTENT(IN) :: attr_name
+  INTEGER(HID_T),INTENT(IN) :: obj_type
+  INTEGER(HID_T),INTENT(OUT) :: attr_id
+  INTEGER(HID_T),INTENT(OUT) :: dspace_id
+  INTEGER(HID_T),INTENT(OUT) :: obj_id
+
+  !Prepare the File and object for the attribute
+  CALL open_object(this,obj_name,obj_id)
+
+  !Create the data space for memory type and size
+  CALL h5screate_simple_f(SIZE(dims),dims,dspace_id,error)
+
+  !Create the attribute within the dataspce
+  CALL createAttribute(this,obj_id,attr_name,obj_type,&
+      dspace_id,attr_id)
+
+ENDSUBROUTINE preWrite_attribute
+!
+!-------------------------------------------------------------------------------
+SUBROUTINE postWrite_attribute(this,dspace_id,attr_id,obj_id)
+  CLASS(HDF5FileType),INTENT(INOUT) :: this
+  INTEGER(HID_T),INTENT(IN) :: dspace_id
+  INTEGER(HID_T),INTENT(IN) :: attr_id
+  INTEGER(HID_T),INTENT(IN) :: obj_id
+
+  CALL h5sclose_f(dspace_id,error)
+  CALL close_attribute(this,attr_id)
+  CALL close_object(this,obj_id)
+
+ENDSUBROUTINE postWrite_attribute
+#endif
+!
+!-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and string value to a known dataset
 !> @param this the file to read
 !> @param obj_name the relative path to the dataset
@@ -7202,41 +7337,420 @@ SUBROUTINE write_attribute_c0(this,obj_name,attr_name,attr_val)
 END SUBROUTINE write_attribute_c0
 !
 !-------------------------------------------------------------------------------
-!> @brief Writes an attribute name and integer  value to a known dataset
+!> @brief Writes an attribute name and integer value to a known dataset
 !> @param this the file to read
 !> @param obj_name the relative path to the dataset
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
 !>
-SUBROUTINE write_attribute_i0(this,obj_name,attr_name,attr_val)
-  CLASS(HDF5FileType),INTENT(INOUT) :: this
-  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-  INTEGER(SNK),INTENT(IN) :: attr_val
+SUBROUTINE write_attribute_i0(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK), INTENT(IN) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-  INTEGER :: num_dims
   INTEGER(HID_T) :: attr_id, dspace_id, obj_id
-  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  INTEGER(HSIZE_T) :: dims(1)
 
-  num_dims=1
-  dims(1)=1
+  dims = 1
 
-  !Prepare the File and object for the attribute
-  CALL open_object(this,obj_name,obj_id)
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
 
-  !Create the data space for memory type and size
-  CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
-
-  !Create and write to the attribute within the dataspce
-  CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_INTEGER,&
-      dspace_id,attr_id)
-  CALL h5awrite_f(attr_id,H5T_NATIVE_INTEGER,attr_val,dims,error)
-
-  CALL h5sclose_f(dspace_id,error)
-  CALL close_attribute(this,attr_id)
-  CALL close_object(this,obj_id)
 #endif
-ENDSUBROUTINE write_attribute_i0
+END SUBROUTINE write_attribute_i0
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_i1(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK), DIMENSION(1) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(1)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_i1
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_i2(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(IN) :: attr_val(:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(2)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_i2
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_i3(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(IN) :: attr_val(:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(3)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_i3
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_i4(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(IN) :: attr_val(:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(4)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_i4
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_i5(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(IN) :: attr_val(:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(5)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_i5
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_i6(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(IN) :: attr_val(:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(6)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_i6
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_i7(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SNK),INTENT(IN) :: attr_val(:,:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(7)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_INTEGER, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_INTEGER, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_i7
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l0(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK), INTENT(IN) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(1)
+
+  dims = 1
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l0
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l1(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK), DIMENSION(1) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(1)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l1
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l2(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK),INTENT(IN) :: attr_val(:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(2)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l2
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l3(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK),INTENT(IN) :: attr_val(:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(3)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l3
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l4(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK),INTENT(IN) :: attr_val(:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(4)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l4
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l5(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK),INTENT(IN) :: attr_val(:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(5)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l5
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l6(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK),INTENT(IN) :: attr_val(:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(6)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l6
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and integer value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_l7(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  INTEGER(SLK),INTENT(IN) :: attr_val(:,:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(7)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_STD_I64LE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_STD_I64LE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_l7
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and real value to a known dataset
@@ -7245,35 +7759,414 @@ ENDSUBROUTINE write_attribute_i0
 !> @param attr_name the desired name of the attribute
 !> @param attr_value the desired value of the attrbute
 !>
-SUBROUTINE write_attribute_d0(this,obj_name,attr_name,attr_val)
-  CLASS(HDF5FileType),INTENT(INOUT) :: this
-  CHARACTER(LEN=*),INTENT(IN) :: obj_name, attr_name
-  REAL(SDK),INTENT(IN) :: attr_val
+SUBROUTINE write_attribute_s0(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK), INTENT(IN) :: attr_val
 
 #ifdef FUTILITY_HAVE_HDF5
-  INTEGER :: num_dims
   INTEGER(HID_T) :: attr_id, dspace_id, obj_id
-  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  INTEGER(HSIZE_T) :: dims(1)
 
-  num_dims=1
-  dims(1)=1
+  dims = 1
 
-  !Prepare the File and object for the attribute
-  CALL open_object(this,obj_name,obj_id)
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
 
-  !Create the data space for memory type and size
-  CALL h5screate_simple_f(num_dims,dims,dspace_id,error)
-
-  !Create and write to the attribute within the dataspce
-  CALL createAttribute(this,obj_id,attr_name,H5T_NATIVE_DOUBLE,&
-      dspace_id,attr_id)
-  CALL h5awrite_f(attr_id,H5T_NATIVE_DOUBLE,attr_val,dims,error)
-
-  CALL h5sclose_f(dspace_id,error)
-  CALL close_attribute(this,attr_id)
-  CALL close_object(this,obj_id)
 #endif
-ENDSUBROUTINE write_attribute_d0
+END SUBROUTINE write_attribute_s0
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_s1(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK), DIMENSION(1) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(1)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_s1
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_s2(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK),INTENT(IN) :: attr_val(:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(2)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_s2
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_s3(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK),INTENT(IN) :: attr_val(:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(3)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_s3
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_s4(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK),INTENT(IN) :: attr_val(:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(4)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_s4
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_s5(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK),INTENT(IN) :: attr_val(:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(5)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_s5
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_s6(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK),INTENT(IN) :: attr_val(:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(6)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_s6
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_s7(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SSK),INTENT(IN) :: attr_val(:,:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(7)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_REAL, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_REAL, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_s7
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d0(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK), INTENT(IN) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(1)
+
+  dims = 1
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d0
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d1(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK), DIMENSION(1) :: attr_val
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(1)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d1
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d2(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(IN) :: attr_val(:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(2)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d2
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d3(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(IN) :: attr_val(:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(3)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d3
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d4(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(IN) :: attr_val(:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(4)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d4
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d5(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(IN) :: attr_val(:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(5)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d5
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d6(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(IN) :: attr_val(:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(6)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d6
+!
+!-------------------------------------------------------------------------------
+!> @brief Writes an attribute name and real value to a known dataset
+!> @param this the file to read
+!> @param obj_name the relative path to the dataset
+!> @param attr_name the desired name of the attribute
+!> @param attr_value the desired value of the attrbute
+!>
+SUBROUTINE write_attribute_d7(this, obj_name, attr_name, attr_val)
+  CLASS(HDF5FileType), INTENT(INOUT) :: this
+  CHARACTER(LEN=*), INTENT(IN) :: obj_name, attr_name
+  REAL(SDK),INTENT(IN) :: attr_val(:,:,:,:,:,:,:)
+
+#ifdef FUTILITY_HAVE_HDF5
+  INTEGER(HID_T) :: attr_id, dspace_id, obj_id
+  INTEGER(HSIZE_T) :: dims(7)
+
+  dims = SHAPE(attr_val)
+
+  CALL preWrite_attribute(this, dims, obj_name, attr_name, H5T_NATIVE_DOUBLE, &
+      obj_id, dspace_id, attr_id)
+  CALL h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, attr_val, dims, error)
+  CALL postWrite_attribute(this, dspace_id, attr_id, obj_id)
+
+#endif
+END SUBROUTINE write_attribute_d7
 !
 !-------------------------------------------------------------------------------
 !> @brief Writes an attribute name and logical value to a known dataset
@@ -7291,7 +8184,7 @@ SUBROUTINE write_attribute_b0(this,obj_name,attr_name,attr_val)
   CHARACTER :: char_attr_val
   INTEGER :: num_dims
   INTEGER(HID_T) :: attr_id, dspace_id, obj_id
-  INTEGER(HSIZE_T),DIMENSION(1) :: dims
+  INTEGER(HSIZE_T) :: dims(1)
 
   num_dims=1
   dims(1)=1
