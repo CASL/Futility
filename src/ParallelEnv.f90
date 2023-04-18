@@ -1452,6 +1452,7 @@ SUBROUTINE gatherv_SNK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
     ALLOCATE(recvbuf(SUM(recvcounts)))
   ELSE
     ALLOCATE(recvbuf(0))
+    ALLOCATE(displs(0))
   ENDIF
 
 #ifdef HAVE_MPI
@@ -1506,6 +1507,7 @@ SUBROUTINE gatherv_SLK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
     ALLOCATE(recvbuf(SUM(recvcounts)))
   ELSE
     ALLOCATE(recvbuf(0))
+    ALLOCATE(displs(0))
   ENDIF
 
 #ifdef HAVE_MPI
@@ -1562,6 +1564,7 @@ SUBROUTINE gatherv_SSK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
     ALLOCATE(recvbuf(SUM(recvcounts)))
   ELSE
     ALLOCATE(recvbuf(0))
+    ALLOCATE(displs(0))
   ENDIF
 
 #ifdef HAVE_MPI
@@ -1618,6 +1621,7 @@ SUBROUTINE gatherv_SDK1_MPI_Env_type(this,sendbuf,recvbuf,recvcounts,root)
     ALLOCATE(recvbuf(SUM(recvcounts)))
   ELSE
     ALLOCATE(recvbuf(0))
+    ALLOCATE(displs(0))
   ENDIF
 
 #ifdef HAVE_MPI
