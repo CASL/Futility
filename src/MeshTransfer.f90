@@ -164,6 +164,8 @@ TYPE,ABSTRACT,EXTENDS(MeshTransfer_base) :: MeshTransfer_1Dbase
   REAL(SRK),ALLOCATABLE :: transferMatrix(:,:)
   !> The linear system to transfer the data from incoming to outgoing: transferLS%A * outgoing = incoming
   TYPE(LinearSolverType_Direct) :: transferLS
+  !> Logical indicating if extrapolation should be allowed
+  LOGICAL(SBK) :: extrapolate = .FALSE.
 !
 !List of type-bound procedures
   CONTAINS
@@ -173,8 +175,8 @@ TYPE,ABSTRACT,EXTENDS(MeshTransfer_base) :: MeshTransfer_1Dbase
     !> @copybrief MeshTransfer::clear_1Dbase
     !> @copydetails MeshTransfer::clear_1Dbase
     PROCEDURE,PASS :: clear => clear_1Dbase
-    !> @copybrief MeshTransfer::clear_1Dbase
-    !> @copydetails MeshTransfer::clear_1Dbase
+    !> @copybrief MeshTransfer::transfer_1Dbase
+    !> @copydetails MeshTransfer::transfer_1Dbase
     PROCEDURE,PASS :: transfer => transfer_1Dbase
 ENDTYPE MeshTransfer_1Dbase
 
@@ -224,6 +226,7 @@ CONTAINS
 !>     * volumemesh_out - 1D array of edges of volumes (only for map_out=VOLUME)
 !>   - Optional:
 !>     * poly_transfer - if present, defines the order of polynomial transfer that is used
+!>     * extrapolate - if present, determines whether to allow extrapolation; defaults to false
 !>
 SUBROUTINE init_1Dbase(this,pList)
   CHARACTER(LEN=*),PARAMETER :: myName="init_1Dbase"
@@ -235,6 +238,10 @@ SUBROUTINE init_1Dbase(this,pList)
 
   REQUIRE(pList%has('map_in'))
   REQUIRE(pList%has('map_out'))
+
+  IF(pList%has('extrapolate')) THEN
+    CALL pList%get('MeshTransfer -> extrapolate',this%extrapolate)
+  ENDIF
 
   CALL pList%get('map_in',tmpstr)
   SELECTCASE(CHAR(tmpstr))
@@ -311,6 +318,7 @@ SUBROUTINE clear_1Dbase(this)
   this%nmesh_in=0
   this%nmesh_out=0
   this%poly_transfer=-1
+  this%extrapolate = .FALSE.
   IF(ALLOCATED(this%mesh_in)) DEALLOCATE(this%mesh_in)
   IF(ALLOCATED(this%mesh_out)) DEALLOCATE(this%mesh_out)
   IF(ALLOCATED(this%transferMatrix)) DEALLOCATE(this%transferMatrix)
@@ -420,7 +428,7 @@ SUBROUTINE init_1DCart(this,pList)
   ELSEIF(this%MapType_in == MapType_POINT .AND. this%MapType_out == MapType_VOLUME) THEN
     IF(this%poly_transfer>=0) THEN
       CALL setupP2C_cart(this%transferLS,this%mesh_in,minX,maxX)
-      CALL setupC2V_cart(this%transferMatrix,this%poly_transfer,this%mesh_out,minX,maxX)
+      CALL setupC2V_cart(this%transferMatrix,this%poly_transfer,this%mesh_out,minX,maxX,this%extrapolate)
     ELSE
       CALL setupP2V_cart(this%transferMatrix,this%mesh_in,this%mesh_out)
     ENDIF
@@ -428,24 +436,24 @@ SUBROUTINE init_1DCart(this,pList)
       CALL setupP2C_cart(this%transferLS,this%mesh_in,minX,maxX)
   ELSEIF(this%MapType_in == MapType_VOLUME .AND. this%MapType_out == MapType_POINT) THEN
     IF(this%poly_transfer>=0) THEN
-      CALL setupV2C_cart(this%transferLS,this%mesh_in,minX,maxX)
+      CALL setupV2C_cart(this%transferLS,this%mesh_in,minX,maxX,this%extrapolate)
       CALL setupC2P_cart(this%transferMatrix,this%poly_transfer,this%mesh_out,minX,maxX)
     ELSE
       CALL setupV2P(this%transferMatrix,this%mesh_in,this%mesh_out)
     ENDIF
   ELSEIF(this%MapType_in == MapType_VOLUME .AND. this%MapType_out == MapType_VOLUME) THEN
     IF(this%poly_transfer>=0) THEN
-      CALL setupV2C_cart(this%transferLS,this%mesh_in,minX,maxX)
-      CALL setupC2V_cart(this%transferMatrix,this%poly_transfer,this%mesh_out,minX,maxX)
+      CALL setupV2C_cart(this%transferLS,this%mesh_in,minX,maxX,this%extrapolate)
+      CALL setupC2V_cart(this%transferMatrix,this%poly_transfer,this%mesh_out,minX,maxX,this%extrapolate)
     ELSE
       CALL setupV2V_cart(this%transferMatrix,this%mesh_in,this%mesh_out)
     ENDIF
   ELSEIF(this%MapType_in == MapType_VOLUME .AND. this%MapType_out == MapType_CONTINUOUS) THEN
-    CALL setupV2C_cart(this%transferLS,this%mesh_in,minX,maxX)
+    CALL setupV2C_cart(this%transferLS,this%mesh_in,minX,maxX,this%extrapolate)
   ELSEIF(this%MapType_in == MapType_CONTINUOUS .AND. this%MapType_out == MapType_POINT) THEN
     CALL setupC2P_cart(this%transferMatrix,this%nmesh_in,this%mesh_out,minX,maxX)
   ELSEIF(this%MapType_in == MapType_CONTINUOUS .AND. this%MapType_out == MapType_VOLUME) THEN
-    CALL setupC2V_cart(this%transferMatrix,this%nmesh_in,this%mesh_out,minX,maxX)
+    CALL setupC2V_cart(this%transferMatrix,this%nmesh_in,this%mesh_out,minX,maxX,this%extrapolate)
   ELSEIF(this%MapType_in == MapType_CONTINUOUS .AND. this%MapType_out == MapType_CONTINUOUS) THEN
     CALL setupC2C(this%transferMatrix,this%nmesh_in,this%nmesh_out)
   ENDIF
@@ -491,7 +499,7 @@ SUBROUTINE init_1DCyl(this,pList)
   ELSEIF(this%MapType_in == MapType_POINT .AND. this%MapType_out == MapType_VOLUME) THEN
     IF(this%poly_transfer>=0) THEN
       CALL setupP2C_cyl(this%transferLS,this%mesh_in,maxR)
-      CALL setupC2V_cyl(this%transferMatrix,this%poly_transfer,this%mesh_out,maxR)
+      CALL setupC2V_cyl(this%transferMatrix,this%poly_transfer,this%mesh_out,maxR,this%extrapolate)
     ELSE
       CALL setupP2V_cyl(this%transferMatrix,this%mesh_in,this%mesh_out)
     ENDIF
@@ -499,24 +507,24 @@ SUBROUTINE init_1DCyl(this,pList)
       CALL setupP2C_cyl(this%transferLS,this%mesh_in,maxR)
   ELSEIF(this%MapType_in == MapType_VOLUME .AND. this%MapType_out == MapType_POINT) THEN
     IF(this%poly_transfer>=0) THEN
-      CALL setupV2C_cyl(this%transferLS,this%mesh_in,maxR)
+      CALL setupV2C_cyl(this%transferLS,this%mesh_in,maxR,this%extrapolate)
       CALL setupC2P_cyl(this%transferMatrix,this%poly_transfer,this%mesh_out,maxR)
     ELSE
       CALL setupV2P(this%transferMatrix,this%mesh_in,this%mesh_out)
     ENDIF
   ELSEIF(this%MapType_in == MapType_VOLUME .AND. this%MapType_out == MapType_VOLUME) THEN
     IF(this%poly_transfer>=0) THEN
-      CALL setupV2C_cyl(this%transferLS,this%mesh_in,maxR)
-      CALL setupC2V_cyl(this%transferMatrix,this%poly_transfer,this%mesh_out,maxR)
+      CALL setupV2C_cyl(this%transferLS,this%mesh_in,maxR,this%extrapolate)
+      CALL setupC2V_cyl(this%transferMatrix,this%poly_transfer,this%mesh_out,maxR,this%extrapolate)
     ELSE
       CALL setupV2V_cyl(this%transferMatrix,this%mesh_in,this%mesh_out)
     ENDIF
   ELSEIF(this%MapType_in == MapType_VOLUME .AND. this%MapType_out == MapType_CONTINUOUS) THEN
-    CALL setupV2C_cyl(this%transferLS,this%mesh_in,maxR)
+    CALL setupV2C_cyl(this%transferLS,this%mesh_in,maxR,this%extrapolate)
   ELSEIF(this%MapType_in == MapType_CONTINUOUS .AND. this%MapType_out == MapType_POINT) THEN
     CALL setupC2P_cyl(this%transferMatrix,this%nmesh_in,this%mesh_out,maxR)
   ELSEIF(this%MapType_in == MapType_CONTINUOUS .AND. this%MapType_out == MapType_VOLUME) THEN
-    CALL setupC2V_cyl(this%transferMatrix,this%nmesh_in,this%mesh_out,maxR)
+    CALL setupC2V_cyl(this%transferMatrix,this%nmesh_in,this%mesh_out,maxR,this%extrapolate)
   ELSEIF(this%MapType_in == MapType_CONTINUOUS .AND. this%MapType_out == MapType_CONTINUOUS) THEN
     CALL setupC2C(this%transferMatrix,this%nmesh_in,this%nmesh_out)
   ENDIF
@@ -831,17 +839,19 @@ ENDSUBROUTINE setupV2V_cart
 !> @param mesh_in The incoming volume mesh
 !> @param minX    The minimum x value for polynomial renormalization
 !> @param maxX    The maximum x value for polynomial renormalization
+!> @param extrap  Indicates if extrapolation is allowed
 !>
 !> This routine initializes a direct linear solver using LU decomposition.  This
 !> routine sets up the linear system to solve the full number of moments.  The
 !> transfer routine will drop moments that aren't needed.  This is inconsequential
 !> because the polynomials are orthogonal.
 !>
-SUBROUTINE setupV2C_cart(TLS,mesh_in,minX,maxX)
+SUBROUTINE setupV2C_cart(TLS,mesh_in,minX,maxX,extrap)
   TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
   REAL(SRK),INTENT(IN) :: mesh_in(:)
   REAL(SRK),INTENT(IN) :: minX
   REAL(SRK),INTENT(IN) :: maxX
+  LOGICAL(SBK),INTENT(IN) :: extrap
 
   INTEGER(SIK) :: i,j,nin
   REAL(SRK) :: h,cent
@@ -876,7 +886,7 @@ SUBROUTINE setupV2C_cart(TLS,mesh_in,minX,maxX)
       DO j=1,nin
         x(:)=0.0_SRK
         x(j)=ONE
-        CALL A%set(i,j,LPIntegral(x,mesh_in(i),mesh_in(i+1),h,cent))
+        CALL A%set(i,j,LPIntegral(x,mesh_in(i),mesh_in(i+1),extrap,h,cent))
       ENDDO
     ENDDO
   ENDSELECT
@@ -939,15 +949,17 @@ ENDSUBROUTINE setupC2P_cart
 !> @param mesh_out The outcoming volume mesh
 !> @param minX     The minimum x value for polynomial renormalization
 !> @param maxX     The maximum x value for polynomial renormalization
+!> @param extrap   Indicates if extrapolation is allowed
 !>
 !> This routine allocates the transfer matrix for continuous to volume
 !>
-SUBROUTINE setupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX)
+SUBROUTINE setupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX,extrap)
   REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
   INTEGER(SIK),INTENT(IN) :: nmesh_in
   REAL(SRK),INTENT(IN) :: mesh_out(:)
   REAL(SRK),INTENT(IN) :: minX
   REAL(SRK),INTENT(IN) :: maxX
+  LOGICAL(SBK),INTENT(IN) :: extrap
 
   INTEGER(SIK) :: i,j,nin,nout
   REAL(SRK) :: h,cent
@@ -970,7 +982,7 @@ SUBROUTINE setupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX)
     DO j=1,nin
       x(:)=ZERO
       x(j)=ONE
-      TM(i,j)=LPIntegral(x,mesh_out(i),mesh_out(i+1),h,cent)
+      TM(i,j)=LPIntegral(x,mesh_out(i),mesh_out(i+1),extrap,h,cent)
     ENDDO
   ENDDO
 
@@ -1173,16 +1185,18 @@ ENDSUBROUTINE setupV2V_cyl
 !> @param TLS     The direct linear solver object to be set up
 !> @param mesh_in The incoming point mesh
 !> @param maxR    The maximum radius for polynomial renormalization
+!> @param extrap   Indicates if extrapolation is allowed
 !>
 !> This routine initializes a direct linear solver using LU decomposition.  This
 !> routine sets up the linear system to solve the full number of moments.  The
 !> transfer routine will drop moments that aren't needed.  This is inconsequential
 !> because the polynomials are orthogonal.
 !>
-SUBROUTINE setupV2C_cyl(TLS,mesh_in,maxR)
+SUBROUTINE setupV2C_cyl(TLS,mesh_in,maxR,extrap)
   TYPE(LinearSolverType_Direct),INTENT(INOUT) :: TLS
   REAL(SRK),INTENT(IN) :: mesh_in(:)
   REAL(SRK),INTENT(IN) :: maxR
+  LOGICAL(SBK),INTENT(IN) :: extrap
 
   INTEGER(SIK) :: i,j,nin
   REAL(SRK),ALLOCATABLE :: x(:)
@@ -1215,7 +1229,7 @@ SUBROUTINE setupV2C_cyl(TLS,mesh_in,maxR)
       DO j=1,nin
         x(:)=ZERO
         x(j)=ONE
-        CALL A%set(i,j,ZPIntegral(x,mesh_in(i),mesh_in(i+1),maxR))
+        CALL A%set(i,j,ZPIntegral(x,mesh_in(i),mesh_in(i+1),extrap,maxR))
       ENDDO
     ENDDO
   ENDSELECT
@@ -1273,14 +1287,16 @@ ENDSUBROUTINE setupC2P_cyl
 !> @param nmesh_in The incoming moments
 !> @param mesh_out The outcoming volume mesh
 !> @param maxR     The maximum radius for polynomial renormalization
+!> @param extrap   Indicates if extrapolation is allowed
 !>
 !> This routine allocates the transfer matrix for continuous to volume
 !>
-SUBROUTINE setupC2V_cyl(TM,nmesh_in,mesh_out,maxR)
+SUBROUTINE setupC2V_cyl(TM,nmesh_in,mesh_out,maxR,extrap)
   REAL(SRK),ALLOCATABLE,INTENT(INOUT) :: TM(:,:)
   INTEGER(SIK),INTENT(IN) :: nmesh_in
   REAL(SRK),INTENT(IN) :: mesh_out(:)
   REAL(SRK),INTENT(IN) :: maxR
+  LOGICAL(SBK),INTENT(IN) :: extrap
 
   INTEGER(SIK) :: i,j,nin,nout
   REAL(SRK),ALLOCATABLE :: x(:)
@@ -1301,7 +1317,7 @@ SUBROUTINE setupC2V_cyl(TM,nmesh_in,mesh_out,maxR)
     DO j=1,nin
       x(:)=ZERO
       x(j)=ONE
-      TM(i,j)=ZPIntegral(x,mesh_out(i),mesh_out(i+1),maxR)
+      TM(i,j)=ZPIntegral(x,mesh_out(i),mesh_out(i+1),extrap,maxR)
     ENDDO
   ENDDO
 
@@ -1316,6 +1332,7 @@ ENDSUBROUTINE setupC2V_cyl
 !> @param globX The value of x in the global coordinate
 !> @param h     The height of the node, OPTIONAL (if not provided a height of 2 is assumed)
 !> @param nodeX The center of the node, OPTIONAL (if not provided a position of 0 is assumed)
+!> @returns y   The function evaluation result
 !>
 !> This routine returns the value of an arbitrary order Legendre expansion at a
 !> specific point for NEM and SANM nodal methods.
@@ -1358,19 +1375,22 @@ ENDFUNCTION LPPointVal
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns value of the integral of an arbitrary order Legendre Polynomial with coefficients coef
-!> @param coef  The coefficients of the Legendre expansion
-!> @param a     The beginning of the integral range
-!> @param b     The end of the integral range
-!> @param h     The height of the node, OPTIONAL (if not provided a height of 2 is assumed)
-!> @param nodeX The center of the node, OPTIONAL (if not provided a position of 0 is assumed)
+!> @param coef   The coefficients of the Legendre expansion
+!> @param a      The beginning of the integral range
+!> @param b      The end of the integral range
+!> @param extrap Indicates if extrapolation is allowed
+!> @param h      The height of the node, OPTIONAL (if not provided a height of 2 is assumed)
+!> @param nodeX  The center of the node, OPTIONAL (if not provided a position of 0 is assumed)
+!> @returns y    The function evaluation result
 !>
 !> This routine returns the value of the integral of an arbitrary order Legendre expansion on a
 !> specific range a to b for NEM and SANM nodal methods.
 !>
-FUNCTION LPIntegral(coef,a,b,h,nodeX) RESULT(y)
+FUNCTION LPIntegral(coef,a,b,extrap,h,nodeX) RESULT(y)
   REAL(SRK),INTENT(IN) :: coef(0:)
   REAL(SRK),INTENT(IN) :: a
   REAL(SRK),INTENT(IN) :: b
+  LOGICAL(SBK),INTENT(IN) :: extrap
   REAL(SRK),INTENT(IN),OPTIONAL :: h
   REAL(SRK),INTENT(IN),OPTIONAL :: nodeX
   REAL(SRK) :: y
@@ -1388,7 +1408,7 @@ FUNCTION LPIntegral(coef,a,b,h,nodeX) RESULT(y)
   IF(PRESENT(nodeX)) xa=a-nodeX
   IF(PRESENT(nodeX)) xb=b-nodeX
 
-  REQUIRE(ABS(xb-xa) <= w)
+  REQUIRE(ABS(xb-xa) <= w .OR. extrap)
 
   N=SIZE(coef)
 
@@ -1420,6 +1440,7 @@ ENDFUNCTION LPIntegral
 !> @param coef  The coefficients of the Zernike expansion
 !> @param r     The value of r in the global coordinate
 !> @param h     The height of the node, OPTIONAL (if not provided a height of 1 is assumed)
+!> @returns y   The function evaluation result
 !>
 !> This routine returns the value of an arbitrary order Zernike expansion at a
 !> specific point.
@@ -1441,18 +1462,21 @@ ENDFUNCTION ZPPointVal
 !
 !-------------------------------------------------------------------------------
 !> @brief Returns value of an arbitrary order Zernike Polynomial with coefficients coef
-!> @param coef  The coefficients of the Zernike expansion
-!> @param a     The beginning of the integral range
-!> @param b     The end of the integral range
-!> @param h     The height of the node, OPTIONAL (if not provided a height of 1 is assumed)
+!> @param coef   The coefficients of the Zernike expansion
+!> @param a      The beginning of the integral range
+!> @param b      The end of the integral range
+!> @param extrap Indicates if extrapolation is allowed
+!> @param h      The height of the node, OPTIONAL (if not provided a height of 1 is assumed)
+!> @returns y    The function evaluation result
 !>
 !> This routine returns the value of an arbitrary order Zernike expansion at a
 !> specific point.
 !>
-FUNCTION ZPIntegral(coef,a,b,h) RESULT(y)
+FUNCTION ZPIntegral(coef,a,b,extrap,h) RESULT(y)
   REAL(SRK),INTENT(IN) :: coef(:)
   REAL(SRK),INTENT(IN) :: a
   REAL(SRK),INTENT(IN) :: b
+  LOGICAL(SBK),INTENT(IN) :: extrap
   REAL(SRK),INTENT(IN),OPTIONAL :: h
   REAL(SRK) :: y
   ! Local variables
@@ -1461,9 +1485,9 @@ FUNCTION ZPIntegral(coef,a,b,h) RESULT(y)
   w=ONE
 
   IF(PRESENT(h)) w=h
-  REQUIRE(ABS(b-a) <= w)
+  REQUIRE(ABS(b-a) <= w .OR. extrap)
 
-  y=LPIntegral(coef,TWO*(a/w)*(a/w)-ONE,TWO*(b/w)*(b/w)-ONE)
+  y=LPIntegral(coef,TWO*(a/w)*(a/w)-ONE,TWO*(b/w)*(b/w)-ONE,extrap)
 ENDFUNCTION ZPIntegral
 !
 !-------------------------------------------------------------------------------
@@ -1524,7 +1548,7 @@ SUBROUTINE testsetupV2C_cart(TLS,mesh_in,minX,maxX)
   REAL(SRK),INTENT(IN) :: minX
   REAL(SRK),INTENT(IN) :: maxX
 
-  CALL setupV2C_cart(TLS,mesh_in,minX,maxX)
+  CALL setupV2C_cart(TLS,mesh_in,minX,maxX,.FALSE.)
 ENDSUBROUTINE testsetupV2C_cart
 !
 SUBROUTINE testsetupC2P_cart(TM,nmesh_in,mesh_out,minX,maxX)
@@ -1544,7 +1568,7 @@ SUBROUTINE testsetupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX)
   REAL(SRK),INTENT(IN) :: minX
   REAL(SRK),INTENT(IN) :: maxX
 
-  CALL setupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX)
+  CALL setupC2V_cart(TM,nmesh_in,mesh_out,minX,maxX,.FALSE.)
 ENDSUBROUTINE testsetupC2V_cart
 !
 SUBROUTINE testsetupP2V_cyl(TM,mesh_in,mesh_out)
@@ -1576,7 +1600,7 @@ SUBROUTINE testsetupV2C_cyl(TLS,mesh_in,maxR)
   REAL(SRK),INTENT(IN) :: mesh_in(:)
   REAL(SRK),INTENT(IN) :: maxR
 
-  CALL setupV2C_cyl(TLS,mesh_in,maxR)
+  CALL setupV2C_cyl(TLS,mesh_in,maxR,.FALSE.)
 ENDSUBROUTINE testsetupV2C_cyl
 !
 SUBROUTINE testsetupC2P_cyl(TM,nmesh_in,mesh_out,maxR)
@@ -1594,7 +1618,7 @@ SUBROUTINE testsetupC2V_cyl(TM,nmesh_in,mesh_out,maxR)
   REAL(SRK),INTENT(IN) :: mesh_out(:)
   REAL(SRK),INTENT(IN) :: maxR
 
-  CALL setupC2V_cyl(TM,nmesh_in,mesh_out,maxR)
+  CALL setupC2V_cyl(TM,nmesh_in,mesh_out,maxR,.FALSE.)
 ENDSUBROUTINE testsetupC2V_cyl
 !
 ENDMODULE MeshTransfer

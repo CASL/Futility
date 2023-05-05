@@ -393,17 +393,17 @@ SUBROUTINE Test1Dsetup()
   CALL testsetupV2C_cart(TLS,mesh_in,0.0_SRK,5.0_SRK)
   ASSERT(TLS%isInit,'TLS initialized')
   CALL TLS%A%get(1,1,x)
-  ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),   ZERO,1.5_SRK,5.0_SRK,2.5_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),   ZERO,1.5_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TLS values')
   CALL TLS%A%get(1,2,x)
-  ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),   ZERO,1.5_SRK,5.0_SRK,2.5_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),   ZERO,1.5_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TLS values')
   CALL TLS%A%get(2,1,x)
-  ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),1.5_SRK,    TWO,5.0_SRK,2.5_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),1.5_SRK,    TWO,.FALSE.,5.0_SRK,2.5_SRK),'TLS values')
   CALL TLS%A%get(2,2,x)
-  ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),1.5_SRK,    TWO,5.0_SRK,2.5_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),1.5_SRK,    TWO,.FALSE.,5.0_SRK,2.5_SRK),'TLS values')
   CALL TLS%A%get(3,1,x)
-  ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),    TWO,5.0_SRK,5.0_SRK,2.5_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,LPIntegral((/ ONE,ZERO/),    TWO,5.0_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TLS values')
   CALL TLS%A%get(3,2,x)
-  ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),    TWO,5.0_SRK,5.0_SRK,2.5_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,LPIntegral((/ZERO, ONE/),    TWO,5.0_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TLS values')
   DEALLOCATE(mesh_in)
   CALL TLS%clear()
 
@@ -425,12 +425,12 @@ SUBROUTINE Test1Dsetup()
   mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
   CALL testsetupC2V_cart(TM,3,mesh_out,0.0_SRK,5.0_SRK)
   ASSERT(ALLOCATED(TM),'TM allocated')
-  ASSERT_APPROXEQ(TM(1,1),LPIntegral((/ ONE,ZERO/), 0.3_SRK,1.55_SRK,5.0_SRK,2.5_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(1,2),LPIntegral((/ZERO, ONE/), 0.3_SRK,1.55_SRK,5.0_SRK,2.5_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(2,1),LPIntegral((/ ONE,ZERO/),1.55_SRK, 2.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(2,2),LPIntegral((/ZERO, ONE/),1.55_SRK, 2.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(3,1),LPIntegral((/ ONE,ZERO/), 2.0_SRK, 3.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(3,2),LPIntegral((/ZERO, ONE/), 2.0_SRK, 3.0_SRK,5.0_SRK,2.5_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(1,1),LPIntegral((/ ONE,ZERO/), 0.3_SRK,1.55_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(1,2),LPIntegral((/ZERO, ONE/), 0.3_SRK,1.55_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(2,1),LPIntegral((/ ONE,ZERO/),1.55_SRK, 2.0_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(2,2),LPIntegral((/ZERO, ONE/),1.55_SRK, 2.0_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(3,1),LPIntegral((/ ONE,ZERO/), 2.0_SRK, 3.0_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(3,2),LPIntegral((/ZERO, ONE/), 2.0_SRK, 3.0_SRK,.FALSE.,5.0_SRK,2.5_SRK),'TM Values')
   DEALLOCATE(mesh_out,TM)
 
   COMPONENT_TEST('setupP2V_cyl')
@@ -516,17 +516,17 @@ SUBROUTINE Test1Dsetup()
   CALL testsetupV2C_cyl(TLS,mesh_in,6.0_SRK)
   ASSERT(TLS%isInit,'TLS initialized')
   CALL TLS%A%get(1,1,x)
-  ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),   ZERO,1.5_SRK,6.0_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),   ZERO,1.5_SRK,.FALSE.,6.0_SRK),'TLS values')
   CALL TLS%A%get(1,2,x)
-  ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),   ZERO,1.5_SRK,6.0_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),   ZERO,1.5_SRK,.FALSE.,6.0_SRK),'TLS values')
   CALL TLS%A%get(2,1,x)
-  ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),1.5_SRK,    TWO,6.0_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),1.5_SRK,    TWO,.FALSE.,6.0_SRK),'TLS values')
   CALL TLS%A%get(2,2,x)
-  ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),1.5_SRK,    TWO,6.0_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),1.5_SRK,    TWO,.FALSE.,6.0_SRK),'TLS values')
   CALL TLS%A%get(3,1,x)
-  ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),    TWO,5.0_SRK,6.0_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,ZPIntegral((/ ONE,ZERO/),    TWO,5.0_SRK,.FALSE.,6.0_SRK),'TLS values')
   CALL TLS%A%get(3,2,x)
-  ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),    TWO,5.0_SRK,6.0_SRK),'TLS values')
+  ASSERT_APPROXEQ(x,ZPIntegral((/ZERO, ONE/),    TWO,5.0_SRK,.FALSE.,6.0_SRK),'TLS values')
   DEALLOCATE(mesh_in)
   CALL TLS%clear()
 
@@ -548,12 +548,12 @@ SUBROUTINE Test1Dsetup()
   mesh_out=(/0.3_SRK, 1.55_SRK, 2.0_SRK, 3.0_SRK/)
   CALL testsetupC2V_cyl(TM,4,mesh_out,6.0_SRK)
   ASSERT(ALLOCATED(TM),'TM allocated')
-  ASSERT_APPROXEQ(TM(1,1),ZPIntegral((/ ONE,ZERO/), 0.3_SRK,1.55_SRK,6.0_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(1,2),ZPIntegral((/ZERO, ONE/), 0.3_SRK,1.55_SRK,6.0_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(2,1),ZPIntegral((/ ONE,ZERO/),1.55_SRK, 2.0_SRK,6.0_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(2,2),ZPIntegral((/ZERO, ONE/),1.55_SRK, 2.0_SRK,6.0_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(3,1),ZPIntegral((/ ONE,ZERO/), 2.0_SRK, 3.0_SRK,6.0_SRK),'TM Values')
-  ASSERT_APPROXEQ(TM(3,2),ZPIntegral((/ZERO, ONE/), 2.0_SRK, 3.0_SRK,6.0_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(1,1),ZPIntegral((/ ONE,ZERO/), 0.3_SRK,1.55_SRK,.FALSE.,6.0_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(1,2),ZPIntegral((/ZERO, ONE/), 0.3_SRK,1.55_SRK,.FALSE.,6.0_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(2,1),ZPIntegral((/ ONE,ZERO/),1.55_SRK, 2.0_SRK,.FALSE.,6.0_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(2,2),ZPIntegral((/ZERO, ONE/),1.55_SRK, 2.0_SRK,.FALSE.,6.0_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(3,1),ZPIntegral((/ ONE,ZERO/), 2.0_SRK, 3.0_SRK,.FALSE.,6.0_SRK),'TM Values')
+  ASSERT_APPROXEQ(TM(3,2),ZPIntegral((/ZERO, ONE/), 2.0_SRK, 3.0_SRK,.FALSE.,6.0_SRK),'TM Values')
   DEALLOCATE(mesh_out,TM)
 ENDSUBROUTINE Test1Dsetup
 !
@@ -879,48 +879,50 @@ SUBROUTINE TestLPIntegral()
   REAL(SRK) :: ref
   INTEGER(SIK) :: i
 
+  COMPONENT_TEST('No Extrapolation')
+
   ALLOCATE(c(8))
   c(:)=0.0_SRK
 
   ! Test each moment individually
   c(1)=1.0_SRK
   ref=1.0000_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK), ref,"0th moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.), ref,"0th moment Integral")
 
   c(:)=0.0_SRK
   c(2)=1.0_SRK
   ref=-0.1_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"1st moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"1st moment Integral")
 
   c(:)=0.0_SRK
   c(3)=1.0_SRK
   ref=-0.24_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"2nd moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"2nd moment Integral")
 
   c(:)=0.0_SRK
   c(4)=1.0_SRK
   ref=0.025_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"3rd moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"3rd moment Integral")
 
   c(:)=0.0_SRK
   c(5)=1.0_SRK
   ref=-0.0216_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"4th moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"4th moment Integral")
 
   c(:)=0.0_SRK
   c(6)=1.0_SRK
   ref=0.04798_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"5th moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"5th moment Integral")
 
   c(:)=0.0_SRK
   c(7)=1.0_SRK
   ref=0.034896_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"6th moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"6th moment Integral")
 
   c(:)=0.0_SRK
   c(8)=1.0_SRK
   ref=-0.0159475_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"7th moment Integral")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"7th moment Integral")
 
   ! Test all the moments together
   DO i=1,8
@@ -928,19 +930,62 @@ SUBROUTINE TestLPIntegral()
   ENDDO
 
   ref=0.88291837202380952380952380952380952380952380952380952380952380952380952380952_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK),ref,"Mixed moments - unit width")
-  ASSERT_APPROXEQ(LPIntegral(c,0.6_SRK,-0.8_SRK),ref,"Mixed moments - unit width reversed bounds")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,0.6_SRK,.FALSE.),ref,"Mixed moments - unit width")
+  ASSERT_APPROXEQ(LPIntegral(c,0.6_SRK,-0.8_SRK,.FALSE.),ref,"Mixed moments - unit width reversed bounds")
   ! Scale solution up to a 20 cm node using equivalent bounds (ie same reference solution)
-  ASSERT_APPROXEQ(LPIntegral(c,-8.0_SRK,6.0_SRK,h=20.0_SRK),ref,"Mixed moments - large width")
+  ASSERT_APPROXEQ(LPIntegral(c,-8.0_SRK,6.0_SRK,.FALSE.,h=20.0_SRK),ref,"Mixed moments - large width")
 
   ! Shift previous test over 20 cm
-  ASSERT_APPROXEQ(LPIntegral(c,12.0_SRK,26.0_SRK,h=20.0_SRK,nodeX=20.0_SRK),ref,"Mixed moments - large width shifted")
+  ASSERT_APPROXEQ(LPIntegral(c,12.0_SRK,26.0_SRK,.FALSE.,h=20.0_SRK,nodeX=20.0_SRK),ref,"Mixed moments - large width shifted")
 
   ref=1.0315685111002619311904027199489064514636993408203125000000000000000000000000_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,0.1_SRK,0.6_SRK),ref,"Mixed moments - positive bounds")
+  ASSERT_APPROXEQ(LPIntegral(c,0.1_SRK,0.6_SRK,.FALSE.),ref,"Mixed moments - positive bounds")
 
   ref=0.75727435035807388885586988180875778198242187500000000000000000000000000000000_SRK
-  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,-0.3_SRK),ref,"Mixed moments - negative bounds")
+  ASSERT_APPROXEQ(LPIntegral(c,-0.8_SRK,-0.3_SRK,.FALSE.),ref,"Mixed moments - negative bounds")
+
+  COMPONENT_TEST('Extrapolation')
+
+  ! Test each moment individually
+  c(:)=0.0_SRK
+  c(1)=1.0_SRK
+  ref=1.0000_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.), ref,"0th moment Integral")
+
+  c(:)=0.0_SRK
+  c(2)=1.0_SRK
+  ref=-0.15_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.),ref,"1st moment Integral")
+
+  c(:)=0.0_SRK
+  c(3)=1.0_SRK
+  ref=0.445_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.),ref,"2nd moment Integral")
+
+  c(:)=0.0_SRK
+  c(4)=1.0_SRK
+  ref=-0.466875_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.),ref,"3rd moment Integral")
+
+  c(:)=0.0_SRK
+  c(5)=1.0_SRK
+  ref=1.2798375_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.),ref,"4th moment Integral")
+
+  c(:)=0.0_SRK
+  c(6)=1.0_SRK
+  ref=-1.945276875_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.),ref,"5th moment Integral")
+
+  c(:)=0.0_SRK
+  c(7)=1.0_SRK
+  ref=4.9077660625_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.),ref,"6th moment Integral")
+
+  c(:)=0.0_SRK
+  c(8)=1.0_SRK
+  ref=-9.1258623304687490_SRK
+  ASSERT_APPROXEQ(LPIntegral(c,-1.5_SRK,1.2_SRK,.TRUE.),ref,"7th moment Integral")
 
 ENDSUBROUTINE TestLPIntegral
 !
@@ -980,48 +1025,49 @@ SUBROUTINE TestZPIntegral()
   REAL(SRK) :: ref
   INTEGER(SIK) :: i
 
+  COMPONENT_TEST('No Extrapolation')
   ALLOCATE(c(8))
   c(:)=0.0_SRK
 
   ! Test each moment individually
   c(1)=1.0_SRK
   ref=1.0000_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK), ref,"0th moment Integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.), ref,"0th moment Integral")
 
   c(:)=0.0_SRK
   c(2)=1.0_SRK
   ref=-0.55_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,"1st moment Integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,"1st moment Integral")
 
   c(:)=0.0_SRK
   c(3)=1.0_SRK
   ref=-0.0098_SRK
-  ASSERT_SOFTEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,1.0E-15_SRK,"2nd moment Integral")
+  ASSERT_SOFTEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,1.0E-15_SRK,"2nd moment Integral")
 
   c(:)=0.0_SRK
   c(4)=1.0_SRK
   ref=0.308825_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,"3rd moment Integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,"3rd moment Integral")
 
   c(:)=0.0_SRK
   c(5)=1.0_SRK
   ref=-0.252552860_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,"4th moment Integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,"4th moment Integral")
 
   c(:)=0.0_SRK
   c(6)=1.0_SRK
   ref=0.0376286570_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,"5th moment Integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,"5th moment Integral")
 
   c(:)=0.0_SRK
   c(7)=1.0_SRK
   ref=0.0929795207320_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,"6th moment Integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,"6th moment Integral")
 
   c(:)=0.0_SRK
   c(8)=1.0_SRK
   ref=-0.072698399532550_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,"7th moment Integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,"7th moment Integral")
 
   ! Test all the moments together
   DO i=1,8
@@ -1029,17 +1075,60 @@ SUBROUTINE TestZPIntegral()
   ENDDO
 
   ref=0.75889594290109791666666666666666666666666666666667_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK),ref,"Mixed moments - unit width")
-  ASSERT_APPROXEQ(ZPIntegral(c,0.6_SRK,0.3_SRK),ref,"Mixed moments - unit width reversed bounds")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,0.6_SRK,.FALSE.),ref,"Mixed moments - unit width")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.6_SRK,0.3_SRK,.FALSE.),ref,"Mixed moments - unit width reversed bounds")
   ! Scale solution up to a 20 cm node using equivalent bounds (ie same reference solution)
-  ASSERT_APPROXEQ(ZPIntegral(c,6.0_SRK,12.0_SRK,h=20.0_SRK),ref,"Mixed moments - large width")
+  ASSERT_APPROXEQ(ZPIntegral(c,6.0_SRK,12.0_SRK,.FALSE.,h=20.0_SRK),ref,"Mixed moments - large width")
 
   ref=0.78953633305305698860168457031250000000000000000000_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.1_SRK,0.75_SRK),ref,"Mixed moments - positive bounds")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.1_SRK,0.75_SRK,.FALSE.),ref,"Mixed moments - positive bounds")
 
 
   ref=1.0000000000000000000_SRK
-  ASSERT_APPROXEQ(ZPIntegral(c,0.0_SRK,1.00_SRK),ref,"Mixed moments - full integral")
+  ASSERT_APPROXEQ(ZPIntegral(c,0.0_SRK,1.00_SRK,.FALSE.),ref,"Mixed moments - full integral")
+
+  COMPONENT_TEST('Extrapolation')
+  c(:)=0.0_SRK
+
+  ! Test each moment individually
+  c(1)=1.0_SRK
+  ref=1.0000_SRK
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.), ref,"0th moment Integral")
+
+  c(:)=0.0_SRK
+  c(2)=1.0_SRK
+  ref=0.53_SRK
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.),ref,"1st moment Integral")
+
+  c(:)=0.0_SRK
+  c(3)=1.0_SRK
+  ref=0.8326_SRK
+  ASSERT_SOFTEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.),ref,1.0E-15_SRK,"2nd moment Integral")
+
+  c(:)=0.0_SRK
+  c(4)=1.0_SRK
+  ref=1.992005_SRK
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.),ref,"3rd moment Integral")
+
+  c(:)=0.0_SRK
+  c(5)=1.0_SRK
+  ref=4.7745037_SRK
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.),ref,"4th moment Integral")
+
+  c(:)=0.0_SRK
+  c(6)=1.0_SRK
+  ref=12.5540668898_SRK
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.),ref,"5th moment Integral")
+
+  c(:)=0.0_SRK
+  c(7)=1.0_SRK
+  ref=34.325232849963989_SRK
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.),ref,"6th moment Integral")
+
+  c(:)=0.0_SRK
+  c(8)=1.0_SRK
+  ref=97.010419743540481_SRK
+  ASSERT_APPROXEQ(ZPIntegral(c,0.3_SRK,1.2_SRK,.TRUE.),ref,"7th moment Integral")
 ENDSUBROUTINE TestZPIntegral
 !
 ENDPROGRAM testMeshTransfer
