@@ -8334,9 +8334,6 @@ SUBROUTINE edit_ParamType_SDK_a1(thisParam,funit,indent,prefix,paddtw)
   WRITE(fmt,'(i12)') i; fmt=ADJUSTL(fmt)
   WRITE(UNIT=funit,FMT='('//TRIM(fmt)//'x,a)',ADVANCE='NO') sprefix// &
       sdtype//' :: '//thisParam%name//'='
-  IF(SIZE(thisParam%val) > 0) THEN
-    WRITE(UNIT=funit,FMT='(g20.14)',ADVANCE='NO') thisParam%val(1)
-  ENDIF
   IF(SIZE(thisParam%val) > 0) WRITE(UNIT=funit,FMT='(g20.14)',ADVANCE='NO') thisParam%val(1)
   j=j+LEN(sdtype)+LEN(thisParam%name)
   WRITE(fmt2,'(i12)') j; fmt2=ADJUSTL(fmt2)
