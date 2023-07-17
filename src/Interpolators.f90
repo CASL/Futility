@@ -91,29 +91,34 @@ FUNCTION Interp_2D(labels1,labels2,table,point,lextrap) RESULT(Interpolant)
   INTEGER(SIK) :: j,i_p(2),j_p(2)
   LOGICAL(SBK) :: canExtrapolate
 
-  REQUIRE(SIZE(labels1) > 1)
-  REQUIRE(SIZE(labels2) > 1)
+  REQUIRE(SIZE(labels1) > 0)
+  REQUIRE(SIZE(labels2) > 0)
   REQUIRE(SIZE(labels1) == SIZE(table(:,1)))
   REQUIRE(SIZE(labels2) == SIZE(table(1,:)))
   REQUIRE(isStrictlyIncDec(labels1))
   REQUIRE(isStrictlyIncDec(labels2))
 
-  canExtrapolate=.FALSE.
-  IF(PRESENT(lextrap)) THEN
-    canExtrapolate=lextrap
+  IF(SIZE(labels1) == 1) THEN
+    Interpolant=Interp_1D(labels2, table(1,:),point(2),lextrap)
+  ELSEIF(SIZE(labels2) == 1) THEN
+    Interpolant=Interp_1D(labels1, table(:,1),point(1),lextrap)
+  ELSE
+    canExtrapolate=.FALSE.
+    IF(PRESENT(lextrap)) THEN
+      canExtrapolate=lextrap
+    ENDIF
+    !Get interval in labels around the point
+    CALL Get_interval(labels1,point(1),i_p)
+    CALL Get_interval(labels2,point(2),j_p)
+    !Interpolate w.r.t labels 1
+    DO j=1,2
+      CALL Get_points_and_weights(labels1,table(:,j_p(j)),point(1),f,t,canExtrapolate)
+      Interp1D(j)=f(1)*t(1)+f(2)*t(2)
+    ENDDO
+    !Interpolate w.r.t labels 2
+    CALL Get_points_and_weights(labels2(j_p(1):j_p(2)),Interp1D,point(2),f,t,canExtrapolate)
+    Interpolant=f(1)*t(1)+f(2)*t(2)
   ENDIF
-  !Get interval in labels around the point
-  CALL Get_interval(labels1,point(1),i_p)
-  CALL Get_interval(labels2,point(2),j_p)
-  !Interpolate w.r.t labels 1
-  DO j=1,2
-    CALL Get_points_and_weights(labels1,table(:,j_p(j)),point(1),f,t,canExtrapolate)
-    Interp1D(j)=f(1)*t(1)+f(2)*t(2)
-  ENDDO
-  !Interpolate w.r.t labels 2
-  CALL Get_points_and_weights(labels2(j_p(1):j_p(2)),Interp1D,point(2),f,t,canExtrapolate)
-  Interpolant=f(1)*t(1)+f(2)*t(2)
-
 ENDFUNCTION Interp_2D
 !
 !-------------------------------------------------------------------------------
@@ -139,9 +144,9 @@ FUNCTION Interp_3D(labels1,labels2,labels3,table,point,lextrap) RESULT(Interpola
   INTEGER(SIK) :: j,k,i_p(2),j_p(2),k_p(2)
   LOGICAL(SBK) :: canExtrapolate
 
-  REQUIRE(SIZE(labels1) > 1)
-  REQUIRE(SIZE(labels2) > 1)
-  REQUIRE(SIZE(labels3) > 1)
+  REQUIRE(SIZE(labels1) > 0)
+  REQUIRE(SIZE(labels2) > 0)
+  REQUIRE(SIZE(labels3) > 0)
   REQUIRE(SIZE(labels1) == SIZE(table(:,1,1)))
   REQUIRE(SIZE(labels2) == SIZE(table(1,:,1)))
   REQUIRE(SIZE(labels3) == SIZE(table(1,1,:)))
@@ -149,30 +154,37 @@ FUNCTION Interp_3D(labels1,labels2,labels3,table,point,lextrap) RESULT(Interpola
   REQUIRE(isStrictlyIncDec(labels2))
   REQUIRE(isStrictlyIncDec(labels3))
 
-  canExtrapolate=.FALSE.
-  IF(PRESENT(lextrap)) THEN
-    canExtrapolate=lextrap
-  ENDIF
-  !Get interval in labels around the point
-  CALL Get_interval(labels1,point(1),i_p)
-  CALL Get_interval(labels2,point(2),j_p)
-  CALL Get_interval(labels3,point(3),k_p)
-  !Interpolate w.r.t labels 1
-  DO k=1,2
-    DO j=1,2
-      CALL Get_points_and_weights(labels1,table(:,j_p(j),k_p(k)),point(1),f,t,canExtrapolate)
-      Interp2D(j,k)=f(1)*t(1)+f(2)*t(2)
+  IF(SIZE(labels1) == 1) THEN
+    Interpolant=Interp_2D(labels2,labels3,table(1,:,:),[point(2),point(3)],lextrap)
+  ELSEIF(SIZE(labels2) == 1) THEN
+    Interpolant=Interp_2D(labels1,labels3,table(:,1,:),[point(1),point(3)],lextrap)
+  ELSEIF(SIZE(labels3) == 1) THEN
+    Interpolant=Interp_2D(labels1,labels2,table(:,:,1),[point(1),point(2)],lextrap)
+  ELSE
+    canExtrapolate=.FALSE.
+    IF(PRESENT(lextrap)) THEN
+      canExtrapolate=lextrap
+    ENDIF
+    !Get interval in labels around the point
+    CALL Get_interval(labels1,point(1),i_p)
+    CALL Get_interval(labels2,point(2),j_p)
+    CALL Get_interval(labels3,point(3),k_p)
+    !Interpolate w.r.t labels 1
+    DO k=1,2
+      DO j=1,2
+        CALL Get_points_and_weights(labels1,table(:,j_p(j),k_p(k)),point(1),f,t,canExtrapolate)
+        Interp2D(j,k)=f(1)*t(1)+f(2)*t(2)
+      ENDDO
     ENDDO
-  ENDDO
-  !Interpolate w.r.t labels 2
-  DO k=1,2
-    CALL Get_points_and_weights(labels2(j_p(1):j_p(2)),Interp2D(:,k),point(2),f,t,canExtrapolate)
-    Interp1D(k)=f(1)*t(1)+f(2)*t(2)
-  ENDDO
-  !Interpolate w.r.t labels 3
-  CALL Get_points_and_weights(labels3(k_p(1):k_p(2)),Interp1D,point(3),f,t,canExtrapolate)
-  Interpolant=f(1)*t(1)+f(2)*t(2)
-
+    !Interpolate w.r.t labels 2
+    DO k=1,2
+      CALL Get_points_and_weights(labels2(j_p(1):j_p(2)),Interp2D(:,k),point(2),f,t,canExtrapolate)
+      Interp1D(k)=f(1)*t(1)+f(2)*t(2)
+    ENDDO
+    !Interpolate w.r.t labels 3
+    CALL Get_points_and_weights(labels3(k_p(1):k_p(2)),Interp1D,point(3),f,t,canExtrapolate)
+    Interpolant=f(1)*t(1)+f(2)*t(2)
+  ENDIF
 ENDFUNCTION Interp_3D
 !
 !-------------------------------------------------------------------------------
