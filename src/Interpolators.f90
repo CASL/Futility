@@ -59,7 +59,7 @@ FUNCTION Interp_1D(labels,table,point,lextrap) RESULT(Interpolant)
 
   REQUIRE(SIZE(labels) > 1)
   REQUIRE(SIZE(labels) == SIZE(table))
-  REQUIRE(isStrictlyIncDec(labels))
+  REQUIRE(isStrictlyIncDec(labels) .OR. SIZE(labels) == 1)
 
   canExtrapolate=.FALSE.
   IF(PRESENT(lextrap)) THEN
@@ -95,8 +95,8 @@ FUNCTION Interp_2D(labels1,labels2,table,point,lextrap) RESULT(Interpolant)
   REQUIRE(SIZE(labels2) > 0)
   REQUIRE(SIZE(labels1) == SIZE(table(:,1)))
   REQUIRE(SIZE(labels2) == SIZE(table(1,:)))
-  REQUIRE(isStrictlyIncDec(labels1))
-  REQUIRE(isStrictlyIncDec(labels2))
+  REQUIRE(isStrictlyIncDec(labels1) .OR. SIZE(labels1) == 1)
+  REQUIRE(isStrictlyIncDec(labels2) .OR. SIZE(labels2) == 1)
 
   IF(SIZE(labels1) == 1) THEN
     Interpolant=Interp_1D(labels2, table(1,:),point(2),lextrap)
@@ -150,9 +150,9 @@ FUNCTION Interp_3D(labels1,labels2,labels3,table,point,lextrap) RESULT(Interpola
   REQUIRE(SIZE(labels1) == SIZE(table(:,1,1)))
   REQUIRE(SIZE(labels2) == SIZE(table(1,:,1)))
   REQUIRE(SIZE(labels3) == SIZE(table(1,1,:)))
-  REQUIRE(isStrictlyIncDec(labels1))
-  REQUIRE(isStrictlyIncDec(labels2))
-  REQUIRE(isStrictlyIncDec(labels3))
+  REQUIRE(isStrictlyIncDec(labels1) .OR. SIZE(labels1) == 1)
+  REQUIRE(isStrictlyIncDec(labels2) .OR. SIZE(labels2) == 1)
+  REQUIRE(isStrictlyIncDec(labels3) .OR. SIZE(labels3) == 1)
 
   IF(SIZE(labels1) == 1) THEN
     Interpolant=Interp_2D(labels2,labels3,table(1,:,:),[point(2),point(3)],lextrap)
