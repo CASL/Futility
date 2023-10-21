@@ -27,7 +27,7 @@
     \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse requirement without a ticket number.} \\\hline
     \cellcolor{caslcolor1}  \\\hline
     \cellcolor{caslcolor2} testA.inp \\\hline
-    \cellcolor{caslcolor1}  \\
+    \cellcolor{caslcolor1} None \\
     \end{tabular}\\\hline
 2 & \hspace{-0.2cm}\begin{tabular}{|p{14cm}}
     \cellcolor{caslheader}\textcolor{white}{The GenerateRequirements.py script shall be able to parse requirement without a ticket entry.} \\\hline

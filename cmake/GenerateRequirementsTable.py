@@ -111,18 +111,16 @@ class Requirement:
                         "Error process file: "+testFile+" line: "+line)
             # Check for a ticket number in the block and save
             # Defaults to None if not present
-            if lineNum < len(rawReqBlock):
-                match = self._re_ticket.match(rawReqBlock[lineNum])
+            self.tix = []
+            for line in rawReqBlock[lineNum:-1]:
+                match = self._re_ticket.match(line)
                 if match:
-                    tix = self._re_ticket.split(
-                        rawReqBlock[lineNum])[1].rstrip()
-                    if self._re_int.match(tix):
-                        self.tix = ''
-                        for t in self._re_int.findall(tix):
-                            self.tix += 'https://code.ornl.gov/vera/vera-dev/-/issues/'+t+'\n'
-                        self.tix = self.tix.rstrip()
-                    else:
-                        self.tix = tix
+                    for tix in [x.strip().rstrip() for x in self._re_ticket.split(line)]:
+                        # tix = self._re_ticket.split(line)[1].rstrip()
+                        if self._re_int.match(tix):
+                            for t in self._re_int.findall(tix):
+                                self.tix.append('https://code.ornl.gov/vera/vera-dev/-/issues/'+t+'\n')
+                            self.tix[-1] = self.tix[-1].rstrip()
 
     def __str__(self):
         return '          Requirement ID: ' + str(self.ID) + '\n'\
@@ -374,13 +372,14 @@ def ConvertToLatex(df):
       #cdash
       cdashname = row['Test Name'].replace('_',r'\_')
       cdashname = cdashname.replace('%',r'\%')
-      #Escape % and escape _.
-      addinfo = str(row['Additional Information']).replace('_',r'\_')
-      addinfo = addinfo.rstrip()
-      if (len(addinfo) > 0) and ('/' in addinfo):
-        addinfo = "\href{" + addinfo + "}{\# " + addinfo[addinfo.rfind('/')+1:] + "}"
+      #Concatenate issues
+      if row['Additional Information']:
+        addinfo = ','.join(["\\href{" + j.rstrip() + "}{\# " + j.split('/')[-1].rstrip() +"}" for j in row['Additional Information']])
       else:
-        addinfo = addinfo.replace('#',r'\#')
+        addinfo = "None"
+      #Escape % and escape _.
+      addinfo = addinfo.replace('_',r'\_')
+      addinfo = addinfo.rstrip()
       rowid = ''
       if (not math.isnan(row['Requirement ID'])):
         rowid = str(int(row['Requirement ID']))
