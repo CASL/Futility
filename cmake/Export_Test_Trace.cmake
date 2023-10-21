@@ -1,11 +1,11 @@
 ########################################################################
-# Test tracing function for building the TestTracking.txt file 
+# Test tracing function for building the TestTracking.txt file
 # Creates a file in the build tree at CTF/cobra_tf/test_matrix
-# This file contains information about test cases to build the 
+# This file contains information about test cases to build the
 # requirements table with Futility/cmake/GenerateRequirementsTable.py
 #
 # TEST_PATH       The directory where the test input files will be found
-# FILE_LIST       List with the base name of source files or input files 
+# FILE_LIST       List with the base name of source files or input files
 #                 containing a test
 # TEST_NAME_OUT   The name of the test
 ########################################################################
