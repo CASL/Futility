@@ -13,7 +13,7 @@
 
 #ifdef PETSC_USE_POINTER_CONVERSION
 extern void *PetscToPointer(void*);
-extern int PetscFromPointer(void *); 
+extern int PetscFromPointer(void *);
 extern void PetscRmPointer(void*);
 #else
 #define PetscToPointer(a) (*(PetscFortranAddr *)(a))
@@ -97,7 +97,7 @@ PetscErrorCode PCMGSoftReset(PC pc)
   PetscFunctionReturn(0);
 }
 
-PETSC_EXTERN void PETSC_STDCALL  pcmgsoftreset_(PC pc, int *__ierr ){
+PETSC_EXTERN void PETSC_STDCALL;  pcmgsoftreset_(PC pc, int *__ierr ){
 *__ierr = PCMGSoftReset(
   (PC)PetscToPointer((pc) ));
 }
