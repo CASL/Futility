@@ -2806,6 +2806,11 @@ ENDSUBROUTINE testDAGinsertNode
 !-------------------------------------------------------------------------------
 SUBROUTINE testDAGremoveNode()
   INTEGER(SIK),ALLOCATABLE :: edges(:,:)
+  TYPE(DAGraphType) :: graph2,graph3
+
+  graph2 = testDAGraph
+
+  COMPONENT_TEST('By ID')
 
   ALLOCATE(edges(6,6))
   edges=0
@@ -2821,6 +2826,8 @@ SUBROUTINE testDAGremoveNode()
   ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
   DEALLOCATE(edges)
 
+  COMPONENT_TEST('By Index')
+
   ALLOCATE(edges(5,5))
   edges=0
   edges(1,2)=1
@@ -2834,6 +2841,33 @@ SUBROUTINE testDAGremoveNode()
   ASSERT(ALL(testDAGraph%nodes == (/2,3,4,5,6/)),'%nodes')
   ASSERT(ALL(testDAGraph%edgeMatrix == edges),'%edgeMatrix')
   DEALLOCATE(edges)
+
+  COMPONENT_TEST('Multiple IDs')
+
+  !Starting order of nodes is [8, 2, 7, 3, 4, 5, 6]
+  graph3 = graph2
+
+  CALL graph2%removeNode(IDS=[8, 7, 4, 6])
+  ALLOCATE(edges(3,3))
+  edges = 0
+  edges(1,2) = 1
+  edges(1,3) = 1
+  edges(3,2) = 1
+  ASSERT_EQ(graph2%n,3,'%n')
+  ASSERT(ALL(graph2%nodes == [2,3,5]),'%nodes')
+  ASSERT(ALL(graph2%edgeMatrix == edges),'%edgeMatrix')
+  FINFO() 'test = ',graph2%edgeMatrix
+  FINFO() ' ref = ',edges
+  CALL graph2%clear()
+
+  COMPONENT_TEST('Multiple Indexes')
+
+  CALL graph3%removeNode(INDEXES=[1, 3, 5, 7])
+  ASSERT_EQ(graph3%n,3,'%n')
+  ASSERT(ALL(graph3%nodes == [2,3,5]),'%nodes')
+  ASSERT(ALL(graph3%edgeMatrix == edges),'%edgeMatrix')
+  CALL graph3%clear()
+
 ENDSUBROUTINE testDAGremoveNode
 !
 !-------------------------------------------------------------------------------

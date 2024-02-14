@@ -133,7 +133,7 @@ TYPE,EXTENDS(BaseFileType) :: XMLFileType
   !>
   LOGICAL(SBK) :: standalone=.FALSE.
   !> The root XML element of the file
-  TYPE(XMLElementType),POINTER :: root => NULL()
+  TYPE(XMLElementType),POINTER :: root(:) => NULL()
 !
 !List of type bound procedures
   CONTAINS
@@ -558,14 +558,16 @@ SUBROUTINE setChildren_XMLElementType(thisXMLE,children)
     DEALLOCATE(thisXMLE%children)
   ENDIF
 
-  IF(SIZE(children) > 0) THEN
-    nChildren=SIZE(children)
-    thisXMLE%children => children
-    SELECTTYPE(thisXMLE); TYPE IS(XMLElementType)
-      DO i=1,nChildren
-        thisXMLE%children(i)%parent => thisXMLE
-      ENDDO
-    ENDSELECT
+  IF(ASSOCIATED(children)) THEN
+    IF(SIZE(children) > 0) THEN
+      nChildren=SIZE(children)
+      thisXMLE%children => children
+      SELECTTYPE(thisXMLE); TYPE IS(XMLElementType)
+        DO i=1,nChildren
+          thisXMLE%children(i)%parent => thisXMLE
+        ENDDO
+      ENDSELECT
+    ENDIF
   ENDIF
 ENDSUBROUTINE setChildren_XMLElementType
 !
@@ -643,7 +645,6 @@ SUBROUTINE init_XMLFileType(thisXMLFile,fname,lread)
     CALL thisXMLFile%setReadStat(lread)
     CALL thisXMLFile%setWriteStat(.NOT.lread)
 
-    ALLOCATE(thisXMLFile%root)
     thisXMLFile%isInit=.TRUE.
   ELSE
     CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
@@ -657,8 +658,13 @@ ENDSUBROUTINE init_XMLFileType
 !>
 SUBROUTINE clear_XMLFileType(thisXMLFile)
   CLASS(XMLFileType),INTENT(INOUT) :: thisXMLFile
+  !
+  INTEGER(SIK) :: i
+
   IF(ASSOCIATED(thisXMLFile%root)) THEN
-    CALL thisXMLFile%root%clear()
+    DO i=1,SIZE(thisXMLFile%root)
+      CALL thisXMLFile%root(i)%clear()
+    ENDDO !i
     DEALLOCATE(thisXMLFile%root)
   ENDIF
   CALL thisXMLFile%setEOFStat(.FALSE.)
@@ -773,9 +779,8 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fname
 
   CHARACTER(LEN=1),ALLOCATABLE :: cachedFile(:)
-  INTEGER(SIK) :: nchars,nopen,nclose,nTags,ic,i,nlines
-  INTEGER(SIK) :: rootTagEnd,rootTagBegin
-  INTEGER(SIK),ALLOCATABLE :: itag(:,:),lines(:)
+  INTEGER(SIK) :: nchars,nopen,nclose,nTags,ic,i,nlines,nroot,nlevels
+  INTEGER(SIK),ALLOCATABLE :: itag(:,:),lines(:),rootTagEnd(:),rootTagBegin(:)
   TYPE(StringType) :: tagStr
 
   !Initialize and open the file if needed
@@ -785,7 +790,12 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
   IF(.NOT.thisXMLFile%isOpen()) CALL thisXMLFile%fopen()
 
   IF(thisXMLFile%isInit) THEN
-    CALL thisXMLFile%root%clear()
+    IF(ASSOCIATED(thisXMLFile%root)) THEN
+      DO i = 1,SIZE(thisXMLFile%root)
+        CALL thisXMLFile%root(i)%clear()
+      ENDDO
+      DEALLOCATE(thisXMLFile%root)
+    ENDIF
 
     IF(thisXMLFile%isOpen() .AND. thisXMLFile%isRead()) THEN
       !Get the XML Declaration info
@@ -823,7 +833,7 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
           ENDIF
           IF(cachedFile(ic) == '>') THEN
             nclose=nclose+1
-            itag(2,nopen)=ic
+            itag(2,nclose)=ic
           ENDIF
           IF(cachedFile(ic) == LF) THEN
             nlines=nlines+1
@@ -876,34 +886,70 @@ SUBROUTINE importFromDisk_XMLFileType(thisXMLFile,fname)
           ENDIF
         ENDDO
 
-        !Find first start tag
-        DO i=1,nTags
+        nroot = 0
+        nlevels = 0
+        DO i = 1,nTags
           IF(itag(3,i) == START_TAG) THEN
-            rootTagBegin=i
-            EXIT
-          ELSEIF(itag(3,i) == END_TAG .OR. &
-              (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags)) THEN
+            IF(nlevels == 0) nroot = nroot + 1
+            nlevels = nlevels + 1
+          ELSEIF(itag(3,i) == END_TAG) THEN
+            nlevels = nlevels - 1
+            IF(nlevels < 0) THEN
               CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-              ' - Could not locate start of root element!')
+                  ' - Closing tag without a matching opening tag!')
+            ENDIF
           ENDIF
-        ENDDO
+        ENDDO !i
+
+        ALLOCATE(rootTagBegin(nroot))
+        ALLOCATE(rootTagEnd(nroot))
+
+        !Find root start tags
+        nroot = 0
+        nlevels = 0
+        DO i = 1,nTags
+          IF(itag(3,i) == START_TAG) THEN
+            IF(nlevels == 0) THEN
+              nroot = nroot + 1
+              rootTagBegin(nroot) = i
+            ENDIF
+            nlevels = nlevels + 1
+          ELSEIF(itag(3,i) == END_TAG) THEN
+            nlevels = nlevels - 1
+            IF(nlevels < 0 .OR. &
+                (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags)) THEN
+              CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
+                  ' - Could not locate start of root element!')
+            ENDIF
+          ENDIF
+        ENDDO !i
 
         !Find last end tag
-        DO i=nTags,1,-1
+        nroot = 0
+        nlevels = 0
+        DO i = nTags,1,-1
           IF(itag(3,i) == END_TAG) THEN
-            rootTagEnd=i
-            EXIT
-          ELSEIF(itag(3,i) == START_TAG .OR. &
-              (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags) .OR. &
-              itag(3,i) == DECLARATION_TAG) THEN
+            IF(nlevels == 0) THEN
+              nroot = nroot + 1
+              rootTagEnd(nroot) = i
+            ENDIF
+            nlevels = nlevels + 1
+          ELSEIF(itag(3,i) == START_TAG) THEN
+            nlevels = nlevels - 1
+            IF(nlevels < 0 .OR. &
+                (itag(3,i) == EMPTY_ELEMENT_TAG .AND. i < nTags) .OR. &
+                itag(3,i) == DECLARATION_TAG) THEN
               CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
-              ' - Could not locate end of root element!')
+                  ' - Could not locate end of root element!')
+            ENDIF
           ENDIF
-        ENDDO
+        ENDDO !i
 
         !Process the elements
-        CALL thisXMLFile%root%init(cachedFile,itag,lines,rootTagBegin, &
-            rootTagEnd)
+        ALLOCATE(thisXMLFile%root(nroot))
+        DO i = 1,nroot
+          CALL thisXMLFile%root(i)%init(cachedFile,itag,lines,rootTagBegin(i),rootTagEnd(i))
+        ENDDO !i
       ENDIF
     ELSE
       CALL thisXMLFile%e%raiseError(modName//'::'//myName// &
@@ -923,8 +969,9 @@ ENDSUBROUTINE importFromDisk_XMLFileType
 SUBROUTINE exportToDisk_XMLFileType(thisXMLFile,fname)
   CLASS(XMLFileType),INTENT(INOUT) :: thisXMLFile
   CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: fname
+  !
   CHARACTER(LEN=4) :: version
-  INTEGER(SIK) :: ierr
+  INTEGER(SIK) :: ierr,i
   TYPE(StringType) :: header
   TYPE(XMLFileType) :: tmpFile
 
@@ -946,7 +993,9 @@ SUBROUTINE exportToDisk_XMLFileType(thisXMLFile,fname)
     ENDIF
 
     !Write the XML Elements
-    CALL thisXMLFile%root%fwrite(tmpFile%unitNo,0)
+    DO i = 1,SIZE(thisXMLFile%root)
+      CALL thisXMLFile%root(i)%fwrite(tmpFile%unitNo,0)
+    ENDDO
     CALL tmpFile%clear()
   ENDIF
 ENDSUBROUTINE exportToDisk_XMLFileType

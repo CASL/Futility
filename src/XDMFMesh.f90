@@ -597,9 +597,10 @@ SUBROUTINE importXDMFMesh(strpath, mesh)
   CHARACTER(LEN=*),PARAMETER :: myName='importXDMFMesh'
   TYPE(StringType),INTENT(INOUT) :: strpath
   TYPE(XDMFMeshType),INTENT(OUT),TARGET  :: mesh
+  !
   TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
-  TYPE(XMLElementType),POINTER :: xmle, children(:)
+  TYPE(XMLElementType),POINTER :: children(:)
   TYPE(StringType) :: strIn, strOut
   INTEGER(SIK) :: i, gridIdx
   CHARACTER(LEN=200) :: charpath
@@ -616,59 +617,60 @@ SUBROUTINE importXDMFMesh(strpath, mesh)
 
   !XML
   CALL xml%importFromDisk(ADJUSTL(strpath))
-  xmle => xml%root
-  IF(.NOT.ASSOCIATED(xmle)) CALL eXDMF%raiseError(modName//'::'//myName// &
+  IF(.NOT.ASSOCIATED(xml%root)) CALL eXDMF%raiseError(modName//'::'//myName// &
     ' - XML data import encountered an error. Pointer to root not associated.')
-  IF(.NOT.xmle%name%upper() == 'XDMF') CALL eXDMF%raiseError(modName//'::'//&
-    myName//' - Expected XDMF XML element to be the root element.')
+  DO i = 1,SIZE(xml%root)
+    IF(.NOT.xml%root(i)%name%upper() == 'XDMF') CALL eXDMF%raiseError(modName//'::'//&
+      myName//' - Expected XDMF XML element to be the root element.')
 
-  ! Version
-  strIn='Version'
-  CALL xmle%getAttributeValue(strIn,strOut)
-  IF(strOut /= '3.0') THEN
-    CALL eXDMF%raiseError(modName//'::'//myName// &
-      ' - Currently only supports XDMF version 3.0')
-  ENDIF
-
-  ! Domain
-  CALL xmle%getChildren(children)
-  IF(.NOT.(SIZE(children) == 1 .AND. children(1)%name%upper() == 'DOMAIN'))THEN
-    CALL eXDMF%raiseError(modName//'::'//myName// &
-    ' - Expected XDMF XML element to have one child (Domain).')
-  ENDIF
-
-  ! Information
-  ! NOTE: It is assumed that material information is before any grids
-  ! and that all grids are contained in one overall grid.
-  CALL children(1)%getChildren(children)
-  IF (SIZE(children) == 2) THEN
-    IF(.NOT.children(1)%name%upper() == 'INFORMATION')THEN
+    ! Version
+    strIn='Version'
+    CALL xml%root(i)%getAttributeValue(strIn,strOut)
+    IF(strOut /= '3.0') THEN
       CALL eXDMF%raiseError(modName//'::'//myName// &
-        ' - Expected Domain XML element to have one Information before Grid.')
+        ' - Currently only supports XDMF version 3.0')
     ENDIF
-    IF(.NOT.children(2)%name%upper() == 'GRID')THEN
-      CALL eXDMF%raiseError(modName//'::'//myName// &
-        ' - Expected Domain XML element to have Grid after Information.')
-    ENDIF
-    gridIdx = 2
-  ELSE IF(SIZE(children) == 1) THEN
-    IF(.NOT.children(1)%name%upper() == 'GRID')THEN
-      CALL eXDMF%raiseError(modName//'::'//myName// &
-        ' - Expected Domain XML element to have Grid child.')
-    ENDIF
-    gridIdx = 1
-  ELSE
-    CALL eXDMF%raiseError(modName//'::'//myName// &
-      ' - Expecting information and grid elements only.')
-  ENDIF
 
-  ! Init root mesh
-  strIn="Name"
-  CALL children(gridIdx)%getAttributeValue(strIn,strOut)
-  mesh%name = strOut
+    ! Domain
+    CALL xml%root(i)%getChildren(children)
+    IF(.NOT.(SIZE(children) == 1 .AND. children(1)%name%upper() == 'DOMAIN'))THEN
+      CALL eXDMF%raiseError(modName//'::'//myName// &
+      ' - Expected XDMF XML element to have one child (Domain).')
+    ENDIF
 
-  ! Create grids
-  CALL create_XDMFMesh_from_file(mesh, children(gridIdx), h5)
+    ! Information
+    ! NOTE: It is assumed that material information is before any grids
+    ! and that all grids are contained in one overall grid.
+    CALL children(1)%getChildren(children)
+    IF (SIZE(children) == 2) THEN
+      IF(.NOT.children(1)%name%upper() == 'INFORMATION')THEN
+        CALL eXDMF%raiseError(modName//'::'//myName// &
+          ' - Expected Domain XML element to have one Information before Grid.')
+      ENDIF
+      IF(.NOT.children(2)%name%upper() == 'GRID')THEN
+        CALL eXDMF%raiseError(modName//'::'//myName// &
+          ' - Expected Domain XML element to have Grid after Information.')
+      ENDIF
+      gridIdx = 2
+    ELSE IF(SIZE(children) == 1) THEN
+      IF(.NOT.children(1)%name%upper() == 'GRID')THEN
+        CALL eXDMF%raiseError(modName//'::'//myName// &
+          ' - Expected Domain XML element to have Grid child.')
+      ENDIF
+      gridIdx = 1
+    ELSE
+      CALL eXDMF%raiseError(modName//'::'//myName// &
+        ' - Expecting information and grid elements only.')
+    ENDIF
+
+    ! Init root mesh
+    strIn="Name"
+    CALL children(gridIdx)%getAttributeValue(strIn,strOut)
+    mesh%name = strOut
+
+    ! Create grids
+    CALL create_XDMFMesh_from_file(mesh, children(gridIdx), h5)
+  ENDDO !i
 
   ! Setup bounding boxes
   CALL mesh%recomputeBoundingBox()
@@ -1194,9 +1196,9 @@ ENDSUBROUTINE create_xml_hierarchy_XDMF
 !> @param mesh the XDMF mesh object
 !>
 SUBROUTINE exportXDMFMesh(strpath, mesh)
-  CHARACTER(LEN=*),PARAMETER :: myName='exportXDMFMesh'
   TYPE(StringType),INTENT(INOUT) :: strpath
   TYPE(XDMFMeshType),INTENT(INOUT)  :: mesh
+  !
   TYPE(XMLFileType) :: xml
   TYPE(HDF5FileType) :: h5
   TYPE(XMLElementType),POINTER :: xmle, children(:), children2(:)
@@ -1212,44 +1214,44 @@ SUBROUTINE exportXDMFMesh(strpath, mesh)
 
   ! Create XML file
   CALL xml%init(ADJUSTL(strpath),.FALSE.)
-  xmle => xml%root
-  IF(.NOT.ASSOCIATED(xmle)) CALL eXDMF%raiseError(modName//'::'//myName// &
-    ' - XML data init encountered an error. Pointer to root not associated.')
-  !   Set Xdmf
-  str_name='Xdmf'
-  CALL xmle%setName(str_name)
-  str_name='Version'
-  str_value = '3.0'
-  CALL xmle%setAttribute(str_name, str_value)
-  !   Set Domain
-  ALLOCATE(children(1))
-  CALL xmle%setChildren(children)
-  str_name='Domain'
-  CALL children(1)%setName(str_name)
-  CALL children(1)%setParent(xml%root)
-  ! Setup the grid that contains everything
-  xmle => children(1)
+  ALLOCATE(xml%root(1))
+  DO i = 1,SIZE(xml%root)
+    !   Set Xdmf
+    str_name='Xdmf'
+    CALL xml%root(i)%setName(str_name)
+    str_name='Version'
+    str_value = '3.0'
+    CALL xml%root(i)%setAttribute(str_name, str_value)
+    !   Set Domain
+    ALLOCATE(children(1))
+    CALL xml%root(i)%setChildren(children)
+    str_name='Domain'
+    CALL children(1)%setName(str_name)
+    ! CALL children(1)%setParent(xml%root)
+    ! Setup the grid that contains everything
+    xmle => children(1)
 
-  ALLOCATE(children2(1))
-  CALL xmle%setChildren(children2)
-  str_name="Grid"
-  CALL children2(1)%setName(str_name)
-  CALL children2(1)%setParent(xmle)
-  str_name='Name'
-  str_value = mesh%name
-  CALL children2(1)%setAttribute(str_name, str_value)
-  str_name='GridType'
-  IF(.NOT.ASSOCIATED(mesh%children))THEN
-    str_value = 'Uniform'
-  ELSE
-    str_value = 'Tree'
-  ENDIF
-  CALL children2(1)%setAttribute(str_name, str_value)
+    ALLOCATE(children2(1))
+    CALL xmle%setChildren(children2)
+    str_name="Grid"
+    CALL children2(1)%setName(str_name)
+    CALL children2(1)%setParent(xmle)
+    str_name='Name'
+    str_value = mesh%name
+    CALL children2(1)%setAttribute(str_name, str_value)
+    str_name='GridType'
+    IF(.NOT.ASSOCIATED(mesh%children))THEN
+      str_value = 'Uniform'
+    ELSE
+      str_value = 'Tree'
+    ENDIF
+    CALL children2(1)%setAttribute(str_name, str_value)
 
-  ! Recursively add xml elements for each grid. Only the leaves have vertices,
-  ! so only the leaves have HDF5 groups/data.
-  xmle => children2(1)
-  CALL create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
+    ! Recursively add xml elements for each grid. Only the leaves have vertices,
+    ! so only the leaves have HDF5 groups/data.
+    xmle => children2(1)
+    CALL create_xml_hierarchy_XDMF(mesh, xmle, strpath, h5)
+  ENDDO !i
 
   ! Finish up
   CALL xml%exportToDisk(CHAR(strpath))

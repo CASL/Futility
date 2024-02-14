@@ -307,7 +307,6 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
   CLASS(LinearSolverType_Base),INTENT(INOUT) :: solver
   TYPE(ParamType),INTENT(IN) :: Params
   CLASS(MatrixType),POINTER,INTENT(INOUT),OPTIONAL :: A
-  CLASS(ParamType),POINTER :: pListPtr
   TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList,pcPList
   ! local variables
   INTEGER(SIK) :: n
@@ -364,16 +363,12 @@ SUBROUTINE init_LinearSolverType_Base(solver,Params,A)
   ENDIF
 
   ! pull data for matrix and vector parameter lists
-  CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
-  matPList=pListPtr
-  CALL validParams%get('LinearSolverType->x->VectorType',pListPtr)
-  vecxPList=pListPtr
-  CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
-  vecbPList=pListPtr
+  CALL validParams%get('LinearSolverType->A->MatrixType',matPList)
+  CALL validParams%get('LinearSolverType->x->VectorType',vecxPList)
+  CALL validParams%get('LinearSolverType->b->VectorType',vecbPList)
   ! Check for Preconditioner Data
   IF(validParams%has('LinearSolverType->PC->PreCondType')) THEN
-    CALL validParams%get('LinearSolverType->PC->PreCondType',pListPtr)
-    pcPList = pListPtr
+    CALL validParams%get('LinearSolverType->PC->PreCondType',pcPList)
     CALL validParams%get('LinearSolverType->PC->PreCondType->pcType',PreCondType)
 
     SELECTTYPE(solver); TYPE IS(LinearSolverType_Iterative)

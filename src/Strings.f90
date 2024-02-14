@@ -81,6 +81,9 @@ TYPE :: StringType
     !> copydetails Strings::split_string_space
     PROCEDURE,PASS,PRIVATE :: split_string_space
     GENERIC :: split => split_string, split_string_space
+    !> copybrief Strings::join
+    !> copydetails Strings::join
+    PROCEDURE,PASS :: join
     !> copybrief Strings::partition
     !> copydetails Strings::partition
     PROCEDURE,PASS :: partition
@@ -491,6 +494,36 @@ FUNCTION split_string_space(this) RESULT(sub_str)
     sub_str=''
   ENDIF
 ENDFUNCTION split_string_space
+!
+!-------------------------------------------------------------------------------
+!> @brief joins an array of strings into one with a delimiter between each
+!> @param this the string to contain the joined result
+!> @param array the array of strings to join
+!> @param delimiter the delimiter to use; optional, defaults to " "
+!>
+SUBROUTINE join(this,array,delimiter)
+  CLASS(StringType),INTENT(INOUT) :: this
+  TYPE(StringType),INTENT(IN) :: array(:)
+  CHARACTER(LEN=*),INTENT(IN),OPTIONAL :: delimiter
+  !
+  INTEGER(SIK) :: i
+  TYPE(StringType) :: delim
+
+  IF(PRESENT(delimiter)) THEN
+    delim = delimiter
+  ELSE
+    delim = ' '
+  ENDIF
+
+  this = ''
+  IF(SIZE(array) > 0) THEN
+    this%s = array(1)%s
+    DO i = 2,SIZE(array)
+      this = this//delim//array(i)
+    ENDDO !i
+  ENDIF
+
+ENDSUBROUTINE join
 !
 !-------------------------------------------------------------------------------
 !> @brief splits a StringType at specified delimiter and returns the substrings

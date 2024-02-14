@@ -70,6 +70,7 @@ USE ISO_FORTRAN_ENV
 #include "Futility_DBC.h"
 USE Futility_DBC
 USE IntrType
+USE HashModule
 USE Strings
 USE Sorting
 USE ExceptionHandler
@@ -134,6 +135,10 @@ CHARACTER(LEN=*),PARAMETER :: SLASH=BSLASH
 !> (BLASH for Windows, FSLASH for everything else)
 CHARACTER(LEN=*),PARAMETER :: SLASH=FSLASH
 #endif
+
+!> Parameters used for string hashing throughout the module
+INTEGER(SLK) :: hashParam1=97_SLK
+INTEGER(SLK) :: hashParam2=1000000009_SLK
 
 !> Module Name for exception handler
 CHARACTER(LEN=*),PARAMETER :: modName='IO_STRINGS'
@@ -1160,8 +1165,10 @@ PURE FUNCTION strarrayeqind_char(string,pattern,lreverse) RESULT(ind)
   CHARACTER(LEN=*),INTENT(IN) :: string(:)
   CHARACTER(LEN=*),INTENT(IN) :: pattern
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
+  !
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i,ind,istt,istp,incr
+  INTEGER(SLK) :: patternHash
 
   ind=-1
   istt=1; istp=SIZE(string,DIM=1); incr=1
@@ -1170,8 +1177,9 @@ PURE FUNCTION strarrayeqind_char(string,pattern,lreverse) RESULT(ind)
       istt=SIZE(string,DIM=1); istp=1; incr=-1
     ENDIF
   ENDIF
+  patternHash = stringHash(pattern,hashParam1,hashParam2)
   DO i=istt,istp,incr
-    bool=string(i) == pattern
+    bool=(stringHash(string(i),hashParam1,hashParam2) == patternHash)
     IF(bool) THEN
       ind=i
       EXIT
@@ -1194,8 +1202,10 @@ PURE FUNCTION strarrayeqind_string(string,pattern,lreverse) RESULT(ind)
   TYPE(StringType),INTENT(IN) :: string(:)
   CHARACTER(LEN=*),INTENT(IN) :: pattern
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
+  !
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i,ind,istt,istp,incr
+  INTEGER(SLK) :: patternHash
 
   ind=-1
   istt=1; istp=SIZE(string,DIM=1); incr=1
@@ -1204,8 +1214,9 @@ PURE FUNCTION strarrayeqind_string(string,pattern,lreverse) RESULT(ind)
       istt=SIZE(string,DIM=1); istp=1; incr=-1
     ENDIF
   ENDIF
+  patternHash = stringHash(pattern,hashParam1,hashParam2)
   DO i=istt,istp,incr
-    bool=CHAR(string(i)) == pattern
+    bool=(stringHash(CHAR(string(i)),hashParam1,hashParam2) == patternHash)
     IF(bool) THEN
       ind=i
       EXIT
@@ -1228,8 +1239,10 @@ PURE FUNCTION strarrayeqind_string_string(string,pattern,lreverse) RESULT(ind)
   TYPE(StringType),INTENT(IN) :: string(:)
   TYPE(StringType),INTENT(IN) :: pattern
   LOGICAL(SBK),INTENT(IN),OPTIONAL :: lreverse
+  !
   LOGICAL(SBK) :: bool
   INTEGER(SIK) :: i,ind,istt,istp,incr
+  INTEGER(SLK) :: patternHash
 
   ind=-1
   istt=1; istp=SIZE(string,DIM=1); incr=1
@@ -1238,8 +1251,9 @@ PURE FUNCTION strarrayeqind_string_string(string,pattern,lreverse) RESULT(ind)
       istt=SIZE(string,DIM=1); istp=1; incr=-1
     ENDIF
   ENDIF
+  patternHash = stringHash(CHAR(pattern),hashParam1,hashParam2)
   DO i=istt,istp,incr
-    bool=string(i) == pattern
+    bool=(stringHash(CHAR(string(i)),hashParam1,hashParam2) == patternHash)
     IF(bool) THEN
       ind=i
       EXIT

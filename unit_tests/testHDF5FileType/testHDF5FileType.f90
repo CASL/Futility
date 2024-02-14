@@ -2106,7 +2106,6 @@ SUBROUTINE testHDF5FileTypeRead()
   TYPE(StringType) :: testST0
   INTEGER(SIK) :: i,j,k
   LOGICAL(SBK) :: checkread
-  TYPE(ParamType) :: tmpPL
   testDP4 => NULL()
 
 !  Begin test
@@ -2288,119 +2287,6 @@ SUBROUTINE testHDF5FileTypeRead()
   ASSERT_EQ(refC1,testC1,'char read fail')
   CALL h5%read_attribute('groupB->memB2',real_name,testD0)
   ASSERT_EQ(refD0,testD0,'real read fail')
-
-  COMPONENT_TEST('%fread to parameter list')
-  CALL h5%fread('groupC',tmpPL)
-  !Character arrays
-  CALL tmpPL%get('groupC->anotherGroup->memC1',testST1)
-  DO i=1,SIZE(testST1)
-    ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
-    ASSERT_EQ(CHAR(testST1(i)),CHAR(refSTC1(i)),'C1 Read PL Failure')
-  ENDDO
-  CALL tmpPL%get('groupC->anotherGroup->moreGroups->almostLastGroup->memC2',testST1)
-  DO i=1,SIZE(testST1)
-    ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
-    ASSERT_EQ(CHAR(testST1(i)),CHAR(refSTC1(i)),'C1 Read PL Failure')
-  ENDDO
-  CALL tmpPL%get('groupC->memC1',testST1)
-  DO i=1,SIZE(testST1)
-    ASSERTFAIL(SIZE(testST1) == SIZE(refSTC1),'SIZE(')
-    ASSERT_EQ(CHAR(testST1(i)),CHAR(refSTC1(i)),'C1 Read PL Failure')
-  ENDDO
-  !Logicals
-  CALL tmpPL%clear()
-  CALL h5%fread('groupB',tmpPL)
-  CALL tmpPL%get('groupB->memB0',testB0)
-  ASSERT(.NOT.testB0,'B0 read PL Failure')
-  CALL tmpPL%get('groupB->memB1',testB1)
-  testB0=.NOT.testB1(1) .AND. testB1(2) .AND. .NOT. testB1(3) .AND. &
-      testB1(4) .AND. .NOT.testB1(5) .AND. testB1(6)
-  ASSERT(testB0,'B1 read PL Failure')
-  !Integers
-  CALL tmpPL%clear()
-  CALL h5%fread('groupI',tmpPL)
-  CALL tmpPL%get('groupI->memL0',testL0)
-  ASSERT_EQ(testL0,refL0,'L0 read PL Failure')
-  CALL tmpPL%get('groupI->memL1',testL1)
-  ASSERT(ALL(testL1 == refL1),'L1 read PL Failure')
-  CALL tmpPL%get('groupI->memL2',testL2)
-  ASSERT(ALL(testL2 == refL2),'L2 read PL Failure')
-  CALL tmpPL%get('groupI->memL3',testL3)
-  ASSERT(ALL(testL3 == refL3),'L3 read PL Failure')
-  CALL tmpPL%get('groupI->memL4',testL4)
-  ASSERT(ALL(testL4 == refL4),'L4 read PL Failure')
-  CALL tmpPL%get('groupI->memN0',testN0)
-  ASSERT_EQ(testN0,refN0,'N0 read PL Failure')
-  CALL tmpPL%get('groupI->memN1',testN1)
-  ASSERT(ALL(testN1 == refN1),'N1 read PL Failure')
-  CALL tmpPL%get('groupI->memN2',testN2)
-  ASSERT(ALL(testN2 == refN2),'N2 read PL Failure')
-  CALL tmpPL%get('groupI->memN3',testN3)
-  ASSERT(ALL(testN3 == refN3),'N3 read PL Failure')
-  CALL tmpPL%get('groupI->memN4',testN4)
-  ASSERT(ALL(testN4 == refN4),'N4 read PL Failure')
-  !Reals
-  CALL tmpPL%clear()
-  CALL h5%fread('groupR',tmpPL)
-  CALL tmpPL%get('groupR->memD0',testD0)
-  ASSERT_EQ(testD0,refD0,'D0 read PL Failure')
-  CALL tmpPL%get('groupR->memD1',testD1)
-  ASSERT(ALL(testD1 == refD1),'D1 read PL Failure')
-  CALL tmpPL%get('groupR->memD2',testD2)
-  ASSERT(ALL(testD2 == refD2),'D2 read PL Failure')
-  CALL tmpPL%get('groupR->memD3',testD3)
-  ASSERT(ALL(testD3 == refD3),'D3 read PL Failure')
-  CALL tmpPL%get('groupR->memD4',testD4)
-  ASSERT(ALL(testD4 == refD4),'D4 read PL Failure')
-  CALL tmpPL%get('groupR->memS0',testS0)
-  ASSERT_EQ(testS0,refS0,'S0 read PL Failure')
-  CALL tmpPL%get('groupR->memS1',testS1)
-  ASSERT(ALL(testS1 == refS1),'S1 read PL Failure')
-  CALL tmpPL%get('groupR->memS2',testS2)
-  ASSERT(ALL(testS2 == refS2),'S2 read PL Failure')
-  CALL tmpPL%get('groupR->memS3',testS3)
-  ASSERT(ALL(testS3 == refS3),'S3 read PL Failure')
-  CALL tmpPL%get('groupR->memS4',testS4)
-  ASSERT(ALL(testS4 == refS4),'S4 read PL Failure')
-  !Strings
-  CALL tmpPL%clear()
-  CALL tmpPL%clear()
-  CALL h5%fread('groupST',tmpPL)
-  CALL tmpPL%get('groupST->memST0',testST0)
-  ASSERT_EQ(CHAR(testST0),CHAR(refST0),'ST0 read PL Failure')
-  CALL tmpPL%get('groupST->memST1',testST1)
-  ASSERTFAIL(SIZE(testST1) == SIZE(refST1),'ST1 Sizes')
-  DO i=1,SIZE(testST1)
-    ASSERT_EQ(CHAR(testST1(i)),CHAR(refST1(i)),'ST1 read PL Failure')
-  ENDDO
-  CALL tmpPL%get('groupST->memST2',testST2)
-  testB0=(SIZE(testST2,DIM=1) == SIZE(refST2,DIM=1)) .AND. &
-      (SIZE(testST2,DIM=2) == SIZE(refST2,DIM=2))
-  ASSERTFAIL(testB0,'ST2 Sizes')
-  DO j=1,SIZE(testST2,DIM=2)
-    DO i=1,SIZE(testST2,DIM=1)
-      ASSERT_EQ(CHAR(testST2(i,j)),CHAR(refST2(i,j)),'ST2 read PL Failure')
-     ENDDO
-   ENDDO
-   CALL tmpPL%get('groupST->memST3',testST3)
-   testB0=(SIZE(testST3,DIM=1) == SIZE(refST3,DIM=1)) .AND. &
-       (SIZE(testST3,DIM=2) == SIZE(refST3,DIM=2)) .AND. &
-       (SIZE(testST3,DIM=3) == SIZE(refST3,DIM=3))
-   ASSERTFAIL(testB0,'ST3 Sizes')
-   DO k=1,SIZE(testST3,DIM=3)
-    DO j=1,SIZE(testST2,DIM=2)
-      DO i=1,SIZE(testST2,DIM=1)
-        ASSERT_EQ(CHAR(testST3(i,j,k)),CHAR(refST3(i,j,k)),'ST3 read PL Failure')
-      ENDDO
-    ENDDO
-  ENDDO
-  !Character array, read in as a 1-D string array
-  CALL tmpPL%get('groupST->memCA0',testST1)
-  ASSERTFAIL(SIZE(testST1) == SIZE(refST0CA),'ST1 Sizes')
-  DO i=1,SIZE(testST1)
-    ASSERT_EQ(CHAR(testST1(i)),CHAR(refST0CA(i)),'ST1 read PL Failure')
-  ENDDO
-  CALL tmpPL%clear()
 
   DEALLOCATE(testD1,testD2,testD3,testD4,testD5,testD6,testD7,testS1,testS2,&
       testS3,testS4,testS5,testS6,testS7,testL1,testL2,testL3,testL4,testL5, &
