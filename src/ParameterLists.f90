@@ -343,9 +343,9 @@ TYPE,EXTENDS(Param_Base) :: ParamType
     !> @copybrief ParameterLists::getDescription
     !> @copydetails ParameterLists::getDescription
     PROCEDURE,PASS :: getDescription
-    !> @copybrief ParameterLists::getDataType
-    !> @copydetails ParameterLists::getDataType
-    PROCEDURE,PASS :: getDataType
+    !> @copybrief ParameterLists::getDataType_PL
+    !> @copydetails ParameterLists::getDataType_PL
+    PROCEDURE,PASS :: getDataType => getDataType_PL
     !> @copybrief ParameterLists::copyParam
     !> @copydetails ParameterLists::copyParam
     PROCEDURE,PASS :: copyParam
@@ -527,7 +527,7 @@ ENDSUBROUTINE removeNode
 !> @param leftmost the leftmost node found in the search
 !>
 SUBROUTINE getLeftmostNode(start,leftmost)
-  CLASS(ParamNode),TARGET,INTENT(IN) :: start
+  CLASS(ParamNode),POINTER,INTENT(IN) :: start
   CLASS(ParamNode),POINTER,INTENT(OUT) :: leftmost
 
   leftmost => start
@@ -1467,7 +1467,7 @@ ENDFUNCTION getDescription
 !> @param name the name of the node to search for
 !> @returns dataType the dataType of the node
 !>
-FUNCTION getDataType(this,name) RESULT(dataType)
+FUNCTION getDataType_PL(this,name) RESULT(dataType)
   CLASS(ParamType),INTENT(IN) :: this
   CHARACTER(LEN=*),INTENT(IN) :: name
   INTEGER(SIK) :: dataType
@@ -1480,7 +1480,7 @@ FUNCTION getDataType(this,name) RESULT(dataType)
     dataType = node%dataType
   ENDIF
 
-ENDFUNCTION getDataType
+ENDFUNCTION getDataType_PL
 !
 !-------------------------------------------------------------------------------
 !> @brief Copies parameters from one @c ParamType to another
@@ -2256,7 +2256,9 @@ RECURSIVE FUNCTION verify_helper(this,refList,assert,fuzzy,structure,prefix) RES
       CALL eParams%raiseError(CHAR(message))
       IF(assert) THEN
         ASSERT(.FALSE.,CHAR(message))
+#ifndef __INTEL_COMPILER
         CALL BACKTRACE()
+#endif
       ENDIF
       isValid = .FALSE.
     ELSE
@@ -2267,7 +2269,9 @@ RECURSIVE FUNCTION verify_helper(this,refList,assert,fuzzy,structure,prefix) RES
             paramTypeNames(node%dataType)//'" on test list!'
         IF(assert) THEN
           ASSERT(.FALSE.,CHAR(message))
+#ifndef __INTEL_COMPILER
           CALL BACKTRACE()
+#endif
         ELSE
           CALL eParams%raiseError(CHAR(message))
         ENDIF
@@ -2300,7 +2304,9 @@ RECURSIVE FUNCTION verify_helper(this,refList,assert,fuzzy,structure,prefix) RES
                   '" has a different value on the test list than on the reference list!'
               IF(assert) THEN
                 ASSERT(.FALSE.,CHAR(message))
+#ifndef __INTEL_COMPILER
                 CALL BACKTRACE()
+#endif
               ELSE
                 CALL eParams%raiseError(CHAR(message))
               ENDIF
@@ -2312,7 +2318,9 @@ RECURSIVE FUNCTION verify_helper(this,refList,assert,fuzzy,structure,prefix) RES
               '" is allocated on the test list but not the reference list!'
           IF(assert) THEN
             ASSERT(.FALSE.,CHAR(message))
+#ifndef __INTEL_COMPILER
             CALL BACKTRACE()
+#endif
           ELSE
             CALL eParams%raiseError(CHAR(message))
           ENDIF
