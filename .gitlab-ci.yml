@@ -17,15 +17,20 @@ release:
       - LastTestsFailed.log
       - LastTest.log
       - CTestCostData.txt
+      - make.out
     expire_in: 1 week
     when: always
   script:
+    - TPL_DIR="${TRIBITS_DEV_ENV_COMPILER_BASE}/tpls/opt"
+    - HDF5_LIBRARY_NAMES="hdf5_hl;hdf5;hdf5_cpp;hdf5_fortran"
+    - HDF5_INCLUDE_DIRS="${TPL_DIR}/hdf5-1.10.1/include"
+    - HDF5_LIBRARY_DIRS="${TPL_DIR}/hdf5-1.10.1/lib"
     - which gcc
     - SRC_DIR=`pwd`
     - mkdir -p $BLD_DIR
     - cd $BLD_DIR
     - rm -rf *
-    - cmake -DFutility_ENABLE_DBC:BOOL=ON -DCMAKE_Fortran_COMPILER=`which gfortran` -DCMAKE_C_COMPILER=`which gcc` -DCMAKE_CXX_COMPILER=`which g++` $SRC_DIR
+    - cmake -DFutility_ENABLE_DBC:BOOL=ON -DCMAKE_Fortran_COMPILER=`which gfortran` -DCMAKE_C_COMPILER=`which gcc` -DCMAKE_CXX_COMPILER=`which g++` -DTPL_ENABLE_HDF5=ON -DHDF5_LIBRARY_DIRS:FILEPATH=${HDF5_LIBRARY_DIRS} -DHDF5_INCLUDE_DIRS:FILEPATH=${HDF5_INCLUDE_DIRS} -DHDF5_LIBRARY_NAMES:STRING=${HDF5_LIBRARY_NAMES} $SRC_DIR
     - make -j28 |& tee make.out
     - ctest -j28
     - (exit `grep -B 4 'Unused \(PRIVATE module \)*variable' make.out | grep 'f90' | wc -l`)
@@ -35,4 +40,4 @@ release:
     - chmod -R a=u $BLD_DIR
     - cd $BLD_DIR
     - cp $BLD_DIR/Testing/Temporary/* $SRC_DIR/
-
+    - cp $BLD_DIR/make.out $SRC_DIR/

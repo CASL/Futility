@@ -16,7 +16,6 @@ USE FileType_XML
 IMPLICIT NONE
 
 TYPE(XMLFileType) :: testXMLFile
-TYPE(XMLElementType),POINTER :: root
 
 !ALLOCATE(testXMLFile%e)
 CREATE_TEST('XML TYPES')
@@ -24,8 +23,7 @@ CALL testXMLFile%importFromDisk('./testFile.xml')
 CALL testXMLFile%exportToDisk('./testWrite.xml')
 
 !DEALLOCATE(testXMLFile%e)
-root => testXMLFile%root
-ASSERTFAIL(ASSOCIATED(root),'root Element')
+ASSERTFAIL(ASSOCIATED(testXMLFile%root),'root Element')
 REGISTER_SUBTEST('%get',testGet)
 REGISTER_SUBTEST('%set',testSet)
 
@@ -44,7 +42,7 @@ TYPE(StringType),ALLOCATABLE :: attr_names(:),attr_values(:)
 TYPE(XMLElementType),POINTER :: parent,children(:)
 
 !Test get children
-CALL root%getChildren(children)
+CALL testXMLFile%root(1)%getChildren(children)
 bool=ASSOCIATED(children)
 ASSERT(bool,'getChildren')
 nch=SIZE(children)
@@ -53,12 +51,12 @@ ASSERT(nch == 11,'number of children')
 !Test get parent
 DO ich=1,nch
   CALL children(ich)%getParent(parent)
-  bool=ASSOCIATED(parent,root)
+  bool=ASSOCIATED(parent,testXMLFile%root(1))
   ASSERT(bool,'getParent')
   NULLIFY(parent)
 ENDDO !ich
 
-CALL root%getParent(parent)
+CALL testXMLFile%root(1)%getParent(parent)
 bool=ASSOCIATED(parent)
 ASSERT(.NOT. bool,'no parent')
 
@@ -93,30 +91,30 @@ TYPE(StringType) :: attr_name,val,refval
 TYPE(StringType) :: refName,setName
 TYPE(XMLElementType),POINTER :: setChildren(:),getChildren(:)
 
-refName=root%name
+refName=testXMLFile%root(1)%name
 bool=(TRIM(refName) == 'ParameterList')
 ASSERT(bool,'correct Name')
 
 !set Name
 setName='Parameter'
-CALL root%setName(setName)
-setName=root%name
+CALL testXMLFile%root(1)%setName(setName)
+setName=testXMLFile%root(1)%name
 bool=(TRIM(setName) == 'Parameter')
 ASSERT(bool,'setName')
 !Reset to correct value
-CALL root%setName(refName)
+CALL testXMLFile%root(1)%setName(refName)
 
 !Get the children to modify/set
-CALL root%getChildren(getChildren)
+CALL testXMLFile%root(1)%getChildren(getChildren)
 nch=SIZE(getChildren)
 ALLOCATE(setChildren(nch-1))
 nch=nch-1
 setChildren=getChildren(1:nch)
 NULLIFY(getChildren)
-CALL root%setChildren(setChildren)
+CALL testXMLFile%root(1)%setChildren(setChildren)
 
 !Check that the set worked
-CALL root%getChildren(getChildren)
+CALL testXMLFile%root(1)%getChildren(getChildren)
 nchComp=SIZE(getChildren)
 bool=(nch == nchComp)
 ASSERT(bool,'set Children')

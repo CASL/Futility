@@ -152,7 +152,6 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
   CLASS(LinearSolverType_Multigrid),INTENT(INOUT) :: solver
   TYPE(ParamType),INTENT(IN) :: Params
   CLASS(MatrixType),POINTER,INTENT(INOUT),OPTIONAL :: A
-  CLASS(ParamType),POINTER :: pListPtr
   TYPE(ParamType) :: validParams,matPList,vecxPList,vecbPList
   ! local variables
   INTEGER(SIK) :: n,num_eqns,nx,ny,nz,nlocal
@@ -189,12 +188,9 @@ SUBROUTINE init_LinearSolverType_Multigrid(solver,Params,A)
   CALL validParams%add('LinearSolverType->A->MatrixType->matType',matType)
   CALL validParams%get('LinearSolverType->numberOMP',numberOMP)
   ! pull data for matrix and vector parameter lists
-  CALL validParams%get('LinearSolverType->A->MatrixType',pListPtr)
-  matPList=pListPtr
-  CALL validParams%get('LinearSolverType->x->VectorType',pListPtr)
-  vecxPList=pListPtr
-  CALL validParams%get('LinearSolverType->b->VectorType',pListPtr)
-  vecbPList=pListPtr
+  CALL validParams%get('LinearSolverType->A->MatrixType',matPList)
+  CALL validParams%get('LinearSolverType->x->VectorType',vecxPList)
+  CALL validParams%get('LinearSolverType->b->VectorType',vecbPList)
   !add mpi communicator to parameter lists
   CALL matPList%add('MatrixType->MPI_Comm_ID',MPI_Comm_ID)
   CALL vecxPList%add('VectorType->MPI_Comm_ID',MPI_Comm_ID)
