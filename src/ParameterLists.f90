@@ -1513,12 +1513,21 @@ RECURSIVE SUBROUTINE copyParam(source,source_path,dest_path,dest,overwrite)
     ELSE
       IF(source_node%dataType == PL_DATA_TYPE_TREE) THEN
         CALL source%get(source_path,iterator,SUBLISTS=.TRUE.)
-        DO WHILE(iterator%isActive)
-          CALL source%copyParam(source_path//'->'//CHAR(iterator%getCurrentName()), &
-              dest_path//'->'//iterator%getCurrentName(.TRUE.),dest,loverwrite)
-          CALL iterator%advance()
-        ENDDO
-        CALL dest%getNode_Name(dest_path,dest_node)
+        IF(iterator%isActive) THEN
+          DO WHILE(iterator%isActive)
+            CALL source%copyParam(source_path//'->'//CHAR(iterator%getCurrentName()), &
+                dest_path//'->'//iterator%getCurrentName(.TRUE.),dest,loverwrite)
+            CALL iterator%advance()
+          ENDDO
+          CALL dest%getNode_Name(dest_path,dest_node)
+        ELSE
+          CALL dest%getOrCreateNode_Name(dest_path,dest_node,.TRUE.)
+          IF(ALLOCATED(dest_node%val)) THEN
+            CALL dest_node%val%clear()
+            DEALLOCATE(dest_node%val)
+          ENDIF
+          dest_node%val = source_node%val
+        ENDIF
       ELSE
         CALL dest%getOrCreateNode_Name(dest_path,dest_node,.TRUE.)
         IF(ALLOCATED(dest_node%val)) THEN
