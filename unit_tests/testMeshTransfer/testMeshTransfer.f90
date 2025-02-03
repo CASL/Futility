@@ -20,6 +20,10 @@ USE LinearSolverTypes
 USE MeshTransfer
 
 IMPLICIT NONE
+#ifdef HAVE_MPI
+#include <mpif.h>
+INTEGER :: ierr
+#endif
 !
 !Check the timer resolution
 CREATE_TEST('Mesh Transfer')
@@ -34,6 +38,9 @@ REGISTER_SUBTEST('Test 1DCart MeshTransfer',Test1DCart)
 REGISTER_SUBTEST('Test 1DCyl MeshTransfer',Test1DCyl)
 
 FINALIZE_TEST()
+#ifdef HAVE_MPI
+CALL MPI_Finalize(ierr)
+#endif
 !
 !
 !===============================================================================

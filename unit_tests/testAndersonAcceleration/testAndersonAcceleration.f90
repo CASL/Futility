@@ -27,6 +27,10 @@ CLASS(VectorType),ALLOCATABLE :: mySol,exSol,inSol,tmpvec
 TYPE(StochasticSamplingType) :: NativeRNG
 TYPE(ParamType) :: pList,vecparams
 REAL(SRK) :: tmp1,tmp2
+#ifdef HAVE_MPI
+#include <mpif.h>
+INTEGER :: ierr
+#endif
 
 ALLOCATE(RealVectorType :: mySol,exSol,inSol,tmpvec)
 CALL vecparams%add("VectorType->n",10000_SIK)
@@ -97,6 +101,9 @@ CALL vecparams%clear()
 FINALIZE_TEST()
 
 CALL ce%clear()
+#ifdef HAVE_MPI
+CALL MPI_Finalize(ierr)
+#endif
 !
 !===============================================================================
 CONTAINS

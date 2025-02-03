@@ -65,10 +65,9 @@ FINALIZE_TEST()
 
 #ifdef FUTILITY_HAVE_PETSC
   CALL PetscFinalize(ierr)
-#else
+#endif
 #ifdef HAVE_MPI
   CALL MPI_Finalize(ierr)
-#endif
 #endif
 !
 !===============================================================================

@@ -26,6 +26,10 @@ TYPE(RelaxedPicardType) :: testRlxPicard
 TYPE(ModifiedPicardType) :: testModPicard
 CLASS(VectorType),ALLOCATABLE :: x
 TYPE(ParamType) :: pList,vecparams
+#ifdef HAVE_MPI
+#include <mpif.h>
+INTEGER :: ierr
+#endif
 
 ALLOCATE(RealVectorType :: x)
 CALL vecparams%add("VectorType->n",2_SIK)
@@ -89,6 +93,9 @@ CALL vecparams%clear()
 FINALIZE_TEST()
 CALL pe%clear()
 CALL ce%clear()
+#ifdef HAVE_MPI
+CALL MPI_Finalize(ierr)
+#endif
 !
 !===============================================================================
 CONTAINS
